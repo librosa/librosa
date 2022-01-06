@@ -199,7 +199,7 @@ def percussive(y, **kwargs):
     return y_perc
 
 
-def time_stretch(y, rate, **kwargs):
+def time_stretch(y, *, rate, **kwargs):
     """Time-stretch an audio series by a fixed rate.
 
 
@@ -246,7 +246,7 @@ def time_stretch(y, rate, **kwargs):
     stft = core.stft(y, **kwargs)
 
     # Stretch by phase vocoding
-    stft_stretch = core.phase_vocoder(stft, rate,
+    stft_stretch = core.phase_vocoder(stft, rate=rate,
                                       hop_length=kwargs.get('hop_length', None),
                                       n_fft=kwargs.get('n_fft', None))
 
@@ -259,7 +259,7 @@ def time_stretch(y, rate, **kwargs):
     return y_stretch
 
 
-def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kwargs):
+def pitch_shift(y, *, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kwargs):
     """Shift the pitch of a waveform by ``n_steps`` steps.
 
     A step is equal to a semitone if ``bins_per_octave`` is set to 12.
@@ -322,14 +322,14 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
 
     # Stretch in time, then resample
     y_shift = core.resample(
-        time_stretch(y, rate, **kwargs), float(sr) / rate, sr, res_type=res_type
+        time_stretch(y, rate=rate, **kwargs), float(sr) / rate, sr, res_type=res_type
     )
 
     # Crop to the same dimension as the input
     return util.fix_length(y_shift, y.shape[-1])
 
 
-def remix(y, intervals, align_zeros=True):
+def remix(y, intervals, *, align_zeros=True):
     """Remix an audio signal by re-ordering time intervals.
 
 
@@ -451,7 +451,7 @@ def _signal_to_frame_nonsilent(
     return db > -top_db
 
 
-def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max):
+def trim(y, *, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max):
     """Trim leading and trailing silence from an audio signal.
 
     Parameters
@@ -526,7 +526,7 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=
 
 
 def split(
-    y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
+    y, *, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
 ):
     """Split an audio signal into non-silent intervals.
 
@@ -595,7 +595,7 @@ def split(
     return edges.reshape((-1, 2))
 
 
-def preemphasis(y, coef=0.97, zi=None, return_zf=False):
+def preemphasis(y, *, coef=0.97, zi=None, return_zf=False):
     """Pre-emphasize an audio signal with a first-order auto-regressive filter:
 
         y[n] -> y[n] - coef * y[n-1]
@@ -684,7 +684,7 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     return y_out
 
 
-def deemphasis(y, coef=0.97, zi=None, return_zf=False):
+def deemphasis(y, *, coef=0.97, zi=None, return_zf=False):
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:

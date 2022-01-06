@@ -47,7 +47,7 @@ def test_time_stretch(ysr, rate, ctx, n_fft):
 
     with ctx:
         y, sr = ysr
-        ys = librosa.effects.time_stretch(y, rate, n_fft=n_fft)
+        ys = librosa.effects.time_stretch(y, rate=rate, n_fft=n_fft)
 
         orig_duration = librosa.get_duration(y=y, sr=sr)
         new_duration = librosa.get_duration(y=ys, sr=sr)
@@ -59,9 +59,9 @@ def test_time_stretch_multi(y_multi):
     y, sr = y_multi
 
     # compare each channel
-    C0 = librosa.effects.time_stretch(y[0],1.1)
-    C1 = librosa.effects.time_stretch(y[1],1.1)
-    Call = librosa.effects.time_stretch(y,1.1)
+    C0 = librosa.effects.time_stretch(y[0], rate=1.1)
+    C1 = librosa.effects.time_stretch(y[1], rate=1.1)
+    Call = librosa.effects.time_stretch(y, rate=1.1)
 
     # Check each channel
     assert np.allclose(C0, Call[0])
@@ -87,7 +87,7 @@ def test_pitch_shift(ysr, n_steps, bins_per_octave, ctx, n_fft):
     with ctx:
         y, sr = ysr
         ys = librosa.effects.pitch_shift(
-            y, sr, n_steps, bins_per_octave=bins_per_octave, n_fft=n_fft
+            y, sr=sr, n_steps=n_steps, bins_per_octave=bins_per_octave, n_fft=n_fft
         )
 
         orig_duration = librosa.get_duration(y=y, sr=sr)
@@ -96,13 +96,14 @@ def test_pitch_shift(ysr, n_steps, bins_per_octave, ctx, n_fft):
         # We don't have to be too precise here, since this goes through an STFT
         assert orig_duration == new_duration
 
+
 def test_pitch_shift_multi(y_multi):
     y, sr = y_multi
 
     # compare each channel
-    C0 = librosa.effects.pitch_shift(y[0], sr, 1)
-    C1 = librosa.effects.pitch_shift(y[1], sr, 1)
-    Call = librosa.effects.pitch_shift(y, sr, 1)
+    C0 = librosa.effects.pitch_shift(y[0], sr=sr, n_steps=1)
+    C1 = librosa.effects.pitch_shift(y[1], sr=sr, n_steps=1)
+    Call = librosa.effects.pitch_shift(y, sr=sr, n_steps=1)
 
     # Check each channel
     assert np.allclose(C0, Call[0])
