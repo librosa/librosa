@@ -532,7 +532,7 @@ class AdaptiveWaveplot:
         ax.figure.canvas.draw_idle()
 
 
-def cmap(data, robust=True, cmap_seq="magma", cmap_bool="gray_r", cmap_div="coolwarm"):
+def cmap(data, *, robust=True, cmap_seq="magma", cmap_bool="gray_r", cmap_div="coolwarm"):
     """Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
@@ -601,6 +601,7 @@ def __envelope(x, hop):
 
 def specshow(
     data,
+    *,
     x_coords=None,
     y_coords=None,
     x_axis=None,
@@ -1255,6 +1256,7 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
 
 def waveshow(
     y,
+    *,
     sr=22050,
     max_points=11025,
     x_axis="time",
