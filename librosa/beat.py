@@ -26,6 +26,7 @@ __all__ = ["beat_track", "tempo", "plp"]
 
 
 def beat_track(
+    *,
     y=None,
     sr=22050,
     onset_envelope=None,
@@ -211,6 +212,7 @@ def beat_track(
 
 @cache(level=30)
 def tempo(
+    *,
     y=None,
     sr=22050,
     onset_envelope=None,
@@ -383,6 +385,7 @@ def tempo(
 
 
 def plp(
+    *,
     y=None,
     sr=22050,
     onset_envelope=None,
