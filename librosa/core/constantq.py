@@ -23,6 +23,7 @@ __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 @cache(level=20)
 def cqt(
     y,
+    *,
     sr=22050,
     hop_length=512,
     fmin=None,
@@ -195,6 +196,7 @@ def cqt(
 @cache(level=20)
 def hybrid_cqt(
     y,
+    *,
     sr=22050,
     hop_length=512,
     fmin=None,
@@ -322,7 +324,7 @@ def hybrid_cqt(
         cqt_resp.append(
             pseudo_cqt(
                 y,
-                sr,
+                sr=sr,
                 hop_length=hop_length,
                 fmin=fmin_pseudo,
                 n_bins=n_bins_pseudo,
@@ -342,7 +344,7 @@ def hybrid_cqt(
             np.abs(
                 cqt(
                     y,
-                    sr,
+                    sr=sr,
                     hop_length=hop_length,
                     fmin=fmin,
                     n_bins=n_bins_full,
@@ -366,6 +368,7 @@ def hybrid_cqt(
 @cache(level=20)
 def pseudo_cqt(
     y,
+    *,
     sr=22050,
     hop_length=512,
     fmin=None,
@@ -510,6 +513,7 @@ def pseudo_cqt(
 @cache(level=40)
 def icqt(
     C,
+    *,
     sr=22050,
     hop_length=512,
     fmin=None,
@@ -723,6 +727,7 @@ def icqt(
 @cache(level=20)
 def vqt(
     y,
+    *,
     sr=22050,
     hop_length=512,
     fmin=None,
@@ -1182,6 +1187,7 @@ def __num_two_factors(x):
 
 def griffinlim_cqt(
     C,
+    *,
     n_iter=32,
     sr=22050,
     hop_length=512,
