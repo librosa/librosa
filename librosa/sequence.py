@@ -651,7 +651,9 @@ def rqa(sim, *, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     ...                                         mode='affinity',
     ...                                         metric='cosine')
     >>> # using infinite cost for gaps enforces strict path continuation
-    >>> L_score, L_path = librosa.sequence.rqa(rec, np.inf, np.inf,
+    >>> L_score, L_path = librosa.sequence.rqa(rec,
+    ...                                        gap_onset=np.inf,
+    ...                                        gap_extend=np.inf,
     ...                                        knight_moves=False)
     >>> fig, ax = plt.subplots(ncols=2)
     >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames', ax=ax[0])
@@ -665,7 +667,7 @@ def rqa(sim, *, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     Full alignment using gaps and knight moves
 
     >>> # New gaps cost 5, extending old gaps cost 10 for each step
-    >>> score, path = librosa.sequence.rqa(rec, 5, 10)
+    >>> score, path = librosa.sequence.rqa(rec, gap_onset=5, gap_extend=10)
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
     >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames', ax=ax[0])
     >>> ax[0].set(title='Recurrence matrix')
@@ -1033,7 +1035,7 @@ def viterbi(prob, transition, *, p_init=None, return_logp=False):
     >>> p_emit = np.array([[0.5, 0.4, 0.1],
     ...                    [0.1, 0.3, 0.6]])
     >>> p_trans = np.array([[0.7, 0.3], [0.4, 0.6]])
-    >>> path, logp = librosa.sequence.viterbi(p_emit, p_trans, p_init,
+    >>> path, logp = librosa.sequence.viterbi(p_emit, p_trans, p_init=p_init,
     ...                                       return_logp=True)
     >>> print(logp, path)
     -4.19173690823075 [0 0 1]
