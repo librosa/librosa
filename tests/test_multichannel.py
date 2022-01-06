@@ -867,9 +867,9 @@ def test_lpc_multi(y_multi):
 def test_yin_multi(y_multi):
     y, sr = y_multi
 
-    Pall = librosa.yin(y, 30, 300)
-    P0 = librosa.yin(y[0], 30, 300)
-    P1 = librosa.yin(y[1], 30, 300)
+    Pall = librosa.yin(y, fmin=30, fmax=300)
+    P0 = librosa.yin(y[0], fmin=30, fmax=300)
+    P1 = librosa.yin(y[1], fmin=30, fmax=300)
 
     assert np.allclose(Pall[0], P0)
     assert np.allclose(Pall[1], P1)

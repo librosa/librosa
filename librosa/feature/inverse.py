@@ -17,7 +17,7 @@ from ..util import nnls, expand_to
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
 
 
-def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
+def mel_to_stft(M, *, sr=22050, n_fft=2048, power=2.0, **kwargs):
     """Approximate STFT magnitude from a Mel power spectrogram.
 
     Parameters
@@ -91,6 +91,7 @@ def mel_to_stft(M, sr=22050, n_fft=2048, power=2.0, **kwargs):
 
 def mel_to_audio(
     M,
+    *,
     sr=22050,
     n_fft=2048,
     hop_length=None,
@@ -185,7 +186,7 @@ def mel_to_audio(
     )
 
 
-def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
+def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
     """Invert Mel-frequency cepstral coefficients to approximate a Mel power
     spectrogram.
 
@@ -261,7 +262,7 @@ def mfcc_to_mel(mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
 
 
 def mfcc_to_audio(
-    mfcc, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0, **kwargs
+    mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0, **kwargs
 ):
     """Convert Mel-frequency cepstral coefficients to a time-domain audio signal
 
