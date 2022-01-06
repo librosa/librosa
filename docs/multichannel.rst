@@ -81,7 +81,7 @@ using `librosa.interp_harmonics`:
     # We'll interpolate the first five harmonics of each frequency
     harmonics = [1, 2, 3, 4, 5]
 
-    S_harmonics = librosa.interp_harmonics(S_stereo, freqs, harmonics)
+    S_harmonics = librosa.interp_harmonics(S_stereo, freqs=freqs, h_range=harmonics)
 
 
 The resulting object has four dimensions now: ``S_harmonics.shape == (N_channels,
