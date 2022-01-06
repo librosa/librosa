@@ -142,7 +142,7 @@ def beat_track(
 
     Track beats using a pre-computed onset envelope
 
-    >>> onset_env = librosa.onset.onset_strength(y, sr=sr,
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          aggregate=np.median)
     >>> tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env,
     ...                                        sr=sr)
