@@ -188,7 +188,7 @@ def mel(
 
     Examples
     --------
-    >>> melfb = librosa.filters.mel(22050, 2048)
+    >>> melfb = librosa.filters.mel(sr=22050, n_fft=2048)
     >>> melfb
     array([[ 0.   ,  0.016, ...,  0.   ,  0.   ],
            [ 0.   ,  0.   , ...,  0.   ,  0.   ],
@@ -199,7 +199,7 @@ def mel(
 
     Clip the maximum frequency to 8KHz
 
-    >>> librosa.filters.mel(22050, 2048, fmax=8000)
+    >>> librosa.filters.mel(sr=22050, n_fft=2048, fmax=8000)
     array([[ 0.  ,  0.02, ...,  0.  ,  0.  ],
            [ 0.  ,  0.  , ...,  0.  ,  0.  ],
            ...,
@@ -329,7 +329,7 @@ def chroma(
     --------
     Build a simple chroma filter bank
 
-    >>> chromafb = librosa.filters.chroma(22050, 4096)
+    >>> chromafb = librosa.filters.chroma(sr=22050, n_fft=4096)
     array([[  1.689e-05,   3.024e-04, ...,   4.639e-17,   5.327e-17],
            [  1.716e-05,   2.652e-04, ...,   2.674e-25,   3.176e-25],
     ...,
@@ -338,7 +338,7 @@ def chroma(
 
     Use quarter-tones instead of semitones
 
-    >>> librosa.filters.chroma(22050, 4096, n_chroma=24)
+    >>> librosa.filters.chroma(sr=22050, n_fft=4096, n_chroma=24)
     array([[  1.194e-05,   2.138e-04, ...,   6.297e-64,   1.115e-63],
            [  1.206e-05,   2.009e-04, ...,   1.546e-79,   2.929e-79],
     ...,
@@ -348,7 +348,7 @@ def chroma(
 
     Equally weight all octaves
 
-    >>> librosa.filters.chroma(22050, 4096, octwidth=None)
+    >>> librosa.filters.chroma(sr=22050, n_fft=4096, octwidth=None)
     array([[  3.036e-01,   2.604e-01, ...,   2.445e-16,   2.809e-16],
            [  3.084e-01,   2.283e-01, ...,   1.409e-24,   1.675e-24],
     ...,
@@ -528,12 +528,12 @@ def constant_q(
     --------
     Use a shorter window for each filter
 
-    >>> basis, lengths = librosa.filters.constant_q(22050, filter_scale=0.5)
+    >>> basis, lengths = librosa.filters.constant_q(sr=22050, filter_scale=0.5)
 
     Plot one octave of filters in time and frequency
 
     >>> import matplotlib.pyplot as plt
-    >>> basis, lengths = librosa.filters.constant_q(22050)
+    >>> basis, lengths = librosa.filters.constant_q(sr=22050)
     >>> fig, ax = plt.subplots(nrows=2, figsize=(10, 6))
     >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
     >>> for i, (f, n) in enumerate(zip(basis, notes[:12])):
@@ -895,12 +895,12 @@ def wavelet(
     Create a constant-Q basis
 
     >>> freqs = librosa.cqt_frequencies(n_bins=84, fmin=librosa.note_to_hz('C1'))
-    >>> basis, lengths = librosa.filters.wavelet(freqs, sr=22050)
+    >>> basis, lengths = librosa.filters.wavelet(freqs=freqs, sr=22050)
 
     Plot one octave of filters in time and frequency
 
     >>> import matplotlib.pyplot as plt
-    >>> basis, lengths = librosa.filters.wavelet(freqs, sr=22050)
+    >>> basis, lengths = librosa.filters.wavelet(freqs=freqs, sr=22050)
     >>> fig, ax = plt.subplots(nrows=2, figsize=(10, 6))
     >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
     >>> for i, (f, n) in enumerate(zip(basis, notes[:12])):
@@ -1528,9 +1528,9 @@ def window_sumsquare(
     at different hop lengths:
 
     >>> n_frames = 50
-    >>> wss_256 = librosa.filters.window_sumsquare('hann', n_frames, hop_length=256)
-    >>> wss_512 = librosa.filters.window_sumsquare('hann', n_frames, hop_length=512)
-    >>> wss_1024 = librosa.filters.window_sumsquare('hann', n_frames, hop_length=1024)
+    >>> wss_256 = librosa.filters.window_sumsquare(window='hann', n_frames=n_frames, hop_length=256)
+    >>> wss_512 = librosa.filters.window_sumsquare(window='hann', n_frames=n_frames, hop_length=512)
+    >>> wss_1024 = librosa.filters.window_sumsquare(window='hann', n_frames=n_frames, hop_length=1024)
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharey=True)
