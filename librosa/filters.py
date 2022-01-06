@@ -123,7 +123,7 @@ WINDOW_BANDWIDTHS = {
 
 @cache(level=10)
 def mel(
-    *, 
+    *,
     sr,
     n_fft,
     n_mels=128,
@@ -260,7 +260,7 @@ def mel(
 
 @cache(level=10)
 def chroma(
-    *, 
+    *,
     sr,
     n_fft,
     n_chroma=12,
@@ -436,7 +436,7 @@ def __float_window(window_spec):
 @cache(level=10)
 @deprecated(version="0.9.0", version_removed="1.0")
 def constant_q(
-    *, 
+    *,
     sr,
     fmin=None,
     n_bins=84,
@@ -809,7 +809,7 @@ def wavelet_lengths(
 
 @cache(level=10)
 def wavelet(
-    *, 
+    *,
     freqs,
     sr=22050,
     window="hann",
@@ -1483,7 +1483,7 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
 
 
 def window_sumsquare(
-    *, 
+    *,
     window,
     n_frames,
     hop_length=512,

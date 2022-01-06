@@ -27,7 +27,9 @@ from .util.exceptions import ParameterError
 __all__ = ["decompose", "hpss", "nn_filter"]
 
 
-def decompose(S, *, n_components=None, transformer=None, sort=False, fit=True, **kwargs):
+def decompose(
+    S, *, n_components=None, transformer=None, sort=False, fit=True, **kwargs
+):
     """Decompose a feature matrix.
 
     Given a spectrogram ``S``, produce a decomposition into ``components``

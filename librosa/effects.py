@@ -246,9 +246,12 @@ def time_stretch(y, *, rate, **kwargs):
     stft = core.stft(y, **kwargs)
 
     # Stretch by phase vocoding
-    stft_stretch = core.phase_vocoder(stft, rate=rate,
-                                      hop_length=kwargs.get('hop_length', None),
-                                      n_fft=kwargs.get('n_fft', None))
+    stft_stretch = core.phase_vocoder(
+        stft,
+        rate=rate,
+        hop_length=kwargs.get("hop_length", None),
+        n_fft=kwargs.get("n_fft", None),
+    )
 
     # Predict the length of y_stretch
     len_stretch = int(round(y.shape[-1] / rate))
@@ -259,7 +262,9 @@ def time_stretch(y, *, rate, **kwargs):
     return y_stretch
 
 
-def pitch_shift(y, *, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kwargs):
+def pitch_shift(
+    y, *, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kwargs
+):
     """Shift the pitch of a waveform by ``n_steps`` steps.
 
     A step is equal to a semitone if ``bins_per_octave`` is set to 12.
@@ -451,7 +456,9 @@ def _signal_to_frame_nonsilent(
     return db > -top_db
 
 
-def trim(y, *, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max):
+def trim(
+    y, *, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
+):
     """Trim leading and trailing silence from an audio signal.
 
     Parameters
@@ -513,7 +520,10 @@ def trim(y, *, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggrega
         # Compute the start and end positions
         # End position goes one frame past the last non-zero
         start = int(core.frames_to_samples(nonzero[0], hop_length=hop_length))
-        end = min(y.shape[-1], int(core.frames_to_samples(nonzero[-1] + 1, hop_length=hop_length)))
+        end = min(
+            y.shape[-1],
+            int(core.frames_to_samples(nonzero[-1] + 1, hop_length=hop_length)),
+        )
     else:
         # The signal only contains zeros
         start, end = 0, 0

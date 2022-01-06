@@ -466,7 +466,7 @@ def to_mono(y):
     util.valid_audio(y, mono=False)
 
     if y.ndim > 1:
-        y = np.mean(y, axis=tuple(range(y.ndim-1)))
+        y = np.mean(y, axis=tuple(range(y.ndim - 1)))
 
     return y
 
@@ -1154,7 +1154,7 @@ def zero_crossings(
 
 
 def clicks(
-    *, 
+    *,
     times=None,
     frames=None,
     sr=22050,

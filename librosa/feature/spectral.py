@@ -869,7 +869,13 @@ def spectral_flatness(
 
 
 def rms(
-    *, y=None, S=None, frame_length=2048, hop_length=512, center=True, pad_mode="constant"
+    *,
+    y=None,
+    S=None,
+    frame_length=2048,
+    hop_length=512,
+    center=True,
+    pad_mode="constant",
 ):
     """Compute root-mean-square (RMS) value for each frame, either from the
     audio samples ``y`` or from a spectrogram ``S``.
@@ -1350,7 +1356,9 @@ def chroma_stft(
         tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
 
     # Get the filter bank
-    chromafb = filters.chroma(sr=sr, n_fft=n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs)
+    chromafb = filters.chroma(
+        sr=sr, n_fft=n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs
+    )
 
     # Compute raw chroma
     raw_chroma = np.einsum("cf,...ft->...ct", chromafb, S, optimize=True)
@@ -1880,7 +1888,7 @@ def mfcc(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img = librosa.display.specshow(librosa.power_to_db(S, ref=np.max), 
+    >>> img = librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
     ...                                x_axis='time', y_axis='mel', fmax=8000,
     ...                                ax=ax[0])
     >>> fig.colorbar(img, ax=[ax[0]])

@@ -908,7 +908,12 @@ def vqt(
     alpha = __bpo_to_alpha(bins_per_octave)
 
     lengths, filter_cutoff = filters.wavelet_lengths(
-        freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, gamma=gamma, alpha=alpha
+        freqs=freqs,
+        sr=sr,
+        window=window,
+        filter_scale=filter_scale,
+        gamma=gamma,
+        alpha=alpha,
     )
 
     # Determine required resampling quality

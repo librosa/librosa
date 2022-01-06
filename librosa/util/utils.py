@@ -44,7 +44,7 @@ __all__ = [
     "dtype_r2c",
     "dtype_c2r",
     "count_unique",
-    "is_unique"
+    "is_unique",
 ]
 
 
@@ -1561,7 +1561,9 @@ def sync(data, idx, *, aggregate=None, pad=True, axis=-1):
     if np.all([isinstance(_, slice) for _ in idx]):
         slices = idx
     elif np.all([np.issubdtype(type(_), np.integer) for _ in idx]):
-        slices = index_to_slice(np.asarray(idx), idx_min=0, idx_max=shape[axis], pad=pad)
+        slices = index_to_slice(
+            np.asarray(idx), idx_min=0, idx_max=shape[axis], pad=pad
+        )
     else:
         raise ParameterError("Invalid index set: {}".format(idx))
 
@@ -2231,17 +2233,17 @@ def dtype_c2r(d, *, default=np.float32):
 
 @numba.jit(nopython=True, cache=True)
 def __count_unique(x):
-    '''Counts the number of unique values in an array.
+    """Counts the number of unique values in an array.
 
     This function is a helper for `count_unique` and is not
     to be called directly.
-    '''
+    """
     uniques = np.unique(x)
     return uniques.shape[0]
 
 
 def count_unique(data, *, axis=-1):
-    '''Count the number of unique values in a multi-dimensional array
+    """Count the number of unique values in a multi-dimensional array
     along a given axis.
 
     Parameters
@@ -2278,24 +2280,24 @@ def count_unique(data, *, axis=-1):
     >>> # Count unique values along columns (within rows)
     >>> librosa.util.count_unique(x, axis=-1)
     array([2, 1, 5, 5, 5])
-    '''
+    """
     return np.apply_along_axis(__count_unique, axis, data)
 
 
 @numba.jit(nopython=True, cache=True)
 def __is_unique(x):
-    '''Determines if the input array has all unique values.
+    """Determines if the input array has all unique values.
 
     This function is a helper for `is_unique` and is not
     to be called directly.
-    '''
+    """
 
     uniques = np.unique(x)
     return uniques.shape[0] == x.size
 
 
 def is_unique(data, *, axis=-1):
-    '''Determine if the input array consists of all unique values
+    """Determine if the input array consists of all unique values
     along a given axis.
 
     Parameters
@@ -2334,6 +2336,6 @@ def is_unique(data, *, axis=-1):
     >>> librosa.util.is_unique(x, axis=-1)
     array([False, False,  True,  True,  True])
 
-    '''
+    """
 
     return np.apply_along_axis(__is_unique, axis, data)

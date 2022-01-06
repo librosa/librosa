@@ -432,7 +432,9 @@ def blocks_to_time(blocks, *, block_length, hop_length, sr):
     ...                                     hop_length=512, sr=sr)
 
     """
-    samples = blocks_to_samples(blocks, block_length=block_length, hop_length=hop_length)
+    samples = blocks_to_samples(
+        blocks, block_length=block_length, hop_length=hop_length
+    )
     return samples_to_time(samples, sr=sr)
 
 
@@ -1099,7 +1101,7 @@ def fft_frequencies(*, sr=22050, n_fft=2048):
 
     """
 
-    return np.fft.rfftfreq(n=n_fft, d=1.0/sr)
+    return np.fft.rfftfreq(n=n_fft, d=1.0 / sr)
 
 
 def cqt_frequencies(n_bins, *, fmin, bins_per_octave=12, tuning=0.0):
@@ -1631,7 +1633,9 @@ def multi_frequency_weighting(frequencies, *, kinds="ZAC", **kw):
     ...        title='Weightings of CQT frequencies')
     >>> ax.legend()
     """
-    return np.stack([frequency_weighting(frequencies, kind=k, **kw) for k in kinds], axis=0)
+    return np.stack(
+        [frequency_weighting(frequencies, kind=k, **kw) for k in kinds], axis=0
+    )
 
 
 def times_like(X, *, sr=22050, hop_length=512, n_fft=None, axis=-1):
@@ -2019,7 +2023,9 @@ def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
     """
     if not np.isscalar(midi):
         return [
-            midi_to_svara_c(m, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode)
+            midi_to_svara_c(
+                m, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode
+            )
             for m in midi
         ]
 

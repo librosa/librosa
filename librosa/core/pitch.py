@@ -18,7 +18,14 @@ __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
 
 def estimate_tuning(
-    *, y=None, sr=22050, S=None, n_fft=2048, resolution=0.01, bins_per_octave=12, **kwargs
+    *,
+    y=None,
+    sr=22050,
+    S=None,
+    n_fft=2048,
+    resolution=0.01,
+    bins_per_octave=12,
+    **kwargs,
 ):
     """Estimate the tuning of an audio time series or spectrogram input.
 

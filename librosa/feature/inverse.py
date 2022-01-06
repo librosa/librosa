@@ -80,7 +80,9 @@ def mel_to_stft(M, *, sr=22050, n_fft=2048, power=2.0, **kwargs):
     """
 
     # Construct a mel basis with dtype matching the input data
-    mel_basis = filters.mel(sr=sr, n_fft=n_fft, n_mels=M.shape[-2], dtype=M.dtype, **kwargs)
+    mel_basis = filters.mel(
+        sr=sr, n_fft=n_fft, n_mels=M.shape[-2], dtype=M.dtype, **kwargs
+    )
 
     # Find the non-negative least squares solution, and apply
     # the inverse exponent.

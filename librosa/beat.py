@@ -566,8 +566,9 @@ def plp(
     ftgram /= util.tiny(ftgram) ** 0.5 + np.abs(ftgram.max(axis=-2, keepdims=True))
 
     # Step 5: invert the Fourier tempogram to get the pulse
-    pulse = core.istft(ftgram, hop_length=1, n_fft=win_length,
-                       length=onset_envelope.shape[-1])
+    pulse = core.istft(
+        ftgram, hop_length=1, n_fft=win_length, length=onset_envelope.shape[-1]
+    )
 
     # Step 6: retain only the positive part of the pulse cycle
     pulse = np.clip(pulse, 0, None, pulse)

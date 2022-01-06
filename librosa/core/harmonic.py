@@ -225,7 +225,9 @@ def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2)
 
         # First, verify that the input frequencies are unique
         if not is_unique(freqs, axis=0):
-            warnings.warn("Frequencies are not unique. This may produce incorrect harmonic interpolations.")
+            warnings.warn(
+                "Frequencies are not unique. This may produce incorrect harmonic interpolations."
+            )
 
         f_interp = scipy.interpolate.interp1d(
             freqs,
@@ -245,7 +247,9 @@ def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2)
 
     elif freqs.shape == x.shape:
         if not np.all(is_unique(freqs, axis=axis)):
-            warnings.warn("Frequencies are not unique. This may produce incorrect harmonic interpolations.")
+            warnings.warn(
+                "Frequencies are not unique. This may produce incorrect harmonic interpolations."
+            )
 
         # If we have time-varying frequencies, then it must match exactly the shape of the input
 
