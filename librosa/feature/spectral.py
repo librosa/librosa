@@ -1746,7 +1746,7 @@ def tonnetz(*, y=None, sr=22050, chroma=None, **kwargs):
     ...                                 y_axis='tonnetz', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Tonal Centroids (Tonnetz)')
     >>> ax[0].label_outer()
-    >>> img2 = librosa.display.specshow(librosa.feature.chroma_cqt(y, sr=sr),
+    >>> img2 = librosa.display.specshow(librosa.feature.chroma_cqt(y=y, sr=sr),
     ...                                 y_axis='chroma', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Chroma')
     >>> fig.colorbar(img1, ax=[ax[0]])
