@@ -58,6 +58,7 @@ __all__ = [
 def cross_similarity(
     data,
     data_ref,
+    *,
     k=None,
     metric="euclidean",
     sparse=False,
@@ -272,6 +273,7 @@ def cross_similarity(
 @cache(level=30)
 def recurrence_matrix(
     data,
+    *,
     k=None,
     width=1,
     metric="euclidean",
@@ -536,7 +538,7 @@ def recurrence_matrix(
     return rec
 
 
-def recurrence_to_lag(rec, pad=True, axis=-1):
+def recurrence_to_lag(rec, *, pad=True, axis=-1):
     """Convert a recurrence matrix into a lag matrix.
 
         ``lag[i, j] == rec[i+j, j]``
@@ -639,7 +641,7 @@ def recurrence_to_lag(rec, pad=True, axis=-1):
     return lag
 
 
-def lag_to_recurrence(lag, axis=-1):
+def lag_to_recurrence(lag, *, axis=-1):
     """Convert a lag matrix into a recurrence matrix.
 
     Parameters
@@ -803,7 +805,7 @@ def timelag_filter(function, pad=True, index=0):
 
 
 @cache(level=30)
-def subsegment(data, frames, n_segments=4, axis=-1):
+def subsegment(data, frames, *, n_segments=4, axis=-1):
     """Sub-divide a segmentation by feature clustering.
 
     Given a set of frame boundaries (``frames``), and a data matrix (``data``),
@@ -892,7 +894,7 @@ def subsegment(data, frames, n_segments=4, axis=-1):
     return np.array(boundaries)
 
 
-def agglomerative(data, k, clusterer=None, axis=-1):
+def agglomerative(data, k, *, clusterer=None, axis=-1):
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
@@ -983,6 +985,7 @@ def agglomerative(data, k, clusterer=None, axis=-1):
 def path_enhance(
     R,
     n,
+    *,
     window="hann",
     max_ratio=2.0,
     min_ratio=None,

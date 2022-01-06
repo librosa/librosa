@@ -4,7 +4,8 @@
 
 import os
 from joblib import Memory
-
+from makefun import wraps
+            
 
 class CacheManager(object):
     """The librosa cache manager class wraps joblib.Memory
@@ -37,25 +38,8 @@ class CacheManager(object):
             """Decorator function.  Adds an input/output cache to
             the specified function."""
 
-            from decorator import FunctionMaker
-
-            def decorator_apply(dec, func):
-                """Decorate a function by preserving the signature even if dec
-                is not a signature-preserving decorator.
-
-                This recipe is derived from
-                http://micheles.googlecode.com/hg/decorator/documentation.html#id14
-                """
-
-                return FunctionMaker.create(
-                    func,
-                    "return decorated(%(signature)s)",
-                    dict(decorated=dec(func)),
-                    __wrapped__=func,
-                )
-
             if self.memory.location is not None and self.level >= level:
-                return decorator_apply(self.memory.cache, function)
+                return wraps(function)(self.memory.cache(function))
 
             else:
                 return function
