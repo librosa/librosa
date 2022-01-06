@@ -18,7 +18,7 @@ __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
 
 def estimate_tuning(
-    y=None, sr=22050, S=None, n_fft=2048, resolution=0.01, bins_per_octave=12, **kwargs
+    *, y=None, sr=22050, S=None, n_fft=2048, resolution=0.01, bins_per_octave=12, **kwargs
 ):
     """Estimate the tuning of an audio time series or spectrogram input.
 
@@ -102,7 +102,7 @@ def estimate_tuning(
     )
 
 
-def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
+def pitch_tuning(frequencies, *, resolution=0.01, bins_per_octave=12):
     """Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
 
@@ -174,6 +174,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
 @cache(level=30)
 def piptrack(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -456,6 +457,7 @@ def _parabolic_interpolation(y_frames):
 
 def yin(
     y,
+    *,
     fmin,
     fmax,
     sr=22050,
@@ -629,6 +631,7 @@ def yin(
 
 def pyin(
     y,
+    *,
     fmin,
     fmax,
     sr=22050,
