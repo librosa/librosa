@@ -974,9 +974,9 @@ def test_mfcc_to_mel_multi(s_multi, n_mfcc, n_mels, dct_type):
     mfcc1 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[1], top_db=None))
     mfcc = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S, top_db=None))
 
-    melspec = librosa.feature.melspectrogram(S, sr=sr, n_mels=n_mels)
-    melspec0 = librosa.feature.melspectrogram(S[0], sr=sr, n_mels=n_mels)
-    melspec1 = librosa.feature.melspectrogram(S[1], sr=sr, n_mels=n_mels)
+    melspec = librosa.feature.melspectrogram(S=S, sr=sr, n_mels=n_mels)
+    melspec0 = librosa.feature.melspectrogram(S=S[0], sr=sr, n_mels=n_mels)
+    melspec1 = librosa.feature.melspectrogram(S=S[1], sr=sr, n_mels=n_mels)
 
     mel_recover = librosa.feature.inverse.mfcc_to_mel(
         mfcc, n_mels=n_mels, dct_type=dct_type
