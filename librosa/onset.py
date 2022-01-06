@@ -123,7 +123,7 @@ def onset_detect(
 
     Or use a pre-computed onset envelope
 
-    >>> o_env = librosa.onset.onset_strength(y, sr=sr)
+    >>> o_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> times = librosa.times_like(o_env, sr=sr)
     >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env, sr=sr)
 
