@@ -231,11 +231,11 @@ def time_stretch(y, *, rate, **kwargs):
     Compress to be twice as fast
 
     >>> y, sr = librosa.load(librosa.ex('choice'))
-    >>> y_fast = librosa.effects.time_stretch(y, 2.0)
+    >>> y_fast = librosa.effects.time_stretch(y, rate=2.0)
 
     Or half the original speed
 
-    >>> y_slow = librosa.effects.time_stretch(y, 0.5)
+    >>> y_slow = librosa.effects.time_stretch(y, rate=0.5)
 
     """
 
@@ -303,15 +303,15 @@ def pitch_shift(y, *, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", *
     Shift up by a major third (four steps if ``bins_per_octave`` is 12)
 
     >>> y, sr = librosa.load(librosa.ex('choice'))
-    >>> y_third = librosa.effects.pitch_shift(y, sr, n_steps=4)
+    >>> y_third = librosa.effects.pitch_shift(y, sr=sr, n_steps=4)
 
     Shift down by a tritone (six steps if ``bins_per_octave`` is 12)
 
-    >>> y_tritone = librosa.effects.pitch_shift(y, sr, n_steps=-6)
+    >>> y_tritone = librosa.effects.pitch_shift(y, sr=sr, n_steps=-6)
 
     Shift up by 3 quarter-tones
 
-    >>> y_three_qt = librosa.effects.pitch_shift(y, sr, n_steps=3,
+    >>> y_three_qt = librosa.effects.pitch_shift(y, sr=sr, n_steps=3,
     ...                                          bins_per_octave=24)
     """
 
