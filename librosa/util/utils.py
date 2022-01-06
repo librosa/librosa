@@ -1164,7 +1164,7 @@ def peak_pick(x, *, pre_max, post_max, pre_avg, post_avg, delta, wait):
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          hop_length=512,
     ...                                          aggregate=np.median)
-    >>> peaks = librosa.util.peak_pick(onset_env, 3, 3, 3, 5, 0.5, 10)
+    >>> peaks = librosa.util.peak_pick(onset_env, pre_max=3, post_max=3, pre_avg=3, post_avg=5, delta=0.5, wait=10)
     >>> peaks
     array([  3,  27,  40,  61,  72,  88, 103])
 
@@ -1511,7 +1511,7 @@ def sync(data, idx, *, aggregate=None, pad=True, axis=-1):
     >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
-    >>> beats = librosa.util.fix_frames(beats, x_max=C.shape[1])
+    >>> beats = librosa.util.fix_frames(beats)
 
     By default, use mean aggregation
 
@@ -1520,12 +1520,12 @@ def sync(data, idx, *, aggregate=None, pad=True, axis=-1):
     Use median-aggregation instead of mean
 
     >>> C_med = librosa.util.sync(C, beats,
-    ...                             aggregate=np.median)
+    ...                              aggregate=np.median)
 
     Or sub-beat synchronization
 
     >>> sub_beats = librosa.segment.subsegment(C, beats)
-    >>> sub_beats = librosa.util.fix_frames(sub_beats, x_max=C.shape[1])
+    >>> sub_beats = librosa.util.fix_frames(sub_beats)
     >>> C_med_sub = librosa.util.sync(C, sub_beats, aggregate=np.median)
 
 
