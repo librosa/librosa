@@ -4,7 +4,16 @@
 
 import os
 from joblib import Memory
-from makefun import wraps
+from decorator import FunctionMaker
+
+
+def _decorator_apply(dec, func):
+    return FunctionMaker.create(
+        func,
+        "return decfunc(%(shortsignature)s)",
+        dict(decfunc=dec(func)),
+        __wrapped__=func,
+    )
 
 
 class CacheManager(object):
@@ -37,9 +46,8 @@ class CacheManager(object):
         def wrapper(function):
             """Decorator function.  Adds an input/output cache to
             the specified function."""
-
             if self.memory.location is not None and self.level >= level:
-                return wraps(function)(self.memory.cache(function))
+                return _decorator_apply(self.memory.cache, function)
 
             else:
                 return function

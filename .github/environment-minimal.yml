@@ -16,7 +16,6 @@ dependencies:
   - pysoundfile==0.10.2
   - pooch==1.0.0
   - packaging==20.0
-  - makefun==1.12.0
 
   # optional, but required for testing
   - matplotlib==3.3.0
