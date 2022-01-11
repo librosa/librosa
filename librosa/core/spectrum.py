@@ -211,7 +211,7 @@ def stft(
     fft_window = get_window(window, win_length, fftbins=True)
 
     # Pad the window out to n_fft size
-    fft_window = util.pad_center(fft_window, n_fft)
+    fft_window = util.pad_center(fft_window, size=n_fft)
 
     # Reshape so that the window can be broadcast
     fft_window = util.expand_to(fft_window, ndim=1 + y.ndim, axes=-2)
@@ -361,7 +361,7 @@ def istft(
 
     >>> n = len(y)
     >>> n_fft = 2048
-    >>> y_pad = librosa.util.fix_length(y, n + n_fft // 2)
+    >>> y_pad = librosa.util.fix_length(y, size=n + n_fft // 2)
     >>> D = librosa.stft(y_pad, n_fft=n_fft)
     >>> y_out = librosa.istft(D, length=n)
     >>> np.max(np.abs(y - y_out))
@@ -382,7 +382,7 @@ def istft(
     ifft_window = get_window(window, win_length, fftbins=True)
 
     # Pad out to match n_fft, and add broadcasting axes
-    ifft_window = util.pad_center(ifft_window, n_fft)
+    ifft_window = util.pad_center(ifft_window, size=n_fft)
     ifft_window = util.expand_to(ifft_window, ndim=stft_matrix.ndim, axes=-2)
 
     # For efficiency, trim STFT frames according to signal length if available
@@ -451,7 +451,7 @@ def istft(
             # If we're not centering, start at 0 and trim/pad as necessary
             start = 0
 
-        y = util.fix_length(y[..., start:], length)
+        y = util.fix_length(y[..., start:], size=length)
 
     return y
 
@@ -585,7 +585,7 @@ def __reassign_frequencies(
         win_length = n_fft
 
     window = get_window(window, win_length, fftbins=True)
-    window = util.pad_center(window, n_fft)
+    window = util.pad_center(window, size=n_fft)
 
     if S is None:
         if dtype is None:
@@ -749,7 +749,7 @@ def __reassign_times(
         win_length = n_fft
 
     window = get_window(window, win_length, fftbins=True)
-    window = util.pad_center(window, n_fft)
+    window = util.pad_center(window, size=n_fft)
 
     # retrieve hop length if needed so that the frame times can be calculated
     if hop_length is None:
@@ -1478,7 +1478,7 @@ def iirt(
             min_length = (
                 int(np.ceil(n_frames * hop_length_STMSP)) + win_length_STMSP_round
             )
-            cur_filter_output = util.fix_length(cur_filter_output, min_length)
+            cur_filter_output = util.fix_length(cur_filter_output, size=min_length)
             start_idx = np.arange(
                 0,
                 cur_filter_output.shape[-1] - win_length_STMSP_round,

@@ -719,7 +719,7 @@ def icqt(
         else:
             y[..., : y_oct.shape[-1]] += y_oct
     if length:
-        y = util.fix_length(y, length)
+        y = util.fix_length(y, size=length)
 
     return y
 

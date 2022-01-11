@@ -331,7 +331,7 @@ def pitch_shift(
     )
 
     # Crop to the same dimension as the input
-    return util.fix_length(y_shift, y.shape[-1])
+    return util.fix_length(y_shift, size=y.shape[-1])
 
 
 def remix(y, intervals, *, align_zeros=True):

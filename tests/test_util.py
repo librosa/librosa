@@ -129,7 +129,7 @@ def test_frame_bad_hop():
 def test_pad_center(y, m, axis, mode):
 
     n = m + y.shape[axis]
-    y_out = librosa.util.pad_center(y, n, axis=axis, mode=mode)
+    y_out = librosa.util.pad_center(y, size=n, axis=axis, mode=mode)
 
     n_len = y.shape[axis]
     n_pad = int((n - n_len) / 2)
@@ -146,7 +146,7 @@ def test_pad_center(y, m, axis, mode):
 @pytest.mark.parametrize("mode", ["constant", "edge", "reflect"])
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_pad_center_fail(y, n, axis, mode):
-    librosa.util.pad_center(y, n, axis=axis, mode=mode)
+    librosa.util.pad_center(y, size=n, axis=axis, mode=mode)
 
 
 @pytest.mark.parametrize("y", [np.ones((16,)), np.ones((16, 16))])
@@ -155,7 +155,7 @@ def test_pad_center_fail(y, n, axis, mode):
 def test_fix_length(y, m, axis):
     n = m + y.shape[axis]
 
-    y_out = librosa.util.fix_length(y, n, axis=axis)
+    y_out = librosa.util.fix_length(y, size=n, axis=axis)
 
     eq_slice = [slice(None)] * y.ndim
     eq_slice[axis] = slice(y.shape[axis])

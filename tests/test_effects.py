@@ -203,7 +203,7 @@ def y_trim(request):
     sr = float(22050)
     trim_duration = 3.0
     y = np.sin(2 * np.pi * 440.0 * np.arange(0, trim_duration * sr) / sr)
-    y = librosa.util.pad_center(y, 5 * sr)
+    y = librosa.util.pad_center(y, size=5 * sr)
 
     if request.param:
         y = np.vstack([y, np.zeros_like(y)])

@@ -592,7 +592,7 @@ def constant_q(
         max_len = int(np.ceil(max_len))
 
     filters = np.asarray(
-        [util.pad_center(filt, max_len, **kwargs) for filt in filters], dtype=dtype
+        [util.pad_center(filt, size=max_len, **kwargs) for filt in filters], dtype=dtype
     )
 
     return filters, np.asarray(lengths)
@@ -953,7 +953,7 @@ def wavelet(
         max_len = int(np.ceil(max_len))
 
     filters = np.asarray(
-        [util.pad_center(filt, max_len, **kwargs) for filt in filters], dtype=dtype
+        [util.pad_center(filt, size=max_len, **kwargs) for filt in filters], dtype=dtype
     )
 
     return filters, lengths
@@ -1550,7 +1550,7 @@ def window_sumsquare(
     # Compute the squared window at the desired length
     win_sq = get_window(window, win_length)
     win_sq = util.normalize(win_sq, norm=norm) ** 2
-    win_sq = util.pad_center(win_sq, n_fft)
+    win_sq = util.pad_center(win_sq, size=n_fft)
 
     # Fill the envelope
     __window_ss_fill(x, win_sq, n_frames, hop_length)

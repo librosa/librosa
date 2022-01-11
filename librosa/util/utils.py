@@ -362,7 +362,7 @@ def valid_intervals(intervals):
     return True
 
 
-def pad_center(data, size, *, axis=-1, **kwargs):
+def pad_center(data, *, size, axis=-1, **kwargs):
     """Pad an array to a target length along a target axis.
 
     This differs from `np.pad` by centering the data prior to padding,
@@ -372,12 +372,12 @@ def pad_center(data, size, *, axis=-1, **kwargs):
     --------
     >>> # Generate a vector
     >>> data = np.ones(5)
-    >>> librosa.util.pad_center(data, 10, mode='constant')
+    >>> librosa.util.pad_center(data, size=10, mode='constant')
     array([ 0.,  0.,  1.,  1.,  1.,  1.,  1.,  0.,  0.,  0.])
 
     >>> # Pad a matrix along its first dimension
     >>> data = np.ones((3, 5))
-    >>> librosa.util.pad_center(data, 7, axis=0)
+    >>> librosa.util.pad_center(data, size=7, axis=0)
     array([[ 0.,  0.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  0.,  0.],
            [ 1.,  1.,  1.,  1.,  1.],
@@ -386,7 +386,7 @@ def pad_center(data, size, *, axis=-1, **kwargs):
            [ 0.,  0.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  0.,  0.]])
     >>> # Or its second dimension
-    >>> librosa.util.pad_center(data, 7, axis=1)
+    >>> librosa.util.pad_center(data, size=7, axis=1)
     array([[ 0.,  1.,  1.,  1.,  1.,  1.,  0.],
            [ 0.,  1.,  1.,  1.,  1.,  1.,  0.],
            [ 0.,  1.,  1.,  1.,  1.,  1.,  0.]])
@@ -510,7 +510,7 @@ def expand_to(x, *, ndim, axes):
     return x.reshape(shape)
 
 
-def fix_length(data, size, *, axis=-1, **kwargs):
+def fix_length(data, *, size, axis=-1, **kwargs):
     """Fix the length an array ``data`` to exactly ``size`` along a target axis.
 
     If ``data.shape[axis] < n``, pad according to the provided kwargs.
@@ -520,13 +520,13 @@ def fix_length(data, size, *, axis=-1, **kwargs):
     --------
     >>> y = np.arange(7)
     >>> # Default: pad with zeros
-    >>> librosa.util.fix_length(y, 10)
+    >>> librosa.util.fix_length(y, size=10)
     array([0, 1, 2, 3, 4, 5, 6, 0, 0, 0])
     >>> # Trim to a desired length
-    >>> librosa.util.fix_length(y, 5)
+    >>> librosa.util.fix_length(y, size=5)
     array([0, 1, 2, 3, 4])
     >>> # Use edge-padding instead of zeros
-    >>> librosa.util.fix_length(y, 10, mode='edge')
+    >>> librosa.util.fix_length(y, size=10, mode='edge')
     array([0, 1, 2, 3, 4, 5, 6, 6, 6, 6])
 
     Parameters

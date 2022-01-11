@@ -1729,7 +1729,7 @@ def transition_local(n_states, width, *, window="triangle", wrap=False):
 
     # Fill in the widths.  This is inefficient, but simple
     for i, width_i in enumerate(width):
-        trans_row = pad_center(get_window(window, width_i, fftbins=False), n_states)
+        trans_row = pad_center(get_window(window, width_i, fftbins=False), size=n_states)
         trans_row = np.roll(trans_row, n_states // 2 + i + 1)
 
         if not wrap:

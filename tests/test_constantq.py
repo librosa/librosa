@@ -561,7 +561,7 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
     if length:
         assert len(y_icqt) == len(yinv)
     else:
-        yinv = librosa.util.fix_length(yinv, len(y_icqt))
+        yinv = librosa.util.fix_length(yinv, size=len(y_icqt))
 
     y_icqt = y_icqt[sr_icqt // 2 : -sr_icqt // 2]
     yinv = yinv[sr_icqt // 2 : -sr_icqt // 2]

@@ -336,8 +336,8 @@ def test_rms_const(n):
 def test_rms(y_ex, y2, frame_length, hop_length, center):
     y1, sr = y_ex
     # Ensure audio is divisible into frame size.
-    y1 = librosa.util.fix_length(y1, y1.size - y1.size % frame_length)
-    y2 = librosa.util.fix_length(y2, y2.size - y2.size % frame_length)
+    y1 = librosa.util.fix_length(y1, size=y1.size - y1.size % frame_length)
+    y2 = librosa.util.fix_length(y2, size=y2.size - y2.size % frame_length)
     assert y1.size % frame_length == 0
     assert y2.size % frame_length == 0
 

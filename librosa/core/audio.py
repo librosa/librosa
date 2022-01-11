@@ -616,7 +616,7 @@ def resample(
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
 
     if fix:
-        y_hat = util.fix_length(y_hat, n_samples, **kwargs)
+        y_hat = util.fix_length(y_hat, size=n_samples, **kwargs)
 
     if scale:
         y_hat /= np.sqrt(ratio)
