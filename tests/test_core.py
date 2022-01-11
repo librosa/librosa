@@ -590,7 +590,7 @@ def test_salience_basecase():
     harms = [1]
     weights = [1.0]
     S_sal = librosa.core.salience(
-        S, freqs=freqs, h_range=harms, weights=weights, filter_peaks=False, kind="quadratic"
+        S, freqs=freqs, harmonics=harms, weights=weights, filter_peaks=False, kind="quadratic"
     )
     assert np.allclose(S_sal, S)
 
@@ -602,7 +602,7 @@ def test_salience_basecase2():
     harms = [1, 0.5, 2.0]
     weights = [1.0, 0.0, 0.0]
     S_sal = librosa.core.salience(
-        S, freqs=freqs, h_range=harms, weights=weights, filter_peaks=False, kind="quadratic"
+        S, freqs=freqs, harmonics=harms, weights=weights, filter_peaks=False, kind="quadratic"
     )
     assert np.allclose(S_sal, S)
 
@@ -611,7 +611,7 @@ def test_salience_defaults():
     S = np.array([[0.1, 0.5, 0.0], [0.2, 1.2, 1.2], [0.0, 0.7, 0.3], [1.3, 3.2, 0.8]])
     freqs = np.array([50.0, 100.0, 200.0, 400.0])
     harms = [0.5, 1, 2]
-    actual = librosa.core.salience(S, freqs=freqs, h_range=harms, kind="quadratic", fill_value=0.0)
+    actual = librosa.core.salience(S, freqs=freqs, harmonics=harms, kind="quadratic", fill_value=0.0)
 
     expected = (
         np.array([[0.0, 0.0, 0.0], [0.3, 2.4, 1.5], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
@@ -626,7 +626,7 @@ def test_salience_weights():
     harms = [0.5, 1, 2]
     weights = [1.0, 1.0, 1.0]
     actual = librosa.core.salience(
-        S, freqs=freqs, h_range=harms, weights=weights, kind="quadratic", fill_value=0.0
+        S, freqs=freqs, harmonics=harms, weights=weights, kind="quadratic", fill_value=0.0
     )
 
     expected = (
@@ -642,7 +642,7 @@ def test_salience_no_peak_filter():
     harms = [0.5, 1, 2]
     weights = [1.0, 1.0, 1.0]
     actual = librosa.core.salience(
-        S, freqs=freqs, h_range=harms, weights=weights, filter_peaks=False, kind="quadratic"
+        S, freqs=freqs, harmonics=harms, weights=weights, filter_peaks=False, kind="quadratic"
     )
 
     expected = (
@@ -658,7 +658,7 @@ def test_salience_aggregate():
     harms = [0.5, 1, 2]
     weights = [1.0, 1.0, 1.0]
     actual = librosa.core.salience(
-        S, freqs=freqs, h_range=harms, weights=weights, aggregate=np.ma.max, kind="quadratic", fill_value=0.0
+        S, freqs=freqs, harmonics=harms, weights=weights, aggregate=np.ma.max, kind="quadratic", fill_value=0.0
     )
 
     expected = np.array(
@@ -1548,7 +1548,7 @@ def test_harmonics_1d():
 
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.interp_harmonics(y, freqs=x, h_range=h, axis=0)
+    yh = librosa.interp_harmonics(y, freqs=x, harmonics=h, axis=0)
 
     assert yh.shape[1:] == y.shape
     assert yh.shape[0] == len(h)
@@ -1572,7 +1572,7 @@ def test_harmonics_2d():
     y = np.tile(y, (5, 1)).T
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.interp_harmonics(y, freqs=x, h_range=h, axis=0)
+    yh = librosa.interp_harmonics(y, freqs=x, harmonics=h, axis=0)
 
     assert yh.shape[1:] == y.shape
     assert yh.shape[0] == len(h)
@@ -1596,21 +1596,21 @@ def test_harmonics_1d_nonunique():
     h = [0.25, 0.5, 1, 2, 4]
 
     with pytest.warns(UserWarning):
-        yh = librosa.interp_harmonics(y, freqs=x, h_range=h, axis=0)
+        yh = librosa.interp_harmonics(y, freqs=x, harmonics=h, axis=0)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_harmonics_badshape_1d():
     freqs = np.zeros(100)
     obs = np.zeros((5, 10))
-    librosa.interp_harmonics(obs, freqs=freqs, h_range=[1])
+    librosa.interp_harmonics(obs, freqs=freqs, harmonics=[1])
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_harmonics_badshape_2d():
     freqs = np.zeros((5, 5))
     obs = np.zeros((5, 10))
-    librosa.interp_harmonics(obs, freqs=freqs, h_range=[1])
+    librosa.interp_harmonics(obs, freqs=freqs, harmonics=[1])
 
 
 def test_harmonics_2d_varying():
@@ -1621,7 +1621,7 @@ def test_harmonics_2d_varying():
     y = np.tile(y, (5, 1)).T
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.interp_harmonics(y, freqs=x, h_range=h, axis=-2)
+    yh = librosa.interp_harmonics(y, freqs=x, harmonics=h, axis=-2)
 
     assert yh.shape[1:] == y.shape
     assert yh.shape[0] == len(h)
@@ -1647,7 +1647,7 @@ def test_harmonics_2d_varying_nonunique():
     h = [0.25, 0.5, 1, 2, 4]
 
     with pytest.warns(UserWarning):
-        yh = librosa.interp_harmonics(y, freqs=x, h_range=h, axis=-2)
+        yh = librosa.interp_harmonics(y, freqs=x, harmonics=h, axis=-2)
 
 
 def test_show_versions():

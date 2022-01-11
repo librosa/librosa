@@ -17,7 +17,7 @@ def salience(
     S,
     *,
     freqs,
-    h_range,
+    harmonics,
     weights=None,
     aggregate=None,
     filter_peaks=True,
@@ -37,7 +37,7 @@ def salience(
         The frequency values corresponding to S's elements along the
         chosen axis.
 
-    h_range : list-like, non-negative
+    harmonics : list-like, non-negative
         Harmonics to include in salience computation.  The first harmonic (1)
         corresponds to ``S`` itself. Values less than one (e.g., 1/2) correspond
         to sub-harmonics.
@@ -87,7 +87,7 @@ def salience(
     >>> freqs = librosa.fft_frequencies(sr=sr)
     >>> harms = [1, 2, 3, 4]
     >>> weights = [1.0, 0.5, 0.33, 0.25]
-    >>> S_sal = librosa.salience(S, freqs=freqs, h_range=harms, weights=weights, fill_value=0)
+    >>> S_sal = librosa.salience(S, freqs=freqs, harmonics=harms, weights=weights, fill_value=0)
     >>> print(S_sal.shape)
     (1025, 115)
     >>> import matplotlib.pyplot as plt
@@ -106,11 +106,11 @@ def salience(
         aggregate = np.average
 
     if weights is None:
-        weights = np.ones((len(h_range),))
+        weights = np.ones((len(harmonics),))
     else:
         weights = np.array(weights, dtype=float)
 
-    S_harm = interp_harmonics(S, freqs=freqs, h_range=h_range, kind=kind, axis=axis)
+    S_harm = interp_harmonics(S, freqs=freqs, harmonics=harmonics, kind=kind, axis=axis)
 
     if aggregate is np.average:
         S_sal = aggregate(S_harm, axis=axis - 1, weights=weights)
@@ -128,7 +128,7 @@ def salience(
     return S_sal
 
 
-def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2):
+def interp_harmonics(x, *, freqs, harmonics, kind="linear", fill_value=0, axis=-2):
     """Compute the energy at harmonics of time-frequency representation.
 
     Given a frequency-based energy representation such as a spectrogram
@@ -146,9 +146,9 @@ def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2)
         The frequency values corresponding to X's elements along the
         chosen axis.
 
-    h_range : list-like, non-negative
-        Harmonics to compute.  The first harmonic (1) corresponds to ``x``
-        itself.
+    harmonics : list-like, non-negative
+        Harmonics to compute as ``harmonics[i] * freqs``.
+        The first harmonic (1) corresponds to ``freqs``.
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
 
     kind : str
@@ -165,7 +165,7 @@ def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2)
     -------
     x_harm : np.ndarray
         ``x_harm[i]`` will have the same shape as ``x``, and measure
-        the energy at the ``h_range[i]`` harmonic of each frequency.
+        the energy at the ``harmonics[i]`` harmonic of each frequency.
         A new dimension indexing harmonics will be inserted immediately
         before ``axis``.
 
@@ -182,10 +182,10 @@ def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2)
     >>> # Compute the time-varying tempogram and average over time
     >>> tempi = np.mean(librosa.feature.tempogram(y=y, sr=sr), axis=1)
     >>> # We'll measure the first five harmonics
-    >>> h_range = [1, 2, 3, 4, 5]
+    >>> harmonics = [1, 2, 3, 4, 5]
     >>> f_tempo = librosa.tempo_frequencies(len(tempi), sr=sr)
     >>> # Build the harmonic tensor; we only have one axis here (tempo)
-    >>> t_harmonics = librosa.interp_harmonics(tempi, freqs=f_tempo, h_range=h_range, axis=0)
+    >>> t_harmonics = librosa.interp_harmonics(tempi, freqs=f_tempo, harmonics=harmonics, axis=0)
     >>> print(t_harmonics.shape)
     (5, 384)
 
@@ -193,18 +193,18 @@ def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2)
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr, ax=ax)
-    >>> ax.set(yticks=np.arange(len(h_range)),
-    ...        yticklabels=['{:.3g}'.format(_) for _ in h_range],
+    >>> ax.set(yticks=np.arange(len(harmonics)),
+    ...        yticklabels=['{:.3g}'.format(_) for _ in harmonics],
     ...        ylabel='Harmonic', xlabel='Tempo (BPM)')
 
     We can also compute frequency harmonics for spectrograms.
     To calculate sub-harmonic energy, use values < 1.
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
-    >>> h_range = [1./3, 1./2, 1, 2, 3, 4]
+    >>> harmonics = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
-    >>> S_harm = librosa.interp_harmonics(S, freqs=fft_freqs, h_range=h_range, axis=0)
+    >>> S_harm = librosa.interp_harmonics(S, freqs=fft_freqs, harmonics=harmonics, axis=0)
     >>> print(S_harm.shape)
     (6, 1025, 646)
 
@@ -214,7 +214,7 @@ def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2)
     ...                                                      ref=S.max()),
     ...                              sr=sr, y_axis='log', x_axis='time',
     ...                              ax=ax.flat[i])
-    ...     ax.flat[i].set(title='h={:.3g}'.format(h_range[i]))
+    ...     ax.flat[i].set(title='h={:.3g}'.format(harmonics[i]))
     ...     ax.flat[i].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
@@ -240,7 +240,7 @@ def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2)
         )
 
         # Set the interpolation points
-        f_out = np.multiply.outer(h_range, freqs)
+        f_out = np.multiply.outer(harmonics, freqs)
 
         # Interpolate
         return f_interp(f_out)
@@ -260,7 +260,7 @@ def interp_harmonics(x, *, freqs, h_range, kind="linear", fill_value=0, axis=-2)
                 _a, _b, bounds_error=False, copy=False, kind=kind, fill_value=fill_value
             )
 
-            return interp(np.multiply.outer(_a, h_range))
+            return interp(np.multiply.outer(_a, harmonics))
 
         # Signature is expanding frequency into a new dimension
         xfunc = np.vectorize(_f_interp, signature="(f),(f)->(f,h)")
