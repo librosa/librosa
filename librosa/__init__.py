@@ -201,8 +201,6 @@ Miscellaneous
     set_fftlib
 """
 
-import warnings
-import sys
 from .version import version as __version__
 from .version import show_versions
 
