@@ -10,6 +10,3 @@ from .constantq import *  # pylint: disable=wildcard-import
 from .harmonic import *  # pylint: disable=wildcard-import
 from .fft import *  # pylint: disable=wildcard-import
 from .notation import *  # pylint: disable=wildcard-import
-
-
-__all__ = [_ for _ in dir() if not _.startswith("_")]
