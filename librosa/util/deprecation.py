@@ -5,7 +5,6 @@
 import inspect
 import warnings
 
-__all__ = ["Deprecated", "rename_kw"]
 
 class Deprecated(object):
     """A dummy class to catch usage of deprecated variable names"""

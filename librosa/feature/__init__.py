@@ -58,8 +58,3 @@ from .utils import *  # pylint: disable=wildcard-import
 from .spectral import *  # pylint: disable=wildcard-import
 from .rhythm import *  # pylint: disable=wildcard-import
 from . import inverse
-
-__all__ = ["inverse"]
-__all__ += utils.__all__
-__all__ += spectral.__all__
-__all__ += rhythm.__all__

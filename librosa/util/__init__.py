@@ -81,10 +81,3 @@ from .deprecation import *  # pylint: disable=wildcard-import
 from ._nnls import *  # pylint: disable=wildcard-import
 from . import decorators
 from . import exceptions
-
-__all__ = ["decorators", "exceptions"]
-__all__ = utils.__all__
-__all__ = files.__all__
-__all__ = matching.__all__
-__all__ = deprecation.__all__
-__all__ = _nnls.__all__
