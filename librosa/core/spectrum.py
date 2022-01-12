@@ -1434,7 +1434,7 @@ def iirt(
     y_srs = np.unique(sample_rates)
 
     for cur_sr in y_srs:
-        y_resampled.append(resample(y, sr, cur_sr, res_type=res_type))
+        y_resampled.append(resample(y, orig_sr=sr, target_sr=cur_sr, res_type=res_type))
 
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = int(1 + (y.shape[-1] - win_length) // hop_length)

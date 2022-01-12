@@ -77,7 +77,7 @@ def test_load_resample(res_type):
 
     y_native, sr = librosa.load(fn, sr=None, res_type=res_type)
 
-    y2 = librosa.resample(y_native, sr, sr_target, res_type=res_type)
+    y2 = librosa.resample(y_native, orig_sr=sr, target_sr=sr_target, res_type=res_type)
 
     y, _ = librosa.load(fn, sr=sr_target, res_type=res_type)
 
@@ -154,7 +154,7 @@ def test_resample_mono(resample_mono, sr_out, res_type, fix):
     y, sr_in = resample_mono
     y = librosa.to_mono(y)
 
-    y2 = librosa.resample(y, sr_in, sr_out, res_type=res_type, fix=fix)
+    y2 = librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, fix=fix)
 
     # First, check that the audio is valid
     librosa.util.valid_audio(y2, mono=True)
@@ -198,7 +198,7 @@ def test_resample_stereo(resample_audio, sr_out, res_type, fix):
 
     y, sr_in = resample_audio
 
-    y2 = librosa.resample(y, sr_in, sr_out, res_type=res_type, fix=fix)
+    y2 = librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, fix=fix)
 
     # First, check that the audio is valid
     librosa.util.valid_audio(y2, mono=False)
@@ -235,7 +235,7 @@ def test_resample_scale(resample_mono, res_type, sr_out):
 
     y, sr_in = resample_mono
 
-    y2 = librosa.resample(y, sr_in, sr_out, res_type=res_type, scale=True)
+    y2 = librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, scale=True)
 
     # First, check that the audio is valid
     librosa.util.valid_audio(y2, mono=True)
@@ -251,7 +251,7 @@ def test_resample_scale(resample_mono, res_type, sr_out):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_resample_poly_float(sr_in, sr_out):
     y = np.zeros(128)
-    librosa.resample(y, sr_in, sr_out, res_type="polyphase")
+    librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type="polyphase")
 
 
 @pytest.mark.parametrize(

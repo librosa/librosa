@@ -327,7 +327,7 @@ def pitch_shift(
 
     # Stretch in time, then resample
     y_shift = core.resample(
-        time_stretch(y, rate=rate, **kwargs), float(sr) / rate, sr, res_type=res_type
+        time_stretch(y, rate=rate, **kwargs), orig_sr=float(sr) / rate, target_sr=sr, res_type=res_type
     )
 
     # Crop to the same dimension as the input

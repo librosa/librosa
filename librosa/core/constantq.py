@@ -711,7 +711,7 @@ def icqt(
         y_oct = istft(D_oct, window="ones", hop_length=my_hop, dtype=dtype)
 
         y_oct = audio.resample(
-            y_oct, 1, sr // my_sr, res_type=res_type, scale=False, fix=False
+            y_oct, orig_sr=1, target_sr=sr // my_sr, res_type=res_type, scale=False, fix=False
         )
 
         if y is None:
@@ -1004,7 +1004,7 @@ def vqt(
         if my_hop % 2 == 0:
             my_hop //= 2
             my_sr /= 2.0
-            my_y = audio.resample(my_y, 2, 1, res_type=res_type, scale=True)
+            my_y = audio.resample(my_y, orig_sr=2, target_sr=1, res_type=res_type, scale=True)
 
     V = __trim_stack(vqt_resp, n_bins, dtype)
 
@@ -1163,7 +1163,7 @@ def __early_downsample(
             )
 
         new_sr = sr / float(downsample_factor)
-        y = audio.resample(y, sr, new_sr, res_type=res_type, scale=True)
+        y = audio.resample(y, orig_sr=sr, target_sr=new_sr, res_type=res_type, scale=True)
 
         # If we're not going to length-scale after CQT, we
         # need to compensate for the downsampling factor here

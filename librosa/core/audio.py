@@ -181,7 +181,7 @@ def load(
         y = to_mono(y)
 
     if sr is not None:
-        y = resample(y, sr_native, sr, res_type=res_type)
+        y = resample(y, orig_sr=sr_native, target_sr=sr, res_type=res_type)
 
     else:
         sr = sr_native
@@ -473,7 +473,7 @@ def to_mono(y):
 
 @cache(level=20)
 def resample(
-    y, orig_sr, target_sr, *, res_type="kaiser_best", fix=True, scale=False, **kwargs
+    y, *, orig_sr, target_sr, res_type="kaiser_best", fix=True, scale=False, **kwargs
 ):
     """Resample a time series from orig_sr to target_sr
 
@@ -566,7 +566,7 @@ def resample(
     Downsample from 22 KHz to 8 KHz
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'), sr=22050)
-    >>> y_8k = librosa.resample(y, sr, 8000)
+    >>> y_8k = librosa.resample(y, orig_sr=sr, target_sr=8000)
     >>> y.shape, y_8k.shape
     ((117601,), (42668,))
     """
