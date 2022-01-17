@@ -26,6 +26,7 @@ __all__ = ["beat_track", "tempo", "plp"]
 
 
 def beat_track(
+    *,
     y=None,
     sr=22050,
     onset_envelope=None,
@@ -141,7 +142,7 @@ def beat_track(
 
     Track beats using a pre-computed onset envelope
 
-    >>> onset_env = librosa.onset.onset_strength(y, sr=sr,
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          aggregate=np.median)
     >>> tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env,
     ...                                        sr=sr)
@@ -211,6 +212,7 @@ def beat_track(
 
 @cache(level=30)
 def tempo(
+    *,
     y=None,
     sr=22050,
     onset_envelope=None,
@@ -278,7 +280,7 @@ def tempo(
     --------
     >>> # Estimate a static tempo
     >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
-    >>> onset_env = librosa.onset.onset_strength(y, sr=sr)
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> tempo = librosa.beat.tempo(onset_envelope=onset_env, sr=sr)
     >>> tempo
     array([143.555])
@@ -312,7 +314,7 @@ def tempo(
     >>> utempo = utempo.item()
     >>> # Compute 2-second windowed autocorrelation
     >>> hop_length = 512
-    >>> ac = librosa.autocorrelate(onset_env, 2 * sr // hop_length)
+    >>> ac = librosa.autocorrelate(onset_env, max_size=2 * sr // hop_length)
     >>> freqs = librosa.tempo_frequencies(len(ac), sr=sr,
     ...                                   hop_length=hop_length)
     >>> # Plot on a BPM axis.  We skip the first (0-lag) bin.
@@ -383,6 +385,7 @@ def tempo(
 
 
 def plp(
+    *,
     y=None,
     sr=22050,
     onset_envelope=None,
@@ -563,8 +566,9 @@ def plp(
     ftgram /= util.tiny(ftgram) ** 0.5 + np.abs(ftgram.max(axis=-2, keepdims=True))
 
     # Step 5: invert the Fourier tempogram to get the pulse
-    pulse = core.istft(ftgram, hop_length=1, n_fft=win_length,
-                       length=onset_envelope.shape[-1])
+    pulse = core.istft(
+        ftgram, hop_length=1, n_fft=win_length, length=onset_envelope.shape[-1]
+    )
 
     # Step 6: retain only the positive part of the pulse cycle
     pulse = np.clip(pulse, 0, None, pulse)

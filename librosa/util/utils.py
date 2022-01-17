@@ -44,11 +44,11 @@ __all__ = [
     "dtype_r2c",
     "dtype_c2r",
     "count_unique",
-    "is_unique"
+    "is_unique",
 ]
 
 
-def frame(x, frame_length, hop_length, axis=-1, writeable=False, subok=False):
+def frame(x, *, frame_length, hop_length, axis=-1, writeable=False, subok=False):
     """Slice a data array into (overlapping) frames.
 
     This implementation uses low-level stride manipulation to avoid
@@ -215,7 +215,7 @@ def frame(x, frame_length, hop_length, axis=-1, writeable=False, subok=False):
 
 
 @cache(level=20)
-def valid_audio(y, mono=Deprecated()):
+def valid_audio(y, *, mono=Deprecated()):
     """Determine whether a variable contains valid audio data.
 
     The following conditions must be satisfied:
@@ -299,7 +299,7 @@ def valid_audio(y, mono=Deprecated()):
     return True
 
 
-def valid_int(x, cast=None):
+def valid_int(x, *, cast=None):
     """Ensure that an input value is integer-typed.
     This is primarily useful for ensuring integrable-valued
     array indices.
@@ -362,7 +362,7 @@ def valid_intervals(intervals):
     return True
 
 
-def pad_center(data, size, axis=-1, **kwargs):
+def pad_center(data, *, size, axis=-1, **kwargs):
     """Pad an array to a target length along a target axis.
 
     This differs from `np.pad` by centering the data prior to padding,
@@ -372,12 +372,12 @@ def pad_center(data, size, axis=-1, **kwargs):
     --------
     >>> # Generate a vector
     >>> data = np.ones(5)
-    >>> librosa.util.pad_center(data, 10, mode='constant')
+    >>> librosa.util.pad_center(data, size=10, mode='constant')
     array([ 0.,  0.,  1.,  1.,  1.,  1.,  1.,  0.,  0.,  0.])
 
     >>> # Pad a matrix along its first dimension
     >>> data = np.ones((3, 5))
-    >>> librosa.util.pad_center(data, 7, axis=0)
+    >>> librosa.util.pad_center(data, size=7, axis=0)
     array([[ 0.,  0.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  0.,  0.],
            [ 1.,  1.,  1.,  1.,  1.],
@@ -386,7 +386,7 @@ def pad_center(data, size, axis=-1, **kwargs):
            [ 0.,  0.,  0.,  0.,  0.],
            [ 0.,  0.,  0.,  0.,  0.]])
     >>> # Or its second dimension
-    >>> librosa.util.pad_center(data, 7, axis=1)
+    >>> librosa.util.pad_center(data, size=7, axis=1)
     array([[ 0.,  1.,  1.,  1.,  1.,  1.,  0.],
            [ 0.,  1.,  1.,  1.,  1.,  1.,  0.],
            [ 0.,  1.,  1.,  1.,  1.,  1.,  0.]])
@@ -438,7 +438,7 @@ def pad_center(data, size, axis=-1, **kwargs):
     return np.pad(data, lengths, **kwargs)
 
 
-def expand_to(x, ndim, axes):
+def expand_to(x, *, ndim, axes):
     """Expand the dimensions of an input array with
 
     Parameters
@@ -510,7 +510,7 @@ def expand_to(x, ndim, axes):
     return x.reshape(shape)
 
 
-def fix_length(data, size, axis=-1, **kwargs):
+def fix_length(data, *, size, axis=-1, **kwargs):
     """Fix the length an array ``data`` to exactly ``size`` along a target axis.
 
     If ``data.shape[axis] < n``, pad according to the provided kwargs.
@@ -520,13 +520,13 @@ def fix_length(data, size, axis=-1, **kwargs):
     --------
     >>> y = np.arange(7)
     >>> # Default: pad with zeros
-    >>> librosa.util.fix_length(y, 10)
+    >>> librosa.util.fix_length(y, size=10)
     array([0, 1, 2, 3, 4, 5, 6, 0, 0, 0])
     >>> # Trim to a desired length
-    >>> librosa.util.fix_length(y, 5)
+    >>> librosa.util.fix_length(y, size=5)
     array([0, 1, 2, 3, 4])
     >>> # Use edge-padding instead of zeros
-    >>> librosa.util.fix_length(y, 10, mode='edge')
+    >>> librosa.util.fix_length(y, size=10, mode='edge')
     array([0, 1, 2, 3, 4, 5, 6, 6, 6, 6])
 
     Parameters
@@ -571,7 +571,7 @@ def fix_length(data, size, axis=-1, **kwargs):
     return data
 
 
-def fix_frames(frames, x_min=0, x_max=None, pad=True):
+def fix_frames(frames, *, x_min=0, x_max=None, pad=True):
     """Fix a list of frames to lie within [x_min, x_max]
 
     Examples
@@ -656,7 +656,7 @@ def fix_frames(frames, x_min=0, x_max=None, pad=True):
     return np.unique(frames).astype(int)
 
 
-def axis_sort(S, axis=-1, index=False, value=None):
+def axis_sort(S, *, axis=-1, index=False, value=None):
     """Sort an array along its rows or columns.
 
     Examples
@@ -753,7 +753,7 @@ def axis_sort(S, axis=-1, index=False, value=None):
 
 
 @cache(level=40)
-def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
+def normalize(S, *, norm=np.inf, axis=0, threshold=None, fill=None):
     """Normalize an array along a chosen axis.
 
     Given a norm (described below) and a target axis, the input
@@ -981,7 +981,7 @@ def normalize(S, norm=np.inf, axis=0, threshold=None, fill=None):
     return Snorm
 
 
-def localmax(x, axis=0):
+def localmax(x, *, axis=0):
     """Find local maxima in an array
 
     An element ``x[i]`` is considered a local maximum if the following
@@ -1042,7 +1042,7 @@ def localmax(x, axis=0):
     return (x > x_pad[tuple(inds1)]) & (x >= x_pad[tuple(inds2)])
 
 
-def localmin(x, axis=0):
+def localmin(x, *, axis=0):
     """Find local minima in an array
 
     An element ``x[i]`` is considered a local minimum if the following
@@ -1104,7 +1104,7 @@ def localmin(x, axis=0):
     return (x < x_pad[tuple(inds1)]) & (x <= x_pad[tuple(inds2)])
 
 
-def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
+def peak_pick(x, *, pre_max, post_max, pre_avg, post_avg, delta, wait):
     """Uses a flexible heuristic to pick peaks in a signal.
 
     A sample n is selected as an peak if the corresponding ``x[n]``
@@ -1164,7 +1164,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          hop_length=512,
     ...                                          aggregate=np.median)
-    >>> peaks = librosa.util.peak_pick(onset_env, 3, 3, 3, 5, 0.5, 10)
+    >>> peaks = librosa.util.peak_pick(onset_env, pre_max=3, post_max=3, pre_avg=3, post_avg=5, delta=0.5, wait=10)
     >>> peaks
     array([  3,  27,  40,  61,  72,  88, 103])
 
@@ -1268,7 +1268,7 @@ def peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
 
 @cache(level=40)
-def sparsify_rows(x, quantile=0.01, dtype=None):
+def sparsify_rows(x, *, quantile=0.01, dtype=None):
     """Return a row-sparse matrix approximating the input
 
     Parameters
@@ -1368,7 +1368,7 @@ def sparsify_rows(x, quantile=0.01, dtype=None):
     return x_sparse.tocsr()
 
 
-def buf_to_float(x, n_bytes=2, dtype=np.float32):
+def buf_to_float(x, *, n_bytes=2, dtype=np.float32):
     """Convert an integer buffer to floating point values.
     This is primarily useful when loading integer-valued wav data
     into numpy arrays.
@@ -1400,7 +1400,7 @@ def buf_to_float(x, n_bytes=2, dtype=np.float32):
     return scale * np.frombuffer(x, fmt).astype(dtype)
 
 
-def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
+def index_to_slice(idx, *, idx_min=None, idx_max=None, step=None, pad=True):
     """Generate a slice array from an index array.
 
     Parameters
@@ -1449,14 +1449,14 @@ def index_to_slice(idx, idx_min=None, idx_max=None, step=None, pad=True):
     """
 
     # First, normalize the index set
-    idx_fixed = fix_frames(idx, idx_min, idx_max, pad=pad)
+    idx_fixed = fix_frames(idx, x_min=idx_min, x_max=idx_max, pad=pad)
 
     # Now convert the indices to slices
     return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:])]
 
 
 @cache(level=40)
-def sync(data, idx, aggregate=None, pad=True, axis=-1):
+def sync(data, idx, *, aggregate=None, pad=True, axis=-1):
     """Synchronous aggregation of a multi-dimensional array between boundaries
 
     .. note::
@@ -1511,7 +1511,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
-    >>> beats = librosa.util.fix_frames(beats, x_max=C.shape[1])
+    >>> beats = librosa.util.fix_frames(beats)
 
     By default, use mean aggregation
 
@@ -1520,12 +1520,12 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     Use median-aggregation instead of mean
 
     >>> C_med = librosa.util.sync(C, beats,
-    ...                             aggregate=np.median)
+    ...                              aggregate=np.median)
 
     Or sub-beat synchronization
 
     >>> sub_beats = librosa.segment.subsegment(C, beats)
-    >>> sub_beats = librosa.util.fix_frames(sub_beats, x_max=C.shape[1])
+    >>> sub_beats = librosa.util.fix_frames(sub_beats)
     >>> C_med_sub = librosa.util.sync(C, sub_beats, aggregate=np.median)
 
 
@@ -1561,7 +1561,9 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     if np.all([isinstance(_, slice) for _ in idx]):
         slices = idx
     elif np.all([np.issubdtype(type(_), np.integer) for _ in idx]):
-        slices = index_to_slice(np.asarray(idx), 0, shape[axis], pad=pad)
+        slices = index_to_slice(
+            np.asarray(idx), idx_min=0, idx_max=shape[axis], pad=pad
+        )
     else:
         raise ParameterError("Invalid index set: {}".format(idx))
 
@@ -1583,7 +1585,7 @@ def sync(data, idx, aggregate=None, pad=True, axis=-1):
     return data_agg
 
 
-def softmask(X, X_ref, power=1, split_zeros=False):
+def softmask(X, X_ref, *, power=1, split_zeros=False):
     """Robustly compute a soft-mask operation.
 
         ``M = X**power / (X**power + X_ref**power)``
@@ -1770,7 +1772,7 @@ def tiny(x):
     return np.finfo(dtype).tiny
 
 
-def fill_off_diagonal(x, radius, value=0):
+def fill_off_diagonal(x, *, radius, value=0):
     """Sets all cells of a matrix to a given ``value``
     if they lie outside a constraint region.
 
@@ -1796,7 +1798,7 @@ def fill_off_diagonal(x, radius, value=0):
     Examples
     --------
     >>> x = np.ones((8, 8))
-    >>> librosa.util.fill_off_diagonal(x, 0.25)
+    >>> librosa.util.fill_off_diagonal(x, radius=0.25)
     >>> x
     array([[1, 1, 0, 0, 0, 0, 0, 0],
            [1, 1, 1, 0, 0, 0, 0, 0],
@@ -1807,7 +1809,7 @@ def fill_off_diagonal(x, radius, value=0):
            [0, 0, 0, 0, 0, 1, 1, 1],
            [0, 0, 0, 0, 0, 0, 1, 1]])
     >>> x = np.ones((8, 12))
-    >>> librosa.util.fill_off_diagonal(x, 0.25)
+    >>> librosa.util.fill_off_diagonal(x, radius=0.25)
     >>> x
     array([[1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
            [1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
@@ -1838,7 +1840,7 @@ def fill_off_diagonal(x, radius, value=0):
     x[idx_l] = value
 
 
-def cyclic_gradient(data, edge_order=1, axis=-1):
+def cyclic_gradient(data, *, edge_order=1, axis=-1):
     """Estimate the gradient of a function over a uniformly sampled,
     periodic domain.
 
@@ -1904,7 +1906,7 @@ def cyclic_gradient(data, edge_order=1, axis=-1):
 
 
 @numba.jit(nopython=True, cache=True)
-def __shear_dense(X, factor=+1, axis=-1):
+def __shear_dense(X, *, factor=+1, axis=-1):
     """Numba-accelerated shear for dense (ndarray) arrays"""
 
     if axis == 0:
@@ -1921,7 +1923,7 @@ def __shear_dense(X, factor=+1, axis=-1):
     return X_shear
 
 
-def __shear_sparse(X, factor=+1, axis=-1):
+def __shear_sparse(X, *, factor=+1, axis=-1):
     """Fast shearing for sparse matrices
 
     Shearing is performed using CSC array indices,
@@ -1950,7 +1952,7 @@ def __shear_sparse(X, factor=+1, axis=-1):
     return X_shear.asformat(fmt)
 
 
-def shear(X, factor=1, axis=-1):
+def shear(X, *, factor=1, axis=-1):
     """Shear a matrix by a given factor.
 
     The column ``X[:, n]`` will be displaced (rolled)
@@ -2004,7 +2006,7 @@ def shear(X, factor=1, axis=-1):
         return __shear_dense(X, factor=factor, axis=axis)
 
 
-def stack(arrays, axis=0):
+def stack(arrays, *, axis=0):
     """Stack one or more arrays along a target axis.
 
     This function is similar to `np.stack`, except that memory contiguity is
@@ -2110,7 +2112,7 @@ def stack(arrays, axis=0):
         return result
 
 
-def dtype_r2c(d, default=np.complex64):
+def dtype_r2c(d, *, default=np.complex64):
     """Find the complex numpy dtype corresponding to a real dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2168,7 +2170,7 @@ def dtype_r2c(d, default=np.complex64):
     return np.dtype(mapping.get(dt, default))
 
 
-def dtype_c2r(d, default=np.float32):
+def dtype_c2r(d, *, default=np.float32):
     """Find the real numpy dtype corresponding to a complex dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2231,17 +2233,17 @@ def dtype_c2r(d, default=np.float32):
 
 @numba.jit(nopython=True, cache=True)
 def __count_unique(x):
-    '''Counts the number of unique values in an array.
+    """Counts the number of unique values in an array.
 
     This function is a helper for `count_unique` and is not
     to be called directly.
-    '''
+    """
     uniques = np.unique(x)
     return uniques.shape[0]
 
 
-def count_unique(data, axis=-1):
-    '''Count the number of unique values in a multi-dimensional array
+def count_unique(data, *, axis=-1):
+    """Count the number of unique values in a multi-dimensional array
     along a given axis.
 
     Parameters
@@ -2278,24 +2280,24 @@ def count_unique(data, axis=-1):
     >>> # Count unique values along columns (within rows)
     >>> librosa.util.count_unique(x, axis=-1)
     array([2, 1, 5, 5, 5])
-    '''
+    """
     return np.apply_along_axis(__count_unique, axis, data)
 
 
 @numba.jit(nopython=True, cache=True)
 def __is_unique(x):
-    '''Determines if the input array has all unique values.
+    """Determines if the input array has all unique values.
 
     This function is a helper for `is_unique` and is not
     to be called directly.
-    '''
+    """
 
     uniques = np.unique(x)
     return uniques.shape[0] == x.size
 
 
-def is_unique(data, axis=-1):
-    '''Determine if the input array consists of all unique values
+def is_unique(data, *, axis=-1):
+    """Determine if the input array consists of all unique values
     along a given axis.
 
     Parameters
@@ -2334,6 +2336,6 @@ def is_unique(data, axis=-1):
     >>> librosa.util.is_unique(x, axis=-1)
     array([False, False,  True,  True,  True])
 
-    '''
+    """
 
     return np.apply_along_axis(__is_unique, axis, data)

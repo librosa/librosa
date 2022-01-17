@@ -199,7 +199,7 @@ def percussive(y, **kwargs):
     return y_perc
 
 
-def time_stretch(y, rate, **kwargs):
+def time_stretch(y, *, rate, **kwargs):
     """Time-stretch an audio series by a fixed rate.
 
 
@@ -231,11 +231,11 @@ def time_stretch(y, rate, **kwargs):
     Compress to be twice as fast
 
     >>> y, sr = librosa.load(librosa.ex('choice'))
-    >>> y_fast = librosa.effects.time_stretch(y, 2.0)
+    >>> y_fast = librosa.effects.time_stretch(y, rate=2.0)
 
     Or half the original speed
 
-    >>> y_slow = librosa.effects.time_stretch(y, 0.5)
+    >>> y_slow = librosa.effects.time_stretch(y, rate=0.5)
 
     """
 
@@ -246,9 +246,12 @@ def time_stretch(y, rate, **kwargs):
     stft = core.stft(y, **kwargs)
 
     # Stretch by phase vocoding
-    stft_stretch = core.phase_vocoder(stft, rate,
-                                      hop_length=kwargs.get('hop_length', None),
-                                      n_fft=kwargs.get('n_fft', None))
+    stft_stretch = core.phase_vocoder(
+        stft,
+        rate=rate,
+        hop_length=kwargs.get("hop_length", None),
+        n_fft=kwargs.get("n_fft", None),
+    )
 
     # Predict the length of y_stretch
     len_stretch = int(round(y.shape[-1] / rate))
@@ -259,7 +262,9 @@ def time_stretch(y, rate, **kwargs):
     return y_stretch
 
 
-def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kwargs):
+def pitch_shift(
+    y, *, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kwargs
+):
     """Shift the pitch of a waveform by ``n_steps`` steps.
 
     A step is equal to a semitone if ``bins_per_octave`` is set to 12.
@@ -303,15 +308,15 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
     Shift up by a major third (four steps if ``bins_per_octave`` is 12)
 
     >>> y, sr = librosa.load(librosa.ex('choice'))
-    >>> y_third = librosa.effects.pitch_shift(y, sr, n_steps=4)
+    >>> y_third = librosa.effects.pitch_shift(y, sr=sr, n_steps=4)
 
     Shift down by a tritone (six steps if ``bins_per_octave`` is 12)
 
-    >>> y_tritone = librosa.effects.pitch_shift(y, sr, n_steps=-6)
+    >>> y_tritone = librosa.effects.pitch_shift(y, sr=sr, n_steps=-6)
 
     Shift up by 3 quarter-tones
 
-    >>> y_three_qt = librosa.effects.pitch_shift(y, sr, n_steps=3,
+    >>> y_three_qt = librosa.effects.pitch_shift(y, sr=sr, n_steps=3,
     ...                                          bins_per_octave=24)
     """
 
@@ -322,14 +327,14 @@ def pitch_shift(y, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kw
 
     # Stretch in time, then resample
     y_shift = core.resample(
-        time_stretch(y, rate, **kwargs), float(sr) / rate, sr, res_type=res_type
+        time_stretch(y, rate=rate, **kwargs), orig_sr=float(sr) / rate, target_sr=sr, res_type=res_type
     )
 
     # Crop to the same dimension as the input
-    return util.fix_length(y_shift, y.shape[-1])
+    return util.fix_length(y_shift, size=y.shape[-1])
 
 
-def remix(y, intervals, align_zeros=True):
+def remix(y, intervals, *, align_zeros=True):
     """Remix an audio signal by re-ordering time intervals.
 
 
@@ -451,7 +456,9 @@ def _signal_to_frame_nonsilent(
     return db > -top_db
 
 
-def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max):
+def trim(
+    y, *, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
+):
     """Trim leading and trailing silence from an audio signal.
 
     Parameters
@@ -512,8 +519,11 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=
     if nonzero.size > 0:
         # Compute the start and end positions
         # End position goes one frame past the last non-zero
-        start = int(core.frames_to_samples(nonzero[0], hop_length))
-        end = min(y.shape[-1], int(core.frames_to_samples(nonzero[-1] + 1, hop_length)))
+        start = int(core.frames_to_samples(nonzero[0], hop_length=hop_length))
+        end = min(
+            y.shape[-1],
+            int(core.frames_to_samples(nonzero[-1] + 1, hop_length=hop_length)),
+        )
     else:
         # The signal only contains zeros
         start, end = 0, 0
@@ -526,7 +536,7 @@ def trim(y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=
 
 
 def split(
-    y, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
+    y, *, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
 ):
     """Split an audio signal into non-silent intervals.
 
@@ -595,7 +605,7 @@ def split(
     return edges.reshape((-1, 2))
 
 
-def preemphasis(y, coef=0.97, zi=None, return_zf=False):
+def preemphasis(y, *, coef=0.97, zi=None, return_zf=False):
     """Pre-emphasize an audio signal with a first-order auto-regressive filter:
 
         y[n] -> y[n] - coef * y[n-1]
@@ -684,7 +694,7 @@ def preemphasis(y, coef=0.97, zi=None, return_zf=False):
     return y_out
 
 
-def deemphasis(y, coef=0.97, zi=None, return_zf=False):
+def deemphasis(y, *, coef=0.97, zi=None, return_zf=False):
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:

@@ -233,7 +233,9 @@ class NoteFormatter(Formatter):
 
         cents = vmax <= 2 * max(1, vmin)
 
-        return core.hz_to_note(x, octave=self.octave, cents=cents, key=self.key, unicode=self.unicode)
+        return core.hz_to_note(
+            x, octave=self.octave, cents=cents, key=self.key, unicode=self.unicode
+        )
 
 
 class SvaraFormatter(Formatter):
@@ -284,7 +286,9 @@ class SvaraFormatter(Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
-    def __init__(self, Sa, octave=True, major=True, abbr=False, mela=None, unicode=True):
+    def __init__(
+        self, Sa, octave=True, major=True, abbr=False, mela=None, unicode=True
+    ):
 
         if Sa is None:
             raise ParameterError(
@@ -310,10 +314,17 @@ class SvaraFormatter(Formatter):
             return ""
 
         if self.mela is None:
-            return core.hz_to_svara_h(x, self.Sa, octave=self.octave, abbr=self.abbr, unicode=self.unicode)
+            return core.hz_to_svara_h(
+                x, Sa=self.Sa, octave=self.octave, abbr=self.abbr, unicode=self.unicode
+            )
         else:
             return core.hz_to_svara_c(
-                x, self.Sa, self.mela, octave=self.octave, abbr=self.abbr, unicode=self.unicode
+                x,
+                Sa=self.Sa,
+                mela=self.mela,
+                octave=self.octave,
+                abbr=self.abbr,
+                unicode=self.unicode,
             )
 
 
@@ -385,7 +396,9 @@ class ChromaFormatter(Formatter):
 
     def __call__(self, x, pos=None):
         """Format for chroma positions"""
-        return core.midi_to_note(int(x), octave=False, cents=False, key=self.key, unicode=self.unicode)
+        return core.midi_to_note(
+            int(x), octave=False, cents=False, key=self.key, unicode=self.unicode
+        )
 
 
 class ChromaSvaraFormatter(Formatter):
@@ -415,7 +428,12 @@ class ChromaSvaraFormatter(Formatter):
         """Format for chroma positions"""
         if self.mela is not None:
             return core.midi_to_svara_c(
-                int(x), Sa=self.Sa, mela=self.mela, octave=False, abbr=self.abbr, unicode=self.unicode
+                int(x),
+                Sa=self.Sa,
+                mela=self.mela,
+                octave=False,
+                abbr=self.abbr,
+                unicode=self.unicode,
             )
         else:
             return core.midi_to_svara_h(
@@ -532,7 +550,9 @@ class AdaptiveWaveplot:
         ax.figure.canvas.draw_idle()
 
 
-def cmap(data, robust=True, cmap_seq="magma", cmap_bool="gray_r", cmap_div="coolwarm"):
+def cmap(
+    data, *, robust=True, cmap_seq="magma", cmap_bool="gray_r", cmap_div="coolwarm"
+):
     """Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
@@ -601,6 +621,7 @@ def __envelope(x, hop):
 
 def specshow(
     data,
+    *,
     x_coords=None,
     y_coords=None,
     x_axis=None,
@@ -851,7 +872,7 @@ def specshow(
         win_length=win_length,
         key=key,
         htk=htk,
-        unicode=unicode
+        unicode=unicode,
     )
 
     # Get the x and y coordinates
@@ -869,8 +890,12 @@ def specshow(
     __scale_axes(axes, y_axis, "y")
 
     # Construct tickers and locators
-    __decorate_axis(axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode)
-    __decorate_axis(axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode)
+    __decorate_axis(
+        axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode
+    )
+    __decorate_axis(
+        axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode
+    )
 
     # If the plot is a self-similarity/covariance etc. plot, square it
     if __same_axes(x_axis, y_axis, axes.get_xlim(), axes.get_ylim()) and auto_aspect:
@@ -896,7 +921,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
     """Compute axis coordinates"""
 
     if coords is not None:
-        if len(coords) not in (n, n+1):
+        if len(coords) not in (n, n + 1):
             raise ParameterError(
                 f"Coordinate shape mismatch: {len(coords)}!={n} or {n}+1"
             )
@@ -1005,7 +1030,9 @@ def __scale_axes(axes, ax_type, which):
     scaler(mode, **kwargs)
 
 
-def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True):
+def __decorate_axis(
+    axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True
+):
     """Configure axis tickers, locators, and labels"""
 
     if ax_type == "tonnetz":
@@ -1040,7 +1067,9 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, 
     elif ax_type == "chroma_c":
         if Sa is None:
             Sa = 0
-        axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa, mela=mela, unicode=unicode))
+        axis.set_major_formatter(
+            ChromaSvaraFormatter(Sa=Sa, mela=mela, unicode=unicode)
+        )
         degrees = core.mela_to_degrees(mela)
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
@@ -1102,7 +1131,9 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, 
         sa_offset = 2.0 ** (np.log2(Sa) - np.floor(np.log2(Sa)))
 
         axis.set_major_locator(LogLocator(base=2.0, subs=(sa_offset,)))
-        axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode))
+        axis.set_minor_formatter(
+            SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode)
+        )
         axis.set_minor_locator(
             LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
@@ -1141,7 +1172,9 @@ def __decorate_axis(axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, 
         axis.set_major_locator(
             SymmetricalLogLocator(axis.get_transform(), base=2.0, subs=[sa_offset])
         )
-        axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode))
+        axis.set_minor_formatter(
+            SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode)
+        )
         axis.set_minor_locator(
             LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
@@ -1255,6 +1288,7 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
 
 def waveshow(
     y,
+    *,
     sr=22050,
     max_points=11025,
     x_axis="time",

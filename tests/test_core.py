@@ -77,7 +77,7 @@ def test_load_resample(res_type):
 
     y_native, sr = librosa.load(fn, sr=None, res_type=res_type)
 
-    y2 = librosa.resample(y_native, sr, sr_target, res_type=res_type)
+    y2 = librosa.resample(y_native, orig_sr=sr, target_sr=sr_target, res_type=res_type)
 
     y, _ = librosa.load(fn, sr=sr_target, res_type=res_type)
 
@@ -154,7 +154,7 @@ def test_resample_mono(resample_mono, sr_out, res_type, fix):
     y, sr_in = resample_mono
     y = librosa.to_mono(y)
 
-    y2 = librosa.resample(y, sr_in, sr_out, res_type=res_type, fix=fix)
+    y2 = librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, fix=fix)
 
     # First, check that the audio is valid
     librosa.util.valid_audio(y2, mono=True)
@@ -198,7 +198,7 @@ def test_resample_stereo(resample_audio, sr_out, res_type, fix):
 
     y, sr_in = resample_audio
 
-    y2 = librosa.resample(y, sr_in, sr_out, res_type=res_type, fix=fix)
+    y2 = librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, fix=fix)
 
     # First, check that the audio is valid
     librosa.util.valid_audio(y2, mono=False)
@@ -235,7 +235,7 @@ def test_resample_scale(resample_mono, res_type, sr_out):
 
     y, sr_in = resample_mono
 
-    y2 = librosa.resample(y, sr_in, sr_out, res_type=res_type, scale=True)
+    y2 = librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, scale=True)
 
     # First, check that the audio is valid
     librosa.util.valid_audio(y2, mono=True)
@@ -251,7 +251,7 @@ def test_resample_scale(resample_mono, res_type, sr_out):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_resample_poly_float(sr_in, sr_out):
     y = np.zeros(128)
-    librosa.resample(y, sr_in, sr_out, res_type="polyphase")
+    librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type="polyphase")
 
 
 @pytest.mark.parametrize(
@@ -366,7 +366,7 @@ def test___reassign_times(sr, n_fft):
     y[[263, 2633]] = 1
 
     # frames with no energy will have all NaN time reassignments
-    expected_frames = librosa.util.frame(y, n_fft, hop_length=n_fft)
+    expected_frames = librosa.util.frame(y, frame_length=n_fft, hop_length=n_fft)
     expected = np.full((n_fft // 2 + 1, expected_frames.shape[1]), np.nan)
 
     # find the impulses again; needed if the signal is truncated by framing
@@ -586,11 +586,11 @@ def test_reassigned_spectrogram_parameters():
 def test_salience_basecase():
     (y, sr) = librosa.load(os.path.join("tests", "data", "test1_22050.wav"))
     S = np.abs(librosa.stft(y))
-    freqs = librosa.core.fft_frequencies(sr)
+    freqs = librosa.core.fft_frequencies(sr=sr)
     harms = [1]
     weights = [1.0]
     S_sal = librosa.core.salience(
-        S, freqs, harms, weights, filter_peaks=False, kind="quadratic"
+        S, freqs=freqs, harmonics=harms, weights=weights, filter_peaks=False, kind="quadratic"
     )
     assert np.allclose(S_sal, S)
 
@@ -598,11 +598,11 @@ def test_salience_basecase():
 def test_salience_basecase2():
     (y, sr) = librosa.load(os.path.join("tests", "data", "test1_22050.wav"))
     S = np.abs(librosa.stft(y))
-    freqs = librosa.core.fft_frequencies(sr)
+    freqs = librosa.core.fft_frequencies(sr=sr)
     harms = [1, 0.5, 2.0]
     weights = [1.0, 0.0, 0.0]
     S_sal = librosa.core.salience(
-        S, freqs, harms, weights, filter_peaks=False, kind="quadratic"
+        S, freqs=freqs, harmonics=harms, weights=weights, filter_peaks=False, kind="quadratic"
     )
     assert np.allclose(S_sal, S)
 
@@ -611,7 +611,7 @@ def test_salience_defaults():
     S = np.array([[0.1, 0.5, 0.0], [0.2, 1.2, 1.2], [0.0, 0.7, 0.3], [1.3, 3.2, 0.8]])
     freqs = np.array([50.0, 100.0, 200.0, 400.0])
     harms = [0.5, 1, 2]
-    actual = librosa.core.salience(S, freqs, harms, kind="quadratic", fill_value=0.0)
+    actual = librosa.core.salience(S, freqs=freqs, harmonics=harms, kind="quadratic", fill_value=0.0)
 
     expected = (
         np.array([[0.0, 0.0, 0.0], [0.3, 2.4, 1.5], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
@@ -626,7 +626,7 @@ def test_salience_weights():
     harms = [0.5, 1, 2]
     weights = [1.0, 1.0, 1.0]
     actual = librosa.core.salience(
-        S, freqs, harms, weights, kind="quadratic", fill_value=0.0
+        S, freqs=freqs, harmonics=harms, weights=weights, kind="quadratic", fill_value=0.0
     )
 
     expected = (
@@ -642,7 +642,7 @@ def test_salience_no_peak_filter():
     harms = [0.5, 1, 2]
     weights = [1.0, 1.0, 1.0]
     actual = librosa.core.salience(
-        S, freqs, harms, weights, filter_peaks=False, kind="quadratic"
+        S, freqs=freqs, harmonics=harms, weights=weights, filter_peaks=False, kind="quadratic"
     )
 
     expected = (
@@ -658,7 +658,7 @@ def test_salience_aggregate():
     harms = [0.5, 1, 2]
     weights = [1.0, 1.0, 1.0]
     actual = librosa.core.salience(
-        S, freqs, harms, weights, aggregate=np.ma.max, kind="quadratic", fill_value=0.0
+        S, freqs=freqs, harmonics=harms, weights=weights, aggregate=np.ma.max, kind="quadratic", fill_value=0.0
     )
 
     expected = np.array(
@@ -691,7 +691,7 @@ def test_magphase(y_22050):
 @pytest.fixture(scope="module", params=[22050, 44100])
 def y_chirp_istft(request):
     sr = request.param
-    return (librosa.chirp(32, 8192, sr=sr, duration=2.0), sr)
+    return (librosa.chirp(fmin=32, fmax=8192, sr=sr, duration=2.0), sr)
 
 
 @pytest.mark.parametrize("n_fft", [1024, 1025, 2048, 4096])
@@ -849,7 +849,7 @@ def test_lpc_regress(infile):
         true_coeffs = test_data["true_coeffs"][i]
         est_coeffs = test_data["est_coeffs"][i]
 
-        test_coeffs = librosa.lpc(signal, order)
+        test_coeffs = librosa.lpc(signal, order=order)
         assert np.allclose(test_coeffs, est_coeffs)
 
 
@@ -863,7 +863,7 @@ def test_lpc_simple(dtype):
     for i in range(n):
         noise = np.random.randn(1000).astype(dtype)
         filtered = scipy.signal.lfilter(dtype([1]), truth_a, noise)
-        est_a[i, :] = librosa.lpc(filtered, 5)
+        est_a[i, :] = librosa.lpc(filtered, order=5)
     assert dtype == est_a.dtype
     assert np.allclose(truth_a, np.mean(est_a, axis=0), rtol=0, atol=1e-3)
 
@@ -1002,7 +1002,7 @@ def test_yin_tone(freq):
 
 
 def test_yin_chirp():
-    y = librosa.chirp(220, 640, duration=1.0)
+    y = librosa.chirp(fmin=220, fmax=640, duration=1.0)
     f0 = librosa.yin(y, fmin=110, fmax=880, center=False)
     target_f0 = np.load(os.path.join("tests", "data", "pitch-yin.npy"))
     assert np.allclose(np.log2(f0), np.log2(target_f0), rtol=0, atol=1e-2)
@@ -1078,7 +1078,7 @@ def test_pyin_multi_center():
 
 
 def test_pyin_chirp():
-    y = librosa.chirp(220, 640, duration=1.0)
+    y = librosa.chirp(fmin=220, fmax=640, duration=1.0)
     y = np.pad(y, (22050,))
     f0, voiced_flag, _ = librosa.pyin(y, fmin=110, fmax=880, center=False)
     target_f0 = np.load(os.path.join("tests", "data", "pitch-pyin.npy"))
@@ -1548,7 +1548,7 @@ def test_harmonics_1d():
 
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.interp_harmonics(y, x, h, axis=0)
+    yh = librosa.interp_harmonics(y, freqs=x, harmonics=h, axis=0)
 
     assert yh.shape[1:] == y.shape
     assert yh.shape[0] == len(h)
@@ -1572,7 +1572,7 @@ def test_harmonics_2d():
     y = np.tile(y, (5, 1)).T
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.interp_harmonics(y, x, h, axis=0)
+    yh = librosa.interp_harmonics(y, freqs=x, harmonics=h, axis=0)
 
     assert yh.shape[1:] == y.shape
     assert yh.shape[0] == len(h)
@@ -1596,21 +1596,21 @@ def test_harmonics_1d_nonunique():
     h = [0.25, 0.5, 1, 2, 4]
 
     with pytest.warns(UserWarning):
-        yh = librosa.interp_harmonics(y, x, h, axis=0)
+        yh = librosa.interp_harmonics(y, freqs=x, harmonics=h, axis=0)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_harmonics_badshape_1d():
     freqs = np.zeros(100)
     obs = np.zeros((5, 10))
-    librosa.interp_harmonics(obs, freqs, [1])
+    librosa.interp_harmonics(obs, freqs=freqs, harmonics=[1])
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_harmonics_badshape_2d():
     freqs = np.zeros((5, 5))
     obs = np.zeros((5, 10))
-    librosa.interp_harmonics(obs, freqs, [1])
+    librosa.interp_harmonics(obs, freqs=freqs, harmonics=[1])
 
 
 def test_harmonics_2d_varying():
@@ -1621,7 +1621,7 @@ def test_harmonics_2d_varying():
     y = np.tile(y, (5, 1)).T
     h = [0.25, 0.5, 1, 2, 4]
 
-    yh = librosa.interp_harmonics(y, x, h, axis=-2)
+    yh = librosa.interp_harmonics(y, freqs=x, harmonics=h, axis=-2)
 
     assert yh.shape[1:] == y.shape
     assert yh.shape[0] == len(h)
@@ -1647,7 +1647,7 @@ def test_harmonics_2d_varying_nonunique():
     h = [0.25, 0.5, 1, 2, 4]
 
     with pytest.warns(UserWarning):
-        yh = librosa.interp_harmonics(y, x, h, axis=-2)
+        yh = librosa.interp_harmonics(y, freqs=x, harmonics=h, axis=-2)
 
 
 def test_show_versions():
@@ -1986,7 +1986,7 @@ def test_reset_fftlib():
 @pytest.fixture
 def y_chirp():
     sr = 22050
-    y = librosa.chirp(55, 55 * 2 ** 7, length=sr // 8, sr=sr)
+    y = librosa.chirp(fmin=55, fmax=55 * 2 ** 7, length=sr // 8, sr=sr)
     return y
 
 
@@ -2183,7 +2183,7 @@ def test_stream(
         # frame this for easy checking
         y_b_mono = librosa.to_mono(y_block)
         if len(y_b_mono) >= frame_length:
-            y_b_frame = librosa.util.frame(y_b_mono, frame_length, hop_length)
+            y_b_frame = librosa.util.frame(y_b_mono, frame_length=frame_length, hop_length=hop_length)
             y_frame_stream.append(y_b_frame)
 
     # Concatenate the framed blocks together
@@ -2200,7 +2200,7 @@ def test_stream(
         path, sr=None, dtype=dtype, mono=True, offset=offset, duration=duration
     )
     # First, check the rate
-    y_frame = librosa.util.frame(y_full, frame_length, hop_length)
+    y_frame = librosa.util.frame(y_full, frame_length=frame_length, hop_length=hop_length)
 
     # Raw audio will not be padded
     n = y_frame.shape[1]

@@ -43,7 +43,7 @@ max_size = 3
 ########################################################
 # The paper uses a log-frequency representation, but for
 # simplicity, we'll use a Mel spectrogram instead.
-S = librosa.feature.melspectrogram(y, sr=sr, n_fft=n_fft,
+S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=n_fft,
                                    hop_length=hop_length,
                                    fmin=fmin,
                                    fmax=fmax,

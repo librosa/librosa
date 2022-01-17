@@ -38,8 +38,8 @@ import mir_eval.sonify
 
 sr = 22050
 
-y_sweep = librosa.chirp(librosa.note_to_hz('C3'),
-                        librosa.note_to_hz('C5'),
+y_sweep = librosa.chirp(fmin=librosa.note_to_hz('C3'),
+                        fmax=librosa.note_to_hz('C5'),
                         sr=sr,
                         duration=1)
 
@@ -137,7 +137,3 @@ Audio(data=y+y_clicks, rate=sr)
 #     in the same cell, you can use
 #     ``IPython.display.display(IPython.display.Audio(...))`` to explicitly render
 #     each widget.  This is helpful when playing back multiple related signals.
-
-
-
-

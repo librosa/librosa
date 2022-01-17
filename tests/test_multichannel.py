@@ -715,9 +715,9 @@ def test_phase_vocoder(y_multi, rate):
     y, sr = y_multi
     D = librosa.stft(y)
 
-    D0 = librosa.phase_vocoder(D[0], rate)
-    D1 = librosa.phase_vocoder(D[1], rate)
-    D2 = librosa.phase_vocoder(D, rate)
+    D0 = librosa.phase_vocoder(D[0], rate=rate)
+    D1 = librosa.phase_vocoder(D[1], rate=rate)
+    D2 = librosa.phase_vocoder(D, rate=rate)
 
     assert np.allclose(D2[0], D0)
     assert np.allclose(D2[1], D1)
@@ -745,9 +745,9 @@ def test_interp_harmonics_multi_static(s_multi):
     S, sr = s_multi
 
     freqs = librosa.fft_frequencies(sr=sr)
-    Hall = librosa.interp_harmonics(S, freqs, [0.5, 1, 2])
-    H0 = librosa.interp_harmonics(S[0], freqs, [0.5, 1, 2])
-    H1 = librosa.interp_harmonics(S[1], freqs, [0.5, 1, 2])
+    Hall = librosa.interp_harmonics(S, freqs=freqs, harmonics=[0.5, 1, 2])
+    H0 = librosa.interp_harmonics(S[0], freqs=freqs, harmonics=[0.5, 1, 2])
+    H1 = librosa.interp_harmonics(S[1], freqs=freqs, harmonics=[0.5, 1, 2])
 
     assert np.allclose(Hall[0], H0)
     assert np.allclose(Hall[1], H1)
@@ -759,9 +759,9 @@ def test_interp_harmonics_multi_vary(tfr_multi):
     times, freqs, mags = tfr_multi
 
     # Force slinear mode here to deal with non-unique frequencies
-    Hall = librosa.interp_harmonics(mags, freqs, [0.5, 1, 2], kind="slinear")
-    H0 = librosa.interp_harmonics(mags[0], freqs[0], [0.5, 1, 2], kind="slinear")
-    H1 = librosa.interp_harmonics(mags[1], freqs[1], [0.5, 1, 2], kind="slinear")
+    Hall = librosa.interp_harmonics(mags, freqs=freqs, harmonics=[0.5, 1, 2], kind="slinear")
+    H0 = librosa.interp_harmonics(mags[0], freqs=freqs[0], harmonics=[0.5, 1, 2], kind="slinear")
+    H1 = librosa.interp_harmonics(mags[1], freqs=freqs[1], harmonics=[0.5, 1, 2], kind="slinear")
 
     assert np.allclose(Hall[0], H0)
     assert np.allclose(Hall[1], H1)
@@ -777,24 +777,24 @@ def test_salience_multi_static(s_multi, filter_peaks):
 
     sal_all = librosa.salience(
         S,
-        freqs,
-        [0.5, 1, 2, 3],
+        freqs=freqs,
+        harmonics=[0.5, 1, 2, 3],
         kind="slinear",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
     sal_0 = librosa.salience(
         S[0],
-        freqs,
-        [0.5, 1, 2, 3],
+        freqs=freqs,
+        harmonics=[0.5, 1, 2, 3],
         kind="slinear",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
     sal_1 = librosa.salience(
         S[1],
-        freqs,
-        [0.5, 1, 2, 3],
+        freqs=freqs,
+        harmonics=[0.5, 1, 2, 3],
         kind="slinear",
         filter_peaks=filter_peaks,
         fill_value=0,
@@ -811,24 +811,24 @@ def test_salience_multi_dynamic(tfr_multi, filter_peaks):
 
     sal_all = librosa.salience(
         S,
-        freqs,
-        [0.5, 1, 2, 3],
+        freqs=freqs,
+        harmonics=[0.5, 1, 2, 3],
         kind="slinear",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
     sal_0 = librosa.salience(
         S[0],
-        freqs[0],
-        [0.5, 1, 2, 3],
+        freqs=freqs[0],
+        harmonics=[0.5, 1, 2, 3],
         kind="slinear",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
     sal_1 = librosa.salience(
         S[1],
-        freqs[1],
-        [0.5, 1, 2, 3],
+        freqs=freqs[1],
+        harmonics=[0.5, 1, 2, 3],
         kind="slinear",
         filter_peaks=filter_peaks,
         fill_value=0,
@@ -855,9 +855,9 @@ def test_iirt_multi(y_multi, center):
 def test_lpc_multi(y_multi):
     y, sr = y_multi
 
-    Lall = librosa.lpc(y, 6)
-    L0 = librosa.lpc(y[0], 6)
-    L1 = librosa.lpc(y[1], 6)
+    Lall = librosa.lpc(y, order=6)
+    L0 = librosa.lpc(y[0], order=6)
+    L1 = librosa.lpc(y[1], order=6)
 
     assert np.allclose(Lall[0], L0)
     assert np.allclose(Lall[1], L1)
@@ -867,9 +867,9 @@ def test_lpc_multi(y_multi):
 def test_yin_multi(y_multi):
     y, sr = y_multi
 
-    Pall = librosa.yin(y, 30, 300)
-    P0 = librosa.yin(y[0], 30, 300)
-    P1 = librosa.yin(y[1], 30, 300)
+    Pall = librosa.yin(y, fmin=30, fmax=300)
+    P0 = librosa.yin(y[0], fmin=30, fmax=300)
+    P1 = librosa.yin(y[1], fmin=30, fmax=300)
 
     assert np.allclose(Pall[0], P0)
     assert np.allclose(Pall[1], P1)
@@ -915,7 +915,7 @@ def test_nnls_multi(s_multi):
     S = S[...,:int(S.shape[-1]/2)]
 
     # multichannel  
-    mel_basis = librosa.filters.mel(sr, n_fft=2*S.shape[-2]-1, n_mels=256)
+    mel_basis = librosa.filters.mel(sr=sr, n_fft=2*S.shape[-2]-1, n_mels=256)
     M = np.einsum('...ft,mf->...mt', S, mel_basis)
     print(M.shape, mel_basis.shape)
     S_recover = librosa.util.nnls(mel_basis, M)
@@ -943,7 +943,7 @@ def test_mel_to_stft_multi(power,  n_fft):
     srand()
 
     # Make a random mel spectrum, 4 frames
-    mel_basis = librosa.filters.mel(22050, n_fft, n_mels=128)
+    mel_basis = librosa.filters.mel(sr=22050, n_fft=n_fft, n_mels=128)
 
     stft_orig = np.random.randn(2, n_fft // 2 + 1, 4) ** power
 
@@ -973,10 +973,6 @@ def test_mfcc_to_mel_multi(s_multi, n_mfcc, n_mels, dct_type):
     mfcc0 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[0], top_db=None))
     mfcc1 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[1], top_db=None))
     mfcc = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S, top_db=None))
-
-    melspec = librosa.feature.melspectrogram(S, sr=sr, n_mels=n_mels)
-    melspec0 = librosa.feature.melspectrogram(S[0], sr=sr, n_mels=n_mels)
-    melspec1 = librosa.feature.melspectrogram(S[1], sr=sr, n_mels=n_mels)
 
     mel_recover = librosa.feature.inverse.mfcc_to_mel(
         mfcc, n_mels=n_mels, dct_type=dct_type

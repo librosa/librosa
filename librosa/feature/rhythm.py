@@ -17,6 +17,7 @@ __all__ = ["tempogram", "fourier_tempogram"]
 
 # -- Rhythmic features -- #
 def tempogram(
+    *,
     y=None,
     sr=22050,
     onset_envelope=None,
@@ -173,6 +174,7 @@ def tempogram(
 
 
 def fourier_tempogram(
+    *,
     y=None,
     sr=22050,
     onset_envelope=None,

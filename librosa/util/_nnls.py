@@ -117,7 +117,7 @@ def nnls(A, B, **kwargs):
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> S = np.abs(librosa.stft(y, n_fft=2048))
     >>> M = librosa.feature.melspectrogram(S=S, sr=sr, power=1)
-    >>> mel_basis = librosa.filters.mel(sr, n_fft=2048, n_mels=M.shape[0])
+    >>> mel_basis = librosa.filters.mel(sr=sr, n_fft=2048, n_mels=M.shape[0])
     >>> S_recover = librosa.util.nnls(mel_basis, M)
 
     Plot the results

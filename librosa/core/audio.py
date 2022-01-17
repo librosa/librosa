@@ -45,6 +45,7 @@ BW_FASTEST = resampy.filters.get_filter("kaiser_fast")[2]
 # 'path' are unchanged across calls.
 def load(
     path,
+    *,
     sr=22050,
     mono=True,
     offset=0.0,
@@ -180,7 +181,7 @@ def load(
         y = to_mono(y)
 
     if sr is not None:
-        y = resample(y, sr_native, sr, res_type=res_type)
+        y = resample(y, orig_sr=sr_native, target_sr=sr, res_type=res_type)
 
     else:
         sr = sr_native
@@ -245,6 +246,7 @@ def __audioread_load(path, offset, duration, dtype):
 
 def stream(
     path,
+    *,
     block_length,
     frame_length,
     hop_length,
@@ -379,7 +381,7 @@ def stream(
     ...                         frame_length=2048,
     ...                         hop_length=2048)
     >>> for y_block in stream:
-    ...     m_block = librosa.feature.melspectrogram(y_block, sr=sr,
+    ...     m_block = librosa.feature.melspectrogram(y=y_block, sr=sr,
     ...                                              n_fft=2048,
     ...                                              hop_length=2048,
     ...                                              center=False)
@@ -464,14 +466,14 @@ def to_mono(y):
     util.valid_audio(y, mono=False)
 
     if y.ndim > 1:
-        y = np.mean(y, axis=tuple(range(y.ndim-1)))
+        y = np.mean(y, axis=tuple(range(y.ndim - 1)))
 
     return y
 
 
 @cache(level=20)
 def resample(
-    y, orig_sr, target_sr, res_type="kaiser_best", fix=True, scale=False, **kwargs
+    y, *, orig_sr, target_sr, res_type="kaiser_best", fix=True, scale=False, **kwargs
 ):
     """Resample a time series from orig_sr to target_sr
 
@@ -564,7 +566,7 @@ def resample(
     Downsample from 22 KHz to 8 KHz
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'), sr=22050)
-    >>> y_8k = librosa.resample(y, sr, 8000)
+    >>> y_8k = librosa.resample(y, orig_sr=sr, target_sr=8000)
     >>> y.shape, y_8k.shape
     ((117601,), (42668,))
     """
@@ -614,7 +616,7 @@ def resample(
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
 
     if fix:
-        y_hat = util.fix_length(y_hat, n_samples, **kwargs)
+        y_hat = util.fix_length(y_hat, size=n_samples, **kwargs)
 
     if scale:
         y_hat /= np.sqrt(ratio)
@@ -623,7 +625,7 @@ def resample(
 
 
 def get_duration(
-    y=None, sr=22050, S=None, n_fft=2048, hop_length=512, center=True, filename=None
+    *, y=None, sr=22050, S=None, n_fft=2048, hop_length=512, center=True, filename=None
 ):
     """Compute the duration (in seconds) of an audio time series,
     feature matrix, or filename.
@@ -765,7 +767,7 @@ def get_samplerate(path):
 
 
 @cache(level=20)
-def autocorrelate(y, max_size=None, axis=-1):
+def autocorrelate(y, *, max_size=None, axis=-1):
     """Bounded-lag auto-correlation
 
     Parameters
@@ -804,7 +806,7 @@ def autocorrelate(y, max_size=None, axis=-1):
 
     >>> import matplotlib.pyplot as plt
     >>> odf = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
-    >>> ac = librosa.autocorrelate(odf, max_size=4* sr / 512)
+    >>> ac = librosa.autocorrelate(odf, max_size=4 * sr // 512)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(ac)
     >>> ax.set(title='Auto-correlation', xlabel='Lag (frames)')
@@ -835,7 +837,7 @@ def autocorrelate(y, max_size=None, axis=-1):
     return autocorr
 
 
-def lpc(y, order, axis=-1):
+def lpc(y, *, order, axis=-1):
     """Linear Prediction Coefficients via Burg's method
 
     This function applies Burg's method to estimate coefficients of a linear
@@ -887,14 +889,14 @@ def lpc(y, order, axis=-1):
     Compute LP coefficients of y at order 16 on entire series
 
     >>> y, sr = librosa.load(librosa.ex('libri1'))
-    >>> librosa.lpc(y, 16)
+    >>> librosa.lpc(y, order=16)
 
     Compute LP coefficients, and plot LP estimate of original series
 
     >>> import matplotlib.pyplot as plt
     >>> import scipy
     >>> y, sr = librosa.load(librosa.ex('libri1'), duration=0.020)
-    >>> a = librosa.lpc(y, 2)
+    >>> a = librosa.lpc(y, order=2)
     >>> b = np.hstack([[0], -1 * a[1:]])
     >>> y_hat = scipy.signal.lfilter(b, [1], y)
     >>> fig, ax = plt.subplots()
@@ -1023,7 +1025,7 @@ def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
 
 @cache(level=20)
 def zero_crossings(
-    y, threshold=1e-10, ref_magnitude=None, pad=True, zero_pos=True, axis=-1
+    y, *, threshold=1e-10, ref_magnitude=None, pad=True, zero_pos=True, axis=-1
 ):
     """Find the zero-crossings of a signal ``y``: indices ``i`` such that
     ``sign(y[i]) != sign(y[j])``.
@@ -1152,6 +1154,7 @@ def zero_crossings(
 
 
 def clicks(
+    *,
     times=None,
     frames=None,
     sr=22050,
@@ -1297,7 +1300,7 @@ def clicks(
     return click_signal
 
 
-def tone(frequency, sr=22050, length=None, duration=None, phi=None):
+def tone(frequency, *, sr=22050, length=None, duration=None, phi=None):
     """Construct a pure tone (cosine) signal at a given frequency.
 
     Parameters
@@ -1369,7 +1372,7 @@ def tone(frequency, sr=22050, length=None, duration=None, phi=None):
     return np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
 
 
-def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=None):
+def chirp(*, fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=None):
     """Construct a "chirp" or "sine-sweep" signal.
 
     The chirp sweeps from frequency ``fmin`` to ``fmax`` (in Hz).
@@ -1428,15 +1431,15 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
     --------
     Generate a exponential chirp from A2 to A8
 
-    >>> exponential_chirp = librosa.chirp(110, 110*64, duration=1)
+    >>> exponential_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1)
 
     Or generate the same signal using ``length``
 
-    >>> exponential_chirp = librosa.chirp(110, 110*64, sr=22050, length=22050)
+    >>> exponential_chirp = librosa.chirp(fmin=110, fmax=110*64, sr=22050, length=22050)
 
     Or generate a linear chirp instead
 
-    >>> linear_chirp = librosa.chirp(110, 110*64, duration=1, linear=True)
+    >>> linear_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1, linear=True)
 
     Display spectrogram for both exponential and linear chirps.
 
@@ -1478,7 +1481,7 @@ def chirp(fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=No
     )
 
 
-def mu_compress(x, mu=255, quantize=True):
+def mu_compress(x, *, mu=255, quantize=True):
     """mu-law compression
 
     Given an input signal ``-1 <= x <= 1``, the mu-law compression
@@ -1573,7 +1576,7 @@ def mu_compress(x, mu=255, quantize=True):
     return x_comp
 
 
-def mu_expand(x, mu=255.0, quantize=True):
+def mu_expand(x, *, mu=255.0, quantize=True):
     """mu-law expansion
 
     This function is the inverse of ``mu_compress``. Given a mu-law compressed

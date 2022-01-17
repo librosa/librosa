@@ -56,6 +56,7 @@ __all__ = [
 def dtw(
     X=None,
     Y=None,
+    *,
     C=None,
     metric="euclidean",
     step_sizes_sigma=None,
@@ -276,7 +277,7 @@ def dtw(
         if not C_local:
             # If C was provided as input, make a copy here
             C = np.copy(C)
-        fill_off_diagonal(C, band_rad, value=np.inf)
+        fill_off_diagonal(C, radius=band_rad, value=np.inf)
 
     # initialize whole matrix with infinity values
     D = np.ones(C.shape + np.array([max_0, max_1])) * np.inf
@@ -492,7 +493,7 @@ def __dtw_backtracking(steps, step_sizes_sigma, subseq, start=None):  # pragma: 
     return wp
 
 
-def dtw_backtracking(steps, step_sizes_sigma=None, subseq=False, start=None):
+def dtw_backtracking(steps, *, step_sizes_sigma=None, subseq=False, start=None):
     """Backtrack a warping path.
 
     Uses the saved step sizes from the cost accumulation
@@ -545,7 +546,7 @@ def dtw_backtracking(steps, step_sizes_sigma=None, subseq=False, start=None):
     return np.asarray(wp, dtype=int)
 
 
-def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
+def rqa(sim, *, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     """Recurrence quantification analysis (RQA)
 
     This function implements different forms of RQA as described by
@@ -650,7 +651,9 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     ...                                         mode='affinity',
     ...                                         metric='cosine')
     >>> # using infinite cost for gaps enforces strict path continuation
-    >>> L_score, L_path = librosa.sequence.rqa(rec, np.inf, np.inf,
+    >>> L_score, L_path = librosa.sequence.rqa(rec,
+    ...                                        gap_onset=np.inf,
+    ...                                        gap_extend=np.inf,
     ...                                        knight_moves=False)
     >>> fig, ax = plt.subplots(ncols=2)
     >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames', ax=ax[0])
@@ -664,7 +667,7 @@ def rqa(sim, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     Full alignment using gaps and knight moves
 
     >>> # New gaps cost 5, extending old gaps cost 10 for each step
-    >>> score, path = librosa.sequence.rqa(rec, 5, 10)
+    >>> score, path = librosa.sequence.rqa(rec, gap_onset=5, gap_extend=10)
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
     >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames', ax=ax[0])
     >>> ax[0].set(title='Recurrence matrix')
@@ -957,7 +960,7 @@ def _viterbi(log_prob, log_trans, log_p_init):  # pragma: no cover
     return state, logp
 
 
-def viterbi(prob, transition, p_init=None, return_logp=False):
+def viterbi(prob, transition, *, p_init=None, return_logp=False):
     """Viterbi decoding from observation likelihoods.
 
     Given a sequence of observation likelihoods ``prob[s, t]``,
@@ -1032,7 +1035,7 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
     >>> p_emit = np.array([[0.5, 0.4, 0.1],
     ...                    [0.1, 0.3, 0.6]])
     >>> p_trans = np.array([[0.7, 0.3], [0.4, 0.6]])
-    >>> path, logp = librosa.sequence.viterbi(p_emit, p_trans, p_init,
+    >>> path, logp = librosa.sequence.viterbi(p_emit, p_trans, p_init=p_init,
     ...                                       return_logp=True)
     >>> print(logp, path)
     -4.19173690823075 [0 0 1]
@@ -1100,7 +1103,7 @@ def viterbi(prob, transition, p_init=None, return_logp=False):
 
 
 def viterbi_discriminative(
-    prob, transition, p_state=None, p_init=None, return_logp=False
+    prob, transition, *, p_state=None, p_init=None, return_logp=False
 ):
     """Viterbi decoding from discriminative state predictions.
 
@@ -1278,7 +1281,7 @@ def viterbi_discriminative(
     log_marginal = np.log(p_state + epsilon)
 
     # reshape to broadcast against prob
-    log_marginal = expand_to(log_marginal, prob.ndim, axes=-2)
+    log_marginal = expand_to(log_marginal, ndim=prob.ndim, axes=-2)
 
     log_prob = np.log(prob + epsilon) - log_marginal
 
@@ -1307,7 +1310,7 @@ def viterbi_discriminative(
     return states
 
 
-def viterbi_binary(prob, transition, p_state=None, p_init=None, return_logp=False):
+def viterbi_binary(prob, transition, *, p_state=None, p_init=None, return_logp=False):
     """Viterbi decoding from binary (multi-label), discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,
@@ -1632,7 +1635,7 @@ def transition_cycle(n_states, prob):
     return transition
 
 
-def transition_local(n_states, width, window="triangle", wrap=False):
+def transition_local(n_states, width, *, window="triangle", wrap=False):
     """Construct a localized transition matrix.
 
     The transition matrix will have the following properties:
@@ -1726,7 +1729,7 @@ def transition_local(n_states, width, window="triangle", wrap=False):
 
     # Fill in the widths.  This is inefficient, but simple
     for i, width_i in enumerate(width):
-        trans_row = pad_center(get_window(window, width_i, fftbins=False), n_states)
+        trans_row = pad_center(get_window(window, width_i, fftbins=False), size=n_states)
         trans_row = np.roll(trans_row, n_states // 2 + i + 1)
 
         if not wrap:
