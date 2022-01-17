@@ -93,7 +93,7 @@ def y_cqt(sr_cqt):
 
 @pytest.fixture(scope="module")
 def y_cqt_110(sr_cqt):
-    return librosa.tone(110.0, sr_cqt, duration=0.75)
+    return librosa.tone(110.0, sr=sr_cqt, duration=0.75)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -485,7 +485,7 @@ def test_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     )
 
     if not scale:
-        lengths = librosa.filters.constant_q_lengths(sr_white, fmin, n_bins=n_bins)
+        lengths = librosa.filters.constant_q_lengths(sr=sr_white, fmin=fmin, n_bins=n_bins)
         C /= np.sqrt(lengths[:, np.newaxis])
 
     # Only compare statistics across the time dimension
@@ -503,7 +503,7 @@ def test_hybrid_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     )
 
     if not scale:
-        lengths = librosa.filters.constant_q_lengths(sr_white, fmin, n_bins=n_bins)
+        lengths = librosa.filters.constant_q_lengths(sr=sr_white, fmin=fmin, n_bins=n_bins)
         C /= np.sqrt(lengths[:, np.newaxis])
 
     assert np.allclose(np.mean(C, axis=1), 1.0, atol=2.5e-1), np.mean(C, axis=1)
@@ -561,7 +561,7 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
     if length:
         assert len(y_icqt) == len(yinv)
     else:
-        yinv = librosa.util.fix_length(yinv, len(y_icqt))
+        yinv = librosa.util.fix_length(yinv, size=len(y_icqt))
 
     y_icqt = y_icqt[sr_icqt // 2 : -sr_icqt // 2]
     yinv = yinv[sr_icqt // 2 : -sr_icqt // 2]
@@ -577,7 +577,7 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
 @pytest.fixture
 def y_chirp():
     sr = 22050
-    y = librosa.chirp(55, 55 * 2 ** 3, length=sr // 8, sr=sr)
+    y = librosa.chirp(fmin=55, fmax=55 * 2 ** 3, length=sr // 8, sr=sr)
     return y
 
 

@@ -29,14 +29,14 @@ def test_viterbi_example():
 
     prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
 
-    path, logp = librosa.sequence.viterbi(prob, transition, p_init, return_logp=True)
+    path, logp = librosa.sequence.viterbi(prob, transition, p_init=p_init, return_logp=True)
 
     # True maximum likelihood state
     assert np.array_equal(path, [0, 0, 1])
     assert np.isclose(logp, np.log(0.01512))
 
     # And check the second execution path
-    path2 = librosa.sequence.viterbi(prob, transition, p_init, return_logp=False)
+    path2 = librosa.sequence.viterbi(prob, transition, p_init=p_init, return_logp=False)
 
     assert np.array_equal(path, path2)
 
@@ -62,22 +62,22 @@ def test_viterbi_multichannel():
 
     # Make a 3-channel stack
     prob_mc = np.stack([prob, 1-prob, prob[:, ::-1]])
-    path, logp = librosa.sequence.viterbi(prob_mc, transition, p_init, return_logp=True)
+    path, logp = librosa.sequence.viterbi(prob_mc, transition, p_init=p_init, return_logp=True)
 
     # Check the second execution path
-    path2 = librosa.sequence.viterbi(prob_mc, transition, p_init, return_logp=False)
+    path2 = librosa.sequence.viterbi(prob_mc, transition, p_init=p_init, return_logp=False)
     assert np.array_equal(path, path2)
 
     # Check each individual path
-    path0, logp0 = librosa.sequence.viterbi(prob_mc[0], transition, p_init, return_logp=True)
+    path0, logp0 = librosa.sequence.viterbi(prob_mc[0], transition, p_init=p_init, return_logp=True)
     assert np.allclose(path0, path[0])
     assert np.allclose(logp0, logp[0])
 
-    path1, logp1 = librosa.sequence.viterbi(prob_mc[1], transition, p_init, return_logp=True)
+    path1, logp1 = librosa.sequence.viterbi(prob_mc[1], transition, p_init=p_init, return_logp=True)
     assert np.allclose(path1, path[1])
     assert np.allclose(logp1, logp[1])
 
-    path2, logp2 = librosa.sequence.viterbi(prob_mc[2], transition, p_init, return_logp=True)
+    path2, logp2 = librosa.sequence.viterbi(prob_mc[2], transition, p_init=p_init, return_logp=True)
     assert np.allclose(path2, path[2])
     assert np.allclose(logp2, logp[2])
 
@@ -102,7 +102,7 @@ def test_viterbi_init():
 
     prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
 
-    path1, logp1 = librosa.sequence.viterbi(prob, transition, p_init, return_logp=True)
+    path1, logp1 = librosa.sequence.viterbi(prob, transition, p_init=p_init, return_logp=True)
 
     path2, logp2 = librosa.sequence.viterbi(prob, transition, return_logp=True)
 

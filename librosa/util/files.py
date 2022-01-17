@@ -38,7 +38,7 @@ with open(
     __TRACKMAP = json.load(fdesc)
 
 
-def example(key, hq=False):
+def example(key, *, hq=False):
     """Retrieve the example recording identified by 'key'.
 
     The first time an example is requested, it will be downloaded from
@@ -159,7 +159,7 @@ def example_info(key):
 
 
 def find_files(
-    directory, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0
+    directory, *, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0
 ):
     """Get a sorted list of (audio) files in a directory or directory sub-tree.
 

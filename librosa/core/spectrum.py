@@ -41,6 +41,7 @@ __all__ = [
 @cache(level=20)
 def stft(
     y,
+    *,
     n_fft=2048,
     hop_length=None,
     win_length=None,
@@ -210,7 +211,7 @@ def stft(
     fft_window = get_window(window, win_length, fftbins=True)
 
     # Pad the window out to n_fft size
-    fft_window = util.pad_center(fft_window, n_fft)
+    fft_window = util.pad_center(fft_window, size=n_fft)
 
     # Reshape so that the window can be broadcast
     fft_window = util.expand_to(fft_window, ndim=1 + y.ndim, axes=-2)
@@ -265,6 +266,7 @@ def stft(
 @cache(level=30)
 def istft(
     stft_matrix,
+    *,
     hop_length=None,
     win_length=None,
     n_fft=None,
@@ -359,7 +361,7 @@ def istft(
 
     >>> n = len(y)
     >>> n_fft = 2048
-    >>> y_pad = librosa.util.fix_length(y, n + n_fft // 2)
+    >>> y_pad = librosa.util.fix_length(y, size=n + n_fft // 2)
     >>> D = librosa.stft(y_pad, n_fft=n_fft)
     >>> y_out = librosa.istft(D, length=n)
     >>> np.max(np.abs(y - y_out))
@@ -380,7 +382,7 @@ def istft(
     ifft_window = get_window(window, win_length, fftbins=True)
 
     # Pad out to match n_fft, and add broadcasting axes
-    ifft_window = util.pad_center(ifft_window, n_fft)
+    ifft_window = util.pad_center(ifft_window, size=n_fft)
     ifft_window = util.expand_to(ifft_window, ndim=stft_matrix.ndim, axes=-2)
 
     # For efficiency, trim STFT frames according to signal length if available
@@ -422,8 +424,8 @@ def istft(
 
     # Normalize by sum of squared window
     ifft_window_sum = window_sumsquare(
-        window,
-        n_frames,
+        window=window,
+        n_frames=n_frames,
         win_length=win_length,
         n_fft=n_fft,
         hop_length=hop_length,
@@ -449,7 +451,7 @@ def istft(
             # If we're not centering, start at 0 and trim/pad as necessary
             start = 0
 
-        y = util.fix_length(y[..., start:], length)
+        y = util.fix_length(y[..., start:], size=length)
 
     return y
 
@@ -583,7 +585,7 @@ def __reassign_frequencies(
         win_length = n_fft
 
     window = get_window(window, win_length, fftbins=True)
-    window = util.pad_center(window, n_fft)
+    window = util.pad_center(window, size=n_fft)
 
     if S is None:
         if dtype is None:
@@ -747,7 +749,7 @@ def __reassign_times(
         win_length = n_fft
 
     window = get_window(window, win_length, fftbins=True)
-    window = util.pad_center(window, n_fft)
+    window = util.pad_center(window, size=n_fft)
 
     # retrieve hop length if needed so that the frame times can be calculated
     if hop_length is None:
@@ -814,6 +816,7 @@ def __reassign_times(
 
 def reassigned_spectrogram(
     y,
+    *,
     sr=22050,
     S=None,
     n_fft=2048,
@@ -995,7 +998,7 @@ def reassigned_spectrogram(
     ...                           click_freq=1200.0, length=8000) +\
     ...     1e-3 * librosa.clicks(times=[1.5], sr=sr, click_duration=0.5,
     ...                           click_freq=400.0, length=8000) +\
-    ...     1e-3 * librosa.chirp(200, 1600, sr=sr, duration=2.0) +\
+    ...     1e-3 * librosa.chirp(fmin=200, fmax=1600, sr=sr, duration=2.0) +\
     ...     1e-6 * np.random.randn(2*sr)
     >>> freqs, times, mags = librosa.reassigned_spectrogram(y=y, sr=sr,
     ...                                                     n_fft=n_fft)
@@ -1115,7 +1118,7 @@ def reassigned_spectrogram(
     return freqs, times, mags
 
 
-def magphase(D, power=1):
+def magphase(D, *, power=1):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that ``D = S * P``.
 
@@ -1181,7 +1184,7 @@ def magphase(D, power=1):
     return mag, phase
 
 
-def phase_vocoder(D, rate, hop_length=None, n_fft=None):
+def phase_vocoder(D, *, rate, hop_length=None, n_fft=None):
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
 
     Based on the implementation provided by [#]_.
@@ -1204,13 +1207,13 @@ def phase_vocoder(D, rate, hop_length=None, n_fft=None):
     >>> # Play at double speed
     >>> y, sr   = librosa.load(librosa.ex('trumpet'))
     >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
-    >>> D_fast  = librosa.phase_vocoder(D, 2.0, hop_length=512)
+    >>> D_fast  = librosa.phase_vocoder(D, rate=2.0, hop_length=512)
     >>> y_fast  = librosa.istft(D_fast, hop_length=512)
 
     >>> # Or play at 1/3 speed
     >>> y, sr   = librosa.load(librosa.ex('trumpet'))
     >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
-    >>> D_slow  = librosa.phase_vocoder(D, 1./3, hop_length=512)
+    >>> D_slow  = librosa.phase_vocoder(D, rate=1./3, hop_length=512)
     >>> y_slow  = librosa.istft(D_slow, hop_length=512)
 
     Parameters
@@ -1292,6 +1295,7 @@ def phase_vocoder(D, rate, hop_length=None, n_fft=None):
 @cache(level=20)
 def iirt(
     y,
+    *,
     sr=22050,
     win_length=2048,
     hop_length=None,
@@ -1430,7 +1434,7 @@ def iirt(
     y_srs = np.unique(sample_rates)
 
     for cur_sr in y_srs:
-        y_resampled.append(resample(y, sr, cur_sr, res_type=res_type))
+        y_resampled.append(resample(y, orig_sr=sr, target_sr=cur_sr, res_type=res_type))
 
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = int(1 + (y.shape[-1] - win_length) // hop_length)
@@ -1474,7 +1478,7 @@ def iirt(
             min_length = (
                 int(np.ceil(n_frames * hop_length_STMSP)) + win_length_STMSP_round
             )
-            cur_filter_output = util.fix_length(cur_filter_output, min_length)
+            cur_filter_output = util.fix_length(cur_filter_output, size=min_length)
             start_idx = np.arange(
                 0,
                 cur_filter_output.shape[-1] - win_length_STMSP_round,
@@ -1492,7 +1496,7 @@ def iirt(
 
 
 @cache(level=30)
-def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
+def power_to_db(S, *, ref=1.0, amin=1e-10, top_db=80.0):
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
     This computes the scaling ``10 * log10(S / ref)`` in a numerically
@@ -1616,7 +1620,7 @@ def power_to_db(S, ref=1.0, amin=1e-10, top_db=80.0):
 
 
 @cache(level=30)
-def db_to_power(S_db, ref=1.0):
+def db_to_power(S_db, *, ref=1.0):
     """Convert a dB-scale spectrogram to a power spectrogram.
 
     This effectively inverts ``power_to_db``::
@@ -1644,7 +1648,7 @@ def db_to_power(S_db, ref=1.0):
 
 
 @cache(level=30)
-def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
+def amplitude_to_db(S, *, ref=1.0, amin=1e-5, top_db=80.0):
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
     This is equivalent to ``power_to_db(S**2)``, but is provided for convenience.
@@ -1706,7 +1710,7 @@ def amplitude_to_db(S, ref=1.0, amin=1e-5, top_db=80.0):
 
 
 @cache(level=30)
-def db_to_amplitude(S_db, ref=1.0):
+def db_to_amplitude(S_db, *, ref=1.0):
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
@@ -1734,7 +1738,7 @@ def db_to_amplitude(S_db, ref=1.0):
 
 
 @cache(level=30)
-def perceptual_weighting(S, frequencies, kind="A", **kwargs):
+def perceptual_weighting(S, frequencies, *, kind="A", **kwargs):
     """Perceptual weighting of a power spectrogram::
 
         S_p[..., f, :] = frequency_weighting(f, 'A') + 10*log(S[..., f, :] / ref)
@@ -1809,7 +1813,7 @@ def perceptual_weighting(S, frequencies, kind="A", **kwargs):
 
 
 @cache(level=30)
-def fmt(y, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis=-1):
+def fmt(y, *, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis=-1):
     """The fast Mellin transform (FMT)
 
     The Mellin of a signal `y` is performed by interpolating `y` on an exponential time
@@ -2003,6 +2007,7 @@ def fmt(y, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis=-1
 @cache(level=30)
 def pcen(
     S,
+    *,
     sr=22050,
     hop_length=512,
     gain=0.98,
@@ -2160,7 +2165,7 @@ def pcen(
     >>> # We recommend scaling y to the range [-2**31, 2**31[ before applying
     >>> # PCEN's default parameters. Furthermore, we use power=1 to get a
     >>> # magnitude spectrum instead of a power spectrum.
-    >>> S = librosa.feature.melspectrogram(y, sr=sr, power=1)
+    >>> S = librosa.feature.melspectrogram(y=y, sr=sr, power=1)
     >>> log_S = librosa.amplitude_to_db(S, ref=np.max)
     >>> pcen_S = librosa.pcen(S * (2**31))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
@@ -2273,6 +2278,7 @@ def pcen(
 
 def griffinlim(
     S,
+    *,
     n_iter=32,
     hop_length=None,
     win_length=None,
@@ -2491,6 +2497,7 @@ def griffinlim(
 
 
 def _spectrogram(
+    *,
     y=None,
     S=None,
     n_fft=2048,

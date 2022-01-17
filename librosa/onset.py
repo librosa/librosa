@@ -26,6 +26,7 @@ __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_back
 
 
 def onset_detect(
+    *,
     y=None,
     sr=22050,
     onset_envelope=None,
@@ -122,7 +123,7 @@ def onset_detect(
 
     Or use a pre-computed onset envelope
 
-    >>> o_env = librosa.onset.onset_strength(y, sr=sr)
+    >>> o_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> times = librosa.times_like(o_env, sr=sr)
     >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env, sr=sr)
 
@@ -191,6 +192,7 @@ def onset_detect(
 
 
 def onset_strength(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -427,6 +429,7 @@ def onset_backtrack(events, energy):
 
 @cache(level=30)
 def onset_strength_multi(
+    *,
     y=None,
     sr=22050,
     S=None,
