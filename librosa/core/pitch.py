@@ -18,7 +18,14 @@ __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
 
 def estimate_tuning(
-    y=None, sr=22050, S=None, n_fft=2048, resolution=0.01, bins_per_octave=12, **kwargs
+    *,
+    y=None,
+    sr=22050,
+    S=None,
+    n_fft=2048,
+    resolution=0.01,
+    bins_per_octave=12,
+    **kwargs,
 ):
     """Estimate the tuning of an audio time series or spectrogram input.
 
@@ -102,7 +109,7 @@ def estimate_tuning(
     )
 
 
-def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
+def pitch_tuning(frequencies, *, resolution=0.01, bins_per_octave=12):
     """Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
 
@@ -132,13 +139,13 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
     Examples
     --------
     >>> # Generate notes at +25 cents
-    >>> freqs = librosa.cqt_frequencies(24, 55, tuning=0.25)
+    >>> freqs = librosa.cqt_frequencies(n_bins=24, fmin=55, tuning=0.25)
     >>> librosa.pitch_tuning(freqs)
     0.25
 
     >>> # Track frequencies from a real spectrogram
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
-    >>> freqs, times, mags = librosa.reassigned_spectrogram(y, sr,
+    >>> freqs, times, mags = librosa.reassigned_spectrogram(y, sr=sr,
     ...                                                     fill_nan=True)
     >>> # Select out pitches with high energy
     >>> freqs = freqs[mags > np.median(mags)]
@@ -174,6 +181,7 @@ def pitch_tuning(frequencies, resolution=0.01, bins_per_octave=12):
 
 @cache(level=30)
 def piptrack(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -456,6 +464,7 @@ def _parabolic_interpolation(y_frames):
 
 def yin(
     y,
+    *,
     fmin,
     fmax,
     sr=22050,
@@ -543,8 +552,8 @@ def yin(
     --------
     Computing a fundamental frequency (F0) curve from an audio input
 
-    >>> y = librosa.chirp(440, 880, duration=5.0)
-    >>> librosa.yin(y, 440, 880)
+    >>> y = librosa.chirp(fmin=440, fmax=880, duration=5.0)
+    >>> librosa.yin(y, fmin=440, fmax=880)
     array([442.66354675, 441.95299983, 441.58010963, ...,
         871.161732  , 873.99001454, 877.04297681])
     """
@@ -629,6 +638,7 @@ def yin(
 
 def pyin(
     y,
+    *,
     fmin,
     fmax,
     sr=22050,

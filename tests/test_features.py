@@ -336,8 +336,8 @@ def test_rms_const(n):
 def test_rms(y_ex, y2, frame_length, hop_length, center):
     y1, sr = y_ex
     # Ensure audio is divisible into frame size.
-    y1 = librosa.util.fix_length(y1, y1.size - y1.size % frame_length)
-    y2 = librosa.util.fix_length(y2, y2.size - y2.size % frame_length)
+    y1 = librosa.util.fix_length(y1, size=y1.size - y1.size % frame_length)
+    y2 = librosa.util.fix_length(y2, size=y2.size - y2.size % frame_length)
     assert y1.size % frame_length == 0
     assert y2.size % frame_length == 0
 
@@ -815,7 +815,7 @@ def test_mel_to_stft(power, dtype, n_fft):
     srand()
 
     # Make a random mel spectrum, 4 frames
-    mel_basis = librosa.filters.mel(22050, n_fft, n_mels=128, dtype=dtype)
+    mel_basis = librosa.filters.mel(sr=22050, n_fft=n_fft, n_mels=128, dtype=dtype)
 
     stft_orig = np.random.randn(n_fft // 2 + 1, 4) ** power
     mels = mel_basis.dot(stft_orig.astype(dtype))

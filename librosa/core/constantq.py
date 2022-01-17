@@ -23,6 +23,7 @@ __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 @cache(level=20)
 def cqt(
     y,
+    *,
     sr=22050,
     hop_length=512,
     fmin=None,
@@ -195,6 +196,7 @@ def cqt(
 @cache(level=20)
 def hybrid_cqt(
     y,
+    *,
     sr=22050,
     hop_length=512,
     fmin=None,
@@ -297,14 +299,14 @@ def hybrid_cqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     # Get all CQT frequencies
-    freqs = cqt_frequencies(n_bins, fmin, bins_per_octave=bins_per_octave)
+    freqs = cqt_frequencies(n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
 
     # Compute an alpha parameter, just in case we need it
     alpha = __bpo_to_alpha(bins_per_octave)
 
     # Compute the length of each constant-Q basis function
     lengths, _ = filters.wavelet_lengths(
-        freqs, sr=sr, filter_scale=filter_scale, window=window, alpha=alpha
+        freqs=freqs, sr=sr, filter_scale=filter_scale, window=window, alpha=alpha
     )
 
     # Determine which filters to use with Pseudo CQT
@@ -322,7 +324,7 @@ def hybrid_cqt(
         cqt_resp.append(
             pseudo_cqt(
                 y,
-                sr,
+                sr=sr,
                 hop_length=hop_length,
                 fmin=fmin_pseudo,
                 n_bins=n_bins_pseudo,
@@ -342,7 +344,7 @@ def hybrid_cqt(
             np.abs(
                 cqt(
                     y,
-                    sr,
+                    sr=sr,
                     hop_length=hop_length,
                     fmin=fmin,
                     n_bins=n_bins_full,
@@ -366,6 +368,7 @@ def hybrid_cqt(
 @cache(level=20)
 def pseudo_cqt(
     y,
+    *,
     sr=22050,
     hop_length=512,
     fmin=None,
@@ -467,7 +470,7 @@ def pseudo_cqt(
     alpha = __bpo_to_alpha(bins_per_octave)
 
     lengths, _ = filters.wavelet_lengths(
-        freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
+        freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
     )
 
     fft_basis, n_fft, _ = __vqt_filter_fft(
@@ -510,6 +513,7 @@ def pseudo_cqt(
 @cache(level=40)
 def icqt(
     C,
+    *,
     sr=22050,
     hop_length=512,
     fmin=None,
@@ -632,7 +636,7 @@ def icqt(
     alpha = __bpo_to_alpha(bins_per_octave)
 
     lengths, f_cutoff = filters.wavelet_lengths(
-        freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
+        freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
     )
 
     # Trim the CQT to only what's necessary for reconstruction
@@ -707,7 +711,7 @@ def icqt(
         y_oct = istft(D_oct, window="ones", hop_length=my_hop, dtype=dtype)
 
         y_oct = audio.resample(
-            y_oct, 1, sr // my_sr, res_type=res_type, scale=False, fix=False
+            y_oct, orig_sr=1, target_sr=sr // my_sr, res_type=res_type, scale=False, fix=False
         )
 
         if y is None:
@@ -715,7 +719,7 @@ def icqt(
         else:
             y[..., : y_oct.shape[-1]] += y_oct
     if length:
-        y = util.fix_length(y, length)
+        y = util.fix_length(y, size=length)
 
     return y
 
@@ -723,6 +727,7 @@ def icqt(
 @cache(level=20)
 def vqt(
     y,
+    *,
     sr=22050,
     hop_length=512,
     fmin=None,
@@ -903,7 +908,12 @@ def vqt(
     alpha = __bpo_to_alpha(bins_per_octave)
 
     lengths, filter_cutoff = filters.wavelet_lengths(
-        freqs, sr=sr, window=window, filter_scale=filter_scale, gamma=gamma, alpha=alpha
+        freqs=freqs,
+        sr=sr,
+        window=window,
+        filter_scale=filter_scale,
+        gamma=gamma,
+        alpha=alpha,
     )
 
     # Determine required resampling quality
@@ -911,7 +921,8 @@ def vqt(
 
     if filter_cutoff > nyquist:
         raise ParameterError(
-            f"Wavelet basis with max frequency={fmax_t} would exceed the Nyquist frequency={nyquist}. Try reducing the number of frequency bins."
+            f"Wavelet basis with max frequency={fmax_t} would exceed the Nyquist frequency={nyquist}. "
+            "Try reducing the number of frequency bins."
         )
 
     auto_resample = False
@@ -993,7 +1004,7 @@ def vqt(
         if my_hop % 2 == 0:
             my_hop //= 2
             my_sr /= 2.0
-            my_y = audio.resample(my_y, 2, 1, res_type=res_type, scale=True)
+            my_y = audio.resample(my_y, orig_sr=2, target_sr=1, res_type=res_type, scale=True)
 
     V = __trim_stack(vqt_resp, n_bins, dtype)
 
@@ -1001,7 +1012,7 @@ def vqt(
         # Recompute lengths here because early downsampling may have changed
         # our sampling rate
         lengths, _ = filters.wavelet_lengths(
-            freqs,
+            freqs=freqs,
             sr=sr,
             window=window,
             filter_scale=filter_scale,
@@ -1032,7 +1043,7 @@ def __vqt_filter_fft(
     """Generate the frequency domain variable-Q filter basis."""
 
     basis, lengths = filters.wavelet(
-        freqs,
+        freqs=freqs,
         sr=sr,
         filter_scale=filter_scale,
         norm=norm,
@@ -1152,7 +1163,7 @@ def __early_downsample(
             )
 
         new_sr = sr / float(downsample_factor)
-        y = audio.resample(y, sr, new_sr, res_type=res_type, scale=True)
+        y = audio.resample(y, orig_sr=sr, target_sr=new_sr, res_type=res_type, scale=True)
 
         # If we're not going to length-scale after CQT, we
         # need to compensate for the downsampling factor here
@@ -1182,6 +1193,7 @@ def __num_two_factors(x):
 
 def griffinlim_cqt(
     C,
+    *,
     n_iter=32,
     sr=22050,
     hop_length=512,

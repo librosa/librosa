@@ -38,6 +38,7 @@ __all__ = [
 
 # -- Spectral features -- #
 def spectral_centroid(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -191,13 +192,14 @@ def spectral_centroid(
 
     if freq.ndim == 1:
         # reshape for broadcasting
-        freq = util.expand_to(freq, S.ndim, axes=-2)
+        freq = util.expand_to(freq, ndim=S.ndim, axes=-2)
 
     # Column-normalize S
     return np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
 
 
 def spectral_bandwidth(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -373,6 +375,7 @@ def spectral_bandwidth(
 
 
 def spectral_contrast(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -573,6 +576,7 @@ def spectral_contrast(
 
 
 def spectral_rolloff(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -734,6 +738,7 @@ def spectral_rolloff(
 
 
 def spectral_flatness(
+    *,
     y=None,
     S=None,
     n_fft=2048,
@@ -864,7 +869,13 @@ def spectral_flatness(
 
 
 def rms(
-    y=None, S=None, frame_length=2048, hop_length=512, center=True, pad_mode="constant"
+    *,
+    y=None,
+    S=None,
+    frame_length=2048,
+    hop_length=512,
+    center=True,
+    pad_mode="constant",
 ):
     """Compute root-mean-square (RMS) value for each frame, either from the
     audio samples ``y`` or from a spectrogram ``S``.
@@ -975,6 +986,7 @@ def rms(
 
 
 def poly_features(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -1128,7 +1140,7 @@ def poly_features(
     return coefficients
 
 
-def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwargs):
+def zero_crossing_rate(y, *, frame_length=2048, hop_length=512, center=True, **kwargs):
     """Compute the zero-crossing rate of an audio time series.
 
     Parameters
@@ -1180,7 +1192,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
         padding[-1] = (int(frame_length // 2), int(frame_length // 2))
         y = np.pad(y, padding, mode="edge")
 
-    y_framed = util.frame(y, frame_length, hop_length)
+    y_framed = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
     kwargs["axis"] = -2
     kwargs.setdefault("pad", False)
@@ -1192,6 +1204,7 @@ def zero_crossing_rate(y, frame_length=2048, hop_length=512, center=True, **kwar
 
 # -- Chroma --#
 def chroma_stft(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -1343,7 +1356,9 @@ def chroma_stft(
         tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
 
     # Get the filter bank
-    chromafb = filters.chroma(sr, n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs)
+    chromafb = filters.chroma(
+        sr=sr, n_fft=n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs
+    )
 
     # Compute raw chroma
     raw_chroma = np.einsum("cf,...ft->...ct", chromafb, S, optimize=True)
@@ -1353,6 +1368,7 @@ def chroma_stft(
 
 
 def chroma_cqt(
+    *,
     y=None,
     sr=22050,
     C=None,
@@ -1496,6 +1512,7 @@ def chroma_cqt(
 
 
 def chroma_cens(
+    *,
     y=None,
     sr=22050,
     C=None,
@@ -1665,7 +1682,7 @@ def chroma_cens(
     return util.normalize(cens, norm=norm, axis=-2)
 
 
-def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
+def tonnetz(*, y=None, sr=22050, chroma=None, **kwargs):
     """Computes the tonal centroid features (tonnetz)
 
     This representation uses the method of [#]_ to project chroma features
@@ -1737,7 +1754,7 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
     ...                                 y_axis='tonnetz', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Tonal Centroids (Tonnetz)')
     >>> ax[0].label_outer()
-    >>> img2 = librosa.display.specshow(librosa.feature.chroma_cqt(y, sr=sr),
+    >>> img2 = librosa.display.specshow(librosa.feature.chroma_cqt(y=y, sr=sr),
     ...                                 y_axis='chroma', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Chroma')
     >>> fig.colorbar(img1, ax=[ax[0]])
@@ -1775,7 +1792,7 @@ def tonnetz(y=None, sr=22050, chroma=None, **kwargs):
 
 # -- Mel spectrogram and MFCCs -- #
 def mfcc(
-    y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm="ortho", lifter=0, **kwargs
+    *, y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm="ortho", lifter=0, **kwargs
 ):
     """Mel-frequency cepstral coefficients (MFCCs)
 
@@ -1871,7 +1888,7 @@ def mfcc(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img = librosa.display.specshow(librosa.power_to_db(S, ref=np.max), 
+    >>> img = librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
     ...                                x_axis='time', y_axis='mel', fmax=8000,
     ...                                ax=ax[0])
     >>> fig.colorbar(img, ax=[ax[0]])
@@ -1903,7 +1920,7 @@ def mfcc(
     if lifter > 0:
         # shape lifter for broadcasting
         LI = np.sin(np.pi * np.arange(1, 1 + n_mfcc, dtype=M.dtype) / lifter)
-        LI = util.expand_to(LI, S.ndim, axes=-2)
+        LI = util.expand_to(LI, ndim=S.ndim, axes=-2)
 
         M *= 1 + (lifter / 2) * LI
         return M
@@ -1916,6 +1933,7 @@ def mfcc(
 
 
 def melspectrogram(
+    *,
     y=None,
     sr=22050,
     S=None,
@@ -2051,6 +2069,6 @@ def melspectrogram(
     )
 
     # Build a Mel filter
-    mel_basis = filters.mel(sr, n_fft, **kwargs)
+    mel_basis = filters.mel(sr=sr, n_fft=n_fft, **kwargs)
 
     return np.einsum("...ft,mf->...mt", S, mel_basis, optimize=True)

@@ -123,6 +123,7 @@ WINDOW_BANDWIDTHS = {
 
 @cache(level=10)
 def mel(
+    *,
     sr,
     n_fft,
     n_mels=128,
@@ -187,7 +188,7 @@ def mel(
 
     Examples
     --------
-    >>> melfb = librosa.filters.mel(22050, 2048)
+    >>> melfb = librosa.filters.mel(sr=22050, n_fft=2048)
     >>> melfb
     array([[ 0.   ,  0.016, ...,  0.   ,  0.   ],
            [ 0.   ,  0.   , ...,  0.   ,  0.   ],
@@ -198,7 +199,7 @@ def mel(
 
     Clip the maximum frequency to 8KHz
 
-    >>> librosa.filters.mel(22050, 2048, fmax=8000)
+    >>> librosa.filters.mel(sr=22050, n_fft=2048, fmax=8000)
     array([[ 0.  ,  0.02, ...,  0.  ,  0.  ],
            [ 0.  ,  0.  , ...,  0.  ,  0.  ],
            ...,
@@ -259,6 +260,7 @@ def mel(
 
 @cache(level=10)
 def chroma(
+    *,
     sr,
     n_fft,
     n_chroma=12,
@@ -327,7 +329,7 @@ def chroma(
     --------
     Build a simple chroma filter bank
 
-    >>> chromafb = librosa.filters.chroma(22050, 4096)
+    >>> chromafb = librosa.filters.chroma(sr=22050, n_fft=4096)
     array([[  1.689e-05,   3.024e-04, ...,   4.639e-17,   5.327e-17],
            [  1.716e-05,   2.652e-04, ...,   2.674e-25,   3.176e-25],
     ...,
@@ -336,7 +338,7 @@ def chroma(
 
     Use quarter-tones instead of semitones
 
-    >>> librosa.filters.chroma(22050, 4096, n_chroma=24)
+    >>> librosa.filters.chroma(sr=22050, n_fft=4096, n_chroma=24)
     array([[  1.194e-05,   2.138e-04, ...,   6.297e-64,   1.115e-63],
            [  1.206e-05,   2.009e-04, ...,   1.546e-79,   2.929e-79],
     ...,
@@ -346,7 +348,7 @@ def chroma(
 
     Equally weight all octaves
 
-    >>> librosa.filters.chroma(22050, 4096, octwidth=None)
+    >>> librosa.filters.chroma(sr=22050, n_fft=4096, octwidth=None)
     array([[  3.036e-01,   2.604e-01, ...,   2.445e-16,   2.809e-16],
            [  3.084e-01,   2.283e-01, ...,   1.409e-24,   1.675e-24],
     ...,
@@ -432,8 +434,9 @@ def __float_window(window_spec):
 
 
 @cache(level=10)
-@deprecated("0.9.0", "1.0")
+@deprecated(version="0.9.0", version_removed="1.0")
 def constant_q(
+    *,
     sr,
     fmin=None,
     n_bins=84,
@@ -525,12 +528,12 @@ def constant_q(
     --------
     Use a shorter window for each filter
 
-    >>> basis, lengths = librosa.filters.constant_q(22050, filter_scale=0.5)
+    >>> basis, lengths = librosa.filters.constant_q(sr=22050, filter_scale=0.5)
 
     Plot one octave of filters in time and frequency
 
     >>> import matplotlib.pyplot as plt
-    >>> basis, lengths = librosa.filters.constant_q(22050)
+    >>> basis, lengths = librosa.filters.constant_q(sr=22050)
     >>> fig, ax = plt.subplots(nrows=2, figsize=(10, 6))
     >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
     >>> for i, (f, n) in enumerate(zip(basis, notes[:12])):
@@ -554,8 +557,8 @@ def constant_q(
 
     # Pass-through parameters to get the filter lengths
     lengths = constant_q_lengths(
-        sr,
-        fmin,
+        sr=sr,
+        fmin=fmin,
         n_bins=n_bins,
         bins_per_octave=bins_per_octave,
         window=window,
@@ -589,16 +592,16 @@ def constant_q(
         max_len = int(np.ceil(max_len))
 
     filters = np.asarray(
-        [util.pad_center(filt, max_len, **kwargs) for filt in filters], dtype=dtype
+        [util.pad_center(filt, size=max_len, **kwargs) for filt in filters], dtype=dtype
     )
 
     return filters, np.asarray(lengths)
 
 
 @cache(level=10)
-@deprecated("0.9.0", "1.0")
+@deprecated(version="0.9.0", version_removed="1.0")
 def constant_q_lengths(
-    sr, fmin, n_bins=84, bins_per_octave=12, window="hann", filter_scale=1, gamma=0
+    *, sr, fmin, n_bins=84, bins_per_octave=12, window="hann", filter_scale=1, gamma=0
 ):
     r"""Return length of each filter in a constant-Q basis.
 
@@ -671,7 +674,7 @@ def constant_q_lengths(
 
 @cache(level=10)
 def wavelet_lengths(
-    freqs, sr=22050, window="hann", filter_scale=1, gamma=0, alpha=None
+    *, freqs, sr=22050, window="hann", filter_scale=1, gamma=0, alpha=None
 ):
     """Return length of each filter in a wavelet basis.
 
@@ -806,6 +809,7 @@ def wavelet_lengths(
 
 @cache(level=10)
 def wavelet(
+    *,
     freqs,
     sr=22050,
     window="hann",
@@ -869,10 +873,10 @@ def wavelet(
     Returns
     -------
     filters : np.ndarray, ``len(filters) == n_bins``
-        ``filters[i]`` is ``i``\ th time-domain CQT basis filter
+        each ``filters[i]`` is a (complex) time-domain filter
 
     lengths : np.ndarray, ``len(lengths) == n_bins``
-        The (fractional) length of each filter
+        The (fractional) length of each filter in samples
 
     Notes
     -----
@@ -891,12 +895,12 @@ def wavelet(
     Create a constant-Q basis
 
     >>> freqs = librosa.cqt_frequencies(n_bins=84, fmin=librosa.note_to_hz('C1'))
-    >>> basis, lengths = librosa.filters.wavelet(freqs, sr=22050)
+    >>> basis, lengths = librosa.filters.wavelet(freqs=freqs, sr=22050)
 
     Plot one octave of filters in time and frequency
 
     >>> import matplotlib.pyplot as plt
-    >>> basis, lengths = librosa.filters.wavelet(freqs, sr=22050)
+    >>> basis, lengths = librosa.filters.wavelet(freqs=freqs, sr=22050)
     >>> fig, ax = plt.subplots(nrows=2, figsize=(10, 6))
     >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
     >>> for i, (f, n) in enumerate(zip(basis, notes[:12])):
@@ -917,7 +921,7 @@ def wavelet(
 
     # Pass-through parameters to get the filter lengths
     lengths, _ = wavelet_lengths(
-        freqs,
+        freqs=freqs,
         sr=sr,
         window=window,
         filter_scale=filter_scale,
@@ -949,7 +953,7 @@ def wavelet(
         max_len = int(np.ceil(max_len))
 
     filters = np.asarray(
-        [util.pad_center(filt, max_len, **kwargs) for filt in filters], dtype=dtype
+        [util.pad_center(filt, size=max_len, **kwargs) for filt in filters], dtype=dtype
     )
 
     return filters, lengths
@@ -958,6 +962,7 @@ def wavelet(
 @cache(level=10)
 def cq_to_chroma(
     n_input,
+    *,
     bins_per_octave=12,
     n_chroma=12,
     fmin=None,
@@ -1133,7 +1138,7 @@ def window_bandwidth(window, n=1000):
 
 
 @cache(level=10)
-def get_window(window, Nx, fftbins=True):
+def get_window(window, Nx, *, fftbins=True):
     """Compute a window function.
 
     This is a wrapper for `scipy.signal.get_window` that additionally
@@ -1382,7 +1387,7 @@ def mr_frequencies(tuning):
 
 
 def semitone_filterbank(
-    center_freqs=None, tuning=0.0, sample_rates=None, flayout="ba", **kwargs
+    *, center_freqs=None, tuning=0.0, sample_rates=None, flayout="ba", **kwargs
 ):
     r"""Construct a multi-rate bank of infinite-impulse response (IIR)
     band-pass filters at user-defined center frequencies and sample rates.
@@ -1478,6 +1483,7 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
 
 
 def window_sumsquare(
+    *,
     window,
     n_frames,
     hop_length=512,
@@ -1522,9 +1528,9 @@ def window_sumsquare(
     at different hop lengths:
 
     >>> n_frames = 50
-    >>> wss_256 = librosa.filters.window_sumsquare('hann', n_frames, hop_length=256)
-    >>> wss_512 = librosa.filters.window_sumsquare('hann', n_frames, hop_length=512)
-    >>> wss_1024 = librosa.filters.window_sumsquare('hann', n_frames, hop_length=1024)
+    >>> wss_256 = librosa.filters.window_sumsquare(window='hann', n_frames=n_frames, hop_length=256)
+    >>> wss_512 = librosa.filters.window_sumsquare(window='hann', n_frames=n_frames, hop_length=512)
+    >>> wss_1024 = librosa.filters.window_sumsquare(window='hann', n_frames=n_frames, hop_length=1024)
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharey=True)
@@ -1544,7 +1550,7 @@ def window_sumsquare(
     # Compute the squared window at the desired length
     win_sq = get_window(window, win_length)
     win_sq = util.normalize(win_sq, norm=norm) ** 2
-    win_sq = util.pad_center(win_sq, n_fft)
+    win_sq = util.pad_center(win_sq, size=n_fft)
 
     # Fill the envelope
     __window_ss_fill(x, win_sq, n_frames, hop_length)
@@ -1553,7 +1559,7 @@ def window_sumsquare(
 
 
 @cache(level=10)
-def diagonal_filter(window, n, slope=1.0, angle=None, zero_mean=False):
+def diagonal_filter(window, n, *, slope=1.0, angle=None, zero_mean=False):
     """Build a two-dimensional diagonal filter.
 
     This is primarily used for smoothing recurrence or self-similarity matrices.

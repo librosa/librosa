@@ -27,7 +27,9 @@ from .util.exceptions import ParameterError
 __all__ = ["decompose", "hpss", "nn_filter"]
 
 
-def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kwargs):
+def decompose(
+    S, *, n_components=None, transformer=None, sort=False, fit=True, **kwargs
+):
     """Decompose a feature matrix.
 
     Given a spectrogram ``S``, produce a decomposition into ``components``
@@ -203,7 +205,7 @@ def decompose(S, n_components=None, transformer=None, sort=False, fit=True, **kw
 
 
 @cache(level=30)
-def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
+def hpss(S, *, kernel_size=31, power=2.0, mask=False, margin=1.0):
     """Median-filtering harmonic percussive source separation (HPSS).
 
     If ``margin = 1.0``, decomposes an input spectrogram ``S = H + P``
@@ -398,7 +400,7 @@ def hpss(S, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
 
 @cache(level=30)
-def nn_filter(S, rec=None, aggregate=None, axis=-1, **kwargs):
+def nn_filter(S, *, rec=None, aggregate=None, axis=-1, **kwargs):
     """Filtering by nearest-neighbors.
 
     Each data point (e.g, spectrogram column) is replaced
