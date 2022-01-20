@@ -18,8 +18,7 @@ def moved(*, moved_from, version, version_removed):
 
     def __wrapper(func, *args, **kwargs):
         """Warn the user, and then proceed."""
-        code = func.__code__
-        warnings.warn_explicit(
+        warnings.warn(
             "{:s}\n\tThis function was moved to '{:s}.{:s}' in "
             "librosa version {:s}."
             "\n\tThis alias will be removed in librosa version "
@@ -27,8 +26,7 @@ def moved(*, moved_from, version, version_removed):
                 moved_from, func.__module__, func.__name__, version, version_removed
             ),
             category=DeprecationWarning,
-            filename=code.co_filename,
-            lineno=code.co_firstlineno + 1,
+            stacklevel=3  # Would be 2, but the decorator adds a level
         )
         return func(*args, **kwargs)
 
@@ -43,15 +41,13 @@ def deprecated(*, version, version_removed):
 
     def __wrapper(func, *args, **kwargs):
         """Warn the user, and then proceed."""
-        code = func.__code__
-        warnings.warn_explicit(
+        warnings.warn(
             "{:s}.{:s}\n\tDeprecated as of librosa version {:s}."
             "\n\tIt will be removed in librosa version {:s}.".format(
                 func.__module__, func.__name__, version, version_removed
             ),
             category=DeprecationWarning,
-            filename=code.co_filename,
-            lineno=code.co_firstlineno + 1,
+            stacklevel=3  # Would be 2, but the decorator adds a level
         )
         return func(*args, **kwargs)
 

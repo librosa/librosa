@@ -171,7 +171,8 @@ def load(
     except RuntimeError as exc:
         # If soundfile failed, try audioread instead
         if isinstance(path, (str, pathlib.PurePath)):
-            warnings.warn("PySoundFile failed. Trying audioread instead.")
+            warnings.warn("PySoundFile failed. Trying audioread instead.",
+                          stacklevel=2)
             y, sr_native = __audioread_load(path, offset, duration, dtype)
         else:
             raise (exc)
