@@ -253,6 +253,7 @@ def mel(
             "Some channels will produce empty responses. "
             "Try increasing your sampling rate (and fmax) or "
             "reducing n_mels.",
+            stacklevel=2,
         )
 
     return weights
