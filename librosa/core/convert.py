@@ -1527,10 +1527,10 @@ def frequency_weighting(frequencies, *, kind="A", **kwargs):
     """
     if isinstance(kind, str):
         kind = kind.upper()
-    return WEIGHTING_FUNCTIONS[kind](frequencies, **kw)
+    return WEIGHTING_FUNCTIONS[kind](frequencies, **kwargs)
 
 
-def multi_frequency_weighting(frequencies, *, kinds="ZAC", **kw):
+def multi_frequency_weighting(frequencies, *, kinds="ZAC", **kwargs):
     """Compute multiple weightings of a set of frequencies.
 
     Parameters
@@ -1539,7 +1539,7 @@ def multi_frequency_weighting(frequencies, *, kinds="ZAC", **kw):
         One or more frequencies (in Hz)
     kinds : list or tuple or str
         An iterable of weighting kinds. e.g. `('Z', 'B')`, `'ZAD'`, `'C'`
-    **kw : keywords to pass to the weighting function.
+    **kwargs : keywords to pass to the weighting function.
 
     Returns
     -------
@@ -1572,7 +1572,7 @@ def multi_frequency_weighting(frequencies, *, kinds="ZAC", **kw):
     >>> ax.legend()
     """
     return np.stack(
-        [frequency_weighting(frequencies, kind=k, **kw) for k in kinds], axis=0
+        [frequency_weighting(frequencies, kind=k, **kwargs) for k in kinds], axis=0
     )
 
 
