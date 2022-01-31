@@ -50,9 +50,8 @@ def rename_kw(
     else:
         stack = inspect.stack()
         dep_func = stack[1]
-        caller = stack[2]
 
-        warnings.warn_explicit(
+        warnings.warn(
             "{:s}() keyword argument '{:s}' has been "
             "renamed to '{:s}' in version {:}."
             "\n\tThis alias will be removed in version "
@@ -60,8 +59,7 @@ def rename_kw(
                 dep_func[3], old_name, new_name, version_deprecated, version_removed
             ),
             category=DeprecationWarning,
-            filename=caller[1],
-            lineno=caller[2],
+            stacklevel=3,
         )
 
         return old_value
