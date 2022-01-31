@@ -223,7 +223,7 @@ def stft(
                 "n_fft={} is too small for input signal of length={}".format(
                     n_fft, y.shape[-1]
                 ),
-                stacklevel=2
+                stacklevel=2,
             )
 
         padding = [(0, 0) for _ in range(y.ndim)]
@@ -1696,7 +1696,7 @@ def amplitude_to_db(S, *, ref=1.0, amin=1e-5, top_db=80.0):
             "amplitude_to_db was called on complex input so phase "
             "information will be discarded. To suppress this warning, "
             "call amplitude_to_db(np.abs(S)) instead.",
-            stacklevel=2
+            stacklevel=2,
         )
 
     magnitude = np.abs(S)
@@ -2229,7 +2229,7 @@ def pcen(
             "pcen was called on complex input so phase "
             "information will be discarded. To suppress this warning, "
             "call pcen(np.abs(D)) instead.",
-            stacklevel=2
+            stacklevel=2,
         )
         S = np.abs(S)
 
@@ -2430,7 +2430,7 @@ def griffinlim(
         warnings.warn(
             "Griffin-Lim with momentum={} > 1 can be unstable. "
             "Proceed with caution!".format(momentum),
-            stacklevel=2
+            stacklevel=2,
         )
     elif momentum < 0:
         raise ParameterError(

@@ -852,7 +852,7 @@ def specshow(
     if np.issubdtype(data.dtype, np.complexfloating):
         warnings.warn(
             "Trying to display complex-valued input. " "Showing magnitude instead.",
-            stacklevel=2
+            stacklevel=2,
         )
         data = np.abs(data)
 

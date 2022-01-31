@@ -160,7 +160,9 @@ def pitch_tuning(frequencies, *, resolution=0.01, bins_per_octave=12):
     frequencies = frequencies[frequencies > 0]
 
     if not np.any(frequencies):
-        warnings.warn("Trying to estimate tuning from empty frequency set.", stacklevel=2)
+        warnings.warn(
+            "Trying to estimate tuning from empty frequency set.", stacklevel=2
+        )
         return 0.0
 
     # Compute the residual relative to the number of bins
