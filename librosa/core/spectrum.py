@@ -557,7 +557,7 @@ def __reassign_frequencies(
         Short-time Fourier transform
 
     Warns
-    --------
+    -----
     RuntimeWarning
         Frequencies with zero support will produce a divide-by-zero warning and
         will be returned as `np.nan`.
@@ -721,7 +721,7 @@ def __reassign_times(
         Short-time Fourier transform
 
     Warns
-    --------
+    -----
     RuntimeWarning
         Time estimates with zero support will produce a divide-by-zero warning
         and will be returned as `np.nan`.
@@ -964,7 +964,7 @@ def reassigned_spectrogram(
             ``mags[..., f, t]`` is the magnitude for bin ``f``, frame ``t``.
 
     Warns
-    --------
+    -----
     RuntimeWarning
         Frequency or time estimates with zero support will produce a
         divide-by-zero warning, and will be returned as `np.nan` unless

@@ -230,7 +230,7 @@ def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0
         An approximate Mel power spectrum recovered from ``mfcc``
 
     Warns
-    --------
+    -----
     UserWarning
         due to critical values in lifter array that invokes underflow.
 
