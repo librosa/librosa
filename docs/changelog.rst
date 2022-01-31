@@ -2,8 +2,12 @@
 Changelog
 *********
 
+v0.9
+====
+
 v0.9.0
-======
+------
+
 2022-02-??
 
 The main feature of this release is (nearly) full support for arbitrary multi-channel processing, along with several speed and stability enhancements.
@@ -35,7 +39,7 @@ Bug fixes
 
 Documentation
     - `#1328`_ Retired the `examples/` folder and expanded the `Advanced Examples` gallery. *Brian McFee*
-    - `#1427`_ Fixed docstring for `librosa.core.reassigned_spectrogram`. *Fabian Keller*
+    - `#1427`_ Fixed docstring for `librosa.reassigned_spectrogram`. *Fabian Keller*
 
 Other changes
     - `#418`_ `librosa.cqt` now supports arbitrary hop lengths. *Brian McFee*
