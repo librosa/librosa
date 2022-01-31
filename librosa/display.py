@@ -851,7 +851,8 @@ def specshow(
 
     if np.issubdtype(data.dtype, np.complexfloating):
         warnings.warn(
-            "Trying to display complex-valued input. " "Showing magnitude instead."
+            "Trying to display complex-valued input. " "Showing magnitude instead.",
+            stacklevel=2
         )
         data = np.abs(data)
 
@@ -1240,7 +1241,8 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, sr=22050, **_kwargs):
     if np.any(freqs > 0.5 * sr):
         warnings.warn(
             "Frequency axis exceeds Nyquist. "
-            "Did you remember to set all spectrogram parameters in specshow?"
+            "Did you remember to set all spectrogram parameters in specshow?",
+            stacklevel=4,
         )
 
     return freqs

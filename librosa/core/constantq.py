@@ -1381,7 +1381,8 @@ def griffinlim_cqt(
     if momentum > 1:
         warnings.warn(
             "Griffin-Lim with momentum={} > 1 can be unstable. "
-            "Proceed with caution!".format(momentum)
+            "Proceed with caution!".format(momentum),
+            stacklevel=2
         )
     elif momentum < 0:
         raise ParameterError(

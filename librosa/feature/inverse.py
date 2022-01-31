@@ -251,6 +251,7 @@ def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0
             warnings.warn(
                 message="lifter array includes critial values that may invoke underflow.",
                 category=UserWarning,
+                stacklevel=2,
             )
 
         # lifter mfcc values
