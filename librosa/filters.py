@@ -461,6 +461,9 @@ def constant_q(
     Frequencies are spaced geometrically, increasing by a factor of
     ``(2**(1./bins_per_octave))`` at each successive band.
 
+    .. warning:: This function is deprecated as of v0.9 and will be removed in 1.0.
+        See `librosa.filters.wavelet`.
+
     Parameters
     ----------
     sr : number > 0 [scalar]
@@ -604,6 +607,9 @@ def constant_q_lengths(
     *, sr, fmin, n_bins=84, bins_per_octave=12, window="hann", filter_scale=1, gamma=0
 ):
     r"""Return length of each filter in a constant-Q basis.
+
+    .. warning:: This function is deprecated as of v0.9 and will be removed in 1.0.
+        See `librosa.filters.wavelet_lengths`.
 
     Parameters
     ----------

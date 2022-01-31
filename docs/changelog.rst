@@ -2,6 +2,87 @@
 Changelog
 *********
 
+v0.9.0
+======
+2022-02-??
+
+The main feature of this release is (nearly) full support for arbitrary multi-channel processing, along with several speed and stability enhancements.
+A detailed list of changes is provided below.
+
+New Features
+    - `#1130`_ Nearly full support for multi-channel processing. *Brian McFee, Daniel Faronbi, Iran Roman*
+    - `#1331`_ Option to disable unicode characters in display functions. *Brian McFee*
+    - `#1441`_ Significantly expanded the library of example audio clips. *Brian McFee*
+
+API changes
+    - `#1114`_ Most functions now require keyword arguments. *Brian McFee*
+    - `#1382`_ The default padding mode for most functions (including STFT) is now zero-padding. *Brian McFee*
+    - `#1418`_ `librosa.load` and `librosa.stream` can now operate directly on open `soundfile` objects. *Brian McFee*
+    - `#1414`_ `librosa.display.specshow` now uses centered coordinate grids. *Brian McFee*
+    - `#1398`_ `librosa.iirt` now exposes API control over resampling modes. *Brian McFee*
+    - `#1416`_ Removed deprecated functions `librosa.display.waveplot` and `librosa.util.example_audio_file`. *Brian McFee*
+
+Bug fixes
+    - `#1387`_ Fixed errors in support of odd frame lengths in various functions. *Brian McFee*
+    - `#1273`_ Minor corrections to constants in perceptual weighting functions. *Brian McFee*
+    - `#1350`_ Removed uses of deprecated numpy numerical types. *Brian McFee*
+    - `#1361`_ Maximum frequency is now correctly inferred as Nyquist in onset strength calculation. *Brian McFee*
+    - `#1362`_ `librosa.effects.deemphasis` no longer modifies the input signal in-place. *Brian McFee*
+    - `#1375`_ `librosa.util.frame` now correctly works for arbitrary memory layouts and numbers of axes. *Brian McFee*
+    - `#1425`_ Fixed an off-by-one error in `librosa.yin` and `librosa.pyin`. *@philstem, Brian McFee*
+    - `#1430`_ Removed unnecessary `__all__` specifications to better support static analysis. *Fabian Keller*
+    - `#1407`_ Corrected a normalization error in inverse CQT. *Brian McFee, Vincent Lostanlen*
+
+Documentation
+    - `#1328`_ Retired the `examples/` folder and expanded the `Advanced Examples` gallery. *Brian McFee*
+    - `#1427`_ Fixed docstring for `librosa.core.reassigned_spectrogram`. *Fabian Keller*
+
+Other changes
+    - `#418`_ `librosa.cqt` now supports arbitrary hop lengths. *Brian McFee*
+    - `#1405`_ Improvements and generalizations to constant-Q/variable-Q basis construction. *Brian McFee, Vincent Lostanlen*
+    - `#1324`_ Added a run-time check for minimally supported matplotlib versions. *Brian McFee*
+    - `#1325`_ Enhanced continuous integration testing for oldest and newest environments. *Brian McFee*
+    - `#1358`_ Harmonic interpolation now preemptively detects repeated values that produce unstable estimates. *Brian McFee*
+    - `#1432`_ Specify stack levels in warnings to provide more helpful warning messages. *Brian McFee*
+    - `#1404`_, `#1406`_ Improved packaging configurations. *Alex Malins*
+    - `#1384`_ Fixed package configuration error for documentation builds. *Adam Weiss*
+
+Deprecations
+    - `#1389`_ The `mono` parameter of `librosa.util.valid_audio` is deprecated and the default is now set to `False`. *Brian McFee*
+    - `#1405`_ CQT filter-bank constructors `librosa.filters.constant_q` are now deprecated in favor of `librosa.filters.wavelet`. *Brian McFee, Vincent Lostanlen*
+
+
+.. _#418: https://github.com/librosa/librosa/issues/418
+.. _#1114: https://github.com/librosa/librosa/issues/1114
+.. _#1130: https://github.com/librosa/librosa/issues/1130
+.. _#1273: https://github.com/librosa/librosa/issues/1273
+.. _#1324: https://github.com/librosa/librosa/issues/1324
+.. _#1325: https://github.com/librosa/librosa/issues/1325
+.. _#1328: https://github.com/librosa/librosa/issues/1328
+.. _#1331: https://github.com/librosa/librosa/issues/1331
+.. _#1350: https://github.com/librosa/librosa/issues/1350
+.. _#1358: https://github.com/librosa/librosa/issues/1358
+.. _#1361: https://github.com/librosa/librosa/issues/1361
+.. _#1362: https://github.com/librosa/librosa/issues/1362
+.. _#1375: https://github.com/librosa/librosa/issues/1375
+.. _#1382: https://github.com/librosa/librosa/issues/1382
+.. _#1384: https://github.com/librosa/librosa/issues/1384
+.. _#1387: https://github.com/librosa/librosa/issues/1387
+.. _#1389: https://github.com/librosa/librosa/issues/1389
+.. _#1398: https://github.com/librosa/librosa/issues/1398
+.. _#1404: https://github.com/librosa/librosa/issues/1404
+.. _#1405: https://github.com/librosa/librosa/issues/1405
+.. _#1406: https://github.com/librosa/librosa/issues/1406
+.. _#1407: https://github.com/librosa/librosa/issues/1407
+.. _#1414: https://github.com/librosa/librosa/issues/1414
+.. _#1416: https://github.com/librosa/librosa/issues/1416
+.. _#1418: https://github.com/librosa/librosa/issues/1418
+.. _#1425: https://github.com/librosa/librosa/issues/1425
+.. _#1427: https://github.com/librosa/librosa/issues/1427
+.. _#1430: https://github.com/librosa/librosa/issues/1430
+.. _#1432: https://github.com/librosa/librosa/issues/1432
+.. _#1441: https://github.com/librosa/librosa/issues/1441
+
 v0.8
 ====
 
