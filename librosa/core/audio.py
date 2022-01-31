@@ -76,7 +76,7 @@ def load(
         On the contrary, if the codec is not supported by `soundfile`
         (for example, MP3), then `path` must be a file path (string or `pathlib.Path`).
 
-    sr   : number > 0 [scalar]
+    sr : number > 0 [scalar]
         target sampling rate
 
         'None' uses the native sampling rate
@@ -106,15 +106,12 @@ def load(
 
            See :ref:`ioformats` for alternate loading methods.
 
-
     Returns
     -------
-    y    : np.ndarray [shape=(n,) or (..., n)]
+    y : np.ndarray [shape=(n,) or (..., n)]
         audio time series. Multi-channel is supported.
-
-    sr   : number > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of ``y``
-
 
     Examples
     --------
@@ -171,8 +168,7 @@ def load(
     except RuntimeError as exc:
         # If soundfile failed, try audioread instead
         if isinstance(path, (str, pathlib.PurePath)):
-            warnings.warn("PySoundFile failed. Trying audioread instead.",
-                          stacklevel=2)
+            warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
             y, sr_native = __audioread_load(path, offset, duration, dtype)
         else:
             raise (exc)
@@ -535,7 +531,7 @@ def resample(
         Scale the resampled signal so that ``y`` and ``y_hat`` have approximately
         equal total energy.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         If ``fix==True``, additional keyword arguments to pass to
         `librosa.util.fix_length`.
 
@@ -668,13 +664,13 @@ def get_duration(
         up to the frame resolution. If high precision is required,
         it is better to use the audio time series directly.
 
-    n_fft       : int > 0 [scalar]
+    n_fft : int > 0 [scalar]
         FFT window size for ``S``
 
-    hop_length  : int > 0 [ scalar]
+    hop_length : int > 0 [ scalar]
         number of audio samples between columns of ``S``
 
-    center  : boolean
+    center : boolean
         - If ``True``, ``S[:, t]`` is centered at ``y[t * hop_length]``
         - If ``False``, then ``S[:, t]`` begins at ``y[t * hop_length]``
 
@@ -775,11 +771,9 @@ def autocorrelate(y, *, max_size=None, axis=-1):
     ----------
     y : np.ndarray
         array to autocorrelate
-
-    max_size  : int > 0 or None
+    max_size : int > 0 or None
         maximum correlation lag.
         If unspecified, defaults to ``y.shape[axis]`` (unbounded)
-
     axis : int
         The axis along which to autocorrelate.
         By default, the last axis (-1) is taken.
@@ -860,10 +854,8 @@ def lpc(y, *, order, axis=-1):
     ----------
     y : np.ndarray [shape=(..., n)]
         Time series to fit. Multi-channel is supported..
-
     order : int > 0
         Order of the linear filter
-
     axis : int
         Axis along which to compute the coefficients
 
@@ -881,7 +873,7 @@ def lpc(y, *, order, axis=-1):
     FloatingPointError
         - If ``y`` is ill-conditioned
 
-    See also
+    See Also
     --------
     scipy.signal.lfilter
 
@@ -1034,7 +1026,6 @@ def zero_crossings(
     If ``y`` is multi-dimensional, then zero-crossings are computed along
     the specified ``axis``.
 
-
     Parameters
     ----------
     y : np.ndarray
@@ -1174,29 +1165,21 @@ def clicks(
     ----------
     times : np.ndarray or None
         times to place clicks, in seconds
-
     frames : np.ndarray or None
         frame indices to place clicks
-
     sr : number > 0
         desired sampling rate of the output signal
-
     hop_length : int > 0
         if positions are specified by ``frames``, the number of samples between frames.
-
     click_freq : float > 0
         frequency (in Hz) of the default click signal.  Default is 1KHz.
-
     click_duration : float > 0
         duration (in seconds) of the default click signal.  Default is 100ms.
-
     click : np.ndarray or None
         (optional) click signal sample to use instead of the default click.
         Multi-channel is supported.
-
     length : int > 0
         desired number of samples in the output signal
-
 
     Returns
     -------
@@ -1204,13 +1187,11 @@ def clicks(
         Synthesized click signal.
         This will be monophonic by default, or match the number of channels to a provided ``click`` signal.
 
-
     Raises
     ------
     ParameterError
         - If neither ``times`` nor ``frames`` are provided.
         - If any of ``click_freq``, ``click_duration``, or ``length`` are out of range.
-
 
     Examples
     --------
@@ -1308,36 +1289,29 @@ def tone(frequency, *, sr=22050, length=None, duration=None, phi=None):
     ----------
     frequency : float > 0
         frequency
-
     sr : number > 0
         desired sampling rate of the output signal
-
     length : int > 0
         desired number of samples in the output signal.
         When both ``duration`` and ``length`` are defined,
         ``length`` takes priority.
-
     duration : float > 0
         desired duration in seconds.
         When both ``duration`` and ``length`` are defined,
         ``length`` takes priority.
-
     phi : float or None
         phase offset, in radians. If unspecified, defaults to ``-np.pi * 0.5``.
-
 
     Returns
     -------
     tone_signal : np.ndarray [shape=(length,), dtype=float64]
         Synthesized pure sine tone signal
 
-
     Raises
     ------
     ParameterError
         - If ``frequency`` is not provided.
         - If neither ``length`` nor ``duration`` are provided.
-
 
     Examples
     --------
@@ -1409,12 +1383,10 @@ def chirp(*, fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi
         phase offset, in radians.
         If unspecified, defaults to ``-np.pi * 0.5``.
 
-
     Returns
     -------
     chirp_signal : np.ndarray [shape=(length,), dtype=float64]
         Synthesized chirp signal
-
 
     Raises
     ------
@@ -1422,11 +1394,9 @@ def chirp(*, fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi
         - If either ``fmin`` or ``fmax`` are not provided.
         - If neither ``length`` nor ``duration`` are provided.
 
-
     See Also
     --------
     scipy.signal.chirp
-
 
     Examples
     --------
@@ -1489,7 +1459,6 @@ def mu_compress(x, *, mu=255, quantize=True):
     is calculated by::
 
         sign(x) * ln(1 + mu * abs(x)) /  ln(1 + mu)
-
 
     Parameters
     ----------
@@ -1590,11 +1559,9 @@ def mu_expand(x, *, mu=255.0, quantize=True):
     x : np.ndarray
         The compressed signal.
         If ``quantize=True``, values must be in the range [-1, +1].
-
     mu : positive number
         The compression parameter.  Values of the form ``2**n - 1``
         (e.g., 15, 31, 63, etc.) are most common.
-
     quantize : boolean
         If ``True``, the input is assumed to be quantized to
         ``1 + mu`` distinct integer values.

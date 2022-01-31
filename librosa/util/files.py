@@ -55,12 +55,10 @@ def example(key, *, hq=False):
     >>> os.environ['LIBROSA_DATA_DIR'] = '/path/to/store/data'
     >>> import librosa
 
-
     Parameters
     ----------
     key : str
         The identifier for the track to load
-
     hq : bool
         If ``True``, return the high-quality version of the recording.
         If ``False``, return the 22KHz mono version of the recording.

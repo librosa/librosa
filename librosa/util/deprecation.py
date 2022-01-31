@@ -23,14 +23,11 @@ def rename_kw(
     old_name : str
     old_value
         The name and value of the old argument
-
     new_name : str
     new_value
         The name and value of the new argument
-
     version_deprecated : str
         The version at which the old name became deprecated
-
     version_removed : str
         The version at which the old name will be removed
 
