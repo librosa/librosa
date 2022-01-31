@@ -38,7 +38,6 @@ def decompose(
     By default, this is done with with non-negative matrix factorization (NMF),
     but any `sklearn.decomposition`-type object will work.
 
-
     Parameters
     ----------
     S : np.ndarray [shape=(..., n_features, n_samples), dtype=float]
@@ -92,18 +91,15 @@ def decompose(
         If `False`, components are assumed to be pre-computed and stored
         in ``transformer``, and are not changed.
 
-    kwargs : Additional keyword arguments to the default transformer
+    **kwargs : Additional keyword arguments to the default transformer
         `sklearn.decomposition.NMF`
-
 
     Returns
     -------
     components: np.ndarray [shape=(..., n_features, n_components)]
         matrix of components (basis elements).
-
     activations: np.ndarray [shape=(n_components, n_samples)]
         transformed matrix/activation matrix
-
 
     Raises
     ------
@@ -112,11 +108,9 @@ def decompose(
 
         if the input array is multi-channel and ``sort=True`` is specified.
 
-
     See Also
     --------
     sklearn.decomposition : SciKit-Learn matrix decomposition modules
-
 
     Examples
     --------
@@ -130,7 +124,6 @@ def decompose(
 
     >>> comps, acts = librosa.decompose.decompose(S, n_components=16,
     ...                                           sort=True)
-
 
     Or with sparse dictionary learning
 
@@ -254,7 +247,6 @@ def hpss(S, *, kernel_size=31, power=2.0, mask=False, margin=1.0):
         Components can be recovered by multiplying ``S * mask_H``
         or ``S * mask_P``.
 
-
     margin : float or tuple (margin_harmonic, margin_percussive)
         margin size(s) for the masks (as described in [2]_)
 
@@ -267,10 +259,8 @@ def hpss(S, *, kernel_size=31, power=2.0, mask=False, margin=1.0):
     -------
     harmonic : np.ndarray [shape=(..., d, n)]
         harmonic component (or mask)
-
     percussive : np.ndarray [shape=(..., d, n)]
         percussive component (or mask)
-
 
     See Also
     --------
@@ -306,7 +296,6 @@ def hpss(S, *, kernel_size=31, power=2.0, mask=False, margin=1.0):
     >>> ax[2].set(title='Percussive power spectrogram')
     >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
 
-
     Or with a narrower horizontal filter
 
     >>> H, P = librosa.decompose.hpss(D, kernel_size=(13, 31))
@@ -336,7 +325,6 @@ def hpss(S, *, kernel_size=31, power=2.0, mask=False, margin=1.0):
     >>> y_harm = librosa.istft(H)
     >>> y_perc = librosa.istft(P)
     >>> y_resi = librosa.istft(R)
-
 
     Get a more isolated percussive component by widening its margin
 
@@ -441,11 +429,10 @@ def nn_filter(S, *, rec=None, aggregate=None, axis=-1, **kwargs):
         For all other aggregation functions, all neighbors
         are treated equally.
 
-
     axis : int
         The axis along which to filter (by default, columns)
 
-    kwargs
+    **kwargs
         Additional keyword arguments provided to
         `librosa.segment.recurrence_matrix` if ``rec`` is not provided
 
@@ -459,21 +446,18 @@ def nn_filter(S, *, rec=None, aggregate=None, axis=-1, **kwargs):
     ParameterError
         if ``rec`` is provided and its shape is incompatible with ``S``.
 
-    See also
+    See Also
     --------
     decompose
     hpss
     librosa.segment.recurrence_matrix
 
-
     Notes
     -----
     This function caches at level 30.
 
-
     Examples
     --------
-
     De-noise a chromagram by non-local median filtering.
     By default this would use euclidean distance to select neighbors,
     but this can be overridden directly by setting the ``metric`` parameter.
@@ -549,13 +533,10 @@ def __nn_filter_helper(R_data, R_indices, R_ptr, S, aggregate):
     ----------
     R_data, R_indices, R_ptr : np.ndarrays
         The ``data``, ``indices``, and ``indptr`` of a scipy.sparse matrix
-
     S : np.ndarray
         The observation data to filter
-
     aggregate : callable
         The aggregation operator
-
 
     Returns
     -------

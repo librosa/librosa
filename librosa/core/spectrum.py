@@ -67,7 +67,6 @@ def stft(
     The integers ``t`` and ``f`` can be converted to physical units by means
     of the utility functions `frames_to_sample` and `fft_frequencies`.
 
-
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)], real-valued
@@ -143,29 +142,23 @@ def stft(
 
         .. see also:: `numpy.pad`
 
-
     Returns
     -------
     D : np.ndarray [shape=(..., 1 + n_fft/2, n_frames), dtype=dtype]
         Complex-valued matrix of short-term Fourier transform
         coefficients.
 
-
     See Also
     --------
     istft : Inverse STFT
-
     reassigned_spectrogram : Time-frequency reassigned spectrogram
-
 
     Notes
     -----
     This function caches at level 20.
 
-
     Examples
     --------
-
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> S = np.abs(librosa.stft(y))
     >>> S
@@ -180,11 +173,9 @@ def stft(
 
     >>> S_left = librosa.stft(y, center=False)
 
-
     Use a shorter hop length
 
     >>> D_short = librosa.stft(y, hop_length=64)
-
 
     Display a spectrogram
 
@@ -223,7 +214,7 @@ def stft(
                 "n_fft={} is too small for input signal of length={}".format(
                     n_fft, y.shape[-1]
                 ),
-                stacklevel=2
+                stacklevel=2,
             )
 
         padding = [(0, 0) for _ in range(y.ndim)]
@@ -552,12 +543,11 @@ def __reassign_frequencies(
     freqs : np.ndarray [shape=(..., 1 + n_fft/2, t), dtype=real]
         Instantaneous frequencies:
         ``freqs[f, t]`` is the frequency for bin ``f``, frame ``t``.
-
     S : np.ndarray [shape=(..., 1 + n_fft/2, t), dtype=complex]
         Short-time Fourier transform
 
     Warns
-    --------
+    -----
     RuntimeWarning
         Frequencies with zero support will produce a divide-by-zero warning and
         will be returned as `np.nan`.
@@ -716,12 +706,11 @@ def __reassign_times(
     times : np.ndarray [shape=(..., 1 + n_fft/2, t), dtype=real]
         Reassigned times:
         ``times[f, t]`` is the time for bin ``f``, frame ``t``.
-
     S : np.ndarray [shape=(..., 1 + n_fft/2, t), dtype=complex]
         Short-time Fourier transform
 
     Warns
-    --------
+    -----
     RuntimeWarning
         Time estimates with zero support will produce a divide-by-zero warning
         and will be returned as `np.nan`.
@@ -964,7 +953,7 @@ def reassigned_spectrogram(
             ``mags[..., f, t]`` is the magnitude for bin ``f``, frame ``t``.
 
     Warns
-    --------
+    -----
     RuntimeWarning
         Frequency or time estimates with zero support will produce a
         divide-by-zero warning, and will be returned as `np.nan` unless
@@ -1123,25 +1112,20 @@ def magphase(D, *, power=1):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that ``D = S * P``.
 
-
     Parameters
     ----------
     D : np.ndarray [shape=(..., d, t), dtype=complex]
         complex-valued spectrogram
-
     power : float > 0
         Exponent for the magnitude spectrogram,
         e.g., 1 for energy, 2 for power, etc.
-
 
     Returns
     -------
     D_mag : np.ndarray [shape=(..., d, t), dtype=real]
         magnitude of ``D``, raised to ``power``
-
     D_phase : np.ndarray [shape=(..., d, t), dtype=complex]
         ``exp(1.j * phi)`` where ``phi`` is the phase of ``D``
-
 
     Examples
     --------
@@ -1202,7 +1186,6 @@ def phase_vocoder(D, *, rate, hop_length=None, n_fft=None):
 
     .. [#] https://breakfastquay.com/rubberband/
 
-
     Examples
     --------
     >>> # Play at double speed
@@ -1222,7 +1205,7 @@ def phase_vocoder(D, *, rate, hop_length=None, n_fft=None):
     D : np.ndarray [shape=(..., d, t), dtype=complex]
         STFT matrix
 
-    rate :  float > 0 [scalar]
+    rate : float > 0 [scalar]
         Speed-up factor: ``rate > 1`` is faster, ``rate < 1`` is slower.
 
     hop_length : int > 0 [scalar] or None
@@ -1332,44 +1315,34 @@ def iirt(
            "Information Retrieval for Music and Motion."
            Springer Verlag. 2007.
 
-
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-
     sr : number > 0 [scalar]
         sampling rate of ``y``
-
     win_length : int > 0, <= n_fft
         Window length.
-
     hop_length : int > 0 [scalar]
         Hop length, number samples between subsequent frames.
         If not supplied, defaults to ``win_length // 4``.
-
     center : boolean
         - If ``True``, the signal ``y`` is padded so that frame
           ``D[..., :, t]`` is centered at ``y[t * hop_length]``.
         - If ``False``, then `D[..., :, t]`` begins at ``y[t * hop_length]``
-
     tuning : float [scalar]
         Tuning deviation from A440 in fractions of a bin.
-
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, this function uses zero padding.
-
     flayout : string
         - If `sos` (default), a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
         - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
-
     res_type : string
         The resampling mode.  See `librosa.resample` for details.
-
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional arguments for `librosa.filters.semitone_filterbank`
         (e.g., could be used to provide another set of ``center_freqs`` and ``sample_rates``).
 
@@ -1540,7 +1513,6 @@ def power_to_db(S, *, ref=1.0, amin=1e-10, top_db=80.0):
     -----
     This function caches at level 30.
 
-
     Examples
     --------
     Get a power spectrogram from a waveform ``y``
@@ -1571,7 +1543,6 @@ def power_to_db(S, *, ref=1.0, amin=1e-10, top_db=80.0):
            ...,
            [16.578, 16.578, ..., 16.578, 16.578],
            [16.578, 16.578, ..., 16.578, 16.578]], dtype=float32)
-
 
     And plot the results
 
@@ -1633,7 +1604,6 @@ def db_to_power(S_db, *, ref=1.0):
     ----------
     S_db : np.ndarray
         dB-scaled spectrogram
-
     ref : number > 0
         Reference power: output will be scaled by this value
 
@@ -1674,7 +1644,6 @@ def amplitude_to_db(S, *, ref=1.0, amin=1e-5, top_db=80.0):
         threshold the output at ``top_db`` below the peak:
         ``max(20 * log10(S)) - top_db``
 
-
     Returns
     -------
     S_db : np.ndarray
@@ -1696,7 +1665,7 @@ def amplitude_to_db(S, *, ref=1.0, amin=1e-5, top_db=80.0):
             "amplitude_to_db was called on complex input so phase "
             "information will be discarded. To suppress this warning, "
             "call amplitude_to_db(np.abs(S)) instead.",
-            stacklevel=2
+            stacklevel=2,
         )
 
     magnitude = np.abs(S)
@@ -1724,8 +1693,7 @@ def db_to_amplitude(S_db, *, ref=1.0):
     ----------
     S_db : np.ndarray
         dB-scaled spectrogram
-
-    ref: number > 0
+    ref : number > 0
         Optional reference power.
 
     Returns
@@ -1750,15 +1718,12 @@ def perceptual_weighting(S, frequencies, *, kind="A", **kwargs):
     ----------
     S : np.ndarray [shape=(..., d, t)]
         Power spectrogram
-
     frequencies : np.ndarray [shape=(d,)]
         Center frequency for each row of` `S``
-
     kind : str
         The frequency weighting curve to use.
         e.g. `'A'`, `'B'`, `'C'`, `'D'`, `None or 'Z'`
-
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional keyword arguments to `power_to_db`.
 
     Returns
@@ -1773,7 +1738,6 @@ def perceptual_weighting(S, frequencies, *, kind="A", **kwargs):
     Notes
     -----
     This function caches at level 30.
-
 
     Examples
     --------
@@ -1826,7 +1790,6 @@ def fmt(y, *, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis
     The scale transform can be useful for audio analysis because its magnitude is invariant
     to scaling of the domain (e.g., time stretching or compression).  This is analogous
     to the magnitude of the Fourier transform being invariant to shifts in the input domain.
-
 
     .. [#] De Sena, Antonio, and Davide Rocchesso.
         "A fast Mellin and scale transform."
@@ -1884,7 +1847,6 @@ def fmt(y, *, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis
     Notes
     -----
     This function caches at level 30.
-
 
     Examples
     --------
@@ -2079,7 +2041,6 @@ def pcen(
        Kelling, S., and Bello, J. P. Per-Channel Energy Normalization: Why and How.
        IEEE Signal Processing Letters, 26(1), 39-43.
 
-
     Parameters
     ----------
     S : np.ndarray (non-negative)
@@ -2143,12 +2104,10 @@ def pcen(
 
         If ``False`` (default) only the PCEN values ``P`` are returned.
 
-
     Returns
     -------
     P : np.ndarray, non-negative [shape=(n, m)]
         The per-channel energy normalized version of ``S``.
-
     zf : np.ndarray (optional)
         The final filter delay values.  Only returned if ``return_zf=True``.
 
@@ -2159,7 +2118,6 @@ def pcen(
 
     Examples
     --------
-
     Compare PCEN to log amplitude (dB) scaling on Mel spectra
 
     >>> import matplotlib.pyplot as plt
@@ -2229,7 +2187,7 @@ def pcen(
             "pcen was called on complex input so phase "
             "information will be discarded. To suppress this warning, "
             "call pcen(np.abs(D)) instead.",
-            stacklevel=2
+            stacklevel=2,
         )
         S = np.abs(S)
 
@@ -2380,7 +2338,6 @@ def griffinlim(
 
         If `None`, defaults to the current `np.random` object.
 
-
     Returns
     -------
     y : np.ndarray [shape=(..., n)]
@@ -2430,7 +2387,7 @@ def griffinlim(
         warnings.warn(
             "Griffin-Lim with momentum={} > 1 can be unstable. "
             "Proceed with caution!".format(momentum),
-            stacklevel=2
+            stacklevel=2,
         )
     elif momentum < 0:
         raise ParameterError(
@@ -2518,7 +2475,6 @@ def _spectrogram(
     This is primarily used in feature extraction functions that can operate on
     either audio time-series or spectrogram input.
 
-
     Parameters
     ----------
     y : None or np.ndarray
@@ -2561,13 +2517,11 @@ def _spectrogram(
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
 
-
     Returns
     -------
     S_out : np.ndarray [dtype=np.float]
         - If ``S`` is provided as input, then ``S_out == S``
         - Else, ``S_out = |stft(y, ...)|**power``
-
     n_fft : int > 0
         - If ``S`` is provided, then ``n_fft`` is inferred from ``S``
         - Else, copied from input

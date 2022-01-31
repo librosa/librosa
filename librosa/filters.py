@@ -140,23 +140,23 @@ def mel(
 
     Parameters
     ----------
-    sr        : number > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of the incoming signal
 
-    n_fft     : int > 0 [scalar]
+    n_fft : int > 0 [scalar]
         number of FFT components
 
-    n_mels    : int > 0 [scalar]
+    n_mels : int > 0 [scalar]
         number of Mel bands to generate
 
-    fmin      : float >= 0 [scalar]
+    fmin : float >= 0 [scalar]
         lowest frequency (in Hz)
 
-    fmax      : float >= 0 [scalar]
+    fmax : float >= 0 [scalar]
         highest frequency (in Hz).
         If `None`, use ``fmax = sr / 2.0``
 
-    htk       : bool [scalar]
+    htk : bool [scalar]
         use HTK formula instead of Slaney
 
     norm : {None, 'slaney', or number} [scalar]
@@ -175,10 +175,10 @@ def mel(
 
     Returns
     -------
-    M         : np.ndarray [shape=(n_mels, 1 + n_fft/2)]
+    M : np.ndarray [shape=(n_mels, 1 + n_fft/2)]
         Mel transform matrix
 
-    See also
+    See Also
     --------
     librosa.util.normalize
 
@@ -196,7 +196,6 @@ def mel(
            [ 0.   ,  0.   , ...,  0.   ,  0.   ],
            [ 0.   ,  0.   , ...,  0.   ,  0.   ]])
 
-
     Clip the maximum frequency to 8KHz
 
     >>> librosa.filters.mel(sr=22050, n_fft=2048, fmax=8000)
@@ -205,7 +204,6 @@ def mel(
            ...,
            [ 0.  ,  0.  , ...,  0.  ,  0.  ],
            [ 0.  ,  0.  , ...,  0.  ,  0.  ]])
-
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
@@ -277,24 +275,23 @@ def chroma(
     This creates a linear transformation matrix to project
     FFT bins onto chroma bins (i.e. pitch classes).
 
-
     Parameters
     ----------
-    sr        : number > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate
 
-    n_fft     : int > 0 [scalar]
+    n_fft : int > 0 [scalar]
         number of FFT bins
 
-    n_chroma  : int > 0 [scalar]
+    n_chroma : int > 0 [scalar]
         number of chroma bins
 
     tuning : float
         Tuning deviation from A440 in fractions of a chroma bin.
 
-    ctroct    : float > 0 [scalar]
+    ctroct : float > 0 [scalar]
 
-    octwidth  : float > 0 or None [scalar]
+    octwidth : float > 0 or None [scalar]
         ``ctroct`` and ``octwidth`` specify a dominance window:
         a Gaussian weighting centered on ``ctroct`` (in octs, A0 = 27.5Hz)
         and with a gaussian half-width of ``octwidth``.
@@ -345,7 +342,6 @@ def chroma(
     ...,
            [  1.162e-05,   2.372e-04, ...,   6.417e-38,   9.923e-38],
            [  1.180e-05,   2.260e-04, ...,   4.697e-50,   7.772e-50]])
-
 
     Equally weight all octaves
 
@@ -461,6 +457,9 @@ def constant_q(
     Frequencies are spaced geometrically, increasing by a factor of
     ``(2**(1./bins_per_octave))`` at each successive band.
 
+    .. warning:: This function is deprecated as of v0.9 and will be removed in 1.0.
+        See `librosa.filters.wavelet`.
+
     Parameters
     ----------
     sr : number > 0 [scalar]
@@ -500,14 +499,13 @@ def constant_q(
         The data type of the output basis.
         By default, uses 64-bit (single precision) complex floating point.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Arguments to `np.pad()` when ``pad==True``.
 
     Returns
     -------
     filters : np.ndarray, ``len(filters) == n_bins``
         ``filters[i]`` is ``i``\ th time-domain CQT basis filter
-
     lengths : np.ndarray, ``len(lengths) == n_bins``
         The (fractional) length of each filter
 
@@ -522,7 +520,6 @@ def constant_q(
     librosa.cqt
     librosa.vqt
     librosa.util.normalize
-
 
     Examples
     --------
@@ -605,25 +602,26 @@ def constant_q_lengths(
 ):
     r"""Return length of each filter in a constant-Q basis.
 
+    .. warning:: This function is deprecated as of v0.9 and will be removed in 1.0.
+        See `librosa.filters.wavelet_lengths`.
+
     Parameters
     ----------
     sr : number > 0 [scalar]
         Audio sampling rate
-
     fmin : float > 0 [scalar]
         Minimum frequency bin.
-
     n_bins : int > 0 [scalar]
         Number of frequencies.  Defaults to 7 octaves (84 bins).
-
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
-
     window : str or callable
         Window function to use on filters
-
     filter_scale : float > 0 [scalar]
         Resolution of filter windows. Larger values use longer windows.
+    gamma : number >= 0
+        Bandwidth offset for variable-Q transforms.
+        ``gamma=0`` produces a constant-Q filterbank.
 
     Returns
     -------
@@ -738,7 +736,6 @@ def wavelet_lengths(
     -------
     lengths : np.ndarray
         The length of each filter.
-
     f_cutoff : float
         The lowest frequency at which all filters' main lobes have decayed by
         at least 3dB.
@@ -828,7 +825,6 @@ def wavelet(
 
     Parameters
     ----------
-
     freqs : np.ndarray (positive)
         Center frequencies of the filters (in Hz).
         Must be in ascending order.
@@ -867,14 +863,13 @@ def wavelet(
 
         If two or more frequencies are provided, this parameter is ignored.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Arguments to `np.pad()` when ``pad==True``.
 
     Returns
     -------
     filters : np.ndarray, ``len(filters) == n_bins``
         each ``filters[i]`` is a (complex) time-domain filter
-
     lengths : np.ndarray, ``len(lengths) == n_bins``
         The (fractional) length of each filter in samples
 
@@ -888,7 +883,6 @@ def wavelet(
     librosa.cqt
     librosa.vqt
     librosa.util.normalize
-
 
     Examples
     --------
@@ -973,34 +967,26 @@ def cq_to_chroma(
     """Construct a linear transformation matrix to map Constant-Q bins
     onto chroma bins (i.e., pitch classes).
 
-
     Parameters
     ----------
     n_input : int > 0 [scalar]
         Number of input components (CQT bins)
-
     bins_per_octave : int > 0 [scalar]
         How many bins per octave in the CQT
-
     n_chroma : int > 0 [scalar]
         Number of output bins (per octave) in the chroma
-
     fmin : None or float > 0
         Center frequency of the first constant-Q channel.
         Default: 'C1' ~= 32.7 Hz
-
     window : None or np.ndarray
         If provided, the cq_to_chroma filter bank will be
         convolved with ``window``.
-
     base_c : bool
         If True, the first chroma bin will start at 'C'
         If False, the first chroma bin will start at 'A'
-
     dtype : np.dtype
         The data type of the output basis.
         By default, uses 32-bit (single-precision) floating point.
-
 
     Returns
     -------
@@ -1097,7 +1083,6 @@ def cq_to_chroma(
 def window_bandwidth(window, n=1000):
     """Get the equivalent noise bandwidth of a window function.
 
-
     Parameters
     ----------
     window : callable or string
@@ -1105,7 +1090,6 @@ def window_bandwidth(window, n=1000):
         Examples:
         - scipy.signal.hann
         - 'boxcar'
-
     n : int > 0
         The number of coefficients to use in estimating the
         window bandwidth
@@ -1222,7 +1206,6 @@ def _multirate_fb(
 
      This implementation uses `scipy.signal.iirdesign` to design the filters.
 
-
     Parameters
     ----------
     center_freqs : np.ndarray [shape=(n,), dtype=float]
@@ -1260,12 +1243,10 @@ def _multirate_fb(
 
         - If `zpk`, returns zeros, poles, and system gains of the transfer functions.
 
-
     Returns
     -------
     filterbank : list [shape=(n,), dtype=float]
         Each list entry comprises the filter coefficients for a single filter.
-
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Samplerate for each filter.
 
@@ -1340,7 +1321,6 @@ def mr_frequencies(tuning):
            "Information Retrieval for Music and Motion."
            Springer Verlag. 2007.
 
-
     Parameters
     ----------
     tuning : float [scalar]
@@ -1352,14 +1332,12 @@ def mr_frequencies(tuning):
     center_freqs : np.ndarray [shape=(n,), dtype=float]
         Center frequencies of the filter kernels.
         Also defines the number of filters in the filterbank.
-
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Sample rate for each filter, used for multirate filterbank.
 
     Notes
     -----
     This function caches at level 10.
-
 
     See Also
     --------
@@ -1409,34 +1387,28 @@ def semitone_filterbank(
            "Information Retrieval for Music and Motion."
            Springer Verlag. 2007.
 
-
     Parameters
     ----------
     center_freqs : np.ndarray [shape=(n,), dtype=float]
         Center frequencies of the filter kernels.
         Also defines the number of filters in the filterbank.
-
     tuning : float [scalar]
         Tuning deviation from A440 as a fraction of a semitone (1/12 of an octave
         in equal temperament).
-
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Sample rates of each filter in the multirate filterbank.
-
     flayout : string
         - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
         - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
-
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional arguments to the private function `_multirate_fb()`.
 
     Returns
     -------
     filterbank : list [shape=(n,), dtype=float]
         Each list entry contains the filter coefficients for a single filter.
-
     fb_sample_rates : np.ndarray [shape=(n,), dtype=float]
         Sample rate for each filter.
 
@@ -1501,21 +1473,19 @@ def window_sumsquare(
     ----------
     window : string, tuple, number, callable, or list-like
         Window specification, as in `get_window`
-
     n_frames : int > 0
         The number of analysis frames
-
     hop_length : int > 0
         The number of samples to advance between frames
-
     win_length : [optional]
         The length of the window function.  By default, this matches ``n_fft``.
-
     n_fft : int > 0
         The length of each analysis frame.
-
     dtype : np.dtype
         The data type of the output
+    norm : {np.inf, -np.inf, 0, float > 0, None}
+        Normalization mode used in window construction.
+        Note that this does not affect the squaring operation.
 
     Returns
     -------
@@ -1591,12 +1561,10 @@ def diagonal_filter(window, n, *, slope=1.0, angle=None, zero_mean=False):
         This should be enabled if you want to enhance paths and suppress
         blocks.
 
-
     Returns
     -------
     kernel : np.ndarray, shape=[(m, m)]
         The 2-dimensional filter kernel
-
 
     Notes
     -----

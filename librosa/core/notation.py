@@ -483,7 +483,7 @@ def key_to_notes(key, *, unicode=True):
 
         Examples: ``C:maj, Db:min, A♭:min``.
 
-    unicode: bool
+    unicode : bool
         If ``True`` (default), use Unicode symbols (♯𝄪♭𝄫)for accidentals.
 
         If ``False``, Unicode symbols will be mapped to low-order ASCII representations::

@@ -87,7 +87,6 @@ def tempogram(
     librosa.util.normalize
     librosa.stft
 
-
     Examples
     --------
     >>> # Compute local onset autocorrelation
@@ -194,26 +193,20 @@ def fourier_tempogram(
     ----------
     y : np.ndarray [shape=(..., n)] or None
         Audio time series.  Multi-channel is supported.
-
     sr : number > 0 [scalar]
         sampling rate of ``y``
-
     onset_envelope : np.ndarray [shape=(..., n)] or None
         Optional pre-computed onset strength envelope as provided by
         ``librosa.onset.onset_strength``.
         Multi-channel is supported.
-
     hop_length : int > 0
         number of audio samples between successive onset measurements
-
     win_length : int > 0
         length of the onset window (in frames/onset measurements)
         The default settings (384) corresponds to ``384 * hop_length / sr ~= 8.9s``.
-
     center : bool
         If `True`, onset windows are centered.
         If `False`, windows are left-aligned.
-
     window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
         A window specification as in `stft`.
 
@@ -235,7 +228,6 @@ def fourier_tempogram(
     librosa.onset.onset_strength
     librosa.util.normalize
     librosa.stft
-
 
     Examples
     --------

@@ -60,21 +60,17 @@ def hpss(y, **kwargs):
     This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
     the output waveforms have equal length to the input waveform ``y``.
 
-
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-
-    kwargs : additional keyword arguments.
+    **kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
-
 
     Returns
     -------
     y_harmonic : np.ndarray [shape=(..., n)]
         audio time series of the harmonic elements
-
     y_percussive : np.ndarray [shape=(..., n)]
         audio time series of the percussive elements
 
@@ -83,7 +79,6 @@ def hpss(y, **kwargs):
     harmonic : Extract only the harmonic component
     percussive : Extract only the percussive component
     librosa.decompose.hpss : HPSS on spectrograms
-
 
     Examples
     --------
@@ -116,8 +111,7 @@ def harmonic(y, **kwargs):
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-
-    kwargs : additional keyword arguments.
+    **kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
 
     Returns
@@ -161,8 +155,7 @@ def percussive(y, **kwargs):
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-
-    kwargs : additional keyword arguments.
+    **kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
 
     Returns
@@ -202,17 +195,14 @@ def percussive(y, **kwargs):
 def time_stretch(y, *, rate, **kwargs):
     """Time-stretch an audio series by a fixed rate.
 
-
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-
     rate : float > 0 [scalar]
         Stretch factor.  If ``rate > 1``, then the signal is sped up.
         If ``rate < 1``, then the signal is slowed down.
-
-    kwargs : additional keyword arguments.
+    **kwargs : additional keyword arguments.
         See `librosa.decompose.stft` for details.
 
     Returns
@@ -222,9 +212,12 @@ def time_stretch(y, *, rate, **kwargs):
 
     See Also
     --------
-    pitch_shift : pitch shifting
-    librosa.phase_vocoder : spectrogram phase vocoder
-    pyrubberband.pyrb.time_stretch : high-quality time stretching using RubberBand
+    pitch_shift :
+        pitch shifting
+    librosa.phase_vocoder :
+        spectrogram phase vocoder
+    pyrubberband.pyrb.time_stretch :
+        high-quality time stretching using RubberBand
 
     Examples
     --------
@@ -288,7 +281,7 @@ def pitch_shift(
 
         See `librosa.resample` for more information.
 
-    kwargs: additional keyword arguments.
+    **kwargs : additional keyword arguments.
         See `librosa.decompose.stft` for details.
 
     Returns
@@ -296,12 +289,14 @@ def pitch_shift(
     y_shift : np.ndarray [shape=(..., n)]
         The pitch-shifted audio time-series
 
-
     See Also
     --------
-    time_stretch : time stretching
-    librosa.phase_vocoder : spectrogram phase vocoder
-    pyrubberband.pyrb.pitch_shift : high-quality pitch shifting using RubberBand
+    time_stretch :
+        time stretching
+    librosa.phase_vocoder :
+        spectrogram phase vocoder
+    pyrubberband.pyrb.pitch_shift :
+        high-quality pitch shifting using RubberBand
 
     Examples
     --------
@@ -327,7 +322,10 @@ def pitch_shift(
 
     # Stretch in time, then resample
     y_shift = core.resample(
-        time_stretch(y, rate=rate, **kwargs), orig_sr=float(sr) / rate, target_sr=sr, res_type=res_type
+        time_stretch(y, rate=rate, **kwargs),
+        orig_sr=float(sr) / rate,
+        target_sr=sr,
+        res_type=res_type,
     )
 
     # Crop to the same dimension as the input
@@ -337,28 +335,23 @@ def pitch_shift(
 def remix(y, intervals, *, align_zeros=True):
     """Remix an audio signal by re-ordering time intervals.
 
-
     Parameters
     ----------
     y : np.ndarray [shape=(..., t)]
         Audio time series. Multi-channel is supported.
-
     intervals : iterable of tuples (start, end)
         An iterable (list-like or generator) where the ``i``th item
         ``intervals[i]`` indicates the start and end (in samples)
         of a slice of ``y``.
-
     align_zeros : boolean
         If ``True``, interval boundaries are mapped to the closest
         zero-crossing in ``y``.  If ``y`` is stereo, zero-crossings
         are computed after converting to mono.
 
-
     Returns
     -------
     y_remix : np.ndarray [shape=(..., d)]
         ``y`` remixed in the order specified by ``intervals``
-
 
     Examples
     --------
@@ -366,23 +359,19 @@ def remix(y, intervals, *, align_zeros=True):
 
     >>> y, sr = librosa.load(librosa.ex('choice'))
 
-
     Compute beats
 
     >>> _, beat_frames = librosa.beat.beat_track(y=y, sr=sr,
     ...                                          hop_length=512)
 
-
     Convert from frames to sample indices
 
     >>> beat_samples = librosa.frames_to_samples(beat_frames)
-
 
     Generate intervals from consecutive events
 
     >>> intervals = librosa.util.frame(beat_samples, frame_length=2,
     ...                                hop_length=1).T
-
 
     Reverse the beat intervals
 
@@ -465,21 +454,16 @@ def trim(
     ----------
     y : np.ndarray, shape=(..., n)
         Audio signal. Multi-channel is supported.
-
     top_db : number > 0
         The threshold (in decibels) below reference to consider as
         silence
-
     ref : number or callable
         The reference power.  By default, it uses `np.max` and compares
         to the peak power in the signal.
-
     frame_length : int > 0
         The number of samples per analysis frame
-
     hop_length : int > 0
         The number of samples between analysis frames
-
     aggregate : callable [default: np.max]
         Function to aggregate across channels (if y.ndim > 1)
 
@@ -487,12 +471,10 @@ def trim(
     -------
     y_trimmed : np.ndarray, shape=(..., m)
         The trimmed signal
-
     index : np.ndarray, shape=(2,)
         the interval of ``y`` corresponding to the non-silent region:
         ``y_trimmed = y[index[0]:index[1]]`` (for mono) or
         ``y_trimmed = y[:, index[0]:index[1]]`` (for stereo).
-
 
     Examples
     --------
@@ -544,22 +526,17 @@ def split(
     ----------
     y : np.ndarray, shape=(..., n)
         An audio signal. Multi-channel is supported.
-
     top_db : number > 0
         The threshold (in decibels) below reference to consider as
         silence
-
     ref : number or callable
         The reference power.  By default, it uses `np.max` and compares
         to the peak power in the signal.
-
     frame_length : int > 0
         The number of samples per analysis frame
-
     hop_length : int > 0
         The number of samples between analysis frames
-
-    aggregate callable [default: np.max]
+    aggregate : callable [default: np.max]
         Function to aggregate across channels (if y.ndim > 1)
 
     Returns
@@ -610,7 +587,6 @@ def preemphasis(y, *, coef=0.97, zi=None, return_zf=False):
 
         y[n] -> y[n] - coef * y[n-1]
 
-
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
@@ -643,7 +619,6 @@ def preemphasis(y, *, coef=0.97, zi=None, return_zf=False):
     -------
     y_out : np.ndarray
         pre-emphasized signal
-
     zf : number
         if ``return_zf=True``, the final filter state is also returned
 
@@ -731,12 +706,10 @@ def deemphasis(y, *, coef=0.97, zi=None, return_zf=False):
         If ``True``, return the final filter state.
         If ``False``, only return the pre-emphasized signal.
 
-
     Returns
     -------
     y_out : np.ndarray
         de-emphasized signal
-
     zf : number
         if ``return_zf=True``, the final filter state is also returned
 

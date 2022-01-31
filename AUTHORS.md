@@ -77,7 +77,10 @@ Contributors
 * N. Dorukhan Sergin <https://github.com/dorukhansergin>
 * Paul Biberstein <https://github.com/P-bibs>
 * Myungchul Keum <https://github.com/dofuuz>
-
+* Daniel Faronbi <https://github.com/dafaronbi>
+* Iran Roman <https://github.com/iranroman>
+* philstem <https://github.com/philstem>
+* Alex Malins <https://github.com/alexmalins>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

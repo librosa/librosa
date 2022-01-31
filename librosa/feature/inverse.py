@@ -24,26 +24,20 @@ def mel_to_stft(M, *, sr=22050, n_fft=2048, power=2.0, **kwargs):
     ----------
     M : np.ndarray [shape=(..., n_mels, n), non-negative]
         The spectrogram as produced by `feature.melspectrogram`
-
     sr : number > 0 [scalar]
         sampling rate of the underlying signal
-
     n_fft : int > 0 [scalar]
         number of FFT components in the resulting STFT
-
     power : float > 0 [scalar]
         Exponent for the magnitude melspectrogram
-
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Mel filter bank parameters.
         See `librosa.filters.mel` for details
-
 
     Returns
     -------
     S : np.ndarray [shape=(..., n_fft, t), non-negative]
         An approximate linear magnitude spectrogram
-
 
     See Also
     --------
@@ -51,7 +45,6 @@ def mel_to_stft(M, *, sr=22050, n_fft=2048, power=2.0, **kwargs):
     librosa.stft
     librosa.filters.mel
     librosa.util.nnls
-
 
     Examples
     --------
@@ -118,46 +111,33 @@ def mel_to_audio(
     ----------
     M : np.ndarray [shape=(..., n_mels, n), non-negative]
         The spectrogram as produced by `feature.melspectrogram`
-
     sr : number > 0 [scalar]
         sampling rate of the underlying signal
-
     n_fft : int > 0 [scalar]
         number of FFT components in the resulting STFT
-
     hop_length : None or int > 0
         The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
-
     win_length : None or int > 0
         The window length of the STFT.  By default, it will equal ``n_fft``
-
     window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         A window specification as supported by `stft` or `istft`
-
     center : boolean
         If `True`, the STFT is assumed to use centered frames.
         If `False`, the STFT is assumed to use left-aligned frames.
-
     pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
-
     power : float > 0 [scalar]
         Exponent for the magnitude melspectrogram
-
     n_iter : int > 0
         The number of iterations for Griffin-Lim
-
     length : None or int > 0
         If provided, the output ``y`` is zero-padded or clipped to exactly ``length``
         samples.
-
     dtype : np.dtype
         Real numeric type for the time-domain signal.  Default is 32-bit float.
-
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Mel filter bank parameters
-
 
     Returns
     -------
@@ -197,7 +177,6 @@ def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0
         1. The inverse DCT is applied to the MFCCs
         2. `librosa.db_to_power` is applied to map the dB-scaled result to a power spectrogram
 
-
     Parameters
     ----------
     mfcc : np.ndarray [shape=(..., n_mfcc, n)]
@@ -230,7 +209,7 @@ def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0
         An approximate Mel power spectrum recovered from ``mfcc``
 
     Warns
-    --------
+    -----
     UserWarning
         due to critical values in lifter array that invokes underflow.
 
@@ -274,7 +253,6 @@ def mfcc_to_audio(
         1. Convert mfcc to Mel power spectrum (`mfcc_to_mel`)
         2. Convert Mel power spectrum to time-domain audio (`mel_to_audio`)
 
-
     Parameters
     ----------
     mfcc : np.ndarray [shape=(..., n_mfcc, n)]
@@ -301,7 +279,7 @@ def mfcc_to_audio(
 
             M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Parameters to pass through to `mel_to_audio`
 
     Returns
