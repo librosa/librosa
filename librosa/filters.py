@@ -252,7 +252,8 @@ def mel(
             "Empty filters detected in mel frequency basis. "
             "Some channels will produce empty responses. "
             "Try increasing your sampling rate (and fmax) or "
-            "reducing n_mels."
+            "reducing n_mels.",
+            stacklevel=2,
         )
 
     return weights
@@ -433,7 +434,6 @@ def __float_window(window_spec):
     return _wrap
 
 
-@cache(level=10)
 @deprecated(version="0.9.0", version_removed="1.0")
 def constant_q(
     *,
@@ -598,8 +598,8 @@ def constant_q(
     return filters, np.asarray(lengths)
 
 
-@cache(level=10)
 @deprecated(version="0.9.0", version_removed="1.0")
+@cache(level=10)
 def constant_q_lengths(
     *, sr, fmin, n_bins=84, bins_per_octave=12, window="hann", filter_scale=1, gamma=0
 ):
