@@ -51,58 +51,42 @@ def beat_track(
            Journal of New Music Research 36.1 (2007): 51-60.
            http://labrosa.ee.columbia.edu/projects/beattrack/
 
-
     Parameters
     ----------
-
     y : np.ndarray [shape=(n,)] or None
         audio time series
-
     sr : number > 0 [scalar]
         sampling rate of ``y``
-
     onset_envelope : np.ndarray [shape=(n,)] or None
         (optional) pre-computed onset strength envelope.
-
     hop_length : int > 0 [scalar]
         number of audio samples between successive ``onset_envelope`` values
-
-    start_bpm  : float > 0 [scalar]
+    start_bpm : float > 0 [scalar]
         initial guess for the tempo estimator (in beats per minute)
-
-    tightness  : float [scalar]
+    tightness : float [scalar]
         tightness of beat distribution around tempo
-
-    trim       : bool [scalar]
+    trim : bool [scalar]
         trim leading/trailing beats with weak onsets
-
-    bpm        : float [scalar]
+    bpm : float [scalar]
         (optional) If provided, use ``bpm`` as the tempo instead of
         estimating it from ``onsets``.
-
-    prior      : scipy.stats.rv_continuous [optional]
+    prior : scipy.stats.rv_continuous [optional]
         An optional prior distribution over tempo.
         If provided, ``start_bpm`` will be ignored.
-
     units : {'frames', 'samples', 'time'}
         The units to encode detected beat events in.
         By default, 'frames' are used.
 
-
     Returns
     -------
-
     tempo : float [scalar, non-negative]
         estimated global tempo (in beats per minute)
-
     beats : np.ndarray [shape=(m,)]
         estimated beat event locations in the specified units
         (default is frame indices)
-
     .. note::
         If no onset strength could be detected, beat_tracker estimates 0 BPM
         and returns an empty list.
-
 
     Raises
     ------
@@ -114,7 +98,6 @@ def beat_track(
     --------
     librosa.onset.onset_strength
 
-
     Examples
     --------
     Track beats using time series input
@@ -125,13 +108,11 @@ def beat_track(
     >>> tempo
     135.99917763157896
 
-
     Print the frames corresponding to beats
 
     >>> beats
     array([  3,  21,  40,  59,  78,  96, 116, 135, 154, 173, 192, 211,
            230, 249, 268, 287, 306, 325, 344, 363])
-
 
     Or print them as timestamps
 
@@ -151,7 +132,6 @@ def beat_track(
     >>> beats
     array([  3,  21,  40,  59,  78,  96, 116, 135, 154, 173, 192, 211,
            230, 249, 268, 287, 306, 325, 344, 363])
-
 
     Plot the beat events against the onset strength envelope
 
@@ -230,32 +210,23 @@ def tempo(
     ----------
     y : np.ndarray [shape=(..., n)] or None
         audio time series. Multi-channel is supported.
-
     sr : number > 0 [scalar]
         sampling rate of the time series
-
-    onset_envelope    : np.ndarray [shape=(..., n)]
+    onset_envelope : np.ndarray [shape=(..., n)]
         pre-computed onset strength envelope
-
     hop_length : int > 0 [scalar]
         hop length of the time series
-
     start_bpm : float [scalar]
         initial guess of the BPM
-
     std_bpm : float > 0 [scalar]
         standard deviation of tempo distribution
-
     ac_size : float > 0 [scalar]
         length (in seconds) of the auto-correlation window
-
     max_tempo : float > 0 [scalar, optional]
         If provided, only estimate tempo below this threshold
-
     aggregate : callable [optional]
         Aggregation function for estimating global tempo.
         If `None`, then tempo is estimated independently for each frame.
-
     prior : scipy.stats.rv_continuous [optional]
         A prior distribution over tempo (in beats per minute).
         By default, a pseudo-log-normal prior is used.
@@ -408,7 +379,6 @@ def plp(
     since `plp` does not require the entire signal to make predictions, it may be
     preferable when beat-tracking long recordings in a streaming setting.
 
-
     .. [#] Grosche, P., & Muller, M. (2011).
         "Extracting predominant local pulse information from music recordings."
         IEEE Transactions on Audio, Speech, and Language Processing, 19(6), 1688-1701.
@@ -494,7 +464,6 @@ def plp(
     ...          label='Predominant local pulse (PLP)')
     >>> ax[2].set(title='Log-normal tempo prior, mean=120', xlim=[5, 20])
     >>> ax[2].legend()
-
 
     PLP local maxima can be used as estimates of beat positions.
 
@@ -584,16 +553,12 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
     ----------
     onset_envelope : np.ndarray [shape=(n,)]
         onset strength envelope
-
     bpm : float [scalar]
         tempo estimate
-
-    fft_res  : float [scalar]
+    fft_res : float [scalar]
         resolution of the fft (sr / hop_length)
-
     tightness: float [scalar]
         how closely do we adhere to bpm?
-
     trim : bool [scalar]
         trim leading/trailing beats with weak onsets?
 

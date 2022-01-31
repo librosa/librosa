@@ -566,17 +566,13 @@ def cmap(
     ----------
     data : np.ndarray
         Input data
-
     robust : bool
         If True, discard the top and bottom 2% of data when calculating
         range.
-
     cmap_seq : str
         The sequential colormap name
-
     cmap_bool : str
         The boolean colormap name
-
     cmap_div : str
         The diverging colormap name
 
@@ -731,7 +727,6 @@ def specshow(
             using `feature.fourier_tempogram`.
 
     x_coords, y_coords : np.ndarray [shape=data.shape[0 or 1]]
-
         Optional positioning coordinates of the input data.
         These can be use to explicitly set the location of each
         element ``data[i, j]``, e.g., for displaying beat-synchronous
@@ -815,13 +810,10 @@ def specshow(
     colormesh : `matplotlib.collections.QuadMesh`
         The color mesh object produced by `matplotlib.pyplot.pcolormesh`
 
-
     See Also
     --------
     cmap : Automatic colormap detection
-
     matplotlib.pyplot.pcolormesh
-
 
     Examples
     --------
@@ -835,7 +827,6 @@ def specshow(
     ...                                sr=sr, ax=ax[0])
     >>> ax[0].set(title='Linear-frequency power spectrogram')
     >>> ax[0].label_outer()
-
 
     Or on a logarithmic scale, and using a larger hop
 
@@ -1326,7 +1317,6 @@ def waveshow(
         If you want to visualize both channels at the sample level, it is recommended to
         plot each signal independently.
 
-
     Parameters
     ----------
     y : np.ndarray [shape=(n,) or (2,n)]
@@ -1361,7 +1351,6 @@ def waveshow(
         - 'lag_ms' : same as lag, but in milliseconds.
 
         - `None`, 'none', or 'off': ticks and tick markers are hidden.
-
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -1398,13 +1387,12 @@ def waveshow(
     librosa.display.AdaptiveWaveplot
         An object of type `librosa.display.AdaptiveWaveplot`
 
-    See also
+    See Also
     --------
     AdaptiveWaveplot
     matplotlib.pyplot.step
     matplotlib.pyplot.fill_between
     matplotlib.markers
-
 
     Examples
     --------

@@ -70,7 +70,6 @@ def cross_similarity(
     The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero
     if ``data_ref[..., i]`` is a k-nearest neighbor of ``data[..., j]``.
 
-
     Parameters
     ----------
     data : np.ndarray [shape=(..., d, n)]
@@ -301,7 +300,6 @@ def recurrence_matrix(
           known as a (sparse) self-distance matrix.
 
     The general term *recurrence matrix* can refer to any of the three forms above.
-
 
     Parameters
     ----------
@@ -648,7 +646,6 @@ def lag_to_recurrence(lag, *, axis=-1):
     ----------
     lag : np.ndarray or scipy.sparse.spmatrix
         A lag matrix, as produced by ``recurrence_to_lag``
-
     axis : int
         The axis corresponding to the time dimension.
         The alternate axis will be interpreted in lag coordinates.
@@ -735,14 +732,11 @@ def timelag_filter(function, pad=True, index=0):
     ----------
     function : callable
         The filtering function to wrap, e.g., `scipy.ndimage.median_filter`
-
     pad : bool
         Whether to zero-pad the structure feature matrix
-
     index : int >= 0
         If ``function`` accepts input data as a positional argument, it should be
         indexed by ``index``
-
 
     Returns
     -------
@@ -750,10 +744,8 @@ def timelag_filter(function, pad=True, index=0):
         A new filter function which applies in time-lag space rather than
         time-time space.
 
-
     Examples
     --------
-
     Apply a 31-bin median filter to the diagonal of a recurrence matrix.
     With default, parameters, this corresponds to a time window of about
     0.72 seconds.
@@ -820,16 +812,13 @@ def subsegment(data, frames, *, n_segments=4, axis=-1):
     ----------
     data : np.ndarray
         Data matrix to use in clustering
-
     frames : np.ndarray [shape=(n_boundaries,)], dtype=int, non-negative]
         Array of beat or segment boundaries, as provided by
         `librosa.beat.beat_track`,
         `librosa.onset.onset_detect`,
         or `agglomerative`.
-
     n_segments : int > 0
         Maximum number of frames to sub-divide each interval.
-
     axis : int
         Axis along which to apply the segmentation.
         By default, the last index (-1) is taken.
@@ -902,16 +891,13 @@ def agglomerative(data, k, *, clusterer=None, axis=-1):
 
     Parameters
     ----------
-    data     : np.ndarray
+    data : np.ndarray
         data to cluster
-
-    k        : int > 0 [scalar]
+    k : int > 0 [scalar]
         number of segments to produce
-
     clusterer : sklearn.cluster.AgglomerativeClustering, optional
         An optional AgglomerativeClustering object.
         If `None`, a constrained Ward object is instantiated.
-
     axis : int
         axis along which to cluster.
         By default, the last axis (-1) is chosen.
@@ -1070,7 +1056,6 @@ def path_enhance(
     kwargs : additional keyword arguments
         Additional arguments to pass to `scipy.ndimage.convolve`
 
-
     Returns
     -------
     R_smooth : np.ndarray, shape=R.shape
@@ -1080,7 +1065,6 @@ def path_enhance(
     --------
     librosa.filters.diagonal_filter
     recurrence_matrix
-
 
     Examples
     --------

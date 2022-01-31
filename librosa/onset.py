@@ -44,16 +44,15 @@ def onset_detect(
 
     .. [#] https://github.com/CPJKU/onset_db
 
-
     Parameters
     ----------
-    y          : np.ndarray [shape=(n,)]
+    y : np.ndarray [shape=(n,)]
         audio time series, must be monophonic
 
-    sr         : number > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    onset_envelope     : np.ndarray [shape=(m,)]
+    onset_envelope : np.ndarray [shape=(m,)]
         (optional) pre-computed onset strength envelope
 
     hop_length : int > 0 [scalar]
@@ -85,10 +84,8 @@ def onset_detect(
 
         See `librosa.util.peak_pick` for details.
 
-
     Returns
     -------
-
     onsets : np.ndarray [shape=(n_onsets,)]
         estimated positions of detected onsets, in whichever units
         are specified.  By default, frame indices.
@@ -96,7 +93,6 @@ def onset_detect(
         .. note::
             If no onset strength could be detected, onset_detect returns
             an empty list.
-
 
     Raises
     ------
@@ -110,7 +106,6 @@ def onset_detect(
     onset_strength : compute onset strength per-frame
     onset_backtrack : backtracking onset events
     librosa.util.peak_pick : pick peaks from a time series
-
 
     Examples
     --------
@@ -126,7 +121,6 @@ def onset_detect(
     >>> o_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> times = librosa.times_like(o_env, sr=sr)
     >>> onset_frames = librosa.onset.onset_detect(onset_envelope=o_env, sr=sr)
-
 
     >>> import matplotlib.pyplot as plt
     >>> D = np.abs(librosa.stft(y))
@@ -224,16 +218,16 @@ def onset_strength(
 
     Parameters
     ----------
-    y        : np.ndarray [shape=(..., n)]
+    y : np.ndarray [shape=(..., n)]
         audio time-series. Multi-channel is supported.
 
-    sr       : number > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    S        : np.ndarray [shape=(..., d, m)]
+    S : np.ndarray [shape=(..., d, m)]
         pre-computed (log-power) spectrogram
 
-    lag      : int > 0
+    lag : int > 0
         time lag for computing differences
 
     max_size : int > 0
@@ -266,13 +260,11 @@ def onset_strength(
     kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
-
     Returns
     -------
-    onset_envelope   : np.ndarray [shape=(..., m,)]
+    onset_envelope : np.ndarray [shape=(..., m,)]
         vector containing the onset strength envelope.
         If the input contains multiple channels, then onset envelope is computed for each channel.
-
 
     Raises
     ------
@@ -281,12 +273,10 @@ def onset_strength(
 
         or if ``lag`` or ``max_size`` are not positive integers
 
-
     See Also
     --------
     onset_detect
     onset_strength_multi
-
 
     Examples
     --------
@@ -308,7 +298,6 @@ def onset_strength(
     >>> ax[1].plot(times, 2 + onset_env / onset_env.max(), alpha=0.8,
     ...            label='Mean (mel)')
 
-
     Median aggregation, and custom mel options
 
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
@@ -316,7 +305,6 @@ def onset_strength(
     ...                                          fmax=8000, n_mels=256)
     >>> ax[1].plot(times, 1 + onset_env / onset_env.max(), alpha=0.8,
     ...            label='Median (custom mel)')
-
 
     Constant-Q spectrogram instead of Mel
 
@@ -370,7 +358,6 @@ def onset_backtrack(events, energy):
     ----------
     events : np.ndarray, dtype=int
         List of onset event frame indices, as computed by `onset_detect`
-
     energy : np.ndarray, shape=(m,)
         An energy function
 
@@ -451,16 +438,15 @@ def onset_strength_multi(
 
         mean_{f in channels[i]} max(0, S[f, t+1] - S[f, t])
 
-
     Parameters
     ----------
-    y        : np.ndarray [shape=(..., n,)]
+    y : np.ndarray [shape=(..., n,)]
         audio time-series. Multi-channel is supported.
 
-    sr       : number > 0 [scalar]
+    sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    S        : np.ndarray [shape=(..., d, m)]
+    S : np.ndarray [shape=(..., d, m)]
         pre-computed (log-power) spectrogram
 
     n_fft : int > 0 [scalar]
@@ -469,7 +455,7 @@ def onset_strength_multi(
     hop_length : int > 0 [scalar]
         hop length for use in ``feature()`` if ``S`` is not provided.
 
-    lag      : int > 0
+    lag : int > 0
         time lag for computing differences
 
     max_size : int > 0
@@ -510,18 +496,15 @@ def onset_strength_multi(
     kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
-
     Returns
     -------
-    onset_envelope   : np.ndarray [shape=(..., n_channels, m)]
+    onset_envelope : np.ndarray [shape=(..., n_channels, m)]
         array containing the onset strength envelope for each specified channel
-
 
     Raises
     ------
     ParameterError
         if neither ``(y, sr)`` nor ``S`` are provided
-
 
     See Also
     --------

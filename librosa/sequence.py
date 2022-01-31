@@ -128,12 +128,10 @@ def dtw(
         accumulated cost matrix.
         D[N, M] is the total alignment cost.
         When doing subsequence DTW, D[N,:] indicates a matching function.
-
     wp : np.ndarray [shape=(N, 2)]
         Warping path with index pairs.
         Each row of the array contains an index pair (n, m).
         Only returned when ``backtrack`` is True.
-
     steps : np.ndarray [shape=(N, M)]
         Step matrix, containing the indices of the used steps from the cost
         accumulation step.
@@ -363,26 +361,19 @@ def __dtw_calc_accu_cost(
     ----------
     C : np.ndarray [shape=(N, M)]
         pre-computed cost matrix
-
     D : np.ndarray [shape=(N, M)]
         accumulated cost matrix
-
     steps : np.ndarray [shape=(N, M)]
         Step matrix, containing the indices of the used steps from the cost
         accumulation step.
-
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
         Specifies allowed step sizes as used by the dtw.
-
     weights_add : np.ndarray [shape=[n, ]]
         Additive weights to penalize certain step sizes.
-
     weights_mul : np.ndarray [shape=[n, ]]
         Multiplicative weights to penalize certain step sizes.
-
     max_0 : int
         maximum number of steps in step_sizes_sigma in dim 0.
-
     max_1 : int
         maximum number of steps in step_sizes_sigma in dim 1.
 
@@ -392,7 +383,6 @@ def __dtw_calc_accu_cost(
         accumulated cost matrix.
         D[N, M] is the total alignment cost.
         When doing subsequence DTW, D[N,:] indicates a matching function.
-
     steps : np.ndarray [shape=(N, M)]
         Step matrix, containing the indices of the used steps from the cost
         accumulation step.
@@ -433,19 +423,15 @@ def __dtw_backtracking(steps, step_sizes_sigma, subseq, start=None):  # pragma: 
     step to backtrack the index pairs for an optimal
     warping path.
 
-
     Parameters
     ----------
     steps : np.ndarray [shape=(N, M)]
         Step matrix, containing the indices of the used steps from the cost
         accumulation step.
-
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
         Specifies allowed step sizes as used by the dtw.
-
     subseq : bool
         Enable subsequence DTW, e.g., for retrieval tasks.
-
     start : int
         Start column index for backtraing (only allowed for ``subseq=True``)
 
@@ -499,19 +485,15 @@ def dtw_backtracking(steps, *, step_sizes_sigma=None, subseq=False, start=None):
     Uses the saved step sizes from the cost accumulation
     step to backtrack the index pairs for a warping path.
 
-
     Parameters
     ----------
     steps : np.ndarray [shape=(N, M)]
         Step matrix, containing the indices of the used steps from the cost
         accumulation step.
-
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
         Specifies allowed step sizes as used by the dtw.
-
     subseq : bool
         Enable subsequence DTW, e.g., for retrieval tasks.
-
     start : int
         Start column index for backtraing (only allowed for ``subseq=True``)
 
@@ -583,7 +565,6 @@ def rqa(sim, *, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     Note that setting ``gap_onset`` and ``gap_extend`` to `np.inf` recovers the second
     method, and disabling knight moves recovers the first.
 
-
     .. [#] Serrà, Joan, Xavier Serra, and Ralph G. Andrzejak.
         "Cross recurrence quantification for cover song identification."
         New Journal of Physics 11, no. 9 (2009): 093017.
@@ -591,7 +572,6 @@ def rqa(sim, *, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     .. [#] Eckmann, J. P., S. Oliffson Kamphorst, and D. Ruelle.
         "Recurrence plots of dynamical systems."
         World Scientific Series on Nonlinear Science Series A 16 (1995): 441-446.
-
 
     Parameters
     ----------
@@ -623,7 +603,6 @@ def rqa(sim, *, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     score : np.ndarray [shape=(N, M)]
         The alignment score matrix.  ``score[n, m]`` is the cumulative value of
         the best alignment sequence ending in frames ``n`` and ``m``.
-
     path : np.ndarray [shape=(k, 2)] (optional)
         If ``backtrack=True``, ``path`` contains a list of pairs of aligned frames
         in the best alignment sequence.
@@ -907,11 +886,9 @@ def _viterbi(log_prob, log_trans, log_p_init):  # pragma: no cover
     log_prob : np.ndarray [shape=(T, m)]
         ``log_prob[t, s]`` is the conditional log-likelihood
         ``log P[X = X(t) | State(t) = s]``
-
     log_trans : np.ndarray [shape=(m, m)]
         The log transition matrix
         ``log_trans[i, j] = log P[State(t+1) = j | State(t) = i]``
-
     log_p_init : np.ndarray [shape=(m,)]
         log of the initial state distribution
 
@@ -979,27 +956,22 @@ def viterbi(prob, transition, *, p_init=None, return_logp=False):
     prob : np.ndarray [shape=(..., n_states, n_steps), non-negative]
         ``prob[..., s, t]`` is the probability of observation at time ``t``
         being generated by state ``s``.
-
     transition : np.ndarray [shape=(n_states, n_states), non-negative]
         ``transition[i, j]`` is the probability of a transition from i->j.
         Each row must sum to 1.
-
     p_init : np.ndarray [shape=(n_states,)]
         Optional: initial state distribution.
         If not provided, a uniform distribution is assumed.
-
     return_logp : bool
         If ``True``, return the log-likelihood of the state sequence.
 
     Returns
     -------
     Either ``states`` or ``(states, logp)``:
-
     states : np.ndarray [shape=(..., n_steps,)]
         The most likely state sequence.
         If ``prob`` contains multiple channels of input, then each channel is
         decoded independently.
-
     logp : scalar [float] or np.ndarray
         If ``return_logp=True``, the log probability of ``states`` given
         the observations.
@@ -1007,7 +979,6 @@ def viterbi(prob, transition, *, p_init=None, return_logp=False):
     See Also
     --------
     viterbi_discriminative : Viterbi decoding from state likelihoods
-
 
     Examples
     --------
@@ -1126,40 +1097,36 @@ def viterbi_discriminative(
         ``prob[s, t]`` is the probability of state ``s`` conditional on
         the observation at time ``t``.
         Must be non-negative and sum to 1 along each column.
-
     transition : np.ndarray [shape=(n_states, n_states), non-negative]
         ``transition[i, j]`` is the probability of a transition from i->j.
         Each row must sum to 1.
-
     p_state : np.ndarray [shape=(n_states,)]
         Optional: marginal probability distribution over states,
         must be non-negative and sum to 1.
         If not provided, a uniform distribution is assumed.
-
     p_init : np.ndarray [shape=(n_states,)]
         Optional: initial state distribution.
         If not provided, it is assumed to be uniform.
-
     return_logp : bool
         If ``True``, return the log-likelihood of the state sequence.
 
     Returns
     -------
     Either ``states`` or ``(states, logp)``:
-
     states : np.ndarray [shape=(..., n_steps,)]
         The most likely state sequence.
         If ``prob`` contains multiple input channels,
         then each channel is decoded independently.
-
     logp : scalar [float] or np.ndarray
         If ``return_logp=True``, the log probability of ``states`` given
         the observations.
 
     See Also
     --------
-    viterbi : Viterbi decoding from observation likelihoods
-    viterbi_binary: Viterbi decoding for multi-label, conditional state likelihoods
+    viterbi :
+        Viterbi decoding from observation likelihoods
+    viterbi_binary :
+        Viterbi decoding for multi-label, conditional state likelihoods
 
     Examples
     --------
@@ -1363,18 +1330,18 @@ def viterbi_binary(prob, transition, *, p_state=None, p_init=None, return_logp=F
     Returns
     -------
     Either ``states`` or ``(states, logp)``:
-
     states : np.ndarray [shape=(..., n_states, n_steps)]
         The most likely state sequence.
-
     logp : np.ndarray [shape=(..., n_states,)]
         If ``return_logp=True``, the log probability of each state activation
         sequence ``states``
 
     See Also
     --------
-    viterbi : Viterbi decoding from observation likelihoods
-    viterbi_discriminative : Viterbi decoding for discriminative (mutually exclusive) state predictions
+    viterbi :
+        Viterbi decoding from observation likelihoods
+    viterbi_discriminative :
+        Viterbi decoding for discriminative (mutually exclusive) state predictions
 
     Examples
     --------
@@ -1485,7 +1452,6 @@ def transition_uniform(n_states):
 
     Examples
     --------
-
     >>> librosa.sequence.transition_uniform(3)
     array([[0.333, 0.333, 0.333],
            [0.333, 0.333, 0.333],
@@ -1667,7 +1633,6 @@ def transition_local(n_states, width, *, window="triangle", wrap=False):
             so and effectively have ``width-2`` non-zero values.  You may have to expand
             ``width`` to get the desired behavior.
 
-
     wrap : bool
         If ``True``, then state locality ``|i - j|`` is computed modulo ``n_states``.
         If ``False`` (default), then locality is absolute.
@@ -1683,7 +1648,6 @@ def transition_local(n_states, width, *, window="triangle", wrap=False):
 
     Examples
     --------
-
     Triangular distributions with and without wrapping
 
     >>> librosa.sequence.transition_local(5, 3, window='triangle', wrap=False)
