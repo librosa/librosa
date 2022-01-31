@@ -144,10 +144,8 @@ def match_intervals(intervals_from, intervals_to, strict=True):
         to ``intervals_from[i, 1]``.
         ``intervals_from[0, 0]`` should be 0, ``intervals_from[-1, 1]``
         should be the track duration.
-
     intervals_to : np.ndarray [shape=(m, 2)]
         Analogous to ``intervals_from``.
-
     strict : bool
         If ``True``, intervals can only match if they intersect.
         If ``False``, disjoint intervals can match.
@@ -239,12 +237,10 @@ def match_events(events_from, events_to, left=True, right=True):
     Parameters
     ----------
     events_from : ndarray [shape=(n,)]
-      Array of events (eg, times, sample or frame indices) to match from.
-
+        Array of events (eg, times, sample or frame indices) to match from.
     events_to : ndarray [shape=(m,)]
-      Array of events (eg, times, sample or frame indices) to
-      match against.
-
+        Array of events (eg, times, sample or frame indices) to
+        match against.
     left : bool
     right : bool
         If ``False``, then matched events cannot be to the left (or right)

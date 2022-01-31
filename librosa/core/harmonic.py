@@ -141,23 +141,18 @@ def interp_harmonics(x, *, freqs, harmonics, kind="linear", fill_value=0, axis=-
     ----------
     x : np.ndarray
         The input energy
-
     freqs : np.ndarray, shape=(X.shape[axis])
         The frequency values corresponding to X's elements along the
         chosen axis.
-
     harmonics : list-like, non-negative
         Harmonics to compute as ``harmonics[i] * freqs``.
         The first harmonic (1) corresponds to ``freqs``.
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
-
     kind : str
         Interpolation type.  See `scipy.interpolate.interp1d`.
-
     fill_value : float
         The value to fill when extrapolating beyond the observed
         frequency range.
-
     axis : int
         The axis along which to compute harmonics
 
@@ -172,7 +167,6 @@ def interp_harmonics(x, *, freqs, harmonics, kind="linear", fill_value=0, axis=-
     See Also
     --------
     scipy.interpolate.interp1d
-
 
     Examples
     --------
@@ -227,7 +221,7 @@ def interp_harmonics(x, *, freqs, harmonics, kind="linear", fill_value=0, axis=-
         if not is_unique(freqs, axis=0):
             warnings.warn(
                 "Frequencies are not unique. This may produce incorrect harmonic interpolations.",
-                stacklevel=2
+                stacklevel=2,
             )
 
         f_interp = scipy.interpolate.interp1d(
@@ -250,7 +244,7 @@ def interp_harmonics(x, *, freqs, harmonics, kind="linear", fill_value=0, axis=-
         if not np.all(is_unique(freqs, axis=axis)):
             warnings.warn(
                 "Frequencies are not unique. This may produce incorrect harmonic interpolations.",
-                stacklevel=2
+                stacklevel=2,
             )
 
         # If we have time-varying frequencies, then it must match exactly the shape of the input

@@ -26,7 +26,7 @@ def moved(*, moved_from, version, version_removed):
                 moved_from, func.__module__, func.__name__, version, version_removed
             ),
             category=DeprecationWarning,
-            stacklevel=3  # Would be 2, but the decorator adds a level
+            stacklevel=3,  # Would be 2, but the decorator adds a level
         )
         return func(*args, **kwargs)
 
@@ -47,7 +47,7 @@ def deprecated(*, version, version_removed):
                 func.__module__, func.__name__, version, version_removed
             ),
             category=DeprecationWarning,
-            stacklevel=3  # Would be 2, but the decorator adds a level
+            stacklevel=3,  # Would be 2, but the decorator adds a level
         )
         return func(*args, **kwargs)
 

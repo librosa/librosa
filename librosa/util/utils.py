@@ -79,26 +79,20 @@ def frame(x, *, frame_length, hop_length, axis=-1, writeable=False, subok=False)
     adding a new "frame axis" either before the framing axis (if ``axis < 0``)
     or after the framing axis (if ``axis >= 0``).
 
-
     Parameters
     ----------
     x : np.ndarray
         Array to frame
-
     frame_length : int > 0 [scalar]
         Length of the frame
-
     hop_length : int > 0 [scalar]
         Number of steps to advance between frames
-
     axis : int
         The axis along which to frame.
-
     writeable : bool
         If ``True``, then the framed view of ``x`` is read-only.
         If ``False``, then the framed view is read-write.  Note that writing to the framed view
         will also write to the input array ``x`` in this case.
-
     subok : bool
         If True, sub-classes will be passed-through, otherwise the returned array will be
         forced to be a base-class array (default).
@@ -231,13 +225,13 @@ def valid_audio(y, *, mono=Deprecated()):
     Parameters
     ----------
     y : np.ndarray
-      The input data to validate
+        The input data to validate
 
     mono : bool
-      Whether or not to require monophonic audio
+        Whether or not to require monophonic audio
 
-      .. warning:: The ``mono`` parameter is deprecated in version 0.9 and will be
-        removed in 0.10.
+        .. warning:: The ``mono`` parameter is deprecated in version 0.9 and will be
+          removed in 0.10.
 
     Returns
     -------
@@ -266,7 +260,7 @@ def valid_audio(y, *, mono=Deprecated()):
     >>> librosa.util.valid_audio(y_stereo, mono=False)
     True
 
-    See also
+    See Also
     --------
     numpy.float32
     """
@@ -308,7 +302,6 @@ def valid_int(x, *, cast=None):
     ----------
     x : number
         A scalar value to be cast to int
-
     cast : function [optional]
         A function to modify ``x`` before casting.
         Default: `np.floor`
@@ -395,15 +388,12 @@ def pad_center(data, *, size, axis=-1, **kwargs):
     ----------
     data : np.ndarray
         Vector to be padded and centered
-
     size : int >= len(data) [scalar]
         Length to pad ``data``
-
     axis : int
         Axis along which to pad and center the data
-
-    kwargs : additional keyword arguments
-      arguments passed to `np.pad`
+    **kwargs : additional keyword arguments
+        arguments passed to `np.pad`
 
     Returns
     -------
@@ -445,10 +435,8 @@ def expand_to(x, *, ndim, axes):
     ----------
     x : np.ndarray
         The input array
-
     ndim : int
         The number of dimensions to expand to.  Must be at least ``x.ndim``
-
     axes : int or slice
         The target axis or axes to preserve from x.
         All other axes will have length 1.
@@ -532,15 +520,12 @@ def fix_length(data, *, size, axis=-1, **kwargs):
     Parameters
     ----------
     data : np.ndarray
-      array to be length-adjusted
-
+        array to be length-adjusted
     size : int >= 0 [scalar]
-      desired length of the array
-
+        desired length of the array
     axis : int, <= data.ndim
-      axis along which to fix length
-
-    kwargs : additional keyword arguments
+        axis along which to fix length
+    **kwargs : additional keyword arguments
         Parameters to ``np.pad``
 
     Returns
@@ -604,18 +589,14 @@ def fix_frames(frames, *, x_min=0, x_max=None, pad=True):
     array([  0, 200, 233, 266, 299, 332, 365, 398, 431, 464, 497,
            500])
 
-
     Parameters
     ----------
     frames : np.ndarray [shape=(n_frames,)]
         List of non-negative frame indices
-
     x_min : int >= 0 or None
         Minimum allowed frame index
-
     x_max : int >= 0 or None
         Maximum allowed frame index
-
     pad : boolean
         If ``True``, then ``frames`` is expanded to span the full range
         ``[x_min, x_max]``
@@ -723,7 +704,6 @@ def axis_sort(S, *, axis=-1, index=False, value=None):
     -------
     S_sort : np.ndarray [shape=(d, n)]
         ``S`` with the columns or rows permuted in sorting order
-
     idx : np.ndarray (optional) [shape=(d,) or (n,)]
         If ``index == True``, the sorting index used to permute ``S``.
         Length of ``idx`` corresponds to the selected ``axis``.
@@ -773,7 +753,6 @@ def normalize(S, *, norm=np.inf, axis=0, threshold=None, fill=None):
     Note: the semantics of this function differ from
     `scipy.linalg.norm` in two ways: multi-dimensional arrays
     are supported, but matrix-norms are not.
-
 
     Parameters
     ----------
@@ -1012,15 +991,14 @@ def localmax(x, *, axis=0):
 
     Parameters
     ----------
-    x     : np.ndarray [shape=(d1,d2,...)]
-      input vector or array
-
+    x : np.ndarray [shape=(d1,d2,...)]
+        input vector or array
     axis : int
-      axis along which to compute local maximality
+        axis along which to compute local maximality
 
     Returns
     -------
-    m     : np.ndarray [shape=x.shape, dtype=bool]
+    m : np.ndarray [shape=x.shape, dtype=bool]
         indicator array of local maximality along ``axis``
 
     See Also
@@ -1074,15 +1052,14 @@ def localmin(x, *, axis=0):
 
     Parameters
     ----------
-    x     : np.ndarray [shape=(d1,d2,...)]
-      input vector or array
-
+    x : np.ndarray [shape=(d1,d2,...)]
+        input vector or array
     axis : int
-      axis along which to compute local minimality
+        axis along which to compute local minimality
 
     Returns
     -------
-    m     : np.ndarray [shape=x.shape, dtype=bool]
+    m : np.ndarray [shape=x.shape, dtype=bool]
         indicator array of local minimality along ``axis``
 
     See Also
@@ -1124,33 +1101,26 @@ def peak_pick(x, *, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
     .. [#] https://github.com/CPJKU/onset_detection/blob/master/onset_program.py
 
-
     Parameters
     ----------
-    x         : np.ndarray [shape=(n,)]
+    x : np.ndarray [shape=(n,)]
         input signal to peak picks from
-
-    pre_max   : int >= 0 [scalar]
+    pre_max : int >= 0 [scalar]
         number of samples before ``n`` over which max is computed
-
-    post_max  : int >= 1 [scalar]
+    post_max : int >= 1 [scalar]
         number of samples after ``n`` over which max is computed
-
-    pre_avg   : int >= 0 [scalar]
+    pre_avg : int >= 0 [scalar]
         number of samples before ``n`` over which mean is computed
-
-    post_avg  : int >= 1 [scalar]
+    post_avg : int >= 1 [scalar]
         number of samples after ``n`` over which mean is computed
-
-    delta     : float >= 0 [scalar]
+    delta : float >= 0 [scalar]
         threshold offset for mean
-
-    wait      : int >= 0 [scalar]
+    wait : int >= 0 [scalar]
         number of samples to wait after picking a peak
 
     Returns
     -------
-    peaks     : np.ndarray [shape=(n_peaks,), dtype=int]
+    peaks : np.ndarray [shape=(n_peaks,), dtype=int]
         indices of peaks in ``x``
 
     Raises
@@ -1275,10 +1245,8 @@ def sparsify_rows(x, *, quantile=0.01, dtype=None):
     ----------
     x : np.ndarray [ndim <= 2]
         The input matrix to sparsify.
-
     quantile : float in [0, 1.0)
         Percentage of magnitude to discard in each row of ``x``
-
     dtype : np.dtype, optional
         The dtype of the output array.
         If not provided, then ``x.dtype`` will be used.
@@ -1377,10 +1345,8 @@ def buf_to_float(x, *, n_bytes=2, dtype=np.float32):
     ----------
     x : np.ndarray [dtype=int]
         The integer-valued data buffer
-
     n_bytes : int [1, 2, 4]
         The number of bytes per sample in ``x``
-
     dtype : numeric type
         The target output type (default: 32-bit float)
 
@@ -1407,14 +1373,11 @@ def index_to_slice(idx, *, idx_min=None, idx_max=None, step=None, pad=True):
     ----------
     idx : list-like
         Array of index boundaries
-
     idx_min, idx_max : None or int
         Minimum and maximum allowed indices
-
     step : None or int
         Step size for each slice.  If `None`, then the default
         step of 1 is used.
-
     pad : boolean
         If `True`, pad ``idx`` to span the range ``idx_min:idx_max``.
 
@@ -1468,20 +1431,15 @@ def sync(data, idx, *, aggregate=None, pad=True, axis=-1):
 
     Parameters
     ----------
-    data      : np.ndarray
+    data : np.ndarray
         multi-dimensional array of features
-
     idx : iterable of ints or slices
         Either an ordered array of boundary indices, or
         an iterable collection of slice objects.
-
-
     aggregate : function
         aggregation function (default: `np.mean`)
-
     pad : boolean
         If `True`, ``idx`` is padded to span the full range ``[0, data.shape[axis]]``
-
     axis : int
         The axis along which to aggregate data
 
@@ -1527,7 +1485,6 @@ def sync(data, idx, *, aggregate=None, pad=True, axis=-1):
     >>> sub_beats = librosa.segment.subsegment(C, beats)
     >>> sub_beats = librosa.util.fix_frames(sub_beats)
     >>> C_med_sub = librosa.util.sync(C, sub_beats, aggregate=np.median)
-
 
     Plot the results
 
@@ -1590,7 +1547,6 @@ def softmask(X, X_ref, *, power=1, split_zeros=False):
 
         ``M = X**power / (X**power + X_ref**power)``
 
-
     Parameters
     ----------
     X : np.ndarray
@@ -1606,13 +1562,11 @@ def softmask(X, X_ref, *, power=1, split_zeros=False):
         If infinite, returns a hard (binary) mask equivalent to ``X > X_ref``.
         Note: for hard masks, ties are always broken in favor of ``X_ref`` (``mask=0``).
 
-
     split_zeros : bool
         If `True`, entries where ``X`` and ``X_ref`` are both small (close to 0)
         will receive mask values of 0.5.
 
         Otherwise, the mask is set to 0 for these entries.
-
 
     Returns
     -------
@@ -1630,7 +1584,6 @@ def softmask(X, X_ref, *, power=1, split_zeros=False):
 
     Examples
     --------
-
     >>> X = 2 * np.ones((3, 3))
     >>> X_ref = np.vander(np.arange(3.0))
     >>> X
@@ -1731,7 +1684,6 @@ def tiny(x):
 
     Examples
     --------
-
     For a standard double-precision floating point number:
 
     >>> librosa.util.tiny(1.0)
@@ -1853,11 +1805,9 @@ def cyclic_gradient(data, *, edge_order=1, axis=-1):
     data : np.ndarray
         The function values observed at uniformly spaced positions on
         a periodic domain
-
-    edge_order: {1, 2}
+    edge_order : {1, 2}
         The order of the difference approximation used for estimating
         the gradient
-
     axis : int
         The axis along which gradients are calculated.
 
@@ -1963,15 +1913,12 @@ def shear(X, *, factor=1, axis=-1):
     to a horizontal.  Shearing with ``factor=1`` converts a horizontal to
     a diagonal.
 
-
     Parameters
     ----------
     X : np.ndarray [ndim=2] or scipy.sparse matrix
         The array to be sheared
-
     factor : integer
         The shear factor: ``X[:, n] -> np.roll(X[:, n], factor * n)``
-
     axis : integer
         The axis along which to shear
 
@@ -2020,11 +1967,9 @@ def stack(arrays, *, axis=0):
     ----------
     arrays : list
         one or more `np.ndarray`
-
     axis : integer
         The target axis along which to stack.  ``axis=0`` creates a new first axis,
         and ``axis=-1`` creates a new last axis.
-
 
     Returns
     -------
@@ -2038,7 +1983,6 @@ def stack(arrays, *, axis=0):
     Raises
     ------
     ParameterError
-
         - If ``arrays`` do not all have the same shape
         - If no ``arrays`` are given
 
@@ -2122,13 +2066,11 @@ def dtype_r2c(d, *, default=np.complex64):
     A `float32` (single-precision) type maps to `complex64`,
     while a `float64` (double-precision) maps to `complex128`.
 
-
     Parameters
     ----------
     d : np.dtype
         The real-valued dtype to convert to complex.
         If ``d`` is a complex type already, it will be returned.
-
     default : np.dtype, optional
         The default complex target type, if ``d`` does not match a
         known dtype
@@ -2180,13 +2122,11 @@ def dtype_c2r(d, *, default=np.float32):
     A `complex64` (single-precision) type maps to `float32`,
     while a `complex128` (double-precision) maps to `float64`.
 
-
     Parameters
     ----------
     d : np.dtype
         The complex-valued dtype to convert to real.
         If ``d`` is a real (float) type already, it will be returned.
-
     default : np.dtype, optional
         The default real target type, if ``d`` does not match a
         known dtype
@@ -2250,7 +2190,6 @@ def count_unique(data, *, axis=-1):
     ----------
     data : np.ndarray
         The input array
-
     axis : int
         The target axis to count
 
@@ -2266,7 +2205,6 @@ def count_unique(data, *, axis=-1):
 
     Examples
     --------
-
     >>> x = np.vander(np.arange(5))
     >>> x
     array([[  0,   0,   0,   0,   1],
@@ -2304,7 +2242,6 @@ def is_unique(data, *, axis=-1):
     ----------
     data : np.ndarray
         The input array
-
     axis : int
         The target axis
 
@@ -2321,7 +2258,6 @@ def is_unique(data, *, axis=-1):
 
     Examples
     --------
-
     >>> x = np.vander(np.arange(5))
     >>> x
     array([[  0,   0,   0,   0,   1],
