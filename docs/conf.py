@@ -390,7 +390,7 @@ texinfo_documents = [
 autodoc_member_order = "bysource"
 
 smv_branch_whitelist = r"^(main)$"  # build main branch, and anything relating to documentation
-smv_tag_whitelist = r"^((0\.7\.2)|(0\.[89]\.\d+)|(0\.9\.0rc0)$"  # use this for final builds
+smv_tag_whitelist = r"^((0\.7\.2)|(0\.[89]\.\d+)|(0\.9\.0rc0))$"  # use this for final builds
 smv_released_pattern = r'.*tags.*'
 smv_remote_whitelist = None
 smv_greatest_tag = True
