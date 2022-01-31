@@ -1487,7 +1487,7 @@ WEIGHTING_FUNCTIONS = {
 }
 
 
-def frequency_weighting(frequencies, *, kind="A", **kw):
+def frequency_weighting(frequencies, *, kind="A", **kwargs):
     """Compute the weighting of a set of frequencies.
 
     Parameters
@@ -1496,9 +1496,8 @@ def frequency_weighting(frequencies, *, kind="A", **kw):
         One or more frequencies (in Hz)
     kind : str in
         The weighting kind. e.g. `'A'`, `'B'`, `'C'`, `'D'`, `'Z'`
-    min_db : float [scalar] or None
-        Clip weights below this threshold.
-        If `None`, no clipping is performed.
+    **kwargs
+        Additional keyword arguments to A_weighting, B_weighting, etc.
 
     Returns
     -------

@@ -249,6 +249,10 @@ def hybrid_cqt(
     filter_scale : float > 0
         Filter filter_scale factor. Larger values use longer windows.
 
+    norm : {inf, -inf, 0, float > 0}
+        Type of norm to use for basis function normalization.
+        See `librosa.util.normalize`.
+
     sparsity : float in [0, 1)
         Sparsify the CQT basis by discarding up to ``sparsity``
         fraction of the energy in each basis.
@@ -258,6 +262,13 @@ def hybrid_cqt(
     window : str, tuple, number, or function
         Window specification for the basis filters.
         See `filters.get_window` for details.
+
+    scale : bool
+        If ``True``, scale the CQT response by square-root the length of
+        each channel's filter.  This is analogous to ``norm='ortho'`` in FFT.
+
+        If ``False``, do not scale the CQT. This is analogous to
+        ``norm=None`` in FFT.
 
     pad_mode : string
         Padding mode for centered frame analysis.
@@ -422,6 +433,10 @@ def pseudo_cqt(
     filter_scale : float > 0
         Filter filter_scale factor. Larger values use longer windows.
 
+    norm : {inf, -inf, 0, float > 0}
+        Type of norm to use for basis function normalization.
+        See `librosa.util.normalize`.
+
     sparsity : float in [0, 1)
         Sparsify the CQT basis by discarding up to ``sparsity``
         fraction of the energy in each basis.
@@ -431,6 +446,13 @@ def pseudo_cqt(
     window : str, tuple, number, or function
         Window specification for the basis filters.
         See `filters.get_window` for details.
+
+    scale : bool
+        If ``True``, scale the CQT response by square-root the length of
+        each channel's filter.  This is analogous to ``norm='ortho'`` in FFT.
+
+        If ``False``, do not scale the CQT. This is analogous to
+        ``norm=None`` in FFT.
 
     pad_mode : string
         Padding mode for centered frame analysis.
@@ -538,11 +560,17 @@ def icqt(
     C : np.ndarray, [shape=(..., n_bins, n_frames)]
         Constant-Q representation as produced by `cqt`
 
+    sr : number > 0 [scalar]
+        sampling rate of the signal
+
     hop_length : int > 0 [scalar]
         number of samples between successive frames
 
     fmin : float > 0 [scalar]
         Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
+
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave
 
     tuning : float [scalar]
         Tuning offset in fractions of a bin.

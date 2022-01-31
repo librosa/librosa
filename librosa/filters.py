@@ -619,6 +619,9 @@ def constant_q_lengths(
         Window function to use on filters
     filter_scale : float > 0 [scalar]
         Resolution of filter windows. Larger values use longer windows.
+    gamma : number >= 0
+        Bandwidth offset for variable-Q transforms.
+        ``gamma=0`` produces a constant-Q filterbank.
 
     Returns
     -------
@@ -1480,6 +1483,9 @@ def window_sumsquare(
         The length of each analysis frame.
     dtype : np.dtype
         The data type of the output
+    norm : {np.inf, -np.inf, 0, float > 0, None}
+        Normalization mode used in window construction.
+        Note that this does not affect the squaring operation.
 
     Returns
     -------
