@@ -392,7 +392,7 @@ def pad_center(data, *, size, axis=-1, **kwargs):
         Length to pad ``data``
     axis : int
         Axis along which to pad and center the data
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         arguments passed to `np.pad`
 
     Returns
@@ -525,7 +525,7 @@ def fix_length(data, *, size, axis=-1, **kwargs):
         desired length of the array
     axis : int, <= data.ndim
         axis along which to fix length
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Parameters to ``np.pad``
 
     Returns
@@ -1805,7 +1805,7 @@ def cyclic_gradient(data, *, edge_order=1, axis=-1):
     data : np.ndarray
         The function values observed at uniformly spaced positions on
         a periodic domain
-    edge_order: {1, 2}
+    edge_order : {1, 2}
         The order of the difference approximation used for estimating
         the gradient
     axis : int

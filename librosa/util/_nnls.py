@@ -48,7 +48,7 @@ def _nnls_lbfgs_block(A, B, x_init=None, **kwargs):
         The regression targets
     x_init : np.ndarray [shape=(d, N)]
         An initial guess
-    kwargs
+    **kwargs
         Additional keyword arguments to `scipy.optimize.fmin_l_bfgs_b`
 
     Returns
@@ -92,7 +92,7 @@ def nnls(A, B, **kwargs):
         The basis matrix
     B : np.ndarray [shape=(..., m, N)]
         The target array.  Additional leading dimensions are supported.
-    kwargs
+    **kwargs
         Additional keyword arguments to `scipy.optimize.fmin_l_bfgs_b`
 
     Returns

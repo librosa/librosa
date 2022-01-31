@@ -1342,7 +1342,7 @@ def iirt(
           Can be unstable for high-order filters.
     res_type : string
         The resampling mode.  See `librosa.resample` for details.
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional arguments for `librosa.filters.semitone_filterbank`
         (e.g., could be used to provide another set of ``center_freqs`` and ``sample_rates``).
 
@@ -1693,7 +1693,7 @@ def db_to_amplitude(S_db, *, ref=1.0):
     ----------
     S_db : np.ndarray
         dB-scaled spectrogram
-    ref: number > 0
+    ref : number > 0
         Optional reference power.
 
     Returns
@@ -1723,7 +1723,7 @@ def perceptual_weighting(S, frequencies, *, kind="A", **kwargs):
     kind : str
         The frequency weighting curve to use.
         e.g. `'A'`, `'B'`, `'C'`, `'D'`, `None or 'Z'`
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional keyword arguments to `power_to_db`.
 
     Returns

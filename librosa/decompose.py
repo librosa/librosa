@@ -91,7 +91,7 @@ def decompose(
         If `False`, components are assumed to be pre-computed and stored
         in ``transformer``, and are not changed.
 
-    kwargs : Additional keyword arguments to the default transformer
+    **kwargs : Additional keyword arguments to the default transformer
         `sklearn.decomposition.NMF`
 
     Returns
@@ -432,7 +432,7 @@ def nn_filter(S, *, rec=None, aggregate=None, axis=-1, **kwargs):
     axis : int
         The axis along which to filter (by default, columns)
 
-    kwargs
+    **kwargs
         Additional keyword arguments provided to
         `librosa.segment.recurrence_matrix` if ``rec`` is not provided
 

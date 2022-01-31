@@ -79,7 +79,7 @@ def onset_detect(
 
         Otherwise, the onset envelope is left unnormalized.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional parameters for peak picking.
 
         See `librosa.util.peak_pick` for details.
@@ -257,7 +257,7 @@ def onset_strength(
 
         Default: `np.mean`
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
     Returns
@@ -493,7 +493,7 @@ def onset_strength_multi(
         Array of channel boundaries or slice objects.
         If `None`, then a single channel is generated to span all bands.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
     Returns

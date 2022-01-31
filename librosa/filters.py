@@ -499,7 +499,7 @@ def constant_q(
         The data type of the output basis.
         By default, uses 64-bit (single precision) complex floating point.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Arguments to `np.pad()` when ``pad==True``.
 
     Returns
@@ -860,7 +860,7 @@ def wavelet(
 
         If two or more frequencies are provided, this parameter is ignored.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Arguments to `np.pad()` when ``pad==True``.
 
     Returns
@@ -1399,7 +1399,7 @@ def semitone_filterbank(
           Can be unstable for high-order filters.
         - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional arguments to the private function `_multirate_fb()`.
 
     Returns

@@ -1147,7 +1147,7 @@ def zero_crossing_rate(y, *, frame_length=2048, hop_length=512, center=True, **k
         This is similar to the padding in `librosa.stft`,
         but uses edge-value copies instead of zero-padding.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         See `librosa.zero_crossings`
 
         .. note:: By default, the ``pad`` parameter is set to `False`, which
@@ -1268,7 +1268,7 @@ def chroma_stft(
     n_chroma : int > 0 [scalar]
         Number of chroma bins to produce (12 by default).
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Arguments to parameterize chroma filters.
         See `librosa.filters.chroma` for details.
 
@@ -1683,7 +1683,7 @@ def tonnetz(*, y=None, sr=22050, chroma=None, **kwargs):
 
         If `None`, a cqt chromagram is performed.
 
-    kwargs
+    **kwargs
         Additional keyword arguments to `chroma_cqt`, if ``chroma`` is not
         pre-computed.
 
@@ -1785,7 +1785,7 @@ def mfcc(
     S : np.ndarray [shape=(..., d, t)] or None
         log-power Mel spectrogram
 
-    n_mfcc: int > 0 [scalar]
+    n_mfcc : int > 0 [scalar]
         number of MFCCs to return
 
     dct_type : {1, 2, 3}
@@ -1806,7 +1806,7 @@ def mfcc(
         Setting ``lifter >= 2 * n_mfcc`` emphasizes the higher-order coefficients.
         As ``lifter`` increases, the coefficient weighting becomes approximately linear.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Arguments to `melspectrogram`, if operating
         on time series input
 
@@ -1977,7 +1977,7 @@ def melspectrogram(
         Exponent for the magnitude melspectrogram.
         e.g., 1 for energy, 2 for power, etc.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Mel filter bank parameters.
 
         See `librosa.filters.mel` for details.

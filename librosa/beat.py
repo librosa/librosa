@@ -557,7 +557,7 @@ def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
         tempo estimate
     fft_res : float [scalar]
         resolution of the fft (sr / hop_length)
-    tightness: float [scalar]
+    tightness : float [scalar]
         how closely do we adhere to bpm?
     trim : bool [scalar]
         trim leading/trailing beats with weak onsets?

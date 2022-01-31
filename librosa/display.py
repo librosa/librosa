@@ -796,7 +796,7 @@ def specshow(
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Arguments passed through to `matplotlib.pyplot.pcolormesh`.
 
         By default, the following options are set:
@@ -1375,7 +1375,7 @@ def waveshow(
         The label string applied to this plot.
         Note that the label
 
-    kwargs
+    **kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between` and
         `matplotlib.pyplot.step`.
 

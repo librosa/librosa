@@ -64,7 +64,7 @@ def hpss(y, **kwargs):
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-    kwargs : additional keyword arguments.
+    **kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
 
     Returns
@@ -111,7 +111,7 @@ def harmonic(y, **kwargs):
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-    kwargs : additional keyword arguments.
+    **kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
 
     Returns
@@ -155,7 +155,7 @@ def percussive(y, **kwargs):
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-    kwargs : additional keyword arguments.
+    **kwargs : additional keyword arguments.
         See `librosa.decompose.hpss` for details.
 
     Returns
@@ -202,7 +202,7 @@ def time_stretch(y, *, rate, **kwargs):
     rate : float > 0 [scalar]
         Stretch factor.  If ``rate > 1``, then the signal is sped up.
         If ``rate < 1``, then the signal is slowed down.
-    kwargs : additional keyword arguments.
+    **kwargs : additional keyword arguments.
         See `librosa.decompose.stft` for details.
 
     Returns
@@ -281,7 +281,7 @@ def pitch_shift(
 
         See `librosa.resample` for more information.
 
-    kwargs: additional keyword arguments.
+    **kwargs : additional keyword arguments.
         See `librosa.decompose.stft` for details.
 
     Returns
@@ -536,7 +536,7 @@ def split(
         The number of samples per analysis frame
     hop_length : int > 0
         The number of samples between analysis frames
-    aggregate callable [default: np.max]
+    aggregate : callable [default: np.max]
         Function to aggregate across channels (if y.ndim > 1)
 
     Returns

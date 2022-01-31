@@ -1053,7 +1053,7 @@ def path_enhance(
         If True, the smoothed similarity matrix will be thresholded at 0, and will not contain
         negative entries.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional arguments to pass to `scipy.ndimage.convolve`
 
     Returns

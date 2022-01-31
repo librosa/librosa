@@ -531,7 +531,7 @@ def resample(
         Scale the resampled signal so that ``y`` and ``y_hat`` have approximately
         equal total energy.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         If ``fix==True``, additional keyword arguments to pass to
         `librosa.util.fix_length`.
 

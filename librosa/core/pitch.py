@@ -31,11 +31,11 @@ def estimate_tuning(
 
     Parameters
     ----------
-    y: np.ndarray [shape=(..., n)] or None
+    y : np.ndarray [shape=(..., n)] or None
         audio signal. Multi-channel is supported..
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
-    S: np.ndarray [shape=(..., d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         magnitude or power spectrogram
     n_fft : int > 0 [scalar] or None
         number of FFT bins to use, if ``y`` is provided.
@@ -44,7 +44,7 @@ def estimate_tuning(
         0.01 corresponds to measurements in cents.
     bins_per_octave : int > 0 [scalar]
         How many frequency bins per octave
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional arguments passed to `piptrack`
 
     Returns
@@ -196,13 +196,13 @@ def piptrack(
 
     Parameters
     ----------
-    y: np.ndarray [shape=(..., n)] or None
+    y : np.ndarray [shape=(..., n)] or None
         audio signal. Multi-channel is supported..
 
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
 
-    S: np.ndarray [shape=(..., d, t)] or None
+    S : np.ndarray [shape=(..., d, t)] or None
         magnitude or power spectrogram
 
     n_fft : int > 0 [scalar] or None
@@ -480,11 +480,11 @@ def yin(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported..
-    fmin: number > 0 [scalar]
+    fmin : number > 0 [scalar]
         minimum frequency in Hertz.
         The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
-    fmax: number > 0 [scalar]
+    fmax : number > 0 [scalar]
         maximum frequency in Hertz.
         The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
@@ -500,7 +500,7 @@ def yin(
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent YIN predictions.
         If ``None``, defaults to ``frame_length // 4``.
-    trough_threshold: number > 0 [scalar]
+    trough_threshold : number > 0 [scalar]
         absolute threshold for peak estimation.
     center : boolean
         If ``True``, the signal `y` is padded so that frame
@@ -653,11 +653,11 @@ def pyin(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-    fmin: number > 0 [scalar]
+    fmin : number > 0 [scalar]
         minimum frequency in Hertz.
         The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
-    fmax: number > 0 [scalar]
+    fmax : number > 0 [scalar]
         maximum frequency in Hertz.
         The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
@@ -677,7 +677,7 @@ def pyin(
         number of thresholds for peak estimation.
     beta_parameters : tuple
         shape parameters for the beta distribution prior over thresholds.
-    boltzmann_parameter: number > 0 [scalar]
+    boltzmann_parameter : number > 0 [scalar]
         shape parameter for the Boltzmann distribution prior over troughs.
         Larger values will assign more mass to smaller periods.
     resolution : float in `(0, 1)`

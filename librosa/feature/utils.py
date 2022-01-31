@@ -41,7 +41,7 @@ def delta(data, *, width=9, order=1, axis=-1, mode="interp", **kwargs):
     mode : str, {'interp', 'nearest', 'mirror', 'constant', 'wrap'}
         Padding mode for estimating differences at the boundaries.
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         See `scipy.signal.savgol_filter`
 
     Returns
@@ -149,7 +149,7 @@ def stack_memory(data, *, n_steps=2, delay=1, **kwargs):
 
         Negative values embed from the future (subsequent columns).
 
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional arguments to pass to `numpy.pad`
 
     Returns

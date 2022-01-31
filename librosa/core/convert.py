@@ -444,7 +444,7 @@ def note_to_hz(note, **kwargs):
     ----------
     note : str or iterable of str
         One or more note names to convert
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Additional parameters to `note_to_midi`
 
     Returns
@@ -609,17 +609,17 @@ def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
     midi : int or iterable of int
         Midi numbers to convert.
 
-    octave: bool
+    octave : bool
         If True, include the octave number
 
-    cents: bool
+    cents : bool
         If true, cent markers will be appended for fractional notes.
         Eg, ``midi_to_note(69.3, cents=True) == 'A4+03'``
 
     key : str
         A key signature to use when resolving enharmonic equivalences.
 
-    unicode: bool
+    unicode : bool
         If ``True`` (default), accidentals will use Unicode notation: ♭ or ♯
 
         If ``False``, accidentals will use ASCII-compatible notation: b or #
@@ -735,7 +735,7 @@ def hz_to_note(frequencies, **kwargs):
     ----------
     frequencies : float or iterable of float
         Input frequencies, specified in Hz
-    kwargs : additional keyword arguments
+    **kwargs : additional keyword arguments
         Arguments passed through to `midi_to_note`
 
     Returns
@@ -929,7 +929,7 @@ def octs_to_hz(octs, *, tuning=0.0, bins_per_octave=12):
 
     Parameters
     ----------
-    octaves : np.ndarray [shape=(n,)] or float
+    octs : np.ndarray [shape=(n,)] or float
         octave number for each frequency
     tuning : float
         Tuning deviation from A440 in (fractional) bins per octave.
@@ -982,7 +982,7 @@ def A4_to_tuning(A4, *, bins_per_octave=12):
 
     Parameters
     ----------
-    A4: float or np.ndarray [shape=(n,), dtype=float]
+    A4 : float or np.ndarray [shape=(n,), dtype=float]
         Reference frequency(s) corresponding to A4.
     bins_per_octave : int > 0
         Number of bins per octave.
