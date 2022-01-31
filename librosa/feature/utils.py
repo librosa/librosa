@@ -21,20 +21,20 @@ def delta(data, *, width=9, order=1, axis=-1, mode="interp", **kwargs):
 
     Parameters
     ----------
-    data      : np.ndarray
+    data : np.ndarray
         the input data matrix (eg, spectrogram)
 
-    width     : int, positive, odd [scalar]
+    width : int, positive, odd [scalar]
         Number of frames over which to compute the delta features.
         Cannot exceed the length of ``data`` along the specified axis.
 
         If ``mode='interp'``, then ``width`` must be at least ``data.shape[axis]``.
 
-    order     : int > 0 [scalar]
+    order : int > 0 [scalar]
         the order of the difference operator.
         1 for first derivative, 2 for second, etc.
 
-    axis      : int [scalar]
+    axis : int [scalar]
         the axis along which to compute deltas.
         Default is -1 (columns).
 
@@ -46,7 +46,7 @@ def delta(data, *, width=9, order=1, axis=-1, mode="interp", **kwargs):
 
     Returns
     -------
-    delta_data   : np.ndarray [shape=(..., t)]
+    delta_data : np.ndarray [shape=(..., t)]
         delta matrix of ``data`` at specified order
 
     Notes
@@ -133,7 +133,6 @@ def stack_memory(data, *, n_steps=2, delay=1, **kwargs):
     overridden by supplying additional keyword arguments which are passed
     to `np.pad()`.
 
-
     Parameters
     ----------
     data : np.ndarray [shape=(..., d, t)]
@@ -151,7 +150,7 @@ def stack_memory(data, *, n_steps=2, delay=1, **kwargs):
         Negative values embed from the future (subsequent columns).
 
     kwargs : additional keyword arguments
-      Additional arguments to pass to `numpy.pad`
+        Additional arguments to pass to `numpy.pad`
 
     Returns
     -------
@@ -162,7 +161,6 @@ def stack_memory(data, *, n_steps=2, delay=1, **kwargs):
     Notes
     -----
     This function caches at level 40.
-
 
     Examples
     --------
@@ -270,11 +268,8 @@ def __stack(history, data, n_steps, delay):
     Parameters
     ----------
     history : output array (2-dimensional)
-
     data : pre-padded input array (2-dimensional)
-
     n_steps : int > 0, the number of steps to stack
-
     delay : int != 0, the amount of delay between steps
 
     Returns

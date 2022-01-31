@@ -533,7 +533,6 @@ def icqt(
     Given a constant-Q transform representation ``C`` of an audio signal ``y``,
     this function produces an approximation ``y_hat``.
 
-
     Parameters
     ----------
     C : np.ndarray, [shape=(..., n_bins, n_frames)]
@@ -1337,12 +1336,10 @@ def griffinlim_cqt(
 
         If ``None``, defaults to the current `np.random` object.
 
-
     Returns
     -------
     y : np.ndarray [shape=(..., n)]
         time-domain signal reconstructed from ``C``
-
 
     See Also
     --------

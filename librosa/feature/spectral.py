@@ -116,7 +116,6 @@ def spectral_centroid(
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
 
-
     Returns
     -------
     centroid : np.ndarray [shape=(..., 1, t)]
@@ -124,11 +123,8 @@ def spectral_centroid(
 
     See Also
     --------
-    librosa.stft
-        Short-time Fourier Transform
-
-    librosa.reassigned_spectrogram
-        Time-frequency reassigned spectrogram
+    librosa.stft : Short-time Fourier Transform
+    librosa.reassigned_spectrogram : Time-frequency reassigned spectrogram
 
     Examples
     --------
@@ -282,12 +278,10 @@ def spectral_bandwidth(
     p : float > 0
         Power to raise deviation from spectral centroid.
 
-
     Returns
     -------
     bandwidth : np.ndarray [shape=(..., 1, t)]
         frequency bandwidth for each frame
-
 
     Examples
     --------
@@ -471,13 +465,11 @@ def spectral_contrast(
         If `False`, return the logarithmic difference:
         ``log(peaks) - log(valleys)``.
 
-
     Returns
     -------
     contrast : np.ndarray [shape=(..., n_bands + 1, t)]
         each row of spectral contrast values corresponds to a given
         octave-based frequency
-
 
     Examples
     --------
@@ -653,7 +645,6 @@ def spectral_rolloff(
     rolloff : np.ndarray [shape=(..., 1, t)]
         roll-off frequency for each frame
 
-
     Examples
     --------
     From time-series input
@@ -814,7 +805,6 @@ def spectral_flatness(
         spectral flatness for each frame.
         The returned value is in [0, 1] and often converted to dB scale.
 
-
     Examples
     --------
     From time-series input
@@ -885,7 +875,6 @@ def rms(
     representation of energy over time because its frames can be windowed,
     thus prefer using ``S`` if it's already available.
 
-
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
@@ -915,7 +904,6 @@ def rms(
     -------
     rms : np.ndarray [shape=(..., 1, t)]
         RMS value for each frame
-
 
     Examples
     --------
@@ -1173,8 +1161,7 @@ def zero_crossing_rate(y, *, frame_length=2048, hop_length=512, center=True, **k
 
     See Also
     --------
-    librosa.zero_crossings
-        Compute zero-crossings in a time-series
+    librosa.zero_crossings : Compute zero-crossings in a time-series
 
     Examples
     --------
@@ -1292,11 +1279,8 @@ def chroma_stft(
 
     See Also
     --------
-    librosa.filters.chroma
-        Chroma filter bank construction
-
-    librosa.util.normalize
-        Vector normalization
+    librosa.filters.chroma : Chroma filter bank construction
+    librosa.util.normalize : Vector normalization
 
     Examples
     --------
@@ -1430,7 +1414,6 @@ def chroma_cqt(
 
         If `None`, it will match ``n_chroma``.
 
-
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
 
@@ -1449,7 +1432,6 @@ def chroma_cqt(
     Examples
     --------
     Compare a long-window STFT chromagram to the CQT chromagram
-
 
     >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
     >>> chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr,
@@ -1601,19 +1583,13 @@ def chroma_cens(
 
     See Also
     --------
-    chroma_cqt
-        Compute a chromagram from a constant-Q transform.
-
-    chroma_stft
-        Compute a chromagram from an STFT spectrogram or waveform.
-
-    librosa.filters.get_window
-        Compute a window function.
+    chroma_cqt : Compute a chromagram from a constant-Q transform.
+    chroma_stft : Compute a chromagram from an STFT spectrogram or waveform.
+    librosa.filters.get_window : Compute a window function.
 
     Examples
     --------
     Compare standard cqt chroma to CENS.
-
 
     >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
     >>> chroma_cens = librosa.feature.chroma_cens(y=y, sr=sr)
@@ -1726,11 +1702,8 @@ def tonnetz(*, y=None, sr=22050, chroma=None, **kwargs):
 
     See Also
     --------
-    chroma_cqt
-        Compute a chromagram from a constant-Q transform.
-
-    chroma_stft
-        Compute a chromagram from an STFT spectrogram or waveform.
+    chroma_cqt : Compute a chromagram from a constant-Q transform.
+    chroma_stft : Compute a chromagram from an STFT spectrogram or waveform.
 
     Examples
     --------
@@ -2016,12 +1989,8 @@ def melspectrogram(
 
     See Also
     --------
-    librosa.filters.mel
-        Mel filter bank construction
-
-    librosa.stft
-        Short-time Fourier Transform
-
+    librosa.filters.mel : Mel filter bank construction
+    librosa.stft : Short-time Fourier Transform
 
     Examples
     --------

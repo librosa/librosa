@@ -57,12 +57,10 @@ def frames_to_samples(frames, *, hop_length=512, n_fft=None):
 
     Parameters
     ----------
-    frames     : number or np.ndarray [shape=(n,)]
+    frames : number or np.ndarray [shape=(n,)]
         frame index or vector of frame indices
-
     hop_length : int > 0 [scalar]
         number of samples between successive frames
-
     n_fft : None or int > 0 [scalar]
         Optional: length of the FFT window.
         If given, time conversion will include an offset of ``n_fft // 2``
@@ -150,15 +148,12 @@ def frames_to_time(frames, *, sr=22050, hop_length=512, n_fft=None):
 
     Parameters
     ----------
-    frames     : np.ndarray [shape=(n,)]
+    frames : np.ndarray [shape=(n,)]
         frame index or vector of frame indices
-
-    sr         : number > 0 [scalar]
+    sr : number > 0 [scalar]
         audio sampling rate
-
     hop_length : int > 0 [scalar]
         number of samples between successive frames
-
     n_fft : None or int > 0 [scalar]
         Optional: length of the FFT window.
         If given, time conversion will include an offset of ``n_fft // 2``
@@ -243,7 +238,6 @@ def time_to_samples(times, *, sr=22050):
     ----------
     times : number or np.ndarray
         Time value or array of time values (in seconds)
-
     sr : number > 0
         Sampling rate
 
@@ -275,7 +269,6 @@ def samples_to_time(samples, *, sr=22050):
     ----------
     samples : np.ndarray
         Sample index or array of sample indices
-
     sr : number > 0
         Sampling rate
 
@@ -313,7 +306,6 @@ def blocks_to_frames(blocks, *, block_length):
     ----------
     blocks : np.ndarray
         Block index or array of block indices
-
     block_length : int > 0
         The number of frames per block
 
@@ -350,10 +342,8 @@ def blocks_to_samples(blocks, *, block_length, hop_length):
     ----------
     blocks : np.ndarray
         Block index or array of block indices
-
     block_length : int > 0
         The number of frames per block
-
     hop_length : int > 0
         The number of samples to advance between frames
 
@@ -395,13 +385,10 @@ def blocks_to_time(blocks, *, block_length, hop_length, sr):
     ----------
     blocks : np.ndarray
         Block index or array of block indices
-
     block_length : int > 0
         The number of frames per block
-
     hop_length : int > 0
         The number of samples to advance between frames
-
     sr : int > 0
         The sampling rate (samples per second)
 
@@ -457,7 +444,6 @@ def note_to_hz(note, **kwargs):
     ----------
     note : str or iterable of str
         One or more note names to convert
-
     kwargs : additional keyword arguments
         Additional parameters to `note_to_midi`
 
@@ -488,7 +474,6 @@ def note_to_midi(note, *, round_midi=True):
     ----------
     note : str or iterable of str
         One or more note names.
-
     round_midi : bool
         - If ``True``, allow for fractional midi notes
         - Otherwise, round cent deviations to the nearest note
@@ -619,7 +604,6 @@ def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
     >>> librosa.midi_to_note(range(12, 24), key='F:min')
     ['C0', 'D♭0', 'D0', 'E♭0', 'E0', 'F0', 'G♭0', 'G0', 'A♭0', 'A0', 'B♭0', 'B0']
 
-
     Parameters
     ----------
     midi : int or iterable of int
@@ -697,12 +681,12 @@ def midi_to_hz(notes):
 
     Parameters
     ----------
-    notes       : int or np.ndarray [shape=(n,), dtype=int]
+    notes : int or np.ndarray [shape=(n,), dtype=int]
         midi number(s) of the note(s)
 
     Returns
     -------
-    frequency   : number or np.ndarray [shape=(n,), dtype=float]
+    frequency : number or np.ndarray [shape=(n,), dtype=float]
         frequency (frequencies) of ``notes`` in Hz
 
     See Also
@@ -726,12 +710,12 @@ def hz_to_midi(frequencies):
 
     Parameters
     ----------
-    frequencies   : float or np.ndarray [shape=(n,), dtype=float]
+    frequencies : float or np.ndarray [shape=(n,), dtype=float]
         frequencies to convert
 
     Returns
     -------
-    note_nums     : number or np.ndarray [shape=(n,), dtype=float]
+    note_nums : number or np.ndarray [shape=(n,), dtype=float]
         MIDI notes to ``frequencies``
 
     See Also
@@ -751,10 +735,8 @@ def hz_to_note(frequencies, **kwargs):
     ----------
     frequencies : float or iterable of float
         Input frequencies, specified in Hz
-
     kwargs : additional keyword arguments
         Arguments passed through to `midi_to_note`
-
 
     Returns
     -------
@@ -762,13 +744,11 @@ def hz_to_note(frequencies, **kwargs):
         ``notes[i]`` is the closest note name to ``frequency[i]``
         (or ``frequency`` if the input is scalar)
 
-
     See Also
     --------
     hz_to_midi
     midi_to_note
     note_to_hz
-
 
     Examples
     --------
@@ -804,14 +784,14 @@ def hz_to_mel(frequencies, *, htk=False):
 
     Parameters
     ----------
-    frequencies   : number or np.ndarray [shape=(n,)] , float
+    frequencies : number or np.ndarray [shape=(n,)] , float
         scalar or array of frequencies
-    htk           : bool
+    htk : bool
         use HTK formula instead of Slaney
 
     Returns
     -------
-    mels        : number or np.ndarray [shape=(n,)]
+    mels : number or np.ndarray [shape=(n,)]
         input frequencies in Mels
 
     See Also
@@ -860,14 +840,14 @@ def mel_to_hz(mels, *, htk=False):
 
     Parameters
     ----------
-    mels          : np.ndarray [shape=(n,)], float
+    mels : np.ndarray [shape=(n,)], float
         mel bins to convert
-    htk           : bool
+    htk : bool
         use HTK formula instead of Slaney
 
     Returns
     -------
-    frequencies   : np.ndarray [shape=(n,)]
+    frequencies : np.ndarray [shape=(n,)]
         input mels in Hz
 
     See Also
@@ -913,18 +893,16 @@ def hz_to_octs(frequencies, *, tuning=0.0, bins_per_octave=12):
 
     Parameters
     ----------
-    frequencies   : number >0 or np.ndarray [shape=(n,)] or float
+    frequencies : number >0 or np.ndarray [shape=(n,)] or float
         scalar or vector of frequencies
-
-    tuning        : float
+    tuning : float
         Tuning deviation from A440 in (fractional) bins per octave.
-
     bins_per_octave : int > 0
         Number of bins per octave.
 
     Returns
     -------
-    octaves       : number or np.ndarray [shape=(n,)]
+    octaves : number or np.ndarray [shape=(n,)]
         octave number for each frequency
 
     See Also
@@ -951,18 +929,16 @@ def octs_to_hz(octs, *, tuning=0.0, bins_per_octave=12):
 
     Parameters
     ----------
-    octaves       : np.ndarray [shape=(n,)] or float
+    octaves : np.ndarray [shape=(n,)] or float
         octave number for each frequency
-
     tuning : float
         Tuning deviation from A440 in (fractional) bins per octave.
-
     bins_per_octave : int > 0
         Number of bins per octave.
 
     Returns
     -------
-    frequencies   : number or np.ndarray [shape=(n,)]
+    frequencies : number or np.ndarray [shape=(n,)]
         scalar or vector of frequencies
 
     See Also
@@ -1008,13 +984,12 @@ def A4_to_tuning(A4, *, bins_per_octave=12):
     ----------
     A4: float or np.ndarray [shape=(n,), dtype=float]
         Reference frequency(s) corresponding to A4.
-
     bins_per_octave : int > 0
         Number of bins per octave.
 
     Returns
     -------
-    tuning   : float or np.ndarray [shape=(n,), dtype=float]
+    tuning : float or np.ndarray [shape=(n,), dtype=float]
         Tuning deviation from A440 in (fractional) bins per octave.
 
     See Also
@@ -1059,13 +1034,12 @@ def tuning_to_A4(tuning, *, bins_per_octave=12):
     ----------
     tuning : float or np.ndarray [shape=(n,), dtype=float]
         Tuning deviation from A440 in fractional bins per octave.
-
     bins_per_octave : int > 0
         Number of bins per octave.
 
     Returns
     -------
-    A4  : float or np.ndarray [shape=(n,), dtype=float]
+    A4 : float or np.ndarray [shape=(n,), dtype=float]
         Reference frequency corresponding to A4.
 
     See Also
@@ -1082,16 +1056,13 @@ def fft_frequencies(*, sr=22050, n_fft=2048):
     ----------
     sr : number > 0 [scalar]
         Audio sampling rate
-
     n_fft : int > 0 [scalar]
         FFT window size
-
 
     Returns
     -------
     freqs : np.ndarray [shape=(1 + n_fft/2,)]
         Frequencies ``(0, sr/n_fft, 2*sr/n_fft, ..., sr/2)``
-
 
     Examples
     --------
@@ -1118,15 +1089,12 @@ def cqt_frequencies(n_bins, *, fmin, bins_per_octave=12, tuning=0.0):
 
     Parameters
     ----------
-    n_bins  : int > 0 [scalar]
+    n_bins : int > 0 [scalar]
         Number of constant-Q bins
-
-    fmin    : float > 0 [scalar]
+    fmin : float > 0 [scalar]
         Minimum frequency
-
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
-
     tuning : float
         Deviation from A440 tuning in fractional bins
 
@@ -1174,7 +1142,6 @@ def mel_frequencies(n_mels=128, *, fmin=0.0, fmax=11025.0, htk=False):
         Moore, G., Odell, J., Ollason, D., Povey, D., Valtchev, V., & Woodland, P.
         The HTK book, version 3.4. Cambridge University, March 2009.
 
-
     See Also
     --------
     hz_to_mel
@@ -1182,19 +1149,15 @@ def mel_frequencies(n_mels=128, *, fmin=0.0, fmax=11025.0, htk=False):
     librosa.feature.melspectrogram
     librosa.feature.mfcc
 
-
     Parameters
     ----------
-    n_mels    : int > 0 [scalar]
+    n_mels : int > 0 [scalar]
         Number of mel bins.
-
-    fmin      : float >= 0 [scalar]
+    fmin : float >= 0 [scalar]
         Minimum frequency (Hz).
-
-    fmax      : float >= 0 [scalar]
+    fmax : float >= 0 [scalar]
         Maximum frequency (Hz).
-
-    htk       : bool
+    htk : bool
         If True, use HTK formula to convert Hz to mel.
         Otherwise (False), use Slaney's Auditory Toolbox.
 
@@ -1237,10 +1200,8 @@ def tempo_frequencies(n_bins, *, hop_length=512, sr=22050):
     ----------
     n_bins : int > 0
         The number of lag bins
-
     hop_length : int > 0
         The number of samples between each bin
-
     sr : number > 0
         The audio sampling rate
 
@@ -1276,10 +1237,8 @@ def fourier_tempo_frequencies(*, sr=22050, win_length=384, hop_length=512):
     ----------
     sr : number > 0
         The audio sampling rate
-
     win_length : int > 0
         The number of frames per analysis window
-
     hop_length : int > 0
         The number of samples between each bin
 
@@ -1310,7 +1269,6 @@ def A_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     ----------
     frequencies : scalar or np.ndarray [shape=(n,)]
         One or more frequencies (in Hz)
-
     min_db : float [scalar] or None
         Clip weights below this threshold.
         If `None`, no clipping is performed.
@@ -1329,10 +1287,8 @@ def A_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     C_weighting
     D_weighting
 
-
     Examples
     --------
-
     Get the A-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
@@ -1366,7 +1322,6 @@ def B_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     ----------
     frequencies : scalar or np.ndarray [shape=(n,)]
         One or more frequencies (in Hz)
-
     min_db : float [scalar] or None
         Clip weights below this threshold.
         If `None`, no clipping is performed.
@@ -1385,10 +1340,8 @@ def B_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     C_weighting
     D_weighting
 
-
     Examples
     --------
-
     Get the B-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
@@ -1421,7 +1374,6 @@ def C_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     ----------
     frequencies : scalar or np.ndarray [shape=(n,)]
         One or more frequencies (in Hz)
-
     min_db : float [scalar] or None
         Clip weights below this threshold.
         If `None`, no clipping is performed.
@@ -1440,10 +1392,8 @@ def C_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     B_weighting
     D_weighting
 
-
     Examples
     --------
-
     Get the C-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
@@ -1474,7 +1424,6 @@ def D_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     ----------
     frequencies : scalar or np.ndarray [shape=(n,)]
         One or more frequencies (in Hz)
-
     min_db : float [scalar] or None
         Clip weights below this threshold.
         If `None`, no clipping is performed.
@@ -1493,10 +1442,8 @@ def D_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     B_weighting
     C_weighting
 
-
     Examples
     --------
-
     Get the D-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
@@ -1547,10 +1494,8 @@ def frequency_weighting(frequencies, *, kind="A", **kw):
     ----------
     frequencies : scalar or np.ndarray [shape=(n,)]
         One or more frequencies (in Hz)
-
     kind : str in
         The weighting kind. e.g. `'A'`, `'B'`, `'C'`, `'D'`, `'Z'`
-
     min_db : float [scalar] or None
         Clip weights below this threshold.
         If `None`, no clipping is performed.
@@ -1569,10 +1514,8 @@ def frequency_weighting(frequencies, *, kind="A", **kw):
     C_weighting
     D_weighting
 
-
     Examples
     --------
-
     Get the A-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
@@ -1595,10 +1538,8 @@ def multi_frequency_weighting(frequencies, *, kinds="ZAC", **kw):
     ----------
     frequencies : scalar or np.ndarray [shape=(n,)]
         One or more frequencies (in Hz)
-
     kinds : list or tuple or str
         An iterable of weighting kinds. e.g. `('Z', 'B')`, `'ZAD'`, `'C'`
-
     **kw : keywords to pass to the weighting function.
 
     Returns
@@ -1616,10 +1557,8 @@ def multi_frequency_weighting(frequencies, *, kinds="ZAC", **kw):
     C_weighting
     D_weighting
 
-
     Examples
     --------
-
     Get the A, B, C, D, and Z weightings for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
@@ -1646,18 +1585,14 @@ def times_like(X, *, sr=22050, hop_length=512, n_fft=None, axis=-1):
     X : np.ndarray or scalar
         - If ndarray, X is a feature matrix, e.g. STFT, chromagram, or mel spectrogram.
         - If scalar, X represents the number of frames.
-
     sr : number > 0 [scalar]
         audio sampling rate
-
     hop_length : int > 0 [scalar]
         number of samples between successive frames
-
     n_fft : None or int > 0 [scalar]
         Optional: length of the FFT window.
         If given, time conversion will include an offset of ``n_fft // 2``
         to counteract windowing effects when using a non-centered STFT.
-
     axis : int [scalar]
         The axis representing the time axis of X.
         By default, the last axis (-1) is taken.
@@ -1669,7 +1604,8 @@ def times_like(X, *, sr=22050, hop_length=512, n_fft=None, axis=-1):
 
     See Also
     --------
-    samples_like : Return an array of sample indices to match the time axis from a feature matrix.
+    samples_like :
+        Return an array of sample indices to match the time axis from a feature matrix.
 
     Examples
     --------
@@ -1701,15 +1637,12 @@ def samples_like(X, *, hop_length=512, n_fft=None, axis=-1):
     X : np.ndarray or scalar
         - If ndarray, X is a feature matrix, e.g. STFT, chromagram, or mel spectrogram.
         - If scalar, X represents the number of frames.
-
     hop_length : int > 0 [scalar]
         number of samples between successive frames
-
     n_fft : None or int > 0 [scalar]
         Optional: length of the FFT window.
         If given, time conversion will include an offset of ``n_fft // 2``
         to counteract windowing effects when using a non-centered STFT.
-
     axis : int [scalar]
         The axis representing the time axis of ``X``.
         By default, the last axis (-1) is taken.
@@ -1721,7 +1654,8 @@ def samples_like(X, *, hop_length=512, n_fft=None, axis=-1):
 
     See Also
     --------
-    times_like : Return an array of time values to match the time axis from a feature matrix.
+    times_like :
+        Return an array of time values to match the time axis from a feature matrix.
 
     Examples
     --------
