@@ -212,8 +212,6 @@ def stack_memory(data, *, n_steps=2, delay=1, **kwargs):
     >>> ax.text(1.0, 1/6, "Lag=0", transform=ax.transAxes, rotation=-90, ha="left", va="center")
     >>> ax.text(1.0, 3/6, "Lag=1", transform=ax.transAxes, rotation=-90, ha="left", va="center")
     >>> ax.text(1.0, 5/6, "Lag=2", transform=ax.transAxes, rotation=-90, ha="left", va="center")
-    >>> ax.axline((0, 1/3), (1, 1/3), transform=ax.transAxes, color='w', alpha=0.75, linestyle='--')
-    >>> ax.axline((0, 2/3), (1, 2/3), transform=ax.transAxes, color='w', alpha=0.75, linestyle='--')
     >>> ax.set(title='Time-lagged chroma', ylabel="")
     """
 
