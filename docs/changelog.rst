@@ -8,7 +8,7 @@ v0.9
 v0.9.0
 ------
 
-2022-02-04
+2022-02-07
 
 The main feature of this release is (nearly) full support for arbitrary multi-channel processing, along with several speed and stability enhancements.
 A detailed list of changes is provided below.
