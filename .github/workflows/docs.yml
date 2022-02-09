@@ -25,24 +25,11 @@ jobs:
         steps:
         - uses: actions/checkout@v2
 
-        - name: Install OS dependencies
-          shell: bash -l {0}
-          run: |
-            case "${{ runner.os }}" in
-            Linux)
-              sudo apt-get update -yy
-              sudo apt-get install -yy  libsamplerate0
-              ;; 
-            macOS)
-              brew install libsamplerate
-              ;;
-            esac
-
         - name: Cache conda
           uses: actions/cache@v2
           env:
             # Increase this value to reset cache if etc/example-environment.yml has not changed
-            CACHE_NUMBER: 0
+            CACHE_NUMBER: 1
           with:
             path: ~/conda_pkgs_dir
             key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}

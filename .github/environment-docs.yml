@@ -6,26 +6,24 @@ dependencies:
   # required
   - pip
   - audioread>=2.1.5
-  - numpy==1.17.1
+  - numpy<1.18
   - scipy>=1.2.0
   - scikit-learn>=0.19.1
   - joblib>=0.14.0
   - decorator>=4.0.10
   - resampy>=0.2.2
-  - numba==0.48
-  - numpydoc==1.1.0
+  - numba<0.50
+  - numpydoc>=1.1.0
   - ipython>=7.0
-  - pysoundfile==0.10.2
+  - pysoundfile>=0.10.2
   - pooch>=1.0.0
   - packaging>=20.0
-  - matplotlib==3.3.4
+  - matplotlib<3.5
   - sphinx>=4.4.0
   - sphinx-gallery>=0.10.1
   - sphinx_rtd_theme>=0.5.2
   - ffmpeg
   - pip:
-    - soxr
-    - samplerate
     - sphinx-multiversion==0.2.4
     - presets>=0.1.3
     - mir-eval>=0.6
