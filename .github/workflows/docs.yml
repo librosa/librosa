@@ -19,7 +19,7 @@ jobs:
             matrix:
                 include:
                     - os: ubuntu-latest
-                      python-version: "3.9"
+                      python-version: "3.7"
                       channel-priority: "strict"
                       envfile: ".github/environment-docs.yml"
         steps:
@@ -37,7 +37,7 @@ jobs:
         - name: Install Conda environment
           uses: conda-incubator/setup-miniconda@v2
           with:
-            auto-update-conda: true
+            auto-update-conda: false
             python-version: ${{ matrix.python-version }}
             add-pip-as-python-dependency: true
             auto-activate-base: false
