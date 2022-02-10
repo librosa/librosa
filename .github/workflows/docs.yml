@@ -65,3 +65,13 @@ jobs:
         - name: Build documentations
           shell: bash -l {0}
           run: sphinx-multiversion docs/ build/html
+
+        - name: push changes to ghpages
+            uses: tagus/git-deploy@v0.1
+            with:
+              changes: build/html
+              repository: git@github.com:librosa/doc-playground.git
+              ssh_key: ${{ secrets.DOCS_DEPLOY_KEY }}
+              name: librosa
+              email: brian.mcfee@nyu.edu
+              clean_repo: true
