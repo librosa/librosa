@@ -9,13 +9,16 @@ on:
     branches:
     - main
 
+concurrency:
+    cancel-in-progress: True
+
 jobs:
     doc:
         name: "Documentation build"
         runs-on: ${{ matrix.os }}
 
         strategy:
-            fail-fast: false
+            fail-fast: true
             matrix:
                 include:
                     - os: ubuntu-latest
