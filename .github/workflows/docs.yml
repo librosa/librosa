@@ -24,6 +24,8 @@ jobs:
                       envfile: ".github/environment-docs.yml"
         steps:
         - uses: actions/checkout@v2
+          with:
+            fetch-depth: 0
 
         - name: Cache conda
           uses: actions/cache@v2
