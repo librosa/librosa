@@ -55,3 +55,7 @@ jobs:
         - name: Install librosa
           shell: bash -l {0}
           run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
+
+        - name: Build documentations
+          shell: bash -l {0}
+          run: sphinx-multiversion docs/ build/html
