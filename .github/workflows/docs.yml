@@ -64,12 +64,15 @@ jobs:
 
         - name: Build documentations
           shell: bash -l {0}
-          run: sphinx-multiversion docs/ build/html
+          run: |
+            sphinx-multiversion docs/ build/html
+            touch build/html/.nojekyll
 
         - name: Push to web
-          uses: tagus/git-deploy@v0.1
+          uses: tagus/git-deploy@v0.3.2
           with:
             changes: build/html
+            branch: main
             repository: git@github.com:librosa/doc-playground.git
             ssh_key: ${{ secrets.DOCS_DEPLOY_KEY }}
             name: librosa
