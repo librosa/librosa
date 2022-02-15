@@ -8,10 +8,12 @@ from numba import jit
 
 from .._cache import cache
 from ..util.exceptions import ParameterError
+from ..util.decorators import deprecate_positional_args
 
 __all__ = ["delta", "stack_memory"]
 
 
+@deprecate_positional_args
 @cache(level=40)
 def delta(data, *, width=9, order=1, axis=-1, mode="interp", **kwargs):
     r"""Compute delta features: local estimate of the derivative
@@ -116,6 +118,7 @@ def delta(data, *, width=9, order=1, axis=-1, mode="interp", **kwargs):
     )
 
 
+@deprecate_positional_args
 @cache(level=40)
 def stack_memory(data, *, n_steps=2, delay=1, **kwargs):
     """Short-term history embedding: vertically concatenate a data

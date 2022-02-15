@@ -14,12 +14,14 @@ from .._cache import cache
 from .. import filters
 from .. import util
 from ..util.exceptions import ParameterError
+from ..util.decorators import deprecate_positional_args
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 
 # TODO: ivqt, griffinlim_vqt
 
 
+@deprecate_positional_args
 @cache(level=20)
 def cqt(
     y,
@@ -193,6 +195,7 @@ def cqt(
     )
 
 
+@deprecate_positional_args
 @cache(level=20)
 def hybrid_cqt(
     y,
@@ -376,6 +379,7 @@ def hybrid_cqt(
     return __trim_stack(cqt_resp, n_bins, cqt_resp[-1].dtype)
 
 
+@deprecate_positional_args
 @cache(level=20)
 def pseudo_cqt(
     y,
@@ -532,6 +536,7 @@ def pseudo_cqt(
     return C
 
 
+@deprecate_positional_args
 @cache(level=40)
 def icqt(
     C,
@@ -756,6 +761,7 @@ def icqt(
     return y
 
 
+@deprecate_positional_args
 @cache(level=20)
 def vqt(
     y,
@@ -1227,6 +1233,7 @@ def __num_two_factors(x):
     return num_twos
 
 
+@deprecate_positional_args
 def griffinlim_cqt(
     C,
     *,

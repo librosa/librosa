@@ -13,10 +13,12 @@ from .._cache import cache
 from .. import util
 from .. import sequence
 from ..util.exceptions import ParameterError
+from ..util.decorators import deprecate_positional_args
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
 
+@deprecate_positional_args
 def estimate_tuning(
     *,
     y=None,
@@ -102,6 +104,7 @@ def estimate_tuning(
     )
 
 
+@deprecate_positional_args
 def pitch_tuning(frequencies, *, resolution=0.01, bins_per_octave=12):
     """Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
@@ -171,6 +174,7 @@ def pitch_tuning(frequencies, *, resolution=0.01, bins_per_octave=12):
     return tuning[np.argmax(counts)]
 
 
+@deprecate_positional_args
 @cache(level=30)
 def piptrack(
     *,
@@ -450,6 +454,7 @@ def _parabolic_interpolation(y_frames):
     return parabolic_shifts
 
 
+@deprecate_positional_args
 def yin(
     y,
     *,
@@ -615,6 +620,7 @@ def yin(
     return f0
 
 
+@deprecate_positional_args
 def pyin(
     y,
     *,
