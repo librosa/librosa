@@ -5,6 +5,23 @@ Changelog
 v0.9
 ====
 
+v0.9.1
+------
+2022-02-15
+
+This release provides partial backward compatibility to the 0.8 series.
+The 0.9.0 release introduced restrictions on positional arguments to many functions, requiring
+parameters to be passed by keyword arguments instead.
+In 0.9.1, positional parameters now trigger warnings instead of errors, so 0.8-compatible code should work again.
+
+
+Additional changes:
+
+- `#1448`_ Documentation for `librosa.effects.trim` and `librosa.effects.split` has been corrected to reflect a semantic change in the `ref` parameter introduced by `#1130`_.
+  Explicit `ref` values now measure amplitude rather than power.
+
+.. _#1448: https://github.com/librosa/librosa/issues/1448
+
 v0.9.0
 ------
 

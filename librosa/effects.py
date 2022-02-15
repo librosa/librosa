@@ -423,7 +423,7 @@ def _signal_to_frame_nonsilent(
         silence
 
     ref : callable or float
-        The reference power
+        The reference amplitude
 
     aggregate : callable [default: np.max]
         Function to aggregate dB measurements across channels (if y.ndim > 1)
@@ -463,8 +463,8 @@ def trim(
         The threshold (in decibels) below reference to consider as
         silence
     ref : number or callable
-        The reference power.  By default, it uses `np.max` and compares
-        to the peak power in the signal.
+        The reference amplitude.  By default, it uses `np.max` and compares
+        to the peak amplitude in the signal.
     frame_length : int > 0
         The number of samples per analysis frame
     hop_length : int > 0
@@ -536,8 +536,8 @@ def split(
         The threshold (in decibels) below reference to consider as
         silence
     ref : number or callable
-        The reference power.  By default, it uses `np.max` and compares
-        to the peak power in the signal.
+        The reference amplitude.  By default, it uses `np.max` and compares
+        to the peak amplitude in the signal.
     frame_length : int > 0
         The number of samples per analysis frame
     hop_length : int > 0
