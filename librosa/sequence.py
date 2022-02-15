@@ -38,6 +38,7 @@ from numba import jit
 from .util import pad_center, fill_off_diagonal, tiny, expand_to
 from .util.exceptions import ParameterError
 from .filters import get_window
+from .util.decorators import deprecate_positional_args
 
 __all__ = [
     "dtw",
@@ -53,6 +54,7 @@ __all__ = [
 ]
 
 
+@deprecate_positional_args
 def dtw(
     X=None,
     Y=None,
@@ -479,6 +481,7 @@ def __dtw_backtracking(steps, step_sizes_sigma, subseq, start=None):  # pragma: 
     return wp
 
 
+@deprecate_positional_args
 def dtw_backtracking(steps, *, step_sizes_sigma=None, subseq=False, start=None):
     """Backtrack a warping path.
 
@@ -528,6 +531,7 @@ def dtw_backtracking(steps, *, step_sizes_sigma=None, subseq=False, start=None):
     return np.asarray(wp, dtype=int)
 
 
+@deprecate_positional_args
 def rqa(sim, *, gap_onset=1, gap_extend=1, knight_moves=True, backtrack=True):
     """Recurrence quantification analysis (RQA)
 
@@ -937,6 +941,7 @@ def _viterbi(log_prob, log_trans, log_p_init):  # pragma: no cover
     return state, logp
 
 
+@deprecate_positional_args
 def viterbi(prob, transition, *, p_init=None, return_logp=False):
     """Viterbi decoding from observation likelihoods.
 
@@ -1073,6 +1078,7 @@ def viterbi(prob, transition, *, p_init=None, return_logp=False):
     return states
 
 
+@deprecate_positional_args
 def viterbi_discriminative(
     prob, transition, *, p_state=None, p_init=None, return_logp=False
 ):
@@ -1277,6 +1283,7 @@ def viterbi_discriminative(
     return states
 
 
+@deprecate_positional_args
 def viterbi_binary(prob, transition, *, p_state=None, p_init=None, return_logp=False):
     """Viterbi decoding from binary (multi-label), discriminative state predictions.
 
@@ -1601,6 +1608,7 @@ def transition_cycle(n_states, prob):
     return transition
 
 
+@deprecate_positional_args
 def transition_local(n_states, width, *, window="triangle", wrap=False):
     """Construct a localized transition matrix.
 
