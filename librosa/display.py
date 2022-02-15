@@ -50,6 +50,7 @@ from packaging.version import parse as version_parse
 from . import core
 from . import util
 from .util.exceptions import ParameterError
+from .util.decorators import deprecate_positional_args
 
 __all__ = [
     "specshow",
@@ -550,6 +551,7 @@ class AdaptiveWaveplot:
         ax.figure.canvas.draw_idle()
 
 
+@deprecate_positional_args
 def cmap(
     data, *, robust=True, cmap_seq="magma", cmap_bool="gray_r", cmap_div="coolwarm"
 ):
@@ -615,6 +617,7 @@ def __envelope(x, hop):
     return x_frame.max(axis=1)
 
 
+@deprecate_positional_args
 def specshow(
     data,
     *,
@@ -1279,6 +1282,7 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
     return axes_same_and_not_none and axes_same_lim
 
 
+@deprecate_positional_args
 def waveshow(
     y,
     *,

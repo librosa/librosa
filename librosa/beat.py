@@ -21,10 +21,12 @@ from . import onset
 from . import util
 from .feature import tempogram, fourier_tempogram
 from .util.exceptions import ParameterError
+from .util.decorators import deprecate_positional_args
 
 __all__ = ["beat_track", "tempo", "plp"]
 
 
+@deprecate_positional_args
 def beat_track(
     *,
     y=None,
@@ -191,6 +193,7 @@ def beat_track(
 
 
 @cache(level=30)
+@deprecate_positional_args
 def tempo(
     *,
     y=None,
@@ -355,6 +358,7 @@ def tempo(
     return np.take(bpms, best_period)
 
 
+@deprecate_positional_args
 def plp(
     *,
     y=None,
