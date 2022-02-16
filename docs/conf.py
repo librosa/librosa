@@ -154,7 +154,7 @@ sphinx_gallery_conf = {
         "librosa": None,
         "numpy": "https://numpy.org/doc/stable/",
         "np": "https://numpy.org/doc/stable/",
-        "scipy": "https://docs.scipy.org/doc/scipy/reference/",
+        "scipy": "https://docs.scipy.org/doc/scipy/",
         "matplotlib": "https://matplotlib.org/",
         "sklearn": "https://scikit-learn.org/stable/",
         "resampy": "https://resampy.readthedocs.io/en/latest/",
@@ -177,7 +177,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "np": ("https://numpy.org/doc/stable/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "matplotlib": ("https://matplotlib.org/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
     "resampy": ("https://resampy.readthedocs.io/en/latest/", None),
@@ -393,8 +393,10 @@ autodoc_member_order = "bysource"
 
 smv_branch_whitelist = r"^(main)$"  # build main branch, and anything relating to documentation
 #smv_tag_whitelist = r"^((0\.7\.2)|(0\.[89]\.\d+))$"  # use this for final builds
-smv_tag_whitelist = r"^0.9.0$"  # use this for testing builds
+smv_tag_whitelist = r"^0.9.\d+$"  # use this for testing builds
 smv_released_pattern = r'.*tags.*'
 smv_remote_whitelist = None
 smv_greatest_tag = True
 smv_prefer_remote_refs = False
+# Pull latest release dynamically
+smv_latest_version = version
