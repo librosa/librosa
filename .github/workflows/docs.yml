@@ -1,9 +1,9 @@
 name: Docs
 
 on:
-  workflow_dispatch
+  workflow_dispatch:
   release:
-    types: [created]
+    - types: [created]
 
   
 concurrency:
