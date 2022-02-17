@@ -1,9 +1,11 @@
 name: Docs
 
 on:
-  workflow_dispatch:
   release:
-    - types: created
+    types: [created]
+  push:
+    branches:
+    - main
 
   
 concurrency:
