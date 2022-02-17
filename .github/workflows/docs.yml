@@ -1,0 +1,81 @@
+name: Docs
+
+on:
+  release:
+    types: [created]
+  push:
+    branches:
+    - main
+
+  
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: True
+
+jobs:
+    doc:
+        name: "Documentation build"
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            fail-fast: true
+            matrix:
+                include:
+                    - os: ubuntu-latest
+                      python-version: "3.7"
+                      channel-priority: "strict"
+                      envfile: ".github/environment-docs.yml"
+        steps:
+        - uses: actions/checkout@v2
+          with:
+            fetch-depth: 0
+
+        - name: Cache conda
+          uses: actions/cache@v2
+          env:
+            # Increase this value to reset cache if etc/example-environment.yml has not changed
+            CACHE_NUMBER: 1
+          with:
+            path: ~/conda_pkgs_dir
+            key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
+
+        - name: Install Conda environment
+          uses: conda-incubator/setup-miniconda@v2
+          with:
+            auto-update-conda: false
+            python-version: ${{ matrix.python-version }}
+            add-pip-as-python-dependency: true
+            auto-activate-base: false
+            activate-environment: docs
+            channel-priority: ${{ matrix.channel-priority }}
+            environment-file: ${{ matrix.envfile }}
+            use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+
+        - name: Conda info
+          shell: bash -l {0}
+          run: |
+            conda info -a
+            conda list
+
+        - name: Install librosa
+          shell: bash -l {0}
+          run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
+
+        - name: Build documentations
+          shell: bash -l {0}
+          run: |
+            sphinx-multiversion docs/ build/html
+            touch build/html/.nojekyll
+            cp docs/docsite-index-redirect.html build/html/index.html
+            ln -srf build/html/$(git tag -l --sort=creatordate |tail -1) build/html/latest  # auto-link the latest tag
+
+        - name: Push to web
+          uses: tagus/git-deploy@v0.4.1
+          with:
+            changes: build/html
+            branch: main
+            repository: git@github.com:librosa/doc.git
+            ssh_key: ${{ secrets.DOCS_DEPLOY_KEY }}
+            name: librosa
+            email: brian.mcfee@nyu.edu
+            clean_repo: true
