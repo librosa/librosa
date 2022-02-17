@@ -71,7 +71,7 @@ jobs:
             ln -srf build/html/$(git tag -l --sort=creatordate |tail -1) build/html/latest  # auto-link the latest tag
 
         - name: Push to web
-          uses: tagus/git-deploy@v0.3.2
+          uses: tagus/git-deploy@v0.4
           with:
             changes: build/html
             branch: main
