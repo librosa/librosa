@@ -54,7 +54,8 @@ jobs:
 
         steps:
         - uses: actions/checkout@v2
-          submodules: true
+          with:
+            submodules: true
 
         - name: Install OS dependencies
           shell: bash -l {0}
