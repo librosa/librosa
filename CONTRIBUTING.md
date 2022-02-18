@@ -15,7 +15,7 @@ GitHub:
 
 2. Clone this copy to your local disk:
 
-          $ git clone git@github.com:YourLogin/librosa.git
+          $ git clone --recursive git@github.com:YourLogin/librosa.git
           $ cd librosa 
 
 3. Remove any previously installed librosas:
