@@ -17,6 +17,7 @@ GitHub:
 
           $ git clone --recursive git@github.com:YourLogin/librosa.git
           $ cd librosa 
+          $ git pull --recurse-submodules
 
 3. Remove any previously installed librosas:
             
