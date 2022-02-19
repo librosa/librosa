@@ -19,6 +19,11 @@ GitHub:
           $ cd librosa 
           $ git pull --recurse-submodules
 
+    These commands will clone the main librosa repository, as well as the submodule
+    that contains testing data.  This should work automatically, but you may also
+    want to read [Working with Submodules](https://github.blog/2016-02-01-working-with-submodules/)
+    for a better understanding of how this works.
+
 3. Remove any previously installed librosas:
             
           $ pip uninstall librosa
