@@ -38,18 +38,26 @@ def show_versions():
         "soundfile",
         "resampy",
         "numba",
+        "pooch",
+        "packaging"
     ]
 
     extra_deps = [
         "numpydoc",
         "sphinx",
         "sphinx_rtd_theme",
-        "sphinxcontrib.versioning",
-        "sphinx-gallery",
+        "sphinx_multiversion",
+        "sphinx_gallery",
+        "mir_eval",
+        "ipython",
+        "sphinxcontrib-svg2pdfconverter",
         "pytest",
         "pytest-mpl",
         "pytest-cov",
         "matplotlib",
+        "samplerate",
+        "soxr",
+        "contextlib2",
         "presets",
     ]
 
