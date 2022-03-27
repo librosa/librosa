@@ -1633,7 +1633,7 @@ def db_to_power(S_db, *, ref=1.0):
 def amplitude_to_db(S, *, ref=1.0, amin=1e-5, top_db=80.0):
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
-    This is equivalent to ``power_to_db(S**2)``, but is provided for convenience.
+    This is equivalent to ``power_to_db(S**2, ref=ref**2, amin=amin**2)``, but is provided for convenience.
 
     Parameters
     ----------
@@ -1698,7 +1698,7 @@ def db_to_amplitude(S_db, *, ref=1.0):
 
     This effectively inverts `amplitude_to_db`::
 
-        db_to_amplitude(S_db) ~= 10.0**(0.5 * (S_db + log10(ref)/10))
+        db_to_amplitude(S_db) ~= 10.0**(0.5 * S_db/10 + log10(ref))
 
     Parameters
     ----------
