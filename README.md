@@ -1,3 +1,5 @@
+https://github.com/librosa/librosa.github.io/blob/9d2c0612df1f046e32d9e115d72d6542473953ad/images/librosa_logo_text.png
+
 librosa
 =======
 A python package for music and audio analysis.  
