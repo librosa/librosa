@@ -65,7 +65,7 @@ python setup.py install
 ```
 If all went well, you should be able to execute the demo scripts under `examples/`
 
-📝 ==OS X users should follow the installation guide given below.==
+📝 OS X users should follow the installation guide given below.
 
 Alternatively, you can download or clone the repository and use `pip` to handle dependencies:
 
@@ -88,7 +88,8 @@ librosa (0.x.x, /path/to/librosa)
 ### Hints for the Installation
 
 `librosa` uses `soundfile` and `audioread` to load audio files.
-Note that `soundfile` does not currently support MP3, which will cause librosa to
+
+📝 Note that `soundfile` does not currently support MP3, which will cause librosa to
 fall back on the `audioread` library.
 
 #### soundfile
@@ -103,16 +104,26 @@ manually.  Please refer to the [SoundFile installation documentation](https://py
 To fuel `audioread` with more audio-decoding power (e.g., for reading MP3 files),
 you may need to install either *ffmpeg* or *GStreamer*.
 
-*Note that on some platforms, `audioread` needs at least one of the programs to work properly.*
+📝*Note that on some platforms, `audioread` needs at least one of the programs to work properly.*
 
 If you are using Anaconda, install *ffmpeg* by calling
+
 ```
 conda install -c conda-forge ffmpeg
 ```
 
 If you are not using Anaconda, here are some common commands for different operating systems:
 
-* Linux (apt-get): `apt-get install ffmpeg` or `apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
+* Linux (apt-get): 
+
+```
+apt-get install ffmpeg
+```
+or
+ 
+```
+apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
+```
 * Linux (yum): `yum install ffmpeg` or `yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
 * Mac: `brew install ffmpeg` or `brew install gstreamer`
 * Windows: download ffmpeg binaries from this [website](https://www.gyan.dev/ffmpeg/builds/) or gstreamer binaries from this [website](https://gstreamer.freedesktop.org/)
