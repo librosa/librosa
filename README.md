@@ -17,6 +17,8 @@ A python package for music and audio analysis.
 
 **[Documentation](#Documentation)**<br>
 **[Installation](#Installation)**<br>
+- **[Using PyPI](###Using_PyPI)** <br>
+
 **[Discussion](#Discussion)**<br>
 **[Citing](#Citing)**
 
@@ -33,17 +35,20 @@ of things that librosa can do.
 ## Installation
 
 
+### Using PyPI
 
 The latest stable release is available on PyPI, and you can install it by saying
 ```
 pip install librosa
 ```
 
-Anaconda users can install using ``conda-forge``:
+### Using Anaconda
+Anaconda users can install using ```conda-forge```:
 ```
 conda install -c conda-forge librosa
 ```
 
+### Building from source
 To build librosa from source, say `python setup.py build`.
 Then, to install librosa, say `python setup.py install`.
 If all went well, you should be able to execute the demo scripts under `examples/`
