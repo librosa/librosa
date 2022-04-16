@@ -73,7 +73,7 @@ Alternatively, you can download or clone the repository and use `pip` to handle 
 unzip librosa.zip
 pip install -e librosa
 ```
-<p align ="center"><b>or</p></b>
+<p align ="center"><b>or</b></p>
 
 ```
 git clone https://github.com/librosa/librosa.git
@@ -92,14 +92,14 @@ librosa (0.x.x, /path/to/librosa)
 📝 Note that `soundfile` does not currently support MP3, which will cause librosa to
 fall back on the `audioread` library.
 
-#### soundfile
+### soundfile
 
 If you're using `conda` to install librosa, then most audio coding dependencies (except MP3) will be handled automatically.
 
 If you're using `pip` on a Linux environment, you may need to install `libsndfile`
 manually.  Please refer to the [SoundFile installation documentation](https://pysoundfile.readthedocs.io/#installation) for details.
 
-#### audioread and MP3 support
+### audioread and MP3 support
 
 To fuel `audioread` with more audio-decoding power (e.g., for reading MP3 files),
 you may need to install either *ffmpeg* or *GStreamer*.
@@ -114,12 +114,12 @@ conda install -c conda-forge ffmpeg
 
 If you are not using Anaconda, here are some common commands for different operating systems:
 
-* Linux (apt-get): 
+- ###  Linux (apt-get): 
 
 ```
 apt-get install ffmpeg
 ```
-or
+<p align ="center"><b>or</b></p>
  
 ```
 apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
