@@ -47,16 +47,25 @@ pip install librosa
 ```
 
 ### - Using Anaconda
+
 Anaconda users can install using ```conda-forge```:
 ```
 conda install -c conda-forge librosa
 ```
 
 ### - Building from source
-To build librosa from source, say `python setup.py build`.
-Then, to install librosa, say `python setup.py install`.
+
+To build librosa from source, say 
+```
+python setup.py build
+```
+Then, to install librosa, say 
+```
+python setup.py install
+```
 If all went well, you should be able to execute the demo scripts under `examples/`
-(OS X users should follow the installation guide given below).
+
+📝 OS X users should follow the installation guide given below.
 
 Alternatively, you can download or clone the repository and use `pip` to handle dependencies:
 
@@ -64,7 +73,8 @@ Alternatively, you can download or clone the repository and use `pip` to handle 
 unzip librosa.zip
 pip install -e librosa
 ```
-or
+<p align ="center">or</p>
+
 ```
 git clone https://github.com/librosa/librosa.git
 pip install -e librosa
