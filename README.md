@@ -65,7 +65,7 @@ python setup.py install
 ```
 If all went well, you should be able to execute the demo scripts under `examples/`
 
-📝 <mark style="background-color: #FFFF00">OS X users should follow the installation guide given below.</mark>
+📝 ==OS X users should follow the installation guide given below.==
 
 Alternatively, you can download or clone the repository and use `pip` to handle dependencies:
 
