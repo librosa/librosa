@@ -17,7 +17,7 @@ A python package for music and audio analysis.
 
 **[Documentation](#Documentation)**<br>
 **[Installation](#Installation)**<br>
-- **[Using PyPI](###Using_PyPI)** <br>
+- **[Using PyPI](###UsingPyPI)** <br>
 
 **[Discussion](#Discussion)**<br>
 **[Citing](#Citing)**
