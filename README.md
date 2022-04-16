@@ -18,6 +18,8 @@ A python package for music and audio analysis.
 **[Documentation](#Documentation)**<br>
 **[Installation](#Installation)**<br>
 - **[Using PyPI](###using-pypi)** <br>
+- **[Using Anaconda](###using-anaconda)** <br>
+
 
 **[Discussion](#Discussion)**<br>
 **[Citing](#Citing)**
