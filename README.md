@@ -30,7 +30,6 @@ A python package for music and audio analysis.
 ## Documentation
 
 
-
 See https://librosa.org/doc/ for a complete reference manual and introductory tutorials.
 
 The [advanced example gallery](https://librosa.org/doc/latest/advanced.html) should give you a quick sense of the kinds
@@ -139,7 +138,8 @@ yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
 brew install ffmpeg
 ```
-or
+<p align ="center"><b>or</b></p>
+
 ```
 brew install gstreamer
 ```
@@ -149,6 +149,7 @@ brew install gstreamer
 download ffmpeg binaries from this [website](https://www.gyan.dev/ffmpeg/builds/) or gstreamer binaries from this [website](https://gstreamer.freedesktop.org/)
 
 For GStreamer, you also need to install the Python bindings with 
+
 ```
 pip install pygobject
 ```
