@@ -124,9 +124,29 @@ apt-get install ffmpeg
 ```
 apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
-* Linux (yum): `yum install ffmpeg` or `yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly`
-* Mac: `brew install ffmpeg` or `brew install gstreamer`
-* Windows: download ffmpeg binaries from this [website](https://www.gyan.dev/ffmpeg/builds/) or gstreamer binaries from this [website](https://gstreamer.freedesktop.org/)
+- ### Linux (yum):
+```
+yum install ffmpeg
+```
+<p align ="center"><b>or</b></p>
+
+
+```
+yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
+```
+
+- ### Mac: 
+```
+brew install ffmpeg
+```
+or
+```
+brew install gstreamer
+```
+
+- ### Windows: 
+
+download ffmpeg binaries from this [website](https://www.gyan.dev/ffmpeg/builds/) or gstreamer binaries from this [website](https://gstreamer.freedesktop.org/)
 
 For GStreamer, you also need to install the Python bindings with 
 ```
