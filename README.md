@@ -65,7 +65,7 @@ python setup.py install
 ```
 If all went well, you should be able to execute the demo scripts under `examples/`
 
-📝 OS X users should follow the installation guide given below.
+📝 <mark style="background-color: #FFFF00">OS X users should follow the installation guide given below.</mark>
 
 Alternatively, you can download or clone the repository and use `pip` to handle dependencies:
 
@@ -73,7 +73,7 @@ Alternatively, you can download or clone the repository and use `pip` to handle 
 unzip librosa.zip
 pip install -e librosa
 ```
-<p align ="center">or</p>
+<p align ="center"><b>or</p></b>
 
 ```
 git clone https://github.com/librosa/librosa.git
