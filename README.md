@@ -1,4 +1,4 @@
-<centre><img src ="docs/img/librosa_logo_text.svg"></centre>
+<p align="center"><img src ="docs/img/librosa_logo_text.svg"></p>
 
 librosa
 =======
