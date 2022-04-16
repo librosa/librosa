@@ -1,6 +1,7 @@
 <centre><img src ="docs/img/librosa_logo_text.svg"></centre>
 
-# librosa
+librosa
+=======
 A python package for music and audio analysis.  
 
 [![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
@@ -13,7 +14,6 @@ A python package for music and audio analysis.
 [![Docs](https://github.com/librosa/librosa/actions/workflows/docs.yml/badge.svg)](https://github.com/librosa/librosa/actions/workflows/docs.yml)
 
 ## Table of Contents
--------------------
 
 **[Documentation](#Documentation)**<br>
 **[Installation](#Installation)**<br>
