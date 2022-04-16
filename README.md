@@ -22,7 +22,7 @@ A python package for music and audio analysis.
 
 
 ## Documentation
-----------------
+
 
 
 See https://librosa.org/doc/ for a complete reference manual and introductory tutorials.
@@ -31,7 +31,7 @@ The [advanced example gallery](https://librosa.org/doc/latest/advanced.html) sho
 of things that librosa can do.
 
 ## Installation
----------------
+
 
 
 The latest stable release is available on PyPI, and you can install it by saying
@@ -104,14 +104,14 @@ pip install pygobject
 ```
 
 ## Discussion
-----------
+
 
 Please direct non-development questions and discussion topics to our web forum at
 https://groups.google.com/forum/#!forum/librosa
 
 
 ## Citing
-------
+
 
 If you want to cite librosa in a scholarly work, there are two ways to do it.
 
