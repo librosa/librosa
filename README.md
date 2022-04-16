@@ -1,4 +1,4 @@
-<img src ="docs/img/librosa_logo_text.svg">
+<centre><img src ="docs/img/librosa_logo_text.svg"></centre>
 
 # librosa
 A python package for music and audio analysis.  
