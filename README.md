@@ -1,6 +1,6 @@
+<img src ="docs/img/librosa_logo_text.svg">
 
-librosa
-=======
+# librosa
 A python package for music and audio analysis.  
 
 [![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
@@ -12,15 +12,30 @@ A python package for music and audio analysis.
 [![codecov](https://codecov.io/gh/librosa/librosa/branch/main/graph/badge.svg?token=ULWnUHaIJC)](https://codecov.io/gh/librosa/librosa)
 [![Docs](https://github.com/librosa/librosa/actions/workflows/docs.yml/badge.svg)](https://github.com/librosa/librosa/actions/workflows/docs.yml)
 
-Documentation
--------------
+## Table of Contents
+-------------------
+
+**[Documentation](#Documentation)**<br>
+**[Installation](#Installation)**<br>
+**[Troubleshooting](#troubleshooting)**<br>
+**[Compatibility](#compatibility)**<br>
+**[Notes and Miscellaneous](#notes-and-miscellaneous)**<br>
+**[Building the Extension Bundles](#building-the-extension-bundles)**<br>
+**[Next Steps, Credits, Feedback, License](#next-steps)**<br>
+
+
+## Documentation
+----------------
+
+
 See https://librosa.org/doc/ for a complete reference manual and introductory tutorials.
 
 The [advanced example gallery](https://librosa.org/doc/latest/advanced.html) should give you a quick sense of the kinds
 of things that librosa can do.
 
-Installation
-------------
+## Installation
+---------------
+
 
 The latest stable release is available on PyPI, and you can install it by saying
 ```
@@ -91,14 +106,14 @@ For GStreamer, you also need to install the Python bindings with
 pip install pygobject
 ```
 
-Discussion
+## Discussion
 ----------
 
 Please direct non-development questions and discussion topics to our web forum at
 https://groups.google.com/forum/#!forum/librosa
 
 
-Citing
+## Citing
 ------
 
 If you want to cite librosa in a scholarly work, there are two ways to do it.
