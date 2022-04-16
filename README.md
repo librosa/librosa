@@ -13,7 +13,7 @@ A python package for music and audio analysis.
 [![codecov](https://codecov.io/gh/librosa/librosa/branch/main/graph/badge.svg?token=ULWnUHaIJC)](https://codecov.io/gh/librosa/librosa)
 [![Docs](https://github.com/librosa/librosa/actions/workflows/docs.yml/badge.svg)](https://github.com/librosa/librosa/actions/workflows/docs.yml)
 
-## Table of Contents
+ ## <u>  Table of Contents</u>
 
 **[Documentation](#Documentation)**<br>
 **[Installation](#Installation)**<br>
