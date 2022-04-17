@@ -62,7 +62,12 @@ Then, to install librosa, say
 ```
 python setup.py install
 ```
-If all went well, you should be able to execute the demo scripts under `examples/`
+If all went well, you should be able to execute the following commands from a python console:
+```
+import librosa
+librosa.show_versions()
+```
+This should print out a description of your software environment, along with the installed versions of other packages used by librosa.
 
 📝 OS X users should follow the installation guide given below.
 
