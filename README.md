@@ -15,13 +15,13 @@ A python package for music and audio analysis.
 
  ##  Table of Contents
 
-**[Documentation](#Documentation)**<br>
-**[Installation](#Installation)**<br>
+**[Documentation](#Documentation)**
+**[Installation](#Installation)**
 
-- **[Using PyPI](#using-pypi)** <br>
-- **[Using Anaconda](#using-anaconda)** <br>
-- **[Building From Source](#building-from-source)** <br>
-- **[Hints for Installation](#hints-for-the-installation)** <br>
+- **[Using PyPI](#using-pypi)** 
+- **[Using Anaconda](#using-anaconda)** 
+- **[Building From Source](#building-from-source)** 
+- **[Hints for Installation](#hints-for-the-installation)** 
 
 **[Discussion](#Discussion)**<br>
 **[Citing](#Citing)**
