@@ -42,7 +42,7 @@ of things that librosa can do.
 
 The latest stable release is available on PyPI, and you can install it by saying
 ```
-pip install librosa
+python -m pip install librosa
 ```
 
 ### - Using Anaconda
@@ -75,13 +75,13 @@ Alternatively, you can download or clone the repository and use `pip` to handle 
 
 ```
 unzip librosa.zip
-pip install -e librosa
+python -m pip install -e librosa
 ```
 <p align ="center"><b>or</b></p>
 
 ```
 git clone https://github.com/librosa/librosa.git
-pip install -e librosa
+python -m pip install -e librosa
 ```
 
 By calling `pip list` you should see `librosa` now as an installed package:
@@ -156,7 +156,7 @@ download ffmpeg binaries from this [website](https://www.gyan.dev/ffmpeg/builds/
 For GStreamer, you also need to install the Python bindings with 
 
 ```
-pip install pygobject
+python -m pip install pygobject
 ```
 
 ## Discussion
