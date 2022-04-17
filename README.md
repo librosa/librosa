@@ -23,7 +23,7 @@ A python package for music and audio analysis.
 - **[Building From Source](#building-from-source)** 
 - **[Hints for Installation](#hints-for-the-installation)** 
 
-**[Discussion](#Discussion)**<br>
+**[Discussion](#Discussion)**
 **[Citing](#Citing)**
 
 
