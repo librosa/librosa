@@ -77,7 +77,7 @@ Alternatively, you can download or clone the repository and use `pip` to handle 
 unzip librosa.zip
 python -m pip install -e librosa
 ```
-<p align ="center"><b>or</b></p>
+or
 
 ```
 git clone https://github.com/librosa/librosa.git
@@ -123,7 +123,7 @@ If you are not using Anaconda, here are some common commands for different opera
 ```
 apt-get install ffmpeg
 ```
-<p align ="center"><b>or</b></p>
+or
  
 ```
 apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
@@ -132,7 +132,7 @@ apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
 yum install ffmpeg
 ```
-<p align ="center"><b>or</b></p>
+or
 
 
 ```
@@ -143,7 +143,7 @@ yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
 brew install ffmpeg
 ```
-<p align ="center"><b>or</b></p>
+or
 
 ```
 brew install gstreamer
