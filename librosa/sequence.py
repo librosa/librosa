@@ -1097,6 +1097,11 @@ def viterbi_discriminative(
     ``P[State(t) = s | Obs(t)] / P[State(t) = s]``, where the denominator
     is the marginal probability of state ``s`` occurring as given by ``p_state``.
 
+    Note that because the denominator ``P[State(t) = s]`` is not explicitly
+    calculated, the resulting probabilities (or log-probabilities) are not
+    normalized.  If using the `return_logp=True` option (see below),
+    be aware that the "probabilities" may not sum to (and may exceed) 1.
+
     Parameters
     ----------
     prob : np.ndarray [shape=(..., n_states, n_steps), non-negative]
@@ -1124,8 +1129,8 @@ def viterbi_discriminative(
         If ``prob`` contains multiple input channels,
         then each channel is decoded independently.
     logp : scalar [float] or np.ndarray
-        If ``return_logp=True``, the log probability of ``states`` given
-        the observations.
+        If ``return_logp=True``, the (unnormalized) log probability
+        of ``states`` given the observations.
 
     See Also
     --------
@@ -1302,6 +1307,10 @@ def viterbi_binary(prob, transition, *, p_state=None, p_init=None, return_logp=F
     The output is a binary matrix ``states[s, t]`` indicating whether each
     state ``s`` is active at time ``t``.
 
+    Like `viterbi_discriminative`, the probabilities of the optimal state sequences
+    are not normalized here.  If using the `return_logp=True` option (see below),
+    be aware that the "probabilities" may not sum to (and may exceed) 1.
+
     Parameters
     ----------
     prob : np.ndarray [shape=(..., n_steps,) or (..., n_states, n_steps)], non-negative
@@ -1332,7 +1341,7 @@ def viterbi_binary(prob, transition, *, p_state=None, p_init=None, return_logp=F
         If not provided, it is assumed to be uniform.
 
     return_logp : bool
-        If ``True``, return the log-likelihood of the state sequence.
+        If ``True``, return the (unnormalized) log-likelihood of the state sequences.
 
     Returns
     -------
@@ -1340,8 +1349,8 @@ def viterbi_binary(prob, transition, *, p_state=None, p_init=None, return_logp=F
     states : np.ndarray [shape=(..., n_states, n_steps)]
         The most likely state sequence.
     logp : np.ndarray [shape=(..., n_states,)]
-        If ``return_logp=True``, the log probability of each state activation
-        sequence ``states``
+        If ``return_logp=True``, the (unnormalized) log probability of each
+        state activation sequence ``states``
 
     See Also
     --------
