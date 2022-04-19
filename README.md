@@ -38,21 +38,21 @@ of things that librosa can do.
 ## Installation
 
 
-### - Using PyPI
+### Using PyPI
 
 The latest stable release is available on PyPI, and you can install it by saying
 ```
 python -m pip install librosa
 ```
 
-### - Using Anaconda
+### Using Anaconda
 
 Anaconda users can install using ```conda-forge```:
 ```
 conda install -c conda-forge librosa
 ```
 
-### - Building from source
+### Building from source
 
 To build librosa from source, say 
 ```
