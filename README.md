@@ -1,4 +1,5 @@
 ![librosa logo](docs/img/librosa_logo_text.svg)
+
 librosa
 =======
 A python package for music and audio analysis.  
