@@ -155,35 +155,21 @@ def load(
     >>> y, sr = librosa.load(aro)
     """
 
-    try:
-        if isinstance(path, sf.SoundFile):
-            # If the user passed an existing soundfile object,
-            # we can use it directly
-            context = path
-        else:
-            # Otherwise, create the soundfile object
-            context = sf.SoundFile(path)
+    if isinstance(path, tuple(audioread.available_backends())):
+        # Force the audioread loader if we have a reader object already
+        y, sr_native = __audioread_load(path, offset, duration, dtype)
+    else:
+        # Otherwise try soundfile first, and then fall back if necessary
+        try:
+            y, sr_native = __soundfile_load(path, offset, duration, dtype)
 
-        with context as sf_desc:
-            sr_native = sf_desc.samplerate
-            if offset:
-                # Seek to the start of the target read
-                sf_desc.seek(int(offset * sr_native))
-            if duration is not None:
-                frame_duration = int(duration * sr_native)
+        except RuntimeError as exc:
+            # If soundfile failed, try audioread instead
+            if isinstance(path, (str, pathlib.PurePath)):
+                warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
+                y, sr_native = __audioread_load(path, offset, duration, dtype)
             else:
-                frame_duration = -1
-
-            # Load the target number of frames, and transpose to match librosa form
-            y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
-
-    except (RuntimeError, TypeError) as exc:
-        # If soundfile failed, try audioread instead
-        if isinstance(path, tuple([str, pathlib.PurePath] + audioread.available_backends())):
-            warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
-            y, sr_native = __audioread_load(path, offset, duration, dtype)
-        else:
-            raise (exc)
+                raise exc
 
     # Final cleanup for dtype and contiguity
     if mono:
@@ -196,6 +182,32 @@ def load(
         sr = sr_native
 
     return y, sr
+
+
+def __soundfile_load(path, offset, duration, dtype):
+    """Load an audio buffer using soundfile."""
+    if isinstance(path, sf.SoundFile):
+        # If the user passed an existing soundfile object,
+        # we can use it directly
+        context = path
+    else:
+        # Otherwise, create the soundfile object
+        context = sf.SoundFile(path)
+
+    with context as sf_desc:
+        sr_native = sf_desc.samplerate
+        if offset:
+            # Seek to the start of the target read
+            sf_desc.seek(int(offset * sr_native))
+        if duration is not None:
+            frame_duration = int(duration * sr_native)
+        else:
+            frame_duration = -1
+
+        # Load the target number of frames, and transpose to match librosa form
+        y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
+
+    return y, sr_native
 
 
 def __audioread_load(path, offset, duration, dtype):
