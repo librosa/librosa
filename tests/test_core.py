@@ -14,6 +14,7 @@ except:
     pass
 
 import soundfile
+import audioread.rawread
 import librosa
 import glob
 import numpy as np
@@ -64,6 +65,20 @@ def test_load_soundfile():
 
     sfo = soundfile.SoundFile(fname)
     y2, sr2 = librosa.load(sfo, sr=None, mono=False)
+
+    assert np.allclose(y, y2)
+    assert np.isclose(sr, sr2)
+
+
+def test_load_audioread():
+    fname = os.path.join("tests", "data", "test1_44100.wav")
+    
+    # Load using an existing audioread object
+    reader = audioread.rawread.RawAudioFile(fname)
+    y, sr = librosa.load(reader, sr=None)
+
+    # Load using sndfile
+    y2, sr2 = librosa.load(fname, sr=None)
 
     assert np.allclose(y, y2)
     assert np.isclose(sr, sr2)

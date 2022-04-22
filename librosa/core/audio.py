@@ -64,7 +64,7 @@ def load(
 
     Parameters
     ----------
-    path : string, int, pathlib.Path, soundfile.SoundFile or file-like object
+    path : string, int, pathlib.Path, soundfile.SoundFile, audioread object, or file-like object
         path to the input file.
 
         Any codec supported by `soundfile` or `audioread` will work.
@@ -75,8 +75,9 @@ def load(
         If the codec is supported by `soundfile`, then `path` can also be
         an open file descriptor (int) or an existing `soundfile.SoundFile` object.
 
-        On the contrary, if the codec is not supported by `soundfile`
-        (for example, MP3), then `path` must be a file path (string or `pathlib.Path`).
+        Pre-constructed audioread decoders are also supported here, see the example
+        below.  This can be used, for example, to force a specific decoder rather
+        than relying upon audioread to select one for you.
 
     sr : number > 0 [scalar]
         target sampling rate
@@ -143,37 +144,32 @@ def load(
     >>> sr
     22050
 
+    >>> # Load using an already open SoundFile object
+    >>> import soundfile
+    >>> sfo = soundfile.SoundFile(librosa.ex('brahms'))
+    >>> y, sr = librosa.load(sfo)
+
+    >>> # Load using an already open audioread object
+    >>> import audioread.ffdec  # Use ffmpeg decoder
+    >>> aro = audioread.ffdec.FFmpegAudioFile(librosa.ex('brahms'))
+    >>> y, sr = librosa.load(aro)
     """
 
-    try:
-        if isinstance(path, sf.SoundFile):
-            # If the user passed an existing soundfile object,
-            # we can use it directly
-            context = path
-        else:
-            # Otherwise, create the soundfile object
-            context = sf.SoundFile(path)
+    if isinstance(path, tuple(audioread.available_backends())):
+        # Force the audioread loader if we have a reader object already
+        y, sr_native = __audioread_load(path, offset, duration, dtype)
+    else:
+        # Otherwise try soundfile first, and then fall back if necessary
+        try:
+            y, sr_native = __soundfile_load(path, offset, duration, dtype)
 
-        with context as sf_desc:
-            sr_native = sf_desc.samplerate
-            if offset:
-                # Seek to the start of the target read
-                sf_desc.seek(int(offset * sr_native))
-            if duration is not None:
-                frame_duration = int(duration * sr_native)
+        except RuntimeError as exc:
+            # If soundfile failed, try audioread instead
+            if isinstance(path, (str, pathlib.PurePath)):
+                warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
+                y, sr_native = __audioread_load(path, offset, duration, dtype)
             else:
-                frame_duration = -1
-
-            # Load the target number of frames, and transpose to match librosa form
-            y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
-
-    except RuntimeError as exc:
-        # If soundfile failed, try audioread instead
-        if isinstance(path, (str, pathlib.PurePath)):
-            warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
-            y, sr_native = __audioread_load(path, offset, duration, dtype)
-        else:
-            raise (exc)
+                raise exc
 
     # Final cleanup for dtype and contiguity
     if mono:
@@ -188,6 +184,32 @@ def load(
     return y, sr
 
 
+def __soundfile_load(path, offset, duration, dtype):
+    """Load an audio buffer using soundfile."""
+    if isinstance(path, sf.SoundFile):
+        # If the user passed an existing soundfile object,
+        # we can use it directly
+        context = path
+    else:
+        # Otherwise, create the soundfile object
+        context = sf.SoundFile(path)
+
+    with context as sf_desc:
+        sr_native = sf_desc.samplerate
+        if offset:
+            # Seek to the start of the target read
+            sf_desc.seek(int(offset * sr_native))
+        if duration is not None:
+            frame_duration = int(duration * sr_native)
+        else:
+            frame_duration = -1
+
+        # Load the target number of frames, and transpose to match librosa form
+        y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
+
+    return y, sr_native
+
+
 def __audioread_load(path, offset, duration, dtype):
     """Load an audio buffer using audioread.
 
@@ -195,7 +217,15 @@ def __audioread_load(path, offset, duration, dtype):
     """
 
     y = []
-    with audioread.audio_open(path) as input_file:
+
+    if isinstance(path, tuple(audioread.available_backends())):
+        # If we have an audioread object already, don't bother opening
+        reader = path
+    else:
+        # If the input was not an audioread object, try to open it
+        reader = audioread.audio_open(path)
+
+    with reader as input_file:
         sr_native = input_file.samplerate
         n_channels = input_file.channels
 

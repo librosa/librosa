@@ -42,6 +42,6 @@ Do not worry.  This is a warning, not an error.  Odds are that your code is work
 just fine.
 
 This warning is most often triggered by loading files encoded with `mp3` format,
-which are not currently supported by `libsndfile`.
+which are not supported by `libsndfile` prior to version 1.1.
 When this situation is detected, librosa falls back to use the slower, but more
 flexible `audioread`-based file loader.

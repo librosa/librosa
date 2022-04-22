@@ -5,7 +5,7 @@ channels:
 dependencies:
   # required
   - pip<22.0
-  - audioread==2.1.5
+  - audioread==2.1.9
   - numpy==1.17.0
   - scipy==1.2.0
   - scikit-learn==0.19.1
