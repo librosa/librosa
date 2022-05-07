@@ -40,6 +40,12 @@ See https://librosa.org/doc/ for a complete reference manual and introductory tu
 The [advanced example gallery](https://librosa.org/doc/latest/advanced.html) should give you a quick sense of the kinds
 of things that librosa can do.
 
+<div align="right">
+
+[Back To Top ↥](#librosa)
+
+</div>
+
 ## Installation
 
 
@@ -93,6 +99,12 @@ By calling `pip list` you should see `librosa` now as an installed package:
 ```
 librosa (0.x.x, /path/to/librosa)
 ```
+
+<div align="right">
+
+[Back To Top ↥](#librosa)
+
+</div>
 
 ### Hints for the Installation
 
@@ -164,12 +176,23 @@ For GStreamer, you also need to install the Python bindings with
 python -m pip install pygobject
 ```
 
+<div align="right">
+
+[Back To Top ↥](#librosa)
+
+</div>
+
 ## Discussion
 
 
 Please direct non-development questions and discussion topics to our web forum at
 https://groups.google.com/forum/#!forum/librosa
 
+<div align="right">
+
+[Back To Top ↥](#librosa)
+
+</div>
 
 ## Citing
 
@@ -185,3 +208,9 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
   published at SciPy 2015:
 
     McFee, Brian, Colin Raffel, Dawen Liang, Daniel PW Ellis, Matt McVicar, Eric Battenberg, and Oriol Nieto. "librosa: Audio and music signal analysis in python." In Proceedings of the 14th python in science conference, pp. 18-25. 2015.
+
+<div align="right">
+
+[Back To Top ↥](#librosa)
+
+</div>
