@@ -140,7 +140,7 @@ conda install -c conda-forge ffmpeg
 
 If you are not using Anaconda, here are some common commands for different operating systems:
 
-- ###  Linux (`apt-get`): 
+- ####  Linux (`apt-get`): 
 
 ```
 apt-get install ffmpeg
@@ -150,7 +150,7 @@ or
 ```
 apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
-- ### Linux (`yum`):
+- #### Linux (`yum`):
 ```
 yum install ffmpeg
 ```
@@ -161,7 +161,7 @@ or
 yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
 
-- ### Mac: 
+- #### Mac: 
 ```
 brew install ffmpeg
 ```
@@ -171,7 +171,7 @@ or
 brew install gstreamer
 ```
 
-- ### Windows: 
+- #### Windows: 
 
 download ffmpeg binaries from this [website](https://www.gyan.dev/ffmpeg/builds/) or gstreamer binaries from this [website](https://gstreamer.freedesktop.org/)
 
