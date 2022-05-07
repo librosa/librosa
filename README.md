@@ -13,21 +13,24 @@ A python package for music and audio analysis.
 [![codecov](https://codecov.io/gh/librosa/librosa/branch/main/graph/badge.svg?token=ULWnUHaIJC)](https://codecov.io/gh/librosa/librosa)
 [![Docs](https://github.com/librosa/librosa/actions/workflows/docs.yml/badge.svg)](https://github.com/librosa/librosa/actions/workflows/docs.yml)
 
- ##  Table of Contents
+#  Table of Contents
 
-**[Documentation](#Documentation)**
+- [Documentation](#Documentation)
+- [Installation](#Installation)
+  - [Using PyPI](#using-pypi)
+  - [Using Anaconda](#using-anaconda)
+  - [Building From Source](#building-from-source)
+  - [Hints for Installation](#hints-for-the-installation)
+    - [soundfile](#soundfile)
+    - [audioread and MP3 support](#audioread-and-mp3-support)
+      - [Linux (`apt get`)](#linux-apt-get)
+      - [Linux (`yum`)](#linux-yum)
+      - [Mac](#mac)
+      - [Windows](#windows)
+- [Discussion](#discussion)
+- [Citing](#citing)
 
-**[Installation](#Installation)**
-
-- **[Using PyPI](#using-pypi)** 
-- **[Using Anaconda](#using-anaconda)** 
-- **[Building From Source](#building-from-source)** 
-- **[Hints for Installation](#hints-for-the-installation)** 
-
-**[Discussion](#Discussion)**
-
-**[Citing](#Citing)**
-
+---
 
 ## Documentation
 
