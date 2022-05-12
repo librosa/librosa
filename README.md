@@ -1,7 +1,8 @@
-![librosa logo](docs/img/librosa_logo_text.svg)
+[![librosa logo](docs/img/librosa_logo_text.svg)](https://librosa.org/)
 
-librosa
-=======
+# librosa
+
+
 A python package for music and audio analysis.  
 
 [![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
@@ -13,21 +14,24 @@ A python package for music and audio analysis.
 [![codecov](https://codecov.io/gh/librosa/librosa/branch/main/graph/badge.svg?token=ULWnUHaIJC)](https://codecov.io/gh/librosa/librosa)
 [![Docs](https://github.com/librosa/librosa/actions/workflows/docs.yml/badge.svg)](https://github.com/librosa/librosa/actions/workflows/docs.yml)
 
- ##  Table of Contents
+#  Table of Contents
 
-**[Documentation](#Documentation)**
+- [Documentation](#Documentation)
+- [Installation](#Installation)
+  - [Using PyPI](#using-pypi)
+  - [Using Anaconda](#using-anaconda)
+  - [Building From Source](#building-from-source)
+  - [Hints for Installation](#hints-for-the-installation)
+    - [`soundfile`](#soundfile)
+    - [`audioread` and MP3 support](#audioread-and-mp3-support)
+      - [Linux (`apt get`)](#linux-apt-get)
+      - [Linux (`yum`)](#linux-yum)
+      - [Mac](#mac)
+      - [Windows](#windows)
+- [Discussion](#discussion)
+- [Citing](#citing)
 
-**[Installation](#Installation)**
-
-- **[Using PyPI](#using-pypi)** 
-- **[Using Anaconda](#using-anaconda)** 
-- **[Building From Source](#building-from-source)** 
-- **[Hints for Installation](#hints-for-the-installation)** 
-
-**[Discussion](#Discussion)**
-
-**[Citing](#Citing)**
-
+---
 
 ## Documentation
 
@@ -36,6 +40,11 @@ See https://librosa.org/doc/ for a complete reference manual and introductory tu
 
 The [advanced example gallery](https://librosa.org/doc/latest/advanced.html) should give you a quick sense of the kinds
 of things that librosa can do.
+
+---
+
+[Back To Top ↥](#librosa)
+
 
 ## Installation
 
@@ -91,6 +100,10 @@ By calling `pip list` you should see `librosa` now as an installed package:
 librosa (0.x.x, /path/to/librosa)
 ```
 
+---
+
+[Back To Top ↥](#librosa)
+
 ### Hints for the Installation
 
 `librosa` uses `soundfile` and `audioread` to load audio files.
@@ -98,14 +111,14 @@ librosa (0.x.x, /path/to/librosa)
 📝 Note that `soundfile` does not currently support MP3, which will cause librosa to
 fall back on the `audioread` library.
 
-### soundfile
+### `soundfile`
 
 If you're using `conda` to install librosa, then most audio coding dependencies (except MP3) will be handled automatically.
 
 If you're using `pip` on a Linux environment, you may need to install `libsndfile`
 manually.  Please refer to the [SoundFile installation documentation](https://pysoundfile.readthedocs.io/#installation) for details.
 
-### audioread and MP3 support
+### `audioread` and MP3 support
 
 To fuel `audioread` with more audio-decoding power (e.g., for reading MP3 files),
 you may need to install either *ffmpeg* or *GStreamer*.
@@ -120,7 +133,7 @@ conda install -c conda-forge ffmpeg
 
 If you are not using Anaconda, here are some common commands for different operating systems:
 
-- ###  Linux (apt-get): 
+- ####  Linux (`apt-get`): 
 
 ```
 apt-get install ffmpeg
@@ -130,7 +143,7 @@ or
 ```
 apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
-- ### Linux (yum):
+- #### Linux (`yum`):
 ```
 yum install ffmpeg
 ```
@@ -141,7 +154,7 @@ or
 yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
 
-- ### Mac: 
+- #### Mac: 
 ```
 brew install ffmpeg
 ```
@@ -151,7 +164,7 @@ or
 brew install gstreamer
 ```
 
-- ### Windows: 
+- #### Windows: 
 
 download ffmpeg binaries from this [website](https://www.gyan.dev/ffmpeg/builds/) or gstreamer binaries from this [website](https://gstreamer.freedesktop.org/)
 
@@ -161,12 +174,19 @@ For GStreamer, you also need to install the Python bindings with
 python -m pip install pygobject
 ```
 
+---
+
+[Back To Top ↥](#librosa)
+
 ## Discussion
 
 
 Please direct non-development questions and discussion topics to our web forum at
 https://groups.google.com/forum/#!forum/librosa
 
+---
+
+[Back To Top ↥](#librosa)
 
 ## Citing
 
@@ -182,3 +202,7 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
   published at SciPy 2015:
 
     McFee, Brian, Colin Raffel, Dawen Liang, Daniel PW Ellis, Matt McVicar, Eric Battenberg, and Oriol Nieto. "librosa: Audio and music signal analysis in python." In Proceedings of the 14th python in science conference, pp. 18-25. 2015.
+
+---
+
+[Back To Top ↥](#librosa)
