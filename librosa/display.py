@@ -78,12 +78,15 @@ class TimeFormatter(Formatter):
         Anything past the midpoint will be converted to negative time.
 
     unit : str or None
-        Abbreviation of the physical unit for axis labels and ticks.
-        Either equal to `s` (seconds) or `ms` (milliseconds) or None (default).
-        If set to None, the resulting TimeFormatter object adapts its string
-        representation to the duration of the underlying time range:
-        `hh:mm:ss` above 3600 seconds; `mm:ss` between 60 and 3600 seconds;
-        and `ss` below 60 seconds.
+        Abbreviation of the string representation for axis labels and ticks.
+        List of supported units:
+        * `"h"`: hour-based format (`H:MM:SS`)
+        * `"m"`: minute-based format (`M:SS`)
+        * `"s"`: second-based format (`S.sss` in scientific notation)
+        * `"ms"`: millisecond-based format (`s.µµµ` in scientific notation)
+        * `None`: adaptive to the duration of the underlying time range: similar
+        to `"h"` above 3600 seconds; to `"m"` between 60 and 3600 seconds; and
+        to `"s"` between 1 and 60 seconds; and to `"ms"` below 1 second.
 
 
     See also
@@ -125,7 +128,7 @@ class TimeFormatter(Formatter):
 
     def __init__(self, lag=False, unit=None):
 
-        if unit not in ["s", "ms", None]:
+        if unit not in ["h", "m", "s", "ms", None]:
             raise ParameterError("Unknown time unit: {}".format(unit))
 
         self.unit = unit
@@ -149,27 +152,18 @@ class TimeFormatter(Formatter):
             value = x
             sign = ""
 
-        if self.unit == "s":
+        if self.unit == "h" or (self.unit==None and (vmax - vmin > 3600)):
+            s = "{:d}:{:02d}:{:02d}".format(
+                int(value / 3600.0),
+                int(np.mod(value / 60.0, 60)),
+                int(np.mod(value, 60)),
+            )
+        elif self.unit == "m" or (self.unit==None and (vmax - vmin > 60)):
+            s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
+        elif self.unit == "s" or (self.unit==None and (vmax - vmin >= 1)):
             s = "{:.3g}".format(value)
-        elif self.unit == "ms":
+        elif self.unit == "ms" or (self.unit==None and (vmax - vmin < 1)):
             s = "{:.3g}".format(value * 1000)
-        else:
-            if vmax - vmin > 3600:
-                # Hours viz
-                s = "{:d}:{:02d}:{:02d}".format(
-                    int(value / 3600.0),
-                    int(np.mod(value / 60.0, 60)),
-                    int(np.mod(value, 60)),
-                )
-            elif vmax - vmin > 60:
-                # Minutes viz
-                s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
-            elif vmax - vmin >= 1:
-                # Seconds viz
-                s = "{:.2g}".format(value)
-            else:
-                # Milliseconds viz
-                s = "{:.3f}".format(value)
 
         return "{:s}{:s}".format(sign, s)
 
