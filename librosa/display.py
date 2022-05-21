@@ -722,9 +722,13 @@ def specshow(
 
         - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
                 Values are plotted in units of seconds.
+        - 'h' : marsers are shown as hours, minutes, and seconds.
+        - 'm' : marsers are shown as minutes and seconds.
         - 's' : markers are shown as seconds.
         - 'ms' : markers are shown as milliseconds.
         - 'lag' : like time, but past the halfway point counts as negative values.
+        - 'lag_h' : same as lag, but in hours, minutes and seconds.
+        - 'lag_m' : same as lag, but in minutes and seconds.
         - 'lag_s' : same as lag, but in seconds.
         - 'lag_ms' : same as lag, but in milliseconds.
 
