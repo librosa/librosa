@@ -516,15 +516,23 @@ def test_time_unit(S_abs, sr):
 def test_time_unit_lag(S_abs, sr):
 
     plt.figure(figsize=(9, 10))
-    plt.subplot(3, 1, 1)
+    plt.subplot(5, 1, 1)
     # time scale auto in lag mode
     librosa.display.specshow(S_abs, sr=sr, x_axis="lag")
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(5, 1, 2)
+    # time unit fixed to 'h' in lag mode
+    librosa.display.specshow(S_abs, sr=sr, x_axis="lag_h")
+
+    plt.subplot(5, 1, 3)
+    # time unit fixed to 'm' in lag mode
+    librosa.display.specshow(S_abs, sr=sr, x_axis="lag_m")
+
+    plt.subplot(5, 1, 4)
     # time unit fixed to 's' in lag mode
     librosa.display.specshow(S_abs, sr=sr, x_axis="lag_s")
 
-    plt.subplot(3, 1, 3)
+    plt.subplot(5, 1, 5)
     # time unit fixed to 'ms' in lag mode
     librosa.display.specshow(S_abs, sr=sr, x_axis="lag_ms")
 
