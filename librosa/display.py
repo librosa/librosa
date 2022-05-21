@@ -1042,6 +1042,7 @@ def __decorate_axis(
     axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True
 ):
     """Configure axis tickers, locators, and labels"""
+    time_units = {"h": "hours", "m": "minutes", "s": "s", "ms": "ms"}
 
     if ax_type == "tonnetz":
         axis.set_major_formatter(TonnetzFormatter())
@@ -1096,30 +1097,21 @@ def __decorate_axis(
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Time")
 
-    elif ax_type == "s":
-        axis.set_major_formatter(TimeFormatter(unit="s", lag=False))
+    elif ax_type in time_units.keys():
+        axis.set_major_formatter(TimeFormatter(unit=ax_type, lag=False))
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
-        axis.set_label_text("Time (s)")
-
-    elif ax_type == "ms":
-        axis.set_major_formatter(TimeFormatter(unit="ms", lag=False))
-        axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
-        axis.set_label_text("Time (ms)")
+        axis.set_label_text("Time ({:s})".format(time_units[ax_type]))
 
     elif ax_type == "lag":
         axis.set_major_formatter(TimeFormatter(unit=None, lag=True))
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Lag")
 
-    elif ax_type == "lag_s":
-        axis.set_major_formatter(TimeFormatter(unit="s", lag=True))
+    elif ax_type.startswith("lag_"):
+        unit = ax_type[-4:]
+        axis.set_major_formatter(TimeFormatter(unit=unit, lag=True))
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
-        axis.set_label_text("Lag (s)")
-
-    elif ax_type == "lag_ms":
-        axis.set_major_formatter(TimeFormatter(unit="ms", lag=True))
-        axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
-        axis.set_label_text("Lag (ms)")
+        axis.set_label_text("Lag ({:s})".format(unit))
 
     elif ax_type == "cqt_note":
         axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
