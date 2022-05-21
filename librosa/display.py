@@ -160,10 +160,14 @@ class TimeFormatter(Formatter):
             )
         elif self.unit == "m" or (self.unit==None and (vmax - vmin > 60)):
             s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
-        elif self.unit == "s" or (self.unit==None and (vmax - vmin >= 1)):
+        elif self.unit == "s":
             s = "{:.3g}".format(value)
-        elif self.unit == "ms" or (self.unit==None and (vmax - vmin < 1)):
+        elif self.unit==None and (vmax - vmin >= 1):
+            s = "{:.2g}".format(value)
+        elif self.unit == "ms":
             s = "{:.3g}".format(value * 1000)
+        elif self.unit==None and (vmax - vmin < 1):
+            s = "{:.3f}".format(value)
 
         return "{:s}{:s}".format(sign, s)
 
