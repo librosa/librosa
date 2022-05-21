@@ -1050,7 +1050,8 @@ def __decorate_axis(
     axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True
 ):
     """Configure axis tickers, locators, and labels"""
-    time_units = {"h": "hours", "m": "minutes", "s": "s", "ms": "ms"}
+    time_units = {
+        "h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
 
     if ax_type == "tonnetz":
         axis.set_major_formatter(TonnetzFormatter())
@@ -1119,7 +1120,7 @@ def __decorate_axis(
         unit = ax_type[4:]
         axis.set_major_formatter(TimeFormatter(unit=unit, lag=True))
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
-        axis.set_label_text("Lag ({:s})".format(unit))
+        axis.set_label_text("Lag ({:s})".format(time_units[unit]))
 
     elif ax_type == "cqt_note":
         axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
