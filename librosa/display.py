@@ -947,9 +947,13 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         "chroma_c": __coord_chroma,
         "chroma_h": __coord_chroma,
         "time": __coord_time,
+        "h": __coord_time,
+        "m": __cord_time,
         "s": __coord_time,
         "ms": __coord_time,
         "lag": __coord_time,
+        "lag_h": __coord_time,
+        "lag_m": __coord_time,
         "lag_s": __coord_time,
         "lag_ms": __coord_time,
         "tonnetz": __coord_n,
@@ -1357,6 +1361,10 @@ def waveshow(
         - 'ms' : markers are shown as milliseconds.
 
         - 'lag' : like time, but past the halfway point counts as negative values.
+
+        - 'lag_h' : same as lag, but in hours.
+
+        - 'lag_m' : same as lag, but in minutes.
 
         - 'lag_s' : same as lag, but in seconds.
 
