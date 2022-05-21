@@ -1101,7 +1101,7 @@ def __decorate_axis(
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Time")
 
-    elif ax_type in time_units.keys():
+    elif isinstance(ax_type, str) and ax_type in time_units.keys():
         axis.set_major_formatter(TimeFormatter(unit=ax_type, lag=False))
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Time ({:s})".format(time_units[ax_type]))
@@ -1111,7 +1111,7 @@ def __decorate_axis(
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Lag")
 
-    elif ax_type.startswith("lag_"):
+    elif isinstance(ax_type, str) and ax_type.startswith("lag_"):
         unit = ax_type[-4:]
         axis.set_major_formatter(TimeFormatter(unit=unit, lag=True))
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
