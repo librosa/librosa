@@ -952,7 +952,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         "chroma_h": __coord_chroma,
         "time": __coord_time,
         "h": __coord_time,
-        "m": __cord_time,
+        "m": __coord_time,
         "s": __coord_time,
         "ms": __coord_time,
         "lag": __coord_time,
