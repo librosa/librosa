@@ -1112,7 +1112,7 @@ def __decorate_axis(
         axis.set_label_text("Lag")
 
     elif isinstance(ax_type, str) and ax_type.startswith("lag_"):
-        unit = ax_type[-4:]
+        unit = ax_type[4:]
         axis.set_major_formatter(TimeFormatter(unit=unit, lag=True))
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Lag ({:s})".format(unit))
