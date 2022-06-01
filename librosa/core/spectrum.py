@@ -67,7 +67,7 @@ def stft(
       at frame ``t``.
 
     The integers ``t`` and ``f`` can be converted to physical units by means
-    of the utility functions `frames_to_sample` and `fft_frequencies`.
+    of the utility functions `frames_to_samples` and `fft_frequencies`.
 
     Parameters
     ----------
