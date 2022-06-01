@@ -85,8 +85,8 @@ class TimeFormatter(Formatter):
         * `"s"`: second-based format (`S.sss` in scientific notation)
         * `"ms"`: millisecond-based format (`s.µµµ` in scientific notation)
         * `None`: adaptive to the duration of the underlying time range: similar
-        to `"h"` above 3600 seconds; to `"m"` between 60 and 3600 seconds; and
-        to `"s"` between 1 and 60 seconds; and to `"ms"` below 1 second.
+        to `"h"` above 3600 seconds; to `"m"` between 60 and 3600 seconds; to
+        `"s"` between 1 and 60 seconds; and to `"ms"` below 1 second.
 
 
     See also
