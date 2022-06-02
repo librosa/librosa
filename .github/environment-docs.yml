@@ -19,7 +19,7 @@ dependencies:
   - pooch>=1.0.0
   - packaging>=20.0
   - matplotlib<3.5
-  - sphinx>=4.4.0
+  - sphinx==4.5.0
   - sphinx-gallery>=0.10.1
   - sphinx_rtd_theme>=1.0.0
   - ffmpeg
