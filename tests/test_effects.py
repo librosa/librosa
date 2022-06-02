@@ -252,6 +252,19 @@ def test_trim_empty():
     assert idx[1] == 0
 
 
+def test_trim_multi(y_multi):
+    # Test for https://github.com/librosa/librosa/issues/1489
+    y, sr = y_multi
+    librosa.effects.trim(y=y)
+
+
+def test_split_multi(y_multi):
+    # Test for https://github.com/librosa/librosa/issues/1489
+    y, sr = y_multi
+
+    librosa.effects.split(y=y)
+
+
 @pytest.fixture(
     scope="module",
     params=[0, 1, 2, 3],
