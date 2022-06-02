@@ -445,6 +445,9 @@ def _signal_to_frame_nonsilent(
     # Aggregate everything but the time dimension
     if db.ndim > 1:
         db = np.apply_over_axes(aggregate, db, range(db.ndim - 1))
+        # Squeeze out leading singleton dimensions here
+        # We always want to keep the trailing dimension though
+        db = np.squeeze(db, axis=tuple(range(db.ndim - 1)))
 
     return db > -top_db
 
