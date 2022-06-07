@@ -278,11 +278,12 @@ def test_recurrence_badmode():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_recurrence_bad_bandwidth():
+@pytest.mark.parametrize("bandwidth", [-2, 'NOT A BANDWIDTH MODE'])
+def test_recurrence_bad_bandwidth(bandwidth):
 
     srand()
     data = np.random.randn(3, 100)
-    rec = librosa.segment.recurrence_matrix(data, bandwidth=-2)
+    rec = librosa.segment.recurrence_matrix(data, bandwidth=bandwidth, mode='affinity')
 
 
 @pytest.mark.parametrize("n", [10, 100, 500])

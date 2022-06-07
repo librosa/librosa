@@ -282,6 +282,7 @@ def recurrence_matrix(
     bandwidth=None,
     self=False,
     axis=-1,
+    full=False,
 ):
     """Compute a recurrence matrix from a data matrix.
 
@@ -344,12 +345,39 @@ def recurrence_matrix(
         ``exp( - distance(i, j) / bandwidth)`` where ``bandwidth`` is
         as specified below.
 
-    bandwidth : None or float > 0
+    bandwidth : None, float > 0, or str in {'med_k_scaler', 'mean_k', 'gmean_k',
+    'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}
         If using ``mode='affinity'``, this can be used to set the
         bandwidth on the affinity kernel.
 
-        If no value is provided, it is set automatically to the median
-        distance between furthest nearest neighbors.
+        If no value is provided or `None`, default to 'med_k_scaler'.
+
+        If 'med_k_scaler', a scaler bandwidth is set to the median distance
+        of the k-th nearest neighbor for all samples.
+
+        If 'mean_k', bandwidth is estimated for each sample-pair (i, j) by taking the
+        arithmetic mean between distances to the k-th nearest neighbor for sample i and sample j.
+
+        If 'gmean_k', bandwidth is estimated for each sample-pair (i, j) by taking the
+        geometric mean between distances to the k-th nearest neighbor for sample i and sample j.
+        This is similar to the approach in [WHICH PAPER??] (2005).
+
+        If 'mean_k_avg', bandwidth is estimated for each sample-pair (i, j) by taking the
+        arithmetic mean between the average distances to the first k-th nearest neighbors for
+        sample i and sample j.
+        This is similar to the approach in Bo et al. (2012) but does not include the distance
+        between i and j.
+
+        If 'gmean_k_avg', bandwidth is estimated for each sample-pair (i, j) by taking the
+        geometric mean between the average distances to the first k-th nearest neighbors for
+        sample i and sample j.
+
+        If 'mean_k_avg_and_pair', bandwidth is estimated for each sample-pair (i, j) by
+        taking the arithmetic mean between three terms: the average distances to the first
+        k-th nearest neighbors for sample i and sample j respectively, as well as the distance
+        between i and j.
+        This is similar to the approach in Bo et al. (2012).
+
 
     self : bool
         If ``True``, then the main diagonal is populated with self-links:
@@ -360,6 +388,16 @@ def recurrence_matrix(
     axis : int
         The axis along which to compute recurrence.
         By default, the last index (-1) is taken.
+
+    full : bool
+        If using ``mode ='affinity'`` or ``mode='distance'``, this option can be used to compute
+        the full affinity or distance matrix as opposed a sparse matrix with only none-zero terms
+        for the first k-neighbors of each sample.
+        This option has no effect when using ``mode='connectivity'``.
+
+        When using ``mode='distance'``, setting ``full=True`` will ignore the value for ``k``.
+        When using ``mode='affinity'``, setting ``full=True`` will use ``k`` exclusively for
+        bandwidth estimation.
 
     Returns
     -------
@@ -453,13 +491,12 @@ def recurrence_matrix(
         else:
             k = 2
 
-    if bandwidth is not None:
-        if bandwidth <= 0:
-            raise ParameterError(
-                "Invalid bandwidth={}. " "Must be strictly positive.".format(bandwidth)
-            )
-
     k = int(k)
+
+    # using k for bandwidth estimation also and decouple k for full mode
+    bandwidth_k = k
+    if full and (mode != 'connectivity'):
+        k = t
 
     # Build the neighbor search object
     try:
@@ -485,16 +522,17 @@ def recurrence_matrix(
     for diag in range(-width + 1, width):
         rec.setdiag(0, diag)
 
-    # Retain only the top-k links per point
-    for i in range(t):
-        # Get the links from point i
-        links = rec[i].nonzero()[1]
+    if not full:
+        # Retain only the top-k links per point
+        for i in range(t):
+            # Get the links from point i
+            links = rec[i].nonzero()[1]
 
-        # Order them ascending
-        idx = links[np.argsort(rec[i, links].toarray())][0]
+            # Order them ascending
+            idx = links[np.argsort(rec[i, links].toarray())][0]
 
-        # Everything past the kth closest gets squashed
-        rec[i, idx[k:]] = 0
+            # Everything past the kth closest gets squashed
+            rec[i, idx[k:]] = 0
 
     if self:
         if mode == "connectivity":
@@ -519,8 +557,8 @@ def recurrence_matrix(
     if mode == "connectivity":
         rec = rec.astype(np.bool)
     elif mode == "affinity":
-        if bandwidth is None:
-            bandwidth = np.nanmedian(rec.max(axis=1).data)
+        # return rec # dev hack
+        bandwidth = __affinity_bandwidth(rec, bandwidth, bandwidth_k)
         # Set all the negatives back to 0
         # Negatives are temporarily inserted above to preserve the sparsity structure
         # of the matrix without corrupting the bandwidth calculations
@@ -1130,3 +1168,77 @@ def path_enhance(
         np.clip(R_smooth, 0, None, out=R_smooth)
 
     return R_smooth
+
+
+def __affinity_bandwidth(rec, bw_mode, k):
+
+    # the api allows users to specify a scalar bandwidth directly, besides the string based options.
+    if isinstance(bw_mode, (int, float)):
+        bandwidth = bw_mode
+        if bandwidth <= 0:
+            raise ParameterError(
+                "Invalid scalar bandwidth={}. " "Must be strictly positive.".format(bandwidth)
+            )
+        return bandwidth
+
+    if bw_mode is None:
+        bw_mode = 'med_k_scaler'
+
+    if bw_mode not in ['med_k_scaler', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']:
+        raise ParameterError(
+            (
+                "Invalid bandwidth='{}'. Must be either a positive scaler or one of "
+                "['med_k_scaler', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']"
+            ).format(bw_mode)
+        )
+
+    # build a list of list that stores the distances to k nearest neighbors for all t points.
+    t = rec.shape[0]
+    knn_dists = []
+    for i in range(t):
+        # Get the links from point i
+        links = rec[i].nonzero()[1]
+
+        # Compute k nearest neighbors' distance and sort ascending
+        knn_dist_row = np.sort(rec[i, links].toarray()[0])[:k]
+
+        # make sure self-links have a distance of 0 and not -1 in self mode
+        knn_dist_row[knn_dist_row < 0] = 0
+        knn_dists.append(knn_dist_row)
+
+    # take the last element of each list for the distance to kth neighbor
+    dist_to_k = np.asarray([dists[-1] for dists in knn_dists])
+    avg_dist_to_first_ks = np.asarray([np.mean(dists) for dists in knn_dists])
+
+    if bw_mode == 'med_k_scaler':
+        return np.nanmedian(dist_to_k)
+
+    if bw_mode in ['mean_k', 'gmean_k']:
+        # building bandwidth components (sigma) using sparse matrix structures and indices
+        sigma_i_data = np.empty_like(rec.data)
+        sigma_j_data = np.empty_like(rec.data)
+        for row in range(t):
+            sigma_i_data[rec.indptr[row]:rec.indptr[row + 1]] = dist_to_k[row]
+            col_idx = rec.indices[rec.indptr[row]:rec.indptr[row + 1]]
+            sigma_j_data[rec.indptr[row]:rec.indptr[row + 1]] = dist_to_k[col_idx]
+
+        if bw_mode == 'mean_k':
+            return (sigma_i_data + sigma_j_data) / 2
+        elif bw_mode == 'gmean_k':
+            return (sigma_i_data * sigma_j_data) ** 0.5
+
+    if bw_mode in ['mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']:
+        # building bandwidth components (sigma) using sparse matrix structures and indices
+        sigma_i_data = np.empty_like(rec.data)
+        sigma_j_data = np.empty_like(rec.data)
+        for row in range(t):
+            sigma_i_data[rec.indptr[row]:rec.indptr[row + 1]] = avg_dist_to_first_ks[row]
+            col_idx = rec.indices[rec.indptr[row]:rec.indptr[row + 1]]
+            sigma_j_data[rec.indptr[row]:rec.indptr[row + 1]] = avg_dist_to_first_ks[col_idx]
+
+        if bw_mode == 'mean_k_avg':
+            return (sigma_i_data + sigma_j_data) / 2
+        elif bw_mode == 'gmean_k_avg':
+            return (sigma_i_data * sigma_j_data) ** 0.5
+        elif bw_mode == 'mean_k_avg_and_pair':
+            return (sigma_i_data + sigma_j_data + rec.data) / 3
