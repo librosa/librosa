@@ -345,14 +345,14 @@ def recurrence_matrix(
         ``exp( - distance(i, j) / bandwidth)`` where ``bandwidth`` is
         as specified below.
 
-    bandwidth : None, float > 0, or str in {'med_k_scaler', 'mean_k', 'gmean_k',
+    bandwidth : None, float > 0, or str in {'med_k_scalar', 'mean_k', 'gmean_k',
     'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}
         If using ``mode='affinity'``, this can be used to set the
         bandwidth on the affinity kernel.
 
-        If no value is provided or `None`, default to 'med_k_scaler'.
+        If no value is provided or `None`, default to 'med_k_scalar'.
 
-        If 'med_k_scaler', a scaler bandwidth is set to the median distance
+        If 'med_k_scalar', a scalar bandwidth is set to the median distance
         of the k-th nearest neighbor for all samples.
 
         If 'mean_k', bandwidth is estimated for each sample-pair (i, j) by taking the
@@ -395,9 +395,9 @@ def recurrence_matrix(
         for the first k-neighbors of each sample.
         This option has no effect when using ``mode='connectivity'``.
 
-        When using ``mode='distance'``, setting ``full=True`` will ignore the value for ``k``.
+        When using ``mode='distance'``, setting ``full=True`` will ignore ``k`` and ``width``.
         When using ``mode='affinity'``, setting ``full=True`` will use ``k`` exclusively for
-        bandwidth estimation.
+        bandwidth estimation, and ignore ``width``.
 
     Returns
     -------
@@ -518,11 +518,11 @@ def recurrence_matrix(
 
     rec = knn.kneighbors_graph(mode=kng_mode).tolil()
 
-    # Remove connections within width
-    for diag in range(-width + 1, width):
-        rec.setdiag(0, diag)
-
     if not full:
+        # Remove connections within width
+        for diag in range(-width + 1, width):
+            rec.setdiag(0, diag)
+
         # Retain only the top-k links per point
         for i in range(t):
             # Get the links from point i
@@ -544,6 +544,8 @@ def recurrence_matrix(
             # using negative distances here preserves the structure without changing
             # the statistics of the data
             rec.setdiag(-1)
+    else:
+        rec.setdiag(0)
 
     # symmetrize
     if sym:
@@ -557,12 +559,11 @@ def recurrence_matrix(
     if mode == "connectivity":
         rec = rec.astype(np.bool)
     elif mode == "affinity":
-        # return rec # dev hack
-        bandwidth = __affinity_bandwidth(rec, bandwidth, bandwidth_k)
         # Set all the negatives back to 0
         # Negatives are temporarily inserted above to preserve the sparsity structure
         # of the matrix without corrupting the bandwidth calculations
         rec.data[rec.data < 0] = 0.0
+        bandwidth = __affinity_bandwidth(rec, bandwidth, bandwidth_k)
         rec.data[:] = np.exp(rec.data / (-1 * bandwidth))
 
     # Transpose to be column-major
@@ -1182,13 +1183,13 @@ def __affinity_bandwidth(rec, bw_mode, k):
         return bandwidth
 
     if bw_mode is None:
-        bw_mode = 'med_k_scaler'
+        bw_mode = 'med_k_scalar'
 
-    if bw_mode not in ['med_k_scaler', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']:
+    if bw_mode not in ['med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']:
         raise ParameterError(
             (
-                "Invalid bandwidth='{}'. Must be either a positive scaler or one of "
-                "['med_k_scaler', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']"
+                "Invalid bandwidth='{}'. Must be either a positive scalar or one of "
+                "['med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']"
             ).format(bw_mode)
         )
 
@@ -1201,16 +1202,13 @@ def __affinity_bandwidth(rec, bw_mode, k):
 
         # Compute k nearest neighbors' distance and sort ascending
         knn_dist_row = np.sort(rec[i, links].toarray()[0])[:k]
-
-        # make sure self-links have a distance of 0 and not -1 in self mode
-        knn_dist_row[knn_dist_row < 0] = 0
         knn_dists.append(knn_dist_row)
 
     # take the last element of each list for the distance to kth neighbor
     dist_to_k = np.asarray([dists[-1] for dists in knn_dists])
     avg_dist_to_first_ks = np.asarray([np.mean(dists) for dists in knn_dists])
 
-    if bw_mode == 'med_k_scaler':
+    if bw_mode == 'med_k_scalar':
         return np.nanmedian(dist_to_k)
 
     if bw_mode in ['mean_k', 'gmean_k']:
