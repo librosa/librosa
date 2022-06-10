@@ -618,16 +618,20 @@ def __envelope(x, hop):
     return x_frame.max(axis=1)
 
 
-_categorical_axis_types = ['chroma', 'chroma_h', 'tonnetz', 'frames']
-_time_axis_types = ['linear', 'fft', 'hz', 'log,' 'fft_note', 'fft_svara', 'mel', 'cqt_hz', 'cqt_note', 'cqt_svara']
-_freq_axis_types = ['time', 's', 'ms', 'lag', 'lag_s', 'lag_ms']
-_tempo_axis_types = ['tempo', 'fourier_tempo']
+_chroma_ax_types = ('chroma', 'chroma_h', 'chroma_c',)
+_cqt_ax_types = ('cqt_hz', 'cqt_note', 'cqt_svara',)
+_freq_ax_types = ('linear', 'fft', 'hz', 'fft_note', 'fft_svara',)
+_time_ax_types = ('time', 's', 'ms',)
+_lag_ax_types = ('lag', 'lag_s', 'lag_ms',)
+_misc_ax_types = ('tempo', 'fourier_tempo', 'mel', 'log', 'tonnetz', 'frames',)
 
 _AXIS_COMPAT = set(
-    [(t, t) for t in _categorical_axis_types] +
-    [t for t in product(_time_axis_types, _time_axis_types)] +
-    [t for t in product(_freq_axis_types, _freq_axis_types)] +
-    [t for t in product(_tempo_axis_types, _tempo_axis_types)]
+    [(t, t) for t in _misc_ax_types] +
+    [t for t in product(_chroma_ax_types, _chroma_ax_types)] +
+    [t for t in product(_cqt_ax_types, _cqt_ax_types)] +
+    [t for t in product(_freq_ax_types, _freq_ax_types)] +
+    [t for t in product(_time_ax_types, _time_ax_types)] +
+    [t for t in product(_lag_ax_types, _lag_ax_types)]
 )
 
 
