@@ -35,6 +35,7 @@ Miscellaneous
 
 """
 
+from itertools import product
 import warnings
 
 import numpy as np
@@ -615,6 +616,19 @@ def __envelope(x, hop):
     """
     x_frame = np.abs(util.frame(x, frame_length=hop, hop_length=hop))
     return x_frame.max(axis=1)
+
+
+_categorical_axis_types = ['chroma', 'chroma_h', 'tonnetz', 'frames']
+_time_axis_types = ['linear', 'fft', 'hz', 'log,' 'fft_note', 'fft_svara', 'mel', 'cqt_hz', 'cqt_note', 'cqt_svara']
+_freq_axis_types = ['time', 's', 'ms', 'lag', 'lag_s', 'lag_ms']
+_tempo_axis_types = ['tempo', 'fourier_tempo']
+
+_AXIS_COMPAT = set(
+    [(t, t) for t in _categorical_axis_types] +
+    [t for t in product(_time_axis_types, _time_axis_types)] +
+    [t for t in product(_freq_axis_types, _freq_axis_types)] +
+    [t for t in product(_tempo_axis_types, _tempo_axis_types)]
+)
 
 
 @deprecate_positional_args
@@ -1276,10 +1290,10 @@ def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
 
 
 def __same_axes(x_axis, y_axis, xlim, ylim):
-    """Check if two axes are the same, used to determine squared plots"""
-    axes_same_and_not_none = (x_axis == y_axis) and (x_axis is not None)
+    """Check if two axes are similar, used to determine squared plots"""
+    axes_compatible_and_not_none = (x_axis, y_axis) in _AXIS_COMPAT
     axes_same_lim = xlim == ylim
-    return axes_same_and_not_none and axes_same_lim
+    return axes_compatible_and_not_none and axes_same_lim
 
 
 @deprecate_positional_args

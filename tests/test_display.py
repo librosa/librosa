@@ -833,6 +833,7 @@ def test_display_fourier_tempo_odd():
         ("time", "linear", (0.0, 1.0), (0.0, 1.0), False),
         ("time", "time", (0.0, 1.0), (0.0, 2.0), False),
         ("chroma", "chroma", (0.0, 1.0), (0.0, 1.0), True),
+        ("s", "ms", (0.0, 1.0), (0.0, 1.0), True),
     ],
 )
 def test_same_axes(x_axis, y_axis, xlim, ylim, out):
@@ -841,7 +842,7 @@ def test_same_axes(x_axis, y_axis, xlim, ylim, out):
 
 def test_auto_aspect():
 
-    fig, ax = plt.subplots(nrows=4)
+    fig, ax = plt.subplots(nrows=5)
 
     # Ensure auto aspect by default
     for axi in ax:
@@ -849,7 +850,7 @@ def test_auto_aspect():
 
     X = np.zeros((12, 12))
 
-    # Different axes should retain auto scaling
+    # Different axes with incompatible types should retain auto scaling
     librosa.display.specshow(X, x_axis="chroma", y_axis="time", ax=ax[0])
     assert ax[0].get_aspect() == "auto"
 
@@ -868,6 +869,10 @@ def test_auto_aspect():
         X[:2, :], x_axis="chroma", y_axis="chroma", auto_aspect=True, ax=ax[3]
     )
     assert ax[3].get_aspect() == "auto"
+
+    # different axes with compatible types and auto_aspect=True should force equal scaling
+    librosa.display.specshow(X, x_axis="time", y_axis="ms", ax=ax[4])
+    assert ax[4].get_aspect() == 1.0
 
 
 @pytest.mark.mpl_image_compare(
