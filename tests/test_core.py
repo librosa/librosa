@@ -728,6 +728,23 @@ def test_magphase_denormalized():
     assert np.allclose(P, 0+1j)
 
 
+def test_magphase_real():
+
+    D = np.array([[-1.0, -0.0], [0.0, 1.0]], dtype=np.float64)
+    S, P = librosa.magphase(D)
+
+    assert S.dtype is np.dtype("float64")
+    assert P.dtype is np.dtype("complex128")
+    assert np.allclose(S, np.array([[1.0, 0.0], [0.0, 1.0]]))
+    assert np.allclose(
+        [
+            [P[0, 0], P[0, 1] ** 2],  # negative zero can have phase +1 or -1
+            [P[1, 0], P[1, 1]],
+        ],
+        np.array([[-1+0j, 1+0j], [1+0j, 1+0j]])
+    )
+
+
 @pytest.fixture(scope="module", params=[22050, 44100])
 def y_chirp_istft(request):
     sr = request.param
