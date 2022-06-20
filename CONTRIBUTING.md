@@ -48,7 +48,7 @@ and install your local copy with testing dependencies:
 
           $ git push -u origin my-feature
 
-Finally, go to the web page of the your fork of the librosa repo,
+Finally, go to the web page of your fork of the librosa repo,
 and click 'Pull request' to send your changes to the maintainers for
 review. This will send an email to the committers.
 
