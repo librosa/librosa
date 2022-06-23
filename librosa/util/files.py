@@ -255,7 +255,7 @@ def __get_files(dir_name, extensions):
 
     # Expand out the directory
     dir_name = os.path.abspath(os.path.expanduser(dir_name))
-    dir_name = glob.escape(dir_name)
+
     myfiles = set()
 
     for sub_ext in extensions:
