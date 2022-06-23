@@ -169,10 +169,10 @@ def cross_similarity(
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
     >>> imgsim = librosa.display.specshow(xsim, x_axis='s', y_axis='s',
     ...                          hop_length=hop_length, ax=ax[0])
-    >>> ax[0].set(title='Binary recurrence (symmetric)')
+    >>> ax[0].set(title='Binary cross-similarity (symmetric)')
     >>> imgaff = librosa.display.specshow(xsim_aff, x_axis='s', y_axis='s',
     ...                          cmap='magma_r', hop_length=hop_length, ax=ax[1])
-    >>> ax[1].set(title='Affinity recurrence')
+    >>> ax[1].set(title='Cross-affinity')
     >>> ax[1].label_outer()
     >>> fig.colorbar(imgsim, ax=ax[0], orientation='horizontal', ticks=[0, 1])
     >>> fig.colorbar(imgaff, ax=ax[1], orientation='horizontal')
