@@ -184,6 +184,12 @@ def find_files(
     >>> # Or last 10 files
     >>> files = librosa.util.find_files('~/Music', offset=-10)
 
+    >>> # Avoid including search patterns in the path string
+    >>> import glob
+    >>> directory = '~/[202206] Music'
+    >>> directory = glob.escape(directory)  # Escape the special characters
+    >>> files = librosa.util.find_files(directory)
+
     Parameters
     ----------
     directory : str
