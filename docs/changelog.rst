@@ -20,7 +20,7 @@ Documentation
 - `#1447`_ Migrated documentation builds to GitHub Actions. *Brian McFee*
 - `#1469`_ Corrected documentation for `db_to_amplitude` and `amplitude_to_db`. *i-aki-y*
 - `#1473`_ Readability improvements to package README. *Asmitha Krishnakumar*
-- `#1475`_ Expanded documentation for discriminative viterbi. *Brian McFee*
+- `#1475`_ Expanded documentation to `librosa.sequence.viterbi_discriminative`. *Brian McFee*
 - `#1487`_ Readability improvements to package README. *Chandrashekhar Ramaprasad*
 - `#1491`_ Pinned sphinx version for documentation builds. *Brian McFee*
 - `#1511`_ Expanded documentation for `find_files`. *Xiao-Ming*
@@ -45,6 +45,7 @@ Other changes
 .. _#1513: https://github.com/librosa/librosa/issues/1513
 .. _#1453: https://github.com/librosa/librosa/issues/1453
 .. _#1479: https://github.com/librosa/librosa/issues/1479
+.. _#1504: https://github.com/librosa/librosa/issues/1504
 .. _#1507: https://github.com/librosa/librosa/issues/1507
 .. _#1508: https://github.com/librosa/librosa/issues/1508
 .. _#1509: https://github.com/librosa/librosa/issues/1509
