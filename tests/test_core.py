@@ -700,7 +700,49 @@ def test_magphase(y_22050):
 
     S, P = librosa.magphase(D)
 
+    assert S.dtype is y_22050.dtype  # float
+    assert P.dtype is D.dtype  # complex
+    assert np.allclose(np.abs(P), 1.0)
     assert np.allclose(S * P, D)
+
+
+def test_magphase_zero():
+
+    D = np.zeros((128, 128), dtype=np.complex64)
+    S, P = librosa.magphase(D)
+
+    assert S.dtype is np.dtype("float32")
+    assert P.dtype is np.dtype("complex64")
+    assert np.allclose(S, 0)
+    assert np.allclose(P, 1+0j)
+
+
+def test_magphase_denormalized():
+
+    D = 1.0e-42j * np.ones((128, 128), dtype=np.complex64)
+    S, P = librosa.magphase(D)
+
+    assert S.dtype is np.dtype("float32")
+    assert P.dtype is np.dtype("complex64")
+    assert np.allclose(S, 1.0e-42)
+    assert np.allclose(P, 0+1j)
+
+
+def test_magphase_real():
+
+    D = np.array([[-1.0, -0.0], [0.0, 1.0]], dtype=np.float64)
+    S, P = librosa.magphase(D)
+
+    assert S.dtype is np.dtype("float64")
+    assert P.dtype is np.dtype("complex128")
+    assert np.allclose(S, np.array([[1.0, 0.0], [0.0, 1.0]]))
+    assert np.allclose(
+        [
+            [P[0, 0], P[0, 1] ** 2],  # negative zero can have phase +1 or -1
+            [P[1, 0], P[1, 1]],
+        ],
+        np.array([[-1+0j, 1+0j], [1+0j, 1+0j]])
+    )
 
 
 @pytest.fixture(scope="module", params=[22050, 44100])

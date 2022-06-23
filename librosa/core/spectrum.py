@@ -1168,8 +1168,18 @@ def magphase(D, *, power=1):
     """
 
     mag = np.abs(D)
+
+    # Prevent NaNs and return magnitude 0, phase 1+0j for zero
+    zeros_to_ones = mag == 0
+    mag_nonzero = mag + zeros_to_ones
+    # Compute real and imaginary separately, because complex division can
+    # produce NaNs when denormalized numbers are involved (< ~2e-39 for
+    # complex64, ~5e-309 for complex128)
+    phase = np.empty_like(D, dtype=util.dtype_r2c(D.dtype))
+    phase.real = D.real / mag_nonzero + zeros_to_ones
+    phase.imag = D.imag / mag_nonzero
+
     mag **= power
-    phase = np.exp(1.0j * np.angle(D))
 
     return mag, phase
 
