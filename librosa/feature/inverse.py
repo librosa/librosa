@@ -232,7 +232,7 @@ def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0
         # raise a UserWarning if lifter array includes critical values
         if np.any(np.abs(lifter_sine) < np.finfo(lifter_sine.dtype).eps):
             warnings.warn(
-                message="lifter array includes critial values that may invoke underflow.",
+                message="lifter array includes critical values that may invoke underflow.",
                 category=UserWarning,
                 stacklevel=2,
             )
