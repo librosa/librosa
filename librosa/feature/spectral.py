@@ -161,7 +161,7 @@ def spectral_centroid(
     >>> ax.set(title='log Power spectrogram')
     """
 
-    # input is time domain:y or spectrogam:s
+    # input is time domain:y or spectrogram:s
     #
 
     S, n_fft = _spectrogram(
@@ -1054,7 +1054,7 @@ def poly_features(
     coefficients : np.ndarray [shape=(..., order+1, t)]
         polynomial coefficients for each frame.
 
-        ``coeffecients[..., 0, :]`` corresponds to the highest degree (``order``),
+        ``coefficients[..., 0, :]`` corresponds to the highest degree (``order``),
 
         ``coefficients[..., 1, :]`` corresponds to the next highest degree (``order-1``),
 
