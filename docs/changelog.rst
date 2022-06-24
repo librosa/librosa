@@ -5,6 +5,52 @@ Changelog
 v0.9
 ====
 
+v0.9.2
+------
+2022-06-27
+
+Bug fixes
+
+- `#1457`_ Fixed `librosa.show_versions` to match package dependencies. *Brian McFee*
+- `#1493`_ Fixed a bug in `librosa.effects.split` when applied to multichannel data.  *Brian McFee*
+
+
+Documentation
+
+- `#1447`_ Migrated documentation builds to GitHub Actions. *Brian McFee*
+- `#1469`_ Corrected documentation for `db_to_amplitude` and `amplitude_to_db`. *i-aki-y*
+- `#1473`_ Readability improvements to package README. *Asmitha Krishnakumar*
+- `#1475`_ Expanded documentation to `librosa.sequence.viterbi_discriminative`. *Brian McFee*
+- `#1487`_ Readability improvements to package README. *Chandrashekhar Ramaprasad*
+- `#1491`_ Pinned sphinx version for documentation builds. *Brian McFee*
+- `#1511`_ Expanded documentation for `find_files`. *Xiao-Ming*
+- `#1513`_ Various documentation updates and enhancements. *Brian McFee*
+
+
+Other changes
+- `#1453`_ Removed test data from main repository and reduced the git attic. *Brian McFee*
+- `#1479`_ Accept pre-constructed audioread objects in `librosa.load`. *Brian McFee*
+- `#1504`_ Accelerate `librosa.magphase`. *Will Monroe*
+- `#1507`_, `#1508`_, `#1509`_ Various spelling corrections in documentation, comments, and warnings. *Lorenz Nickel*
+
+.. _#1457: https://github.com/librosa/librosa/issues/1457
+.. _#1493: https://github.com/librosa/librosa/issues/1493
+.. _#1447: https://github.com/librosa/librosa/issues/1447
+.. _#1469: https://github.com/librosa/librosa/issues/1469
+.. _#1473: https://github.com/librosa/librosa/issues/1473
+.. _#1475: https://github.com/librosa/librosa/issues/1475
+.. _#1487: https://github.com/librosa/librosa/issues/1487
+.. _#1491: https://github.com/librosa/librosa/issues/1491
+.. _#1511: https://github.com/librosa/librosa/issues/1511
+.. _#1513: https://github.com/librosa/librosa/issues/1513
+.. _#1453: https://github.com/librosa/librosa/issues/1453
+.. _#1479: https://github.com/librosa/librosa/issues/1479
+.. _#1504: https://github.com/librosa/librosa/issues/1504
+.. _#1507: https://github.com/librosa/librosa/issues/1507
+.. _#1508: https://github.com/librosa/librosa/issues/1508
+.. _#1509: https://github.com/librosa/librosa/issues/1509
+
+
 v0.9.1
 ------
 2022-02-15

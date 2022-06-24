@@ -81,10 +81,16 @@ Contributors
 * Iran Roman <https://github.com/iranroman>
 * philstem <https://github.com/philstem>
 * Alex Malins <https://github.com/alexmalins>
+* i-aky-y <https://github.com/i-aky-y>
+* Asmitha Krishnakumar <https://github.com/Asmitha-K>
+* Chandrashekhar Ramaprasad <https://github.com/cr2007>
+* Xiao-Ming <https://github.com/Xiao-Ming>
+* Will Monroe <https://github.com/futurulus>
+* Lorenz Nickel <https://github.com/LorenzNickel>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
-Large portions of LibROSA were ported from MATLAB code by Dan Ellis <http://www.ee.columbia.edu/~dpwe/resources/matlab/>.
+Large portions of librosa were ported from MATLAB code by Dan Ellis <http://www.ee.columbia.edu/~dpwe/resources/matlab/>.
 
 Some spectral features were ported from original MATLAB implementations by Erik Schmidt and Jeff Scott
 at the Drexel METlab <http://music.ece.drexel.edu/>

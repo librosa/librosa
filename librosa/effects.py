@@ -593,7 +593,7 @@ def split(
 
 @deprecate_positional_args
 def preemphasis(y, *, coef=0.97, zi=None, return_zf=False):
-    """Pre-emphasize an audio signal with a first-order auto-regressive filter:
+    """Pre-emphasize an audio signal with a first-order differencing filter:
 
         y[n] -> y[n] - coef * y[n-1]
 
