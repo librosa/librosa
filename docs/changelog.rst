@@ -10,13 +10,11 @@ v0.9.2
 2022-06-27
 
 Bug fixes
-
     - `#1457`_ Fixed `librosa.show_versions` to match package dependencies. *Brian McFee*
     - `#1493`_ Fixed a bug in `librosa.effects.split` when applied to multichannel data.  *Brian McFee*
 
 
 Documentation
-
     - `#1447`_ Migrated documentation builds to GitHub Actions. *Brian McFee*
     - `#1469`_ Corrected documentation for `db_to_amplitude` and `amplitude_to_db`. *i-aki-y*
     - `#1473`_ Readability improvements to package README. *Asmitha Krishnakumar*
@@ -28,7 +26,6 @@ Documentation
 
 
 Other changes
-
     - `#1453`_ Removed test data from main repository and reduced the git attic. *Brian McFee*
     - `#1479`_ Accept pre-constructed audioread objects in `librosa.load`. *Brian McFee*
     - `#1504`_ Accelerate `librosa.magphase`. *Will Monroe*
