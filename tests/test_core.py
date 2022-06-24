@@ -326,6 +326,21 @@ def test_stft_winsizes():
         librosa.stft(x, n_fft=N, hop_length=H, win_length=N)
 
 
+@pytest.mark.parametrize("center", [False, True])
+@pytest.mark.parametrize("n_fft, hop_length", [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)])
+@pytest.mark.parametrize("N", [1024, 2048, 8192])
+def test_stft_preallocate(center, n_fft, hop_length, N):
+
+    # Work in stereo by default
+    y = np.random.randn(2, max(N, n_fft))
+
+    D1 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
+    out = np.empty_like(D1)
+    D2 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length, out=out)
+    assert D2 is out
+    assert np.allclose(D1, D2)
+
+
 # results for FFT bins containing multiple components will be unstable, as when
 # using higher sampling rates or shorter windows with this test signal
 @pytest.mark.parametrize("center", [False, True])

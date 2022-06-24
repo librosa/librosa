@@ -49,6 +49,7 @@ def stft(
     center=True,
     dtype=None,
     pad_mode="constant",
+    out=None,
 ):
     """Short-time Fourier transform (STFT).
 
@@ -142,11 +143,20 @@ def stft(
 
         .. see also:: `numpy.pad`
 
+    out : np.ndarray or None
+        A pre-allocated, complex-valued array to store the STFT results.
+        This must be of the correct shape for the given input parameters.
+
+        If not provided, a new array is allocated and returned.
+
     Returns
     -------
     D : np.ndarray [shape=(..., 1 + n_fft/2, n_frames), dtype=dtype]
         Complex-valued matrix of short-term Fourier transform
         coefficients.
+
+        If a pre-allocated `out` array is provided, then `D` will be
+        a reference to `out`.
 
     See Also
     --------
@@ -211,45 +221,120 @@ def stft(
     if center:
         if n_fft > y.shape[-1]:
             warnings.warn(
-                "n_fft={} is too small for input signal of length={}".format(
+                "n_fft={} is too large for input signal of length={}".format(
                     n_fft, y.shape[-1]
-                ),
-                stacklevel=2,
+                )
             )
 
+        # Set up the padding array to be empty, and we'll fix the target dimension later
         padding = [(0, 0) for _ in range(y.ndim)]
-        padding[-1] = (int(n_fft // 2), int(n_fft // 2))
-        y = np.pad(y, padding, mode=pad_mode)
 
-    elif n_fft > y.shape[-1]:
-        raise ParameterError(
-            "n_fft={} is too large for input signal of length={}".format(
-                n_fft, y.shape[-1]
+        # How many frames depend on left padding?
+        start_k = int(np.ceil(n_fft // 2 / hop_length))
+
+        # What's the first frame that depends on extra right-padding?
+        tail_k = (y.shape[-1] + n_fft // 2 - n_fft) // hop_length + 1
+
+        if tail_k <= start_k:
+            # If tail and head overlap, then just copy-pad the signal and carry on
+            start = 0
+            extra = 0
+            padding[-1] = (n_fft // 2, n_fft // 2)
+            y = np.pad(y, padding, mode=pad_mode)
+        else:
+            # If tail and head do not overlap, then we can implement padding on each part separately
+            # and avoid a full copy-pad
+
+            # "Middle" of the signal starts here, and does not depend on head padding
+            start = start_k * hop_length - n_fft // 2
+            padding[-1] = (n_fft // 2, 0)
+
+            y_pre = np.pad(
+                y[..., : (start_k - 1) * hop_length - n_fft // 2 + n_fft],
+                padding,
+                mode=pad_mode,
             )
-        )
+            y_frames_pre = util.frame(y_pre, frame_length=n_fft, hop_length=hop_length)
 
-    # Window the time series.
-    y_frames = util.frame(y, frame_length=n_fft, hop_length=hop_length)
+            # How many extra frames do we have from the head?
+            extra = y_frames_pre.shape[-1]
+
+            # Determine if we have any frames that will fit inside the tail pad
+            if tail_k * hop_length - n_fft // 2 + n_fft <= y.shape[-1] + n_fft // 2:
+                padding[-1] = (0, n_fft // 2)
+                y_post = np.pad(
+                    y[..., (tail_k) * hop_length - n_fft // 2 :], padding, mode=pad_mode
+                )
+                y_frames_post = util.frame(
+                    y_post, frame_length=n_fft, hop_length=hop_length
+                )
+                # How many extra frames do we have from the tail?
+                extra += y_frames_post.shape[-1]
+            else:
+                # In this event, the first frame that touches tail padding would run off
+                # the end of the padded array
+                # We'll circumvent this by allocating an empty frame buffer for the tail
+                # this keeps the subsequent logic simple
+                post_shape = list(y_frames_pre.shape)
+                post_shape[-1] = 0
+                y_frames_post = np.empty_like(y_frames_pre, shape=post_shape)
+    else:
+        if n_fft > y.shape[-1]:
+            raise ParameterError(
+                "n_fft={} is too large for uncentered analysis of input signal of length={}".format(
+                    n_fft, y.shape[-1]
+                )
+            )
+
+        # "Middle" of the signal starts at sample 0
+        start = 0
+        # We have no extra frames
+        extra = 0
 
     fft = get_fftlib()
 
     if dtype is None:
         dtype = util.dtype_r2c(y.dtype)
 
+    # Window the time series.
+    y_frames = util.frame(y[..., start:], frame_length=n_fft, hop_length=hop_length)
+
     # Pre-allocate the STFT matrix
     shape = list(y_frames.shape)
-    shape[-2] = 1 + n_fft // 2
-    stft_matrix = np.empty(shape, dtype=dtype, order="F")
 
-    n_columns = util.MAX_MEM_BLOCK // (
-        np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize
-    )
+    # This is our frequency dimension
+    shape[-2] = 1 + n_fft // 2
+
+    # If there's padding, there will be extra head and tail frames
+    shape[-1] += extra
+
+    if out is None:
+        stft_matrix = np.zeros(shape, dtype=dtype, order="F")
+    elif not np.allclose(out.shape, shape):
+        raise ParameterError(
+            f"Shape mismatch for provided output array out.shape={out.shape} != {shape}"
+        )
+    else:
+        stft_matrix = out
+
+    # Fill in the warm-up
+    if center and extra > 0:
+        off_start = y_frames_pre.shape[-1]
+        stft_matrix[..., :off_start] = fft.rfft(fft_window * y_frames_pre, axis=-2)
+
+        off_end = y_frames_post.shape[-1]
+        if off_end > 0:
+            stft_matrix[..., -off_end:] = fft.rfft(fft_window * y_frames_post, axis=-2)
+    else:
+        off_start = 0
+
+    n_columns = util.MAX_MEM_BLOCK // (np.prod(y_frames.shape[:-1]) * y_frames.itemsize)
     n_columns = max(n_columns, 1)
 
-    for bl_s in range(0, stft_matrix.shape[-1], n_columns):
-        bl_t = min(bl_s + n_columns, stft_matrix.shape[-1])
+    for bl_s in range(0, y_frames.shape[-1], n_columns):
+        bl_t = min(bl_s + n_columns, y_frames.shape[-1])
 
-        stft_matrix[..., bl_s:bl_t] = fft.rfft(
+        stft_matrix[..., bl_s + off_start : bl_t + off_start] = fft.rfft(
             fft_window * y_frames[..., bl_s:bl_t], axis=-2
         )
     return stft_matrix
@@ -1070,9 +1155,9 @@ def reassigned_spectrogram(
     # find bins below the power threshold
     # reassigned bins with zero power will already be NaN
     if callable(ref_power):
-        ref_power = ref_power(mags ** 2)
+        ref_power = ref_power(mags**2)
 
-    mags_low = np.less(mags, ref_power ** 0.5, where=~np.isnan(mags))
+    mags_low = np.less(mags, ref_power**0.5, where=~np.isnan(mags))
 
     # for reassigned estimates, optionally set thresholded bins to NaN, return
     # bin frequencies and frame times in place of NaN generated by
@@ -1689,7 +1774,7 @@ def amplitude_to_db(S, *, ref=1.0, amin=1e-5, top_db=80.0):
 
     power = np.square(magnitude, out=magnitude)
 
-    return power_to_db(power, ref=ref_value ** 2, amin=amin ** 2, top_db=top_db)
+    return power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db)
 
 
 @cache(level=30)
@@ -1716,7 +1801,7 @@ def db_to_amplitude(S_db, *, ref=1.0):
     -----
     This function caches at level 30.
     """
-    return db_to_power(S_db, ref=ref ** 2) ** 0.5
+    return db_to_power(S_db, ref=ref**2) ** 0.5
 
 
 @cache(level=30)
@@ -1976,7 +2061,7 @@ def fmt(y, *, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis
     # Normalization is absorbed into the window here for expedience
     fft = get_fftlib()
     return fft.rfft(
-        y_res * ((x_exp ** beta).reshape(shape) * np.sqrt(n) / n_fmt), axis=axis
+        y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt), axis=axis
     )
 
 
@@ -2188,7 +2273,7 @@ def pcen(
         # which approximates the full-width half-max of the
         # squared frequency response of the IIR low-pass filter
 
-        b = (np.sqrt(1 + 4 * t_frames ** 2) - 1) / (2 * t_frames ** 2)
+        b = (np.sqrt(1 + 4 * t_frames**2) - 1) / (2 * t_frames**2)
 
     if not 0 <= b <= 1:
         raise ParameterError("b={} must be between 0 and 1".format(b))
@@ -2241,7 +2326,7 @@ def pcen(
     elif bias == 0:
         S_out = np.exp(power * (np.log(S) + np.log(smooth)))
     else:
-        S_out = (bias ** power) * np.expm1(power * np.log1p(S * smooth / bias))
+        S_out = (bias**power) * np.expm1(power * np.log1p(S * smooth / bias))
 
     if return_zf:
         return S_out, zf
