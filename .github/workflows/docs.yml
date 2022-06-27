@@ -2,7 +2,9 @@ name: Docs
 
 on:
   release:
-    types: [created]
+    types: 
+    - created
+    - published
   push:
     branches:
     - main
