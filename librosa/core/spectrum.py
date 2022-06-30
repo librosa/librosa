@@ -139,6 +139,13 @@ def stft(
         If ``center=True``, this argument is passed to `np.pad` for padding
         the edges of the signal ``y``. By default (``pad_mode="constant"``),
         ``y`` is padded on both sides with zeros.
+
+        .. note:: Not all padding modes supported by `numpy.pad` are supported here.
+            `wrap`, `mean`, `maximum`, `median`, and `minimum` are not supported.
+
+            Other modes that depend at most on input values at the edges of the
+            signal (e.g., `constant`, `edge`, `linear_ramp`) are supported.
+
         If ``center=False``,  this argument is ignored.
 
         .. see also:: `numpy.pad`
@@ -219,6 +226,9 @@ def stft(
 
     # Pad the time series so that frames are centered
     if center:
+        if pad_mode in ("wrap", "maximum", "mean", "median", "minimum"):
+            raise ParameterError("pad_mode='{}' is not supported by librosa.stft".format(pad_mode))
+
         if n_fft > y.shape[-1]:
             warnings.warn(
                 "n_fft={} is too large for input signal of length={}".format(
