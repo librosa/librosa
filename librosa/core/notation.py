@@ -6,7 +6,6 @@ import re
 import numpy as np
 from .._cache import cache
 from ..util.exceptions import ParameterError
-from ..util.decorators import deprecate_positional_args
 
 __all__ = [
     "key_to_degrees",
@@ -244,7 +243,6 @@ def mela_to_degrees(mela):
     return np.array(degrees)
 
 
-@deprecate_positional_args
 @cache(level=10)
 def mela_to_svara(mela, *, abbr=True, unicode=True):
     """Spell the Carnatic svara names for a given melakarta raga
@@ -456,7 +454,6 @@ def list_thaat():
     return list(THAAT_MAP.keys())
 
 
-@deprecate_positional_args
 @cache(level=10)
 def key_to_notes(key, *, unicode=True):
     """Lists all 12 note names in the chromatic scale, as spelled according to

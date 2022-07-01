@@ -9,7 +9,6 @@ from .. import util
 from ..core.audio import autocorrelate
 from ..core.spectrum import stft
 from ..util.exceptions import ParameterError
-from ..util.decorators import deprecate_positional_args
 from ..filters import get_window
 
 
@@ -17,7 +16,6 @@ __all__ = ["tempogram", "fourier_tempogram"]
 
 
 # -- Rhythmic features -- #
-@deprecate_positional_args
 def tempogram(
     *,
     y=None,
@@ -174,7 +172,6 @@ def tempogram(
     )
 
 
-@deprecate_positional_args
 def fourier_tempogram(
     *,
     y=None,

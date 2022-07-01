@@ -41,7 +41,6 @@ from ._cache import cache
 from . import util
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
-from .util.decorators import deprecate_positional_args
 
 __all__ = [
     "cross_similarity",
@@ -55,7 +54,6 @@ __all__ = [
 ]
 
 
-@deprecate_positional_args
 @cache(level=30)
 def cross_similarity(
     data,
@@ -271,7 +269,6 @@ def cross_similarity(
     return xsim
 
 
-@deprecate_positional_args
 @cache(level=30)
 def recurrence_matrix(
     data,
@@ -539,7 +536,6 @@ def recurrence_matrix(
     return rec
 
 
-@deprecate_positional_args
 def recurrence_to_lag(rec, *, pad=True, axis=-1):
     """Convert a recurrence matrix into a lag matrix.
 
@@ -643,7 +639,6 @@ def recurrence_to_lag(rec, *, pad=True, axis=-1):
     return lag
 
 
-@deprecate_positional_args
 def lag_to_recurrence(lag, *, axis=-1):
     """Convert a lag matrix into a recurrence matrix.
 
@@ -801,7 +796,6 @@ def timelag_filter(function, pad=True, index=0):
     return decorator(__my_filter, function)
 
 
-@deprecate_positional_args
 @cache(level=30)
 def subsegment(data, frames, *, n_segments=4, axis=-1):
     """Sub-divide a segmentation by feature clustering.
@@ -889,7 +883,6 @@ def subsegment(data, frames, *, n_segments=4, axis=-1):
     return np.array(boundaries)
 
 
-@deprecate_positional_args
 def agglomerative(data, k, *, clusterer=None, axis=-1):
     """Bottom-up temporal segmentation.
 
@@ -975,7 +968,6 @@ def agglomerative(data, k, *, clusterer=None, axis=-1):
     return np.asarray(boundaries)
 
 
-@deprecate_positional_args
 def path_enhance(
     R,
     n,

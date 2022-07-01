@@ -12,7 +12,6 @@ from numpy.lib.stride_tricks import as_strided
 from .._cache import cache
 from .exceptions import ParameterError
 from .deprecation import Deprecated
-from .decorators import deprecate_positional_args
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2 ** 8 * 2 ** 10
@@ -49,7 +48,6 @@ __all__ = [
 ]
 
 
-@deprecate_positional_args
 def frame(x, *, frame_length, hop_length, axis=-1, writeable=False, subok=False):
     """Slice a data array into (overlapping) frames.
 
@@ -210,7 +208,6 @@ def frame(x, *, frame_length, hop_length, axis=-1, writeable=False, subok=False)
     return xw[tuple(slices)]
 
 
-@deprecate_positional_args
 @cache(level=20)
 def valid_audio(y, *, mono=Deprecated()):
     """Determine whether a variable contains valid audio data.
@@ -296,7 +293,6 @@ def valid_audio(y, *, mono=Deprecated()):
     return True
 
 
-@deprecate_positional_args
 def valid_int(x, *, cast=None):
     """Ensure that an input value is integer-typed.
     This is primarily useful for ensuring integrable-valued
@@ -359,7 +355,6 @@ def valid_intervals(intervals):
     return True
 
 
-@deprecate_positional_args
 def pad_center(data, *, size, axis=-1, **kwargs):
     """Pad an array to a target length along a target axis.
 
@@ -433,7 +428,6 @@ def pad_center(data, *, size, axis=-1, **kwargs):
     return np.pad(data, lengths, **kwargs)
 
 
-@deprecate_positional_args
 def expand_to(x, *, ndim, axes):
     """Expand the dimensions of an input array with
 
@@ -504,7 +498,6 @@ def expand_to(x, *, ndim, axes):
     return x.reshape(shape)
 
 
-@deprecate_positional_args
 def fix_length(data, *, size, axis=-1, **kwargs):
     """Fix the length an array ``data`` to exactly ``size`` along a target axis.
 
@@ -563,7 +556,6 @@ def fix_length(data, *, size, axis=-1, **kwargs):
     return data
 
 
-@deprecate_positional_args
 def fix_frames(frames, *, x_min=0, x_max=None, pad=True):
     """Fix a list of frames to lie within [x_min, x_max]
 
@@ -645,7 +637,6 @@ def fix_frames(frames, *, x_min=0, x_max=None, pad=True):
     return np.unique(frames).astype(int)
 
 
-@deprecate_positional_args
 def axis_sort(S, *, axis=-1, index=False, value=None):
     """Sort an array along its rows or columns.
 
@@ -741,7 +732,6 @@ def axis_sort(S, *, axis=-1, index=False, value=None):
         return S[tuple(sort_slice)]
 
 
-@deprecate_positional_args
 @cache(level=40)
 def normalize(S, *, norm=np.inf, axis=0, threshold=None, fill=None):
     """Normalize an array along a chosen axis.
@@ -970,7 +960,6 @@ def normalize(S, *, norm=np.inf, axis=0, threshold=None, fill=None):
     return Snorm
 
 
-@deprecate_positional_args
 def localmax(x, *, axis=0):
     """Find local maxima in an array
 
@@ -1031,7 +1020,6 @@ def localmax(x, *, axis=0):
     return (x > x_pad[tuple(inds1)]) & (x >= x_pad[tuple(inds2)])
 
 
-@deprecate_positional_args
 def localmin(x, *, axis=0):
     """Find local minima in an array
 
@@ -1093,7 +1081,6 @@ def localmin(x, *, axis=0):
     return (x < x_pad[tuple(inds1)]) & (x <= x_pad[tuple(inds2)])
 
 
-@deprecate_positional_args
 def peak_pick(x, *, pre_max, post_max, pre_avg, post_avg, delta, wait):
     """Uses a flexible heuristic to pick peaks in a signal.
 
@@ -1250,7 +1237,6 @@ def peak_pick(x, *, pre_max, post_max, pre_avg, post_avg, delta, wait):
     return np.array(peaks)
 
 
-@deprecate_positional_args
 @cache(level=40)
 def sparsify_rows(x, *, quantile=0.01, dtype=None):
     """Return a row-sparse matrix approximating the input
@@ -1350,7 +1336,6 @@ def sparsify_rows(x, *, quantile=0.01, dtype=None):
     return x_sparse.tocsr()
 
 
-@deprecate_positional_args
 def buf_to_float(x, *, n_bytes=2, dtype=np.float32):
     """Convert an integer buffer to floating point values.
     This is primarily useful when loading integer-valued wav data
@@ -1381,7 +1366,6 @@ def buf_to_float(x, *, n_bytes=2, dtype=np.float32):
     return scale * np.frombuffer(x, fmt).astype(dtype)
 
 
-@deprecate_positional_args
 def index_to_slice(idx, *, idx_min=None, idx_max=None, step=None, pad=True):
     """Generate a slice array from an index array.
 
@@ -1434,7 +1418,6 @@ def index_to_slice(idx, *, idx_min=None, idx_max=None, step=None, pad=True):
     return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:])]
 
 
-@deprecate_positional_args
 @cache(level=40)
 def sync(data, idx, *, aggregate=None, pad=True, axis=-1):
     """Synchronous aggregation of a multi-dimensional array between boundaries
@@ -1559,7 +1542,6 @@ def sync(data, idx, *, aggregate=None, pad=True, axis=-1):
     return data_agg
 
 
-@deprecate_positional_args
 def softmask(X, X_ref, *, power=1, split_zeros=False):
     """Robustly compute a soft-mask operation.
 
@@ -1742,7 +1724,6 @@ def tiny(x):
     return np.finfo(dtype).tiny
 
 
-@deprecate_positional_args
 def fill_off_diagonal(x, *, radius, value=0):
     """Sets all cells of a matrix to a given ``value``
     if they lie outside a constraint region.
@@ -1811,7 +1792,6 @@ def fill_off_diagonal(x, *, radius, value=0):
     x[idx_l] = value
 
 
-@deprecate_positional_args
 def cyclic_gradient(data, *, edge_order=1, axis=-1):
     """Estimate the gradient of a function over a uniformly sampled,
     periodic domain.
@@ -1922,7 +1902,6 @@ def __shear_sparse(X, *, factor=+1, axis=-1):
     return X_shear.asformat(fmt)
 
 
-@deprecate_positional_args
 def shear(X, *, factor=1, axis=-1):
     """Shear a matrix by a given factor.
 
@@ -1974,7 +1953,6 @@ def shear(X, *, factor=1, axis=-1):
         return __shear_dense(X, factor=factor, axis=axis)
 
 
-@deprecate_positional_args
 def stack(arrays, *, axis=0):
     """Stack one or more arrays along a target axis.
 
@@ -2078,7 +2056,6 @@ def stack(arrays, *, axis=0):
         return result
 
 
-@deprecate_positional_args
 def dtype_r2c(d, *, default=np.complex64):
     """Find the complex numpy dtype corresponding to a real dtype.
 
@@ -2135,7 +2112,6 @@ def dtype_r2c(d, *, default=np.complex64):
     return np.dtype(mapping.get(dt, default))
 
 
-@deprecate_positional_args
 def dtype_c2r(d, *, default=np.float32):
     """Find the real numpy dtype corresponding to a complex dtype.
 
@@ -2206,7 +2182,6 @@ def __count_unique(x):
     return uniques.shape[0]
 
 
-@deprecate_positional_args
 def count_unique(data, *, axis=-1):
     """Count the number of unique values in a multi-dimensional array
     along a given axis.
@@ -2259,7 +2234,6 @@ def __is_unique(x):
     return uniques.shape[0] == x.size
 
 
-@deprecate_positional_args
 def is_unique(data, *, axis=-1):
     """Determine if the input array consists of all unique values
     along a given axis.

@@ -11,7 +11,6 @@ from pkg_resources import resource_filename
 import pooch
 
 from .exceptions import ParameterError
-from .decorators import deprecate_positional_args
 
 
 __all__ = [
@@ -39,7 +38,6 @@ with open(
     __TRACKMAP = json.load(fdesc)
 
 
-@deprecate_positional_args
 def example(key, *, hq=False):
     """Retrieve the example recording identified by 'key'.
 
@@ -158,7 +156,6 @@ def example_info(key):
             print(line)
 
 
-@deprecate_positional_args
 def find_files(
     directory, *, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0
 ):

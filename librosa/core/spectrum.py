@@ -19,7 +19,6 @@ from .. import util
 from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
-from ..util.decorators import deprecate_positional_args
 
 __all__ = [
     "stft",
@@ -39,7 +38,6 @@ __all__ = [
 ]
 
 
-@deprecate_positional_args
 @cache(level=20)
 def stft(
     y,
@@ -257,7 +255,6 @@ def stft(
     return stft_matrix
 
 
-@deprecate_positional_args
 @cache(level=30)
 def istft(
     stft_matrix,
@@ -807,7 +804,6 @@ def __reassign_times(
     return times, S_h
 
 
-@deprecate_positional_args
 def reassigned_spectrogram(
     y,
     *,
@@ -1112,7 +1108,6 @@ def reassigned_spectrogram(
     return freqs, times, mags
 
 
-@deprecate_positional_args
 def magphase(D, *, power=1):
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that ``D = S * P``.
@@ -1184,7 +1179,6 @@ def magphase(D, *, power=1):
     return mag, phase
 
 
-@deprecate_positional_args
 def phase_vocoder(D, *, rate, hop_length=None, n_fft=None):
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
 
@@ -1292,7 +1286,6 @@ def phase_vocoder(D, *, rate, hop_length=None, n_fft=None):
     return d_stretch
 
 
-@deprecate_positional_args
 @cache(level=20)
 def iirt(
     y,
@@ -1486,7 +1479,6 @@ def iirt(
     return bands_power
 
 
-@deprecate_positional_args
 @cache(level=30)
 def power_to_db(S, *, ref=1.0, amin=1e-10, top_db=80.0):
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
@@ -1610,7 +1602,6 @@ def power_to_db(S, *, ref=1.0, amin=1e-10, top_db=80.0):
     return log_spec
 
 
-@deprecate_positional_args
 @cache(level=30)
 def db_to_power(S_db, *, ref=1.0):
     """Convert a dB-scale spectrogram to a power spectrogram.
@@ -1638,7 +1629,6 @@ def db_to_power(S_db, *, ref=1.0):
     return ref * np.power(10.0, 0.1 * S_db)
 
 
-@deprecate_positional_args
 @cache(level=30)
 def amplitude_to_db(S, *, ref=1.0, amin=1e-5, top_db=80.0):
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
@@ -1702,7 +1692,6 @@ def amplitude_to_db(S, *, ref=1.0, amin=1e-5, top_db=80.0):
     return power_to_db(power, ref=ref_value ** 2, amin=amin ** 2, top_db=top_db)
 
 
-@deprecate_positional_args
 @cache(level=30)
 def db_to_amplitude(S_db, *, ref=1.0):
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
@@ -1730,7 +1719,6 @@ def db_to_amplitude(S_db, *, ref=1.0):
     return db_to_power(S_db, ref=ref ** 2) ** 0.5
 
 
-@deprecate_positional_args
 @cache(level=30)
 def perceptual_weighting(S, frequencies, *, kind="A", **kwargs):
     """Perceptual weighting of a power spectrogram::
@@ -1802,7 +1790,6 @@ def perceptual_weighting(S, frequencies, *, kind="A", **kwargs):
     return offset + power_to_db(S, **kwargs)
 
 
-@deprecate_positional_args
 @cache(level=30)
 def fmt(y, *, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis=-1):
     """The fast Mellin transform (FMT)
@@ -1993,7 +1980,6 @@ def fmt(y, *, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis
     )
 
 
-@deprecate_positional_args
 @cache(level=30)
 def pcen(
     S,
@@ -2263,7 +2249,6 @@ def pcen(
         return S_out
 
 
-@deprecate_positional_args
 def griffinlim(
     S,
     *,

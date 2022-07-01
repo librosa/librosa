@@ -54,7 +54,7 @@ from numba import jit
 from ._cache import cache
 from . import util
 from .util.exceptions import ParameterError
-from .util.decorators import deprecated, deprecate_positional_args
+from .util.decorators import deprecated
 
 from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.convert import fft_frequencies, mel_frequencies
@@ -121,7 +121,6 @@ WINDOW_BANDWIDTHS = {
 }
 
 
-@deprecate_positional_args
 @cache(level=10)
 def mel(
     *,
@@ -258,7 +257,6 @@ def mel(
     return weights
 
 
-@deprecate_positional_args
 @cache(level=10)
 def chroma(
     *,
@@ -433,7 +431,6 @@ def __float_window(window_spec):
 
 
 @deprecated(version="0.9.0", version_removed="1.0")
-@deprecate_positional_args
 def constant_q(
     *,
     sr,
@@ -599,7 +596,6 @@ def constant_q(
 
 
 @deprecated(version="0.9.0", version_removed="1.0")
-@deprecate_positional_args
 @cache(level=10)
 def constant_q_lengths(
     *, sr, fmin, n_bins=84, bins_per_octave=12, window="hann", filter_scale=1, gamma=0
@@ -674,7 +670,6 @@ def constant_q_lengths(
     return lengths
 
 
-@deprecate_positional_args
 @cache(level=10)
 def wavelet_lengths(
     *, freqs, sr=22050, window="hann", filter_scale=1, gamma=0, alpha=None
@@ -809,7 +804,6 @@ def wavelet_lengths(
     return lengths, f_cutoff
 
 
-@deprecate_positional_args
 @cache(level=10)
 def wavelet(
     *,
@@ -959,7 +953,6 @@ def wavelet(
     return filters, lengths
 
 
-@deprecate_positional_args
 @cache(level=10)
 def cq_to_chroma(
     n_input,
@@ -1128,7 +1121,6 @@ def window_bandwidth(window, n=1000):
     return WINDOW_BANDWIDTHS[key]
 
 
-@deprecate_positional_args
 @cache(level=10)
 def get_window(window, Nx, *, fftbins=True):
     """Compute a window function.
@@ -1372,7 +1364,6 @@ def mr_frequencies(tuning):
     return center_freqs, sample_rates
 
 
-@deprecate_positional_args
 def semitone_filterbank(
     *, center_freqs=None, tuning=0.0, sample_rates=None, flayout="ba", **kwargs
 ):
@@ -1463,7 +1454,6 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
         x[sample : min(n, sample + n_fft)] += win_sq[: max(0, min(n_fft, n - sample))]
 
 
-@deprecate_positional_args
 def window_sumsquare(
     *,
     window,
@@ -1538,7 +1528,6 @@ def window_sumsquare(
     return x
 
 
-@deprecate_positional_args
 @cache(level=10)
 def diagonal_filter(window, n, *, slope=1.0, angle=None, zero_mean=False):
     """Build a two-dimensional diagonal filter.
