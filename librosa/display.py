@@ -35,6 +35,7 @@ Miscellaneous
 
 """
 
+from itertools import product
 import warnings
 
 import numpy as np
@@ -615,6 +616,23 @@ def __envelope(x, hop):
     """
     x_frame = np.abs(util.frame(x, frame_length=hop, hop_length=hop))
     return x_frame.max(axis=1)
+
+
+_chroma_ax_types = ('chroma', 'chroma_h', 'chroma_c',)
+_cqt_ax_types = ('cqt_hz', 'cqt_note', 'cqt_svara',)
+_freq_ax_types = ('linear', 'fft', 'hz', 'fft_note', 'fft_svara',)
+_time_ax_types = ('time', 's', 'ms',)
+_lag_ax_types = ('lag', 'lag_s', 'lag_ms',)
+_misc_ax_types = ('tempo', 'fourier_tempo', 'mel', 'log', 'tonnetz', 'frames',)
+
+_AXIS_COMPAT = set(
+    [(t, t) for t in _misc_ax_types] +
+    [t for t in product(_chroma_ax_types, _chroma_ax_types)] +
+    [t for t in product(_cqt_ax_types, _cqt_ax_types)] +
+    [t for t in product(_freq_ax_types, _freq_ax_types)] +
+    [t for t in product(_time_ax_types, _time_ax_types)] +
+    [t for t in product(_lag_ax_types, _lag_ax_types)]
+)
 
 
 @deprecate_positional_args
@@ -1276,10 +1294,10 @@ def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
 
 
 def __same_axes(x_axis, y_axis, xlim, ylim):
-    """Check if two axes are the same, used to determine squared plots"""
-    axes_same_and_not_none = (x_axis == y_axis) and (x_axis is not None)
+    """Check if two axes are similar, used to determine squared plots"""
+    axes_compatible_and_not_none = (x_axis, y_axis) in _AXIS_COMPAT
     axes_same_lim = xlim == ylim
-    return axes_same_and_not_none and axes_same_lim
+    return axes_compatible_and_not_none and axes_same_lim
 
 
 @deprecate_positional_args
