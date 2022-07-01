@@ -617,8 +617,8 @@ def __envelope(x, hop):
 _chroma_ax_types = ('chroma', 'chroma_h', 'chroma_c',)
 _cqt_ax_types = ('cqt_hz', 'cqt_note', 'cqt_svara',)
 _freq_ax_types = ('linear', 'fft', 'hz', 'fft_note', 'fft_svara',)
-_time_ax_types = ('time', 's', 'ms',)
-_lag_ax_types = ('lag', 'lag_s', 'lag_ms',)
+_time_ax_types = ('time', 'h', 'm', 's', 'ms',)
+_lag_ax_types = ('lag', 'lag_h', 'lag_m', 'lag_s', 'lag_ms',)
 _misc_ax_types = ('tempo', 'fourier_tempo', 'mel', 'log', 'tonnetz', 'frames',)
 
 _AXIS_COMPAT = set(
