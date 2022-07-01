@@ -152,7 +152,7 @@ def stft(
 
     out : np.ndarray or None
         A pre-allocated, complex-valued array to store the STFT results.
-        This must be of the correct shape for the given input parameters.
+        This must be of the correct shape and dtype for the given input parameters.
 
         If not provided, a new array is allocated and returned.
 
@@ -426,10 +426,11 @@ def istft(
         If provided, the output ``y`` is zero-padded or clipped to exactly
         ``length`` samples.
 
-    out : np.ndarray, optional
-        Optional pre-allocated output array.
-        FIXME: more
+    out : np.ndarray or None
+        A pre-allocated, complex-valued array to store the reconstructed signal
+        ``y``.  This must be of the correct shape for the given input parameters.
 
+        If not provided, a new array is allocated and returned.
 
     Returns
     -------
