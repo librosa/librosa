@@ -326,6 +326,10 @@ def stft(
         raise ParameterError(
             f"Shape mismatch for provided output array out.shape={out.shape} != {shape}"
         )
+    elif not np.iscomplexobj(out):
+        raise ParameterError(
+            f"output with dtype={out.dtype} is not of complex type"
+        )
     else:
         stft_matrix = out
 
