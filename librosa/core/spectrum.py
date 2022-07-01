@@ -367,6 +367,7 @@ def istft(
     center=True,
     dtype=None,
     length=None,
+    out=None,
 ):
     """
     Inverse short-time Fourier transform (ISTFT).
@@ -425,6 +426,11 @@ def istft(
         If provided, the output ``y`` is zero-padded or clipped to exactly
         ``length`` samples.
 
+    out : np.ndarray, optional
+        Optional pre-allocated output array.
+        FIXME: more
+
+
     Returns
     -------
     y : np.ndarray [shape=(..., n)]
@@ -481,7 +487,7 @@ def istft(
     # For efficiency, trim STFT frames according to signal length if available
     if length:
         if center:
-            padded_length = length + int(n_fft)
+            padded_length = length + 2 * (n_fft//2)
         else:
             padded_length = length
         n_frames = min(stft_matrix.shape[-1], int(np.ceil(padded_length / hop_length)))
@@ -493,25 +499,71 @@ def istft(
 
     shape = list(stft_matrix.shape[:-2])
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
+
+    if length:
+        expected_signal_len = length
+    elif center:
+        expected_signal_len -= 2*(n_fft//2)
+
     shape.append(expected_signal_len)
-    y = np.zeros(shape, dtype=dtype)
+
+    if out is None:
+        y = np.zeros(shape, dtype=dtype)
+    elif not np.allclose(out.shape, shape):
+        raise ParameterError(f'Shape mismatch for provided output array out.shape={out.shape} != {shape}')
+    else:
+        y = out
+        # Since we'll be doing overlap-add here, this needs to be initialized to zero.
+        y.fill(0.)
+
+    fft = get_fftlib()
+
+    if center:
+        # First frame that does not depend on padding
+        #  k * hop_length - n_fft//2 >= 0
+        # k * hop_length >= n_fft // 2
+        # k >= (n_fft//2 / hop_length)
+
+        start_frame = int(np.ceil((n_fft//2) / hop_length))
+
+        # Do overlap-add on the head block
+        ytmp = ifft_window * fft.irfft(stft_matrix[..., :start_frame], n=n_fft, axis=-2)
+
+        shape[-1] = n_fft + hop_length * (start_frame - 1)
+        head_buffer = np.zeros(shape, dtype=dtype)
+
+        __overlap_add(head_buffer, ytmp, hop_length)
+
+        # If y is smaller than the head buffer, take everything
+        if y.shape[-1] < shape[-1] - n_fft//2:
+            y[..., :] = head_buffer[..., n_fft//2:y.shape[-1]+n_fft//2]
+        else:
+            # Trim off the first n_fft//2 samples from the head and copy into target buffer
+            y[..., :shape[-1]-n_fft//2] = head_buffer[..., n_fft//2:]
+
+        # This offset compensates for any differences between frame alignment
+        # and padding truncation
+        offset = start_frame * hop_length - n_fft//2
+
+    else:
+        start_frame = 0
+        offset = 0
 
     n_columns = util.MAX_MEM_BLOCK // (
         np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize
     )
     n_columns = max(n_columns, 1)
 
-    fft = get_fftlib()
-
     frame = 0
-    for bl_s in range(0, n_frames, n_columns):
+    for bl_s in range(start_frame, n_frames, n_columns):
+
         bl_t = min(bl_s + n_columns, n_frames)
 
         # invert the block and apply the window function
         ytmp = ifft_window * fft.irfft(stft_matrix[..., bl_s:bl_t], n=n_fft, axis=-2)
 
         # Overlap-add the istft block starting at the i'th frame
-        __overlap_add(y[..., frame * hop_length :], ytmp, hop_length)
+        __overlap_add(y[..., frame * hop_length + offset:], ytmp, hop_length)
 
         frame += bl_t - bl_s
 
@@ -525,26 +577,16 @@ def istft(
         dtype=dtype,
     )
 
-    approx_nonzero_indices = ifft_window_sum > util.tiny(ifft_window_sum)
-    y[..., approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
-
-    if length is None:
-        # If we don't need to control length, just do the usual center trimming
-        # to eliminate padded data
-        if center:
-            y = y[..., int(n_fft // 2) : -int(n_fft // 2)]
+    if center:
+        start = n_fft//2
     else:
-        if center:
-            # If we're centering, crop off the first n_fft//2 samples
-            # and then trim/pad to the target length.
-            # We don't trim the end here, so that if the signal is zero-padded
-            # to a longer duration, the decay is smooth by windowing
-            start = int(n_fft // 2)
-        else:
-            # If we're not centering, start at 0 and trim/pad as necessary
-            start = 0
+        start = 0
 
-        y = util.fix_length(y[..., start:], size=length)
+    ifft_window_sum = util.fix_length(ifft_window_sum[..., start:], size=y.shape[-1])
+
+    approx_nonzero_indices = ifft_window_sum > util.tiny(ifft_window_sum)
+
+    y[..., approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
     return y
 
@@ -557,9 +599,13 @@ def __overlap_add(y, ytmp, hop_length):
     # hop_length is the hop-length of the STFT analysis
 
     n_fft = ytmp.shape[-2]
+    N = n_fft
     for frame in range(ytmp.shape[-1]):
         sample = frame * hop_length
-        y[..., sample : (sample + n_fft)] += ytmp[..., frame]
+        if N > y.shape[-1] - sample:
+            N = y.shape[-1] - sample
+
+        y[..., sample : (sample + N)] += ytmp[..., :N, frame]
 
 
 def __reassign_frequencies(
