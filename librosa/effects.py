@@ -41,7 +41,6 @@ from . import decompose
 from . import feature
 from . import util
 from .util.exceptions import ParameterError
-from .util.decorators import deprecate_positional_args
 
 __all__ = [
     "hpss",
@@ -193,7 +192,6 @@ def percussive(y, **kwargs):
     return y_perc
 
 
-@deprecate_positional_args
 def time_stretch(y, *, rate, **kwargs):
     """Time-stretch an audio series by a fixed rate.
 
@@ -257,7 +255,6 @@ def time_stretch(y, *, rate, **kwargs):
     return y_stretch
 
 
-@deprecate_positional_args
 def pitch_shift(
     y, *, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kwargs
 ):
@@ -335,7 +332,6 @@ def pitch_shift(
     return util.fix_length(y_shift, size=y.shape[-1])
 
 
-@deprecate_positional_args
 def remix(y, intervals, *, align_zeros=True):
     """Remix an audio signal by re-ordering time intervals.
 
@@ -452,7 +448,6 @@ def _signal_to_frame_nonsilent(
     return db > -top_db
 
 
-@deprecate_positional_args
 def trim(
     y, *, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
 ):
@@ -525,7 +520,6 @@ def trim(
     return y[tuple(full_index)], np.asarray([start, end])
 
 
-@deprecate_positional_args
 def split(
     y, *, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
 ):
@@ -591,7 +585,6 @@ def split(
     return edges.reshape((-1, 2))
 
 
-@deprecate_positional_args
 def preemphasis(y, *, coef=0.97, zi=None, return_zf=False):
     """Pre-emphasize an audio signal with a first-order differencing filter:
 
@@ -679,7 +672,6 @@ def preemphasis(y, *, coef=0.97, zi=None, return_zf=False):
     return y_out
 
 
-@deprecate_positional_args
 def deemphasis(y, *, coef=0.97, zi=None, return_zf=False):
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 

@@ -23,12 +23,10 @@ from ._cache import cache
 from . import segment
 from . import util
 from .util.exceptions import ParameterError
-from .util.decorators import deprecate_positional_args
 
 __all__ = ["decompose", "hpss", "nn_filter"]
 
 
-@deprecate_positional_args
 def decompose(
     S, *, n_components=None, transformer=None, sort=False, fit=True, **kwargs
 ):
@@ -200,7 +198,6 @@ def decompose(
 
 
 @cache(level=30)
-@deprecate_positional_args
 def hpss(S, *, kernel_size=31, power=2.0, mask=False, margin=1.0):
     """Median-filtering harmonic percussive source separation (HPSS).
 
@@ -391,7 +388,6 @@ def hpss(S, *, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
 
 @cache(level=30)
-@deprecate_positional_args
 def nn_filter(S, *, rec=None, aggregate=None, axis=-1, **kwargs):
     """Filtering by nearest-neighbors.
 

@@ -12,13 +12,11 @@ from ..core.spectrum import db_to_power
 from ..util.utils import tiny
 from .. import filters
 from ..util import nnls, expand_to
-from ..util.decorators import deprecate_positional_args
 
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
 
 
-@deprecate_positional_args
 def mel_to_stft(M, *, sr=22050, n_fft=2048, power=2.0, **kwargs):
     """Approximate STFT magnitude from a Mel power spectrogram.
 
@@ -86,7 +84,6 @@ def mel_to_stft(M, *, sr=22050, n_fft=2048, power=2.0, **kwargs):
     return np.power(inverse, 1.0 / power, out=inverse)
 
 
-@deprecate_positional_args
 def mel_to_audio(
     M,
     *,
@@ -171,7 +168,6 @@ def mel_to_audio(
     )
 
 
-@deprecate_positional_args
 def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
     """Invert Mel-frequency cepstral coefficients to approximate a Mel power
     spectrogram.
@@ -247,7 +243,6 @@ def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0
     return db_to_power(logmel, ref=ref)
 
 
-@deprecate_positional_args
 def mfcc_to_audio(
     mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0, **kwargs
 ):

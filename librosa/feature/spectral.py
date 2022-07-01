@@ -10,7 +10,6 @@ import scipy.fftpack
 from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
-from ..util.decorators import deprecate_positional_args
 
 from ..core.convert import fft_frequencies
 from ..core.audio import zero_crossings
@@ -38,7 +37,6 @@ __all__ = [
 
 
 # -- Spectral features -- #
-@deprecate_positional_args
 def spectral_centroid(
     *,
     y=None,
@@ -196,7 +194,6 @@ def spectral_centroid(
     return np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
 
 
-@deprecate_positional_args
 def spectral_bandwidth(
     *,
     y=None,
@@ -371,7 +368,6 @@ def spectral_bandwidth(
     return np.sum(S * deviation ** p, axis=-2, keepdims=True) ** (1.0 / p)
 
 
-@deprecate_positional_args
 def spectral_contrast(
     *,
     y=None,
@@ -571,7 +567,6 @@ def spectral_contrast(
         return power_to_db(peak) - power_to_db(valley)
 
 
-@deprecate_positional_args
 def spectral_rolloff(
     *,
     y=None,
@@ -733,7 +728,6 @@ def spectral_rolloff(
     return np.nanmin(ind * freq, axis=-2, keepdims=True)
 
 
-@deprecate_positional_args
 def spectral_flatness(
     *,
     y=None,
@@ -864,7 +858,6 @@ def spectral_flatness(
     return gmean / amean
 
 
-@deprecate_positional_args
 def rms(
     *,
     y=None,
@@ -980,7 +973,6 @@ def rms(
     return np.sqrt(power)
 
 
-@deprecate_positional_args
 def poly_features(
     *,
     y=None,
@@ -1136,7 +1128,6 @@ def poly_features(
     return coefficients
 
 
-@deprecate_positional_args
 def zero_crossing_rate(y, *, frame_length=2048, hop_length=512, center=True, **kwargs):
     """Compute the zero-crossing rate of an audio time series.
 
@@ -1199,7 +1190,6 @@ def zero_crossing_rate(y, *, frame_length=2048, hop_length=512, center=True, **k
 
 
 # -- Chroma --#
-@deprecate_positional_args
 def chroma_stft(
     *,
     y=None,
@@ -1361,7 +1351,6 @@ def chroma_stft(
     return util.normalize(raw_chroma, norm=norm, axis=-2)
 
 
-@deprecate_positional_args
 def chroma_cqt(
     *,
     y=None,
@@ -1504,7 +1493,6 @@ def chroma_cqt(
     return chroma
 
 
-@deprecate_positional_args
 def chroma_cens(
     *,
     y=None,
@@ -1670,7 +1658,6 @@ def chroma_cens(
     return util.normalize(cens, norm=norm, axis=-2)
 
 
-@deprecate_positional_args
 def tonnetz(*, y=None, sr=22050, chroma=None, **kwargs):
     """Computes the tonal centroid features (tonnetz)
 
@@ -1777,7 +1764,6 @@ def tonnetz(*, y=None, sr=22050, chroma=None, **kwargs):
 
 
 # -- Mel spectrogram and MFCCs -- #
-@deprecate_positional_args
 def mfcc(
     *, y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm="ortho", lifter=0, **kwargs
 ):
@@ -1919,7 +1905,6 @@ def mfcc(
         )
 
 
-@deprecate_positional_args
 def melspectrogram(
     *,
     y=None,

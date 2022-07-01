@@ -773,24 +773,6 @@ def test_warning_moved():
         assert "moved" in str(out[0].message).lower()
 
 
-def test_warning_positional_deprecation():
-    @librosa.util.decorators.deprecate_positional_args
-    def __dummy(*, x):
-        pass
-
-    with warnings.catch_warnings(record=True) as out:
-        __dummy(x=1)
-        # No warning here, we're doing it correctly
-        assert len(out) == 0
-
-    with warnings.catch_warnings(record=True) as out:
-        __dummy(1)
-        # Should be a warning here
-        assert len(out) > 0
-        assert out[0].category is FutureWarning
-        assert "positional arguments" in str(out[0].message).lower()
-
-
 def test_warning_rename_kw_pass():
 
     ov = librosa.util.Deprecated()

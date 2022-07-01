@@ -17,7 +17,6 @@ from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
-from ..util.decorators import deprecate_positional_args
 
 __all__ = [
     "load",
@@ -44,7 +43,6 @@ BW_FASTEST = resampy.filters.get_filter("kaiser_fast")[2]
 # -- CORE ROUTINES --#
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
-@deprecate_positional_args
 def load(
     path,
     *,
@@ -273,7 +271,6 @@ def __audioread_load(path, offset, duration, dtype):
     return y, sr_native
 
 
-@deprecate_positional_args
 def stream(
     path,
     *,
@@ -501,7 +498,6 @@ def to_mono(y):
     return y
 
 
-@deprecate_positional_args
 @cache(level=20)
 def resample(
     y, *, orig_sr, target_sr, res_type="kaiser_best", fix=True, scale=False, **kwargs
@@ -655,7 +651,6 @@ def resample(
     return y_hat.astype(y.dtype)
 
 
-@deprecate_positional_args
 def get_duration(
     *, y=None, sr=22050, S=None, n_fft=2048, hop_length=512, center=True, filename=None
 ):
@@ -798,7 +793,6 @@ def get_samplerate(path):
             return fdesc.samplerate
 
 
-@deprecate_positional_args
 @cache(level=20)
 def autocorrelate(y, *, max_size=None, axis=-1):
     """Bounded-lag auto-correlation
@@ -868,7 +862,6 @@ def autocorrelate(y, *, max_size=None, axis=-1):
     return autocorr
 
 
-@deprecate_positional_args
 def lpc(y, *, order, axis=-1):
     """Linear Prediction Coefficients via Burg's method
 
@@ -1053,7 +1046,6 @@ def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
     return ar_coeffs
 
 
-@deprecate_positional_args
 @cache(level=20)
 def zero_crossings(
     y, *, threshold=1e-10, ref_magnitude=None, pad=True, zero_pos=True, axis=-1
@@ -1183,7 +1175,6 @@ def zero_crossings(
     )
 
 
-@deprecate_positional_args
 def clicks(
     *,
     times=None,
@@ -1321,7 +1312,6 @@ def clicks(
     return click_signal
 
 
-@deprecate_positional_args
 def tone(frequency, *, sr=22050, length=None, duration=None, phi=None):
     """Construct a pure tone (cosine) signal at a given frequency.
 
@@ -1387,7 +1377,6 @@ def tone(frequency, *, sr=22050, length=None, duration=None, phi=None):
     return np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
 
 
-@deprecate_positional_args
 def chirp(*, fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=None):
     """Construct a "chirp" or "sine-sweep" signal.
 
@@ -1493,7 +1482,6 @@ def chirp(*, fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi
     )
 
 
-@deprecate_positional_args
 def mu_compress(x, *, mu=255, quantize=True):
     """mu-law compression
 
@@ -1588,7 +1576,6 @@ def mu_compress(x, *, mu=255, quantize=True):
     return x_comp
 
 
-@deprecate_positional_args
 def mu_expand(x, *, mu=255.0, quantize=True):
     """mu-law expansion
 

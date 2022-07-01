@@ -19,14 +19,12 @@ from ._cache import cache
 from . import core
 from . import util
 from .util.exceptions import ParameterError
-from .util.decorators import deprecate_positional_args
 
 from .feature.spectral import melspectrogram
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 
 
-@deprecate_positional_args
 def onset_detect(
     *,
     y=None,
@@ -187,7 +185,6 @@ def onset_detect(
     return onsets
 
 
-@deprecate_positional_args
 def onset_strength(
     *,
     y=None,
@@ -417,7 +414,6 @@ def onset_backtrack(events, energy):
     return minima[util.match_events(events, minima, right=False)]
 
 
-@deprecate_positional_args
 @cache(level=30)
 def onset_strength_multi(
     *,

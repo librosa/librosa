@@ -9,12 +9,10 @@ import scipy.interpolate
 import scipy.signal
 from ..util.exceptions import ParameterError
 from ..util import is_unique
-from ..util.decorators import deprecate_positional_args
 
 __all__ = ["salience", "interp_harmonics"]
 
 
-@deprecate_positional_args
 def salience(
     S,
     *,
@@ -130,7 +128,6 @@ def salience(
     return S_sal
 
 
-@deprecate_positional_args
 def interp_harmonics(x, *, freqs, harmonics, kind="linear", fill_value=0, axis=-2):
     """Compute the energy at harmonics of time-frequency representation.
 
