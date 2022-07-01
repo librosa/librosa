@@ -350,6 +350,25 @@ def test_stft_preallocate(center, n_fft, hop_length, N):
     assert np.allclose(D1, D2)
 
 
+@pytest.mark.parametrize("center", [False, True])
+@pytest.mark.parametrize(
+    "n_fft, hop_length",
+    [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)],
+)
+@pytest.mark.parametrize("N", [1024, 2048, 8192])
+def test_istft_preallocate(center, n_fft, hop_length, N):
+    y = np.random.randn(2, max(N, n_fft))
+
+    D = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
+
+    y1 = librosa.istft(D, center=center, n_fft=n_fft, hop_length=hop_length)
+    y2 = np.empty_like(y1)
+    y3 = librosa.istft(D, center=center, n_fft=n_fft, hop_length=hop_length, out=y2)
+
+    assert y3 is y2
+    assert np.allclose(y1, y2)
+
+
 # results for FFT bins containing multiple components will be unstable, as when
 # using higher sampling rates or shorter windows with this test signal
 @pytest.mark.parametrize("center", [False])
@@ -2411,3 +2430,9 @@ def test_stft_bad_prealloc_dtype():
 
     Dbad = np.zeros(D.shape, dtype=np.float32)
     librosa.stft(y, out=Dbad)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_istft_bad_prealloc_shape():
+    D = np.zeros((1025, 5), dtype=np.complex64)
+    librosa.istft(D, out=np.zeros(100))
