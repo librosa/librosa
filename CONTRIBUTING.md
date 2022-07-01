@@ -83,6 +83,16 @@ tools:
            $ pip install autopep8
            $ autopep8 path/to/pep8.py
 
+Some tests in tests/test_display.py use baseline images for output comparison.
+If existing images need to be updated or new ones should be added:
+1. Ensure that the environment is properly setup for testing (pytest with addons)
+2. Run:
+
+           $ pytest --mpl-generate-path=tmp tests/test_display.py [-k ANY_TESTS_THAT_CHANGED]
+
+3. Inspect the new baseline images under tmp/
+4. If (3) looks good, copy into `tests/baseline_images/test_display/` and add to the PR.
+
 Filing bugs
 -----------
 We use Github issues to track all bugs and feature requests; feel free to
