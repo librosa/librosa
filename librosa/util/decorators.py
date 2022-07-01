@@ -4,8 +4,6 @@
 """Helpful tools for deprecation"""
 
 import warnings
-from inspect import signature, isclass, Parameter
-from functools import wraps
 from decorator import decorator
 
 
