@@ -212,6 +212,8 @@ def stft(
     # Set the default hop, if it's not already specified
     if hop_length is None:
         hop_length = int(win_length // 4)
+    elif not (np.issubdtype(type(hop_length), np.integer) and hop_length > 0):
+        raise ParameterError("hop_length={} must be a positive integer".format(hop_length))
 
     # Check audio is valid
     util.valid_audio(y, mono=False)

@@ -343,7 +343,7 @@ def test_stft_preallocate(center, n_fft, hop_length, N):
 
 # results for FFT bins containing multiple components will be unstable, as when
 # using higher sampling rates or shorter windows with this test signal
-@pytest.mark.parametrize("center", [False, True])
+@pytest.mark.parametrize("center", [False])
 @pytest.mark.parametrize("sr", [256, 512, 2000, 2048])
 @pytest.mark.parametrize("n_fft", [128, 255, 256, 512, 1280])
 def test___reassign_frequencies(sr, n_fft, center):
@@ -351,7 +351,7 @@ def test___reassign_frequencies(sr, n_fft, center):
     y = np.sin(17 * x * 2 * np.pi) + np.sin(103 * x * 2 * np.pi)
 
     freqs, S = librosa.core.spectrum.__reassign_frequencies(
-        y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=center, pad_mode="wrap"
+        y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=center
     )
 
     S_db = librosa.amplitude_to_db(np.abs(S), ref=np.max)

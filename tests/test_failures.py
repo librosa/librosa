@@ -131,3 +131,10 @@ def test_istft_bad_window():
     window = np.ones(n_fft // 2)
 
     librosa.istft(D, window=window)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('y', [np.empty(22050)])
+@pytest.mark.parametrize('mode', ['wrap', 'maximum', 'minimum', 'median', 'mean'])
+def test_stft_bad_pad(y, mode):
+    librosa.stft(y, pad_mode=mode)
