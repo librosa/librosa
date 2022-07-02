@@ -2557,8 +2557,8 @@ def griffinlim(
     if n_fft is None:
         n_fft = 2 * (S.shape[-2] - 1)
 
-    # using complex64 will keep the result to minimal necessary precision
-    angles = np.empty(S.shape, dtype=np.complex64)
+    # Infer the dtype from S
+    angles = np.empty(S.shape, dtype=util.dtype_r2c(S.dtype))
     eps = util.tiny(angles)
 
     if init == "random":
@@ -2570,18 +2570,17 @@ def griffinlim(
     else:
         raise ParameterError("init={} must either None or 'random'".format(init))
 
-    # And initialize the previous iterate to 0
-    rebuilt = 0.0
-
-    rebuilt, tprev = None, None
+    # Place-holders for temporary data and reconstructed buffer
+    rebuilt = None
+    tprev = None
     inverse = None
-    for _ in range(n_iter):
-        # Store the previous iterate
-        #tprev = rebuilt
 
+    # Absorb magnitudes into angles
+    angles *= S
+    for _ in range(n_iter):
         # Invert with our current estimate of the phases
         inverse = istft(
-            S * angles,
+            angles,
             hop_length=hop_length,
             win_length=win_length,
             n_fft=n_fft,
@@ -2610,12 +2609,13 @@ def griffinlim(
         else:
             angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
         angles[:] /= np.abs(angles) + eps
+        angles *= S
         # Store
         rebuilt, tprev = tprev, rebuilt
 
     # Return the final phase estimates
     return istft(
-        S * angles,
+        angles,
         hop_length=hop_length,
         win_length=win_length,
         n_fft=n_fft,
