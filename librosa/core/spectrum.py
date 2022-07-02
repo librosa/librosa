@@ -2573,9 +2573,11 @@ def griffinlim(
     # And initialize the previous iterate to 0
     rebuilt = 0.0
 
+    rebuilt, tprev = None, None
+    inverse = None
     for _ in range(n_iter):
         # Store the previous iterate
-        tprev = rebuilt
+        #tprev = rebuilt
 
         # Invert with our current estimate of the phases
         inverse = istft(
@@ -2587,6 +2589,7 @@ def griffinlim(
             center=center,
             dtype=dtype,
             length=length,
+            out=inverse,
         )
 
         # Rebuild the spectrogram
@@ -2598,11 +2601,17 @@ def griffinlim(
             window=window,
             center=center,
             pad_mode=pad_mode,
+            out=rebuilt
         )
 
         # Update our phase estimates
-        angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
+        if tprev is None:
+            angles[:] = rebuilt
+        else:
+            angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
         angles[:] /= np.abs(angles) + eps
+        # Store
+        rebuilt, tprev = tprev, rebuilt
 
     # Return the final phase estimates
     return istft(
@@ -2614,6 +2623,7 @@ def griffinlim(
         center=center,
         dtype=dtype,
         length=length,
+        out=inverse
     )
 
 
