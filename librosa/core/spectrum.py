@@ -2604,11 +2604,10 @@ def griffinlim(
         )
 
         # Update our phase estimates
-        if tprev is None:
-            angles[:] = rebuilt
-        else:
-            angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
-        angles[:] /= np.abs(angles) + eps
+        angles[:] = rebuilt
+        if tprev is not None:
+            angles -= (momentum / (1 + momentum)) * tprev
+        angles /= np.abs(angles) + eps
         angles *= S
         # Store
         rebuilt, tprev = tprev, rebuilt
