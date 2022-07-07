@@ -152,13 +152,13 @@ class TimeFormatter(Formatter):
             value = x
             sign = ""
 
-        if self.unit == "h" or (self.unit==None and (vmax - vmin > 3600)):
+        if self.unit == "h" or ((self.unit is None) and (vmax - vmin > 3600)):
             s = "{:d}:{:02d}:{:02d}".format(
                 int(value / 3600.0),
                 int(np.mod(value / 60.0, 60)),
                 int(np.mod(value, 60)),
             )
-        elif self.unit == "m" or (self.unit==None and (vmax - vmin > 60)):
+        elif self.unit == "m" or ((self.unit is None) and (vmax - vmin > 60)):
             s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
         elif self.unit == "s":
             s = "{:.3g}".format(value)
@@ -1106,7 +1106,7 @@ def __decorate_axis(
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Time")
 
-    elif isinstance(ax_type, str) and ax_type in time_units.keys():
+    elif ax_type in time_units:
         axis.set_major_formatter(TimeFormatter(unit=ax_type, lag=False))
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Time ({:s})".format(time_units[ax_type]))
