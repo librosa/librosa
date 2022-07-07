@@ -78,12 +78,15 @@ class TimeFormatter(Formatter):
         Anything past the midpoint will be converted to negative time.
 
     unit : str or None
-        Abbreviation of the physical unit for axis labels and ticks.
-        Either equal to `s` (seconds) or `ms` (milliseconds) or None (default).
-        If set to None, the resulting TimeFormatter object adapts its string
-        representation to the duration of the underlying time range:
-        `hh:mm:ss` above 3600 seconds; `mm:ss` between 60 and 3600 seconds;
-        and `ss` below 60 seconds.
+        Abbreviation of the string representation for axis labels and ticks.
+        List of supported units:
+        * `"h"`: hour-based format (`H:MM:SS`)
+        * `"m"`: minute-based format (`M:SS`)
+        * `"s"`: second-based format (`S.sss` in scientific notation)
+        * `"ms"`: millisecond-based format (`s.µµµ` in scientific notation)
+        * `None`: adaptive to the duration of the underlying time range: similar
+        to `"h"` above 3600 seconds; to `"m"` between 60 and 3600 seconds; to
+        `"s"` between 1 and 60 seconds; and to `"ms"` below 1 second.
 
 
     See also
@@ -125,7 +128,7 @@ class TimeFormatter(Formatter):
 
     def __init__(self, lag=False, unit=None):
 
-        if unit not in ["s", "ms", None]:
+        if unit not in ["h", "m", "s", "ms", None]:
             raise ParameterError("Unknown time unit: {}".format(unit))
 
         self.unit = unit
@@ -149,27 +152,22 @@ class TimeFormatter(Formatter):
             value = x
             sign = ""
 
-        if self.unit == "s":
+        if self.unit == "h" or ((self.unit is None) and (vmax - vmin > 3600)):
+            s = "{:d}:{:02d}:{:02d}".format(
+                int(value / 3600.0),
+                int(np.mod(value / 60.0, 60)),
+                int(np.mod(value, 60)),
+            )
+        elif self.unit == "m" or ((self.unit is None) and (vmax - vmin > 60)):
+            s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
+        elif self.unit == "s":
             s = "{:.3g}".format(value)
+        elif self.unit==None and (vmax - vmin >= 1):
+            s = "{:.2g}".format(value)
         elif self.unit == "ms":
             s = "{:.3g}".format(value * 1000)
-        else:
-            if vmax - vmin > 3600:
-                # Hours viz
-                s = "{:d}:{:02d}:{:02d}".format(
-                    int(value / 3600.0),
-                    int(np.mod(value / 60.0, 60)),
-                    int(np.mod(value, 60)),
-                )
-            elif vmax - vmin > 60:
-                # Minutes viz
-                s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
-            elif vmax - vmin >= 1:
-                # Seconds viz
-                s = "{:.2g}".format(value)
-            else:
-                # Milliseconds viz
-                s = "{:.3f}".format(value)
+        elif self.unit==None and (vmax - vmin < 1):
+            s = "{:.3f}".format(value)
 
         return "{:s}{:s}".format(sign, s)
 
@@ -619,8 +617,8 @@ def __envelope(x, hop):
 _chroma_ax_types = ('chroma', 'chroma_h', 'chroma_c',)
 _cqt_ax_types = ('cqt_hz', 'cqt_note', 'cqt_svara',)
 _freq_ax_types = ('linear', 'fft', 'hz', 'fft_note', 'fft_svara',)
-_time_ax_types = ('time', 's', 'ms',)
-_lag_ax_types = ('lag', 'lag_s', 'lag_ms',)
+_time_ax_types = ('time', 'h', 'm', 's', 'ms',)
+_lag_ax_types = ('lag', 'lag_h', 'lag_m', 'lag_s', 'lag_ms',)
 _misc_ax_types = ('tempo', 'fourier_tempo', 'mel', 'log', 'tonnetz', 'frames',)
 
 _AXIS_COMPAT = set(
@@ -728,9 +726,13 @@ def specshow(
 
         - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
                 Values are plotted in units of seconds.
+        - 'h' : markers are shown as hours, minutes, and seconds.
+        - 'm' : markers are shown as minutes and seconds.
         - 's' : markers are shown as seconds.
         - 'ms' : markers are shown as milliseconds.
         - 'lag' : like time, but past the halfway point counts as negative values.
+        - 'lag_h' : same as lag, but in hours, minutes and seconds.
+        - 'lag_m' : same as lag, but in minutes and seconds.
         - 'lag_s' : same as lag, but in seconds.
         - 'lag_ms' : same as lag, but in milliseconds.
 
@@ -953,9 +955,13 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         "chroma_c": __coord_chroma,
         "chroma_h": __coord_chroma,
         "time": __coord_time,
+        "h": __coord_time,
+        "m": __coord_time,
         "s": __coord_time,
         "ms": __coord_time,
         "lag": __coord_time,
+        "lag_h": __coord_time,
+        "lag_m": __coord_time,
         "lag_s": __coord_time,
         "lag_ms": __coord_time,
         "tonnetz": __coord_n,
@@ -1044,6 +1050,8 @@ def __decorate_axis(
     axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True
 ):
     """Configure axis tickers, locators, and labels"""
+    time_units = {
+        "h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
 
     if ax_type == "tonnetz":
         axis.set_major_formatter(TonnetzFormatter())
@@ -1098,30 +1106,21 @@ def __decorate_axis(
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Time")
 
-    elif ax_type == "s":
-        axis.set_major_formatter(TimeFormatter(unit="s", lag=False))
+    elif ax_type in time_units:
+        axis.set_major_formatter(TimeFormatter(unit=ax_type, lag=False))
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
-        axis.set_label_text("Time (s)")
-
-    elif ax_type == "ms":
-        axis.set_major_formatter(TimeFormatter(unit="ms", lag=False))
-        axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
-        axis.set_label_text("Time (ms)")
+        axis.set_label_text("Time ({:s})".format(time_units[ax_type]))
 
     elif ax_type == "lag":
         axis.set_major_formatter(TimeFormatter(unit=None, lag=True))
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Lag")
 
-    elif ax_type == "lag_s":
-        axis.set_major_formatter(TimeFormatter(unit="s", lag=True))
+    elif isinstance(ax_type, str) and ax_type.startswith("lag_"):
+        unit = ax_type[4:]
+        axis.set_major_formatter(TimeFormatter(unit=unit, lag=True))
         axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
-        axis.set_label_text("Lag (s)")
-
-    elif ax_type == "lag_ms":
-        axis.set_major_formatter(TimeFormatter(unit="ms", lag=True))
-        axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
-        axis.set_label_text("Lag (ms)")
+        axis.set_label_text("Lag ({:s})".format(time_units[unit]))
 
     elif ax_type == "cqt_note":
         axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
@@ -1358,11 +1357,19 @@ def waveshow(
         - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
                     Values are plotted in units of seconds.
 
+        - 'h' : markers are shown as hours, minutes, and seconds.
+
+        - 'm' : markers are shown as minutes and seconds.
+
         - 's' : markers are shown as seconds.
 
         - 'ms' : markers are shown as milliseconds.
 
         - 'lag' : like time, but past the halfway point counts as negative values.
+
+        - 'lag_h' : same as lag, but in hours.
+
+        - 'lag_m' : same as lag, but in minutes.
 
         - 'lag_s' : same as lag, but in seconds.
 

@@ -106,7 +106,7 @@ def test_unknown_time_unit(y):
     ax = plt.gca()
     ax.plot(times, y)
     ax.xaxis.set_major_formatter(
-        librosa.display.TimeFormatter(unit="neither s, nor ms, nor None")
+        librosa.display.TimeFormatter(unit="an unsupported time unit")
     )
     return plt.gcf()
 
@@ -485,15 +485,23 @@ def test_time_unit(S_abs, sr):
     # sr = 22050, hop_length = 512, S.shape[1] = 198
     # 197 * 512 / 22050 ~= 4.6s
     plt.figure(figsize=(9, 10))
-    plt.subplot(3, 1, 1)
+    plt.subplot(5, 1, 1)
     # time scale auto
     librosa.display.specshow(S_abs, sr=sr, x_axis="time")
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(5, 1, 2)
+    # time unit fixed to 'h'
+    librosa.display.specshow(S_abs, sr=sr, x_axis="h")
+
+    plt.subplot(5, 1, 3)
+    # time unit fixed to 'h'
+    librosa.display.specshow(S_abs, sr=sr, x_axis="m")
+
+    plt.subplot(5, 1, 4)
     # time unit fixed to 's'
     librosa.display.specshow(S_abs, sr=sr, x_axis="s")
 
-    plt.subplot(3, 1, 3)
+    plt.subplot(5, 1, 5)
     # time unit fixed to 'ms'
     librosa.display.specshow(S_abs, sr=sr, x_axis="ms")
 
@@ -508,15 +516,23 @@ def test_time_unit(S_abs, sr):
 def test_time_unit_lag(S_abs, sr):
 
     plt.figure(figsize=(9, 10))
-    plt.subplot(3, 1, 1)
+    plt.subplot(5, 1, 1)
     # time scale auto in lag mode
     librosa.display.specshow(S_abs, sr=sr, x_axis="lag")
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(5, 1, 2)
+    # time unit fixed to 'h' in lag mode
+    librosa.display.specshow(S_abs, sr=sr, x_axis="lag_h")
+
+    plt.subplot(5, 1, 3)
+    # time unit fixed to 'm' in lag mode
+    librosa.display.specshow(S_abs, sr=sr, x_axis="lag_m")
+
+    plt.subplot(5, 1, 4)
     # time unit fixed to 's' in lag mode
     librosa.display.specshow(S_abs, sr=sr, x_axis="lag_s")
 
-    plt.subplot(3, 1, 3)
+    plt.subplot(5, 1, 5)
     # time unit fixed to 'ms' in lag mode
     librosa.display.specshow(S_abs, sr=sr, x_axis="lag_ms")
 
