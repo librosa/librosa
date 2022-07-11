@@ -229,6 +229,15 @@ def stft(
     # Pad the time series so that frames are centered
     if center:
         if pad_mode in ("wrap", "maximum", "mean", "median", "minimum"):
+            # Note: padding with a user-provided function "works", but
+            # use at your own risk.
+            # Since we don't pass-through kwargs here, any arguments
+            # to a user-provided pad function should be encapsulated
+            # by using functools.partial:
+            #
+            # >>> my_pad_func = functools.partial(pad_func, foo=x, bar=y)
+            # >>> librosa.stft(..., pad_mode=my_pad_func)
+
             raise ParameterError("pad_mode='{}' is not supported by librosa.stft".format(pad_mode))
 
         if n_fft > y.shape[-1]:
