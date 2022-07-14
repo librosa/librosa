@@ -50,6 +50,7 @@ Miscellaneous
     count_unique
     is_unique
     abs2
+    phasor
 
 
 Input validation

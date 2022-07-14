@@ -1346,3 +1346,21 @@ def test_abs2_complex(x, dtype):
     p = librosa.util.abs2(x)
     assert np.allclose(p, np.abs(x)**2)
     assert p.dtype == librosa.util.dtype_c2r(x.dtype)
+
+
+
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('angles', [np.pi/2, [np.pi/2, -np.pi/3]])
+@pytest.mark.parametrize('mag', [None, 2])
+def test_phasor(dtype, angles, mag):
+
+    angles = dtype(angles)
+    z = np.exp(1j * angles)
+    if mag is not None:
+        mag = dtype(mag)
+        z *= mag
+
+    z2 = librosa.util.phasor(angles, mag=mag)
+
+    assert np.allclose(z, z2)
+    assert z2.dtype == librosa.util.dtype_r2c(dtype)
