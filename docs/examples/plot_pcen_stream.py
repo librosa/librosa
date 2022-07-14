@@ -11,6 +11,10 @@ to do dynamic per-channel energy normalization on a spectrogram incrementally.
 
 This is useful when processing long audio files that are too large to load all at
 once, or when streaming data from a recording device.
+
+It also illustrates how to use a pre-allocated output buffer for block-wise
+short-time Fourier transforms.  This provides a minor speed boost and reduction
+in memory usage when processing audio streams.
 """
 
 ##################################################
@@ -59,10 +63,15 @@ pcen_blocks = []
 # Initialize the PCEN filter delays to steady state
 zi = None
 
+# Create a handle for storing the block STFT outputs
+# After the first block has been processed, we can re-use
+# this buffer instead of allocating a new one for each block.
+D = None
+
 for y_block in stream:
     # Compute the STFT (without padding, so center=False)
     D = librosa.stft(y_block, n_fft=n_fft, hop_length=hop_length,
-                     center=False)
+                     center=False, out=D)
 
     # Compute PCEN on the magnitude spectrum, using initial delays
     # returned from our previous call (if any)

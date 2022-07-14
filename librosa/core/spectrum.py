@@ -49,6 +49,7 @@ def stft(
     center=True,
     dtype=None,
     pad_mode="constant",
+    out=None,
 ):
     """Short-time Fourier transform (STFT).
 
@@ -138,15 +139,37 @@ def stft(
         If ``center=True``, this argument is passed to `np.pad` for padding
         the edges of the signal ``y``. By default (``pad_mode="constant"``),
         ``y`` is padded on both sides with zeros.
+
+        .. note:: Not all padding modes supported by `numpy.pad` are supported here.
+            `wrap`, `mean`, `maximum`, `median`, and `minimum` are not supported.
+
+            Other modes that depend at most on input values at the edges of the
+            signal (e.g., `constant`, `edge`, `linear_ramp`) are supported.
+
         If ``center=False``,  this argument is ignored.
 
         .. see also:: `numpy.pad`
+
+    out : np.ndarray or None
+        A pre-allocated, complex-valued array to store the STFT results.
+        This must be of compatible shape and dtype for the given input parameters.
+
+        If `out` is larger than necessary for the provided input signal, then only
+        a prefix slice of `out` will be used.
+
+        If not provided, a new array is allocated and returned.
 
     Returns
     -------
     D : np.ndarray [shape=(..., 1 + n_fft/2, n_frames), dtype=dtype]
         Complex-valued matrix of short-term Fourier transform
         coefficients.
+
+        If a pre-allocated `out` array is provided, then `D` will be
+        a reference to `out`.
+
+        If `out` is larger than necessary, then `D` will be a sliced
+        view: `D = out[..., :n_frames]`.
 
     See Also
     --------
@@ -195,6 +218,8 @@ def stft(
     # Set the default hop, if it's not already specified
     if hop_length is None:
         hop_length = int(win_length // 4)
+    elif not (np.issubdtype(type(hop_length), np.integer) and hop_length > 0):
+        raise ParameterError("hop_length={} must be a positive integer".format(hop_length))
 
     # Check audio is valid
     util.valid_audio(y, mono=False)
@@ -209,47 +234,141 @@ def stft(
 
     # Pad the time series so that frames are centered
     if center:
+        if pad_mode in ("wrap", "maximum", "mean", "median", "minimum"):
+            # Note: padding with a user-provided function "works", but
+            # use at your own risk.
+            # Since we don't pass-through kwargs here, any arguments
+            # to a user-provided pad function should be encapsulated
+            # by using functools.partial:
+            #
+            # >>> my_pad_func = functools.partial(pad_func, foo=x, bar=y)
+            # >>> librosa.stft(..., pad_mode=my_pad_func)
+
+            raise ParameterError("pad_mode='{}' is not supported by librosa.stft".format(pad_mode))
+
         if n_fft > y.shape[-1]:
             warnings.warn(
-                "n_fft={} is too small for input signal of length={}".format(
+                "n_fft={} is too large for input signal of length={}".format(
                     n_fft, y.shape[-1]
-                ),
-                stacklevel=2,
+                )
             )
 
+        # Set up the padding array to be empty, and we'll fix the target dimension later
         padding = [(0, 0) for _ in range(y.ndim)]
-        padding[-1] = (int(n_fft // 2), int(n_fft // 2))
-        y = np.pad(y, padding, mode=pad_mode)
 
-    elif n_fft > y.shape[-1]:
-        raise ParameterError(
-            "n_fft={} is too large for input signal of length={}".format(
-                n_fft, y.shape[-1]
+        # How many frames depend on left padding?
+        start_k = int(np.ceil(n_fft // 2 / hop_length))
+
+        # What's the first frame that depends on extra right-padding?
+        tail_k = (y.shape[-1] + n_fft // 2 - n_fft) // hop_length + 1
+
+        if tail_k <= start_k:
+            # If tail and head overlap, then just copy-pad the signal and carry on
+            start = 0
+            extra = 0
+            padding[-1] = (n_fft // 2, n_fft // 2)
+            y = np.pad(y, padding, mode=pad_mode)
+        else:
+            # If tail and head do not overlap, then we can implement padding on each part separately
+            # and avoid a full copy-pad
+
+            # "Middle" of the signal starts here, and does not depend on head padding
+            start = start_k * hop_length - n_fft // 2
+            padding[-1] = (n_fft // 2, 0)
+
+            y_pre = np.pad(
+                y[..., : (start_k - 1) * hop_length - n_fft // 2 + n_fft],
+                padding,
+                mode=pad_mode,
             )
-        )
+            y_frames_pre = util.frame(y_pre, frame_length=n_fft, hop_length=hop_length)
 
-    # Window the time series.
-    y_frames = util.frame(y, frame_length=n_fft, hop_length=hop_length)
+            # How many extra frames do we have from the head?
+            extra = y_frames_pre.shape[-1]
+
+            # Determine if we have any frames that will fit inside the tail pad
+            if tail_k * hop_length - n_fft // 2 + n_fft <= y.shape[-1] + n_fft // 2:
+                padding[-1] = (0, n_fft // 2)
+                y_post = np.pad(
+                    y[..., (tail_k) * hop_length - n_fft // 2 :], padding, mode=pad_mode
+                )
+                y_frames_post = util.frame(
+                    y_post, frame_length=n_fft, hop_length=hop_length
+                )
+                # How many extra frames do we have from the tail?
+                extra += y_frames_post.shape[-1]
+            else:
+                # In this event, the first frame that touches tail padding would run off
+                # the end of the padded array
+                # We'll circumvent this by allocating an empty frame buffer for the tail
+                # this keeps the subsequent logic simple
+                post_shape = list(y_frames_pre.shape)
+                post_shape[-1] = 0
+                y_frames_post = np.empty_like(y_frames_pre, shape=post_shape)
+    else:
+        if n_fft > y.shape[-1]:
+            raise ParameterError(
+                "n_fft={} is too large for uncentered analysis of input signal of length={}".format(
+                    n_fft, y.shape[-1]
+                )
+            )
+
+        # "Middle" of the signal starts at sample 0
+        start = 0
+        # We have no extra frames
+        extra = 0
 
     fft = get_fftlib()
 
     if dtype is None:
         dtype = util.dtype_r2c(y.dtype)
 
+    # Window the time series.
+    y_frames = util.frame(y[..., start:], frame_length=n_fft, hop_length=hop_length)
+
     # Pre-allocate the STFT matrix
     shape = list(y_frames.shape)
-    shape[-2] = 1 + n_fft // 2
-    stft_matrix = np.empty(shape, dtype=dtype, order="F")
 
-    n_columns = util.MAX_MEM_BLOCK // (
-        np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize
-    )
+    # This is our frequency dimension
+    shape[-2] = 1 + n_fft // 2
+
+    # If there's padding, there will be extra head and tail frames
+    shape[-1] += extra
+
+    if out is None:
+        stft_matrix = np.zeros(shape, dtype=dtype, order="F")
+    elif not (np.allclose(out.shape[:-1], shape[:-1]) and out.shape[-1] >= shape[-1]):
+        raise ParameterError(
+            f"Shape mismatch for provided output array out.shape={out.shape} and target shape={shape}"
+        )
+    elif not np.iscomplexobj(out):
+        raise ParameterError(
+            f"output with dtype={out.dtype} is not of complex type"
+        )
+    else:
+        if np.allclose(shape, out.shape):
+            stft_matrix = out
+        else:
+            stft_matrix = out[..., :shape[-1]]
+
+    # Fill in the warm-up
+    if center and extra > 0:
+        off_start = y_frames_pre.shape[-1]
+        stft_matrix[..., :off_start] = fft.rfft(fft_window * y_frames_pre, axis=-2)
+
+        off_end = y_frames_post.shape[-1]
+        if off_end > 0:
+            stft_matrix[..., -off_end:] = fft.rfft(fft_window * y_frames_post, axis=-2)
+    else:
+        off_start = 0
+
+    n_columns = util.MAX_MEM_BLOCK // (np.prod(y_frames.shape[:-1]) * y_frames.itemsize)
     n_columns = max(n_columns, 1)
 
-    for bl_s in range(0, stft_matrix.shape[-1], n_columns):
-        bl_t = min(bl_s + n_columns, stft_matrix.shape[-1])
+    for bl_s in range(0, y_frames.shape[-1], n_columns):
+        bl_t = min(bl_s + n_columns, y_frames.shape[-1])
 
-        stft_matrix[..., bl_s:bl_t] = fft.rfft(
+        stft_matrix[..., bl_s + off_start : bl_t + off_start] = fft.rfft(
             fft_window * y_frames[..., bl_s:bl_t], axis=-2
         )
     return stft_matrix
@@ -266,6 +385,7 @@ def istft(
     center=True,
     dtype=None,
     length=None,
+    out=None,
 ):
     """
     Inverse short-time Fourier transform (ISTFT).
@@ -324,6 +444,12 @@ def istft(
         If provided, the output ``y`` is zero-padded or clipped to exactly
         ``length`` samples.
 
+    out : np.ndarray or None
+        A pre-allocated, complex-valued array to store the reconstructed signal
+        ``y``.  This must be of the correct shape for the given input parameters.
+
+        If not provided, a new array is allocated and returned.
+
     Returns
     -------
     y : np.ndarray [shape=(..., n)]
@@ -380,7 +506,7 @@ def istft(
     # For efficiency, trim STFT frames according to signal length if available
     if length:
         if center:
-            padded_length = length + int(n_fft)
+            padded_length = length + 2 * (n_fft//2)
         else:
             padded_length = length
         n_frames = min(stft_matrix.shape[-1], int(np.ceil(padded_length / hop_length)))
@@ -392,25 +518,71 @@ def istft(
 
     shape = list(stft_matrix.shape[:-2])
     expected_signal_len = n_fft + hop_length * (n_frames - 1)
+
+    if length:
+        expected_signal_len = length
+    elif center:
+        expected_signal_len -= 2*(n_fft//2)
+
     shape.append(expected_signal_len)
-    y = np.zeros(shape, dtype=dtype)
+
+    if out is None:
+        y = np.zeros(shape, dtype=dtype)
+    elif not np.allclose(out.shape, shape):
+        raise ParameterError(f'Shape mismatch for provided output array out.shape={out.shape} != {shape}')
+    else:
+        y = out
+        # Since we'll be doing overlap-add here, this needs to be initialized to zero.
+        y.fill(0.)
+
+    fft = get_fftlib()
+
+    if center:
+        # First frame that does not depend on padding
+        #  k * hop_length - n_fft//2 >= 0
+        # k * hop_length >= n_fft // 2
+        # k >= (n_fft//2 / hop_length)
+
+        start_frame = int(np.ceil((n_fft//2) / hop_length))
+
+        # Do overlap-add on the head block
+        ytmp = ifft_window * fft.irfft(stft_matrix[..., :start_frame], n=n_fft, axis=-2)
+
+        shape[-1] = n_fft + hop_length * (start_frame - 1)
+        head_buffer = np.zeros(shape, dtype=dtype)
+
+        __overlap_add(head_buffer, ytmp, hop_length)
+
+        # If y is smaller than the head buffer, take everything
+        if y.shape[-1] < shape[-1] - n_fft//2:
+            y[..., :] = head_buffer[..., n_fft//2:y.shape[-1]+n_fft//2]
+        else:
+            # Trim off the first n_fft//2 samples from the head and copy into target buffer
+            y[..., :shape[-1]-n_fft//2] = head_buffer[..., n_fft//2:]
+
+        # This offset compensates for any differences between frame alignment
+        # and padding truncation
+        offset = start_frame * hop_length - n_fft//2
+
+    else:
+        start_frame = 0
+        offset = 0
 
     n_columns = util.MAX_MEM_BLOCK // (
         np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize
     )
     n_columns = max(n_columns, 1)
 
-    fft = get_fftlib()
-
     frame = 0
-    for bl_s in range(0, n_frames, n_columns):
+    for bl_s in range(start_frame, n_frames, n_columns):
+
         bl_t = min(bl_s + n_columns, n_frames)
 
         # invert the block and apply the window function
         ytmp = ifft_window * fft.irfft(stft_matrix[..., bl_s:bl_t], n=n_fft, axis=-2)
 
         # Overlap-add the istft block starting at the i'th frame
-        __overlap_add(y[..., frame * hop_length :], ytmp, hop_length)
+        __overlap_add(y[..., frame * hop_length + offset:], ytmp, hop_length)
 
         frame += bl_t - bl_s
 
@@ -424,26 +596,16 @@ def istft(
         dtype=dtype,
     )
 
-    approx_nonzero_indices = ifft_window_sum > util.tiny(ifft_window_sum)
-    y[..., approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
-
-    if length is None:
-        # If we don't need to control length, just do the usual center trimming
-        # to eliminate padded data
-        if center:
-            y = y[..., int(n_fft // 2) : -int(n_fft // 2)]
+    if center:
+        start = n_fft//2
     else:
-        if center:
-            # If we're centering, crop off the first n_fft//2 samples
-            # and then trim/pad to the target length.
-            # We don't trim the end here, so that if the signal is zero-padded
-            # to a longer duration, the decay is smooth by windowing
-            start = int(n_fft // 2)
-        else:
-            # If we're not centering, start at 0 and trim/pad as necessary
-            start = 0
+        start = 0
 
-        y = util.fix_length(y[..., start:], size=length)
+    ifft_window_sum = util.fix_length(ifft_window_sum[..., start:], size=y.shape[-1])
+
+    approx_nonzero_indices = ifft_window_sum > util.tiny(ifft_window_sum)
+
+    y[..., approx_nonzero_indices] /= ifft_window_sum[approx_nonzero_indices]
 
     return y
 
@@ -456,9 +618,13 @@ def __overlap_add(y, ytmp, hop_length):
     # hop_length is the hop-length of the STFT analysis
 
     n_fft = ytmp.shape[-2]
+    N = n_fft
     for frame in range(ytmp.shape[-1]):
         sample = frame * hop_length
-        y[..., sample : (sample + n_fft)] += ytmp[..., frame]
+        if N > y.shape[-1] - sample:
+            N = y.shape[-1] - sample
+
+        y[..., sample : (sample + N)] += ytmp[..., :N, frame]
 
 
 def __reassign_frequencies(
@@ -1070,9 +1236,9 @@ def reassigned_spectrogram(
     # find bins below the power threshold
     # reassigned bins with zero power will already be NaN
     if callable(ref_power):
-        ref_power = ref_power(mags ** 2)
+        ref_power = ref_power(mags**2)
 
-    mags_low = np.less(mags, ref_power ** 0.5, where=~np.isnan(mags))
+    mags_low = np.less(mags, ref_power**0.5, where=~np.isnan(mags))
 
     # for reassigned estimates, optionally set thresholded bins to NaN, return
     # bin frequencies and frame times in place of NaN generated by
@@ -1689,7 +1855,7 @@ def amplitude_to_db(S, *, ref=1.0, amin=1e-5, top_db=80.0):
 
     power = np.square(magnitude, out=magnitude)
 
-    return power_to_db(power, ref=ref_value ** 2, amin=amin ** 2, top_db=top_db)
+    return power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db)
 
 
 @cache(level=30)
@@ -1716,7 +1882,7 @@ def db_to_amplitude(S_db, *, ref=1.0):
     -----
     This function caches at level 30.
     """
-    return db_to_power(S_db, ref=ref ** 2) ** 0.5
+    return db_to_power(S_db, ref=ref**2) ** 0.5
 
 
 @cache(level=30)
@@ -1976,7 +2142,7 @@ def fmt(y, *, t_min=0.5, n_fmt=None, kind="cubic", beta=0.5, over_sample=1, axis
     # Normalization is absorbed into the window here for expedience
     fft = get_fftlib()
     return fft.rfft(
-        y_res * ((x_exp ** beta).reshape(shape) * np.sqrt(n) / n_fmt), axis=axis
+        y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt), axis=axis
     )
 
 
@@ -2188,7 +2354,7 @@ def pcen(
         # which approximates the full-width half-max of the
         # squared frequency response of the IIR low-pass filter
 
-        b = (np.sqrt(1 + 4 * t_frames ** 2) - 1) / (2 * t_frames ** 2)
+        b = (np.sqrt(1 + 4 * t_frames**2) - 1) / (2 * t_frames**2)
 
     if not 0 <= b <= 1:
         raise ParameterError("b={} must be between 0 and 1".format(b))
@@ -2241,7 +2407,7 @@ def pcen(
     elif bias == 0:
         S_out = np.exp(power * (np.log(S) + np.log(smooth)))
     else:
-        S_out = (bias ** power) * np.expm1(power * np.log1p(S * smooth / bias))
+        S_out = (bias**power) * np.expm1(power * np.log1p(S * smooth / bias))
 
     if return_zf:
         return S_out, zf
@@ -2409,8 +2575,8 @@ def griffinlim(
     if n_fft is None:
         n_fft = 2 * (S.shape[-2] - 1)
 
-    # using complex64 will keep the result to minimal necessary precision
-    angles = np.empty(S.shape, dtype=np.complex64)
+    # Infer the dtype from S
+    angles = np.empty(S.shape, dtype=util.dtype_r2c(S.dtype))
     eps = util.tiny(angles)
 
     if init == "random":
@@ -2422,16 +2588,17 @@ def griffinlim(
     else:
         raise ParameterError("init={} must either None or 'random'".format(init))
 
-    # And initialize the previous iterate to 0
-    rebuilt = 0.0
+    # Place-holders for temporary data and reconstructed buffer
+    rebuilt = None
+    tprev = None
+    inverse = None
 
+    # Absorb magnitudes into angles
+    angles *= S
     for _ in range(n_iter):
-        # Store the previous iterate
-        tprev = rebuilt
-
         # Invert with our current estimate of the phases
         inverse = istft(
-            S * angles,
+            angles,
             hop_length=hop_length,
             win_length=win_length,
             n_fft=n_fft,
@@ -2439,6 +2606,7 @@ def griffinlim(
             center=center,
             dtype=dtype,
             length=length,
+            out=inverse,
         )
 
         # Rebuild the spectrogram
@@ -2450,15 +2618,21 @@ def griffinlim(
             window=window,
             center=center,
             pad_mode=pad_mode,
+            out=rebuilt
         )
 
         # Update our phase estimates
-        angles[:] = rebuilt - (momentum / (1 + momentum)) * tprev
-        angles[:] /= np.abs(angles) + eps
+        angles[:] = rebuilt
+        if tprev is not None:
+            angles -= (momentum / (1 + momentum)) * tprev
+        angles /= np.abs(angles) + eps
+        angles *= S
+        # Store
+        rebuilt, tprev = tprev, rebuilt
 
     # Return the final phase estimates
     return istft(
-        S * angles,
+        angles,
         hop_length=hop_length,
         win_length=win_length,
         n_fft=n_fft,
@@ -2466,6 +2640,7 @@ def griffinlim(
         center=center,
         dtype=dtype,
         length=length,
+        out=inverse
     )
 
 

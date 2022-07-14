@@ -72,7 +72,7 @@ def test_load_soundfile():
 
 def test_load_audioread():
     fname = os.path.join("tests", "data", "test1_44100.wav")
-    
+
     # Load using an existing audioread object
     reader = audioread.rawread.RawAudioFile(fname)
     y, sr = librosa.load(reader, sr=None)
@@ -169,7 +169,9 @@ def test_resample_mono(resample_mono, sr_out, res_type, fix):
     y, sr_in = resample_mono
     y = librosa.to_mono(y)
 
-    y2 = librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, fix=fix)
+    y2 = librosa.resample(
+        y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, fix=fix
+    )
 
     # First, check that the audio is valid
     librosa.util.valid_audio(y2, mono=True)
@@ -213,7 +215,9 @@ def test_resample_stereo(resample_audio, sr_out, res_type, fix):
 
     y, sr_in = resample_audio
 
-    y2 = librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, fix=fix)
+    y2 = librosa.resample(
+        y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, fix=fix
+    )
 
     # First, check that the audio is valid
     librosa.util.valid_audio(y2, mono=False)
@@ -250,7 +254,9 @@ def test_resample_scale(resample_mono, res_type, sr_out):
 
     y, sr_in = resample_mono
 
-    y2 = librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, scale=True)
+    y2 = librosa.resample(
+        y, orig_sr=sr_in, target_sr=sr_out, res_type=res_type, scale=True
+    )
 
     # First, check that the audio is valid
     librosa.util.valid_audio(y2, mono=True)
@@ -321,14 +327,90 @@ def test_stft_winsizes():
     x = np.zeros(1000000)
 
     for power in range(12, 17):
-        N = 2 ** power
+        N = 2**power
         H = N // 2
         librosa.stft(x, n_fft=N, hop_length=H, win_length=N)
 
 
+@pytest.mark.parametrize("center", [False, True])
+@pytest.mark.parametrize(
+    "n_fft, hop_length",
+    [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)],
+)
+@pytest.mark.parametrize("N", [1024, 2048, 8192])
+def test_stft_preallocate(center, n_fft, hop_length, N):
+
+    # Work in stereo by default
+    y = np.random.randn(2, max(N, n_fft))
+
+    D1 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
+    out = np.empty_like(D1)
+    D2 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length, out=out)
+    assert D2 is out
+    assert np.allclose(D1, D2)
+
+
+@pytest.mark.parametrize("center", [False, True])
+@pytest.mark.parametrize(
+    "n_fft, hop_length",
+    [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)],
+)
+@pytest.mark.parametrize("N", [2048])
+def test_stft_preallocate_oversize(center, n_fft, hop_length, N):
+
+    # Work in stereo by default
+    y = np.random.randn(2, max(N, n_fft))
+
+    D1 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
+    shape = list(D1.shape)
+    shape[-1] *= 2
+    out = np.empty_like(D1, shape=shape)
+    D2 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length, out=out)
+    assert np.allclose(D1, D2)
+    assert np.allclose(D1, out[..., :D2.shape[-1]])
+
+
+@pytest.mark.parametrize("center", [False, True])
+@pytest.mark.parametrize(
+    "n_fft, hop_length",
+    [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)],
+)
+@pytest.mark.parametrize("N", [2048])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_stft_preallocate_undersize(center, n_fft, hop_length, N):
+
+    # Work in stereo by default
+    y = np.random.randn(2, max(N, n_fft))
+
+    D1 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
+    shape = list(D1.shape)
+    shape[-1] //= 2
+    out = np.empty_like(D1, shape=shape)
+    D2 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length, out=out)
+
+
+@pytest.mark.parametrize("center", [False, True])
+@pytest.mark.parametrize(
+    "n_fft, hop_length",
+    [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)],
+)
+@pytest.mark.parametrize("N", [1024, 2048, 8192])
+def test_istft_preallocate(center, n_fft, hop_length, N):
+    y = np.random.randn(2, max(N, n_fft))
+
+    D = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
+
+    y1 = librosa.istft(D, center=center, n_fft=n_fft, hop_length=hop_length)
+    y2 = np.empty_like(y1)
+    y3 = librosa.istft(D, center=center, n_fft=n_fft, hop_length=hop_length, out=y2)
+
+    assert y3 is y2
+    assert np.allclose(y1, y2)
+
+
 # results for FFT bins containing multiple components will be unstable, as when
 # using higher sampling rates or shorter windows with this test signal
-@pytest.mark.parametrize("center", [False, True])
+@pytest.mark.parametrize("center", [False])
 @pytest.mark.parametrize("sr", [256, 512, 2000, 2048])
 @pytest.mark.parametrize("n_fft", [128, 255, 256, 512, 1280])
 def test___reassign_frequencies(sr, n_fft, center):
@@ -336,7 +418,7 @@ def test___reassign_frequencies(sr, n_fft, center):
     y = np.sin(17 * x * 2 * np.pi) + np.sin(103 * x * 2 * np.pi)
 
     freqs, S = librosa.core.spectrum.__reassign_frequencies(
-        y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=center, pad_mode="wrap"
+        y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=center
     )
 
     S_db = librosa.amplitude_to_db(np.abs(S), ref=np.max)
@@ -605,7 +687,12 @@ def test_salience_basecase():
     harms = [1]
     weights = [1.0]
     S_sal = librosa.core.salience(
-        S, freqs=freqs, harmonics=harms, weights=weights, filter_peaks=False, kind="quadratic"
+        S,
+        freqs=freqs,
+        harmonics=harms,
+        weights=weights,
+        filter_peaks=False,
+        kind="quadratic",
     )
     assert np.allclose(S_sal, S)
 
@@ -617,7 +704,12 @@ def test_salience_basecase2():
     harms = [1, 0.5, 2.0]
     weights = [1.0, 0.0, 0.0]
     S_sal = librosa.core.salience(
-        S, freqs=freqs, harmonics=harms, weights=weights, filter_peaks=False, kind="quadratic"
+        S,
+        freqs=freqs,
+        harmonics=harms,
+        weights=weights,
+        filter_peaks=False,
+        kind="quadratic",
     )
     assert np.allclose(S_sal, S)
 
@@ -626,7 +718,9 @@ def test_salience_defaults():
     S = np.array([[0.1, 0.5, 0.0], [0.2, 1.2, 1.2], [0.0, 0.7, 0.3], [1.3, 3.2, 0.8]])
     freqs = np.array([50.0, 100.0, 200.0, 400.0])
     harms = [0.5, 1, 2]
-    actual = librosa.core.salience(S, freqs=freqs, harmonics=harms, kind="quadratic", fill_value=0.0)
+    actual = librosa.core.salience(
+        S, freqs=freqs, harmonics=harms, kind="quadratic", fill_value=0.0
+    )
 
     expected = (
         np.array([[0.0, 0.0, 0.0], [0.3, 2.4, 1.5], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]])
@@ -641,7 +735,12 @@ def test_salience_weights():
     harms = [0.5, 1, 2]
     weights = [1.0, 1.0, 1.0]
     actual = librosa.core.salience(
-        S, freqs=freqs, harmonics=harms, weights=weights, kind="quadratic", fill_value=0.0
+        S,
+        freqs=freqs,
+        harmonics=harms,
+        weights=weights,
+        kind="quadratic",
+        fill_value=0.0,
     )
 
     expected = (
@@ -657,7 +756,12 @@ def test_salience_no_peak_filter():
     harms = [0.5, 1, 2]
     weights = [1.0, 1.0, 1.0]
     actual = librosa.core.salience(
-        S, freqs=freqs, harmonics=harms, weights=weights, filter_peaks=False, kind="quadratic"
+        S,
+        freqs=freqs,
+        harmonics=harms,
+        weights=weights,
+        filter_peaks=False,
+        kind="quadratic",
     )
 
     expected = (
@@ -673,7 +777,13 @@ def test_salience_aggregate():
     harms = [0.5, 1, 2]
     weights = [1.0, 1.0, 1.0]
     actual = librosa.core.salience(
-        S, freqs=freqs, harmonics=harms, weights=weights, aggregate=np.ma.max, kind="quadratic", fill_value=0.0
+        S,
+        freqs=freqs,
+        harmonics=harms,
+        weights=weights,
+        aggregate=np.ma.max,
+        kind="quadratic",
+        fill_value=0.0,
     )
 
     expected = np.array(
@@ -714,7 +824,7 @@ def test_magphase_zero():
     assert S.dtype is np.dtype("float32")
     assert P.dtype is np.dtype("complex64")
     assert np.allclose(S, 0)
-    assert np.allclose(P, 1+0j)
+    assert np.allclose(P, 1 + 0j)
 
 
 def test_magphase_denormalized():
@@ -725,7 +835,7 @@ def test_magphase_denormalized():
     assert S.dtype is np.dtype("float32")
     assert P.dtype is np.dtype("complex64")
     assert np.allclose(S, 1.0e-42)
-    assert np.allclose(P, 0+1j)
+    assert np.allclose(P, 0 + 1j)
 
 
 def test_magphase_real():
@@ -741,7 +851,7 @@ def test_magphase_real():
             [P[0, 0], P[0, 1] ** 2],  # negative zero can have phase +1 or -1
             [P[1, 0], P[1, 1]],
         ],
-        np.array([[-1+0j, 1+0j], [1+0j, 1+0j]])
+        np.array([[-1 + 0j, 1 + 0j], [1 + 0j, 1 + 0j]]),
     )
 
 
@@ -940,7 +1050,7 @@ def test_to_mono(y):
 
 
 @pytest.mark.parametrize(
-    "y", [np.ones((2, 10)), np.ones((2, 3, 10)), np.ones((2,3,4,10))]
+    "y", [np.ones((2, 10)), np.ones((2, 3, 10)), np.ones((2, 3, 4, 10))]
 )
 def test_to_mono_multi(y):
     y_mono = librosa.to_mono(y)
@@ -1094,10 +1204,10 @@ def test_pyin_multi():
     y = np.stack([librosa.tone(440, duration=1.0), librosa.tone(560, duration=1.0)])
 
     # Taper the signal
-    h = librosa.filters.get_window('triangle', y.shape[-1])
+    h = librosa.filters.get_window("triangle", y.shape[-1])
 
     # Filter it
-    y = y * h[np.newaxis,:]
+    y = y * h[np.newaxis, :]
 
     # Disable nans so we can use allclose checks
     fall, vall, vpall = librosa.pyin(y, fmin=100, fmax=1000, center=False, fill_na=-1)
@@ -1116,13 +1226,15 @@ def test_pyin_multi_center():
     y = np.stack([librosa.tone(440, duration=1.0), librosa.tone(560, duration=1.0)])
 
     # Taper the signal
-    h = librosa.filters.get_window('triangle', y.shape[-1])
+    h = librosa.filters.get_window("triangle", y.shape[-1])
 
     # Filter it
-    y = y * h[np.newaxis,:]
+    y = y * h[np.newaxis, :]
 
     # Disable nans so we can use allclose checks
-    fleft, vleft, vpleft = librosa.pyin(y, fmin=100, fmax=1000, center=False, fill_na=-1)
+    fleft, vleft, vpleft = librosa.pyin(
+        y, fmin=100, fmax=1000, center=False, fill_na=-1
+    )
     fc, vc, vpc = librosa.pyin(y, fmin=100, fmax=1000, center=True, fill_na=-1)
 
     # Centering will pad by half a frame on either side
@@ -1265,7 +1377,7 @@ def test__spectrogram(y_22050, n_fft, hop_length, power):
     # And only the spectrogram but with incorrect n_fft
     S_, n_fft_ = librosa.core.spectrum._spectrogram(S=S, n_fft=2 * n_fft, power=power)
     assert np.allclose(S, S_)
-    
+
     assert np.allclose(2 * (S.shape[-2] - 1), n_fft_)
 
 
@@ -1298,8 +1410,8 @@ def test_power_to_db_fail(x, top_db, amin):
 def test_power_to_db_inv(erp, k):
 
     y_true = (k - erp) * 10
-    x = 10.0 ** k
-    rp = 10.0 ** erp
+    x = 10.0**k
+    rp = 10.0**erp
     y = librosa.power_to_db(x, ref=rp, top_db=None)
 
     assert np.isclose(y, y_true)
@@ -1314,7 +1426,7 @@ def test_amplitude_to_db():
     x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
 
     db1 = librosa.amplitude_to_db(x, top_db=None)
-    db2 = librosa.power_to_db(x ** 2, top_db=None)
+    db2 = librosa.power_to_db(x**2, top_db=None)
 
     assert np.allclose(db1, db2)
 
@@ -1332,7 +1444,7 @@ def test_amplitude_to_db_complex():
         assert len(out) > 0
         assert "complex" in str(out[0].message).lower()
 
-    db2 = librosa.power_to_db(x ** 2, top_db=None)
+    db2 = librosa.power_to_db(x**2, top_db=None)
 
     assert np.allclose(db1, db2)
 
@@ -1341,7 +1453,7 @@ def test_amplitude_to_db_complex():
 @pytest.mark.parametrize("xp", [(np.abs(np.random.randn(1000)) + 1e-5) ** 2])
 def test_db_to_power_inv(ref_p, xp):
 
-    ref = 10.0 ** ref_p
+    ref = 10.0**ref_p
     db = librosa.power_to_db(xp, ref=ref, top_db=None)
     xp2 = librosa.db_to_power(db, ref=ref)
 
@@ -1353,8 +1465,8 @@ def test_db_to_power_inv(ref_p, xp):
 def test_db_to_power(erp, db):
 
     y = db
-    rp = 10.0 ** erp
-    x_true = 10.0 ** erp * (10.0 ** (0.1 * db))
+    rp = 10.0**erp
+    x_true = 10.0**erp * (10.0 ** (0.1 * db))
 
     x = librosa.db_to_power(y, ref=rp)
 
@@ -1365,7 +1477,7 @@ def test_db_to_power(erp, db):
 @pytest.mark.parametrize("xp", [(np.abs(np.random.randn(1000)) + 1e-5)])
 def test_db_to_amplitude_inv(xp, ref_p):
 
-    ref = 10.0 ** ref_p
+    ref = 10.0**ref_p
     db = librosa.amplitude_to_db(xp, ref=ref, top_db=None)
     xp2 = librosa.db_to_amplitude(db, ref=ref)
 
@@ -1541,7 +1653,7 @@ def y_orig():
 def test_fmt_scale(y_orig, y_res, n_fmt, kind, atol, SCALE, OVER_SAMPLE):
 
     # Make sure our signals preserve energy
-    assert np.allclose(np.sum(y_orig ** 2), np.sum(y_res ** 2))
+    assert np.allclose(np.sum(y_orig**2), np.sum(y_res**2))
 
     # Scale-transform the original
     f_orig = librosa.fmt(
@@ -1647,7 +1759,7 @@ def test_harmonics_2d():
 
 
 def test_harmonics_1d_nonunique():
-    x = np.arange(-8, 8)**2
+    x = np.arange(-8, 8) ** 2
     y = np.linspace(-8, 8, num=len(x), endpoint=False) ** 2
 
     h = [0.25, 0.5, 1, 2, 4]
@@ -1837,7 +1949,7 @@ def test_pcen_power(S_pcen, p):
     P = librosa.pcen(
         S_pcen, gain=0, bias=0, power=p, b=1, time_constant=0.5, eps=1e-6, max_size=1
     )
-    assert np.allclose(P, S_pcen ** p)
+    assert np.allclose(P, S_pcen**p)
 
 
 def test_pcen_ones(S_pcen):
@@ -2043,7 +2155,7 @@ def test_reset_fftlib():
 @pytest.fixture
 def y_chirp():
     sr = 22050
-    y = librosa.chirp(fmin=55, fmax=55 * 2 ** 7, length=sr // 8, sr=sr)
+    y = librosa.chirp(fmin=55, fmax=55 * 2**7, length=sr // 8, sr=sr)
     return y
 
 
@@ -2240,7 +2352,9 @@ def test_stream(
         # frame this for easy checking
         y_b_mono = librosa.to_mono(y_block)
         if len(y_b_mono) >= frame_length:
-            y_b_frame = librosa.util.frame(y_b_mono, frame_length=frame_length, hop_length=hop_length)
+            y_b_frame = librosa.util.frame(
+                y_b_mono, frame_length=frame_length, hop_length=hop_length
+            )
             y_frame_stream.append(y_b_frame)
 
     # Concatenate the framed blocks together
@@ -2257,7 +2371,9 @@ def test_stream(
         path, sr=None, dtype=dtype, mono=True, offset=offset, duration=duration
     )
     # First, check the rate
-    y_frame = librosa.util.frame(y_full, frame_length=frame_length, hop_length=hop_length)
+    y_frame = librosa.util.frame(
+        y_full, frame_length=frame_length, hop_length=hop_length
+    )
 
     # Raw audio will not be padded
     n = y_frame.shape[1]
@@ -2334,3 +2450,28 @@ def test_mu_expand_badmu():
 )
 def test_mu_expand_badx(x):
     librosa.mu_expand(x, quantize=False)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_stft_bad_prealloc_shape():
+    y = np.zeros(22050)
+
+    # Output shape here is incorrect, and should trigger a failure
+    S1 = librosa.stft(
+        y, n_fft=512, hop_length=128, out=np.zeros((100, 10), dtype=np.complex)
+    )
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_stft_bad_prealloc_dtype():
+    y = np.zeros(22050)
+    D = librosa.stft(y)
+
+    Dbad = np.zeros(D.shape, dtype=np.float32)
+    librosa.stft(y, out=Dbad)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_istft_bad_prealloc_shape():
+    D = np.zeros((1025, 5), dtype=np.complex64)
+    librosa.istft(D, out=np.zeros(100))
