@@ -845,7 +845,7 @@ def autocorrelate(y, *, max_size=None, axis=-1):
     # Compute the power spectrum along the chosen axis
     # Pad out the signal to support full-length auto-correlation.
     fft = get_fftlib()
-    powspec = np.abs(fft.fft(y, n=2 * y.shape[axis] + 1, axis=axis)) ** 2
+    powspec = util.abs2(fft.fft(y, n=2 * y.shape[axis] + 1, axis=axis))
 
     # Convert back to time domain
     autocorr = fft.ifft(powspec, axis=axis)
