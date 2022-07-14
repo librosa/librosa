@@ -569,8 +569,8 @@ def constant_q(
     filters = []
     for ilen, freq in zip(lengths, freqs):
         # Build the filter: note, length will be ceil(ilen)
-        sig = np.exp(
-            np.arange(-ilen // 2, ilen // 2, dtype=float) * 1j * 2 * np.pi * freq / sr
+        sig = util.phasor(
+            np.arange(-ilen // 2, ilen // 2, dtype=float) * 2 * np.pi * freq / sr
         )
 
         # Apply the windowing function
@@ -927,8 +927,8 @@ def wavelet(
     filters = []
     for ilen, freq in zip(lengths, freqs):
         # Build the filter: note, length will be ceil(ilen)
-        sig = np.exp(
-            np.arange(-ilen // 2, ilen // 2, dtype=float) * 1j * 2 * np.pi * freq / sr
+        sig = util.phasor(
+            np.arange(-ilen // 2, ilen // 2, dtype=float) * 2 * np.pi * freq / sr
         )
 
         # Apply the windowing function

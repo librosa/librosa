@@ -1429,7 +1429,7 @@ def griffinlim_cqt(
 
     if init == "random":
         # randomly initialize the phase
-        angles[:] = np.exp(2j * np.pi * rng.rand(*C.shape))
+        angles[:] = util.phasor(2 * np.pi * rng.rand(*C.shape))
     elif init is None:
         # Initialize an all ones complex matrix
         angles[:] = 1.0
