@@ -355,6 +355,45 @@ def test_stft_preallocate(center, n_fft, hop_length, N):
     "n_fft, hop_length",
     [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)],
 )
+@pytest.mark.parametrize("N", [2048])
+def test_stft_preallocate_oversize(center, n_fft, hop_length, N):
+
+    # Work in stereo by default
+    y = np.random.randn(2, max(N, n_fft))
+
+    D1 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
+    shape = list(D1.shape)
+    shape[-1] *= 2
+    out = np.empty_like(D1, shape=shape)
+    D2 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length, out=out)
+    assert np.allclose(D1, D2)
+    assert np.allclose(D1, out[..., :D2.shape[-1]])
+
+
+@pytest.mark.parametrize("center", [False, True])
+@pytest.mark.parametrize(
+    "n_fft, hop_length",
+    [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)],
+)
+@pytest.mark.parametrize("N", [2048])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_stft_preallocate_undersize(center, n_fft, hop_length, N):
+
+    # Work in stereo by default
+    y = np.random.randn(2, max(N, n_fft))
+
+    D1 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
+    shape = list(D1.shape)
+    shape[-1] //= 2
+    out = np.empty_like(D1, shape=shape)
+    D2 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length, out=out)
+
+
+@pytest.mark.parametrize("center", [False, True])
+@pytest.mark.parametrize(
+    "n_fft, hop_length",
+    [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)],
+)
 @pytest.mark.parametrize("N", [1024, 2048, 8192])
 def test_istft_preallocate(center, n_fft, hop_length, N):
     y = np.random.randn(2, max(N, n_fft))

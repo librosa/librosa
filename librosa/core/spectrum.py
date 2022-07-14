@@ -152,7 +152,10 @@ def stft(
 
     out : np.ndarray or None
         A pre-allocated, complex-valued array to store the STFT results.
-        This must be of the correct shape and dtype for the given input parameters.
+        This must be of compatible shape and dtype for the given input parameters.
+
+        If `out` is larger than necessary for the provided input signal, then only
+        a prefix slice of `out` will be used.
 
         If not provided, a new array is allocated and returned.
 
@@ -164,6 +167,9 @@ def stft(
 
         If a pre-allocated `out` array is provided, then `D` will be
         a reference to `out`.
+
+        If `out` is larger than necessary, then `D` will be a sliced
+        view: `D = out[..., :n_frames]`.
 
     See Also
     --------
@@ -331,16 +337,19 @@ def stft(
 
     if out is None:
         stft_matrix = np.zeros(shape, dtype=dtype, order="F")
-    elif not np.allclose(out.shape, shape):
+    elif not (np.allclose(out.shape[:-1], shape[:-1]) and out.shape[-1] >= shape[-1]):
         raise ParameterError(
-            f"Shape mismatch for provided output array out.shape={out.shape} != {shape}"
+            f"Shape mismatch for provided output array out.shape={out.shape} and target shape={shape}"
         )
     elif not np.iscomplexobj(out):
         raise ParameterError(
             f"output with dtype={out.dtype} is not of complex type"
         )
     else:
-        stft_matrix = out
+        if np.allclose(shape, out.shape):
+            stft_matrix = out
+        else:
+            stft_matrix = out[..., :shape[-1]]
 
     # Fill in the warm-up
     if center and extra > 0:
