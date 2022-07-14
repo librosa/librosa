@@ -2358,16 +2358,19 @@ def phasor(angles, *, mag=None):
 
     Examples
     --------
-    Construct unit phasors at angles 0, pi/2, and pi
+    Construct unit phasors at angles 0, pi/2, and pi:
+
     >>> librosa.util.phasor([0, np.pi/2, np.pi])
     array([ 1.000e+00+0.000e+00j,  6.123e-17+1.000e+00j,
            -1.000e+00+1.225e-16j])
 
-    Construct a phasor with magnitude 1/2
+    Construct a phasor with magnitude 1/2:
+
     >>> librosa.util.phasor(np.pi/2, mag=0.5)
     (3.061616997868383e-17+0.5j)
 
-    Or arrays of angles and magnitudes
+    Or arrays of angles and magnitudes:
+
     >>> librosa.util.phasor(np.array([0, np.pi/2]), mag=np.array([0.5, 1.5]))
     array([5.000e-01+0.j , 9.185e-17+1.5j])
     '''
