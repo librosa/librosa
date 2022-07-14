@@ -49,6 +49,7 @@ Miscellaneous
     dtype_r2c
     count_unique
     is_unique
+    abs2
 
 
 Input validation

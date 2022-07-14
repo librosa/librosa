@@ -45,6 +45,7 @@ __all__ = [
     "dtype_c2r",
     "count_unique",
     "is_unique",
+    "abs2",
 ]
 
 
@@ -2275,3 +2276,38 @@ def is_unique(data, *, axis=-1):
     """
 
     return np.apply_along_axis(__is_unique, axis, data)
+
+
+@numba.vectorize(['float32(complex64)', 'float64(complex128)'], nopython=True, cache=True, identity=0)
+def _cabs2(x):
+    '''Helper function for efficiently computing abs2 on complex inputs'''
+    return x.real**2 + x.imag**2
+
+
+def abs2(x):
+    '''Compute the squared magnitude of a real or complex array:
+
+        p = |x|**2
+
+    Parameters
+    ----------
+    x : np.ndarray or scalar, real or complex typed
+        The input data, either real (float32, float64) or complex (complex64, complex128) typed
+
+    Returns
+    -------
+    p : real-valued squared magnitude of `x`
+
+    Examples
+    --------
+    >>> librosa.util.abs2(3 + 4j)
+    25.0
+
+    >>> librosa.util.abs2((0.5j)**np.arange(8))
+    array([1.000e+00, 2.500e-01, 6.250e-02, 1.562e-02, 3.906e-03, 9.766e-04,
+       2.441e-04, 6.104e-05])
+    '''
+    if np.iscomplexobj(x):
+        return _cabs2(x)
+    else:
+        return x**2

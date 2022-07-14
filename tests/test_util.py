@@ -1329,3 +1329,20 @@ def test_is_unique():
 
     assert np.allclose(x0, [True, True, True, True, False])
     assert np.allclose(x1, [False, False, True, True, True])
+
+
+@pytest.mark.parametrize('x', [-2, 3, np.arange(-3, 3)])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+def test_abs2_real(x, dtype):
+    x = dtype(x)
+    p = librosa.util.abs2(x)
+    assert np.allclose(p, x**2)
+
+
+@pytest.mark.parametrize('x', [(2 -2j), (3 +0j), (0.5j)**np.arange(6)])
+@pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
+def test_abs2_complex(x, dtype):
+    x = dtype(x)
+    p = librosa.util.abs2(x)
+    assert np.allclose(p, np.abs(x)**2)
+    assert p.dtype == librosa.util.dtype_c2r(x.dtype)
