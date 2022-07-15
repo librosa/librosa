@@ -129,10 +129,11 @@ the HTML output by typing ``make html`` from the docs/ directory.
 The resulting HTML files will be placed in _build/html/ and are viewable 
 in a web browser. See the README file in the doc/ directory for more information.
 
-For building the documentation, you will need 
-[sphinx](https://www.sphinx-doc.org/),
-[matplotlib](https://matplotlib.org/stable/index.html), and [numpydoc](https://pypi.python.org/pypi/numpydoc).
+For building the documentation, you will need some additional dependencies.
+These can be installed by executing the following command:
 
+    $ python -m pip install -e .[docs]
+    
 Note
 ----
 This document was gleefully borrowed from [scikit-learn](http://scikit-learn.org/).
