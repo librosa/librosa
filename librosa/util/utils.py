@@ -2290,8 +2290,8 @@ def _cabs2(x):  # pragma: no cover
 def abs2(x):
     """Compute the squared magnitude of a real or complex array.
 
-    This function is equivalent to calling `np.abs(x)**2` but slightly
-    more efficient.
+    This function is equivalent to calling `np.abs(x)**2` but it
+    is slightly more efficient.
 
     Parameters
     ----------
@@ -2300,7 +2300,8 @@ def abs2(x):
 
     Returns
     -------
-    p : real-valued squared magnitude of `x`
+    p : np.ndarray or scale, real
+        squared magnitude of `x`
 
     Examples
     --------
