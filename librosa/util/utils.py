@@ -14,7 +14,7 @@ from .exceptions import ParameterError
 from .deprecation import Deprecated
 
 # Constrain STFT block sizes to 256 KB
-MAX_MEM_BLOCK = 2 ** 8 * 2 ** 10
+MAX_MEM_BLOCK = 2**8 * 2**10
 
 __all__ = [
     "MAX_MEM_BLOCK",
@@ -46,7 +46,7 @@ __all__ = [
     "count_unique",
     "is_unique",
     "abs2",
-    "phasor"
+    "phasor",
 ]
 
 
@@ -924,7 +924,7 @@ def normalize(S, *, norm=np.inf, axis=0, threshold=None, fill=None):
         length = np.sum(mag > 0, axis=axis, keepdims=True, dtype=mag.dtype)
 
     elif np.issubdtype(type(norm), np.number) and norm > 0:
-        length = np.sum(mag ** norm, axis=axis, keepdims=True) ** (1.0 / norm)
+        length = np.sum(mag**norm, axis=axis, keepdims=True) ** (1.0 / norm)
 
         if axis is None:
             fill_norm = mag.size ** (-1.0 / norm)
@@ -2279,14 +2279,16 @@ def is_unique(data, *, axis=-1):
     return np.apply_along_axis(__is_unique, axis, data)
 
 
-@numba.vectorize(['float32(complex64)', 'float64(complex128)'], nopython=True, cache=True, identity=0)
-def _cabs2(x):
-    '''Helper function for efficiently computing abs2 on complex inputs'''
+@numba.vectorize(
+    ["float32(complex64)", "float64(complex128)"], nopython=True, cache=True, identity=0
+)
+def _cabs2(x):  # pragma: no cover
+    """Helper function for efficiently computing abs2 on complex inputs"""
     return x.real**2 + x.imag**2
 
 
 def abs2(x):
-    '''Compute the squared magnitude of a real or complex array.
+    """Compute the squared magnitude of a real or complex array.
 
     This function is equivalent to calling `np.abs(x)**2` but slightly
     more efficient.
@@ -2308,20 +2310,22 @@ def abs2(x):
     >>> librosa.util.abs2((0.5j)**np.arange(8))
     array([1.000e+00, 2.500e-01, 6.250e-02, 1.562e-02, 3.906e-03, 9.766e-04,
        2.441e-04, 6.104e-05])
-    '''
+    """
     if np.iscomplexobj(x):
         return _cabs2(x)
     else:
         return x**2
 
 
-@numba.vectorize(['complex64(float32)', 'complex128(float64)'], nopython=True, cache=True, identity=1)
-def _phasor_angles(x):
+@numba.vectorize(
+    ["complex64(float32)", "complex128(float64)"], nopython=True, cache=True, identity=1
+)
+def _phasor_angles(x):  # pragma: no cover
     return np.cos(x) + 1j * np.sin(x)
 
 
 def phasor(angles, *, mag=None):
-    '''Construct a complex phasor representation from angles.
+    """Construct a complex phasor representation from angles.
 
     When `mag` is not provided, this is equivalent to:
 
@@ -2373,7 +2377,7 @@ def phasor(angles, *, mag=None):
 
     >>> librosa.util.phasor(np.array([0, np.pi/2]), mag=np.array([0.5, 1.5]))
     array([5.000e-01+0.j , 9.185e-17+1.5j])
-    '''
+    """
     z = _phasor_angles(angles)
 
     if mag is not None:
