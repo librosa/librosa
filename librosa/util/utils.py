@@ -24,6 +24,7 @@ __all__ = [
     "fix_length",
     "valid_audio",
     "valid_int",
+    "is_positive_int",
     "valid_intervals",
     "fix_frames",
     "axis_sort",
@@ -326,6 +327,23 @@ def valid_int(x, *, cast=None):
         raise ParameterError("cast parameter must be callable")
 
     return int(cast(x))
+
+
+def is_positive_int(x):
+    """Checks that x is a positive integer, i.e. 1 or greater.
+
+    Parameters
+    ----------
+    x : number
+
+    Returns
+    -------
+    positive : bool
+
+    """
+
+    # Check type first to catch None values.
+    return isinstance(x, (int, np.integer)) and (x > 0)
 
 
 def valid_intervals(intervals):

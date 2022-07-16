@@ -415,11 +415,11 @@ def stream(
 
     """
 
-    if not (np.issubdtype(type(block_length), np.integer) and block_length > 0):
+    if not util.is_positive_int(block_length):
         raise ParameterError("block_length={} must be a positive integer")
-    if not (np.issubdtype(type(frame_length), np.integer) and frame_length > 0):
+    if not util.is_positive_int(frame_length):
         raise ParameterError("frame_length={} must be a positive integer")
-    if not (np.issubdtype(type(hop_length), np.integer) and hop_length > 0):
+    if not util.is_positive_int(hop_length):
         raise ParameterError("hop_length={} must be a positive integer")
 
     if isinstance(path, sf.SoundFile):
@@ -929,8 +929,8 @@ def lpc(y, *, order, axis=-1):
     >>> ax.set_title('LP Model Forward Prediction')
 
     """
-    if not isinstance(order, (int, np.integer)) or order < 1:
-        raise ParameterError("order must be an integer > 0")
+    if not util.is_positive_int(order):
+        raise ParameterError(f"order={order} must be an integer > 0")
 
     util.valid_audio(y, mono=False)
 
