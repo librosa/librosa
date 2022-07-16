@@ -416,11 +416,11 @@ def stream(
     """
 
     if not util.is_positive_int(block_length):
-        raise ParameterError("block_length={} must be a positive integer")
+        raise ParameterError(f"block_length={} must be a positive integer")
     if not util.is_positive_int(frame_length):
-        raise ParameterError("frame_length={} must be a positive integer")
+        raise ParameterError(f"frame_length={} must be a positive integer")
     if not util.is_positive_int(hop_length):
-        raise ParameterError("hop_length={} must be a positive integer")
+        raise ParameterError(f"hop_length={} must be a positive integer")
 
     if isinstance(path, sf.SoundFile):
         sfo = path
