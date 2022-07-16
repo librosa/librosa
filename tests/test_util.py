@@ -697,6 +697,16 @@ def test_valid_int_fail(x, cast):
     librosa.util.valid_int(x, cast=cast)
 
 
+@pytest.mark.parametrize("x", [1, np.int(64)])
+def test_is_positive_int(x):
+    assert librosa.util.is_positive_int(x) == True
+
+
+@pytest.mark.parametrize("x", [None, 0, -1, 1.1, np.float64(1.2), -np.inf, np.finfo(float).eps])
+def test_is_positive_int_fail(x):
+    assert librosa.util.is_positive_int(x) == False
+
+
 @pytest.mark.parametrize(
     "ivals",
     [

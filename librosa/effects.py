@@ -315,8 +315,8 @@ def pitch_shift(
     ...                                          bins_per_octave=24)
     """
 
-    if bins_per_octave < 1 or not np.issubdtype(type(bins_per_octave), np.integer):
-        raise ParameterError("bins_per_octave must be a positive integer.")
+    if not util.is_positive_int(bins_per_octave):
+        raise ParameterError(f"bins_per_octave={bins_per_octave} must be a positive integer.")
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 

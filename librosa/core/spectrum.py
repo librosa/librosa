@@ -218,7 +218,7 @@ def stft(
     # Set the default hop, if it's not already specified
     if hop_length is None:
         hop_length = int(win_length // 4)
-    elif not (np.issubdtype(type(hop_length), np.integer) and hop_length > 0):
+    elif not util.is_positive_int(hop_length):
         raise ParameterError("hop_length={} must be a positive integer".format(hop_length))
 
     # Check audio is valid
@@ -2344,7 +2344,7 @@ def pcen(
             "time_constant={} must be strictly positive".format(time_constant)
         )
 
-    if max_size < 1 or not isinstance(max_size, (int, np.integer)):
+    if not util.is_positive_int(max_size):
         raise ParameterError("max_size={} must be a positive integer".format(max_size))
 
     if b is None:

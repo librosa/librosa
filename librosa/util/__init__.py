@@ -61,6 +61,7 @@ Input validation
     valid_audio
     valid_int
     valid_intervals
+    is_positive_int
 
 
 File operations

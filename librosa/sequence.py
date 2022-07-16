@@ -35,7 +35,7 @@ Transition matrices
 import numpy as np
 from scipy.spatial.distance import cdist
 from numba import jit
-from .util import pad_center, fill_off_diagonal, tiny, expand_to
+from .util import pad_center, fill_off_diagonal, is_positive_int, tiny, expand_to
 from .util.exceptions import ParameterError
 from .filters import get_window
 
@@ -1467,8 +1467,8 @@ def transition_uniform(n_states):
            [0.333, 0.333, 0.333]])
     """
 
-    if not isinstance(n_states, (int, np.integer)) or n_states <= 0:
-        raise ParameterError("n_states={} must be a positive integer")
+    if not is_positive_int(n_states):
+        raise ParameterError(f"n_states={n_states} must be a positive integer")
 
     transition = np.empty((n_states, n_states), dtype=np.float64)
     transition.fill(1.0 / n_states)
@@ -1515,8 +1515,8 @@ def transition_loop(n_states, prob):
            [0.375, 0.375, 0.25 ]])
     """
 
-    if not isinstance(n_states, (int, np.integer)) or n_states <= 1:
-        raise ParameterError("n_states={} must be a positive integer > 1")
+    if not (is_positive_int(n_states) and (n_states > 1)):
+        raise ParameterError(f"n_states={n_states} must be a positive integer > 1")
 
     transition = np.empty((n_states, n_states), dtype=np.float64)
 
@@ -1582,8 +1582,8 @@ def transition_cycle(n_states, prob):
            [0.1, 0. , 0. , 0.9]])
     """
 
-    if not isinstance(n_states, (int, np.integer)) or n_states <= 1:
-        raise ParameterError("n_states={} must be a positive integer > 1")
+    if not (is_positive_int(n_states) and n_states > 1):
+        raise ParameterError(f"n_states={n_states} must be a positive integer > 1")
 
     transition = np.zeros((n_states, n_states), dtype=np.float64)
 
@@ -1683,8 +1683,8 @@ def transition_local(n_states, width, *, window="triangle", wrap=False):
            [0.   , 0.   , 0.   , 0.   , 1.   ]])
     """
 
-    if not isinstance(n_states, (int, np.integer)) or n_states <= 1:
-        raise ParameterError("n_states={} must be a positive integer > 1")
+    if not (is_positive_int(n_states) and n_states > 1):
+        raise ParameterError(f"n_states={n_states} must be a positive integer > 1")
 
     width = np.asarray(width, dtype=int)
     if width.ndim == 0:
