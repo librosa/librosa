@@ -24,29 +24,39 @@ GitHub:
     want to read [Working with Submodules](https://github.blog/2016-02-01-working-with-submodules/)
     for a better understanding of how this works.
 
-3. Remove any previously installed librosas:
-            
-          $ pip uninstall librosa
+3. Set the upstream remote to the Librosa's repo:
 
-and install your local copy with testing dependencies:
+          $ git remote add upstream git@github.com:librosa/librosa.git 
 
-          $ pip install -e .[tests]
+4. Create a new conda environment in order to install dependencies:
 
-4. Create a branch to hold your changes:
+          $ conda create -n librosa-dev python=3.9
 
-          $ git checkout -b my-feature
+          $ conda env update -n librosa-dev --file .github/environment-ci.yml
+
+          $ conda activate librosa-dev
+
+          $ pip install -e '.[tests]'
+
+5. Create a branch to hold your changes:
+
+          $ git checkout -b <NAME-NEW-BRANCH>
 
    and start making changes. Never work in the ``main`` branch!
 
-5. Work on this copy on your computer using Git to do the version
-   control. When you're done editing, do:
+6. Work on this copy on your computer using Git to do the version
+   control. You can check your modified files using:
 
-          $ git add modified_files
-          $ git commit
+          $ git status 
+
+7. When you're done editing, do:
+
+          $ git add <PATH-TO-MODIFIED-FILES>
+          $ git commit -m "<COMMIT-MESSAGE>"
 
    to record your changes in Git, then push them to GitHub with:
 
-          $ git push -u origin my-feature
+          $ git push -u origin <NAME-NEW-BRANCH>
 
 Finally, go to the web page of your fork of the librosa repo,
 and click 'Pull request' to send your changes to the maintainers for
