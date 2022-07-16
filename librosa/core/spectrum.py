@@ -1438,7 +1438,7 @@ def phase_vocoder(D, *, rate, hop_length=None, n_fft=None):
         mag = (1.0 - alpha) * np.abs(columns[..., 0]) + alpha * np.abs(columns[..., 1])
 
         # Store to output array
-        d_stretch[..., t] = mag * np.exp(1.0j * phase_acc)
+        d_stretch[..., t] = util.phasor(phase_acc, mag=mag)
 
         # Compute phase advance
         dphase = np.angle(columns[..., 1]) - np.angle(columns[..., 0]) - phi_advance
@@ -2581,7 +2581,7 @@ def griffinlim(
 
     if init == "random":
         # randomly initialize the phase
-        angles[:] = np.exp(2j * np.pi * rng.rand(*S.shape))
+        angles[:] = util.phasor((2 * np.pi * rng.rand(*S.shape)))
     elif init is None:
         # Initialize an all ones complex matrix
         angles[:] = 1.0

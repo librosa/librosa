@@ -945,7 +945,7 @@ def rms(
         x = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
         # Calculate power
-        power = np.mean(np.abs(x) ** 2, axis=-2, keepdims=True)
+        power = np.mean(util.abs2(x), axis=-2, keepdims=True)
     elif S is not None:
         # Check the frame length
         if S.shape[-2] != frame_length // 2 + 1:
