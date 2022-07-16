@@ -30,26 +30,27 @@ def mel_to_stft(M, *, sr=22050, n_fft=2048, power=2.0, **kwargs):
         number of FFT components in the resulting STFT
     power : float > 0 [scalar]
         Exponent for the magnitude melspectrogram
+    
     **kwargs : additional keyword arguments for Mel filter bank parameters
-        n_mels : int > 0 [scalar]
-            number of Mel bands to generate
-        fmin : float >= 0 [scalar]
-            lowest frequency (in Hz)
-        fmax : float >= 0 [scalar]
-            highest frequency (in Hz).
-            If `None`, use ``fmax = sr / 2.0``
-        htk : bool [scalar]
-            use HTK formula instead of Slaney
-        norm : {None, 'slaney', or number} [scalar]
-            If 'slaney', divide the triangular mel weights by the width of
-            the mel band (area normalization).
-            If numeric, use `librosa.util.normalize` to normalize each filter
-            by to unit l_p norm. See `librosa.util.normalize` for a full
-            description of supported norm values (including `+-np.inf`).
-            Otherwise, leave all the triangles aiming for a peak value of 1.0
-        dtype : np.dtype
-            The data type of the output basis.
-            By default, uses 32-bit (single-precision) floating point.
+    n_mels : int > 0 [scalar]
+        number of Mel bands to generate
+    fmin : float >= 0 [scalar]
+        lowest frequency (in Hz)
+    fmax : float >= 0 [scalar]
+        highest frequency (in Hz).
+        If `None`, use ``fmax = sr / 2.0``
+    htk : bool [scalar]
+        use HTK formula instead of Slaney
+    norm : {None, 'slaney', or number} [scalar]
+        If 'slaney', divide the triangular mel weights by the width of
+        the mel band (area normalization).
+        If numeric, use `librosa.util.normalize` to normalize each filter
+        by to unit l_p norm. See `librosa.util.normalize` for a full
+        description of supported norm values (including `+-np.inf`).
+        Otherwise, leave all the triangles aiming for a peak value of 1.0
+    dtype : np.dtype
+        The data type of the output basis.
+        By default, uses 32-bit (single-precision) floating point.
 
     Returns
     -------
@@ -153,23 +154,24 @@ def mel_to_audio(
         samples.
     dtype : np.dtype
         Real numeric type for the time-domain signal.  Default is 32-bit float.
+
     **kwargs : additional keyword arguments for Mel filter bank parameters
-        n_mels : int > 0 [scalar]
-            number of Mel bands to generate
-        fmin : float >= 0 [scalar]
-            lowest frequency (in Hz)
-        fmax : float >= 0 [scalar]
-            highest frequency (in Hz).
-            If `None`, use ``fmax = sr / 2.0``
-        htk : bool [scalar]
-            use HTK formula instead of Slaney
-        norm : {None, 'slaney', or number} [scalar]
-            If 'slaney', divide the triangular mel weights by the width of
-            the mel band (area normalization).
-            If numeric, use `librosa.util.normalize` to normalize each filter
-            by to unit l_p norm. See `librosa.util.normalize` for a full
-            description of supported norm values (including `+-np.inf`).
-            Otherwise, leave all the triangles aiming for a peak value of 1.0
+    n_mels : int > 0 [scalar]
+        number of Mel bands to generate
+    fmin : float >= 0 [scalar]
+        lowest frequency (in Hz)
+    fmax : float >= 0 [scalar]
+        highest frequency (in Hz).
+        If `None`, use ``fmax = sr / 2.0``
+    htk : bool [scalar]
+        use HTK formula instead of Slaney
+    norm : {None, 'slaney', or number} [scalar]
+        If 'slaney', divide the triangular mel weights by the width of
+        the mel band (area normalization).
+        If numeric, use `librosa.util.normalize` to normalize each filter
+        by to unit l_p norm. See `librosa.util.normalize` for a full
+        description of supported norm values (including `+-np.inf`).
+        Otherwise, leave all the triangles aiming for a peak value of 1.0
 
     Returns
     -------
@@ -312,41 +314,42 @@ def mfcc_to_audio(
             M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2
 
     **kwargs : additional keyword arguments to pass through to `mel_to_audio`
-        M : np.ndarray [shape=(..., n_mels, n), non-negative]
-            The spectrogram as produced by `feature.melspectrogram`
-        sr : number > 0 [scalar]
-            sampling rate of the underlying signal
-        n_fft : int > 0 [scalar]
-            number of FFT components in the resulting STFT
-        hop_length : None or int > 0
-            The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
-        win_length : None or int > 0
-            The window length of the STFT.  By default, it will equal ``n_fft``
-        window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-            A window specification as supported by `stft` or `istft`
-        center : boolean
-            If `True`, the STFT is assumed to use centered frames.
-            If `False`, the STFT is assumed to use left-aligned frames.
-        pad_mode : string
-            If ``center=True``, the padding mode to use at the edges of the signal.
-            By default, STFT uses zero padding.
-        power : float > 0 [scalar]
-            Exponent for the magnitude melspectrogram
-        n_iter : int > 0
-            The number of iterations for Griffin-Lim
-        length : None or int > 0
-            If provided, the output ``y`` is zero-padded or clipped to exactly ``length``
-            samples.
-        dtype : np.dtype
-            Real numeric type for the time-domain signal.  Default is 32-bit float.
-        **kwargs : additional keyword arguments for Mel filter bank parameters
-            fmin : float >= 0 [scalar]
-                lowest frequency (in Hz)
-            fmax : float >= 0 [scalar]
-                highest frequency (in Hz).
-                If `None`, use ``fmax = sr / 2.0``
-            htk : bool [scalar]
-                use HTK formula instead of Slaney
+    M : np.ndarray [shape=(..., n_mels, n), non-negative]
+        The spectrogram as produced by `feature.melspectrogram`
+    sr : number > 0 [scalar]
+        sampling rate of the underlying signal
+    n_fft : int > 0 [scalar]
+        number of FFT components in the resulting STFT
+    hop_length : None or int > 0
+        The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
+    win_length : None or int > 0
+        The window length of the STFT.  By default, it will equal ``n_fft``
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        A window specification as supported by `stft` or `istft`
+    center : boolean
+        If `True`, the STFT is assumed to use centered frames.
+        If `False`, the STFT is assumed to use left-aligned frames.
+    pad_mode : string
+        If ``center=True``, the padding mode to use at the edges of the signal.
+        By default, STFT uses zero padding.
+    power : float > 0 [scalar]
+        Exponent for the magnitude melspectrogram
+    n_iter : int > 0
+        The number of iterations for Griffin-Lim
+    length : None or int > 0
+        If provided, the output ``y`` is zero-padded or clipped to exactly ``length``
+        samples.
+    dtype : np.dtype
+        Real numeric type for the time-domain signal.  Default is 32-bit float.
+
+    **kwargs : additional keyword arguments for Mel filter bank parameters
+    fmin : float >= 0 [scalar]
+        lowest frequency (in Hz)
+    fmax : float >= 0 [scalar]
+        highest frequency (in Hz).
+        If `None`, use ``fmax = sr / 2.0``
+    htk : bool [scalar]
+        use HTK formula instead of Slaney
 
     Returns
     -------
