@@ -1147,9 +1147,19 @@ def zero_crossing_rate(y, *, frame_length=2048, hop_length=512, center=True, **k
         This is similar to the padding in `librosa.stft`,
         but uses edge-value copies instead of zero-padding.
 
-    **kwargs : additional keyword arguments
-        See `librosa.zero_crossings`
-
+    **kwargs : additional keyword arguments to pass to `librosa.zero_crossings`
+        threshold : float > 0 or None
+            If specified, values where ``-threshold <= y <= threshold`` are
+            clipped to 0.
+        ref_magnitude : float > 0 or callable
+            If numeric, the threshold is scaled relative to ``ref_magnitude``.
+            If callable, the threshold is scaled relative to
+            ``ref_magnitude(np.abs(y))``.
+        zero_pos : boolean
+            If ``True`` then the value 0 is interpreted as having positive sign.
+            If ``False``, then 0, -1, and +1 all have distinct signs.
+        axis : int
+            Axis along which to compute zero-crossings.
         .. note:: By default, the ``pad`` parameter is set to `False`, which
             differs from the default specified by
             `librosa.zero_crossings`.
@@ -1270,7 +1280,20 @@ def chroma_stft(
 
     **kwargs : additional keyword arguments
         Arguments to parameterize chroma filters.
-        See `librosa.filters.chroma` for details.
+        ctroct : float > 0 [scalar]
+        octwidth : float > 0 or None [scalar]
+            ``ctroct`` and ``octwidth`` specify a dominance window:
+            a Gaussian weighting centered on ``ctroct`` (in octs, A0 = 27.5Hz)
+            and with a gaussian half-width of ``octwidth``.
+            Set ``octwidth`` to `None` to use a flat weighting.
+        norm : float > 0 or np.inf
+            Normalization factor for each filter
+        base_c : bool
+            If True, the filter bank will start at 'C'.
+            If False, the filter bank will start at 'A'.
+        dtype : np.dtype
+            The data type of the output basis.
+            By default, uses 32-bit (single-precision) floating point.
 
     Returns
     -------
@@ -1686,6 +1709,33 @@ def tonnetz(*, y=None, sr=22050, chroma=None, **kwargs):
     **kwargs
         Additional keyword arguments to `chroma_cqt`, if ``chroma`` is not
         pre-computed.
+        C : np.ndarray [shape=(..., d, t)] [Optional]
+            a pre-computed constant-Q spectrogram
+        hop_length : int > 0
+            number of samples between successive chroma frames
+        fmin : float > 0
+            minimum frequency to analyze in the CQT.
+            Default: `C1 ~= 32.7 Hz`
+        norm : int > 0, +-np.inf, or None
+            Column-wise normalization of the chromagram.
+        threshold : float
+            Pre-normalization energy threshold.  Values below the
+            threshold are discarded, resulting in a sparse chromagram.
+        tuning : float
+            Deviation (in fractions of a CQT bin) from A440 tuning
+        n_chroma : int > 0
+            Number of chroma bins to produce
+        n_octaves : int > 0
+            Number of octaves to analyze above ``fmin``
+        window : None or np.ndarray
+            Optional window parameter to `filters.cq_to_chroma`
+        bins_per_octave : int > 0, optional
+            Number of bins per octave in the CQT.
+            Must be an integer multiple of ``n_chroma``.
+            Default: 36 (3 bins per semitone)
+            If `None`, it will match ``n_chroma``.
+        cqt_mode : ['full', 'hybrid']
+            Constant-Q transform mode
 
     Returns
     -------
@@ -1809,6 +1859,45 @@ def mfcc(
     **kwargs : additional keyword arguments
         Arguments to `melspectrogram`, if operating
         on time series input
+        n_fft : int > 0 [scalar]
+            length of the FFT window
+        hop_length : int > 0 [scalar]
+            number of samples between successive frames.
+            See `librosa.stft`
+        win_length : int <= n_fft [scalar]
+            Each frame of audio is windowed by `window()`.
+            The window will be of length `win_length` and then padded
+            with zeros to match ``n_fft``.
+            If unspecified, defaults to ``win_length = n_fft``.
+        window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+            - a window specification (string, tuple, or number);
+            see `scipy.signal.get_window`
+            - a window function, such as `scipy.signal.windows.hann`
+            - a vector or array of length ``n_fft``
+            .. see also:: `librosa.filters.get_window`
+        center : boolean
+            - If `True`, the signal ``y`` is padded so that frame
+            ``t`` is centered at ``y[t * hop_length]``.
+            - If `False`, then frame ``t`` begins at ``y[t * hop_length]``
+        pad_mode : string
+            If ``center=True``, the padding mode to use at the edges of the signal.
+            By default, STFT uses zero padding.
+        power : float > 0 [scalar]
+            Exponent for the magnitude melspectrogram.
+            e.g., 1 for energy, 2 for power, etc.
+        **kwargs : additional keyword arguments for Mel filter bank parameters
+            n_mels : int > 0 [scalar]
+                number of Mel bands to generate
+            fmin : float >= 0 [scalar]
+                lowest frequency (in Hz)
+            fmax : float >= 0 [scalar]
+                highest frequency (in Hz).
+                If `None`, use ``fmax = sr / 2.0``
+            htk : bool [scalar]
+                use HTK formula instead of Slaney
+            dtype : np.dtype
+                The data type of the output basis.
+                By default, uses 32-bit (single-precision) floating point.
 
     Returns
     -------
@@ -1977,10 +2066,26 @@ def melspectrogram(
         Exponent for the magnitude melspectrogram.
         e.g., 1 for energy, 2 for power, etc.
 
-    **kwargs : additional keyword arguments
-        Mel filter bank parameters.
-
-        See `librosa.filters.mel` for details.
+    **kwargs : additional keyword arguments for Mel filter bank parameters
+        n_mels : int > 0 [scalar]
+            number of Mel bands to generate
+        fmin : float >= 0 [scalar]
+            lowest frequency (in Hz)
+        fmax : float >= 0 [scalar]
+            highest frequency (in Hz).
+            If `None`, use ``fmax = sr / 2.0``
+        htk : bool [scalar]
+            use HTK formula instead of Slaney
+        norm : {None, 'slaney', or number} [scalar]
+            If 'slaney', divide the triangular mel weights by the width of
+            the mel band (area normalization).
+            If numeric, use `librosa.util.normalize` to normalize each filter
+            by to unit l_p norm. See `librosa.util.normalize` for a full
+            description of supported norm values (including `+-np.inf`).
+            Otherwise, leave all the triangles aiming for a peak value of 1.0
+        dtype : np.dtype
+            The data type of the output basis.
+            By default, uses 32-bit (single-precision) floating point.
 
     Returns
     -------
