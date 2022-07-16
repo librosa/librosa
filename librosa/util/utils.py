@@ -968,15 +968,32 @@ def _localmax_sten(x):
     return (x[0] > x[-1]) & (x[0] >= x[1])
 
 
+@numba.stencil
+def _localmin_sten(x):
+    '''Numba stencil for local minima computation'''
+    return (x[0] < x[-1]) & (x[0] <= x[1])
+
+
 @numba.guvectorize(['void(int16[:], bool_[:])',
                     'void(int32[:], bool_[:])',
                     'void(int64[:], bool_[:])',
                     'void(float32[:], bool_[:])',
                     'void(float64[:], bool_[:])'], '(n)->(n)',
-                    cache=True, nopython=True)
+                   cache=True, nopython=True)
 def _localmax(x, y):
     '''Vectorized wrapper for the localmax stencil'''
     y[:] = _localmax_sten(x)
+
+
+@numba.guvectorize(['void(int16[:], bool_[:])',
+                    'void(int32[:], bool_[:])',
+                    'void(int64[:], bool_[:])',
+                    'void(float32[:], bool_[:])',
+                    'void(float64[:], bool_[:])'], '(n)->(n)',
+                   cache=True, nopython=True)
+def _localmin(x, y):
+    '''Vectorized wrapper for the localmin stencil'''
+    y[:] = _localmin_sten(x)
 
 
 def localmax(x, *, axis=0):
@@ -1086,19 +1103,20 @@ def localmin(x, *, axis=0):
     --------
     localmax
     """
+    # Rotate the target axis to the end
+    xi = x.swapaxes(-1, axis)
 
-    paddings = [(0, 0)] * x.ndim
-    paddings[axis] = (1, 1)
+    # Allocate the output array and rotate target axis
+    lmin = np.empty_like(x, dtype=bool)
+    lmini = lmin.swapaxes(-1, axis)
 
-    x_pad = np.pad(x, paddings, mode="edge")
+    # Call the vectorized stencil
+    _localmin(xi, lmini)
 
-    inds1 = [slice(None)] * x.ndim
-    inds1[axis] = slice(0, -2)
+    # Handle the edge condition not covered by the stencil
+    lmini[..., -1] = xi[..., -1] < xi[..., -2]
 
-    inds2 = [slice(None)] * x.ndim
-    inds2[axis] = slice(2, x_pad.shape[axis])
-
-    return (x < x_pad[tuple(inds1)]) & (x <= x_pad[tuple(inds2)])
+    return lmin
 
 
 def peak_pick(x, *, pre_max, post_max, pre_avg, post_avg, delta, wait):
