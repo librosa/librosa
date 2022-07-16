@@ -963,13 +963,13 @@ def normalize(S, *, norm=np.inf, axis=0, threshold=None, fill=None):
 
 
 @numba.stencil
-def _localmax_sten(x):
+def _localmax_sten(x):  # pragma: no cover
     '''Numba stencil for local maxima computation'''
     return (x[0] > x[-1]) & (x[0] >= x[1])
 
 
 @numba.stencil
-def _localmin_sten(x):
+def _localmin_sten(x):  # pragma: no cover
     '''Numba stencil for local minima computation'''
     return (x[0] < x[-1]) & (x[0] <= x[1])
 
@@ -980,7 +980,7 @@ def _localmin_sten(x):
                     'void(float32[:], bool_[:])',
                     'void(float64[:], bool_[:])'], '(n)->(n)',
                    cache=True, nopython=True)
-def _localmax(x, y):
+def _localmax(x, y):  # pragma: no cover
     '''Vectorized wrapper for the localmax stencil'''
     y[:] = _localmax_sten(x)
 
@@ -991,7 +991,7 @@ def _localmax(x, y):
                     'void(float32[:], bool_[:])',
                     'void(float64[:], bool_[:])'], '(n)->(n)',
                    cache=True, nopython=True)
-def _localmin(x, y):
+def _localmin(x, y):  # pragma: no cover
     '''Vectorized wrapper for the localmin stencil'''
     y[:] = _localmin_sten(x)
 
