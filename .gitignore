@@ -58,3 +58,4 @@ coverage.xml
 
 #IDE
 .idea/
+.vscode
