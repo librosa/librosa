@@ -512,6 +512,9 @@ class AdaptiveWaveplot:
         self.cid = None
         self.ax = None
 
+    def __del__(self):
+        self.disconnect(strict=True)
+
     def connect(self, ax, signal="xlim_changed"):
         """Connect the adaptor to a signal on an axes object.
 
@@ -521,10 +524,9 @@ class AdaptiveWaveplot:
         Parameters
         ----------
         ax : matplotlib.axes.Axes
-            The axes to connect this adaptor to
-
-        signal : string, {'xlim_changed', 'ylim_changed'}
-            The signal to connect the update to
+            The axes to connect with this adaptor's `update`
+        signal : string, {"xlim_changed", "ylim_changed"}
+            The signal to connect
 
         See Also
         --------
@@ -532,14 +534,21 @@ class AdaptiveWaveplot:
         matplotlib.axes.callbacks.connect
         """
         # Disconnect any existing callback first
-        if self.ax:
-            self.ax.callbacks.disconnect(self.cid)
+        self.disconnect()
 
+        # Attach to axes and store the connection id
         self.ax = ax
         self.cid = ax.callbacks.connect(signal, self.update)
 
-    def disconnect(self):
+    def disconnect(self, strict=False):
         """Disconnect the adaptor's update callback.
+
+        Parameters
+        ----------
+        strict : bool
+            If `True`, remove references to the connected axes.
+
+            If `False` (default), only disconnect the callback.
 
         See Also
         --------
@@ -547,6 +556,9 @@ class AdaptiveWaveplot:
         """
         if self.ax:
             self.ax.callbacks.disconnect(self.cid)
+            self.cid = None
+            if strict:
+                self.ax = None
 
     def update(self, ax):
         """Update the matplotlib display according to the current viewport limits.

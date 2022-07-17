@@ -950,3 +950,58 @@ def test_specshow_unicode_false(C, sr):
         axi.label_outer()
 
     return fig
+
+
+def test_waveshow_disconnect(y, sr):
+    fig, ax = plt.subplots()
+    ad = librosa.display.waveshow(y=y, sr=sr, ax=ax)
+
+    # By default, envelope should be visible and steps should not
+    assert ad.envelope.get_visible() and not ad.steps.get_visible()
+
+    # Zoom in to a 0.25 second range
+    ax.set(xlim=[0, 0.25])
+
+    # Steps should be visible but not envelope
+    assert ad.steps.get_visible() and not ad.envelope.get_visible()
+
+    # Zoom back out
+    ax.set(xlim=[0, 4])
+    assert ad.envelope.get_visible() and not ad.steps.get_visible()
+
+    # Disconnect
+    ad.disconnect()
+
+    # Zoom back in to a 0.25 second range
+    ax.set(xlim=[0, 0.25])
+
+    # Envelope should now still be visible
+    assert ad.envelope.get_visible() and not ad.steps.get_visible()
+
+
+def test_waveshow_deladaptor(y, sr):
+    fig, ax = plt.subplots()
+    ad = librosa.display.waveshow(y=y, sr=sr, ax=ax)
+
+    envelope, steps = ad.envelope, ad.steps
+    # By default, envelope should be visible and steps should not
+    assert envelope.get_visible() and not steps.get_visible()
+
+    # Zoom in to a 0.25 second range
+    ax.set(xlim=[0, 0.25])
+
+    # Steps should be visible but not envelope
+    assert steps.get_visible() and not envelope.get_visible()
+
+    # Zoom back out
+    ax.set(xlim=[0, 4])
+    assert envelope.get_visible() and not steps.get_visible()
+
+    # Disconnect
+    del ad
+
+    # Zoom back in to a 0.25 second range
+    ax.set(xlim=[0, 0.25])
+
+    # Envelope should now still be visible
+    assert envelope.get_visible() and not steps.get_visible()
