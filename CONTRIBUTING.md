@@ -52,15 +52,19 @@ GitHub:
 7. When you're done editing, do:
 
           $ git add <PATH-TO-MODIFIED-FILES>
+
           $ git commit -m "<COMMIT-MESSAGE>"
 
    to record your changes in Git, then push them to GitHub with:
 
-          $ git push -u origin <NAME-NEW-BRANCH>
+          $ git push--set-upstream origin <NAME-NEW-BRANCH>
 
-Finally, go to the web page of your fork of the librosa repo,
-and click 'Pull request' to send your changes to the maintainers for
-review. This will send an email to the committers.
+8. Go to the web page of your fork of the librosa repo,
+   and click 'Pull request' to review your changes and add a description
+   of what you did.
+
+Finally, click 'Create pull request' to send your changes to the
+maintainers for review. This will send an email to the committers.
 
 (If any of the above seems like magic to you, then look up the 
 [Git documentation](http://git-scm.com/documentation) on the web.)
@@ -68,8 +72,7 @@ review. This will send an email to the committers.
 It is recommended to check that your contribution complies with the
 following rules before submitting a pull request:
 
--  All public methods should have informative docstrings with sample
-   usage presented.
+-  All public methods should have informative [docstrings](https://numpydoc.readthedocs.io/en/latest/format.html) with sample usage presented.
 
 You can also check for common programming errors with the following
 tools:
@@ -82,11 +85,6 @@ tools:
 
            $ pip install pyflakes
            $ pyflakes path/to/module.py
-
--  No PEP8 warnings, check with:
-
-           $ pip install pep8
-           $ pep8 path/to/module.py
 
 -  AutoPEP8 can help you fix some of the easy redundant errors:
 
@@ -142,7 +140,7 @@ in a web browser. See the README file in the doc/ directory for more information
 For building the documentation, you will need some additional dependencies.
 These can be installed by executing the following command:
 
-    $ python -m pip install -e .[docs]
+    $ python -m pip install -e '.[docs]'
     
 Note
 ----
