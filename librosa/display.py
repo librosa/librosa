@@ -531,7 +531,6 @@ class AdaptiveWaveplot:
         See Also
         --------
         disconnect
-        matplotlib.axes.callbacks.connect
         """
         # Disconnect any existing callback first
         self.disconnect()
