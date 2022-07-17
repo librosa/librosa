@@ -515,7 +515,7 @@ class AdaptiveWaveplot:
     def __del__(self):
         self.disconnect(strict=True)
 
-    def connect(self, ax, signal="xlim_changed"):
+    def connect(self, ax, *, signal="xlim_changed"):
         """Connect the adaptor to a signal on an axes object.
 
         Note that if the adaptor has already been connected to an axes object,
@@ -540,7 +540,7 @@ class AdaptiveWaveplot:
         self.ax = ax
         self.cid = ax.callbacks.connect(signal, self.update)
 
-    def disconnect(self, strict=False):
+    def disconnect(self, *, strict=False):
         """Disconnect the adaptor's update callback.
 
         Parameters
