@@ -30,7 +30,6 @@ def mel_to_stft(M, *, sr=22050, n_fft=2048, power=2.0, **kwargs):
         number of FFT components in the resulting STFT
     power : float > 0 [scalar]
         Exponent for the magnitude melspectrogram
-    
     **kwargs : additional keyword arguments for Mel filter bank parameters
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
@@ -154,7 +153,6 @@ def mel_to_audio(
         samples.
     dtype : np.dtype
         Real numeric type for the time-domain signal.  Default is 32-bit float.
-
     **kwargs : additional keyword arguments for Mel filter bank parameters
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
@@ -215,26 +213,19 @@ def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0
     ----------
     mfcc : np.ndarray [shape=(..., n_mfcc, n)]
         The Mel-frequency cepstral coefficients
-
     n_mels : int > 0
         The number of Mel frequencies
-
     dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type
         By default, DCT type-2 is used.
-
     norm : None or 'ortho'
         If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
-
         Normalization is not supported for `dct_type=1`.
-
     ref : number or callable
         Reference power for (inverse) decibel calculation
-
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
-
             M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter) * lifter / 2)
 
     Returns
@@ -291,28 +282,20 @@ def mfcc_to_audio(
     ----------
     mfcc : np.ndarray [shape=(..., n_mfcc, n)]
         The Mel-frequency cepstral coefficients
-
     n_mels : int > 0
         The number of Mel frequencies
-
     dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type
         By default, DCT type-2 is used.
-
     norm : None or 'ortho'
         If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
-
         Normalization is not supported for ``dct_type=1``.
-
     ref : number or callable
         Reference power for (inverse) decibel calculation
-
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
-
             M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2
-
     **kwargs : additional keyword arguments to pass through to `mel_to_audio`
     M : np.ndarray [shape=(..., n_mels, n), non-negative]
         The spectrogram as produced by `feature.melspectrogram`
@@ -341,7 +324,6 @@ def mfcc_to_audio(
         samples.
     dtype : np.dtype
         Real numeric type for the time-domain signal.  Default is 32-bit float.
-
     **kwargs : additional keyword arguments for Mel filter bank parameters
     fmin : float >= 0 [scalar]
         lowest frequency (in Hz)
