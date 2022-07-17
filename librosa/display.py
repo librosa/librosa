@@ -162,11 +162,11 @@ class TimeFormatter(Formatter):
             s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
         elif self.unit == "s":
             s = "{:.3g}".format(value)
-        elif self.unit==None and (vmax - vmin >= 1):
+        elif self.unit == None and (vmax - vmin >= 1):
             s = "{:.2g}".format(value)
         elif self.unit == "ms":
             s = "{:.3g}".format(value * 1000)
-        elif self.unit==None and (vmax - vmin < 1):
+        elif self.unit == None and (vmax - vmin < 1):
             s = "{:.3f}".format(value)
 
         return "{:s}{:s}".format(sign, s)
@@ -509,6 +509,57 @@ class AdaptiveWaveplot:
         self.envelope = envelope
         self.sr = sr
         self.max_samples = max_samples
+        self.cid = None
+        self.ax = None
+
+    def __del__(self):
+        self.disconnect(strict=True)
+
+    def connect(self, ax, *, signal="xlim_changed"):
+        """Connect the adaptor to a signal on an axes object.
+
+        Note that if the adaptor has already been connected to an axes object,
+        that connect is first broken and then replaced by a new callback.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            The axes to connect with this adaptor's `update`
+        signal : string, {"xlim_changed", "ylim_changed"}
+            The signal to connect
+
+        See Also
+        --------
+        disconnect
+        """
+        # Disconnect any existing callback first
+        self.disconnect()
+
+        # Attach to axes and store the connection id
+        self.ax = ax
+        self.cid = ax.callbacks.connect(signal, self.update)
+
+    def disconnect(self, *, strict=False):
+        """Disconnect the adaptor's update callback.
+
+        Parameters
+        ----------
+        strict : bool
+            If `True`, remove references to the connected axes.
+            If `False` (default), only disconnect the callback.
+
+            This functionality is intended primarily for internal use,
+            and should have no observable effects for users.
+
+        See Also
+        --------
+        connect
+        """
+        if self.ax:
+            self.ax.callbacks.disconnect(self.cid)
+            self.cid = None
+            if strict:
+                self.ax = None
 
     def update(self, ax):
         """Update the matplotlib display according to the current viewport limits.
@@ -517,7 +568,7 @@ class AdaptiveWaveplot:
 
         Parameters
         ----------
-        ax : matplotlib axes object
+        ax : matplotlib.axes.Axes
             The axes object to update
         """
         lims = ax.viewLim
@@ -614,20 +665,53 @@ def __envelope(x, hop):
     return x_frame.max(axis=1)
 
 
-_chroma_ax_types = ('chroma', 'chroma_h', 'chroma_c',)
-_cqt_ax_types = ('cqt_hz', 'cqt_note', 'cqt_svara',)
-_freq_ax_types = ('linear', 'fft', 'hz', 'fft_note', 'fft_svara',)
-_time_ax_types = ('time', 'h', 'm', 's', 'ms',)
-_lag_ax_types = ('lag', 'lag_h', 'lag_m', 'lag_s', 'lag_ms',)
-_misc_ax_types = ('tempo', 'fourier_tempo', 'mel', 'log', 'tonnetz', 'frames',)
+_chroma_ax_types = (
+    "chroma",
+    "chroma_h",
+    "chroma_c",
+)
+_cqt_ax_types = (
+    "cqt_hz",
+    "cqt_note",
+    "cqt_svara",
+)
+_freq_ax_types = (
+    "linear",
+    "fft",
+    "hz",
+    "fft_note",
+    "fft_svara",
+)
+_time_ax_types = (
+    "time",
+    "h",
+    "m",
+    "s",
+    "ms",
+)
+_lag_ax_types = (
+    "lag",
+    "lag_h",
+    "lag_m",
+    "lag_s",
+    "lag_ms",
+)
+_misc_ax_types = (
+    "tempo",
+    "fourier_tempo",
+    "mel",
+    "log",
+    "tonnetz",
+    "frames",
+)
 
 _AXIS_COMPAT = set(
-    [(t, t) for t in _misc_ax_types] +
-    [t for t in product(_chroma_ax_types, _chroma_ax_types)] +
-    [t for t in product(_cqt_ax_types, _cqt_ax_types)] +
-    [t for t in product(_freq_ax_types, _freq_ax_types)] +
-    [t for t in product(_time_ax_types, _time_ax_types)] +
-    [t for t in product(_lag_ax_types, _lag_ax_types)]
+    [(t, t) for t in _misc_ax_types]
+    + [t for t in product(_chroma_ax_types, _chroma_ax_types)]
+    + [t for t in product(_cqt_ax_types, _cqt_ax_types)]
+    + [t for t in product(_freq_ax_types, _freq_ax_types)]
+    + [t for t in product(_time_ax_types, _time_ax_types)]
+    + [t for t in product(_lag_ax_types, _lag_ax_types)]
 )
 
 
@@ -1050,8 +1134,7 @@ def __decorate_axis(
     axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True
 ):
     """Configure axis tickers, locators, and labels"""
-    time_units = {
-        "h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
+    time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
 
     if ax_type == "tonnetz":
         axis.set_major_formatter(TonnetzFormatter())
@@ -1502,7 +1585,7 @@ def waveshow(
         times, y[0], steps, envelope, sr=sr, max_samples=max_points
     )
 
-    axes.callbacks.connect("xlim_changed", adaptor.update)
+    adaptor.connect(axes, signal="xlim_changed")
 
     # Force an initial update to ensure the state is consistent
     adaptor.update(axes)
