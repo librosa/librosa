@@ -546,8 +546,10 @@ class AdaptiveWaveplot:
         ----------
         strict : bool
             If `True`, remove references to the connected axes.
-
             If `False` (default), only disconnect the callback.
+
+            This functionality is intended primarily for internal use,
+            and should have no observable effects for users.
 
         See Also
         --------
