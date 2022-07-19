@@ -36,11 +36,11 @@ GitHub:
 
           $ conda activate librosa-dev
 
-          $ pip install -e '.[tests]'
+          $ python -m pip install -e '.[tests]'
 
 5. Create a branch to hold your changes:
 
-          $ git checkout -b <NAME-NEW-BRANCH>
+          $ git switch -c <NAME-NEW-BRANCH>
 
    and start making changes. Never work in the ``main`` branch!
 
@@ -57,7 +57,7 @@ GitHub:
 
    to record your changes in Git, then push them to GitHub with:
 
-          $ git push--set-upstream origin <NAME-NEW-BRANCH>
+          $ git push --set-upstream origin <NAME-NEW-BRANCH>
 
 8. Go to the web page of your fork of the librosa repo,
    and click 'Pull request' to review your changes and add a description
@@ -72,7 +72,7 @@ maintainers for review. This will send an email to the committers.
 It is recommended to check that your contribution complies with the
 following rules before submitting a pull request:
 
--  All public methods should have informative [docstrings](https://numpydoc.readthedocs.io/en/latest/format.html) with sample usage presented.
+-  All functions should have informative [docstrings](https://numpydoc.readthedocs.io/en/latest/format.html) with sample usage presented.
 
 You can also check for common programming errors with the following
 tools:
@@ -83,12 +83,12 @@ tools:
 
 -  No pyflakes warnings, check with:
 
-           $ pip install pyflakes
+           $ python -m pip install pyflakes
            $ pyflakes path/to/module.py
 
 -  AutoPEP8 can help you fix some of the easy redundant errors:
 
-           $ pip install autopep8
+           $ python -m pip install autopep8
            $ autopep8 path/to/pep8.py
 
 Some tests in tests/test_display.py use baseline images for output comparison.
