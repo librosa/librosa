@@ -1,4 +1,4 @@
-name: test
+name: librosa-dev
 channels:
   - conda-forge
   - defaults
