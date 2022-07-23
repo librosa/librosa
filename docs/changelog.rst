@@ -19,7 +19,7 @@ Documentation
     - `#1469`_ Corrected documentation for `db_to_amplitude` and `amplitude_to_db`. *i-aki-y*
     - `#1473`_ Readability improvements to package README. *Asmitha Krishnakumar*
     - `#1475`_ Expanded documentation to `librosa.sequence.viterbi_discriminative`. *Brian McFee*
-    - `#1487`_ Readability improvements to package README. *Chandrashekhar Ramaprasad*
+    - `#1479`_ Readability improvements to package README. *Chandrashekhar Ramaprasad*
     - `#1491`_ Pinned sphinx version for documentation builds. *Brian McFee*
     - `#1511`_ Expanded documentation for `find_files`. *Xiao-Ming*
     - `#1513`_ Various documentation updates and enhancements. *Brian McFee*
