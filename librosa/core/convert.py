@@ -476,7 +476,7 @@ def note_to_midi(note, *, round_midi=True):
         One or more note names.
     round_midi : bool
         - If ``True``, midi numbers are rounded to the nearest integer.
-        - IF ``False``, allow fractional midi numbers.
+        - If ``False``, allow fractional midi numbers.
 
     Returns
     -------
