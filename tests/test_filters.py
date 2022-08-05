@@ -226,7 +226,6 @@ def test_chroma_issue1295(freq):
         "flattop",
         "hamming",
         "hann",
-        "hanning",
         "nuttall",
         "parzen",
         "triang",
