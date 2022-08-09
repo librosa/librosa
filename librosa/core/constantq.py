@@ -6,6 +6,7 @@ import numpy as np
 from numba import jit
 
 from . import audio
+from .intervals import interval_frequencies
 from .fft import get_fftlib
 from .convert import cqt_frequencies, note_to_hz
 from .spectrum import stft, istft
@@ -171,6 +172,7 @@ def cqt(
         hop_length=hop_length,
         fmin=fmin,
         n_bins=n_bins,
+        intervals="equal",
         gamma=0,
         bins_per_octave=bins_per_octave,
         tuning=tuning,
@@ -755,6 +757,7 @@ def vqt(
     hop_length=512,
     fmin=None,
     n_bins=84,
+    intervals="equal",
     gamma=None,
     bins_per_octave=12,
     tuning=0.0,
@@ -915,7 +918,14 @@ def vqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     # First thing, get the freqs of the top octave
-    freqs = cqt_frequencies(n_bins=n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
+    # freqs = cqt_frequencies(n_bins=n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
+    if not isinstance(intervals, str):
+        bins_per_octave = len(intervals)
+
+    freqs = interval_frequencies(n_bins=n_bins,
+                                 fmin=fmin,
+                                 intervals=intervals,
+                                 bins_per_octave=bins_per_octave)
 
     freqs_top = freqs[-bins_per_octave:]
 
