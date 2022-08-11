@@ -10,10 +10,12 @@ This script is primarily intended for developer use.
 
 Usage:
 
-    python create_intervals.py > intervals.json
+    python create_intervals.py
+
+The output will be stored in intervals.pickle
 """
 
-import json
+import pickle
 import sympy
 import numpy as np
 import librosa
@@ -41,7 +43,9 @@ def main():
         for (interval, fraction) in zip(all_intervals, fractions)
     }
 
-    print(json.dumps(factorized))
+    with open('intervals.pickle', 'wb') as fdesc:
+        # Pickling at protocol=4 
+        pickle.dump(factorized, fdesc, protocol=4)
 
 
 if __name__ == "__main__":
