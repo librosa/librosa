@@ -161,8 +161,9 @@ def __harmonic_distance(logs, a, b):
     # gcd(a,b) for rationals: gcd(a_num, b_num) / lcm(a_den, b_den)
     # gcd = minimum(a_num, b_num) and lcm = maximum(a_den, b_den)
     gcd = np.minimum(a_num, b_num) - np.maximum(a_den, b_den)
-    # FIXME: this ceiling helps for mysterious reasons
-    return np.ceil(logs).dot(a + b - 2 * gcd)
+
+    # Rounding this to 6 decimals to avoid floating point weirdness
+    return np.around(logs.dot(a + b - 2 * gcd), 6)
 
 
 def _crystal_tie_break(a, b, logs):
@@ -233,7 +234,7 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
     """
 
     primes = np.atleast_1d(primes)
-    logs = np.log2(primes)
+    logs = np.log2(primes, dtype=np.float64)
 
     # The seed set are primes and their reciprocals
     # These are the values that we can use to expand our
@@ -277,7 +278,7 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
 
                 HD += distances[s, point]
 
-            if HD < score or (HD == score and _crystal_tie_break(point, frontier[best_f], logs)):
+            if HD < score or (np.isclose(HD, score) and _crystal_tie_break(point, frontier[best_f], logs)):
                 score = HD
                 best_f = f
 
