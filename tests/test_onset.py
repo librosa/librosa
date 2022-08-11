@@ -2,9 +2,8 @@
 # CREATED:2013-03-11 18:14:30 by Brian McFee <brm2132@columbia.edu>
 #  unit tests for librosa.onset
 
-from __future__ import print_function
 import pytest
-from contextlib2 import nullcontext as dnr
+from contextlib import nullcontext as dnr
 
 # Disable cache
 import os

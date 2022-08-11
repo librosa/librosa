@@ -57,7 +57,6 @@ def show_versions():
         "matplotlib",
         "samplerate",
         "soxr",
-        "contextlib2",
         "presets",
     ]
 

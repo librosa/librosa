@@ -22,7 +22,6 @@ dependencies:
   - pytest-mpl
   - pytest-cov
   - pytest
-  - contextlib2
   - coverage
   - ffmpeg
   - tomli<2.0

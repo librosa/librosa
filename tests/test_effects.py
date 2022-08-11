@@ -11,7 +11,7 @@ try:
 except KeyError:
     pass
 
-from contextlib2 import nullcontext as dnr
+from contextlib import nullcontext as dnr
 import numpy as np
 import pytest
 
