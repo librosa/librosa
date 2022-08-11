@@ -30,10 +30,25 @@ def fraction(x):
 def main():
 
     # Get the intervals
-    all_intervals = librosa.plimit_intervals(
+    intervals_pythagorean = librosa.pythagorean_intervals(
+        bins_per_octave=72, sort=False
+    )
+    intervals_3lim = librosa.plimit_intervals(
+        primes=[3], bins_per_octave=72, sort=False
+    )
+    intervals_5lim = librosa.plimit_intervals(
+        primes=[3, 5], bins_per_octave=72, sort=False
+    )
+    intervals_7lim = librosa.plimit_intervals(
+        primes=[3, 5, 7], bins_per_octave=72, sort=False
+    )
+    intervals_23lim = librosa.plimit_intervals(
         primes=[3, 5, 7, 11, 13, 17, 19, 23], bins_per_octave=190, sort=False
     )
 
+    all_intervals = np.concatenate(
+        (intervals_pythagorean, intervals_5lim, intervals_7lim, intervals_23lim)
+    )
     # Convert to rationals
     fractions = fraction(all_intervals)
 
@@ -43,8 +58,8 @@ def main():
         for (interval, fraction) in zip(all_intervals, fractions)
     }
 
-    with open('intervals.pickle', 'wb') as fdesc:
-        # Pickling at protocol=4 
+    with open("intervals.pickle", "wb") as fdesc:
+        # Pickling at protocol=4
         pickle.dump(factorized, fdesc, protocol=4)
 
 
