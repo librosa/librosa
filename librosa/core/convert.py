@@ -26,6 +26,7 @@ __all__ = [
     "hz_to_midi",
     "hz_to_mel",
     "hz_to_octs",
+    "hz_to_fjs",
     "mel_to_hz",
     "octs_to_hz",
     "A4_to_tuning",
@@ -2101,3 +2102,53 @@ def note_to_svara_c(notes, *, Sa, mela, abbr=True, octave=True, unicode=True):
     return midi_to_svara_c(
         midis, Sa=note_to_midi(Sa), mela=mela, abbr=abbr, octave=octave, unicode=unicode
     )
+
+
+def hz_to_fjs(frequencies, *, fmin=None, unison=None, unicode=False):
+    """Convert one or more frequencies (in Hz) from a just intonation
+    scale to notes in FJS notation.
+
+    Parameters
+    ----------
+    frequencies : float or iterable of float
+        Input frequencies, specified in Hz
+
+    fmin : float (optional)
+        The minimum frequency, corresponding to a unison note.
+        If not provided, it will be inferred as `min(frequencies)`
+
+    unison : str (optional)
+        The name of the unison note.
+        If not provided, it will be inferred as the scientific pitch
+        notation name of `fmin`, that is, `hz_to_note(fmin)`
+
+    unicode : bool
+        If `True`, then unicode symbols are used for accidentals.
+
+        If `False`, then low-order ASCII symbols are used for accidentals.
+
+    Returns
+    -------
+    notes : str
+        ``notes[i]`` is the closest note name to ``frequency[i]``
+        (or ``frequency`` if the input is scalar)
+
+    See Also
+    --------
+    hz_to_note
+    interval_to_fjs
+
+    Examples
+    --------
+    Get a single note name for a frequency
+
+
+    """
+    if fmin is None:
+        fmin = np.min(frequencies)
+    if unison is None:
+        unison = hz_to_note(fmin, octave=False, unicode=False)
+
+    intervals = frequencies / fmin
+
+    return notation.interval_to_fjs(intervals, unison=unison, unicode=unicode)
