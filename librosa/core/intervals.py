@@ -2,13 +2,10 @@
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
 
-from pathlib import Path
-from pkg_resources import resource_filename
 import pickle
+from pkg_resources import resource_filename
 import numpy as np
 from .._cache import cache
-
-PRIMES = [3, 5, 7, 11, 13, 17, 19, 23]
 
 
 with open(resource_filename(__name__, "intervals.pickle"), "rb") as fdesc:
