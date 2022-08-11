@@ -741,7 +741,7 @@ def fifths_to_note(*, unison, fifths, unicode=True):
     'G#'
     """
     # Starting the circle of fifths at F makes accidentals easier to count
-    COFMAP = 'FCGDAEB'
+    COFMAP = "FCGDAEB"
 
     acc_map = {
         "#": 1,
@@ -756,21 +756,9 @@ def fifths_to_note(*, unison, fifths, unicode=True):
     }
 
     if unicode:
-        acc_map_inv = {
-            1: "♯",
-            2: "𝄪",
-            -1: "♭",
-            -2: "𝄫",
-            0: ""
-        }
+        acc_map_inv = {1: "♯", 2: "𝄪", -1: "♭", -2: "𝄫", 0: ""}
     else:
-        acc_map_inv = {
-            1: "#",
-            2: "##",
-            -1: "b",
-            -2: "bb",
-            0: ""
-        }
+        acc_map_inv = {1: "#", 2: "##", -1: "b", -2: "bb", 0: ""}
 
     match = re.match(
         r"^(?P<note>[A-Ga-g])"
@@ -797,46 +785,64 @@ def fifths_to_note(*, unison, fifths, unicode=True):
     acc_index = offset + (circle_idx + fifths) // 7
 
     # Compress multiple-accidentals as needed
-    acc_str = acc_map_inv[np.sign(acc_index) * 2] * int(abs(acc_index)//2) + acc_map_inv[np.sign(acc_index)] * int(abs(acc_index) % 2)
+    acc_str = acc_map_inv[np.sign(acc_index) * 2] * int(
+        abs(acc_index) // 2
+    ) + acc_map_inv[np.sign(acc_index)] * int(abs(acc_index) % 2)
 
     return raw_output + acc_str
 
 
 @jit(nopython=True, nogil=True, cache=True)
+def __o_fold(d):
+    """Compute the octave-folded interval.
+
+    This maps intervals to the range [1, 2).
+
+    This is part of the FJS notation converter.
+    It is equivalent to the `red` function described in the FJS
+    documentation.
+    """
+    return d * (2.0 ** -np.floor(np.log2(d)))
+
+
+@jit(nopython=True, nogil=True, cache=True)
 def __bo_fold(d):
-    '''Compute the balanced, octave-folded interval.
+    """Compute the balanced, octave-folded interval.
 
     This maps intervals to the range [sqrt(2)/2, sqrt(2)).
 
     This is part of the FJS notation converter.
     It is equivalent to the `reb` function described in the FJS
     documentation, but with a simpler implementation.
-    '''
-    return d * (2.0**-np.round(np.log2(d)))
+    """
+    return d * (2.0 ** -np.round(np.log2(d)))
 
 
 @jit(nopython=True, nogil=True, cache=True)
 def __fifth_search(interval, tolerance):
-    '''Accelerated helper function for finding the number of fifths
+    """Accelerated helper function for finding the number of fifths
     to get within tolerance of a given interval.
 
     This implementation will give up after 20 fifths
-    '''
+    """
     log_tolerance = np.abs(np.log2(tolerance))
     for power in range(20):
         for sign in [1, -1]:
-            if np.abs(np.log2(__bo_fold(interval / 3.0**(power * sign)))) <= log_tolerance:
+            if (
+                np.abs(np.log2(__bo_fold(interval / 3.0 ** (power * sign))))
+                <= log_tolerance
+            ):
                 return power * sign
         power += 1
     return power
 
 
 # Translation grids for superscripts and subscripts
-SUPER_TRANS = str.maketrans('0123456789', '⁰¹²³⁴⁵⁶⁷⁸⁹')
-SUB_TRANS = str.maketrans('0123456789', '₀₁₂₃₄₅₆₇₈₉')
+SUPER_TRANS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+SUB_TRANS = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 
 
-def interval_to_fjs(interval, *, unison='C', tolerance=65.0/63, unicode=True):
+def _interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True):
     """Convert an interval to Functional Just System (FJS) notation.
 
     See https://misotanni.github.io/fjs/en/index.html for a thorough overview
@@ -850,7 +856,7 @@ def interval_to_fjs(interval, *, unison='C', tolerance=65.0/63, unicode=True):
 
     Parameters
     ----------
-    interval : float in [1, 2)
+    interval : float > 0
         A (just) interval to notate in FJS.
 
     unison : str
@@ -873,7 +879,7 @@ def interval_to_fjs(interval, *, unison='C', tolerance=65.0/63, unicode=True):
     Raises
     ------
     ParameterError
-        If the provided interval is not in the range [1, 2)
+        If the provided interval is not postive
 
         If the provided interval cannot be identified with a
         just intonation prime factorization.
@@ -908,8 +914,8 @@ def interval_to_fjs(interval, *, unison='C', tolerance=65.0/63, unicode=True):
     >>> librosa.interval_to_fjs(25/14, unison='F#', unicode=False)
     'E^25_7'
     """
-    if not 1 <= interval < 2:
-        raise ParameterError(f"Interval={interval} must lie in the range [1, 2)")
+    if interval <= 0:
+        raise ParameterError(f"Interval={interval} must be strictly positive")
 
     # Find the approximate number of fifth-steps to get within tolerance
     # of the target interval
@@ -920,7 +926,9 @@ def interval_to_fjs(interval, *, unison='C', tolerance=65.0/63, unicode=True):
 
     # Get the prime factor expansion from the interval table
     try:
-        powers = INTERVALS[np.around(interval, decimals=6)]
+        # Balance the interval into the octave for lookup
+        interval_b = __o_fold(interval)
+        powers = INTERVALS[np.around(interval_b, decimals=6)]
     except KeyError as exc:
         raise ParameterError(f"Unknown interval={interval}") from exc
 
@@ -928,10 +936,10 @@ def interval_to_fjs(interval, *, unison='C', tolerance=65.0/63, unicode=True):
     powers = {p: powers[p] for p in powers if p > 3}
 
     # Split into otonal and utonal accidentals
-    otonal = np.prod([p**powers[p] for p in powers if powers[p] > 0])
-    utonal = np.prod([p**-powers[p] for p in powers if powers[p] < 0])
+    otonal = np.prod([p ** powers[p] for p in powers if powers[p] > 0])
+    utonal = np.prod([p ** -powers[p] for p in powers if powers[p] < 0])
 
-    suffix = ''
+    suffix = ""
     if otonal > 1:
         if unicode:
             suffix += f"{otonal:d}".translate(SUPER_TRANS)
@@ -945,3 +953,8 @@ def interval_to_fjs(interval, *, unison='C', tolerance=65.0/63, unicode=True):
             suffix += f"_{utonal}"
 
     return note_name + suffix
+
+
+interval_to_fjs = np.vectorize(
+    _interval_to_fjs, otypes="U", excluded=set(["unison", "tolerance", "unicode"])
+)

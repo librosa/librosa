@@ -54,17 +54,25 @@ def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=
     """
 
     if isinstance(intervals, str):
-        if intervals == 'equal':
+        if intervals == "equal":
             # Maybe include tuning here?
-            ratios = 2.0**((tuning + np.arange(0, bins_per_octave, dtype=float)) / bins_per_octave)
-        elif intervals == 'pythagorean':
+            ratios = 2.0 ** (
+                (tuning + np.arange(0, bins_per_octave, dtype=float)) / bins_per_octave
+            )
+        elif intervals == "pythagorean":
             ratios = pythagorean_intervals(bins_per_octave=bins_per_octave, sort=True)
-        elif intervals == 'ji3':
-            ratios = plimit_intervals(primes=[3], bins_per_octave=bins_per_octave, sort=True)
-        elif intervals == 'ji5':
-            ratios = plimit_intervals(primes=[3, 5], bins_per_octave=bins_per_octave, sort=True)
-        elif intervals == 'ji7':
-            ratios = plimit_intervals(primes=[3, 5, 7], bins_per_octave=bins_per_octave, sort=True)
+        elif intervals == "ji3":
+            ratios = plimit_intervals(
+                primes=[3], bins_per_octave=bins_per_octave, sort=True
+            )
+        elif intervals == "ji5":
+            ratios = plimit_intervals(
+                primes=[3, 5], bins_per_octave=bins_per_octave, sort=True
+            )
+        elif intervals == "ji7":
+            ratios = plimit_intervals(
+                primes=[3, 5, 7], bins_per_octave=bins_per_octave, sort=True
+            )
     else:
         ratios = np.array(intervals)
         bins_per_octave = len(ratios)
@@ -72,7 +80,9 @@ def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=
     # We have one octave of ratios, tile it up to however many we need
     # and trim back to the right number of bins
     n_octaves = np.ceil(n_bins / bins_per_octave)
-    all_ratios = np.multiply.outer(2.0**np.arange(n_octaves), ratios).flatten()[:n_bins]
+    all_ratios = np.multiply.outer(2.0 ** np.arange(n_octaves), ratios).flatten()[
+        :n_bins
+    ]
 
     return all_ratios * fmin
 
@@ -171,7 +181,7 @@ def __harmonic_distance(logs, a, b):
 
 
 def _crystal_tie_break(a, b, logs):
-    '''Given two tuples of prime powers, break ties.'''
+    """Given two tuples of prime powers, break ties."""
     return logs.dot(np.abs(a)) < logs.dot(np.abs(b))
 
 
@@ -273,7 +283,7 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
         best_f = 0
         for f, point in enumerate(frontier):
             # Compute harmonic distance (HD) to each selected interval
-            HD = 0.
+            HD = 0.0
 
             for s in intervals:
                 if (s, point) not in distances:
@@ -282,7 +292,10 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
 
                 HD += distances[s, point]
 
-            if HD < score or (np.isclose(HD, score) and _crystal_tie_break(point, frontier[best_f], logs)):
+            if HD < score or (
+                np.isclose(HD, score)
+                and _crystal_tie_break(point, frontier[best_f], logs)
+            ):
                 score = HD
                 best_f = f
 
