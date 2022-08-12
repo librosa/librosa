@@ -900,6 +900,10 @@ def vqt(
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     """
 
+    # If intervals are provided as an array, override BPO
+    if not isinstance(intervals, str):
+        bins_per_octave = len(intervals)
+
     # How many octaves are we dealing with?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
     n_filters = min(bins_per_octave, n_bins)
@@ -918,10 +922,6 @@ def vqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     # First thing, get the freqs of the top octave
-    # freqs = cqt_frequencies(n_bins=n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
-    if not isinstance(intervals, str):
-        bins_per_octave = len(intervals)
-
     freqs = interval_frequencies(n_bins=n_bins,
                                  fmin=fmin,
                                  intervals=intervals,

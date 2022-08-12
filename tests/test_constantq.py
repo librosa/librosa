@@ -732,3 +732,16 @@ def test_cqt_precision(y_cqt, sr_cqt, dtype):
 def test_cqt_partial_octave(y_cqt, sr_cqt, n_bins_missing):
     # Test what happens when n_bins is +- 1 bin from complete octaves
     librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=72-n_bins_missing, bins_per_octave=12)
+
+
+def test_vqt_provided_intervals(y_cqt, sr_cqt):
+
+    # Generate a 20-ET vqt
+    V1 = librosa.vqt(y=y_cqt, sr=sr_cqt, bins_per_octave=20, n_bins=60, intervals="equal")
+
+    # Generate the same thing with a pre-set list of intervals
+    intervals = 2.0**(np.arange(20)/20.0)
+
+    V2 = librosa.vqt(y=y_cqt, sr=sr_cqt, n_bins=60, intervals=intervals)
+
+    assert np.allclose(V1, V2)
