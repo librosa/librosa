@@ -2140,8 +2140,22 @@ def hz_to_fjs(frequencies, *, fmin=None, unison=None, unicode=False):
 
     Examples
     --------
-    Get a single note name for a frequency
+    Get a single note name for a frequency, relative to A=55 Hz
 
+    >>> librosa.hz_to_fjs(66, fmin=55, unicode=True)
+    array('C₅', dtype='<U2')
+
+    Get notation for a 5-limit frequency set starting at A=55
+    >>> freqs = librosa.interval_frequencies(24, intervals="ji5", fmin=55)
+    >>> freqs
+    array([ 55.   ,  58.667,  61.875,  66.   ,  68.75 ,  73.333,  77.344,
+        82.5  ,  88.   ,  91.667,  99.   , 103.125, 110.   , 117.333,
+       123.75 , 132.   , 137.5  , 146.667, 154.687, 165.   , 176.   ,
+       183.333, 198.   , 206.25 ])
+    >>> librosa.hz_to_fjs(freqs, unicode=True)
+    array(['A', 'B♭₅', 'B', 'C₅', 'C♯⁵', 'D', 'D♯⁵', 'E', 'F₅', 'F♯⁵', 'G₅',
+       'G♯⁵', 'A', 'B♭₅', 'B', 'C₅', 'C♯⁵', 'D', 'D♯⁵', 'E', 'F₅', 'F♯⁵',
+       'G₅', 'G♯⁵'], dtype='<U3')
 
     """
     if fmin is None:
