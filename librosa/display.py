@@ -20,6 +20,7 @@ Axis formatting
     TimeFormatter
     NoteFormatter
     SvaraFormatter
+    FJSFormatter
     LogHzFormatter
     ChromaFormatter
     ChromaSvaraFormatter
@@ -59,6 +60,7 @@ __all__ = [
     "cmap",
     "TimeFormatter",
     "NoteFormatter",
+    "FJSFormatter",
     "LogHzFormatter",
     "ChromaFormatter",
     "TonnetzFormatter",
@@ -326,6 +328,69 @@ class SvaraFormatter(mplticker.Formatter):
                 abbr=self.abbr,
                 unicode=self.unicode,
             )
+
+
+class FJSFormatter(mplticker.Formatter):
+    """Ticker formatter for Functional Just System (FJS) notation
+
+    Parameters
+    ----------
+    fmin : float
+        The unison frequency for this axis
+
+
+    major : bool
+        If ``True``, ticks are always labeled.
+
+        If ``False``, ticks are only labeled if the span is less than 2 octaves
+
+    unison : str
+        The unison note name.  If not provided, it will be inferred from fmin.
+
+    unicode : bool
+        If ``True``, use unicode symbols for accidentals.
+
+        If ``False``, use ASCII symbols for accidentals.
+
+    See also
+    --------
+    NoteFormatter
+    hz_to_fjs
+    matplotlib.ticker.Formatter
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> values = librosa.midi_to_hz(np.arange(48, 72))
+    >>> fig, ax = plt.subplots(nrows=2)
+    >>> ax[0].bar(np.arange(len(values)), values)
+    >>> ax[0].set(ylabel='Hz')
+    >>> ax[1].bar(np.arange(len(values)), values)
+    >>> ax[1].yaxis.set_major_formatter(librosa.display.NoteFormatter())
+    >>> ax[1].set(ylabel='Note')
+    """
+
+    def __init__(self, fmin, major=True, unison=None, unicode=True):
+
+        self.fmin = fmin
+        self.major = major
+        self.unison = unison
+        self.unicode = unicode
+
+    def __call__(self, x, pos=None):
+
+        if x <= 0:
+            return ""
+
+        # Only use cent precision if our vspan is less than an octave
+        vmin, vmax = self.axis.get_view_interval()
+
+        if not self.major and vmax > 4 * max(1, vmin):
+            return ""
+
+        return core.hz_to_fjs(
+            x, fmin=self.fmin, unison=self.unison, unicode=self.unicode
+        )
 
 
 class LogHzFormatter(mplticker.Formatter):
@@ -738,6 +803,8 @@ def specshow(
     auto_aspect=True,
     htk=False,
     unicode=True,
+    intervals=None,
+    unison=None,
     ax=None,
     **kwargs,
 ):
@@ -973,6 +1040,8 @@ def specshow(
         key=key,
         htk=htk,
         unicode=unicode,
+        intervals=intervals,
+        unison=unison,
     )
 
     # Get the x and y coordinates
@@ -991,10 +1060,12 @@ def specshow(
 
     # Construct tickers and locators
     __decorate_axis(
-        axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode
+        axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode, fmin=fmin, unison=unison,
+        intervals=intervals
     )
     __decorate_axis(
-        axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode
+        axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode, fmin=fmin, unison=unison,
+        intervals=intervals
     )
 
     # If the plot is a self-similarity/covariance etc. plot, square it
@@ -1037,6 +1108,9 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         "cqt_hz": __coord_cqt_hz,
         "cqt_note": __coord_cqt_hz,
         "cqt_svara": __coord_cqt_hz,
+        "vqt_fjs": __coord_vqt_hz,
+        "vqt_hz": __coord_vqt_hz,
+        "vqt_note": __coord_vqt_hz,
         "chroma": __coord_chroma,
         "chroma_c": __coord_chroma,
         "chroma_h": __coord_chroma,
@@ -1110,7 +1184,7 @@ def __scale_axes(axes, ax_type, which):
         kwargs[thresh] = 1000.0
         kwargs[base] = 2
 
-    elif ax_type in ["cqt", "cqt_hz", "cqt_note", "cqt_svara"]:
+    elif ax_type in ["cqt", "cqt_hz", "cqt_note", "cqt_svara", "vqt_hz", "vqt_note", "vqt_fjs"]:
         mode = "log"
         kwargs[base] = 2
 
@@ -1131,7 +1205,7 @@ def __scale_axes(axes, ax_type, which):
 
 
 def __decorate_axis(
-    axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True
+    axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True, fmin=None, unison=None, intervals=None,
 ):
     """Configure axis tickers, locators, and labels"""
     time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
@@ -1231,6 +1305,48 @@ def __decorate_axis(
         )
         axis.set_label_text("Svara")
 
+    elif ax_type == "vqt_fjs":
+        if fmin is None:
+            fmin = core.note_to_hz("C1")
+        axis.set_major_formatter(FJSFormatter(fmin=fmin, unison=unison, unicode=unicode))
+        log_fmin = np.log2(fmin)
+        fmin_offset = 2.0**(log_fmin - np.floor(log_fmin))
+        axis.set_major_locator(LogLocator(base=2.0, subs=(fmin_offset,)))
+        axis.set_minor_formatter(FJSFormatter(fmin=fmin, unison=unison, unicode=unicode, major=False))
+        axis.set_minor_locator(
+            LogLocator(base=2.0, subs=core.interval_frequencies(12, fmin=fmin_offset, intervals=intervals,
+                                                                bins_per_octave=12))
+        )
+        axis.set_label_text("Note")
+
+    elif ax_type == "vqt_hz":
+        if fmin is None:
+            fmin = core.note_to_hz("C1")
+        axis.set_major_formatter(LogHzFormatter())
+        log_fmin = np.log2(fmin)
+        fmin_offset = 2.0**(log_fmin - np.floor(log_fmin))
+        axis.set_major_locator(LogLocator(base=2.0, subs=(fmin_offset,)))
+        axis.set_minor_formatter(LogHzFormatter(major=False))
+        axis.set_minor_locator(
+            LogLocator(base=2.0, subs=core.interval_frequencies(12, fmin=fmin_offset, intervals=intervals,
+                                                                bins_per_octave=12))
+        )
+        axis.set_label_text("Hz")
+
+    elif ax_type == "vqt_note":
+        if fmin is None:
+            fmin = core.note_to_hz("C1")
+        axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
+        log_fmin = np.log2(fmin)
+        fmin_offset = 2.0**(log_fmin - np.floor(log_fmin))
+        axis.set_major_locator(LogLocator(base=2.0, subs=(fmin_offset,)))
+        axis.set_minor_formatter(NoteFormatter(key=key, unicode=unicode, major=False))
+        axis.set_minor_locator(
+            LogLocator(base=2.0, subs=core.interval_frequencies(12, fmin=fmin_offset, intervals=intervals,
+                                                                bins_per_octave=12))
+        )
+        axis.set_label_text("Note")
+
     elif ax_type in ["cqt_hz"]:
         axis.set_major_formatter(LogHzFormatter())
         log_C1 = np.log2(core.note_to_hz("C1"))
@@ -1328,6 +1444,24 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, sr=22050, **_kwargs):
         fmin=fmin,
         bins_per_octave=bins_per_octave,
     )
+
+    if np.any(freqs > 0.5 * sr):
+        warnings.warn(
+            "Frequency axis exceeds Nyquist. "
+            "Did you remember to set all spectrogram parameters in specshow?",
+            stacklevel=4,
+        )
+
+    return freqs
+
+
+def __coord_vqt_hz(n, fmin=None, bins_per_octave=12, sr=22050,
+        intervals=None, unison=None, **_kwargs):
+    if fmin is None:
+        fmin = core.note_to_hz("C1")
+
+    freqs = core.interval_frequencies(n, fmin=fmin, intervals=intervals,
+                                      bins_per_octave=bins_per_octave)
 
     if np.any(freqs > 0.5 * sr):
         warnings.warn(
