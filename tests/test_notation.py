@@ -205,3 +205,27 @@ def test_mela_to_svara_badmela():
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_mela_to_svara_badidx():
     librosa.mela_to_svara(0)
+
+@pytest.mark.parametrize('unison, fifths, unicode, result',
+        [
+            ('C', 0, True, 'C'),
+            ('C', 1, True, 'G'),
+            ('C', -2, True, 'B♭'),
+            ('C', -2, False, 'Bb'),
+            ('F', 1, True, 'C'),
+            ('F', -1, True, 'B♭'),
+            ('B', -7, True, 'B♭'),
+            ('Bb', 7, True, 'B'),
+            ('Bb', 14, True, 'B♯'),
+            ('B', 1, True, 'F♯'),
+            ('B', 14, True, 'B𝄪'),
+            ('B', -14, True, 'B𝄫'),
+            ('B', 21, True, 'B𝄪♯'),
+            ('B', -21, True, 'B𝄫♭'),
+            ('B', 21, False, 'B###'),
+            ('B', -21, False, 'Bbbb'),
+        ]
+)
+def test_fifths_to_note(unison, fifths, unicode, result):
+    note = librosa.core.notation.fifths_to_note(unison=unison, fifths=fifths, unicode=unicode)
+    assert note == result
