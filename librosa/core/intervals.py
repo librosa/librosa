@@ -2,14 +2,15 @@
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
 
-import pickle
+import msgpack
 from pkg_resources import resource_filename
 import numpy as np
 from .._cache import cache
 
 
-with open(resource_filename(__name__, "intervals.pickle"), "rb") as fdesc:
-    INTERVALS = pickle.load(fdesc)
+with open(resource_filename(__name__, "intervals.msgpack"), "rb") as fdesc:
+    # We use floats for dictionary keys, so strict mapping is disabled
+    INTERVALS = msgpack.load(fdesc, strict_map_key=False)
 
 
 @cache(level=10)

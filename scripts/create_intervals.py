@@ -15,7 +15,7 @@ Usage:
 The output will be stored in intervals.pickle
 """
 
-import pickle
+import msgpack
 import sympy
 import numpy as np
 import librosa
@@ -58,9 +58,8 @@ def main():
         for (interval, fraction) in zip(all_intervals, fractions)
     }
 
-    with open("intervals.pickle", "wb") as fdesc:
-        # Pickling at protocol=4
-        pickle.dump(factorized, fdesc, protocol=4)
+    with open("intervals.msgpack", "wb") as fdesc:
+        msgpack.dump(factorized, fdesc)
 
 
 if __name__ == "__main__":
