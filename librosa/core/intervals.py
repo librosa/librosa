@@ -38,10 +38,9 @@ def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=
     bins_per_octave : int > 0
         If `intervals` is a string specification, how many bins to
         generate per octave.
-
         If `intervals` is an array, then this parameter is ignored.
 
-    tuning: float
+    tuning : float
         Deviation from A440 tuning in fractional bins.
         This is only used when `intervals == 'equal'`
 
@@ -52,6 +51,25 @@ def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=
 
     Examples
     --------
+    Generate two octaves of Pythagorean intervals starting at 55Hz
+    >>> librosa.interval_frequencies(24, fmin=55, intervals="pythagorean", bins_per_octave=12)
+    array([ 55.   ,  58.733,  61.875,  66.075,  69.609,  74.334,  78.311,
+            82.5  ,  88.099,  92.812,  99.112, 104.414, 110.   , 117.466,
+           123.75 , 132.149, 139.219, 148.668, 156.621, 165.   , 176.199,
+           185.625, 198.224, 208.828])
+
+    Generate two octaves of 5-limit intervals starting at 55Hz
+    >>> librosa.interval_frequencies(24, fmin=55, intervals="ji5", bins_per_octave=12)
+    array([ 55.   ,  58.667,  61.875,  66.   ,  68.75 ,  73.333,  77.344,
+            82.5  ,  88.   ,  91.667,  99.   , 103.125, 110.   , 117.333,
+           123.75 , 132.   , 137.5  , 146.667, 154.687, 165.   , 176.   ,
+           183.333, 198.   , 206.25 ])
+
+    Generate three octaves using only 
+    >>> intervals = [1, 4/3, 3/2]
+    >>> librosa.interval_frequencies(9, fmin=55, intervals=intervals)
+    array([ 55.   ,  73.333,  82.5  , 110.   , 146.667, 165.   , 220.   ,
+       293.333, 330.   ])
     """
 
     if isinstance(intervals, str):
@@ -105,7 +123,6 @@ def pythagorean_intervals(*, bins_per_octave=12, sort=True):
     ----------
     bins_per_octave : int
         The number of intervals to generate
-
     sort : bool
         If `True` then intervals are returned in ascending order.
         If `False`, then intervals are returned in circle-of-fifths order.
@@ -205,10 +222,8 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
     ----------
     primes : array of odd primes
         Which prime factors are to be used
-
     bins_per_octave : int
         The number of intervals to construct
-
     sort : bool
         If `True` then intervals are returned in ascending order.
         If `False`, then intervals are returned in crystal growth order.
