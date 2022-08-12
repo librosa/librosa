@@ -2156,13 +2156,12 @@ def hz_to_fjs(frequencies, *, fmin=None, unison=None, unicode=False):
     array(['A', 'B♭₅', 'B', 'C₅', 'C♯⁵', 'D', 'D♯⁵', 'E', 'F₅', 'F♯⁵', 'G₅',
        'G♯⁵', 'A', 'B♭₅', 'B', 'C₅', 'C♯⁵', 'D', 'D♯⁵', 'E', 'F₅', 'F♯⁵',
        'G₅', 'G♯⁵'], dtype='<U3')
-
     """
     if fmin is None:
         fmin = np.min(frequencies)
     if unison is None:
         unison = hz_to_note(fmin, octave=False, unicode=False)
 
-    intervals = frequencies / fmin
+    intervals = np.asarray(frequencies) / fmin
 
     return notation.interval_to_fjs(intervals, unison=unison, unicode=unicode)

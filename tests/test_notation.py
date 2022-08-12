@@ -281,4 +281,14 @@ def test_interval_to_fjs_set(unison, unicode, intervals):
         assert fjs_single == note
 
 
-
+@pytest.mark.parametrize('hz, fmin, unison, unicode, results',
+        [
+            ([55, 66, 77], None, None, True, ['A', 'C₅', 'D♯⁷₅']),
+            ([55, 66, 77], 33, None, True, ['A⁵', 'C', 'E♭⁷']),
+            ([55, 66, 77], 33, 'Cb', True, ['A♭⁵', 'C♭', 'E𝄫⁷']),
+            ([55, 66, 77], 33, 'Cb', False, ['Ab^5', 'Cb', 'Ebb^7']),
+        ]
+)
+def test_hz_to_fjs(hz, fmin, unison, unicode, results):
+    fjs = librosa.hz_to_fjs(hz, fmin=fmin, unison=unison, unicode=unicode)
+    assert list(fjs) == results
