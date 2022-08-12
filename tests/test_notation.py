@@ -237,9 +237,14 @@ def test_fifths_to_note_badunison():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_interval_to_fjs_badinterval():
+def test_interval_to_fjs_irrational():
     # Test FJS conversion with a non-just interval
     librosa.interval_to_fjs(np.sqrt(2))
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('r', [0, -1, -1/2])
+def test_interval_to_fjs_nonpos(r):
+    librosa.interval_to_fjs(r)
 
 
 @pytest.mark.parametrize('interval, unison, unicode, result',
@@ -274,3 +279,6 @@ def test_interval_to_fjs_set(unison, unicode, intervals):
     for (interval, note) in zip(intervals, fjs):
         fjs_single = librosa.interval_to_fjs(interval, unison=unison, unicode=unicode).item()
         assert fjs_single == note
+
+
+
