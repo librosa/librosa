@@ -879,7 +879,7 @@ def _interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True)
     Raises
     ------
     ParameterError
-        If the provided interval is not postive
+        If the provided interval is not positive
 
         If the provided interval cannot be identified with a
         just intonation prime factorization.
