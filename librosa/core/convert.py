@@ -538,13 +538,8 @@ def note_to_midi(note, *, round_midi=True):
         "♮": 0,
     }
 
-    match = re.match(
-        r"^(?P<note>[A-Ga-g])"
-        r"(?P<accidental>[#♯𝄪b!♭𝄫♮]*)"
-        r"(?P<octave>[+-]?\d+)?"
-        r"(?P<cents>[+-]\d+)?$",
-        note,
-    )
+    match = notation.NOTE_RE.match(note)
+
     if not match:
         raise ParameterError("Improper note format: {:s}".format(note))
 

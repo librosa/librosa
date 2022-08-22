@@ -117,6 +117,19 @@ MELAKARTA_MAP = {
 }
 
 
+# Pre-compiled regular expressions for note and key parsing
+NOTE_RE = re.compile(
+    r"^(?P<note>[A-Ga-g])"
+    r"(?P<accidental>[#♯𝄪b!♭𝄫♮]*)"
+    r"(?P<octave>[+-]?\d+)?"
+    r"(?P<cents>[+-]\d+)?$"
+)
+
+KEY_RE = re.compile(
+    r"^(?P<tonic>[A-Ga-g])" r"(?P<accidental>[#♯b!♭]?)" r":(?P<scale>(maj|min)(or)?)$"
+)
+
+
 def thaat_to_degrees(thaat):
     """Construct the svara indices (degrees) for a given thaat
 
@@ -534,12 +547,8 @@ def key_to_notes(key, *, unicode=True):
     """
 
     # Parse the key signature
-    match = re.match(
-        r"^(?P<tonic>[A-Ga-g])"
-        r"(?P<accidental>[#♯b!♭]?)"
-        r":(?P<scale>(maj|min)(or)?)$",
-        key,
-    )
+    match = KEY_RE.match(key)
+
     if not match:
         raise ParameterError("Improper key format: {:s}".format(key))
 
@@ -677,12 +686,8 @@ def key_to_degrees(key):
         maj=np.array([0, 2, 4, 5, 7, 9, 11]), min=np.array([0, 2, 3, 5, 7, 8, 10])
     )
 
-    match = re.match(
-        r"^(?P<tonic>[A-Ga-g])"
-        r"(?P<accidental>[#♯b!♭]?)"
-        r":(?P<scale>(maj|min)(or)?)$",
-        key,
-    )
+    match = KEY_RE.match(key)
+
     if not match:
         raise ParameterError("Improper key format: {:s}".format(key))
 
@@ -697,6 +702,7 @@ def key_to_degrees(key):
     return (notes[scale] + pitch_map[tonic] + offset) % 12
 
 
+@cache(level=10)
 def fifths_to_note(*, unison, fifths, unicode=True):
     """Calculate the note name for a given number of perfect fifths
     from a specified unison.
@@ -760,13 +766,8 @@ def fifths_to_note(*, unison, fifths, unicode=True):
     else:
         acc_map_inv = {1: "#", 2: "##", -1: "b", -2: "bb", 0: ""}
 
-    match = re.match(
-        r"^(?P<note>[A-Ga-g])"
-        r"(?P<accidental>[#♯𝄪b!♭𝄫♮]*)"
-        r"(?P<octave>[+-]?\d+)?"
-        r"(?P<cents>[+-]\d+)?$",
-        unison,
-    )
+    match = NOTE_RE.match(unison)
+
     if not match:
         raise ParameterError(f"Improper note format: {unison:s}")
 
