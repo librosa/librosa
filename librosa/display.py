@@ -370,12 +370,19 @@ class FJSFormatter(mplticker.Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
-    def __init__(self, fmin, major=True, unison=None, unicode=True):
+    def __init__(self, fmin, major=True, unison=None, unicode=True, intervals=None, bins_per_octave=None, n_bins=None):
 
         self.fmin = fmin
         self.major = major
         self.unison = unison
         self.unicode = unicode
+        self.intervals = intervals
+        self.n_bins = n_bins
+        self.bins_per_octave = bins_per_octave
+        self.frequencies_ = core.interval_frequencies(n_bins,
+                                                      fmin=fmin,
+                                                      intervals=intervals,
+                                                      bins_per_octave=bins_per_octave)
 
     def __call__(self, x, pos=None):
 
@@ -388,8 +395,11 @@ class FJSFormatter(mplticker.Formatter):
         if not self.major and vmax > 4 * max(1, vmin):
             return ""
 
+        # Map the given frequency to the nearest JI interval
+        idx = util.match_events(np.atleast_1d(x), self.frequencies_)[0]
+
         return core.hz_to_fjs(
-            x, fmin=self.fmin, unison=self.unison, unicode=self.unicode
+            self.frequencies_[idx], fmin=self.fmin, unison=self.unison, unicode=self.unicode
         )
 
 
@@ -1061,11 +1071,11 @@ def specshow(
     # Construct tickers and locators
     __decorate_axis(
         axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode, fmin=fmin, unison=unison,
-        intervals=intervals
+        intervals=intervals, bins_per_octave=bins_per_octave, n_bins=len(x_coords)
     )
     __decorate_axis(
         axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode, fmin=fmin, unison=unison,
-        intervals=intervals
+        intervals=intervals, bins_per_octave=bins_per_octave, n_bins=len(y_coords)
     )
 
     # If the plot is a self-similarity/covariance etc. plot, square it
@@ -1205,7 +1215,7 @@ def __scale_axes(axes, ax_type, which):
 
 
 def __decorate_axis(
-    axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True, fmin=None, unison=None, intervals=None,
+    axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True, fmin=None, unison=None, intervals=None, bins_per_octave=None, n_bins=None,
 ):
     """Configure axis tickers, locators, and labels"""
     time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
@@ -1308,14 +1318,15 @@ def __decorate_axis(
     elif ax_type == "vqt_fjs":
         if fmin is None:
             fmin = core.note_to_hz("C1")
-        axis.set_major_formatter(FJSFormatter(fmin=fmin, unison=unison, unicode=unicode))
+        axis.set_major_formatter(FJSFormatter(fmin=fmin, unison=unison, unicode=unicode, intervals=intervals, bins_per_octave=bins_per_octave, n_bins=n_bins))
         log_fmin = np.log2(fmin)
         fmin_offset = 2.0**(log_fmin - np.floor(log_fmin))
         axis.set_major_locator(LogLocator(base=2.0, subs=(fmin_offset,)))
-        axis.set_minor_formatter(FJSFormatter(fmin=fmin, unison=unison, unicode=unicode, major=False))
+
+        axis.set_minor_formatter(FJSFormatter(fmin=fmin, unison=unison, unicode=unicode, intervals=intervals, bins_per_octave=bins_per_octave, n_bins=n_bins, major=False))
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=core.interval_frequencies(12, fmin=fmin_offset, intervals=intervals,
-                                                                bins_per_octave=12))
+            FixedLocator(core.interval_frequencies(n_bins * 12 // bins_per_octave, fmin=fmin, intervals=intervals,
+                                                   bins_per_octave=12))
         )
         axis.set_label_text("Note")
 
