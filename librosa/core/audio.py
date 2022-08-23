@@ -877,7 +877,7 @@ def lpc(y, *, order, axis=-1):
 
     .. [#] Larry Marple.
            A New Autoregressive Spectrum Analysis Algorithm.
-           IEEE Transactions on Accoustics, Speech, and Signal Processing
+           IEEE Transactions on Acoustics, Speech, and Signal Processing
            vol 28, no. 4, 1980.
 
     Parameters
