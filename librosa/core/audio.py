@@ -510,8 +510,8 @@ def resample(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(..., n)]
-        audio time series.  Multi-channel is supported.
+    y : np.ndarray [shape=(..., n, ...)]
+        audio time series, with `n` samples along the specified axis.
 
     orig_sr : number > 0 [scalar]
         original sampling rate of ``y``
