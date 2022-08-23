@@ -1033,7 +1033,7 @@ def test_resample_highdim(x, res_type):
 
 @pytest.mark.parametrize('res_type', ('scipy', 'polyphase', 'sinc_fastest', 'kaiser_fast', 'soxr_qq'))
 @pytest.mark.parametrize('x, axis', [(np.zeros((2, 2, 2, 22050)), -1), (np.zeros((22050, 2, 3)), 0)])
-def test_resample_highdim(x, axis, res_type):
+def test_resample_highdim_axis(x, axis, res_type):
     # Resample along the target axis
     y = librosa.resample(x, orig_sr=22050, target_sr=11025, axis=axis, res_type=res_type)
 
