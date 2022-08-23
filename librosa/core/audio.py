@@ -500,7 +500,7 @@ def to_mono(y):
 
 @cache(level=20)
 def resample(
-    y, *, orig_sr, target_sr, res_type="kaiser_best", fix=True, scale=False, **kwargs
+    y, *, orig_sr, target_sr, res_type="kaiser_best", fix=True, scale=False, axis=-1, **kwargs
 ):
     """Resample a time series from orig_sr to target_sr
 
@@ -510,8 +510,8 @@ def resample(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(..., n)]
-        audio time series.  Multi-channel is supported.
+    y : np.ndarray [shape=(..., n, ...)]
+        audio time series, with `n` samples along the specified axis.
 
     orig_sr : number > 0 [scalar]
         original sampling rate of ``y``
@@ -561,14 +561,17 @@ def resample(
         Scale the resampled signal so that ``y`` and ``y_hat`` have approximately
         equal total energy.
 
+    axis : int
+        The target axis along which to resample.  Defaults to the trailing axis.
+
     **kwargs : additional keyword arguments
         If ``fix==True``, additional keyword arguments to pass to
         `librosa.util.fix_length`.
 
     Returns
     -------
-    y_hat : np.ndarray [shape=(..., n * target_sr / orig_sr)]
-        ``y`` resampled from ``orig_sr`` to ``target_sr``
+    y_hat : np.ndarray [shape=(..., n * target_sr / orig_sr, ...)]
+        ``y`` resampled from ``orig_sr`` to ``target_sr`` along the target axis
 
     Raises
     ------
@@ -606,10 +609,10 @@ def resample(
 
     ratio = float(target_sr) / orig_sr
 
-    n_samples = int(np.ceil(y.shape[-1] * ratio))
+    n_samples = int(np.ceil(y.shape[axis] * ratio))
 
     if res_type in ("scipy", "fft"):
-        y_hat = scipy.signal.resample(y, n_samples, axis=-1)
+        y_hat = scipy.signal.resample(y, n_samples, axis=axis)
     elif res_type == "polyphase":
         if int(orig_sr) != orig_sr or int(target_sr) != target_sr:
             raise ParameterError(
@@ -622,7 +625,7 @@ def resample(
         orig_sr = int(orig_sr)
         target_sr = int(target_sr)
         gcd = np.gcd(orig_sr, target_sr)
-        y_hat = scipy.signal.resample_poly(y, target_sr // gcd, orig_sr // gcd, axis=-1)
+        y_hat = scipy.signal.resample_poly(y, target_sr // gcd, orig_sr // gcd, axis=axis)
     elif res_type in (
         "linear",
         "zero_order_hold",
@@ -632,18 +635,20 @@ def resample(
     ):
         import samplerate
 
-        # We have to transpose here to match libsamplerate
-        y_hat = samplerate.resample(y.T, ratio, converter_type=res_type).T
+        # Use numpy to vectorize the resampler along the target axis
+        # This is because samplerate does not support ndim>2 generally.
+        y_hat = np.apply_along_axis(samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type)
     elif res_type.startswith("soxr"):
         import soxr
 
-        # We have to transpose here to match soxr
-        y_hat = soxr.resample(y.T, orig_sr, target_sr, quality=res_type).T
+        # Use numpy to vectorize the resampler along the target axis
+        # This is because soxr does not support ndim>2 generally.
+        y_hat = np.apply_along_axis(soxr.resample, axis=axis, arr=y, in_rate=orig_sr, out_rate=target_sr, quality=res_type)
     else:
-        y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=-1)
+        y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=axis)
 
     if fix:
-        y_hat = util.fix_length(y_hat, size=n_samples, **kwargs)
+        y_hat = util.fix_length(y_hat, size=n_samples, axis=axis, **kwargs)
 
     if scale:
         y_hat /= np.sqrt(ratio)

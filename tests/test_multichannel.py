@@ -1008,3 +1008,35 @@ def test_trim_multichannel(y_multi):
     # intersection of the individual intervals
     assert ival[0] == max(ival0[0], ival1[0])
     assert ival[1] == min(ival0[1], ival1[1])
+
+
+@pytest.mark.parametrize('res_type', ('scipy', 'polyphase', 'sinc_fastest', 'kaiser_fast', 'soxr_qq'))
+def test_resample_multichannel(y_multi, res_type):
+    # Test multi-channel resampling with all backends: scipy, samplerate, resampy, soxr
+    y, sr = y_multi
+
+    y_res = librosa.resample(y=y, orig_sr=sr, target_sr=sr//2, res_type=res_type)
+    y0_res = librosa.resample(y=y[0], orig_sr=sr, target_sr=sr//2, res_type=res_type)
+    y1_res = librosa.resample(y=y[1], orig_sr=sr, target_sr=sr//2, res_type=res_type)
+
+    assert np.allclose(y_res[0], y0_res)
+    assert np.allclose(y_res[1], y1_res)
+    assert y_res[0].shape == y0_res.shape
+
+
+@pytest.mark.parametrize('res_type', ('scipy', 'polyphase', 'sinc_fastest', 'kaiser_fast', 'soxr_qq'))
+@pytest.mark.parametrize('x', [np.zeros((2, 2, 2, 22050))])
+def test_resample_highdim(x, res_type):
+    # Just run these to verify that it doesn't crash with ndim>2
+    y = librosa.resample(x, orig_sr=22050, target_sr=11025, res_type=res_type)
+
+
+@pytest.mark.parametrize('res_type', ('scipy', 'polyphase', 'sinc_fastest', 'kaiser_fast', 'soxr_qq'))
+@pytest.mark.parametrize('x, axis', [(np.zeros((2, 2, 2, 22050)), -1), (np.zeros((22050, 2, 3)), 0)])
+def test_resample_highdim_axis(x, axis, res_type):
+    # Resample along the target axis
+    y = librosa.resample(x, orig_sr=22050, target_sr=11025, axis=axis, res_type=res_type)
+
+    # Verify that the target axis is the correct shape
+    assert y.shape[axis] == 11025
+    assert y.ndim == x.ndim
