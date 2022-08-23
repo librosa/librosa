@@ -824,10 +824,10 @@ def __fifth_search(interval, tolerance):
     """Accelerated helper function for finding the number of fifths
     to get within tolerance of a given interval.
 
-    This implementation will give up after 20 fifths
+    This implementation will give up after 32 fifths
     """
     log_tolerance = np.abs(np.log2(tolerance))
-    for power in range(20):
+    for power in range(32):
         for sign in [1, -1]:
             if (
                 np.abs(np.log2(__bo_fold(interval / 3.0 ** (power * sign))))
