@@ -719,7 +719,7 @@ def test_sharex_waveplot_ms(y, sr, S_abs):
     return fig
 
 
-@pytest.mark.parametrize("format_str", ["cqt_hz", "cqt_note"])
+@pytest.mark.parametrize("format_str", ["cqt_hz", "cqt_note", "vqt_hz"])
 def test_axis_bound_warning(format_str):
 
     with pytest.warns(UserWarning):
@@ -734,6 +734,7 @@ def test_axis_bound_warning(format_str):
             fmin=11025,
             sr=22050,
             bins_per_octave=12,
+            intervals="ji3",
         )
 
 
