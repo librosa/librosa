@@ -1080,7 +1080,16 @@ def cq_to_chroma(
 
 @cache(level=10)
 def window_bandwidth(window, n=1000):
-    """Get the equivalent noise bandwidth of a window function.
+    """Get the equivalent noise bandwidth (ENBW) of a window function.
+
+    The ENBW of a window is defined by [#]_ (equation 11) as the normalized
+    ratio of the sum of squares to the square of sums::
+
+        enbw = n * sum(window**2) / sum(window)**2
+
+    .. [#] Harris, F. J.
+        "On the use of windows for harmonic analysis with the discrete Fourier transform."
+        Proceedings of the IEEE, 66(1), 51-83.  1978.
 
     Parameters
     ----------
@@ -1115,7 +1124,7 @@ def window_bandwidth(window, n=1000):
 
     if key not in WINDOW_BANDWIDTHS:
         win = get_window(window, n)
-        WINDOW_BANDWIDTHS[key] = n * np.sum(win ** 2) / np.sum(np.abs(win)) ** 2
+        WINDOW_BANDWIDTHS[key] = n * np.sum(win ** 2) / (np.sum(win) ** 2 + util.tiny(win))
 
     return WINDOW_BANDWIDTHS[key]
 
