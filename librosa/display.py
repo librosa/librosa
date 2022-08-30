@@ -909,6 +909,9 @@ def specshow(
             - ``shading='auto'``
             - ``edgecolors='None'``
 
+        The ``cmap`` option if not provided, is inferred from data automatically.
+        Set ``cmap=None`` to use matplotlib's default colormap.
+
     Returns
     -------
     colormesh : `matplotlib.collections.QuadMesh`
