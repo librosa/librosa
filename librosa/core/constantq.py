@@ -950,7 +950,9 @@ def vqt(
 
     if res_type is None:
         warnings.warn("Support for VQT with res_type=None is deprecated in librosa 0.10\n"
-                      "and will be removed in version 1.0.")
+                      "and will be removed in version 1.0.",
+                      category=DeprecationWarning,
+                      stacklevel=2)
         res_type = "soxr_hq"
 
     y, sr, hop_length = __early_downsample(
