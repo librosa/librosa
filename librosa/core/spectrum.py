@@ -1467,7 +1467,7 @@ def iirt(
     tuning=0.0,
     pad_mode="constant",
     flayout="sos",
-    res_type="kaiser_best",
+    res_type="soxr_hq",
     **kwargs,
 ):
     r"""Time-frequency representation using IIR filters

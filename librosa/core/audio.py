@@ -9,7 +9,7 @@ import soundfile as sf
 import audioread
 import numpy as np
 import scipy.signal
-import resampy
+import soxr
 
 from numba import jit
 from .fft import get_fftlib
@@ -35,10 +35,6 @@ __all__ = [
     "mu_expand",
 ]
 
-# Resampling bandwidths as percentage of Nyquist
-BW_BEST = resampy.filters.get_filter("kaiser_best")[2]
-BW_FASTEST = resampy.filters.get_filter("kaiser_fast")[2]
-
 
 # -- CORE ROUTINES --#
 # Load should never be cached, since we cannot verify that the contents of
@@ -51,7 +47,7 @@ def load(
     offset=0.0,
     duration=None,
     dtype=np.float32,
-    res_type="kaiser_best",
+    res_type="soxr_hq",
 ):
     """Load an audio file as a floating point time series.
 
@@ -98,7 +94,7 @@ def load(
         resample type (see note)
 
         .. note::
-            By default, this uses `resampy`'s high-quality mode ('kaiser_best').
+            By default, this uses `soxr`'s high-quality mode ('HQ').
 
             For alternative resampling modes, see `resample`
 
@@ -500,7 +496,7 @@ def to_mono(y):
 
 @cache(level=20)
 def resample(
-    y, *, orig_sr, target_sr, res_type="kaiser_best", fix=True, scale=False, axis=-1, **kwargs
+    y, *, orig_sr, target_sr, res_type="soxr_hq", fix=True, scale=False, axis=-1, **kwargs
 ):
     """Resample a time series from orig_sr to target_sr
 
@@ -519,10 +515,15 @@ def resample(
     target_sr : number > 0 [scalar]
         target sampling rate
 
-    res_type : str
+    res_type : str (default: `soxr_hq`)
         resample type
 
-        'kaiser_best' (default)
+        'soxr_vhq', 'soxr_hq', 'soxr_mq' or 'soxr_lq'
+            `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
+            ``'soxr_hq'`` is the default setting of `soxr`.
+        'soxr_qq'
+            `soxr` Quick cubic interpolation (very fast)
+        'kaiser_best'
             `resampy` high-quality mode
         'kaiser_fast'
             `resampy` faster method
@@ -536,18 +537,13 @@ def resample(
             `samplerate` repeat the last value between samples. (very fast)
         'sinc_best', 'sinc_medium' or 'sinc_fastest'
             `samplerate` high-, medium-, and low-quality sinc interpolation.
-        'soxr_vhq', 'soxr_hq', 'soxr_mq' or 'soxr_lq'
-            `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
-            ``'soxr_hq'`` is the default setting of `soxr` (fast)
-        'soxr_qq'
-            `soxr` Quick cubic interpolation (very fast)
 
         .. note::
-            `samplerate` and `soxr` are not installed with `librosa`.
-            To use `samplerate` or `soxr`, they should be installed manually::
+            `samplerate` and `resampy` are not installed with `librosa`.
+            To use `samplerate` or `resampy`, they should be installed manually::
 
                 $ pip install samplerate
-                $ pip install soxr
+                $ pip install resampy
 
         .. note::
             When using ``res_type='polyphase'``, only integer sampling rates are
@@ -639,12 +635,12 @@ def resample(
         # This is because samplerate does not support ndim>2 generally.
         y_hat = np.apply_along_axis(samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type)
     elif res_type.startswith("soxr"):
-        import soxr
-
         # Use numpy to vectorize the resampler along the target axis
         # This is because soxr does not support ndim>2 generally.
         y_hat = np.apply_along_axis(soxr.resample, axis=axis, arr=y, in_rate=orig_sr, out_rate=target_sr, quality=res_type)
     else:
+        import resampy
+
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=axis)
 
     if fix:

@@ -256,7 +256,7 @@ def time_stretch(y, *, rate, **kwargs):
 
 
 def pitch_shift(
-    y, *, sr, n_steps, bins_per_octave=12, res_type="kaiser_best", **kwargs
+    y, *, sr, n_steps, bins_per_octave=12, res_type="soxr_hq", **kwargs
 ):
     """Shift the pitch of a waveform by ``n_steps`` steps.
 
@@ -277,7 +277,7 @@ def pitch_shift(
         how many steps per octave
 
     res_type : string
-        Resample type. By default, 'kaiser_best' is used.
+        Resample type. By default, 'soxr_hq' is used.
 
         See `librosa.resample` for more information.
 
