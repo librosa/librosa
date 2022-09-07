@@ -106,16 +106,8 @@ def cqt(
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string [optional]
+    res_type : string
         The resampling mode for recursive downsampling.
-
-        By default, `cqt` will adaptively select a resampling mode
-        which trades off accuracy at high frequencies for efficiency at low frequencies.
-
-        You can override this by specifying a resampling mode as supported by
-        `librosa.resample`.  For example, ``res_type='fft'`` will use a high-quality,
-        but potentially slow FFT-based down-sampling, while ``res_type='polyphase'`` will
-        use a fast, but potentially inaccurate down-sampling.
 
     dtype : np.dtype
         The (complex) data type of the output array.  By default, this is inferred to match
@@ -866,7 +858,7 @@ def vqt(
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string [optional]
+    res_type : string
         The resampling mode for recursive downsampling.
 
     dtype : np.dtype
@@ -1129,7 +1121,7 @@ def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
     """Compute the number of early downsampling operations"""
 
     downsample_count1 = max(
-        0, int(np.ceil(np.log2(0.95 * nyquist / filter_cutoff)) - 1) - 1
+        0, int(np.ceil(np.log2(nyquist / filter_cutoff)) - 1) - 1
     )
 
     num_twos = __num_two_factors(hop_length)
@@ -1147,7 +1139,7 @@ def __early_downsample(
         nyquist, filter_cutoff, hop_length, n_octaves
     )
 
-    if downsample_count > 0 and res_type != 'polyphase':
+    if downsample_count > 0:
         downsample_factor = 2 ** (downsample_count)
 
         hop_length //= downsample_factor
@@ -1160,7 +1152,7 @@ def __early_downsample(
 
         new_sr = sr / float(downsample_factor)
         y = audio.resample(
-            y, orig_sr=sr, target_sr=new_sr, res_type=res_type, scale=True
+            y, orig_sr=downsample_factor, target_sr=1, res_type=res_type, scale=True
         )
 
         # If we're not going to length-scale after CQT, we
@@ -1287,12 +1279,6 @@ def griffinlim_cqt(
 
     res_type : string
         The resampling mode for recursive downsampling.
-
-        By default, CQT uses an adaptive mode selection to
-        trade accuracy at high frequencies for efficiency at low
-        frequencies.
-
-        Griffin-Lim uses the efficient (fast) resampling mode by default.
 
         See ``librosa.resample`` for a list of available options.
 
