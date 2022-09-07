@@ -282,6 +282,8 @@ def stft(
                 mode=pad_mode,
             )
             y_frames_pre = util.frame(y_pre, frame_length=n_fft, hop_length=hop_length)
+            # Trim this down to the exact number of frames we should have
+            y_frames_pre = y_frames_pre[..., :start_k]
 
             # How many extra frames do we have from the head?
             extra = y_frames_pre.shape[-1]
