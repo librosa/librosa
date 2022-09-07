@@ -277,7 +277,7 @@ def stft(
             padding[-1] = (n_fft // 2, 0)
 
             y_pre = np.pad(
-                y[..., : (start_k - 1) * hop_length - n_fft // 2 + n_fft],
+                y[..., : (start_k - 1) * hop_length - n_fft // 2 + n_fft + 1],
                 padding,
                 mode=pad_mode,
             )
