@@ -524,7 +524,7 @@ def y_icqt(sr_icqt):
 @pytest.mark.parametrize("scale", [False, True])
 @pytest.mark.parametrize("hop_length", [384, 512])
 @pytest.mark.parametrize("length", [None, True])
-@pytest.mark.parametrize("res_type", ["scipy", "kaiser_fast", "polyphase"])
+@pytest.mark.parametrize("res_type", ["soxr_hq", "polyphase"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type, dtype):
 
