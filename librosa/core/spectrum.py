@@ -276,6 +276,8 @@ def stft(
             start = start_k * hop_length - n_fft // 2
             padding[-1] = (n_fft // 2, 0)
 
+            # +1 here is to ensure enough samples to fill the window
+            # fixes bug #1567
             y_pre = np.pad(
                 y[..., : (start_k - 1) * hop_length - n_fft // 2 + n_fft + 1],
                 padding,
