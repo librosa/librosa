@@ -847,24 +847,30 @@ def autocorrelate(y, *, max_size=None, axis=-1):
 
     max_size = int(min(max_size, y.shape[axis]))
 
-    # Compute the power spectrum along the chosen axis
-    # Pad out the signal to support full-length auto-correlation.
     fft = get_fftlib()
-    powspec = util.abs2(fft.fft(y, n=2 * y.shape[axis] + 1, axis=axis))
 
-    # Convert back to time domain
-    autocorr = fft.ifft(powspec, axis=axis)
+    # Pad out the signal to support full-length auto-correlation.
+    n_pad = 2 * y.shape[axis] - 1
+
+    if np.iscomplexobj(y):
+        # Compute the power spectrum along the chosen axis
+        powspec = util.abs2(fft.fft(y, n=n_pad, axis=axis))
+
+        # Convert back to time domain
+        autocorr = fft.ifft(powspec, n=n_pad, axis=axis)
+    else:
+        # Compute the power spectrum along the chosen axis
+        # Pad out the signal to support full-length auto-correlation.
+        powspec = util.abs2(fft.rfft(y, n=n_pad, axis=axis))
+
+        # Convert back to time domain
+        autocorr = fft.irfft(powspec, n=n_pad, axis=axis)
 
     # Slice down to max_size
     subslice = [slice(None)] * autocorr.ndim
     subslice[axis] = slice(max_size)
 
-    autocorr = autocorr[tuple(subslice)]
-
-    if not np.iscomplexobj(y):
-        autocorr = autocorr.real
-
-    return autocorr
+    return autocorr[tuple(subslice)]
 
 
 def lpc(y, *, order, axis=-1):

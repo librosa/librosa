@@ -966,7 +966,7 @@ def test_get_duration_fail():
 
 @pytest.mark.parametrize(
     "y",
-    [np.random.randn(256, 256), np.exp(1.0j * np.random.randn(256, 256))],
+    [np.random.randn(256, 384), np.exp(1.0j * np.random.randn(256, 384))],
     ids=["real", "complex"],
 )
 @pytest.mark.parametrize("axis", [0, 1, -1])
