@@ -28,12 +28,12 @@ jobs:
                       name: "Minimal dependencies"
 
                     - os: ubuntu-latest
-                      python-version: "3.8"
+                      python-version: "3.7"
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
-                      python-version: "3.9"
+                      python-version: "3.8"
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
