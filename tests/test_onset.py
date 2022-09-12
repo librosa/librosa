@@ -4,7 +4,7 @@
 
 from __future__ import print_function
 import pytest
-from contextlib2 import nullcontext as dnr
+from contextlib import nullcontext as dnr
 
 # Disable cache
 import os

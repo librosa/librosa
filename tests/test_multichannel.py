@@ -21,7 +21,7 @@ import pytest
 import warnings
 from unittest import mock
 
-from contextlib2 import nullcontext as dnr
+from contextlib import nullcontext as dnr
 from test_core import srand
 
 

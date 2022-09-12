@@ -13,7 +13,7 @@ except:
     pass
 
 import pytest
-from contextlib2 import nullcontext as dnr
+from contextlib import nullcontext as dnr
 
 import numpy as np
 import scipy.stats
