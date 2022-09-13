@@ -1357,15 +1357,15 @@ def mr_frequencies(tuning):
     sample_rates = np.asarray(
         len(np.arange(0, 36))
         * [
-            882,
+            882.0,
         ]
         + len(np.arange(36, 70))
         * [
-            4410,
+            4410.0,
         ]
         + len(np.arange(70, 85))
         * [
-            22050,
+            22050.0,
         ]
     )
 
