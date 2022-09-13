@@ -1865,15 +1865,15 @@ def test_iirt_peaks():
     sample_rates = np.asarray(
         len(np.arange(40, 46))
         * [
-            1000,
+            1000.0,
         ]
         + len(np.arange(46, 80))
         * [
-            1750,
+            1750.0,
         ]
         + len(np.arange(80, 95))
         * [
-            4000,
+            4000.0,
         ]
     )
 
