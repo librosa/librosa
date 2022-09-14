@@ -6,6 +6,7 @@ import re
 import numpy as np
 from . import notation
 from ..util.exceptions import ParameterError
+from ..util.decorators import vectorize
 
 __all__ = [
     "frames_to_samples",
@@ -569,7 +570,7 @@ def note_to_midi(note, *, round_midi=True):
     return note_value
 
 
-def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
+def _midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
     """Convert one or more MIDI numbers to note strings.
 
     MIDI numbers will be rounded to the nearest integer.
@@ -645,12 +646,6 @@ def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
     if cents and not octave:
         raise ParameterError("Cannot encode cents without octave information.")
 
-    if not np.isscalar(midi):
-        return [
-            midi_to_note(x, octave=octave, cents=cents, key=key, unicode=unicode)
-            for x in midi
-        ]
-
     note_map = notation.key_to_notes(key=key, unicode=unicode)
 
     note_num = int(np.round(midi))
@@ -664,6 +659,9 @@ def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
         note = "{:s}{:+02d}".format(note, note_cents)
 
     return note
+
+
+midi_to_note = vectorize(_midi_to_note, excluded=['octave', 'cents', 'key', 'unicode'])
 
 
 def midi_to_hz(notes):
@@ -1680,7 +1678,7 @@ def samples_like(X, *, hop_length=512, n_fft=None, axis=-1):
     return frames_to_samples(frames, hop_length=hop_length, n_fft=n_fft)
 
 
-def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
+def _midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
     """Convert MIDI numbers to Hindustani svara
 
     Parameters
@@ -1760,12 +1758,6 @@ def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
 
     SVARA_MAP_SHORT = list(s[0] for s in SVARA_MAP)
 
-    if not np.isscalar(midi):
-        return [
-            midi_to_svara_h(m, Sa=Sa, abbr=abbr, octave=octave, unicode=unicode)
-            for m in midi
-        ]
-
     svara_num = int(np.round(midi - Sa))
 
     if abbr:
@@ -1786,6 +1778,9 @@ def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
                 svara += ","
 
     return svara
+
+
+midi_to_svara_h = vectorize(_midi_to_svara_h, excluded=['Sa', 'abbr', 'octave', 'unicode'])
 
 
 def hz_to_svara_h(frequencies, *, Sa, abbr=True, octave=True, unicode=True):
@@ -1909,7 +1904,7 @@ def note_to_svara_h(notes, *, Sa, abbr=True, octave=True, unicode=True):
     )
 
 
-def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
+def _midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
     """Convert MIDI numbers to Carnatic svara within a given melakarta raga
 
     Parameters
@@ -1954,14 +1949,6 @@ def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
     mela_to_svara
     list_mela
     """
-    if not np.isscalar(midi):
-        return [
-            midi_to_svara_c(
-                m, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode
-            )
-            for m in midi
-        ]
-
     svara_num = int(np.round(midi - Sa))
 
     svara_map = notation.mela_to_svara(mela, abbr=abbr, unicode=unicode)
@@ -1981,6 +1968,9 @@ def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
                 svara += ","
 
     return svara
+
+
+midi_to_svara_c = vectorize(_midi_to_svara_c, excluded=['Sa', 'mela', 'abbr', 'octave', 'unicode'])
 
 
 def hz_to_svara_c(frequencies, *, Sa, mela, abbr=True, octave=True, unicode=True):
