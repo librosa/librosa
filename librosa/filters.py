@@ -1432,13 +1432,33 @@ def semitone_filterbank(
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> import scipy.signal
-    >>> semitone_filterbank, sample_rates = librosa.filters.semitone_filterbank()
-    >>> fig, ax = plt.subplots()
+    >>> semitone_filterbank, sample_rates = librosa.filters.semitone_filterbank(
+    ...     center_freqs=librosa.midi_to_hz(np.arange(60, 72)),
+    ...     sample_rates=np.repeat(4410.0, 12),
+    ...     flayout='sos'
+    ...     )
+    >>> magnitudes = []
     >>> for cur_sr, cur_filter in zip(sample_rates, semitone_filterbank):
-    ...    w, h = scipy.signal.freqz(cur_filter[0], cur_filter[1], worN=2000)
-    ...    ax.semilogx((cur_sr / (2 * np.pi)) * w, 20 * np.log10(abs(h)))
-    >>> ax.set(xlim=[20, 10e3], ylim=[-60, 3], title='Magnitude Responses of the Pitch Filterbank',
-    ...        xlabel='Log-Frequency (Hz)', ylabel='Magnitude (dB)')
+    ...     w, h = scipy.signal.sosfreqz(cur_filter,fs=cur_sr, worN=1025)
+    ...     magnitudes.append(20 * np.log10(np.abs(h)))
+    >>> fig, ax = plt.subplots(figsize=(12,6))
+    >>> img = librosa.display.specshow(
+    ...     np.array(magnitudes), 
+    ...     x_axis="hz", 
+    ...     sr=4410, 
+    ...     y_coords=librosa.midi_to_hz(np.arange(60, 72)), 
+    ...     vmin=-60, 
+    ...     vmax=3, 
+    ...     ax=ax
+    ...     )
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB", label="Magnitude (dB)")
+    >>> ax.set(
+    ...     xlim=[200, 600], 
+    ...     yticks=librosa.midi_to_hz(np.arange(60, 72)),
+    ...     title='Magnitude Responses of the Pitch Filterbank', 
+    ...     xlabel='Frequency (Hz)', 
+    ...     ylabel='Semitone filter center frequency (Hz)'
+    ... )
     """
 
     if (center_freqs is None) and (sample_rates is None):
