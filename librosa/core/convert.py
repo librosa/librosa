@@ -570,7 +570,8 @@ def note_to_midi(note, *, round_midi=True):
     return note_value
 
 
-def _midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
+@vectorize(excluded=['octave', 'cents', 'key', 'unicode'])
+def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
     """Convert one or more MIDI numbers to note strings.
 
     MIDI numbers will be rounded to the nearest integer.
@@ -659,9 +660,6 @@ def _midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
         note = "{:s}{:+02d}".format(note, note_cents)
 
     return note
-
-
-midi_to_note = vectorize(_midi_to_note, excluded=['octave', 'cents', 'key', 'unicode'])
 
 
 def midi_to_hz(notes):
@@ -1678,7 +1676,8 @@ def samples_like(X, *, hop_length=512, n_fft=None, axis=-1):
     return frames_to_samples(frames, hop_length=hop_length, n_fft=n_fft)
 
 
-def _midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
+@vectorize(excluded=['Sa', 'abbr', 'octave', 'unicode'])
+def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
     """Convert MIDI numbers to Hindustani svara
 
     Parameters
@@ -1778,9 +1777,6 @@ def _midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
                 svara += ","
 
     return svara
-
-
-midi_to_svara_h = vectorize(_midi_to_svara_h, excluded=['Sa', 'abbr', 'octave', 'unicode'])
 
 
 def hz_to_svara_h(frequencies, *, Sa, abbr=True, octave=True, unicode=True):
@@ -1904,7 +1900,8 @@ def note_to_svara_h(notes, *, Sa, abbr=True, octave=True, unicode=True):
     )
 
 
-def _midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
+@vectorize(excluded=['Sa', 'mela', 'abbr', 'octave', 'unicode'])
+def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
     """Convert MIDI numbers to Carnatic svara within a given melakarta raga
 
     Parameters
@@ -1969,8 +1966,6 @@ def _midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
 
     return svara
 
-
-midi_to_svara_c = vectorize(_midi_to_svara_c, excluded=['Sa', 'mela', 'abbr', 'octave', 'unicode'])
 
 
 def hz_to_svara_c(frequencies, *, Sa, mela, abbr=True, octave=True, unicode=True):

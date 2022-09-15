@@ -57,18 +57,22 @@ def deprecated(*, version, version_removed):
     return decorator(__wrapper)
 
 
-def vectorize(function, *, otypes=None, doc=None, excluded=None, cache=False, signature=None):
+def vectorize(*, otypes=None, doc=None, excluded=None, cache=False, signature=None):
     """This function is not quite a decorator, but is used as a wrapper
     to np.vectorize that preserves scalar behavior.
     """
-    vecfunc = np.vectorize(function, otypes=otypes, doc=doc, excluded=excluded, cache=cache, signature=signature)
 
-    @functools.wraps(function)
-    def _vec(*args, **kwargs):
-        y = vecfunc(*args, **kwargs)
-        if np.isscalar(args[0]):
-            return y.item()
-        else:
-            return y
+    def __wrapper(function):
+        vecfunc = np.vectorize(function, otypes=otypes, doc=doc, excluded=excluded, cache=cache, signature=signature)
 
-    return _vec
+        @functools.wraps(function)
+        def _vec(*args, **kwargs):
+            y = vecfunc(*args, **kwargs)
+            if np.isscalar(args[0]):
+                return y.item()
+            else:
+                return y
+
+        return _vec
+
+    return __wrapper
