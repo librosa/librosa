@@ -8,6 +8,7 @@ from numba import jit
 from .intervals import INTERVALS
 from .._cache import cache
 from ..util.exceptions import ParameterError
+from ..util.decorators import vectorize
 
 __all__ = [
     "key_to_degrees",
@@ -843,7 +844,8 @@ SUPER_TRANS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 SUB_TRANS = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 
 
-def _interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True):
+@vectorize(otypes="U", excluded=set(["unison", "tolerance", "unicode"]))
+def interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True):
     """Convert an interval to Functional Just System (FJS) notation.
 
     See https://misotanni.github.io/fjs/en/index.html for a thorough overview
@@ -954,8 +956,3 @@ def _interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True)
             suffix += f"_{utonal}"
 
     return note_name + suffix
-
-
-interval_to_fjs = np.vectorize(
-    _interval_to_fjs, otypes="U", excluded=set(["unison", "tolerance", "unicode"])
-)
