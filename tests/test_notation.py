@@ -265,7 +265,7 @@ def test_interval_to_fjs_nonpos(r):
         ]
 )
 def test_interval_to_fjs(interval, unison, unicode, result):
-    note = librosa.interval_to_fjs(interval, unison=unison, unicode=unicode).item()
+    note = librosa.interval_to_fjs(interval, unison=unison, unicode=unicode)
 
     assert note == result
 
@@ -277,7 +277,7 @@ def test_interval_to_fjs_set(unison, unicode, intervals):
     fjs = librosa.interval_to_fjs(intervals, unison=unison, unicode=unicode)
 
     for (interval, note) in zip(intervals, fjs):
-        fjs_single = librosa.interval_to_fjs(interval, unison=unison, unicode=unicode).item()
+        fjs_single = librosa.interval_to_fjs(interval, unison=unison, unicode=unicode)
         assert fjs_single == note
 
 
