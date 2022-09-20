@@ -16,6 +16,7 @@ dependencies:
   - pysoundfile>=0.10.2
   - pooch>=1.0
   - packaging>=20.0
+  - soxr-python>=0.3.0
 
   # optional, but required for testing
   - matplotlib>=3.3.0
@@ -26,5 +27,4 @@ dependencies:
   - coverage
   - ffmpeg
   - pip:
-    - soxr
     - samplerate

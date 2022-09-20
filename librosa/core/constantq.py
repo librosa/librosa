@@ -36,7 +36,7 @@ def cqt(
     window="hann",
     scale=True,
     pad_mode="constant",
-    res_type=None,
+    res_type="soxr_hq",
     dtype=None,
 ):
     """Compute the constant-Q transform of an audio signal.
@@ -106,16 +106,8 @@ def cqt(
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string [optional]
+    res_type : string
         The resampling mode for recursive downsampling.
-
-        By default, `cqt` will adaptively select a resampling mode
-        which trades off accuracy at high frequencies for efficiency at low frequencies.
-
-        You can override this by specifying a resampling mode as supported by
-        `librosa.resample`.  For example, ``res_type='fft'`` will use a high-quality,
-        but potentially slow FFT-based down-sampling, while ``res_type='polyphase'`` will
-        use a fast, but potentially inaccurate down-sampling.
 
     dtype : np.dtype
         The (complex) data type of the output array.  By default, this is inferred to match
@@ -209,7 +201,7 @@ def hybrid_cqt(
     window="hann",
     scale=True,
     pad_mode="constant",
-    res_type=None,
+    res_type="soxr_hq",
     dtype=None,
 ):
     """Compute the hybrid constant-Q transform of an audio signal.
@@ -547,7 +539,7 @@ def icqt(
     window="hann",
     scale=True,
     length=None,
-    res_type="fft",
+    res_type="soxr_hq",
     dtype=None,
 ):
     """Compute the inverse constant-Q transform.
@@ -608,8 +600,7 @@ def icqt(
         ``length`` samples.
 
     res_type : string
-        Resampling mode.  By default, this uses ``'fft'`` mode for high-quality
-        reconstruction, but this may be slow depending on your signal duration.
+        Resampling mode.
         See `librosa.resample` for supported modes.
 
     dtype : numeric type
@@ -773,7 +764,7 @@ def vqt(
     window="hann",
     scale=True,
     pad_mode="constant",
-    res_type=None,
+    res_type="soxr_hq",
     dtype=None,
 ):
     """Compute the variable-Q transform of an audio signal.
@@ -867,16 +858,8 @@ def vqt(
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string [optional]
+    res_type : string
         The resampling mode for recursive downsampling.
-
-        By default, `vqt` will adaptively select a resampling mode
-        which trades off accuracy at high frequencies for efficiency at low frequencies.
-
-        You can override this by specifying a resampling mode as supported by
-        `librosa.resample`.  For example, ``res_type='fft'`` will use a high-quality,
-        but potentially slow FFT-based down-sampling, while ``res_type='polyphase'`` will
-        use a fast, but potentially inaccurate down-sampling.
 
     dtype : np.dtype
         The dtype of the output array.  By default, this is inferred to match the
@@ -957,13 +940,12 @@ def vqt(
             "Try reducing the number of frequency bins."
         )
 
-    auto_resample = False
-    if not res_type:
-        auto_resample = True
-        if filter_cutoff < audio.BW_FASTEST * nyquist:
-            res_type = "kaiser_fast"
-        else:
-            res_type = "kaiser_best"
+    if res_type is None:
+        warnings.warn("Support for VQT with res_type=None is deprecated in librosa 0.10\n"
+                      "and will be removed in version 1.0.",
+                      category=DeprecationWarning,
+                      stacklevel=2)
+        res_type = "soxr_hq"
 
     y, sr, hop_length = __early_downsample(
         y, sr, hop_length, res_type, n_octaves, nyquist, filter_cutoff, scale
@@ -971,38 +953,10 @@ def vqt(
 
     vqt_resp = []
 
-    # Skip this block for now
-    oct_start = 0
-    if auto_resample and res_type != "kaiser_fast":
-
-        # Do the top octave before resampling to allow for fast resampling
-        freqs_top = freqs[-n_filters:]
-
-        fft_basis, n_fft, _ = __vqt_filter_fft(
-            sr,
-            freqs_top,
-            filter_scale,
-            norm,
-            sparsity,
-            window=window,
-            gamma=gamma,
-            dtype=dtype,
-            alpha=alpha,
-        )
-
-        # Compute the VQT filter response and append it to the stack
-        vqt_resp.append(
-            __cqt_response(y, n_fft, hop_length, fft_basis, pad_mode, dtype=dtype)
-        )
-
-        oct_start = 1
-
-        res_type = "kaiser_fast"
-
     # Iterate down the octaves
     my_y, my_sr, my_hop = y, sr, hop_length
 
-    for i in range(oct_start, n_octaves):
+    for i in range(n_octaves):
 
         # Slice out the current octave of filters
         if i == 0:
@@ -1167,7 +1121,7 @@ def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
     """Compute the number of early downsampling operations"""
 
     downsample_count1 = max(
-        0, int(np.ceil(np.log2(audio.BW_FASTEST * nyquist / filter_cutoff)) - 1) - 1
+        0, int(np.ceil(np.log2(nyquist / filter_cutoff)) - 1) - 1
     )
 
     num_twos = __num_two_factors(hop_length)
@@ -1185,7 +1139,7 @@ def __early_downsample(
         nyquist, filter_cutoff, hop_length, n_octaves
     )
 
-    if downsample_count > 0 and res_type == "kaiser_fast":
+    if downsample_count > 0:
         downsample_factor = 2 ** (downsample_count)
 
         hop_length //= downsample_factor
@@ -1198,7 +1152,7 @@ def __early_downsample(
 
         new_sr = sr / float(downsample_factor)
         y = audio.resample(
-            y, orig_sr=sr, target_sr=new_sr, res_type=res_type, scale=True
+            y, orig_sr=downsample_factor, target_sr=1, res_type=res_type, scale=True
         )
 
         # If we're not going to length-scale after CQT, we
@@ -1242,7 +1196,7 @@ def griffinlim_cqt(
     window="hann",
     scale=True,
     pad_mode="constant",
-    res_type="kaiser_fast",
+    res_type="soxr_hq",
     dtype=None,
     length=None,
     momentum=0.99,
@@ -1325,12 +1279,6 @@ def griffinlim_cqt(
 
     res_type : string
         The resampling mode for recursive downsampling.
-
-        By default, CQT uses an adaptive mode selection to
-        trade accuracy at high frequencies for efficiency at low
-        frequencies.
-
-        Griffin-Lim uses the efficient (fast) resampling mode by default.
 
         See ``librosa.resample`` for a list of available options.
 

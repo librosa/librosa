@@ -84,7 +84,7 @@ def test_load_audioread():
     assert np.isclose(sr, sr2)
 
 
-@pytest.mark.parametrize("res_type", ["kaiser_fast", "kaiser_best", "scipy"])
+@pytest.mark.parametrize("res_type", ["soxr_qq", "soxr_hq", "scipy"])
 def test_load_resample(res_type):
 
     sr_target = 16000

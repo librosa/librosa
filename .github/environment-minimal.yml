@@ -11,7 +11,6 @@ dependencies:
   - scikit-learn==0.19.1
   - joblib==0.14.0
   - decorator==4.0.10
-  - resampy==0.2.2
   - numba==0.45.1
   - pysoundfile==0.10.2
   - pooch==1.0.0
@@ -26,9 +25,10 @@ dependencies:
   - coverage
   - ffmpeg
   - tomli<2.0
+  - resampy==0.2.2
 
   # For python 3.6 we limit this dependency
   - typing-extensions<4.2
   - pip:
-    - soxr
+    - soxr>=0.3.0
     - samplerate
