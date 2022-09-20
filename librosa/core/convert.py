@@ -6,6 +6,7 @@ import re
 import numpy as np
 from . import notation
 from ..util.exceptions import ParameterError
+from ..util.decorators import vectorize
 
 __all__ = [
     "frames_to_samples",
@@ -569,6 +570,7 @@ def note_to_midi(note, *, round_midi=True):
     return note_value
 
 
+@vectorize(excluded=['octave', 'cents', 'key', 'unicode'])
 def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
     """Convert one or more MIDI numbers to note strings.
 
@@ -596,13 +598,15 @@ def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
     >>> librosa.midi_to_note(104.7, cents=True)
     'A7-30'
 
-    >>> librosa.midi_to_note(list(range(12, 24)))
-    ['C0', 'C♯0', 'D0', 'D♯0', 'E0', 'F0', 'F♯0', 'G0', 'G♯0', 'A0', 'A♯0', 'B0']
+    >>> librosa.midi_to_note(np.arange(12, 24)))
+    array(['C0', 'C♯0', 'D0', 'D♯0', 'E0', 'F0', 'F♯0', 'G0', 'G♯0', 'A0',
+           'A♯0', 'B0'], dtype='<U3')
 
     Use a key signature to resolve enharmonic equivalences
 
     >>> librosa.midi_to_note(range(12, 24), key='F:min')
-    ['C0', 'D♭0', 'D0', 'E♭0', 'E0', 'F0', 'G♭0', 'G0', 'A♭0', 'A0', 'B♭0', 'B0']
+    array(['C0', 'D♭0', 'D0', 'E♭0', 'E0', 'F0', 'G♭0', 'G0', 'A♭0', 'A0',
+           'B♭0', 'B0'], dtype='<U3')
 
     Parameters
     ----------
@@ -626,7 +630,7 @@ def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
 
     Returns
     -------
-    notes : str or iterable of str
+    notes : str or np.ndarray of str
         Strings describing each midi note.
 
     Raises
@@ -644,12 +648,6 @@ def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
 
     if cents and not octave:
         raise ParameterError("Cannot encode cents without octave information.")
-
-    if not np.isscalar(midi):
-        return [
-            midi_to_note(x, octave=octave, cents=cents, key=key, unicode=unicode)
-            for x in midi
-        ]
 
     note_map = notation.key_to_notes(key=key, unicode=unicode)
 
@@ -740,7 +738,7 @@ def hz_to_note(frequencies, **kwargs):
 
     Returns
     -------
-    notes : list of str
+    notes : str or np.ndarray of str
         ``notes[i]`` is the closest note name to ``frequency[i]``
         (or ``frequency`` if the input is scalar)
 
@@ -755,7 +753,7 @@ def hz_to_note(frequencies, **kwargs):
     Get a single note name for a frequency
 
     >>> librosa.hz_to_note(440.0)
-    ['A5']
+    'A5'
 
     Get multiple notes with cent deviation
 
@@ -1680,6 +1678,7 @@ def samples_like(X, *, hop_length=512, n_fft=None, axis=-1):
     return frames_to_samples(frames, hop_length=hop_length, n_fft=n_fft)
 
 
+@vectorize(excluded=['Sa', 'abbr', 'octave', 'unicode'])
 def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
     """Convert MIDI numbers to Hindustani svara
 
@@ -1710,7 +1709,7 @@ def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
 
     Returns
     -------
-    svara : str or list of str
+    svara : str or np.ndarray of str
         The svara corresponding to the given MIDI number(s)
 
     See Also
@@ -1722,25 +1721,30 @@ def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
 
     Examples
     --------
+    Convert a single midi number:
+
+    >>> librosa.midi_to_svara_h(65, Sa=60)
+    'm'
+
     The first three svara with Sa at midi number 60:
 
-    >>> librosa.midi_svara_h([60, 61, 62], Sa=60)
-    ['S', 'r', 'R']
+    >>> librosa.midi_to_svara_h([60, 61, 62], Sa=60)
+    array(['S', 'r', 'R'], dtype='<U1')
 
     With Sa=67, midi 60-62 are in the octave below:
 
     >>> librosa.midi_to_svara_h([60, 61, 62], Sa=67)
-    ['ṃ', 'Ṃ', 'P̣']
+    array(['ṃ', 'Ṃ', 'P̣'], dtype='<U2')
 
     Or without unicode decoration:
 
     >>> librosa.midi_to_svara_h([60, 61, 62], Sa=67, unicode=False)
-    ['m,', 'M,', 'P,']
+    array(['m,', 'M,', 'P,'], dtype='<U2')
 
     Or going up an octave, with Sa=60, and using unabbreviated notes
 
     >>> librosa.midi_to_svara_h([72, 73, 74], Sa=60, abbr=False)
-    ['Ṡa', 'ṙe', 'Ṙe']
+    array(['Ṡa', 'ṙe', 'Ṙe'], dtype='<U3')
     """
 
     SVARA_MAP = [
@@ -1759,12 +1763,6 @@ def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
     ]
 
     SVARA_MAP_SHORT = list(s[0] for s in SVARA_MAP)
-
-    if not np.isscalar(midi):
-        return [
-            midi_to_svara_h(m, Sa=Sa, abbr=abbr, octave=octave, unicode=unicode)
-            for m in midi
-        ]
 
     svara_num = int(np.round(midi - Sa))
 
@@ -1820,7 +1818,7 @@ def hz_to_svara_h(frequencies, *, Sa, abbr=True, octave=True, unicode=True):
 
     Returns
     -------
-    svara : str or list of str
+    svara : str or np.ndarray of str
         The svara corresponding to the given frequency/frequencies
 
     See Also
@@ -1857,7 +1855,7 @@ def note_to_svara_h(notes, *, Sa, abbr=True, octave=True, unicode=True):
 
     Parameters
     ----------
-    notes : str or list of str
+    notes : str or iterable of str
         Notes to convert (e.g., `'C#'` or `['C4', 'Db4', 'D4']`
 
     Sa : str
@@ -1885,7 +1883,7 @@ def note_to_svara_h(notes, *, Sa, abbr=True, octave=True, unicode=True):
 
     Returns
     -------
-    svara : str or list of str
+    svara : str or np.ndarray of str
         The svara corresponding to the given notes
 
     See Also
@@ -1909,6 +1907,7 @@ def note_to_svara_h(notes, *, Sa, abbr=True, octave=True, unicode=True):
     )
 
 
+@vectorize(excluded=['Sa', 'mela', 'abbr', 'octave', 'unicode'])
 def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
     """Convert MIDI numbers to Carnatic svara within a given melakarta raga
 
@@ -1943,7 +1942,7 @@ def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
 
     Returns
     -------
-    svara : str or list of str
+    svara : str or np.ndarray of str
         The svara corresponding to the given MIDI number(s)
 
     See Also
@@ -1954,14 +1953,6 @@ def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
     mela_to_svara
     list_mela
     """
-    if not np.isscalar(midi):
-        return [
-            midi_to_svara_c(
-                m, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode
-            )
-            for m in midi
-        ]
-
     svara_num = int(np.round(midi - Sa))
 
     svara_map = notation.mela_to_svara(mela, abbr=abbr, unicode=unicode)
@@ -1981,6 +1972,7 @@ def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
                 svara += ","
 
     return svara
+
 
 
 def hz_to_svara_c(frequencies, *, Sa, mela, abbr=True, octave=True, unicode=True):
@@ -2018,7 +2010,7 @@ def hz_to_svara_c(frequencies, *, Sa, mela, abbr=True, octave=True, unicode=True
 
     Returns
     -------
-    svara : str or list of str
+    svara : str or np.ndarray of str
         The svara corresponding to the given frequency/frequencies
 
     See Also
@@ -2056,7 +2048,7 @@ def note_to_svara_c(notes, *, Sa, mela, abbr=True, octave=True, unicode=True):
 
     Parameters
     ----------
-    notes : str or list of str
+    notes : str or iterable of str
         Notes to convert (e.g., `'C#'` or `['C4', 'Db4', 'D4']`
 
     Sa : str
@@ -2087,7 +2079,7 @@ def note_to_svara_c(notes, *, Sa, mela, abbr=True, octave=True, unicode=True):
 
     Returns
     -------
-    svara : str or list of str
+    svara : str or np.ndarray of str
         The svara corresponding to the given notes
 
     See Also

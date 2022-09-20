@@ -293,7 +293,10 @@ def test_hz_to_midi():
 )
 def test_hz_to_note(hz, note, octave, cents):
     note_out = librosa.hz_to_note(hz, octave=octave, cents=cents)
-    assert note_out == note
+    if np.isscalar(hz):
+        assert note_out == note
+    else:
+        assert np.all(note_out == note)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)

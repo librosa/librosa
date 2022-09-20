@@ -4,10 +4,12 @@
 """Helpful tools for deprecation"""
 
 import warnings
+import functools
 from decorator import decorator
+import numpy as np
 
 
-__all__ = ["moved", "deprecated"]
+__all__ = ["moved", "deprecated", "vectorize"]
 
 
 def moved(*, moved_from, version, version_removed):
@@ -53,3 +55,24 @@ def deprecated(*, version, version_removed):
         return func(*args, **kwargs)
 
     return decorator(__wrapper)
+
+
+def vectorize(*, otypes=None, doc=None, excluded=None, cache=False, signature=None):
+    """This function is not quite a decorator, but is used as a wrapper
+    to np.vectorize that preserves scalar behavior.
+    """
+
+    def __wrapper(function):
+        vecfunc = np.vectorize(function, otypes=otypes, doc=doc, excluded=excluded, cache=cache, signature=signature)
+
+        @functools.wraps(function)
+        def _vec(*args, **kwargs):
+            y = vecfunc(*args, **kwargs)
+            if np.isscalar(args[0]):
+                return y.item()
+            else:
+                return y
+
+        return _vec
+
+    return __wrapper
