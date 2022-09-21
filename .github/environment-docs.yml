@@ -6,7 +6,7 @@ dependencies:
   # required
   - pip
   - audioread>=2.1.5
-  - numpy>=1.15
+  - numpy>=1.17
   - scipy>=1.2.0
   - scikit-learn>=0.19.1
   - joblib>=0.14.0
@@ -17,7 +17,6 @@ dependencies:
   - numpydoc>=1.1.0
   - ipython>=7.0
   - pysoundfile>=0.10.2
-  - python_abi>=3.9
   - pooch>=1.0.0
   - packaging>=20.0
   - matplotlib>=3.5
