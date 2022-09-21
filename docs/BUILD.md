@@ -27,9 +27,4 @@ deposited under `build/html`.  To deploy, we sync the compiled site to the
 
 Because the historical docs include example code that is executed to generate
 figures, the environment for building historical docs can be brittle.
-Presently, the oldest compiled doc is for release 0.7.2.
-The historical docs work with the following dependency versions:
-
-    - numba=0.48 : decorators submodule move in 0.49 gives warnings, and 0.50 breaks old librosa
-    - numpy=1.17 : strict dtype requirements in linspace parameters break some of our old examples from 1.18 on
-    - matplotlib=3.3,<3.5 : log axes API changes cause warnings in 3.3 onward
+Presently, the oldest compiled doc is for release 0.8.1.
