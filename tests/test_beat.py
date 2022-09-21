@@ -2,8 +2,6 @@
 # CREATED:2013-03-11 18:14:30 by Brian McFee <brm2132@columbia.edu>
 #  unit tests for librosa.beat
 
-from __future__ import print_function
-
 # Disable cache
 import os
 
@@ -13,7 +11,7 @@ except:
     pass
 
 import pytest
-from contextlib2 import nullcontext as dnr
+from contextlib import nullcontext as dnr
 
 import numpy as np
 import scipy.stats
