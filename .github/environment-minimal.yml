@@ -15,6 +15,7 @@ dependencies:
   - pysoundfile==0.10.2
   - pooch==1.0.0
   - packaging==20.0
+  - soxr-python==0.3.2
 
   # optional, but required for testing
   - matplotlib==3.3.0
@@ -30,5 +31,4 @@ dependencies:
   # For python 3.6 we limit this dependency
   - typing-extensions<4.2
   - pip:
-    - soxr>=0.3.0
     - samplerate
