@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   # required
-  - pip<22.0
+  - pip
   - audioread==2.1.9
   - numpy==1.17.0
   - scipy==1.2.0
@@ -24,10 +24,7 @@ dependencies:
   - pytest
   - coverage
   - ffmpeg
-  - tomli<2.0
   - resampy==0.2.2
 
-  # For python 3.6 we limit this dependency
-  - typing-extensions<4.2
   - pip:
     - samplerate
