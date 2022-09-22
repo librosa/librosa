@@ -4,31 +4,27 @@ channels:
   - defaults
 dependencies:
   # required
-  - pip<22.0
+  - pip
   - audioread==2.1.9
-  - numpy==1.17.0
+  - numpy==1.20.3
   - scipy==1.2.0
-  - scikit-learn==0.19.1
+  - scikit-learn==0.20.0
   - joblib==0.14.0
-  - decorator==4.0.10
-  - numba==0.45.1
+  - decorator==4.3.0
+  - numba==0.51.0
   - pysoundfile==0.10.2
   - pooch==1.0.0
   - packaging==20.0
+  - soxr-python==0.3.2
 
   # optional, but required for testing
   - matplotlib==3.3.0
   - pytest-mpl
   - pytest-cov
   - pytest
-  - contextlib2
   - coverage
   - ffmpeg
-  - tomli<2.0
   - resampy==0.2.2
 
-  # For python 3.6 we limit this dependency
-  - typing-extensions<4.2
   - pip:
-    - soxr>=0.3.0
     - samplerate

@@ -21,16 +21,11 @@ jobs:
             fail-fast: false
             matrix:
                 include:
-                    - os: ubuntu-18.04
-                      python-version: "3.6"
+                    - os: ubuntu-latest
+                      python-version: "3.7"
                       envfile: ".github/environment-minimal.yml"
                       channel-priority: "flexible"
                       name: "Minimal dependencies"
-
-                    - os: ubuntu-latest
-                      python-version: "3.7"
-                      channel-priority: "strict"
-                      envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
                       python-version: "3.8"
@@ -42,13 +37,18 @@ jobs:
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
+                    - os: ubuntu-latest
+                      python-version: "3.10"
+                      channel-priority: "strict"
+                      envfile: ".github/environment-ci.yml"
+
                     - os: macos-latest
-                      python-version: "3.9"
+                      python-version: "3.10"
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: windows-latest
-                      python-version: "3.9"
+                      python-version: "3.10"
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
