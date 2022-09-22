@@ -201,27 +201,134 @@ Miscellaneous
     set_fftlib
 """
 
+import lazy_loader as lazy
 from .version import version as __version__
-from .version import show_versions
 
-# And all the librosa sub-modules
-from ._cache import cache
-from . import core
-from . import beat
-from . import decompose
-from . import effects
-from . import feature
-from . import filters
-from . import onset
-from . import segment
-from . import sequence
-from . import util
 
-# Exporting exception classes at the top level
-from .util.exceptions import *  # pylint: disable=wildcard-import
+__getattr__, __lazy_dir__, _ = lazy.attach(
+    __name__,
+    submodules=[
+        "core",
+        "beat",
+        "decompose",
+        "display",
+        "effects",
+        "feature",
+        "filters",
+        "onset",
+        "segment",
+        "sequence",
+        "util",
+    ],
+    submod_attrs={
+        "_cache": ["cache"],
+        "util.exceptions": ["LibrosaError", "ParameterError"],
+        "util.files": ["example", "ex"],
+        "core": [
+            "A4_to_tuning",
+            "A_weighting",
+            "B_weighting",
+            "C_weighting",
+            "D_weighting",
+            "Z_weighting",
+            "amplitude_to_db",
+            "audio",
+            "autocorrelate",
+            "blocks_to_frames",
+            "blocks_to_samples",
+            "blocks_to_time",
+            "chirp",
+            "clicks",
+            "constantq",
+            "convert",
+            "cqt",
+            "cqt_frequencies",
+            "db_to_amplitude",
+            "db_to_power",
+            "estimate_tuning",
+            "fft",
+            "fft_frequencies",
+            "fmt",
+            "fourier_tempo_frequencies",
+            "frames_to_samples",
+            "frames_to_time",
+            "frequency_weighting",
+            "get_duration",
+            "get_fftlib",
+            "get_samplerate",
+            "griffinlim",
+            "griffinlim_cqt",
+            "harmonic",
+            "hybrid_cqt",
+            "hz_to_mel",
+            "hz_to_midi",
+            "hz_to_note",
+            "hz_to_octs",
+            "hz_to_svara_c",
+            "hz_to_svara_h",
+            "icqt",
+            "iirt",
+            "interp_harmonics",
+            "istft",
+            "key_to_degrees",
+            "key_to_notes",
+            "list_mela",
+            "list_thaat",
+            "load",
+            "lpc",
+            "magphase",
+            "mel_frequencies",
+            "mel_to_hz",
+            "mela_to_degrees",
+            "mela_to_svara",
+            "midi_to_hz",
+            "midi_to_note",
+            "midi_to_svara_c",
+            "midi_to_svara_h",
+            "mu_compress",
+            "mu_expand",
+            "multi_frequency_weighting",
+            "notation",
+            "note_to_hz",
+            "note_to_midi",
+            "note_to_svara_c",
+            "note_to_svara_h",
+            "octs_to_hz",
+            "pcen",
+            "perceptual_weighting",
+            "phase_vocoder",
+            "piptrack",
+            "pitch",
+            "pitch_tuning",
+            "power_to_db",
+            "pseudo_cqt",
+            "pyin",
+            "reassigned_spectrogram",
+            "resample",
+            "salience",
+            "samples_like",
+            "samples_to_frames",
+            "samples_to_time",
+            "set_fftlib",
+            "spectrum",
+            "stft",
+            "stream",
+            "tempo_frequencies",
+            "thaat_to_degrees",
+            "time_to_frames",
+            "time_to_samples",
+            "times_like",
+            "to_mono",
+            "tone",
+            "tuning_to_A4",
+            "vqt",
+            "yin",
+            "zero_crossings",
+        ],
+        "version": ["show_versions"],
+    },
+)
 
-# Exporting data loader at the top level
-from .util.files import example, ex
 
-# Exporting all core functions is okay here: suppress the import warning
-from .core import *  # pylint: disable=wildcard-import
+def __dir__():
+    return __lazy_dir__() + ["__version__"]
