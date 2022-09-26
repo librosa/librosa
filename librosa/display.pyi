@@ -1,5 +1,7 @@
 from _typeshed import Incomplete
 
+import matplotlib.ticker as mplticker
+
 class TimeFormatter(mplticker.Formatter):
     unit: Incomplete
     lag: Incomplete
