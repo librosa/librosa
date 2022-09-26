@@ -24,6 +24,7 @@ Axis formatting
     LogHzFormatter
     ChromaFormatter
     ChromaSvaraFormatter
+    ChromaFJSFormatter
     TonnetzFormatter
 
 Miscellaneous
@@ -63,6 +64,8 @@ __all__ = [
     "FJSFormatter",
     "LogHzFormatter",
     "ChromaFormatter",
+    "ChromaSvaraFormatter",
+    "ChromaFJSFormatter",
     "TonnetzFormatter",
     "AdaptiveWaveplot",
 ]
@@ -516,6 +519,45 @@ class ChromaSvaraFormatter(mplticker.Formatter):
             )
 
 
+class ChromaFJSFormatter(mplticker.Formatter):
+    """A formatter for chroma axes with functional just notation
+
+    See also
+    --------
+    matplotlib.ticker.Formatter
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> values = np.arange(12)
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(values)
+    >>> ax.yaxis.set_major_formatter(librosa.display.ChromaFJSFormatter(intervals="ji5", bins_per_octave=12))
+    >>> ax.set(ylabel='Pitch class')
+    """
+
+    def __init__(self, unison='C', unicode=True, intervals=None, bins_per_octave=None):
+        self.unison = unison
+        self.unicode = unicode
+        self.intervals = intervals
+        if not isinstance(intervals, str):
+            bins_per_octave = len(intervals)
+        self.bins_per_octave = bins_per_octave
+        # Construct the explicit interval set
+        self.intervals_ = core.interval_frequencies(bins_per_octave,
+                                                    fmin=1,
+                                                    intervals=intervals,
+                                                    bins_per_octave=bins_per_octave)
+
+    def __call__(self, x, pos=None):
+        """Format for chroma positions"""
+        return core.interval_to_fjs(
+                self.intervals_[int(x) % self.bins_per_octave],
+                unison=self.unison,
+                unicode=self.unicode
+        )
+
+
 class TonnetzFormatter(mplticker.Formatter):
     """A formatter for tonnetz axes
 
@@ -745,6 +787,7 @@ _chroma_ax_types = (
     "chroma",
     "chroma_h",
     "chroma_c",
+    "chroma_fjs",
 )
 _cqt_ax_types = (
     "cqt_hz",
@@ -864,6 +907,9 @@ def specshow(
         - 'cqt_hz' : frequencies are determined by the CQT scale.
         - 'cqt_note' : pitches are determined by the CQT scale.
         - 'cqt_svara' : like `cqt_note` but using Hindustani or Carnatic svara
+        - 'vqt_fjs' : like `cqt_note` but using Functional Just System (FJS)
+          notation.  This requires a just intonation-based variable-Q
+          transform representation.
 
         All frequency types are plotted in units of Hz.
 
@@ -880,6 +926,9 @@ def specshow(
         - `chroma_h`, `chroma_c`: pitches are determined by chroma filters,
           and labeled as svara in the Hindustani (`chroma_h`) or Carnatic (`chroma_c`)
           according to a given thaat (Hindustani) or melakarta raga (Carnatic).
+
+        - 'chroma_fjs': pitches are determined by chroma filters using just
+          intonation.  All pitch classes are annotated.
 
         - 'tonnetz' : axes are labeled by Tonnetz dimensions (0-5)
         - 'frames' : markers are shown as frame counts.
@@ -917,7 +966,7 @@ def specshow(
         If not provided, they are inferred from ``x_axis`` and ``y_axis``.
 
     fmin : float > 0 [scalar] or None
-        Frequency of the lowest spectrogram bin.  Used for Mel and CQT
+        Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
         scales.
 
         If ``y_axis`` is `cqt_hz` or `cqt_note` and ``fmin`` is not given,
@@ -952,6 +1001,11 @@ def specshow(
 
     thaat : str, optional
         If using `chroma_h` display mode, specify the parent thaat.
+
+    unison : str, optional
+        If using an FJS notation (`chroma_fjs`, `vqt_fjs`), the pitch name of the unison
+        interval.  If not provided, it will be inferred from `fmin` (for VQT display) or
+        assumed as `'C'` (for chroma display).
 
     auto_aspect : bool
         Axes will have 'equal' aspect if the horizontal and vertical dimensions
@@ -1124,6 +1178,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         "chroma": __coord_chroma,
         "chroma_c": __coord_chroma,
         "chroma_h": __coord_chroma,
+        "chroma_fjs": __coord_n,  # We can't use a 12-normalized tick locator here
         "time": __coord_time,
         "h": __coord_time,
         "m": __coord_time,
@@ -1262,6 +1317,24 @@ def __decorate_axis(
             mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
         )
         axis.set_label_text("Svara")
+
+    elif ax_type == "chroma_fjs":
+        if fmin is None:
+            fmin = core.note_to_hz("C1")
+
+        if unison is None:
+            unison = core.hz_to_note(fmin, octave=False, cents=False)
+
+        axis.set_major_formatter(ChromaFJSFormatter(unison=unison,
+            unicode=unicode, intervals=intervals,
+            bins_per_octave=bins_per_octave))
+
+        degrees = np.arange(bins_per_octave)
+
+        axis.set_major_locator(
+            FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+        )
+        axis.set_label_text("Pitch class")
 
     elif ax_type in ["tempo", "fourier_tempo"]:
         axis.set_major_formatter(mplticker.ScalarFormatter())
