@@ -798,6 +798,12 @@ def vqt(
     n_bins : int > 0 [scalar]
         Number of frequency bins, starting at ``fmin``
 
+    intervals : str or array of floats in [1, 2)
+        Either a string specification for an interval set, e.g.,
+        `'equal'`, `'pythagorean'`, `'ji3'`, etc. or an array of
+        intervals expressed as numbers between 1 and 2.
+        .. see also:: librosa.interval_frequencies
+
     gamma : number > 0 [scalar]
         Bandwidth offset for determining filter lengths.
 
