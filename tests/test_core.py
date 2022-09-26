@@ -2122,6 +2122,8 @@ def test_pcen_stream_multi(axis):
     slice2 = [slice(None)] * x.ndim
     slice2[axis] = slice(10, None)
 
+    slice1 = tuple(slice1)
+    slice2 = tuple(slice2)
     # Compute pcen piecewise
     p1, zf1 = librosa.pcen(x[slice1], return_zf=True, axis=axis)
     p2, zf2 = librosa.pcen(x[slice2], zi=zf1, return_zf=True, axis=axis)

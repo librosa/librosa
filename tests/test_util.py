@@ -877,13 +877,13 @@ def test_sync(aggregate, ndim, axis):
     idx = [slice(None)] * ndim
     idx[axis] = 0
     if aggregate is np.sum:
-        assert np.allclose(dsync[idx], 2)
+        assert np.allclose(dsync[tuple(idx)], 2)
     else:
-        assert np.allclose(dsync[idx], 1)
+        assert np.allclose(dsync[tuple(idx)], 1)
 
     # The second slice will sum to 1 and have mean 1
     idx[axis] = 1
-    assert np.allclose(dsync[idx], 1)
+    assert np.allclose(dsync[tuple(idx)], 1)
 
 
 @pytest.mark.parametrize("aggregate", [np.mean, np.max])
