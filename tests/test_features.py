@@ -927,3 +927,33 @@ def test_mfcc_to_audio(y, n_mfcc, n_mels, dct_type, lifter):
 
     # And that it's valid audio
     assert librosa.util.valid_audio(y_inv)
+
+
+def test_chroma_vqt_bpo(y_ex):
+    # Test that bins per octave is properly overridden in chroma
+    y, sr = y_ex
+    chroma = librosa.feature.chroma_vqt(y=y, sr=sr,
+                                        intervals=[1, 1.25, 1.5],
+                                        bins_per_octave=12)
+
+    assert chroma.shape[0] == 3
+
+    chroma2 = librosa.feature.chroma_vqt(y=y, sr=sr,
+                                         intervals='equal',
+                                         bins_per_octave=12)
+
+    assert chroma2.shape[0] == 12
+
+
+def test_chroma_vqt_threshold(y_ex):
+
+    y, sr = y_ex
+
+    c1 = librosa.feature.chroma_vqt(y=y, sr=sr, intervals='pythagorean')
+    c2 = librosa.feature.chroma_vqt(y=y, sr=sr, intervals='pythagorean',
+                                    threshold=1)
+
+    # Check that all thresholded points are zero
+    assert np.allclose(c2[c2 < c1], 0)
+    # Check that all non-thresholded points match
+    assert np.all(c2 <= c1)

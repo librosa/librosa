@@ -1391,8 +1391,7 @@ def chroma_cqt(
         chroma[chroma < threshold] = 0.0
 
     # Normalize
-    if norm is not None:
-        chroma = util.normalize(chroma, norm=norm, axis=-2)
+    chroma = util.normalize(chroma, norm=norm, axis=-2)
 
     return chroma
 
@@ -1675,8 +1674,7 @@ def chroma_vqt(
         chroma[chroma < threshold] = 0.0
 
     # Normalize
-    if norm is not None:
-        chroma = util.normalize(chroma, norm=norm, axis=-2)
+    chroma = util.normalize(chroma, norm=norm, axis=-2)
 
     return chroma
 
