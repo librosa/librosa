@@ -41,6 +41,8 @@ from ._cache import cache
 from . import util
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
+from typing import Callable, Optional, Union
+from typing_extensions import Literal
 
 __all__ = [
     "cross_similarity",
@@ -56,15 +58,17 @@ __all__ = [
 
 @cache(level=30)
 def cross_similarity(
-    data,
-    data_ref,
+    data: np.ndarray,
+    data_ref: np.ndarray,
     *,
-    k=None,
-    metric="euclidean",
-    sparse=False,
-    mode="connectivity",
-    bandwidth=None,
-):
+    k: Optional[int] = None,
+    metric: str = "euclidean",
+    sparse: bool = False,
+    mode: Union[
+        Literal["connectivity"], Literal["distance"], Literal["affinity"]
+    ] = "connectivity",
+    bandwidth: Optional[float] = None,
+) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
     """Compute cross-similarity from one data sequence to a reference sequence.
 
     The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero
@@ -271,18 +275,20 @@ def cross_similarity(
 
 @cache(level=30)
 def recurrence_matrix(
-    data,
+    data: np.ndarray,
     *,
-    k=None,
-    width=1,
-    metric="euclidean",
-    sym=False,
-    sparse=False,
-    mode="connectivity",
-    bandwidth=None,
-    self=False,
-    axis=-1,
-):
+    k: Optional[int] = None,
+    width: int = 1,
+    metric: str = "euclidean",
+    sym: bool = False,
+    sparse: bool = False,
+    mode: Union[
+        Literal["connectivity"], Literal["distance"], Literal["affinity"]
+    ] = "connectivity",
+    bandwidth: Optional[float] = None,
+    self: bool = False,
+    axis: int = -1,
+) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
     """Compute a recurrence matrix from a data matrix.
 
     ``rec[i, j]`` is non-zero if ``data[..., i]`` is a k-nearest neighbor
@@ -536,7 +542,9 @@ def recurrence_matrix(
     return rec
 
 
-def recurrence_to_lag(rec, *, pad=True, axis=-1):
+def recurrence_to_lag(
+    rec: Union[np.ndarray, scipy.sparse.spmatrix], *, pad: bool = True, axis: int = -1
+) -> np.ndarray:
     """Convert a recurrence matrix into a lag matrix.
 
         ``lag[i, j] == rec[i+j, j]``
@@ -639,7 +647,9 @@ def recurrence_to_lag(rec, *, pad=True, axis=-1):
     return lag
 
 
-def lag_to_recurrence(lag, *, axis=-1):
+def lag_to_recurrence(
+    lag: Union[np.ndarray, scipy.sparse.spmatrix], *, axis: int = -1
+) -> Union[np.ndarray, scipy.sparse.spmatrix]:
     """Convert a lag matrix into a recurrence matrix.
 
     Parameters
@@ -715,7 +725,7 @@ def lag_to_recurrence(lag, *, axis=-1):
     return rec[tuple(sub_slice)]
 
 
-def timelag_filter(function, pad=True, index=0):
+def timelag_filter(function: Callable, pad: bool = True, index: int = 0) -> Callable:
     """Filtering in the time-lag domain.
 
     This is primarily useful for adapting image filters to operate on
@@ -797,7 +807,9 @@ def timelag_filter(function, pad=True, index=0):
 
 
 @cache(level=30)
-def subsegment(data, frames, *, n_segments=4, axis=-1):
+def subsegment(
+    data: np.ndarray, frames: np.ndarray, *, n_segments: int = 4, axis: int = -1
+) -> np.ndarray:
     """Sub-divide a segmentation by feature clustering.
 
     Given a set of frame boundaries (``frames``), and a data matrix (``data``),
@@ -883,7 +895,13 @@ def subsegment(data, frames, *, n_segments=4, axis=-1):
     return np.array(boundaries)
 
 
-def agglomerative(data, k, *, clusterer=None, axis=-1):
+def agglomerative(
+    data: np.ndarray,
+    k: int,
+    *,
+    clusterer: Optional[sklearn.cluster.AgglomerativeClustering] = None,
+    axis: int = -1,
+) -> np.ndarray:
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
@@ -969,17 +987,17 @@ def agglomerative(data, k, *, clusterer=None, axis=-1):
 
 
 def path_enhance(
-    R,
-    n,
+    R: np.ndarray,
+    n: int,
     *,
-    window="hann",
-    max_ratio=2.0,
-    min_ratio=None,
-    n_filters=7,
-    zero_mean=False,
-    clip=True,
+    window: "window specification" = "hann",
+    max_ratio: float = 2.0,
+    min_ratio: Optional[float] = None,
+    n_filters: int = 7,
+    zero_mean: bool = False,
+    clip: bool = True,
     **kwargs,
-):
+) -> np.ndarray:
     """Multi-angle path enhancement for self- and cross-similarity matrices.
 
     This function convolves multiple diagonal smoothing filters with a self-similarity (or

@@ -13,20 +13,22 @@ from .._cache import cache
 from .. import util
 from .. import sequence
 from ..util.exceptions import ParameterError
+from numpy.typing import ArrayLike
+from typing import Callable, Optional, Tuple, Union
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
 
 def estimate_tuning(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    resolution=0.01,
-    bins_per_octave=12,
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: Optional[int] = 2048,
+    resolution: float = 0.01,
+    bins_per_octave: int = 12,
     **kwargs,
-):
+) -> float:
     """Estimate the tuning of an audio time series or spectrogram input.
 
     Parameters
@@ -102,7 +104,9 @@ def estimate_tuning(
     )
 
 
-def pitch_tuning(frequencies, *, resolution=0.01, bins_per_octave=12):
+def pitch_tuning(
+    frequencies: ArrayLike, *, resolution: float = 0.01, bins_per_octave: int = 12
+) -> float:
     """Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
 
@@ -174,20 +178,20 @@ def pitch_tuning(frequencies, *, resolution=0.01, bins_per_octave=12):
 @cache(level=30)
 def piptrack(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    hop_length=None,
-    fmin=150.0,
-    fmax=4000.0,
-    threshold=0.1,
-    win_length=None,
-    window="hann",
-    center=True,
-    pad_mode="constant",
-    ref=None,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: Optional[int] = 2048,
+    hop_length: Optional[int] = None,
+    fmin: float = 150.0,
+    fmax: float = 4000.0,
+    threshold: float = 0.1,
+    win_length: Optional[int] = None,
+    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    center: bool = True,
+    pad_mode: str = "constant",
+    ref: Optional[Union[float, Callable]] = None,
+) -> np.ndarray:
     """Pitch tracking on thresholded parabolically-interpolated STFT.
 
     This implementation uses the parabolic interpolation method described by [#]_.
@@ -367,8 +371,12 @@ def piptrack(
 
 
 def _cumulative_mean_normalized_difference(
-    y_frames, frame_length, win_length, min_period, max_period
-):
+    y_frames: np.ndarray,
+    frame_length: int,
+    win_length: int,
+    min_period: int,
+    max_period: int,
+) -> np.ndarray:
     """Cumulative mean normalized difference function (equation 8 in [#]_)
 
     .. [#] De Cheveigné, Alain, and Hideki Kawahara.
@@ -400,7 +408,7 @@ def _cumulative_mean_normalized_difference(
     acf_frames[np.abs(acf_frames) < 1e-6] = 0
 
     # Energy terms.
-    energy_frames = np.cumsum(y_frames ** 2, axis=-2)
+    energy_frames = np.cumsum(y_frames**2, axis=-2)
     energy_frames = (
         energy_frames[..., win_length:, :] - energy_frames[..., :-win_length, :]
     )
@@ -424,7 +432,7 @@ def _cumulative_mean_normalized_difference(
     return yin_frames
 
 
-def _parabolic_interpolation(y_frames):
+def _parabolic_interpolation(y_frames: np.ndarray) -> np.ndarray:
     """Piecewise parabolic interpolation for yin and pyin.
 
     Parameters
@@ -451,18 +459,18 @@ def _parabolic_interpolation(y_frames):
 
 
 def yin(
-    y,
+    y: np.ndarray,
     *,
-    fmin,
-    fmax,
-    sr=22050,
-    frame_length=2048,
-    win_length=None,
-    hop_length=None,
-    trough_threshold=0.1,
-    center=True,
-    pad_mode="constant",
-):
+    fmin: float,
+    fmax: float,
+    sr: float = 22050,
+    frame_length: int = 2048,
+    win_length: Optional[int] = None,
+    hop_length: Optional[int] = None,
+    trough_threshold: float = 0.1,
+    center: bool = True,
+    pad_mode: Union[str, Callable] = "constant",
+) -> np.ndarray:
     """Fundamental frequency (F0) estimation using the YIN algorithm.
 
     YIN is an autocorrelation based method for fundamental frequency estimation [#]_.
@@ -616,25 +624,25 @@ def yin(
 
 
 def pyin(
-    y,
+    y: np.ndarray,
     *,
-    fmin,
-    fmax,
-    sr=22050,
-    frame_length=2048,
-    win_length=None,
-    hop_length=None,
-    n_thresholds=100,
-    beta_parameters=(2, 18),
-    boltzmann_parameter=2,
-    resolution=0.1,
-    max_transition_rate=35.92,
-    switch_prob=0.01,
-    no_trough_prob=0.01,
-    fill_na=np.nan,
-    center=True,
-    pad_mode="constant",
-):
+    fmin: float,
+    fmax: float,
+    sr: float = 22050,
+    frame_length: int = 2048,
+    win_length: Optional[int] = None,
+    hop_length: Optional[int] = None,
+    n_thresholds: int = 100,
+    beta_parameters: tuple = (2, 18),
+    boltzmann_parameter: float = 2,
+    resolution: float = 0.1,
+    max_transition_rate: float = 35.92,
+    switch_prob: "float in ``(0, 1)" = 0.01,
+    no_trough_prob: "float in ``(0, 1)" = 0.01,
+    fill_na: Optional[Union[float, np.nan]] = np.nan,
+    center: bool = True,
+    pad_mode: Union[str, Callable] = "constant",
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 
     pYIN [#]_ is a modificatin of the YIN algorithm [#]_ for fundamental frequency (F0) estimation.

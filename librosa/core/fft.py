@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Fast Fourier Transform (FFT) library container"""
+from types import ModuleType
+from typing import Optional
 
 
 __all__ = ["get_fftlib", "set_fftlib"]
@@ -9,7 +11,7 @@ __all__ = ["get_fftlib", "set_fftlib"]
 __FFTLIB = None
 
 
-def set_fftlib(lib=None):
+def set_fftlib(lib: Optional[ModuleType] = None) -> None:
     """Set the FFT library used by librosa.
 
     Parameters
@@ -40,7 +42,7 @@ def set_fftlib(lib=None):
     __FFTLIB = lib
 
 
-def get_fftlib():
+def get_fftlib() -> ModuleType:
     """Get the FFT library currently used by librosa
 
     Returns

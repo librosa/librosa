@@ -51,6 +51,8 @@ from packaging.version import parse as version_parse
 from . import core
 from . import util
 from .util.exceptions import ParameterError
+from typing import Optional, Union
+from typing_extensions import Literal
 
 __all__ = [
     "specshow",
@@ -515,7 +517,14 @@ class AdaptiveWaveplot:
     def __del__(self):
         self.disconnect(strict=True)
 
-    def connect(self, ax, *, signal="xlim_changed"):
+    def connect(
+        self,
+        ax: matplotlib.axes.Axes,
+        *,
+        signal: Union[
+            Literal["xlim_changed"], Literal["ylim_changed"]
+        ] = "xlim_changed",
+    ) -> None:
         """Connect the adaptor to a signal on an axes object.
 
         Note that if the adaptor has already been connected to an axes object,
@@ -539,7 +548,7 @@ class AdaptiveWaveplot:
         self.ax = ax
         self.cid = ax.callbacks.connect(signal, self.update)
 
-    def disconnect(self, *, strict=False):
+    def disconnect(self, *, strict: bool = False) -> None:
         """Disconnect the adaptor's update callback.
 
         Parameters
@@ -561,7 +570,7 @@ class AdaptiveWaveplot:
             if strict:
                 self.ax = None
 
-    def update(self, ax):
+    def update(self, ax: matplotlib.axes.Axes) -> None:
         """Update the matplotlib display according to the current viewport limits.
 
         This is a callback function, and should not be used directly.
@@ -601,8 +610,13 @@ class AdaptiveWaveplot:
 
 
 def cmap(
-    data, *, robust=True, cmap_seq="magma", cmap_bool="gray_r", cmap_div="coolwarm"
-):
+    data: np.ndarray,
+    *,
+    robust: bool = True,
+    cmap_seq: str = "magma",
+    cmap_bool: str = "gray_r",
+    cmap_div: str = "coolwarm",
+) -> matplotlib.colors.Colormap:
     """Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
@@ -716,30 +730,30 @@ _AXIS_COMPAT = set(
 
 
 def specshow(
-    data,
+    data: np.ndarray,
     *,
     x_coords=None,
     y_coords=None,
     x_axis=None,
     y_axis=None,
-    sr=22050,
-    hop_length=512,
-    n_fft=None,
-    win_length=None,
-    fmin=None,
-    fmax=None,
-    tuning=0.0,
-    bins_per_octave=12,
-    key="C:maj",
-    Sa=None,
-    mela=None,
-    thaat=None,
-    auto_aspect=True,
-    htk=False,
-    unicode=True,
-    ax=None,
+    sr: float = 22050,
+    hop_length: int = 512,
+    n_fft: Optional[int] = None,
+    win_length: Optional[int] = None,
+    fmin: Optional[float] = None,
+    fmax: Optional[float] = None,
+    tuning: float = 0.0,
+    bins_per_octave: int = 12,
+    key: str = "C:maj",
+    Sa: Optional[Union[float, int]] = None,
+    mela: Optional[Union[str, int]] = None,
+    thaat: Optional[str] = None,
+    auto_aspect: bool = True,
+    htk: bool = False,
+    unicode: bool = True,
+    ax: Optional[matplotlib.axes.Axes] = None,
     **kwargs,
-):
+) -> matplotlib.collections.QuadMesh:
     """Display a spectrogram/chromagram/cqt/etc.
 
     For a detailed overview of this function, see :ref:`sphx_glr_auto_examples_plot_display.py`
@@ -1383,18 +1397,18 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
 
 
 def waveshow(
-    y,
+    y: np.ndarray,
     *,
-    sr=22050,
-    max_points=11025,
-    x_axis="time",
-    offset=0.0,
-    marker="",
-    where="post",
-    label=None,
-    ax=None,
+    sr: float = 22050,
+    max_points: int = 11025,
+    x_axis: Optional[str] = "time",
+    offset: float = 0.0,
+    marker: str = "",
+    where: Union[Literal["pre"], Literal["mid"], Literal["post"]] = "post",
+    label: Optional[str] = None,
+    ax: Optional[matplotlib.axes.Axes] = None,
     **kwargs,
-):
+) -> librosa.display.AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
 
     This function constructs a plot which adaptively switches between a raw

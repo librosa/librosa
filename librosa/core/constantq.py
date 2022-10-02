@@ -14,6 +14,8 @@ from .._cache import cache
 from .. import filters
 from .. import util
 from ..util.exceptions import ParameterError
+from numpy.typing import DTypeLike
+from typing import Callable, Literal, Optional, Union
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 
@@ -22,23 +24,23 @@ __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 
 @cache(level=20)
 def cqt(
-    y,
+    y: np.ndarray,
     *,
-    sr=22050,
-    hop_length=512,
-    fmin=None,
-    n_bins=84,
-    bins_per_octave=12,
-    tuning=0.0,
-    filter_scale=1,
-    norm=1,
-    sparsity=0.01,
-    window="hann",
-    scale=True,
-    pad_mode="constant",
-    res_type="soxr_hq",
-    dtype=None,
-):
+    sr: float = 22050,
+    hop_length: int = 512,
+    fmin: Optional[float] = None,
+    n_bins: int = 84,
+    bins_per_octave: int = 12,
+    tuning: Optional[float] = 0.0,
+    filter_scale: float = 1,
+    norm: float = 1,
+    sparsity: float = 0.01,
+    window: Union[str, tuple, float, Callable] = "hann",
+    scale: bool = True,
+    pad_mode: str = "constant",
+    res_type: str = "soxr_hq",
+    dtype: Optional[DTypeLike] = None,
+) -> np.ndarray:
     """Compute the constant-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -187,23 +189,23 @@ def cqt(
 
 @cache(level=20)
 def hybrid_cqt(
-    y,
+    y: np.ndarray,
     *,
-    sr=22050,
-    hop_length=512,
-    fmin=None,
-    n_bins=84,
-    bins_per_octave=12,
-    tuning=0.0,
-    filter_scale=1,
-    norm=1,
-    sparsity=0.01,
-    window="hann",
-    scale=True,
-    pad_mode="constant",
-    res_type="soxr_hq",
-    dtype=None,
-):
+    sr: float = 22050,
+    hop_length: int = 512,
+    fmin: Optional[float] = None,
+    n_bins: int = 84,
+    bins_per_octave: int = 12,
+    tuning: Optional[float] = 0.0,
+    filter_scale: float = 1,
+    norm: float = 1,
+    sparsity: float = 0.01,
+    window: Union[str, tuple, float, Callable] = "hann",
+    scale: bool = True,
+    pad_mode: str = "constant",
+    res_type: str = "soxr_hq",
+    dtype: Optional[DTypeLike] = None,
+) -> np.ndarray:
     """Compute the hybrid constant-Q transform of an audio signal.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
@@ -370,22 +372,22 @@ def hybrid_cqt(
 
 @cache(level=20)
 def pseudo_cqt(
-    y,
+    y: np.ndarray,
     *,
-    sr=22050,
-    hop_length=512,
-    fmin=None,
-    n_bins=84,
-    bins_per_octave=12,
-    tuning=0.0,
-    filter_scale=1,
-    norm=1,
-    sparsity=0.01,
-    window="hann",
-    scale=True,
-    pad_mode="constant",
-    dtype=None,
-):
+    sr: float = 22050,
+    hop_length: int = 512,
+    fmin: Optional[float] = None,
+    n_bins: int = 84,
+    bins_per_octave: int = 12,
+    tuning: Optional[float] = 0.0,
+    filter_scale: float = 1,
+    norm: float = 1,
+    sparsity: float = 0.01,
+    window: Union[str, tuple, float, Callable] = "hann",
+    scale: bool = True,
+    pad_mode: str = "constant",
+    dtype: Optional[DTypeLike] = None,
+) -> np.ndarray:
     """Compute the pseudo constant-Q transform of an audio signal.
 
     This uses a single fft size that is the smallest power of 2 that is greater
@@ -526,22 +528,22 @@ def pseudo_cqt(
 
 @cache(level=40)
 def icqt(
-    C,
+    C: np.ndarray,
     *,
-    sr=22050,
-    hop_length=512,
-    fmin=None,
-    bins_per_octave=12,
-    tuning=0.0,
-    filter_scale=1,
-    norm=1,
-    sparsity=0.01,
-    window="hann",
-    scale=True,
-    length=None,
-    res_type="soxr_hq",
-    dtype=None,
-):
+    sr: float = 22050,
+    hop_length: int = 512,
+    fmin: Optional[float] = None,
+    bins_per_octave: int = 12,
+    tuning: float = 0.0,
+    filter_scale: float = 1,
+    norm: float = 1,
+    sparsity: float = 0.01,
+    window: Union[str, tuple, float, Callable] = "hann",
+    scale: bool = True,
+    length: Optional[int] = None,
+    res_type: str = "soxr_hq",
+    dtype: Optional[DTypeLike] = None,
+) -> np.ndarray:
     """Compute the inverse constant-Q transform.
 
     Given a constant-Q transform representation ``C`` of an audio signal ``y``,
@@ -749,24 +751,24 @@ def icqt(
 
 @cache(level=20)
 def vqt(
-    y,
+    y: np.ndarray,
     *,
-    sr=22050,
-    hop_length=512,
-    fmin=None,
-    n_bins=84,
-    gamma=None,
-    bins_per_octave=12,
-    tuning=0.0,
-    filter_scale=1,
-    norm=1,
-    sparsity=0.01,
-    window="hann",
-    scale=True,
-    pad_mode="constant",
-    res_type="soxr_hq",
-    dtype=None,
-):
+    sr: float = 22050,
+    hop_length: int = 512,
+    fmin: Optional[float] = None,
+    n_bins: int = 84,
+    gamma: Optional[float] = None,
+    bins_per_octave: int = 12,
+    tuning: Optional[float] = 0.0,
+    filter_scale: float = 1,
+    norm: float = 1,
+    sparsity: float = 0.01,
+    window: Union[str, tuple, float, Callable] = "hann",
+    scale: bool = True,
+    pad_mode: str = "constant",
+    res_type: str = "soxr_hq",
+    dtype: Optional[DTypeLike] = None,
+) -> np.ndarray:
     """Compute the variable-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -941,10 +943,12 @@ def vqt(
         )
 
     if res_type is None:
-        warnings.warn("Support for VQT with res_type=None is deprecated in librosa 0.10\n"
-                      "and will be removed in version 1.0.",
-                      category=DeprecationWarning,
-                      stacklevel=2)
+        warnings.warn(
+            "Support for VQT with res_type=None is deprecated in librosa 0.10\n"
+            "and will be removed in version 1.0.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
         res_type = "soxr_hq"
 
     y, sr, hop_length = __early_downsample(
@@ -1120,9 +1124,7 @@ def __cqt_response(
 def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
     """Compute the number of early downsampling operations"""
 
-    downsample_count1 = max(
-        0, int(np.ceil(np.log2(nyquist / filter_cutoff)) - 1) - 1
-    )
+    downsample_count1 = max(0, int(np.ceil(np.log2(nyquist / filter_cutoff)) - 1) - 1)
 
     num_twos = __num_two_factors(hop_length)
     downsample_count2 = max(0, num_twos - n_octaves + 1)
@@ -1182,27 +1184,27 @@ def __num_two_factors(x):
 
 
 def griffinlim_cqt(
-    C,
+    C: np.ndarray,
     *,
-    n_iter=32,
-    sr=22050,
-    hop_length=512,
-    fmin=None,
-    bins_per_octave=12,
-    tuning=0.0,
-    filter_scale=1,
-    norm=1,
-    sparsity=0.01,
-    window="hann",
-    scale=True,
-    pad_mode="constant",
-    res_type="soxr_hq",
-    dtype=None,
-    length=None,
-    momentum=0.99,
-    init="random",
-    random_state=None,
-):
+    n_iter: int = 32,
+    sr: float = 22050,
+    hop_length: int = 512,
+    fmin: Optional[float] = None,
+    bins_per_octave: int = 12,
+    tuning: float = 0.0,
+    filter_scale: float = 1,
+    norm: float = 1,
+    sparsity: float = 0.01,
+    window: Union[str, tuple, Callable] = "hann",
+    scale: bool = True,
+    pad_mode: str = "constant",
+    res_type: str = "soxr_hq",
+    dtype: Optional[DTypeLike] = None,
+    length: Optional[int] = None,
+    momentum: float = 0.99,
+    init: Optional[Literal["random"]] = "random",
+    random_state: Optional[Union[int, np.random.RandomState]] = None,
+) -> np.ndarray:
     """Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
     algorithm.
 
@@ -1450,7 +1452,7 @@ def griffinlim_cqt(
     )
 
 
-def __bpo_to_alpha(bins_per_octave):
+def __bpo_to_alpha(bins_per_octave: int) -> float:
     """Compute the alpha coefficient for a given number of bins per octave
 
     Parameters
@@ -1463,4 +1465,4 @@ def __bpo_to_alpha(bins_per_octave):
     """
 
     r = 2 ** (1 / bins_per_octave)
-    return (r ** 2 - 1) / (r ** 2 + 1)
+    return (r**2 - 1) / (r**2 + 1)

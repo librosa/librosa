@@ -43,7 +43,7 @@ class CacheManager(object):
             ...
         """
 
-        def wrapper(function):
+        def wrapper(function) -> None:
             """Decorator function.  Adds an input/output cache to
             the specified function."""
             if self.memory.location is not None and self.level >= level:

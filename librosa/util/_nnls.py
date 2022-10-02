@@ -12,6 +12,7 @@
 import numpy as np
 import scipy.optimize
 from .utils import MAX_MEM_BLOCK
+from typing import Optional
 
 
 __all__ = ["nnls"]
@@ -28,7 +29,7 @@ def _nnls_obj(x, shape, A, B):
     diff = np.einsum("mf,...ft->...mt", A, x, optimize=True) - B
 
     # Compute the objective value
-    value = (1 / B.size) * 0.5 * np.sum(diff ** 2)
+    value = (1 / B.size) * 0.5 * np.sum(diff**2)
 
     # And the gradient
     grad = (1 / B.size) * np.einsum("mf,...mt->...ft", A, diff, optimize=True)
@@ -37,7 +38,9 @@ def _nnls_obj(x, shape, A, B):
     return value, grad.flatten()
 
 
-def _nnls_lbfgs_block(A, B, x_init=None, **kwargs):
+def _nnls_lbfgs_block(
+    A: np.ndarray, B: np.ndarray, x_init: Optional[np.ndarray] = None, **kwargs
+) -> np.ndarray:
     """Solve the constrained problem over a single block
 
     Parameters
@@ -78,7 +81,7 @@ def _nnls_lbfgs_block(A, B, x_init=None, **kwargs):
     return x.reshape(shape)
 
 
-def nnls(A, B, **kwargs):
+def nnls(A: np.ndarray, B: np.ndarray, **kwargs) -> np.ndarray:
     """Non-negative least squares.
 
     Given two matrices A and B, find a non-negative matrix X

@@ -21,23 +21,24 @@ from . import onset
 from . import util
 from .feature import tempogram, fourier_tempogram
 from .util.exceptions import ParameterError
+from typing import Callable, Literal, Optional, Tuple, Union
 
 __all__ = ["beat_track", "tempo", "plp"]
 
 
 def beat_track(
     *,
-    y=None,
-    sr=22050,
-    onset_envelope=None,
-    hop_length=512,
-    start_bpm=120.0,
-    tightness=100,
-    trim=True,
-    bpm=None,
-    prior=None,
-    units="frames",
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    onset_envelope: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    start_bpm: float = 120.0,
+    tightness: float = 100,
+    trim: bool = True,
+    bpm: Optional[float] = None,
+    prior: Optional[scipy.stats.rv_continuous] = None,
+    units: Union[Literal["frames"], Literal["samples"], Literal["time"]] = "frames",
+) -> Tuple[float, np.ndarray]:
     r"""Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [#]_:
@@ -193,17 +194,17 @@ def beat_track(
 @cache(level=30)
 def tempo(
     *,
-    y=None,
-    sr=22050,
-    onset_envelope=None,
-    hop_length=512,
-    start_bpm=120,
-    std_bpm=1.0,
-    ac_size=8.0,
-    max_tempo=320.0,
-    aggregate=np.mean,
-    prior=None,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    onset_envelope: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    start_bpm: float = 120,
+    std_bpm: float = 1.0,
+    ac_size: float = 8.0,
+    max_tempo: Optional[float] = 320.0,
+    aggregate: Optional[Callable] = np.mean,
+    prior: Optional[scipy.stats.rv_continuous] = None,
+) -> np.ndarray:
     """Estimate the tempo (beats per minute)
 
     Parameters
@@ -357,15 +358,15 @@ def tempo(
 
 def plp(
     *,
-    y=None,
-    sr=22050,
-    onset_envelope=None,
-    hop_length=512,
-    win_length=384,
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    onset_envelope: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    win_length: int = 384,
     tempo_min=30,
     tempo_max=300,
-    prior=None,
-):
+    prior: Optional[scipy.stats.rv_continuous] = None,
+) -> np.ndarray:
     """Predominant local pulse (PLP) estimation. [#]_
 
     The PLP method analyzes the onset strength envelope in the frequency domain
@@ -546,7 +547,9 @@ def plp(
     return util.normalize(pulse, axis=-1)
 
 
-def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
+def __beat_tracker(
+    onset_envelope: np.ndarray, bpm: float, fft_res: float, tightness: float, trim: bool
+) -> np.ndarray:
     """Internal function that tracks beats in an onset strength envelope.
 
     Parameters
@@ -675,7 +678,7 @@ def __trim_beats(localscore, beats, trim):
     smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.hann(5), "same")
 
     if trim:
-        threshold = 0.5 * ((smooth_boe ** 2).mean() ** 0.5)
+        threshold = 0.5 * ((smooth_boe**2).mean() ** 0.5)
     else:
         threshold = 0.0
 

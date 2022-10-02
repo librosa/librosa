@@ -8,12 +8,28 @@ from numba import jit
 
 from .._cache import cache
 from ..util.exceptions import ParameterError
+from typing import Union
+from typing_extensions import Literal
 
 __all__ = ["delta", "stack_memory"]
 
 
 @cache(level=40)
-def delta(data, *, width=9, order=1, axis=-1, mode="interp", **kwargs):
+def delta(
+    data: np.ndarray,
+    *,
+    width: "int, , odd" = 9,
+    order: int = 1,
+    axis: int = -1,
+    mode: Union[
+        Literal["interp"],
+        Literal["nearest"],
+        Literal["mirror"],
+        Literal["constant"],
+        Literal["wrap"],
+    ] = "interp",
+    **kwargs
+) -> np.ndarray:
     r"""Compute delta features: local estimate of the derivative
     of the input data along the selected axis.
 
@@ -117,7 +133,9 @@ def delta(data, *, width=9, order=1, axis=-1, mode="interp", **kwargs):
 
 
 @cache(level=40)
-def stack_memory(data, *, n_steps=2, delay=1, **kwargs):
+def stack_memory(
+    data: np.ndarray, *, n_steps: int = 2, delay: int = 1, **kwargs
+) -> np.ndarray:
     """Short-term history embedding: vertically concatenate a data
     vector or matrix with delayed copies of itself.
 
@@ -260,7 +278,12 @@ def stack_memory(data, *, n_steps=2, delay=1, **kwargs):
 
 
 @jit(nopython=True, cache=True)
-def __stack(history, data, n_steps, delay):
+def __stack(
+    history: "output array (2-dimensional)",
+    data: "pre-padded input array (2-dimensional)",
+    n_steps: "int, the number of steps to stack",
+    delay: "int, the amount of delay between steps",
+) -> None:
     """Memory-stacking helper function.
 
     Parameters

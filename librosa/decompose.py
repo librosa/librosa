@@ -23,13 +23,20 @@ from ._cache import cache
 from . import segment
 from . import util
 from .util.exceptions import ParameterError
+from typing import Any, Callable, Optional, Tuple, Union
 
 __all__ = ["decompose", "hpss", "nn_filter"]
 
 
 def decompose(
-    S, *, n_components=None, transformer=None, sort=False, fit=True, **kwargs
-):
+    S: np.ndarray,
+    *,
+    n_components: Optional[int] = None,
+    transformer: Optional[object] = None,
+    sort: bool = False,
+    fit: bool = True,
+    **kwargs
+) -> Tuple[np.ndarray, np.ndarray]:
     """Decompose a feature matrix.
 
     Given a spectrogram ``S``, produce a decomposition into ``components``
@@ -198,7 +205,14 @@ def decompose(
 
 
 @cache(level=30)
-def hpss(S, *, kernel_size=31, power=2.0, mask=False, margin=1.0):
+def hpss(
+    S: np.ndarray,
+    *,
+    kernel_size: Union[int, Tuple[Any, Any]] = 31,
+    power: float = 2.0,
+    mask: bool = False,
+    margin: Union[float, Tuple[Any, Any]] = 1.0
+) -> Tuple[np.ndarray, np.ndarray]:
     """Median-filtering harmonic percussive source separation (HPSS).
 
     If ``margin = 1.0``, decomposes an input spectrogram ``S = H + P``
@@ -388,7 +402,14 @@ def hpss(S, *, kernel_size=31, power=2.0, mask=False, margin=1.0):
 
 
 @cache(level=30)
-def nn_filter(S, *, rec=None, aggregate=None, axis=-1, **kwargs):
+def nn_filter(
+    S: np.ndarray,
+    *,
+    rec: Optional[Union[scipy.sparse.spmatrix, np.ndarray]] = None,
+    aggregate: Optional[Callable] = None,
+    axis: int = -1,
+    **kwargs
+) -> np.ndarray:
     """Filtering by nearest-neighbors.
 
     Each data point (e.g, spectrogram column) is replaced
@@ -521,7 +542,9 @@ def nn_filter(S, *, rec=None, aggregate=None, axis=-1, **kwargs):
     ).swapaxes(0, axis)
 
 
-def __nn_filter_helper(R_data, R_indices, R_ptr, S, aggregate):
+def __nn_filter_helper(
+    R_data, R_indices, R_ptr, S: np.ndarray, aggregate: Callable
+) -> np.ndarray:
     """Nearest-neighbor filter helper function.
 
     This is an internal function, not for use outside of the decompose module.

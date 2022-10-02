@@ -25,7 +25,7 @@ def __get_mod_version(modname):
         return None
 
 
-def show_versions():
+def show_versions() -> None:
     """Return the version information for all librosa dependencies."""
 
     core_deps = [
@@ -39,7 +39,7 @@ def show_versions():
         "resampy",
         "numba",
         "pooch",
-        "packaging"
+        "packaging",
     ]
 
     extra_deps = [

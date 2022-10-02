@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
+from typing import List, Optional, Union
 
 import os
 import glob
@@ -38,7 +39,7 @@ with open(
     __TRACKMAP = json.load(fdesc)
 
 
-def example(key, *, hq=False):
+def example(key: str, *, hq: bool = False) -> str:
     """Retrieve the example recording identified by 'key'.
 
     The first time an example is requested, it will be downloaded from
@@ -100,7 +101,7 @@ ex = example
 """Alias for example"""
 
 
-def list_examples():
+def list_examples() -> None:
     """List the available audio recordings included with librosa.
 
     Each recording is given a unique identifier (e.g., "brahms" or "nutcracker"),
@@ -119,7 +120,7 @@ def list_examples():
         print("{:10}\t{}".format(key, __TRACKMAP[key]["desc"]))
 
 
-def example_info(key):
+def example_info(key: str) -> None:
     """Display licensing and metadata information for the given example recording.
 
     The first time an example is requested, it will be downloaded from
@@ -157,8 +158,14 @@ def example_info(key):
 
 
 def find_files(
-    directory, *, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0
-):
+    directory: str,
+    *,
+    ext: Optional[Union[str, List[str]]] = None,
+    recurse: bool = True,
+    case_sensitive: bool = False,
+    limit: Optional[int] = None,
+    offset: int = 0
+) -> List[str]:
     """Get a sorted list of (audio) files in a directory or directory sub-tree.
 
     Examples

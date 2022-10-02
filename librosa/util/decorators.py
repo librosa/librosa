@@ -12,7 +12,7 @@ import numpy as np
 __all__ = ["moved", "deprecated", "vectorize"]
 
 
-def moved(*, moved_from, version, version_removed):
+def moved(*, moved_from, version, version_removed) -> None:
     """This is a decorator which can be used to mark functions
     as moved/renamed.
 
@@ -36,7 +36,7 @@ def moved(*, moved_from, version, version_removed):
     return decorator(__wrapper)
 
 
-def deprecated(*, version, version_removed):
+def deprecated(*, version, version_removed) -> None:
     """This is a decorator which can be used to mark functions
     as deprecated.
 
@@ -57,13 +57,22 @@ def deprecated(*, version, version_removed):
     return decorator(__wrapper)
 
 
-def vectorize(*, otypes=None, doc=None, excluded=None, cache=False, signature=None):
+def vectorize(
+    *, otypes=None, doc=None, excluded=None, cache=False, signature=None
+) -> None:
     """This function is not quite a decorator, but is used as a wrapper
     to np.vectorize that preserves scalar behavior.
     """
 
     def __wrapper(function):
-        vecfunc = np.vectorize(function, otypes=otypes, doc=doc, excluded=excluded, cache=cache, signature=signature)
+        vecfunc = np.vectorize(
+            function,
+            otypes=otypes,
+            doc=doc,
+            excluded=excluded,
+            cache=cache,
+            signature=signature,
+        )
 
         @functools.wraps(function)
         def _vec(*args, **kwargs):

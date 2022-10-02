@@ -14,8 +14,14 @@ class Deprecated(object):
 
 
 def rename_kw(
-    *, old_name, old_value, new_name, new_value, version_deprecated, version_removed
-):
+    *,
+    old_name: str,
+    old_value,
+    new_name: str,
+    new_value,
+    version_deprecated: str,
+    version_removed: str
+) -> value:
     """Handle renamed arguments.
 
     Parameters

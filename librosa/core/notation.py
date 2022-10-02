@@ -6,6 +6,7 @@ import re
 import numpy as np
 from .._cache import cache
 from ..util.exceptions import ParameterError
+from typing import List, Union
 
 __all__ = [
     "key_to_degrees",
@@ -113,7 +114,7 @@ MELAKARTA_MAP = {
 }
 
 
-def thaat_to_degrees(thaat):
+def thaat_to_degrees(thaat: str) -> np.ndarray:
     """Construct the svara indices (degrees) for a given thaat
 
     Parameters
@@ -144,7 +145,7 @@ def thaat_to_degrees(thaat):
     return np.asarray(THAAT_MAP[thaat.lower()])
 
 
-def mela_to_degrees(mela):
+def mela_to_degrees(mela: Union[str, int]) -> np.ndarray:
     """Construct the svara indices (degrees) for a given melakarta raga
 
     Parameters
@@ -244,7 +245,9 @@ def mela_to_degrees(mela):
 
 
 @cache(level=10)
-def mela_to_svara(mela, *, abbr=True, unicode=True):
+def mela_to_svara(
+    mela: Union[str, int], *, abbr: bool = True, unicode: bool = True
+) -> List[strings]:
     """Spell the Carnatic svara names for a given melakarta raga
 
     This function exists to resolve enharmonic equivalences between
@@ -391,7 +394,7 @@ def mela_to_svara(mela, *, abbr=True, unicode=True):
     return list(svara_map)
 
 
-def list_mela():
+def list_mela() -> dict:
     """List melakarta ragas by name and index.
 
     Melakarta raga names are transcribed from [#]_, with the exception of #45
@@ -424,7 +427,7 @@ def list_mela():
     return MELAKARTA_MAP.copy()
 
 
-def list_thaat():
+def list_thaat() -> list:
     """List supported thaats by name.
 
     Returns
@@ -455,7 +458,7 @@ def list_thaat():
 
 
 @cache(level=10)
-def key_to_notes(key, *, unicode=True):
+def key_to_notes(key: str, *, unicode: bool = True) -> list:
     """Lists all 12 note names in the chromatic scale, as spelled according to
     a given key (major or minor).
 
@@ -633,7 +636,7 @@ def key_to_notes(key, *, unicode=True):
     return notes
 
 
-def key_to_degrees(key):
+def key_to_degrees(key: str) -> np.ndarray:
     """Construct the diatonic scale degrees for a given key.
 
     Parameters
