@@ -13,8 +13,8 @@ __all__ = ["match_intervals", "match_events"]
 
 @numba.jit(nopython=True, cache=True)
 def __jaccard(
-    int_a, int_b
-) -> "Jaccard similarity between intervals":  # pragma: no cover
+    int_a: np.ndarray, int_b: np.ndarray
+):  # pragma: no cover
     """Jaccard similarity between two intervals
 
     Parameters

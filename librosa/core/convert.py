@@ -493,7 +493,7 @@ def note_to_hz(note: Union[str, Iterable[str]], **kwargs) -> Union[float, np.nda
 
 def note_to_midi(
     note: Union[str, Iterable[str]], *, round_midi: bool = True
-) -> Union[float, np.array]:
+) -> Union[float, np.ndarray]:
     """Convert one or more spelled notes to MIDI number(s).
 
     Notes may be spelled out with optional accidentals or octave numbers.
@@ -601,7 +601,7 @@ def note_to_midi(
     return note_value
 
 
-@vectorize(excluded=["octave", "cents", "key", "unicode"])
+@vectorize(excluded=['octave', 'cents', 'key', 'unicode'])
 def midi_to_note(
     midi: Union[int, Iterable[int]],
     *,
@@ -922,7 +922,7 @@ def mel_to_hz(mels: np.ndarray, *, htk: bool = False) -> np.ndarray:
 
 
 def hz_to_octs(
-    frequencies: Union[number > 0, np.ndarray, float],
+    frequencies: Union[float, np.ndarray],
     *,
     tuning: float = 0.0,
     bins_per_octave: int = 12
@@ -1555,7 +1555,7 @@ WEIGHTING_FUNCTIONS = {
 
 
 def frequency_weighting(
-    frequencies: Union[float, np.ndarray], *, kind: "str in" = "A", **kwargs
+    frequencies: Union[float, np.ndarray], *, kind: str = "A", **kwargs
 ) -> Union[float, np.ndarray]:
     """Compute the weighting of a set of frequencies.
 
@@ -1769,7 +1769,7 @@ def samples_like(
 
 @vectorize(excluded=["Sa", "abbr", "octave", "unicode"])
 def midi_to_svara_h(
-    midi: Union[numeric, np.ndarray],
+    midi: Union[float, np.ndarray],
     *,
     Sa: float,
     abbr: bool = True,
@@ -2019,7 +2019,7 @@ def note_to_svara_h(
 
 @vectorize(excluded=["Sa", "mela", "abbr", "octave", "unicode"])
 def midi_to_svara_c(
-    midi: numeric,
+    midi: float,
     *,
     Sa: float,
     mela: Union[int, str],

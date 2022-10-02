@@ -18,7 +18,7 @@ __all__ = ["delta", "stack_memory"]
 def delta(
     data: np.ndarray,
     *,
-    width: "int, , odd" = 9,
+    width: int = 9,
     order: int = 1,
     axis: int = -1,
     mode: Union[
@@ -278,12 +278,7 @@ def stack_memory(
 
 
 @jit(nopython=True, cache=True)
-def __stack(
-    history: "output array (2-dimensional)",
-    data: "pre-padded input array (2-dimensional)",
-    n_steps: "int, the number of steps to stack",
-    delay: "int, the amount of delay between steps",
-) -> None:
+def __stack(history, data, n_steps, delay):
     """Memory-stacking helper function.
 
     Parameters

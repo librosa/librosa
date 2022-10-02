@@ -21,7 +21,7 @@ def rename_kw(
     new_value,
     version_deprecated: str,
     version_removed: str
-) -> value:
+):
     """Handle renamed arguments.
 
     Parameters

@@ -131,7 +131,7 @@ def mel(
     fmin: float = 0.0,
     fmax: Optional[float] = None,
     htk: bool = False,
-    norm: Union[{None, Literal["slaney"], number}] = "slaney",
+    norm: Optional[Union[Literal["slaney"], float]] = "slaney",
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
     """Create a Mel filter-bank.
@@ -1139,9 +1139,7 @@ def window_bandwidth(window: Union[Callable, str], n: int = 1000) -> float:
 
     if key not in WINDOW_BANDWIDTHS:
         win = get_window(window, n)
-        WINDOW_BANDWIDTHS[key] = (
-            n * np.sum(win**2) / (np.sum(win) ** 2 + util.tiny(win))
-        )
+        WINDOW_BANDWIDTHS[key] = n * np.sum(win ** 2) / (np.sum(win) ** 2 + util.tiny(win))
 
     return WINDOW_BANDWIDTHS[key]
 
@@ -1470,20 +1468,20 @@ def semitone_filterbank(
     ...     magnitudes.append(20 * np.log10(np.abs(h)))
     >>> fig, ax = plt.subplots(figsize=(12,6))
     >>> img = librosa.display.specshow(
-    ...     np.array(magnitudes),
-    ...     x_axis="hz",
-    ...     sr=4410,
-    ...     y_coords=librosa.midi_to_hz(np.arange(60, 72)),
-    ...     vmin=-60,
-    ...     vmax=3,
+    ...     np.array(magnitudes), 
+    ...     x_axis="hz", 
+    ...     sr=4410, 
+    ...     y_coords=librosa.midi_to_hz(np.arange(60, 72)), 
+    ...     vmin=-60, 
+    ...     vmax=3, 
     ...     ax=ax
     ...     )
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB", label="Magnitude (dB)")
     >>> ax.set(
-    ...     xlim=[200, 600],
+    ...     xlim=[200, 600], 
     ...     yticks=librosa.midi_to_hz(np.arange(60, 72)),
-    ...     title='Magnitude Responses of the Pitch Filterbank',
-    ...     xlabel='Frequency (Hz)',
+    ...     title='Magnitude Responses of the Pitch Filterbank', 
+    ...     xlabel='Frequency (Hz)', 
     ...     ylabel='Semitone filter center frequency (Hz)'
     ... )
     """
@@ -1514,7 +1512,7 @@ def window_sumsquare(
     window: Union[str, tuple, float, Callable, ArrayLike],
     n_frames: int,
     hop_length: int = 512,
-    win_length: Optional[Union[optional]] = None,
+    win_length: Optional[int] = None,
     n_fft: int = 2048,
     dtype: DTypeLike = np.float32,
     norm: Optional[float] = None,

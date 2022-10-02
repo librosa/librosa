@@ -39,6 +39,7 @@ from .util import pad_center, fill_off_diagonal, is_positive_int, tiny, expand_t
 from .util.exceptions import ParameterError
 from .filters import get_window
 from typing import Callable, Iterable, Optional, Tuple, Union
+from numpy.typing import ArrayLike
 
 __all__ = [
     "dtw",
@@ -971,7 +972,7 @@ def viterbi(
     *,
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
-) -> "Tuple[Union[Either ``states, (states, logp)``:], np.ndarray, Union[float, np.ndarray]]":
+) -> Union[np.ndarray, Tuple[np.ndarray, Union[float, np.ndarray]]]:
     """Viterbi decoding from observation likelihoods.
 
     Given a sequence of observation likelihoods ``prob[s, t]``,
@@ -1114,7 +1115,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = None,
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
-) -> "Tuple[Union[Either ``states, (states, logp)``:], np.ndarray, Union[float, np.ndarray]]":
+) -> Union[np.ndarray, Tuple[np.ndarray, Union[float, np.ndarray]]]:
     """Viterbi decoding from discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,
@@ -1328,7 +1329,7 @@ def viterbi_binary(
     p_state: Optional[np.ndarray] = None,
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
-) -> "Tuple[Union[Either ``states, (states, logp)``:], np.ndarray, np.ndarray]":
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Viterbi decoding from binary (multi-label), discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,
@@ -1660,7 +1661,7 @@ def transition_local(
     n_states: int,
     width: Union[int, Iterable],
     *,
-    window: "Union[str, Callable, window specification]" = "triangle",
+    window: Union[str, tuple, float, Callable, ArrayLike] = "triangle",
     wrap: bool = False,
 ) -> np.ndarray:
     """Construct a localized transition matrix.

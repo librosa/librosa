@@ -21,7 +21,8 @@ from . import onset
 from . import util
 from .feature import tempogram, fourier_tempogram
 from .util.exceptions import ParameterError
-from typing import Callable, Literal, Optional, Tuple, Union
+from typing import Callable, Optional, Tuple, Union
+from typing_extensions import Literal
 
 __all__ = ["beat_track", "tempo", "plp"]
 
@@ -678,7 +679,7 @@ def __trim_beats(localscore, beats, trim):
     smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.hann(5), "same")
 
     if trim:
-        threshold = 0.5 * ((smooth_boe**2).mean() ** 0.5)
+        threshold = 0.5 * ((smooth_boe ** 2).mean() ** 0.5)
     else:
         threshold = 0.0
 

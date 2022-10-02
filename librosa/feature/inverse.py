@@ -13,8 +13,8 @@ from ..util.utils import tiny
 from .. import filters
 from ..util import nnls, expand_to
 from numpy.typing import DTypeLike
-from typing import Callable, Literal, Optional, Union
-
+from typing import Callable, Optional, Union
+from typing_extensions import Literal
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
 

@@ -41,6 +41,7 @@ import warnings
 import numpy as np
 from matplotlib.cm import get_cmap
 from matplotlib.axes import Axes
+from matplotlib.collections import QuadMesh
 from matplotlib.ticker import Formatter, ScalarFormatter
 from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
 from matplotlib.ticker import SymmetricalLogLocator
@@ -519,7 +520,7 @@ class AdaptiveWaveplot:
 
     def connect(
         self,
-        ax: matplotlib.axes.Axes,
+        ax: Axes,
         *,
         signal: Union[
             Literal["xlim_changed"], Literal["ylim_changed"]
@@ -570,7 +571,7 @@ class AdaptiveWaveplot:
             if strict:
                 self.ax = None
 
-    def update(self, ax: matplotlib.axes.Axes) -> None:
+    def update(self, ax: Axes) -> None:
         """Update the matplotlib display according to the current viewport limits.
 
         This is a callback function, and should not be used directly.
@@ -751,9 +752,9 @@ def specshow(
     auto_aspect: bool = True,
     htk: bool = False,
     unicode: bool = True,
-    ax: Optional[matplotlib.axes.Axes] = None,
+    ax: Optional[Axes] = None,
     **kwargs,
-) -> matplotlib.collections.QuadMesh:
+) -> QuadMesh:
     """Display a spectrogram/chromagram/cqt/etc.
 
     For a detailed overview of this function, see :ref:`sphx_glr_auto_examples_plot_display.py`
@@ -1406,9 +1407,9 @@ def waveshow(
     marker: str = "",
     where: Union[Literal["pre"], Literal["mid"], Literal["post"]] = "post",
     label: Optional[str] = None,
-    ax: Optional[matplotlib.axes.Axes] = None,
+    ax: Optional[Axes] = None,
     **kwargs,
-) -> librosa.display.AdaptiveWaveplot:
+) -> AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
 
     This function constructs a plot which adaptively switches between a raw

@@ -13,7 +13,8 @@ from .._cache import cache
 from .exceptions import ParameterError
 from .deprecation import Deprecated
 from numpy.typing import ArrayLike, DTypeLike
-from typing import Callable, Iterable, List, Literal, Optional, Tuple, Union
+from typing import Callable, Iterable, List, Optional, Tuple, Union
+from typing_extensions import Literal
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -1011,47 +1012,35 @@ def normalize(
 
 @numba.stencil
 def _localmax_sten(x):  # pragma: no cover
-    """Numba stencil for local maxima computation"""
+    '''Numba stencil for local maxima computation'''
     return (x[0] > x[-1]) & (x[0] >= x[1])
 
 
 @numba.stencil
 def _localmin_sten(x):  # pragma: no cover
-    """Numba stencil for local minima computation"""
+    '''Numba stencil for local minima computation'''
     return (x[0] < x[-1]) & (x[0] <= x[1])
 
 
-@numba.guvectorize(
-    [
-        "void(int16[:], bool_[:])",
-        "void(int32[:], bool_[:])",
-        "void(int64[:], bool_[:])",
-        "void(float32[:], bool_[:])",
-        "void(float64[:], bool_[:])",
-    ],
-    "(n)->(n)",
-    cache=True,
-    nopython=True,
-)
+@numba.guvectorize(['void(int16[:], bool_[:])',
+                    'void(int32[:], bool_[:])',
+                    'void(int64[:], bool_[:])',
+                    'void(float32[:], bool_[:])',
+                    'void(float64[:], bool_[:])'], '(n)->(n)',
+                   cache=True, nopython=True)
 def _localmax(x, y):  # pragma: no cover
-    """Vectorized wrapper for the localmax stencil"""
+    '''Vectorized wrapper for the localmax stencil'''
     y[:] = _localmax_sten(x)
 
 
-@numba.guvectorize(
-    [
-        "void(int16[:], bool_[:])",
-        "void(int32[:], bool_[:])",
-        "void(int64[:], bool_[:])",
-        "void(float32[:], bool_[:])",
-        "void(float64[:], bool_[:])",
-    ],
-    "(n)->(n)",
-    cache=True,
-    nopython=True,
-)
+@numba.guvectorize(['void(int16[:], bool_[:])',
+                    'void(int32[:], bool_[:])',
+                    'void(int64[:], bool_[:])',
+                    'void(float32[:], bool_[:])',
+                    'void(float64[:], bool_[:])'], '(n)->(n)',
+                   cache=True, nopython=True)
 def _localmin(x, y):  # pragma: no cover
-    """Vectorized wrapper for the localmin stencil"""
+    '''Vectorized wrapper for the localmin stencil'''
     y[:] = _localmin_sten(x)
 
 
@@ -1538,7 +1527,7 @@ def index_to_slice(
 @cache(level=40)
 def sync(
     data: np.ndarray,
-    idx: Union[Iterable[ints], slices],
+    idx: Union[Iterable[int], Iterable[slice]],
     *,
     aggregate: Optional[Callable] = None,
     pad: bool = True,
@@ -2031,8 +2020,8 @@ def __shear_sparse(X, *, factor=+1, axis=-1):
 
 
 def shear(
-    X: "Union[np.ndarray, scipy.sparse matrix]", *, factor: int = 1, axis: int = -1
-) -> "same type as ``X":
+    X: Union[np.ndarray, scipy.sparse.spmatrix], *, factor: int = 1, axis: int = -1
+) -> Union[np.ndarray, scipy.sparse.spmatrix]:
     """Shear a matrix by a given factor.
 
     The column ``X[:, n]`` will be displaced (rolled)
@@ -2083,7 +2072,7 @@ def shear(
         return __shear_dense(X, factor=factor, axis=axis)
 
 
-def stack(arrays: list, *, axis: int = 0) -> np.ndarray:
+def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
     """Stack one or more arrays along a target axis.
 
     This function is similar to `np.stack`, except that memory contiguity is
@@ -2314,7 +2303,7 @@ def __count_unique(x):
     return uniques.shape[0]
 
 
-def count_unique(data: np.ndarray, *, axis: int = -1) -> n_uniques:
+def count_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
     """Count the number of unique values in a multi-dimensional array
     along a given axis.
 
@@ -2366,7 +2355,7 @@ def __is_unique(x):
     return uniques.shape[0] == x.size
 
 
-def is_unique(data: np.ndarray, *, axis: int = -1) -> is_unique:
+def is_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
     """Determine if the input array consists of all unique values
     along a given axis.
 
@@ -2417,9 +2406,7 @@ def _cabs2(x):  # pragma: no cover
     return x.real**2 + x.imag**2
 
 
-def abs2(
-    x: "Union[np.ndarray, scalar, real, complex typed]",
-) -> Union[np.ndarray, scale, real]:
+def abs2(x: ArrayLike) -> ArrayLike:
     """Compute the squared magnitude of a real or complex array.
 
     This function is equivalent to calling `np.abs(x)**2` but it

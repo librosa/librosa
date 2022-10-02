@@ -943,12 +943,10 @@ def vqt(
         )
 
     if res_type is None:
-        warnings.warn(
-            "Support for VQT with res_type=None is deprecated in librosa 0.10\n"
-            "and will be removed in version 1.0.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
+        warnings.warn("Support for VQT with res_type=None is deprecated in librosa 0.10\n"
+                      "and will be removed in version 1.0.",
+                      category=DeprecationWarning,
+                      stacklevel=2)
         res_type = "soxr_hq"
 
     y, sr, hop_length = __early_downsample(
@@ -1124,7 +1122,9 @@ def __cqt_response(
 def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
     """Compute the number of early downsampling operations"""
 
-    downsample_count1 = max(0, int(np.ceil(np.log2(nyquist / filter_cutoff)) - 1) - 1)
+    downsample_count1 = max(
+        0, int(np.ceil(np.log2(nyquist / filter_cutoff)) - 1) - 1
+    )
 
     num_twos = __num_two_factors(hop_length)
     downsample_count2 = max(0, num_twos - n_octaves + 1)
@@ -1465,4 +1465,4 @@ def __bpo_to_alpha(bins_per_octave: int) -> float:
     """
 
     r = 2 ** (1 / bins_per_octave)
-    return (r**2 - 1) / (r**2 + 1)
+    return (r ** 2 - 1) / (r ** 2 + 1)

@@ -29,7 +29,7 @@ def _nnls_obj(x, shape, A, B):
     diff = np.einsum("mf,...ft->...mt", A, x, optimize=True) - B
 
     # Compute the objective value
-    value = (1 / B.size) * 0.5 * np.sum(diff**2)
+    value = (1 / B.size) * 0.5 * np.sum(diff ** 2)
 
     # And the gradient
     grad = (1 / B.size) * np.einsum("mf,...mt->...ft", A, diff, optimize=True)

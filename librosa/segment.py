@@ -43,6 +43,7 @@ from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 from typing import Callable, Optional, Union
 from typing_extensions import Literal
+from numpy.typing import ArrayLike
 
 __all__ = [
     "cross_similarity",
@@ -990,7 +991,7 @@ def path_enhance(
     R: np.ndarray,
     n: int,
     *,
-    window: "window specification" = "hann",
+    window: Union[str, tuple, float, Callable, ArrayLike] = "hann",
     max_ratio: float = 2.0,
     min_ratio: Optional[float] = None,
     n_filters: int = 7,

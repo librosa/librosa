@@ -10,7 +10,7 @@ from ..core.audio import autocorrelate
 from ..core.spectrum import stft
 from ..util.exceptions import ParameterError
 from ..filters import get_window
-from typing import Callable, Literal, Optional, Union
+from typing import Callable, Optional, Union
 
 
 __all__ = ["tempogram", "fourier_tempogram"]

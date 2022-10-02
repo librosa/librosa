@@ -408,7 +408,7 @@ def _cumulative_mean_normalized_difference(
     acf_frames[np.abs(acf_frames) < 1e-6] = 0
 
     # Energy terms.
-    energy_frames = np.cumsum(y_frames**2, axis=-2)
+    energy_frames = np.cumsum(y_frames ** 2, axis=-2)
     energy_frames = (
         energy_frames[..., win_length:, :] - energy_frames[..., :-win_length, :]
     )
@@ -637,9 +637,9 @@ def pyin(
     boltzmann_parameter: float = 2,
     resolution: float = 0.1,
     max_transition_rate: float = 35.92,
-    switch_prob: "float in ``(0, 1)" = 0.01,
-    no_trough_prob: "float in ``(0, 1)" = 0.01,
-    fill_na: Optional[Union[float, np.nan]] = np.nan,
+    switch_prob: float = 0.01,
+    no_trough_prob: float = 0.01,
+    fill_na: Optional[float] = np.nan,
     center: bool = True,
     pad_mode: Union[str, Callable] = "constant",
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:

@@ -323,9 +323,7 @@ def pitch_shift(
     """
 
     if not util.is_positive_int(bins_per_octave):
-        raise ParameterError(
-            f"bins_per_octave={bins_per_octave} must be a positive integer."
-        )
+        raise ParameterError(f"bins_per_octave={bins_per_octave} must be a positive integer.")
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
@@ -342,7 +340,7 @@ def pitch_shift(
 
 
 def remix(
-    y: np.ndarray, intervals: Iterable[tuples(start, end)], *, align_zeros: bool = True
+    y: np.ndarray, intervals: Iterable[Tuple[int, int]], *, align_zeros: bool = True
 ) -> np.ndarray:
     """Remix an audio signal by re-ordering time intervals.
 

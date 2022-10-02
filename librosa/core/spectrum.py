@@ -221,9 +221,7 @@ def stft(
     if hop_length is None:
         hop_length = int(win_length // 4)
     elif not util.is_positive_int(hop_length):
-        raise ParameterError(
-            "hop_length={} must be a positive integer".format(hop_length)
-        )
+        raise ParameterError("hop_length={} must be a positive integer".format(hop_length))
 
     # Check audio is valid
     util.valid_audio(y, mono=False)
@@ -248,9 +246,7 @@ def stft(
             # >>> my_pad_func = functools.partial(pad_func, foo=x, bar=y)
             # >>> librosa.stft(..., pad_mode=my_pad_func)
 
-            raise ParameterError(
-                "pad_mode='{}' is not supported by librosa.stft".format(pad_mode)
-            )
+            raise ParameterError("pad_mode='{}' is not supported by librosa.stft".format(pad_mode))
 
         if n_fft > y.shape[-1]:
             warnings.warn(
@@ -352,12 +348,14 @@ def stft(
             f"Shape mismatch for provided output array out.shape={out.shape} and target shape={shape}"
         )
     elif not np.iscomplexobj(out):
-        raise ParameterError(f"output with dtype={out.dtype} is not of complex type")
+        raise ParameterError(
+            f"output with dtype={out.dtype} is not of complex type"
+        )
     else:
         if np.allclose(shape, out.shape):
             stft_matrix = out
         else:
-            stft_matrix = out[..., : shape[-1]]
+            stft_matrix = out[..., :shape[-1]]
 
     # Fill in the warm-up
     if center and extra > 0:
@@ -387,9 +385,9 @@ def istft(
     stft_matrix: np.ndarray,
     *,
     hop_length: Optional[int] = None,
-    win_length: "Optional[int] - 1)]" = None,
+    win_length: Optional[int] = None,
     n_fft: Optional[int] = None,
-    window: "string, tuple, number, function, np.ndarray" = "hann",
+    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
     length: Optional[int] = None,
@@ -514,7 +512,7 @@ def istft(
     # For efficiency, trim STFT frames according to signal length if available
     if length:
         if center:
-            padded_length = length + 2 * (n_fft // 2)
+            padded_length = length + 2 * (n_fft//2)
         else:
             padded_length = length
         n_frames = min(stft_matrix.shape[-1], int(np.ceil(padded_length / hop_length)))
@@ -530,20 +528,18 @@ def istft(
     if length:
         expected_signal_len = length
     elif center:
-        expected_signal_len -= 2 * (n_fft // 2)
+        expected_signal_len -= 2*(n_fft//2)
 
     shape.append(expected_signal_len)
 
     if out is None:
         y = np.zeros(shape, dtype=dtype)
     elif not np.allclose(out.shape, shape):
-        raise ParameterError(
-            f"Shape mismatch for provided output array out.shape={out.shape} != {shape}"
-        )
+        raise ParameterError(f"Shape mismatch for provided output array out.shape={out.shape} != {shape}")
     else:
         y = out
         # Since we'll be doing overlap-add here, this needs to be initialized to zero.
-        y.fill(0.0)
+        y.fill(0.)
 
     fft = get_fftlib()
 
@@ -553,7 +549,7 @@ def istft(
         # k * hop_length >= n_fft // 2
         # k >= (n_fft//2 / hop_length)
 
-        start_frame = int(np.ceil((n_fft // 2) / hop_length))
+        start_frame = int(np.ceil((n_fft//2) / hop_length))
 
         # Do overlap-add on the head block
         ytmp = ifft_window * fft.irfft(stft_matrix[..., :start_frame], n=n_fft, axis=-2)
@@ -564,15 +560,15 @@ def istft(
         __overlap_add(head_buffer, ytmp, hop_length)
 
         # If y is smaller than the head buffer, take everything
-        if y.shape[-1] < shape[-1] - n_fft // 2:
-            y[..., :] = head_buffer[..., n_fft // 2 : y.shape[-1] + n_fft // 2]
+        if y.shape[-1] < shape[-1] - n_fft//2:
+            y[..., :] = head_buffer[..., n_fft//2:y.shape[-1]+n_fft//2]
         else:
             # Trim off the first n_fft//2 samples from the head and copy into target buffer
-            y[..., : shape[-1] - n_fft // 2] = head_buffer[..., n_fft // 2 :]
+            y[..., :shape[-1]-n_fft//2] = head_buffer[..., n_fft//2:]
 
         # This offset compensates for any differences between frame alignment
         # and padding truncation
-        offset = start_frame * hop_length - n_fft // 2
+        offset = start_frame * hop_length - n_fft//2
 
     else:
         start_frame = 0
@@ -592,7 +588,7 @@ def istft(
         ytmp = ifft_window * fft.irfft(stft_matrix[..., bl_s:bl_t], n=n_fft, axis=-2)
 
         # Overlap-add the istft block starting at the i'th frame
-        __overlap_add(y[..., frame * hop_length + offset :], ytmp, hop_length)
+        __overlap_add(y[..., frame * hop_length + offset:], ytmp, hop_length)
 
         frame += bl_t - bl_s
 
@@ -607,7 +603,7 @@ def istft(
     )
 
     if center:
-        start = n_fft // 2
+        start = n_fft//2
     else:
         start = 0
 
@@ -2196,7 +2192,7 @@ def pcen(
     power: float = 0.5,
     time_constant: float = 0.400,
     eps: float = 1e-6,
-    b: Optional[number] = None,
+    b: Optional[float] = None,
     max_size: int = 1,
     ref: Optional[np.ndarray] = None,
     axis: int = -1,
@@ -2657,7 +2653,7 @@ def griffinlim(
             window=window,
             center=center,
             pad_mode=pad_mode,
-            out=rebuilt,
+            out=rebuilt
         )
 
         # Update our phase estimates

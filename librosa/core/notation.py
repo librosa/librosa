@@ -247,7 +247,7 @@ def mela_to_degrees(mela: Union[str, int]) -> np.ndarray:
 @cache(level=10)
 def mela_to_svara(
     mela: Union[str, int], *, abbr: bool = True, unicode: bool = True
-) -> List[strings]:
+) -> List[str]:
     """Spell the Carnatic svara names for a given melakarta raga
 
     This function exists to resolve enharmonic equivalences between
@@ -394,7 +394,7 @@ def mela_to_svara(
     return list(svara_map)
 
 
-def list_mela() -> dict:
+def list_mela() -> dict[str, int]:
     """List melakarta ragas by name and index.
 
     Melakarta raga names are transcribed from [#]_, with the exception of #45
@@ -427,7 +427,7 @@ def list_mela() -> dict:
     return MELAKARTA_MAP.copy()
 
 
-def list_thaat() -> list:
+def list_thaat() -> list[str]:
     """List supported thaats by name.
 
     Returns
@@ -458,7 +458,7 @@ def list_thaat() -> list:
 
 
 @cache(level=10)
-def key_to_notes(key: str, *, unicode: bool = True) -> list:
+def key_to_notes(key: str, *, unicode: bool = True) -> list[str]:
     """Lists all 12 note names in the chromatic scale, as spelled according to
     a given key (major or minor).
 

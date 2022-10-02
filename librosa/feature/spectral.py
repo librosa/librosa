@@ -16,7 +16,8 @@ from ..core.audio import zero_crossings
 from ..core.spectrum import power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt
 from ..core.pitch import estimate_tuning
-from typing import Callable, Literal, Optional, Union
+from typing import Callable, Optional, Union
+from typing_extensions import Literal
 
 
 __all__ = [
@@ -345,7 +346,7 @@ def spectral_bandwidth(
 def spectral_contrast(
     *,
     y: Optional[np.ndarray] = None,
-    sr: number = 22050,
+    sr: float = 22050,
     S: Optional[np.ndarray] = None,
     n_fft: int = 2048,
     hop_length: int = 512,
@@ -785,7 +786,7 @@ def spectral_flatness(
             "Spectral flatness is only defined " "with non-negative energies"
         )
 
-    S_thresh = np.maximum(amin, S**power)
+    S_thresh = np.maximum(amin, S ** power)
     gmean = np.exp(np.mean(np.log(S_thresh), axis=-2, keepdims=True))
     amean = np.mean(S_thresh, axis=-2, keepdims=True)
     return gmean / amean
@@ -893,7 +894,7 @@ def rms(
             x[..., -1, :] *= 0.5
 
         # Calculate power
-        power = 2 * np.sum(x, axis=-2, keepdims=True) / frame_length**2
+        power = 2 * np.sum(x, axis=-2, keepdims=True) / frame_length ** 2
     else:
         raise ParameterError("Either `y` or `S` must be input.")
 
@@ -1283,7 +1284,7 @@ def chroma_cqt(
     C: Optional[np.ndarray] = None,
     hop_length: int = 512,
     fmin: Optional[float] = None,
-    norm: Optional[int, +-np.inf] = np.inf,
+    norm: Optional[Union[int, float]] = np.inf,
     threshold: float = 0.0,
     tuning: Optional[float] = None,
     n_chroma: int = 12,
@@ -1417,7 +1418,7 @@ def chroma_cens(
     bins_per_octave: int = 36,
     cqt_mode: Union[Literal["full"], Literal["hybrid"]] = "full",
     window: Optional[np.ndarray] = None,
-    norm: Optional[int, +-np.inf] = 2,
+    norm: Optional[int, float] = 2,
     win_len_smooth: Optional[int] = 41,
     smoothing_window: Union[str, float, tuple] = "hann",
 ) -> np.ndarray:

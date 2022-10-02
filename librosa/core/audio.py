@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Core IO, DSP and utility functions."""
 
+import os
 import pathlib
 import warnings
 
@@ -17,8 +18,9 @@ from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
+
 from numpy.typing import DTypeLike
-from typing import BinaryIO, Callable, Optional, Tuple, Union
+from typing import BinaryIO, Callable, Generator, Optional, Tuple, Union
 
 __all__ = [
     "load",
@@ -42,7 +44,7 @@ __all__ = [
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
 def load(
-    path: "Union[str, int, pathlib.Path, soundfile.SoundFile, audioread object, BinaryIO]",
+    path: Union[str, int, os.PathLike, sf.SoundFile, audioread.AudioFile, BinaryIO],
     *,
     sr: float = 22050,
     mono: bool = True,
@@ -162,9 +164,7 @@ def load(
         except RuntimeError as exc:
             # If soundfile failed, try audioread instead
             if isinstance(path, (str, pathlib.PurePath)):
-                warnings.warn(
-                    "PySoundFile failed. Trying audioread instead.", stacklevel=2
-                )
+                warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
                 y, sr_native = __audioread_load(path, offset, duration, dtype)
             else:
                 raise exc
@@ -282,7 +282,7 @@ def stream(
     duration: Optional[float] = None,
     fill_value: Optional[float] = None,
     dtype: DTypeLike = np.float32,
-) -> None:
+) -> Generator[np.ndarray, None, None]:
     """Stream audio in fixed-length buffers.
 
     This is primarily useful for processing large files that won't
@@ -504,7 +504,7 @@ def resample(
     *,
     orig_sr: float,
     target_sr: float,
-    res_type: "str (default: `soxr_hq`)" = "soxr_hq",
+    res_type: str = "soxr_hq",
     fix: bool = True,
     scale: bool = False,
     axis: int = -1,
@@ -633,9 +633,7 @@ def resample(
         orig_sr = int(orig_sr)
         target_sr = int(target_sr)
         gcd = np.gcd(orig_sr, target_sr)
-        y_hat = scipy.signal.resample_poly(
-            y, target_sr // gcd, orig_sr // gcd, axis=axis
-        )
+        y_hat = scipy.signal.resample_poly(y, target_sr // gcd, orig_sr // gcd, axis=axis)
     elif res_type in (
         "linear",
         "zero_order_hold",
@@ -647,20 +645,11 @@ def resample(
 
         # Use numpy to vectorize the resampler along the target axis
         # This is because samplerate does not support ndim>2 generally.
-        y_hat = np.apply_along_axis(
-            samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type
-        )
+        y_hat = np.apply_along_axis(samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type)
     elif res_type.startswith("soxr"):
         # Use numpy to vectorize the resampler along the target axis
         # This is because soxr does not support ndim>2 generally.
-        y_hat = np.apply_along_axis(
-            soxr.resample,
-            axis=axis,
-            arr=y,
-            in_rate=orig_sr,
-            out_rate=target_sr,
-            quality=res_type,
-        )
+        y_hat = np.apply_along_axis(soxr.resample, axis=axis, arr=y, in_rate=orig_sr, out_rate=target_sr, quality=res_type)
     else:
         import resampy
 
@@ -681,7 +670,7 @@ def get_duration(
     sr: float = 22050,
     S: Optional[np.ndarray] = None,
     n_fft: int = 2048,
-    hop_length: "int]" = 512,
+    hop_length: int = 512,
     center: bool = True,
     filename: Optional[str] = None,
 ) -> float:
@@ -790,7 +779,7 @@ def get_duration(
     return float(n_samples) / sr
 
 
-def get_samplerate(path: Union[str, int, soundfile.SoundFile, BinaryIO]) -> float:
+def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
     """Get the sampling rate for a given file.
 
     Parameters
@@ -1019,7 +1008,7 @@ def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
     bwd_pred_error = y[:-1]
 
     # DEN_{M} from eqn 16 of Marple.
-    den[0] = np.sum(fwd_pred_error**2 + bwd_pred_error**2, axis=0)
+    den[0] = np.sum(fwd_pred_error ** 2 + bwd_pred_error ** 2, axis=0)
 
     for i in range(order):
         # can be removed if we keep the epsilon bias
