@@ -19,8 +19,8 @@ from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
 
-from numpy.typing import DTypeLike
 from typing import BinaryIO, Callable, Generator, Optional, Tuple, Union
+from numpy.typing import DTypeLike, ArrayLike
 
 __all__ = [
     "load",
@@ -46,7 +46,7 @@ __all__ = [
 def load(
     path: Union[str, int, os.PathLike, sf.SoundFile, audioread.AudioFile, BinaryIO],
     *,
-    sr: float = 22050,
+    sr: Optional[float] = 22050,
     mono: bool = True,
     offset: float = 0.0,
     duration: Optional[float] = None,
@@ -1211,8 +1211,8 @@ def zero_crossings(
 
 def clicks(
     *,
-    times: Optional[np.ndarray] = None,
-    frames: Optional[np.ndarray] = None,
+    times: Optional[ArrayLike] = None,
+    frames: Optional[ArrayLike] = None,
     sr: float = 22050,
     hop_length: int = 512,
     click_freq: float = 1000.0,

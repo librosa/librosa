@@ -7,7 +7,8 @@ import numpy as np
 from . import notation
 from ..util.exceptions import ParameterError
 from ..util.decorators import vectorize
-from typing import Iterable, Optional, Union
+from typing import Iterable, List, Optional, Union, overload
+from numpy.typing import ArrayLike
 
 __all__ = [
     "frames_to_samples",
@@ -55,11 +56,11 @@ __all__ = [
 
 
 def frames_to_samples(
-    frames: Union[float, np.ndarray],
+    frames: ArrayLike,
     *,
     hop_length: int = 512,
     n_fft: Optional[int] = None
-) -> Union[float, np.ndarray]:
+) -> np.ndarray:
     """Converts frame indices to audio sample indices.
 
     Parameters
@@ -104,7 +105,7 @@ def samples_to_frames(
     *,
     hop_length: int = 512,
     n_fft: Optional[int] = None
-) -> Union[int, np.ndarray]:
+) -> np.ndarray:
     """Converts sample indices into STFT frames.
 
     Examples
@@ -256,8 +257,8 @@ def time_to_frames(
 
 
 def time_to_samples(
-    times: Union[float, np.ndarray], *, sr: float = 22050
-) -> Union[int, np.ndarray]:
+    times: ArrayLike, *, sr: float = 22050
+) -> np.ndarray:
     """Convert timestamps (in seconds) to sample indices.
 
     Parameters
@@ -288,7 +289,7 @@ def time_to_samples(
     return (np.asanyarray(times) * sr).astype(int)
 
 
-def samples_to_time(samples: np.ndarray, *, sr: float = 22050) -> np.ndarray:
+def samples_to_time(samples: ArrayLike, *, sr: float = 22050) -> np.ndarray:
     """Convert sample indices to time (in seconds).
 
     Parameters
@@ -325,7 +326,7 @@ def samples_to_time(samples: np.ndarray, *, sr: float = 22050) -> np.ndarray:
     return np.asanyarray(samples) / float(sr)
 
 
-def blocks_to_frames(blocks: np.ndarray, *, block_length: int) -> np.ndarray:
+def blocks_to_frames(blocks: ArrayLike, *, block_length: int) -> np.ndarray:
     """Convert block indices to frame indices
 
     Parameters
@@ -362,7 +363,7 @@ def blocks_to_frames(blocks: np.ndarray, *, block_length: int) -> np.ndarray:
 
 
 def blocks_to_samples(
-    blocks: np.ndarray, *, block_length: int, hop_length: int
+    blocks: ArrayLike, *, block_length: int, hop_length: int
 ) -> np.ndarray:
     """Convert block indices to sample indices
 
@@ -407,7 +408,7 @@ def blocks_to_samples(
 
 
 def blocks_to_time(
-    blocks: np.ndarray, *, block_length: int, hop_length: int, sr: int
+    blocks: ArrayLike, *, block_length: int, hop_length: int, sr: int
 ) -> np.ndarray:
     """Convert block indices to time (in seconds)
 
@@ -491,8 +492,18 @@ def note_to_hz(note: Union[str, Iterable[str]], **kwargs) -> Union[float, np.nda
     return midi_to_hz(note_to_midi(note, **kwargs))
 
 
+@overload
+def note_to_midi(note: str, *, round_midi: bool = ...) -> float: ...
+
+@overload
+def note_to_midi(note: List[str], *, round_midi: bool = ...) -> np.ndarray: ...
+
+@overload
+# Note: this overload must return Union[float, np.ndarray] because str extends Iterable[str]
+def note_to_midi(note: Iterable[str], *, round_midi: bool = ...) -> Union[float, np.ndarray]: ...
+
 def note_to_midi(
-    note: Union[str, Iterable[str]], *, round_midi: bool = True
+    note: Union[str, Iterable[str], List[str]], *, round_midi: bool = True
 ) -> Union[float, np.ndarray]:
     """Convert one or more spelled notes to MIDI number(s).
 
@@ -603,7 +614,7 @@ def note_to_midi(
 
 @vectorize(excluded=['octave', 'cents', 'key', 'unicode'])
 def midi_to_note(
-    midi: Union[int, Iterable[int]],
+    midi: ArrayLike,
     *,
     octave: bool = True,
     cents: bool = False,
@@ -702,7 +713,7 @@ def midi_to_note(
     return note
 
 
-def midi_to_hz(notes: Union[int, np.ndarray]) -> Union[float, np.ndarray]:
+def midi_to_hz(notes: ArrayLike) -> np.ndarray:
     """Get the frequency (Hz) of MIDI note(s)
 
     Examples
@@ -734,7 +745,7 @@ def midi_to_hz(notes: Union[int, np.ndarray]) -> Union[float, np.ndarray]:
     return 440.0 * (2.0 ** ((np.asanyarray(notes) - 69.0) / 12.0))
 
 
-def hz_to_midi(frequencies: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+def hz_to_midi(frequencies: ArrayLike) -> np.ndarray:
     """Get MIDI note number(s) for given frequencies
 
     Examples
@@ -765,7 +776,7 @@ def hz_to_midi(frequencies: Union[float, np.ndarray]) -> Union[float, np.ndarray
 
 
 def hz_to_note(
-    frequencies: Union[float, Iterable[float]], **kwargs
+    frequencies: ArrayLike, **kwargs
 ) -> Union[str, np.ndarray]:
     """Convert one or more frequencies (in Hz) to the nearest note names.
 
@@ -811,8 +822,8 @@ def hz_to_note(
 
 
 def hz_to_mel(
-    frequencies: Union[float, np.ndarray], *, htk: bool = False
-) -> Union[float, np.ndarray]:
+    frequencies: ArrayLike, *, htk: bool = False
+) -> np.ndarray:
     """Convert Hz to Mels
 
     Examples
@@ -867,7 +878,7 @@ def hz_to_mel(
     return mels
 
 
-def mel_to_hz(mels: np.ndarray, *, htk: bool = False) -> np.ndarray:
+def mel_to_hz(mels: ArrayLike, *, htk: bool = False) -> np.ndarray:
     """Convert mel bin numbers to frequencies
 
     Examples
@@ -922,11 +933,11 @@ def mel_to_hz(mels: np.ndarray, *, htk: bool = False) -> np.ndarray:
 
 
 def hz_to_octs(
-    frequencies: Union[float, np.ndarray],
+    frequencies: ArrayLike,
     *,
     tuning: float = 0.0,
     bins_per_octave: int = 12
-) -> Union[float, np.ndarray]:
+) -> np.ndarray:
     """Convert frequencies (Hz) to (fractional) octave numbers.
 
     Examples
@@ -961,8 +972,8 @@ def hz_to_octs(
 
 
 def octs_to_hz(
-    octs: Union[np.ndarray, float], *, tuning: float = 0.0, bins_per_octave: int = 12
-) -> Union[float, np.ndarray]:
+    octs: ArrayLike, *, tuning: float = 0.0, bins_per_octave: int = 12
+) -> np.ndarray:
     """Convert octaves numbers to frequencies.
 
     Octaves are counted relative to A.
@@ -998,8 +1009,8 @@ def octs_to_hz(
 
 
 def A4_to_tuning(
-    A4: Union[float, np.ndarray], *, bins_per_octave: int = 12
-) -> Union[float, np.ndarray]:
+    A4: ArrayLike, *, bins_per_octave: int = 12
+) -> np.ndarray:
     """Convert a reference pitch frequency (e.g., ``A4=435``) to a tuning
     estimation, in fractions of a bin per octave.
 
@@ -1049,8 +1060,8 @@ def A4_to_tuning(
 
 
 def tuning_to_A4(
-    tuning: Union[float, np.ndarray], *, bins_per_octave: int = 12
-) -> Union[float, np.ndarray]:
+    tuning: ArrayLike, *, bins_per_octave: int = 12
+) -> np.ndarray:
     """Convert a tuning deviation (from 0) in fractions of a bin per
     octave (e.g., ``tuning=-0.1``) to a reference pitch frequency
     relative to A440.
@@ -1322,8 +1333,8 @@ def fourier_tempo_frequencies(
 
 # A-weighting should be capitalized: suppress the naming warning
 def A_weighting(
-    frequencies: Union[float, np.ndarray], *, min_db: Optional[float] = -80.0
-) -> Union[float, np.ndarray]:  # pylint: disable=invalid-name
+    frequencies: ArrayLike, *, min_db: Optional[float] = -80.0
+) -> np.ndarray:  # pylint: disable=invalid-name
     """Compute the A-weighting of a set of frequencies.
 
     Parameters
@@ -1377,8 +1388,8 @@ def A_weighting(
 
 
 def B_weighting(
-    frequencies: Union[float, np.ndarray], *, min_db: Optional[float] = -80.0
-) -> Union[float, np.ndarray]:  # pylint: disable=invalid-name
+    frequencies: ArrayLike, *, min_db: Optional[float] = -80.0
+) -> np.ndarray:  # pylint: disable=invalid-name
     """Compute the B-weighting of a set of frequencies.
 
     Parameters
@@ -1431,8 +1442,8 @@ def B_weighting(
 
 
 def C_weighting(
-    frequencies: Union[float, np.ndarray], *, min_db: Optional[float] = -80.0
-) -> Union[float, np.ndarray]:  # pylint: disable=invalid-name
+    frequencies: ArrayLike, *, min_db: Optional[float] = -80.0
+) -> np.ndarray:  # pylint: disable=invalid-name
     """Compute the C-weighting of a set of frequencies.
 
     Parameters
@@ -1483,8 +1494,8 @@ def C_weighting(
 
 
 def D_weighting(
-    frequencies: Union[float, np.ndarray], *, min_db: Optional[float] = -80.0
-) -> Union[float, np.ndarray]:  # pylint: disable=invalid-name
+    frequencies: ArrayLike, *, min_db: Optional[float] = -80.0
+) -> np.ndarray:  # pylint: disable=invalid-name
     """Compute the D-weighting of a set of frequencies.
 
     Parameters
@@ -1555,8 +1566,8 @@ WEIGHTING_FUNCTIONS = {
 
 
 def frequency_weighting(
-    frequencies: Union[float, np.ndarray], *, kind: str = "A", **kwargs
-) -> Union[float, np.ndarray]:
+    frequencies: ArrayLike, *, kind: str = "A", **kwargs
+) -> np.ndarray:
     """Compute the weighting of a set of frequencies.
 
     Parameters
@@ -1600,11 +1611,11 @@ def frequency_weighting(
 
 
 def multi_frequency_weighting(
-    frequencies: Union[float, np.ndarray],
+    frequencies: ArrayLike,
     *,
     kinds: Union[list, tuple, str] = "ZAC",
     **kwargs
-) -> Union[float, np.ndarray]:
+) -> np.ndarray:
     """Compute multiple weightings of a set of frequencies.
 
     Parameters

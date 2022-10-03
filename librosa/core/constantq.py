@@ -15,7 +15,8 @@ from .. import filters
 from .. import util
 from ..util.exceptions import ParameterError
 from numpy.typing import DTypeLike
-from typing import Callable, Literal, Optional, Union
+from typing import Callable, Optional, Union
+from typing_extensions import Literal
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 

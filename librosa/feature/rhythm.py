@@ -26,7 +26,7 @@ def tempogram(
     win_length: int = 384,
     center: bool = True,
     window: Union[str, Callable, float, tuple, np.ndarray] = "hann",
-    norm: float = np.inf,
+    norm: Optional[float] = np.inf,
 ) -> np.ndarray:
     """Compute the tempogram: local autocorrelation of the onset strength envelope. [#]_
 

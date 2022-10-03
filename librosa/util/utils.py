@@ -13,7 +13,7 @@ from .._cache import cache
 from .exceptions import ParameterError
 from .deprecation import Deprecated
 from numpy.typing import ArrayLike, DTypeLike
-from typing import Callable, Iterable, List, Optional, Tuple, Union
+from typing import Callable, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union, overload
 from typing_extensions import Literal
 
 # Constrain STFT block sizes to 256 KB
@@ -386,7 +386,7 @@ def valid_intervals(intervals: np.ndarray) -> bool:
     return True
 
 
-def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs) -> np.ndarray:
+def pad_center(data: np.ndarray, *, size: float, axis: int = -1, **kwargs) -> np.ndarray:
     """Pad an array to a target length along a target axis.
 
     This differs from `np.pad` by centering the data prior to padding,
@@ -459,7 +459,7 @@ def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs) -> np.n
     return np.pad(data, lengths, **kwargs)
 
 
-def expand_to(x: np.ndarray, *, ndim: int, axes: Union[int, slice]) -> np.ndarray:
+def expand_to(x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int], Sequence[slice]]) -> np.ndarray:
     """Expand the dimensions of an input array with
 
     Parameters
@@ -674,13 +674,33 @@ def fix_frames(
     return np.unique(frames).astype(int)
 
 
+@overload
+def axis_sort(
+    S: np.ndarray,
+    *,
+    axis: int = ...,
+    index: Literal[False] = ...,
+    value: Optional[Callable] = ...
+) -> np.ndarray:
+    ...
+
+@overload
+def axis_sort(
+    S: np.ndarray,
+    *,
+    axis: int = ...,
+    index: Literal[True],
+    value: Optional[Callable] = ...
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
 def axis_sort(
     S: np.ndarray,
     *,
     axis: int = -1,
     index: bool = False,
     value: Optional[Callable] = None
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Sort an array along its rows or columns.
 
     Examples
@@ -780,7 +800,7 @@ def normalize(
     S: np.ndarray,
     *,
     norm: float = np.inf,
-    axis: int = 0,
+    axis: Optional[int] = 0,
     threshold: Optional[float] = None,
     fill: Optional[bool] = None
 ) -> np.ndarray:
@@ -2018,10 +2038,11 @@ def __shear_sparse(X, *, factor=+1, axis=-1):
     # And convert back to the input format
     return X_shear.asformat(fmt)
 
+_ArrayOrSparseMatrix = TypeVar('_ArrayOrSparseMatrix', bound=Union[np.ndarray, scipy.sparse.spmatrix])
 
 def shear(
-    X: Union[np.ndarray, scipy.sparse.spmatrix], *, factor: int = 1, axis: int = -1
-) -> Union[np.ndarray, scipy.sparse.spmatrix]:
+    X: _ArrayOrSparseMatrix, *, factor: int = 1, axis: int = -1
+) -> _ArrayOrSparseMatrix:
     """Shear a matrix by a given factor.
 
     The column ``X[:, n]`` will be displaced (rolled)
@@ -2405,8 +2426,9 @@ def _cabs2(x):  # pragma: no cover
     """Helper function for efficiently computing abs2 on complex inputs"""
     return x.real**2 + x.imag**2
 
-
-def abs2(x: ArrayLike) -> ArrayLike:
+_Number = Union[complex, np.number]
+_NumberOrArray = TypeVar("_NumberOrArray", bound=Union[_Number, np.ndarray])
+def abs2(x: _NumberOrArray) -> _NumberOrArray:
     """Compute the squared magnitude of a real or complex array.
 
     This function is equivalent to calling `np.abs(x)**2` but it
@@ -2440,13 +2462,18 @@ def abs2(x: ArrayLike) -> ArrayLike:
 @numba.vectorize(
     ["complex64(float32)", "complex128(float64)"], nopython=True, cache=True, identity=1
 )
-def _phasor_angles(x):  # pragma: no cover
+def _phasor_angles(x) -> np.complex_:  # pragma: no cover
     return np.cos(x) + 1j * np.sin(x)
 
+_Real = Union[float, np.integer, np.floating]
+@overload
+def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray: ...
+@overload
+def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> np.complex_: ...
 
 def phasor(
-    angles: Union[np.ndarray, float], *, mag: Optional[Union[np.ndarray, float]] = None
-) -> Union[np.ndarray, float]:
+    angles: Union[np.ndarray, _Real], *, mag: Optional[Union[np.ndarray, _Number]] = None
+) -> Union[np.ndarray, np.complex_]:
     """Construct a complex phasor representation from angles.
 
     When `mag` is not provided, this is equivalent to:

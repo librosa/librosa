@@ -41,7 +41,9 @@ from . import decompose
 from . import feature
 from . import util
 from .util.exceptions import ParameterError
-from typing import Callable, Iterable, Optional, Tuple, Union
+from typing import Callable, Iterable, Optional, Tuple, Union, overload
+from typing_extensions import Literal
+from numpy.typing import ArrayLike
 
 __all__ = [
     "hpss",
@@ -611,13 +613,35 @@ def split(
     return edges.reshape((-1, 2))
 
 
+@overload
+def preemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = ...,
+    zi: Optional[ArrayLike] = ...,
+    return_zf: Literal[False] = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def preemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = ...,
+    zi: Optional[ArrayLike] = ...,
+    return_zf: Literal[True] = ...,
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+
 def preemphasis(
     y: np.ndarray,
     *,
     coef: float = 0.97,
-    zi: Optional[float] = None,
+    zi: Optional[ArrayLike] = None,
     return_zf: bool = False,
-) -> Tuple[np.ndarray, float]:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Pre-emphasize an audio signal with a first-order differencing filter:
 
         y[n] -> y[n] - coef * y[n-1]
@@ -704,13 +728,34 @@ def preemphasis(
     return y_out
 
 
+@overload
+def deemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = ...,
+    zi: Optional[ArrayLike] = ...,
+    return_zf: Literal[False] = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def deemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = ...,
+    zi: Optional[ArrayLike] = ...,
+    return_zf: Literal[True] = ...,
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
 def deemphasis(
     y: np.ndarray,
     *,
     coef: float = 0.97,
-    zi: Optional[float] = None,
+    zi: Optional[ArrayLike] = None,
     return_zf: bool = False,
-) -> Tuple[np.ndarray, float]:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:

@@ -20,7 +20,8 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
-from typing import Callable, Literal, Optional, Tuple, Union
+from typing import Callable, Optional, Tuple, Union
+from typing_extensions import Literal
 
 __all__ = [
     "stft",
@@ -1663,7 +1664,7 @@ def power_to_db(
     *,
     ref: Union[float, Callable] = 1.0,
     amin: float = 1e-10,
-    top_db: float = 80.0,
+    top_db: Optional[float] = 80.0,
 ) -> np.ndarray:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 

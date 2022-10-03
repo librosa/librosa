@@ -38,7 +38,8 @@ from numba import jit
 from .util import pad_center, fill_off_diagonal, is_positive_int, tiny, expand_to
 from .util.exceptions import ParameterError
 from .filters import get_window
-from typing import Callable, Iterable, Optional, Tuple, Union
+from typing import Callable, Iterable, Optional, Tuple, Union, overload
+from typing_extensions import Literal
 from numpy.typing import ArrayLike
 
 __all__ = [
@@ -55,6 +56,78 @@ __all__ = [
 ]
 
 
+@overload
+def dtw(
+    X: Optional[np.ndarray] = ...,
+    Y: Optional[np.ndarray] = ...,
+    *,
+    C: Optional[np.ndarray] = ...,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[False] = ...,
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[False] = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def dtw(
+    X: Optional[np.ndarray] = ...,
+    Y: Optional[np.ndarray] = ...,
+    *,
+    C: Optional[np.ndarray] = ...,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[False] = ...,
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[True] = ...,
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+@overload
+def dtw(
+    X: Optional[np.ndarray] = ...,
+    Y: Optional[np.ndarray] = ...,
+    *,
+    C: Optional[np.ndarray] = ...,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[True] = ...,
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[False] = ...,
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+@overload
+def dtw(
+    X: Optional[np.ndarray] = ...,
+    Y: Optional[np.ndarray] = ...,
+    *,
+    C: Optional[np.ndarray] = ...,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[True] = ...,
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[True] = ...,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ...
+
 def dtw(
     X: Optional[np.ndarray] = None,
     Y: Optional[np.ndarray] = None,
@@ -69,7 +142,7 @@ def dtw(
     global_constraints: bool = False,
     band_rad: float = 0.25,
     return_steps: bool = False,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]]:
     """Dynamic time warping (DTW).
 
     This function performs a DTW and path backtracking on two sequences.
