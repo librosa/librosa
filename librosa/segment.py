@@ -41,7 +41,7 @@ from ._cache import cache
 from . import util
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
-from typing import Callable, Optional, Union
+from typing import Callable, Optional, Union, overload
 from typing_extensions import Literal
 from numpy.typing import ArrayLike
 
@@ -273,6 +273,42 @@ def cross_similarity(
 
     return xsim
 
+
+@overload
+def recurrence_matrix(
+    data: np.ndarray,
+    *,
+    k: Optional[int] = ...,
+    width: int = ...,
+    metric: str = ...,
+    sym: bool = ...,
+    sparse: Literal[True] = ...,
+    mode: Union[
+        Literal["connectivity"], Literal["distance"], Literal["affinity"]
+    ] = ...,
+    bandwidth: Optional[float] = ...,
+    self: bool = ...,
+    axis: int = ...,
+) -> scipy.sparse.csc_matrix:
+    ...
+
+@overload
+def recurrence_matrix(
+    data: np.ndarray,
+    *,
+    k: Optional[int] = ...,
+    width: int = ...,
+    metric: str = ...,
+    sym: bool = ...,
+    sparse: Literal[False] = ...,
+    mode: Union[
+        Literal["connectivity"], Literal["distance"], Literal["affinity"]
+    ] = ...,
+    bandwidth: Optional[float] = ...,
+    self: bool = ...,
+    axis: int = ...,
+) -> np.ndarray:
+    ...
 
 @cache(level=30)
 def recurrence_matrix(
