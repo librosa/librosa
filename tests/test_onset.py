@@ -293,7 +293,7 @@ def test_onset_backtrack(ysr, oenv, hop, energy):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_onset_strength_noagg():
     S = np.zeros((3, 3))
-    librosa.onset.onset_strength(S=S, aggregate=False)
+    librosa.onset.onset_strength(S=S, aggregate=False) # type: ignore
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)

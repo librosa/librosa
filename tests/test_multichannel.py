@@ -46,7 +46,7 @@ def tfr_multi(y_multi):
     "ndim,axis", [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 2), (3, -1), (4, 0), (4, 3), (4, -1)]
 )
 def test_sync_multi(aggregate, ndim, axis):
-    data = np.ones([6] * ndim, dtype=np.float)
+    data = np.ones([6] * ndim, dtype=float)
 
     # Make some slices that don't fill the entire dimension
     slices = [slice(1, 3), slice(3, 4)]

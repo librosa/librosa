@@ -24,7 +24,7 @@ def test_mono_valid_stereo():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_valid_audio_int():
-    y = np.zeros(10, dtype=np.int)
+    y = np.zeros(10, dtype=int)
     librosa.util.valid_audio(y)
 
 

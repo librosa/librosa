@@ -646,7 +646,7 @@ def test_unknown_axis(S_abs, axis):
         np.arange(1, 10.0),  # strictly positive
         -np.arange(1, 10.0),  # strictly negative
         np.arange(-3, 4.0),  # signed,
-        np.arange(2, dtype=np.bool),
+        np.arange(2, dtype=bool),
     ],
 )  # binary
 def test_cmap_robust(data):

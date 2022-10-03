@@ -117,8 +117,8 @@ def test_pitch_shift_multi(y_multi):
 def test_remix_mono(align_zeros):
 
     # without zc alignment
-    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=np.float)
-    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=np.float)
+    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=float)
+    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=float)
     intervals = np.asarray([[2, 4], [6, 8], [0, 2], [8, 10], [4, 6]])
 
     y_out = librosa.effects.remix(y, intervals, align_zeros=align_zeros)
@@ -129,8 +129,8 @@ def test_remix_mono(align_zeros):
 def test_remix_stereo(align_zeros):
 
     # without zc alignment
-    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=np.float)
-    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=np.float)
+    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=float)
+    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=float)
     y = np.vstack([y, y])
     y_t = np.vstack([y_t, y_t])
 
@@ -332,10 +332,11 @@ def test_split(y_split_idx, frame_length, hop_length, top_db):
 def test_preemphasis(coef, zi, return_zf, dtype):
     x = np.arange(10, dtype=dtype)
 
-    y = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
-
+    result = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
     if return_zf:
-        y, zf = y
+        y, zf = result
+    else:
+        y = result
 
     assert np.allclose(y[1:], x[1:] - coef * x[:-1])
     assert x.dtype == y.dtype

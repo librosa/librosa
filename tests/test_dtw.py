@@ -154,7 +154,7 @@ def test_dtw_backtracking_incompatible_args_01():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_dtw_incompatible_args_01():
-    librosa.sequence.dtw(C=1, X=1, Y=1)
+    librosa.sequence.dtw(C=1, X=1, Y=1) # type: ignore
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -186,7 +186,7 @@ def test_dtw_incompatible_sigma_diag():
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_dtw_incompatible_sigma_diag_precomp():
     C = np.ones((5, 3))
-    librosa.sequence.dtw(C=C, step_sizes_sigma=[[1, 1]])
+    librosa.sequence.dtw(C=C, step_sizes_sigma=[[1, 1]]) # type: ignore
 
 
 def test_dtw_global_diagonal():
@@ -272,7 +272,7 @@ def test_dtw_global_inf():
     # path-following to (0, 0)
 
     # Construct a cost matrix where full alignment is impossible
-    C = np.zeros((4, 4), dtype=np.float)
+    C = np.zeros((4, 4), dtype=float)
     C[-1, -1] = np.inf
     with pytest.raises(librosa.ParameterError):
         librosa.sequence.dtw(C=C, subseq=False)
@@ -280,7 +280,7 @@ def test_dtw_global_inf():
 
 def test_dtw_subseq_inf():
     # Construct a cost matrix where partial alignment is impossible
-    C = np.zeros((4, 4), dtype=np.float)
+    C = np.zeros((4, 4), dtype=float)
     C[-1, :] = np.inf
 
     with pytest.raises(librosa.ParameterError):
@@ -289,7 +289,7 @@ def test_dtw_subseq_inf():
 
 def test_dtw_subseq_pass():
     # Construct a cost matrix where partial alignment is possible
-    C = np.zeros((4, 4), dtype=np.float)
+    C = np.zeros((4, 4), dtype=float)
     C[-1, 2:] = np.inf
     librosa.sequence.dtw(C=C, subseq=True)
 
