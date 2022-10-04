@@ -16,6 +16,7 @@ from .convert import (
     hz_to_midi as hz_to_midi,
     hz_to_mel as hz_to_mel,
     hz_to_octs as hz_to_octs,
+    hz_to_fjs as hz_to_fjs,
     mel_to_hz as mel_to_hz,
     octs_to_hz as octs_to_hz,
     A4_to_tuning as A4_to_tuning,
@@ -111,4 +112,12 @@ from .notation import (
     thaat_to_degrees as thaat_to_degrees,
     list_mela as list_mela,
     list_thaat as list_thaat,
+    fifths_to_note,
+    interval_to_fjs,
+)
+
+from .intervals import (
+    interval_frequencies as interval_frequencies,
+    pythagorean_intervals as pythagorean_intervals,
+    plimit_intervals as plimit_intervals,
 )
