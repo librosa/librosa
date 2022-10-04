@@ -20,7 +20,7 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
-from typing import Callable, Optional, Tuple, Union
+from typing import Callable, Optional, Tuple, Union, overload
 from typing_extensions import Literal
 
 __all__ = [
@@ -1820,7 +1820,7 @@ def amplitude_to_db(
     *,
     ref: Union[float, Callable] = 1.0,
     amin: float = 1e-5,
-    top_db: float = 80.0,
+    top_db: Optional[float] = 80.0,
 ) -> np.ndarray:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
@@ -2182,6 +2182,67 @@ def fmt(
     )
 
 
+@overload
+def pcen(
+    S: np.ndarray,
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    gain: float = ...,
+    bias: float = ...,
+    power: float = ...,
+    time_constant: float = ...,
+    eps: float = ...,
+    b: Optional[float] = ...,
+    max_size: int = ...,
+    ref: Optional[np.ndarray] = ...,
+    axis: int = ...,
+    max_axis: Optional[int] = ...,
+    zi: Optional[np.ndarray] = ...,
+    return_zf: Literal[False] = ...,
+) -> np.ndarray:
+    ...
+@overload
+def pcen(
+    S: np.ndarray,
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    gain: float = ...,
+    bias: float = ...,
+    power: float = ...,
+    time_constant: float = ...,
+    eps: float = ...,
+    b: Optional[float] = ...,
+    max_size: int = ...,
+    ref: Optional[np.ndarray] = ...,
+    axis: int = ...,
+    max_axis: Optional[int] = ...,
+    zi: Optional[np.ndarray] = ...,
+    return_zf: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+@overload
+def pcen(
+    S: np.ndarray,
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    gain: float = ...,
+    bias: float = ...,
+    power: float = ...,
+    time_constant: float = ...,
+    eps: float = ...,
+    b: Optional[float] = ...,
+    max_size: int = ...,
+    ref: Optional[np.ndarray] = ...,
+    axis: int = ...,
+    max_axis: Optional[int] = ...,
+    zi: Optional[np.ndarray] = ...,
+    return_zf: bool = ...,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    ...
+
 @cache(level=30)
 def pcen(
     S: np.ndarray,
@@ -2200,7 +2261,7 @@ def pcen(
     max_axis: Optional[int] = None,
     zi: Optional[np.ndarray] = None,
     return_zf: bool = False,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Per-channel energy normalization (PCEN)
 
     This function normalizes a time-frequency representation ``S`` by

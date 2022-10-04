@@ -682,7 +682,7 @@ def constant_q_lengths(
 @cache(level=10)
 def wavelet_lengths(
     *,
-    freqs: np.ndarray,
+    freqs: ArrayLike,
     sr: float = 22050,
     window: Union[str, Callable] = "hann",
     filter_scale: float = 1,

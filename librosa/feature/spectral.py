@@ -18,6 +18,7 @@ from ..core.constantq import cqt, hybrid_cqt
 from ..core.pitch import estimate_tuning
 from typing import Callable, Optional, Union
 from typing_extensions import Literal
+from .._typing import _FloatLike_co
 
 
 __all__ = [
@@ -1411,14 +1412,14 @@ def chroma_cens(
     sr: float = 22050,
     C: Optional[np.ndarray] = None,
     hop_length: int = 512,
-    fmin: Optional[float] = None,
+    fmin: Optional[_FloatLike_co] = None,
     tuning: Optional[float] = None,
     n_chroma: int = 12,
     n_octaves: int = 7,
     bins_per_octave: int = 36,
     cqt_mode: Union[Literal["full"], Literal["hybrid"]] = "full",
     window: Optional[np.ndarray] = None,
-    norm: Optional[int, float] = 2,
+    norm: Optional[float] = 2,
     win_len_smooth: Optional[int] = 41,
     smoothing_window: Union[str, float, tuple] = "hann",
 ) -> np.ndarray:

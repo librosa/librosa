@@ -56,7 +56,7 @@ def test_valid_stereo():
 def test_valid_audio_type():
     """valid_audio: list input"""
     y = list(np.zeros(1000))
-    librosa.util.valid_audio(y)
+    librosa.util.valid_audio(y) # type: ignore
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)

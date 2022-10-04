@@ -23,6 +23,7 @@ from contextlib import nullcontext as dnr
 import glob
 import numpy as np
 import scipy.io
+import scipy.signal
 
 import pytest
 
@@ -143,7 +144,7 @@ def test_mel_norm(norm):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_mel_badnorm():
-    librosa.filters.mel(sr=22050, n_fft=2048, norm="garbage")
+    librosa.filters.mel(sr=22050, n_fft=2048, norm="garbage") # type: ignore
 
 
 def test_mel_gap():
@@ -460,7 +461,7 @@ def test_cq_to_chroma(n_octaves, semitones, n_chroma, fmin, base_c, window):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_get_window_fail():
 
-    librosa.filters.get_window(None, 32)
+    librosa.filters.get_window(None, 32) # type: ignore
 
 
 @pytest.mark.parametrize("window", ["hann", "hann", 4.0, ("kaiser", 4.0)])

@@ -39,7 +39,7 @@ def cqt(
     window: Union[str, tuple, float, Callable] = "hann",
     scale: bool = True,
     pad_mode: str = "constant",
-    res_type: str = "soxr_hq",
+    res_type: Optional[str] = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
     """Compute the constant-Q transform of an audio signal.
@@ -767,7 +767,7 @@ def vqt(
     window: Union[str, tuple, float, Callable] = "hann",
     scale: bool = True,
     pad_mode: str = "constant",
-    res_type: str = "soxr_hq",
+    res_type: Optional[str] = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
     """Compute the variable-Q transform of an audio signal.

@@ -5,6 +5,7 @@
 
 # Disable cache
 import os
+from typing import cast
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
@@ -15,6 +16,7 @@ import librosa
 import glob
 import numpy as np
 import scipy.io
+import scipy.stats
 import pytest
 import warnings
 from unittest import mock
@@ -393,7 +395,7 @@ def test_spectral_centroid_multi_variable(s_multi):
 
     S, sr = s_multi
 
-    freq = np.random.randn(*S.shape)
+    freq = cast(np.ndarray, np.random.randn(*S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_centroid(sr=sr, freq=freq[0], S=S[0])
@@ -429,7 +431,7 @@ def test_spectral_bandwidth_multi(s_multi):
 def test_spectral_bandwidth_multi_variable(s_multi):
     S, sr = s_multi
 
-    freq = np.random.randn(*S.shape)
+    freq = cast(np.ndarray, np.random.randn(*S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_bandwidth(sr=sr, freq=freq[0], S=S[0])
@@ -483,7 +485,7 @@ def test_spectral_rolloff_multi(s_multi):
 def test_spectral_rolloff_multi_variable(s_multi):
     S, sr = s_multi
 
-    freq = np.random.randn(*S.shape)
+    freq = cast(np.ndarray, np.random.randn(*S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_rolloff(sr=sr, freq=freq[0], S=S[0])

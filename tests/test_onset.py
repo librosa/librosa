@@ -248,7 +248,7 @@ def test_onset_units(ysr, hop_length, units, ctx):
         b2 = librosa.onset.onset_detect(y=y, sr=sr, hop_length=hop_length, units=units)
 
         t1 = librosa.frames_to_time(b1, sr=sr, hop_length=hop_length)
-
+        
         if units == "time":
             t2 = b2
 
@@ -257,6 +257,9 @@ def test_onset_units(ysr, hop_length, units, ctx):
 
         elif units == "frames":
             t2 = librosa.frames_to_time(b2, sr=sr, hop_length=hop_length)
+
+        else:
+            assert False
 
         assert np.allclose(t1, t2)
 

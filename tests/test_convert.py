@@ -534,7 +534,7 @@ def test_blocks_to_frames(blocks, block_length):
     assert np.allclose(frames, block_length * np.asanyarray(blocks))
 
     # Check dtype
-    assert np.issubdtype(frames.dtype, np.int)
+    assert np.issubdtype(frames.dtype, int)
 
 
 @pytest.mark.parametrize("blocks", [0, 1, [10, 20]])
@@ -551,7 +551,7 @@ def test_blocks_to_samples(blocks, block_length, hop_length):
     assert np.allclose(samples, np.asanyarray(blocks) * hop_length * block_length)
 
     # Check dtype
-    assert np.issubdtype(samples.dtype, np.int)
+    assert np.issubdtype(samples.dtype, int)
 
 
 @pytest.mark.parametrize("blocks", [0, 1, [10, 20]])
@@ -571,7 +571,7 @@ def test_blocks_to_time(blocks, block_length, hop_length, sr):
     )
 
     # Check dtype
-    assert np.issubdtype(times.dtype, np.float)
+    assert np.issubdtype(times.dtype, float)
 
 
 @pytest.mark.parametrize("abbr", [False, True])

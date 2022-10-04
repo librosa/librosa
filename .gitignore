@@ -59,3 +59,5 @@ coverage.xml
 #IDE
 .idea/
 .vscode
+
+.venv

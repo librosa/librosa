@@ -18,6 +18,7 @@ from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
+from .._typing import _FloatLike_co
 
 from typing import BinaryIO, Callable, Generator, Optional, Tuple, Union
 from numpy.typing import DTypeLike, ArrayLike
@@ -1347,7 +1348,7 @@ def clicks(
 
 
 def tone(
-    frequency: float,
+    frequency: _FloatLike_co,
     *,
     sr: float = 22050,
     length: Optional[int] = None,

@@ -41,7 +41,7 @@ from ._cache import cache
 from . import util
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
-from typing import Callable, Optional, Union, overload
+from typing import Callable, Optional, TypeVar, Union, overload
 from typing_extensions import Literal
 from numpy.typing import ArrayLike
 
@@ -56,6 +56,35 @@ __all__ = [
     "path_enhance",
 ]
 
+@overload
+def cross_similarity(
+    data: np.ndarray,
+    data_ref: np.ndarray,
+    *,
+    k: Optional[int] = ...,
+    metric: str = ...,
+    sparse: Literal[False] = ...,
+    mode: Union[
+        Literal["connectivity"], Literal["distance"], Literal["affinity"]
+    ] = ...,
+    bandwidth: Optional[float] = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def cross_similarity(
+    data: np.ndarray,
+    data_ref: np.ndarray,
+    *,
+    k: Optional[int] = ...,
+    metric: str = ...,
+    sparse: Literal[True] = ...,
+    mode: Union[
+        Literal["connectivity"], Literal["distance"], Literal["affinity"]
+    ] = ...,
+    bandwidth: Optional[float] = ...,
+) -> scipy.sparse.csc_matrix:
+    ...
 
 @cache(level=30)
 def cross_similarity(
@@ -579,9 +608,11 @@ def recurrence_matrix(
     return rec
 
 
+_ArrayOrSparseMatrix = TypeVar('_ArrayOrSparseMatrix', bound=Union[np.ndarray, scipy.sparse.spmatrix])
+
 def recurrence_to_lag(
-    rec: Union[np.ndarray, scipy.sparse.spmatrix], *, pad: bool = True, axis: int = -1
-) -> np.ndarray:
+    rec: _ArrayOrSparseMatrix, *, pad: bool = True, axis: int = -1
+) -> _ArrayOrSparseMatrix:
     """Convert a recurrence matrix into a lag matrix.
 
         ``lag[i, j] == rec[i+j, j]``
@@ -685,8 +716,8 @@ def recurrence_to_lag(
 
 
 def lag_to_recurrence(
-    lag: Union[np.ndarray, scipy.sparse.spmatrix], *, axis: int = -1
-) -> Union[np.ndarray, scipy.sparse.spmatrix]:
+    lag: _ArrayOrSparseMatrix, *, axis: int = -1
+) -> _ArrayOrSparseMatrix:
     """Convert a lag matrix into a recurrence matrix.
 
     Parameters

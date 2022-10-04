@@ -571,8 +571,8 @@ def dtw_backtracking(
     *,
     step_sizes_sigma: Optional[np.ndarray] = None,
     subseq: bool = False,
-    start: Optional[int] = None,
-) -> list:
+    start: Optional[Union[int, np.integer]] = None,
+) -> np.ndarray:
     """Backtrack a warping path.
 
     Uses the saved step sizes from the cost accumulation
@@ -620,6 +620,36 @@ def dtw_backtracking(
     wp = __dtw_backtracking(steps, step_sizes_sigma, subseq, start)
     return np.asarray(wp, dtype=int)
 
+@overload
+def rqa(
+    sim: np.ndarray,
+    *,
+    gap_onset: float = ...,
+    gap_extend: float = ...,
+    knight_moves: bool = ...,
+    backtrack: Literal[False],
+) -> np.ndarray:
+    ...
+@overload
+def rqa(
+    sim: np.ndarray,
+    *,
+    gap_onset: float = ...,
+    gap_extend: float = ...,
+    knight_moves: bool = ...,
+    backtrack: Literal[True] = ...,
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+@overload
+def rqa(
+    sim: np.ndarray,
+    *,
+    gap_onset: float = ...,
+    gap_extend: float = ...,
+    knight_moves: bool = ...,
+    backtrack: bool = ...,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    ...
 
 def rqa(
     sim: np.ndarray,
@@ -628,7 +658,7 @@ def rqa(
     gap_extend: float = 1,
     knight_moves: bool = True,
     backtrack: bool = True,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Recurrence quantification analysis (RQA)
 
     This function implements different forms of RQA as described by
@@ -978,7 +1008,7 @@ def __rqa_backtrack(score, pointers):
 @jit(nopython=True, cache=True)
 def _viterbi(
     log_prob: np.ndarray, log_trans: np.ndarray, log_p_init: np.ndarray
-) -> None:  # pragma: no cover
+) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
     """Core Viterbi algorithm.
 
     This is intended for internal use only.
@@ -1039,13 +1069,32 @@ def _viterbi(
     return state, logp
 
 
+@overload
+def viterbi(
+    prob: np.ndarray,
+    transition: np.ndarray,
+    *,
+    p_init: Optional[np.ndarray] = ...,
+    return_logp: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+@overload
+def viterbi(
+    prob: np.ndarray,
+    transition: np.ndarray,
+    *,
+    p_init: Optional[np.ndarray] = ...,
+    return_logp: Literal[False] = ...,
+) -> np.ndarray:
+    ...
+
 def viterbi(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, Union[float, np.ndarray]]]:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Viterbi decoding from observation likelihoods.
 
     Given a sequence of observation likelihoods ``prob[s, t]``,
@@ -1181,6 +1230,37 @@ def viterbi(
     return states
 
 
+@overload
+def viterbi_discriminative(
+    prob: np.ndarray,
+    transition: np.ndarray,
+    *,
+    p_state: Optional[np.ndarray] = ...,
+    p_init: Optional[np.ndarray] = ...,
+    return_logp: Literal[False] = ...,
+) -> np.ndarray:
+    ...
+@overload
+def viterbi_discriminative(
+    prob: np.ndarray,
+    transition: np.ndarray,
+    *,
+    p_state: Optional[np.ndarray] = ...,
+    p_init: Optional[np.ndarray] = ...,
+    return_logp: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+@overload
+def viterbi_discriminative(
+    prob: np.ndarray,
+    transition: np.ndarray,
+    *,
+    p_state: Optional[np.ndarray] = ...,
+    p_init: Optional[np.ndarray] = ...,
+    return_logp: bool,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    ...
+
 def viterbi_discriminative(
     prob: np.ndarray,
     transition: np.ndarray,
@@ -1188,7 +1268,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = None,
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, Union[float, np.ndarray]]]:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Viterbi decoding from discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,

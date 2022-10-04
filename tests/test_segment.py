@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 """Tests for segmentation functions"""
+from typing import Union
 import warnings
 
 # Disable cache
@@ -100,7 +101,7 @@ def test_cross_similarity_badmode():
     data = np.random.randn(3, 50)
 
     rec = librosa.segment.cross_similarity(
-        data, data_ref, mode="NOT A MODE", metric="sqeuclidean", sparse=True
+        data, data_ref, mode="NOT A MODE", metric="sqeuclidean", sparse=True  # type: ignore
     )
 
 
@@ -273,7 +274,7 @@ def test_recurrence_badmode():
     data = np.random.randn(3, 100)
 
     rec = librosa.segment.recurrence_matrix(
-        data, mode="NOT A MODE", metric="sqeuclidean", sparse=True
+        data, mode="NOT A MODE", metric="sqeuclidean", sparse=True # type: ignore
     )
 
 
@@ -299,7 +300,7 @@ def test_recurrence_to_lag(n, pad):
 
     assert np.allclose(lag, lag2.T)
 
-    x = Ellipsis
+    x: Union[ellipsis, slice] = Ellipsis
     if pad:
         x = slice(n)
 

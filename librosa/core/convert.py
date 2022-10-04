@@ -7,7 +7,7 @@ import numpy as np
 from . import notation
 from ..util.exceptions import ParameterError
 from ..util.decorators import vectorize
-from typing import Iterable, List, Optional, Union, overload
+from typing import Any, Iterable, List, Optional, Sequence, Union, overload
 from numpy.typing import ArrayLike
 
 __all__ = [
@@ -455,8 +455,14 @@ def blocks_to_time(
     )
     return samples_to_time(samples, sr=sr)
 
+@overload
+def note_to_hz(note: str, **kwargs) -> float: ...
+@overload
+def note_to_hz(note: List[str], **kwargs) -> np.ndarray: ...
+@overload
+def note_to_hz(note: Iterable[str], **kwargs) -> Union[float, np.ndarray]: ...
 
-def note_to_hz(note: Union[str, Iterable[str]], **kwargs) -> Union[float, np.ndarray]:
+def note_to_hz(note: Union[str, Iterable[str], List[str]], **kwargs) -> Union[float, np.ndarray]:
     """Convert one or more note names to frequency (Hz)
 
     Examples
@@ -712,8 +718,16 @@ def midi_to_note(
 
     return note
 
+@overload
+def midi_to_hz(notes: Sequence) -> np.ndarray: ...
+@overload
+def midi_to_hz(notes: np.floating[Any]) -> np.floating: ...
+@overload
+def midi_to_hz(notes: Union[float, np.integer, np.floating]) -> np.floating: ...
+@overload
+def midi_to_hz(notes: ArrayLike) -> Union[np.ndarray, np.floating]: ...
 
-def midi_to_hz(notes: ArrayLike) -> np.ndarray:
+def midi_to_hz(notes: ArrayLike) -> Union[np.ndarray, np.floating]:
     """Get the frequency (Hz) of MIDI note(s)
 
     Examples

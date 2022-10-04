@@ -546,7 +546,7 @@ def test_time_unit_lag(S_abs, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono(y, sr):
 
-    fig, ax = plt.subplots(nrows=1)
+    fig, ax = plt.subplots()
     librosa.display.waveshow(y, sr=sr, ax=ax)
     return fig
 
@@ -557,7 +557,7 @@ def test_waveshow_mono(y, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono_zoom(y, sr):
 
-    fig, ax = plt.subplots(nrows=1)
+    fig, ax = plt.subplots()
     out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(xlim=[1, 1.125])
@@ -570,7 +570,7 @@ def test_waveshow_mono_zoom(y, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono_zoom_out(y, sr):
 
-    fig, ax = plt.subplots(nrows=1)
+    fig, ax = plt.subplots()
     out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(xlim=[1, 1.125])
