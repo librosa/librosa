@@ -1332,7 +1332,7 @@ def __decorate_axis(
         degrees = np.arange(bins_per_octave)
 
         axis.set_major_locator(
-            FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
         )
         axis.set_label_text("Pitch class")
 
@@ -1394,11 +1394,11 @@ def __decorate_axis(
         axis.set_major_formatter(FJSFormatter(fmin=fmin, unison=unison, unicode=unicode, intervals=intervals, bins_per_octave=bins_per_octave, n_bins=n_bins))
         log_fmin = np.log2(fmin)
         fmin_offset = 2.0**(log_fmin - np.floor(log_fmin))
-        axis.set_major_locator(LogLocator(base=2.0, subs=(fmin_offset,)))
+        axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(fmin_offset,)))
 
         axis.set_minor_formatter(FJSFormatter(fmin=fmin, unison=unison, unicode=unicode, intervals=intervals, bins_per_octave=bins_per_octave, n_bins=n_bins, major=False))
         axis.set_minor_locator(
-            FixedLocator(core.interval_frequencies(n_bins * 12 // bins_per_octave, fmin=fmin, intervals=intervals,
+            mplticker.FixedLocator(core.interval_frequencies(n_bins * 12 // bins_per_octave, fmin=fmin, intervals=intervals,
                                                    bins_per_octave=12))
         )
         axis.set_label_text("Note")
@@ -1409,10 +1409,10 @@ def __decorate_axis(
         axis.set_major_formatter(LogHzFormatter())
         log_fmin = np.log2(fmin)
         fmin_offset = 2.0**(log_fmin - np.floor(log_fmin))
-        axis.set_major_locator(LogLocator(base=2.0, subs=(fmin_offset,)))
+        axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(fmin_offset,)))
         axis.set_minor_formatter(LogHzFormatter(major=False))
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=core.interval_frequencies(12, fmin=fmin_offset, intervals=intervals,
+            mplticker.LogLocator(base=2.0, subs=core.interval_frequencies(12, fmin=fmin_offset, intervals=intervals,
                                                                 bins_per_octave=12))
         )
         axis.set_label_text("Hz")
@@ -1423,10 +1423,10 @@ def __decorate_axis(
         axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
         log_fmin = np.log2(fmin)
         fmin_offset = 2.0**(log_fmin - np.floor(log_fmin))
-        axis.set_major_locator(LogLocator(base=2.0, subs=(fmin_offset,)))
+        axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(fmin_offset,)))
         axis.set_minor_formatter(NoteFormatter(key=key, unicode=unicode, major=False))
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=core.interval_frequencies(12, fmin=fmin_offset, intervals=intervals,
+            mplticker.LogLocator(base=2.0, subs=core.interval_frequencies(12, fmin=fmin_offset, intervals=intervals,
                                                                 bins_per_octave=12))
         )
         axis.set_label_text("Note")
