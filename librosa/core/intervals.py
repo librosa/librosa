@@ -52,6 +52,7 @@ def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=
     Examples
     --------
     Generate two octaves of Pythagorean intervals starting at 55Hz
+
     >>> librosa.interval_frequencies(24, fmin=55, intervals="pythagorean", bins_per_octave=12)
     array([ 55.   ,  58.733,  61.875,  66.075,  69.609,  74.334,  78.311,
             82.5  ,  88.099,  92.812,  99.112, 104.414, 110.   , 117.466,
@@ -59,17 +60,20 @@ def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=
            185.625, 198.224, 208.828])
 
     Generate two octaves of 5-limit intervals starting at 55Hz
+
     >>> librosa.interval_frequencies(24, fmin=55, intervals="ji5", bins_per_octave=12)
     array([ 55.   ,  58.667,  61.875,  66.   ,  68.75 ,  73.333,  77.344,
             82.5  ,  88.   ,  91.667,  99.   , 103.125, 110.   , 117.333,
            123.75 , 132.   , 137.5  , 146.667, 154.687, 165.   , 176.   ,
            183.333, 198.   , 206.25 ])
 
-    Generate three octaves using only 
+    Generate three octaves using only three intervals
+
     >>> intervals = [1, 4/3, 3/2]
     >>> librosa.interval_frequencies(9, fmin=55, intervals=intervals)
     array([ 55.   ,  73.333,  82.5  , 110.   , 146.667, 165.   , 220.   ,
        293.333, 330.   ])
+
     """
 
     if isinstance(intervals, str):
@@ -111,7 +115,8 @@ def pythagorean_intervals(*, bins_per_octave=12, sort=True):
     """Pythagorean intervals
 
     Intervals are constructed by stacking ratios of 3/2 (i.e.,
-    just perfect fifths) and folding down to a single octave:
+    just perfect fifths) and folding down to a single octave::
+
         1, 3/2, 9/8, 27/16, 81/64, ...
 
     Note that this differs from 3-limit just intonation intervals
@@ -123,6 +128,7 @@ def pythagorean_intervals(*, bins_per_octave=12, sort=True):
     ----------
     bins_per_octave : int
         The number of intervals to generate
+
     sort : bool
         If `True` then intervals are returned in ascending order.
         If `False`, then intervals are returned in circle-of-fifths order.
@@ -140,6 +146,7 @@ def pythagorean_intervals(*, bins_per_octave=12, sort=True):
     Examples
     --------
     Generate the first 12 intervals
+
     >>> librosa.pythagorean_intervals(bins_per_octave=12)
     array([1.      , 1.067871, 1.125   , 1.201355, 1.265625, 1.351524,
            1.423828, 1.5     , 1.601807, 1.6875  , 1.802032, 1.898437])
@@ -149,9 +156,11 @@ def pythagorean_intervals(*, bins_per_octave=12, sort=True):
            1.414214, 1.498307, 1.587401, 1.681793, 1.781797, 1.887749])
 
     Or the first 7, in circle-of-fifths order
+
     >>> librosa.pythagorean_intervals(bins_per_octave=7, sort=False)
     array([1.      , 1.5     , 1.125   , 1.6875  , 1.265625, 1.898437,
            1.423828])
+
     """
 
     # Generate all powers of 3 in log space
@@ -208,13 +217,13 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
     """Construct p-limit intervals for a given set of prime factors.
 
     This function is based on the "harmonic crystal growth" algorithm
-    of [#]_.
+    of [#1]_ [#2]_.
 
-    .. [#] Tenney, James.
+    .. [#1] Tenney, James.
         "On ‘Crystal Growth’ in harmonic space (1993–1998)."
         Contemporary Music Review 27.1 (2008): 47-56.
 
-    .. [#] Sabat, Marc, and James Tenney.
+    .. [#2] Sabat, Marc, and James Tenney.
         "Three crystal growth algorithms in 23-limit constrained harmonic space."
         Contemporary Music Review 27, no. 1 (2008): 57-78.
 
@@ -222,8 +231,10 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
     ----------
     primes : array of odd primes
         Which prime factors are to be used
+
     bins_per_octave : int
         The number of intervals to construct
+
     sort : bool
         If `True` then intervals are returned in ascending order.
         If `False`, then intervals are returned in crystal growth order.
@@ -258,9 +269,11 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
            1.78179744, 1.88774863])
 
     Create a 7-bin, 5-limit interval set
+
     >>> librosa.plimit_intervals(primes=[3, 5], bins_per_octave=7)
     array([1.        , 1.125     , 1.25      , 1.33333333, 1.5       ,
            1.66666667, 1.875     ])
+
     """
 
     primes = np.atleast_1d(primes)

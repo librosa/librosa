@@ -903,19 +903,23 @@ def interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True):
     'B♭'
 
     A ptolemaic major third will appear with an otonal '5':
+
     >>> librosa.interval_to_fjs(5/4, unison='A')
     'C♯⁵'
 
     And a ptolemaic minor third will appear with utonal '5':
+
     >>> librosa.interval_to_fjs(6/5, unison='A')
     'C₅'
 
     More complex intervals will have compound accidentals.
     For example:
+
     >>> librosa.interval_to_fjs(25/14, unison='F#')
     'E²⁵₇'
     >>> librosa.interval_to_fjs(25/14, unison='F#', unicode=False)
     'E^25_7'
+
     """
     if interval <= 0:
         raise ParameterError(f"Interval={interval} must be strictly positive")

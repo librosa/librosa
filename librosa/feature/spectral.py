@@ -1623,19 +1623,21 @@ def chroma_vqt(
     chromagram.  Both use 36 bins per octave.
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
-    >>> chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=36)
+    >>> n_bins = 36
+    >>> chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=n_bins)
     >>> chroma_vq = librosa.feature.chroma_vqt(y=y, sr=sr,
     ...                                        intervals='ji5',
-    ...                                        bins_per_octave=36)
+    ...                                        bins_per_octave=n_bins)
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> librosa.display.specshow(chroma_cq, y_axis='chroma', x_axis='time',
-    ...                          ax=ax[0], bins_per_octave=36)
+    ...                          ax=ax[0], bins_per_octave=n_bins)
     >>> ax[0].set(ylabel='chroma_cqt')
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(chroma_vq, y_axis='chroma', x_axis='time',
-    ...                                ax=ax[1], bins_per_octave=36)
+    >>> img = librosa.display.specshow(chroma_vq, y_axis='chroma_fjs', x_axis='time',
+    ...                                ax=ax[1], bins_per_octave=n_bins,
+    ...                                intervals='ji5')
     >>> ax[1].set(ylabel='chroma_vqt')
     >>> fig.colorbar(img, ax=ax)
     """

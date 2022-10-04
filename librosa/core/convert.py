@@ -2119,7 +2119,6 @@ def hz_to_fjs(frequencies, *, fmin=None, unison=None, unicode=False):
 
     unicode : bool
         If `True`, then unicode symbols are used for accidentals.
-
         If `False`, then low-order ASCII symbols are used for accidentals.
 
     Returns
@@ -2141,6 +2140,7 @@ def hz_to_fjs(frequencies, *, fmin=None, unison=None, unicode=False):
     array('C₅', dtype='<U2')
 
     Get notation for a 5-limit frequency set starting at A=55
+
     >>> freqs = librosa.interval_frequencies(24, intervals="ji5", fmin=55)
     >>> freqs
     array([ 55.   ,  58.667,  61.875,  66.   ,  68.75 ,  73.333,  77.344,
@@ -2151,6 +2151,7 @@ def hz_to_fjs(frequencies, *, fmin=None, unison=None, unicode=False):
     array(['A', 'B♭₅', 'B', 'C₅', 'C♯⁵', 'D', 'D♯⁵', 'E', 'F₅', 'F♯⁵', 'G₅',
        'G♯⁵', 'A', 'B♭₅', 'B', 'C₅', 'C♯⁵', 'D', 'D♯⁵', 'E', 'F₅', 'F♯⁵',
        'G₅', 'G♯⁵'], dtype='<U3')
+
     """
     if fmin is None:
         fmin = np.min(frequencies)
