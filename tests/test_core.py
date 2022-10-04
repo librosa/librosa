@@ -7,7 +7,6 @@ from __future__ import print_function
 
 # Disable cache
 import os
-from typing import cast
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
@@ -26,6 +25,7 @@ import scipy.signal
 import pytest
 import warnings
 from unittest import mock
+from typing import Callable, Union, cast
 
 
 # -- utilities --#
@@ -291,6 +291,7 @@ def test_stft(infile):
         os.path.join("tests", DATA["wavfile"][0]), sr=None, mono=True
     )
 
+    window: Union[Callable, str]
     if DATA["hann_w"][0, 0] == 0:
         # Set window to ones, swap back to nfft
         window = np.ones
@@ -1305,9 +1306,7 @@ def test_piptrack(freq, n_fft):
 @pytest.mark.parametrize("sr", [11025, 22050])
 def test_estimate_tuning(sr, center_note: int, tuning: np.float_, bins_per_octave, resolution):
     midi = center_note + tuning
-    reveal_type(midi)
     target_hz = librosa.midi_to_hz(midi)
-    reveal_type(target_hz)
     y = librosa.tone(target_hz, duration=0.5, sr=sr)
 
     tuning_est = librosa.estimate_tuning(

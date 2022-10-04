@@ -24,6 +24,7 @@ import glob
 import numpy as np
 import scipy.io
 import scipy.signal
+from typing import ContextManager
 
 import pytest
 
@@ -411,6 +412,7 @@ def test_cq_to_chroma(n_octaves, semitones, n_chroma, fmin, base_c, window):
     bins_per_octave = 12 * semitones
     n_bins = n_octaves * bins_per_octave
 
+    ctx: ContextManager
     if np.mod(bins_per_octave, n_chroma) != 0:
         ctx = pytest.raises(librosa.ParameterError)
     else:

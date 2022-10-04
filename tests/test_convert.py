@@ -164,7 +164,7 @@ def test_tuning_to_A4(tuning, bins_per_octave, A4):
 )
 @pytest.mark.parametrize("accidental", ["", "#", "b", "!"])
 @pytest.mark.parametrize("round_midi", [False, True])
-def test_note_to_midi(tuning, accidental, octave, round_midi):
+def test_note_to_midi(tuning, accidental, octave, round_midi: bool):
 
     note = "C{:s}".format(accidental)
 
@@ -216,7 +216,7 @@ def test_note_to_midi_badnote():
 )
 @pytest.mark.parametrize("accidental", ["", "#", "b", "!"])
 @pytest.mark.parametrize("round_midi", [False, True])
-def test_note_to_hz(tuning, octave, accidental, round_midi):
+def test_note_to_hz(tuning, octave, accidental, round_midi: bool):
 
     note = "A{:s}".format(accidental)
 

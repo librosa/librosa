@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import librosa
 import librosa.display
 import numpy as np
+from typing import Any, Dict
 
 # Workaround for old freetype builds with our image fixtures
 FT_VERSION = version.parse(matplotlib.ft2font.__freetype_version__)
@@ -632,10 +633,9 @@ def test_waveshow_bad_maxpoints(y, sr):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("axis", ["x_axis", "y_axis"])
-def test_unknown_axis(S_abs, axis):
+def test_unknown_axis(S_abs, axis: str):
 
-    kwargs = dict()
-    kwargs.setdefault(axis, "something not in the axis map")
+    kwargs: Dict[str, Any] = {axis: "something not in the axis map"}
     plt.figure()
     librosa.display.specshow(S_abs, **kwargs)
 

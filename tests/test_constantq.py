@@ -397,7 +397,7 @@ def test_cqt_position(y, sr, note_min: int):
     Cbar = np.median(C, axis=1)
 
     # Find the peak
-    idx = np.argmax(Cbar)
+    idx = int(np.argmax(Cbar))
 
     assert idx == 60 - note_min
 

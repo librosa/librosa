@@ -16,7 +16,7 @@ import scipy.sparse
 import pytest
 import warnings
 import librosa
-from typing import Union, cast
+from typing import List, Union, cast
 
 from test_core import srand
 
@@ -875,7 +875,7 @@ def test_sync(aggregate, ndim, axis: int):
     assert s_test == s_orig
 
     # The first slice will sum to 2 and have mean 1
-    idx = [slice(None)] * ndim
+    idx: List[Union[slice, int]] = [slice(None)] * ndim
     idx[axis] = 0
     if aggregate is np.sum:
         assert np.allclose(dsync[tuple(idx)], 2)
