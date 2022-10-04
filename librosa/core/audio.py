@@ -10,6 +10,7 @@ import audioread
 import numpy as np
 import scipy.signal
 import soxr
+import lazy_loader as lazy
 
 from numba import jit
 from .fft import get_fftlib
@@ -17,6 +18,10 @@ from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
+
+# Lazy-load optional dependencies
+samplerate = lazy.load('samplerate')
+resampy = lazy.load('resampy')
 
 __all__ = [
     "load",
@@ -629,8 +634,6 @@ def resample(
         "sinc_fastest",
         "sinc_medium",
     ):
-        import samplerate
-
         # Use numpy to vectorize the resampler along the target axis
         # This is because samplerate does not support ndim>2 generally.
         y_hat = np.apply_along_axis(samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type)
@@ -639,8 +642,6 @@ def resample(
         # This is because soxr does not support ndim>2 generally.
         y_hat = np.apply_along_axis(soxr.resample, axis=axis, arr=y, in_rate=orig_sr, out_rate=target_sr, quality=res_type)
     else:
-        import resampy
-
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=axis)
 
     if fix:
