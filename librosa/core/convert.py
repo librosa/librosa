@@ -2107,16 +2107,13 @@ def hz_to_fjs(frequencies, *, fmin=None, unison=None, unicode=False):
     ----------
     frequencies : float or iterable of float
         Input frequencies, specified in Hz
-
     fmin : float (optional)
         The minimum frequency, corresponding to a unison note.
         If not provided, it will be inferred as `min(frequencies)`
-
     unison : str (optional)
         The name of the unison note.
         If not provided, it will be inferred as the scientific pitch
         notation name of `fmin`, that is, `hz_to_note(fmin)`
-
     unicode : bool
         If `True`, then unicode symbols are used for accidentals.
         If `False`, then low-order ASCII symbols are used for accidentals.

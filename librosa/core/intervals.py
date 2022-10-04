@@ -128,7 +128,6 @@ def pythagorean_intervals(*, bins_per_octave=12, sort=True):
     ----------
     bins_per_octave : int
         The number of intervals to generate
-
     sort : bool
         If `True` then intervals are returned in ascending order.
         If `False`, then intervals are returned in circle-of-fifths order.
@@ -231,10 +230,8 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
     ----------
     primes : array of odd primes
         Which prime factors are to be used
-
     bins_per_octave : int
         The number of intervals to construct
-
     sort : bool
         If `True` then intervals are returned in ascending order.
         If `False`, then intervals are returned in crystal growth order.
