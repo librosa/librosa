@@ -3,6 +3,7 @@
 """Function caching"""
 
 import os
+from typing import Any, Callable, TypeVar
 from joblib import Memory
 from decorator import FunctionMaker
 
@@ -15,6 +16,8 @@ def _decorator_apply(dec, func):
         __wrapped__=func,
     )
 
+
+_F = TypeVar("_F", bound=Callable[..., Any])
 
 class CacheManager(object):
     """The librosa cache manager class wraps joblib.Memory
@@ -35,7 +38,7 @@ class CacheManager(object):
         # smaller numbers mean less caching
         self.level = level
 
-    def __call__(self, level):
+    def __call__(self, level: int) -> Callable[[_F], _F]:
         """Example usage:
 
         @cache(level=2)
