@@ -15,8 +15,9 @@ from .. import filters
 from .. import util
 from ..util.exceptions import ParameterError
 from numpy.typing import DTypeLike
-from typing import Callable, Optional, Union
+from typing import Optional, Union
 from typing_extensions import Literal
+from .._typing import _WindowSpec
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 
@@ -36,7 +37,7 @@ def cqt(
     filter_scale: float = 1,
     norm: float = 1,
     sparsity: float = 0.01,
-    window: Union[str, tuple, float, Callable] = "hann",
+    window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: str = "constant",
     res_type: Optional[str] = "soxr_hq",
@@ -201,7 +202,7 @@ def hybrid_cqt(
     filter_scale: float = 1,
     norm: float = 1,
     sparsity: float = 0.01,
-    window: Union[str, tuple, float, Callable] = "hann",
+    window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: str = "constant",
     res_type: str = "soxr_hq",
@@ -384,7 +385,7 @@ def pseudo_cqt(
     filter_scale: float = 1,
     norm: float = 1,
     sparsity: float = 0.01,
-    window: Union[str, tuple, float, Callable] = "hann",
+    window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: str = "constant",
     dtype: Optional[DTypeLike] = None,
@@ -539,7 +540,7 @@ def icqt(
     filter_scale: float = 1,
     norm: float = 1,
     sparsity: float = 0.01,
-    window: Union[str, tuple, float, Callable] = "hann",
+    window: _WindowSpec = "hann",
     scale: bool = True,
     length: Optional[int] = None,
     res_type: str = "soxr_hq",
@@ -764,7 +765,7 @@ def vqt(
     filter_scale: float = 1,
     norm: float = 1,
     sparsity: float = 0.01,
-    window: Union[str, tuple, float, Callable] = "hann",
+    window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: str = "constant",
     res_type: Optional[str] = "soxr_hq",
@@ -1196,7 +1197,7 @@ def griffinlim_cqt(
     filter_scale: float = 1,
     norm: float = 1,
     sparsity: float = 0.01,
-    window: Union[str, tuple, Callable] = "hann",
+    window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: str = "constant",
     res_type: str = "soxr_hq",

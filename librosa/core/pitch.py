@@ -14,7 +14,8 @@ from .. import util
 from .. import sequence
 from ..util.exceptions import ParameterError
 from numpy.typing import ArrayLike
-from typing import Callable, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Tuple, Union
+from .._typing import _WindowSpec
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
@@ -27,7 +28,7 @@ def estimate_tuning(
     n_fft: Optional[int] = 2048,
     resolution: float = 0.01,
     bins_per_octave: int = 12,
-    **kwargs,
+    **kwargs: Any,
 ) -> float:
     """Estimate the tuning of an audio time series or spectrogram input.
 
@@ -187,7 +188,7 @@ def piptrack(
     fmax: float = 4000.0,
     threshold: float = 0.1,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: str = "constant",
     ref: Optional[Union[float, Callable]] = None,
@@ -633,7 +634,7 @@ def pyin(
     win_length: Optional[int] = None,
     hop_length: Optional[int] = None,
     n_thresholds: int = 100,
-    beta_parameters: tuple = (2, 18),
+    beta_parameters: Tuple[float, float] = (2, 18),
     boltzmann_parameter: float = 2,
     resolution: float = 0.1,
     max_transition_rate: float = 35.92,

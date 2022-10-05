@@ -20,8 +20,9 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
-from typing import Callable, Optional, Tuple, Union, overload
+from typing import Any, Callable, Optional, Tuple, Union, overload
 from typing_extensions import Literal
+from .._typing import _WindowSpec
 
 __all__ = [
     "stft",
@@ -48,7 +49,7 @@ def stft(
     n_fft: int = 2048,
     hop_length: Optional[int] = None,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
     pad_mode: Union[str, Callable] = "constant",
@@ -388,7 +389,7 @@ def istft(
     hop_length: Optional[int] = None,
     win_length: Optional[int] = None,
     n_fft: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
     length: Optional[int] = None,
@@ -641,7 +642,7 @@ def __reassign_frequencies(
     n_fft: int = 2048,
     hop_length: Optional[int] = None,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
     pad_mode: str = "constant",
@@ -804,7 +805,7 @@ def __reassign_times(
     n_fft: int = 2048,
     hop_length: Optional[int] = None,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
     pad_mode: str = "constant",
@@ -985,7 +986,7 @@ def reassigned_spectrogram(
     n_fft: int = 2048,
     hop_length: Optional[int] = None,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     reassign_frequencies: bool = True,
     reassign_times: bool = True,
@@ -1477,7 +1478,7 @@ def iirt(
     pad_mode: str = "constant",
     flayout: str = "sos",
     res_type: str = "soxr_hq",
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     r"""Time-frequency representation using IIR filters
 
@@ -1912,7 +1913,7 @@ def db_to_amplitude(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
 
 @cache(level=30)
 def perceptual_weighting(
-    S: np.ndarray, frequencies: np.ndarray, *, kind: str = "A", **kwargs
+    S: np.ndarray, frequencies: np.ndarray, *, kind: str = "A", **kwargs: Any
 ) -> np.ndarray:
     """Perceptual weighting of a power spectrogram::
 
@@ -2519,7 +2520,7 @@ def griffinlim(
     hop_length: Optional[int] = None,
     win_length: Optional[int] = None,
     n_fft: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
     length: Optional[int] = None,
@@ -2749,7 +2750,7 @@ def _spectrogram(
     hop_length: int = 512,
     power: float = 1,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: str = "constant",
 ) -> Tuple[np.ndarray, int]:

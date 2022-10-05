@@ -10,8 +10,8 @@ from ..core.audio import autocorrelate
 from ..core.spectrum import stft
 from ..util.exceptions import ParameterError
 from ..filters import get_window
-from typing import Callable, Optional, Union
-
+from typing import Optional
+from .._typing import _WindowSpec
 
 __all__ = ["tempogram", "fourier_tempogram"]
 
@@ -25,7 +25,7 @@ def tempogram(
     hop_length: int = 512,
     win_length: int = 384,
     center: bool = True,
-    window: Union[str, Callable, float, tuple, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     norm: Optional[float] = np.inf,
 ) -> np.ndarray:
     """Compute the tempogram: local autocorrelation of the onset strength envelope. [#]_
@@ -181,7 +181,7 @@ def fourier_tempogram(
     hop_length: int = 512,
     win_length: int = 384,
     center: bool = True,
-    window: Union[str, Callable, float, tuple, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
 ) -> np.ndarray:
     """Compute the Fourier tempogram: the short-time Fourier transform of the
     onset strength envelope. [#]_

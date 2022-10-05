@@ -59,8 +59,9 @@ from .util.decorators import deprecated
 from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.convert import fft_frequencies, mel_frequencies
 from numpy.typing import ArrayLike, DTypeLike
-from typing import Callable, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 from typing_extensions import Literal
+from ._typing import _WindowSpec
 
 __all__ = [
     "mel",
@@ -439,13 +440,13 @@ def constant_q(
     fmin: Optional[float] = None,
     n_bins: int = 84,
     bins_per_octave: int = 12,
-    window: Union[str, tuple, float, Callable] = "hann",
+    window: _WindowSpec = "hann",
     filter_scale: float = 1,
     pad_fft: bool = True,
     norm: float = 1,
     dtype: DTypeLike = np.complex64,
     gamma: float = 0,
-    **kwargs,
+    **kwargs: Any,
 ) -> Tuple[np.ndarray, np.ndarray]:
     r"""Construct a constant-Q basis.
 
@@ -605,7 +606,7 @@ def constant_q_lengths(
     fmin: float,
     n_bins: int = 84,
     bins_per_octave: int = 12,
-    window: Union[str, Callable] = "hann",
+    window: _WindowSpec = "hann",
     filter_scale: float = 1,
     gamma: float = 0,
 ) -> np.ndarray:
@@ -684,7 +685,7 @@ def wavelet_lengths(
     *,
     freqs: ArrayLike,
     sr: float = 22050,
-    window: Union[str, Callable] = "hann",
+    window: _WindowSpec = "hann",
     filter_scale: float = 1,
     gamma: Optional[float] = 0,
     alpha: Optional[float] = None,
@@ -824,14 +825,14 @@ def wavelet(
     *,
     freqs: np.ndarray,
     sr: float = 22050,
-    window: Union[str, tuple, float, Callable] = "hann",
+    window: _WindowSpec = "hann",
     filter_scale: float = 1,
     pad_fft: bool = True,
     norm: float = 1,
     dtype: DTypeLike = np.complex64,
     gamma: float = 0,
     alpha: Optional[float] = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Construct a wavelet basis using windowed complex sinusoids.
 
@@ -1095,7 +1096,7 @@ def cq_to_chroma(
 
 
 @cache(level=10)
-def window_bandwidth(window: Union[Callable, str], n: int = 1000) -> float:
+def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
     """Get the equivalent noise bandwidth (ENBW) of a window function.
 
     The ENBW of a window is defined by [#]_ (equation 11) as the normalized
@@ -1147,7 +1148,7 @@ def window_bandwidth(window: Union[Callable, str], n: int = 1000) -> float:
 
 @cache(level=10)
 def get_window(
-    window: Union[str, tuple, float, Callable, ArrayLike],
+    window: _WindowSpec,
     Nx: int,
     *,
     fftbins: Optional[bool] = True,
@@ -1225,7 +1226,7 @@ def _multirate_fb(
     stopband_attenuation: float = 50,
     ftype: str = "ellip",
     flayout: str = "sos",
-) -> Tuple[list, np.ndarray]:
+) -> Tuple[List[Any], np.ndarray]:
     r"""Helper function to construct a multirate filterbank.
 
      A filter bank consists of multiple band-pass filters which divide the input signal
@@ -1399,8 +1400,8 @@ def semitone_filterbank(
     tuning: float = 0.0,
     sample_rates: Optional[np.ndarray] = None,
     flayout: str = "ba",
-    **kwargs,
-) -> Tuple[list, np.ndarray]:
+    **kwargs: Any,
+) -> Tuple[List[Any], np.ndarray]:
     r"""Construct a multi-rate bank of infinite-impulse response (IIR)
     band-pass filters at user-defined center frequencies and sample rates.
 
@@ -1510,7 +1511,7 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
 
 def window_sumsquare(
     *,
-    window: Union[str, tuple, float, Callable, ArrayLike],
+    window: _WindowSpec,
     n_frames: int,
     hop_length: int = 512,
     win_length: Optional[int] = None,
@@ -1584,7 +1585,7 @@ def window_sumsquare(
 
 @cache(level=10)
 def diagonal_filter(
-    window: Union[str, tuple, float, Callable, ArrayLike],
+    window: _WindowSpec,
     n: int,
     *,
     slope: float = 1.0,

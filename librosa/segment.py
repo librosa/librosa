@@ -41,9 +41,9 @@ from ._cache import cache
 from . import util
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
-from typing import Callable, Optional, TypeVar, Union, overload
+from typing import Any, Callable, Optional, TypeVar, Union, overload
 from typing_extensions import Literal
-from numpy.typing import ArrayLike
+from ._typing import _WindowSpec
 
 __all__ = [
     "cross_similarity",
@@ -1058,13 +1058,13 @@ def path_enhance(
     R: np.ndarray,
     n: int,
     *,
-    window: Union[str, tuple, float, Callable, ArrayLike] = "hann",
+    window: _WindowSpec = "hann",
     max_ratio: float = 2.0,
     min_ratio: Optional[float] = None,
     n_filters: int = 7,
     zero_mean: bool = False,
     clip: bool = True,
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Multi-angle path enhancement for self- and cross-similarity matrices.
 

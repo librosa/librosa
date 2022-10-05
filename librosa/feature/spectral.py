@@ -16,9 +16,9 @@ from ..core.audio import zero_crossings
 from ..core.spectrum import power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt
 from ..core.pitch import estimate_tuning
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Optional, Union
 from typing_extensions import Literal
-from .._typing import _FloatLike_co
+from .._typing import _FloatLike_co, _WindowSpec
 
 
 __all__ = [
@@ -49,7 +49,7 @@ def spectral_centroid(
     hop_length: int = 512,
     freq: Optional[np.ndarray] = None,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: str = "constant",
 ) -> np.ndarray:
@@ -193,7 +193,7 @@ def spectral_bandwidth(
     n_fft: int = 2048,
     hop_length: int = 512,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: str = "constant",
     freq: Optional[np.ndarray] = None,
@@ -352,7 +352,7 @@ def spectral_contrast(
     n_fft: int = 2048,
     hop_length: int = 512,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: str = "constant",
     freq: Optional[np.ndarray] = None,
@@ -534,7 +534,7 @@ def spectral_rolloff(
     n_fft: int = 2048,
     hop_length: int = 512,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: str = "constant",
     freq: Optional[np.ndarray] = None,
@@ -681,7 +681,7 @@ def spectral_flatness(
     n_fft: int = 2048,
     hop_length: int = 512,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: str = "constant",
     amin: float = 1e-10,
@@ -910,7 +910,7 @@ def poly_features(
     n_fft: int = 2048,
     hop_length: int = 512,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: str = "constant",
     order: int = 1,
@@ -1051,7 +1051,7 @@ def zero_crossing_rate(
     frame_length: int = 2048,
     hop_length: int = 512,
     center: bool = True,
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Compute the zero-crossing rate of an audio time series.
 
@@ -1129,12 +1129,12 @@ def chroma_stft(
     n_fft: int = 2048,
     hop_length: int = 512,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: str = "constant",
     tuning: Optional[float] = None,
     n_chroma: int = 12,
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Compute a chromagram from a waveform or power spectrogram.
 
@@ -1421,7 +1421,7 @@ def chroma_cens(
     window: Optional[np.ndarray] = None,
     norm: Optional[float] = 2,
     win_len_smooth: Optional[int] = 41,
-    smoothing_window: Union[str, float, tuple] = "hann",
+    smoothing_window: _WindowSpec = "hann",
 ) -> np.ndarray:
     r"""Computes the chroma variant "Chroma Energy Normalized" (CENS)
 
@@ -1562,7 +1562,7 @@ def tonnetz(
     y: Optional[np.ndarray] = None,
     sr: float = 22050,
     chroma: Optional[np.ndarray] = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Computes the tonal centroid features (tonnetz)
 
@@ -1700,7 +1700,7 @@ def mfcc(
     dct_type: Union[Literal[1], Literal[2], Literal[3]] = 2,
     norm: Optional[Literal["ortho"]] = "ortho",
     lifter: float = 0,
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Mel-frequency cepstral coefficients (MFCCs)
 
@@ -1876,11 +1876,11 @@ def melspectrogram(
     n_fft: int = 2048,
     hop_length: int = 512,
     win_length: Optional[int] = None,
-    window: Union[str, tuple, float, Callable, np.ndarray] = "hann",
+    window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: str = "constant",
     power: float = 2.0,
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Compute a mel-scaled spectrogram.
 

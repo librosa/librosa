@@ -6,7 +6,7 @@ import re
 import numpy as np
 from .._cache import cache
 from ..util.exceptions import ParameterError
-from typing import List, Union
+from typing import Dict, List, Union
 
 __all__ = [
     "key_to_degrees",
@@ -394,7 +394,7 @@ def mela_to_svara(
     return list(svara_map)
 
 
-def list_mela() -> dict[str, int]:
+def list_mela() -> Dict[str, int]:
     """List melakarta ragas by name and index.
 
     Melakarta raga names are transcribed from [#]_, with the exception of #45
@@ -427,7 +427,7 @@ def list_mela() -> dict[str, int]:
     return MELAKARTA_MAP.copy()
 
 
-def list_thaat() -> list[str]:
+def list_thaat() -> List[str]:
     """List supported thaats by name.
 
     Returns
@@ -458,7 +458,7 @@ def list_thaat() -> list[str]:
 
 
 @cache(level=10)
-def key_to_notes(key: str, *, unicode: bool = True) -> list[str]:
+def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     """Lists all 12 note names in the chromatic scale, as spelled according to
     a given key (major or minor).
 

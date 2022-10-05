@@ -8,7 +8,7 @@ from numba import jit
 
 from .._cache import cache
 from ..util.exceptions import ParameterError
-from typing import Union
+from typing import Any, Union
 from typing_extensions import Literal
 
 __all__ = ["delta", "stack_memory"]
@@ -28,7 +28,7 @@ def delta(
         Literal["constant"],
         Literal["wrap"],
     ] = "interp",
-    **kwargs
+    **kwargs: Any
 ) -> np.ndarray:
     r"""Compute delta features: local estimate of the derivative
     of the input data along the selected axis.
@@ -134,7 +134,7 @@ def delta(
 
 @cache(level=40)
 def stack_memory(
-    data: np.ndarray, *, n_steps: int = 2, delay: int = 1, **kwargs
+    data: np.ndarray, *, n_steps: int = 2, delay: int = 1, **kwargs: Any
 ) -> np.ndarray:
     """Short-term history embedding: vertically concatenate a data
     vector or matrix with delayed copies of itself.

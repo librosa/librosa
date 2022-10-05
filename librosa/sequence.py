@@ -31,6 +31,7 @@ Transition matrices
     transition_cycle
     transition_local
 """
+from __future__ import annotations
 
 import numpy as np
 from scipy.spatial.distance import cdist
@@ -38,9 +39,9 @@ from numba import jit
 from .util import pad_center, fill_off_diagonal, is_positive_int, tiny, expand_to
 from .util.exceptions import ParameterError
 from .filters import get_window
-from typing import Callable, Iterable, Optional, Tuple, Union, overload
+from typing import Any, Iterable, Optional, Tuple, Union, overload
 from typing_extensions import Literal
-from numpy.typing import ArrayLike
+from ._typing import _WindowSpec
 
 __all__ = [
     "dtw",
@@ -571,7 +572,7 @@ def dtw_backtracking(
     *,
     step_sizes_sigma: Optional[np.ndarray] = None,
     subseq: bool = False,
-    start: Optional[Union[int, np.integer]] = None,
+    start: Optional[Union[int, np.integer[Any]]] = None,
 ) -> np.ndarray:
     """Backtrack a warping path.
 
@@ -1675,7 +1676,7 @@ def transition_uniform(n_states: int) -> np.ndarray:
     return transition
 
 
-def transition_loop(n_states: int, prob: Union[float, Iterable]) -> np.ndarray:
+def transition_loop(n_states: int, prob: Union[float, Iterable[float]]) -> np.ndarray:
     """Construct a self-loop transition matrix over ``n_states``.
 
     The transition matrix will have the following properties:
@@ -1743,7 +1744,7 @@ def transition_loop(n_states: int, prob: Union[float, Iterable]) -> np.ndarray:
     return transition
 
 
-def transition_cycle(n_states: int, prob: Union[float, Iterable]) -> np.ndarray:
+def transition_cycle(n_states: int, prob: Union[float, Iterable[float]]) -> np.ndarray:
     """Construct a cyclic transition matrix over ``n_states``.
 
     The transition matrix will have the following properties:
@@ -1812,9 +1813,9 @@ def transition_cycle(n_states: int, prob: Union[float, Iterable]) -> np.ndarray:
 
 def transition_local(
     n_states: int,
-    width: Union[int, Iterable],
+    width: Union[int, Iterable[int]],
     *,
-    window: Union[str, tuple, float, Callable, ArrayLike] = "triangle",
+    window: _WindowSpec = "triangle",
     wrap: bool = False,
 ) -> np.ndarray:
     """Construct a localized transition matrix.

@@ -41,7 +41,7 @@ from . import decompose
 from . import feature
 from . import util
 from .util.exceptions import ParameterError
-from typing import Callable, Iterable, Optional, Tuple, Union, overload
+from typing import Any, Callable, Iterable, Optional, Tuple, Union, overload
 from typing_extensions import Literal
 from numpy.typing import ArrayLike
 
@@ -57,7 +57,7 @@ __all__ = [
 ]
 
 
-def hpss(y: np.ndarray, **kwargs) -> Tuple[np.ndarray, np.ndarray]:
+def hpss(y: np.ndarray, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
     """Decompose an audio time series into harmonic and percussive components.
 
     This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
@@ -107,7 +107,7 @@ def hpss(y: np.ndarray, **kwargs) -> Tuple[np.ndarray, np.ndarray]:
     return y_harm, y_perc
 
 
-def harmonic(y: np.ndarray, **kwargs) -> np.ndarray:
+def harmonic(y: np.ndarray, **kwargs: Any) -> np.ndarray:
     """Extract harmonic elements from an audio time-series.
 
     Parameters
@@ -151,7 +151,7 @@ def harmonic(y: np.ndarray, **kwargs) -> np.ndarray:
     return y_harm
 
 
-def percussive(y: np.ndarray, **kwargs) -> np.ndarray:
+def percussive(y: np.ndarray, **kwargs: Any) -> np.ndarray:
     """Extract percussive elements from an audio time-series.
 
     Parameters
@@ -195,7 +195,7 @@ def percussive(y: np.ndarray, **kwargs) -> np.ndarray:
     return y_perc
 
 
-def time_stretch(y: np.ndarray, *, rate: float, **kwargs) -> np.ndarray:
+def time_stretch(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     """Time-stretch an audio series by a fixed rate.
 
     Parameters
@@ -265,7 +265,7 @@ def pitch_shift(
     n_steps: float,
     bins_per_octave: float = 12,
     res_type: str = "soxr_hq",
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Shift the pitch of a waveform by ``n_steps`` steps.
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Core IO, DSP and utility functions."""
+from __future__ import annotations
 
 import os
 import pathlib
@@ -20,7 +21,7 @@ from .. import util
 from ..util.exceptions import ParameterError
 from .._typing import _FloatLike_co
 
-from typing import BinaryIO, Callable, Generator, Optional, Tuple, Union
+from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
 from numpy.typing import DTypeLike, ArrayLike
 
 __all__ = [
@@ -45,7 +46,7 @@ __all__ = [
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
 def load(
-    path: Union[str, int, os.PathLike, sf.SoundFile, audioread.AudioFile, BinaryIO],
+    path: Union[str, int, os.PathLike[Any], sf.SoundFile, audioread.AudioFile, BinaryIO],
     *,
     sr: Optional[float] = 22050,
     mono: bool = True,
@@ -509,7 +510,7 @@ def resample(
     fix: bool = True,
     scale: bool = False,
     axis: int = -1,
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Resample a time series from orig_sr to target_sr
 

@@ -35,7 +35,7 @@ def decompose(
     transformer: Optional[object] = None,
     sort: bool = False,
     fit: bool = True,
-    **kwargs
+    **kwargs: Any
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Decompose a feature matrix.
 
@@ -408,7 +408,7 @@ def nn_filter(
     rec: Optional[Union[scipy.sparse.spmatrix, np.ndarray]] = None,
     aggregate: Optional[Callable] = None,
     axis: int = -1,
-    **kwargs
+    **kwargs: Any
 ) -> np.ndarray:
     """Filtering by nearest-neighbors.
 

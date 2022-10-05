@@ -12,7 +12,7 @@
 import numpy as np
 import scipy.optimize
 from .utils import MAX_MEM_BLOCK
-from typing import Optional
+from typing import Any, Optional
 
 
 __all__ = ["nnls"]
@@ -39,7 +39,7 @@ def _nnls_obj(x, shape, A, B):
 
 
 def _nnls_lbfgs_block(
-    A: np.ndarray, B: np.ndarray, x_init: Optional[np.ndarray] = None, **kwargs
+    A: np.ndarray, B: np.ndarray, x_init: Optional[np.ndarray] = None, **kwargs: Any
 ) -> np.ndarray:
     """Solve the constrained problem over a single block
 
@@ -81,7 +81,7 @@ def _nnls_lbfgs_block(
     return x.reshape(shape)
 
 
-def nnls(A: np.ndarray, B: np.ndarray, **kwargs) -> np.ndarray:
+def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
     """Non-negative least squares.
 
     Given two matrices A and B, find a non-negative matrix X

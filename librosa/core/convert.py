@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Unit conversion utilities"""
-
+from __future__ import annotations
 import re
 import numpy as np
 from . import notation
 from ..util.exceptions import ParameterError
 from ..util.decorators import vectorize
-from typing import Any, Iterable, List, Optional, Sequence, Union, overload
+from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Sized, Union, overload
 from numpy.typing import ArrayLike
 
 __all__ = [
@@ -462,7 +462,7 @@ def note_to_hz(note: List[str], **kwargs: Any) -> np.ndarray: ...
 @overload
 def note_to_hz(note: Iterable[str], **kwargs: Any) -> Union[float, np.ndarray]: ...
 
-def note_to_hz(note: Union[str, Iterable[str], List[str]], **kwargs) -> Union[float, np.ndarray]:
+def note_to_hz(note: Union[str, Iterable[str], List[str]], **kwargs: Any) -> Union[float, np.ndarray]:
     """Convert one or more note names to frequency (Hz)
 
     Examples
@@ -719,15 +719,15 @@ def midi_to_note(
     return note
 
 @overload
-def midi_to_hz(notes: Sequence) -> np.ndarray: ...
+def midi_to_hz(notes: Sequence[Any]) -> np.ndarray: ...
 @overload
-def midi_to_hz(notes: np.floating[Any]) -> np.floating: ...
+def midi_to_hz(notes: np.floating[Any]) -> np.floating[Any]: ...
 @overload
-def midi_to_hz(notes: Union[float, np.integer, np.floating]) -> np.floating: ...
+def midi_to_hz(notes: Union[float, np.integer[Any], np.floating[Any]]) -> np.floating[Any]: ...
 @overload
-def midi_to_hz(notes: ArrayLike) -> Union[np.ndarray, np.floating]: ...
+def midi_to_hz(notes: ArrayLike) -> Union[np.ndarray, np.floating[Any]]: ...
 
-def midi_to_hz(notes: ArrayLike) -> Union[np.ndarray, np.floating]:
+def midi_to_hz(notes: ArrayLike) -> Union[np.ndarray, np.floating[Any]]:
     """Get the frequency (Hz) of MIDI note(s)
 
     Examples
@@ -760,15 +760,15 @@ def midi_to_hz(notes: ArrayLike) -> Union[np.ndarray, np.floating]:
 
 
 @overload
-def hz_to_midi(frequencies: Sequence) -> np.ndarray: ...
+def hz_to_midi(frequencies: Sequence[Any]) -> np.ndarray: ...
 @overload
-def hz_to_midi(frequencies: np.floating[Any]) -> np.floating: ...
+def hz_to_midi(frequencies: np.floating[Any]) -> np.floating[Any]: ...
 @overload
-def hz_to_midi(frequencies: Union[float, np.integer, np.floating]) -> np.floating: ...
+def hz_to_midi(frequencies: Union[float, np.integer[Any], np.floating[Any]]) -> np.floating[Any]: ...
 @overload
-def hz_to_midi(frequencies: ArrayLike) -> Union[np.ndarray, np.floating]: ...
+def hz_to_midi(frequencies: ArrayLike) -> Union[np.ndarray, np.floating[Any]]: ...
 
-def hz_to_midi(frequencies: ArrayLike) -> Union[np.ndarray, np.floating]:
+def hz_to_midi(frequencies: ArrayLike) -> Union[np.ndarray, np.floating[Any]]:
     """Get MIDI note number(s) for given frequencies
 
     Examples
@@ -799,7 +799,7 @@ def hz_to_midi(frequencies: ArrayLike) -> Union[np.ndarray, np.floating]:
 
 
 def hz_to_note(
-    frequencies: ArrayLike, **kwargs
+    frequencies: ArrayLike, **kwargs: Any
 ) -> Union[str, np.ndarray]:
     """Convert one or more frequencies (in Hz) to the nearest note names.
 
@@ -1573,12 +1573,12 @@ def D_weighting(
     return weights if min_db is None else np.maximum(min_db, weights)
 
 
-def Z_weighting(frequencies, *, min_db=None):  # pylint: disable=invalid-name
+def Z_weighting(frequencies: Sized, *, min_db: Optional[float]=None) -> np.ndarray:  # pylint: disable=invalid-name
     weights = np.zeros(len(frequencies))
     return weights if min_db is None else np.maximum(min_db, weights)
 
 
-WEIGHTING_FUNCTIONS = {
+WEIGHTING_FUNCTIONS: Dict[Optional[str], Callable[..., np.ndarray]] = {
     "A": A_weighting,
     "B": B_weighting,
     "C": C_weighting,
@@ -1589,7 +1589,7 @@ WEIGHTING_FUNCTIONS = {
 
 
 def frequency_weighting(
-    frequencies: ArrayLike, *, kind: str = "A", **kwargs
+    frequencies: ArrayLike, *, kind: str = "A", **kwargs: Any
 ) -> np.ndarray:
     """Compute the weighting of a set of frequencies.
 
@@ -1636,8 +1636,8 @@ def frequency_weighting(
 def multi_frequency_weighting(
     frequencies: ArrayLike,
     *,
-    kinds: Union[list, tuple, str] = "ZAC",
-    **kwargs
+    kinds: Iterable[str] = "ZAC",
+    **kwargs: Any
 ) -> np.ndarray:
     """Compute multiple weightings of a set of frequencies.
 

@@ -21,7 +21,7 @@ from . import util
 from .util.exceptions import ParameterError
 
 from .feature.spectral import melspectrogram
-from typing import Callable, Optional, Union
+from typing import Any, Callable, Iterable, Optional, Union
 from typing_extensions import Literal
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
@@ -37,7 +37,7 @@ def onset_detect(
     energy: Optional[np.ndarray] = None,
     units: Union[Literal["frames"], Literal["samples"], Literal["time"]] = "frames",
     normalize: bool = True,
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Locate note onset events by picking peaks in an onset strength envelope.
 
@@ -199,7 +199,7 @@ def onset_strength(
     center: bool = True,
     feature: Optional[Callable] = None,
     aggregate: Optional[Callable] = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope.
 
@@ -431,8 +431,8 @@ def onset_strength_multi(
     center: bool = True,
     feature: Optional[Callable] = None,
     aggregate: Optional[Union[Callable, Literal[False]]] = None,
-    channels: Optional[list] = None,
-    **kwargs,
+    channels: Optional[Union[Iterable[int], Iterable[slice]]] = None,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope across multiple channels.
 

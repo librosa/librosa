@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """Utility functions"""
 
+from __future__ import annotations
+
 import scipy.ndimage
 import scipy.sparse
 
@@ -13,7 +15,7 @@ from .._cache import cache
 from .exceptions import ParameterError
 from .deprecation import Deprecated
 from numpy.typing import ArrayLike, DTypeLike
-from typing import Callable, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union, overload
+from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union, overload
 from typing_extensions import Literal
 
 # Constrain STFT block sizes to 256 KB
@@ -386,7 +388,7 @@ def valid_intervals(intervals: np.ndarray) -> bool:
     return True
 
 
-def pad_center(data: np.ndarray, *, size: float, axis: int = -1, **kwargs) -> np.ndarray:
+def pad_center(data: np.ndarray, *, size: float, axis: int = -1, **kwargs: Any) -> np.ndarray:
     """Pad an array to a target length along a target axis.
 
     This differs from `np.pad` by centering the data prior to padding,
@@ -529,7 +531,7 @@ def expand_to(x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int]
     return x.reshape(shape)
 
 
-def fix_length(data: np.ndarray, *, size: int, axis: int = -1, **kwargs) -> np.ndarray:
+def fix_length(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
     """Fix the length an array ``data`` to exactly ``size`` along a target axis.
 
     If ``data.shape[axis] < n``, pad according to the provided kwargs.
@@ -1488,8 +1490,8 @@ def buf_to_float(
 def index_to_slice(
     idx: ArrayLike,
     *,
-    idx_min=None,
-    idx_max=None,
+    idx_min: Optional[int] = None,
+    idx_max: Optional[int] = None,
     step: Optional[int] = None,
     pad: bool = True
 ) -> List[slice]:
@@ -2426,7 +2428,7 @@ def _cabs2(x):  # pragma: no cover
     """Helper function for efficiently computing abs2 on complex inputs"""
     return x.real**2 + x.imag**2
 
-_Number = Union[complex, np.number]
+_Number = Union[complex, "np.number[Any]"]
 _NumberOrArray = TypeVar("_NumberOrArray", bound=Union[_Number, np.ndarray])
 def abs2(x: _NumberOrArray) -> _NumberOrArray:
     """Compute the squared magnitude of a real or complex array.
@@ -2465,7 +2467,7 @@ def abs2(x: _NumberOrArray) -> _NumberOrArray:
 def _phasor_angles(x) -> np.complex_:  # pragma: no cover
     return np.cos(x) + 1j * np.sin(x)
 
-_Real = Union[float, np.integer, np.floating]
+_Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
 @overload
 def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray: ...
 @overload

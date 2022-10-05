@@ -4,24 +4,25 @@
 
 import inspect
 import warnings
+from typing import Any
 
 
 class Deprecated(object):
     """A dummy class to catch usage of deprecated variable names"""
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<DEPRECATED parameter>"
 
 
 def rename_kw(
     *,
     old_name: str,
-    old_value,
+    old_value: Any,
     new_name: str,
-    new_value,
+    new_value: Any,
     version_deprecated: str,
     version_removed: str
-):
+) -> Any:
     """Handle renamed arguments.
 
     Parameters

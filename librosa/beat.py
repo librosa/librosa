@@ -364,8 +364,8 @@ def plp(
     onset_envelope: Optional[np.ndarray] = None,
     hop_length: int = 512,
     win_length: int = 384,
-    tempo_min=30,
-    tempo_max=300,
+    tempo_min: Optional[float] = 30,
+    tempo_max: Optional[float] = 300,
     prior: Optional[scipy.stats.rv_continuous] = None,
 ) -> np.ndarray:
     """Predominant local pulse (PLP) estimation. [#]_
