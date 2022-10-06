@@ -98,7 +98,7 @@ plot_pre_code = (
 import matplotlib
 import librosa
 import librosa.display
-matplotlib.rcParams['figure.constrained_layout.use'] = librosa.__version__ >= '0.8'
+matplotlib.rcParams['figure.constrained_layout.use'] = True
 """
 )
 plot_include_source = True
@@ -139,7 +139,7 @@ def reset_mpl(gallery_conf, fname):
     matplotlib.rcParams.update(**plot_rcparams)
 
     # Only use constrained layout in 0.8 and above
-    matplotlib.rcParams['figure.constrained_layout.use'] = librosa.__version__ >= '0.8'
+    matplotlib.rcParams['figure.constrained_layout.use'] = True
     plt.close('all')
 
 
