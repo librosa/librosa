@@ -248,7 +248,7 @@ def test_onset_units(ysr, hop_length, units, ctx):
         b2 = librosa.onset.onset_detect(y=y, sr=sr, hop_length=hop_length, units=units)
 
         t1 = librosa.frames_to_time(b1, sr=sr, hop_length=hop_length)
-        
+
         if units == "time":
             t2 = b2
 
