@@ -21,7 +21,7 @@ from . import onset
 from . import util
 from .feature import tempogram, fourier_tempogram
 from .util.exceptions import ParameterError
-from typing import Callable, Optional, Tuple, Union
+from typing import Any, Callable, Optional, Tuple, Union
 from typing_extensions import Literal
 
 __all__ = ["beat_track", "tempo", "plp"]
@@ -203,7 +203,7 @@ def tempo(
     std_bpm: float = 1.0,
     ac_size: float = 8.0,
     max_tempo: Optional[float] = 320.0,
-    aggregate: Optional[Callable] = np.mean,
+    aggregate: Optional[Callable[[np.ndarray], Any]] = np.mean,
     prior: Optional[scipy.stats.rv_continuous] = None,
 ) -> np.ndarray:
     """Estimate the tempo (beats per minute)

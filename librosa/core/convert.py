@@ -203,7 +203,7 @@ def frames_to_time(
 
 
 def time_to_frames(
-    times: np.ndarray,
+    times: ArrayLike,
     *,
     sr: float = 22050,
     hop_length: int = 512,
