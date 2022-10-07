@@ -39,22 +39,31 @@ from itertools import product
 import warnings
 
 import numpy as np
-from matplotlib.cm import get_cmap
-from matplotlib.axes import Axes
-from matplotlib.collections import QuadMesh, PolyCollection
-from matplotlib.lines import Line2D
-from matplotlib.ticker import Formatter, ScalarFormatter
-from matplotlib.ticker import LogLocator, FixedLocator, MaxNLocator
-from matplotlib.ticker import SymmetricalLogLocator
-import matplotlib
 from packaging.version import parse as version_parse
-
+import lazy_loader as lazy
 
 from . import core
 from . import util
 from .util.exceptions import ParameterError
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Optional, Union
 from typing_extensions import Literal
+
+
+if TYPE_CHECKING:
+    import matplotlib
+    import matplotlib.cm as mcm
+    import matplotlib.axes as mplaxes
+    import matplotlib.ticker as mplticker
+    import matplotlib.pyplot as plt
+    from matplotlib.collections import QuadMesh, PolyCollection
+    from matplotlib.lines import Line2D
+else:
+    matplotlib = lazy.load('matplotlib')
+    mcm = lazy.load('matplotlib.cm')
+    mplaxes = lazy.load('matplotlib.axes')
+    mplticker = lazy.load('matplotlib.ticker')
+    plt = lazy.load('matplotlib.pyplot')
+
 
 __all__ = [
     "specshow",
@@ -69,7 +78,7 @@ __all__ = [
 ]
 
 
-class TimeFormatter(Formatter):
+class TimeFormatter(mplticker.Formatter):
     """A tick formatter for time axes.
 
     Automatically switches between seconds, minutes:seconds,
@@ -176,7 +185,7 @@ class TimeFormatter(Formatter):
         return "{:s}{:s}".format(sign, s)
 
 
-class NoteFormatter(Formatter):
+class NoteFormatter(mplticker.Formatter):
     """Ticker formatter for Notes
 
     Parameters
@@ -241,7 +250,7 @@ class NoteFormatter(Formatter):
         )
 
 
-class SvaraFormatter(Formatter):
+class SvaraFormatter(mplticker.Formatter):
     """Ticker formatter for Svara
 
     Parameters
@@ -337,7 +346,7 @@ class SvaraFormatter(Formatter):
             )
 
 
-class LogHzFormatter(Formatter):
+class LogHzFormatter(mplticker.Formatter):
     """Ticker formatter for logarithmic frequency
 
     Parameters
@@ -382,7 +391,7 @@ class LogHzFormatter(Formatter):
         return "{:g}".format(x)
 
 
-class ChromaFormatter(Formatter):
+class ChromaFormatter(mplticker.Formatter):
     """A formatter for chroma axes
 
     See also
@@ -410,7 +419,7 @@ class ChromaFormatter(Formatter):
         )
 
 
-class ChromaSvaraFormatter(Formatter):
+class ChromaSvaraFormatter(mplticker.Formatter):
     """A formatter for chroma axes with svara instead of notes.
 
     If mela is given, Carnatic svara names will be used.
@@ -456,7 +465,7 @@ class ChromaSvaraFormatter(Formatter):
             )
 
 
-class TonnetzFormatter(Formatter):
+class TonnetzFormatter(mplticker.Formatter):
     """A formatter for tonnetz axes
 
     See also
@@ -541,7 +550,7 @@ class AdaptiveWaveplot:
 
     def connect(
         self,
-        ax: Axes,
+        ax: mplaxes.Axes,
         *,
         signal: Union[
             Literal["xlim_changed"], Literal["ylim_changed"]
@@ -675,7 +684,7 @@ def cmap(
     data = np.atleast_1d(data)
 
     if data.dtype == "bool":
-        return get_cmap(cmap_bool, lut=2)
+        return mcm.get_cmap(cmap_bool, lut=2)
 
     data = data[np.isfinite(data)]
 
@@ -687,9 +696,9 @@ def cmap(
     min_val, max_val = np.percentile(data, [min_p, max_p])
 
     if min_val >= 0 or max_val <= 0:
-        return get_cmap(cmap_seq)
+        return mcm.get_cmap(cmap_seq)
 
-    return get_cmap(cmap_div)
+    return mcm.get_cmap(cmap_div)
 
 
 def __envelope(x, hop):
@@ -1047,8 +1056,6 @@ def __set_current_image(ax, img):
     """
 
     if ax is None:
-        import matplotlib.pyplot as plt
-
         plt.sci(img)
 
 
@@ -1103,10 +1110,8 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
 def __check_axes(axes):
     """Check if "axes" is an instance of an axis object. If not, use `gca`."""
     if axes is None:
-        import matplotlib.pyplot as plt
-
         axes = plt.gca()
-    elif not isinstance(axes, Axes):
+    elif not isinstance(axes, mplaxes.Axes):
         raise ParameterError(
             "`axes` must be an instance of matplotlib.axes.Axes. "
             "Found type(axes)={}".format(type(axes))
@@ -1177,14 +1182,14 @@ def __decorate_axis(
 
     if ax_type == "tonnetz":
         axis.set_major_formatter(TonnetzFormatter())
-        axis.set_major_locator(FixedLocator(np.arange(6)))
+        axis.set_major_locator(mplticker.FixedLocator(np.arange(6)))
         axis.set_label_text("Tonnetz")
 
     elif ax_type == "chroma":
         axis.set_major_formatter(ChromaFormatter(key=key, unicode=unicode))
         degrees = core.key_to_degrees(key)
         axis.set_major_locator(
-            FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
         )
         axis.set_label_text("Pitch class")
 
@@ -1200,7 +1205,7 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
         )
         axis.set_label_text("Svara")
 
@@ -1214,34 +1219,34 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
         )
         axis.set_label_text("Svara")
 
     elif ax_type in ["tempo", "fourier_tempo"]:
-        axis.set_major_formatter(ScalarFormatter())
-        axis.set_major_locator(LogLocator(base=2.0))
+        axis.set_major_formatter(mplticker.ScalarFormatter())
+        axis.set_major_locator(mplticker.LogLocator(base=2.0))
         axis.set_label_text("BPM")
 
     elif ax_type == "time":
         axis.set_major_formatter(TimeFormatter(unit=None, lag=False))
-        axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
+        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Time")
 
     elif ax_type in time_units:
         axis.set_major_formatter(TimeFormatter(unit=ax_type, lag=False))
-        axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
+        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Time ({:s})".format(time_units[ax_type]))
 
     elif ax_type == "lag":
         axis.set_major_formatter(TimeFormatter(unit=None, lag=True))
-        axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
+        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Lag")
 
     elif isinstance(ax_type, str) and ax_type.startswith("lag_"):
         unit = ax_type[4:]
         axis.set_major_formatter(TimeFormatter(unit=unit, lag=True))
-        axis.set_major_locator(MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
+        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Lag ({:s})".format(time_units[unit]))
 
     elif ax_type == "cqt_note":
@@ -1249,10 +1254,10 @@ def __decorate_axis(
         # Where is C1 relative to 2**k hz?
         log_C1 = np.log2(core.note_to_hz("C1"))
         C_offset = 2.0 ** (log_C1 - np.floor(log_C1))
-        axis.set_major_locator(LogLocator(base=2.0, subs=(C_offset,)))
+        axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(C_offset,)))
         axis.set_minor_formatter(NoteFormatter(key=key, major=False, unicode=unicode))
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
         axis.set_label_text("Note")
 
@@ -1261,12 +1266,12 @@ def __decorate_axis(
         # Find the offset of Sa relative to 2**k Hz
         sa_offset = 2.0 ** (np.log2(Sa) - np.floor(np.log2(Sa)))
 
-        axis.set_major_locator(LogLocator(base=2.0, subs=(sa_offset,)))
+        axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(sa_offset,)))
         axis.set_minor_formatter(
             SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode)
         )
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
         axis.set_label_text("Svara")
 
@@ -1274,11 +1279,11 @@ def __decorate_axis(
         axis.set_major_formatter(LogHzFormatter())
         log_C1 = np.log2(core.note_to_hz("C1"))
         C_offset = 2.0 ** (log_C1 - np.floor(log_C1))
-        axis.set_major_locator(LogLocator(base=2.0, subs=(C_offset,)))
-        axis.set_major_locator(LogLocator(base=2.0))
+        axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(C_offset,)))
+        axis.set_major_locator(mplticker.LogLocator(base=2.0))
         axis.set_minor_formatter(LogHzFormatter(major=False))
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
         axis.set_label_text("Hz")
 
@@ -1287,10 +1292,10 @@ def __decorate_axis(
         # Where is C1 relative to 2**k hz?
         log_C1 = np.log2(core.note_to_hz("C1"))
         C_offset = 2.0 ** (log_C1 - np.floor(log_C1))
-        axis.set_major_locator(SymmetricalLogLocator(axis.get_transform()))
+        axis.set_major_locator(mplticker.SymmetricalLogLocator(axis.get_transform()))
         axis.set_minor_formatter(NoteFormatter(key=key, major=False, unicode=unicode))
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))
         )
         axis.set_label_text("Note")
 
@@ -1301,23 +1306,23 @@ def __decorate_axis(
         sa_offset = 2.0 ** (log_Sa - np.floor(log_Sa))
 
         axis.set_major_locator(
-            SymmetricalLogLocator(axis.get_transform(), base=2.0, subs=[sa_offset])
+            mplticker.SymmetricalLogLocator(axis.get_transform(), base=2.0, subs=[sa_offset])
         )
         axis.set_minor_formatter(
             SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode)
         )
         axis.set_minor_locator(
-            LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
         )
         axis.set_label_text("Svara")
 
     elif ax_type in ["mel", "log"]:
-        axis.set_major_formatter(ScalarFormatter())
-        axis.set_major_locator(SymmetricalLogLocator(axis.get_transform()))
+        axis.set_major_formatter(mplticker.ScalarFormatter())
+        axis.set_major_locator(mplticker.SymmetricalLogLocator(axis.get_transform()))
         axis.set_label_text("Hz")
 
     elif ax_type in ["linear", "hz", "fft"]:
-        axis.set_major_formatter(ScalarFormatter())
+        axis.set_major_formatter(mplticker.ScalarFormatter())
         axis.set_label_text("Hz")
 
     elif ax_type in ["frames"]:

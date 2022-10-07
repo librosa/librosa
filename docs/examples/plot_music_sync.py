@@ -94,7 +94,7 @@ fig.colorbar(img, ax=ax)
 # (Thanks to F. Zalkow for the nice visualization.)
 from matplotlib.patches import ConnectionPatch
 
-fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 4))
+fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8,4))
 
 # Plot x_2
 librosa.display.waveshow(x_2, sr=fs, ax=ax2)
@@ -115,6 +115,7 @@ for tp1, tp2 in wp_s[::len(wp_s)//n_arrows]:
                           coordsA='data', coordsB='data',
                           color='r', linestyle='--',
                           alpha=0.5)
+    con.set_in_layout(False)  # This is needed to preserve layout
     ax2.add_artist(con)
 
 ###########################################################
