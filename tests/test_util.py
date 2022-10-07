@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # CREATED:2014-01-18 14:09:05 by Brian McFee <brm2132@columbia.edu>
 # unit tests for util routines
+from __future__ import annotations
 
 # Disable cache
 import os
