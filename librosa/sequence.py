@@ -1475,6 +1475,38 @@ def viterbi_discriminative(
 
     return states
 
+@overload
+def viterbi_binary(
+    prob: np.ndarray,
+    transition: np.ndarray,
+    *,
+    p_state: Optional[np.ndarray] = ...,
+    p_init: Optional[np.ndarray] = ...,
+    return_logp: Literal[False] = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def viterbi_binary(
+    prob: np.ndarray,
+    transition: np.ndarray,
+    *,
+    p_state: Optional[np.ndarray] = ...,
+    p_init: Optional[np.ndarray] = ...,
+    return_logp: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+@overload
+def viterbi_binary(
+    prob: np.ndarray,
+    transition: np.ndarray,
+    *,
+    p_state: Optional[np.ndarray] = ...,
+    p_init: Optional[np.ndarray] = ...,
+    return_logp: bool = ...,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    ...
 
 def viterbi_binary(
     prob: np.ndarray,
