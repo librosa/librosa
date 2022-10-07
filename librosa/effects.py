@@ -623,6 +623,15 @@ def preemphasis(
 ) -> np.ndarray:
     ...
 
+@overload
+def preemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = ...,
+    zi: Optional[ArrayLike] = ...,
+    return_zf: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
 
 @overload
 def preemphasis(
@@ -630,10 +639,9 @@ def preemphasis(
     *,
     coef: float = ...,
     zi: Optional[ArrayLike] = ...,
-    return_zf: Literal[True] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
+    return_zf: bool,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     ...
-
 
 def preemphasis(
     y: np.ndarray,
