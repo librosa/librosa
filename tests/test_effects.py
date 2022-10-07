@@ -329,14 +329,13 @@ def test_split(y_split_idx, frame_length, hop_length, top_db):
 @pytest.mark.parametrize("zi", [None, 0, [0]])
 @pytest.mark.parametrize("return_zf", [False, True])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_preemphasis(coef, zi, return_zf, dtype):
+def test_preemphasis(coef, zi, return_zf: bool, dtype):
     x = np.arange(10, dtype=dtype)
 
-    result = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
     if return_zf:
-        y, zf = result
+        y, zf = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
     else:
-        y = result
+        y = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
 
     assert np.allclose(y[1:], x[1:] - coef * x[:-1])
     assert x.dtype == y.dtype

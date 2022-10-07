@@ -456,13 +456,13 @@ def blocks_to_time(
     return samples_to_time(samples, sr=sr)
 
 @overload
-def note_to_hz(note: str, **kwargs: Any) -> float: ...
+def note_to_hz(note: str, **kwargs: Any) -> np.floating[Any]: ...
 @overload
 def note_to_hz(note: List[str], **kwargs: Any) -> np.ndarray: ...
 @overload
-def note_to_hz(note: Iterable[str], **kwargs: Any) -> Union[float, np.ndarray]: ...
+def note_to_hz(note: Iterable[str], **kwargs: Any) -> Union[np.floating[Any], np.ndarray]: ...
 
-def note_to_hz(note: Union[str, Iterable[str], List[str]], **kwargs: Any) -> Union[float, np.ndarray]:
+def note_to_hz(note: Union[str, Iterable[str], List[str]], **kwargs: Any) -> Union[np.floating[Any], np.ndarray]:
     """Convert one or more note names to frequency (Hz)
 
     Examples
