@@ -341,7 +341,7 @@ def spectral_bandwidth(
     if norm:
         S = util.normalize(S, norm=1, axis=-2)
 
-    return np.sum(S * deviation**p, axis=-2, keepdims=True) ** (1.0 / p)
+    return np.sum(S * deviation ** p, axis=-2, keepdims=True) ** (1.0 / p)
 
 
 def spectral_contrast(
