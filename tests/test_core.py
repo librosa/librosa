@@ -25,7 +25,7 @@ import scipy.signal
 import pytest
 import warnings
 from unittest import mock
-from typing import Callable, Union, cast
+from typing import Any, Callable, Union, cast
 
 
 # -- utilities --#
@@ -291,7 +291,7 @@ def test_stft(infile):
         os.path.join("tests", DATA["wavfile"][0]), sr=None, mono=True
     )
 
-    window: Union[Callable, str]
+    window: Union[Callable[..., Any], str]
     if DATA["hann_w"][0, 0] == 0:
         # Set window to ones, swap back to nfft
         window = np.ones
@@ -2147,7 +2147,7 @@ def test_get_fftlib():
 
 def test_set_fftlib():
     librosa.set_fftlib("foo") # type: ignore
-    assert librosa.get_fftlib() == "foo"
+    assert librosa.get_fftlib() == "foo" # type: ignore
     librosa.set_fftlib()
 
 

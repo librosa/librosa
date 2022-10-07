@@ -309,7 +309,7 @@ def valid_audio(y: np.ndarray, *, mono: bool = Deprecated()) -> bool:
     return True
 
 
-def valid_int(x: float, *, cast: Optional[Callable] = None) -> int:
+def valid_int(x: float, *, cast: Optional[Callable[[float], float]] = None) -> int:
     """Ensure that an input value is integer-typed.
     This is primarily useful for ensuring integrable-valued
     array indices.
@@ -388,7 +388,7 @@ def valid_intervals(intervals: np.ndarray) -> bool:
     return True
 
 
-def pad_center(data: np.ndarray, *, size: float, axis: int = -1, **kwargs: Any) -> np.ndarray:
+def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
     """Pad an array to a target length along a target axis.
 
     This differs from `np.pad` by centering the data prior to padding,
@@ -682,7 +682,7 @@ def axis_sort(
     *,
     axis: int = ...,
     index: Literal[False] = ...,
-    value: Optional[Callable] = ...
+    value: Optional[Callable[..., Any]] = ...
 ) -> np.ndarray:
     ...
 
@@ -692,7 +692,7 @@ def axis_sort(
     *,
     axis: int = ...,
     index: Literal[True],
-    value: Optional[Callable] = ...
+    value: Optional[Callable[..., Any]] = ...
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
 
@@ -701,7 +701,7 @@ def axis_sort(
     *,
     axis: int = -1,
     index: bool = False,
-    value: Optional[Callable] = None
+    value: Optional[Callable[..., Any]] = None
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Sort an array along its rows or columns.
 
@@ -1551,7 +1551,7 @@ def sync(
     data: np.ndarray,
     idx: Union[Iterable[int], Iterable[slice]],
     *,
-    aggregate: Optional[Callable] = None,
+    aggregate: Optional[Callable[..., Any]] = None,
     pad: bool = True,
     axis: int = -1
 ) -> np.ndarray:
@@ -2302,7 +2302,7 @@ def dtype_c2r(d: DTypeLike, *, default: Optional[DTypeLike] = np.float32) -> DTy
     mapping = {
         np.dtype(np.complex64): np.float32,
         np.dtype(np.complex128): np.float64,
-        np.dtype(complex): np.dtype(np.float).type,
+        np.dtype(complex): np.dtype(float).type,
     }
 
     # If we're given a real type already, return it

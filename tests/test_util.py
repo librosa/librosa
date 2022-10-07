@@ -16,7 +16,7 @@ import scipy.sparse
 import pytest
 import warnings
 import librosa
-from typing import List, Union, cast
+from typing import Any, List, Union, cast
 
 from test_core import srand
 
@@ -1353,7 +1353,7 @@ def test_abs2_real(x, dtype):
 @pytest.mark.parametrize('x', [(2 -2j), (3 +0j), (0.5j)**np.arange(6)])
 @pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
 def test_abs2_complex(x, dtype):
-    x_cast: Union[np.complexfloating, np.ndarray] = dtype(x)
+    x_cast: Union[np.complexfloating[Any, Any], np.ndarray] = dtype(x)
     p = librosa.util.abs2(x_cast)
     assert np.allclose(p, np.abs(x_cast)**2)
     assert p.dtype == librosa.util.dtype_c2r(x_cast.dtype)
@@ -1365,7 +1365,7 @@ def test_abs2_complex(x, dtype):
 @pytest.mark.parametrize('mag', [None, 2])
 def test_phasor(dtype, angles, mag):
 
-    angles_cast: Union[np.floating, np.ndarray] = dtype(angles)
+    angles_cast: Union[np.floating[Any], np.ndarray] = dtype(angles)
     z = np.exp(1j * angles_cast)
     if mag is not None:
         mag = dtype(mag)
