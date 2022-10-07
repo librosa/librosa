@@ -203,7 +203,7 @@ def tempo(
     std_bpm: float = 1.0,
     ac_size: float = 8.0,
     max_tempo: Optional[float] = 320.0,
-    aggregate: Optional[Callable[[np.ndarray], Any]] = np.mean,
+    aggregate: Optional[Callable[..., Any]] = np.mean,
     prior: Optional[scipy.stats.rv_continuous] = None,
 ) -> np.ndarray:
     """Estimate the tempo (beats per minute)

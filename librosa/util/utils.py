@@ -801,7 +801,7 @@ def axis_sort(
 def normalize(
     S: np.ndarray,
     *,
-    norm: float = np.inf,
+    norm: Optional[float] = np.inf,
     axis: Optional[int] = 0,
     threshold: Optional[float] = None,
     fill: Optional[bool] = None

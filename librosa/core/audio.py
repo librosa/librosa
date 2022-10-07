@@ -210,7 +210,7 @@ def __soundfile_load(path, offset, duration, dtype):
     return y, sr_native
 
 
-def __audioread_load(path, offset, duration, dtype):
+def __audioread_load(path, offset, duration, dtype: DTypeLike):
     """Load an audio buffer using audioread.
 
     This loads one block at a time, and then concatenates the results.

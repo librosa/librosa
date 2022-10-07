@@ -793,7 +793,9 @@ def lag_to_recurrence(
     return rec[tuple(sub_slice)]
 
 
-def timelag_filter(function: Callable, pad: bool = True, index: int = 0) -> Callable:
+_F = TypeVar("_F", bound=Callable[..., Any])
+
+def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
     """Filtering in the time-lag domain.
 
     This is primarily useful for adapting image filters to operate on
