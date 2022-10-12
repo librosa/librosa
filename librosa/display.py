@@ -601,7 +601,7 @@ class AdaptiveWaveplot:
             if strict:
                 self.ax = None
 
-    def update(self, ax: Axes) -> None:
+    def update(self, ax: mplaxes.Axes) -> None:
         """Update the matplotlib display according to the current viewport limits.
 
         This is a callback function, and should not be used directly.
@@ -782,7 +782,7 @@ def specshow(
     auto_aspect: bool = True,
     htk: bool = False,
     unicode: bool = True,
-    ax: Optional[Axes] = None,
+    ax: Optional[mplaxes.Axes] = None,
     **kwargs: Any,
 ) -> QuadMesh:
     """Display a spectrogram/chromagram/cqt/etc.
@@ -1433,7 +1433,7 @@ def waveshow(
     marker: str = "",
     where: Union[Literal["pre"], Literal["mid"], Literal["post"]] = "post",
     label: Optional[str] = None,
-    ax: Optional[Axes] = None,
+    ax: Optional[mplaxes.Axes] = None,
     **kwargs: Any,
 ) -> AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
