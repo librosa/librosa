@@ -9,3 +9,5 @@ exclude_lines =
     @numba.jit
     @jit
     pragma: no cover
+    if TYPE_CHECKING:
+    @overload
