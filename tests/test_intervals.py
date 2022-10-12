@@ -148,3 +148,15 @@ def test_interval_frequencies(n_bins, intervals, bins_per_octave):
 
     assert len(freqs) == n_bins
     assert min(freqs) == 10
+
+
+@pytest.mark.parametrize("intervals", ["pythagorean", "ji3", "ji5", "ji7", [1, 3/2, 4/3, 5/4]])
+def test_intervals_sorted(intervals):
+
+    freqs = librosa.interval_frequencies(12, fmin=1, intervals=intervals, sort=False)
+    freqs_s = librosa.interval_frequencies(12, fmin=1, intervals=intervals, sort=True)
+
+    assert not np.allclose(freqs, freqs_s)
+
+    assert np.allclose(sorted(freqs), freqs_s)
+
