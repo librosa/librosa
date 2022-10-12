@@ -554,18 +554,18 @@ class ChromaFJSFormatter(mplticker.Formatter):
         try:
             if not isinstance(intervals, str):
                 bins_per_octave = len(intervals)
+            self.bins_per_octave = bins_per_octave
+            # Construct the explicit interval set
+            self.intervals_ = core.interval_frequencies(
+                bins_per_octave,
+                fmin=1,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+            )
         except TypeError as exc:
             raise ParameterError(
                 f"intervals={intervals} must be of type str or a collection of numbers between 1 and 2"
             ) from exc
-        self.bins_per_octave = bins_per_octave
-        # Construct the explicit interval set
-        self.intervals_ = core.interval_frequencies(
-            bins_per_octave,
-            fmin=1,
-            intervals=intervals,
-            bins_per_octave=bins_per_octave,
-        )
 
     def __call__(self, x, pos=None):
         """Format for chroma positions"""

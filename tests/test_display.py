@@ -1025,3 +1025,28 @@ def test_specshow_vqt(C):
     for _ax in ax:
         _ax.set(ylim=[55, 165])
     return fig
+
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_chromafjs_badintervals():
+    formatter = librosa.display.ChromaFJSFormatter(intervals=dict())
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["chroma_fjs"], extensions=["png"], tolerance=6, style=STYLE
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_specshow_chromafjs(C):
+
+    # This isn't a VQT chroma, but that's not important here
+    chroma = librosa.feature.chroma_cqt(C=C, sr=sr, threshold=0.9)
+
+    intervals = librosa.plimit_intervals(primes=[3, 5])
+
+    fig, ax = plt.subplots(nrows=2, figsize=(12, 8), constrained_layout=True)
+
+    librosa.display.specshow(chroma, y_axis="chroma_fjs", intervals="ji5", ax=ax[0])
+    librosa.display.specshow(chroma, y_axis="chroma_fjs", intervals=intervals, ax=ax[1])
+
+    return fig
