@@ -1391,7 +1391,7 @@ def __decorate_axis(
             )
         )
 
-        if isinstance(intervals, str):
+        if isinstance(intervals, str) and bins_per_octave > 7:
             # If intervals are implicit, generate the first 7 and identify
             # them in the sorted set
             tick_intervals = core.interval_frequencies(
