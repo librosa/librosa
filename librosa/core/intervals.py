@@ -14,7 +14,7 @@ with open(resource_filename(__name__, "intervals.msgpack"), "rb") as fdesc:
 
 
 @cache(level=10)
-def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=0.0):
+def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=0.0, sort=True):
     """Construct a set of frequencies from an interval set
 
     Parameters
@@ -43,6 +43,9 @@ def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=
     tuning : float
         Deviation from A440 tuning in fractional bins.
         This is only used when `intervals == 'equal'`
+
+    sort : bool
+        Sort the intervals in ascending order.
 
     Returns
     -------
@@ -83,18 +86,18 @@ def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=
                 (tuning + np.arange(0, bins_per_octave, dtype=float)) / bins_per_octave
             )
         elif intervals == "pythagorean":
-            ratios = pythagorean_intervals(bins_per_octave=bins_per_octave, sort=True)
+            ratios = pythagorean_intervals(bins_per_octave=bins_per_octave, sort=sort)
         elif intervals == "ji3":
             ratios = plimit_intervals(
-                primes=[3], bins_per_octave=bins_per_octave, sort=True
+                primes=[3], bins_per_octave=bins_per_octave, sort=sort
             )
         elif intervals == "ji5":
             ratios = plimit_intervals(
-                primes=[3, 5], bins_per_octave=bins_per_octave, sort=True
+                primes=[3, 5], bins_per_octave=bins_per_octave, sort=sort
             )
         elif intervals == "ji7":
             ratios = plimit_intervals(
-                primes=[3, 5, 7], bins_per_octave=bins_per_octave, sort=True
+                primes=[3, 5, 7], bins_per_octave=bins_per_octave, sort=sort
             )
     else:
         ratios = np.array(intervals)
@@ -106,6 +109,9 @@ def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=
     all_ratios = np.multiply.outer(2.0 ** np.arange(n_octaves), ratios).flatten()[
         :n_bins
     ]
+
+    if sort:
+        all_ratios = np.sort(all_ratios)
 
     return all_ratios * fmin
 

@@ -931,7 +931,8 @@ def vqt(
     freqs = interval_frequencies(n_bins=n_bins,
                                  fmin=fmin,
                                  intervals=intervals,
-                                 bins_per_octave=bins_per_octave)
+                                 bins_per_octave=bins_per_octave,
+                                 sort=True)
 
     freqs_top = freqs[-bins_per_octave:]
 
