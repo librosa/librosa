@@ -143,6 +143,7 @@ def pythagorean_intervals(*, bins_per_octave=12, sort=True, return_factors=False
         If `True` then return a list of dictionaries encoding the prime factorization
         of each interval as `{2: p2, 3: p3}` (meaning `3**p3 * 2**p2`).
         If `False` (default), return intervals as an array of floating point numbers.
+
     Returns
     -------
     intervals : np.ndarray or list of dictionaries
@@ -284,7 +285,7 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True, return_factors=Fa
 
     Returns
     -------
-    intervals : np.ndarray
+    intervals : np.ndarray or list of dictionaries
         The constructed interval set. All intervals are mapped
         to the range [1, 2).
 
