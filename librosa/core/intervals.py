@@ -14,7 +14,9 @@ with open(resource_filename(__name__, "intervals.msgpack"), "rb") as fdesc:
 
 
 @cache(level=10)
-def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=0.0, sort=True):
+def interval_frequencies(
+    n_bins, *, fmin, intervals, bins_per_octave=12, tuning=0.0, sort=True
+):
     """Construct a set of frequencies from an interval set
 
     Parameters
