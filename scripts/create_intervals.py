@@ -47,7 +47,7 @@ def main():
     )
 
     all_intervals = np.concatenate(
-        (intervals_pythagorean, intervals_5lim, intervals_7lim, intervals_23lim)
+        (intervals_pythagorean, intervals_3lim, intervals_5lim, intervals_7lim, intervals_23lim)
     )
     # Convert to rationals
     fractions = fraction(all_intervals)

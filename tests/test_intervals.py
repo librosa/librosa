@@ -160,3 +160,34 @@ def test_intervals_sorted(intervals):
 
     assert np.allclose(sorted(freqs), freqs_s)
 
+
+@pytest.mark.parametrize("sort", [False, True])
+def test_pythagorean_factorizations(sort):
+    intervals = librosa.pythagorean_intervals(bins_per_octave=20, sort=sort, return_factors=False)
+    factors = librosa.pythagorean_intervals(bins_per_octave=20, sort=sort, return_factors=True)
+
+    assert len(intervals) == len(factors)
+
+    for ival, facts in zip(intervals, factors):
+        value = 0.
+        for prime in facts:
+            value += facts[prime] * np.log2(prime)
+
+        assert np.isclose(ival, np.power(2, value))
+
+
+@pytest.mark.parametrize("sort", [False, True])
+@pytest.mark.parametrize("primes", [[3], [3, 5], [3, 5, 7]])
+def test_plimit_factorizations(sort, primes):
+    intervals = librosa.plimit_intervals(primes=primes, bins_per_octave=20, sort=sort, return_factors=False)
+    factors = librosa.plimit_intervals(primes=primes, bins_per_octave=20, sort=sort, return_factors=True)
+
+    assert len(intervals) == len(factors)
+
+    for ival, facts in zip(intervals, factors):
+        value = 0.
+        for prime in facts:
+            value += facts[prime] * np.log2(prime)
+
+        assert np.isclose(ival, np.power(2, value))
+

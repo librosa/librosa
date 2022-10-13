@@ -117,7 +117,7 @@ def interval_frequencies(n_bins, *, fmin, intervals, bins_per_octave=12, tuning=
 
 
 @cache(level=10)
-def pythagorean_intervals(*, bins_per_octave=12, sort=True):
+def pythagorean_intervals(*, bins_per_octave=12, sort=True, return_factors=False):
     """Pythagorean intervals
 
     Intervals are constructed by stacking ratios of 3/2 (i.e.,
@@ -137,10 +137,13 @@ def pythagorean_intervals(*, bins_per_octave=12, sort=True):
     sort : bool
         If `True` then intervals are returned in ascending order.
         If `False`, then intervals are returned in circle-of-fifths order.
-
+    return_factors : bool
+        If `True` then return a list of dictionaries encoding the prime factorization
+        of each interval as `{2: p2, 3: p3}` (meaning `3**p3 * 2**p2`).
+        If `False` (default), return intervals as an array of floating point numbers.
     Returns
     -------
-    intervals : np.ndarray
+    intervals : np.ndarray or list of dictionaries
         The constructed interval set. All intervals are mapped
         to the range [1, 2).
 
@@ -166,17 +169,48 @@ def pythagorean_intervals(*, bins_per_octave=12, sort=True):
     array([1.      , 1.5     , 1.125   , 1.6875  , 1.265625, 1.898437,
            1.423828])
 
+    Generate the first 7, in circle-of-fifths other and factored form
+
+    >>> librosa.pythagorean_intervals(bins_per_octave=7, sort=False, return_factors=True)
+    [
+        {2: 0, 3: 0},
+        {2: -1, 3: 1},
+        {2: -3, 3: 2},
+        {2: -4, 3: 3},
+        {2: -6, 3: 4},
+        {2: -7, 3: 5},
+        {2: -9, 3: 6}
+    ]
     """
 
     # Generate all powers of 3 in log space
+    pow3 = np.arange(bins_per_octave)
+
     # Using modf here to quickly get the fractional part of the log,
     # accounting for whatever power of 2 is necessary to get 3**k
-    # within the octave.  If the fractional part is negative, add
+    # within the octave.
+    log_ratios, pow2 = np.modf(pow3 * np.log2(3))
+
+    # If the fractional part is negative, add
     # one more power of two to get it into the range [0, 1).
-    log_ratios = np.modf(np.log2(3) * np.arange(bins_per_octave))[0]
-    log_ratios[log_ratios < 0] += 1
+    too_small = log_ratios < 0
+    log_ratios[too_small] += 1
+    pow2[too_small] += 1
+
+    # Convert powers of 2 to integer
+    pow2 = pow2.astype(int)
+
     if sort:
-        log_ratios.sort()
+        # Order the intervals
+        idx = np.argsort(log_ratios)
+        log_ratios = log_ratios[idx]
+    else:
+        # If not sorting, we'll take powers in order
+        idx = range(bins_per_octave)
+
+    if return_factors:
+        return list({2: -pow2[i], 3: pow3[i]} for i in idx)
+
     return np.power(2, log_ratios)
 
 
@@ -218,7 +252,7 @@ def _crystal_tie_break(a, b, logs):
 
 
 @cache(level=10)
-def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
+def plimit_intervals(*, primes, bins_per_octave=12, sort=True, return_factors=False):
     """Construct p-limit intervals for a given set of prime factors.
 
     This function is based on the "harmonic crystal growth" algorithm
@@ -241,6 +275,10 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
     sort : bool
         If `True` then intervals are returned in ascending order.
         If `False`, then intervals are returned in crystal growth order.
+    return_factors : bool
+        If `True` then return a list of dictionaries encoding the prime factorization
+        of each interval as `{2: p2, 3: p3, ...}` (meaning `3**p3 * 2**p2`).
+        If `False` (default), return intervals as an array of floating point numbers.
 
     Returns
     -------
@@ -277,6 +315,19 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
     array([1.        , 1.125     , 1.25      , 1.33333333, 1.5       ,
            1.66666667, 1.875     ])
 
+    The same example, but now in factored form
+
+    >>> librosa.plimit_intervals(primes=[3, 5], bins_per_octave=7,
+    ...                          return_factors=True)
+    [
+        {},
+        {2: -3, 3: 2},
+        {2: -2, 5: 1},
+        {2: 2, 3: -1},
+        {2: -1, 3: 1},
+        {3: -1, 5: 1},
+        {2: -3, 3: 1, 5: 1}
+    ]
     """
 
     primes = np.atleast_1d(primes)
@@ -341,10 +392,37 @@ def plimit_intervals(*, primes, bins_per_octave=12, sort=True):
 
     pows = np.array(list(intervals), dtype=float)
 
-    log_ratios = np.modf(pows.dot(logs))[0]
-    log_ratios[log_ratios < 0] += 1
+    log_ratios, pow2 = np.modf(pows.dot(logs))
+
+    # If the fractional part is negative, add
+    # one more power of two to get it into the range [0, 1).
+    too_small = log_ratios < 0
+    log_ratios[too_small] += 1
+    pow2[too_small] -= 1
+
+    # Convert powers of 2 to integer
+    pow2 = pow2.astype(int)
 
     if sort:
-        log_ratios.sort()
+        # Order the intervals
+        idx = np.argsort(log_ratios)
+        log_ratios = log_ratios[idx]
+    else:
+        # If not sorting, we'll take powers in order
+        idx = range(bins_per_octave)
 
+    if return_factors:
+        # Collect the factorized intervals into a list
+        factors = []
+        for i in idx:
+            v = dict()
+            if pow2[i] != 0:
+                v[2] = -pow2[i]
+
+            v.update({p: int(power) for p, power in zip(primes, pows[i]) if power != 0})
+
+            factors.append(v)
+        return factors
+
+    # Otherwise, just return intervals as floats
     return np.power(2, log_ratios)
