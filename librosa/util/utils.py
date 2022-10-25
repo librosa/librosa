@@ -2214,7 +2214,7 @@ def dtype_c2r(d, *, default=np.float32):
     mapping = {
         np.dtype(np.complex64): np.float32,
         np.dtype(np.complex128): np.float64,
-        np.dtype(complex): np.dtype(np.float).type,
+        np.dtype(complex): np.dtype(float).type,
     }
 
     # If we're given a real type already, return it
