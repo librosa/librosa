@@ -756,10 +756,9 @@ def test_interp_harmonics_multi_static(s_multi):
 def test_interp_harmonics_multi_vary(tfr_multi):
     times, freqs, mags = tfr_multi
 
-    # Force slinear mode here to deal with non-unique frequencies
-    Hall = librosa.interp_harmonics(mags, freqs=freqs, harmonics=[0.5, 1, 2], kind="slinear")
-    H0 = librosa.interp_harmonics(mags[0], freqs=freqs[0], harmonics=[0.5, 1, 2], kind="slinear")
-    H1 = librosa.interp_harmonics(mags[1], freqs=freqs[1], harmonics=[0.5, 1, 2], kind="slinear")
+    Hall = librosa.interp_harmonics(mags, freqs=freqs, harmonics=[0.5, 1, 2], kind="nearest")
+    H0 = librosa.interp_harmonics(mags[0], freqs=freqs[0], harmonics=[0.5, 1, 2], kind="nearest")
+    H1 = librosa.interp_harmonics(mags[1], freqs=freqs[1], harmonics=[0.5, 1, 2], kind="nearest")
 
     assert np.allclose(Hall[0], H0)
     assert np.allclose(Hall[1], H1)
@@ -811,7 +810,7 @@ def test_salience_multi_dynamic(tfr_multi, filter_peaks):
         S,
         freqs=freqs,
         harmonics=[0.5, 1, 2, 3],
-        kind="slinear",
+        kind="nearest",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
@@ -819,7 +818,7 @@ def test_salience_multi_dynamic(tfr_multi, filter_peaks):
         S[0],
         freqs=freqs[0],
         harmonics=[0.5, 1, 2, 3],
-        kind="slinear",
+        kind="nearest",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
@@ -827,7 +826,7 @@ def test_salience_multi_dynamic(tfr_multi, filter_peaks):
         S[1],
         freqs=freqs[1],
         harmonics=[0.5, 1, 2, 3],
-        kind="slinear",
+        kind="nearest",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
@@ -897,7 +896,6 @@ def test_click_multi():
 
     yout = librosa.clicks(times=[0, 1, 2], sr=1000, click=click)
 
-    print(yout.shape)
     assert yout.shape[0] == click.shape[0]
 
     assert np.allclose(yout[..., :100], click)
@@ -915,7 +913,6 @@ def test_nnls_multi(s_multi):
     # multichannel  
     mel_basis = librosa.filters.mel(sr=sr, n_fft=2*S.shape[-2]-1, n_mels=256)
     M = np.einsum('...ft,mf->...mt', S, mel_basis)
-    print(M.shape, mel_basis.shape)
     S_recover = librosa.util.nnls(mel_basis, M)
 
     # channel 0
