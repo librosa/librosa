@@ -1569,7 +1569,7 @@ def chroma_vqt(
 
     Note: unlike CQT- and STFT-based chroma, VQT chroma does not aggregate energy
     from neighboring frequency bands.  As a result, the number of chroma
-    features produces is equal to the number of intervals used, or equivalently,
+    features produced is equal to the number of intervals used, or equivalently,
     the number of bins per octave in the underlying VQT representation.
 
     Parameters
