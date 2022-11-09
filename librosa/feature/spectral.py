@@ -1558,7 +1558,6 @@ def chroma_vqt(
     norm=np.inf,
     threshold=0.0,
     n_octaves=7,
-    window=None,
     bins_per_octave=12,
     gamma=0,
 ):
@@ -1597,8 +1596,6 @@ def chroma_vqt(
         threshold are discarded, resulting in a sparse chromagram.
     n_octaves : int > 0
         Number of octaves to analyze above ``fmin``
-    window : None or np.ndarray
-        Optional window parameter to `filters.cq_to_chroma`
     bins_per_octave : int > 0, optional
         Number of bins per octave in the VQT.
     gamma : number > 0 [scalar]
@@ -1667,7 +1664,6 @@ def chroma_vqt(
         bins_per_octave=bins_per_octave,
         n_chroma=bins_per_octave,
         fmin=fmin,
-        window=window,
     )
 
     chroma = np.einsum("cf,...ft->...ct", vq_to_chr, V, optimize=True)
