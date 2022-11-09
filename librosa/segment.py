@@ -360,7 +360,7 @@ def recurrence_matrix(
         arithmetic mean between distances to the k-th nearest neighbor for sample i and sample j.
 
         If ``bandwidth='gmean_k'``, bandwidth is estimated for each sample-pair (i, j) by taking the
-        geometric mean between distances to the k-th nearest neighbor for sample i and sample j [#z]_. 
+        geometric mean between distances to the k-th nearest neighbor for sample i and j [#z]_.
 
         If ``bandwidth='mean_k_avg'``, bandwidth is estimated for each sample-pair (i, j) by taking the
         arithmetic mean between the average distances to the first k-th nearest neighbors for
