@@ -345,39 +345,45 @@ def recurrence_matrix(
         ``exp( - distance(i, j) / bandwidth)`` where ``bandwidth`` is
         as specified below.
 
-    bandwidth : None, float > 0, or str in {'med_k_scalar', 'mean_k', 'gmean_k',
-    'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}
-        If using ``mode='affinity'``, this can be used to set the
+    bandwidth : None, float > 0, or str
+        str options include ``{'med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}``
+
+        If using ``mode='affinity'``, the ``bandwidth`` option can be used to set the
         bandwidth on the affinity kernel.
 
-        If no value is provided or `None`, default to 'med_k_scalar'.
+        If no value is provided or ``None``, default to ``'med_k_scalar'``.
 
-        If 'med_k_scalar', a scalar bandwidth is set to the median distance
+        If ``bandwidth='med_k_scalar'``, a scalar bandwidth is set to the median distance
         of the k-th nearest neighbor for all samples.
 
-        If 'mean_k', bandwidth is estimated for each sample-pair (i, j) by taking the
+        If ``bandwidth='mean_k'``, bandwidth is estimated for each sample-pair (i, j) by taking the
         arithmetic mean between distances to the k-th nearest neighbor for sample i and sample j.
 
-        If 'gmean_k', bandwidth is estimated for each sample-pair (i, j) by taking the
-        geometric mean between distances to the k-th nearest neighbor for sample i and sample j.
-        This is similar to the approach in [WHICH PAPER??] (2005).
+        If ``bandwidth='gmean_k'``, bandwidth is estimated for each sample-pair (i, j) by taking the
+        geometric mean between distances to the k-th nearest neighbor for sample i and sample j [#z]_. 
 
-        If 'mean_k_avg', bandwidth is estimated for each sample-pair (i, j) by taking the
+        If ``bandwidth='mean_k_avg'``, bandwidth is estimated for each sample-pair (i, j) by taking the
         arithmetic mean between the average distances to the first k-th nearest neighbors for
         sample i and sample j.
-        This is similar to the approach in Bo et al. (2012) but does not include the distance
+        This is similar to the approach in Wang et al. (2014) [#w]_ but does not include the distance
         between i and j.
 
-        If 'gmean_k_avg', bandwidth is estimated for each sample-pair (i, j) by taking the
+        If ``bandwidth='gmean_k_avg'``, bandwidth is estimated for each sample-pair (i, j) by taking the
         geometric mean between the average distances to the first k-th nearest neighbors for
         sample i and sample j.
 
-        If 'mean_k_avg_and_pair', bandwidth is estimated for each sample-pair (i, j) by
+        If ``bandwidth='mean_k_avg_and_pair'``, bandwidth is estimated for each sample-pair (i, j) by
         taking the arithmetic mean between three terms: the average distances to the first
-        k-th nearest neighbors for sample i and sample j respectively, as well as the distance
-        between i and j.
-        This is similar to the approach in Bo et al. (2012).
+        k-th nearest neighbors for sample i and sample j respectively, as well as
+        the distance between i and j.
+        This is similar to the approach in Wang et al. (2014). [#w]_
 
+        .. [#z] Zelnik-Manor, Lihi, and Pietro Perona. (2004).
+            "Self-tuning spectral clustering." Advances in neural information processing systems 17.
+
+        .. [#w] Wang, Bo, et al. (2014).
+            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333–337.
+            https://doi.org/10.1038/nmeth.2810
 
     self : bool
         If ``True``, then the main diagonal is populated with self-links:
@@ -1172,13 +1178,29 @@ def path_enhance(
 
 
 def __affinity_bandwidth(rec, bw_mode, k):
+    # make sure rec is a csr_matrix
+    rec = rec.tocsr()
 
     # the api allows users to specify a scalar bandwidth directly, besides the string based options.
-    if isinstance(bw_mode, (int, float)):
+    if isinstance(bw_mode, np.ndarray):
+        bandwidth = bw_mode
+        # check if bw is the right size
+        if bandwidth.shape != rec.shape:
+            raise ParameterError(
+                "Invalid matrix bandwidth with bad shape: {}."
+                "Should be {}.".format(bandwidth.shape, rec.shape)
+            )
+        if (bandwidth <= 0).any():
+            raise ParameterError(
+                "Invalid bandwidth. All entries must be strictly positive."
+            )
+        return bandwidth[rec.nonzero()]
+
+    elif isinstance(bw_mode, (int, float)):
         bandwidth = bw_mode
         if bandwidth <= 0:
             raise ParameterError(
-                "Invalid scalar bandwidth={}. " "Must be strictly positive.".format(bandwidth)
+                "Invalid scalar bandwidth={}. Must be strictly positive.".format(bandwidth)
             )
         return bandwidth
 

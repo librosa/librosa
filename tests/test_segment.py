@@ -138,7 +138,7 @@ def test_cross_similarity_multi():
 @pytest.mark.parametrize("n", [20, 250])
 @pytest.mark.parametrize("k", [None, 5])
 @pytest.mark.parametrize("sym", [False, True])
-@pytest.mark.parametrize("width", [1, 3])
+@pytest.mark.parametrize("width", [1, 5])
 @pytest.mark.parametrize("metric", ["l2", "cosine"])
 @pytest.mark.parametrize("self", [False, True])
 def test_recurrence_matrix(n, k, width, sym, metric, self):
@@ -278,12 +278,26 @@ def test_recurrence_badmode():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize("bandwidth", [-2, 'NOT A BANDWIDTH MODE'])
+@pytest.mark.parametrize("bandwidth", 
+                         [-2, 'FAKE', np.random.randn(2, 5), -1 * np.random.randn(100, 100)])
 def test_recurrence_bad_bandwidth(bandwidth):
-
     srand()
     data = np.random.randn(3, 100)
     rec = librosa.segment.recurrence_matrix(data, bandwidth=bandwidth, mode='affinity')
+
+
+def test_recurrence_array_bandwidth():
+    srand()
+    data = np.random.randn(3, 100)
+    bw = np.random.random((100, 100)) + 0.1
+    rec = librosa.segment.recurrence_matrix(data, bandwidth=bw, mode='affinity')
+
+
+@pytest.mark.parametrize("bw_mode", ['mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'])
+def test_automatic_bandwidth(bw_mode):
+    srand()
+    data = np.random.randn(3, 100)
+    rec = librosa.segment.recurrence_matrix(data, bandwidth=bw_mode, mode='affinity')
 
 
 @pytest.mark.parametrize("n", [10, 100, 500])
