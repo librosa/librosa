@@ -476,10 +476,10 @@ def recurrence_matrix(
     # Use F-ordering here to preserve leading axis layout
     data = data.reshape((t, -1), order="F")
 
-    if width < 1 or width > t:
+    if width < 1 or width >= (t - 1) // 2:
         raise ParameterError(
-            "width={} must be at least 1 and at most data.shape[{}]={}".format(
-                width, axis, t
+            "width={} must be at least 1 and at most (data.shape[{}] - 1) // 2={}".format(
+                width, axis, (t - 1) // 2
             )
         )
 
@@ -492,10 +492,7 @@ def recurrence_matrix(
             ).format(mode)
         )
     if k is None:
-        if t > 2 * width + 1:
-            k = 2 * np.ceil(np.sqrt(t - 2 * width + 1))
-        else:
-            k = 2
+        k = 2 * np.ceil(np.sqrt(t - 2 * width + 1))
 
     k = int(k)
 
@@ -1178,8 +1175,7 @@ def path_enhance(
 
 
 def __affinity_bandwidth(rec, bw_mode, k):
-    # make sure rec is a csr_matrix
-    rec = rec.tocsr()
+    # rec should be a csr_matrix
 
     # the api allows users to specify a scalar bandwidth directly, besides the string based options.
     if isinstance(bw_mode, np.ndarray):
@@ -1221,12 +1217,17 @@ def __affinity_bandwidth(rec, bw_mode, k):
     for i in range(t):
         # Get the links from point i
         links = rec[i].nonzero()[1]
+        # catch empty dists lists in knn_dists
+        if len(links) == 0:
+            raise ParameterError("The sample at time point {} has no neighbors".format(i))
 
         # Compute k nearest neighbors' distance and sort ascending
         knn_dist_row = np.sort(rec[i, links].toarray()[0])[:k]
         knn_dists.append(knn_dist_row)
 
     # take the last element of each list for the distance to kth neighbor
+    
+    
     dist_to_k = np.asarray([dists[-1] for dists in knn_dists])
     avg_dist_to_first_ks = np.asarray([np.mean(dists) for dists in knn_dists])
 

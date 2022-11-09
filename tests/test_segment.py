@@ -253,6 +253,26 @@ def test_recurrence_affinity(metric, bandwidth, self):
         assert np.allclose(-logvals, distance[i, j] * bandwidth)
 
 
+def test_recurrence_full():
+    data = np.eye(10)
+    rec = librosa.segment.recurrence_matrix(data, mode="distance", full=True)
+    assert np.all(rec >= 0)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_big_width():
+    srand()
+    data = np.random.randn(3, 100)
+    width = 55
+    auto_k_rec = librosa.segment.recurrence_matrix(data, mode="affinity", width=width)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_empty_data_recurrence():
+    data = np.zeros((10, 10))
+    librosa.segment.recurrence_matrix(data, mode="affinity")
+
+
 def test_recurrence_multi():
     srand()
     X = np.random.randn(2, 10, 100)
