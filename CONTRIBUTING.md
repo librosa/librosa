@@ -101,6 +101,10 @@ If existing images need to be updated or new ones should be added:
 3. Inspect the new baseline images under tmp/
 4. If (3) looks good, copy into `tests/baseline_images/test_display/` and add to the PR.
 
+Finally, once your pull request has been created and reviewed, please update the file `docs/changelog.rst`
+to briefly summarize your contribution in the section for the next release.
+If you are a first-time contributor, please add yourself to `AUTHORS.md` as well.
+
 Filing bugs
 -----------
 We use Github issues to track all bugs and feature requests; feel free to
