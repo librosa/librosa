@@ -1260,6 +1260,8 @@ def test_dtype_r2c(dtype, target):
         (np.complex64, np.float32),
         (np.int32, np.float32),
         (np.complex128, np.float64),
+        (complex, float),
+        (np.dtype(complex), np.float64)
     ],
 )
 def test_dtype_c2r(dtype, target):

@@ -87,6 +87,15 @@ Contributors
 * Xiao-Ming <https://github.com/Xiao-Ming>
 * Will Monroe <https://github.com/futurulus>
 * Lorenz Nickel <https://github.com/LorenzNickel>
+* Mattia Di Gangi <https://github.com/mattiadg>
+* Kian Eliasi <https://github.com/kianelbo>
+* Anton Kostin <https://github.com/masguit42>
+* Emily Halvachs <https://github.com/Embot2000>
+* Juantia Gomez <https://github.com/juanis2112>
+* Helmi Jinoz <https://github.com/helminzo>
+* Zvi Baratz <https://github.com/ZviBaratz>
+* Alexandre Chabot-Leclerc <https://github.com/achabotl>
+* Steve Kowalik <https://github.com/s-t-e-v-e-n-k>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

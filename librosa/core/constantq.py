@@ -6,6 +6,7 @@ import numpy as np
 from numba import jit
 
 from . import audio
+from .intervals import interval_frequencies
 from .fft import get_fftlib
 from .convert import cqt_frequencies, note_to_hz
 from .spectrum import stft, istft
@@ -175,6 +176,7 @@ def cqt(
         hop_length=hop_length,
         fmin=fmin,
         n_bins=n_bins,
+        intervals="equal",
         gamma=0,
         bins_per_octave=bins_per_octave,
         tuning=tuning,
@@ -759,6 +761,7 @@ def vqt(
     hop_length: int = 512,
     fmin: Optional[float] = None,
     n_bins: int = 84,
+    intervals: Union[str, np.ndarray] = "equal",
     gamma: Optional[float] = None,
     bins_per_octave: int = 12,
     tuning: Optional[float] = 0.0,
@@ -771,6 +774,7 @@ def vqt(
     res_type: Optional[str] = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
+
     """Compute the variable-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -798,6 +802,12 @@ def vqt(
 
     n_bins : int > 0 [scalar]
         Number of frequency bins, starting at ``fmin``
+
+    intervals : str or array of floats in [1, 2)
+        Either a string specification for an interval set, e.g.,
+        `'equal'`, `'pythagorean'`, `'ji3'`, etc. or an array of
+        intervals expressed as numbers between 1 and 2.
+        .. see also:: librosa.interval_frequencies
 
     gamma : number > 0 [scalar]
         Bandwidth offset for determining filter lengths.
@@ -901,6 +911,10 @@ def vqt(
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     """
 
+    # If intervals are provided as an array, override BPO
+    if not isinstance(intervals, str):
+        bins_per_octave = len(intervals)
+
     # How many octaves are we dealing with?
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
     n_filters = min(bins_per_octave, n_bins)
@@ -919,7 +933,11 @@ def vqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     # First thing, get the freqs of the top octave
-    freqs = cqt_frequencies(n_bins=n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
+    freqs = interval_frequencies(n_bins=n_bins,
+                                 fmin=fmin,
+                                 intervals=intervals,
+                                 bins_per_octave=bins_per_octave,
+                                 sort=True)
 
     freqs_top = freqs[-bins_per_octave:]
 

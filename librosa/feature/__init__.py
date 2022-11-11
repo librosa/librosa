@@ -13,6 +13,7 @@ Spectral features
     chroma_stft
     chroma_cqt
     chroma_cens
+    chroma_vqt
     melspectrogram
     mfcc
     rms

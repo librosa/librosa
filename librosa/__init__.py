@@ -129,6 +129,7 @@ Frequency unit conversion
     hz_to_midi
     hz_to_svara_h
     hz_to_svara_c
+    hz_to_fjs
     midi_to_hz
     midi_to_note
     midi_to_svara_h
@@ -162,6 +163,12 @@ Music notation
 
     list_mela
     list_thaat
+
+    fifths_to_note
+    interval_to_fjs
+    interval_frequencies
+    pythagorean_intervals
+    plimit_intervals
 
 
 Frequency range generation

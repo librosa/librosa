@@ -2,6 +2,97 @@
 Changelog
 *********
 
+v0.10
+=====
+
+v0.10.0
+-------
+*In development*
+
+New features
+
+    - `#1485`_ Added support for `"h"` (hours) and `"m"` (minutes) in `TimeFormatter`.  *Vincent Lostanlen*
+    - `#1529`_ Accelerated utility functions for squared magnitude `util.abs2` and `util.phasor`. *Brian McFee*
+    - `#1514`_ `librosa.stft` support for pre-allocated output arrays.  *Brian McFee*
+    - `#1533`_ Accelerated `util.localmax` and `util.localmin`. *Brian McFee*
+    - `#1552`_ **EXPERIMENTAL** Support for just-intonation based variable-Q transforms and functional just system (FJS) notation. *Brian McFee*
+    - `#1579`_ Imports are now done lazily, significantly reducing startup time. It is not longer necessary to explicitly `import librosa.display`. *Brian McFee*
+    - 
+
+Bug fixes
+
+    - `#1560`_ Corrected an error in bandwidth estimation for window functions that take on negative sample values. *Brian McFee*
+    - `#1571`_ Fixed rounding error in multirate filterbank calculation of sampling rates. *Brian McFee*
+    - `#1594`_ Fixed incorrect use of deprecated numpy numerical types. *Mattia Di Gangi*
+
+
+API changes
+
+    - `#1561`_ `librosa.resample` now supports `axis=` for all sample rate conversion backends. *Brian McFee*
+    - `#1572`_ Notation conversion (e.g., `midi_to_note`) now vectorizes operations, and produces `numpy.ndarray` outputs rather than `list` when given iterable inputs. *Brian McFee*
+
+
+Documentation
+
+    - `#1520`_ Improved CONTRIBUTING.md documentation. *Kian Eliasi*
+    - `#1531`_ Updated LICENSE.md documentation. *Anton Kostin*
+    - `#1536`_ Added keyword argument (`kwargs`) definitions to docstrings. *Emily Halvachs*
+    - `#1537`_ Improvements to CONTRIBUTING.md. *Juanita Gomez*
+    - `#1545`_ Correction to docstring for `note_to_midi`. *Helmin Jinoz*
+    - `#1563`_ Improved `specshow` documentation to explain `cmap=` parameter. *Kian Eliasi*
+    - `#1586`_ Fixed figure layout in documentation builds. *Brian McFee*
+    - `#1592`_ Fixed incorrect link to the documentation badge in README. *Zvi Baratz*
+
+
+Deprecations
+
+    - `#1521`_ Removed backward compatibility support for positional arguments that are now keyword-only. *Brian McFee*
+    - `#1577`_ Removed official support for python 3.6. *Brian McFee*
+
+
+Other changes
+
+    - `#1501`_ Infer square / equal plot dimensions for compatible x/y axes.  *Kian Eliasi*
+    - `#1535`_ Standardized integer type checks throughout the library. *Alexandre Chabot-Leclerc*
+    - `#1539`_ Refactored `AdaptiveWaveplot` to allow callback disconnection. *Brian McFee*
+    - `#1548`_ Removed deprecated `'hanning'` window specification from tests. *Brian McFee*
+    - `#1551`_ Removed dependency on `contextlib2`. *Steve Kowalik*
+    - `#1565`_ Efficiency improvements to `autocorrelate`. *Brian McFee*
+    - `#1566`_ Changed the default sample rate conversion method from `kaiser_best` (resampy) to `soxr_hq` (soxr). *Brian McFee*
+    - `#1581`_ Updated tests for numpy 1.23 compatibility. *Brian McFee*
+
+.. _#1485: https://github.com/librosa/librosa/issues/1485
+.. _#1529: https://github.com/librosa/librosa/issues/1529
+.. _#1514: https://github.com/librosa/librosa/issues/1514
+.. _#1533: https://github.com/librosa/librosa/issues/1533
+.. _#1552: https://github.com/librosa/librosa/issues/1552
+.. _#1579: https://github.com/librosa/librosa/issues/1579
+.. _#1560: https://github.com/librosa/librosa/issues/1560
+.. _#1571: https://github.com/librosa/librosa/issues/1571
+.. _#1594: https://github.com/librosa/librosa/issues/1594
+.. _#1561: https://github.com/librosa/librosa/issues/1561
+.. _#1572: https://github.com/librosa/librosa/issues/1572
+.. _#1520: https://github.com/librosa/librosa/issues/1520
+.. _#1531: https://github.com/librosa/librosa/issues/1531
+.. _#1536: https://github.com/librosa/librosa/issues/1536
+.. _#1537: https://github.com/librosa/librosa/issues/1537
+.. _#1545: https://github.com/librosa/librosa/issues/1545
+.. _#1563: https://github.com/librosa/librosa/issues/1563
+.. _#1586: https://github.com/librosa/librosa/issues/1586
+.. _#1592: https://github.com/librosa/librosa/issues/1592
+.. _#1521: https://github.com/librosa/librosa/issues/1521
+.. _#1577: https://github.com/librosa/librosa/issues/1577
+.. _#1501: https://github.com/librosa/librosa/issues/1501
+.. _#1535: https://github.com/librosa/librosa/issues/1535
+.. _#1539: https://github.com/librosa/librosa/issues/1539
+.. _#1548: https://github.com/librosa/librosa/issues/1548
+.. _#1551: https://github.com/librosa/librosa/issues/1551
+.. _#1565: https://github.com/librosa/librosa/issues/1565
+.. _#1566: https://github.com/librosa/librosa/issues/1566
+.. _#1581: https://github.com/librosa/librosa/issues/1581
+
+
+
 v0.9
 ====
 

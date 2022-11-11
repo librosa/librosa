@@ -7,6 +7,13 @@ Vocal separation
 This notebook demonstrates a simple technique for separating vocals (and
 other sporadic foreground signals) from accompanying instrumentation.
 
+.. warning::
+    This example is primarily of historical interest, and we do not recommend
+    this as a competitive method for vocal source separation.
+    For a more recent treatment of vocal and music source separation, please
+    refer to `Open Source Tools & Data for Music Source Separation <https://source-separation.github.io/tutorial/landing.html>`_
+    (Manilow, Seetharaman, and Salamon 2020).
+
 This is based on the "REPET-SIM" method of `Rafii and Pardo, 2012
 <http://www.cs.northwestern.edu/~zra446/doc/Rafii-Pardo%20-%20Music-Voice%20Separation%20using%20the%20Similarity%20Matrix%20-%20ISMIR%202012.pdf>`_, but includes a couple of modifications and extensions:
 

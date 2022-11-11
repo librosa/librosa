@@ -205,3 +205,96 @@ def test_mela_to_svara_badmela():
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_mela_to_svara_badidx():
     librosa.mela_to_svara(0)
+
+@pytest.mark.parametrize('unison, fifths, unicode, result',
+        [
+            ('C', 0, True, 'C'),
+            ('C', 1, True, 'G'),
+            ('C', -2, True, 'B♭'),
+            ('C', -2, False, 'Bb'),
+            ('F', 1, True, 'C'),
+            ('F', -1, True, 'B♭'),
+            ('B', -7, True, 'B♭'),
+            ('Bb', 7, True, 'B'),
+            ('Bb', 14, True, 'B♯'),
+            ('B', 1, True, 'F♯'),
+            ('B', 14, True, 'B𝄪'),
+            ('B', -14, True, 'B𝄫'),
+            ('B', 21, True, 'B𝄪♯'),
+            ('B', -21, True, 'B𝄫♭'),
+            ('B', 21, False, 'B###'),
+            ('B', -21, False, 'Bbbb'),
+        ]
+)
+def test_fifths_to_note(unison, fifths, unicode, result):
+    note = librosa.core.notation.fifths_to_note(unison=unison, fifths=fifths, unicode=unicode)
+    assert note == result
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_fifths_to_note_badunison():
+    librosa.fifths_to_note(unison='X', fifths=1)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_interval_to_fjs_irrational():
+    # Test FJS conversion with a non-just interval
+    librosa.interval_to_fjs(np.sqrt(2))
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize('r', [0, -1, -1/2])
+def test_interval_to_fjs_nonpos(r):
+    librosa.interval_to_fjs(r)
+
+
+@pytest.mark.parametrize('interval, unison, unicode, result',
+        [
+            (1, 'C', True, 'C'),
+            (2, 'G', True, 'G'),
+            (1/2, 'F#', True, 'F♯'),
+            (1/2, 'F#', False, 'F#'),
+            (3/2, 'C', True, 'G'),
+            (5/4, 'C', True, 'E⁵'),
+            (5/4, 'C', False, 'E^5'),
+            (8/5, 'E', True, 'C₅'),
+            (8/5, 'E', False, 'C_5'),
+            (7/5, 'F', True, 'B⁷₅'),
+            (7/5, 'F', False, 'B^7_5'),
+            (49, 'C', True, 'G⁴⁹'),
+            (1/49, 'C', True, 'F₄₉'),
+        ]
+)
+def test_interval_to_fjs(interval, unison, unicode, result):
+    note = librosa.interval_to_fjs(interval, unison=unison, unicode=unicode)
+
+    assert note == result
+
+
+@pytest.mark.parametrize('unison', ['C', 'F#', 'Gbb'])
+@pytest.mark.parametrize('unicode', [False, True])
+@pytest.mark.parametrize('intervals', [librosa.plimit_intervals(primes=[3,5,7], bins_per_octave=24)])
+def test_interval_to_fjs_set(unison, unicode, intervals):
+    fjs = librosa.interval_to_fjs(intervals, unison=unison, unicode=unicode)
+
+    for (interval, note) in zip(intervals, fjs):
+        fjs_single = librosa.interval_to_fjs(interval, unison=unison, unicode=unicode)
+        assert fjs_single == note
+
+
+@pytest.mark.parametrize('hz, fmin, unison, unicode, results',
+        [
+            ([55, 66, 77], None, None, True, ['A', 'C₅', 'D♯⁷₅']),
+            ([55, 66, 77], 33, None, True, ['A⁵', 'C', 'E♭⁷']),
+            ([55, 66, 77], 33, 'Cb', True, ['A♭⁵', 'C♭', 'E𝄫⁷']),
+            ([55, 66, 77], 33, 'Cb', False, ['Ab^5', 'Cb', 'Ebb^7']),
+        ]
+)
+def test_hz_to_fjs(hz, fmin, unison, unicode, results):
+    fjs = librosa.hz_to_fjs(hz, fmin=fmin, unison=unison, unicode=unicode)
+    assert list(fjs) == results
+
+
+def test_hz_to_fjs_scalar():
+    fjs = librosa.hz_to_fjs(110, fmin=55, unicode=False)
+
+    assert fjs == 'A'

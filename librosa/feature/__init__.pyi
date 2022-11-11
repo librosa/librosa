@@ -14,6 +14,7 @@ from .spectral import (
     chroma_stft as chroma_stft,
     chroma_cqt as chroma_cqt,
     chroma_cens as chroma_cens,
+    chroma_vqt as chroma_vqt,
     melspectrogram as melspectrogram,
     mfcc as mfcc,
     tonnetz as tonnetz,
