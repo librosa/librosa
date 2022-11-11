@@ -918,7 +918,7 @@ def specshow(
     auto_aspect: bool = True,
     htk: bool = False,
     unicode: bool = True,
-    intervals Optional[Union[str, np.ndarray]] = None,
+    intervals: Optional[Union[str, np.ndarray]] = None,
     unison: Optional[str] = None,
     ax: Optional[mplaxes.Axes] = None,
     **kwargs: Any,
