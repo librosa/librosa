@@ -20,9 +20,11 @@ Axis formatting
     TimeFormatter
     NoteFormatter
     SvaraFormatter
+    FJSFormatter
     LogHzFormatter
     ChromaFormatter
     ChromaSvaraFormatter
+    ChromaFJSFormatter
     TonnetzFormatter
 
 Miscellaneous
@@ -47,11 +49,11 @@ from . import util
 from .util.exceptions import ParameterError
 
 
-matplotlib = lazy.load('matplotlib')
-mcm = lazy.load('matplotlib.cm')
-mplaxes = lazy.load('matplotlib.axes')
-mplticker = lazy.load('matplotlib.ticker')
-plt = lazy.load('matplotlib.pyplot')
+matplotlib = lazy.load("matplotlib")
+mcm = lazy.load("matplotlib.cm")
+mplaxes = lazy.load("matplotlib.axes")
+mplticker = lazy.load("matplotlib.ticker")
+plt = lazy.load("matplotlib.pyplot")
 
 __all__ = [
     "specshow",
@@ -59,8 +61,11 @@ __all__ = [
     "cmap",
     "TimeFormatter",
     "NoteFormatter",
+    "FJSFormatter",
     "LogHzFormatter",
     "ChromaFormatter",
+    "ChromaSvaraFormatter",
+    "ChromaFJSFormatter",
     "TonnetzFormatter",
     "AdaptiveWaveplot",
 ]
@@ -328,6 +333,90 @@ class SvaraFormatter(mplticker.Formatter):
             )
 
 
+class FJSFormatter(mplticker.Formatter):
+    """Ticker formatter for Functional Just System (FJS) notation
+
+    Parameters
+    ----------
+    fmin : float
+        The unison frequency for this axis
+
+
+    major : bool
+        If ``True``, ticks are always labeled.
+
+        If ``False``, ticks are only labeled if the span is less than 2 octaves
+
+    unison : str
+        The unison note name.  If not provided, it will be inferred from fmin.
+
+    unicode : bool
+        If ``True``, use unicode symbols for accidentals.
+
+        If ``False``, use ASCII symbols for accidentals.
+
+    See also
+    --------
+    NoteFormatter
+    hz_to_fjs
+    matplotlib.ticker.Formatter
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> values = librosa.midi_to_hz(np.arange(48, 72))
+    >>> fig, ax = plt.subplots(nrows=2)
+    >>> ax[0].bar(np.arange(len(values)), values)
+    >>> ax[0].set(ylabel='Hz')
+    >>> ax[1].bar(np.arange(len(values)), values)
+    >>> ax[1].yaxis.set_major_formatter(librosa.display.NoteFormatter())
+    >>> ax[1].set(ylabel='Note')
+    """
+
+    def __init__(
+        self,
+        fmin,
+        major=True,
+        unison=None,
+        unicode=True,
+        intervals=None,
+        bins_per_octave=None,
+        n_bins=None,
+    ):
+
+        self.fmin = fmin
+        self.major = major
+        self.unison = unison
+        self.unicode = unicode
+        self.intervals = intervals
+        self.n_bins = n_bins
+        self.bins_per_octave = bins_per_octave
+        self.frequencies_ = core.interval_frequencies(
+            n_bins, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
+        )
+
+    def __call__(self, x, pos=None):
+
+        if x <= 0:
+            return ""
+
+        # Only use cent precision if our vspan is less than an octave
+        vmin, vmax = self.axis.get_view_interval()
+
+        if not self.major and vmax > 4 * max(1, vmin):
+            return ""
+
+        # Map the given frequency to the nearest JI interval
+        idx = util.match_events(np.atleast_1d(x), self.frequencies_)[0]
+
+        return core.hz_to_fjs(
+            self.frequencies_[idx],
+            fmin=self.fmin,
+            unison=self.unison,
+            unicode=self.unicode,
+        )
+
+
 class LogHzFormatter(mplticker.Formatter):
     """Ticker formatter for logarithmic frequency
 
@@ -439,6 +528,52 @@ class ChromaSvaraFormatter(mplticker.Formatter):
             return core.midi_to_svara_h(
                 int(x), Sa=self.Sa, octave=False, abbr=self.abbr, unicode=self.unicode
             )
+
+
+class ChromaFJSFormatter(mplticker.Formatter):
+    """A formatter for chroma axes with functional just notation
+
+    See also
+    --------
+    matplotlib.ticker.Formatter
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> values = np.arange(12)
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(values)
+    >>> ax.yaxis.set_major_formatter(librosa.display.ChromaFJSFormatter(intervals="ji5", bins_per_octave=12))
+    >>> ax.set(ylabel='Pitch class')
+    """
+
+    def __init__(self, unison="C", unicode=True, intervals=None, bins_per_octave=None):
+        self.unison = unison
+        self.unicode = unicode
+        self.intervals = intervals
+        try:
+            if not isinstance(intervals, str):
+                bins_per_octave = len(intervals)
+            self.bins_per_octave = bins_per_octave
+            # Construct the explicit interval set
+            self.intervals_ = core.interval_frequencies(
+                bins_per_octave,
+                fmin=1,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+            )
+        except TypeError as exc:
+            raise ParameterError(
+                f"intervals={intervals} must be of type str or a collection of numbers between 1 and 2"
+            ) from exc
+
+    def __call__(self, x, pos=None):
+        """Format for chroma positions"""
+        return core.interval_to_fjs(
+            self.intervals_[int(x) % self.bins_per_octave],
+            unison=self.unison,
+            unicode=self.unicode,
+        )
 
 
 class TonnetzFormatter(mplticker.Formatter):
@@ -670,6 +805,7 @@ _chroma_ax_types = (
     "chroma",
     "chroma_h",
     "chroma_c",
+    "chroma_fjs",
 )
 _cqt_ax_types = (
     "cqt_hz",
@@ -738,6 +874,8 @@ def specshow(
     auto_aspect=True,
     htk=False,
     unicode=True,
+    intervals=None,
+    unison=None,
     ax=None,
     **kwargs,
 ):
@@ -787,6 +925,9 @@ def specshow(
         - 'cqt_hz' : frequencies are determined by the CQT scale.
         - 'cqt_note' : pitches are determined by the CQT scale.
         - 'cqt_svara' : like `cqt_note` but using Hindustani or Carnatic svara
+        - 'vqt_fjs' : like `cqt_note` but using Functional Just System (FJS)
+          notation.  This requires a just intonation-based variable-Q
+          transform representation.
 
         All frequency types are plotted in units of Hz.
 
@@ -803,6 +944,9 @@ def specshow(
         - `chroma_h`, `chroma_c`: pitches are determined by chroma filters,
           and labeled as svara in the Hindustani (`chroma_h`) or Carnatic (`chroma_c`)
           according to a given thaat (Hindustani) or melakarta raga (Carnatic).
+
+        - 'chroma_fjs': pitches are determined by chroma filters using just
+          intonation.  All pitch classes are annotated.
 
         - 'tonnetz' : axes are labeled by Tonnetz dimensions (0-5)
         - 'frames' : markers are shown as frame counts.
@@ -840,7 +984,7 @@ def specshow(
         If not provided, they are inferred from ``x_axis`` and ``y_axis``.
 
     fmin : float > 0 [scalar] or None
-        Frequency of the lowest spectrogram bin.  Used for Mel and CQT
+        Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
         scales.
 
         If ``y_axis`` is `cqt_hz` or `cqt_note` and ``fmin`` is not given,
@@ -875,6 +1019,11 @@ def specshow(
 
     thaat : str, optional
         If using `chroma_h` display mode, specify the parent thaat.
+
+    unison : str, optional
+        If using an FJS notation (`chroma_fjs`, `vqt_fjs`), the pitch name of the unison
+        interval.  If not provided, it will be inferred from `fmin` (for VQT display) or
+        assumed as `'C'` (for chroma display).
 
     auto_aspect : bool
         Axes will have 'equal' aspect if the horizontal and vertical dimensions
@@ -973,6 +1122,8 @@ def specshow(
         key=key,
         htk=htk,
         unicode=unicode,
+        intervals=intervals,
+        unison=unison,
     )
 
     # Get the x and y coordinates
@@ -991,10 +1142,32 @@ def specshow(
 
     # Construct tickers and locators
     __decorate_axis(
-        axes.xaxis, x_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode
+        axes.xaxis,
+        x_axis,
+        key=key,
+        Sa=Sa,
+        mela=mela,
+        thaat=thaat,
+        unicode=unicode,
+        fmin=fmin,
+        unison=unison,
+        intervals=intervals,
+        bins_per_octave=bins_per_octave,
+        n_bins=len(x_coords),
     )
     __decorate_axis(
-        axes.yaxis, y_axis, key=key, Sa=Sa, mela=mela, thaat=thaat, unicode=unicode
+        axes.yaxis,
+        y_axis,
+        key=key,
+        Sa=Sa,
+        mela=mela,
+        thaat=thaat,
+        unicode=unicode,
+        fmin=fmin,
+        unison=unison,
+        intervals=intervals,
+        bins_per_octave=bins_per_octave,
+        n_bins=len(y_coords),
     )
 
     # If the plot is a self-similarity/covariance etc. plot, square it
@@ -1037,9 +1210,13 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         "cqt_hz": __coord_cqt_hz,
         "cqt_note": __coord_cqt_hz,
         "cqt_svara": __coord_cqt_hz,
+        "vqt_fjs": __coord_vqt_hz,
+        "vqt_hz": __coord_vqt_hz,
+        "vqt_note": __coord_vqt_hz,
         "chroma": __coord_chroma,
         "chroma_c": __coord_chroma,
         "chroma_h": __coord_chroma,
+        "chroma_fjs": __coord_n,  # We can't use a 12-normalized tick locator here
         "time": __coord_time,
         "h": __coord_time,
         "m": __coord_time,
@@ -1110,7 +1287,15 @@ def __scale_axes(axes, ax_type, which):
         kwargs[thresh] = 1000.0
         kwargs[base] = 2
 
-    elif ax_type in ["cqt", "cqt_hz", "cqt_note", "cqt_svara"]:
+    elif ax_type in [
+        "cqt",
+        "cqt_hz",
+        "cqt_note",
+        "cqt_svara",
+        "vqt_hz",
+        "vqt_note",
+        "vqt_fjs",
+    ]:
         mode = "log"
         kwargs[base] = 2
 
@@ -1131,7 +1316,18 @@ def __scale_axes(axes, ax_type, which):
 
 
 def __decorate_axis(
-    axis, ax_type, key="C:maj", Sa=None, mela=None, thaat=None, unicode=True
+    axis,
+    ax_type,
+    key="C:maj",
+    Sa=None,
+    mela=None,
+    thaat=None,
+    unicode=True,
+    fmin=None,
+    unison=None,
+    intervals=None,
+    bins_per_octave=None,
+    n_bins=None,
 ):
     """Configure axis tickers, locators, and labels"""
     time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
@@ -1179,6 +1375,49 @@ def __decorate_axis(
         )
         axis.set_label_text("Svara")
 
+    elif ax_type == "chroma_fjs":
+        if fmin is None:
+            fmin = core.note_to_hz("C1")
+
+        if unison is None:
+            unison = core.hz_to_note(fmin, octave=False, cents=False)
+
+        axis.set_major_formatter(
+            ChromaFJSFormatter(
+                unison=unison,
+                unicode=unicode,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+            )
+        )
+
+        if isinstance(intervals, str) and bins_per_octave > 7:
+            # If intervals are implicit, generate the first 7 and identify
+            # them in the sorted set
+            tick_intervals = core.interval_frequencies(
+                7,
+                fmin=1,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+                sort=False,
+            )
+
+            all_intervals = core.interval_frequencies(
+                bins_per_octave,
+                fmin=1,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+                sort=True,
+            )
+
+            degrees = util.match_events(tick_intervals, all_intervals)
+        else:
+            # If intervals are explicit, tick them all
+            degrees = np.arange(bins_per_octave)
+
+        axis.set_major_locator(mplticker.FixedLocator(degrees))
+        axis.set_label_text("Pitch class")
+
     elif ax_type in ["tempo", "fourier_tempo"]:
         axis.set_major_formatter(mplticker.ScalarFormatter())
         axis.set_major_locator(mplticker.LogLocator(base=2.0))
@@ -1186,23 +1425,31 @@ def __decorate_axis(
 
     elif ax_type == "time":
         axis.set_major_formatter(TimeFormatter(unit=None, lag=False))
-        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
+        axis.set_major_locator(
+            mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
+        )
         axis.set_label_text("Time")
 
     elif ax_type in time_units:
         axis.set_major_formatter(TimeFormatter(unit=ax_type, lag=False))
-        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
+        axis.set_major_locator(
+            mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
+        )
         axis.set_label_text("Time ({:s})".format(time_units[ax_type]))
 
     elif ax_type == "lag":
         axis.set_major_formatter(TimeFormatter(unit=None, lag=True))
-        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
+        axis.set_major_locator(
+            mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
+        )
         axis.set_label_text("Lag")
 
     elif isinstance(ax_type, str) and ax_type.startswith("lag_"):
         unit = ax_type[4:]
         axis.set_major_formatter(TimeFormatter(unit=unit, lag=True))
-        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
+        axis.set_major_locator(
+            mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
+        )
         axis.set_label_text("Lag ({:s})".format(time_units[unit]))
 
     elif ax_type == "cqt_note":
@@ -1213,7 +1460,9 @@ def __decorate_axis(
         axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(C_offset,)))
         axis.set_minor_formatter(NoteFormatter(key=key, major=False, unicode=unicode))
         axis.set_minor_locator(
-            mplticker.LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(
+                base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0)
+            )
         )
         axis.set_label_text("Note")
 
@@ -1227,9 +1476,87 @@ def __decorate_axis(
             SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode)
         )
         axis.set_minor_locator(
-            mplticker.LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(
+                base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0)
+            )
         )
         axis.set_label_text("Svara")
+
+    elif ax_type == "vqt_fjs":
+        if fmin is None:
+            fmin = core.note_to_hz("C1")
+        axis.set_major_formatter(
+            FJSFormatter(
+                fmin=fmin,
+                unison=unison,
+                unicode=unicode,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+                n_bins=n_bins,
+            )
+        )
+        log_fmin = np.log2(fmin)
+        fmin_offset = 2.0 ** (log_fmin - np.floor(log_fmin))
+        axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(fmin_offset,)))
+
+        axis.set_minor_formatter(
+            FJSFormatter(
+                fmin=fmin,
+                unison=unison,
+                unicode=unicode,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+                n_bins=n_bins,
+                major=False,
+            )
+        )
+        axis.set_minor_locator(
+            mplticker.FixedLocator(
+                core.interval_frequencies(
+                    n_bins * 12 // bins_per_octave,
+                    fmin=fmin,
+                    intervals=intervals,
+                    bins_per_octave=12,
+                )
+            )
+        )
+        axis.set_label_text("Note")
+
+    elif ax_type == "vqt_hz":
+        if fmin is None:
+            fmin = core.note_to_hz("C1")
+        axis.set_major_formatter(LogHzFormatter())
+        log_fmin = np.log2(fmin)
+        fmin_offset = 2.0 ** (log_fmin - np.floor(log_fmin))
+        axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(fmin_offset,)))
+        axis.set_minor_formatter(LogHzFormatter(major=False))
+        axis.set_minor_locator(
+            mplticker.LogLocator(
+                base=2.0,
+                subs=core.interval_frequencies(
+                    12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12
+                ),
+            )
+        )
+        axis.set_label_text("Hz")
+
+    elif ax_type == "vqt_note":
+        if fmin is None:
+            fmin = core.note_to_hz("C1")
+        axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
+        log_fmin = np.log2(fmin)
+        fmin_offset = 2.0 ** (log_fmin - np.floor(log_fmin))
+        axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(fmin_offset,)))
+        axis.set_minor_formatter(NoteFormatter(key=key, unicode=unicode, major=False))
+        axis.set_minor_locator(
+            mplticker.LogLocator(
+                base=2.0,
+                subs=core.interval_frequencies(
+                    12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12
+                ),
+            )
+        )
+        axis.set_label_text("Note")
 
     elif ax_type in ["cqt_hz"]:
         axis.set_major_formatter(LogHzFormatter())
@@ -1239,7 +1566,9 @@ def __decorate_axis(
         axis.set_major_locator(mplticker.LogLocator(base=2.0))
         axis.set_minor_formatter(LogHzFormatter(major=False))
         axis.set_minor_locator(
-            mplticker.LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(
+                base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0)
+            )
         )
         axis.set_label_text("Hz")
 
@@ -1262,13 +1591,17 @@ def __decorate_axis(
         sa_offset = 2.0 ** (log_Sa - np.floor(log_Sa))
 
         axis.set_major_locator(
-            mplticker.SymmetricalLogLocator(axis.get_transform(), base=2.0, subs=[sa_offset])
+            mplticker.SymmetricalLogLocator(
+                axis.get_transform(), base=2.0, subs=[sa_offset]
+            )
         )
         axis.set_minor_formatter(
             SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode)
         )
         axis.set_minor_locator(
-            mplticker.LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(
+                base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0)
+            )
         )
         axis.set_label_text("Svara")
 
@@ -1327,6 +1660,26 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, sr=22050, **_kwargs):
         n,
         fmin=fmin,
         bins_per_octave=bins_per_octave,
+    )
+
+    if np.any(freqs > 0.5 * sr):
+        warnings.warn(
+            "Frequency axis exceeds Nyquist. "
+            "Did you remember to set all spectrogram parameters in specshow?",
+            stacklevel=4,
+        )
+
+    return freqs
+
+
+def __coord_vqt_hz(
+    n, fmin=None, bins_per_octave=12, sr=22050, intervals=None, unison=None, **_kwargs
+):
+    if fmin is None:
+        fmin = core.note_to_hz("C1")
+
+    freqs = core.interval_frequencies(
+        n, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
     )
 
     if np.any(freqs > 0.5 * sr):

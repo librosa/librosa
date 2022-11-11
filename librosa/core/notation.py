@@ -4,8 +4,11 @@
 
 import re
 import numpy as np
+from numba import jit
+from .intervals import INTERVALS
 from .._cache import cache
 from ..util.exceptions import ParameterError
+from ..util.decorators import vectorize
 
 __all__ = [
     "key_to_degrees",
@@ -15,6 +18,8 @@ __all__ = [
     "thaat_to_degrees",
     "list_mela",
     "list_thaat",
+    "fifths_to_note",
+    "interval_to_fjs",
 ]
 
 THAAT_MAP = dict(
@@ -111,6 +116,19 @@ MELAKARTA_MAP = {
         1,
     )
 }
+
+
+# Pre-compiled regular expressions for note and key parsing
+NOTE_RE = re.compile(
+    r"^(?P<note>[A-Ga-g])"
+    r"(?P<accidental>[#♯𝄪b!♭𝄫♮]*)"
+    r"(?P<octave>[+-]?\d+)?"
+    r"(?P<cents>[+-]\d+)?$"
+)
+
+KEY_RE = re.compile(
+    r"^(?P<tonic>[A-Ga-g])" r"(?P<accidental>[#♯b!♭]?)" r":(?P<scale>(maj|min)(or)?)$"
+)
 
 
 def thaat_to_degrees(thaat):
@@ -530,12 +548,8 @@ def key_to_notes(key, *, unicode=True):
     """
 
     # Parse the key signature
-    match = re.match(
-        r"^(?P<tonic>[A-Ga-g])"
-        r"(?P<accidental>[#♯b!♭]?)"
-        r":(?P<scale>(maj|min)(or)?)$",
-        key,
-    )
+    match = KEY_RE.match(key)
+
     if not match:
         raise ParameterError("Improper key format: {:s}".format(key))
 
@@ -673,12 +687,8 @@ def key_to_degrees(key):
         maj=np.array([0, 2, 4, 5, 7, 9, 11]), min=np.array([0, 2, 3, 5, 7, 8, 10])
     )
 
-    match = re.match(
-        r"^(?P<tonic>[A-Ga-g])"
-        r"(?P<accidental>[#♯b!♭]?)"
-        r":(?P<scale>(maj|min)(or)?)$",
-        key,
-    )
+    match = KEY_RE.match(key)
+
     if not match:
         raise ParameterError("Improper key format: {:s}".format(key))
 
@@ -691,3 +701,267 @@ def key_to_degrees(key):
     scale = match.group("scale")[:3].lower()
 
     return (notes[scale] + pitch_map[tonic] + offset) % 12
+
+
+@cache(level=10)
+def fifths_to_note(*, unison, fifths, unicode=True):
+    """Calculate the note name for a given number of perfect fifths
+    from a specified unison.
+
+    This function is primarily intended as a utility routine for
+    Functional Just System (FJS) notation conversions.
+
+    This function does not assume the "circle of fifths" or equal temperament,
+    so 12 fifths will not generally produce a note of the same pitch class
+    due to the accumulation of accidentals.
+
+    Parameters
+    ----------
+    unison : str
+        The name of the starting (unison) note, e.g., 'C' or 'Bb'.
+        Unicode accidentals are supported.
+
+    fifths : integer
+        The number of perfect fifths to deviate from unison.
+
+    unicode : bool
+        If ``True`` (default), use Unicode symbols (♯𝄪♭𝄫)for accidentals.
+
+        If ``False``, accidentals will be encoded as low-order ASCII representations::
+
+            ♯ -> #, 𝄪 -> ##, ♭ -> b, 𝄫 -> bb
+
+    Returns
+    -------
+    note : str
+        The name of the requested note
+
+    Examples
+    --------
+    >>> librosa.fifths_to_note(unison='C', fifths=6)
+    'F♯'
+
+    >>> librosa.fifths_to_note(unison='G', fifths=-3)
+    'B♭'
+
+    >>> librosa.fifths_to_note(unison='Eb', fifths=11, unicode=False)
+    'G#'
+    """
+    # Starting the circle of fifths at F makes accidentals easier to count
+    COFMAP = "FCGDAEB"
+
+    acc_map = {
+        "#": 1,
+        "": 0,
+        "b": -1,
+        "!": -1,
+        "♯": 1,
+        "𝄪": 2,
+        "♭": -1,
+        "𝄫": -2,
+        "♮": 0,
+    }
+
+    if unicode:
+        acc_map_inv = {1: "♯", 2: "𝄪", -1: "♭", -2: "𝄫", 0: ""}
+    else:
+        acc_map_inv = {1: "#", 2: "##", -1: "b", -2: "bb", 0: ""}
+
+    match = NOTE_RE.match(unison)
+
+    if not match:
+        raise ParameterError(f"Improper note format: {unison:s}")
+
+    # Find unison in the alphabet
+    pitch = match.group("note").upper()
+
+    # Find the number of accidentals to start from
+    offset = np.sum([acc_map[o] for o in match.group("accidental")])
+
+    # Find the raw target note
+    circle_idx = COFMAP.index(pitch)
+    raw_output = COFMAP[(circle_idx + fifths) % 7]
+
+    # Now how many accidentals have we accrued?
+    # Equivalently, count times we cross a B<->F boundary
+    acc_index = offset + (circle_idx + fifths) // 7
+
+    # Compress multiple-accidentals as needed
+    acc_str = acc_map_inv[np.sign(acc_index) * 2] * int(
+        abs(acc_index) // 2
+    ) + acc_map_inv[np.sign(acc_index)] * int(abs(acc_index) % 2)
+
+    return raw_output + acc_str
+
+
+@jit(nopython=True, nogil=True, cache=True)
+def __o_fold(d):
+    """Compute the octave-folded interval.
+
+    This maps intervals to the range [1, 2).
+
+    This is part of the FJS notation converter.
+    It is equivalent to the `red` function described in the FJS
+    documentation.
+    """
+    return d * (2.0 ** -np.floor(np.log2(d)))
+
+
+@jit(nopython=True, nogil=True, cache=True)
+def __bo_fold(d):
+    """Compute the balanced, octave-folded interval.
+
+    This maps intervals to the range [sqrt(2)/2, sqrt(2)).
+
+    This is part of the FJS notation converter.
+    It is equivalent to the `reb` function described in the FJS
+    documentation, but with a simpler implementation.
+    """
+    return d * (2.0 ** -np.round(np.log2(d)))
+
+
+@jit(nopython=True, nogil=True, cache=True)
+def __fifth_search(interval, tolerance):
+    """Accelerated helper function for finding the number of fifths
+    to get within tolerance of a given interval.
+
+    This implementation will give up after 32 fifths
+    """
+    log_tolerance = np.abs(np.log2(tolerance))
+    for power in range(32):
+        for sign in [1, -1]:
+            if (
+                np.abs(np.log2(__bo_fold(interval / 3.0 ** (power * sign))))
+                <= log_tolerance
+            ):
+                return power * sign
+        power += 1
+    return power
+
+
+# Translation grids for superscripts and subscripts
+SUPER_TRANS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
+SUB_TRANS = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
+
+
+@vectorize(otypes="U", excluded=set(["unison", "tolerance", "unicode"]))
+def interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True):
+    """Convert an interval to Functional Just System (FJS) notation.
+
+    See https://misotanni.github.io/fjs/en/index.html for a thorough overview
+    of the FJS notation system, and the examples below.
+
+    FJS conversion works by identifying a Pythagorean interval which is within
+    a specified tolerance of the target interval, which provides the core note
+    name.  If the interval is derived from ratios other than perfect fifths,
+    then the remaining factors are encoded as superscripts for otonal
+    (increasing) intervals and subscripts for utonal (decreasing) intervals.
+
+    Parameters
+    ----------
+    interval : float > 0 or iterable of floats
+        A (just) interval to notate in FJS.
+
+    unison : str
+        The name of the unison note (corresponding to `interval=1`).
+
+    tolerance : float
+        The tolerance threshold for identifying the core note name.
+
+    unicode : bool
+        If ``True`` (default), use Unicode symbols (♯𝄪♭𝄫)for accidentals,
+        and superscripts/subscripts for otonal and utonal accidentals.
+
+        If ``False``, accidentals will be encoded as low-order ASCII representations::
+
+            ♯ -> #, 𝄪 -> ##, ♭ -> b, 𝄫 -> bb
+
+        Otonal and utonal accidentals will be denoted by `^##` and `_##`
+        respectively (see examples below).
+
+    Raises
+    ------
+    ParameterError
+        If the provided interval is not positive
+
+        If the provided interval cannot be identified with a
+        just intonation prime factorization.
+
+    Returns
+    -------
+    note_fjs : str or np.ndarray(dtype=str)
+        The interval(s) relative to the given unison in FJS notation.
+
+    Examples
+    --------
+    Pythagorean intervals appear as expected, with no otonal
+    or utonal extensions:
+
+    >>> librosa.interval_to_fjs(3/2, unison='C')
+    'G'
+    >>> librosa.interval_to_fjs(4/3, unison='F')
+    'B♭'
+
+    A ptolemaic major third will appear with an otonal '5':
+
+    >>> librosa.interval_to_fjs(5/4, unison='A')
+    'C♯⁵'
+
+    And a ptolemaic minor third will appear with utonal '5':
+
+    >>> librosa.interval_to_fjs(6/5, unison='A')
+    'C₅'
+
+    More complex intervals will have compound accidentals.
+    For example:
+
+    >>> librosa.interval_to_fjs(25/14, unison='F#')
+    'E²⁵₇'
+    >>> librosa.interval_to_fjs(25/14, unison='F#', unicode=False)
+    'E^25_7'
+
+    Array inputs are also supported:
+
+    >>> librosa.interval_to_fjs([3/2, 4/3, 5/3])
+    array(['G', 'F', 'A⁵'], dtype='<U2')
+
+    """
+    if interval <= 0:
+        raise ParameterError(f"Interval={interval} must be strictly positive")
+
+    # Find the approximate number of fifth-steps to get within tolerance
+    # of the target interval
+    fifths = __fifth_search(interval, tolerance)
+
+    # determine the base note name
+    note_name = fifths_to_note(unison=unison, fifths=fifths, unicode=unicode)
+
+    # Get the prime factor expansion from the interval table
+    try:
+        # Balance the interval into the octave for lookup
+        interval_b = __o_fold(interval)
+        powers = INTERVALS[np.around(interval_b, decimals=6)]
+    except KeyError as exc:
+        raise ParameterError(f"Unknown interval={interval}") from exc
+
+    # Ignore pythagorean spelling
+    powers = {p: powers[p] for p in powers if p > 3}
+
+    # Split into otonal and utonal accidentals
+    otonal = np.prod([p ** powers[p] for p in powers if powers[p] > 0])
+    utonal = np.prod([p ** -powers[p] for p in powers if powers[p] < 0])
+
+    suffix = ""
+    if otonal > 1:
+        if unicode:
+            suffix += f"{otonal:d}".translate(SUPER_TRANS)
+        else:
+            suffix += f"^{otonal}"
+
+    if utonal > 1:
+        if unicode:
+            suffix += f"{utonal:d}".translate(SUB_TRANS)
+        else:
+            suffix += f"_{utonal}"
+
+    return note_name + suffix

@@ -16,6 +16,7 @@ dependencies:
   - pooch==1.0.0
   - packaging==20.0
   - soxr-python==0.3.2
+  - msgpack-python==1.0.0
   - lazy_loader==0.1
 
   # optional, but required for testing
