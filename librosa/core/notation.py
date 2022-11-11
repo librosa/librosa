@@ -859,7 +859,7 @@ def interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True):
 
     Parameters
     ----------
-    interval : float > 0
+    interval : float > 0 or iterable of floats
         A (just) interval to notate in FJS.
 
     unison : str
@@ -889,8 +889,8 @@ def interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True):
 
     Returns
     -------
-    note_fjs : str
-        The interval relative to the given unison in FJS notation.
+    note_fjs : str or np.ndarray(dtype=str)
+        The interval(s) relative to the given unison in FJS notation.
 
     Examples
     --------
@@ -919,6 +919,11 @@ def interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True):
     'E²⁵₇'
     >>> librosa.interval_to_fjs(25/14, unison='F#', unicode=False)
     'E^25_7'
+
+    Array inputs are also supported:
+
+    >>> librosa.interval_to_fjs([3/2, 4/3, 5/3])
+    array(['G', 'F', 'A⁵'], dtype='<U2')
 
     """
     if interval <= 0:

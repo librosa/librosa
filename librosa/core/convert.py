@@ -2120,7 +2120,7 @@ def hz_to_fjs(frequencies, *, fmin=None, unison=None, unicode=False):
 
     Returns
     -------
-    notes : str
+    notes : str or np.ndarray(dtype=str)
         ``notes[i]`` is the closest note name to ``frequency[i]``
         (or ``frequency`` if the input is scalar)
 
@@ -2134,7 +2134,7 @@ def hz_to_fjs(frequencies, *, fmin=None, unison=None, unicode=False):
     Get a single note name for a frequency, relative to A=55 Hz
 
     >>> librosa.hz_to_fjs(66, fmin=55, unicode=True)
-    array('C₅', dtype='<U2')
+    'C₅'
 
     Get notation for a 5-limit frequency set starting at A=55
 
@@ -2155,6 +2155,9 @@ def hz_to_fjs(frequencies, *, fmin=None, unison=None, unicode=False):
     if unison is None:
         unison = hz_to_note(fmin, octave=False, unicode=False)
 
-    intervals = np.asarray(frequencies) / fmin
+    if np.isscalar(frequencies):
+        intervals = frequencies / fmin
+    else:
+        intervals = np.asarray(frequencies) / fmin
 
     return notation.interval_to_fjs(intervals, unison=unison, unicode=unicode)

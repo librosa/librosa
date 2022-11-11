@@ -292,3 +292,9 @@ def test_interval_to_fjs_set(unison, unicode, intervals):
 def test_hz_to_fjs(hz, fmin, unison, unicode, results):
     fjs = librosa.hz_to_fjs(hz, fmin=fmin, unison=unison, unicode=unicode)
     assert list(fjs) == results
+
+
+def test_hz_to_fjs_scalar():
+    fjs = librosa.hz_to_fjs(110, fmin=55, unicode=False)
+
+    assert fjs == 'A'
