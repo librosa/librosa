@@ -23,10 +23,6 @@ from presets import Preset
 # To use presets, we'll make a dummy import of librosa
 # and the display submodule here.
 import librosa as _librosa
-import librosa.display as _display
-# The assignment here is to circumvent python's inability
-# to rename submodule imports within the package
-_librosa.display = _display
 
 #########################################################################
 # By default, librosa uses the following parameters across all functions:
