@@ -116,6 +116,9 @@ def list_examples():
     print("AVAILABLE EXAMPLES")
     print("-" * 68)
     for key in sorted(__TRACKMAP.keys()):
+        if key == "pibble":
+            # Shh... she's sleeping
+            continue
         print("{:10}\t{}".format(key, __TRACKMAP[key]["desc"]))
 
 
