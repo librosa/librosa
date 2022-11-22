@@ -9,6 +9,7 @@ from ..util.exceptions import ParameterError
 from ..util.decorators import vectorize
 from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Sized, Union, overload
 from numpy.typing import ArrayLike
+from .._typing import _IterableLike
 
 __all__ = [
     "frames_to_samples",
@@ -459,11 +460,11 @@ def blocks_to_time(
 @overload
 def note_to_hz(note: str, **kwargs: Any) -> np.floating[Any]: ...
 @overload
-def note_to_hz(note: List[str], **kwargs: Any) -> np.ndarray: ...
+def note_to_hz(note: _IterableLike[str], **kwargs: Any) -> np.ndarray: ...
 @overload
 def note_to_hz(note: Iterable[str], **kwargs: Any) -> Union[np.floating[Any], np.ndarray]: ...
 
-def note_to_hz(note: Union[str, Iterable[str], List[str]], **kwargs: Any) -> Union[np.floating[Any], np.ndarray]:
+def note_to_hz(note: Union[str, _IterableLike[str], Iterable[str]], **kwargs: Any) -> Union[np.floating[Any], np.ndarray]:
     """Convert one or more note names to frequency (Hz)
 
     Examples
@@ -503,14 +504,14 @@ def note_to_hz(note: Union[str, Iterable[str], List[str]], **kwargs: Any) -> Uni
 def note_to_midi(note: str, *, round_midi: bool = ...) -> float: ...
 
 @overload
-def note_to_midi(note: List[str], *, round_midi: bool = ...) -> np.ndarray: ...
+def note_to_midi(note: _IterableLike[str], *, round_midi: bool = ...) -> np.ndarray: ...
 
 @overload
 # Note: this overload must return Union[float, np.ndarray] because str extends Iterable[str]
 def note_to_midi(note: Iterable[str], *, round_midi: bool = ...) -> Union[float, np.ndarray]: ...
 
 def note_to_midi(
-    note: Union[str, Iterable[str], List[str]], *, round_midi: bool = True
+    note: Union[str, Iterable[str], _IterableLike[str]], *, round_midi: bool = True
 ) -> Union[float, np.ndarray]:
     """Convert one or more spelled notes to MIDI number(s).
 

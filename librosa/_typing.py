@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Callable, Union, Tuple, Any
+from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any
 import numpy as np
 from numpy.typing import ArrayLike
 
 
 _WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]
+T = TypeVar("T")
+_IterableLike = Union[List[T], Tuple[T, ...], Generator[T, None, None]]
 
 # The following definitions are copied from numpy/_typing/_scalars.py
 # (We don't import them directly from numpy because they're an implementation detail.)
