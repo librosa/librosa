@@ -47,7 +47,7 @@ import lazy_loader as lazy
 from . import core
 from . import util
 from .util.exceptions import ParameterError
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, Collection, Optional, Union
 from typing_extensions import Literal
 
 
@@ -393,13 +393,13 @@ class FJSFormatter(mplticker.Formatter):
 
     def __init__(
         self,
-        fmin,
-        major=True,
-        unison=None,
-        unicode=True,
-        intervals=None,
-        bins_per_octave=None,
-        n_bins=None,
+        fmin: int,
+        major: bool = True,
+        unison: Optional[str] = None,
+        unicode: bool = True,
+        intervals: Optional[Union[str, Collection[float]]] = None,
+        bins_per_octave: Optional[int] = None,
+        n_bins: Optional[int] = None,
     ):
 
         self.fmin = fmin
@@ -413,7 +413,7 @@ class FJSFormatter(mplticker.Formatter):
             n_bins, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
         )
 
-    def __call__(self, x, pos=None):
+    def __call__(self, x: float, pos: Optional[int] = None) -> str:
 
         if x <= 0:
             return ""
@@ -571,7 +571,13 @@ class ChromaFJSFormatter(mplticker.Formatter):
     >>> ax.set(ylabel='Pitch class')
     """
 
-    def __init__(self, unison="C", unicode=True, intervals=None, bins_per_octave=None):
+    def __init__(
+        self,
+        unison: str = "C",
+        unicode: bool = True,
+        intervals: Optional[Union[str, Collection[float]]] = None,
+        bins_per_octave: Optional[int] = None
+    ):
         self.unison = unison
         self.unicode = unicode
         self.intervals = intervals
@@ -591,7 +597,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
                 f"intervals={intervals} must be of type str or a collection of numbers between 1 and 2"
             ) from exc
 
-    def __call__(self, x, pos=None):
+    def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Format for chroma positions"""
         return core.interval_to_fjs(
             self.intervals_[int(x) % self.bins_per_octave],
@@ -677,8 +683,8 @@ class AdaptiveWaveplot:
         self.envelope = envelope
         self.sr = sr
         self.max_samples = max_samples
-        self.cid = None
-        self.ax = None
+        self.cid: Optional[int] = None
+        self.ax: Optional[mplaxes.Axes] = None
 
     def __del__(self) -> None:
         self.disconnect(strict=True)

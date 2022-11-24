@@ -1037,7 +1037,7 @@ def test_chromafjs_badintervals():
     baseline_images=["chroma_fjs"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_specshow_chromafjs(C):
+def test_specshow_chromafjs(C, sr):
 
     # This isn't a VQT chroma, but that's not important here
     chroma = librosa.feature.chroma_cqt(C=C, sr=sr, threshold=0.9)

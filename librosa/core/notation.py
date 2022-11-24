@@ -848,9 +848,14 @@ def __fifth_search(interval, tolerance):
 SUPER_TRANS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 SUB_TRANS = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 
-
 @vectorize(otypes="U", excluded=set(["unison", "tolerance", "unicode"]))
-def interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True):
+def interval_to_fjs(
+    interval: float,
+    *,
+    unison: str = "C",
+    tolerance: float = 65.0 / 63,
+    unicode: bool = True
+) -> str:
     """Convert an interval to Functional Just System (FJS) notation.
 
     See https://misotanni.github.io/fjs/en/index.html for a thorough overview

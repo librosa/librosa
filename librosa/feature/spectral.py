@@ -16,7 +16,7 @@ from ..core.audio import zero_crossings
 from ..core.spectrum import power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt, vqt
 from ..core.pitch import estimate_tuning
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional, Union, Collection
 from typing_extensions import Literal
 from .._typing import _FloatLike_co, _WindowSpec
 
@@ -1564,7 +1564,7 @@ def chroma_vqt(
     V: Optional[np.ndarray] = None,
     hop_length: int = 512,
     fmin: Optional[float] = None,
-    intervals: Optional[Union[str, np.ndarray]] = None,
+    intervals: Optional[Union[str, Collection[float]]] = None,
     norm: Optional[float] = np.inf,
     threshold: float = 0.0,
     n_octaves: int = 7,

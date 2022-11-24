@@ -6,8 +6,8 @@ from numpy.typing import ArrayLike
 
 
 _WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]
-T = TypeVar("T")
-_IterableLike = Union[List[T], Tuple[T, ...], Generator[T, None, None]]
+_T = TypeVar("_T")
+_IterableLike = Union[List[_T], Tuple[_T, ...], Generator[_T, None, None]]
 
 # The following definitions are copied from numpy/_typing/_scalars.py
 # (We don't import them directly from numpy because they're an implementation detail.)

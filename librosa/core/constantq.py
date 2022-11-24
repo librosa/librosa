@@ -16,7 +16,7 @@ from .. import filters
 from .. import util
 from ..util.exceptions import ParameterError
 from numpy.typing import DTypeLike
-from typing import Optional, Union
+from typing import Optional, Union, Collection
 from typing_extensions import Literal
 from .._typing import _WindowSpec
 
@@ -761,7 +761,7 @@ def vqt(
     hop_length: int = 512,
     fmin: Optional[float] = None,
     n_bins: int = 84,
-    intervals: Union[str, np.ndarray] = "equal",
+    intervals: Union[str, Collection[float]] = "equal",
     gamma: Optional[float] = None,
     bins_per_octave: int = 12,
     tuning: Optional[float] = 0.0,
