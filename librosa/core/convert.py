@@ -7,9 +7,9 @@ import numpy as np
 from . import notation
 from ..util.exceptions import ParameterError
 from ..util.decorators import vectorize
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Sized, Union, overload
+from typing import Any, Callable, Dict, Iterable, Optional, Sized, Union, overload
 from numpy.typing import ArrayLike
-from .._typing import _IterableLike, _FloatLike_co
+from .._typing import _IterableLike, _FloatLike_co, _SequenceLike, _ScalarOrSequence
 
 __all__ = [
     "frames_to_samples",
@@ -58,11 +58,11 @@ __all__ = [
 
 
 def frames_to_samples(
-    frames: ArrayLike,
+    frames: _ScalarOrSequence[_FloatLike_co],
     *,
     hop_length: int = 512,
     n_fft: Optional[int] = None
-) -> Union[np.integer, np.ndarray]:
+) -> Union[np.integer[Any], np.ndarray]:
     """Converts frame indices to audio sample indices.
 
     Parameters
@@ -107,7 +107,7 @@ def samples_to_frames(
     *,
     hop_length: int = 512,
     n_fft: Optional[int] = None
-) -> Union[np.integer, np.ndarray]:
+) -> Union[np.integer[Any], np.ndarray]:
     """Converts sample indices into STFT frames.
 
     Examples
@@ -158,8 +158,36 @@ def samples_to_frames(
     return np.floor((samples - offset) // hop_length).astype(int)
 
 
+@overload
 def frames_to_time(
-    frames: ArrayLike,
+    frames: _FloatLike_co,
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    n_fft: Optional[int] = ...
+) -> np.floating[Any]:
+    ...
+@overload
+def frames_to_time(
+    frames: _SequenceLike[_FloatLike_co],
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    n_fft: Optional[int] = ...
+) -> np.ndarray:
+    ...
+@overload
+def frames_to_time(
+    frames: _ScalarOrSequence[_FloatLike_co],
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    n_fft: Optional[int] = ...
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+def frames_to_time(
+    frames: _ScalarOrSequence[_FloatLike_co],
     *,
     sr: float = 22050,
     hop_length: int = 512,
@@ -291,7 +319,21 @@ def time_to_samples(
     return (np.asanyarray(times) * sr).astype(int)
 
 
-def samples_to_time(samples: ArrayLike, *, sr: float = 22050) -> Union[np.floating[Any], np.ndarray]:
+@overload
+def samples_to_time(samples: _FloatLike_co, *, sr: float = ...) -> np.floating[Any]: ...
+@overload
+def samples_to_time(samples: _SequenceLike[_FloatLike_co], *, sr: float = ...) -> np.ndarray: ...
+@overload
+def samples_to_time(
+    samples: _ScalarOrSequence[_FloatLike_co], *, sr: float = ...
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+def samples_to_time(
+    samples: _ScalarOrSequence[_FloatLike_co],
+    *,
+    sr: float = 22050
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert sample indices to time (in seconds).
 
     Parameters
@@ -631,7 +673,7 @@ def midi_to_note(
 
 @overload
 def midi_to_note(
-    midi: Iterable[_FloatLike_co],
+    midi: _SequenceLike[_FloatLike_co],
     *,
     octave: bool = ...,
     cents: bool = ...,
@@ -642,7 +684,7 @@ def midi_to_note(
 
 @overload
 def midi_to_note(
-    midi: Union[_FloatLike_co, Iterable[_FloatLike_co]],
+    midi: _ScalarOrSequence[_FloatLike_co],
     *,
     octave: bool = ...,
     cents: bool = ...,
@@ -653,7 +695,7 @@ def midi_to_note(
 
 @vectorize(excluded=['octave', 'cents', 'key', 'unicode'])
 def midi_to_note(
-    midi: Union[_FloatLike_co, Iterable[_FloatLike_co]],
+    midi: _ScalarOrSequence[_FloatLike_co],
     *,
     octave: bool = True,
     cents: bool = False,
@@ -752,13 +794,13 @@ def midi_to_note(
     return note
 
 @overload
-def midi_to_hz(notes: Iterable[_FloatLike_co]) -> np.ndarray: ...
-@overload
 def midi_to_hz(notes: _FloatLike_co) -> np.floating[Any]: ...
 @overload
-def midi_to_hz(notes: Union[_FloatLike_co, Iterable[_FloatLike_co]]) -> Union[np.ndarray, np.floating[Any]]: ...
+def midi_to_hz(notes: _SequenceLike[_FloatLike_co]) -> np.ndarray: ...
+@overload
+def midi_to_hz(notes: _ScalarOrSequence[_FloatLike_co]) -> Union[np.ndarray, np.floating[Any]]: ...
 
-def midi_to_hz(notes: Union[_FloatLike_co, Iterable[_FloatLike_co]]) -> Union[np.ndarray, np.floating[Any]]:
+def midi_to_hz(notes: _ScalarOrSequence[_FloatLike_co]) -> Union[np.ndarray, np.floating[Any]]:
     """Get the frequency (Hz) of MIDI note(s)
 
     Examples
@@ -791,13 +833,13 @@ def midi_to_hz(notes: Union[_FloatLike_co, Iterable[_FloatLike_co]]) -> Union[np
 
 
 @overload
-def hz_to_midi(frequencies: Iterable[_FloatLike_co]) -> np.ndarray: ...
-@overload
 def hz_to_midi(frequencies: _FloatLike_co) -> np.floating[Any]: ...
 @overload
-def hz_to_midi(frequencies: Union[_FloatLike_co, Iterable[_FloatLike_co]]) -> Union[np.ndarray, np.floating[Any]]: ...
+def hz_to_midi(frequencies: _SequenceLike[_FloatLike_co]) -> np.ndarray: ...
+@overload
+def hz_to_midi(frequencies: _ScalarOrSequence[_FloatLike_co]) -> Union[np.ndarray, np.floating[Any]]: ...
 
-def hz_to_midi(frequencies: Union[_FloatLike_co, Iterable[_FloatLike_co]]) -> Union[np.ndarray, np.floating[Any]]:
+def hz_to_midi(frequencies: _ScalarOrSequence[_FloatLike_co]) -> Union[np.ndarray, np.floating[Any]]:
     """Get MIDI note number(s) for given frequencies
 
     Examples
@@ -830,12 +872,12 @@ def hz_to_midi(frequencies: Union[_FloatLike_co, Iterable[_FloatLike_co]]) -> Un
 @overload
 def hz_to_note(frequencies: _FloatLike_co, **kwargs: Any) -> str: ...
 @overload
-def hz_to_note(frequencies: Iterable[_FloatLike_co], **kwargs: Any) -> np.ndarray: ...
+def hz_to_note(frequencies: _SequenceLike[_FloatLike_co], **kwargs: Any) -> np.ndarray: ...
 @overload
-def hz_to_note(frequencies: Union[_FloatLike_co, Iterable[_FloatLike_co]], **kwargs: Any) -> Union[str, np.ndarray]: ...
+def hz_to_note(frequencies: _ScalarOrSequence[_FloatLike_co], **kwargs: Any) -> Union[str, np.ndarray]: ...
 
 def hz_to_note(
-    frequencies: Union[_FloatLike_co, Iterable[_FloatLike_co]], **kwargs: Any
+    frequencies: _ScalarOrSequence[_FloatLike_co], **kwargs: Any
 ) -> Union[str, np.ndarray]:
     """Convert one or more frequencies (in Hz) to the nearest note names.
 
@@ -889,21 +931,21 @@ def hz_to_mel(
     ...
 @overload
 def hz_to_mel(
-    frequencies: Iterable[_FloatLike_co],
+    frequencies: _SequenceLike[_FloatLike_co],
     *,
     htk: bool = ...
 ) -> np.ndarray:
     ...
 @overload
 def hz_to_mel(
-    frequencies: Union[_FloatLike_co, Iterable[_FloatLike_co]],
+    frequencies: _ScalarOrSequence[_FloatLike_co],
     *,
     htk: bool = ...
 ) -> Union[np.floating[Any], np.ndarray]:
     ...
 
 def hz_to_mel(
-    frequencies: Union[_FloatLike_co, Iterable[_FloatLike_co]],
+    frequencies: _ScalarOrSequence[_FloatLike_co],
     *,
     htk: bool = False
 ) -> Union[np.floating[Any], np.ndarray]:
@@ -970,21 +1012,21 @@ def mel_to_hz(
     ...
 @overload
 def mel_to_hz(
-    mels: Iterable[_FloatLike_co],
+    mels: _SequenceLike[_FloatLike_co],
     *,
     htk: bool = ...
 ) -> np.ndarray:
     ...
 @overload
 def mel_to_hz(
-    mels: Union[_FloatLike_co, Iterable[_FloatLike_co]],
+    mels: _ScalarOrSequence[_FloatLike_co],
     *,
     htk: bool = ...
 ) -> Union[np.floating[Any], np.ndarray]:
     ...
 
 def mel_to_hz(
-    mels: Union[_FloatLike_co, Iterable[_FloatLike_co]],
+    mels: _ScalarOrSequence[_FloatLike_co],
     *,
     htk: bool = False
 ) -> Union[np.floating[Any], np.ndarray]:
@@ -2049,7 +2091,7 @@ def hz_to_svara_h(
 
 @overload
 def hz_to_svara_h(
-    frequencies: Iterable[_FloatLike_co],
+    frequencies: _SequenceLike[_FloatLike_co],
     *,
     Sa: _FloatLike_co,
     abbr: bool = ...,
@@ -2060,7 +2102,7 @@ def hz_to_svara_h(
 
 @overload
 def hz_to_svara_h(
-    frequencies: Union[_FloatLike_co, Iterable[_FloatLike_co]],
+    frequencies: _ScalarOrSequence[_FloatLike_co],
     *,
     Sa: _FloatLike_co,
     abbr: bool = ...,
@@ -2070,7 +2112,7 @@ def hz_to_svara_h(
     ...
 
 def hz_to_svara_h(
-    frequencies: Union[_FloatLike_co, Iterable[_FloatLike_co]],
+    frequencies: _ScalarOrSequence[_FloatLike_co],
     *,
     Sa: _FloatLike_co,
     abbr: bool = True,
@@ -2562,7 +2604,7 @@ def note_to_svara_c(
 
 @overload
 def hz_to_fjs(
-    frequencies: float,
+    frequencies: _FloatLike_co,
     *,
     fmin: Optional[float] = ...,
     unison: Optional[str] = ...,
@@ -2572,7 +2614,7 @@ def hz_to_fjs(
 
 @overload
 def hz_to_fjs(
-    frequencies: Iterable[float],
+    frequencies: _SequenceLike[_FloatLike_co],
     *,
     fmin: Optional[float] = ...,
     unison: Optional[str] = ...,
@@ -2582,7 +2624,7 @@ def hz_to_fjs(
 
 @overload
 def hz_to_fjs(
-    frequencies: Union[float, Iterable[float]],
+    frequencies: _ScalarOrSequence[_FloatLike_co],
     *,
     fmin: Optional[float] = ...,
     unison: Optional[str] = ...,
@@ -2591,7 +2633,7 @@ def hz_to_fjs(
     ...
 
 def hz_to_fjs(
-    frequencies: Union[float, Iterable[float]],
+    frequencies: _ScalarOrSequence[_FloatLike_co],
     *,
     fmin: Optional[float] = None,
     unison: Optional[str] = None,

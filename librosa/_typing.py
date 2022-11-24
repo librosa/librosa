@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any
+from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any, Sequence
 import numpy as np
 from numpy.typing import ArrayLike
 
@@ -8,6 +8,8 @@ from numpy.typing import ArrayLike
 _WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]
 _T = TypeVar("_T")
 _IterableLike = Union[List[_T], Tuple[_T, ...], Generator[_T, None, None]]
+_SequenceLike = Union[Sequence[_T], np.ndarray]
+_ScalarOrSequence = Union[_T, _SequenceLike[_T]]
 
 # The following definitions are copied from numpy/_typing/_scalars.py
 # (We don't import them directly from numpy because they're an implementation detail.)
