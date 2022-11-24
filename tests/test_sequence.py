@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-from turtle import back
 import numpy as np
 
 import pytest
