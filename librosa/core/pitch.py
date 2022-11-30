@@ -5,6 +5,7 @@
 import warnings
 import numpy as np
 import scipy
+import numba
 
 
 from .spectrum import _spectrogram
@@ -433,30 +434,57 @@ def _cumulative_mean_normalized_difference(
     return yin_frames
 
 
-def _parabolic_interpolation(y_frames: np.ndarray) -> np.ndarray:
+@numba.stencil
+def _pi_stencil(x: np.ndarray) -> np.ndarray:
+    '''Stencil to compute local parabolic interpolation'''
+
+    a = x[1] + x[-1] - 2 * x[0]
+    b = (x[1] - x[-1]) / 2
+
+    if np.abs(b) >= np.abs(a):
+        return 0
+
+    return -b / a
+
+
+@numba.guvectorize(['void(float32[:], float32[:])',
+                    'void(float64[:], float64[:])'], '(n)->(n)',
+                   cache=True, nopython=True)
+def _pi_wrapper(x: np.ndarray, y: np.ndarray) -> np.ndarray:  # pragma: no cover
+    '''Vectorized wrapper for the parabolic interpolation stencil'''
+    y[:] = _pi_stencil(x)
+
+
+def _parabolic_interpolation(x: np.ndarray, *, axis: int=-2) -> np.ndarray:
     """Piecewise parabolic interpolation for yin and pyin.
 
     Parameters
     ----------
-    y_frames : np.ndarray [shape=(frame_length, n_frames)]
-        framed audio time series.
+    x : np.ndarray
+        array to interpolate
 
+    axis : int
+        axis along which to interpolate
     Returns
     -------
-    parabolic_shifts : np.ndarray [shape=(frame_length, n_frames)]
-        position of the parabola optima
+    parabolic_shifts : np.ndarray [shape=x.shape]
+        position of the parabola optima (relative to bin indices)
     """
+    # Rotate the target axis to the end
+    xi = x.swapaxes(-1, axis)
 
-    parabolic_shifts = np.zeros_like(y_frames)
-    parabola_a = (
-        y_frames[..., :-2, :] + y_frames[..., 2:, :] - 2 * y_frames[..., 1:-1, :]
-    ) / 2
-    parabola_b = (y_frames[..., 2:, :] - y_frames[..., :-2, :]) / 2
-    parabolic_shifts[..., 1:-1, :] = -parabola_b / (
-        2 * parabola_a + util.tiny(parabola_a)
-    )
-    parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
-    return parabolic_shifts
+    # Allocate the output array and rotate target axis
+    lp = np.empty_like(x)
+    lpi = lp.swapaxes(-1, axis)
+
+    # Call the vectorized stencil
+    _pi_wrapper(xi, lpi)
+
+    # Handle the edge condition not covered by the stencil
+    lpi[..., -1] = 0
+    lpi[..., 0] = 0
+
+    return lp
 
 
 def yin(
