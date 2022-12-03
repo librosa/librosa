@@ -20,7 +20,7 @@ from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
-from .._typing import _FloatLike_co
+from .._typing import _FloatLike_co, _ResampleType
 
 from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
 from numpy.typing import DTypeLike, ArrayLike
@@ -58,7 +58,7 @@ def load(
     offset: float = 0.0,
     duration: Optional[float] = None,
     dtype: DTypeLike = np.float32,
-    res_type: str = "soxr_hq",
+    res_type: _ResampleType = "soxr_hq",
 ) -> Tuple[np.ndarray, float]:
     """Load an audio file as a floating point time series.
 
@@ -511,7 +511,7 @@ def resample(
     *,
     orig_sr: float,
     target_sr: float,
-    res_type: str = "soxr_hq",
+    res_type: _ResampleType = "soxr_hq",
     fix: bool = True,
     scale: bool = False,
     axis: int = -1,

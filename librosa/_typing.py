@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any, Sequence
+from typing_extensions import Literal
 import numpy as np
 from numpy.typing import ArrayLike
 
@@ -10,6 +11,25 @@ _T = TypeVar("_T")
 _IterableLike = Union[List[_T], Tuple[_T, ...], Generator[_T, None, None]]
 _SequenceLike = Union[Sequence[_T], np.ndarray]
 _ScalarOrSequence = Union[_T, _SequenceLike[_T]]
+
+_ResampleType = Union[
+    Literal["soxr_vhq"],
+    Literal["soxr_hq"],
+    Literal["soxr_mq"],
+    Literal["soxr_lq"],
+    Literal["soxr_qq"],
+    Literal["kaiser_best"],
+    Literal["kaiser_fast"],
+    Literal["fft"],
+    Literal["scipy"],
+    Literal["polyphase"],
+    Literal["linear"],
+    Literal["zero_order_hold"],
+    Literal["sinc_best"],
+    Literal["sinc_medium"],
+    Literal["sinc_fastest"],
+    str,
+]
 
 # The following definitions are copied from numpy/_typing/_scalars.py
 # (We don't import them directly from numpy because they're an implementation detail.)
