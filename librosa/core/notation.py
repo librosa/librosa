@@ -8,8 +8,9 @@ from numba import jit
 from .intervals import INTERVALS
 from .._cache import cache
 from ..util.exceptions import ParameterError
-from typing import Dict, List, Union
+from typing import Dict, List, Union, overload
 from ..util.decorators import vectorize
+from .._typing import _ScalarOrSequence, _FloatLike_co, _SequenceLike
 
 
 __all__ = [
@@ -848,14 +849,44 @@ def __fifth_search(interval, tolerance):
 SUPER_TRANS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 SUB_TRANS = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 
+@overload
+def interval_to_fjs(
+    interval: _FloatLike_co,
+    *,
+    unison: str = ...,
+    tolerance: float = ...,
+    unicode: bool = ...
+) -> str:
+    ...
+
+@overload
+def interval_to_fjs(
+    interval: _SequenceLike[_FloatLike_co],
+    *,
+    unison: str = ...,
+    tolerance: float = ...,
+    unicode: bool = ...
+) -> np.ndarray:
+    ...
+
+@overload
+def interval_to_fjs(
+    interval: _ScalarOrSequence[_FloatLike_co],
+    *,
+    unison: str = ...,
+    tolerance: float = ...,
+    unicode: bool = ...
+) -> Union[str, np.ndarray]:
+    ...
+
 @vectorize(otypes="U", excluded=set(["unison", "tolerance", "unicode"]))
 def interval_to_fjs(
-    interval: float,
+    interval: _ScalarOrSequence[_FloatLike_co],
     *,
     unison: str = "C",
     tolerance: float = 65.0 / 63,
     unicode: bool = True
-) -> str:
+) -> Union[str, np.ndarray]:
     """Convert an interval to Functional Just System (FJS) notation.
 
     See https://misotanni.github.io/fjs/en/index.html for a thorough overview
