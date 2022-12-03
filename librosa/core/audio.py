@@ -675,7 +675,7 @@ def get_duration(
     n_fft: int = 2048,
     hop_length: int = 512,
     center: bool = True,
-    filename: Optional[str] = None,
+    filename: Optional[Union[str, os.PathLike[Any]]] = None,
 ) -> float:
     """Compute the duration (in seconds) of an audio time series,
     feature matrix, or filename.

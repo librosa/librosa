@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Any
 
 import os
 import glob
@@ -158,7 +158,7 @@ def example_info(key: str) -> None:
 
 
 def find_files(
-    directory: str,
+    directory: Union[str, os.PathLike[Any]],
     *,
     ext: Optional[Union[str, List[str]]] = None,
     recurse: bool = True,
