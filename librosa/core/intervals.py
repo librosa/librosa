@@ -19,9 +19,9 @@ __all__ = [
 ]
 
 
-with open(resource_filename(__name__, "intervals.msgpack"), "rb") as fdesc:
+with open(resource_filename(__name__, "intervals.msgpack"), "rb") as _fdesc:
     # We use floats for dictionary keys, so strict mapping is disabled
-    INTERVALS = msgpack.load(fdesc, strict_map_key=False)
+    INTERVALS = msgpack.load(_fdesc, strict_map_key=False)
 
 
 @cache(level=10)

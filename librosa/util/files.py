@@ -35,8 +35,8 @@ __GOODBOY.load_registry(
 
 with open(
     resource_filename(__name__, str(Path("example_data") / "index.json")), "r"
-) as fdesc:
-    __TRACKMAP = json.load(fdesc)
+) as _fdesc:
+    __TRACKMAP = json.load(_fdesc)
 
 
 def example(key: str, *, hq: bool = False) -> str:
