@@ -9,7 +9,7 @@ from ..util.exceptions import ParameterError
 from ..util.decorators import vectorize
 from typing import Any, Callable, Dict, Iterable, Optional, Sized, Union, overload
 from numpy.typing import ArrayLike
-from .._typing import _IterableLike, _FloatLike_co, _SequenceLike, _ScalarOrSequence
+from .._typing import _IterableLike, _FloatLike_co, _SequenceLike, _ScalarOrSequence, _IntLike_co
 
 __all__ = [
     "frames_to_samples",
@@ -58,7 +58,7 @@ __all__ = [
 
 
 def frames_to_samples(
-    frames: _ScalarOrSequence[_FloatLike_co],
+    frames: _ScalarOrSequence[_IntLike_co],
     *,
     hop_length: int = 512,
     n_fft: Optional[int] = None
@@ -160,7 +160,7 @@ def samples_to_frames(
 
 @overload
 def frames_to_time(
-    frames: _FloatLike_co,
+    frames: _IntLike_co,
     *,
     sr: float = ...,
     hop_length: int = ...,
@@ -169,7 +169,7 @@ def frames_to_time(
     ...
 @overload
 def frames_to_time(
-    frames: _SequenceLike[_FloatLike_co],
+    frames: _SequenceLike[_IntLike_co],
     *,
     sr: float = ...,
     hop_length: int = ...,
@@ -178,7 +178,7 @@ def frames_to_time(
     ...
 @overload
 def frames_to_time(
-    frames: _ScalarOrSequence[_FloatLike_co],
+    frames: _ScalarOrSequence[_IntLike_co],
     *,
     sr: float = ...,
     hop_length: int = ...,
@@ -187,7 +187,7 @@ def frames_to_time(
     ...
 
 def frames_to_time(
-    frames: _ScalarOrSequence[_FloatLike_co],
+    frames: _ScalarOrSequence[_IntLike_co],
     *,
     sr: float = 22050,
     hop_length: int = 512,
@@ -238,7 +238,7 @@ def time_to_frames(
     sr: float = 22050,
     hop_length: int = 512,
     n_fft: Optional[int] = None
-) -> Union[np.floating[Any], np.ndarray]:
+) -> Union[np.integer[Any], np.ndarray]:
     """Converts time stamps into STFT frames.
 
     Parameters
