@@ -1423,8 +1423,8 @@ def tone(
 
 def chirp(
     *,
-    fmin: float,
-    fmax: float,
+    fmin: _FloatLike_co,
+    fmax: _FloatLike_co,
     sr: float = 22050,
     length: Optional[int] = None,
     duration: Optional[float] = None,
@@ -1535,7 +1535,7 @@ def chirp(
     )
 
 
-def mu_compress(x: np.ndarray, *, mu: float = 255, quantize: bool = True) -> np.ndarray:
+def mu_compress(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255, quantize: bool = True) -> np.ndarray:
     """mu-law compression
 
     Given an input signal ``-1 <= x <= 1``, the mu-law compression
@@ -1629,7 +1629,7 @@ def mu_compress(x: np.ndarray, *, mu: float = 255, quantize: bool = True) -> np.
     return x_comp
 
 
-def mu_expand(x: np.ndarray, *, mu: float = 255.0, quantize: bool = True) -> np.ndarray:
+def mu_expand(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255.0, quantize: bool = True) -> np.ndarray:
     """mu-law expansion
 
     This function is the inverse of ``mu_compress``. Given a mu-law compressed
