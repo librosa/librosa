@@ -11,14 +11,6 @@ from numpy.typing import ArrayLike
 from .._cache import cache
 
 
-__all__ = [
-    "INTERVALS",
-    "interval_frequencies",
-    "pythagorean_intervals",
-    "plimit_intervals",
-]
-
-
 with open(resource_filename(__name__, "intervals.msgpack"), "rb") as _fdesc:
     # We use floats for dictionary keys, so strict mapping is disabled
     INTERVALS = msgpack.load(_fdesc, strict_map_key=False)
