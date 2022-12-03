@@ -18,7 +18,7 @@ from ..core.constantq import cqt, hybrid_cqt, vqt
 from ..core.pitch import estimate_tuning
 from typing import Any, Optional, Union, Collection
 from typing_extensions import Literal
-from .._typing import _FloatLike_co, _WindowSpec
+from .._typing import _FloatLike_co, _WindowSpec, _PadMode
 
 
 __all__ = [
@@ -52,7 +52,7 @@ def spectral_centroid(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
 ) -> np.ndarray:
     """Compute the spectral centroid.
 
@@ -196,7 +196,7 @@ def spectral_bandwidth(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     freq: Optional[np.ndarray] = None,
     centroid: Optional[np.ndarray] = None,
     norm: bool = True,
@@ -355,7 +355,7 @@ def spectral_contrast(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     freq: Optional[np.ndarray] = None,
     fmin: float = 200.0,
     n_bands: int = 6,
@@ -537,7 +537,7 @@ def spectral_rolloff(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     freq: Optional[np.ndarray] = None,
     roll_percent: float = 0.85,
 ) -> np.ndarray:
@@ -684,7 +684,7 @@ def spectral_flatness(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     amin: float = 1e-10,
     power: float = 2.0,
 ) -> np.ndarray:
@@ -801,7 +801,7 @@ def rms(
     frame_length: int = 2048,
     hop_length: int = 512,
     center: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
 ) -> np.ndarray:
     """Compute root-mean-square (RMS) value for each frame, either from the
     audio samples ``y`` or from a spectrogram ``S``.
@@ -913,7 +913,7 @@ def poly_features(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     order: int = 1,
     freq: Optional[np.ndarray] = None,
 ) -> np.ndarray:
@@ -1132,7 +1132,7 @@ def chroma_stft(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     tuning: Optional[float] = None,
     n_chroma: int = 12,
     **kwargs: Any,
@@ -2008,7 +2008,7 @@ def melspectrogram(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     power: float = 2.0,
     **kwargs: Any,
 ) -> np.ndarray:

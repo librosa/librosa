@@ -30,6 +30,7 @@ _ResampleType = Union[
     Literal["sinc_fastest"],
     str,
 ]
+_PadMode = Union[str, Callable[..., Any]]
 
 # The following definitions are copied from numpy/_typing/_scalars.py
 # (We don't import them directly from numpy because they're an implementation detail.)

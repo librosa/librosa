@@ -18,7 +18,7 @@ from ..util.exceptions import ParameterError
 from numpy.typing import DTypeLike
 from typing import Optional, Union, Collection
 from typing_extensions import Literal
-from .._typing import _WindowSpec, _ResampleType
+from .._typing import _WindowSpec, _ResampleType, _PadMode
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 
@@ -40,7 +40,7 @@ def cqt(
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     res_type: Optional[_ResampleType] = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
@@ -206,7 +206,7 @@ def hybrid_cqt(
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     res_type: _ResampleType = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
@@ -389,7 +389,7 @@ def pseudo_cqt(
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
     """Compute the pseudo constant-Q transform of an audio signal.
@@ -770,7 +770,7 @@ def vqt(
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     res_type: Optional[_ResampleType] = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
@@ -1217,7 +1217,7 @@ def griffinlim_cqt(
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
-    pad_mode: str = "constant",
+    pad_mode: _PadMode = "constant",
     res_type: _ResampleType = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
     length: Optional[int] = None,
