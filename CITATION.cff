@@ -1,0 +1,84 @@
+# Referenced from https://zenodo.org/record/6759664#.Y43yzhRBz30
+
+cff-version: 1.2.0
+title: librosa
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+license: "ISC"
+version: 0.9.2
+date-released: 2022-06-27
+authors:
+  - given-names: Brian
+    family-names: McFee
+    affiliation: New York University
+  - given-names: Alexandros
+    family-names: Metsai
+  - given-names: Matt
+    family-names: McVicar
+  - given-names: Stefan
+    family-names: Balke
+  - given-names: Carl
+    family-names: Thomé
+    affiliation: '@xlnaudio'
+  - given-names: Colin
+    family-names: Raffel
+    affiliation: UNC and Hugging Face
+  - given-names: Frank
+    family-names: Zalkow
+  - given-names: Ayoub
+    family-names: Malek
+    affiliation: '@yoummday'
+  - given-names: Dana
+    affiliation: Ableton
+  - given-names: Kyungyun
+    family-names: Lee
+    affiliation: Gaudio Lab
+  - given-names: Oriol
+    family-names: Nieto
+    affiliation: Adobe Research
+  - given-names: Dan
+    family-names: Ellis
+    affiliation: Google
+  - given-names: Jack
+    family-names: Mason
+  - given-names: Eric
+    family-names: Battenberg
+    affiliation: Google
+  - given-names: Scott
+    family-names: Seyfarth
+  - given-names: Ryuichi
+    family-names: Yamamoto
+    affiliation: '@line'
+  - given-names: viktorandreevichmorozov
+  - given-names: Keunwoo
+    family-names: Choi
+    affiliation: '@bytedance'
+  - given-names: Josh
+    family-names: Moore
+    affiliation: '@openmicroscopy'
+  - given-names: Rachel
+    family-names: Bittner
+  - given-names: Shunsuke Hidaka
+    affiliation: 'Kyushu University, Graduate School of Design'
+  - given-names: Ziyao
+    family-names: Wei
+  - given-names: nullmightybofo
+  - given-names: Adam
+    family-names: Weiss
+  - given-names: Darío
+    family-names: Hereñú
+  - given-names: Fabian-Robert
+    family-names: Stöter
+    affiliation: Audioshake
+  - given-names: Lorenz
+    family-names: Nickel
+  - given-names: Pius
+    family-names: Friesch
+    affiliation: KTH Royal Institute of Technology
+  - given-names: Matt
+    family-names: Vollrath
+    affiliation: '@EndPointCorp'
+  - given-names: Taewoon
+    family-names: Kim
