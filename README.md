@@ -52,29 +52,29 @@ of things that librosa can do.
 ### Using PyPI
 
 The latest stable release is available on PyPI, and you can install it by saying
-```
+```py
 python -m pip install librosa
 ```
 
 ### Using Anaconda
 
 Anaconda users can install using ```conda-forge```:
-```
+```py
 conda install -c conda-forge librosa
 ```
 
 ### Building from source
 
 To build librosa from source, say 
-```
+```py
 python setup.py build
 ```
 Then, to install librosa, say 
-```
+```py
 python setup.py install
 ```
 If all went well, you should be able to execute the following commands from a python console:
-```
+```py
 import librosa
 librosa.show_versions()
 ```
@@ -84,19 +84,19 @@ This should print out a description of your software environment, along with the
 
 Alternatively, you can download or clone the repository and use `pip` to handle dependencies:
 
-```
+```py
 unzip librosa.zip
 python -m pip install -e librosa
 ```
 or
 
-```
+```py
 git clone https://github.com/librosa/librosa.git
 python -m pip install -e librosa
 ```
 
 By calling `pip list` you should see `librosa` now as an installed package:
-```
+```py
 librosa (0.x.x, /path/to/librosa)
 ```
 
@@ -127,7 +127,7 @@ you may need to install either *ffmpeg* or *GStreamer*.
 
 If you are using Anaconda, install *ffmpeg* by calling
 
-```
+```py
 conda install -c conda-forge ffmpeg
 ```
 
@@ -135,32 +135,32 @@ If you are not using Anaconda, here are some common commands for different opera
 
 - ####  Linux (`apt-get`): 
 
-```
+```py
 apt-get install ffmpeg
 ```
 or
  
-```
+```py
 apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
 - #### Linux (`yum`):
-```
+```py
 yum install ffmpeg
 ```
 or
 
 
-```
+```py
 yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
 
 - #### Mac: 
-```
+```py
 brew install ffmpeg
 ```
 or
 
-```
+```py
 brew install gstreamer
 ```
 
@@ -170,7 +170,7 @@ download ffmpeg binaries from this [website](https://www.gyan.dev/ffmpeg/builds/
 
 For GStreamer, you also need to install the Python bindings with 
 
-```
+```py
 python -m pip install pygobject
 ```
 
