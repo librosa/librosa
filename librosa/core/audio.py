@@ -505,8 +505,8 @@ def resample(
 ):
     """Resample a time series from orig_sr to target_sr
 
-    By default, this uses a high-quality method (`soxr_hq`) for band-limited sinc 
-    interpolation. The alternate ``res_type`` values listed below offer different 
+    By default, this uses a high-quality method (`soxr_hq`) for band-limited sinc
+    interpolation. The alternate ``res_type`` values listed below offer different
     trade-offs of speed and quality.
 
     Parameters
@@ -544,7 +544,7 @@ def resample(
             `samplerate` high-, medium-, and low-quality bandlimited sinc interpolation.
 
         .. note::
-            Not all options yield a bandlimited interpolator. If you use `soxr_qq`, `polyphase`, 
+            Not all options yield a bandlimited interpolator. If you use `soxr_qq`, `polyphase`,
             `linear`, or `zero_order_hold`, you need to be aware of possible aliasing effects.
 
         .. note::
