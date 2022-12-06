@@ -505,9 +505,9 @@ def resample(
 ):
     """Resample a time series from orig_sr to target_sr
 
-    By default, this uses a high-quality (but relatively slow) method ('kaiser_best')
-    for band-limited sinc interpolation.  The alternate ``res_type`` values listed below
-    offer different trade-offs of speed and quality.
+    By default, this uses a high-quality method (`soxr_hq`) for band-limited sinc
+    interpolation. The alternate ``res_type`` values listed below offer different
+    trade-offs of speed and quality.
 
     Parameters
     ----------
@@ -527,7 +527,7 @@ def resample(
             `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
             ``'soxr_hq'`` is the default setting of `soxr`.
         'soxr_qq'
-            `soxr` Quick cubic interpolation (very fast)
+            `soxr` Quick cubic interpolation (very fast, but not bandlimited)
         'kaiser_best'
             `resampy` high-quality mode
         'kaiser_fast'
@@ -537,11 +537,15 @@ def resample(
         'polyphase'
             `scipy.signal.resample_poly` polyphase filtering. (fast)
         'linear'
-            `samplerate` linear interpolation. (very fast)
+            `samplerate` linear interpolation. (very fast, but not bandlimited)
         'zero_order_hold'
-            `samplerate` repeat the last value between samples. (very fast)
+            `samplerate` repeat the last value between samples. (very fast, but not bandlimited)
         'sinc_best', 'sinc_medium' or 'sinc_fastest'
-            `samplerate` high-, medium-, and low-quality sinc interpolation.
+            `samplerate` high-, medium-, and low-quality bandlimited sinc interpolation.
+
+        .. note::
+            Not all options yield a bandlimited interpolator. If you use `soxr_qq`, `polyphase`,
+            `linear`, or `zero_order_hold`, you need to be aware of possible aliasing effects.
 
         .. note::
             `samplerate` and `resampy` are not installed with `librosa`.
