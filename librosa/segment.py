@@ -56,6 +56,8 @@ __all__ = [
     "path_enhance",
 ]
 
+_Mode = Literal["connectivity", "distance", "affinity"]
+
 @overload
 def cross_similarity(
     data: np.ndarray,
@@ -64,9 +66,7 @@ def cross_similarity(
     k: Optional[int] = ...,
     metric: str = ...,
     sparse: Literal[False] = ...,
-    mode: Union[
-        Literal["connectivity"], Literal["distance"], Literal["affinity"]
-    ] = ...,
+    mode: _Mode = ...,
     bandwidth: Optional[float] = ...,
 ) -> np.ndarray:
     ...
@@ -79,9 +79,7 @@ def cross_similarity(
     k: Optional[int] = ...,
     metric: str = ...,
     sparse: Literal[True] = ...,
-    mode: Union[
-        Literal["connectivity"], Literal["distance"], Literal["affinity"]
-    ] = ...,
+    mode: _Mode = ...,
     bandwidth: Optional[float] = ...,
 ) -> scipy.sparse.csc_matrix:
     ...
@@ -94,9 +92,7 @@ def cross_similarity(
     k: Optional[int] = None,
     metric: str = "euclidean",
     sparse: bool = False,
-    mode: Union[
-        Literal["connectivity"], Literal["distance"], Literal["affinity"]
-    ] = "connectivity",
+    mode: _Mode = "connectivity",
     bandwidth: Optional[float] = None,
 ) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
     """Compute cross-similarity from one data sequence to a reference sequence.
@@ -312,9 +308,7 @@ def recurrence_matrix(
     metric: str = ...,
     sym: bool = ...,
     sparse: Literal[True] = ...,
-    mode: Union[
-        Literal["connectivity"], Literal["distance"], Literal["affinity"]
-    ] = ...,
+    mode: _Mode = ...,
     bandwidth: Optional[float] = ...,
     self: bool = ...,
     axis: int = ...,
@@ -330,9 +324,7 @@ def recurrence_matrix(
     metric: str = ...,
     sym: bool = ...,
     sparse: Literal[False] = ...,
-    mode: Union[
-        Literal["connectivity"], Literal["distance"], Literal["affinity"]
-    ] = ...,
+    mode: _Mode = ...,
     bandwidth: Optional[float] = ...,
     self: bool = ...,
     axis: int = ...,
@@ -348,9 +340,7 @@ def recurrence_matrix(
     metric: str = "euclidean",
     sym: bool = False,
     sparse: bool = False,
-    mode: Union[
-        Literal["connectivity"], Literal["distance"], Literal["affinity"]
-    ] = "connectivity",
+    mode: _Mode = "connectivity",
     bandwidth: Optional[float] = None,
     self: bool = False,
     axis: int = -1,

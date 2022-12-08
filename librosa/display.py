@@ -693,9 +693,7 @@ class AdaptiveWaveplot:
         self,
         ax: mplaxes.Axes,
         *,
-        signal: Union[
-            Literal["xlim_changed"], Literal["ylim_changed"]
-        ] = "xlim_changed",
+        signal: Literal["xlim_changed", "ylim_changed"] = "xlim_changed",
     ) -> None:
         """Connect the adaptor to a signal on an axes object.
 
@@ -1790,7 +1788,7 @@ def waveshow(
     x_axis: Optional[str] = "time",
     offset: float = 0.0,
     marker: str = "",
-    where: Union[Literal["pre"], Literal["mid"], Literal["post"]] = "post",
+    where: Literal["pre", "mid", "post"] = "post",
     label: Optional[str] = None,
     ax: Optional[mplaxes.Axes] = None,
     **kwargs: Any,

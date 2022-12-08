@@ -1293,7 +1293,7 @@ def chroma_cqt(
     n_octaves: int = 7,
     window: Optional[np.ndarray] = None,
     bins_per_octave: Optional[int] = 36,
-    cqt_mode: Union[Literal["full"], Literal["hybrid"]] = "full",
+    cqt_mode: Literal["full", "hybrid"] = "full",
 ) -> np.ndarray:
     r"""Constant-Q chromagram
 
@@ -1417,7 +1417,7 @@ def chroma_cens(
     n_chroma: int = 12,
     n_octaves: int = 7,
     bins_per_octave: int = 36,
-    cqt_mode: Union[Literal["full"], Literal["hybrid"]] = "full",
+    cqt_mode: Literal["full", "hybrid"] = "full",
     window: Optional[np.ndarray] = None,
     norm: Optional[float] = 2,
     win_len_smooth: Optional[int] = 41,
@@ -1827,7 +1827,7 @@ def mfcc(
     sr: float = 22050,
     S: Optional[np.ndarray] = None,
     n_mfcc: int = 20,
-    dct_type: Union[Literal[1], Literal[2], Literal[3]] = 2,
+    dct_type: Literal[1, 2, 3] = 2,
     norm: Optional[Literal["ortho"]] = "ortho",
     lifter: float = 0,
     **kwargs: Any,

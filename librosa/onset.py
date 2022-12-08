@@ -35,7 +35,7 @@ def onset_detect(
     hop_length: int = 512,
     backtrack: bool = False,
     energy: Optional[np.ndarray] = None,
-    units: Union[Literal["frames"], Literal["samples"], Literal["time"]] = "frames",
+    units: Literal["frames", "samples", "time"] = "frames",
     normalize: bool = True,
     **kwargs: Any,
 ) -> np.ndarray:

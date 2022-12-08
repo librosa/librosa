@@ -21,13 +21,7 @@ def delta(
     width: int = 9,
     order: int = 1,
     axis: int = -1,
-    mode: Union[
-        Literal["interp"],
-        Literal["nearest"],
-        Literal["mirror"],
-        Literal["constant"],
-        Literal["wrap"],
-    ] = "interp",
+    mode: Literal["interp", "nearest" "mirror", "constant", "wrap"] = "interp",
     **kwargs: Any
 ) -> np.ndarray:
     r"""Compute delta features: local estimate of the derivative

@@ -38,7 +38,7 @@ def beat_track(
     trim: bool = True,
     bpm: Optional[float] = None,
     prior: Optional[scipy.stats.rv_continuous] = None,
-    units: Union[Literal["frames"], Literal["samples"], Literal["time"]] = "frames",
+    units: Literal["frames", "samples", "time"] = "frames",
 ) -> Tuple[float, np.ndarray]:
     r"""Dynamic programming beat tracker.
 

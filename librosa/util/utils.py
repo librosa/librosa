@@ -1930,7 +1930,7 @@ def fill_off_diagonal(x: np.ndarray, *, radius: float, value: int = 0) -> None:
 
 
 def cyclic_gradient(
-    data: np.ndarray, *, edge_order: Union[Literal[1], Literal[2]] = 1, axis: int = -1
+    data: np.ndarray, *, edge_order: Literal[1, 2] = 1, axis: int = -1
 ) -> np.ndarray:
     """Estimate the gradient of a function over a uniformly sampled,
     periodic domain.
