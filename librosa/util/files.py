@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
+from __future__ import annotations
 from typing import List, Optional, Union, Any
 
 import os
