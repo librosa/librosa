@@ -22,7 +22,6 @@ from .util.exceptions import ParameterError
 
 from .feature.spectral import melspectrogram
 from typing import Any, Callable, Iterable, Optional, Union
-from typing_extensions import Literal
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 
@@ -35,7 +34,7 @@ def onset_detect(
     hop_length: int = 512,
     backtrack: bool = False,
     energy: Optional[np.ndarray] = None,
-    units: Literal["frames", "samples", "time"] = "frames",
+    units: str = "frames",
     normalize: bool = True,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -430,7 +429,7 @@ def onset_strength_multi(
     detrend: bool = False,
     center: bool = True,
     feature: Optional[Callable] = None,
-    aggregate: Optional[Union[Callable, Literal[False]]] = None,
+    aggregate: Optional[Union[Callable, bool]] = None,
     channels: Optional[Union[Iterable[int], Iterable[slice]]] = None,
     **kwargs: Any,
 ) -> np.ndarray:

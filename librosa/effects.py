@@ -44,7 +44,6 @@ from .util.exceptions import ParameterError
 from typing import Any, Callable, Iterable, Optional, Tuple, Union, overload
 from typing_extensions import Literal
 from numpy.typing import ArrayLike
-from ._typing import _ResampleType
 
 __all__ = [
     "hpss",
@@ -265,7 +264,7 @@ def pitch_shift(
     sr: float,
     n_steps: float,
     bins_per_octave: float = 12,
-    res_type: _ResampleType = "soxr_hq",
+    res_type: str = "soxr_hq",
     **kwargs: Any,
 ) -> np.ndarray:
     """Shift the pitch of a waveform by ``n_steps`` steps.

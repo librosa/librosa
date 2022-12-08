@@ -14,7 +14,6 @@ from .. import filters
 from ..util import nnls, expand_to
 from numpy.typing import DTypeLike
 from typing import Any, Callable, Optional, Union
-from typing_extensions import Literal
 from .._typing import _WindowSpec, _PadMode
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
@@ -209,8 +208,8 @@ def mfcc_to_mel(
     mfcc: np.ndarray,
     *,
     n_mels: int = 128,
-    dct_type: Literal[1, 2, 3] = 2,
-    norm: Optional[Literal["ortho"]] = "ortho",
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
     ref: Union[float, Callable] = 1.0,
     lifter: float = 0,
 ) -> np.ndarray:
@@ -285,8 +284,8 @@ def mfcc_to_audio(
     mfcc: np.ndarray,
     *,
     n_mels: int = 128,
-    dct_type: Literal[1, 2, 3] = 2,
-    norm: Optional[Literal["ortho"]] = "ortho",
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
     ref: Union[float, Callable] = 1.0,
     lifter: float = 0,
     **kwargs: Any,

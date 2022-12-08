@@ -21,8 +21,7 @@ from . import onset
 from . import util
 from .feature import tempogram, fourier_tempogram
 from .util.exceptions import ParameterError
-from typing import Any, Callable, Optional, Tuple, Union
-from typing_extensions import Literal
+from typing import Any, Callable, Optional, Tuple
 
 __all__ = ["beat_track", "tempo", "plp"]
 
@@ -38,7 +37,7 @@ def beat_track(
     trim: bool = True,
     bpm: Optional[float] = None,
     prior: Optional[scipy.stats.rv_continuous] = None,
-    units: Literal["frames", "samples", "time"] = "frames",
+    units: str = "frames",
 ) -> Tuple[float, np.ndarray]:
     r"""Dynamic programming beat tracker.
 

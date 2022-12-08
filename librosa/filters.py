@@ -60,7 +60,6 @@ from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.convert import fft_frequencies, mel_frequencies
 from numpy.typing import ArrayLike, DTypeLike
 from typing import Any, List, Optional, Tuple, Union
-from typing_extensions import Literal
 from ._typing import _WindowSpec
 
 __all__ = [
@@ -133,7 +132,7 @@ def mel(
     fmin: float = 0.0,
     fmax: Optional[float] = None,
     htk: bool = False,
-    norm: Optional[Union[Literal["slaney"], float]] = "slaney",
+    norm: Optional[Union[str, float]] = "slaney",
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
     """Create a Mel filter-bank.

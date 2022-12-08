@@ -17,7 +17,6 @@ from ..core.spectrum import power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt, vqt
 from ..core.pitch import estimate_tuning
 from typing import Any, Optional, Union, Collection
-from typing_extensions import Literal
 from .._typing import _FloatLike_co, _WindowSpec, _PadMode
 
 
@@ -1293,7 +1292,7 @@ def chroma_cqt(
     n_octaves: int = 7,
     window: Optional[np.ndarray] = None,
     bins_per_octave: Optional[int] = 36,
-    cqt_mode: Literal["full", "hybrid"] = "full",
+    cqt_mode: str = "full",
 ) -> np.ndarray:
     r"""Constant-Q chromagram
 
@@ -1417,7 +1416,7 @@ def chroma_cens(
     n_chroma: int = 12,
     n_octaves: int = 7,
     bins_per_octave: int = 36,
-    cqt_mode: Literal["full", "hybrid"] = "full",
+    cqt_mode: str = "full",
     window: Optional[np.ndarray] = None,
     norm: Optional[float] = 2,
     win_len_smooth: Optional[int] = 41,
@@ -1827,8 +1826,8 @@ def mfcc(
     sr: float = 22050,
     S: Optional[np.ndarray] = None,
     n_mfcc: int = 20,
-    dct_type: Literal[1, 2, 3] = 2,
-    norm: Optional[Literal["ortho"]] = "ortho",
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
     lifter: float = 0,
     **kwargs: Any,
 ) -> np.ndarray:

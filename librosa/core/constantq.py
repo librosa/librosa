@@ -17,8 +17,7 @@ from .. import util
 from ..util.exceptions import ParameterError
 from numpy.typing import DTypeLike
 from typing import Optional, Union, Collection
-from typing_extensions import Literal
-from .._typing import _WindowSpec, _ResampleType, _PadMode
+from .._typing import _WindowSpec, _PadMode
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 
@@ -41,7 +40,7 @@ def cqt(
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    res_type: Optional[_ResampleType] = "soxr_hq",
+    res_type: Optional[str] = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
     """Compute the constant-Q transform of an audio signal.
@@ -207,7 +206,7 @@ def hybrid_cqt(
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    res_type: _ResampleType = "soxr_hq",
+    res_type: str = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
     """Compute the hybrid constant-Q transform of an audio signal.
@@ -545,7 +544,7 @@ def icqt(
     window: _WindowSpec = "hann",
     scale: bool = True,
     length: Optional[int] = None,
-    res_type: _ResampleType = "soxr_hq",
+    res_type: str = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
     """Compute the inverse constant-Q transform.
@@ -771,7 +770,7 @@ def vqt(
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    res_type: Optional[_ResampleType] = "soxr_hq",
+    res_type: Optional[str] = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
 
@@ -1218,11 +1217,11 @@ def griffinlim_cqt(
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    res_type: _ResampleType = "soxr_hq",
+    res_type: str = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
     length: Optional[int] = None,
     momentum: float = 0.99,
-    init: Optional[Literal["random"]] = "random",
+    init: Optional[str] = "random",
     random_state: Optional[Union[int, np.random.RandomState]] = None,
 ) -> np.ndarray:
     """Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim

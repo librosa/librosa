@@ -22,7 +22,7 @@ from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
 from typing import Any, Callable, Optional, Tuple, Union, overload
 from typing_extensions import Literal
-from .._typing import _WindowSpec, _ResampleType, _PadMode
+from .._typing import _WindowSpec, _PadMode
 
 __all__ = [
     "stft",
@@ -1477,7 +1477,7 @@ def iirt(
     tuning: float = 0.0,
     pad_mode: _PadMode = "constant",
     flayout: str = "sos",
-    res_type: _ResampleType = "soxr_hq",
+    res_type: str = "soxr_hq",
     **kwargs: Any,
 ) -> np.ndarray:
     r"""Time-frequency representation using IIR filters
@@ -2526,7 +2526,7 @@ def griffinlim(
     length: Optional[int] = None,
     pad_mode: _PadMode = "constant",
     momentum: float = 0.99,
-    init: Optional[Literal["random"]] = "random",
+    init: Optional[str] = "random",
     random_state: Optional[Union[int, np.random.RandomState]] = None,
 ) -> np.ndarray:
 

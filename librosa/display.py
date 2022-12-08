@@ -48,7 +48,6 @@ from . import core
 from . import util
 from .util.exceptions import ParameterError
 from typing import TYPE_CHECKING, Any, Collection, Optional, Union
-from typing_extensions import Literal
 
 
 if TYPE_CHECKING:
@@ -693,7 +692,7 @@ class AdaptiveWaveplot:
         self,
         ax: mplaxes.Axes,
         *,
-        signal: Literal["xlim_changed", "ylim_changed"] = "xlim_changed",
+        signal: str = "xlim_changed",
     ) -> None:
         """Connect the adaptor to a signal on an axes object.
 
@@ -1788,7 +1787,7 @@ def waveshow(
     x_axis: Optional[str] = "time",
     offset: float = 0.0,
     marker: str = "",
-    where: Literal["pre", "mid", "post"] = "post",
+    where: str = "post",
     label: Optional[str] = None,
     ax: Optional[mplaxes.Axes] = None,
     **kwargs: Any,
