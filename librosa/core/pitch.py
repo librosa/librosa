@@ -474,17 +474,17 @@ def _parabolic_interpolation(x: np.ndarray, *, axis: int=-2) -> np.ndarray:
     xi = x.swapaxes(-1, axis)
 
     # Allocate the output array and rotate target axis
-    lp = np.empty_like(x)
-    lpi = lp.swapaxes(-1, axis)
+    shifts = np.empty_like(x)
+    shiftsi = shifts.swapaxes(-1, axis)
 
     # Call the vectorized stencil
-    _pi_wrapper(xi, lpi)
+    _pi_wrapper(xi, shiftsi)
 
     # Handle the edge condition not covered by the stencil
-    lpi[..., -1] = 0
-    lpi[..., 0] = 0
+    shiftsi[..., -1] = 0
+    shiftsi[..., 0] = 0
 
-    return lp
+    return shifts
 
 
 def yin(
