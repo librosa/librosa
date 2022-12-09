@@ -462,7 +462,6 @@ def _parabolic_interpolation(x: np.ndarray, *, axis: int=-2) -> np.ndarray:
     ----------
     x : np.ndarray
         array to interpolate
-
     axis : int
         axis along which to interpolate
 
