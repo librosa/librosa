@@ -708,7 +708,7 @@ def test_griffinlim_cqt_init(y_chirp, init):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_griffinlim_cqt_badinit():
     x = np.zeros((33, 3))
-    librosa.griffinlim_cqt(x, init="garbage") # type: ignore
+    librosa.griffinlim_cqt(x, init="garbage")
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)

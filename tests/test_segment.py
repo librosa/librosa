@@ -101,7 +101,7 @@ def test_cross_similarity_badmode():
     data = np.random.randn(3, 50)
 
     rec = librosa.segment.cross_similarity(
-        data, data_ref, mode="NOT A MODE", metric="sqeuclidean", sparse=True  # type: ignore
+        data, data_ref, mode="NOT A MODE", metric="sqeuclidean", sparse=True
     )
 
 
@@ -274,7 +274,7 @@ def test_recurrence_badmode():
     data = np.random.randn(3, 100)
 
     rec = librosa.segment.recurrence_matrix(
-        data, mode="NOT A MODE", metric="sqeuclidean", sparse=True # type: ignore
+        data, mode="NOT A MODE", metric="sqeuclidean", sparse=True
     )
 
 

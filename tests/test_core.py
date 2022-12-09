@@ -2237,7 +2237,7 @@ def test_griffinlim(
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_griffinlim_badinit():
     x = np.zeros((33, 3))
-    librosa.griffinlim(x, init="garbage") # type: ignore
+    librosa.griffinlim(x, init="garbage")
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
