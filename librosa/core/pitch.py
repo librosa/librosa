@@ -465,6 +465,7 @@ def _parabolic_interpolation(x: np.ndarray, *, axis: int=-2) -> np.ndarray:
 
     axis : int
         axis along which to interpolate
+
     Returns
     -------
     parabolic_shifts : np.ndarray [shape=x.shape]
