@@ -1125,7 +1125,7 @@ def chroma_stft(
     y: Optional[np.ndarray] = None,
     sr: float = 22050,
     S: Optional[np.ndarray] = None,
-    norm: float = np.inf,
+    norm: Optional[float] = np.inf,
     n_fft: int = 2048,
     hop_length: int = 512,
     win_length: Optional[int] = None,
