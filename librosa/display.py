@@ -58,6 +58,8 @@ if TYPE_CHECKING:
     import matplotlib.pyplot as plt
     from matplotlib.collections import QuadMesh, PolyCollection
     from matplotlib.lines import Line2D
+    from matplotlib.path import Path as MplPath
+    from matplotlib.markers import MarkerStyle
 else:
     matplotlib = lazy.load("matplotlib")
     mcm = lazy.load("matplotlib.cm")
@@ -304,7 +306,7 @@ class SvaraFormatter(mplticker.Formatter):
 
     def __init__(
         self,
-        Sa: np.ndarray,
+        Sa: float,
         octave: bool = True,
         major: bool = True,
         abbr: bool = False,
@@ -524,7 +526,7 @@ class ChromaSvaraFormatter(mplticker.Formatter):
 
     def __init__(
         self,
-        Sa: Optional[np.ndarray] = None,
+        Sa: Optional[float] = None,
         mela: Optional[Union[int, str]] = None,
         abbr: bool = True,
         unicode: bool = True
@@ -1786,7 +1788,7 @@ def waveshow(
     max_points: int = 11025,
     x_axis: Optional[str] = "time",
     offset: float = 0.0,
-    marker: str = "",
+    marker: Union[str, MplPath, MarkerStyle] = "",
     where: str = "post",
     label: Optional[str] = None,
     ax: Optional[mplaxes.Axes] = None,

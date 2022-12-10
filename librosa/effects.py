@@ -263,7 +263,7 @@ def pitch_shift(
     *,
     sr: float,
     n_steps: float,
-    bins_per_octave: float = 12,
+    bins_per_octave: int = 12,
     res_type: str = "soxr_hq",
     **kwargs: Any,
 ) -> np.ndarray:
