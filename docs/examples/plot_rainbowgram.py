@@ -39,7 +39,7 @@ phase_exp = 2*np.pi*np.multiply.outer(freqs,times)
 plt.close('all')
 fig, ax = plt.subplots()
 
-img = librosa.display.specshow(np.diff(np.unwrap(np.angle(phase), axis=1), axis=1, prepend=0),
+img = librosa.display.specshow(np.diff(np.unwrap(np.angle(phase)-phase_exp, axis=1), axis=1, prepend=0),
                          cmap='hsv', 
                          alpha=librosa.amplitude_to_db(mag, ref=np.max)/80 + 1,
                          ax=ax,
@@ -55,7 +55,7 @@ cbar.ax.set(yticklabels=['-π', '-π/2', 0, 'π/2', 'π']);
 # can also work here, with the caveat that it uses black to code the extremes of the map (ie 0). 
 # We can sidestep this by using a neutral axis facecolor:
 fig, ax = plt.subplots()
-img = librosa.display.specshow(np.diff(np.unwrap(np.angle(phase), axis=1), axis=1, prepend=0),
+img = librosa.display.specshow(np.diff(np.unwrap(np.angle(phase)-phase_exp, axis=1), axis=1, prepend=0),
                          cmap='twilight', 
                          alpha=librosa.amplitude_to_db(mag, ref=np.max)/80 + 1,
                          ax=ax,
