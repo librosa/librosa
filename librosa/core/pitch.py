@@ -438,6 +438,8 @@ def _cumulative_mean_normalized_difference(
 def _pi_stencil(x: np.ndarray) -> np.ndarray:
     '''Stencil to compute local parabolic interpolation'''
 
+    # Divided differences 
+    # (x[1] - x[0]) - (x[0] - x[-1])
     a = x[1] + x[-1] - 2 * x[0]
     b = (x[1] - x[-1]) / 2
 
@@ -469,6 +471,9 @@ def _parabolic_interpolation(x: np.ndarray, *, axis: int=-2) -> np.ndarray:
     -------
     parabolic_shifts : np.ndarray [shape=x.shape]
         position of the parabola optima (relative to bin indices)
+
+        Note: the shift at bin `n` is determined as 0 if the estimated
+        optimum is outside the range `[n-1, n+1]`.
     """
     # Rotate the target axis to the end
     xi = x.swapaxes(-1, axis)
