@@ -452,7 +452,7 @@ def _pi_stencil(x: np.ndarray) -> np.ndarray:
 @numba.guvectorize(['void(float32[:], float32[:])',
                     'void(float64[:], float64[:])'], '(n)->(n)',
                    cache=True, nopython=True)
-def _pi_wrapper(x: np.ndarray, y: np.ndarray) -> np.ndarray:  # pragma: no cover
+def _pi_wrapper(x: np.ndarray, y: np.ndarray) -> None:  # pragma: no cover
     '''Vectorized wrapper for the parabolic interpolation stencil'''
     y[:] = _pi_stencil(x)
 
