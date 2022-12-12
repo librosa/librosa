@@ -17,7 +17,7 @@ import scipy.sparse
 import pytest
 import warnings
 import librosa
-from typing import Any, List, Union, cast
+from typing import Any, List, Union
 
 from test_core import srand
 
@@ -88,7 +88,7 @@ def test_frame_0stride():
 def test_frame_highdim(frame_length, hop_length, ndim):
     srand()
 
-    x = cast(np.ndarray, np.random.randn(*([20] * ndim)))
+    x = np.asarray(np.random.randn(*([20] * ndim)))
     xf = librosa.util.frame(x, frame_length=frame_length, hop_length=hop_length)
     for i in range(x.shape[0]):
         xf0 = librosa.util.frame(x[i], frame_length=frame_length, hop_length=hop_length)
@@ -203,7 +203,7 @@ def test_fix_frames_fail_negative(frames, x_min, x_max, pad):
 )
 def test_normalize(ndims, norm, axis):
     srand()
-    X = cast(np.ndarray, np.random.randn(*([4] * ndims)))
+    X = np.asarray(np.random.randn(*([4] * ndims)))
     X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
 
     # Shape and dtype checks
@@ -321,7 +321,7 @@ def test_axis_sort_badndim(ndim, axis, index, value):
 @pytest.mark.parametrize("value", [None, np.min, np.mean, np.max])
 def test_axis_sort(ndim, axis, index, value):
     srand()
-    data = cast(np.ndarray, np.random.randn(*([10] * ndim)))
+    data = np.asarray(np.random.randn(*([10] * ndim)))
     if index:
         Xsorted, idx = librosa.util.axis_sort(data, axis=axis, index=index, value=value)
 
@@ -448,7 +448,7 @@ def test_localmax(ndim, axis):
 
     srand()
 
-    data = cast(np.ndarray, np.random.randn(*([7] * ndim)))
+    data = np.asarray(np.random.randn(*([7] * ndim)))
     lm = librosa.util.localmax(data, axis=axis)
 
     for hits in np.argwhere(lm):
@@ -473,7 +473,7 @@ def test_localmin(ndim, axis):
 
     srand()
 
-    data = cast(np.ndarray, np.random.randn(*([7] * ndim)))
+    data = np.asarray(np.random.randn(*([7] * ndim)))
     lm = librosa.util.localmin(data, axis=axis)
 
     for hits in np.argwhere(lm):

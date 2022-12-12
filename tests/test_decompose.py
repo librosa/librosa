@@ -12,7 +12,6 @@ except:
 
 import numpy as np
 import scipy.sparse
-from typing import cast
 
 import librosa
 import sklearn.decomposition
@@ -54,7 +53,7 @@ def test_decompose_fit():
     (W, H) = librosa.decompose.decompose(X, transformer=D, fit=True)
 
     # Make random data and decompose with the same basis
-    X = cast(np.ndarray, np.random.randn(*X.shape) ** 2)
+    X = np.asarray(np.random.randn(*X.shape) ** 2)
     (W2, H2) = librosa.decompose.decompose(X, transformer=D, fit=False)
 
     # Make sure the basis hasn't changed

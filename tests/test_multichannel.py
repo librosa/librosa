@@ -19,7 +19,7 @@ import scipy.stats
 import pytest
 import warnings
 from unittest import mock
-from typing import List, Union, cast
+from typing import List, Union
 
 from contextlib import nullcontext as dnr
 from test_core import srand
@@ -395,7 +395,7 @@ def test_spectral_centroid_multi_variable(s_multi):
 
     S, sr = s_multi
 
-    freq = cast(np.ndarray, np.random.randn(*S.shape))
+    freq = np.asarray(np.random.randn(*S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_centroid(sr=sr, freq=freq[0], S=S[0])
@@ -431,7 +431,7 @@ def test_spectral_bandwidth_multi(s_multi):
 def test_spectral_bandwidth_multi_variable(s_multi):
     S, sr = s_multi
 
-    freq = cast(np.ndarray, np.random.randn(*S.shape))
+    freq = np.asarray( np.random.randn(*S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_bandwidth(sr=sr, freq=freq[0], S=S[0])
@@ -485,7 +485,7 @@ def test_spectral_rolloff_multi(s_multi):
 def test_spectral_rolloff_multi_variable(s_multi):
     S, sr = s_multi
 
-    freq = cast(np.ndarray, np.random.randn(*S.shape))
+    freq = np.asarray(np.random.randn(*S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_rolloff(sr=sr, freq=freq[0], S=S[0])
