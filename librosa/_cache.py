@@ -3,6 +3,7 @@
 """Function caching"""
 
 import os
+from typing import Any, Callable, TypeVar
 from joblib import Memory
 from decorator import FunctionMaker
 
@@ -16,6 +17,8 @@ def _decorator_apply(dec, func):
     )
 
 
+_F = TypeVar("_F", bound=Callable[..., Any])
+
 class CacheManager(object):
     """The librosa cache manager class wraps joblib.Memory
     with a __call__ attribute, so that it may act as a function.
@@ -25,17 +28,17 @@ class CacheManager(object):
     preference for speed vs. storage usage.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any):
 
         level = kwargs.pop("level", 10)
 
         # Initialize the memory object
-        self.memory = Memory(*args, **kwargs)
+        self.memory: Memory = Memory(*args, **kwargs)
         # The level parameter controls which data we cache
         # smaller numbers mean less caching
-        self.level = level
+        self.level: int = level
 
-    def __call__(self, level):
+    def __call__(self, level: int) -> Callable[[_F], _F]:
         """Example usage:
 
         @cache(level=2)
@@ -54,24 +57,24 @@ class CacheManager(object):
 
         return wrapper
 
-    def clear(self, *args, **kwargs):
+    def clear(self, *args: Any, **kwargs: Any) -> None:
         return self.memory.clear(*args, **kwargs)
 
-    def eval(self, *args, **kwargs):
+    def eval(self, *args: Any, **kwargs: Any) -> Any:
         return self.memory.eval(*args, **kwargs)
 
-    def format(self, *args, **kwargs):
+    def format(self, *args: Any, **kwargs: Any) -> str:
         return self.memory.format(*args, **kwargs)
 
-    def reduce_size(self, *args, **kwargs):
+    def reduce_size(self, *args: Any, **kwargs: Any) -> None:
         return self.memory.reduce_size(*args, **kwargs)
 
-    def warn(self, *args, **kwargs):
+    def warn(self, *args: Any, **kwargs: Any) -> None:
         return self.memory.warn(*args, **kwargs)
 
 
 # Instantiate the cache from the environment
-cache = CacheManager(
+cache: CacheManager = CacheManager(
     os.environ.get("LIBROSA_CACHE_DIR", None),
     mmap_mode=os.environ.get("LIBROSA_CACHE_MMAP", None),
     compress=os.environ.get("LIBROSA_CACHE_COMPRESS", False),

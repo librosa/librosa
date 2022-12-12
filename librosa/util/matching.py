@@ -12,7 +12,9 @@ __all__ = ["match_intervals", "match_events"]
 
 
 @numba.jit(nopython=True, cache=True)
-def __jaccard(int_a, int_b):  # pragma: no cover
+def __jaccard(
+    int_a: np.ndarray, int_b: np.ndarray
+):  # pragma: no cover
     """Jaccard similarity between two intervals
 
     Parameters
@@ -109,7 +111,9 @@ def __match_intervals(intervals_from, intervals_to, strict=True):  # pragma: no 
     return output
 
 
-def match_intervals(intervals_from, intervals_to, strict=True):
+def match_intervals(
+    intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True
+) -> np.ndarray:
     """Match one set of time intervals to another.
 
     This can be useful for tasks such as mapping beat timings
@@ -205,7 +209,12 @@ def match_intervals(intervals_from, intervals_to, strict=True):
         ) from exc
 
 
-def match_events(events_from, events_to, left=True, right=True):
+def match_events(
+    events_from: np.ndarray,
+    events_to: np.ndarray,
+    left: bool = True,
+    right: bool = True,
+) -> np.ndarray:
     """Match one set of events to another.
 
     This is useful for tasks such as matching beats to the nearest

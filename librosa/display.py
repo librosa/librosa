@@ -36,7 +36,7 @@ Miscellaneous
     AdaptiveWaveplot
 
 """
-
+from __future__ import annotations
 from itertools import product
 import warnings
 
@@ -47,13 +47,26 @@ import lazy_loader as lazy
 from . import core
 from . import util
 from .util.exceptions import ParameterError
+from typing import TYPE_CHECKING, Any, Collection, Optional, Union
 
 
-matplotlib = lazy.load("matplotlib")
-mcm = lazy.load("matplotlib.cm")
-mplaxes = lazy.load("matplotlib.axes")
-mplticker = lazy.load("matplotlib.ticker")
-plt = lazy.load("matplotlib.pyplot")
+if TYPE_CHECKING:
+    import matplotlib
+    import matplotlib.cm as mcm
+    import matplotlib.axes as mplaxes
+    import matplotlib.ticker as mplticker
+    import matplotlib.pyplot as plt
+    from matplotlib.collections import QuadMesh, PolyCollection
+    from matplotlib.lines import Line2D
+    from matplotlib.path import Path as MplPath
+    from matplotlib.markers import MarkerStyle
+else:
+    matplotlib = lazy.load("matplotlib")
+    mcm = lazy.load("matplotlib.cm")
+    mplaxes = lazy.load("matplotlib.axes")
+    mplticker = lazy.load("matplotlib.ticker")
+    plt = lazy.load("matplotlib.pyplot")
+
 
 __all__ = [
     "specshow",
@@ -132,7 +145,7 @@ class TimeFormatter(mplticker.Formatter):
     >>> ax.set(xlabel='Lag')
     """
 
-    def __init__(self, lag=False, unit=None):
+    def __init__(self, lag: bool = False, unit: Optional[str] = None):
 
         if unit not in ["h", "m", "s", "ms", None]:
             raise ParameterError("Unknown time unit: {}".format(unit))
@@ -140,7 +153,7 @@ class TimeFormatter(mplticker.Formatter):
         self.unit = unit
         self.lag = lag
 
-    def __call__(self, x, pos=None):
+    def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Return the time format as pos"""
 
         _, dmax = self.axis.get_data_interval()
@@ -218,14 +231,14 @@ class NoteFormatter(mplticker.Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
-    def __init__(self, octave=True, major=True, key="C:maj", unicode=True):
+    def __init__(self, octave: bool = True, major: bool = True, key: str = "C:maj", unicode: bool = True):
 
         self.octave = octave
         self.major = major
         self.key = key
         self.unicode = unicode
 
-    def __call__(self, x, pos=None):
+    def __call__(self, x: float, pos: Optional[int] = None) -> str:
 
         if x <= 0:
             return ""
@@ -292,7 +305,13 @@ class SvaraFormatter(mplticker.Formatter):
     """
 
     def __init__(
-        self, Sa, octave=True, major=True, abbr=False, mela=None, unicode=True
+        self,
+        Sa: float,
+        octave: bool = True,
+        major: bool = True,
+        abbr: bool = False,
+        mela: Optional[Union[str, int]] = None,
+        unicode: bool = True,
     ):
 
         if Sa is None:
@@ -307,7 +326,7 @@ class SvaraFormatter(mplticker.Formatter):
         self.mela = mela
         self.unicode = unicode
 
-    def __call__(self, x, pos=None):
+    def __call__(self, x: float, pos: Optional[int] = None) -> str:
 
         if x <= 0:
             return ""
@@ -375,13 +394,13 @@ class FJSFormatter(mplticker.Formatter):
 
     def __init__(
         self,
-        fmin,
-        major=True,
-        unison=None,
-        unicode=True,
-        intervals=None,
-        bins_per_octave=None,
-        n_bins=None,
+        fmin: int,
+        major: bool = True,
+        unison: Optional[str] = None,
+        unicode: bool = True,
+        intervals: Optional[Union[str, Collection[float]]] = None,
+        bins_per_octave: Optional[int] = None,
+        n_bins: Optional[int] = None,
     ):
 
         self.fmin = fmin
@@ -395,7 +414,7 @@ class FJSFormatter(mplticker.Formatter):
             n_bins, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
         )
 
-    def __call__(self, x, pos=None):
+    def __call__(self, x: float, pos: Optional[int] = None) -> str:
 
         if x <= 0:
             return ""
@@ -445,11 +464,11 @@ class LogHzFormatter(mplticker.Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
-    def __init__(self, major=True):
+    def __init__(self, major: bool = True):
 
         self.major = major
 
-    def __call__(self, x, pos=None):
+    def __call__(self, x: float, pos: Optional[int] = None) -> str:
 
         if x <= 0:
             return ""
@@ -479,11 +498,11 @@ class ChromaFormatter(mplticker.Formatter):
     >>> ax.set(ylabel='Pitch class')
     """
 
-    def __init__(self, key="C:maj", unicode=True):
+    def __init__(self, key: str = "C:maj", unicode: bool = True):
         self.key = key
         self.unicode = unicode
 
-    def __call__(self, x, pos=None):
+    def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Format for chroma positions"""
         return core.midi_to_note(
             int(x), octave=False, cents=False, key=self.key, unicode=self.unicode
@@ -505,7 +524,13 @@ class ChromaSvaraFormatter(mplticker.Formatter):
 
     """
 
-    def __init__(self, Sa=None, mela=None, abbr=True, unicode=True):
+    def __init__(
+        self,
+        Sa: Optional[float] = None,
+        mela: Optional[Union[int, str]] = None,
+        abbr: bool = True,
+        unicode: bool = True
+    ):
         if Sa is None:
             Sa = 0
         self.Sa = Sa
@@ -513,7 +538,7 @@ class ChromaSvaraFormatter(mplticker.Formatter):
         self.abbr = abbr
         self.unicode = unicode
 
-    def __call__(self, x, pos=None):
+    def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Format for chroma positions"""
         if self.mela is not None:
             return core.midi_to_svara_c(
@@ -547,7 +572,13 @@ class ChromaFJSFormatter(mplticker.Formatter):
     >>> ax.set(ylabel='Pitch class')
     """
 
-    def __init__(self, unison="C", unicode=True, intervals=None, bins_per_octave=None):
+    def __init__(
+        self,
+        unison: str = "C",
+        unicode: bool = True,
+        intervals: Optional[Union[str, Collection[float]]] = None,
+        bins_per_octave: Optional[int] = None
+    ):
         self.unison = unison
         self.unicode = unicode
         self.intervals = intervals
@@ -567,7 +598,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
                 f"intervals={intervals} must be of type str or a collection of numbers between 1 and 2"
             ) from exc
 
-    def __call__(self, x, pos=None):
+    def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Format for chroma positions"""
         return core.interval_to_fjs(
             self.intervals_[int(x) % self.bins_per_octave],
@@ -593,7 +624,7 @@ class TonnetzFormatter(mplticker.Formatter):
     >>> ax.set(ylabel='Tonnetz')
     """
 
-    def __call__(self, x, pos=None):
+    def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Format for tonnetz positions"""
         return [r"5$_x$", r"5$_y$", r"m3$_x$", r"m3$_y$", r"M3$_x$", r"M3$_y$"][int(x)]
 
@@ -619,7 +650,7 @@ class AdaptiveWaveplot:
     y : np.ndarray
         An array containing the (monophonic) wave samples.
 
-    steps : matplotlib.lines.Lines2D
+    steps : matplotlib.lines.Line2D
         The matplotlib artist used for the sample-based visualization.
         This is constructed by `matplotlib.pyplot.step`.
 
@@ -638,20 +669,33 @@ class AdaptiveWaveplot:
     waveshow
     """
 
-    def __init__(self, times, y, steps, envelope, sr=22050, max_samples=11025):
+    def __init__(
+        self,
+        times: np.ndarray,
+        y: np.ndarray,
+        steps: Line2D,
+        envelope: PolyCollection,
+        sr: float = 22050,
+        max_samples: int = 11025
+    ):
         self.times = times
         self.samples = y
         self.steps = steps
         self.envelope = envelope
         self.sr = sr
         self.max_samples = max_samples
-        self.cid = None
-        self.ax = None
+        self.cid: Optional[int] = None
+        self.ax: Optional[mplaxes.Axes] = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.disconnect(strict=True)
 
-    def connect(self, ax, *, signal="xlim_changed"):
+    def connect(
+        self,
+        ax: mplaxes.Axes,
+        *,
+        signal: str = "xlim_changed",
+    ) -> None:
         """Connect the adaptor to a signal on an axes object.
 
         Note that if the adaptor has already been connected to an axes object,
@@ -675,7 +719,7 @@ class AdaptiveWaveplot:
         self.ax = ax
         self.cid = ax.callbacks.connect(signal, self.update)
 
-    def disconnect(self, *, strict=False):
+    def disconnect(self, *, strict: bool = False) -> None:
         """Disconnect the adaptor's update callback.
 
         Parameters
@@ -697,7 +741,7 @@ class AdaptiveWaveplot:
             if strict:
                 self.ax = None
 
-    def update(self, ax):
+    def update(self, ax: mplaxes.Axes) -> None:
         """Update the matplotlib display according to the current viewport limits.
 
         This is a callback function, and should not be used directly.
@@ -737,8 +781,13 @@ class AdaptiveWaveplot:
 
 
 def cmap(
-    data, *, robust=True, cmap_seq="magma", cmap_bool="gray_r", cmap_div="coolwarm"
-):
+    data: np.ndarray,
+    *,
+    robust: bool = True,
+    cmap_seq: str = "magma",
+    cmap_bool: str = "gray_r",
+    cmap_div: str = "coolwarm",
+) -> matplotlib.colors.Colormap:
     """Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
@@ -853,32 +902,32 @@ _AXIS_COMPAT = set(
 
 
 def specshow(
-    data,
+    data: np.ndarray,
     *,
-    x_coords=None,
-    y_coords=None,
-    x_axis=None,
-    y_axis=None,
-    sr=22050,
-    hop_length=512,
-    n_fft=None,
-    win_length=None,
-    fmin=None,
-    fmax=None,
-    tuning=0.0,
-    bins_per_octave=12,
-    key="C:maj",
-    Sa=None,
-    mela=None,
-    thaat=None,
-    auto_aspect=True,
-    htk=False,
-    unicode=True,
-    intervals=None,
-    unison=None,
-    ax=None,
-    **kwargs,
-):
+    x_coords: Optional[np.ndarray] = None,
+    y_coords: Optional[np.ndarray] = None,
+    x_axis: Optional[str] = None,
+    y_axis: Optional[str] = None,
+    sr: float = 22050,
+    hop_length: int = 512,
+    n_fft: Optional[int] = None,
+    win_length: Optional[int] = None,
+    fmin: Optional[float] = None,
+    fmax: Optional[float] = None,
+    tuning: float = 0.0,
+    bins_per_octave: int = 12,
+    key: str = "C:maj",
+    Sa: Optional[Union[float, int]] = None,
+    mela: Optional[Union[str, int]] = None,
+    thaat: Optional[str] = None,
+    auto_aspect: bool = True,
+    htk: bool = False,
+    unicode: bool = True,
+    intervals: Optional[Union[str, np.ndarray]] = None,
+    unison: Optional[str] = None,
+    ax: Optional[mplaxes.Axes] = None,
+    **kwargs: Any,
+) -> QuadMesh:
     """Display a spectrogram/chromagram/cqt/etc.
 
     For a detailed overview of this function, see :ref:`sphx_glr_auto_examples_plot_display.py`
@@ -1733,18 +1782,18 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
 
 
 def waveshow(
-    y,
+    y: np.ndarray,
     *,
-    sr=22050,
-    max_points=11025,
-    x_axis="time",
-    offset=0.0,
-    marker="",
-    where="post",
-    label=None,
-    ax=None,
-    **kwargs,
-):
+    sr: float = 22050,
+    max_points: int = 11025,
+    x_axis: Optional[str] = "time",
+    offset: float = 0.0,
+    marker: Union[str, MplPath, MarkerStyle] = "",
+    where: str = "post",
+    label: Optional[str] = None,
+    ax: Optional[mplaxes.Axes] = None,
+    **kwargs: Any,
+) -> AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
 
     This function constructs a plot which adaptively switches between a raw

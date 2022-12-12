@@ -9,22 +9,24 @@ import scipy.interpolate
 import scipy.signal
 from ..util.exceptions import ParameterError
 from ..util import is_unique
+from numpy.typing import ArrayLike
+from typing import Callable, Optional
 
 __all__ = ["salience", "interp_harmonics"]
 
 
 def salience(
-    S,
+    S: np.ndarray,
     *,
-    freqs,
-    harmonics,
-    weights=None,
-    aggregate=None,
-    filter_peaks=True,
-    fill_value=np.nan,
-    kind="linear",
-    axis=-2,
-):
+    freqs: np.ndarray,
+    harmonics: ArrayLike,
+    weights: Optional[ArrayLike] = None,
+    aggregate: Optional[Callable] = None,
+    filter_peaks: bool = True,
+    fill_value: float = np.nan,
+    kind: str = "linear",
+    axis: int = -2,
+) -> np.ndarray:
     """Harmonic salience function.
 
     Parameters
@@ -128,7 +130,15 @@ def salience(
     return S_sal
 
 
-def interp_harmonics(x, *, freqs, harmonics, kind="linear", fill_value=0, axis=-2):
+def interp_harmonics(
+    x: np.ndarray,
+    *,
+    freqs: np.ndarray,
+    harmonics: ArrayLike,
+    kind: str = "linear",
+    fill_value: float = 0,
+    axis: int = -2,
+) -> np.ndarray:
     """Compute the energy at harmonics of time-frequency representation.
 
     Given a frequency-based energy representation such as a spectrogram

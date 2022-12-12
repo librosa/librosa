@@ -644,25 +644,20 @@ def test_trans_local_nowrap_var():
 @pytest.mark.parametrize("gap_extend", [1, np.inf])
 @pytest.mark.parametrize("knight", [False, True])
 @pytest.mark.parametrize("backtrack", [False, True])
-def test_rqa_edge(gap_onset, gap_extend, knight, backtrack):
+def test_rqa_edge(gap_onset, gap_extend, knight, backtrack: bool):
 
     rec = np.asarray([[0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 1, 1], [0, 0, 0, 1]])
-
-    out = librosa.sequence.rqa(
-        rec,
-        gap_onset=gap_onset,
-        gap_extend=gap_extend,
-        knight_moves=knight,
-        backtrack=backtrack,
-    )
+    kwargs = dict(gap_onset=gap_onset, gap_extend=gap_extend, knight_moves=knight)
 
     if backtrack:
+        out = librosa.sequence.rqa(rec, backtrack=backtrack, **kwargs)
         score, path = out
         __validate_rqa_results(
             rec, score, path, gap_onset, gap_extend, backtrack, knight
         )
         assert len(path) == 3
     else:
+        out = librosa.sequence.rqa(rec, backtrack=backtrack, **kwargs)
         # without backtracking, make sure the output is just the score matrix
         assert out.shape == rec.shape
 
@@ -690,24 +685,19 @@ def test_rqa_empty(gap_onset, gap_extend, knight):
 @pytest.mark.parametrize("gap_extend", [1, np.inf])
 @pytest.mark.parametrize("knight", [False, True])
 @pytest.mark.parametrize("backtrack", [False, True])
-def test_rqa_interior(gap_onset, gap_extend, knight, backtrack):
+def test_rqa_interior(gap_onset, gap_extend, knight, backtrack: bool):
     rec = np.asarray([[0, 0, 0, 1], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0]])
-
-    out = librosa.sequence.rqa(
-        rec,
-        gap_onset=gap_onset,
-        gap_extend=gap_extend,
-        knight_moves=knight,
-        backtrack=backtrack,
-    )
+    kwargs = dict(gap_onset=gap_onset, gap_extend=gap_extend, knight_moves=knight)
 
     if backtrack:
+        out = librosa.sequence.rqa(rec, backtrack=backtrack, **kwargs)
         score, path = out
         __validate_rqa_results(
             rec, score, path, gap_onset, gap_extend, backtrack, knight
         )
         assert len(path) == 2
     else:
+        out = librosa.sequence.rqa(rec, backtrack=backtrack, **kwargs)
         # without backtracking, make sure the output is just the score matrix
         assert out.shape == rec.shape
 

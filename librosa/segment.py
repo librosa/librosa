@@ -41,6 +41,9 @@ from ._cache import cache
 from . import util
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
+from typing import Any, Callable, Optional, TypeVar, Union, overload
+from typing_extensions import Literal
+from ._typing import _WindowSpec
 
 __all__ = [
     "cross_similarity",
@@ -53,18 +56,43 @@ __all__ = [
     "path_enhance",
 ]
 
+@overload
+def cross_similarity(
+    data: np.ndarray,
+    data_ref: np.ndarray,
+    *,
+    k: Optional[int] = ...,
+    metric: str = ...,
+    sparse: Literal[False] = ...,
+    mode: str = ...,
+    bandwidth: Optional[float] = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def cross_similarity(
+    data: np.ndarray,
+    data_ref: np.ndarray,
+    *,
+    k: Optional[int] = ...,
+    metric: str = ...,
+    sparse: Literal[True] = ...,
+    mode: str = ...,
+    bandwidth: Optional[float] = ...,
+) -> scipy.sparse.csc_matrix:
+    ...
 
 @cache(level=30)
 def cross_similarity(
-    data,
-    data_ref,
+    data: np.ndarray,
+    data_ref: np.ndarray,
     *,
-    k=None,
-    metric="euclidean",
-    sparse=False,
-    mode="connectivity",
-    bandwidth=None,
-):
+    k: Optional[int] = None,
+    metric: str = "euclidean",
+    sparse: bool = False,
+    mode: str = "connectivity",
+    bandwidth: Optional[float] = None,
+) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
     """Compute cross-similarity from one data sequence to a reference sequence.
 
     The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero
@@ -269,20 +297,52 @@ def cross_similarity(
     return xsim
 
 
+@overload
+def recurrence_matrix(
+    data: np.ndarray,
+    *,
+    k: Optional[int] = ...,
+    width: int = ...,
+    metric: str = ...,
+    sym: bool = ...,
+    sparse: Literal[True] = ...,
+    mode: str = ...,
+    bandwidth: Optional[float] = ...,
+    self: bool = ...,
+    axis: int = ...,
+) -> scipy.sparse.csc_matrix:
+    ...
+
+@overload
+def recurrence_matrix(
+    data: np.ndarray,
+    *,
+    k: Optional[int] = ...,
+    width: int = ...,
+    metric: str = ...,
+    sym: bool = ...,
+    sparse: Literal[False] = ...,
+    mode: str = ...,
+    bandwidth: Optional[float] = ...,
+    self: bool = ...,
+    axis: int = ...,
+) -> np.ndarray:
+    ...
+
 @cache(level=30)
 def recurrence_matrix(
-    data,
+    data: np.ndarray,
     *,
-    k=None,
-    width=1,
-    metric="euclidean",
-    sym=False,
-    sparse=False,
-    mode="connectivity",
-    bandwidth=None,
-    self=False,
-    axis=-1,
-):
+    k: Optional[int] = None,
+    width: int = 1,
+    metric: str = "euclidean",
+    sym: bool = False,
+    sparse: bool = False,
+    mode: str = "connectivity",
+    bandwidth: Optional[float] = None,
+    self: bool = False,
+    axis: int = -1,
+) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
     """Compute a recurrence matrix from a data matrix.
 
     ``rec[i, j]`` is non-zero if ``data[..., i]`` is a k-nearest neighbor
@@ -536,7 +596,11 @@ def recurrence_matrix(
     return rec
 
 
-def recurrence_to_lag(rec, *, pad=True, axis=-1):
+_ArrayOrSparseMatrix = TypeVar('_ArrayOrSparseMatrix', bound=Union[np.ndarray, scipy.sparse.spmatrix])
+
+def recurrence_to_lag(
+    rec: _ArrayOrSparseMatrix, *, pad: bool = True, axis: int = -1
+) -> _ArrayOrSparseMatrix:
     """Convert a recurrence matrix into a lag matrix.
 
         ``lag[i, j] == rec[i+j, j]``
@@ -639,7 +703,9 @@ def recurrence_to_lag(rec, *, pad=True, axis=-1):
     return lag
 
 
-def lag_to_recurrence(lag, *, axis=-1):
+def lag_to_recurrence(
+    lag: _ArrayOrSparseMatrix, *, axis: int = -1
+) -> _ArrayOrSparseMatrix:
     """Convert a lag matrix into a recurrence matrix.
 
     Parameters
@@ -715,7 +781,9 @@ def lag_to_recurrence(lag, *, axis=-1):
     return rec[tuple(sub_slice)]
 
 
-def timelag_filter(function, pad=True, index=0):
+_F = TypeVar("_F", bound=Callable[..., Any])
+
+def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
     """Filtering in the time-lag domain.
 
     This is primarily useful for adapting image filters to operate on
@@ -797,7 +865,9 @@ def timelag_filter(function, pad=True, index=0):
 
 
 @cache(level=30)
-def subsegment(data, frames, *, n_segments=4, axis=-1):
+def subsegment(
+    data: np.ndarray, frames: np.ndarray, *, n_segments: int = 4, axis: int = -1
+) -> np.ndarray:
     """Sub-divide a segmentation by feature clustering.
 
     Given a set of frame boundaries (``frames``), and a data matrix (``data``),
@@ -883,7 +953,13 @@ def subsegment(data, frames, *, n_segments=4, axis=-1):
     return np.array(boundaries)
 
 
-def agglomerative(data, k, *, clusterer=None, axis=-1):
+def agglomerative(
+    data: np.ndarray,
+    k: int,
+    *,
+    clusterer: Optional[sklearn.cluster.AgglomerativeClustering] = None,
+    axis: int = -1,
+) -> np.ndarray:
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
@@ -969,17 +1045,17 @@ def agglomerative(data, k, *, clusterer=None, axis=-1):
 
 
 def path_enhance(
-    R,
-    n,
+    R: np.ndarray,
+    n: int,
     *,
-    window="hann",
-    max_ratio=2.0,
-    min_ratio=None,
-    n_filters=7,
-    zero_mean=False,
-    clip=True,
-    **kwargs,
-):
+    window: _WindowSpec = "hann",
+    max_ratio: float = 2.0,
+    min_ratio: Optional[float] = None,
+    n_filters: int = 7,
+    zero_mean: bool = False,
+    clip: bool = True,
+    **kwargs: Any,
+) -> np.ndarray:
     """Multi-angle path enhancement for self- and cross-similarity matrices.
 
     This function convolves multiple diagonal smoothing filters with a self-similarity (or

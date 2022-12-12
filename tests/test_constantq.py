@@ -15,6 +15,7 @@ try:
 except KeyError:
     pass
 
+from typing import Optional
 import librosa
 import numpy as np
 import scipy.stats
@@ -59,24 +60,24 @@ def __test_cqt_size(
     return cqt_output
 
 
-def make_signal(sr, duration, fmin="C1", fmax="C8"):
+def make_signal(sr, duration, fmin: Optional[str] = "C1", fmax: Optional[str] = "C8"):
     """Generates a linear sine sweep"""
 
     if fmin is None:
-        fmin = 0.01
+        fmin_normfreq = 0.01
     else:
-        fmin = librosa.note_to_hz(fmin) / sr
+        fmin_normfreq = librosa.note_to_hz(fmin) / sr
 
     if fmax is None:
-        fmax = 0.5
+        fmax_normfreq = 0.5
     else:
-        fmax = librosa.note_to_hz(fmax) / sr
+        fmax_normfreq = librosa.note_to_hz(fmax) / sr
 
     return np.sin(
         np.cumsum(
             2
             * np.pi
-            * np.logspace(np.log10(fmin), np.log10(fmax), num=int(duration * sr))
+            * np.logspace(np.log10(fmin_normfreq), np.log10(fmax_normfreq), num=int(duration * sr))
         )
     )
 
@@ -388,15 +389,15 @@ def test_hybrid_cqt(
 @pytest.mark.parametrize(
     "y", [np.sin(2 * np.pi * librosa.midi_to_hz(60) * np.arange(2 * 22050) / 22050.0)]
 )
-def test_cqt_position(y, sr, note_min):
+def test_cqt_position(y, sr, note_min: int):
 
-    C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(note_min))) ** 2
+    C = np.abs(librosa.cqt(y, sr=sr, fmin=float(librosa.midi_to_hz(note_min)))) ** 2
 
     # Average over time
     Cbar = np.median(C, axis=1)
 
     # Find the peak
-    idx = np.argmax(Cbar)
+    idx = int(np.argmax(Cbar))
 
     assert idx == 60 - note_min
 

@@ -21,22 +21,23 @@ from . import util
 from .util.exceptions import ParameterError
 
 from .feature.spectral import melspectrogram
+from typing import Any, Callable, Iterable, Optional, Union
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 
 
 def onset_detect(
     *,
-    y=None,
-    sr=22050,
-    onset_envelope=None,
-    hop_length=512,
-    backtrack=False,
-    energy=None,
-    units="frames",
-    normalize=True,
-    **kwargs,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    onset_envelope: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    backtrack: bool = False,
+    energy: Optional[np.ndarray] = None,
+    units: str = "frames",
+    normalize: bool = True,
+    **kwargs: Any,
+) -> np.ndarray:
     """Locate note onset events by picking peaks in an onset strength envelope.
 
     The `peak_pick` parameters were chosen by large-scale hyper-parameter
@@ -187,18 +188,18 @@ def onset_detect(
 
 def onset_strength(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    lag=1,
-    max_size=1,
-    ref=None,
-    detrend=False,
-    center=True,
-    feature=None,
-    aggregate=None,
-    **kwargs,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    lag: int = 1,
+    max_size: int = 1,
+    ref: Optional[np.ndarray] = None,
+    detrend: bool = False,
+    center: bool = True,
+    feature: Optional[Callable] = None,
+    aggregate: Optional[Callable] = None,
+    **kwargs: Any,
+) -> np.ndarray:
     """Compute a spectral flux onset strength envelope.
 
     Onset strength at time ``t`` is determined by::
@@ -339,7 +340,7 @@ def onset_strength(
     return odf_all[..., 0, :]
 
 
-def onset_backtrack(events, energy):
+def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
     """Backtrack detected onset events to the nearest preceding local
     minimum of an energy function.
 
@@ -417,21 +418,21 @@ def onset_backtrack(events, energy):
 @cache(level=30)
 def onset_strength_multi(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    hop_length=512,
-    lag=1,
-    max_size=1,
-    ref=None,
-    detrend=False,
-    center=True,
-    feature=None,
-    aggregate=None,
-    channels=None,
-    **kwargs,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    lag: int = 1,
+    max_size: int = 1,
+    ref: Optional[np.ndarray] = None,
+    detrend: bool = False,
+    center: bool = True,
+    feature: Optional[Callable] = None,
+    aggregate: Optional[Union[Callable, bool]] = None,
+    channels: Optional[Union[Iterable[int], Iterable[slice]]] = None,
+    **kwargs: Any,
+) -> np.ndarray:
     """Compute a spectral flux onset strength envelope across multiple channels.
 
     Onset strength for channel ``i`` at time ``t`` is determined by::

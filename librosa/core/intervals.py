@@ -2,21 +2,30 @@
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
 
+from typing import Collection, Dict, List, Union, overload
+from typing_extensions import Literal
 import msgpack
 from pkg_resources import resource_filename
 import numpy as np
+from numpy.typing import ArrayLike
 from .._cache import cache
 
 
-with open(resource_filename(__name__, "intervals.msgpack"), "rb") as fdesc:
+with open(resource_filename(__name__, "intervals.msgpack"), "rb") as _fdesc:
     # We use floats for dictionary keys, so strict mapping is disabled
-    INTERVALS = msgpack.load(fdesc, strict_map_key=False)
+    INTERVALS = msgpack.load(_fdesc, strict_map_key=False)
 
 
 @cache(level=10)
 def interval_frequencies(
-    n_bins, *, fmin, intervals, bins_per_octave=12, tuning=0.0, sort=True
-):
+    n_bins: int,
+    *,
+    fmin: float,
+    intervals: Union[str, Collection[float]],
+    bins_per_octave: int = 12,
+    tuning: float = 0.0,
+    sort: bool = True
+) -> np.ndarray:
     """Construct a set of frequencies from an interval set
 
     Parameters
@@ -117,9 +126,40 @@ def interval_frequencies(
 
     return all_ratios * fmin
 
+@overload
+def pythagorean_intervals(
+    *,
+    bins_per_octave: int = ...,
+    sort: bool = ...,
+    return_factors: Literal[False] = ...
+) -> np.ndarray:
+    ...
+
+@overload
+def pythagorean_intervals(
+    *,
+    bins_per_octave: int = ...,
+    sort: bool = ...,
+    return_factors: Literal[True]
+) -> List[Dict[int, int]]:
+    ...
+
+@overload
+def pythagorean_intervals(
+    *,
+    bins_per_octave: int = ...,
+    sort: bool = ...,
+    return_factors: bool = ...
+) -> Union[np.ndarray, List[Dict[int, int]]]:
+    ...
 
 @cache(level=10)
-def pythagorean_intervals(*, bins_per_octave=12, sort=True, return_factors=False):
+def pythagorean_intervals(
+    *,
+    bins_per_octave: int = 12,
+    sort: bool = True,
+    return_factors: bool = False
+) -> Union[np.ndarray, List[Dict[int, int]]]:
     """Pythagorean intervals
 
     Intervals are constructed by stacking ratios of 3/2 (i.e.,
@@ -254,8 +294,44 @@ def _crystal_tie_break(a, b, logs):
     return logs.dot(np.abs(a)) < logs.dot(np.abs(b))
 
 
+@overload
+def plimit_intervals(
+    *,
+    primes: ArrayLike,
+    bins_per_octave: int = ...,
+    sort: bool = ...,
+    return_factors: Literal[False] = ...
+) -> np.ndarray:
+    ...
+
+@overload
+def plimit_intervals(
+    *,
+    primes: ArrayLike,
+    bins_per_octave: int = ...,
+    sort: bool = ...,
+    return_factors: Literal[True]
+) -> List[Dict[int, int]]:
+    ...
+
+@overload
+def plimit_intervals(
+    *,
+    primes: ArrayLike,
+    bins_per_octave: int = ...,
+    sort: bool = ...,
+    return_factors: bool = ...
+) -> Union[np.ndarray, List[Dict[int, int]]]:
+    ...
+
 @cache(level=10)
-def plimit_intervals(*, primes, bins_per_octave=12, sort=True, return_factors=False):
+def plimit_intervals(
+    *,
+    primes: ArrayLike,
+    bins_per_octave: int = 12,
+    sort: bool = True,
+    return_factors: bool = False
+) -> Union[np.ndarray, List[Dict[int, int]]]:
     """Construct p-limit intervals for a given set of prime factors.
 
     This function is based on the "harmonic crystal growth" algorithm

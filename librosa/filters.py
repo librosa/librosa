@@ -58,6 +58,9 @@ from .util.decorators import deprecated
 
 from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.convert import fft_frequencies, mel_frequencies
+from numpy.typing import ArrayLike, DTypeLike
+from typing import Any, List, Optional, Tuple, Union
+from ._typing import _WindowSpec
 
 __all__ = [
     "mel",
@@ -123,15 +126,15 @@ WINDOW_BANDWIDTHS = {
 @cache(level=10)
 def mel(
     *,
-    sr,
-    n_fft,
-    n_mels=128,
-    fmin=0.0,
-    fmax=None,
-    htk=False,
-    norm="slaney",
-    dtype=np.float32,
-):
+    sr: float,
+    n_fft: int,
+    n_mels: int = 128,
+    fmin: float = 0.0,
+    fmax: Optional[float] = None,
+    htk: bool = False,
+    norm: Optional[Union[str, float]] = "slaney",
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
     """Create a Mel filter-bank.
 
     This produces a linear transformation matrix to project
@@ -259,16 +262,16 @@ def mel(
 @cache(level=10)
 def chroma(
     *,
-    sr,
-    n_fft,
-    n_chroma=12,
-    tuning=0.0,
-    ctroct=5.0,
-    octwidth=2,
-    norm=2,
-    base_c=True,
-    dtype=np.float32,
-):
+    sr: float,
+    n_fft: int,
+    n_chroma: int = 12,
+    tuning: float = 0.0,
+    ctroct: float = 5.0,
+    octwidth: Union[float, None] = 2,
+    norm: Optional[float] = 2,
+    base_c: bool = True,
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
     """Create a chroma filter bank.
 
     This creates a linear transformation matrix to project
@@ -432,18 +435,18 @@ def __float_window(window_spec):
 @deprecated(version="0.9.0", version_removed="1.0")
 def constant_q(
     *,
-    sr,
-    fmin=None,
-    n_bins=84,
-    bins_per_octave=12,
-    window="hann",
-    filter_scale=1,
-    pad_fft=True,
-    norm=1,
-    dtype=np.complex64,
-    gamma=0,
-    **kwargs,
-):
+    sr: float,
+    fmin: Optional[float] = None,
+    n_bins: int = 84,
+    bins_per_octave: int = 12,
+    window: _WindowSpec = "hann",
+    filter_scale: float = 1,
+    pad_fft: bool = True,
+    norm: Optional[float] = 1,
+    dtype: DTypeLike = np.complex64,
+    gamma: float = 0,
+    **kwargs: Any,
+) -> Tuple[np.ndarray, np.ndarray]:
     r"""Construct a constant-Q basis.
 
     This function constructs a filter bank similar to Morlet wavelets,
@@ -597,8 +600,15 @@ def constant_q(
 @deprecated(version="0.9.0", version_removed="1.0")
 @cache(level=10)
 def constant_q_lengths(
-    *, sr, fmin, n_bins=84, bins_per_octave=12, window="hann", filter_scale=1, gamma=0
-):
+    *,
+    sr: float,
+    fmin: float,
+    n_bins: int = 84,
+    bins_per_octave: int = 12,
+    window: _WindowSpec = "hann",
+    filter_scale: float = 1,
+    gamma: float = 0,
+) -> np.ndarray:
     r"""Return length of each filter in a constant-Q basis.
 
     .. warning:: This function is deprecated as of v0.9 and will be removed in 1.0.
@@ -671,8 +681,14 @@ def constant_q_lengths(
 
 @cache(level=10)
 def wavelet_lengths(
-    *, freqs, sr=22050, window="hann", filter_scale=1, gamma=0, alpha=None
-):
+    *,
+    freqs: ArrayLike,
+    sr: float = 22050,
+    window: _WindowSpec = "hann",
+    filter_scale: float = 1,
+    gamma: Optional[float] = 0,
+    alpha: Optional[float] = None,
+) -> Tuple[np.ndarray, float]:
     """Return length of each filter in a wavelet basis.
 
     Parameters
@@ -806,17 +822,17 @@ def wavelet_lengths(
 @cache(level=10)
 def wavelet(
     *,
-    freqs,
-    sr=22050,
-    window="hann",
-    filter_scale=1,
-    pad_fft=True,
-    norm=1,
-    dtype=np.complex64,
-    gamma=0,
-    alpha=None,
-    **kwargs,
-):
+    freqs: np.ndarray,
+    sr: float = 22050,
+    window: _WindowSpec = "hann",
+    filter_scale: float = 1,
+    pad_fft: bool = True,
+    norm: Optional[float] = 1,
+    dtype: DTypeLike = np.complex64,
+    gamma: float = 0,
+    alpha: Optional[float] = None,
+    **kwargs: Any,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Construct a wavelet basis using windowed complex sinusoids.
 
     This function constructs a wavelet filterbank at a specified set of center
@@ -954,15 +970,15 @@ def wavelet(
 
 @cache(level=10)
 def cq_to_chroma(
-    n_input,
+    n_input: int,
     *,
-    bins_per_octave=12,
-    n_chroma=12,
-    fmin=None,
-    window=None,
-    base_c=True,
-    dtype=np.float32,
-):
+    bins_per_octave: int = 12,
+    n_chroma: int = 12,
+    fmin: Optional[float] = None,
+    window: Optional[np.ndarray] = None,
+    base_c: bool = True,
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
     """Construct a linear transformation matrix to map Constant-Q bins
     onto chroma bins (i.e., pitch classes).
 
@@ -1079,7 +1095,7 @@ def cq_to_chroma(
 
 
 @cache(level=10)
-def window_bandwidth(window, n=1000):
+def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
     """Get the equivalent noise bandwidth (ENBW) of a window function.
 
     The ENBW of a window is defined by [#]_ (equation 11) as the normalized
@@ -1130,7 +1146,12 @@ def window_bandwidth(window, n=1000):
 
 
 @cache(level=10)
-def get_window(window, Nx, *, fftbins=True):
+def get_window(
+    window: _WindowSpec,
+    Nx: int,
+    *,
+    fftbins: Optional[bool] = True,
+) -> np.ndarray:
     """Compute a window function.
 
     This is a wrapper for `scipy.signal.get_window` that additionally
@@ -1197,14 +1218,14 @@ def get_window(window, Nx, *, fftbins=True):
 
 @cache(level=10)
 def _multirate_fb(
-    center_freqs=None,
-    sample_rates=None,
-    Q=25.0,
-    passband_ripple=1,
-    stopband_attenuation=50,
-    ftype="ellip",
-    flayout="sos",
-):
+    center_freqs: Optional[np.ndarray] = None,
+    sample_rates: Optional[np.ndarray] = None,
+    Q: float = 25.0,
+    passband_ripple: float = 1,
+    stopband_attenuation: float = 50,
+    ftype: str = "ellip",
+    flayout: str = "sos",
+) -> Tuple[List[Any], np.ndarray]:
     r"""Helper function to construct a multirate filterbank.
 
      A filter bank consists of multiple band-pass filters which divide the input signal
@@ -1318,7 +1339,7 @@ def _multirate_fb(
 
 
 @cache(level=10)
-def mr_frequencies(tuning):
+def mr_frequencies(tuning: float) -> Tuple[np.ndarray, np.ndarray]:
     r"""Helper function for generating center frequency and sample rate pairs.
 
     This function will return center frequency and corresponding sample rates
@@ -1373,8 +1394,13 @@ def mr_frequencies(tuning):
 
 
 def semitone_filterbank(
-    *, center_freqs=None, tuning=0.0, sample_rates=None, flayout="ba", **kwargs
-):
+    *,
+    center_freqs: Optional[np.ndarray] = None,
+    tuning: float = 0.0,
+    sample_rates: Optional[np.ndarray] = None,
+    flayout: str = "ba",
+    **kwargs: Any,
+) -> Tuple[List[Any], np.ndarray]:
     r"""Construct a multi-rate bank of infinite-impulse response (IIR)
     band-pass filters at user-defined center frequencies and sample rates.
 
@@ -1484,14 +1510,14 @@ def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
 
 def window_sumsquare(
     *,
-    window,
-    n_frames,
-    hop_length=512,
-    win_length=None,
-    n_fft=2048,
-    dtype=np.float32,
-    norm=None,
-):
+    window: _WindowSpec,
+    n_frames: int,
+    hop_length: int = 512,
+    win_length: Optional[int] = None,
+    n_fft: int = 2048,
+    dtype: DTypeLike = np.float32,
+    norm: Optional[float] = None,
+) -> np.ndarray:
     """Compute the sum-square envelope of a window function at a given hop length.
 
     This is used to estimate modulation effects induced by windowing observations
@@ -1557,7 +1583,14 @@ def window_sumsquare(
 
 
 @cache(level=10)
-def diagonal_filter(window, n, *, slope=1.0, angle=None, zero_mean=False):
+def diagonal_filter(
+    window: _WindowSpec,
+    n: int,
+    *,
+    slope: float = 1.0,
+    angle: Optional[float] = None,
+    zero_mean: bool = False,
+) -> np.ndarray:
     """Build a two-dimensional diagonal filter.
 
     This is primarily used for smoothing recurrence or self-similarity matrices.

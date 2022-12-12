@@ -1,4 +1,7 @@
-from .utils import delta, stack_memory
+from .utils import (
+    delta as delta,
+    stack_memory as stack_memory,
+)
 from .spectral import (
     spectral_centroid as spectral_centroid,
     spectral_bandwidth as spectral_bandwidth,

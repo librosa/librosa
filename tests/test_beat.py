@@ -213,6 +213,9 @@ def test_beat_units(ysr, hop_length, units, ctx):
 
         elif units == "frames":
             t2 = librosa.frames_to_time(b2, sr=sr, hop_length=hop_length)
+        
+        else:
+            assert False
 
         assert np.allclose(t1, t2)
 

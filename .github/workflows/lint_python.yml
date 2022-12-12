@@ -6,8 +6,9 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-      - run: pip install bandit codespell flake8 velin
+      - run: pip install bandit codespell flake8 velin mypy pytest numpy
       - run: bandit --recursive --skip B101,B110 .
       - run: codespell --ignore-words-list="ba,trough,ue" --skip="*demo.ipynb,./AUTHORS.md,./docs/changelog.rst"
       - run: flake8 librosa --count --select=E9,F63,F7,F82 --show-source --statistics
       - run: python -m velin --check librosa
+      - run: python -m mypy tests --config-file=tests/mypy.ini

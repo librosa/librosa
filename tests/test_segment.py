@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 """Tests for segmentation functions"""
+from typing import Union
 import warnings
 
 # Disable cache
@@ -299,7 +300,7 @@ def test_recurrence_to_lag(n, pad):
 
     assert np.allclose(lag, lag2.T)
 
-    x = Ellipsis
+    x: Union[ellipsis, slice] = Ellipsis
     if pad:
         x = slice(n)
 

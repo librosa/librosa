@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # CREATED:2014-01-18 14:09:05 by Brian McFee <brm2132@columbia.edu>
 # unit tests for util routines
+from __future__ import annotations
 
 # Disable cache
 import os
@@ -16,6 +17,7 @@ import scipy.sparse
 import pytest
 import warnings
 import librosa
+from typing import Any, List, Union
 
 from test_core import srand
 
@@ -86,7 +88,7 @@ def test_frame_0stride():
 def test_frame_highdim(frame_length, hop_length, ndim):
     srand()
 
-    x = np.random.randn(*([20] * ndim))
+    x = np.asarray(np.random.randn(*([20] * ndim)))
     xf = librosa.util.frame(x, frame_length=frame_length, hop_length=hop_length)
     for i in range(x.shape[0]):
         xf0 = librosa.util.frame(x[i], frame_length=frame_length, hop_length=hop_length)
@@ -201,7 +203,7 @@ def test_fix_frames_fail_negative(frames, x_min, x_max, pad):
 )
 def test_normalize(ndims, norm, axis):
     srand()
-    X = np.random.randn(*([4] * ndims))
+    X = np.asarray(np.random.randn(*([4] * ndims)))
     X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
 
     # Shape and dtype checks
@@ -319,7 +321,7 @@ def test_axis_sort_badndim(ndim, axis, index, value):
 @pytest.mark.parametrize("value", [None, np.min, np.mean, np.max])
 def test_axis_sort(ndim, axis, index, value):
     srand()
-    data = np.random.randn(*([10] * ndim))
+    data = np.asarray(np.random.randn(*([10] * ndim)))
     if index:
         Xsorted, idx = librosa.util.axis_sort(data, axis=axis, index=index, value=value)
 
@@ -446,7 +448,7 @@ def test_localmax(ndim, axis):
 
     srand()
 
-    data = np.random.randn(*([7] * ndim))
+    data = np.asarray(np.random.randn(*([7] * ndim)))
     lm = librosa.util.localmax(data, axis=axis)
 
     for hits in np.argwhere(lm):
@@ -471,7 +473,7 @@ def test_localmin(ndim, axis):
 
     srand()
 
-    data = np.random.randn(*([7] * ndim))
+    data = np.asarray(np.random.randn(*([7] * ndim)))
     lm = librosa.util.localmin(data, axis=axis)
 
     for hits in np.argwhere(lm):
@@ -697,7 +699,7 @@ def test_valid_int_fail(x, cast):
     librosa.util.valid_int(x, cast=cast)
 
 
-@pytest.mark.parametrize("x", [1, np.int(64)])
+@pytest.mark.parametrize("x", [1, 64])
 def test_is_positive_int(x):
     assert librosa.util.is_positive_int(x) == True
 
@@ -857,8 +859,8 @@ def test_index_to_slice(idx, idx_min, idx_max, step, pad):
 @pytest.mark.parametrize(
     "ndim,axis", [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 2), (3, -1)]
 )
-def test_sync(aggregate, ndim, axis):
-    data = np.ones([6] * ndim, dtype=np.float)
+def test_sync(aggregate, ndim, axis: int):
+    data = np.ones([6] * ndim, dtype=float)
 
     # Make some slices that don't fill the entire dimension
     slices = [slice(1, 3), slice(3, 4)]
@@ -874,7 +876,7 @@ def test_sync(aggregate, ndim, axis):
     assert s_test == s_orig
 
     # The first slice will sum to 2 and have mean 1
-    idx = [slice(None)] * ndim
+    idx: List[Union[slice, int]] = [slice(None)] * ndim
     idx[axis] = 0
     if aggregate is np.sum:
         assert np.allclose(dsync[tuple(idx)], 2)
@@ -1171,7 +1173,7 @@ def test_shear_sparse(fmt):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_shear_badfactor():
-    librosa.util.shear(np.eye(3), factor=None)
+    librosa.util.shear(np.eye(3), factor=None) # type: ignore
 
 
 def test_stack_contig():
@@ -1354,10 +1356,10 @@ def test_abs2_real(x, dtype):
 @pytest.mark.parametrize('x', [(2 -2j), (3 +0j), (0.5j)**np.arange(6)])
 @pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
 def test_abs2_complex(x, dtype):
-    x = dtype(x)
-    p = librosa.util.abs2(x)
-    assert np.allclose(p, np.abs(x)**2)
-    assert p.dtype == librosa.util.dtype_c2r(x.dtype)
+    x_cast: Union[np.complexfloating[Any, Any], np.ndarray] = dtype(x)
+    p = librosa.util.abs2(x_cast)
+    assert np.allclose(p, np.abs(x_cast)**2)
+    assert p.dtype == librosa.util.dtype_c2r(x_cast.dtype)
 
 
 
@@ -1366,13 +1368,13 @@ def test_abs2_complex(x, dtype):
 @pytest.mark.parametrize('mag', [None, 2])
 def test_phasor(dtype, angles, mag):
 
-    angles = dtype(angles)
-    z = np.exp(1j * angles)
+    angles_cast: Union[np.floating[Any], np.ndarray] = dtype(angles)
+    z = np.exp(1j * angles_cast)
     if mag is not None:
         mag = dtype(mag)
         z *= mag
 
-    z2 = librosa.util.phasor(angles, mag=mag)
+    z2 = librosa.util.phasor(angles_cast, mag=mag)
 
     assert np.allclose(z, z2)
     assert z2.dtype == librosa.util.dtype_r2c(dtype)

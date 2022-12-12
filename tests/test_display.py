@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import librosa
 import librosa.display
 import numpy as np
+from typing import Any, Dict
 
 # Workaround for old freetype builds with our image fixtures
 FT_VERSION = version.parse(matplotlib.ft2font.__freetype_version__)
@@ -546,7 +547,7 @@ def test_time_unit_lag(S_abs, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono(y, sr):
 
-    fig, ax = plt.subplots(nrows=1)
+    fig, ax = plt.subplots()
     librosa.display.waveshow(y, sr=sr, ax=ax)
     return fig
 
@@ -557,7 +558,7 @@ def test_waveshow_mono(y, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono_zoom(y, sr):
 
-    fig, ax = plt.subplots(nrows=1)
+    fig, ax = plt.subplots()
     out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(xlim=[1, 1.125])
@@ -570,7 +571,7 @@ def test_waveshow_mono_zoom(y, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono_zoom_out(y, sr):
 
-    fig, ax = plt.subplots(nrows=1)
+    fig, ax = plt.subplots()
     out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(xlim=[1, 1.125])
@@ -632,10 +633,9 @@ def test_waveshow_bad_maxpoints(y, sr):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("axis", ["x_axis", "y_axis"])
-def test_unknown_axis(S_abs, axis):
+def test_unknown_axis(S_abs, axis: str):
 
-    kwargs = dict()
-    kwargs.setdefault(axis, "something not in the axis map")
+    kwargs: Dict[str, Any] = {axis: "something not in the axis map"}
     plt.figure()
     librosa.display.specshow(S_abs, **kwargs)
 
@@ -646,7 +646,7 @@ def test_unknown_axis(S_abs, axis):
         np.arange(1, 10.0),  # strictly positive
         -np.arange(1, 10.0),  # strictly negative
         np.arange(-3, 4.0),  # signed,
-        np.arange(2, dtype=np.bool),
+        np.arange(2, dtype=bool),
     ],
 )  # binary
 def test_cmap_robust(data):
@@ -1037,7 +1037,7 @@ def test_chromafjs_badintervals():
     baseline_images=["chroma_fjs"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_specshow_chromafjs(C):
+def test_specshow_chromafjs(C, sr):
 
     # This isn't a VQT chroma, but that's not important here
     chroma = librosa.feature.chroma_cqt(C=C, sr=sr, threshold=0.9)

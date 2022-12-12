@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 """Utility functions"""
 
+from __future__ import annotations
+
 import scipy.ndimage
 import scipy.sparse
 
@@ -12,6 +14,9 @@ from numpy.lib.stride_tricks import as_strided
 from .._cache import cache
 from .exceptions import ParameterError
 from .deprecation import Deprecated
+from numpy.typing import ArrayLike, DTypeLike
+from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union, overload
+from typing_extensions import Literal
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -51,7 +56,15 @@ __all__ = [
 ]
 
 
-def frame(x, *, frame_length, hop_length, axis=-1, writeable=False, subok=False):
+def frame(
+    x: np.ndarray,
+    *,
+    frame_length: int,
+    hop_length: int,
+    axis: int = -1,
+    writeable: bool = False,
+    subok: bool = False
+) -> np.ndarray:
     """Slice a data array into (overlapping) frames.
 
     This implementation uses low-level stride manipulation to avoid
@@ -212,7 +225,7 @@ def frame(x, *, frame_length, hop_length, axis=-1, writeable=False, subok=False)
 
 
 @cache(level=20)
-def valid_audio(y, *, mono=Deprecated()):
+def valid_audio(y: np.ndarray, *, mono: bool = Deprecated()) -> bool:
     """Determine whether a variable contains valid audio data.
 
     The following conditions must be satisfied:
@@ -296,7 +309,7 @@ def valid_audio(y, *, mono=Deprecated()):
     return True
 
 
-def valid_int(x, *, cast=None):
+def valid_int(x: float, *, cast: Optional[Callable[[float], float]] = None) -> int:
     """Ensure that an input value is integer-typed.
     This is primarily useful for ensuring integrable-valued
     array indices.
@@ -329,7 +342,7 @@ def valid_int(x, *, cast=None):
     return int(cast(x))
 
 
-def is_positive_int(x):
+def is_positive_int(x: float) -> bool:
     """Checks that x is a positive integer, i.e. 1 or greater.
 
     Parameters
@@ -346,7 +359,7 @@ def is_positive_int(x):
     return isinstance(x, (int, np.integer)) and (x > 0)
 
 
-def valid_intervals(intervals):
+def valid_intervals(intervals: np.ndarray) -> bool:
     """Ensure that an array is a valid representation of time intervals:
 
         - intervals.ndim == 2
@@ -375,7 +388,7 @@ def valid_intervals(intervals):
     return True
 
 
-def pad_center(data, *, size, axis=-1, **kwargs):
+def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
     """Pad an array to a target length along a target axis.
 
     This differs from `np.pad` by centering the data prior to padding,
@@ -448,7 +461,7 @@ def pad_center(data, *, size, axis=-1, **kwargs):
     return np.pad(data, lengths, **kwargs)
 
 
-def expand_to(x, *, ndim, axes):
+def expand_to(x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int], Sequence[slice]]) -> np.ndarray:
     """Expand the dimensions of an input array with
 
     Parameters
@@ -518,7 +531,7 @@ def expand_to(x, *, ndim, axes):
     return x.reshape(shape)
 
 
-def fix_length(data, *, size, axis=-1, **kwargs):
+def fix_length(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
     """Fix the length an array ``data`` to exactly ``size`` along a target axis.
 
     If ``data.shape[axis] < n``, pad according to the provided kwargs.
@@ -576,7 +589,13 @@ def fix_length(data, *, size, axis=-1, **kwargs):
     return data
 
 
-def fix_frames(frames, *, x_min=0, x_max=None, pad=True):
+def fix_frames(
+    frames: np.ndarray,
+    *,
+    x_min: Optional[int] = 0,
+    x_max: Optional[int] = None,
+    pad: bool = True
+) -> np.ndarray:
     """Fix a list of frames to lie within [x_min, x_max]
 
     Examples
@@ -657,7 +676,33 @@ def fix_frames(frames, *, x_min=0, x_max=None, pad=True):
     return np.unique(frames).astype(int)
 
 
-def axis_sort(S, *, axis=-1, index=False, value=None):
+@overload
+def axis_sort(
+    S: np.ndarray,
+    *,
+    axis: int = ...,
+    index: Literal[False] = ...,
+    value: Optional[Callable[..., Any]] = ...
+) -> np.ndarray:
+    ...
+
+@overload
+def axis_sort(
+    S: np.ndarray,
+    *,
+    axis: int = ...,
+    index: Literal[True],
+    value: Optional[Callable[..., Any]] = ...
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+def axis_sort(
+    S: np.ndarray,
+    *,
+    axis: int = -1,
+    index: bool = False,
+    value: Optional[Callable[..., Any]] = None
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Sort an array along its rows or columns.
 
     Examples
@@ -753,7 +798,14 @@ def axis_sort(S, *, axis=-1, index=False, value=None):
 
 
 @cache(level=40)
-def normalize(S, *, norm=np.inf, axis=0, threshold=None, fill=None):
+def normalize(
+    S: np.ndarray,
+    *,
+    norm: Optional[float] = np.inf,
+    axis: Optional[int] = 0,
+    threshold: Optional[float] = None,
+    fill: Optional[bool] = None
+) -> np.ndarray:
     """Normalize an array along a chosen axis.
 
     Given a norm (described below) and a target axis, the input
@@ -1014,7 +1066,7 @@ def _localmin(x, y):  # pragma: no cover
     y[:] = _localmin_sten(x)
 
 
-def localmax(x, *, axis=0):
+def localmax(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
     """Find local maxima in an array
 
     An element ``x[i]`` is considered a local maximum if the following
@@ -1075,7 +1127,7 @@ def localmax(x, *, axis=0):
     return lmax
 
 
-def localmin(x, *, axis=0):
+def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
     """Find local minima in an array
 
     An element ``x[i]`` is considered a local minimum if the following
@@ -1137,7 +1189,16 @@ def localmin(x, *, axis=0):
     return lmin
 
 
-def peak_pick(x, *, pre_max, post_max, pre_avg, post_avg, delta, wait):
+def peak_pick(
+    x: np.ndarray,
+    *,
+    pre_max: int,
+    post_max: int,
+    pre_avg: int,
+    post_avg: int,
+    delta: float,
+    wait: int
+) -> np.ndarray:
     """Uses a flexible heuristic to pick peaks in a signal.
 
     A sample n is selected as an peak if the corresponding ``x[n]``
@@ -1294,7 +1355,9 @@ def peak_pick(x, *, pre_max, post_max, pre_avg, post_avg, delta, wait):
 
 
 @cache(level=40)
-def sparsify_rows(x, *, quantile=0.01, dtype=None):
+def sparsify_rows(
+    x: np.ndarray, *, quantile: float = 0.01, dtype: Optional[DTypeLike] = None
+) -> scipy.sparse.csr_matrix:
     """Return a row-sparse matrix approximating the input
 
     Parameters
@@ -1392,7 +1455,9 @@ def sparsify_rows(x, *, quantile=0.01, dtype=None):
     return x_sparse.tocsr()
 
 
-def buf_to_float(x, *, n_bytes=2, dtype=np.float32):
+def buf_to_float(
+    x: np.ndarray, *, n_bytes: int = 2, dtype: DTypeLike = np.float32
+) -> np.ndarray:
     """Convert an integer buffer to floating point values.
     This is primarily useful when loading integer-valued wav data
     into numpy arrays.
@@ -1422,7 +1487,14 @@ def buf_to_float(x, *, n_bytes=2, dtype=np.float32):
     return scale * np.frombuffer(x, fmt).astype(dtype)
 
 
-def index_to_slice(idx, *, idx_min=None, idx_max=None, step=None, pad=True):
+def index_to_slice(
+    idx: ArrayLike,
+    *,
+    idx_min: Optional[int] = None,
+    idx_max: Optional[int] = None,
+    step: Optional[int] = None,
+    pad: bool = True
+) -> List[slice]:
     """Generate a slice array from an index array.
 
     Parameters
@@ -1475,7 +1547,14 @@ def index_to_slice(idx, *, idx_min=None, idx_max=None, step=None, pad=True):
 
 
 @cache(level=40)
-def sync(data, idx, *, aggregate=None, pad=True, axis=-1):
+def sync(
+    data: np.ndarray,
+    idx: Union[Iterable[int], Iterable[slice]],
+    *,
+    aggregate: Optional[Callable[..., Any]] = None,
+    pad: bool = True,
+    axis: int = -1
+) -> np.ndarray:
     """Synchronous aggregation of a multi-dimensional array between boundaries
 
     .. note::
@@ -1598,7 +1677,9 @@ def sync(data, idx, *, aggregate=None, pad=True, axis=-1):
     return data_agg
 
 
-def softmask(X, X_ref, *, power=1, split_zeros=False):
+def softmask(
+    X: np.ndarray, X_ref: np.ndarray, *, power: float = 1, split_zeros: bool = False
+) -> np.ndarray:
     """Robustly compute a soft-mask operation.
 
         ``M = X**power / (X**power + X_ref**power)``
@@ -1712,7 +1793,7 @@ def softmask(X, X_ref, *, power=1, split_zeros=False):
     return mask
 
 
-def tiny(x):
+def tiny(x: Union[float, np.ndarray]) -> float:
     """Compute the tiny-value corresponding to an input's data type.
 
     This is the smallest "usable" number representable in ``x.dtype``
@@ -1780,7 +1861,7 @@ def tiny(x):
     return np.finfo(dtype).tiny
 
 
-def fill_off_diagonal(x, *, radius, value=0):
+def fill_off_diagonal(x: np.ndarray, *, radius: float, value: int = 0) -> None:
     """Sets all cells of a matrix to a given ``value``
     if they lie outside a constraint region.
 
@@ -1848,7 +1929,9 @@ def fill_off_diagonal(x, *, radius, value=0):
     x[idx_l] = value
 
 
-def cyclic_gradient(data, *, edge_order=1, axis=-1):
+def cyclic_gradient(
+    data: np.ndarray, *, edge_order: int = 1, axis: int = -1
+) -> np.ndarray:
     """Estimate the gradient of a function over a uniformly sampled,
     periodic domain.
 
@@ -1957,8 +2040,11 @@ def __shear_sparse(X, *, factor=+1, axis=-1):
     # And convert back to the input format
     return X_shear.asformat(fmt)
 
+_ArrayOrSparseMatrix = TypeVar('_ArrayOrSparseMatrix', bound=Union[np.ndarray, scipy.sparse.spmatrix])
 
-def shear(X, *, factor=1, axis=-1):
+def shear(
+    X: _ArrayOrSparseMatrix, *, factor: int = 1, axis: int = -1
+) -> _ArrayOrSparseMatrix:
     """Shear a matrix by a given factor.
 
     The column ``X[:, n]`` will be displaced (rolled)
@@ -2009,7 +2095,7 @@ def shear(X, *, factor=1, axis=-1):
         return __shear_dense(X, factor=factor, axis=axis)
 
 
-def stack(arrays, *, axis=0):
+def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
     """Stack one or more arrays along a target axis.
 
     This function is similar to `np.stack`, except that memory contiguity is
@@ -2112,7 +2198,9 @@ def stack(arrays, *, axis=0):
         return result
 
 
-def dtype_r2c(d, *, default=np.complex64):
+def dtype_r2c(
+    d: DTypeLike, *, default: Optional[DTypeLike] = np.complex64
+) -> DTypeLike:
     """Find the complex numpy dtype corresponding to a real dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2168,7 +2256,7 @@ def dtype_r2c(d, *, default=np.complex64):
     return np.dtype(mapping.get(dt, default))
 
 
-def dtype_c2r(d, *, default=np.float32):
+def dtype_c2r(d: DTypeLike, *, default: Optional[DTypeLike] = np.float32) -> DTypeLike:
     """Find the real numpy dtype corresponding to a complex dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2238,7 +2326,7 @@ def __count_unique(x):
     return uniques.shape[0]
 
 
-def count_unique(data, *, axis=-1):
+def count_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
     """Count the number of unique values in a multi-dimensional array
     along a given axis.
 
@@ -2290,7 +2378,7 @@ def __is_unique(x):
     return uniques.shape[0] == x.size
 
 
-def is_unique(data, *, axis=-1):
+def is_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
     """Determine if the input array consists of all unique values
     along a given axis.
 
@@ -2340,8 +2428,9 @@ def _cabs2(x):  # pragma: no cover
     """Helper function for efficiently computing abs2 on complex inputs"""
     return x.real**2 + x.imag**2
 
-
-def abs2(x):
+_Number = Union[complex, "np.number[Any]"]
+_NumberOrArray = TypeVar("_NumberOrArray", bound=Union[_Number, np.ndarray])
+def abs2(x: _NumberOrArray) -> _NumberOrArray:
     """Compute the squared magnitude of a real or complex array.
 
     This function is equivalent to calling `np.abs(x)**2` but it
@@ -2375,11 +2464,18 @@ def abs2(x):
 @numba.vectorize(
     ["complex64(float32)", "complex128(float64)"], nopython=True, cache=True, identity=1
 )
-def _phasor_angles(x):  # pragma: no cover
+def _phasor_angles(x) -> np.complex_:  # pragma: no cover
     return np.cos(x) + 1j * np.sin(x)
 
+_Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
+@overload
+def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray: ...
+@overload
+def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> np.complex_: ...
 
-def phasor(angles, *, mag=None):
+def phasor(
+    angles: Union[np.ndarray, _Real], *, mag: Optional[Union[np.ndarray, _Number]] = None
+) -> Union[np.ndarray, np.complex_]:
     """Construct a complex phasor representation from angles.
 
     When `mag` is not provided, this is equivalent to:

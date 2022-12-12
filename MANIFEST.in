@@ -4,3 +4,4 @@ include LICENSE.md
 include CODE_OF_CONDUCT.md
 include librosa/util/example_data/*
 global-include *.pyi
+global-include py.typed

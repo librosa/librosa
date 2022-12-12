@@ -112,8 +112,8 @@ from .notation import (
     thaat_to_degrees as thaat_to_degrees,
     list_mela as list_mela,
     list_thaat as list_thaat,
-    fifths_to_note,
-    interval_to_fjs,
+    fifths_to_note as fifths_to_note,
+    interval_to_fjs as interval_to_fjs,
 )
 
 from .intervals import (

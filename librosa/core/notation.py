@@ -8,7 +8,10 @@ from numba import jit
 from .intervals import INTERVALS
 from .._cache import cache
 from ..util.exceptions import ParameterError
+from typing import Dict, List, Union, overload
 from ..util.decorators import vectorize
+from .._typing import _ScalarOrSequence, _FloatLike_co, _SequenceLike
+
 
 __all__ = [
     "key_to_degrees",
@@ -131,7 +134,8 @@ KEY_RE = re.compile(
 )
 
 
-def thaat_to_degrees(thaat):
+def thaat_to_degrees(thaat: str) -> np.ndarray:
+
     """Construct the svara indices (degrees) for a given thaat
 
     Parameters
@@ -162,7 +166,7 @@ def thaat_to_degrees(thaat):
     return np.asarray(THAAT_MAP[thaat.lower()])
 
 
-def mela_to_degrees(mela):
+def mela_to_degrees(mela: Union[str, int]) -> np.ndarray:
     """Construct the svara indices (degrees) for a given melakarta raga
 
     Parameters
@@ -262,7 +266,9 @@ def mela_to_degrees(mela):
 
 
 @cache(level=10)
-def mela_to_svara(mela, *, abbr=True, unicode=True):
+def mela_to_svara(
+    mela: Union[str, int], *, abbr: bool = True, unicode: bool = True
+) -> List[str]:
     """Spell the Carnatic svara names for a given melakarta raga
 
     This function exists to resolve enharmonic equivalences between
@@ -409,7 +415,7 @@ def mela_to_svara(mela, *, abbr=True, unicode=True):
     return list(svara_map)
 
 
-def list_mela():
+def list_mela() -> Dict[str, int]:
     """List melakarta ragas by name and index.
 
     Melakarta raga names are transcribed from [#]_, with the exception of #45
@@ -442,7 +448,7 @@ def list_mela():
     return MELAKARTA_MAP.copy()
 
 
-def list_thaat():
+def list_thaat() -> List[str]:
     """List supported thaats by name.
 
     Returns
@@ -473,7 +479,7 @@ def list_thaat():
 
 
 @cache(level=10)
-def key_to_notes(key, *, unicode=True):
+def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     """Lists all 12 note names in the chromatic scale, as spelled according to
     a given key (major or minor).
 
@@ -647,7 +653,7 @@ def key_to_notes(key, *, unicode=True):
     return notes
 
 
-def key_to_degrees(key):
+def key_to_degrees(key: str) -> np.ndarray:
     """Construct the diatonic scale degrees for a given key.
 
     Parameters
@@ -704,7 +710,7 @@ def key_to_degrees(key):
 
 
 @cache(level=10)
-def fifths_to_note(*, unison, fifths, unicode=True):
+def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
     """Calculate the note name for a given number of perfect fifths
     from a specified unison.
 
@@ -843,9 +849,44 @@ def __fifth_search(interval, tolerance):
 SUPER_TRANS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 SUB_TRANS = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 
+@overload
+def interval_to_fjs(
+    interval: _FloatLike_co,
+    *,
+    unison: str = ...,
+    tolerance: float = ...,
+    unicode: bool = ...
+) -> str:
+    ...
+
+@overload
+def interval_to_fjs(
+    interval: _SequenceLike[_FloatLike_co],
+    *,
+    unison: str = ...,
+    tolerance: float = ...,
+    unicode: bool = ...
+) -> np.ndarray:
+    ...
+
+@overload
+def interval_to_fjs(
+    interval: _ScalarOrSequence[_FloatLike_co],
+    *,
+    unison: str = ...,
+    tolerance: float = ...,
+    unicode: bool = ...
+) -> Union[str, np.ndarray]:
+    ...
 
 @vectorize(otypes="U", excluded=set(["unison", "tolerance", "unicode"]))
-def interval_to_fjs(interval, *, unison="C", tolerance=65.0 / 63, unicode=True):
+def interval_to_fjs(
+    interval: _ScalarOrSequence[_FloatLike_co],
+    *,
+    unison: str = "C",
+    tolerance: float = 65.0 / 63,
+    unicode: bool = True
+) -> Union[str, np.ndarray]:
     """Convert an interval to Functional Just System (FJS) notation.
 
     See https://misotanni.github.io/fjs/en/index.html for a thorough overview

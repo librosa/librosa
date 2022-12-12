@@ -16,6 +16,8 @@ from ..core.audio import zero_crossings
 from ..core.spectrum import power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt, vqt
 from ..core.pitch import estimate_tuning
+from typing import Any, Optional, Union, Collection
+from .._typing import _FloatLike_co, _WindowSpec, _PadMode
 
 
 __all__ = [
@@ -40,17 +42,17 @@ __all__ = [
 # -- Spectral features -- #
 def spectral_centroid(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    hop_length=512,
-    freq=None,
-    win_length=None,
-    window="hann",
-    center=True,
-    pad_mode="constant",
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    freq: Optional[np.ndarray] = None,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadMode = "constant",
+) -> np.ndarray:
     """Compute the spectral centroid.
 
     Each frame of a magnitude spectrogram is normalized and treated as a
@@ -185,20 +187,20 @@ def spectral_centroid(
 
 def spectral_bandwidth(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    hop_length=512,
-    win_length=None,
-    window="hann",
-    center=True,
-    pad_mode="constant",
-    freq=None,
-    centroid=None,
-    norm=True,
-    p=2,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadMode = "constant",
+    freq: Optional[np.ndarray] = None,
+    centroid: Optional[np.ndarray] = None,
+    norm: bool = True,
+    p: float = 2,
+) -> np.ndarray:
     """Compute p'th-order spectral bandwidth.
 
        The spectral bandwidth [#]_ at frame ``t`` is computed by::
@@ -344,21 +346,21 @@ def spectral_bandwidth(
 
 def spectral_contrast(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    hop_length=512,
-    win_length=None,
-    window="hann",
-    center=True,
-    pad_mode="constant",
-    freq=None,
-    fmin=200.0,
-    n_bands=6,
-    quantile=0.02,
-    linear=False,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadMode = "constant",
+    freq: Optional[np.ndarray] = None,
+    fmin: float = 200.0,
+    n_bands: int = 6,
+    quantile: float = 0.02,
+    linear: bool = False,
+) -> np.ndarray:
     """Compute spectral contrast
 
     Each frame of a spectrogram ``S`` is divided into sub-bands.
@@ -526,18 +528,18 @@ def spectral_contrast(
 
 def spectral_rolloff(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    hop_length=512,
-    win_length=None,
-    window="hann",
-    center=True,
-    pad_mode="constant",
-    freq=None,
-    roll_percent=0.85,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadMode = "constant",
+    freq: Optional[np.ndarray] = None,
+    roll_percent: float = 0.85,
+) -> np.ndarray:
     """Compute roll-off frequency.
 
     The roll-off frequency is defined for each frame as the center frequency
@@ -674,17 +676,17 @@ def spectral_rolloff(
 
 def spectral_flatness(
     *,
-    y=None,
-    S=None,
-    n_fft=2048,
-    hop_length=512,
-    win_length=None,
-    window="hann",
-    center=True,
-    pad_mode="constant",
-    amin=1e-10,
-    power=2.0,
-):
+    y: Optional[np.ndarray] = None,
+    S: Optional[np.ndarray] = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadMode = "constant",
+    amin: float = 1e-10,
+    power: float = 2.0,
+) -> np.ndarray:
     """Compute spectral flatness
 
     Spectral flatness (or tonality coefficient) is a measure to
@@ -793,13 +795,13 @@ def spectral_flatness(
 
 def rms(
     *,
-    y=None,
-    S=None,
-    frame_length=2048,
-    hop_length=512,
-    center=True,
-    pad_mode="constant",
-):
+    y: Optional[np.ndarray] = None,
+    S: Optional[np.ndarray] = None,
+    frame_length: int = 2048,
+    hop_length: int = 512,
+    center: bool = True,
+    pad_mode: _PadMode = "constant",
+) -> np.ndarray:
     """Compute root-mean-square (RMS) value for each frame, either from the
     audio samples ``y`` or from a spectrogram ``S``.
 
@@ -902,18 +904,18 @@ def rms(
 
 def poly_features(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    hop_length=512,
-    win_length=None,
-    window="hann",
-    center=True,
-    pad_mode="constant",
-    order=1,
-    freq=None,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadMode = "constant",
+    order: int = 1,
+    freq: Optional[np.ndarray] = None,
+) -> np.ndarray:
     """Get coefficients of fitting an nth-order polynomial to the columns
     of a spectrogram.
 
@@ -1043,7 +1045,14 @@ def poly_features(
     return coefficients
 
 
-def zero_crossing_rate(y, *, frame_length=2048, hop_length=512, center=True, **kwargs):
+def zero_crossing_rate(
+    y: np.ndarray,
+    *,
+    frame_length: int = 2048,
+    hop_length: int = 512,
+    center: bool = True,
+    **kwargs: Any,
+) -> np.ndarray:
     """Compute the zero-crossing rate of an audio time series.
 
     Parameters
@@ -1113,20 +1122,20 @@ def zero_crossing_rate(y, *, frame_length=2048, hop_length=512, center=True, **k
 # -- Chroma --#
 def chroma_stft(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    norm=np.inf,
-    n_fft=2048,
-    hop_length=512,
-    win_length=None,
-    window="hann",
-    center=True,
-    pad_mode="constant",
-    tuning=None,
-    n_chroma=12,
-    **kwargs,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    norm: Optional[float] = np.inf,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadMode = "constant",
+    tuning: Optional[float] = None,
+    n_chroma: int = 12,
+    **kwargs: Any,
+) -> np.ndarray:
     """Compute a chromagram from a waveform or power spectrogram.
 
     This implementation is derived from ``chromagram_E`` [#]_
@@ -1271,20 +1280,20 @@ def chroma_stft(
 
 def chroma_cqt(
     *,
-    y=None,
-    sr=22050,
-    C=None,
-    hop_length=512,
-    fmin=None,
-    norm=np.inf,
-    threshold=0.0,
-    tuning=None,
-    n_chroma=12,
-    n_octaves=7,
-    window=None,
-    bins_per_octave=36,
-    cqt_mode="full",
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    C: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    fmin: Optional[float] = None,
+    norm: Optional[Union[int, float]] = np.inf,
+    threshold: float = 0.0,
+    tuning: Optional[float] = None,
+    n_chroma: int = 12,
+    n_octaves: int = 7,
+    window: Optional[np.ndarray] = None,
+    bins_per_octave: Optional[int] = 36,
+    cqt_mode: str = "full",
+) -> np.ndarray:
     r"""Constant-Q chromagram
 
     Parameters
@@ -1398,21 +1407,21 @@ def chroma_cqt(
 
 def chroma_cens(
     *,
-    y=None,
-    sr=22050,
-    C=None,
-    hop_length=512,
-    fmin=None,
-    tuning=None,
-    n_chroma=12,
-    n_octaves=7,
-    bins_per_octave=36,
-    cqt_mode="full",
-    window=None,
-    norm=2,
-    win_len_smooth=41,
-    smoothing_window="hann",
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    C: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    fmin: Optional[_FloatLike_co] = None,
+    tuning: Optional[float] = None,
+    n_chroma: int = 12,
+    n_octaves: int = 7,
+    bins_per_octave: int = 36,
+    cqt_mode: str = "full",
+    window: Optional[np.ndarray] = None,
+    norm: Optional[float] = 2,
+    win_len_smooth: Optional[int] = 41,
+    smoothing_window: _WindowSpec = "hann",
+) -> np.ndarray:
     r"""Computes the chroma variant "Chroma Energy Normalized" (CENS)
 
     To compute CENS features, following steps are taken after obtaining chroma vectors
@@ -1549,18 +1558,18 @@ def chroma_cens(
 
 def chroma_vqt(
     *,
-    y=None,
-    sr=22050,
-    V=None,
-    hop_length=512,
-    fmin=None,
-    intervals=None,
-    norm=np.inf,
-    threshold=0.0,
-    n_octaves=7,
-    bins_per_octave=12,
-    gamma=0,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    V: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    fmin: Optional[float] = None,
+    intervals: Optional[Union[str, Collection[float]]] = None,
+    norm: Optional[float] = np.inf,
+    threshold: float = 0.0,
+    n_octaves: int = 7,
+    bins_per_octave: int = 12,
+    gamma: float = 0,
+) -> np.ndarray:
     r"""Variable-Q chromagram
 
     This differs from CQT-based chroma by supporting non-equal temperament
@@ -1677,7 +1686,13 @@ def chroma_vqt(
     return chroma
 
 
-def tonnetz(*, y=None, sr=22050, chroma=None, **kwargs):
+def tonnetz(
+    *,
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    chroma: Optional[np.ndarray] = None,
+    **kwargs: Any,
+) -> np.ndarray:
     """Computes the tonal centroid features (tonnetz)
 
     This representation uses the method of [#]_ to project chroma features
@@ -1806,8 +1821,16 @@ def tonnetz(*, y=None, sr=22050, chroma=None, **kwargs):
 
 # -- Mel spectrogram and MFCCs -- #
 def mfcc(
-    *, y=None, sr=22050, S=None, n_mfcc=20, dct_type=2, norm="ortho", lifter=0, **kwargs
-):
+    *,
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_mfcc: int = 20,
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
+    lifter: float = 0,
+    **kwargs: Any,
+) -> np.ndarray:
     """Mel-frequency cepstral coefficients (MFCCs)
 
     .. warning:: If multi-channel audio input ``y`` is provided, the MFCC
@@ -1976,18 +1999,18 @@ def mfcc(
 
 def melspectrogram(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    hop_length=512,
-    win_length=None,
-    window="hann",
-    center=True,
-    pad_mode="constant",
-    power=2.0,
-    **kwargs,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadMode = "constant",
+    power: float = 2.0,
+    **kwargs: Any,
+) -> np.ndarray:
     """Compute a mel-scaled spectrogram.
 
     If a spectrogram input ``S`` is provided, then it is mapped directly onto
