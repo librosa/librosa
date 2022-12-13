@@ -5,7 +5,7 @@ Rainbowgrams
 ================
 This notebook demonstrates how to use "Rainbowgrams" to simultaneously 
 visualize amplitude and (unwrapped) phase (differential) as demonstrated in the
-`NSynth paper<https://proceedings.mlr.press/v70/engel17a/engel17a.pdf>`
+`NSynth paper <https://proceedings.mlr.press/v70/engel17a/engel17a.pdf>`
 """
 # Code source: Brian McFee
 # License: ISC
@@ -33,12 +33,9 @@ freqs = librosa.fft_frequencies()
 times = librosa.times_like(D)
 
 phase_exp = 2*np.pi*np.multiply.outer(freqs,times)
-
 ####################
 # Plot the spectrum.
-plt.close('all')
 fig, ax = plt.subplots()
-
 img = librosa.display.specshow(np.diff(np.unwrap(np.angle(phase)-phase_exp, axis=1), axis=1, prepend=0),
                          cmap='hsv', 
                          alpha=librosa.amplitude_to_db(mag, ref=np.max)/80 + 1,
@@ -46,9 +43,10 @@ img = librosa.display.specshow(np.diff(np.unwrap(np.angle(phase)-phase_exp, axis
                          y_axis='log', 
                          x_axis='time')
 ax.set_facecolor('#000')
-
+fig.colorbar(img, ax=ax)
 cbar = fig.colorbar(img, ticks=[-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
-cbar.ax.set(yticklabels=['-π', '-π/2', 0, 'π/2', 'π']);
+cbar.ax.set(yticklabels=['-π', '-π/2', "0", 'π/2', 'π']);
+plt.show()
 
 ################################
 # The above uses HSV colormap for phase fading to a black background. The twilight colormap 
@@ -62,4 +60,5 @@ img = librosa.display.specshow(np.diff(np.unwrap(np.angle(phase)-phase_exp, axis
                          y_axis='log', 
                          x_axis='time')
 ax.set_facecolor('#888')
-
+cbar = fig.colorbar(img, ticks=[-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
+cbar.ax.set(yticklabels=['-π', '-π/2', 0, 'π/2', 'π'])
