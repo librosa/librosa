@@ -327,20 +327,9 @@ def piptrack(
     # Do the parabolic interpolation everywhere,
     # then figure out where the peaks are
     # then restrict to the feasible range (fmin:fmax)
-    avg = 0.5 * (S[..., 2:, :] - S[..., :-2, :])
-
-    shift = 2 * S[..., 1:-1, :] - S[..., 2:, :] - S[..., :-2, :]
-
-    # Suppress divide-by-zeros.
-    # Points where shift == 0 will never be selected by localmax anyway
-    shift = avg / (shift + (np.abs(shift) < util.tiny(shift)))
-
-    # Pad back up to the same shape as S
-    padding = [(0, 0) for _ in S.shape]
-    padding[-2] = (1, 1)
-    avg = np.pad(avg, padding, mode="constant")
-    shift = np.pad(shift, padding, mode="constant")
-
+    avg = np.gradient(S, axis=-2)
+    shift = _parabolic_interpolation(S, axis=-2)
+    # this will get us the interpolated peak value
     dskew = 0.5 * avg * shift
 
     # Pre-allocate output
@@ -359,6 +348,7 @@ def piptrack(
     if callable(ref):
         ref_value = threshold * ref(S, axis=-2)
         # Reinsert the frequency axis here, in case the callable doesn't
+
         # support keepdims=True
         ref_value = np.expand_dims(ref_value, -2)
     else:
@@ -438,12 +428,11 @@ def _cumulative_mean_normalized_difference(
 def _pi_stencil(x: np.ndarray) -> np.ndarray:
     '''Stencil to compute local parabolic interpolation'''
 
-    # Divided differences 
-    # (x[1] - x[0]) - (x[0] - x[-1])
     a = x[1] + x[-1] - 2 * x[0]
     b = (x[1] - x[-1]) / 2
 
     if np.abs(b) >= np.abs(a):
+        # If this happens, we'll shift by more than 1 bin
         return 0
 
     return -b / a
