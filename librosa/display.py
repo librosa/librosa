@@ -360,6 +360,10 @@ class FJSFormatter(mplticker.Formatter):
     fmin : float
         The unison frequency for this axis
 
+    intervals : str or array of float in [1, 2)
+        The interval specification for the frequency axis.
+
+        See `core.interval_frequencies` for supported values.
 
     major : bool
         If ``True``, ticks are always labeled.
@@ -394,11 +398,12 @@ class FJSFormatter(mplticker.Formatter):
 
     def __init__(
         self,
+        *,
         fmin: int,
+        intervals: Union[str, Collection[float]],
         major: bool = True,
         unison: Optional[str] = None,
         unicode: bool = True,
-        intervals: Optional[Union[str, Collection[float]]] = None,
         bins_per_octave: Optional[int] = None,
         n_bins: Optional[int] = None,
     ):
@@ -574,9 +579,10 @@ class ChromaFJSFormatter(mplticker.Formatter):
 
     def __init__(
         self,
+        *,
+        intervals: Union[str, Collection[float]],
         unison: str = "C",
         unicode: bool = True,
-        intervals: Optional[Union[str, Collection[float]]] = None,
         bins_per_octave: Optional[int] = None
     ):
         self.unison = unison
@@ -1069,6 +1075,11 @@ def specshow(
     thaat : str, optional
         If using `chroma_h` display mode, specify the parent thaat.
 
+    intervals : str or array of floats in [1, 2), optional
+        If using an FJS notation (`chroma_fjs`, `vqt_fjs`), the interval specification.
+
+        See `core.interval_frequencies` for a description of supported values.
+
     unison : str, optional
         If using an FJS notation (`chroma_fjs`, `vqt_fjs`), the pitch name of the unison
         interval.  If not provided, it will be inferred from `fmin` (for VQT display) or
@@ -1433,9 +1444,9 @@ def __decorate_axis(
 
         axis.set_major_formatter(
             ChromaFJSFormatter(
+                intervals=intervals,
                 unison=unison,
                 unicode=unicode,
-                intervals=intervals,
                 bins_per_octave=bins_per_octave,
             )
         )
@@ -1536,10 +1547,10 @@ def __decorate_axis(
             fmin = core.note_to_hz("C1")
         axis.set_major_formatter(
             FJSFormatter(
+                intervals=intervals,
                 fmin=fmin,
                 unison=unison,
                 unicode=unicode,
-                intervals=intervals,
                 bins_per_octave=bins_per_octave,
                 n_bins=n_bins,
             )
@@ -1550,10 +1561,10 @@ def __decorate_axis(
 
         axis.set_minor_formatter(
             FJSFormatter(
+                intervals=intervals,
                 fmin=fmin,
                 unison=unison,
                 unicode=unicode,
-                intervals=intervals,
                 bins_per_octave=bins_per_octave,
                 n_bins=n_bins,
                 major=False,
