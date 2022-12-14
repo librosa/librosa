@@ -5,6 +5,7 @@
 import warnings
 import numpy as np
 import scipy
+import numba
 
 
 from .spectrum import _spectrogram
@@ -326,20 +327,9 @@ def piptrack(
     # Do the parabolic interpolation everywhere,
     # then figure out where the peaks are
     # then restrict to the feasible range (fmin:fmax)
-    avg = 0.5 * (S[..., 2:, :] - S[..., :-2, :])
-
-    shift = 2 * S[..., 1:-1, :] - S[..., 2:, :] - S[..., :-2, :]
-
-    # Suppress divide-by-zeros.
-    # Points where shift == 0 will never be selected by localmax anyway
-    shift = avg / (shift + (np.abs(shift) < util.tiny(shift)))
-
-    # Pad back up to the same shape as S
-    padding = [(0, 0) for _ in S.shape]
-    padding[-2] = (1, 1)
-    avg = np.pad(avg, padding, mode="constant")
-    shift = np.pad(shift, padding, mode="constant")
-
+    avg = np.gradient(S, axis=-2)
+    shift = _parabolic_interpolation(S, axis=-2)
+    # this will get us the interpolated peak value
     dskew = 0.5 * avg * shift
 
     # Pre-allocate output
@@ -358,6 +348,7 @@ def piptrack(
     if callable(ref):
         ref_value = threshold * ref(S, axis=-2)
         # Reinsert the frequency axis here, in case the callable doesn't
+
         # support keepdims=True
         ref_value = np.expand_dims(ref_value, -2)
     else:
@@ -433,30 +424,61 @@ def _cumulative_mean_normalized_difference(
     return yin_frames
 
 
-def _parabolic_interpolation(y_frames: np.ndarray) -> np.ndarray:
+@numba.stencil
+def _pi_stencil(x: np.ndarray) -> np.ndarray:
+    '''Stencil to compute local parabolic interpolation'''
+
+    a = x[1] + x[-1] - 2 * x[0]
+    b = (x[1] - x[-1]) / 2
+
+    if np.abs(b) >= np.abs(a):
+        # If this happens, we'll shift by more than 1 bin
+        return 0
+
+    return -b / a
+
+
+@numba.guvectorize(['void(float32[:], float32[:])',
+                    'void(float64[:], float64[:])'], '(n)->(n)',
+                   cache=True, nopython=True)
+def _pi_wrapper(x: np.ndarray, y: np.ndarray) -> None:  # pragma: no cover
+    '''Vectorized wrapper for the parabolic interpolation stencil'''
+    y[:] = _pi_stencil(x)
+
+
+def _parabolic_interpolation(x: np.ndarray, *, axis: int=-2) -> np.ndarray:
     """Piecewise parabolic interpolation for yin and pyin.
 
     Parameters
     ----------
-    y_frames : np.ndarray [shape=(frame_length, n_frames)]
-        framed audio time series.
+    x : np.ndarray
+        array to interpolate
+    axis : int
+        axis along which to interpolate
 
     Returns
     -------
-    parabolic_shifts : np.ndarray [shape=(frame_length, n_frames)]
-        position of the parabola optima
-    """
+    parabolic_shifts : np.ndarray [shape=x.shape]
+        position of the parabola optima (relative to bin indices)
 
-    parabolic_shifts = np.zeros_like(y_frames)
-    parabola_a = (
-        y_frames[..., :-2, :] + y_frames[..., 2:, :] - 2 * y_frames[..., 1:-1, :]
-    ) / 2
-    parabola_b = (y_frames[..., 2:, :] - y_frames[..., :-2, :]) / 2
-    parabolic_shifts[..., 1:-1, :] = -parabola_b / (
-        2 * parabola_a + util.tiny(parabola_a)
-    )
-    parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
-    return parabolic_shifts
+        Note: the shift at bin `n` is determined as 0 if the estimated
+        optimum is outside the range `[n-1, n+1]`.
+    """
+    # Rotate the target axis to the end
+    xi = x.swapaxes(-1, axis)
+
+    # Allocate the output array and rotate target axis
+    shifts = np.empty_like(x)
+    shiftsi = shifts.swapaxes(-1, axis)
+
+    # Call the vectorized stencil
+    _pi_wrapper(xi, shiftsi)
+
+    # Handle the edge condition not covered by the stencil
+    shiftsi[..., -1] = 0
+    shiftsi[..., 0] = 0
+
+    return shifts
 
 
 def yin(

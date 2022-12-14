@@ -1156,7 +1156,7 @@ def test_piptrack_errors():
     pitches, mags = librosa.piptrack(
         y=None,
         sr=22050,
-        S=np.asarray([[1, 0, 0]]).T,
+        S=np.asarray([[1.0, 0.0, 0.0]]).T,
         n_fft=4096,
         hop_length=None,
         fmin=150,
