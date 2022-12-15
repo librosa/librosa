@@ -35,7 +35,7 @@ removals = [_ for _ in sys.modules if 'librosa' in _]
 for _ in removals:
     del sys.modules[_]
 
-# -- General configuration -----------------------------------------------------
+# -- General configuration ----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
 if sphinx.__version__ < "2.0":
@@ -378,6 +378,7 @@ texinfo_documents = [
 # texinfo_show_urls = 'footnote'
 
 autodoc_member_order = "bysource"
+autodoc_typehints = "none"
 
 smv_branch_whitelist = r"^main$"  # build main branch, and anything relating to documentation
 smv_tag_whitelist = r"^((0\.8\.1)|(0\.[9]\.\d+))$"  # use this for final builds
