@@ -1,0 +1,7 @@
+bandit
+codespell
+flake8
+velin
+mypy
+pytest
+numpy
