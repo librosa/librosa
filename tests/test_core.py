@@ -943,7 +943,7 @@ def test_get_duration_filename():
     filename = os.path.join("tests", "data", "test2_8000.wav")
     true_duration = 30.197625
 
-    duration_fn = librosa.get_duration(filename=filename)
+    duration_fn = librosa.get_duration(path=filename)
     y, sr = librosa.load(filename, sr=None)
     duration_y = librosa.get_duration(y=y, sr=sr)
 
@@ -955,7 +955,7 @@ def test_get_duration_mp3():
     filename = os.path.join("tests", "data", "test1_22050.mp3")
     true_duration = 4.587528344671202
 
-    duration_fn = librosa.get_duration(filename=filename)
+    duration_fn = librosa.get_duration(path=filename)
     y, sr = librosa.load(filename, sr=None)
     duration_y = librosa.get_duration(y=y, sr=sr)
     # mp3 duration at low sampling rate isn't too reliable
@@ -2482,3 +2482,29 @@ def test_stft_bad_prealloc_dtype():
 def test_istft_bad_prealloc_shape():
     D = np.zeros((1025, 5), dtype=np.complex64)
     librosa.istft(D, out=np.zeros(100))
+
+
+# Tests to force audioread decoding
+def test_load_force_audioread():
+    path = os.path.join("tests", "data", "test2_8000.mkv")
+    with warnings.catch_warnings(record=True) as out:
+        y, sr = librosa.load(path)
+
+        assert len(out) > 0
+        assert "audioread" in str(out[0].message).lower()
+
+
+def test_get_duration_audioread():
+    path = os.path.join("tests", "data", "test2_8000.mkv")
+    duration = librosa.get_duration(path=path)
+
+    assert duration == 30.2
+
+
+def test_get_samplerate_audioread():
+    path = os.path.join("tests", "data", "test2_8000.mkv")
+    sr = librosa.get_samplerate(path=path)
+
+    assert sr == 8000
+
+

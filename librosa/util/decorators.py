@@ -30,7 +30,7 @@ def moved(*, moved_from: str, version: str, version_removed: str) -> Callable[[_
             "{:s}.".format(
                 moved_from, func.__module__, func.__name__, version, version_removed
             ),
-            category=DeprecationWarning,
+            category=FutureWarning,
             stacklevel=3,  # Would be 2, but the decorator adds a level
         )
         return func(*args, **kwargs)
@@ -51,7 +51,7 @@ def deprecated(*, version: str, version_removed: str) -> Callable[[_F], _F]:
             "\n\tIt will be removed in librosa version {:s}.".format(
                 func.__module__, func.__name__, version, version_removed
             ),
-            category=DeprecationWarning,
+            category=FutureWarning,
             stacklevel=3,  # Would be 2, but the decorator adds a level
         )
         return func(*args, **kwargs)

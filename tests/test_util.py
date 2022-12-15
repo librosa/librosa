@@ -758,7 +758,7 @@ def test_warning_deprecated():
         assert len(out) > 0
 
         # And that the category is correct
-        assert out[0].category is DeprecationWarning
+        assert out[0].category is FutureWarning
 
         # And that it says the right thing (roughly)
         assert "deprecated" in str(out[0].message).lower()
@@ -779,7 +779,7 @@ def test_warning_moved():
         assert len(out) > 0
 
         # And that the category is correct
-        assert out[0].category is DeprecationWarning
+        assert out[0].category is FutureWarning
 
         # And that it says the right thing (roughly)
         assert "moved" in str(out[0].message).lower()
@@ -813,7 +813,7 @@ def test_warning_rename_kw_fail():
         assert len(out) > 0
 
         # And that the category is correct
-        assert out[0].category is DeprecationWarning
+        assert out[0].category is FutureWarning
 
         # And that it says the right thing (roughly)
         assert "renamed" in str(out[0].message).lower()

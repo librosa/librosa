@@ -20,6 +20,8 @@ from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
+from ..util.decorators import deprecated
+from ..util.deprecation import Deprecated, rename_kw
 from .._typing import _FloatLike_co
 
 from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
@@ -83,6 +85,9 @@ def load(
         Pre-constructed audioread decoders are also supported here, see the example
         below.  This can be used, for example, to force a specific decoder rather
         than relying upon audioread to select one for you.
+
+        .. warning:: audioread support is deprecated as of version 0.10.0.
+            audioread support be removed in version 1.0.
 
     sr : number > 0 [scalar]
         target sampling rate
@@ -168,7 +173,7 @@ def load(
         try:
             y, sr_native = __soundfile_load(path, offset, duration, dtype)
 
-        except RuntimeError as exc:
+        except sf.SoundFileRuntimeError as exc:
             # If soundfile failed, try audioread instead
             if isinstance(path, (str, pathlib.PurePath)):
                 warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
@@ -215,6 +220,7 @@ def __soundfile_load(path, offset, duration, dtype):
     return y, sr_native
 
 
+@deprecated(version="0.10.0", version_removed="1.0")
 def __audioread_load(path, offset, duration, dtype: DTypeLike):
     """Load an audio buffer using audioread.
 
@@ -679,7 +685,8 @@ def get_duration(
     n_fft: int = 2048,
     hop_length: int = 512,
     center: bool = True,
-    filename: Optional[Union[str, os.PathLike[Any]]] = None,
+    path: Optional[Union[str, os.PathLike[Any]]] = None,
+    filename: Optional[Union[str, os.PathLike[Any], Deprecated]] = Deprecated(),
 ) -> float:
     """Compute the duration (in seconds) of an audio time series,
     feature matrix, or filename.
@@ -731,7 +738,7 @@ def get_duration(
         - If ``True``, ``S[:, t]`` is centered at ``y[t * hop_length]``
         - If ``False``, then ``S[:, t]`` begins at ``y[t * hop_length]``
 
-    filename : str
+    path : str, path, or file-like
         If provided, all other parameters are ignored, and the
         duration is calculated directly from the audio file.
         Note that this avoids loading the contents into memory,
@@ -741,6 +748,12 @@ def get_duration(
         As in ``load``, this can also be an integer or open file-handle
         that can be processed by ``soundfile``.
 
+    filename : Deprecated
+        Equivalent to ``path``
+
+        .. warning:: This parameter has been renamed to ``path`` in 0.10.
+            Support for ``filename=`` will be removed in 1.0.
+
     Returns
     -------
     d : float >= 0
@@ -749,28 +762,40 @@ def get_duration(
     Raises
     ------
     ParameterError
-        if none of ``y``, ``S``, or ``filename`` are provided.
+        if none of ``y``, ``S``, or ``path`` are provided.
 
     Notes
     -----
-    `get_duration` can be applied to a file (``filename``), a spectrogram (``S``),
+    `get_duration` can be applied to a file (``path``), a spectrogram (``S``),
     or audio buffer (``y, sr``).  Only one of these three options should be
-    provided.  If you do provide multiple options (e.g., ``filename`` and ``S``),
-    then ``filename`` takes precedence over ``S``, and ``S`` takes precedence over
+    provided.  If you do provide multiple options (e.g., ``path`` and ``S``),
+    then ``path`` takes precedence over ``S``, and ``S`` takes precedence over
     ``(y, sr)``.
     """
 
-    if filename is not None:
+    path = rename_kw(old_name='filename',
+                     old_value=filename,
+                     new_name='path',
+                     new_value=path,
+                     version_deprecated='0.10.0',
+                     version_removed='1.0')
+
+    if path is not None:
         try:
-            return sf.info(filename).duration
-        except RuntimeError:
-            with audioread.audio_open(filename) as fdesc:
+            return sf.info(path).duration
+        except sf.SoundFileRuntimeError:
+            warnings.warn("PySoundFile failed. Trying audioread instead."
+                          "\n\tAudioread support is deprecated in librosa 0.10.0"
+                          " and will be removed in version 1.0.",
+                          stacklevel=2,
+                          category=FutureWarning)
+            with audioread.audio_open(path) as fdesc:
                 return fdesc.duration
 
     if y is None:
         if S is None:
             raise ParameterError(
-                "At least one of (y, sr), S, or filename must be provided"
+                "At least one of (y, sr), S, or path must be provided"
             )
 
         n_frames = S.shape[-1]
@@ -815,7 +840,12 @@ def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
             return path.samplerate
 
         return sf.info(path).samplerate
-    except RuntimeError:
+    except sf.SoundFileRuntimeError:
+        warnings.warn("PySoundFile failed. Trying audioread instead."
+                      "\n\tAudioread support is deprecated in librosa 0.10.0"
+                      " and will be removed in version 1.0.",
+                      stacklevel=2,
+                      category=FutureWarning)
         with audioread.audio_open(path) as fdesc:
             return fdesc.samplerate
 
