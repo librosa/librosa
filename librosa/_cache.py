@@ -57,19 +57,19 @@ class CacheManager(object):
 
         return wrapper
 
-    def clear(self, *args: Any, **kwargs: Any) -> None:
+    def clear(self, *args: Any, **kwargs: Any) -> Any:
         return self.memory.clear(*args, **kwargs)
 
     def eval(self, *args: Any, **kwargs: Any) -> Any:
         return self.memory.eval(*args, **kwargs)
 
-    def format(self, *args: Any, **kwargs: Any) -> str:
+    def format(self, *args: Any, **kwargs: Any) -> Any:
         return self.memory.format(*args, **kwargs)
 
-    def reduce_size(self, *args: Any, **kwargs: Any) -> None:
+    def reduce_size(self, *args: Any, **kwargs: Any) -> Any:
         return self.memory.reduce_size(*args, **kwargs)
 
-    def warn(self, *args: Any, **kwargs: Any) -> None:
+    def warn(self, *args: Any, **kwargs: Any) -> Any:
         return self.memory.warn(*args, **kwargs)
 
 
