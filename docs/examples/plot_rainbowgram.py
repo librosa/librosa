@@ -3,9 +3,11 @@
 ================
 Rainbowgrams
 ================
+
 This notebook demonstrates how to use "Rainbowgrams" to simultaneously 
 visualize amplitude and (unwrapped) phase (differential) as demonstrated in the
-`NSynth paper <https://proceedings.mlr.press/v70/engel17a/engel17a.pdf>`
+`NSynth paper <https://proceedings.mlr.press/v70/engel17a/engel17a.pdf>`_.
+
 """
 # Code source: Brian McFee
 # License: ISC
