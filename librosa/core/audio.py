@@ -744,10 +744,10 @@ def get_duration(
         that can be processed by ``soundfile``.
 
     filename : Deprecated
-        Equivalent to path
+        Equivalent to ``path``
 
-        .. note:: This parameter has been renamed to `path` in 0.10.
-            Support for `filename=` will be removed in 1.0.
+        .. warning:: This parameter has been renamed to ``path`` in 0.10.
+            Support for ``filename=`` will be removed in 1.0.
 
     Returns
     -------
@@ -757,7 +757,7 @@ def get_duration(
     Raises
     ------
     ParameterError
-        if none of ``y``, ``S``, or ``filename`` are provided.
+        if none of ``y``, ``S``, or ``path`` are provided.
 
     Notes
     -----
