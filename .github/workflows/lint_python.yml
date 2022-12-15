@@ -4,7 +4,7 @@ jobs:
   lint_python:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-python@v2
       - run: pip install bandit codespell flake8 velin mypy pytest numpy
       - run: bandit --recursive --skip B101,B110 .
