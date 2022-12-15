@@ -62,7 +62,7 @@ def rename_kw(
             "{:}.".format(
                 dep_func[3], old_name, new_name, version_deprecated, version_removed
             ),
-            category=DeprecationWarning,
+            category=FutureWarning,
             stacklevel=3,
         )
 
