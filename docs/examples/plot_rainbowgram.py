@@ -43,7 +43,6 @@ img = librosa.display.specshow(np.diff(np.unwrap(np.angle(phase)-phase_exp, axis
                          y_axis='log', 
                          x_axis='time')
 ax.set_facecolor('#000')
-fig.colorbar(img, ax=ax)
 cbar = fig.colorbar(img, ticks=[-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
 cbar.ax.set(yticklabels=['-π', '-π/2', "0", 'π/2', 'π']);
 plt.show()
