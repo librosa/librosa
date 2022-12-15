@@ -943,7 +943,7 @@ def test_get_duration_filename():
     filename = os.path.join("tests", "data", "test2_8000.wav")
     true_duration = 30.197625
 
-    duration_fn = librosa.get_duration(filename=filename)
+    duration_fn = librosa.get_duration(path=filename)
     y, sr = librosa.load(filename, sr=None)
     duration_y = librosa.get_duration(y=y, sr=sr)
 
@@ -955,7 +955,7 @@ def test_get_duration_mp3():
     filename = os.path.join("tests", "data", "test1_22050.mp3")
     true_duration = 4.587528344671202
 
-    duration_fn = librosa.get_duration(filename=filename)
+    duration_fn = librosa.get_duration(path=filename)
     y, sr = librosa.load(filename, sr=None)
     duration_y = librosa.get_duration(y=y, sr=sr)
     # mp3 duration at low sampling rate isn't too reliable
@@ -2496,7 +2496,7 @@ def test_load_force_audioread():
 
 def test_get_duration_audioread():
     path = os.path.join("tests", "data", "test2_8000.mkv")
-    duration = librosa.get_duration(filename=path)
+    duration = librosa.get_duration(path=path)
 
     assert duration == 30.2
 
