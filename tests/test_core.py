@@ -2482,3 +2482,29 @@ def test_stft_bad_prealloc_dtype():
 def test_istft_bad_prealloc_shape():
     D = np.zeros((1025, 5), dtype=np.complex64)
     librosa.istft(D, out=np.zeros(100))
+
+
+# Tests to force audioread decoding
+def test_load_force_audioread():
+    path = os.path.join("tests", "data", "test2_8000.mkv")
+    with warnings.catch_warnings(record=True) as out:
+        y, sr = librosa.load(path)
+
+        assert len(out) > 0
+        assert "audioread" in str(out[0].message).lower()
+
+
+def test_get_duration_audioread():
+    path = os.path.join("tests", "data", "test2_8000.mkv")
+    duration = librosa.get_duration(filename=path)
+
+    assert duration == 30.2
+
+
+def test_get_samplerate_audioread():
+    path = os.path.join("tests", "data", "test2_8000.mkv")
+    sr = librosa.get_samplerate(path=path)
+
+    assert sr == 8000
+
+
