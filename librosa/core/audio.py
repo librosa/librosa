@@ -168,7 +168,7 @@ def load(
         try:
             y, sr_native = __soundfile_load(path, offset, duration, dtype)
 
-        except RuntimeError as exc:
+        except sf.SoundFileRuntimeError as exc:
             # If soundfile failed, try audioread instead
             if isinstance(path, (str, pathlib.PurePath)):
                 warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
@@ -763,7 +763,7 @@ def get_duration(
     if filename is not None:
         try:
             return sf.info(filename).duration
-        except RuntimeError:
+        except sf.SoundFileRuntimeError:
             with audioread.audio_open(filename) as fdesc:
                 return fdesc.duration
 
@@ -815,7 +815,7 @@ def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
             return path.samplerate
 
         return sf.info(path).samplerate
-    except RuntimeError:
+    except sf.SoundFileRuntimeError:
         with audioread.audio_open(path) as fdesc:
             return fdesc.samplerate
 

@@ -12,7 +12,7 @@ dependencies:
   - joblib>=0.14.0
   - decorator>=4.3.0
   - numba>=0.51.0
-  - pysoundfile>=0.10.2
+  - pysoundfile>=0.11.0
   - pooch>=1.0
   - packaging>=20.0
   - soxr-python>=0.3.2
