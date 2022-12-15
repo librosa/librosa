@@ -20,6 +20,7 @@ from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
+from ..util.decorators import deprecated
 from ..util.deprecation import Deprecated, rename_kw
 from .._typing import _FloatLike_co
 
@@ -84,6 +85,9 @@ def load(
         Pre-constructed audioread decoders are also supported here, see the example
         below.  This can be used, for example, to force a specific decoder rather
         than relying upon audioread to select one for you.
+
+        .. warning:: audioread support is deprecated as of version 0.10.0.
+            audioread support be removed in version 1.0.
 
     sr : number > 0 [scalar]
         target sampling rate
@@ -216,6 +220,7 @@ def __soundfile_load(path, offset, duration, dtype):
     return y, sr_native
 
 
+@deprecated(version="0.10.0", version_removed="1.0")
 def __audioread_load(path, offset, duration, dtype: DTypeLike):
     """Load an audio buffer using audioread.
 
@@ -779,6 +784,11 @@ def get_duration(
         try:
             return sf.info(path).duration
         except sf.SoundFileRuntimeError:
+            warnings.warn("PySoundFile failed. Trying audioread instead."
+                          "\n\tAudioread support is deprecated in librosa 0.10.0"
+                          " and will be removed in version 1.0.",
+                          stacklevel=2,
+                          category=FutureWarning)
             with audioread.audio_open(path) as fdesc:
                 return fdesc.duration
 
@@ -831,6 +841,11 @@ def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
 
         return sf.info(path).samplerate
     except sf.SoundFileRuntimeError:
+        warnings.warn("PySoundFile failed. Trying audioread instead."
+                      "\n\tAudioread support is deprecated in librosa 0.10.0"
+                      " and will be removed in version 1.0.",
+                      stacklevel=2,
+                      category=FutureWarning)
         with audioread.audio_open(path) as fdesc:
             return fdesc.samplerate
 
