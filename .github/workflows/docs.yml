@@ -28,15 +28,15 @@ jobs:
                       channel-priority: "strict"
                       envfile: ".github/environment-docs.yml"
         steps:
-        - uses: actions/checkout@v2
+        - uses: actions/checkout@v3
           with:
             fetch-depth: 0
 
         - name: Cache conda
-          uses: actions/cache@v2
+          uses: actions/cache@v3
           env:
             # Increase this value to reset cache if etc/example-environment.yml has not changed
-            CACHE_NUMBER: 1
+            CACHE_NUMBER: 0
           with:
             path: ~/conda_pkgs_dir
             key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
