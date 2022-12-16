@@ -168,7 +168,7 @@ def beat_track(
 
     # Estimate BPM if one was not provided
     if bpm is None:
-        bpm = tempo(
+        bpm: float = tempo(
             onset_envelope=onset_envelope,
             sr=sr,
             hop_length=hop_length,
@@ -180,15 +180,13 @@ def beat_track(
     beats = __beat_tracker(onset_envelope, bpm, float(sr) / hop_length, tightness, trim)
 
     if units == "frames":
-        pass
+        return (bpm, beats)
     elif units == "samples":
-        beats = core.frames_to_samples(beats, hop_length=hop_length)
+        return (bpm, core.frames_to_samples(beats, hop_length=hop_length))
     elif units == "time":
-        beats = core.frames_to_time(beats, hop_length=hop_length, sr=sr)
+        return (bpm, core.frames_to_time(beats, hop_length=hop_length, sr=sr))
     else:
         raise ParameterError("Invalid unit type: {}".format(units))
-
-    return (bpm, beats)
 
 
 @cache(level=30)
@@ -344,7 +342,7 @@ def tempo(
 
     # Kill everything above the max tempo
     if max_tempo is not None:
-        max_idx = np.argmax(bpms < max_tempo)
+        max_idx = int(np.argmax(bpms < max_tempo))
         logprior[:max_idx] = -np.inf
     # explicit axis expansion
     logprior = util.expand_to(logprior, ndim=tg.ndim, axes=-2)

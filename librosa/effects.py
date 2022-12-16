@@ -597,11 +597,11 @@ def split(
 
     # If the first frame had high energy, count it
     if non_silent[0]:
-        edges.insert(0, [0])
+        edges.insert(0, np.array([0]))
 
     # Likewise for the last frame
     if non_silent[-1]:
-        edges.append([len(non_silent)])
+        edges.append(np.array([len(non_silent)]))
 
     # Convert from frames to samples
     edges = core.frames_to_samples(np.concatenate(edges), hop_length=hop_length)
@@ -756,6 +756,7 @@ def deemphasis(
     return_zf: Literal[True] = ...,
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
+
 
 def deemphasis(
     y: np.ndarray,
