@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
 from __future__ import annotations
-from typing import List, Optional, Union, Any
+from typing import List, Optional, Union, Any, Set
 
 import os
 import glob
@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 
 from pkg_resources import resource_filename
-import pooch
+import pooch  # type: ignore
 
 from .exceptions import ParameterError
 
@@ -152,9 +152,9 @@ def example_info(key: str) -> None:
     if key not in __TRACKMAP:
         raise ParameterError("Unknown example key: {}".format(key))
 
-    license = __GOODBOY.fetch(__TRACKMAP[key]["path"] + ".txt")
+    license_file = __GOODBOY.fetch(__TRACKMAP[key]["path"] + ".txt")
 
-    with open(license, "r") as fdesc:
+    with open(license_file, "r") as fdesc:
         print("{:10s}\t{:s}".format(key, __TRACKMAP[key]["desc"]))
         print("-" * 68)
         for line in fdesc:
@@ -238,24 +238,24 @@ def find_files(
         ext = [ext]
 
     # Cast into a set
-    ext = set(ext)
+    ext_set = set(ext)
 
     # Generate upper-case versions
     if not case_sensitive:
         # Force to lower-case
-        ext = set([e.lower() for e in ext])
+        ext_set = {e.lower() for e in ext_set}
         # Add in upper-case versions
-        ext |= set([e.upper() for e in ext])
+        ext_set |= {e.upper() for e in ext_set}
 
-    files = set()
+    fileset = set()
 
     if recurse:
-        for walk in os.walk(directory):
-            files |= __get_files(walk[0], ext)
+        for walk in os.walk(directory):  # type: ignore
+            fileset |= __get_files(walk[0], ext_set)
     else:
-        files = __get_files(directory, ext)
+        fileset = __get_files(directory, ext_set)
 
-    files = list(files)
+    files = list(fileset)
     files.sort()
     files = files[offset:]
     if limit is not None:
@@ -264,7 +264,7 @@ def find_files(
     return files
 
 
-def __get_files(dir_name, extensions):
+def __get_files(dir_name: Union[str, os.PathLike[Any]], extensions: Set[str]):
     """Helper function to get files in a single directory"""
 
     # Expand out the directory
