@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 
 from pkg_resources import resource_filename
-import pooch  # type: ignore
+import pooch
 
 from .exceptions import ParameterError
 
@@ -95,7 +95,7 @@ def example(key: str, *, hq: bool = False) -> str:
     else:
         ext = ".ogg"
 
-    return __GOODBOY.fetch(__TRACKMAP[key]["path"] + ext)
+    return str(__GOODBOY.fetch(__TRACKMAP[key]["path"] + ext))
 
 
 ex = example

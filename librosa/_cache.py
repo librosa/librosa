@@ -4,7 +4,7 @@
 
 import os
 from typing import Any, Callable, TypeVar
-from joblib import Memory  # type: ignore
+from joblib import Memory
 from decorator import FunctionMaker
 
 
@@ -58,7 +58,7 @@ class CacheManager(object):
         return wrapper
 
     def clear(self, *args: Any, **kwargs: Any) -> None:
-        return self.memory.clear(*args, **kwargs)
+        self.memory.clear(*args, **kwargs)
 
     def eval(self, *args: Any, **kwargs: Any) -> Any:
         return self.memory.eval(*args, **kwargs)
@@ -67,10 +67,10 @@ class CacheManager(object):
         return self.memory.format(*args, **kwargs)
 
     def reduce_size(self, *args: Any, **kwargs: Any) -> None:
-        return self.memory.reduce_size(*args, **kwargs)
+        self.memory.reduce_size(*args, **kwargs)
 
     def warn(self, *args: Any, **kwargs: Any) -> None:
-        return self.memory.warn(*args, **kwargs)
+        self.memory.warn(*args, **kwargs)
 
 
 # Instantiate the cache from the environment
