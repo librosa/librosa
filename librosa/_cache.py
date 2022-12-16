@@ -4,7 +4,7 @@
 
 import os
 from typing import Any, Callable, TypeVar
-from joblib import Memory
+from joblib import Memory  # type: ignore
 from decorator import FunctionMaker
 
 

@@ -225,7 +225,7 @@ def frame(
 
 
 @cache(level=20)
-def valid_audio(y: np.ndarray, *, mono: bool = Deprecated()) -> bool:
+def valid_audio(y: np.ndarray, *, mono: Union[bool, Deprecated] = Deprecated()) -> bool:
     """Determine whether a variable contains valid audio data.
 
     The following conditions must be satisfied:
@@ -510,13 +510,13 @@ def expand_to(x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int]
     # Force axes into a tuple
 
     try:
-        axes = tuple(axes)
+        axes_tup = tuple(axes)  # type: ignore
     except TypeError:
-        axes = tuple([axes])
+        axes_tup = tuple([axes])
 
-    if len(axes) != x.ndim:
+    if len(axes_tup) != x.ndim:
         raise ParameterError(
-            "Shape mismatch between axes={} and input x.shape={}".format(axes, x.shape)
+            "Shape mismatch between axes={} and input x.shape={}".format(axes_tup, x.shape)
         )
 
     if ndim < x.ndim:
@@ -525,7 +525,7 @@ def expand_to(x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int]
         )
 
     shape = [1] * ndim
-    for i, axi in enumerate(axes):
+    for i, axi in enumerate(axes_tup):
         shape[axi] = x.shape[i]
 
     return x.reshape(shape)
