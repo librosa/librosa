@@ -1447,7 +1447,7 @@ def tone(
     if length is None:
         if duration is None:
             raise ParameterError('either "length" or "duration" must be provided')
-        length = duration * sr
+        length = int(duration * sr)
 
     if phi is None:
         phi = -np.pi * 0.5

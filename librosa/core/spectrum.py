@@ -20,7 +20,7 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
-from typing import Any, Callable, Optional, Tuple, Union, overload
+from typing import Any, Callable, Optional, Tuple, List, Union, overload
 from typing_extensions import Literal
 from .._typing import _WindowSpec, _PadMode
 
@@ -1612,7 +1612,7 @@ def iirt(
 
     bands_power = np.empty_like(y, shape=shape)
 
-    slices = [slice(None) for _ in bands_power.shape]
+    slices: List[Union[int, slice]] = [slice(None) for _ in bands_power.shape]
     for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates, filterbank_ct)):
 
         slices[-2] = i

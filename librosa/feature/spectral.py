@@ -1649,7 +1649,9 @@ def chroma_vqt(
     """
 
     # If intervals are provided as an array, override BPO
-    if not isinstance(intervals, str):
+    if intervals is None:
+        raise ParameterError('intervals must be specified for VQT chroma')
+    elif not isinstance(intervals, str):
         bins_per_octave = len(intervals)
 
     # Build the CQT if we don't have one already
