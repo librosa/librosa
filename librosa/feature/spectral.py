@@ -1563,7 +1563,7 @@ def chroma_vqt(
     V: Optional[np.ndarray] = None,
     hop_length: int = 512,
     fmin: Optional[float] = None,
-    intervals: Optional[Union[str, Collection[float]]] = None,
+    intervals: Union[str, Collection[float]],
     norm: Optional[float] = np.inf,
     threshold: float = 0.0,
     n_octaves: int = 7,
@@ -1649,9 +1649,7 @@ def chroma_vqt(
     """
 
     # If intervals are provided as an array, override BPO
-    if intervals is None:
-        raise ParameterError('intervals must be specified for VQT chroma')
-    elif not isinstance(intervals, str):
+    if not isinstance(intervals, str):
         bins_per_octave = len(intervals)
 
     # Build the CQT if we don't have one already
