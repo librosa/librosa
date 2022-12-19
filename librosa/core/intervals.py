@@ -464,8 +464,8 @@ def plimit_intervals(
         new_point = frontier.pop(best_f)
         intervals.append(new_point)
 
-        for seed in seeds:
-            new_seed = tuple(np.array(new_point) + np.array(seed))
+        for _ in seeds:
+            new_seed = tuple(np.array(new_point) + np.array(_))
             if new_seed not in intervals and new_seed not in frontier:
                 frontier.append(new_seed)
 

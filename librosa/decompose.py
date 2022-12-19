@@ -351,19 +351,21 @@ def hpss(
     else:
         phase = 1
 
+    # Ignore type checks below because mypy won't
+    # introspect through np.isscalar checks
     if np.isscalar(kernel_size):
-        win_harm = kernel_size
-        win_perc = kernel_size
+        win_harm: int = kernel_size  # type: ignore
+        win_perc: int = kernel_size  # type: ignore
     else:
-        win_harm = kernel_size[0]
-        win_perc = kernel_size[1]
+        win_harm: int = kernel_size[0]  # type: ignore
+        win_perc: int = kernel_size[1]  # type: ignore
 
     if np.isscalar(margin):
-        margin_harm = margin
-        margin_perc = margin
+        margin_harm: float = margin  # type: ignore
+        margin_perc: float = margin  # type: ignore
     else:
-        margin_harm = margin[0]
-        margin_perc = margin[1]
+        margin_harm: float = margin[0]  # type: ignore
+        margin_perc: float = margin[1]  # type: ignore
 
     # margin minimum is 1.0
     if margin_harm < 1 or margin_perc < 1:
@@ -372,10 +374,10 @@ def hpss(
         )
 
     # shape for kernels
-    harm_shape = [1 for _ in S.shape]
+    harm_shape = [1] * S.ndim
     harm_shape[-1] = win_harm
 
-    perc_shape = [1 for _ in S.shape]
+    perc_shape = [1] * S.ndim
     perc_shape[-2] = win_perc
 
     # Compute median filters. Pre-allocation here preserves memory layout.

@@ -798,13 +798,13 @@ def wavelet_lengths(
         bpo[1:-1] = 2 / (logf[2:] - logf[:-2])
 
         alpha = (2.0 ** (2 / bpo) - 1) / (2.0 ** (2 / bpo) + 1)
-    elif alpha is None:
+    if alpha is None:
         raise ParameterError(
             "Cannot construct a wavelet basis for a single frequency if alpha is not provided"
         )
 
     if gamma is None:
-        gamma = alpha * 24.7 / 0.108
+        gamma = alpha * 24.7 / 0.108  # type: ignore
 
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name

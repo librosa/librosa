@@ -346,15 +346,15 @@ def mela_to_svara(
     svara_map = [
         "Sa",
         "Ri\u2081",
-        None,  # Ri2/Ga1
-        None,  # Ri3/Ga2
+        "",  # Ri2/Ga1
+        "",  # Ri3/Ga2
         "Ga\u2083",
         "Ma\u2081",
         "Ma\u2082",
         "Pa",
         "Dha\u2081",
-        None,  # Dha2/Ni1
-        None,  # Dha3/Ni2
+        "",  # Dha2/Ni1
+        "",  # Dha3/Ni2
         "Ni\u2083",
     ]
 
@@ -402,15 +402,12 @@ def mela_to_svara(
         svara_map[10] = "Ni\u2082"
 
     if abbr:
-        svara_map = [
-            s.translate(str.maketrans({"a": "", "h": "", "i": ""})) for s in svara_map
-        ]
+        t_abbr = str.maketrans({"a": "", "h": "", "i": ""})
+        svara_map = [s.translate(t_abbr) for s in svara_map]
 
     if not unicode:
-        svara_map = [
-            s.translate(str.maketrans({"\u2081": "1", "\u2082": "2", "\u2083": "3"}))
-            for s in svara_map
-        ]
+        t_uni = str.maketrans({"\u2081": "1", "\u2082": "2", "\u2083": "3"})
+        svara_map = [s.translate(t_uni) for s in svara_map]
 
     return list(svara_map)
 
@@ -967,7 +964,9 @@ def interval_to_fjs(
     array(['G', 'F', 'A⁵'], dtype='<U2')
 
     """
-    if interval <= 0:
+    # suppressing the type check here because mypy won't introspect through
+    # numpy vectorization
+    if interval <= 0:  # type: ignore
         raise ParameterError(f"Interval={interval} must be strictly positive")
 
     # Find the approximate number of fifth-steps to get within tolerance
