@@ -168,7 +168,7 @@ def beat_track(
 
     # Estimate BPM if one was not provided
     if bpm is None:
-        bpm: float = tempo(
+        bpm = tempo(
             onset_envelope=onset_envelope,
             sr=sr,
             hop_length=hop_length,

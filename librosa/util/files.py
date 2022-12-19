@@ -88,7 +88,7 @@ def example(key: str, *, hq: bool = False) -> str:
     """
 
     if key not in __TRACKMAP:
-        raise ParameterError("Unknown example key: {}".format(key))
+        raise ParameterError(f"Unknown example key: {key}")
 
     if hq:
         ext = ".hq.ogg"
@@ -150,7 +150,7 @@ def example_info(key: str) -> None:
     """
 
     if key not in __TRACKMAP:
-        raise ParameterError("Unknown example key: {}".format(key))
+        raise ParameterError(f"Unknown example key: {key}")
 
     license_file = __GOODBOY.fetch(__TRACKMAP[key]["path"] + ".txt")
 
@@ -238,22 +238,22 @@ def find_files(
         ext = [ext]
 
     # Cast into a set
-    ext_set = set(ext)
+    ext = set(ext)
 
     # Generate upper-case versions
     if not case_sensitive:
         # Force to lower-case
-        ext_set = {e.lower() for e in ext_set}
+        ext = {e.lower() for e in ext}
         # Add in upper-case versions
-        ext_set |= {e.upper() for e in ext_set}
+        ext |= {e.upper() for e in ext}
 
     fileset = set()
 
     if recurse:
         for walk in os.walk(directory):  # type: ignore
-            fileset |= __get_files(walk[0], ext_set)
+            fileset |= __get_files(walk[0], ext)
     else:
-        fileset = __get_files(directory, ext_set)
+        fileset = __get_files(directory, ext)
 
     files = list(fileset)
     files.sort()
