@@ -940,7 +940,7 @@ def vqt(
 
     freqs_top = freqs[-bins_per_octave:]
 
-    fmax_t = np.max(freqs_top)
+    fmax_t: float = np.max(freqs_top)
     alpha = __bpo_to_alpha(bins_per_octave)
 
     lengths, filter_cutoff = filters.wavelet_lengths(
@@ -1222,7 +1222,7 @@ def griffinlim_cqt(
     length: Optional[int] = None,
     momentum: float = 0.99,
     init: Optional[str] = "random",
-    random_state: Optional[Union[int, np.random.RandomState]] = None,
+    random_state: Optional[Union[int, np.random.RandomState, np.random.Generator]] = None,
 ) -> np.ndarray:
     """Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
     algorithm.
@@ -1375,7 +1375,7 @@ def griffinlim_cqt(
         fmin = note_to_hz("C1")
 
     if random_state is None:
-        rng = np.random
+        rng = np.random.default_rng()
     elif isinstance(random_state, int):
         rng = np.random.RandomState(seed=random_state)
     elif isinstance(random_state, np.random.RandomState):
@@ -1398,7 +1398,7 @@ def griffinlim_cqt(
 
     if init == "random":
         # randomly initialize the phase
-        angles[:] = util.phasor(2 * np.pi * rng.rand(*C.shape))
+        angles[:] = util.phasor(2 * np.pi * rng.random(size=C.shape))
     elif init is None:
         # Initialize an all ones complex matrix
         angles[:] = 1.0

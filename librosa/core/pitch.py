@@ -193,7 +193,7 @@ def piptrack(
     center: bool = True,
     pad_mode: _PadMode = "constant",
     ref: Optional[Union[float, Callable]] = None,
-) -> np.ndarray:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Pitch tracking on thresholded parabolically-interpolated STFT.
 
     This implementation uses the parabolic interpolation method described by [#]_.
@@ -433,7 +433,8 @@ def _pi_stencil(x: np.ndarray) -> np.ndarray:
 
     if np.abs(b) >= np.abs(a):
         # If this happens, we'll shift by more than 1 bin
-        return 0
+        # Suppressing types because mypy has no idea about stencils
+        return 0  # type: ignore
 
     return -b / a
 
