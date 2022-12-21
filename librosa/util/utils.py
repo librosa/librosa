@@ -981,7 +981,10 @@ def normalize(
     # For max/min norms, filling with 1 works
     fill_norm = 1
 
-    if norm == np.inf:
+    if norm is None:
+        return S
+
+    elif norm == np.inf:
         length = np.max(mag, axis=axis, keepdims=True)
 
     elif norm == -np.inf:
@@ -1000,9 +1003,6 @@ def normalize(
             fill_norm = mag.size ** (-1.0 / norm)
         else:
             fill_norm = mag.shape[axis] ** (-1.0 / norm)
-
-    elif norm is None:
-        return S
 
     else:
         raise ParameterError("Unsupported norm: {}".format(repr(norm)))
@@ -1549,7 +1549,7 @@ def index_to_slice(
 @cache(level=40)
 def sync(
     data: np.ndarray,
-    idx: Union[Iterable[int], Iterable[slice]],
+    idx: Union[Sequence[int], Sequence[slice]],
     *,
     aggregate: Optional[Callable[..., Any]] = None,
     pad: bool = True,
@@ -1568,7 +1568,7 @@ def sync(
     ----------
     data : np.ndarray
         multi-dimensional array of features
-    idx : iterable of ints or slices
+    idx : sequence of ints or slices
         Either an ordered array of boundary indices, or
         an iterable collection of slice objects.
     aggregate : function
@@ -1930,7 +1930,7 @@ def fill_off_diagonal(x: np.ndarray, *, radius: float, value: int = 0) -> None:
 
 
 def cyclic_gradient(
-    data: np.ndarray, *, edge_order: int = 1, axis: int = -1
+    data: np.ndarray, *, edge_order: Literal[1, 2] = 1, axis: int = -1
 ) -> np.ndarray:
     """Estimate the gradient of a function over a uniformly sampled,
     periodic domain.
