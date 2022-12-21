@@ -2527,7 +2527,7 @@ def griffinlim(
     pad_mode: _PadMode = "constant",
     momentum: float = 0.99,
     init: Optional[str] = "random",
-    random_state: Optional[Union[int, np.random.RandomState]] = None,
+    random_state: Optional[Union[int, np.random.RandomState, np.random.Generator]] = None,
 ) -> np.ndarray:
 
     """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
@@ -2652,7 +2652,7 @@ def griffinlim(
     """
 
     if random_state is None:
-        rng = np.random
+        rng = np.random.default_rng()
     elif isinstance(random_state, int):
         rng = np.random.RandomState(seed=random_state)
     elif isinstance(random_state, np.random.RandomState):
@@ -2679,7 +2679,7 @@ def griffinlim(
 
     if init == "random":
         # randomly initialize the phase
-        angles[:] = util.phasor((2 * np.pi * rng.rand(*S.shape)))
+        angles[:] = util.phasor((2 * np.pi * rng.random(size=S.shape)))
     elif init is None:
         # Initialize an all ones complex matrix
         angles[:] = 1.0
