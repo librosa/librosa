@@ -56,6 +56,26 @@ __all__ = [
 ]
 
 
+@overload
+def frames_to_samples(
+    frames: _IntLike_co,
+    *,
+    hop_length: int = 512,
+    n_fft: Optional[int] = None
+) -> np.integer[Any]:
+    ...
+
+
+@overload
+def frames_to_samples(
+    frames: _SequenceLike[_IntLike_co],
+    *,
+    hop_length: int = 512,
+    n_fft: Optional[int] = None
+) -> np.ndarray:
+    ...
+
+
 def frames_to_samples(
     frames: _ScalarOrSequence[_IntLike_co],
     *,
