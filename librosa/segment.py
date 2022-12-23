@@ -700,7 +700,7 @@ def recurrence_to_lag(
     lag = util.shear(rec, factor=-1, axis=axis)
 
     if sparse:
-        # Supress type check, mypy doesn't know
+        # Suppress type check, mypy doesn't know
         # that lag is sparse here
         lag = lag.asformat(fmt)  # type: ignore
 
