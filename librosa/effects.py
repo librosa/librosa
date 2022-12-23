@@ -610,7 +610,8 @@ def split(
     edges = np.minimum(edges, y.shape[-1])
 
     # Stack the results back as an ndarray
-    return edges.reshape((-1, 2))
+    edges = edges.reshape((-1, 2))  # type: np.ndarray
+    return edges
 
 
 @overload
@@ -728,6 +729,9 @@ def preemphasis(
 
     zi = np.atleast_1d(zi)
 
+    y_out : np.ndarray
+    z_f : np.ndarray
+
     y_out, z_f = scipy.signal.lfilter(b, a, y, zi=np.asarray(zi, dtype=y.dtype))
 
     if return_zf:
@@ -826,6 +830,8 @@ def deemphasis(
     b = np.array([1.0, -coef], dtype=y.dtype)
     a = np.array([1.0], dtype=y.dtype)
 
+    y_out: np.ndarray
+    zf: np.ndarray
     if zi is None:
         # initialize with all zeros
         zi = np.zeros(list(y.shape[:-1]) + [1], dtype=y.dtype)

@@ -351,7 +351,8 @@ def tempo(
     # Using log1p here for numerical stability
     best_period = np.argmax(np.log1p(1e6 * tg) + logprior, axis=-2)
 
-    return np.take(bpms, best_period)
+    tempo_est: np.ndarray = np.take(bpms, best_period)
+    return tempo_est
 
 
 def plp(
@@ -670,7 +671,7 @@ def __last_beat(cumscore):
     return np.argwhere((cumscore * maxes * 2 > med_score)).max()
 
 
-def __trim_beats(localscore, beats, trim):
+def __trim_beats(localscore: np.ndarray, beats: np.ndarray, trim: bool) -> np.ndarray:
     """Final post-processing: throw out spurious leading/trailing beats"""
 
     smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.hann(5), "same")

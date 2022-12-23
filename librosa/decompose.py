@@ -187,12 +187,15 @@ def decompose(
 
         transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
 
+    # Suppressing type errors here because we don't want to overly restrict
+    # the transformer object type
+    activations: np.ndarray
     if fit:
-        activations = transformer.fit_transform(S).T
+        activations = transformer.fit_transform(S).T  # type: ignore
     else:
-        activations = transformer.transform(S).T
+        activations = transformer.transform(S).T  # type: ignore
 
-    components = transformer.components_
+    components: np.ndarray = transformer.components_  # type: ignore
     component_shape = orig_shape[:-1] + [-1]
     # use order='F' here to preserve component ordering
     components = components.reshape(component_shape[::-1], order="F").T
@@ -345,6 +348,8 @@ def hpss(
     >>> H, P = librosa.decompose.hpss(D, margin=(1.0,5.0))
 
     """
+
+    phase: Union[float, np.ndarray]
 
     if np.iscomplexobj(S):
         S, phase = core.magphase(S)
@@ -526,21 +531,25 @@ def nn_filter(
     if aggregate is None:
         aggregate = np.mean
 
+    rec_s: scipy.sparse.spmatrix
+
     if rec is None:
         kwargs = dict(kwargs)
         kwargs["sparse"] = True
-        rec = segment.recurrence_matrix(S, axis=axis, **kwargs)
+        rec_s = segment.recurrence_matrix(S, axis=axis, **kwargs)
     elif not scipy.sparse.issparse(rec):
-        rec = scipy.sparse.csc_matrix(rec)
+        rec_s = scipy.sparse.csc_matrix(rec)
+    else:
+        rec_s = rec
 
-    if rec.shape[0] != S.shape[axis] or rec.shape[0] != rec.shape[1]:
+    if rec_s.shape[0] != S.shape[axis] or rec_s.shape[0] != rec_s.shape[1]:
         raise ParameterError(
             "Invalid self-similarity matrix shape "
-            "rec.shape={} for S.shape={}".format(rec.shape, S.shape)
+            "rec.shape={} for S.shape={}".format(rec_s.shape, S.shape)
         )
 
     return __nn_filter_helper(
-        rec.data, rec.indices, rec.indptr, S.swapaxes(0, axis), aggregate
+        rec_s.data, rec_s.indices, rec_s.indptr, S.swapaxes(0, axis), aggregate
     ).swapaxes(0, axis)
 
 
