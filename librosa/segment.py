@@ -692,14 +692,17 @@ def recurrence_to_lag(
                 rec_fmt = "csc"
             rec = scipy.sparse.kron(padding, rec, format=rec_fmt)
         else:
-            padding = [(0, 0), (0, 0)]
-            padding[(1 - axis)] = (0, t)
-            rec = np.pad(rec, padding, mode="constant")
+            padding = np.array([(0, 0), (0, 0)])
+            padding[(1 - axis), :] = [0, t]
+            # Suppress type check, mypy doesn't know that rec is an ndarray here
+            rec = np.pad(rec, padding, mode="constant")  # type: ignore
 
     lag = util.shear(rec, factor=-1, axis=axis)
 
     if sparse:
-        lag = lag.asformat(fmt)
+        # Supress type check, mypy doesn't know
+        # that lag is sparse here
+        lag = lag.asformat(fmt)  # type: ignore
 
     return lag
 
@@ -1204,6 +1207,6 @@ def path_enhance(
 
     if clip:
         # Clip the output in-place
-        np.clip(R_smooth, 0, None, out=R_smooth)
+        np.clip(R_smooth, 0, None, out=R_smooth)  # type: ignore
 
     return np.asanyarray(R_smooth)
