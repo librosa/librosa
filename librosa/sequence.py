@@ -68,10 +68,10 @@ def dtw(
     weights_add: Optional[np.ndarray] = ...,
     weights_mul: Optional[np.ndarray] = ...,
     subseq: bool = ...,
-    backtrack: Literal[False] = ...,
+    backtrack: Literal[False],
     global_constraints: bool = ...,
     band_rad: float = ...,
-    return_steps: Literal[False] = ...,
+    return_steps: Literal[False],
 ) -> np.ndarray:
     ...
 
@@ -86,10 +86,10 @@ def dtw(
     weights_add: Optional[np.ndarray] = ...,
     weights_mul: Optional[np.ndarray] = ...,
     subseq: bool = ...,
-    backtrack: Literal[False] = ...,
+    backtrack: Literal[False],
     global_constraints: bool = ...,
     band_rad: float = ...,
-    return_steps: Literal[True] = ...,
+    return_steps: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
 
@@ -104,10 +104,10 @@ def dtw(
     weights_add: Optional[np.ndarray] = ...,
     weights_mul: Optional[np.ndarray] = ...,
     subseq: bool = ...,
-    backtrack: Literal[True] = ...,
+    backtrack: Literal[True],
     global_constraints: bool = ...,
     band_rad: float = ...,
-    return_steps: Literal[False] = ...,
+    return_steps: Literal[False],
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
 
@@ -122,10 +122,10 @@ def dtw(
     weights_add: Optional[np.ndarray] = ...,
     weights_mul: Optional[np.ndarray] = ...,
     subseq: bool = ...,
-    backtrack: Literal[True] = ...,
+    backtrack: Literal[True],
     global_constraints: bool = ...,
     band_rad: float = ...,
-    return_steps: Literal[True] = ...,
+    return_steps: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     ...
 
@@ -275,6 +275,11 @@ def dtw(
         step_sizes_sigma = np.concatenate((default_steps, step_sizes_sigma))
         weights_add = np.concatenate((default_weights_add, weights_add))
         weights_mul = np.concatenate((default_weights_mul, weights_mul))
+
+    # These asserts are bad, but mypy cannot trace the code paths properly
+    assert step_sizes_sigma is not None
+    assert weights_add is not None
+    assert weights_mul is not None
 
     if np.any(step_sizes_sigma < 0):
         raise ParameterError("step_sizes_sigma cannot contain negative values")

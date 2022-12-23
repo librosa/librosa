@@ -1861,7 +1861,7 @@ def tiny(x: Union[float, np.ndarray]) -> float:
     return np.finfo(dtype).tiny
 
 
-def fill_off_diagonal(x: np.ndarray, *, radius: float, value: int = 0) -> None:
+def fill_off_diagonal(x: np.ndarray, *, radius: float, value: float = 0) -> None:
     """Sets all cells of a matrix to a given ``value``
     if they lie outside a constraint region.
 
@@ -1881,7 +1881,7 @@ def fill_off_diagonal(x: np.ndarray, *, radius: float, value: int = 0) -> None:
     radius : float
         The band radius (1/2 of the width) will be
         ``int(radius*min(x.shape))``
-    value : int
+    value : float
         ``x[n, m] = value`` when ``(n, m)`` lies outside the band.
 
     Examples
