@@ -7,7 +7,7 @@ import numba
 
 from .exceptions import ParameterError
 from .utils import valid_intervals
-from ..typing import _SequenceLike
+from .._typing import _SequenceLike
 
 __all__ = ["match_intervals", "match_events"]
 

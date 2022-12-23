@@ -1912,7 +1912,7 @@ def fill_off_diagonal(x: np.ndarray, *, radius: float, value: int = 0) -> None:
     nx, ny = x.shape
 
     # Calculate the radius in indices, rather than proportion
-    radius = np.round(radius * np.min(x.shape))
+    radius = int(np.round(radius * np.min(x.shape)))
 
     nx, ny = x.shape
     offset = np.abs((x.shape[0] - x.shape[1]))
@@ -2458,7 +2458,8 @@ def abs2(x: _NumberOrArray) -> _NumberOrArray:
     if np.iscomplexobj(x):
         return _cabs2(x)
     else:
-        return x**2
+        # suppress type check, mypy doesn't know this is real
+        return x**2  # type: ignore
 
 
 @numba.vectorize(
