@@ -7,6 +7,7 @@ import numba
 
 from .exceptions import ParameterError
 from .utils import valid_intervals
+from ..typing import _SequenceLike
 
 __all__ = ["match_intervals", "match_events"]
 
@@ -210,8 +211,8 @@ def match_intervals(
 
 
 def match_events(
-    events_from: np.ndarray,
-    events_to: np.ndarray,
+    events_from: _SequenceLike,
+    events_to: _SequenceLike,
     left: bool = True,
     right: bool = True,
 ) -> np.ndarray:

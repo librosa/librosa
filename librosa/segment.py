@@ -282,7 +282,7 @@ def cross_similarity(
     xsim.eliminate_zeros()
 
     if mode == "connectivity":
-        xsim = xsim.astype(np.bool)
+        xsim = xsim.astype(bool)
     elif mode == "affinity":
         if bandwidth is None:
             bandwidth = np.nanmedian(xsim.max(axis=1).data)
@@ -577,7 +577,7 @@ def recurrence_matrix(
     rec.eliminate_zeros()
 
     if mode == "connectivity":
-        rec = rec.astype(np.bool)
+        rec = rec.astype(bool)
     elif mode == "affinity":
         if bandwidth is None:
             bandwidth = np.nanmedian(rec.max(axis=1).data)
