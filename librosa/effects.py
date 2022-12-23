@@ -753,7 +753,7 @@ def deemphasis(
     *,
     coef: float = ...,
     zi: Optional[ArrayLike] = ...,
-    return_zf: Literal[True] = ...,
+    return_zf: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
 
