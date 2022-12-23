@@ -43,7 +43,7 @@ from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 from typing import Any, Callable, Optional, TypeVar, Union, overload
 from typing_extensions import Literal
-from ._typing import _WindowSpec
+from ._typing import _WindowSpec, _FloatLike_co
 
 __all__ = [
     "cross_similarity",
@@ -91,7 +91,7 @@ def cross_similarity(
     metric: str = "euclidean",
     sparse: bool = False,
     mode: str = "connectivity",
-    bandwidth: Optional[float] = None,
+    bandwidth: Optional[_FloatLike_co] = None,
 ) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
     """Compute cross-similarity from one data sequence to a reference sequence.
 
@@ -323,7 +323,7 @@ def recurrence_matrix(
     sym: bool = ...,
     sparse: Literal[False] = ...,
     mode: str = ...,
-    bandwidth: Optional[float] = ...,
+    bandwidth: Optional[_FloatLike_co] = ...,
     self: bool = ...,
     axis: int = ...,
 ) -> np.ndarray:
@@ -339,7 +339,7 @@ def recurrence_matrix(
     sym: bool = False,
     sparse: bool = False,
     mode: str = "connectivity",
-    bandwidth: Optional[float] = None,
+    bandwidth: Optional[_FloatLike_co] = None,
     self: bool = False,
     axis: int = -1,
 ) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
@@ -678,7 +678,8 @@ def recurrence_to_lag(
     sparse = scipy.sparse.issparse(rec)
 
     if sparse:
-        fmt = rec.format
+        # suppress type check here, mypy doesn't know about issparse
+        fmt = rec.format  # type: ignore
 
     t = rec.shape[axis]
 
@@ -1205,4 +1206,4 @@ def path_enhance(
         # Clip the output in-place
         np.clip(R_smooth, 0, None, out=R_smooth)
 
-    return R_smooth
+    return np.asanyarray(R_smooth)
