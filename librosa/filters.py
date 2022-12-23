@@ -242,7 +242,7 @@ def mel(
         # Slaney-style mel is scaled to be approx constant energy per channel
         enorm = 2.0 / (mel_f[2 : n_mels + 2] - mel_f[:n_mels])
         weights *= enorm[:, np.newaxis]
-    elif np.issubdtype(type(norm), np.number):
+    elif np.issubdtype(type(norm), np.number) or norm is None:
         weights = util.normalize(weights, norm=norm, axis=-1)  # type: ignore
     else:
         raise ParameterError(f"Unsupported norm={norm}")
