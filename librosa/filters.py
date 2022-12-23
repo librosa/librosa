@@ -60,7 +60,7 @@ from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.convert import fft_frequencies, mel_frequencies
 from numpy.typing import ArrayLike, DTypeLike
 from typing import Any, List, Optional, Tuple, Union
-from ._typing import _WindowSpec
+from ._typing import _WindowSpec, _FloatLike_co
 
 __all__ = [
     "mel",
@@ -238,12 +238,14 @@ def mel(
         # .. then intersect them with each other and zero
         weights[i] = np.maximum(0, np.minimum(lower, upper))
 
-    if norm == "slaney":
+    if isinstance(norm, str) and norm == "slaney":
         # Slaney-style mel is scaled to be approx constant energy per channel
         enorm = 2.0 / (mel_f[2 : n_mels + 2] - mel_f[:n_mels])
         weights *= enorm[:, np.newaxis]
+    elif np.issubdtype(type(norm), np.number):
+        weights = util.normalize(weights, norm=norm, axis=-1)  # type: ignore
     else:
-        weights = util.normalize(weights, norm=norm, axis=-1)
+        raise ParameterError(f"Unsupported norm={norm}")
 
     # Only check weights if f_mel[0] is positive
     if not np.all((mel_f[:-2] == 0) | (weights.max(axis=1) > 0)):
@@ -551,13 +553,16 @@ def constant_q(
     >>> ax[1].set(ylabel='CQ filters', title='CQ filter magnitudes (frequency domain)')
     """
 
+    fmin_: float
     if fmin is None:
-        fmin = note_to_hz("C1")
+        fmin_ = note_to_hz("C1")  # type: ignore
+    else:
+        fmin_ = fmin
 
     # Pass-through parameters to get the filter lengths
     lengths = constant_q_lengths(
         sr=sr,
-        fmin=fmin,
+        fmin=fmin_,
         n_bins=n_bins,
         bins_per_octave=bins_per_octave,
         window=window,
@@ -565,7 +570,7 @@ def constant_q(
         gamma=gamma,
     )
 
-    freqs = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
+    freqs = fmin_ * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
 
     # Build the filters
     filters = []
@@ -674,7 +679,7 @@ def constant_q_lengths(
         )
 
     # Convert frequencies to filter lengths
-    lengths = Q * sr / (freq + gamma / alpha)
+    lengths: np.ndarray = Q * sr / (freq + gamma / alpha)
 
     return lengths
 
@@ -687,7 +692,7 @@ def wavelet_lengths(
     window: _WindowSpec = "hann",
     filter_scale: float = 1,
     gamma: Optional[float] = 0,
-    alpha: Optional[float] = None,
+    alpha: Optional[Union[float, np.ndarray]] = None,
 ) -> Tuple[np.ndarray, float]:
     """Return length of each filter in a wavelet basis.
 
@@ -803,18 +808,20 @@ def wavelet_lengths(
             "Cannot construct a wavelet basis for a single frequency if alpha is not provided"
         )
 
+    gamma_: Union[_FloatLike_co, np.ndarray]
     if gamma is None:
-        gamma = alpha * 24.7 / 0.108  # type: ignore
-
+        gamma_ = alpha * 24.7 / 0.108
+    else:
+        gamma_ = gamma
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
     Q = float(filter_scale) / alpha
 
     # How far up does our highest frequency reach?
-    f_cutoff = max(freqs * (1 + 0.5 * window_bandwidth(window) / Q) + 0.5 * gamma)
+    f_cutoff = max(freqs * (1 + 0.5 * window_bandwidth(window) / Q) + 0.5 * gamma_)
 
     # Convert frequencies to filter lengths
-    lengths = Q * sr / (freqs + gamma / alpha)
+    lengths = Q * sr / (freqs + gamma_ / alpha)
 
     return lengths, f_cutoff
 
@@ -1048,8 +1055,11 @@ def cq_to_chroma(
     # How many fractional bins are we merging?
     n_merge = float(bins_per_octave) / n_chroma
 
+    fmin_: _FloatLike_co
     if fmin is None:
-        fmin = note_to_hz("C1")
+        fmin_ = note_to_hz("C1")
+    else:
+        fmin_ = fmin
 
     if np.mod(n_merge, 1) != 0:
         raise ParameterError(
@@ -1059,7 +1069,7 @@ def cq_to_chroma(
         )
 
     # Tile the identity to merge fractional bins
-    cq_to_ch = np.repeat(np.eye(n_chroma), n_merge, axis=1)
+    cq_to_ch = np.repeat(np.eye(n_chroma), int(n_merge), axis=1)
 
     # Roll it left to center on the target bin
     cq_to_ch = np.roll(cq_to_ch, -int(n_merge // 2), axis=1)
@@ -1072,7 +1082,7 @@ def cq_to_chroma(
 
     # What's the note number of the first bin in the CQT?
     # midi uses 12 bins per octave here
-    midi_0 = np.mod(hz_to_midi(fmin), 12)
+    midi_0 = np.mod(hz_to_midi(fmin_), 12)
 
     if base_c:
         # rotate to C
@@ -1203,7 +1213,8 @@ def get_window(
     elif isinstance(window, (str, tuple)) or np.isscalar(window):
         # TODO: if we add custom window functions in librosa, call them here
 
-        return scipy.signal.get_window(window, Nx, fftbins=fftbins)
+        win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins)
+        return win
 
     elif isinstance(window, (np.ndarray, list)):
         if len(window) == Nx:
@@ -1213,7 +1224,7 @@ def get_window(
             "Window size mismatch: " "{:d} != {:d}".format(len(window), Nx)
         )
     else:
-        raise ParameterError("Invalid window specification: {}".format(window))
+        raise ParameterError(f"Invalid window specification: {window!r}")
 
 
 @cache(level=10)
