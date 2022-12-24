@@ -1494,8 +1494,8 @@ def cqt_frequencies(
         Center frequency for each CQT bin
     """
 
-    correction = 2.0 ** (float(tuning) / bins_per_octave)
-    frequencies = 2.0 ** (np.arange(0, n_bins, dtype=float) / bins_per_octave)
+    correction: float = 2.0 ** (float(tuning) / bins_per_octave)
+    frequencies: np.ndarray = 2.0 ** (np.arange(0, n_bins, dtype=float) / bins_per_octave)
 
     return correction * fmin * frequencies
 
@@ -1928,7 +1928,7 @@ def D_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([8.3046305e-3, 1018.7, 1039.6, 3136.5, 3424, 282.7, 1160]) ** 2.0
-    weights = 20.0 * (
+    weights: np.ndarray = 20.0 * (
         0.5 * np.log10(f_sq)
         - np.log10(const[0])
         + 0.5
@@ -1940,7 +1940,10 @@ def D_weighting(
         )
     )
 
-    return weights if min_db is None else np.maximum(min_db, weights)
+    if min_db is None:
+        return weights
+    else:
+        return np.maximum(min_db, weights)
 
 
 def Z_weighting(frequencies: Sized, *, min_db: Optional[float]=None) -> np.ndarray:  # pylint: disable=invalid-name
@@ -2314,7 +2317,8 @@ def midi_to_svara_h(
 
     SVARA_MAP_SHORT = list(s[0] for s in SVARA_MAP)
 
-    svara_num = int(np.round(midi - Sa))
+    # mypy does not understand vectorization
+    svara_num = int(np.round(midi - Sa))  # type: ignore
 
     if abbr:
         svara = SVARA_MAP_SHORT[svara_num % 12]
