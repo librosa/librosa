@@ -12,7 +12,7 @@ from .._typing import _SequenceLike
 __all__ = ["match_intervals", "match_events"]
 
 
-@numba.jit(nopython=True, cache=True)
+@numba.jit(nopython=True, cache=True)  # type: ignore
 def __jaccard(
     int_a: np.ndarray, int_b: np.ndarray
 ):  # pragma: no cover
@@ -60,8 +60,8 @@ def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no co
     return best_idx
 
 
-@numba.jit(nopython=True, cache=True)
-def __match_intervals(intervals_from, intervals_to, strict=True):  # pragma: no cover
+@numba.jit(nopython=True, cache=True)  # type: ignore
+def __match_intervals(intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True) -> np.ndarray:  # pragma: no cover
     """Numba-accelerated interval matching algorithm."""
     # sort index of the interval starts
     start_index = np.argsort(intervals_to[:, 0])
@@ -203,10 +203,11 @@ def match_intervals(
     valid_intervals(intervals_to)
 
     try:
-        return __match_intervals(intervals_from, intervals_to, strict=strict)
+        # Suppress type check because of numba wrapper
+        return __match_intervals(intervals_from, intervals_to, strict=strict)  # type: ignore
     except ParameterError as exc:
         raise ParameterError(
-            "Unable to match intervals with strict={}".format(strict)
+            f"Unable to match intervals with strict={strict}"
         ) from exc
 
 
@@ -304,12 +305,14 @@ def match_events(
     # array of matched items
     output = np.empty_like(events_from, dtype=np.int32)
 
-    return __match_events_helper(output, events_from, events_to, left, right)
+    # Suppress type check because of numba
+    return __match_events_helper(output, events_from, events_to, left, right)  # type: ignore
 
 
-@numba.jit(nopython=True, cache=True)
+@numba.jit(nopython=True, cache=True)  # type: ignore
 def __match_events_helper(
-    output, events_from, events_to, left=True, right=True
+    output: np.ndarray, events_from: np.ndarray, events_to: np.ndarray,
+    left: bool =True, right: bool =True
 ):  # pragma: no cover
     # mock dictionary for events
     from_idx = np.argsort(events_from)
