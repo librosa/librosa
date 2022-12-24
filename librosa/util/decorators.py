@@ -14,6 +14,7 @@ __all__ = ["moved", "deprecated", "vectorize"]
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
+
 def moved(*, moved_from: str, version: str, version_removed: str) -> Callable[[_F], _F]:
     """This is a decorator which can be used to mark functions
     as moved/renamed.
