@@ -17,7 +17,7 @@ from .deprecation import Deprecated
 from numpy.typing import ArrayLike, DTypeLike
 from typing import Any, Callable, Iterable, List, Dict, Optional, Sequence, Tuple, TypeVar, Union, overload
 from typing_extensions import Literal
-from .._typing import _SequenceLike, _FloatLike_co
+from .._typing import _SequenceLike, _FloatLike_co, _ComplexLike_co
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -2019,7 +2019,7 @@ def __shear_dense(X: np.ndarray, *, factor: int=+1, axis: int=-1) -> np.ndarray:
     return X_shear
 
 
-def __shear_sparse(X, *, factor=+1, axis=-1):
+def __shear_sparse(X: scipy.sparse.spmatrix, *, factor: int=+1, axis: int=-1) -> scipy.sparse.spmatrix:
     """Fast shearing for sparse matrices
 
     Shearing is performed using CSC array indices,
@@ -2096,10 +2096,12 @@ def shear(
     if not np.issubdtype(type(factor), np.integer):
         raise ParameterError("factor={} must be integer-valued".format(factor))
 
+    # Suppress type checks because mypy doesn't like numba jitting
+    # or scipy sparse conversion
     if scipy.sparse.isspmatrix(X):
-        return __shear_sparse(X, factor=factor, axis=axis)
+        return __shear_sparse(X, factor=factor, axis=axis)  # type: ignore
     else:
-        return __shear_dense(X, factor=factor, axis=axis)
+        return __shear_dense(X, factor=factor, axis=axis)  # type: ignore
 
 
 def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
@@ -2430,8 +2432,8 @@ def is_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
 
 @numba.vectorize(
     ["float32(complex64)", "float64(complex128)"], nopython=True, cache=True, identity=0
-)
-def _cabs2(x):  # pragma: no cover
+)  # type: ignore
+def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
     """Helper function for efficiently computing abs2 on complex inputs"""
     return x.real**2 + x.imag**2
 
@@ -2463,7 +2465,8 @@ def abs2(x: _NumberOrArray) -> _NumberOrArray:
        2.441e-04, 6.104e-05])
     """
     if np.iscomplexobj(x):
-        return _cabs2(x)
+        # suppress type check, mypy doesn't like vectorization
+        return _cabs2(x)  # type: ignore
     else:
         # suppress type check, mypy doesn't know this is real
         return x**2  # type: ignore
@@ -2473,7 +2476,7 @@ def abs2(x: _NumberOrArray) -> _NumberOrArray:
     ["complex64(float32)", "complex128(float64)"], nopython=True, cache=True, identity=1
 )  # type: ignore
 def _phasor_angles(x) -> np.complex_:  # pragma: no cover
-    return np.cos(x) + 1j * np.sin(x)
+    return np.cos(x) + 1j * np.sin(x)  # type: ignore
 
 _Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
 @overload
@@ -2542,4 +2545,4 @@ def phasor(
     if mag is not None:
         z *= mag
 
-    return z
+    return z  # type: ignore
