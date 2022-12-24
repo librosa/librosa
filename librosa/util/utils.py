@@ -2001,8 +2001,8 @@ def cyclic_gradient(
     return grad_slice
 
 
-@numba.jit(nopython=True, cache=True)
-def __shear_dense(X, *, factor=+1, axis=-1):
+@numba.jit(nopython=True, cache=True)  # type: ignore
+def __shear_dense(X: np.ndarray, *, factor: int=+1, axis: int=-1) -> np.ndarray:
     """Numba-accelerated shear for dense (ndarray) arrays"""
 
     if axis == 0:
