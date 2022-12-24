@@ -199,7 +199,7 @@ def samples_to_frames(
         offset = int(n_fft // 2)
 
     samples = np.asanyarray(samples)
-    return np.floor((samples - offset) // hop_length).astype(int)
+    return np.asarray(np.floor((samples - offset) // hop_length), dtype=int)
 
 
 @overload
@@ -661,7 +661,7 @@ def note_to_hz(note: Union[str, _IterableLike[str], Iterable[str]], **kwargs: An
 
 
 @overload
-def note_to_midi(note: str, *, round_midi: bool = ...) -> float: ...
+def note_to_midi(note: str, *, round_midi: bool = ...) -> Union[float, int]: ...
 
 @overload
 def note_to_midi(note: _IterableLike[str], *, round_midi: bool = ...) -> np.ndarray: ...
@@ -671,7 +671,7 @@ def note_to_midi(
     note: Union[str, _IterableLike[str], Iterable[str]],
     *,
     round_midi: bool = ...
-) -> Union[float, np.ndarray]:
+) -> Union[float, int, np.ndarray]:
     ...
 
 def note_to_midi(
@@ -738,8 +738,8 @@ def note_to_midi(
     if not isinstance(note, str):
         return np.array([note_to_midi(n, round_midi=round_midi) for n in note])
 
-    pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
-    acc_map = {
+    pitch_map: Dict[str, int] = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
+    acc_map: Dict[str, int] = {
         "#": 1,
         "": 0,
         "b": -1,
@@ -771,12 +771,13 @@ def note_to_midi(
     else:
         cents = int(cents) * 1e-2
 
-    note_value = 12 * (octave + 1) + pitch_map[pitch] + offset + cents
+    note_value: float = 12 * (octave + 1) + pitch_map[pitch] + offset + cents
 
     if round_midi:
-        note_value = int(np.round(note_value))
+        return int(np.round(note_value))
+    else:
+        return note_value
 
-    return note_value
 
 @overload
 def midi_to_note(
@@ -899,8 +900,9 @@ def midi_to_note(
 
     note_map = notation.key_to_notes(key=key, unicode=unicode)
 
-    note_num = int(np.round(midi))
-    note_cents = int(100 * np.around(midi - note_num, 2))
+    # mypy does not understand vectorization, suppress type checks
+    note_num = int(np.round(midi))  # type: ignore
+    note_cents = int(100 * np.around(midi - note_num, 2))  # type: ignore
 
     note = note_map[note_num % 12]
 
@@ -1715,7 +1717,7 @@ def A_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997, 107.65265, 737.86223]) ** 2.0
-    weights = 2.0 + 20.0 * (
+    weights: np.ndarray = 2.0 + 20.0 * (
         np.log10(const[0])
         + 2 * np.log10(f_sq)
         - np.log10(f_sq + const[0])
@@ -1724,7 +1726,10 @@ def A_weighting(
         - 0.5 * np.log10(f_sq + const[3])
     )
 
-    return weights if min_db is None else np.maximum(min_db, weights)
+    if min_db is None:
+        return weights
+    else:
+        return np.maximum(min_db, weights)
 
 
 @overload
@@ -1786,7 +1791,7 @@ def B_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997, 158.48932]) ** 2.0
-    weights = 0.17 + 20.0 * (
+    weights: np.ndarray = 0.17 + 20.0 * (
         np.log10(const[0])
         + 1.5 * np.log10(f_sq)
         - np.log10(f_sq + const[0])
@@ -1855,7 +1860,7 @@ def C_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997]) ** 2.0
-    weights = 0.062 + 20.0 * (
+    weights: np.ndarray = 0.062 + 20.0 * (
         np.log10(const[0])
         + np.log10(f_sq)
         - np.log10(f_sq + const[0])
@@ -2175,10 +2180,11 @@ def samples_like(
     >>> samples
     array([      0,     512,    1024, ..., 1353728, 1354240, 1354752])
     """
+    # suppress type checks because mypy does not understand isscalar
     if np.isscalar(X):
-        frames = np.arange(X)
+        frames = np.arange(X)  # type: ignore
     else:
-        frames = np.arange(X.shape[axis])
+        frames = np.arange(X.shape[axis])  # type: ignore
     return frames_to_samples(frames, hop_length=hop_length, n_fft=n_fft)
 
 
@@ -2947,8 +2953,10 @@ def hz_to_fjs(
         unison = hz_to_note(fmin, octave=False, unicode=False)
 
     if np.isscalar(frequencies):
-        intervals = frequencies / fmin
+        # suppress type check - mypy does not understand scalar checks
+        intervals = frequencies / fmin  # type: ignore
     else:
         intervals = np.asarray(frequencies) / fmin
 
-    return notation.interval_to_fjs(intervals, unison=unison, unicode=unicode)
+    # mypy does not understand vectorization
+    return notation.interval_to_fjs(intervals, unison=unison, unicode=unicode)  # type: ignore
