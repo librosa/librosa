@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
 
-from typing import Collection, Dict, List, Union, overload
+from typing import Collection, Dict, List, Union, overload, Iterable
 from typing_extensions import Literal
 import msgpack
 from pkg_resources import resource_filename
@@ -232,6 +232,8 @@ def pythagorean_intervals(
     # Using modf here to quickly get the fractional part of the log,
     # accounting for whatever power of 2 is necessary to get 3**k
     # within the octave.
+    log_ratios: np.ndarray
+    pow2: np.ndarray
     log_ratios, pow2 = np.modf(pow3 * np.log2(3))
 
     # If the fractional part is negative, add
@@ -242,6 +244,8 @@ def pythagorean_intervals(
 
     # Convert powers of 2 to integer
     pow2 = pow2.astype(int)
+
+    idx: Iterable[int]
 
     if sort:
         # Order the intervals
@@ -471,6 +475,8 @@ def plimit_intervals(
 
     pows = np.array(list(intervals), dtype=float)
 
+    log_ratios: np.ndarray
+    pow2: np.ndarray
     log_ratios, pow2 = np.modf(pows.dot(logs))
 
     # If the fractional part is negative, add
@@ -482,6 +488,7 @@ def plimit_intervals(
     # Convert powers of 2 to integer
     pow2 = pow2.astype(int)
 
+    idx: Iterable[int]
     if sort:
         # Order the intervals
         idx = np.argsort(log_ratios)
