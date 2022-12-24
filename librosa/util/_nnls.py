@@ -12,13 +12,13 @@
 import numpy as np
 import scipy.optimize
 from .utils import MAX_MEM_BLOCK
-from typing import Any, Optional
+from typing import Any, Optional, Tuple, Sequence
 
 
 __all__ = ["nnls"]
 
 
-def _nnls_obj(x, shape, A, B):
+def _nnls_obj(x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray) -> Tuple[float, np.ndarray]:
     """Compute the objective and gradient for NNLS"""
 
     # Scipy's lbfgs flattens all arrays, so we first reshape
@@ -63,7 +63,8 @@ def _nnls_lbfgs_block(
     # If we don't have an initial point, start at the projected
     # least squares solution
     if x_init is None:
-        x_init = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)
+        # Suppress type checks because mypy can't find pinv
+        x_init = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)  # type: ignore
         np.clip(x_init, 0, None, out=x_init)
 
     # Adapt the hessian approximation to the dimension of the problem
@@ -74,6 +75,7 @@ def _nnls_lbfgs_block(
     shape = x_init.shape
 
     # optimize
+    x: np.ndarray
     x, obj_value, diagnostics = scipy.optimize.fmin_l_bfgs_b(
         _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs
     )
@@ -139,16 +141,17 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
 
     # If B is a single vector, punt up to the scipy method
     if B.ndim == 1:
-        return scipy.optimize.nnls(A, B)[0]
+        return scipy.optimize.nnls(A, B)[0]  # type: ignore
 
-    n_columns = MAX_MEM_BLOCK // (np.prod(B.shape[:-1]) * A.itemsize)
+    n_columns = int(MAX_MEM_BLOCK // (np.prod(B.shape[:-1]) * A.itemsize))
     n_columns = max(n_columns, 1)
 
     # Process in blocks:
     if B.shape[-1] <= n_columns:
         return _nnls_lbfgs_block(A, B, **kwargs).astype(A.dtype)
 
-    x: np.ndarray = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)
+    x: np.ndarray
+    x = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)  # type: ignore
     np.clip(x, 0, None, out=x)
     x_init = x
 
