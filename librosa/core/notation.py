@@ -554,7 +554,7 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     match = KEY_RE.match(key)
 
     if not match:
-        raise ParameterError("Improper key format: {:s}".format(key))
+        raise ParameterError(f"Improper key format: {key:s}")
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
     acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1}
@@ -693,7 +693,7 @@ def key_to_degrees(key: str) -> np.ndarray:
     match = KEY_RE.match(key)
 
     if not match:
-        raise ParameterError("Improper key format: {:s}".format(key))
+        raise ParameterError(f"Improper key format: {key:s}")
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
     acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1}
