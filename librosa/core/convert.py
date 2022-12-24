@@ -986,8 +986,8 @@ def hz_to_midi(frequencies: _ScalarOrSequence[_FloatLike_co]) -> Union[np.ndarra
     hz_to_note
     """
 
-    return 12 * (np.log2(np.asanyarray(frequencies)) - np.log2(440.0)) + 69
-
+    midi: np.ndarray = 12 * (np.log2(np.asanyarray(frequencies)) - np.log2(440.0)) + 69
+    return midi
 
 @overload
 def hz_to_note(frequencies: _FloatLike_co, **kwargs: Any) -> str: ...
@@ -1098,7 +1098,8 @@ def hz_to_mel(
     frequencies = np.asanyarray(frequencies)
 
     if htk:
-        return 2595.0 * np.log10(1.0 + frequencies / 700.0)
+        mels: np.ndarray = 2595.0 * np.log10(1.0 + frequencies / 700.0)
+        return mels
 
     # Fill in the linear part
     f_min = 0.0
@@ -1264,7 +1265,8 @@ def hz_to_octs(
 
     A440 = 440.0 * 2.0 ** (tuning / bins_per_octave)
 
-    return np.log2(np.asanyarray(frequencies) / (float(A440) / 16))
+    octs: np.ndarray = np.log2(np.asanyarray(frequencies) / (float(A440) / 16))
+    return octs
 
 
 @overload
@@ -1375,8 +1377,8 @@ def A4_to_tuning(
     --------
     tuning_to_A4
     """
-    return bins_per_octave * (np.log2(np.asanyarray(A4)) - np.log2(440.0))
-
+    tuning: np.ndarray = bins_per_octave * (np.log2(np.asanyarray(A4)) - np.log2(440.0))
+    return tuning
 
 @overload
 def tuning_to_A4(tuning: _FloatLike_co, *, bins_per_octave: int = ...) -> np.floating[Any]: ...
@@ -1581,7 +1583,8 @@ def mel_frequencies(
 
     mels = np.linspace(min_mel, max_mel, n_mels)
 
-    return mel_to_hz(mels, htk=htk)
+    hz: np.ndarray = mel_to_hz(mels, htk=htk)
+    return hz
 
 
 def tempo_frequencies(
@@ -2129,7 +2132,8 @@ def times_like(
              6.13935601e+01,   6.14167800e+01,   6.14400000e+01])
     """
     samples = samples_like(X, hop_length=hop_length, n_fft=n_fft, axis=axis)
-    return samples_to_time(samples, sr=sr)
+    time: np.ndarray = samples_to_time(samples, sr=sr)
+    return time
 
 
 def samples_like(
@@ -2542,9 +2546,9 @@ def note_to_svara_h(
 
 @overload
 def midi_to_svara_c(
-    midi: float,
+    midi: _FloatLike_co,
     *,
-    Sa: float,
+    Sa: _FloatLike_co,
     mela: Union[int, str],
     abbr: bool = ...,
     octave: bool = ...,
@@ -2556,7 +2560,7 @@ def midi_to_svara_c(
 def midi_to_svara_c(
     midi: np.ndarray,
     *,
-    Sa: float,
+    Sa: _FloatLike_co,
     mela: Union[int, str],
     abbr: bool = ...,
     octave: bool = ...,
@@ -2568,7 +2572,7 @@ def midi_to_svara_c(
 def midi_to_svara_c(
     midi: Union[float, np.ndarray],
     *,
-    Sa: float,
+    Sa: _FloatLike_co,
     mela: Union[int, str],
     abbr: bool = ...,
     octave: bool = ...,
@@ -2576,11 +2580,11 @@ def midi_to_svara_c(
 ) -> Union[str, np.ndarray]:
     ...
 
-@vectorize(excluded=["Sa", "mela", "abbr", "octave", "unicode"])
+@vectorize(excluded=["Sa", "mela", "abbr", "octave", "unicode"])  # type: ignore
 def midi_to_svara_c(
     midi: Union[float, np.ndarray],
     *,
-    Sa: float,
+    Sa: _FloatLike_co,
     mela: Union[int, str],
     abbr: bool = True,
     octave: bool = True,
@@ -2759,6 +2763,7 @@ def hz_to_svara_c(
         midis, Sa=hz_to_midi(Sa), mela=mela, abbr=abbr, octave=octave, unicode=unicode
     )
 
+
 @overload
 def note_to_svara_c(
     notes: str,
@@ -2884,16 +2889,6 @@ def hz_to_fjs(
 ) -> np.ndarray:
     ...
 
-@overload
-def hz_to_fjs(
-    frequencies: _ScalarOrSequence[_FloatLike_co],
-    *,
-    fmin: Optional[float] = ...,
-    unison: Optional[str] = ...,
-    unicode: bool = ...
-) -> Union[str, np.ndarray]:
-    ...
-
 def hz_to_fjs(
     frequencies: _ScalarOrSequence[_FloatLike_co],
     *,
@@ -2952,7 +2947,8 @@ def hz_to_fjs(
 
     """
     if fmin is None:
-        fmin = np.min(frequencies)
+        # mypy doesn't know that min can handle scalars
+        fmin = np.min(frequencies)  # type: ignore
     if unison is None:
         unison = hz_to_note(fmin, octave=False, unicode=False)
 
