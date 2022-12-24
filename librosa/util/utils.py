@@ -15,8 +15,9 @@ from .._cache import cache
 from .exceptions import ParameterError
 from .deprecation import Deprecated
 from numpy.typing import ArrayLike, DTypeLike
-from typing import Any, Callable, Iterable, List, Optional, Sequence, Tuple, TypeVar, Union, overload
+from typing import Any, Callable, Iterable, List, Dict, Optional, Sequence, Tuple, TypeVar, Union, overload
 from typing_extensions import Literal
+from .._typing import _SequenceLike, _FloatLike_co
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -508,23 +509,23 @@ def expand_to(x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int]
     """
 
     # Force axes into a tuple
-
+    axes_tup: Tuple[int]
     try:
         axes_tup = tuple(axes)  # type: ignore
     except TypeError:
-        axes_tup = tuple([axes])
+        axes_tup = tuple([axes])  # type: ignore
 
     if len(axes_tup) != x.ndim:
         raise ParameterError(
-            "Shape mismatch between axes={} and input x.shape={}".format(axes_tup, x.shape)
+            f"Shape mismatch between axes={axes_tup} and input x.shape={x.shape}"
         )
 
     if ndim < x.ndim:
         raise ParameterError(
-            "Cannot expand x.shape={} to fewer dimensions ndim={}".format(x.shape, ndim)
+            f"Cannot expand x.shape={x.shape} to fewer dimensions ndim={ndim}"
         )
 
-    shape = [1] * ndim
+    shape : List[int] = [1] * ndim
     for i, axi in enumerate(axes_tup):
         shape[axi] = x.shape[i]
 
@@ -590,7 +591,7 @@ def fix_length(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) ->
 
 
 def fix_frames(
-    frames: np.ndarray,
+    frames: _SequenceLike[int],
     *,
     x_min: Optional[int] = 0,
     x_max: Optional[int] = None,
@@ -656,6 +657,8 @@ def fix_frames(
     if np.any(frames < 0):
         raise ParameterError("Negative frame index detected")
 
+    # TODO: this whole function could be made more efficient
+
     if pad and (x_min is not None or x_max is not None):
         frames = np.clip(frames, x_min, x_max)
 
@@ -665,7 +668,7 @@ def fix_frames(
             pad_data.append(x_min)
         if x_max is not None:
             pad_data.append(x_max)
-        frames = np.concatenate((pad_data, frames))
+        frames = np.concatenate((np.asarray(pad_data), frames))
 
     if x_min is not None:
         frames = frames[frames >= x_min]
@@ -673,7 +676,8 @@ def fix_frames(
     if x_max is not None:
         frames = frames[frames <= x_max]
 
-    return np.unique(frames).astype(int)
+    unique: np.ndarray = np.unique(frames).astype(int)
+    return unique
 
 
 @overload
@@ -789,7 +793,7 @@ def axis_sort(
     idx = np.argsort(bin_idx)
 
     sort_slice = [slice(None)] * S.ndim
-    sort_slice[axis] = idx
+    sort_slice[axis] = idx  # type: ignore
 
     if index:
         return S[tuple(sort_slice)], idx
@@ -803,7 +807,7 @@ def normalize(
     *,
     norm: Optional[float] = np.inf,
     axis: Optional[int] = 0,
-    threshold: Optional[float] = None,
+    threshold: Optional[_FloatLike_co] = None,
     fill: Optional[bool] = None
 ) -> np.ndarray:
     """Normalize an array along a chosen axis.
@@ -1488,7 +1492,7 @@ def buf_to_float(
 
 
 def index_to_slice(
-    idx: ArrayLike,
+    idx: _SequenceLike[int],
     *,
     idx_min: Optional[int] = None,
     idx_max: Optional[int] = None,
@@ -1670,8 +1674,8 @@ def sync(
     idx_agg = [slice(None)] * data_agg.ndim
 
     for (i, segment) in enumerate(slices):
-        idx_in[axis] = segment
-        idx_agg[axis] = i
+        idx_in[axis] = segment  # type: ignore
+        idx_agg[axis] = i  # type: ignore
         data_agg[tuple(idx_agg)] = aggregate(data[tuple(idx_in)], axis=axis)
 
     return data_agg
@@ -1776,6 +1780,8 @@ def softmask(
     Z[bad_idx] = 1
 
     # For finite power, compute the softmask
+    mask: np.ndarray
+
     if np.isfinite(power):
         mask = (X / Z) ** power
         ref_mask = (X_ref / Z) ** power
@@ -1793,7 +1799,7 @@ def softmask(
     return mask
 
 
-def tiny(x: Union[float, np.ndarray]) -> float:
+def tiny(x: Union[float, np.ndarray]) -> _FloatLike_co:
     """Compute the tiny-value corresponding to an input's data type.
 
     This is the smallest "usable" number representable in ``x.dtype``
@@ -1856,7 +1862,7 @@ def tiny(x: Union[float, np.ndarray]) -> float:
     ):
         dtype = x.dtype
     else:
-        dtype = np.float32
+        dtype = np.dtype(np.float32)
 
     return np.finfo(dtype).tiny
 
@@ -1991,7 +1997,8 @@ def cyclic_gradient(
     # Remove the padding
     slices = [slice(None)] * data.ndim
     slices[axis] = slice(edge_order, -edge_order)
-    return grad[tuple(slices)]
+    grad_slice: np.ndarray = grad[tuple(slices)]
+    return grad_slice
 
 
 @numba.jit(nopython=True, cache=True)
@@ -2199,7 +2206,7 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
 
 
 def dtype_r2c(
-    d: DTypeLike, *, default: Optional[DTypeLike] = np.complex64
+    d: DTypeLike, *, default: Optional[type] = np.complex64
 ) -> DTypeLike:
     """Find the complex numpy dtype corresponding to a real dtype.
 
@@ -2240,7 +2247,7 @@ def dtype_r2c(
     >>> librosa.util.dtype_r2c(np.complex128)
     dtype('complex128')
     """
-    mapping = {
+    mapping: Dict[DTypeLike, type] = {
         np.dtype(np.float32): np.complex64,
         np.dtype(np.float64): np.complex128,
         np.dtype(float): np.dtype(complex).type,
@@ -2256,7 +2263,7 @@ def dtype_r2c(
     return np.dtype(mapping.get(dt, default))
 
 
-def dtype_c2r(d: DTypeLike, *, default: Optional[DTypeLike] = np.float32) -> DTypeLike:
+def dtype_c2r(d: DTypeLike, *, default: Optional[type] = np.float32) -> DTypeLike:
     """Find the real numpy dtype corresponding to a complex dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2299,7 +2306,7 @@ def dtype_c2r(d: DTypeLike, *, default: Optional[DTypeLike] = np.float32) -> DTy
     >>> librosa.util.dtype_r2c(np.complex128)
     dtype('float64')
     """
-    mapping = {
+    mapping: Dict[DTypeLike, type] = {
         np.dtype(np.complex64): np.float32,
         np.dtype(np.complex128): np.float64,
         np.dtype(complex): np.dtype(float).type,
@@ -2312,7 +2319,7 @@ def dtype_c2r(d: DTypeLike, *, default: Optional[DTypeLike] = np.float32) -> DTy
 
     # Otherwise, try to map the dtype.
     # If no match is found, return the default.
-    return np.dtype(mapping.get(np.dtype(d), default))
+    return np.dtype(mapping.get(dt, default))
 
 
 @numba.jit(nopython=True, cache=True)
@@ -2464,7 +2471,7 @@ def abs2(x: _NumberOrArray) -> _NumberOrArray:
 
 @numba.vectorize(
     ["complex64(float32)", "complex128(float64)"], nopython=True, cache=True, identity=1
-)
+)  # type: ignore
 def _phasor_angles(x) -> np.complex_:  # pragma: no cover
     return np.cos(x) + 1j * np.sin(x)
 

@@ -63,7 +63,7 @@ class CacheManager(object):
     def eval(self, *args: Any, **kwargs: Any) -> Any:
         return self.memory.eval(*args, **kwargs)
 
-    def format(self, *args: Any, **kwargs: Any) -> str:
+    def format(self, *args: Any, **kwargs: Any) -> Any:
         return self.memory.format(*args, **kwargs)
 
     def reduce_size(self, *args: Any, **kwargs: Any) -> None:
