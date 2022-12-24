@@ -174,7 +174,8 @@ def pitch_tuning(
     counts, tuning = np.histogram(residual, bins)
 
     # return the histogram peak
-    return tuning[np.argmax(counts)]
+    tuning_est: float = tuning[np.argmax(counts)]
+    return tuning_est
 
 
 @cache(level=30)
@@ -420,11 +421,11 @@ def _cumulative_mean_normalized_difference(
         np.cumsum(yin_frames[..., 1 : max_period + 1, :], axis=-2) / tau_range
     )
     yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
-    yin_frames = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
+    yin_frames: np.ndarray = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
     return yin_frames
 
 
-@numba.stencil
+@numba.stencil  # type: ignore
 def _pi_stencil(x: np.ndarray) -> np.ndarray:
     '''Stencil to compute local parabolic interpolation'''
 
@@ -436,12 +437,12 @@ def _pi_stencil(x: np.ndarray) -> np.ndarray:
         # Suppressing types because mypy has no idea about stencils
         return 0  # type: ignore
 
-    return -b / a
+    return -b / a  # type: ignore
 
 
 @numba.guvectorize(['void(float32[:], float32[:])',
                     'void(float64[:], float64[:])'], '(n)->(n)',
-                   cache=True, nopython=True)
+                   cache=True, nopython=True)  # type: ignore
 def _pi_wrapper(x: np.ndarray, y: np.ndarray) -> None:  # pragma: no cover
     '''Vectorized wrapper for the parabolic interpolation stencil'''
     y[:] = _pi_stencil(x)
@@ -592,7 +593,7 @@ def yin(
 
     # Pad the time series so that frames are centered
     if center:
-        padding = [(0, 0) for _ in y.shape]
+        padding = [(0, 0)] * y.ndim
         padding[-1] = (frame_length // 2, frame_length // 2)
         y = np.pad(y, padding, mode=pad_mode)
 
@@ -643,7 +644,7 @@ def yin(
     )[..., 0, :]
 
     # Convert period to fundamental frequency.
-    f0 = sr / yin_period
+    f0: np.ndarray = sr / yin_period
     return f0
 
 

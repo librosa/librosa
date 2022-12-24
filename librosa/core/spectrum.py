@@ -2746,8 +2746,8 @@ def _spectrogram(
     *,
     y: Optional[np.ndarray] = None,
     S: Optional[np.ndarray] = None,
-    n_fft: int = 2048,
-    hop_length: int = 512,
+    n_fft: Optional[int] = 2048,
+    hop_length: Optional[int] = 512,
     power: float = 1,
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
@@ -2817,6 +2817,8 @@ def _spectrogram(
             n_fft = 2 * (S.shape[-2] - 1)
     else:
         # Otherwise, compute a magnitude spectrogram from input
+        if n_fft is None:
+            raise ParameterError(f"Unable to compute spectrogram with n_fft={n_fft}")
         S = (
             np.abs(
                 stft(
