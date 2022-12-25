@@ -1254,8 +1254,8 @@ def zero_crossings(
 
 def clicks(
     *,
-    times: Optional[ArrayLike] = None,
-    frames: Optional[ArrayLike] = None,
+    times: Optional[np.ndarray] = None,
+    frames: Optional[np.ndarray] = None,
     sr: float = 22050,
     hop_length: int = 512,
     click_freq: float = 1000.0,
@@ -1333,6 +1333,7 @@ def clicks(
     """
 
     # Compute sample positions from time or frames
+    positions: np.ndarray
     if times is None:
         if frames is None:
             raise ParameterError('either "times" or "frames" must be provided')
@@ -1566,7 +1567,7 @@ def chirp(
 
     method = "linear" if linear else "logarithmic"
     y: np.ndarray = scipy.signal.chirp(
-        np.arange(duration, step=period),
+        np.arange(np.round(duration * sr)) / sr,
         fmin,
         duration,
         fmax,
@@ -1657,15 +1658,17 @@ def mu_compress(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255, quantiz
             "mu-law input x={} must be in the " "range [-1, +1].".format(x)
         )
 
-    x_comp = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
+    x_comp: np.ndarray = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
 
     if quantize:
-        return (
+
+        y: np.ndarray = (
             np.digitize(
                 x_comp, np.linspace(-1, 1, num=int(1 + mu), endpoint=True), right=True
             )
             - int(mu + 1) // 2
         )
+        return y
 
     return x_comp
 
