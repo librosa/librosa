@@ -16,7 +16,7 @@ from .. import filters
 from .. import util
 from ..util.exceptions import ParameterError
 from numpy.typing import DTypeLike
-from typing import Optional, Union, Collection
+from typing import Optional, Union, Collection, List
 from .._typing import _WindowSpec, _PadMode
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
@@ -298,7 +298,7 @@ def hybrid_cqt(
 
     if fmin is None:
         # C1 by default
-        fmin = note_to_hz("C1")
+        fmin = note_to_hz("C1")  # type: ignore
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -473,7 +473,7 @@ def pseudo_cqt(
 
     if fmin is None:
         # C1 by default
-        fmin = note_to_hz("C1")
+        fmin = note_to_hz("C1")  # type: ignore
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -507,7 +507,7 @@ def pseudo_cqt(
     fft_basis = np.abs(fft_basis)
 
     # Compute the magnitude-only CQT response
-    C = __cqt_response(
+    C: np.ndarray = __cqt_response(
         y,
         n_fft,
         hop_length,
@@ -644,7 +644,7 @@ def icqt(
     ...                 bins_per_octave=bins_per_octave)
     """
     if fmin is None:
-        fmin = note_to_hz("C1")
+        fmin = note_to_hz("C1")  # type: ignore
 
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
@@ -671,7 +671,7 @@ def icqt(
 
     # This shape array will be used for broadcasting the basis scale
     # we'll have to adapt this per octave within the loop
-    y = None
+    y: Optional[np.ndarray] = None
 
     # Assume the top octave is at the full rate
     srs = [sr]
@@ -746,6 +746,9 @@ def icqt(
             y = y_oct
         else:
             y[..., : y_oct.shape[-1]] += y_oct
+    # make mypy happy
+    assert y is not None
+
     if length:
         y = util.fix_length(y, size=length)
 
@@ -920,7 +923,7 @@ def vqt(
 
     if fmin is None:
         # C1 by default
-        fmin = note_to_hz("C1")
+        fmin = note_to_hz("C1")  # type: ignore
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -1081,7 +1084,7 @@ def __vqt_filter_fft(
     return fft_basis, n_fft, lengths
 
 
-def __trim_stack(cqt_resp, n_bins, dtype):
+def __trim_stack(cqt_resp: List[np.ndarray], n_bins: int, dtype: DTypeLike) -> np.ndarray:
     """Helper function to trim and stack a collection of CQT responses"""
 
     max_col = min(c_i.shape[-1] for c_i in cqt_resp)
@@ -1372,25 +1375,23 @@ def griffinlim_cqt(
     >>> ax[2].set(title='Magnitude-only icqt reconstruction')
     """
     if fmin is None:
-        fmin = note_to_hz("C1")
+        fmin = note_to_hz("C1")  # type: ignore
 
     if random_state is None:
         rng = np.random.default_rng()
     elif isinstance(random_state, int):
-        rng = np.random.RandomState(seed=random_state)
+        rng = np.random.RandomState(seed=random_state)  # type: ignore
     elif isinstance(random_state, np.random.RandomState):
-        rng = random_state
+        rng = random_state  # type: ignore
 
     if momentum > 1:
         warnings.warn(
-            "Griffin-Lim with momentum={} > 1 can be unstable. "
-            "Proceed with caution!".format(momentum),
+            f"Griffin-Lim with momentum={momentum} > 1 can be unstable. "
+            "Proceed with caution!",
             stacklevel=2,
         )
     elif momentum < 0:
-        raise ParameterError(
-            "griffinlim_cqt() called with momentum={} < 0".format(momentum)
-        )
+        raise ParameterError(f"griffinlim_cqt() called with momentum={momentum} < 0")
 
     # using complex64 will keep the result to minimal necessary precision
     angles = np.empty(C.shape, dtype=np.complex64)
@@ -1398,7 +1399,7 @@ def griffinlim_cqt(
 
     if init == "random":
         # randomly initialize the phase
-        angles[:] = util.phasor(2 * np.pi * rng.random(size=C.shape))
+        angles[:] = util.phasor(2 * np.pi * rng.random(size=C.shape))  # type: ignore
     elif init is None:
         # Initialize an all ones complex matrix
         angles[:] = 1.0
@@ -1406,7 +1407,7 @@ def griffinlim_cqt(
         raise ParameterError("init={} must either None or 'random'".format(init))
 
     # And initialize the previous iterate to 0
-    rebuilt = 0.0
+    rebuilt: np.ndarray = np.array(0.0)
 
     for _ in range(n_iter):
         # Store the previous iterate
