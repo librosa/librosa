@@ -67,10 +67,10 @@ class CacheManager(object):
         return self.memory.format(*args, **kwargs)
 
     def reduce_size(self, *args: Any, **kwargs: Any) -> None:
-        self.memory.reduce_size(*args, **kwargs)
+        self.memory.reduce_size(*args, **kwargs)  # pragma: no cover
 
     def warn(self, *args: Any, **kwargs: Any) -> None:
-        self.memory.warn(*args, **kwargs)
+        self.memory.warn(*args, **kwargs)  # pragma: no cover
 
 
 # Instantiate the cache from the environment
