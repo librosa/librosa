@@ -210,7 +210,7 @@ def mfcc_to_mel(
     n_mels: int = 128,
     dct_type: int = 2,
     norm: Optional[str] = "ortho",
-    ref: Union[float, Callable] = 1.0,
+    ref: float = 1.0,
     lifter: float = 0,
 ) -> np.ndarray:
     """Invert Mel-frequency cepstral coefficients to approximate a Mel power
@@ -234,7 +234,7 @@ def mfcc_to_mel(
         If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
         Normalization is not supported for `dct_type=1`.
-    ref : number or callable
+    ref : float
         Reference power for (inverse) decibel calculation
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
@@ -286,7 +286,7 @@ def mfcc_to_audio(
     n_mels: int = 128,
     dct_type: int = 2,
     norm: Optional[str] = "ortho",
-    ref: Union[float, Callable] = 1.0,
+    ref: float = 1.0,
     lifter: float = 0,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -310,7 +310,7 @@ def mfcc_to_audio(
         If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
         Normalization is not supported for ``dct_type=1``.
-    ref : number or callable
+    ref : float
         Reference power for (inverse) decibel calculation
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
