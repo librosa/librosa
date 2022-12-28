@@ -4,4 +4,4 @@ flake8
 velin
 mypy
 pytest
-numpy
+numpy==1.20.3
