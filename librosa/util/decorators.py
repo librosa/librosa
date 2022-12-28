@@ -12,10 +12,8 @@ from numpy.typing import DTypeLike
 
 __all__ = ["moved", "deprecated", "vectorize"]
 
-_F = TypeVar("_F", bound=Callable[..., Any])
 
-
-def moved(*, moved_from: str, version: str, version_removed: str) -> Callable[[_F], _F]:
+def moved(*, moved_from: str, version: str, version_removed: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """This is a decorator which can be used to mark functions
     as moved/renamed.
 
@@ -39,7 +37,7 @@ def moved(*, moved_from: str, version: str, version_removed: str) -> Callable[[_
     return decorator(__wrapper)
 
 
-def deprecated(*, version: str, version_removed: str) -> Callable[[_F], _F]:
+def deprecated(*, version: str, version_removed: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """This is a decorator which can be used to mark functions
     as deprecated.
 
@@ -58,6 +56,9 @@ def deprecated(*, version: str, version_removed: str) -> Callable[[_F], _F]:
         return func(*args, **kwargs)
 
     return decorator(__wrapper)
+
+
+_F = TypeVar("_F", bound=Callable[..., Any])
 
 
 def vectorize(
