@@ -940,6 +940,7 @@ def __reassign_times(
     # calculate window weighted by time
     half_width = n_fft // 2
 
+    window_times: np.ndarray
     if n_fft % 2:
         window_times = np.arange(-half_width, half_width + 1)
 
@@ -2662,19 +2663,19 @@ def griffinlim(
     if random_state is None:
         rng = np.random.default_rng()
     elif isinstance(random_state, int):
-        rng = np.random.RandomState(seed=random_state)
+        rng = np.random.RandomState(seed=random_state)  # type: ignore
     elif isinstance(random_state, np.random.RandomState):
-        rng = random_state
+        rng = random_state  # type: ignore
 
     if momentum > 1:
         warnings.warn(
-            "Griffin-Lim with momentum={} > 1 can be unstable. "
-            "Proceed with caution!".format(momentum),
+            f"Griffin-Lim with momentum={momentum} > 1 can be unstable. "
+            "Proceed with caution!",
             stacklevel=2,
         )
     elif momentum < 0:
         raise ParameterError(
-            "griffinlim() called with momentum={} < 0".format(momentum)
+            f"griffinlim() called with momentum={momentum} < 0"
         )
 
     # Infer n_fft from the spectrogram shape
@@ -2687,7 +2688,7 @@ def griffinlim(
 
     if init == "random":
         # randomly initialize the phase
-        angles[:] = util.phasor((2 * np.pi * rng.random(size=S.shape)))
+        angles[:] = util.phasor((2 * np.pi * rng.random(size=S.shape)))  # type: ignore
     elif init is None:
         # Initialize an all ones complex matrix
         angles[:] = 1.0
