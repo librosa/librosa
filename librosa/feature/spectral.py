@@ -877,7 +877,7 @@ def rms(
             padding[-1] = (int(frame_length // 2), int(frame_length // 2))
             y = np.pad(y, padding, mode=pad_mode)
 
-        x = util.frame(y, frame_length=frame_length, hop_length=hop_length)  # type: ignore
+        x = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
         # Calculate power
         power = np.mean(util.abs2(x), axis=-2, keepdims=True)
