@@ -16,7 +16,7 @@ from .. import sequence
 from ..util.exceptions import ParameterError
 from numpy.typing import ArrayLike
 from typing import Any, Callable, Optional, Tuple, Union
-from .._typing import _WindowSpec, _PadMode
+from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
@@ -192,7 +192,7 @@ def piptrack(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
     ref: Optional[Union[float, Callable]] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Pitch tracking on thresholded parabolically-interpolated STFT.

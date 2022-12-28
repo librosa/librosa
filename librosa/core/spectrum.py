@@ -22,7 +22,7 @@ from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
 from typing import Any, Callable, Optional, Tuple, List, Union, overload
 from typing_extensions import Literal
-from .._typing import _WindowSpec, _PadMode
+from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 __all__ = [
     "stft",
@@ -52,7 +52,7 @@ def stft(
     window: _WindowSpec = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
     out: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Short-time Fourier transform (STFT).
@@ -645,7 +645,7 @@ def __reassign_frequencies(
     window: _WindowSpec = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Instantaneous frequencies based on a spectrogram representation.
 
@@ -808,7 +808,7 @@ def __reassign_times(
     window: _WindowSpec = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Time reassignments based on a spectrogram representation.
 
@@ -995,7 +995,7 @@ def reassigned_spectrogram(
     fill_nan: bool = False,
     clip: bool = True,
     dtype: Optional[DTypeLike] = None,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     r"""Time-frequency reassigned spectrogram.
 
@@ -2533,7 +2533,7 @@ def griffinlim(
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
     length: Optional[int] = None,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
     momentum: float = 0.99,
     init: Optional[str] = "random",
     random_state: Optional[Union[int, np.random.RandomState, np.random.Generator]] = None,
@@ -2761,7 +2761,7 @@ def _spectrogram(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, int]:
     """Helper function to retrieve a magnitude spectrogram.
 
