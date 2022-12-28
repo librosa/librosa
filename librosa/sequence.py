@@ -302,8 +302,6 @@ def dtw(
     C_local = False
     if C is None:
         C_local = True
-        if X is None or Y is None:
-            raise ParameterError("Both X and Y must be provided")
         # take care of dimensions
         X = np.atleast_2d(X)
         Y = np.atleast_2d(Y)
