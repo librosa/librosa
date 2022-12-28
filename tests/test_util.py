@@ -1235,7 +1235,7 @@ def test_example_info(key):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_example_info_fail():
-    librosa.example_info("no such track")
+    librosa.util.example_info("no such track")
 
 
 def test_list_examples():
