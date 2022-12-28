@@ -697,7 +697,7 @@ def recurrence_to_lag(
             # Suppress type check, mypy doesn't know that rec is an ndarray here
             rec = np.pad(rec, padding, mode="constant")  # type: ignore
 
-    lag = util.shear(rec, factor=-1, axis=axis)
+    lag: _ArrayOrSparseMatrix = util.shear(rec, factor=-1, axis=axis)
 
     if sparse:
         # Suppress type check, mypy doesn't know
@@ -782,7 +782,8 @@ def lag_to_recurrence(
 
     sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)
-    return rec[tuple(sub_slice)]
+    rec_slice: _ArrayOrSparseMatrix = rec[tuple(sub_slice)]
+    return rec_slice
 
 
 _F = TypeVar("_F", bound=Callable[..., Any])

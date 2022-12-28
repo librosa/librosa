@@ -2047,7 +2047,15 @@ def __shear_sparse(X: scipy.sparse.spmatrix, *, factor: int=+1, axis: int=-1) ->
     # And convert back to the input format
     return X_shear.asformat(fmt)
 
+
 _ArrayOrSparseMatrix = TypeVar('_ArrayOrSparseMatrix', bound=Union[np.ndarray, scipy.sparse.spmatrix])
+
+@overload
+def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
+
+@overload
+def shear(X: scipy.sparse.spmatrix, *, factor: int = ..., axis: int = ...) -> scipy.sparse.spmatrix: ...
+
 
 def shear(
     X: _ArrayOrSparseMatrix, *, factor: int = 1, axis: int = -1
