@@ -957,3 +957,13 @@ def test_chroma_vqt_threshold(y_ex):
     assert np.allclose(c2[c2 < c1], 0)
     # Check that all non-thresholded points match
     assert np.all(c2 <= c1)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_chroma_vqt_noinput():
+    librosa.feature.chroma_vqt(y=None, V=None, intervals='ji3')
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_chroma_cqt_noinput():
+    librosa.feature.chroma_cqt(y=None, C=None)
