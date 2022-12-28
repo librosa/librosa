@@ -54,7 +54,7 @@ def get_fftlib() -> ModuleType:
     if __FFTLIB is None:
         # This path should never occur because importing
         # this module will call set_fftlib
-        assert False
+        assert False  # pragma: no cover
 
     return __FFTLIB
 

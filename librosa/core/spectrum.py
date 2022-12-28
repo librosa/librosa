@@ -1220,8 +1220,7 @@ def reassigned_spectrogram(
             pad_mode=pad_mode,
         )
 
-    if S is None:
-        raise ParameterError("Reassigned spectrogram cannot be computed when both reassign_times and reassign_frequencies are False.")
+    assert S is not None
 
     mags: np.ndarray = np.abs(S)
 
@@ -1988,6 +1987,7 @@ def perceptual_weighting(
 
     result: np.ndarray = offset + power_to_db(S, **kwargs)
     return result
+
 
 @cache(level=30)
 def fmt(
