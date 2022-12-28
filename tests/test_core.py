@@ -1385,6 +1385,11 @@ def test__spectrogram(y_22050, n_fft, hop_length, power):
     assert np.allclose(2 * (S.shape[-2] - 1), n_fft_)
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test__spectrogram_no_nfft():
+    librosa.core.spectrum._spectrogram(S=None, n_fft=None)
+
+
 @pytest.mark.parametrize(
     "x", [np.linspace(0, 2e5, num=10), np.linspace(0, 2e5, num=10) * np.exp(1.0j)]
 )

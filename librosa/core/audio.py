@@ -265,7 +265,7 @@ def __audioread_load(path, offset, duration, dtype: DTypeLike):
 
             if s_end < n:
                 # the end is in this frame.  crop.
-                frame = frame[: int(s_end - n_prev)]
+                frame = frame[: int(s_end - n_prev)]  # pragma: no cover
 
             if n_prev <= s_start <= n:
                 # beginning is in this frame
