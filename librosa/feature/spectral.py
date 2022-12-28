@@ -182,7 +182,8 @@ def spectral_centroid(
         freq = util.expand_to(freq, ndim=S.ndim, axes=-2)
 
     # Column-normalize S
-    return np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
+    centroid: np.ndarray = np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
+    return centroid
 
 
 def spectral_bandwidth(
@@ -341,7 +342,8 @@ def spectral_bandwidth(
     if norm:
         S = util.normalize(S, norm=1, axis=-2)
 
-    return np.sum(S * deviation ** p, axis=-2, keepdims=True) ** (1.0 / p)
+    bw: np.ndarray = np.sum(S * deviation ** p, axis=-2, keepdims=True) ** (1.0 / p)
+    return bw
 
 
 def spectral_contrast(
@@ -520,10 +522,12 @@ def spectral_contrast(
         valley[..., k, :] = np.mean(sortedr[..., :idx, :], axis=-2)
         peak[..., k, :] = np.mean(sortedr[..., -idx:, :], axis=-2)
 
+    contrast: np.ndarray
     if linear:
-        return peak - valley
+        contrast = peak - valley
     else:
-        return power_to_db(peak) - power_to_db(valley)
+        contrast = power_to_db(peak) - power_to_db(valley)
+    return contrast
 
 
 def spectral_rolloff(
@@ -671,7 +675,8 @@ def spectral_rolloff(
 
     ind = np.where(total_energy < threshold, np.nan, 1)
 
-    return np.nanmin(ind * freq, axis=-2, keepdims=True)
+    rolloff: np.ndarray = np.nanmin(ind * freq, axis=-2, keepdims=True)
+    return rolloff
 
 
 def spectral_flatness(
@@ -790,7 +795,8 @@ def spectral_flatness(
     S_thresh = np.maximum(amin, S ** power)
     gmean = np.exp(np.mean(np.log(S_thresh), axis=-2, keepdims=True))
     amean = np.mean(S_thresh, axis=-2, keepdims=True)
-    return gmean / amean
+    flatness: np.ndarray = gmean / amean
+    return flatness
 
 
 def rms(
@@ -871,7 +877,7 @@ def rms(
             padding[-1] = (int(frame_length // 2), int(frame_length // 2))
             y = np.pad(y, padding, mode=pad_mode)
 
-        x = util.frame(y, frame_length=frame_length, hop_length=hop_length)
+        x = util.frame(y, frame_length=frame_length, hop_length=hop_length)  # type: ignore
 
         # Calculate power
         power = np.mean(util.abs2(x), axis=-2, keepdims=True)
@@ -899,7 +905,8 @@ def rms(
     else:
         raise ParameterError("Either `y` or `S` must be input.")
 
-    return np.sqrt(power)
+    rms_result: np.ndarray = np.sqrt(power)
+    return rms_result
 
 
 def poly_features(
@@ -1024,10 +1031,15 @@ def poly_features(
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
+    # help out mypy here
+    assert freq is not None
+
+    coefficients: np.ndarray
+
     if freq.ndim == 1:
         # If frequencies are constant over frames, then we only need to fit once
         fitter = np.vectorize(
-            lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)"
+            lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)" # type: ignore
         )
         coefficients = fitter(S)
     else:
@@ -1116,7 +1128,8 @@ def zero_crossing_rate(
 
     crossings = zero_crossings(y_framed, **kwargs)
 
-    return np.mean(crossings, axis=-2, keepdims=True)
+    zcrate: np.ndarray = np.mean(crossings, axis=-2, keepdims=True)
+    return zcrate
 
 
 # -- Chroma --#
@@ -1284,7 +1297,7 @@ def chroma_cqt(
     sr: float = 22050,
     C: Optional[np.ndarray] = None,
     hop_length: int = 512,
-    fmin: Optional[float] = None,
+    fmin: Optional[_FloatLike_co] = None,
     norm: Optional[Union[int, float]] = np.inf,
     threshold: float = 0.0,
     tuning: Optional[float] = None,
@@ -1373,6 +1386,8 @@ def chroma_cqt(
 
     # Build the CQT if we don't have one already
     if C is None:
+        if y is None:
+            raise ParameterError("At least one of C or y must be provided to compute chroma")
         C = np.abs(
             cqt_func[cqt_mode](
                 y,
@@ -1654,6 +1669,8 @@ def chroma_vqt(
 
     # Build the CQT if we don't have one already
     if V is None:
+        if y is None:
+            raise ParameterError("At least one of y or V must be provided to compute chroma")
         V = np.abs(
             vqt(
                 y=y,
@@ -1814,9 +1831,10 @@ def tonnetz(
     phi = R[:, np.newaxis] * np.cos(np.pi * V)
 
     # Do the transform to tonnetz
-    return np.einsum(
+    ton: np.ndarray = np.einsum(
         "pc,...ci->...pi", phi, util.normalize(chroma, norm=1, axis=-2), optimize=True
     )
+    return ton
 
 
 # -- Mel spectrogram and MFCCs -- #
@@ -1980,7 +1998,7 @@ def mfcc(
         # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    M = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[..., :n_mfcc, :]
+    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[..., :n_mfcc, :]
 
     if lifter > 0:
         # shape lifter for broadcasting
@@ -1992,9 +2010,7 @@ def mfcc(
     elif lifter == 0:
         return M
     else:
-        raise ParameterError(
-            "MFCC lifter={} must be a non-negative number".format(lifter)
-        )
+        raise ParameterError(f"MFCC lifter={lifter} must be a non-negative number")
 
 
 def melspectrogram(
@@ -2135,4 +2151,5 @@ def melspectrogram(
     # Build a Mel filter
     mel_basis = filters.mel(sr=sr, n_fft=n_fft, **kwargs)
 
-    return np.einsum("...ft,mf->...mt", S, mel_basis, optimize=True)
+    melspec: np.ndarray = np.einsum("...ft,mf->...mt", S, mel_basis, optimize=True)
+    return melspec

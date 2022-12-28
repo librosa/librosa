@@ -981,7 +981,7 @@ def cq_to_chroma(
     *,
     bins_per_octave: int = 12,
     n_chroma: int = 12,
-    fmin: Optional[float] = None,
+    fmin: Optional[_FloatLike_co] = None,
     window: Optional[np.ndarray] = None,
     base_c: bool = True,
     dtype: DTypeLike = np.float32,
