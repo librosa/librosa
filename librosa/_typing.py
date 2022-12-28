@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any, Sequence, Literal
+from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any, Sequence
+from typing_extensions import Literal
 import numpy as np
 from numpy.typing import ArrayLike
 
