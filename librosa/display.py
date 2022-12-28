@@ -47,8 +47,8 @@ import lazy_loader as lazy
 from . import core
 from . import util
 from .util.exceptions import ParameterError
-from typing import TYPE_CHECKING, Any, Collection, Optional, Union
-
+from typing import TYPE_CHECKING, Any, Collection, Optional, Union, Callable, Dict
+from ._typing import _FloatLike_co
 
 if TYPE_CHECKING:
     import matplotlib
@@ -60,6 +60,7 @@ if TYPE_CHECKING:
     from matplotlib.lines import Line2D
     from matplotlib.path import Path as MplPath
     from matplotlib.markers import MarkerStyle
+    from matplotlib.colors import Colormap
 else:
     matplotlib = lazy.load("matplotlib")
     mcm = lazy.load("matplotlib.cm")
@@ -82,6 +83,8 @@ __all__ = [
     "TonnetzFormatter",
     "AdaptiveWaveplot",
 ]
+
+# mypy: disable-error-code="attr-defined"
 
 
 class TimeFormatter(mplticker.Formatter):
@@ -797,7 +800,7 @@ def cmap(
     cmap_seq: str = "magma",
     cmap_bool: str = "gray_r",
     cmap_div: str = "coolwarm",
-) -> matplotlib.colors.Colormap:
+) -> Colormap:
     """Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
@@ -1262,7 +1265,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
             )
         return coords
 
-    coord_map = {
+    coord_map: Dict[Optional[str], Callable[..., np.ndarray]] = {
         "linear": __coord_fft_hz,
         "fft": __coord_fft_hz,
         "fft_note": __coord_fft_hz,
@@ -1304,7 +1307,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
     return coord_map[ax_type](n, **kwargs)
 
 
-def __check_axes(axes):
+def __check_axes(axes: Optional[mplaxes.Axes]) -> mplaxes.Axes:
     """Check if "axes" is an instance of an axis object. If not, use `gca`."""
     if axes is None:
         axes = plt.gca()
@@ -1689,7 +1692,7 @@ def __decorate_axis(
         raise ParameterError("Unsupported axis type: {}".format(ax_type))
 
 
-def __coord_fft_hz(n, sr=22050, n_fft=None, **_kwargs):
+def __coord_fft_hz(n: int, sr: float=22050, n_fft: Optional[int] =None, **_kwargs: Any) -> np.ndarray:
     """Get the frequencies for FFT bins"""
     if n_fft is None:
         n_fft = 2 * (n - 1)
@@ -1699,11 +1702,13 @@ def __coord_fft_hz(n, sr=22050, n_fft=None, **_kwargs):
     return basis
 
 
-def __coord_mel_hz(n, fmin=0, fmax=None, sr=22050, htk=False, **_kwargs):
+def __coord_mel_hz(n: int, fmin: Optional[float]=0., fmax:
+        Optional[float]=None, sr: float=22050, htk: bool=False,
+        **_kwargs: Any) -> np.ndarray:
     """Get the frequencies for Mel bins"""
 
     if fmin is None:
-        fmin = 0
+        fmin = 0.0
     if fmax is None:
         fmax = 0.5 * sr
 
@@ -1711,7 +1716,8 @@ def __coord_mel_hz(n, fmin=0, fmax=None, sr=22050, htk=False, **_kwargs):
     return basis
 
 
-def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, sr=22050, **_kwargs):
+def __coord_cqt_hz(n: int, fmin: Optional[_FloatLike_co]=None,
+        bins_per_octave: int=12, sr: float=22050, **_kwargs: Any) -> np.ndarray:
     """Get CQT bin frequencies"""
     if fmin is None:
         fmin = core.note_to_hz("C1")
@@ -1737,10 +1743,15 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, sr=22050, **_kwargs):
 
 
 def __coord_vqt_hz(
-    n, fmin=None, bins_per_octave=12, sr=22050, intervals=None, unison=None, **_kwargs
-):
+        n: int, fmin: Optional[_FloatLike_co]=None, bins_per_octave: int=12,
+        sr: float=22050, intervals: Optional[Union[str, Collection[float]]]=None,
+        unison: Optional[str]=None, **_kwargs: Any
+) -> np.ndarray:
     if fmin is None:
         fmin = core.note_to_hz("C1")
+
+    if intervals is None:
+        raise ParameterError("VQT axis coordinates cannot be defined without intervals")
 
     freqs = core.interval_frequencies(
         n, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
@@ -1756,18 +1767,19 @@ def __coord_vqt_hz(
     return freqs
 
 
-def __coord_chroma(n, bins_per_octave=12, **_kwargs):
+def __coord_chroma(n: int, bins_per_octave: int=12, **_kwargs: Any) -> np.ndarray:
     """Get chroma bin numbers"""
     return np.linspace(0, (12.0 * n) / bins_per_octave, num=n, endpoint=False)
 
 
-def __coord_tempo(n, sr=22050, hop_length=512, **_kwargs):
+def __coord_tempo(n: int, sr: float =22050, hop_length: int =512, **_kwargs: Any) -> np.ndarray:
     """Tempo coordinates"""
     basis = core.tempo_frequencies(n + 1, sr=sr, hop_length=hop_length)[1:]
     return basis
 
 
-def __coord_fourier_tempo(n, sr=22050, hop_length=512, win_length=None, **_kwargs):
+def __coord_fourier_tempo(n: int, sr: float=22050, hop_length: int=512, win_length:
+        Optional[int]=None, **_kwargs: Any) -> np.ndarray:
     """Fourier tempogram coordinates"""
     if win_length is None:
         win_length = 2 * (n - 1)
@@ -1779,14 +1791,15 @@ def __coord_fourier_tempo(n, sr=22050, hop_length=512, win_length=None, **_kwarg
     return basis
 
 
-def __coord_n(n, **_kwargs):
+def __coord_n(n: int, **_kwargs: Any) -> np.ndarray:
     """Get bare positions"""
     return np.arange(n)
 
 
-def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
+def __coord_time(n: int, sr: float=22050, hop_length: int=512, **_kwargs: Any) -> np.ndarray:
     """Get time coordinates from frames"""
-    return core.frames_to_time(np.arange(n), sr=sr, hop_length=hop_length)
+    times: np.ndarray = core.frames_to_time(np.arange(n), sr=sr, hop_length=hop_length)
+    return times
 
 
 def __same_axes(x_axis, y_axis, xlim, ylim):

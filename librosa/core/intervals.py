@@ -9,6 +9,7 @@ from pkg_resources import resource_filename
 import numpy as np
 from numpy.typing import ArrayLike
 from .._cache import cache
+from .._typing import _FloatLike_co
 
 
 with open(resource_filename(__name__, "intervals.msgpack"), "rb") as _fdesc:
@@ -20,7 +21,7 @@ with open(resource_filename(__name__, "intervals.msgpack"), "rb") as _fdesc:
 def interval_frequencies(
     n_bins: int,
     *,
-    fmin: float,
+    fmin: _FloatLike_co,
     intervals: Union[str, Collection[float]],
     bins_per_octave: int = 12,
     tuning: float = 0.0,

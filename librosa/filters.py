@@ -438,7 +438,7 @@ def __float_window(window_spec):
 def constant_q(
     *,
     sr: float,
-    fmin: Optional[float] = None,
+    fmin: Optional[_FloatLike_co] = None,
     n_bins: int = 84,
     bins_per_octave: int = 12,
     window: _WindowSpec = "hann",
@@ -553,16 +553,13 @@ def constant_q(
     >>> ax[1].set(ylabel='CQ filters', title='CQ filter magnitudes (frequency domain)')
     """
 
-    fmin_: float
     if fmin is None:
-        fmin_ = note_to_hz("C1")  # type: ignore
-    else:
-        fmin_ = fmin
+        fmin = note_to_hz("C1")
 
     # Pass-through parameters to get the filter lengths
     lengths = constant_q_lengths(
         sr=sr,
-        fmin=fmin_,
+        fmin=fmin,
         n_bins=n_bins,
         bins_per_octave=bins_per_octave,
         window=window,
@@ -570,7 +567,7 @@ def constant_q(
         gamma=gamma,
     )
 
-    freqs = fmin_ * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
+    freqs = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
 
     # Build the filters
     filters = []
@@ -607,7 +604,7 @@ def constant_q(
 def constant_q_lengths(
     *,
     sr: float,
-    fmin: float,
+    fmin: _FloatLike_co,
     n_bins: int = 84,
     bins_per_octave: int = 12,
     window: _WindowSpec = "hann",
