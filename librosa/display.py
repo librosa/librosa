@@ -400,12 +400,12 @@ class FJSFormatter(mplticker.Formatter):
         self,
         *,
         fmin: int,
+        n_bins: int,
+        bins_per_octave: int,
         intervals: Union[str, Collection[float]],
         major: bool = True,
         unison: Optional[str] = None,
         unicode: bool = True,
-        bins_per_octave: Optional[int] = None,
-        n_bins: Optional[int] = None,
     ):
 
         self.fmin = fmin
@@ -433,12 +433,13 @@ class FJSFormatter(mplticker.Formatter):
         # Map the given frequency to the nearest JI interval
         idx = util.match_events(np.atleast_1d(x), self.frequencies_)[0]
 
-        return core.hz_to_fjs(
+        label: str = core.hz_to_fjs(
             self.frequencies_[idx],
             fmin=self.fmin,
             unison=self.unison,
             unicode=self.unicode,
         )
+        return label
 
 
 class LogHzFormatter(mplticker.Formatter):
@@ -1296,7 +1297,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
     }
 
     if ax_type not in coord_map:
-        raise ParameterError("Unknown axis type: {}".format(ax_type))
+        raise ParameterError(f"Unknown axis type: {ax_type}")
     return coord_map[ax_type](n, **kwargs)
 
 
@@ -1362,7 +1363,7 @@ def __scale_axes(axes, ax_type, which):
     elif ax_type in ["log", "fft_note", "fft_svara"]:
         mode = "symlog"
         kwargs[base] = 2
-        kwargs[thresh] = core.note_to_hz("C2")
+        kwargs[thresh] = float(core.note_to_hz("C2"))
         kwargs[scale] = 0.5
 
     elif ax_type in ["tempo", "fourier_tempo"]:
