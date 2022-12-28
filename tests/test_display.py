@@ -1050,3 +1050,8 @@ def test_specshow_chromafjs(C, sr):
     librosa.display.specshow(chroma, y_axis="chroma_fjs", intervals=intervals, ax=ax[1])
 
     return fig
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_vqt_hz_nointervals(C, sr):
+    librosa.display.specshow(C, sr=sr, y_axis='vqt_hz')
