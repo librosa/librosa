@@ -302,6 +302,8 @@ def dtw(
     C_local = False
     if C is None:
         C_local = True
+        # mypy can't figure out that this case does not happen
+        assert X is not None and Y is not None
         # take care of dimensions
         X = np.atleast_2d(X)
         Y = np.atleast_2d(Y)
