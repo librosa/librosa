@@ -592,13 +592,15 @@ class ChromaFJSFormatter(mplticker.Formatter):
         try:
             if not isinstance(intervals, str):
                 bins_per_octave = len(intervals)
-            self.bins_per_octave = bins_per_octave
+            if not isinstance(bins_per_octave, int):
+                raise ParameterError(f"bins_per_octave={bins_per_octave} must be integer-valued")
+            self.bins_per_octave: int = bins_per_octave
             # Construct the explicit interval set
             self.intervals_ = core.interval_frequencies(
-                bins_per_octave,
+                self.bins_per_octave,
                 fmin=1,
                 intervals=intervals,
-                bins_per_octave=bins_per_octave,
+                bins_per_octave=self.bins_per_octave,
             )
         except TypeError as exc:
             raise ParameterError(
@@ -607,11 +609,12 @@ class ChromaFJSFormatter(mplticker.Formatter):
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Format for chroma positions"""
-        return core.interval_to_fjs(
+        lab: str = core.interval_to_fjs(
             self.intervals_[int(x) % self.bins_per_octave],
             unison=self.unison,
             unicode=self.unicode,
         )
+        return lab
 
 
 class TonnetzFormatter(mplticker.Formatter):
