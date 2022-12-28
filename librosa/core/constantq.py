@@ -17,7 +17,7 @@ from .. import util
 from ..util.exceptions import ParameterError
 from numpy.typing import DTypeLike
 from typing import Optional, Union, Collection, List
-from .._typing import _WindowSpec, _PadMode
+from .._typing import _WindowSpec, _PadMode, _FloatLike_co
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 
@@ -298,7 +298,7 @@ def hybrid_cqt(
 
     if fmin is None:
         # C1 by default
-        fmin = note_to_hz("C1")  # type: ignore
+        fmin = note_to_hz("C1")
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -473,7 +473,7 @@ def pseudo_cqt(
 
     if fmin is None:
         # C1 by default
-        fmin = note_to_hz("C1")  # type: ignore
+        fmin = note_to_hz("C1")
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -644,7 +644,7 @@ def icqt(
     ...                 bins_per_octave=bins_per_octave)
     """
     if fmin is None:
-        fmin = note_to_hz("C1")  # type: ignore
+        fmin = note_to_hz("C1")
 
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
@@ -923,7 +923,7 @@ def vqt(
 
     if fmin is None:
         # C1 by default
-        fmin = note_to_hz("C1")  # type: ignore
+        fmin = note_to_hz("C1")
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -1375,7 +1375,7 @@ def griffinlim_cqt(
     >>> ax[2].set(title='Magnitude-only icqt reconstruction')
     """
     if fmin is None:
-        fmin = note_to_hz("C1")  # type: ignore
+        fmin = note_to_hz("C1")
 
     if random_state is None:
         rng = np.random.default_rng()
