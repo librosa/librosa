@@ -785,7 +785,7 @@ def test_salience_aggregate():
         freqs=freqs,
         harmonics=harms,
         weights=weights,
-        aggregate=np.ma.max,
+        aggregate=np.max,
         kind="quadratic",
         fill_value=0.0,
     )

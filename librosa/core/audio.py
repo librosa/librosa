@@ -1577,7 +1577,8 @@ def chirp(
     return y
 
 
-def mu_compress(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255, quantize: bool = True) -> Union[np.ndarray, _FloatLike_co]:
+def mu_compress(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255,
+                quantize: bool = True) -> np.ndarray :
     """mu-law compression
 
     Given an input signal ``-1 <= x <= 1``, the mu-law compression
