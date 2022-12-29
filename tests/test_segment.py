@@ -391,16 +391,18 @@ def test_lag_to_recurrence_sparse_badaxis():
 
 def test_timelag_filter():
     srand()
-    X = np.random.randn(15, 15)
+    X: np.ndarray = np.random.randn(15, 15)
     d_pos0 = librosa.segment.timelag_filter(lambda X: X)
-    assert np.allclose(X, d_pos0(X))
+    res: np.ndarray = d_pos0(X)
+    assert np.allclose(X, res)
 
 
 def test_timelag_filter_pos1():
     srand()
     X = np.random.randn(15, 15)
     d_pos1 = librosa.segment.timelag_filter(lambda _, X: X, index=1)
-    assert np.allclose(X, d_pos1(None, X))
+    res: np.ndarray = d_pos1(None, X)
+    assert np.allclose(X, res)
 
 
 @pytest.fixture(scope="module")
