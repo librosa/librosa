@@ -68,7 +68,7 @@ def test_decompose_multi_sort():
 
 def test_decompose_multi():
     srand()
-    X = np.random.random((2, 20, 100))
+    X = np.random.random_sample(size=(2, 20, 100))
 
     # Fit with multichannel data
     components, activations = librosa.decompose.decompose(X, n_components=20, random_state=0)
