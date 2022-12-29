@@ -13,5 +13,11 @@ dependencies:
   - numpy==1.20.3
   - pytest
 
+  # Dependencies for velin
+  - numpydoc>=1.1.0
+  - sphinx>=5.1.0
+  - pygments
+  - black
+
   - pip:
     - velin

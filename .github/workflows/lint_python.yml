@@ -34,20 +34,33 @@ jobs:
         channel-priority: ${{ matrix.channel-priority }}
         environment-file: ${{ matrix.envfile }}
         use-only-tar-bz2: true
+
     - name: Conda info
       shell: bash -l {0}
       run: |
         conda info -a
         conda list
+
     - name: Spell check
+      shell: bash -l {0}
       run: codespell --ignore-words-list="ba,trough,ue" --skip="*demo.ipynb,./AUTHORS.md,./docs/changelog.rst"
+
     - name: Security check
+      shell: bash -l {0}
       run: bandit --recursive --skip B101,B110 .
+
     - name: Style check
+      shell: bash -l {0}
       run: flake8 librosa --count --select=E9,F63,F7,F82 --show-source --statistics
+    
     - name: Docstring check  
+      shell: bash -l {0}
       run: python -m velin --check librosa
+    
     - name: Type check package
+      shell: bash -l {0}
       run: python -m mypy librosa
+    
     - name: Type check tests
+      shell: bash -l {0}
       run: python -m mypy tests --config-file=tests/mypy.ini
