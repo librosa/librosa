@@ -10,7 +10,7 @@ dependencies:
   - flake8
   - types-decorator
   - mypy
-  - numpy==1.23.5
+  - numpy==1.23.4
   - pytest
 
   # Dependencies for velin
