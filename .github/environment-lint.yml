@@ -1,0 +1,17 @@
+name: lint
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  # required
+  - pip
+  - bandit
+  - codespell
+  - flake8
+  - types-decorator
+  - mypy
+  - numpy==1.20.3
+  - pytest
+
+  - pip:
+    - velin
