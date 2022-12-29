@@ -2688,7 +2688,7 @@ def griffinlim(
 
     if init == "random":
         # randomly initialize the phase
-        angles[:] = util.phasor((2 * np.pi * rng.random(size=S.shape)))  # type: ignore
+        angles[:] = util.phasor((2 * np.pi * rng.random(size=S.shape)))
     elif init is None:
         # Initialize an all ones complex matrix
         angles[:] = 1.0

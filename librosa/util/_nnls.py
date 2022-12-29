@@ -64,7 +64,7 @@ def _nnls_lbfgs_block(
     # least squares solution
     if x_init is None:
         # Suppress type checks because mypy can't find pinv
-        x_init = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)  # type: ignore
+        x_init = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)
         np.clip(x_init, 0, None, out=x_init)
 
     # Adapt the hessian approximation to the dimension of the problem
@@ -151,7 +151,7 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
         return _nnls_lbfgs_block(A, B, **kwargs).astype(A.dtype)
 
     x: np.ndarray
-    x = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)  # type: ignore
+    x = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)
     np.clip(x, 0, None, out=x)
     x_init = x
 
