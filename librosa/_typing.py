@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any, Sequence
+from typing_extensions import Literal
 import numpy as np
 from numpy.typing import ArrayLike
 
@@ -10,8 +11,6 @@ _T = TypeVar("_T")
 _IterableLike = Union[List[_T], Tuple[_T, ...], Generator[_T, None, None]]
 _SequenceLike = Union[Sequence[_T], np.ndarray]
 _ScalarOrSequence = Union[_T, _SequenceLike[_T]]
-
-_PadMode = Union[str, Callable[..., Any]]
 
 # The following definitions are copied from numpy/_typing/_scalars.py
 # (We don't import them directly from numpy because they're an implementation detail.)
@@ -39,6 +38,37 @@ _ScalarLike_co = Union[
 ]
 # `_VoidLike_co` is technically not a scalar, but it's close enough
 _VoidLike_co = Union[Tuple[Any, ...], np.void]
+
+
+# Padding modes in general
+_ModeKind = Literal[
+    "constant",
+    "edge",
+    "linear_ramp",
+    "maximum",
+    "mean",
+    "median",
+    "minimum",
+    "reflect",
+    "symmetric",
+    "wrap",
+    "empty",
+]
 ###
 ### END COPIED CODE
 ###
+
+# Padding modes for head/tail padding
+# These rule out padding modes that depend on the entire array
+_STFTPad = Literal[
+    "constant",
+    "edge",
+    "linear_ramp",
+    "reflect",
+    "symmetric",
+    "empty",
+]
+
+_PadMode = Union[_ModeKind, Callable[..., Any]]
+
+_PadModeSTFT = Union[_STFTPad, Callable[..., Any]]

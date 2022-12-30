@@ -14,13 +14,18 @@ from .. import filters
 from ..util import nnls, expand_to
 from numpy.typing import DTypeLike
 from typing import Any, Callable, Optional, Union
-from .._typing import _WindowSpec, _PadMode
+from .._typing import _WindowSpec, _PadModeSTFT
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
 
 
 def mel_to_stft(
-    M: np.ndarray, *, sr: float = 22050, n_fft: int = 2048, power: float = 2.0, **kwargs: Any
+    M: np.ndarray,
+    *,
+    sr: float = 22050,
+    n_fft: int = 2048,
+    power: float = 2.0,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Approximate STFT magnitude from a Mel power spectrogram.
 
@@ -114,7 +119,7 @@ def mel_to_audio(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
     power: float = 2.0,
     n_iter: int = 32,
     length: Optional[int] = None,
@@ -210,7 +215,7 @@ def mfcc_to_mel(
     n_mels: int = 128,
     dct_type: int = 2,
     norm: Optional[str] = "ortho",
-    ref: Union[float, Callable] = 1.0,
+    ref: float = 1.0,
     lifter: float = 0,
 ) -> np.ndarray:
     """Invert Mel-frequency cepstral coefficients to approximate a Mel power
@@ -234,7 +239,7 @@ def mfcc_to_mel(
         If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
         Normalization is not supported for `dct_type=1`.
-    ref : number or callable
+    ref : float
         Reference power for (inverse) decibel calculation
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
@@ -286,7 +291,7 @@ def mfcc_to_audio(
     n_mels: int = 128,
     dct_type: int = 2,
     norm: Optional[str] = "ortho",
-    ref: Union[float, Callable] = 1.0,
+    ref: float = 1.0,
     lifter: float = 0,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -310,7 +315,7 @@ def mfcc_to_audio(
         If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
         Normalization is not supported for ``dct_type=1``.
-    ref : number or callable
+    ref : float
         Reference power for (inverse) decibel calculation
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::

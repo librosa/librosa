@@ -180,15 +180,13 @@ def beat_track(
     beats = __beat_tracker(onset_envelope, bpm, float(sr) / hop_length, tightness, trim)
 
     if units == "frames":
-        pass
+        return (bpm, beats)
     elif units == "samples":
-        beats = core.frames_to_samples(beats, hop_length=hop_length)
+        return (bpm, core.frames_to_samples(beats, hop_length=hop_length))
     elif units == "time":
-        beats = core.frames_to_time(beats, hop_length=hop_length, sr=sr)
+        return (bpm, core.frames_to_time(beats, hop_length=hop_length, sr=sr))
     else:
         raise ParameterError("Invalid unit type: {}".format(units))
-
-    return (bpm, beats)
 
 
 @cache(level=30)
@@ -344,7 +342,7 @@ def tempo(
 
     # Kill everything above the max tempo
     if max_tempo is not None:
-        max_idx = np.argmax(bpms < max_tempo)
+        max_idx = int(np.argmax(bpms < max_tempo))
         logprior[:max_idx] = -np.inf
     # explicit axis expansion
     logprior = util.expand_to(logprior, ndim=tg.ndim, axes=-2)
@@ -353,7 +351,8 @@ def tempo(
     # Using log1p here for numerical stability
     best_period = np.argmax(np.log1p(1e6 * tg) + logprior, axis=-2)
 
-    return np.take(bpms, best_period)
+    tempo_est: np.ndarray = np.take(bpms, best_period)
+    return tempo_est
 
 
 def plp(
@@ -672,13 +671,13 @@ def __last_beat(cumscore):
     return np.argwhere((cumscore * maxes * 2 > med_score)).max()
 
 
-def __trim_beats(localscore, beats, trim):
+def __trim_beats(localscore: np.ndarray, beats: np.ndarray, trim: bool) -> np.ndarray:
     """Final post-processing: throw out spurious leading/trailing beats"""
 
     smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.hann(5), "same")
 
     if trim:
-        threshold = 0.5 * ((smooth_boe ** 2).mean() ** 0.5)
+        threshold = 0.5 * ((smooth_boe**2).mean() ** 0.5)
     else:
         threshold = 0.0
 

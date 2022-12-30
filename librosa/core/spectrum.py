@@ -20,9 +20,9 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
-from typing import Any, Callable, Optional, Tuple, Union, overload
+from typing import Any, Callable, Optional, Tuple, List, Union, overload
 from typing_extensions import Literal
-from .._typing import _WindowSpec, _PadMode
+from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 __all__ = [
     "stft",
@@ -52,7 +52,7 @@ def stft(
     window: _WindowSpec = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
     out: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Short-time Fourier transform (STFT).
@@ -223,7 +223,9 @@ def stft(
     if hop_length is None:
         hop_length = int(win_length // 4)
     elif not util.is_positive_int(hop_length):
-        raise ParameterError("hop_length={} must be a positive integer".format(hop_length))
+        raise ParameterError(
+            "hop_length={} must be a positive integer".format(hop_length)
+        )
 
     # Check audio is valid
     util.valid_audio(y, mono=False)
@@ -248,7 +250,9 @@ def stft(
             # >>> my_pad_func = functools.partial(pad_func, foo=x, bar=y)
             # >>> librosa.stft(..., pad_mode=my_pad_func)
 
-            raise ParameterError("pad_mode='{}' is not supported by librosa.stft".format(pad_mode))
+            raise ParameterError(
+                "pad_mode='{}' is not supported by librosa.stft".format(pad_mode)
+            )
 
         if n_fft > y.shape[-1]:
             warnings.warn(
@@ -350,14 +354,12 @@ def stft(
             f"Shape mismatch for provided output array out.shape={out.shape} and target shape={shape}"
         )
     elif not np.iscomplexobj(out):
-        raise ParameterError(
-            f"output with dtype={out.dtype} is not of complex type"
-        )
+        raise ParameterError(f"output with dtype={out.dtype} is not of complex type")
     else:
         if np.allclose(shape, out.shape):
             stft_matrix = out
         else:
-            stft_matrix = out[..., :shape[-1]]
+            stft_matrix = out[..., : shape[-1]]
 
     # Fill in the warm-up
     if center and extra > 0:
@@ -370,7 +372,9 @@ def stft(
     else:
         off_start = 0
 
-    n_columns = util.MAX_MEM_BLOCK // (np.prod(y_frames.shape[:-1]) * y_frames.itemsize)
+    n_columns = int(
+        util.MAX_MEM_BLOCK // (np.prod(y_frames.shape[:-1]) * y_frames.itemsize)
+    )
     n_columns = max(n_columns, 1)
 
     for bl_s in range(0, y_frames.shape[-1], n_columns):
@@ -514,7 +518,7 @@ def istft(
     # For efficiency, trim STFT frames according to signal length if available
     if length:
         if center:
-            padded_length = length + 2 * (n_fft//2)
+            padded_length = length + 2 * (n_fft // 2)
         else:
             padded_length = length
         n_frames = min(stft_matrix.shape[-1], int(np.ceil(padded_length / hop_length)))
@@ -530,18 +534,20 @@ def istft(
     if length:
         expected_signal_len = length
     elif center:
-        expected_signal_len -= 2*(n_fft//2)
+        expected_signal_len -= 2 * (n_fft // 2)
 
     shape.append(expected_signal_len)
 
     if out is None:
         y = np.zeros(shape, dtype=dtype)
     elif not np.allclose(out.shape, shape):
-        raise ParameterError(f"Shape mismatch for provided output array out.shape={out.shape} != {shape}")
+        raise ParameterError(
+            f"Shape mismatch for provided output array out.shape={out.shape} != {shape}"
+        )
     else:
         y = out
         # Since we'll be doing overlap-add here, this needs to be initialized to zero.
-        y.fill(0.)
+        y.fill(0.0)
 
     fft = get_fftlib()
 
@@ -551,7 +557,7 @@ def istft(
         # k * hop_length >= n_fft // 2
         # k >= (n_fft//2 / hop_length)
 
-        start_frame = int(np.ceil((n_fft//2) / hop_length))
+        start_frame = int(np.ceil((n_fft // 2) / hop_length))
 
         # Do overlap-add on the head block
         ytmp = ifft_window * fft.irfft(stft_matrix[..., :start_frame], n=n_fft, axis=-2)
@@ -562,22 +568,22 @@ def istft(
         __overlap_add(head_buffer, ytmp, hop_length)
 
         # If y is smaller than the head buffer, take everything
-        if y.shape[-1] < shape[-1] - n_fft//2:
-            y[..., :] = head_buffer[..., n_fft//2:y.shape[-1]+n_fft//2]
+        if y.shape[-1] < shape[-1] - n_fft // 2:
+            y[..., :] = head_buffer[..., n_fft // 2 : y.shape[-1] + n_fft // 2]
         else:
             # Trim off the first n_fft//2 samples from the head and copy into target buffer
-            y[..., :shape[-1]-n_fft//2] = head_buffer[..., n_fft//2:]
+            y[..., : shape[-1] - n_fft // 2] = head_buffer[..., n_fft // 2 :]
 
         # This offset compensates for any differences between frame alignment
         # and padding truncation
-        offset = start_frame * hop_length - n_fft//2
+        offset = start_frame * hop_length - n_fft // 2
 
     else:
         start_frame = 0
         offset = 0
 
-    n_columns = util.MAX_MEM_BLOCK // (
-        np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize
+    n_columns = int(
+        util.MAX_MEM_BLOCK // (np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize)
     )
     n_columns = max(n_columns, 1)
 
@@ -590,7 +596,7 @@ def istft(
         ytmp = ifft_window * fft.irfft(stft_matrix[..., bl_s:bl_t], n=n_fft, axis=-2)
 
         # Overlap-add the istft block starting at the i'th frame
-        __overlap_add(y[..., frame * hop_length + offset:], ytmp, hop_length)
+        __overlap_add(y[..., frame * hop_length + offset :], ytmp, hop_length)
 
         frame += bl_t - bl_s
 
@@ -605,7 +611,7 @@ def istft(
     )
 
     if center:
-        start = n_fft//2
+        start = n_fft // 2
     else:
         start = 0
 
@@ -645,7 +651,7 @@ def __reassign_frequencies(
     window: _WindowSpec = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Instantaneous frequencies based on a spectrogram representation.
 
@@ -808,7 +814,7 @@ def __reassign_times(
     window: _WindowSpec = "hann",
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Time reassignments based on a spectrogram representation.
 
@@ -940,6 +946,7 @@ def __reassign_times(
     # calculate window weighted by time
     half_width = n_fft // 2
 
+    window_times: np.ndarray
     if n_fft % 2:
         window_times = np.arange(-half_width, half_width + 1)
 
@@ -994,8 +1001,8 @@ def reassigned_spectrogram(
     fill_nan: bool = False,
     clip: bool = True,
     dtype: Optional[DTypeLike] = None,
-    pad_mode: _PadMode = "constant",
-) -> np.ndarray:
+    pad_mode: _PadModeSTFT = "constant",
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     r"""Time-frequency reassigned spectrogram.
 
     The reassignment vectors are calculated using equations 5.20 and 5.23 in
@@ -1219,7 +1226,9 @@ def reassigned_spectrogram(
             pad_mode=pad_mode,
         )
 
-    mags = np.abs(S)
+    assert S is not None
+
+    mags: np.ndarray = np.abs(S)
 
     # clean up reassignment issues: divide-by-zero, bins with near-zero power,
     # and estimates outside the spectrogram bounds
@@ -1244,15 +1253,16 @@ def reassigned_spectrogram(
     # find bins below the power threshold
     # reassigned bins with zero power will already be NaN
     if callable(ref_power):
-        ref_power = ref_power(mags**2)
-
-    mags_low = np.less(mags, ref_power**0.5, where=~np.isnan(mags))
+        ref_p = ref_power(mags**2)
+    else:
+        ref_p = ref_power
+    mags_low = np.less(mags, ref_p**0.5, where=~np.isnan(mags))
 
     # for reassigned estimates, optionally set thresholded bins to NaN, return
     # bin frequencies and frame times in place of NaN generated by
     # divide-by-zero and power threshold, and clip to spectrogram bounds
     if reassign_frequencies:
-        if ref_power > 0:
+        if ref_p > 0:
             freqs[mags_low] = np.nan
 
         if fill_nan:
@@ -1267,7 +1277,7 @@ def reassigned_spectrogram(
         freqs = np.broadcast_to(bin_freqs[:, np.newaxis], S.shape)
 
     if reassign_times:
-        if ref_power > 0:
+        if ref_p > 0:
             times[mags_low] = np.nan
 
         if fill_nan:
@@ -1612,7 +1622,7 @@ def iirt(
 
     bands_power = np.empty_like(y, shape=shape)
 
-    slices = [slice(None) for _ in bands_power.shape]
+    slices: List[Union[int, slice]] = [slice(None) for _ in bands_power.shape]
     for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates, filterbank_ct)):
 
         slices[-2] = i
@@ -1777,7 +1787,7 @@ def power_to_db(
     else:
         ref_value = np.abs(ref)
 
-    log_spec = 10.0 * np.log10(np.maximum(amin, magnitude))
+    log_spec: np.ndarray = 10.0 * np.log10(np.maximum(amin, magnitude))
     log_spec -= 10.0 * np.log10(np.maximum(amin, ref_value))
 
     if top_db is not None:
@@ -1981,7 +1991,8 @@ def perceptual_weighting(
 
     offset = convert.frequency_weighting(frequencies, kind=kind).reshape((-1, 1))
 
-    return offset + power_to_db(S, **kwargs)
+    result: np.ndarray = offset + power_to_db(S, **kwargs)
+    return result
 
 
 @cache(level=30)
@@ -2178,9 +2189,10 @@ def fmt(
     # Apply the window and fft
     # Normalization is absorbed into the window here for expedience
     fft = get_fftlib()
-    return fft.rfft(
+    result: np.ndarray = fft.rfft(
         y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt), axis=axis
     )
+    return result
 
 
 @overload
@@ -2203,6 +2215,8 @@ def pcen(
     return_zf: Literal[False] = ...,
 ) -> np.ndarray:
     ...
+
+
 @overload
 def pcen(
     S: np.ndarray,
@@ -2223,6 +2237,8 @@ def pcen(
     return_zf: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
+
+
 @overload
 def pcen(
     S: np.ndarray,
@@ -2243,6 +2259,7 @@ def pcen(
     return_zf: bool = ...,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     ...
+
 
 @cache(level=30)
 def pcen(
@@ -2493,6 +2510,8 @@ def pcen(
         zi[:] = scipy.signal.lfilter_zi([b], [1, b - 1])[:]
 
     # Temporal integration
+    S_smooth: np.ndarray
+    zf: np.ndarray
     S_smooth, zf = scipy.signal.lfilter([b], [1, b - 1], ref, zi=zi, axis=axis)
 
     # Adaptive gain control
@@ -2500,6 +2519,7 @@ def pcen(
     smooth = np.exp(-gain * (np.log(eps) + np.log1p(S_smooth / eps)))
 
     # Dynamic range compression
+    S_out: np.ndarray
     if power == 0:
         S_out = np.log1p(S * smooth)
     elif bias == 0:
@@ -2524,10 +2544,12 @@ def griffinlim(
     center: bool = True,
     dtype: Optional[DTypeLike] = None,
     length: Optional[int] = None,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
     momentum: float = 0.99,
     init: Optional[str] = "random",
-    random_state: Optional[Union[int, np.random.RandomState]] = None,
+    random_state: Optional[
+        Union[int, np.random.RandomState, np.random.Generator]
+    ] = None,
 ) -> np.ndarray:
 
     """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
@@ -2604,14 +2626,14 @@ def griffinlim(
         an initial guess for phase can be provided, or when you want to resume
         Griffin-Lim from a previous output.
 
-    random_state : None, int, or np.random.RandomState
+    random_state : None, int, np.random.RandomState, or np.random.Generator
         If int, random_state is the seed used by the random number generator
         for phase initialization.
 
-        If `np.random.RandomState` instance, the random number
+        If `np.random.RandomState` or `np.random.Generator` instance, the random number
         generator itself.
 
-        If `None`, defaults to the current `np.random` object.
+        If `None`, defaults to the `np.random.default_rng()` object.
 
     Returns
     -------
@@ -2652,22 +2674,22 @@ def griffinlim(
     """
 
     if random_state is None:
-        rng = np.random
+        rng = np.random.default_rng()
     elif isinstance(random_state, int):
-        rng = np.random.RandomState(seed=random_state)
-    elif isinstance(random_state, np.random.RandomState):
-        rng = random_state
+        rng = np.random.RandomState(seed=random_state)  # type: ignore
+    elif isinstance(random_state, (np.random.RandomState, np.random.Generator)):
+        rng = random_state  # type: ignore
+    else:
+        raise ParameterError(f"Unsupported random_state={random_state!r}")
 
     if momentum > 1:
         warnings.warn(
-            "Griffin-Lim with momentum={} > 1 can be unstable. "
-            "Proceed with caution!".format(momentum),
+            f"Griffin-Lim with momentum={momentum} > 1 can be unstable. "
+            "Proceed with caution!",
             stacklevel=2,
         )
     elif momentum < 0:
-        raise ParameterError(
-            "griffinlim() called with momentum={} < 0".format(momentum)
-        )
+        raise ParameterError(f"griffinlim() called with momentum={momentum} < 0")
 
     # Infer n_fft from the spectrogram shape
     if n_fft is None:
@@ -2679,7 +2701,7 @@ def griffinlim(
 
     if init == "random":
         # randomly initialize the phase
-        angles[:] = util.phasor((2 * np.pi * rng.rand(*S.shape)))
+        angles[:] = util.phasor((2 * np.pi * rng.random(size=S.shape)))
     elif init is None:
         # Initialize an all ones complex matrix
         angles[:] = 1.0
@@ -2716,7 +2738,7 @@ def griffinlim(
             window=window,
             center=center,
             pad_mode=pad_mode,
-            out=rebuilt
+            out=rebuilt,
         )
 
         # Update our phase estimates
@@ -2746,13 +2768,13 @@ def _spectrogram(
     *,
     y: Optional[np.ndarray] = None,
     S: Optional[np.ndarray] = None,
-    n_fft: int = 2048,
-    hop_length: int = 512,
+    n_fft: Optional[int] = 2048,
+    hop_length: Optional[int] = 512,
     power: float = 1,
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, int]:
     """Helper function to retrieve a magnitude spectrogram.
 
@@ -2813,10 +2835,16 @@ def _spectrogram(
 
     if S is not None:
         # Infer n_fft from spectrogram shape, but only if it mismatches
-        if n_fft // 2 + 1 != S.shape[-2]:
+        if n_fft is None or n_fft // 2 + 1 != S.shape[-2]:
             n_fft = 2 * (S.shape[-2] - 1)
     else:
         # Otherwise, compute a magnitude spectrogram from input
+        if n_fft is None:
+            raise ParameterError(f"Unable to compute spectrogram with n_fft={n_fft}")
+        if y is None:
+            raise ParameterError(
+                "Input signal must be provided to compute a spectrogram"
+            )
         S = (
             np.abs(
                 stft(

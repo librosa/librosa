@@ -22,14 +22,14 @@ from .. import util
 from ..util.exceptions import ParameterError
 from ..util.decorators import deprecated
 from ..util.deprecation import Deprecated, rename_kw
-from .._typing import _FloatLike_co
+from .._typing import _FloatLike_co, _IntLike_co, _SequenceLike
 
-from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
+from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union, List
 from numpy.typing import DTypeLike, ArrayLike
 
 # Lazy-load optional dependencies
-samplerate = lazy.load('samplerate')
-resampy = lazy.load('resampy')
+samplerate = lazy.load("samplerate")
+resampy = lazy.load("resampy")
 
 __all__ = [
     "load",
@@ -53,7 +53,9 @@ __all__ = [
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
 def load(
-    path: Union[str, int, os.PathLike[Any], sf.SoundFile, audioread.AudioFile, BinaryIO],
+    path: Union[
+        str, int, os.PathLike[Any], sf.SoundFile, audioread.AudioFile, BinaryIO
+    ],
     *,
     sr: Optional[float] = 22050,
     mono: bool = True,
@@ -176,7 +178,9 @@ def load(
         except sf.SoundFileRuntimeError as exc:
             # If soundfile failed, try audioread instead
             if isinstance(path, (str, pathlib.PurePath)):
-                warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
+                warnings.warn(
+                    "PySoundFile failed. Trying audioread instead.", stacklevel=2
+                )
                 y, sr_native = __audioread_load(path, offset, duration, dtype)
             else:
                 raise exc
@@ -227,7 +231,7 @@ def __audioread_load(path, offset, duration, dtype: DTypeLike):
     This loads one block at a time, and then concatenates the results.
     """
 
-    y = []
+    buf = []
 
     if isinstance(path, tuple(audioread.available_backends())):
         # If we have an audioread object already, don't bother opening
@@ -265,17 +269,17 @@ def __audioread_load(path, offset, duration, dtype: DTypeLike):
 
             if s_end < n:
                 # the end is in this frame.  crop.
-                frame = frame[: s_end - n_prev]
+                frame = frame[: int(s_end - n_prev)]  # pragma: no cover
 
             if n_prev <= s_start <= n:
                 # beginning is in this frame
                 frame = frame[(s_start - n_prev) :]
 
             # tack on the current frame
-            y.append(frame)
+            buf.append(frame)
 
-    if y:
-        y = np.concatenate(y)
+    if buf:
+        y = np.concatenate(buf)
         if n_channels > 1:
             y = y.reshape((-1, n_channels)).T
     else:
@@ -650,7 +654,9 @@ def resample(
         orig_sr = int(orig_sr)
         target_sr = int(target_sr)
         gcd = np.gcd(orig_sr, target_sr)
-        y_hat = scipy.signal.resample_poly(y, target_sr // gcd, orig_sr // gcd, axis=axis)
+        y_hat = scipy.signal.resample_poly(
+            y, target_sr // gcd, orig_sr // gcd, axis=axis
+        )
     elif res_type in (
         "linear",
         "zero_order_hold",
@@ -660,11 +666,20 @@ def resample(
     ):
         # Use numpy to vectorize the resampler along the target axis
         # This is because samplerate does not support ndim>2 generally.
-        y_hat = np.apply_along_axis(samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type)
+        y_hat = np.apply_along_axis(
+            samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type
+        )
     elif res_type.startswith("soxr"):
         # Use numpy to vectorize the resampler along the target axis
         # This is because soxr does not support ndim>2 generally.
-        y_hat = np.apply_along_axis(soxr.resample, axis=axis, arr=y, in_rate=orig_sr, out_rate=target_sr, quality=res_type)
+        y_hat = np.apply_along_axis(
+            soxr.resample,
+            axis=axis,
+            arr=y,
+            in_rate=orig_sr,
+            out_rate=target_sr,
+            quality=res_type,
+        )
     else:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=axis)
 
@@ -674,7 +689,8 @@ def resample(
     if scale:
         y_hat /= np.sqrt(ratio)
 
-    return y_hat.astype(y.dtype)
+    # Match dtypes
+    return np.asarray(y_hat, dtype=y.dtype)
 
 
 def get_duration(
@@ -773,30 +789,32 @@ def get_duration(
     ``(y, sr)``.
     """
 
-    path = rename_kw(old_name='filename',
-                     old_value=filename,
-                     new_name='path',
-                     new_value=path,
-                     version_deprecated='0.10.0',
-                     version_removed='1.0')
+    path = rename_kw(
+        old_name="filename",
+        old_value=filename,
+        new_name="path",
+        new_value=path,
+        version_deprecated="0.10.0",
+        version_removed="1.0",
+    )
 
     if path is not None:
         try:
-            return sf.info(path).duration
+            return sf.info(path).duration  # type: ignore
         except sf.SoundFileRuntimeError:
-            warnings.warn("PySoundFile failed. Trying audioread instead."
-                          "\n\tAudioread support is deprecated in librosa 0.10.0"
-                          " and will be removed in version 1.0.",
-                          stacklevel=2,
-                          category=FutureWarning)
+            warnings.warn(
+                "PySoundFile failed. Trying audioread instead."
+                "\n\tAudioread support is deprecated in librosa 0.10.0"
+                " and will be removed in version 1.0.",
+                stacklevel=2,
+                category=FutureWarning,
+            )
             with audioread.audio_open(path) as fdesc:
-                return fdesc.duration
+                return fdesc.duration  # type: ignore
 
     if y is None:
         if S is None:
-            raise ParameterError(
-                "At least one of (y, sr), S, or path must be provided"
-            )
+            raise ParameterError("At least one of (y, sr), S, or path must be provided")
 
         n_frames = S.shape[-1]
         n_samples = n_fft + hop_length * (n_frames - 1)
@@ -837,17 +855,19 @@ def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
     """
     try:
         if isinstance(path, sf.SoundFile):
-            return path.samplerate
+            return path.samplerate  # type: ignore
 
-        return sf.info(path).samplerate
+        return sf.info(path).samplerate  # type: ignore
     except sf.SoundFileRuntimeError:
-        warnings.warn("PySoundFile failed. Trying audioread instead."
-                      "\n\tAudioread support is deprecated in librosa 0.10.0"
-                      " and will be removed in version 1.0.",
-                      stacklevel=2,
-                      category=FutureWarning)
+        warnings.warn(
+            "PySoundFile failed. Trying audioread instead."
+            "\n\tAudioread support is deprecated in librosa 0.10.0"
+            " and will be removed in version 1.0.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         with audioread.audio_open(path) as fdesc:
-            return fdesc.samplerate
+            return fdesc.samplerate  # type: ignore
 
 
 @cache(level=20)
@@ -924,7 +944,9 @@ def autocorrelate(
     subslice = [slice(None)] * autocorr.ndim
     subslice[axis] = slice(max_size)
 
-    return autocorr[tuple(subslice)]
+    autocorr_slice: np.ndarray = autocorr[tuple(subslice)]
+
+    return autocorr_slice
 
 
 def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
@@ -1019,13 +1041,21 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     epsilon = util.tiny(den)
 
     # Call the helper, and swap the results back to the target axis position
-    return __lpc(
-        y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon
-    ).swapaxes(0, axis)
+    return np.swapaxes(
+        __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon), 0, axis
+    )
 
 
-@jit(nopython=True, cache=True)
-def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
+@jit(nopython=True, cache=True)  # type: ignore
+def __lpc(
+    y: np.ndarray,
+    order: int,
+    ar_coeffs: np.ndarray,
+    ar_coeffs_prev: np.ndarray,
+    reflect_coeff: np.ndarray,
+    den: np.ndarray,
+    epsilon: float,
+) -> np.ndarray:
     # This implementation follows the description of Burg's algorithm given in
     # section III of Marple's paper referenced in the docstring.
     #
@@ -1045,7 +1075,7 @@ def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
     bwd_pred_error = y[:-1]
 
     # DEN_{M} from eqn 16 of Marple.
-    den[0] = np.sum(fwd_pred_error ** 2 + bwd_pred_error ** 2, axis=0)
+    den[0] = np.sum(fwd_pred_error**2 + bwd_pred_error**2, axis=0)
 
     for i in range(order):
         # can be removed if we keep the epsilon bias
@@ -1207,6 +1237,7 @@ def zero_crossings(
     (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
     """
 
+    # TODO: drop support for None thresholds, just use 0
     # Clip within the threshold
     if threshold is None:
         threshold = 0.0
@@ -1217,6 +1248,7 @@ def zero_crossings(
     elif ref_magnitude is not None:
         threshold = threshold * ref_magnitude
 
+    assert threshold is not None  # because mypy can't infer we're float now
     if threshold > 0:
         y = y.copy()
         y[np.abs(y) <= threshold] = 0
@@ -1248,8 +1280,8 @@ def zero_crossings(
 
 def clicks(
     *,
-    times: Optional[ArrayLike] = None,
-    frames: Optional[ArrayLike] = None,
+    times: Optional[_SequenceLike[_FloatLike_co]] = None,
+    frames: Optional[_SequenceLike[_IntLike_co]] = None,
     sr: float = 22050,
     hop_length: int = 512,
     click_freq: float = 1000.0,
@@ -1327,6 +1359,7 @@ def clicks(
     """
 
     # Compute sample positions from time or frames
+    positions: np.ndarray
     if times is None:
         if frames is None:
             raise ParameterError('either "times" or "frames" must be provided')
@@ -1447,12 +1480,13 @@ def tone(
     if length is None:
         if duration is None:
             raise ParameterError('either "length" or "duration" must be provided')
-        length = duration * sr
+        length = int(np.ceil(duration * sr))
 
     if phi is None:
         phi = -np.pi * 0.5
 
-    return np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
+    y: np.ndarray = np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
+    return y
 
 
 def chirp(
@@ -1559,17 +1593,20 @@ def chirp(
         phi = -np.pi * 0.5
 
     method = "linear" if linear else "logarithmic"
-    return scipy.signal.chirp(
-        np.arange(duration, step=period),
+    y: np.ndarray = scipy.signal.chirp(
+        np.arange(int(np.ceil(duration * sr))) / sr,
         fmin,
         duration,
         fmax,
         method=method,
         phi=phi / np.pi * 180,  # scipy.signal.chirp uses degrees for phase offset
     )
+    return y
 
 
-def mu_compress(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255, quantize: bool = True) -> np.ndarray:
+def mu_compress(
+    x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255, quantize: bool = True
+) -> np.ndarray:
     """mu-law compression
 
     Given an input signal ``-1 <= x <= 1``, the mu-law compression
@@ -1650,20 +1687,24 @@ def mu_compress(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255, quantiz
             "mu-law input x={} must be in the " "range [-1, +1].".format(x)
         )
 
-    x_comp = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
+    x_comp: np.ndarray = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
 
     if quantize:
-        return (
+
+        y: np.ndarray = (
             np.digitize(
                 x_comp, np.linspace(-1, 1, num=int(1 + mu), endpoint=True), right=True
             )
             - int(mu + 1) // 2
         )
+        return y
 
     return x_comp
 
 
-def mu_expand(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255.0, quantize: bool = True) -> np.ndarray:
+def mu_expand(
+    x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255.0, quantize: bool = True
+) -> np.ndarray:
     """mu-law expansion
 
     This function is the inverse of ``mu_compress``. Given a mu-law compressed
@@ -1745,7 +1786,7 @@ def mu_expand(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255.0, quantiz
 
     if np.any(x < -1) or np.any(x > 1):
         raise ParameterError(
-            "Inverse mu-law input x={} must be " "in the range [-1, +1].".format(x)
+            f"Inverse mu-law input x={x} must be in the range [-1, +1]."
         )
 
     return np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)

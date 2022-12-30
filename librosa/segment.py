@@ -43,7 +43,7 @@ from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 from typing import Any, Callable, Optional, TypeVar, Union, overload
 from typing_extensions import Literal
-from ._typing import _WindowSpec
+from ._typing import _WindowSpec, _FloatLike_co
 
 __all__ = [
     "cross_similarity",
@@ -55,6 +55,7 @@ __all__ = [
     "subsegment",
     "path_enhance",
 ]
+
 
 @overload
 def cross_similarity(
@@ -69,6 +70,7 @@ def cross_similarity(
 ) -> np.ndarray:
     ...
 
+
 @overload
 def cross_similarity(
     data: np.ndarray,
@@ -82,6 +84,7 @@ def cross_similarity(
 ) -> scipy.sparse.csc_matrix:
     ...
 
+
 @cache(level=30)
 def cross_similarity(
     data: np.ndarray,
@@ -91,7 +94,7 @@ def cross_similarity(
     metric: str = "euclidean",
     sparse: bool = False,
     mode: str = "connectivity",
-    bandwidth: Optional[float] = None,
+    bandwidth: Optional[_FloatLike_co] = None,
 ) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
     """Compute cross-similarity from one data sequence to a reference sequence.
 
@@ -282,7 +285,7 @@ def cross_similarity(
     xsim.eliminate_zeros()
 
     if mode == "connectivity":
-        xsim = xsim.astype(np.bool)
+        xsim = xsim.astype(bool)
     elif mode == "affinity":
         if bandwidth is None:
             bandwidth = np.nanmedian(xsim.max(axis=1).data)
@@ -313,6 +316,7 @@ def recurrence_matrix(
 ) -> scipy.sparse.csc_matrix:
     ...
 
+
 @overload
 def recurrence_matrix(
     data: np.ndarray,
@@ -323,11 +327,12 @@ def recurrence_matrix(
     sym: bool = ...,
     sparse: Literal[False] = ...,
     mode: str = ...,
-    bandwidth: Optional[float] = ...,
+    bandwidth: Optional[_FloatLike_co] = ...,
     self: bool = ...,
     axis: int = ...,
 ) -> np.ndarray:
     ...
+
 
 @cache(level=30)
 def recurrence_matrix(
@@ -339,7 +344,7 @@ def recurrence_matrix(
     sym: bool = False,
     sparse: bool = False,
     mode: str = "connectivity",
-    bandwidth: Optional[float] = None,
+    bandwidth: Optional[_FloatLike_co] = None,
     self: bool = False,
     axis: int = -1,
 ) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
@@ -577,7 +582,7 @@ def recurrence_matrix(
     rec.eliminate_zeros()
 
     if mode == "connectivity":
-        rec = rec.astype(np.bool)
+        rec = rec.astype(bool)
     elif mode == "affinity":
         if bandwidth is None:
             bandwidth = np.nanmedian(rec.max(axis=1).data)
@@ -596,7 +601,10 @@ def recurrence_matrix(
     return rec
 
 
-_ArrayOrSparseMatrix = TypeVar('_ArrayOrSparseMatrix', bound=Union[np.ndarray, scipy.sparse.spmatrix])
+_ArrayOrSparseMatrix = TypeVar(
+    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, scipy.sparse.spmatrix]
+)
+
 
 def recurrence_to_lag(
     rec: _ArrayOrSparseMatrix, *, pad: bool = True, axis: int = -1
@@ -678,7 +686,8 @@ def recurrence_to_lag(
     sparse = scipy.sparse.issparse(rec)
 
     if sparse:
-        fmt = rec.format
+        # suppress type check here, mypy doesn't know about issparse
+        fmt = rec.format  # type: ignore
 
     t = rec.shape[axis]
 
@@ -691,14 +700,17 @@ def recurrence_to_lag(
                 rec_fmt = "csc"
             rec = scipy.sparse.kron(padding, rec, format=rec_fmt)
         else:
-            padding = [(0, 0), (0, 0)]
-            padding[(1 - axis)] = (0, t)
-            rec = np.pad(rec, padding, mode="constant")
+            padding = np.array([(0, 0), (0, 0)])
+            padding[(1 - axis), :] = [0, t]
+            # Suppress type check, mypy doesn't know that rec is an ndarray here
+            rec = np.pad(rec, padding, mode="constant")  # type: ignore
 
-    lag = util.shear(rec, factor=-1, axis=axis)
+    lag: _ArrayOrSparseMatrix = util.shear(rec, factor=-1, axis=axis)
 
     if sparse:
-        lag = lag.asformat(fmt)
+        # Suppress type check, mypy doesn't know
+        # that lag is sparse here
+        lag = lag.asformat(fmt)  # type: ignore
 
     return lag
 
@@ -778,10 +790,12 @@ def lag_to_recurrence(
 
     sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)
-    return rec[tuple(sub_slice)]
+    rec_slice: _ArrayOrSparseMatrix = rec[tuple(sub_slice)]
+    return rec_slice
 
 
 _F = TypeVar("_F", bound=Callable[..., Any])
+
 
 def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
     """Filtering in the time-lag domain.
@@ -861,7 +875,7 @@ def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
         # Map back into time-time and return
         return lag_to_recurrence(result)
 
-    return decorator(__my_filter, function)
+    return decorator(__my_filter, function)  # type: ignore
 
 
 @cache(level=30)
@@ -1203,6 +1217,6 @@ def path_enhance(
 
     if clip:
         # Clip the output in-place
-        np.clip(R_smooth, 0, None, out=R_smooth)
+        np.clip(R_smooth, 0, None, out=R_smooth)  # type: ignore
 
-    return R_smooth
+    return np.asanyarray(R_smooth)

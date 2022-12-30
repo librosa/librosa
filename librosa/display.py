@@ -47,8 +47,8 @@ import lazy_loader as lazy
 from . import core
 from . import util
 from .util.exceptions import ParameterError
-from typing import TYPE_CHECKING, Any, Collection, Optional, Union
-
+from typing import TYPE_CHECKING, Any, Collection, Optional, Union, Callable, Dict
+from ._typing import _FloatLike_co
 
 if TYPE_CHECKING:
     import matplotlib
@@ -60,6 +60,7 @@ if TYPE_CHECKING:
     from matplotlib.lines import Line2D
     from matplotlib.path import Path as MplPath
     from matplotlib.markers import MarkerStyle
+    from matplotlib.colors import Colormap
 else:
     matplotlib = lazy.load("matplotlib")
     mcm = lazy.load("matplotlib.cm")
@@ -82,6 +83,8 @@ __all__ = [
     "TonnetzFormatter",
     "AdaptiveWaveplot",
 ]
+
+# mypy: disable-error-code="attr-defined"
 
 
 class TimeFormatter(mplticker.Formatter):
@@ -231,7 +234,13 @@ class NoteFormatter(mplticker.Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
-    def __init__(self, octave: bool = True, major: bool = True, key: str = "C:maj", unicode: bool = True):
+    def __init__(
+        self,
+        octave: bool = True,
+        major: bool = True,
+        key: str = "C:maj",
+        unicode: bool = True,
+    ):
 
         self.octave = octave
         self.major = major
@@ -400,12 +409,12 @@ class FJSFormatter(mplticker.Formatter):
         self,
         *,
         fmin: int,
+        n_bins: int,
+        bins_per_octave: int,
         intervals: Union[str, Collection[float]],
         major: bool = True,
         unison: Optional[str] = None,
         unicode: bool = True,
-        bins_per_octave: Optional[int] = None,
-        n_bins: Optional[int] = None,
     ):
 
         self.fmin = fmin
@@ -433,12 +442,13 @@ class FJSFormatter(mplticker.Formatter):
         # Map the given frequency to the nearest JI interval
         idx = util.match_events(np.atleast_1d(x), self.frequencies_)[0]
 
-        return core.hz_to_fjs(
+        label: str = core.hz_to_fjs(
             self.frequencies_[idx],
             fmin=self.fmin,
             unison=self.unison,
             unicode=self.unicode,
         )
+        return label
 
 
 class LogHzFormatter(mplticker.Formatter):
@@ -534,7 +544,7 @@ class ChromaSvaraFormatter(mplticker.Formatter):
         Sa: Optional[float] = None,
         mela: Optional[Union[int, str]] = None,
         abbr: bool = True,
-        unicode: bool = True
+        unicode: bool = True,
     ):
         if Sa is None:
             Sa = 0
@@ -583,7 +593,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
         intervals: Union[str, Collection[float]],
         unison: str = "C",
         unicode: bool = True,
-        bins_per_octave: Optional[int] = None
+        bins_per_octave: Optional[int] = None,
     ):
         self.unison = unison
         self.unicode = unicode
@@ -591,13 +601,17 @@ class ChromaFJSFormatter(mplticker.Formatter):
         try:
             if not isinstance(intervals, str):
                 bins_per_octave = len(intervals)
-            self.bins_per_octave = bins_per_octave
+            if not isinstance(bins_per_octave, int):
+                raise ParameterError(
+                    f"bins_per_octave={bins_per_octave} must be integer-valued"
+                )
+            self.bins_per_octave: int = bins_per_octave
             # Construct the explicit interval set
             self.intervals_ = core.interval_frequencies(
-                bins_per_octave,
+                self.bins_per_octave,
                 fmin=1,
                 intervals=intervals,
-                bins_per_octave=bins_per_octave,
+                bins_per_octave=self.bins_per_octave,
             )
         except TypeError as exc:
             raise ParameterError(
@@ -606,11 +620,12 @@ class ChromaFJSFormatter(mplticker.Formatter):
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Format for chroma positions"""
-        return core.interval_to_fjs(
+        lab: str = core.interval_to_fjs(
             self.intervals_[int(x) % self.bins_per_octave],
             unison=self.unison,
             unicode=self.unicode,
         )
+        return lab
 
 
 class TonnetzFormatter(mplticker.Formatter):
@@ -682,7 +697,7 @@ class AdaptiveWaveplot:
         steps: Line2D,
         envelope: PolyCollection,
         sr: float = 22050,
-        max_samples: int = 11025
+        max_samples: int = 11025,
     ):
         self.times = times
         self.samples = y
@@ -793,7 +808,7 @@ def cmap(
     cmap_seq: str = "magma",
     cmap_bool: str = "gray_r",
     cmap_div: str = "coolwarm",
-) -> matplotlib.colors.Colormap:
+) -> Colormap:
     """Get a default colormap from the given data.
 
     If the data is boolean, use a black and white colormap.
@@ -1258,7 +1273,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
             )
         return coords
 
-    coord_map = {
+    coord_map: Dict[Optional[str], Callable[..., np.ndarray]] = {
         "linear": __coord_fft_hz,
         "fft": __coord_fft_hz,
         "fft_note": __coord_fft_hz,
@@ -1296,11 +1311,11 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
     }
 
     if ax_type not in coord_map:
-        raise ParameterError("Unknown axis type: {}".format(ax_type))
+        raise ParameterError(f"Unknown axis type: {ax_type}")
     return coord_map[ax_type](n, **kwargs)
 
 
-def __check_axes(axes):
+def __check_axes(axes: Optional[mplaxes.Axes]) -> mplaxes.Axes:
     """Check if "axes" is an instance of an axis object. If not, use `gca`."""
     if axes is None:
         axes = plt.gca()
@@ -1362,7 +1377,7 @@ def __scale_axes(axes, ax_type, which):
     elif ax_type in ["log", "fft_note", "fft_svara"]:
         mode = "symlog"
         kwargs[base] = 2
-        kwargs[thresh] = core.note_to_hz("C2")
+        kwargs[thresh] = float(core.note_to_hz("C2"))
         kwargs[scale] = 0.5
 
     elif ax_type in ["tempo", "fourier_tempo"]:
@@ -1685,7 +1700,9 @@ def __decorate_axis(
         raise ParameterError("Unsupported axis type: {}".format(ax_type))
 
 
-def __coord_fft_hz(n, sr=22050, n_fft=None, **_kwargs):
+def __coord_fft_hz(
+    n: int, sr: float = 22050, n_fft: Optional[int] = None, **_kwargs: Any
+) -> np.ndarray:
     """Get the frequencies for FFT bins"""
     if n_fft is None:
         n_fft = 2 * (n - 1)
@@ -1695,11 +1712,18 @@ def __coord_fft_hz(n, sr=22050, n_fft=None, **_kwargs):
     return basis
 
 
-def __coord_mel_hz(n, fmin=0, fmax=None, sr=22050, htk=False, **_kwargs):
+def __coord_mel_hz(
+    n: int,
+    fmin: Optional[float] = 0.0,
+    fmax: Optional[float] = None,
+    sr: float = 22050,
+    htk: bool = False,
+    **_kwargs: Any,
+) -> np.ndarray:
     """Get the frequencies for Mel bins"""
 
     if fmin is None:
-        fmin = 0
+        fmin = 0.0
     if fmax is None:
         fmax = 0.5 * sr
 
@@ -1707,7 +1731,13 @@ def __coord_mel_hz(n, fmin=0, fmax=None, sr=22050, htk=False, **_kwargs):
     return basis
 
 
-def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, sr=22050, **_kwargs):
+def __coord_cqt_hz(
+    n: int,
+    fmin: Optional[_FloatLike_co] = None,
+    bins_per_octave: int = 12,
+    sr: float = 22050,
+    **_kwargs: Any,
+) -> np.ndarray:
     """Get CQT bin frequencies"""
     if fmin is None:
         fmin = core.note_to_hz("C1")
@@ -1733,10 +1763,19 @@ def __coord_cqt_hz(n, fmin=None, bins_per_octave=12, sr=22050, **_kwargs):
 
 
 def __coord_vqt_hz(
-    n, fmin=None, bins_per_octave=12, sr=22050, intervals=None, unison=None, **_kwargs
-):
+    n: int,
+    fmin: Optional[_FloatLike_co] = None,
+    bins_per_octave: int = 12,
+    sr: float = 22050,
+    intervals: Optional[Union[str, Collection[float]]] = None,
+    unison: Optional[str] = None,
+    **_kwargs: Any,
+) -> np.ndarray:
     if fmin is None:
         fmin = core.note_to_hz("C1")
+
+    if intervals is None:
+        raise ParameterError("VQT axis coordinates cannot be defined without intervals")
 
     freqs = core.interval_frequencies(
         n, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
@@ -1752,18 +1791,26 @@ def __coord_vqt_hz(
     return freqs
 
 
-def __coord_chroma(n, bins_per_octave=12, **_kwargs):
+def __coord_chroma(n: int, bins_per_octave: int = 12, **_kwargs: Any) -> np.ndarray:
     """Get chroma bin numbers"""
     return np.linspace(0, (12.0 * n) / bins_per_octave, num=n, endpoint=False)
 
 
-def __coord_tempo(n, sr=22050, hop_length=512, **_kwargs):
+def __coord_tempo(
+    n: int, sr: float = 22050, hop_length: int = 512, **_kwargs: Any
+) -> np.ndarray:
     """Tempo coordinates"""
     basis = core.tempo_frequencies(n + 1, sr=sr, hop_length=hop_length)[1:]
     return basis
 
 
-def __coord_fourier_tempo(n, sr=22050, hop_length=512, win_length=None, **_kwargs):
+def __coord_fourier_tempo(
+    n: int,
+    sr: float = 22050,
+    hop_length: int = 512,
+    win_length: Optional[int] = None,
+    **_kwargs: Any,
+) -> np.ndarray:
     """Fourier tempogram coordinates"""
     if win_length is None:
         win_length = 2 * (n - 1)
@@ -1775,14 +1822,17 @@ def __coord_fourier_tempo(n, sr=22050, hop_length=512, win_length=None, **_kwarg
     return basis
 
 
-def __coord_n(n, **_kwargs):
+def __coord_n(n: int, **_kwargs: Any) -> np.ndarray:
     """Get bare positions"""
     return np.arange(n)
 
 
-def __coord_time(n, sr=22050, hop_length=512, **_kwargs):
+def __coord_time(
+    n: int, sr: float = 22050, hop_length: int = 512, **_kwargs: Any
+) -> np.ndarray:
     """Get time coordinates from frames"""
-    return core.frames_to_time(np.arange(n), sr=sr, hop_length=hop_length)
+    times: np.ndarray = core.frames_to_time(np.arange(n), sr=sr, hop_length=hop_length)
+    return times
 
 
 def __same_axes(x_axis, y_axis, xlim, ylim):

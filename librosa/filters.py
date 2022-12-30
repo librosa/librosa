@@ -60,7 +60,7 @@ from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.convert import fft_frequencies, mel_frequencies
 from numpy.typing import ArrayLike, DTypeLike
 from typing import Any, List, Optional, Tuple, Union
-from ._typing import _WindowSpec
+from ._typing import _WindowSpec, _FloatLike_co
 
 __all__ = [
     "mel",
@@ -238,12 +238,14 @@ def mel(
         # .. then intersect them with each other and zero
         weights[i] = np.maximum(0, np.minimum(lower, upper))
 
-    if norm == "slaney":
+    if isinstance(norm, str) and norm == "slaney":
         # Slaney-style mel is scaled to be approx constant energy per channel
         enorm = 2.0 / (mel_f[2 : n_mels + 2] - mel_f[:n_mels])
         weights *= enorm[:, np.newaxis]
+    elif np.issubdtype(type(norm), np.number) or norm is None:
+        weights = util.normalize(weights, norm=norm, axis=-1)  # type: ignore
     else:
-        weights = util.normalize(weights, norm=norm, axis=-1)
+        raise ParameterError(f"Unsupported norm={norm}")
 
     # Only check weights if f_mel[0] is positive
     if not np.all((mel_f[:-2] == 0) | (weights.max(axis=1) > 0)):
@@ -436,7 +438,7 @@ def __float_window(window_spec):
 def constant_q(
     *,
     sr: float,
-    fmin: Optional[float] = None,
+    fmin: Optional[_FloatLike_co] = None,
     n_bins: int = 84,
     bins_per_octave: int = 12,
     window: _WindowSpec = "hann",
@@ -602,7 +604,7 @@ def constant_q(
 def constant_q_lengths(
     *,
     sr: float,
-    fmin: float,
+    fmin: _FloatLike_co,
     n_bins: int = 84,
     bins_per_octave: int = 12,
     window: _WindowSpec = "hann",
@@ -674,7 +676,7 @@ def constant_q_lengths(
         )
 
     # Convert frequencies to filter lengths
-    lengths = Q * sr / (freq + gamma / alpha)
+    lengths: np.ndarray = Q * sr / (freq + gamma / alpha)
 
     return lengths
 
@@ -687,7 +689,7 @@ def wavelet_lengths(
     window: _WindowSpec = "hann",
     filter_scale: float = 1,
     gamma: Optional[float] = 0,
-    alpha: Optional[float] = None,
+    alpha: Optional[Union[float, np.ndarray]] = None,
 ) -> Tuple[np.ndarray, float]:
     """Return length of each filter in a wavelet basis.
 
@@ -798,23 +800,25 @@ def wavelet_lengths(
         bpo[1:-1] = 2 / (logf[2:] - logf[:-2])
 
         alpha = (2.0 ** (2 / bpo) - 1) / (2.0 ** (2 / bpo) + 1)
-    elif alpha is None:
+    if alpha is None:
         raise ParameterError(
             "Cannot construct a wavelet basis for a single frequency if alpha is not provided"
         )
 
+    gamma_: Union[_FloatLike_co, np.ndarray]
     if gamma is None:
-        gamma = alpha * 24.7 / 0.108
-
+        gamma_ = alpha * 24.7 / 0.108
+    else:
+        gamma_ = gamma
     # Q should be capitalized here, so we suppress the name warning
     # pylint: disable=invalid-name
     Q = float(filter_scale) / alpha
 
     # How far up does our highest frequency reach?
-    f_cutoff = max(freqs * (1 + 0.5 * window_bandwidth(window) / Q) + 0.5 * gamma)
+    f_cutoff = max(freqs * (1 + 0.5 * window_bandwidth(window) / Q) + 0.5 * gamma_)
 
     # Convert frequencies to filter lengths
-    lengths = Q * sr / (freqs + gamma / alpha)
+    lengths = Q * sr / (freqs + gamma_ / alpha)
 
     return lengths, f_cutoff
 
@@ -974,7 +978,7 @@ def cq_to_chroma(
     *,
     bins_per_octave: int = 12,
     n_chroma: int = 12,
-    fmin: Optional[float] = None,
+    fmin: Optional[_FloatLike_co] = None,
     window: Optional[np.ndarray] = None,
     base_c: bool = True,
     dtype: DTypeLike = np.float32,
@@ -1048,8 +1052,11 @@ def cq_to_chroma(
     # How many fractional bins are we merging?
     n_merge = float(bins_per_octave) / n_chroma
 
+    fmin_: _FloatLike_co
     if fmin is None:
-        fmin = note_to_hz("C1")
+        fmin_ = note_to_hz("C1")
+    else:
+        fmin_ = fmin
 
     if np.mod(n_merge, 1) != 0:
         raise ParameterError(
@@ -1059,7 +1066,7 @@ def cq_to_chroma(
         )
 
     # Tile the identity to merge fractional bins
-    cq_to_ch = np.repeat(np.eye(n_chroma), n_merge, axis=1)
+    cq_to_ch = np.repeat(np.eye(n_chroma), int(n_merge), axis=1)
 
     # Roll it left to center on the target bin
     cq_to_ch = np.roll(cq_to_ch, -int(n_merge // 2), axis=1)
@@ -1072,7 +1079,7 @@ def cq_to_chroma(
 
     # What's the note number of the first bin in the CQT?
     # midi uses 12 bins per octave here
-    midi_0 = np.mod(hz_to_midi(fmin), 12)
+    midi_0 = np.mod(hz_to_midi(fmin_), 12)
 
     if base_c:
         # rotate to C
@@ -1140,7 +1147,9 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
 
     if key not in WINDOW_BANDWIDTHS:
         win = get_window(window, n)
-        WINDOW_BANDWIDTHS[key] = n * np.sum(win ** 2) / (np.sum(win) ** 2 + util.tiny(win))
+        WINDOW_BANDWIDTHS[key] = (
+            n * np.sum(win**2) / (np.sum(win) ** 2 + util.tiny(win))
+        )
 
     return WINDOW_BANDWIDTHS[key]
 
@@ -1203,7 +1212,8 @@ def get_window(
     elif isinstance(window, (str, tuple)) or np.isscalar(window):
         # TODO: if we add custom window functions in librosa, call them here
 
-        return scipy.signal.get_window(window, Nx, fftbins=fftbins)
+        win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins)
+        return win
 
     elif isinstance(window, (np.ndarray, list)):
         if len(window) == Nx:
@@ -1213,7 +1223,7 @@ def get_window(
             "Window size mismatch: " "{:d} != {:d}".format(len(window), Nx)
         )
     else:
-        raise ParameterError("Invalid window specification: {}".format(window))
+        raise ParameterError(f"Invalid window specification: {window!r}")
 
 
 @cache(level=10)
@@ -1469,20 +1479,20 @@ def semitone_filterbank(
     ...     magnitudes.append(20 * np.log10(np.abs(h)))
     >>> fig, ax = plt.subplots(figsize=(12,6))
     >>> img = librosa.display.specshow(
-    ...     np.array(magnitudes), 
-    ...     x_axis="hz", 
-    ...     sr=4410, 
-    ...     y_coords=librosa.midi_to_hz(np.arange(60, 72)), 
-    ...     vmin=-60, 
-    ...     vmax=3, 
+    ...     np.array(magnitudes),
+    ...     x_axis="hz",
+    ...     sr=4410,
+    ...     y_coords=librosa.midi_to_hz(np.arange(60, 72)),
+    ...     vmin=-60,
+    ...     vmax=3,
     ...     ax=ax
     ...     )
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB", label="Magnitude (dB)")
     >>> ax.set(
-    ...     xlim=[200, 600], 
+    ...     xlim=[200, 600],
     ...     yticks=librosa.midi_to_hz(np.arange(60, 72)),
-    ...     title='Magnitude Responses of the Pitch Filterbank', 
-    ...     xlabel='Frequency (Hz)', 
+    ...     title='Magnitude Responses of the Pitch Filterbank',
+    ...     xlabel='Frequency (Hz)',
     ...     ylabel='Semitone filter center frequency (Hz)'
     ... )
     """

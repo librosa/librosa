@@ -325,7 +325,9 @@ def pitch_shift(
     """
 
     if not util.is_positive_int(bins_per_octave):
-        raise ParameterError(f"bins_per_octave={bins_per_octave} must be a positive integer.")
+        raise ParameterError(
+            f"bins_per_octave={bins_per_octave} must be a positive integer."
+        )
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
@@ -597,11 +599,11 @@ def split(
 
     # If the first frame had high energy, count it
     if non_silent[0]:
-        edges.insert(0, [0])
+        edges.insert(0, np.array([0]))
 
     # Likewise for the last frame
     if non_silent[-1]:
-        edges.append([len(non_silent)])
+        edges.append(np.array([len(non_silent)]))
 
     # Convert from frames to samples
     edges = core.frames_to_samples(np.concatenate(edges), hop_length=hop_length)
@@ -610,7 +612,8 @@ def split(
     edges = np.minimum(edges, y.shape[-1])
 
     # Stack the results back as an ndarray
-    return edges.reshape((-1, 2))
+    edges = edges.reshape((-1, 2))  # type: np.ndarray
+    return edges
 
 
 @overload
@@ -623,6 +626,7 @@ def preemphasis(
 ) -> np.ndarray:
     ...
 
+
 @overload
 def preemphasis(
     y: np.ndarray,
@@ -633,6 +637,7 @@ def preemphasis(
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
 
+
 @overload
 def preemphasis(
     y: np.ndarray,
@@ -642,6 +647,7 @@ def preemphasis(
     return_zf: bool,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     ...
+
 
 def preemphasis(
     y: np.ndarray,
@@ -728,6 +734,9 @@ def preemphasis(
 
     zi = np.atleast_1d(zi)
 
+    y_out: np.ndarray
+    z_f: np.ndarray
+
     y_out, z_f = scipy.signal.lfilter(b, a, y, zi=np.asarray(zi, dtype=y.dtype))
 
     if return_zf:
@@ -753,9 +762,10 @@ def deemphasis(
     *,
     coef: float = ...,
     zi: Optional[ArrayLike] = ...,
-    return_zf: Literal[True] = ...,
+    return_zf: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
+
 
 def deemphasis(
     y: np.ndarray,
@@ -825,6 +835,8 @@ def deemphasis(
     b = np.array([1.0, -coef], dtype=y.dtype)
     a = np.array([1.0], dtype=y.dtype)
 
+    y_out: np.ndarray
+    zf: np.ndarray
     if zi is None:
         # initialize with all zeros
         zi = np.zeros(list(y.shape[:-1]) + [1], dtype=y.dtype)

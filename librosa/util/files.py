@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
 from __future__ import annotations
-from typing import List, Optional, Union, Any
+from typing import List, Optional, Union, Any, Set
 
 import os
 import glob
@@ -88,14 +88,14 @@ def example(key: str, *, hq: bool = False) -> str:
     """
 
     if key not in __TRACKMAP:
-        raise ParameterError("Unknown example key: {}".format(key))
+        raise ParameterError(f"Unknown example key: {key}")
 
     if hq:
         ext = ".hq.ogg"
     else:
         ext = ".ogg"
 
-    return __GOODBOY.fetch(__TRACKMAP[key]["path"] + ext)
+    return str(__GOODBOY.fetch(__TRACKMAP[key]["path"] + ext))
 
 
 ex = example
@@ -150,11 +150,11 @@ def example_info(key: str) -> None:
     """
 
     if key not in __TRACKMAP:
-        raise ParameterError("Unknown example key: {}".format(key))
+        raise ParameterError(f"Unknown example key: {key}")
 
-    license = __GOODBOY.fetch(__TRACKMAP[key]["path"] + ".txt")
+    license_file = __GOODBOY.fetch(__TRACKMAP[key]["path"] + ".txt")
 
-    with open(license, "r") as fdesc:
+    with open(license_file, "r") as fdesc:
         print("{:10s}\t{:s}".format(key, __TRACKMAP[key]["desc"]))
         print("-" * 68)
         for line in fdesc:
@@ -168,7 +168,7 @@ def find_files(
     recurse: bool = True,
     case_sensitive: bool = False,
     limit: Optional[int] = None,
-    offset: int = 0
+    offset: int = 0,
 ) -> List[str]:
     """Get a sorted list of (audio) files in a directory or directory sub-tree.
 
@@ -243,19 +243,19 @@ def find_files(
     # Generate upper-case versions
     if not case_sensitive:
         # Force to lower-case
-        ext = set([e.lower() for e in ext])
+        ext = {e.lower() for e in ext}
         # Add in upper-case versions
-        ext |= set([e.upper() for e in ext])
+        ext |= {e.upper() for e in ext}
 
-    files = set()
+    fileset = set()
 
     if recurse:
-        for walk in os.walk(directory):
-            files |= __get_files(walk[0], ext)
+        for walk in os.walk(directory):  # type: ignore
+            fileset |= __get_files(walk[0], ext)
     else:
-        files = __get_files(directory, ext)
+        fileset = __get_files(directory, ext)
 
-    files = list(files)
+    files = list(fileset)
     files.sort()
     files = files[offset:]
     if limit is not None:
@@ -264,7 +264,7 @@ def find_files(
     return files
 
 
-def __get_files(dir_name, extensions):
+def __get_files(dir_name: Union[str, os.PathLike[Any]], extensions: Set[str]):
     """Helper function to get files in a single directory"""
 
     # Expand out the directory

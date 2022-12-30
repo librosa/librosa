@@ -712,6 +712,12 @@ def test_griffinlim_cqt_badinit():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
+def test_griffinlim_cqt_badrng():
+    x = np.zeros((33, 3))
+    librosa.griffinlim_cqt(x, random_state="garbage")  # type: ignore
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_griffinlim_cqt_bad_momentum():
     x = np.zeros((33, 3))
     librosa.griffinlim_cqt(x, momentum=-1)

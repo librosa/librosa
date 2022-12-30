@@ -16,7 +16,7 @@ from .. import sequence
 from ..util.exceptions import ParameterError
 from numpy.typing import ArrayLike
 from typing import Any, Callable, Optional, Tuple, Union
-from .._typing import _WindowSpec, _PadMode
+from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
@@ -174,7 +174,8 @@ def pitch_tuning(
     counts, tuning = np.histogram(residual, bins)
 
     # return the histogram peak
-    return tuning[np.argmax(counts)]
+    tuning_est: float = tuning[np.argmax(counts)]
+    return tuning_est
 
 
 @cache(level=30)
@@ -191,9 +192,9 @@ def piptrack(
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    pad_mode: _PadMode = "constant",
+    pad_mode: _PadModeSTFT = "constant",
     ref: Optional[Union[float, Callable]] = None,
-) -> np.ndarray:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Pitch tracking on thresholded parabolically-interpolated STFT.
 
     This implementation uses the parabolic interpolation method described by [#]_.
@@ -400,7 +401,7 @@ def _cumulative_mean_normalized_difference(
     acf_frames[np.abs(acf_frames) < 1e-6] = 0
 
     # Energy terms.
-    energy_frames = np.cumsum(y_frames ** 2, axis=-2)
+    energy_frames = np.cumsum(y_frames**2, axis=-2)
     energy_frames = (
         energy_frames[..., win_length:, :] - energy_frames[..., :-win_length, :]
     )
@@ -420,33 +421,39 @@ def _cumulative_mean_normalized_difference(
         np.cumsum(yin_frames[..., 1 : max_period + 1, :], axis=-2) / tau_range
     )
     yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
-    yin_frames = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
+    yin_frames: np.ndarray = yin_numerator / (
+        yin_denominator + util.tiny(yin_denominator)
+    )
     return yin_frames
 
 
-@numba.stencil
+@numba.stencil  # type: ignore
 def _pi_stencil(x: np.ndarray) -> np.ndarray:
-    '''Stencil to compute local parabolic interpolation'''
+    """Stencil to compute local parabolic interpolation"""
 
     a = x[1] + x[-1] - 2 * x[0]
     b = (x[1] - x[-1]) / 2
 
     if np.abs(b) >= np.abs(a):
         # If this happens, we'll shift by more than 1 bin
-        return 0
+        # Suppressing types because mypy has no idea about stencils
+        return 0  # type: ignore
 
-    return -b / a
+    return -b / a  # type: ignore
 
 
-@numba.guvectorize(['void(float32[:], float32[:])',
-                    'void(float64[:], float64[:])'], '(n)->(n)',
-                   cache=True, nopython=True)
+@numba.guvectorize(
+    ["void(float32[:], float32[:])", "void(float64[:], float64[:])"],
+    "(n)->(n)",
+    cache=True,
+    nopython=True,
+)  # type: ignore
 def _pi_wrapper(x: np.ndarray, y: np.ndarray) -> None:  # pragma: no cover
-    '''Vectorized wrapper for the parabolic interpolation stencil'''
+    """Vectorized wrapper for the parabolic interpolation stencil"""
     y[:] = _pi_stencil(x)
 
 
-def _parabolic_interpolation(x: np.ndarray, *, axis: int=-2) -> np.ndarray:
+def _parabolic_interpolation(x: np.ndarray, *, axis: int = -2) -> np.ndarray:
     """Piecewise parabolic interpolation for yin and pyin.
 
     Parameters
@@ -591,7 +598,7 @@ def yin(
 
     # Pad the time series so that frames are centered
     if center:
-        padding = [(0, 0) for _ in y.shape]
+        padding = [(0, 0)] * y.ndim
         padding[-1] = (frame_length // 2, frame_length // 2)
         y = np.pad(y, padding, mode=pad_mode)
 
@@ -642,7 +649,7 @@ def yin(
     )[..., 0, :]
 
     # Convert period to fundamental frequency.
-    f0 = sr / yin_period
+    f0: np.ndarray = sr / yin_period
     return f0
 
 

@@ -8,7 +8,7 @@ from typing import Optional
 __all__ = ["get_fftlib", "set_fftlib"]
 
 # Object to hold FFT interfaces
-__FFTLIB = None
+__FFTLIB: Optional[ModuleType] = None
 
 
 def set_fftlib(lib: Optional[ModuleType] = None) -> None:
@@ -51,7 +51,11 @@ def get_fftlib() -> ModuleType:
         The FFT library currently used by librosa.
         Must API-compatible with `numpy.fft`.
     """
-    global __FFTLIB
+    if __FFTLIB is None:
+        # This path should never occur because importing
+        # this module will call set_fftlib
+        assert False  # pragma: no cover
+
     return __FFTLIB
 
 

@@ -21,7 +21,7 @@ from . import util
 from .util.exceptions import ParameterError
 
 from .feature.spectral import melspectrogram
-from typing import Any, Callable, Iterable, Optional, Union
+from typing import Any, Callable, Iterable, Optional, Union, Sequence
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 
@@ -147,9 +147,14 @@ def onset_detect(
     # (a common normalization step to make the threshold more consistent)
     if normalize:
         # Normalize onset strength function to [0, 1] range
-        onset_envelope = onset_envelope - onset_envelope.min()
+        onset_envelope = onset_envelope - np.min(onset_envelope)
+
+        # Mypy does not realize that oenv is not None by now
         # Max-scale with safe division
-        onset_envelope /= np.max(onset_envelope) + util.tiny(onset_envelope)
+        onset_envelope /= np.max(onset_envelope) + util.tiny(onset_envelope)  # type: ignore
+
+    # help out mypy
+    assert onset_envelope is not None
 
     # Do we have any onsets to grab?
     if not onset_envelope.any() or not np.all(np.isfinite(onset_envelope)):
@@ -171,7 +176,7 @@ def onset_detect(
         if backtrack:
             if energy is None:
                 energy = onset_envelope
-
+            assert energy is not None
             onsets = onset_backtrack(onsets, energy)
 
     if units == "frames":
@@ -197,7 +202,7 @@ def onset_strength(
     detrend: bool = False,
     center: bool = True,
     feature: Optional[Callable] = None,
-    aggregate: Optional[Callable] = None,
+    aggregate: Optional[Union[Callable, bool]] = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope.
@@ -319,7 +324,7 @@ def onset_strength(
 
     if aggregate is False:
         raise ParameterError(
-            "aggregate={} cannot be False when computing full-spectrum onset strength."
+            f"aggregate parameter cannot be False when computing full-spectrum onset strength."
         )
 
     odf_all = onset_strength_multi(
@@ -412,7 +417,8 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
     minima = util.fix_frames(1 + minima, x_min=0)
 
     # Only match going left from the detected events
-    return minima[util.match_events(events, minima, right=False)]
+    results: np.ndarray = minima[util.match_events(events, minima, right=False)]
+    return results
 
 
 @cache(level=30)
@@ -430,7 +436,7 @@ def onset_strength_multi(
     center: bool = True,
     feature: Optional[Callable] = None,
     aggregate: Optional[Union[Callable, bool]] = None,
-    channels: Optional[Union[Iterable[int], Iterable[slice]]] = None,
+    channels: Optional[Union[Sequence[int], Sequence[slice]]] = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope across multiple channels.
@@ -589,7 +595,7 @@ def onset_strength_multi(
     else:
         pad = False
 
-    if aggregate:
+    if callable(aggregate):
         onset_env = util.sync(
             onset_env, channels, aggregate=aggregate, pad=pad, axis=-2
         )

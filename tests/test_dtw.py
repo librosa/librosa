@@ -154,12 +154,12 @@ def test_dtw_backtracking_incompatible_args_01():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_dtw_incompatible_args_01():
-    librosa.sequence.dtw(C=1, X=1, Y=1) # type: ignore
+    librosa.sequence.dtw(C=1, X=1, Y=1)  # type: ignore
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_dtw_incompatible_args_02():
-    librosa.sequence.dtw(C=None, X=None, Y=None)
+    librosa.sequence.dtw(C=None, X=None, Y=None)  # type: ignore
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)

@@ -24,6 +24,7 @@ from . import segment
 from . import util
 from .util.exceptions import ParameterError
 from typing import Any, Callable, Optional, Tuple, Union
+from ._typing import _IntLike_co, _FloatLike_co
 
 __all__ = ["decompose", "hpss", "nn_filter"]
 
@@ -187,12 +188,15 @@ def decompose(
 
         transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
 
+    # Suppressing type errors here because we don't want to overly restrict
+    # the transformer object type
+    activations: np.ndarray
     if fit:
-        activations = transformer.fit_transform(S).T
+        activations = transformer.fit_transform(S).T  # type: ignore
     else:
-        activations = transformer.transform(S).T
+        activations = transformer.transform(S).T  # type: ignore
 
-    components = transformer.components_
+    components: np.ndarray = transformer.components_  # type: ignore
     component_shape = orig_shape[:-1] + [-1]
     # use order='F' here to preserve component ordering
     components = components.reshape(component_shape[::-1], order="F").T
@@ -208,10 +212,10 @@ def decompose(
 def hpss(
     S: np.ndarray,
     *,
-    kernel_size: Union[int, Tuple[Any, Any]] = 31,
+    kernel_size: Union[_IntLike_co, Tuple[Any, Any]] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: Union[float, Tuple[Any, Any]] = 1.0
+    margin: Union[_FloatLike_co, Tuple[Any, Any]] = 1.0
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Median-filtering harmonic percussive source separation (HPSS).
 
@@ -346,24 +350,28 @@ def hpss(
 
     """
 
+    phase: Union[float, np.ndarray]
+
     if np.iscomplexobj(S):
         S, phase = core.magphase(S)
     else:
         phase = 1
 
+    # Ignore type checks below because mypy won't
+    # introspect through np.isscalar checks
     if np.isscalar(kernel_size):
-        win_harm = kernel_size
-        win_perc = kernel_size
+        win_harm: int = kernel_size  # type: ignore
+        win_perc: int = kernel_size  # type: ignore
     else:
-        win_harm = kernel_size[0]
-        win_perc = kernel_size[1]
+        win_harm: int = kernel_size[0]  # type: ignore
+        win_perc: int = kernel_size[1]  # type: ignore
 
     if np.isscalar(margin):
-        margin_harm = margin
-        margin_perc = margin
+        margin_harm: float = margin  # type: ignore
+        margin_perc: float = margin  # type: ignore
     else:
-        margin_harm = margin[0]
-        margin_perc = margin[1]
+        margin_harm: float = margin[0]  # type: ignore
+        margin_perc: float = margin[1]  # type: ignore
 
     # margin minimum is 1.0
     if margin_harm < 1 or margin_perc < 1:
@@ -372,10 +380,10 @@ def hpss(
         )
 
     # shape for kernels
-    harm_shape = [1 for _ in S.shape]
+    harm_shape = [1] * S.ndim
     harm_shape[-1] = win_harm
 
-    perc_shape = [1 for _ in S.shape]
+    perc_shape = [1] * S.ndim
     perc_shape[-2] = win_perc
 
     # Compute median filters. Pre-allocation here preserves memory layout.
@@ -524,21 +532,25 @@ def nn_filter(
     if aggregate is None:
         aggregate = np.mean
 
+    rec_s: scipy.sparse.spmatrix
+
     if rec is None:
         kwargs = dict(kwargs)
         kwargs["sparse"] = True
-        rec = segment.recurrence_matrix(S, axis=axis, **kwargs)
+        rec_s = segment.recurrence_matrix(S, axis=axis, **kwargs)
     elif not scipy.sparse.issparse(rec):
-        rec = scipy.sparse.csc_matrix(rec)
+        rec_s = scipy.sparse.csc_matrix(rec)
+    else:
+        rec_s = rec
 
-    if rec.shape[0] != S.shape[axis] or rec.shape[0] != rec.shape[1]:
+    if rec_s.shape[0] != S.shape[axis] or rec_s.shape[0] != rec_s.shape[1]:
         raise ParameterError(
             "Invalid self-similarity matrix shape "
-            "rec.shape={} for S.shape={}".format(rec.shape, S.shape)
+            "rec.shape={} for S.shape={}".format(rec_s.shape, S.shape)
         )
 
     return __nn_filter_helper(
-        rec.data, rec.indices, rec.indptr, S.swapaxes(0, axis), aggregate
+        rec_s.data, rec_s.indices, rec_s.indptr, S.swapaxes(0, axis), aggregate
     ).swapaxes(0, axis)
 
 

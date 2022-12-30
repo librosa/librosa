@@ -346,15 +346,15 @@ def mela_to_svara(
     svara_map = [
         "Sa",
         "Ri\u2081",
-        None,  # Ri2/Ga1
-        None,  # Ri3/Ga2
+        "",  # Ri2/Ga1
+        "",  # Ri3/Ga2
         "Ga\u2083",
         "Ma\u2081",
         "Ma\u2082",
         "Pa",
         "Dha\u2081",
-        None,  # Dha2/Ni1
-        None,  # Dha3/Ni2
+        "",  # Dha2/Ni1
+        "",  # Dha3/Ni2
         "Ni\u2083",
     ]
 
@@ -402,15 +402,12 @@ def mela_to_svara(
         svara_map[10] = "Ni\u2082"
 
     if abbr:
-        svara_map = [
-            s.translate(str.maketrans({"a": "", "h": "", "i": ""})) for s in svara_map
-        ]
+        t_abbr = str.maketrans({"a": "", "h": "", "i": ""})
+        svara_map = [s.translate(t_abbr) for s in svara_map]
 
     if not unicode:
-        svara_map = [
-            s.translate(str.maketrans({"\u2081": "1", "\u2082": "2", "\u2083": "3"}))
-            for s in svara_map
-        ]
+        t_uni = str.maketrans({"\u2081": "1", "\u2082": "2", "\u2083": "3"})
+        svara_map = [s.translate(t_uni) for s in svara_map]
 
     return list(svara_map)
 
@@ -557,7 +554,7 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     match = KEY_RE.match(key)
 
     if not match:
-        raise ParameterError("Improper key format: {:s}".format(key))
+        raise ParameterError(f"Improper key format: {key:s}")
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
     acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1}
@@ -696,7 +693,7 @@ def key_to_degrees(key: str) -> np.ndarray:
     match = KEY_RE.match(key)
 
     if not match:
-        raise ParameterError("Improper key format: {:s}".format(key))
+        raise ParameterError(f"Improper key format: {key:s}")
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
     acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1}
@@ -849,15 +846,17 @@ def __fifth_search(interval, tolerance):
 SUPER_TRANS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 SUB_TRANS = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 
+
 @overload
 def interval_to_fjs(
     interval: _FloatLike_co,
     *,
     unison: str = ...,
     tolerance: float = ...,
-    unicode: bool = ...
+    unicode: bool = ...,
 ) -> str:
     ...
+
 
 @overload
 def interval_to_fjs(
@@ -865,9 +864,10 @@ def interval_to_fjs(
     *,
     unison: str = ...,
     tolerance: float = ...,
-    unicode: bool = ...
+    unicode: bool = ...,
 ) -> np.ndarray:
     ...
+
 
 @overload
 def interval_to_fjs(
@@ -875,9 +875,10 @@ def interval_to_fjs(
     *,
     unison: str = ...,
     tolerance: float = ...,
-    unicode: bool = ...
+    unicode: bool = ...,
 ) -> Union[str, np.ndarray]:
     ...
+
 
 @vectorize(otypes="U", excluded=set(["unison", "tolerance", "unicode"]))
 def interval_to_fjs(
@@ -885,7 +886,7 @@ def interval_to_fjs(
     *,
     unison: str = "C",
     tolerance: float = 65.0 / 63,
-    unicode: bool = True
+    unicode: bool = True,
 ) -> Union[str, np.ndarray]:
     """Convert an interval to Functional Just System (FJS) notation.
 
@@ -967,7 +968,9 @@ def interval_to_fjs(
     array(['G', 'F', 'A⁵'], dtype='<U2')
 
     """
-    if interval <= 0:
+    # suppressing the type check here because mypy won't introspect through
+    # numpy vectorization
+    if interval <= 0:  # type: ignore
         raise ParameterError(f"Interval={interval} must be strictly positive")
 
     # Find the approximate number of fifth-steps to get within tolerance

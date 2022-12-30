@@ -2,17 +2,66 @@ name: lint_python
 on: [pull_request, push]
 jobs:
   lint_python:
+    name: "Lint and code analysis"
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python-version: "3.8"
+            channel-priority: "flexible"
+            envfile: ".github/environment-lint.yml"
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-          cache: 'pip'
-          cache-dependency-path: '**/requirements-lint.txt'
-      - run: pip install -r .github/requirements-lint.txt
-      - run: bandit --recursive --skip B101,B110 .
-      - run: codespell --ignore-words-list="ba,trough,ue" --skip="*demo.ipynb,./AUTHORS.md,./docs/changelog.rst"
-      - run: flake8 librosa --count --select=E9,F63,F7,F82 --show-source --statistics
-      - run: python -m velin --check librosa
-      - run: python -m mypy tests --config-file=tests/mypy.ini
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Cache conda
+      uses: actions/cache@v3
+      env:
+        CACHE_NUMBER: 0
+      with:
+        path: ~/conda_pkgs_dir
+        key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
+    - name: Install conda environmnent
+      uses: conda-incubator/setup-miniconda@v2
+      with: 
+        auto-update-conda: false
+        python-version: ${{ matrix.python-version }}
+        add-pip-as-python-dependency: true
+        auto-activate-base: false
+        activate-environment: lint
+        mamba-version: "*"
+        channel-priority: ${{ matrix.channel-priority }}
+        environment-file: ${{ matrix.envfile }}
+        use-only-tar-bz2: true
+
+    - name: Conda info
+      shell: bash -l {0}
+      run: |
+        conda info -a
+        conda list
+
+    - name: Spell check
+      shell: bash -l {0}
+      run: codespell --ignore-words-list="ba,trough,ue" --skip="*demo.ipynb,./AUTHORS.md,./docs/changelog.rst"
+
+    - name: Security check
+      shell: bash -l {0}
+      run: bandit --recursive --skip B101,B110 .
+
+    - name: Style check
+      shell: bash -l {0}
+      run: flake8 librosa --count --select=E9,F63,F7,F82 --show-source --statistics
+    
+    - name: Docstring check  
+      shell: bash -l {0}
+      run: python -m velin --check librosa
+    
+    - name: Type check package
+      shell: bash -l {0}
+      run: python -m mypy --pretty librosa
+    
+    - name: Type check tests
+      shell: bash -l {0}
+      run: python -m mypy --pretty tests

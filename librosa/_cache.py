@@ -19,6 +19,7 @@ def _decorator_apply(dec, func):
 
 _F = TypeVar("_F", bound=Callable[..., Any])
 
+
 class CacheManager(object):
     """The librosa cache manager class wraps joblib.Memory
     with a __call__ attribute, so that it may act as a function.
@@ -58,19 +59,19 @@ class CacheManager(object):
         return wrapper
 
     def clear(self, *args: Any, **kwargs: Any) -> None:
-        return self.memory.clear(*args, **kwargs)
+        self.memory.clear(*args, **kwargs)
 
     def eval(self, *args: Any, **kwargs: Any) -> Any:
         return self.memory.eval(*args, **kwargs)
 
-    def format(self, *args: Any, **kwargs: Any) -> str:
+    def format(self, *args: Any, **kwargs: Any) -> Any:
         return self.memory.format(*args, **kwargs)
 
     def reduce_size(self, *args: Any, **kwargs: Any) -> None:
-        return self.memory.reduce_size(*args, **kwargs)
+        self.memory.reduce_size(*args, **kwargs)  # pragma: no cover
 
     def warn(self, *args: Any, **kwargs: Any) -> None:
-        return self.memory.warn(*args, **kwargs)
+        self.memory.warn(*args, **kwargs)  # pragma: no cover
 
 
 # Instantiate the cache from the environment

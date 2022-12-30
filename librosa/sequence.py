@@ -39,9 +39,9 @@ from numba import jit
 from .util import pad_center, fill_off_diagonal, is_positive_int, tiny, expand_to
 from .util.exceptions import ParameterError
 from .filters import get_window
-from typing import Any, Iterable, Optional, Tuple, Union, overload
+from typing import Any, Iterable, List, Optional, Tuple, Union, overload
 from typing_extensions import Literal
-from ._typing import _WindowSpec
+from ._typing import _WindowSpec, _IntLike_co
 
 __all__ = [
     "dtw",
@@ -59,46 +59,79 @@ __all__ = [
 
 @overload
 def dtw(
-    X: Optional[np.ndarray] = ...,
-    Y: Optional[np.ndarray] = ...,
+    X: np.ndarray,
+    Y: np.ndarray,
     *,
-    C: Optional[np.ndarray] = ...,
     metric: str = ...,
     step_sizes_sigma: Optional[np.ndarray] = ...,
     weights_add: Optional[np.ndarray] = ...,
     weights_mul: Optional[np.ndarray] = ...,
     subseq: bool = ...,
-    backtrack: Literal[False] = ...,
+    backtrack: Literal[False],
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
 ) -> np.ndarray:
     ...
 
+
 @overload
 def dtw(
-    X: Optional[np.ndarray] = ...,
-    Y: Optional[np.ndarray] = ...,
     *,
-    C: Optional[np.ndarray] = ...,
+    C: np.ndarray,
     metric: str = ...,
     step_sizes_sigma: Optional[np.ndarray] = ...,
     weights_add: Optional[np.ndarray] = ...,
     weights_mul: Optional[np.ndarray] = ...,
     subseq: bool = ...,
-    backtrack: Literal[False] = ...,
+    backtrack: Literal[False],
     global_constraints: bool = ...,
     band_rad: float = ...,
-    return_steps: Literal[True] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
+    return_steps: Literal[False] = ...,
+) -> np.ndarray:
     ...
+
 
 @overload
 def dtw(
-    X: Optional[np.ndarray] = ...,
-    Y: Optional[np.ndarray] = ...,
+    X: np.ndarray,
+    Y: np.ndarray,
     *,
-    C: Optional[np.ndarray] = ...,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[False],
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+
+@overload
+def dtw(
+    *,
+    C: np.ndarray,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[False],
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+
+@overload
+def dtw(
+    X: np.ndarray,
+    Y: np.ndarray,
+    *,
     metric: str = ...,
     step_sizes_sigma: Optional[np.ndarray] = ...,
     weights_add: Optional[np.ndarray] = ...,
@@ -111,12 +144,11 @@ def dtw(
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
 
+
 @overload
 def dtw(
-    X: Optional[np.ndarray] = ...,
-    Y: Optional[np.ndarray] = ...,
     *,
-    C: Optional[np.ndarray] = ...,
+    C: np.ndarray,
     metric: str = ...,
     step_sizes_sigma: Optional[np.ndarray] = ...,
     weights_add: Optional[np.ndarray] = ...,
@@ -125,9 +157,45 @@ def dtw(
     backtrack: Literal[True] = ...,
     global_constraints: bool = ...,
     band_rad: float = ...,
-    return_steps: Literal[True] = ...,
+    return_steps: Literal[False] = ...,
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+
+@overload
+def dtw(
+    X: np.ndarray,
+    Y: np.ndarray,
+    *,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[True] = ...,
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     ...
+
+
+@overload
+def dtw(
+    *,
+    C: np.ndarray,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[True] = ...,
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ...
+
 
 def dtw(
     X: Optional[np.ndarray] = None,
@@ -143,7 +211,9 @@ def dtw(
     global_constraints: bool = False,
     band_rad: float = 0.25,
     return_steps: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+) -> Union[
+    np.ndarray, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]
+]:
     """Dynamic time warping (DTW).
 
     This function performs a DTW and path backtracking on two sequences.
@@ -276,6 +346,11 @@ def dtw(
         weights_add = np.concatenate((default_weights_add, weights_add))
         weights_mul = np.concatenate((default_weights_mul, weights_mul))
 
+    # These asserts are bad, but mypy cannot trace the code paths properly
+    assert step_sizes_sigma is not None
+    assert weights_add is not None
+    assert weights_mul is not None
+
     if np.any(step_sizes_sigma < 0):
         raise ParameterError("step_sizes_sigma cannot contain negative values")
 
@@ -297,14 +372,17 @@ def dtw(
     C_local = False
     if C is None:
         C_local = True
+        # mypy can't figure out that this case does not happen
+        assert X is not None and Y is not None
         # take care of dimensions
         X = np.atleast_2d(X)
         Y = np.atleast_2d(Y)
 
         # Perform some shape-squashing here
         # Put the time axes around front
-        X = np.swapaxes(X, -1, 0)
-        Y = np.swapaxes(Y, -1, 0)
+        # Suppress types because mypy doesn't know these are ndarrays
+        X = np.swapaxes(X, -1, 0)  # type: ignore
+        Y = np.swapaxes(Y, -1, 0)  # type: ignore
 
         # Flatten the remaining dimensions
         # Use F-ordering to preserve columns
@@ -371,6 +449,8 @@ def dtw(
     steps[:, 0] = 2
 
     # calculate accumulated cost matrix
+    D: np.ndarray
+    steps: np.ndarray
     D, steps = __dtw_calc_accu_cost(
         C, D, steps, step_sizes_sigma, weights_mul, weights_add, max_0, max_1
     )
@@ -379,7 +459,9 @@ def dtw(
     D = D[max_0:, max_1:]
     steps = steps[max_0:, max_1:]
 
+    return_values: List[np.ndarray]
     if backtrack:
+        wp: np.ndarray
         if subseq:
             if np.all(np.isinf(D[-1])):
                 raise ParameterError(
@@ -387,7 +469,7 @@ def dtw(
                     "be constructed with the given step sizes."
                 )
             start = np.argmin(D[-1, :])
-            wp = __dtw_backtracking(steps, step_sizes_sigma, subseq, start)
+            _wp = __dtw_backtracking(steps, step_sizes_sigma, subseq, start)
         else:
             # perform warping path backtracking
             if np.isinf(D[-1, -1]):
@@ -396,14 +478,14 @@ def dtw(
                     "be constructed with the given step sizes."
                 )
 
-            wp = __dtw_backtracking(steps, step_sizes_sigma, subseq)
-            if wp[-1] != (0, 0):
+            _wp = __dtw_backtracking(steps, step_sizes_sigma, subseq)
+            if _wp[-1] != (0, 0):
                 raise ParameterError(
                     "Unable to compute a full DTW warping path. "
                     "You may want to try again with subseq=True."
                 )
 
-        wp = np.asarray(wp, dtype=int)
+        wp = np.asarray(_wp, dtype=int)
 
         # since we transposed in the beginning, we have to adjust the index pairs back
         if subseq and (
@@ -420,12 +502,14 @@ def dtw(
         return_values.append(steps)
 
     if len(return_values) > 1:
-        return tuple(return_values)
+        # Suppressing type check here because mypy can't
+        # infer the exact length of the tuple
+        return tuple(return_values)  # type: ignore
     else:
         return return_values[0]
 
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)  # type: ignore
 def __dtw_calc_accu_cost(
     C: np.ndarray,
     D: np.ndarray,
@@ -498,13 +582,13 @@ def __dtw_calc_accu_cost(
     return D, steps
 
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)  # type: ignore
 def __dtw_backtracking(
     steps: np.ndarray,
     step_sizes_sigma: np.ndarray,
     subseq: bool,
     start: Optional[int] = None,
-) -> list:  # pragma: no cover
+) -> List[Tuple[int, int]]:  # pragma: no cover
     """Backtrack optimal warping path.
 
     Uses the saved step sizes from the cost accumulation
@@ -621,6 +705,7 @@ def dtw_backtracking(
     wp = __dtw_backtracking(steps, step_sizes_sigma, subseq, start)
     return np.asarray(wp, dtype=int)
 
+
 @overload
 def rqa(
     sim: np.ndarray,
@@ -631,6 +716,8 @@ def rqa(
     backtrack: Literal[False],
 ) -> np.ndarray:
     ...
+
+
 @overload
 def rqa(
     sim: np.ndarray,
@@ -641,6 +728,8 @@ def rqa(
     backtrack: Literal[True] = ...,
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
+
+
 @overload
 def rqa(
     sim: np.ndarray,
@@ -651,6 +740,7 @@ def rqa(
     backtrack: bool = ...,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     ...
+
 
 def rqa(
     sim: np.ndarray,
@@ -793,6 +883,8 @@ def rqa(
     if gap_extend < 0:
         raise ParameterError("gap_extend={} must be strictly positive")
 
+    score: np.ndarray
+    pointers: np.ndarray
     score, pointers = __rqa_dp(sim, gap_onset, gap_extend, knight_moves)
     if backtrack:
         path = __rqa_backtrack(score, pointers)
@@ -801,8 +893,10 @@ def rqa(
     return score
 
 
-@jit(nopython=True, cache=True)
-def __rqa_dp(sim, gap_onset, gap_extend, knight):  # pragma: no cover
+@jit(nopython=True, cache=True)  # type: ignore
+def __rqa_dp(
+    sim: np.ndarray, gap_onset: float, gap_extend: float, knight: bool
+) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
     """RQA dynamic programming implementation"""
 
     # The output array
@@ -976,7 +1070,7 @@ def __rqa_backtrack(score, pointers):
     idx = list(np.unravel_index(np.argmax(score), score.shape))
 
     # Construct the path
-    path = []
+    path: List = []
     while True:
         bt_index = pointers[tuple(idx)]
 
@@ -1006,7 +1100,7 @@ def __rqa_backtrack(score, pointers):
     return np.asarray(path, dtype=np.uint)
 
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)  # type: ignore
 def _viterbi(
     log_prob: np.ndarray, log_trans: np.ndarray, log_p_init: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
@@ -1079,6 +1173,8 @@ def viterbi(
     return_logp: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
+
+
 @overload
 def viterbi(
     prob: np.ndarray,
@@ -1088,6 +1184,7 @@ def viterbi(
     return_logp: Literal[False] = ...,
 ) -> np.ndarray:
     ...
+
 
 def viterbi(
     prob: np.ndarray,
@@ -1212,6 +1309,9 @@ def viterbi(
         # Transpose outputs for return
         return _state.T, logp
 
+    states: np.ndarray
+    logp: np.ndarray
+
     if log_prob.ndim == 2:
         states, logp = _helper(log_prob)
     else:
@@ -1241,6 +1341,8 @@ def viterbi_discriminative(
     return_logp: Literal[False] = ...,
 ) -> np.ndarray:
     ...
+
+
 @overload
 def viterbi_discriminative(
     prob: np.ndarray,
@@ -1251,6 +1353,8 @@ def viterbi_discriminative(
     return_logp: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
+
+
 @overload
 def viterbi_discriminative(
     prob: np.ndarray,
@@ -1261,6 +1365,7 @@ def viterbi_discriminative(
     return_logp: bool,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     ...
+
 
 def viterbi_discriminative(
     prob: np.ndarray,
@@ -1457,6 +1562,8 @@ def viterbi_discriminative(
         # Transpose outputs for return
         return _state.T, logp
 
+    states: np.ndarray
+    logp: np.ndarray
     if log_prob.ndim == 2:
         states, logp = _helper(log_prob)
     else:
@@ -1475,6 +1582,7 @@ def viterbi_discriminative(
 
     return states
 
+
 @overload
 def viterbi_binary(
     prob: np.ndarray,
@@ -1485,6 +1593,7 @@ def viterbi_binary(
     return_logp: Literal[False] = ...,
 ) -> np.ndarray:
     ...
+
 
 @overload
 def viterbi_binary(
@@ -1497,6 +1606,7 @@ def viterbi_binary(
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
 
+
 @overload
 def viterbi_binary(
     prob: np.ndarray,
@@ -1507,6 +1617,7 @@ def viterbi_binary(
     return_logp: bool = ...,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     ...
+
 
 def viterbi_binary(
     prob: np.ndarray,
@@ -1631,6 +1742,8 @@ def viterbi_binary(
     else:
         p_state = np.atleast_1d(p_state)
 
+    assert p_state is not None
+
     if p_state.shape != (n_states,) or np.any(p_state < 0) or np.any(p_state > 1):
         raise ParameterError(
             "Invalid marginal state distributions: p_state={}".format(p_state)
@@ -1641,6 +1754,8 @@ def viterbi_binary(
         p_init.fill(0.5)
     else:
         p_init = np.atleast_1d(p_init)
+
+    assert p_init is not None
 
     if p_init.shape != (n_states,) or np.any(p_init < 0) or np.any(p_init > 1):
         raise ParameterError(

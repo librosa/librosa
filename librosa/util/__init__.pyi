@@ -7,12 +7,12 @@ from .files import (
     ex as ex,
     list_examples as list_examples,
     example_info as example_info,
-    )
+)
 
 from .matching import (
     match_intervals as match_intervals,
     match_events as match_events,
-    )
+)
 
 from .deprecation import (
     Deprecated as Deprecated,

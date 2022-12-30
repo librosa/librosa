@@ -785,7 +785,7 @@ def test_salience_aggregate():
         freqs=freqs,
         harmonics=harms,
         weights=weights,
-        aggregate=np.ma.max,
+        aggregate=np.max,
         kind="quadratic",
         fill_value=0.0,
     )
@@ -1383,6 +1383,11 @@ def test__spectrogram(y_22050, n_fft, hop_length, power):
     assert np.allclose(S, S_)
 
     assert np.allclose(2 * (S.shape[-2] - 1), n_fft_)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test__spectrogram_no_nfft():
+    librosa.core.spectrum._spectrogram(S=None, n_fft=None)
 
 
 @pytest.mark.parametrize(
@@ -2238,6 +2243,12 @@ def test_griffinlim(
 def test_griffinlim_badinit():
     x = np.zeros((33, 3))
     librosa.griffinlim(x, init="garbage")
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_griffinlim_badrng():
+    x = np.zeros((33, 3))
+    librosa.griffinlim(x, random_state="garbage")  # type: ignore
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)

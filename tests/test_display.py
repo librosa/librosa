@@ -1033,6 +1033,12 @@ def test_chromafjs_badintervals():
     formatter = librosa.display.ChromaFJSFormatter(intervals=dict())
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_chromafjs_badbpo():
+    formatter = librosa.display.ChromaFJSFormatter(intervals='ji3', bins_per_octave=None)
+
+
+
 @pytest.mark.mpl_image_compare(
     baseline_images=["chroma_fjs"], extensions=["png"], tolerance=6, style=STYLE
 )
@@ -1050,3 +1056,8 @@ def test_specshow_chromafjs(C, sr):
     librosa.display.specshow(chroma, y_axis="chroma_fjs", intervals=intervals, ax=ax[1])
 
     return fig
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_vqt_hz_nointervals(C, sr):
+    librosa.display.specshow(C, sr=sr, y_axis='vqt_hz')

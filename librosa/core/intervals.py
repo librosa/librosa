@@ -2,13 +2,14 @@
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
 
-from typing import Collection, Dict, List, Union, overload
+from typing import Collection, Dict, List, Union, overload, Iterable
 from typing_extensions import Literal
 import msgpack
 from pkg_resources import resource_filename
 import numpy as np
 from numpy.typing import ArrayLike
 from .._cache import cache
+from .._typing import _FloatLike_co
 
 
 with open(resource_filename(__name__, "intervals.msgpack"), "rb") as _fdesc:
@@ -20,7 +21,7 @@ with open(resource_filename(__name__, "intervals.msgpack"), "rb") as _fdesc:
 def interval_frequencies(
     n_bins: int,
     *,
-    fmin: float,
+    fmin: _FloatLike_co,
     intervals: Union[str, Collection[float]],
     bins_per_octave: int = 12,
     tuning: float = 0.0,
@@ -126,6 +127,7 @@ def interval_frequencies(
 
     return all_ratios * fmin
 
+
 @overload
 def pythagorean_intervals(
     *,
@@ -135,30 +137,24 @@ def pythagorean_intervals(
 ) -> np.ndarray:
     ...
 
+
 @overload
 def pythagorean_intervals(
-    *,
-    bins_per_octave: int = ...,
-    sort: bool = ...,
-    return_factors: Literal[True]
+    *, bins_per_octave: int = ..., sort: bool = ..., return_factors: Literal[True]
 ) -> List[Dict[int, int]]:
     ...
 
+
 @overload
 def pythagorean_intervals(
-    *,
-    bins_per_octave: int = ...,
-    sort: bool = ...,
-    return_factors: bool = ...
+    *, bins_per_octave: int = ..., sort: bool = ..., return_factors: bool = ...
 ) -> Union[np.ndarray, List[Dict[int, int]]]:
     ...
 
+
 @cache(level=10)
 def pythagorean_intervals(
-    *,
-    bins_per_octave: int = 12,
-    sort: bool = True,
-    return_factors: bool = False
+    *, bins_per_octave: int = 12, sort: bool = True, return_factors: bool = False
 ) -> Union[np.ndarray, List[Dict[int, int]]]:
     """Pythagorean intervals
 
@@ -232,6 +228,8 @@ def pythagorean_intervals(
     # Using modf here to quickly get the fractional part of the log,
     # accounting for whatever power of 2 is necessary to get 3**k
     # within the octave.
+    log_ratios: np.ndarray
+    pow2: np.ndarray
     log_ratios, pow2 = np.modf(pow3 * np.log2(3))
 
     # If the fractional part is negative, add
@@ -242,6 +240,8 @@ def pythagorean_intervals(
 
     # Convert powers of 2 to integer
     pow2 = pow2.astype(int)
+
+    idx: Iterable[int]
 
     if sort:
         # Order the intervals
@@ -304,6 +304,7 @@ def plimit_intervals(
 ) -> np.ndarray:
     ...
 
+
 @overload
 def plimit_intervals(
     *,
@@ -314,6 +315,7 @@ def plimit_intervals(
 ) -> List[Dict[int, int]]:
     ...
 
+
 @overload
 def plimit_intervals(
     *,
@@ -323,6 +325,7 @@ def plimit_intervals(
     return_factors: bool = ...
 ) -> Union[np.ndarray, List[Dict[int, int]]]:
     ...
+
 
 @cache(level=10)
 def plimit_intervals(
@@ -464,13 +467,15 @@ def plimit_intervals(
         new_point = frontier.pop(best_f)
         intervals.append(new_point)
 
-        for seed in seeds:
-            new_seed = tuple(np.array(new_point) + np.array(seed))
+        for _ in seeds:
+            new_seed = tuple(np.array(new_point) + np.array(_))
             if new_seed not in intervals and new_seed not in frontier:
                 frontier.append(new_seed)
 
     pows = np.array(list(intervals), dtype=float)
 
+    log_ratios: np.ndarray
+    pow2: np.ndarray
     log_ratios, pow2 = np.modf(pows.dot(logs))
 
     # If the fractional part is negative, add
@@ -482,6 +487,7 @@ def plimit_intervals(
     # Convert powers of 2 to integer
     pow2 = pow2.astype(int)
 
+    idx: Iterable[int]
     if sort:
         # Order the intervals
         idx = np.argsort(log_ratios)
