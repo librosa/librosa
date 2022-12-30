@@ -59,10 +59,9 @@ __all__ = [
 
 @overload
 def dtw(
-    X: Optional[np.ndarray] = ...,
-    Y: Optional[np.ndarray] = ...,
+    X: np.ndarray,
+    Y: np.ndarray,
     *,
-    C: Optional[np.ndarray] = ...,
     metric: str = ...,
     step_sizes_sigma: Optional[np.ndarray] = ...,
     weights_add: Optional[np.ndarray] = ...,
@@ -71,16 +70,33 @@ def dtw(
     backtrack: Literal[False],
     global_constraints: bool = ...,
     band_rad: float = ...,
-    return_steps: Literal[False],
+    return_steps: Literal[False] = ...,
 ) -> np.ndarray:
     ...
 
+
 @overload
 def dtw(
-    X: Optional[np.ndarray] = ...,
-    Y: Optional[np.ndarray] = ...,
     *,
-    C: Optional[np.ndarray] = ...,
+    C: np.ndarray,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[False],
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[False] = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def dtw(
+    X: np.ndarray,
+    Y: np.ndarray,
+    *,
     metric: str = ...,
     step_sizes_sigma: Optional[np.ndarray] = ...,
     weights_add: Optional[np.ndarray] = ...,
@@ -93,36 +109,87 @@ def dtw(
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
 
-@overload
-def dtw(
-    X: Optional[np.ndarray] = ...,
-    Y: Optional[np.ndarray] = ...,
-    *,
-    C: Optional[np.ndarray] = ...,
-    metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
-    subseq: bool = ...,
-    backtrack: Literal[True],
-    global_constraints: bool = ...,
-    band_rad: float = ...,
-    return_steps: Literal[False],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
 
 @overload
 def dtw(
-    X: Optional[np.ndarray] = ...,
-    Y: Optional[np.ndarray] = ...,
     *,
-    C: Optional[np.ndarray] = ...,
+    C: np.ndarray,
     metric: str = ...,
     step_sizes_sigma: Optional[np.ndarray] = ...,
     weights_add: Optional[np.ndarray] = ...,
     weights_mul: Optional[np.ndarray] = ...,
     subseq: bool = ...,
-    backtrack: Literal[True],
+    backtrack: Literal[False],
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+
+@overload
+def dtw(
+    X: np.ndarray,
+    Y: np.ndarray,
+    *,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[True] = ...,
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[False] = ...,
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+
+@overload
+def dtw(
+    *,
+    C: np.ndarray,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[True] = ...,
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[False] = ...,
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+
+@overload
+def dtw(
+    X: np.ndarray,
+    Y: np.ndarray,
+    *,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[True] = ...,
+    global_constraints: bool = ...,
+    band_rad: float = ...,
+    return_steps: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ...
+
+
+@overload
+def dtw(
+    *,
+    C: np.ndarray,
+    metric: str = ...,
+    step_sizes_sigma: Optional[np.ndarray] = ...,
+    weights_add: Optional[np.ndarray] = ...,
+    weights_mul: Optional[np.ndarray] = ...,
+    subseq: bool = ...,
+    backtrack: Literal[True] = ...,
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
