@@ -24,6 +24,7 @@ from . import segment
 from . import util
 from .util.exceptions import ParameterError
 from typing import Any, Callable, Optional, Tuple, Union
+from ._typing import _IntLike_co, _FloatLike_co
 
 __all__ = ["decompose", "hpss", "nn_filter"]
 
@@ -211,10 +212,10 @@ def decompose(
 def hpss(
     S: np.ndarray,
     *,
-    kernel_size: Union[int, Tuple[Any, Any]] = 31,
+    kernel_size: Union[_IntLike_co, Tuple[Any, Any]] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: Union[float, Tuple[Any, Any]] = 1.0
+    margin: Union[_FloatLike_co, Tuple[Any, Any]] = 1.0
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Median-filtering harmonic percussive source separation (HPSS).
 
