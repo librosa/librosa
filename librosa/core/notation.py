@@ -846,15 +846,17 @@ def __fifth_search(interval, tolerance):
 SUPER_TRANS = str.maketrans("0123456789", "⁰¹²³⁴⁵⁶⁷⁸⁹")
 SUB_TRANS = str.maketrans("0123456789", "₀₁₂₃₄₅₆₇₈₉")
 
+
 @overload
 def interval_to_fjs(
     interval: _FloatLike_co,
     *,
     unison: str = ...,
     tolerance: float = ...,
-    unicode: bool = ...
+    unicode: bool = ...,
 ) -> str:
     ...
+
 
 @overload
 def interval_to_fjs(
@@ -862,9 +864,10 @@ def interval_to_fjs(
     *,
     unison: str = ...,
     tolerance: float = ...,
-    unicode: bool = ...
+    unicode: bool = ...,
 ) -> np.ndarray:
     ...
+
 
 @overload
 def interval_to_fjs(
@@ -872,9 +875,10 @@ def interval_to_fjs(
     *,
     unison: str = ...,
     tolerance: float = ...,
-    unicode: bool = ...
+    unicode: bool = ...,
 ) -> Union[str, np.ndarray]:
     ...
+
 
 @vectorize(otypes="U", excluded=set(["unison", "tolerance", "unicode"]))
 def interval_to_fjs(
@@ -882,7 +886,7 @@ def interval_to_fjs(
     *,
     unison: str = "C",
     tolerance: float = 65.0 / 63,
-    unicode: bool = True
+    unicode: bool = True,
 ) -> Union[str, np.ndarray]:
     """Convert an interval to Functional Just System (FJS) notation.
 

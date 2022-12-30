@@ -127,6 +127,7 @@ def interval_frequencies(
 
     return all_ratios * fmin
 
+
 @overload
 def pythagorean_intervals(
     *,
@@ -136,30 +137,24 @@ def pythagorean_intervals(
 ) -> np.ndarray:
     ...
 
+
 @overload
 def pythagorean_intervals(
-    *,
-    bins_per_octave: int = ...,
-    sort: bool = ...,
-    return_factors: Literal[True]
+    *, bins_per_octave: int = ..., sort: bool = ..., return_factors: Literal[True]
 ) -> List[Dict[int, int]]:
     ...
 
+
 @overload
 def pythagorean_intervals(
-    *,
-    bins_per_octave: int = ...,
-    sort: bool = ...,
-    return_factors: bool = ...
+    *, bins_per_octave: int = ..., sort: bool = ..., return_factors: bool = ...
 ) -> Union[np.ndarray, List[Dict[int, int]]]:
     ...
 
+
 @cache(level=10)
 def pythagorean_intervals(
-    *,
-    bins_per_octave: int = 12,
-    sort: bool = True,
-    return_factors: bool = False
+    *, bins_per_octave: int = 12, sort: bool = True, return_factors: bool = False
 ) -> Union[np.ndarray, List[Dict[int, int]]]:
     """Pythagorean intervals
 
@@ -309,6 +304,7 @@ def plimit_intervals(
 ) -> np.ndarray:
     ...
 
+
 @overload
 def plimit_intervals(
     *,
@@ -319,6 +315,7 @@ def plimit_intervals(
 ) -> List[Dict[int, int]]:
     ...
 
+
 @overload
 def plimit_intervals(
     *,
@@ -328,6 +325,7 @@ def plimit_intervals(
     return_factors: bool = ...
 ) -> Union[np.ndarray, List[Dict[int, int]]]:
     ...
+
 
 @cache(level=10)
 def plimit_intervals(

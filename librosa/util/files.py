@@ -168,7 +168,7 @@ def find_files(
     recurse: bool = True,
     case_sensitive: bool = False,
     limit: Optional[int] = None,
-    offset: int = 0
+    offset: int = 0,
 ) -> List[str]:
     """Get a sorted list of (audio) files in a directory or directory sub-tree.
 

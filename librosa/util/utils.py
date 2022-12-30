@@ -15,7 +15,19 @@ from .._cache import cache
 from .exceptions import ParameterError
 from .deprecation import Deprecated
 from numpy.typing import ArrayLike, DTypeLike
-from typing import Any, Callable, Iterable, List, Dict, Optional, Sequence, Tuple, TypeVar, Union, overload
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Dict,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    Union,
+    overload,
+)
 from typing_extensions import Literal
 from .._typing import _SequenceLike, _FloatLike_co, _ComplexLike_co
 
@@ -64,7 +76,7 @@ def frame(
     hop_length: int,
     axis: int = -1,
     writeable: bool = False,
-    subok: bool = False
+    subok: bool = False,
 ) -> np.ndarray:
     """Slice a data array into (overlapping) frames.
 
@@ -389,7 +401,9 @@ def valid_intervals(intervals: np.ndarray) -> bool:
     return True
 
 
-def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
+def pad_center(
+    data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any
+) -> np.ndarray:
     """Pad an array to a target length along a target axis.
 
     This differs from `np.pad` by centering the data prior to padding,
@@ -462,7 +476,9 @@ def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) ->
     return np.pad(data, lengths, **kwargs)
 
 
-def expand_to(x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int], Sequence[slice]]) -> np.ndarray:
+def expand_to(
+    x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int], Sequence[slice]]
+) -> np.ndarray:
     """Expand the dimensions of an input array with
 
     Parameters
@@ -525,14 +541,16 @@ def expand_to(x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int]
             f"Cannot expand x.shape={x.shape} to fewer dimensions ndim={ndim}"
         )
 
-    shape : List[int] = [1] * ndim
+    shape: List[int] = [1] * ndim
     for i, axi in enumerate(axes_tup):
         shape[axi] = x.shape[i]
 
     return x.reshape(shape)
 
 
-def fix_length(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
+def fix_length(
+    data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any
+) -> np.ndarray:
     """Fix the length an array ``data`` to exactly ``size`` along a target axis.
 
     If ``data.shape[axis] < n``, pad according to the provided kwargs.
@@ -595,7 +613,7 @@ def fix_frames(
     *,
     x_min: Optional[int] = 0,
     x_max: Optional[int] = None,
-    pad: bool = True
+    pad: bool = True,
 ) -> np.ndarray:
     """Fix a list of frames to lie within [x_min, x_max]
 
@@ -686,9 +704,10 @@ def axis_sort(
     *,
     axis: int = ...,
     index: Literal[False] = ...,
-    value: Optional[Callable[..., Any]] = ...
+    value: Optional[Callable[..., Any]] = ...,
 ) -> np.ndarray:
     ...
+
 
 @overload
 def axis_sort(
@@ -696,16 +715,17 @@ def axis_sort(
     *,
     axis: int = ...,
     index: Literal[True],
-    value: Optional[Callable[..., Any]] = ...
+    value: Optional[Callable[..., Any]] = ...,
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
+
 
 def axis_sort(
     S: np.ndarray,
     *,
     axis: int = -1,
     index: bool = False,
-    value: Optional[Callable[..., Any]] = None
+    value: Optional[Callable[..., Any]] = None,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Sort an array along its rows or columns.
 
@@ -808,7 +828,7 @@ def normalize(
     norm: Optional[float] = np.inf,
     axis: Optional[int] = 0,
     threshold: Optional[_FloatLike_co] = None,
-    fill: Optional[bool] = None
+    fill: Optional[bool] = None,
 ) -> np.ndarray:
     """Normalize an array along a chosen axis.
 
@@ -1038,35 +1058,47 @@ def normalize(
 
 @numba.stencil
 def _localmax_sten(x):  # pragma: no cover
-    '''Numba stencil for local maxima computation'''
+    """Numba stencil for local maxima computation"""
     return (x[0] > x[-1]) & (x[0] >= x[1])
 
 
 @numba.stencil
 def _localmin_sten(x):  # pragma: no cover
-    '''Numba stencil for local minima computation'''
+    """Numba stencil for local minima computation"""
     return (x[0] < x[-1]) & (x[0] <= x[1])
 
 
-@numba.guvectorize(['void(int16[:], bool_[:])',
-                    'void(int32[:], bool_[:])',
-                    'void(int64[:], bool_[:])',
-                    'void(float32[:], bool_[:])',
-                    'void(float64[:], bool_[:])'], '(n)->(n)',
-                   cache=True, nopython=True)
+@numba.guvectorize(
+    [
+        "void(int16[:], bool_[:])",
+        "void(int32[:], bool_[:])",
+        "void(int64[:], bool_[:])",
+        "void(float32[:], bool_[:])",
+        "void(float64[:], bool_[:])",
+    ],
+    "(n)->(n)",
+    cache=True,
+    nopython=True,
+)
 def _localmax(x, y):  # pragma: no cover
-    '''Vectorized wrapper for the localmax stencil'''
+    """Vectorized wrapper for the localmax stencil"""
     y[:] = _localmax_sten(x)
 
 
-@numba.guvectorize(['void(int16[:], bool_[:])',
-                    'void(int32[:], bool_[:])',
-                    'void(int64[:], bool_[:])',
-                    'void(float32[:], bool_[:])',
-                    'void(float64[:], bool_[:])'], '(n)->(n)',
-                   cache=True, nopython=True)
+@numba.guvectorize(
+    [
+        "void(int16[:], bool_[:])",
+        "void(int32[:], bool_[:])",
+        "void(int64[:], bool_[:])",
+        "void(float32[:], bool_[:])",
+        "void(float64[:], bool_[:])",
+    ],
+    "(n)->(n)",
+    cache=True,
+    nopython=True,
+)
 def _localmin(x, y):  # pragma: no cover
-    '''Vectorized wrapper for the localmin stencil'''
+    """Vectorized wrapper for the localmin stencil"""
     y[:] = _localmin_sten(x)
 
 
@@ -1201,7 +1233,7 @@ def peak_pick(
     pre_avg: int,
     post_avg: int,
     delta: float,
-    wait: int
+    wait: int,
 ) -> np.ndarray:
     """Uses a flexible heuristic to pick peaks in a signal.
 
@@ -1497,7 +1529,7 @@ def index_to_slice(
     idx_min: Optional[int] = None,
     idx_max: Optional[int] = None,
     step: Optional[int] = None,
-    pad: bool = True
+    pad: bool = True,
 ) -> List[slice]:
     """Generate a slice array from an index array.
 
@@ -1557,7 +1589,7 @@ def sync(
     *,
     aggregate: Optional[Callable[..., Any]] = None,
     pad: bool = True,
-    axis: int = -1
+    axis: int = -1,
 ) -> np.ndarray:
     """Synchronous aggregation of a multi-dimensional array between boundaries
 
@@ -2002,7 +2034,7 @@ def cyclic_gradient(
 
 
 @numba.jit(nopython=True, cache=True)  # type: ignore
-def __shear_dense(X: np.ndarray, *, factor: int=+1, axis: int=-1) -> np.ndarray:
+def __shear_dense(X: np.ndarray, *, factor: int = +1, axis: int = -1) -> np.ndarray:
     """Numba-accelerated shear for dense (ndarray) arrays"""
 
     if axis == 0:
@@ -2019,7 +2051,9 @@ def __shear_dense(X: np.ndarray, *, factor: int=+1, axis: int=-1) -> np.ndarray:
     return X_shear
 
 
-def __shear_sparse(X: scipy.sparse.spmatrix, *, factor: int=+1, axis: int=-1) -> scipy.sparse.spmatrix:
+def __shear_sparse(
+    X: scipy.sparse.spmatrix, *, factor: int = +1, axis: int = -1
+) -> scipy.sparse.spmatrix:
     """Fast shearing for sparse matrices
 
     Shearing is performed using CSC array indices,
@@ -2048,13 +2082,21 @@ def __shear_sparse(X: scipy.sparse.spmatrix, *, factor: int=+1, axis: int=-1) ->
     return X_shear.asformat(fmt)
 
 
-_ArrayOrSparseMatrix = TypeVar('_ArrayOrSparseMatrix', bound=Union[np.ndarray, scipy.sparse.spmatrix])
+_ArrayOrSparseMatrix = TypeVar(
+    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, scipy.sparse.spmatrix]
+)
+
 
 @overload
-def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
+def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray:
+    ...
+
 
 @overload
-def shear(X: scipy.sparse.spmatrix, *, factor: int = ..., axis: int = ...) -> scipy.sparse.spmatrix: ...
+def shear(
+    X: scipy.sparse.spmatrix, *, factor: int = ..., axis: int = ...
+) -> scipy.sparse.spmatrix:
+    ...
 
 
 def shear(
@@ -2215,9 +2257,7 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
         return result
 
 
-def dtype_r2c(
-    d: DTypeLike, *, default: Optional[type] = np.complex64
-) -> DTypeLike:
+def dtype_r2c(d: DTypeLike, *, default: Optional[type] = np.complex64) -> DTypeLike:
     """Find the complex numpy dtype corresponding to a real dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2445,8 +2485,11 @@ def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
     """Helper function for efficiently computing abs2 on complex inputs"""
     return x.real**2 + x.imag**2
 
+
 _Number = Union[complex, "np.number[Any]"]
 _NumberOrArray = TypeVar("_NumberOrArray", bound=Union[_Number, np.ndarray])
+
+
 def abs2(x: _NumberOrArray) -> _NumberOrArray:
     """Compute the squared magnitude of a real or complex array.
 
@@ -2486,14 +2529,24 @@ def abs2(x: _NumberOrArray) -> _NumberOrArray:
 def _phasor_angles(x) -> np.complex_:  # pragma: no cover
     return np.cos(x) + 1j * np.sin(x)  # type: ignore
 
+
 _Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
+
+
 @overload
-def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray: ...
+def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray:
+    ...
+
+
 @overload
-def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> np.complex_: ...
+def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> np.complex_:
+    ...
+
 
 def phasor(
-    angles: Union[np.ndarray, _Real], *, mag: Optional[Union[np.ndarray, _Number]] = None
+    angles: Union[np.ndarray, _Real],
+    *,
+    mag: Optional[Union[np.ndarray, _Number]] = None,
 ) -> Union[np.ndarray, np.complex_]:
     """Construct a complex phasor representation from angles.
 

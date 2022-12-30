@@ -13,7 +13,9 @@ from numpy.typing import DTypeLike
 __all__ = ["moved", "deprecated", "vectorize"]
 
 
-def moved(*, moved_from: str, version: str, version_removed: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def moved(
+    *, moved_from: str, version: str, version_removed: str
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """This is a decorator which can be used to mark functions
     as moved/renamed.
 
@@ -37,7 +39,9 @@ def moved(*, moved_from: str, version: str, version_removed: str) -> Callable[[C
     return decorator(__wrapper)
 
 
-def deprecated(*, version: str, version_removed: str) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+def deprecated(
+    *, version: str, version_removed: str
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """This is a decorator which can be used to mark functions
     as deprecated.
 
@@ -74,7 +78,14 @@ def vectorize(
     """
 
     def __wrapper(function):
-        vecfunc = np.vectorize(function, otypes=otypes, doc=doc, excluded=excluded, cache=cache, signature=signature)
+        vecfunc = np.vectorize(
+            function,
+            otypes=otypes,
+            doc=doc,
+            excluded=excluded,
+            cache=cache,
+            signature=signature,
+        )
 
         @functools.wraps(function)
         def _vec(*args, **kwargs):

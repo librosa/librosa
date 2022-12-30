@@ -13,9 +13,7 @@ __all__ = ["match_intervals", "match_events"]
 
 
 @numba.jit(nopython=True, cache=True)  # type: ignore
-def __jaccard(
-    int_a: np.ndarray, int_b: np.ndarray
-):  # pragma: no cover
+def __jaccard(int_a: np.ndarray, int_b: np.ndarray):  # pragma: no cover
     """Jaccard similarity between two intervals
 
     Parameters
@@ -61,7 +59,9 @@ def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no co
 
 
 @numba.jit(nopython=True, cache=True)  # type: ignore
-def __match_intervals(intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True) -> np.ndarray:  # pragma: no cover
+def __match_intervals(
+    intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True
+) -> np.ndarray:  # pragma: no cover
     """Numba-accelerated interval matching algorithm."""
     # sort index of the interval starts
     start_index = np.argsort(intervals_to[:, 0])
@@ -206,9 +206,7 @@ def match_intervals(
         # Suppress type check because of numba wrapper
         return __match_intervals(intervals_from, intervals_to, strict=strict)  # type: ignore
     except ParameterError as exc:
-        raise ParameterError(
-            f"Unable to match intervals with strict={strict}"
-        ) from exc
+        raise ParameterError(f"Unable to match intervals with strict={strict}") from exc
 
 
 def match_events(
@@ -311,8 +309,11 @@ def match_events(
 
 @numba.jit(nopython=True, cache=True)  # type: ignore
 def __match_events_helper(
-    output: np.ndarray, events_from: np.ndarray, events_to: np.ndarray,
-    left: bool =True, right: bool =True
+    output: np.ndarray,
+    events_from: np.ndarray,
+    events_to: np.ndarray,
+    left: bool = True,
+    right: bool = True,
 ):  # pragma: no cover
     # mock dictionary for events
     from_idx = np.argsort(events_from)

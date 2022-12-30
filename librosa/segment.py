@@ -56,6 +56,7 @@ __all__ = [
     "path_enhance",
 ]
 
+
 @overload
 def cross_similarity(
     data: np.ndarray,
@@ -69,6 +70,7 @@ def cross_similarity(
 ) -> np.ndarray:
     ...
 
+
 @overload
 def cross_similarity(
     data: np.ndarray,
@@ -81,6 +83,7 @@ def cross_similarity(
     bandwidth: Optional[float] = ...,
 ) -> scipy.sparse.csc_matrix:
     ...
+
 
 @cache(level=30)
 def cross_similarity(
@@ -313,6 +316,7 @@ def recurrence_matrix(
 ) -> scipy.sparse.csc_matrix:
     ...
 
+
 @overload
 def recurrence_matrix(
     data: np.ndarray,
@@ -328,6 +332,7 @@ def recurrence_matrix(
     axis: int = ...,
 ) -> np.ndarray:
     ...
+
 
 @cache(level=30)
 def recurrence_matrix(
@@ -596,7 +601,10 @@ def recurrence_matrix(
     return rec
 
 
-_ArrayOrSparseMatrix = TypeVar('_ArrayOrSparseMatrix', bound=Union[np.ndarray, scipy.sparse.spmatrix])
+_ArrayOrSparseMatrix = TypeVar(
+    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, scipy.sparse.spmatrix]
+)
+
 
 def recurrence_to_lag(
     rec: _ArrayOrSparseMatrix, *, pad: bool = True, axis: int = -1
@@ -787,6 +795,7 @@ def lag_to_recurrence(
 
 
 _F = TypeVar("_F", bound=Callable[..., Any])
+
 
 def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
     """Filtering in the time-lag domain.

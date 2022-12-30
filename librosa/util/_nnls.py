@@ -18,7 +18,9 @@ from typing import Any, Optional, Tuple, Sequence
 __all__ = ["nnls"]
 
 
-def _nnls_obj(x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray) -> Tuple[float, np.ndarray]:
+def _nnls_obj(
+    x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray
+) -> Tuple[float, np.ndarray]:
     """Compute the objective and gradient for NNLS"""
 
     # Scipy's lbfgs flattens all arrays, so we first reshape
@@ -29,7 +31,7 @@ def _nnls_obj(x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray)
     diff = np.einsum("mf,...ft->...mt", A, x, optimize=True) - B
 
     # Compute the objective value
-    value = (1 / B.size) * 0.5 * np.sum(diff ** 2)
+    value = (1 / B.size) * 0.5 * np.sum(diff**2)
 
     # And the gradient
     grad = (1 / B.size) * np.einsum("mf,...mt->...ft", A, diff, optimize=True)

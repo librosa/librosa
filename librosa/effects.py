@@ -325,7 +325,9 @@ def pitch_shift(
     """
 
     if not util.is_positive_int(bins_per_octave):
-        raise ParameterError(f"bins_per_octave={bins_per_octave} must be a positive integer.")
+        raise ParameterError(
+            f"bins_per_octave={bins_per_octave} must be a positive integer."
+        )
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
@@ -624,6 +626,7 @@ def preemphasis(
 ) -> np.ndarray:
     ...
 
+
 @overload
 def preemphasis(
     y: np.ndarray,
@@ -634,6 +637,7 @@ def preemphasis(
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
 
+
 @overload
 def preemphasis(
     y: np.ndarray,
@@ -643,6 +647,7 @@ def preemphasis(
     return_zf: bool,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     ...
+
 
 def preemphasis(
     y: np.ndarray,
@@ -729,8 +734,8 @@ def preemphasis(
 
     zi = np.atleast_1d(zi)
 
-    y_out : np.ndarray
-    z_f : np.ndarray
+    y_out: np.ndarray
+    z_f: np.ndarray
 
     y_out, z_f = scipy.signal.lfilter(b, a, y, zi=np.asarray(zi, dtype=y.dtype))
 

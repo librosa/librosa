@@ -28,8 +28,8 @@ from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union, L
 from numpy.typing import DTypeLike, ArrayLike
 
 # Lazy-load optional dependencies
-samplerate = lazy.load('samplerate')
-resampy = lazy.load('resampy')
+samplerate = lazy.load("samplerate")
+resampy = lazy.load("resampy")
 
 __all__ = [
     "load",
@@ -53,7 +53,9 @@ __all__ = [
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
 def load(
-    path: Union[str, int, os.PathLike[Any], sf.SoundFile, audioread.AudioFile, BinaryIO],
+    path: Union[
+        str, int, os.PathLike[Any], sf.SoundFile, audioread.AudioFile, BinaryIO
+    ],
     *,
     sr: Optional[float] = 22050,
     mono: bool = True,
@@ -176,7 +178,9 @@ def load(
         except sf.SoundFileRuntimeError as exc:
             # If soundfile failed, try audioread instead
             if isinstance(path, (str, pathlib.PurePath)):
-                warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
+                warnings.warn(
+                    "PySoundFile failed. Trying audioread instead.", stacklevel=2
+                )
                 y, sr_native = __audioread_load(path, offset, duration, dtype)
             else:
                 raise exc
@@ -650,7 +654,9 @@ def resample(
         orig_sr = int(orig_sr)
         target_sr = int(target_sr)
         gcd = np.gcd(orig_sr, target_sr)
-        y_hat = scipy.signal.resample_poly(y, target_sr // gcd, orig_sr // gcd, axis=axis)
+        y_hat = scipy.signal.resample_poly(
+            y, target_sr // gcd, orig_sr // gcd, axis=axis
+        )
     elif res_type in (
         "linear",
         "zero_order_hold",
@@ -660,11 +666,20 @@ def resample(
     ):
         # Use numpy to vectorize the resampler along the target axis
         # This is because samplerate does not support ndim>2 generally.
-        y_hat = np.apply_along_axis(samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type)
+        y_hat = np.apply_along_axis(
+            samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type
+        )
     elif res_type.startswith("soxr"):
         # Use numpy to vectorize the resampler along the target axis
         # This is because soxr does not support ndim>2 generally.
-        y_hat = np.apply_along_axis(soxr.resample, axis=axis, arr=y, in_rate=orig_sr, out_rate=target_sr, quality=res_type)
+        y_hat = np.apply_along_axis(
+            soxr.resample,
+            axis=axis,
+            arr=y,
+            in_rate=orig_sr,
+            out_rate=target_sr,
+            quality=res_type,
+        )
     else:
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=axis)
 
@@ -774,30 +789,32 @@ def get_duration(
     ``(y, sr)``.
     """
 
-    path = rename_kw(old_name='filename',
-                     old_value=filename,
-                     new_name='path',
-                     new_value=path,
-                     version_deprecated='0.10.0',
-                     version_removed='1.0')
+    path = rename_kw(
+        old_name="filename",
+        old_value=filename,
+        new_name="path",
+        new_value=path,
+        version_deprecated="0.10.0",
+        version_removed="1.0",
+    )
 
     if path is not None:
         try:
             return sf.info(path).duration  # type: ignore
         except sf.SoundFileRuntimeError:
-            warnings.warn("PySoundFile failed. Trying audioread instead."
-                          "\n\tAudioread support is deprecated in librosa 0.10.0"
-                          " and will be removed in version 1.0.",
-                          stacklevel=2,
-                          category=FutureWarning)
+            warnings.warn(
+                "PySoundFile failed. Trying audioread instead."
+                "\n\tAudioread support is deprecated in librosa 0.10.0"
+                " and will be removed in version 1.0.",
+                stacklevel=2,
+                category=FutureWarning,
+            )
             with audioread.audio_open(path) as fdesc:
                 return fdesc.duration  # type: ignore
 
     if y is None:
         if S is None:
-            raise ParameterError(
-                "At least one of (y, sr), S, or path must be provided"
-            )
+            raise ParameterError("At least one of (y, sr), S, or path must be provided")
 
         n_frames = S.shape[-1]
         n_samples = n_fft + hop_length * (n_frames - 1)
@@ -842,11 +859,13 @@ def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
 
         return sf.info(path).samplerate  # type: ignore
     except sf.SoundFileRuntimeError:
-        warnings.warn("PySoundFile failed. Trying audioread instead."
-                      "\n\tAudioread support is deprecated in librosa 0.10.0"
-                      " and will be removed in version 1.0.",
-                      stacklevel=2,
-                      category=FutureWarning)
+        warnings.warn(
+            "PySoundFile failed. Trying audioread instead."
+            "\n\tAudioread support is deprecated in librosa 0.10.0"
+            " and will be removed in version 1.0.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         with audioread.audio_open(path) as fdesc:
             return fdesc.samplerate  # type: ignore
 
@@ -1022,14 +1041,21 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     epsilon = util.tiny(den)
 
     # Call the helper, and swap the results back to the target axis position
-    return np.swapaxes(__lpc(
-        y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon
-    ), 0, axis)
+    return np.swapaxes(
+        __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon), 0, axis
+    )
 
 
 @jit(nopython=True, cache=True)  # type: ignore
-def __lpc(y: np.ndarray, order: int, ar_coeffs: np.ndarray, ar_coeffs_prev: np.ndarray,
-        reflect_coeff: np.ndarray, den: np.ndarray, epsilon: float) -> np.ndarray:
+def __lpc(
+    y: np.ndarray,
+    order: int,
+    ar_coeffs: np.ndarray,
+    ar_coeffs_prev: np.ndarray,
+    reflect_coeff: np.ndarray,
+    den: np.ndarray,
+    epsilon: float,
+) -> np.ndarray:
     # This implementation follows the description of Burg's algorithm given in
     # section III of Marple's paper referenced in the docstring.
     #
@@ -1049,7 +1075,7 @@ def __lpc(y: np.ndarray, order: int, ar_coeffs: np.ndarray, ar_coeffs_prev: np.n
     bwd_pred_error = y[:-1]
 
     # DEN_{M} from eqn 16 of Marple.
-    den[0] = np.sum(fwd_pred_error ** 2 + bwd_pred_error ** 2, axis=0)
+    den[0] = np.sum(fwd_pred_error**2 + bwd_pred_error**2, axis=0)
 
     for i in range(order):
         # can be removed if we keep the epsilon bias
@@ -1462,6 +1488,7 @@ def tone(
     y: np.ndarray = np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
     return y
 
+
 def chirp(
     *,
     fmin: _FloatLike_co,
@@ -1577,8 +1604,9 @@ def chirp(
     return y
 
 
-def mu_compress(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255,
-                quantize: bool = True) -> np.ndarray :
+def mu_compress(
+    x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255, quantize: bool = True
+) -> np.ndarray:
     """mu-law compression
 
     Given an input signal ``-1 <= x <= 1``, the mu-law compression
@@ -1674,7 +1702,9 @@ def mu_compress(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255,
     return x_comp
 
 
-def mu_expand(x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255.0, quantize: bool = True) -> np.ndarray:
+def mu_expand(
+    x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255.0, quantize: bool = True
+) -> np.ndarray:
     """mu-law expansion
 
     This function is the inverse of ``mu_compress``. Given a mu-law compressed

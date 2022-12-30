@@ -72,4 +72,3 @@ _STFTPad = Literal[
 _PadMode = Union[_ModeKind, Callable[..., Any]]
 
 _PadModeSTFT = Union[_STFTPad, Callable[..., Any]]
-

@@ -13,13 +13,10 @@ from . import util
 from ._cache import cache as cache
 
 from .util.exceptions import (
-        LibrosaError as LibrosaError,
-        ParameterError as ParameterError
-        )
-from .util.files import (
-        example as example,
-        ex as ex
-    )
+    LibrosaError as LibrosaError,
+    ParameterError as ParameterError,
+)
+from .util.files import example as example, ex as ex
 
 from .version import show_versions as show_versions
 
@@ -66,7 +63,6 @@ from .core import (
     note_to_svara_c as note_to_svara_c,
     hz_to_svara_h as hz_to_svara_h,
     hz_to_svara_c as hz_to_svara_c,
-
     load as load,
     stream as stream,
     to_mono as to_mono,
@@ -81,7 +77,6 @@ from .core import (
     chirp as chirp,
     mu_compress as mu_compress,
     mu_expand as mu_expand,
-
     stft as stft,
     istft as istft,
     magphase as magphase,
@@ -101,20 +96,16 @@ from .core import (
     piptrack as piptrack,
     yin as yin,
     pyin as pyin,
-
     cqt as cqt,
     hybrid_cqt as hybrid_cqt,
     pseudo_cqt as pseudo_cqt,
     icqt as icqt,
     griffinlim_cqt as griffinlim_cqt,
     vqt as vqt,
-
     salience as salience,
     interp_harmonics as interp_harmonics,
-
     get_fftlib as get_fftlib,
     set_fftlib as set_fftlib,
-
     key_to_degrees as key_to_degrees,
     key_to_notes as key_to_notes,
     mela_to_degrees as mela_to_degrees,
@@ -124,7 +115,6 @@ from .core import (
     list_thaat as list_thaat,
     fifths_to_note as fifths_to_note,
     interval_to_fjs as interval_to_fjs,
-
     interval_frequencies as interval_frequencies,
     pythagorean_intervals as pythagorean_intervals,
     plimit_intervals as plimit_intervals,

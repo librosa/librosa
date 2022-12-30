@@ -935,11 +935,13 @@ def vqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     # First thing, get the freqs of the top octave
-    freqs = interval_frequencies(n_bins=n_bins,
-                                 fmin=fmin,
-                                 intervals=intervals,
-                                 bins_per_octave=bins_per_octave,
-                                 sort=True)
+    freqs = interval_frequencies(
+        n_bins=n_bins,
+        fmin=fmin,
+        intervals=intervals,
+        bins_per_octave=bins_per_octave,
+        sort=True,
+    )
 
     freqs_top = freqs[-bins_per_octave:]
 
@@ -965,10 +967,12 @@ def vqt(
         )
 
     if res_type is None:
-        warnings.warn("Support for VQT with res_type=None is deprecated in librosa 0.10\n"
-                      "and will be removed in version 1.0.",
-                      category=FutureWarning,
-                      stacklevel=2)
+        warnings.warn(
+            "Support for VQT with res_type=None is deprecated in librosa 0.10\n"
+            "and will be removed in version 1.0.",
+            category=FutureWarning,
+            stacklevel=2,
+        )
         res_type = "soxr_hq"
 
     y, sr, hop_length = __early_downsample(
@@ -1084,7 +1088,9 @@ def __vqt_filter_fft(
     return fft_basis, n_fft, lengths
 
 
-def __trim_stack(cqt_resp: List[np.ndarray], n_bins: int, dtype: DTypeLike) -> np.ndarray:
+def __trim_stack(
+    cqt_resp: List[np.ndarray], n_bins: int, dtype: DTypeLike
+) -> np.ndarray:
     """Helper function to trim and stack a collection of CQT responses"""
 
     max_col = min(c_i.shape[-1] for c_i in cqt_resp)
@@ -1144,9 +1150,7 @@ def __cqt_response(
 def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
     """Compute the number of early downsampling operations"""
 
-    downsample_count1 = max(
-        0, int(np.ceil(np.log2(nyquist / filter_cutoff)) - 1) - 1
-    )
+    downsample_count1 = max(0, int(np.ceil(np.log2(nyquist / filter_cutoff)) - 1) - 1)
 
     num_twos = __num_two_factors(hop_length)
     downsample_count2 = max(0, num_twos - n_octaves + 1)
@@ -1225,7 +1229,9 @@ def griffinlim_cqt(
     length: Optional[int] = None,
     momentum: float = 0.99,
     init: Optional[str] = "random",
-    random_state: Optional[Union[int, np.random.RandomState, np.random.Generator]] = None,
+    random_state: Optional[
+        Union[int, np.random.RandomState, np.random.Generator]
+    ] = None,
 ) -> np.ndarray:
     """Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
     algorithm.
@@ -1487,4 +1493,4 @@ def __bpo_to_alpha(bins_per_octave: int) -> float:
     """
 
     r = 2 ** (1 / bins_per_octave)
-    return (r ** 2 - 1) / (r ** 2 + 1)
+    return (r**2 - 1) / (r**2 + 1)

@@ -677,7 +677,7 @@ def __trim_beats(localscore: np.ndarray, beats: np.ndarray, trim: bool) -> np.nd
     smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.hann(5), "same")
 
     if trim:
-        threshold = 0.5 * ((smooth_boe ** 2).mean() ** 0.5)
+        threshold = 0.5 * ((smooth_boe**2).mean() ** 0.5)
     else:
         threshold = 0.0
 

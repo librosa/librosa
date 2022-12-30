@@ -92,17 +92,17 @@ from .constantq import (
     icqt as icqt,
     griffinlim_cqt as griffinlim_cqt,
     vqt as vqt,
-    )
+)
 
 from .harmonic import (
     salience as salience,
     interp_harmonics as interp_harmonics,
-    )
+)
 
 from .fft import (
     get_fftlib as get_fftlib,
     set_fftlib as set_fftlib,
-    )
+)
 
 from .notation import (
     key_to_degrees as key_to_degrees,

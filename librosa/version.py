@@ -39,7 +39,7 @@ def show_versions() -> None:
         "resampy",
         "numba",
         "pooch",
-        "packaging"
+        "packaging",
     ]
 
     extra_deps = [

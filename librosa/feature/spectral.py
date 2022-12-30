@@ -182,7 +182,9 @@ def spectral_centroid(
         freq = util.expand_to(freq, ndim=S.ndim, axes=-2)
 
     # Column-normalize S
-    centroid: np.ndarray = np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
+    centroid: np.ndarray = np.sum(
+        freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True
+    )
     return centroid
 
 
@@ -342,7 +344,7 @@ def spectral_bandwidth(
     if norm:
         S = util.normalize(S, norm=1, axis=-2)
 
-    bw: np.ndarray = np.sum(S * deviation ** p, axis=-2, keepdims=True) ** (1.0 / p)
+    bw: np.ndarray = np.sum(S * deviation**p, axis=-2, keepdims=True) ** (1.0 / p)
     return bw
 
 
@@ -792,7 +794,7 @@ def spectral_flatness(
             "Spectral flatness is only defined " "with non-negative energies"
         )
 
-    S_thresh = np.maximum(amin, S ** power)
+    S_thresh = np.maximum(amin, S**power)
     gmean = np.exp(np.mean(np.log(S_thresh), axis=-2, keepdims=True))
     amean = np.mean(S_thresh, axis=-2, keepdims=True)
     flatness: np.ndarray = gmean / amean
@@ -901,7 +903,7 @@ def rms(
             x[..., -1, :] *= 0.5
 
         # Calculate power
-        power = 2 * np.sum(x, axis=-2, keepdims=True) / frame_length ** 2
+        power = 2 * np.sum(x, axis=-2, keepdims=True) / frame_length**2
     else:
         raise ParameterError("Either `y` or `S` must be input.")
 
@@ -1039,7 +1041,7 @@ def poly_features(
     if freq.ndim == 1:
         # If frequencies are constant over frames, then we only need to fit once
         fitter = np.vectorize(
-            lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)" # type: ignore
+            lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)"  # type: ignore
         )
         coefficients = fitter(S)
     else:
@@ -1387,7 +1389,9 @@ def chroma_cqt(
     # Build the CQT if we don't have one already
     if C is None:
         if y is None:
-            raise ParameterError("At least one of C or y must be provided to compute chroma")
+            raise ParameterError(
+                "At least one of C or y must be provided to compute chroma"
+            )
         C = np.abs(
             cqt_func[cqt_mode](
                 y,
@@ -1670,7 +1674,9 @@ def chroma_vqt(
     # Build the CQT if we don't have one already
     if V is None:
         if y is None:
-            raise ParameterError("At least one of y or V must be provided to compute chroma")
+            raise ParameterError(
+                "At least one of y or V must be provided to compute chroma"
+            )
         V = np.abs(
             vqt(
                 y=y,
@@ -1680,7 +1686,7 @@ def chroma_vqt(
                 intervals=intervals,
                 n_bins=n_octaves * bins_per_octave,
                 bins_per_octave=bins_per_octave,
-                gamma=gamma
+                gamma=gamma,
             )
         )
 
@@ -1998,7 +2004,9 @@ def mfcc(
         # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[..., :n_mfcc, :]
+    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[
+        ..., :n_mfcc, :
+    ]
 
     if lifter > 0:
         # shape lifter for broadcasting

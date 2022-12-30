@@ -20,7 +20,12 @@ __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
 
 
 def mel_to_stft(
-    M: np.ndarray, *, sr: float = 22050, n_fft: int = 2048, power: float = 2.0, **kwargs: Any
+    M: np.ndarray,
+    *,
+    sr: float = 22050,
+    n_fft: int = 2048,
+    power: float = 2.0,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Approximate STFT magnitude from a Mel power spectrogram.
 

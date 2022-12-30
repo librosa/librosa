@@ -196,6 +196,7 @@ def dtw(
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     ...
 
+
 def dtw(
     X: Optional[np.ndarray] = None,
     Y: Optional[np.ndarray] = None,
@@ -210,7 +211,9 @@ def dtw(
     global_constraints: bool = False,
     band_rad: float = 0.25,
     return_steps: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]]:
+) -> Union[
+    np.ndarray, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]
+]:
     """Dynamic time warping (DTW).
 
     This function performs a DTW and path backtracking on two sequences.
@@ -702,6 +705,7 @@ def dtw_backtracking(
     wp = __dtw_backtracking(steps, step_sizes_sigma, subseq, start)
     return np.asarray(wp, dtype=int)
 
+
 @overload
 def rqa(
     sim: np.ndarray,
@@ -712,6 +716,8 @@ def rqa(
     backtrack: Literal[False],
 ) -> np.ndarray:
     ...
+
+
 @overload
 def rqa(
     sim: np.ndarray,
@@ -722,6 +728,8 @@ def rqa(
     backtrack: Literal[True] = ...,
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
+
+
 @overload
 def rqa(
     sim: np.ndarray,
@@ -732,6 +740,7 @@ def rqa(
     backtrack: bool = ...,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     ...
+
 
 def rqa(
     sim: np.ndarray,
@@ -885,7 +894,9 @@ def rqa(
 
 
 @jit(nopython=True, cache=True)  # type: ignore
-def __rqa_dp(sim: np.ndarray, gap_onset: float, gap_extend: float, knight: bool) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
+def __rqa_dp(
+    sim: np.ndarray, gap_onset: float, gap_extend: float, knight: bool
+) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
     """RQA dynamic programming implementation"""
 
     # The output array
@@ -1162,6 +1173,8 @@ def viterbi(
     return_logp: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
+
+
 @overload
 def viterbi(
     prob: np.ndarray,
@@ -1171,6 +1184,7 @@ def viterbi(
     return_logp: Literal[False] = ...,
 ) -> np.ndarray:
     ...
+
 
 def viterbi(
     prob: np.ndarray,
@@ -1327,6 +1341,8 @@ def viterbi_discriminative(
     return_logp: Literal[False] = ...,
 ) -> np.ndarray:
     ...
+
+
 @overload
 def viterbi_discriminative(
     prob: np.ndarray,
@@ -1337,6 +1353,8 @@ def viterbi_discriminative(
     return_logp: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
+
+
 @overload
 def viterbi_discriminative(
     prob: np.ndarray,
@@ -1347,6 +1365,7 @@ def viterbi_discriminative(
     return_logp: bool,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     ...
+
 
 def viterbi_discriminative(
     prob: np.ndarray,
@@ -1563,6 +1582,7 @@ def viterbi_discriminative(
 
     return states
 
+
 @overload
 def viterbi_binary(
     prob: np.ndarray,
@@ -1573,6 +1593,7 @@ def viterbi_binary(
     return_logp: Literal[False] = ...,
 ) -> np.ndarray:
     ...
+
 
 @overload
 def viterbi_binary(
@@ -1585,6 +1606,7 @@ def viterbi_binary(
 ) -> Tuple[np.ndarray, np.ndarray]:
     ...
 
+
 @overload
 def viterbi_binary(
     prob: np.ndarray,
@@ -1595,6 +1617,7 @@ def viterbi_binary(
     return_logp: bool = ...,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     ...
+
 
 def viterbi_binary(
     prob: np.ndarray,

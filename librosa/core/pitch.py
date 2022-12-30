@@ -401,7 +401,7 @@ def _cumulative_mean_normalized_difference(
     acf_frames[np.abs(acf_frames) < 1e-6] = 0
 
     # Energy terms.
-    energy_frames = np.cumsum(y_frames ** 2, axis=-2)
+    energy_frames = np.cumsum(y_frames**2, axis=-2)
     energy_frames = (
         energy_frames[..., win_length:, :] - energy_frames[..., :-win_length, :]
     )
@@ -421,13 +421,15 @@ def _cumulative_mean_normalized_difference(
         np.cumsum(yin_frames[..., 1 : max_period + 1, :], axis=-2) / tau_range
     )
     yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
-    yin_frames: np.ndarray = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
+    yin_frames: np.ndarray = yin_numerator / (
+        yin_denominator + util.tiny(yin_denominator)
+    )
     return yin_frames
 
 
 @numba.stencil  # type: ignore
 def _pi_stencil(x: np.ndarray) -> np.ndarray:
-    '''Stencil to compute local parabolic interpolation'''
+    """Stencil to compute local parabolic interpolation"""
 
     a = x[1] + x[-1] - 2 * x[0]
     b = (x[1] - x[-1]) / 2
@@ -440,15 +442,18 @@ def _pi_stencil(x: np.ndarray) -> np.ndarray:
     return -b / a  # type: ignore
 
 
-@numba.guvectorize(['void(float32[:], float32[:])',
-                    'void(float64[:], float64[:])'], '(n)->(n)',
-                   cache=True, nopython=True)  # type: ignore
+@numba.guvectorize(
+    ["void(float32[:], float32[:])", "void(float64[:], float64[:])"],
+    "(n)->(n)",
+    cache=True,
+    nopython=True,
+)  # type: ignore
 def _pi_wrapper(x: np.ndarray, y: np.ndarray) -> None:  # pragma: no cover
-    '''Vectorized wrapper for the parabolic interpolation stencil'''
+    """Vectorized wrapper for the parabolic interpolation stencil"""
     y[:] = _pi_stencil(x)
 
 
-def _parabolic_interpolation(x: np.ndarray, *, axis: int=-2) -> np.ndarray:
+def _parabolic_interpolation(x: np.ndarray, *, axis: int = -2) -> np.ndarray:
     """Piecewise parabolic interpolation for yin and pyin.
 
     Parameters

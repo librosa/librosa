@@ -234,7 +234,13 @@ class NoteFormatter(mplticker.Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
-    def __init__(self, octave: bool = True, major: bool = True, key: str = "C:maj", unicode: bool = True):
+    def __init__(
+        self,
+        octave: bool = True,
+        major: bool = True,
+        key: str = "C:maj",
+        unicode: bool = True,
+    ):
 
         self.octave = octave
         self.major = major
@@ -538,7 +544,7 @@ class ChromaSvaraFormatter(mplticker.Formatter):
         Sa: Optional[float] = None,
         mela: Optional[Union[int, str]] = None,
         abbr: bool = True,
-        unicode: bool = True
+        unicode: bool = True,
     ):
         if Sa is None:
             Sa = 0
@@ -587,7 +593,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
         intervals: Union[str, Collection[float]],
         unison: str = "C",
         unicode: bool = True,
-        bins_per_octave: Optional[int] = None
+        bins_per_octave: Optional[int] = None,
     ):
         self.unison = unison
         self.unicode = unicode
@@ -596,7 +602,9 @@ class ChromaFJSFormatter(mplticker.Formatter):
             if not isinstance(intervals, str):
                 bins_per_octave = len(intervals)
             if not isinstance(bins_per_octave, int):
-                raise ParameterError(f"bins_per_octave={bins_per_octave} must be integer-valued")
+                raise ParameterError(
+                    f"bins_per_octave={bins_per_octave} must be integer-valued"
+                )
             self.bins_per_octave: int = bins_per_octave
             # Construct the explicit interval set
             self.intervals_ = core.interval_frequencies(
@@ -689,7 +697,7 @@ class AdaptiveWaveplot:
         steps: Line2D,
         envelope: PolyCollection,
         sr: float = 22050,
-        max_samples: int = 11025
+        max_samples: int = 11025,
     ):
         self.times = times
         self.samples = y
@@ -1692,7 +1700,9 @@ def __decorate_axis(
         raise ParameterError("Unsupported axis type: {}".format(ax_type))
 
 
-def __coord_fft_hz(n: int, sr: float=22050, n_fft: Optional[int] =None, **_kwargs: Any) -> np.ndarray:
+def __coord_fft_hz(
+    n: int, sr: float = 22050, n_fft: Optional[int] = None, **_kwargs: Any
+) -> np.ndarray:
     """Get the frequencies for FFT bins"""
     if n_fft is None:
         n_fft = 2 * (n - 1)
@@ -1702,9 +1712,14 @@ def __coord_fft_hz(n: int, sr: float=22050, n_fft: Optional[int] =None, **_kwarg
     return basis
 
 
-def __coord_mel_hz(n: int, fmin: Optional[float]=0., fmax:
-        Optional[float]=None, sr: float=22050, htk: bool=False,
-        **_kwargs: Any) -> np.ndarray:
+def __coord_mel_hz(
+    n: int,
+    fmin: Optional[float] = 0.0,
+    fmax: Optional[float] = None,
+    sr: float = 22050,
+    htk: bool = False,
+    **_kwargs: Any,
+) -> np.ndarray:
     """Get the frequencies for Mel bins"""
 
     if fmin is None:
@@ -1716,8 +1731,13 @@ def __coord_mel_hz(n: int, fmin: Optional[float]=0., fmax:
     return basis
 
 
-def __coord_cqt_hz(n: int, fmin: Optional[_FloatLike_co]=None,
-        bins_per_octave: int=12, sr: float=22050, **_kwargs: Any) -> np.ndarray:
+def __coord_cqt_hz(
+    n: int,
+    fmin: Optional[_FloatLike_co] = None,
+    bins_per_octave: int = 12,
+    sr: float = 22050,
+    **_kwargs: Any,
+) -> np.ndarray:
     """Get CQT bin frequencies"""
     if fmin is None:
         fmin = core.note_to_hz("C1")
@@ -1743,9 +1763,13 @@ def __coord_cqt_hz(n: int, fmin: Optional[_FloatLike_co]=None,
 
 
 def __coord_vqt_hz(
-        n: int, fmin: Optional[_FloatLike_co]=None, bins_per_octave: int=12,
-        sr: float=22050, intervals: Optional[Union[str, Collection[float]]]=None,
-        unison: Optional[str]=None, **_kwargs: Any
+    n: int,
+    fmin: Optional[_FloatLike_co] = None,
+    bins_per_octave: int = 12,
+    sr: float = 22050,
+    intervals: Optional[Union[str, Collection[float]]] = None,
+    unison: Optional[str] = None,
+    **_kwargs: Any,
 ) -> np.ndarray:
     if fmin is None:
         fmin = core.note_to_hz("C1")
@@ -1767,19 +1791,26 @@ def __coord_vqt_hz(
     return freqs
 
 
-def __coord_chroma(n: int, bins_per_octave: int=12, **_kwargs: Any) -> np.ndarray:
+def __coord_chroma(n: int, bins_per_octave: int = 12, **_kwargs: Any) -> np.ndarray:
     """Get chroma bin numbers"""
     return np.linspace(0, (12.0 * n) / bins_per_octave, num=n, endpoint=False)
 
 
-def __coord_tempo(n: int, sr: float =22050, hop_length: int =512, **_kwargs: Any) -> np.ndarray:
+def __coord_tempo(
+    n: int, sr: float = 22050, hop_length: int = 512, **_kwargs: Any
+) -> np.ndarray:
     """Tempo coordinates"""
     basis = core.tempo_frequencies(n + 1, sr=sr, hop_length=hop_length)[1:]
     return basis
 
 
-def __coord_fourier_tempo(n: int, sr: float=22050, hop_length: int=512, win_length:
-        Optional[int]=None, **_kwargs: Any) -> np.ndarray:
+def __coord_fourier_tempo(
+    n: int,
+    sr: float = 22050,
+    hop_length: int = 512,
+    win_length: Optional[int] = None,
+    **_kwargs: Any,
+) -> np.ndarray:
     """Fourier tempogram coordinates"""
     if win_length is None:
         win_length = 2 * (n - 1)
@@ -1796,7 +1827,9 @@ def __coord_n(n: int, **_kwargs: Any) -> np.ndarray:
     return np.arange(n)
 
 
-def __coord_time(n: int, sr: float=22050, hop_length: int=512, **_kwargs: Any) -> np.ndarray:
+def __coord_time(
+    n: int, sr: float = 22050, hop_length: int = 512, **_kwargs: Any
+) -> np.ndarray:
     """Get time coordinates from frames"""
     times: np.ndarray = core.frames_to_time(np.arange(n), sr=sr, hop_length=hop_length)
     return times
