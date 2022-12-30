@@ -2613,14 +2613,14 @@ def griffinlim(
         an initial guess for phase can be provided, or when you want to resume
         Griffin-Lim from a previous output.
 
-    random_state : None, int, or np.random.RandomState
+    random_state : None, int, np.random.RandomState, or np.random.Generator
         If int, random_state is the seed used by the random number generator
         for phase initialization.
 
-        If `np.random.RandomState` instance, the random number
+        If `np.random.RandomState` or `np.random.Generator` instance, the random number
         generator itself.
 
-        If `None`, defaults to the current `np.random` object.
+        If `None`, defaults to the `np.random.default_rng()` object.
 
     Returns
     -------
@@ -2664,8 +2664,10 @@ def griffinlim(
         rng = np.random.default_rng()
     elif isinstance(random_state, int):
         rng = np.random.RandomState(seed=random_state)  # type: ignore
-    elif isinstance(random_state, np.random.RandomState):
+    elif isinstance(random_state, (np.random.RandomState, np.random.Generator)):
         rng = random_state  # type: ignore
+    else:
+        raise ParameterError(f"Unsupported random_state={random_state!r}")
 
     if momentum > 1:
         warnings.warn(
