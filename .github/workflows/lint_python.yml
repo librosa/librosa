@@ -64,4 +64,4 @@ jobs:
     
     - name: Type check tests
       shell: bash -l {0}
-      run: python -m mypy --pretty tests --config-file=tests/mypy.ini
+      run: python -m mypy --pretty tests
