@@ -1033,9 +1033,6 @@ def poly_features(
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft)
 
-    # help out mypy here
-    assert freq is not None
-
     coefficients: np.ndarray
 
     if freq.ndim == 1:
