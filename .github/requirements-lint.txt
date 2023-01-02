@@ -1,8 +1,0 @@
-bandit
-codespell
-flake8
-velin
-types-decorator
-mypy
-pytest
-numpy
