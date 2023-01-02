@@ -41,7 +41,6 @@ from itertools import product
 import warnings
 
 import numpy as np
-from packaging.version import parse as version_parse
 import lazy_loader as lazy
 
 from . import core
@@ -1331,28 +1330,14 @@ def __scale_axes(axes, ax_type, which):
     """Set the axis scaling"""
 
     kwargs = dict()
-    if which == "x":
-        if version_parse(matplotlib.__version__) < version_parse("3.3.0"):
-            thresh = "linthreshx"
-            base = "basex"
-            scale = "linscalex"
-        else:
-            thresh = "linthresh"
-            base = "base"
-            scale = "linscale"
+    thresh = "linthresh"
+    base = "base"
+    scale = "linscale"
 
+    if which == "x":
         scaler = axes.set_xscale
         limit = axes.set_xlim
     else:
-        if version_parse(matplotlib.__version__) < version_parse("3.3.0"):
-            thresh = "linthreshy"
-            base = "basey"
-            scale = "linscaley"
-        else:
-            thresh = "linthresh"
-            base = "base"
-            scale = "linscale"
-
         scaler = axes.set_yscale
         limit = axes.set_ylim
 
