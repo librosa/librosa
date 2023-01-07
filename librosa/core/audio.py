@@ -14,7 +14,7 @@ import scipy.signal
 import soxr
 import lazy_loader as lazy
 
-from numba import jit
+from numba import jit, stencil, guvectorize
 from .fft import get_fftlib
 from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
@@ -1141,6 +1141,42 @@ def __lpc(
     return ar_coeffs
 
 
+@stencil  # type: ignore
+def _zc_stencil(x: np.ndarray, threshold: float, zero_pos: bool) -> np.ndarray:
+    """Stencil to compute zero crossings"""
+    x0 = x[0]
+    if -threshold <= x0 <= threshold:
+        x0 = 0
+
+    x1 = x[-1]
+    if -threshold <= x1 <= threshold:
+        x1 = 0
+
+    if zero_pos:
+        return np.signbit(x0) != np.signbit(x1)  # type: ignore
+    else:
+        return np.sign(x0) != np.sign(x1)  # type: ignore
+
+
+@guvectorize(
+    [
+        "void(float32[:], float32, bool_, bool_[:])",
+        "void(float64[:], float64, bool_, bool_[:])",
+    ],
+    "(n),(),()->(n)",
+    cache=True,
+    nopython=True,
+)  # type: ignore
+def _zc_wrapper(
+    x: np.ndarray,
+    threshold: float,
+    zero_pos: bool,
+    y: np.ndarray,
+) -> None:  # pragma: no cover
+    """Vectorized wrapper for zero crossing stencil"""
+    y[:] = _zc_stencil(x, threshold, zero_pos)
+
+
 @cache(level=20)
 def zero_crossings(
     y: np.ndarray,
@@ -1249,33 +1285,16 @@ def zero_crossings(
         threshold = threshold * ref_magnitude
 
     assert threshold is not None  # because mypy can't infer we're float now
-    if threshold > 0:
-        y = y.copy()
-        y[np.abs(y) <= threshold] = 0
 
-    # Extract the sign bit
-    if zero_pos:
-        y_sign = np.signbit(y)
-    else:
-        y_sign = np.sign(y)
+    yi = y.swapaxes(-1, axis)
+    z = np.empty_like(y, dtype=bool)
+    zi = z.swapaxes(-1, axis)
 
-    # Find the change-points by slicing
-    slice_pre = [slice(None)] * y.ndim
-    slice_pre[axis] = slice(1, None)
+    _zc_wrapper(yi, threshold, zero_pos, zi)
 
-    slice_post = [slice(None)] * y.ndim
-    slice_post[axis] = slice(-1)
+    zi[..., 0] = pad
 
-    # Since we've offset the input by one, pad back onto the front
-    padding = [(0, 0)] * y.ndim
-    padding[axis] = (1, 0)
-
-    return np.pad(
-        (y_sign[tuple(slice_post)] != y_sign[tuple(slice_pre)]),
-        padding,
-        mode="constant",
-        constant_values=pad,
-    )
+    return z
 
 
 def clicks(
