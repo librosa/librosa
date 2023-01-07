@@ -1181,7 +1181,7 @@ def _zc_wrapper(
 def zero_crossings(
     y: np.ndarray,
     *,
-    threshold: Optional[float] = 1e-10,
+    threshold: float = 1e-10,
     ref_magnitude: Optional[Union[float, Callable]] = None,
     pad: bool = True,
     zero_pos: bool = True,
@@ -1198,8 +1198,8 @@ def zero_crossings(
     y : np.ndarray
         The input array
 
-    threshold : float > 0 or None
-        If specified, values where ``-threshold <= y <= threshold`` are
+    threshold : float >= 0
+        If non-zero, values where ``-threshold <= y <= threshold`` are
         clipped to 0.
 
     ref_magnitude : float > 0 or callable
@@ -1273,18 +1273,11 @@ def zero_crossings(
     (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
     """
 
-    # TODO: drop support for None thresholds, just use 0
-    # Clip within the threshold
-    if threshold is None:
-        threshold = 0.0
-
     if callable(ref_magnitude):
         threshold = threshold * ref_magnitude(np.abs(y))
 
     elif ref_magnitude is not None:
         threshold = threshold * ref_magnitude
-
-    assert threshold is not None  # because mypy can't infer we're float now
 
     yi = y.swapaxes(-1, axis)
     z = np.empty_like(y, dtype=bool)

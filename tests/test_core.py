@@ -1064,7 +1064,7 @@ def test_to_mono_multi(y):
 
 
 @pytest.mark.parametrize("data", [np.random.randn(32)])
-@pytest.mark.parametrize("threshold", [None, 0, 1e-10])
+@pytest.mark.parametrize("threshold", [0, 1e-10])
 @pytest.mark.parametrize("ref_magnitude", [None, 0.1, np.max])
 @pytest.mark.parametrize("pad", [False, True])
 @pytest.mark.parametrize("zp", [False, True])
