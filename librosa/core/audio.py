@@ -14,7 +14,7 @@ import scipy.signal
 import soxr
 import lazy_loader as lazy
 
-from numba import jit
+from numba import jit, stencil, guvectorize
 from .fft import get_fftlib
 from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
@@ -1141,11 +1141,47 @@ def __lpc(
     return ar_coeffs
 
 
+@stencil  # type: ignore
+def _zc_stencil(x: np.ndarray, threshold: float, zero_pos: bool) -> np.ndarray:
+    """Stencil to compute zero crossings"""
+    x0 = x[0]
+    if -threshold <= x0 <= threshold:
+        x0 = 0
+
+    x1 = x[-1]
+    if -threshold <= x1 <= threshold:
+        x1 = 0
+
+    if zero_pos:
+        return np.signbit(x0) != np.signbit(x1)  # type: ignore
+    else:
+        return np.sign(x0) != np.sign(x1)  # type: ignore
+
+
+@guvectorize(
+    [
+        "void(float32[:], float32, bool_, bool_[:])",
+        "void(float64[:], float64, bool_, bool_[:])",
+    ],
+    "(n),(),()->(n)",
+    cache=True,
+    nopython=True,
+)  # type: ignore
+def _zc_wrapper(
+    x: np.ndarray,
+    threshold: float,
+    zero_pos: bool,
+    y: np.ndarray,
+) -> None:  # pragma: no cover
+    """Vectorized wrapper for zero crossing stencil"""
+    y[:] = _zc_stencil(x, threshold, zero_pos)
+
+
 @cache(level=20)
 def zero_crossings(
     y: np.ndarray,
     *,
-    threshold: Optional[float] = 1e-10,
+    threshold: float = 1e-10,
     ref_magnitude: Optional[Union[float, Callable]] = None,
     pad: bool = True,
     zero_pos: bool = True,
@@ -1162,8 +1198,8 @@ def zero_crossings(
     y : np.ndarray
         The input array
 
-    threshold : float > 0 or None
-        If specified, values where ``-threshold <= y <= threshold`` are
+    threshold : float >= 0
+        If non-zero, values where ``-threshold <= y <= threshold`` are
         clipped to 0.
 
     ref_magnitude : float > 0 or callable
@@ -1237,45 +1273,21 @@ def zero_crossings(
     (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
     """
 
-    # TODO: drop support for None thresholds, just use 0
-    # Clip within the threshold
-    if threshold is None:
-        threshold = 0.0
-
     if callable(ref_magnitude):
         threshold = threshold * ref_magnitude(np.abs(y))
 
     elif ref_magnitude is not None:
         threshold = threshold * ref_magnitude
 
-    assert threshold is not None  # because mypy can't infer we're float now
-    if threshold > 0:
-        y = y.copy()
-        y[np.abs(y) <= threshold] = 0
+    yi = y.swapaxes(-1, axis)
+    z = np.empty_like(y, dtype=bool)
+    zi = z.swapaxes(-1, axis)
 
-    # Extract the sign bit
-    if zero_pos:
-        y_sign = np.signbit(y)
-    else:
-        y_sign = np.sign(y)
+    _zc_wrapper(yi, threshold, zero_pos, zi)
 
-    # Find the change-points by slicing
-    slice_pre = [slice(None)] * y.ndim
-    slice_pre[axis] = slice(1, None)
+    zi[..., 0] = pad
 
-    slice_post = [slice(None)] * y.ndim
-    slice_post[axis] = slice(-1)
-
-    # Since we've offset the input by one, pad back onto the front
-    padding = [(0, 0)] * y.ndim
-    padding[axis] = (1, 0)
-
-    return np.pad(
-        (y_sign[tuple(slice_post)] != y_sign[tuple(slice_pre)]),
-        padding,
-        mode="constant",
-        constant_values=pad,
-    )
+    return z
 
 
 def clicks(

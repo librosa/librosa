@@ -1082,7 +1082,7 @@ def zero_crossing_rate(
         This is similar to the padding in `librosa.stft`,
         but uses edge-value copies instead of zero-padding.
     **kwargs : additional keyword arguments to pass to `librosa.zero_crossings`
-    threshold : float > 0 or None
+    threshold : float >= 0
         If specified, values where ``-threshold <= y <= threshold`` are
         clipped to 0.
     ref_magnitude : float > 0 or callable
