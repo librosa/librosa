@@ -212,10 +212,14 @@ def decompose(
 def hpss(
     S: np.ndarray,
     *,
-    kernel_size: Union[_IntLike_co, Tuple[Any, Any]] = 31,
+    kernel_size: Union[
+        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
+    ] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: Union[_FloatLike_co, Tuple[Any, Any]] = 1.0
+    margin: Union[
+        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
+    ] = 1.0
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Median-filtering harmonic percussive source separation (HPSS).
 
@@ -357,14 +361,14 @@ def hpss(
     else:
         phase = 1
 
-    if isinstance(kernel_size, tuple):
+    if isinstance(kernel_size, tuple) or isinstance(kernel_size, list):
         win_harm = kernel_size[0]
         win_perc = kernel_size[1]
     else:
         win_harm = kernel_size
         win_perc = kernel_size
 
-    if isinstance(margin, tuple):
+    if isinstance(margin, tuple) or isinstance(margin, list):
         margin_harm = margin[0]
         margin_perc = margin[1]
     else:
