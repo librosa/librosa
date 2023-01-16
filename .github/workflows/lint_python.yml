@@ -31,7 +31,7 @@ jobs:
         add-pip-as-python-dependency: true
         auto-activate-base: false
         activate-environment: lint
-        mamba-version: "*"
+        # mamba-version: "*"
         channel-priority: ${{ matrix.channel-priority }}
         environment-file: ${{ matrix.envfile }}
         use-only-tar-bz2: true
