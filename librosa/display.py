@@ -697,6 +697,7 @@ class AdaptiveWaveplot:
         envelope: PolyCollection,
         sr: float = 22050,
         max_samples: int = 11025,
+        transpose: bool = False,
     ):
         self.times = times
         self.samples = y
@@ -704,6 +705,7 @@ class AdaptiveWaveplot:
         self.envelope = envelope
         self.sr = sr
         self.max_samples = max_samples
+        self.transpose = transpose
         self.cid: Optional[int] = None
         self.ax: Optional[mplaxes.Axes] = None
 
@@ -773,24 +775,33 @@ class AdaptiveWaveplot:
         """
         lims = ax.viewLim
 
+        if self.transpose:
+            dim = lims.height * self.sr
+            start, end = lims.y0, lims.y1
+            xdata, ydata = self.samples, self.times
+            data = self.steps.get_ydata()
+        else:
+            dim = lims.width * self.sr
+            start, end = lims.x0, lims.x1
+            xdata, ydata = self.times, self.samples
+            data = self.steps.get_xdata()
         # Does our width cover fewer than max_samples?
         # If so, then use the sample-based plot
-        if lims.width * self.sr <= self.max_samples:
+        if dim <= self.max_samples:
             self.envelope.set_visible(False)
             self.steps.set_visible(True)
 
-            # Now check that our viewport
-            xdata = self.steps.get_xdata()
-            if lims.x0 <= xdata[0] or lims.x1 >= xdata[-1]:
+            # Now check our viewport
+            if start <= data[0] or end >= data[-1]:
                 # Viewport expands beyond current data in steps; update
                 # we want to cover a window of self.max_samples centered on the current viewport
-                midpoint_time = (lims.x1 + lims.x0) / 2
+                midpoint_time = (start + end) / 2
                 idx_start = np.searchsorted(
                     self.times, midpoint_time - 0.5 * self.max_samples / self.sr
                 )
                 self.steps.set_data(
-                    self.times[idx_start : idx_start + self.max_samples],
-                    self.samples[idx_start : idx_start + self.max_samples],
+                    xdata[idx_start : idx_start + self.max_samples],
+                    ydata[idx_start : idx_start + self.max_samples],
                 )
         else:
             # Otherwise, use the envelope plot
@@ -1837,6 +1848,7 @@ def waveshow(
     marker: Union[str, MplPath, MarkerStyle] = "",
     where: str = "post",
     label: Optional[str] = None,
+    transpose: bool = False,
     ax: Optional[mplaxes.Axes] = None,
     **kwargs: Any,
 ) -> AdaptiveWaveplot:
@@ -2017,11 +2029,21 @@ def waveshow(
     times = offset + core.times_like(y, sr=sr, hop_length=1)
 
     # Only plot up to max_points worth of data here
+    xdata, ydata = times[:max_points], y[0, :max_points]
+    filler = axes.fill_between
+    signal = "xlim_changed"
+    dec_axis = axes.xaxis
+    if transpose:
+        ydata, xdata = xdata, ydata
+        filler = axes.fill_betweenx
+        signal = "ylim_changed"
+        dec_axis = axes.yaxis
+
     (steps,) = axes.step(
-        times[:max_points], y[0, :max_points], marker=marker, where=where, **kwargs
+        xdata, ydata, marker=marker, where=where, **kwargs
     )
 
-    envelope = axes.fill_between(
+    envelope = filler(
         times[: len(y_top) * hop_length : hop_length],
         y_bottom,
         y_top,
@@ -2030,15 +2052,16 @@ def waveshow(
         **kwargs,
     )
     adaptor = AdaptiveWaveplot(
-        times, y[0], steps, envelope, sr=sr, max_samples=max_points
+        times, y[0], steps, envelope, sr=sr, max_samples=max_points,
+        transpose=transpose
     )
 
-    adaptor.connect(axes, signal="xlim_changed")
+    adaptor.connect(axes, signal=signal)
 
     # Force an initial update to ensure the state is consistent
     adaptor.update(axes)
 
     # Construct tickers and locators
-    __decorate_axis(axes.xaxis, x_axis)
+    __decorate_axis(dec_axis, x_axis)
 
     return adaptor
