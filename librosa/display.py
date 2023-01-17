@@ -1925,7 +1925,7 @@ def waveshow(
 
         - `None`, 'none', or 'off': ticks and tick markers are hidden.
 
-    x_axis: Deprecated
+    x_axis : Deprecated
         Equivalent to `axis` parameter, included for backward compatibility.
 
         .. warning:: This parameter is deprecated as of 0.10.0 and
