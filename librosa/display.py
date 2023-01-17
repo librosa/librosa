@@ -45,6 +45,7 @@ import lazy_loader as lazy
 
 from . import core
 from . import util
+from .util.deprecation import rename_kw, Deprecated
 from .util.exceptions import ParameterError
 from typing import TYPE_CHECKING, Any, Collection, Optional, Union, Callable, Dict
 from ._typing import _FloatLike_co
@@ -683,6 +684,9 @@ class AdaptiveWaveplot:
 
     max_samples : int > 0
         The maximum number of samples to use for sample-based display.
+
+    transpose : bool
+        If `True`, display the wave vertically instead of horizontally.
 
     See Also
     --------
@@ -1843,13 +1847,14 @@ def waveshow(
     *,
     sr: float = 22050,
     max_points: int = 11025,
-    x_axis: Optional[str] = "time",
+    axis: Optional[str] = "time",
     offset: float = 0.0,
     marker: Union[str, MplPath, MarkerStyle] = "",
     where: str = "post",
     label: Optional[str] = None,
     transpose: bool = False,
     ax: Optional[mplaxes.Axes] = None,
+    x_axis: Optional[Union[str, Deprecated]] = Deprecated(),
     **kwargs: Any,
 ) -> AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
@@ -1894,8 +1899,8 @@ def waveshow(
         visualized instead.  The parameters of the amplitude envelope are defined so
         that the resulting plot cannot produce more than `max_points` frames.
 
-    x_axis : str or None
-        Display of the x-axis ticks and tick markers. Accepted values are:
+    axis : str or None
+        Display style of the axis ticks and tick markers. Accepted values are:
 
         - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
                     Values are plotted in units of seconds.
@@ -1920,6 +1925,12 @@ def waveshow(
 
         - `None`, 'none', or 'off': ticks and tick markers are hidden.
 
+    x_axis: Deprecated
+        Equivalent to `axis` parameter, included for backward compatibility.
+
+        .. warning:: This parameter is deprecated as of 0.10.0 and
+            will be removed in 1.0.  Use `axis=` instead going forward.
+
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
@@ -1943,6 +1954,9 @@ def waveshow(
         The label string applied to this plot.
         Note that the label
 
+    transpose : bool
+        If `True`, display the wave vertically instead of horizontally.
+
     **kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between` and
         `matplotlib.pyplot.step`.
@@ -1960,6 +1974,7 @@ def waveshow(
     AdaptiveWaveplot
     matplotlib.pyplot.step
     matplotlib.pyplot.fill_between
+    matplotlib.pyplot.fill_betweenx
     matplotlib.markers
 
     Examples
@@ -2015,6 +2030,16 @@ def waveshow(
     # Create the adaptive drawing object
     axes = __check_axes(ax)
 
+    # Handle the x_axis->axis rename deprecation
+    axis = rename_kw(
+        old_name="x_axis",
+        old_value=x_axis,
+        new_name="axis",
+        new_value=axis,
+        version_deprecated="0.10.0",
+        version_removed="1.0",
+    )
+
     if "color" not in kwargs:
         kwargs.setdefault("color", next(axes._get_lines.prop_cycler)["color"])
 
@@ -2039,9 +2064,7 @@ def waveshow(
         signal = "ylim_changed"
         dec_axis = axes.yaxis
 
-    (steps,) = axes.step(
-        xdata, ydata, marker=marker, where=where, **kwargs
-    )
+    (steps,) = axes.step(xdata, ydata, marker=marker, where=where, **kwargs)
 
     envelope = filler(
         times[: len(y_top) * hop_length : hop_length],
@@ -2052,8 +2075,7 @@ def waveshow(
         **kwargs,
     )
     adaptor = AdaptiveWaveplot(
-        times, y[0], steps, envelope, sr=sr, max_samples=max_points,
-        transpose=transpose
+        times, y[0], steps, envelope, sr=sr, max_samples=max_points, transpose=transpose
     )
 
     adaptor.connect(axes, signal=signal)
@@ -2062,6 +2084,6 @@ def waveshow(
     adaptor.update(axes)
 
     # Construct tickers and locators
-    __decorate_axis(dec_axis, x_axis)
+    __decorate_axis(dec_axis, axis)
 
     return adaptor
