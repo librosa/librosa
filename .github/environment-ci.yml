@@ -18,7 +18,7 @@ dependencies:
   - soxr-python>=0.3.2
   - msgpack-python>=1.0
   - lazy_loader>=0.1
-  - typing_extensions>=4.0.0
+  - typing_extensions>=4.1.1
 
   # optional, but required for testing
   - matplotlib>=3.3.0

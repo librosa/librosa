@@ -60,6 +60,7 @@ from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
 from .core.convert import fft_frequencies, mel_frequencies
 from numpy.typing import ArrayLike, DTypeLike
 from typing import Any, List, Optional, Tuple, Union
+from typing_extensions import Literal
 from ._typing import _WindowSpec, _FloatLike_co
 
 __all__ = [
@@ -132,7 +133,7 @@ def mel(
     fmin: float = 0.0,
     fmax: Optional[float] = None,
     htk: bool = False,
-    norm: Optional[Union[str, float]] = "slaney",
+    norm: Optional[Union[Literal["slaney"], float]] = "slaney",
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
     """Create a Mel filter-bank.
@@ -238,14 +239,15 @@ def mel(
         # .. then intersect them with each other and zero
         weights[i] = np.maximum(0, np.minimum(lower, upper))
 
-    if isinstance(norm, str) and norm == "slaney":
-        # Slaney-style mel is scaled to be approx constant energy per channel
-        enorm = 2.0 / (mel_f[2 : n_mels + 2] - mel_f[:n_mels])
-        weights *= enorm[:, np.newaxis]
-    elif np.issubdtype(type(norm), np.number) or norm is None:
-        weights = util.normalize(weights, norm=norm, axis=-1)  # type: ignore
+    if isinstance(norm, str):
+        if norm == "slaney":
+            # Slaney-style mel is scaled to be approx constant energy per channel
+            enorm = 2.0 / (mel_f[2 : n_mels + 2] - mel_f[:n_mels])
+            weights *= enorm[:, np.newaxis]
+        else:
+            raise ParameterError(f"Unsupported norm={norm}")
     else:
-        raise ParameterError(f"Unsupported norm={norm}")
+        weights = util.normalize(weights, norm=norm, axis=-1)
 
     # Only check weights if f_mel[0] is positive
     if not np.all((mel_f[:-2] == 0) | (weights.max(axis=1) > 0)):

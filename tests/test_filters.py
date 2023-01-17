@@ -145,7 +145,7 @@ def test_mel_norm(norm):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_mel_badnorm():
-    librosa.filters.mel(sr=22050, n_fft=2048, norm="garbage")
+    librosa.filters.mel(sr=22050, n_fft=2048, norm="garbage")  # type: ignore
 
 
 def test_mel_gap():

@@ -23,7 +23,7 @@ from ._cache import cache
 from . import segment
 from . import util
 from .util.exceptions import ParameterError
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 from ._typing import _IntLike_co, _FloatLike_co
 
 __all__ = ["decompose", "hpss", "nn_filter"]
@@ -212,10 +212,14 @@ def decompose(
 def hpss(
     S: np.ndarray,
     *,
-    kernel_size: Union[_IntLike_co, Tuple[Any, Any]] = 31,
+    kernel_size: Union[
+        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
+    ] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: Union[_FloatLike_co, Tuple[Any, Any]] = 1.0
+    margin: Union[
+        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
+    ] = 1.0
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Median-filtering harmonic percussive source separation (HPSS).
 
@@ -357,21 +361,19 @@ def hpss(
     else:
         phase = 1
 
-    # Ignore type checks below because mypy won't
-    # introspect through np.isscalar checks
-    if np.isscalar(kernel_size):
-        win_harm: int = kernel_size  # type: ignore
-        win_perc: int = kernel_size  # type: ignore
+    if isinstance(kernel_size, tuple) or isinstance(kernel_size, list):
+        win_harm = kernel_size[0]
+        win_perc = kernel_size[1]
     else:
-        win_harm: int = kernel_size[0]  # type: ignore
-        win_perc: int = kernel_size[1]  # type: ignore
+        win_harm = kernel_size
+        win_perc = kernel_size
 
-    if np.isscalar(margin):
-        margin_harm: float = margin  # type: ignore
-        margin_perc: float = margin  # type: ignore
+    if isinstance(margin, tuple) or isinstance(margin, list):
+        margin_harm = margin[0]
+        margin_perc = margin[1]
     else:
-        margin_harm: float = margin[0]  # type: ignore
-        margin_perc: float = margin[1]  # type: ignore
+        margin_harm = margin
+        margin_perc = margin
 
     # margin minimum is 1.0
     if margin_harm < 1 or margin_perc < 1:
@@ -380,10 +382,10 @@ def hpss(
         )
 
     # shape for kernels
-    harm_shape = [1] * S.ndim
+    harm_shape: List[_IntLike_co] = [1] * S.ndim
     harm_shape[-1] = win_harm
 
-    perc_shape = [1] * S.ndim
+    perc_shape: List[_IntLike_co] = [1] * S.ndim
     perc_shape[-2] = win_perc
 
     # Compute median filters. Pre-allocation here preserves memory layout.

@@ -17,7 +17,7 @@ from .. import util
 from ..util.exceptions import ParameterError
 from numpy.typing import DTypeLike
 from typing import Optional, Union, Collection, List
-from .._typing import _WindowSpec, _PadMode, _FloatLike_co
+from .._typing import _WindowSpec, _PadMode, _FloatLike_co, _ensure_not_reachable
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 
@@ -1390,6 +1390,7 @@ def griffinlim_cqt(
     elif isinstance(random_state, (np.random.RandomState, np.random.Generator)):
         rng = random_state  # type: ignore
     else:
+        _ensure_not_reachable(random_state)
         raise ParameterError(f"Unsupported random_state={random_state!r}")
 
     if momentum > 1:
