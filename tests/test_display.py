@@ -553,6 +553,17 @@ def test_waveshow_mono(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_mono_trans"], extensions=["png"], tolerance=6, style=STYLE
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_waveshow_mono_trans(y, sr):
+
+    fig, ax = plt.subplots()
+    librosa.display.waveshow(y, sr=sr, ax=ax, transpose=True)
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_mono_zoom"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
