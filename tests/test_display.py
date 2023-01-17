@@ -566,6 +566,19 @@ def test_waveshow_mono_zoom(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_mono_zoom_trans"], extensions=["png"], tolerance=6, style=STYLE
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_waveshow_mono_zoom_trans(y, sr):
+
+    fig, ax = plt.subplots()
+    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2, transpose=True)
+    # Zoom into 1/8 of a second, make sure it's out of the initial viewport
+    ax.set(ylim=[1, 1.125])
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_mono_zoom_out"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
