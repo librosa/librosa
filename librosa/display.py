@@ -2015,6 +2015,25 @@ def waveshow(
     >>> ax.legend()
     >>> ax2.legend()
 
+    Plotting a transposed wave along with a self-similarity matrix
+
+    >>> fig, ax = plt.subplot_mosaic("hSSS;hSSS;hSSS;.vvv")
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> sim = librosa.segment.recurrence_matrix(chroma, mode='affinity')
+    >>> librosa.display.specshow(sim, ax=ax['S'], sr=sr, 
+    ...                          x_axis='time', y_axis='time',
+    ...                          auto_aspect=False)
+    >>> ax['S'].label_outer()
+    >>> ax['S'].sharex(ax['v'])
+    >>> ax['S'].sharey(ax['h'])
+    >>> ax['S'].set(title='Self-similarity')
+    >>> librosa.display.waveshow(y, ax=ax['v'])
+    >>> ax['v'].label_outer()
+    >>> ax['v'].set(title='transpose=False')
+    >>> librosa.display.waveshow(y, ax=ax['h'], transpose=True)
+    >>> ax['h'].label_outer()
+    >>> ax['h'].set(title='transpose=True')
     """
     util.valid_audio(y, mono=False)
 
