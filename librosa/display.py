@@ -45,6 +45,7 @@ import lazy_loader as lazy
 
 from . import core
 from . import util
+from .util.deprecation import rename_kw, Deprecated
 from .util.exceptions import ParameterError
 from typing import TYPE_CHECKING, Any, Collection, Optional, Union, Callable, Dict
 from ._typing import _FloatLike_co
@@ -684,6 +685,9 @@ class AdaptiveWaveplot:
     max_samples : int > 0
         The maximum number of samples to use for sample-based display.
 
+    transpose : bool
+        If `True`, display the wave vertically instead of horizontally.
+
     See Also
     --------
     waveshow
@@ -697,6 +701,7 @@ class AdaptiveWaveplot:
         envelope: PolyCollection,
         sr: float = 22050,
         max_samples: int = 11025,
+        transpose: bool = False,
     ):
         self.times = times
         self.samples = y
@@ -704,6 +709,7 @@ class AdaptiveWaveplot:
         self.envelope = envelope
         self.sr = sr
         self.max_samples = max_samples
+        self.transpose = transpose
         self.cid: Optional[int] = None
         self.ax: Optional[mplaxes.Axes] = None
 
@@ -773,24 +779,33 @@ class AdaptiveWaveplot:
         """
         lims = ax.viewLim
 
+        if self.transpose:
+            dim = lims.height * self.sr
+            start, end = lims.y0, lims.y1
+            xdata, ydata = self.samples, self.times
+            data = self.steps.get_ydata()
+        else:
+            dim = lims.width * self.sr
+            start, end = lims.x0, lims.x1
+            xdata, ydata = self.times, self.samples
+            data = self.steps.get_xdata()
         # Does our width cover fewer than max_samples?
         # If so, then use the sample-based plot
-        if lims.width * self.sr <= self.max_samples:
+        if dim <= self.max_samples:
             self.envelope.set_visible(False)
             self.steps.set_visible(True)
 
-            # Now check that our viewport
-            xdata = self.steps.get_xdata()
-            if lims.x0 <= xdata[0] or lims.x1 >= xdata[-1]:
+            # Now check our viewport
+            if start <= data[0] or end >= data[-1]:
                 # Viewport expands beyond current data in steps; update
                 # we want to cover a window of self.max_samples centered on the current viewport
-                midpoint_time = (lims.x1 + lims.x0) / 2
+                midpoint_time = (start + end) / 2
                 idx_start = np.searchsorted(
                     self.times, midpoint_time - 0.5 * self.max_samples / self.sr
                 )
                 self.steps.set_data(
-                    self.times[idx_start : idx_start + self.max_samples],
-                    self.samples[idx_start : idx_start + self.max_samples],
+                    xdata[idx_start : idx_start + self.max_samples],
+                    ydata[idx_start : idx_start + self.max_samples],
                 )
         else:
             # Otherwise, use the envelope plot
@@ -1832,12 +1847,14 @@ def waveshow(
     *,
     sr: float = 22050,
     max_points: int = 11025,
-    x_axis: Optional[str] = "time",
+    axis: Optional[str] = "time",
     offset: float = 0.0,
     marker: Union[str, MplPath, MarkerStyle] = "",
     where: str = "post",
     label: Optional[str] = None,
+    transpose: bool = False,
     ax: Optional[mplaxes.Axes] = None,
+    x_axis: Optional[Union[str, Deprecated]] = Deprecated(),
     **kwargs: Any,
 ) -> AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
@@ -1882,8 +1899,8 @@ def waveshow(
         visualized instead.  The parameters of the amplitude envelope are defined so
         that the resulting plot cannot produce more than `max_points` frames.
 
-    x_axis : str or None
-        Display of the x-axis ticks and tick markers. Accepted values are:
+    axis : str or None
+        Display style of the axis ticks and tick markers. Accepted values are:
 
         - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
                     Values are plotted in units of seconds.
@@ -1908,6 +1925,12 @@ def waveshow(
 
         - `None`, 'none', or 'off': ticks and tick markers are hidden.
 
+    x_axis : Deprecated
+        Equivalent to `axis` parameter, included for backward compatibility.
+
+        .. warning:: This parameter is deprecated as of 0.10.0 and
+            will be removed in 1.0.  Use `axis=` instead going forward.
+
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
@@ -1931,6 +1954,9 @@ def waveshow(
         The label string applied to this plot.
         Note that the label
 
+    transpose : bool
+        If `True`, display the wave vertically instead of horizontally.
+
     **kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between` and
         `matplotlib.pyplot.step`.
@@ -1948,6 +1974,7 @@ def waveshow(
     AdaptiveWaveplot
     matplotlib.pyplot.step
     matplotlib.pyplot.fill_between
+    matplotlib.pyplot.fill_betweenx
     matplotlib.markers
 
     Examples
@@ -1988,6 +2015,25 @@ def waveshow(
     >>> ax.legend()
     >>> ax2.legend()
 
+    Plotting a transposed wave along with a self-similarity matrix
+
+    >>> fig, ax = plt.subplot_mosaic("hSSS;hSSS;hSSS;.vvv")
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> sim = librosa.segment.recurrence_matrix(chroma, mode='affinity')
+    >>> librosa.display.specshow(sim, ax=ax['S'], sr=sr, 
+    ...                          x_axis='time', y_axis='time',
+    ...                          auto_aspect=False)
+    >>> ax['S'].label_outer()
+    >>> ax['S'].sharex(ax['v'])
+    >>> ax['S'].sharey(ax['h'])
+    >>> ax['S'].set(title='Self-similarity')
+    >>> librosa.display.waveshow(y, ax=ax['v'])
+    >>> ax['v'].label_outer()
+    >>> ax['v'].set(title='transpose=False')
+    >>> librosa.display.waveshow(y, ax=ax['h'], transpose=True)
+    >>> ax['h'].label_outer()
+    >>> ax['h'].set(title='transpose=True')
     """
     util.valid_audio(y, mono=False)
 
@@ -2003,6 +2049,16 @@ def waveshow(
     # Create the adaptive drawing object
     axes = __check_axes(ax)
 
+    # Handle the x_axis->axis rename deprecation
+    axis = rename_kw(
+        old_name="x_axis",
+        old_value=x_axis,
+        new_name="axis",
+        new_value=axis,
+        version_deprecated="0.10.0",
+        version_removed="1.0",
+    )
+
     if "color" not in kwargs:
         kwargs.setdefault("color", next(axes._get_lines.prop_cycler)["color"])
 
@@ -2017,11 +2073,19 @@ def waveshow(
     times = offset + core.times_like(y, sr=sr, hop_length=1)
 
     # Only plot up to max_points worth of data here
-    (steps,) = axes.step(
-        times[:max_points], y[0, :max_points], marker=marker, where=where, **kwargs
-    )
+    xdata, ydata = times[:max_points], y[0, :max_points]
+    filler = axes.fill_between
+    signal = "xlim_changed"
+    dec_axis = axes.xaxis
+    if transpose:
+        ydata, xdata = xdata, ydata
+        filler = axes.fill_betweenx
+        signal = "ylim_changed"
+        dec_axis = axes.yaxis
 
-    envelope = axes.fill_between(
+    (steps,) = axes.step(xdata, ydata, marker=marker, where=where, **kwargs)
+
+    envelope = filler(
         times[: len(y_top) * hop_length : hop_length],
         y_bottom,
         y_top,
@@ -2030,15 +2094,15 @@ def waveshow(
         **kwargs,
     )
     adaptor = AdaptiveWaveplot(
-        times, y[0], steps, envelope, sr=sr, max_samples=max_points
+        times, y[0], steps, envelope, sr=sr, max_samples=max_points, transpose=transpose
     )
 
-    adaptor.connect(axes, signal="xlim_changed")
+    adaptor.connect(axes, signal=signal)
 
     # Force an initial update to ensure the state is consistent
     adaptor.update(axes)
 
     # Construct tickers and locators
-    __decorate_axis(axes.xaxis, x_axis)
+    __decorate_axis(dec_axis, axis)
 
     return adaptor
