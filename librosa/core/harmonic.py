@@ -10,7 +10,7 @@ import scipy.signal
 from ..util.exceptions import ParameterError
 from ..util import is_unique
 from numpy.typing import ArrayLike
-from typing import Callable, Optional, Sequence, Union
+from typing import Callable, Optional, Sequence
 
 __all__ = ["salience", "interp_harmonics", "f0_harmonics"]
 
