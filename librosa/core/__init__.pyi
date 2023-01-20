@@ -97,6 +97,7 @@ from .constantq import (
 from .harmonic import (
     salience as salience,
     interp_harmonics as interp_harmonics,
+    f0_harmonics as f0_harmonics,
 )
 
 from .fft import (
