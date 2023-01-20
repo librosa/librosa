@@ -353,7 +353,7 @@ def f0_harmonics(
         # We have a fixed frequency grid
         idx = np.isfinite(freqs)
 
-        def _f_interp(data, f):
+        def _f_interps(data, f):
             interp = scipy.interpolate.interp1d(
                 freqs[idx],
                 data[idx],
@@ -366,9 +366,13 @@ def f0_harmonics(
             )
             return interp(f)
 
-        xfunc = np.vectorize(_f_interp, signature="(f),(h)->(h)")
-        return xfunc(x.swapaxes(axis, -1), np.multiply.outer(f0, harmonics)).swapaxes(
-            axis, -1
+        xfunc = np.vectorize(_f_interps, signature="(f),(h)->(h)")
+        return (  # type: ignore
+            xfunc(x.swapaxes(axis, -1), np.multiply.outer(f0, harmonics))
+            .swapaxes(
+                axis,
+                -1
+            )
         )
 
     elif freqs.shape == x.shape:
@@ -378,7 +382,7 @@ def f0_harmonics(
                 stacklevel=2,
             )
         # We have a dynamic frequency grid, not so bad
-        def _f_interp(data, frequencies, f):
+        def _f_interpd(data, frequencies, f):
             idx = np.isfinite(frequencies)
             interp = scipy.interpolate.interp1d(
                 frequencies[idx],
@@ -392,12 +396,15 @@ def f0_harmonics(
             )
             return interp(f)
 
-        xfunc = np.vectorize(_f_interp, signature="(f),(f),(h)->(h)")
-        return xfunc(
-            x.swapaxes(axis, -1),
-            freqs.swapaxes(axis, -1),
-            np.multiply.outer(f0, harmonics),
-        ).swapaxes(axis, -1)
+        xfunc = np.vectorize(_f_interpd, signature="(f),(f),(h)->(h)")
+        return (  # type: ignore
+            xfunc(
+                x.swapaxes(axis, -1),
+                freqs.swapaxes(axis, -1),
+                np.multiply.outer(f0, harmonics),
+            )
+            .swapaxes(axis, -1)
+        )
 
     else:
         raise ParameterError(
