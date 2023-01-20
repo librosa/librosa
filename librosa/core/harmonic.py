@@ -367,13 +367,9 @@ def f0_harmonics(
             return interp(f)
 
         xfunc = np.vectorize(_f_interps, signature="(f),(h)->(h)")
-        return (  # type: ignore
-            xfunc(x.swapaxes(axis, -1), np.multiply.outer(f0, harmonics))
-            .swapaxes(
-                axis,
-                -1
-            )
-        )
+        return xfunc(  # type: ignore
+            x.swapaxes(axis, -1), np.multiply.outer(f0, harmonics)
+        ).swapaxes(axis, -1)
 
     elif freqs.shape == x.shape:
         if not np.all(is_unique(freqs, axis=axis)):
@@ -397,14 +393,11 @@ def f0_harmonics(
             return interp(f)
 
         xfunc = np.vectorize(_f_interpd, signature="(f),(f),(h)->(h)")
-        return (  # type: ignore
-            xfunc(
-                x.swapaxes(axis, -1),
-                freqs.swapaxes(axis, -1),
-                np.multiply.outer(f0, harmonics),
-            )
-            .swapaxes(axis, -1)
-        )
+        return xfunc(  # type: ignore
+            x.swapaxes(axis, -1),
+            freqs.swapaxes(axis, -1),
+            np.multiply.outer(f0, harmonics),
+        ).swapaxes(axis, -1)
 
     else:
         raise ParameterError(
