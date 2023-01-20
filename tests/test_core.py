@@ -2575,7 +2575,7 @@ def test_f0_harmonics_dynamic():
     #        [14, 24, 36]])
 
     # f0 at each frame
-    f0 = [2, 4, 5]
+    f0 = np.array([2, 4, 5])
 
     # Harmonics
     harmonics = [0.5, 1, 2]
