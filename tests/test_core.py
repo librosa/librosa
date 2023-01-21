@@ -2599,13 +2599,13 @@ def test_f0_harmonics_dynamic():
 
 
 def test_f0_harmonics_1d_nonunique():
-    freqs = np.arange(-8, 8) **2
+    freqs = np.arange(-8, 8)**2
     data = np.multiply.outer(freqs, np.arange(5))
 
     h = [1, 2, 3]
     f0 = np.ones(data.shape[-1])
     with pytest.warns(UserWarning):
-        yh = librosa.f0_harmonics(data, freqs=freqs, harmonics=h, f0=f0)
+        librosa.f0_harmonics(data, freqs=freqs, harmonics=h, f0=f0)
 
 
 def test_f0_harmonics_2d_nonunique():
@@ -2616,5 +2616,5 @@ def test_f0_harmonics_2d_nonunique():
     h = [1, 2, 3]
     f0 = np.ones(data.shape[-1])
     with pytest.warns(UserWarning):
-        yh = librosa.f0_harmonics(data, freqs=freqs, harmonics=h, f0=f0)
+        librosa.f0_harmonics(data, freqs=freqs, harmonics=h, f0=f0)
 
