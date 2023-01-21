@@ -2618,3 +2618,14 @@ def test_f0_harmonics_2d_nonunique():
     with pytest.warns(UserWarning):
         librosa.f0_harmonics(data, freqs=freqs, harmonics=h, f0=f0)
 
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_f0_harmonics_incompat():
+
+    # Freq axis does not match data shape
+    freqs = np.arange(5)
+    data = np.zeros((6, 7))
+    f0 = np.arange(7)
+    harmonics = np.arange(1, 3)
+
+    librosa.f0_harmonics(data, freqs=freqs, harmonics=harmonics, f0=f0)
