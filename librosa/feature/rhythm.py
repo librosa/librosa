@@ -11,12 +11,13 @@ from .._cache import cache
 from ..core.audio import autocorrelate
 from ..core.spectrum import stft
 from ..core.convert import tempo_frequencies, time_to_frames
+from ..core.harmonic import f0_harmonics
 from ..util.exceptions import ParameterError
 from ..filters import get_window
 from typing import Optional, Callable, Any
 from .._typing import _WindowSpec
 
-__all__ = ["tempogram", "fourier_tempogram", "tempo"]
+__all__ = ["tempogram", "fourier_tempogram", "tempo", "tempogram_ratio"]
 
 
 # -- Rhythmic features -- #
@@ -284,6 +285,7 @@ def tempo(
     y: Optional[np.ndarray] = None,
     sr: float = 22050,
     onset_envelope: Optional[np.ndarray] = None,
+    tg: Optional[np.ndarray] = None,
     hop_length: int = 512,
     start_bpm: float = 120,
     std_bpm: float = 1.0,
@@ -302,6 +304,10 @@ def tempo(
         sampling rate of the time series
     onset_envelope : np.ndarray [shape=(..., n)]
         pre-computed onset strength envelope
+    tg : np.ndarray
+        pre-computed tempogram.  If provided, then `y` and
+        `onset_envelope` are ignored, and `win_length` is
+        inferred from the shape of the tempogram.
     hop_length : int > 0 [scalar]
         hop length of the time series
     start_bpm : float [scalar]
@@ -406,22 +412,28 @@ def tempo(
     if start_bpm <= 0:
         raise ParameterError("start_bpm must be strictly positive")
 
-    win_length = time_to_frames(ac_size, sr=sr, hop_length=hop_length).item()
+    if tg is None:
+        win_length = time_to_frames(ac_size, sr=sr, hop_length=hop_length).item()
 
-    tg = tempogram(
-        y=y,
-        sr=sr,
-        onset_envelope=onset_envelope,
-        hop_length=hop_length,
-        win_length=win_length,
-    )
+        tg = tempogram(
+            y=y,
+            sr=sr,
+            onset_envelope=onset_envelope,
+            hop_length=hop_length,
+            win_length=win_length,
+        )
+    else:
+        # Override window length by what's actually given
+        win_length = tg.shape[-2]
 
     # Eventually, we want this to work for time-varying tempo
     if aggregate is not None:
         tg = aggregate(tg, axis=-1, keepdims=True)
 
+    assert tg is not None
+
     # Get the BPM values for each bin, skipping the 0-lag bin
-    bpms = tempo_frequencies(tg.shape[-2], hop_length=hop_length, sr=sr)
+    bpms = tempo_frequencies(win_length, hop_length=hop_length, sr=sr)
 
     # Weight the autocorrelation by a log-normal distribution
     if prior is None:
@@ -442,3 +454,197 @@ def tempo(
 
     tempo_est: np.ndarray = np.take(bpms, best_period)
     return tempo_est
+
+
+@cache(level=40)
+def tempogram_ratio(
+    *,
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    onset_envelope: Optional[np.ndarray] = None,
+    tg: Optional[np.ndarray] = None,
+    bpm: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    win_length: int = 384,
+    start_bpm: float = 120,
+    std_bpm: float = 1.0,
+    max_tempo: Optional[float] = 320.0,
+    freqs: Optional[np.ndarray] = None,
+    factors: Optional[np.ndarray] = None,
+    aggregate: Optional[Callable[..., Any]] = None,
+    prior: Optional[scipy.stats.rv_continuous] = None,
+    center: bool = True,
+    window: _WindowSpec = "hann",
+    kind: str = "linear",
+    fill_value: float = 0,
+    norm: Optional[float] = np.inf,
+) -> np.ndarray:
+    """Tempogram ratio features, also known as spectral rhythm patterns. [1]_
+
+    This function summarizes the energy at metrically important multiples
+    of the tempo.  For example, if the tempo corresponds to the quarter-note
+    period, the tempogram ratio will measure the energy at the eighth note,
+    sixteenth note, half note, whole note, etc. periods, as well as dotted
+    and triplet ratios.
+
+    By default, the multiplicative factors used here are as specified by
+    [2]_::
+
+        [4, 8/3, 3, 2, 4/3, 3/2, 1, 2/3, 3/4, 1/2, 1/3, 3/8, 1/4]
+
+    If the estimated tempo corresponds to a quarter note (𝅘𝅥 ), these factors
+    will measure relative energy at the following metrical subdivisions::
+
+    - Sixteenth note: 𝅘𝅥𝅯 
+    - Dotted sixteenth: 𝅘𝅥𝅯 .
+    - Eighth triplet: 𝅘𝅥𝅮 ₃
+    - Eighth: 𝅘𝅥𝅮 
+    - Dotted 8th: 𝅘𝅥𝅮 .
+    - Quarter-note triplet: 𝅘𝅥 ₃
+    - Quarter note: 𝅘𝅥 
+    - Dotted quarter note: 𝅘𝅥 .
+    - Half-note triplet: 𝅗𝅥 ₃
+    - Half note: 𝅗𝅥 
+    - Dotted half note: 𝅗𝅥 .
+    - Whole-note triplet: 𝅝 ₃
+    - Whole note: 𝅝 
+
+    .. [1] Peeters, Geoffroy.
+        "Rhythm Classification Using Spectral Rhythm Patterns."
+        In ISMIR, pp. 644-647. 2005.
+
+    .. [2] Prockup, Matthew, Andreas F. Ehmann, Fabien Gouyon, Erik M. Schmidt, and Youngmoo E. Kim.
+        "Modeling musical rhythm at scale with the music genome project."
+        In 2015 IEEE workshop on applications of signal processing to audio and acoustics (WASPAA), pp. 1-5. IEEE, 2015.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series
+    sr : number > 0 [scalar]
+        sampling rate of the time series
+    onset_envelope : np.ndarray [shape=(..., n)]
+        pre-computed onset strength envelope
+    tg : np.ndarray
+        pre-computed tempogram.  If provided, then `y` and
+        `onset_envelope` are ignored, and `win_length` is
+        inferred from the shape of the tempogram.
+    bpm : np.ndarray
+        pre-computed tempo estimate.  This must be a per-frame
+        estimate, and have dimension compatible with `tg`.
+    hop_length : int > 0 [scalar]
+        hop length of the time series
+    win_length : int > 0 [scalar]
+        window length of the autocorrelation window for tempogram
+        calculation
+    start_bpm : float [scalar]
+        initial guess of the BPM if `bpm` is not provided
+    std_bpm : float > 0 [scalar]
+        standard deviation of tempo distribution
+    max_tempo : float > 0 [scalar, optional]
+        If provided, only estimate tempo below this threshold
+    freqs : np.ndarray
+        Frequencies (in BPM) of the tempogram axis.
+    factors : np.ndarray
+        Multiples of the fundamental tempo (bpm) to estimate.
+        If not provided, the factors are as specified above.
+    prior : scipy.stats.rv_continuous [optional]
+        A prior distribution over tempo (in beats per minute).
+        By default, a pseudo-log-normal prior is used.
+        If given, ``start_bpm`` and ``std_bpm`` will be ignored.
+    center : bool
+        If `True`, onset windows are centered.
+        If `False`, windows are left-aligned.
+    aggregate : callable [optional]
+        Aggregation function for estimating global tempogram ratio.
+        If `None`, then ratios are estimated independently for each frame.
+    window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
+        A window specification as in `stft`.
+    kind : str
+        Interpolation mode for measuring tempogram ratios
+    fill_value : float
+        The value to fill when extrapolating beyond the observed
+        frequency range.
+    norm : {np.inf, -np.inf, 0, float > 0, None}
+        Normalization mode.  Set to `None` to disable normalization.
+
+    Returns
+    -------
+    tgr : np.ndarray
+        The tempogram ratio for the specified factors.
+        If `aggregate` is provided, the trailing time axis
+        will be removed.
+        If `aggregate` is not provided (default), ratios
+        will be estimated for each frame.
+
+    See Also
+    --------
+    tempogram
+    tempo
+    librosa.f0_harmonics
+    librosa.tempo_frequencies
+
+    Examples
+    --------
+    Compute tempogram ratio features using the default factors
+    for a waltz (3/4 time)
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.ex('sweetwaltz'))
+    >>> tempogram = librosa.feature.tempogram(y=y, sr=sr)
+    >>> tgr = librosa.feature.tempogram_ratio(tg=tempogram, sr=sr)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> librosa.display.specshow(tempogram, x_axis='time', y_axis='tempo',
+    ...                          ax=ax[0])
+    >>> librosa.display.specshow(tgr, x_axis='time', ax=ax[1])
+    >>> ax[0].label_outer()
+    >>> ax[0].set(title="Tempogram")
+    >>> ax[1].set(title="Tempogram ratio")
+    """
+
+    # Get a tempogram and time-varying tempo estimate
+    if tg is None:
+        tg = tempogram(
+                y=y,
+                sr=sr,
+                onset_envelope=onset_envelope,
+                hop_length=hop_length,
+                win_length=win_length,
+                center=center,
+                window=window,
+                norm=norm,
+            )
+
+    if freqs is None:
+        freqs = tempo_frequencies(sr=sr,
+                                  n_bins=len(tg),
+                                  hop_length=hop_length)
+
+    # Estimate tempo per-frame, no aggregation yet
+    if bpm is None:
+        bpm = tempo(
+                sr=sr,
+                tg=tg,
+                hop_length=hop_length,
+                start_bpm=start_bpm,
+                std_bpm=std_bpm,
+                max_tempo=max_tempo,
+                aggregate=None,
+                prior=prior,
+            )
+
+    if factors is None:
+        # metric multiples from Prockup'15
+        factors = np.array([4, 8/3, 3, 2, 4/3, 3/2, 1, 2/3, 3/4, 1/2, 1/3,
+            3/8, 1/4])
+        # metric multiples from Peeters'05
+        #factors = np.array([1/4, 1/3, 1/2, 2/3, 3/4, 1, 1.25, 1.5, 1.75, 2,
+        #                    2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4])
+
+    tgr = f0_harmonics(tg, freqs=freqs, f0=bpm, harmonics=factors,
+                       kind=kind, fill_value=fill_value)
+
+    if aggregate is not None:
+        return aggregate(tgr, axis=-1)  # type: ignore
+
+    return tgr

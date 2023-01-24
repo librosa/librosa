@@ -23,6 +23,7 @@ from .rhythm import (
     tempogram as tempogram,
     fourier_tempogram as fourier_tempogram,
     tempo as tempo,
+    tempogram_ratio as tempogram_ratio,
 )
 
 from . import (
