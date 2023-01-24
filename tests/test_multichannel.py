@@ -171,7 +171,7 @@ def test_tempo_multi(y_multi):
     y[0,::delay[0]] = 1
     y[1,::delay[1]] = 1
 
-    t = librosa.beat.tempo(
+    t = librosa.feature.tempo(
         y=y,
         sr=sr,
         hop_length=512,
@@ -180,7 +180,7 @@ def test_tempo_multi(y_multi):
         prior=None
     )
 
-    t0 = librosa.beat.tempo(
+    t0 = librosa.feature.tempo(
         y=y[0],
         sr=sr,
         hop_length=512,
@@ -189,7 +189,7 @@ def test_tempo_multi(y_multi):
         prior=None
     )
 
-    t1 = librosa.beat.tempo(
+    t1 = librosa.feature.tempo(
         y=y[1],
         sr=sr,
         hop_length=512,

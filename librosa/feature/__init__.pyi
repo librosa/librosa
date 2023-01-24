@@ -22,6 +22,7 @@ from .spectral import (
 from .rhythm import (
     tempogram as tempogram,
     fourier_tempogram as fourier_tempogram,
+    tempo as tempo,
 )
 
 from . import (

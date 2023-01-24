@@ -31,6 +31,7 @@ Rhythm features
 .. autosummary::
     :toctree: generated/
 
+    tempo
     tempogram
     fourier_tempogram
 

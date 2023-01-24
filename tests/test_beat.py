@@ -59,7 +59,7 @@ def test_tempo(tempo, sr, hop_length, ac_size, aggregate, prior):
     delay = librosa.time_to_samples(60.0 / tempo, sr=sr).item()
     y[::delay] = 1
 
-    tempo_est = librosa.beat.tempo(
+    tempo_est = librosa.feature.tempo(
         y=y,
         sr=sr,
         hop_length=hop_length,
@@ -105,7 +105,7 @@ def test_beat_no_onsets():
 @pytest.mark.parametrize("hop_length", [512])
 def test_tempo_no_onsets(start_bpm, aggregate, onsets, sr, hop_length):
 
-    tempo = librosa.beat.tempo(
+    tempo = librosa.feature.tempo(
         onset_envelope=onsets,
         sr=sr,
         hop_length=hop_length,
