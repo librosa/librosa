@@ -343,6 +343,7 @@ def f0_harmonics(
 
     """
 
+    result: np.ndarray
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
         if not is_unique(freqs, axis=0):
             warnings.warn(
@@ -367,7 +368,7 @@ def f0_harmonics(
             return interp(f)
 
         xfunc = np.vectorize(_f_interps, signature="(f),(h)->(h)")
-        return xfunc(  # type: ignore
+        result = xfunc(
             x.swapaxes(axis, -1), np.multiply.outer(f0, harmonics)
         ).swapaxes(axis, -1)
 
@@ -393,7 +394,7 @@ def f0_harmonics(
             return interp(f)
 
         xfunc = np.vectorize(_f_interpd, signature="(f),(f),(h)->(h)")
-        return xfunc(  # type: ignore
+        result = xfunc(
             x.swapaxes(axis, -1),
             freqs.swapaxes(axis, -1),
             np.multiply.outer(f0, harmonics),
@@ -403,3 +404,5 @@ def f0_harmonics(
         raise ParameterError(
             f"freqs.shape={freqs.shape} is incompatible with input shape={x.shape}"
         )
+
+    return np.nan_to_num(result, copy=False, nan=fill_value)
