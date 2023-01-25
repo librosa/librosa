@@ -488,10 +488,8 @@ def tempogram_ratio(
     and triplet ratios.
 
     By default, the multiplicative factors used here are as specified by
-    [2]_.
-    If the estimated tempo corresponds to a quarter note, these factors
+    [2]_.  If the estimated tempo corresponds to a quarter note, these factors
     will measure relative energy at the following metrical subdivisions:
-
 
     +-------+--------+------------------+
     | Index | Factor | Description      |
