@@ -488,26 +488,40 @@ def tempogram_ratio(
     and triplet ratios.
 
     By default, the multiplicative factors used here are as specified by
-    [2]_::
+    [2]_.
+    If the estimated tempo corresponds to a quarter note, these factors
+    will measure relative energy at the following metrical subdivisions:
 
-        [4, 8/3, 3, 2, 4/3, 3/2, 1, 2/3, 3/4, 1/2, 1/3, 3/8, 1/4]
 
-    If the estimated tempo corresponds to a quarter note (𝅘𝅥 ), these factors
-    will measure relative energy at the following metrical subdivisions::
-
-    - Sixteenth note: 𝅘𝅥𝅯 
-    - Dotted sixteenth: 𝅘𝅥𝅯 .
-    - Eighth triplet: 𝅘𝅥𝅮 ₃
-    - Eighth: 𝅘𝅥𝅮 
-    - Dotted 8th: 𝅘𝅥𝅮 .
-    - Quarter-note triplet: 𝅘𝅥 ₃
-    - Quarter note: 𝅘𝅥 
-    - Dotted quarter note: 𝅘𝅥 .
-    - Half-note triplet: 𝅗𝅥 ₃
-    - Half note: 𝅗𝅥 
-    - Dotted half note: 𝅗𝅥 .
-    - Whole-note triplet: 𝅝 ₃
-    - Whole note: 𝅝 
+    +-------+--------+------------------+
+    | Index | Factor | Description      |
+    +=======+========+==================+
+    |     0 |    4   | Sixteenth note   |
+    +-------+--------+------------------+
+    |     1 |    8/3 | Dotted sixteenth |
+    +-------+--------+------------------+
+    |     2 |    3   | Eighth triplet   |
+    +-------+--------+------------------+
+    |     3 |    2   | Eighth note      |
+    +-------+--------+------------------+
+    |     4 |    4/3 | Dotted eighth    |
+    +-------+--------+------------------+
+    |     5 |    3/2 | Quarter triplet  |
+    +-------+--------+------------------+
+    |     6 |    1   | Quarter note     |
+    +-------+--------+------------------+
+    |     7 |    2/3 | Dotted quarter   |
+    +-------+--------+------------------+
+    |     8 |    3/4 | Half triplet     |
+    +-------+--------+------------------+
+    |     9 |    1/2 | Half note        |
+    +-------+--------+------------------+
+    |    10 |    1/3 | Dotted half note |
+    +-------+--------+------------------+
+    |    11 |    3/8 | Whole triplet    |
+    +-------+--------+------------------+
+    |    12 |    1/4 | Whole note       |
+    +-------+--------+------------------+
 
     .. [1] Peeters, Geoffroy.
         "Rhythm Classification Using Spectral Rhythm Patterns."
@@ -635,11 +649,7 @@ def tempogram_ratio(
 
     if factors is None:
         # metric multiples from Prockup'15
-        factors = np.array([4, 8/3, 3, 2, 4/3, 3/2, 1, 2/3, 3/4, 1/2, 1/3,
-            3/8, 1/4])
-        # metric multiples from Peeters'05
-        #factors = np.array([1/4, 1/3, 1/2, 2/3, 3/4, 1, 1.25, 1.5, 1.75, 2,
-        #                    2.25, 2.5, 2.75, 3, 3.25, 3.5, 3.75, 4])
+        factors = np.array([4, 8/3, 3, 2, 4/3, 3/2, 1, 2/3, 3/4, 1/2, 1/3, 3/8, 1/4])
 
     tgr = f0_harmonics(tg, freqs=freqs, f0=bpm, harmonics=factors,
                        kind=kind, fill_value=fill_value)
