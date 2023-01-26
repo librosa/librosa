@@ -311,13 +311,23 @@ def f0_harmonics(
     fill_value: float = 0,
     axis: int = -2,
 ) -> np.ndarray:
-    """Compute the energy at selected harmonics of a fundamental frequency.
+    """Compute the energy at selected harmonics of a time-varying 
+    fundamental frequency.
+
+    This function can be used to reduce a `frequency * time` representation
+    to a `harmonic * time` representation, effectively normalizing out for
+    the fundamental frequency.  The result can be used as a representation
+    of timbre when f0 corresponds to pitch, or as a representation of
+    rhythm when f0 corresponds to tempo.
+
+    This function differs from `interp_harmonics`, which computes the
+    harmonics of *all* frequencies.
 
     Parameters
     ----------
-    x : np.ndarray
+    x : np.ndarray [shape=(..., frequencies, n)]
         The input array (e.g., STFT magnitudes)
-    f0 : np.ndarray
+    f0 : np.ndarray [shape=(..., n)]
         The fundamental frequency (f0) of each frame in the input
         Shape should match ``x.shape[-1]``
     freqs : np.ndarray, shape=(x.shape[axis]) or shape=x.shape
@@ -335,12 +345,45 @@ def f0_harmonics(
         The value to fill when extrapolating beyond the observed
         frequency range.
     axis : int
-        The axis along which to compute harmonics
+        The axis corresponding to frequency in ``x``
 
     Returns
     -------
-    f0_harm : np.ndarray
+    f0_harm : np.ndarray [shape=(..., len(harmonics), n)]
+        Interpolated energy at each specified harmonic of the fundamental
+        frequency for each time step.
 
+    See Also
+    --------
+    interp_harmonics
+    librosa.feature.tempogram_ratio
+
+    Examples
+    --------
+    This example estimates the fundamental (f0), and then extracts the first
+    12 harmonics
+
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> f0, voicing, voicing_p = librosa.pyin(y=y, sr=sr, fmin=200, fmax=700)
+    >>> S = np.abs(librosa.stft(y))
+    >>> freqs = librosa.fft_frequencies(sr=sr)
+    >>> harmonics = np.arange(1, 13)
+    >>> f0_harm = librosa.f0_harmonics(S, freqs=freqs, f0=f0, harmonics=harmonics)
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax =plt.subplots(nrows=2, sharex=True)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    ...                          x_axis='time', y_axis='log', ax=ax[0])
+    >>> times = librosa.times_like(f0)
+    >>> for h in harmonics:
+    ...     ax[0].plot(times, h * f0, label=f"{h}*f0")
+    >>> ax[0].legend(ncols=4, loc='lower right')
+    >>> ax[0].label_outer()
+    >>> librosa.display.specshow(librosa.amplitude_to_db(f0_harm, ref=np.max),
+    ...                          x_axis='time', ax=ax[1])
+    >>> ax[1].set_yticks(harmonics-1)
+    >>> ax[1].set_yticklabels(harmonics)
+    >>> ax[1].set(ylabel='Harmonics')
     """
 
     result: np.ndarray
