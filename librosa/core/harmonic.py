@@ -311,7 +311,7 @@ def f0_harmonics(
     fill_value: float = 0,
     axis: int = -2,
 ) -> np.ndarray:
-    """Compute the energy at selected harmonics of a time-varying 
+    """Compute the energy at selected harmonics of a time-varying
     fundamental frequency.
 
     This function can be used to reduce a `frequency * time` representation
