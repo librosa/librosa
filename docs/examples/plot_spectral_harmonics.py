@@ -7,8 +7,8 @@ Spectral harmonics
 This notebook demonstrates how to extract spectral harmonics from an audio signal.
 The basic idea is to estimate the fundamental frequency (f0) at each time step,
 and extract the energy at integer multiples of f0 (*harmonics*).
-This representation can be used to compactly encode timbral content, either for resynthesis [1]_ or
-downstream analysis [2]_.
+This representation can be used to compactly encode timbral content, either for
+resynthesis [1]_ or downstream analysis [2]_.
 
 .. [1] Bonada, Jordi, X. Serra, X. Amatriain, and A. Loscos.
     "Spectral processing."

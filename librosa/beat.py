@@ -8,7 +8,6 @@ Beat and tempo
 
    beat_track
    plp
-   tempo
 """
 
 import numpy as np
