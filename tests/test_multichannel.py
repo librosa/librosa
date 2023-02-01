@@ -15,9 +15,11 @@ import librosa
 import glob
 import numpy as np
 import scipy.io
+import scipy.stats
 import pytest
 import warnings
 from unittest import mock
+from typing import List, Union
 
 from contextlib import nullcontext as dnr
 from test_core import srand
@@ -45,8 +47,8 @@ def tfr_multi(y_multi):
 @pytest.mark.parametrize(
     "ndim,axis", [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 2), (3, -1), (4, 0), (4, 3), (4, -1)]
 )
-def test_sync_multi(aggregate, ndim, axis):
-    data = np.ones([6] * ndim, dtype=np.float)
+def test_sync_multi(aggregate, ndim: int, axis: int):
+    data = np.ones([6] * ndim, dtype=float)
 
     # Make some slices that don't fill the entire dimension
     slices = [slice(1, 3), slice(3, 4)]
@@ -62,7 +64,7 @@ def test_sync_multi(aggregate, ndim, axis):
     assert s_test == s_orig
 
     # The first slice will sum to 2 and have mean 1
-    idx = [slice(None)] * ndim
+    idx: List[Union[slice, int]] = [slice(None)] * ndim
     idx[axis] = 0
     if aggregate is np.sum:
         assert np.allclose(dsync[tuple(idx)], 2)
@@ -393,7 +395,7 @@ def test_spectral_centroid_multi_variable(s_multi):
 
     S, sr = s_multi
 
-    freq = np.random.randn(*S.shape)
+    freq = np.asarray(np.random.randn(*S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_centroid(sr=sr, freq=freq[0], S=S[0])
@@ -429,7 +431,7 @@ def test_spectral_bandwidth_multi(s_multi):
 def test_spectral_bandwidth_multi_variable(s_multi):
     S, sr = s_multi
 
-    freq = np.random.randn(*S.shape)
+    freq = np.asarray( np.random.randn(*S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_bandwidth(sr=sr, freq=freq[0], S=S[0])
@@ -483,7 +485,7 @@ def test_spectral_rolloff_multi(s_multi):
 def test_spectral_rolloff_multi_variable(s_multi):
     S, sr = s_multi
 
-    freq = np.random.randn(*S.shape)
+    freq = np.asarray(np.random.randn(*S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_rolloff(sr=sr, freq=freq[0], S=S[0])
@@ -756,10 +758,9 @@ def test_interp_harmonics_multi_static(s_multi):
 def test_interp_harmonics_multi_vary(tfr_multi):
     times, freqs, mags = tfr_multi
 
-    # Force slinear mode here to deal with non-unique frequencies
-    Hall = librosa.interp_harmonics(mags, freqs=freqs, harmonics=[0.5, 1, 2], kind="slinear")
-    H0 = librosa.interp_harmonics(mags[0], freqs=freqs[0], harmonics=[0.5, 1, 2], kind="slinear")
-    H1 = librosa.interp_harmonics(mags[1], freqs=freqs[1], harmonics=[0.5, 1, 2], kind="slinear")
+    Hall = librosa.interp_harmonics(mags, freqs=freqs, harmonics=[0.5, 1, 2], kind="nearest")
+    H0 = librosa.interp_harmonics(mags[0], freqs=freqs[0], harmonics=[0.5, 1, 2], kind="nearest")
+    H1 = librosa.interp_harmonics(mags[1], freqs=freqs[1], harmonics=[0.5, 1, 2], kind="nearest")
 
     assert np.allclose(Hall[0], H0)
     assert np.allclose(Hall[1], H1)
@@ -811,7 +812,7 @@ def test_salience_multi_dynamic(tfr_multi, filter_peaks):
         S,
         freqs=freqs,
         harmonics=[0.5, 1, 2, 3],
-        kind="slinear",
+        kind="nearest",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
@@ -819,7 +820,7 @@ def test_salience_multi_dynamic(tfr_multi, filter_peaks):
         S[0],
         freqs=freqs[0],
         harmonics=[0.5, 1, 2, 3],
-        kind="slinear",
+        kind="nearest",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
@@ -827,7 +828,7 @@ def test_salience_multi_dynamic(tfr_multi, filter_peaks):
         S[1],
         freqs=freqs[1],
         harmonics=[0.5, 1, 2, 3],
-        kind="slinear",
+        kind="nearest",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
@@ -897,7 +898,6 @@ def test_click_multi():
 
     yout = librosa.clicks(times=[0, 1, 2], sr=1000, click=click)
 
-    print(yout.shape)
     assert yout.shape[0] == click.shape[0]
 
     assert np.allclose(yout[..., :100], click)
@@ -915,7 +915,6 @@ def test_nnls_multi(s_multi):
     # multichannel  
     mel_basis = librosa.filters.mel(sr=sr, n_fft=2*S.shape[-2]-1, n_mels=256)
     M = np.einsum('...ft,mf->...mt', S, mel_basis)
-    print(M.shape, mel_basis.shape)
     S_recover = librosa.util.nnls(mel_basis, M)
 
     # channel 0

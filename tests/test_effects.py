@@ -117,8 +117,8 @@ def test_pitch_shift_multi(y_multi):
 def test_remix_mono(align_zeros):
 
     # without zc alignment
-    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=np.float)
-    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=np.float)
+    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=float)
+    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=float)
     intervals = np.asarray([[2, 4], [6, 8], [0, 2], [8, 10], [4, 6]])
 
     y_out = librosa.effects.remix(y, intervals, align_zeros=align_zeros)
@@ -129,8 +129,8 @@ def test_remix_mono(align_zeros):
 def test_remix_stereo(align_zeros):
 
     # without zc alignment
-    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=np.float)
-    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=np.float)
+    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=float)
+    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=float)
     y = np.vstack([y, y])
     y_t = np.vstack([y_t, y_t])
 
@@ -200,7 +200,7 @@ def y_trim(request):
     # construct 5 seconds of stereo silence
     # Stick a sine wave in the middle three seconds
 
-    sr = float(22050)
+    sr = 22050
     trim_duration = 3.0
     y = np.sin(2 * np.pi * 440.0 * np.arange(0, trim_duration * sr) / sr)
     y = librosa.util.pad_center(y, size=5 * sr)
@@ -329,13 +329,13 @@ def test_split(y_split_idx, frame_length, hop_length, top_db):
 @pytest.mark.parametrize("zi", [None, 0, [0]])
 @pytest.mark.parametrize("return_zf", [False, True])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_preemphasis(coef, zi, return_zf, dtype):
+def test_preemphasis(coef, zi, return_zf: bool, dtype):
     x = np.arange(10, dtype=dtype)
 
-    y = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
-
     if return_zf:
-        y, zf = y
+        y, zf = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
+    else:
+        y = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
 
     assert np.allclose(y[1:], x[1:] - coef * x[:-1])
     assert x.dtype == y.dtype

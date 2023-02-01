@@ -10,7 +10,8 @@ from ..core.audio import autocorrelate
 from ..core.spectrum import stft
 from ..util.exceptions import ParameterError
 from ..filters import get_window
-
+from typing import Optional
+from .._typing import _WindowSpec
 
 __all__ = ["tempogram", "fourier_tempogram"]
 
@@ -18,15 +19,15 @@ __all__ = ["tempogram", "fourier_tempogram"]
 # -- Rhythmic features -- #
 def tempogram(
     *,
-    y=None,
-    sr=22050,
-    onset_envelope=None,
-    hop_length=512,
-    win_length=384,
-    center=True,
-    window="hann",
-    norm=np.inf,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    onset_envelope: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    win_length: int = 384,
+    center: bool = True,
+    window: _WindowSpec = "hann",
+    norm: Optional[float] = np.inf,
+) -> np.ndarray:
     """Compute the tempogram: local autocorrelation of the onset strength envelope. [#]_
 
     .. [#] Grosche, Peter, Meinard Müller, and Frank Kurth.
@@ -174,14 +175,14 @@ def tempogram(
 
 def fourier_tempogram(
     *,
-    y=None,
-    sr=22050,
-    onset_envelope=None,
-    hop_length=512,
-    win_length=384,
-    center=True,
-    window="hann",
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    onset_envelope: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    win_length: int = 384,
+    center: bool = True,
+    window: _WindowSpec = "hann",
+) -> np.ndarray:
     """Compute the Fourier tempogram: the short-time Fourier transform of the
     onset strength envelope. [#]_
 

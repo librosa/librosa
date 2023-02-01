@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Fast Fourier Transform (FFT) library container"""
+from types import ModuleType
+from typing import Optional
 
 
 __all__ = ["get_fftlib", "set_fftlib"]
 
 # Object to hold FFT interfaces
-__FFTLIB = None
+__FFTLIB: Optional[ModuleType] = None
 
 
-def set_fftlib(lib=None):
+def set_fftlib(lib: Optional[ModuleType] = None) -> None:
     """Set the FFT library used by librosa.
 
     Parameters
@@ -40,7 +42,7 @@ def set_fftlib(lib=None):
     __FFTLIB = lib
 
 
-def get_fftlib():
+def get_fftlib() -> ModuleType:
     """Get the FFT library currently used by librosa
 
     Returns
@@ -49,7 +51,11 @@ def get_fftlib():
         The FFT library currently used by librosa.
         Must API-compatible with `numpy.fft`.
     """
-    global __FFTLIB
+    if __FFTLIB is None:
+        # This path should never occur because importing
+        # this module will call set_fftlib
+        assert False  # pragma: no cover
+
     return __FFTLIB
 
 

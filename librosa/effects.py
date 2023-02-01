@@ -41,6 +41,9 @@ from . import decompose
 from . import feature
 from . import util
 from .util.exceptions import ParameterError
+from typing import Any, Callable, Iterable, Optional, Tuple, Union, overload
+from typing_extensions import Literal
+from numpy.typing import ArrayLike
 
 __all__ = [
     "hpss",
@@ -54,7 +57,7 @@ __all__ = [
 ]
 
 
-def hpss(y, **kwargs):
+def hpss(y: np.ndarray, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
     """Decompose an audio time series into harmonic and percussive components.
 
     This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
@@ -104,7 +107,7 @@ def hpss(y, **kwargs):
     return y_harm, y_perc
 
 
-def harmonic(y, **kwargs):
+def harmonic(y: np.ndarray, **kwargs: Any) -> np.ndarray:
     """Extract harmonic elements from an audio time-series.
 
     Parameters
@@ -148,7 +151,7 @@ def harmonic(y, **kwargs):
     return y_harm
 
 
-def percussive(y, **kwargs):
+def percussive(y: np.ndarray, **kwargs: Any) -> np.ndarray:
     """Extract percussive elements from an audio time-series.
 
     Parameters
@@ -192,7 +195,7 @@ def percussive(y, **kwargs):
     return y_perc
 
 
-def time_stretch(y, *, rate, **kwargs):
+def time_stretch(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     """Time-stretch an audio series by a fixed rate.
 
     Parameters
@@ -256,8 +259,14 @@ def time_stretch(y, *, rate, **kwargs):
 
 
 def pitch_shift(
-    y, *, sr, n_steps, bins_per_octave=12, res_type="soxr_hq", **kwargs
-):
+    y: np.ndarray,
+    *,
+    sr: float,
+    n_steps: float,
+    bins_per_octave: int = 12,
+    res_type: str = "soxr_hq",
+    **kwargs: Any,
+) -> np.ndarray:
     """Shift the pitch of a waveform by ``n_steps`` steps.
 
     A step is equal to a semitone if ``bins_per_octave`` is set to 12.
@@ -316,7 +325,9 @@ def pitch_shift(
     """
 
     if not util.is_positive_int(bins_per_octave):
-        raise ParameterError(f"bins_per_octave={bins_per_octave} must be a positive integer.")
+        raise ParameterError(
+            f"bins_per_octave={bins_per_octave} must be a positive integer."
+        )
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
@@ -332,7 +343,9 @@ def pitch_shift(
     return util.fix_length(y_shift, size=y.shape[-1])
 
 
-def remix(y, intervals, *, align_zeros=True):
+def remix(
+    y: np.ndarray, intervals: Iterable[Tuple[int, int]], *, align_zeros: bool = True
+) -> np.ndarray:
     """Remix an audio signal by re-ordering time intervals.
 
     Parameters
@@ -397,8 +410,13 @@ def remix(y, intervals, *, align_zeros=True):
 
 
 def _signal_to_frame_nonsilent(
-    y, frame_length=2048, hop_length=512, top_db=60, ref=np.max, aggregate=np.max
-):
+    y: np.ndarray,
+    frame_length: int = 2048,
+    hop_length: int = 512,
+    top_db: float = 60,
+    ref: Union[Callable, float] = np.max,
+    aggregate: Callable = np.max,
+) -> np.ndarray:
     """Frame-wise non-silent indicator for audio input.
 
     This is a helper function for `trim` and `split`.
@@ -449,8 +467,14 @@ def _signal_to_frame_nonsilent(
 
 
 def trim(
-    y, *, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
-):
+    y: np.ndarray,
+    *,
+    top_db: float = 60,
+    ref: Union[float, Callable] = np.max,
+    frame_length: int = 2048,
+    hop_length: int = 512,
+    aggregate: Callable = np.max,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Trim leading and trailing silence from an audio signal.
 
     Parameters
@@ -521,8 +545,14 @@ def trim(
 
 
 def split(
-    y, *, top_db=60, ref=np.max, frame_length=2048, hop_length=512, aggregate=np.max
-):
+    y: np.ndarray,
+    *,
+    top_db: float = 60,
+    ref: Union[float, Callable] = np.max,
+    frame_length: int = 2048,
+    hop_length: int = 512,
+    aggregate: Callable = np.max,
+) -> np.ndarray:
     """Split an audio signal into non-silent intervals.
 
     Parameters
@@ -569,11 +599,11 @@ def split(
 
     # If the first frame had high energy, count it
     if non_silent[0]:
-        edges.insert(0, [0])
+        edges.insert(0, np.array([0]))
 
     # Likewise for the last frame
     if non_silent[-1]:
-        edges.append([len(non_silent)])
+        edges.append(np.array([len(non_silent)]))
 
     # Convert from frames to samples
     edges = core.frames_to_samples(np.concatenate(edges), hop_length=hop_length)
@@ -582,10 +612,50 @@ def split(
     edges = np.minimum(edges, y.shape[-1])
 
     # Stack the results back as an ndarray
-    return edges.reshape((-1, 2))
+    edges = edges.reshape((-1, 2))  # type: np.ndarray
+    return edges
 
 
-def preemphasis(y, *, coef=0.97, zi=None, return_zf=False):
+@overload
+def preemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = ...,
+    zi: Optional[ArrayLike] = ...,
+    return_zf: Literal[False] = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def preemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = ...,
+    zi: Optional[ArrayLike] = ...,
+    return_zf: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+
+@overload
+def preemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = ...,
+    zi: Optional[ArrayLike] = ...,
+    return_zf: bool,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    ...
+
+
+def preemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = 0.97,
+    zi: Optional[ArrayLike] = None,
+    return_zf: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Pre-emphasize an audio signal with a first-order differencing filter:
 
         y[n] -> y[n] - coef * y[n-1]
@@ -664,6 +734,9 @@ def preemphasis(y, *, coef=0.97, zi=None, return_zf=False):
 
     zi = np.atleast_1d(zi)
 
+    y_out: np.ndarray
+    z_f: np.ndarray
+
     y_out, z_f = scipy.signal.lfilter(b, a, y, zi=np.asarray(zi, dtype=y.dtype))
 
     if return_zf:
@@ -672,7 +745,35 @@ def preemphasis(y, *, coef=0.97, zi=None, return_zf=False):
     return y_out
 
 
-def deemphasis(y, *, coef=0.97, zi=None, return_zf=False):
+@overload
+def deemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = ...,
+    zi: Optional[ArrayLike] = ...,
+    return_zf: Literal[False] = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def deemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = ...,
+    zi: Optional[ArrayLike] = ...,
+    return_zf: Literal[True],
+) -> Tuple[np.ndarray, np.ndarray]:
+    ...
+
+
+def deemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = 0.97,
+    zi: Optional[ArrayLike] = None,
+    return_zf: bool = False,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:
@@ -734,6 +835,8 @@ def deemphasis(y, *, coef=0.97, zi=None, return_zf=False):
     b = np.array([1.0, -coef], dtype=y.dtype)
     a = np.array([1.0], dtype=y.dtype)
 
+    y_out: np.ndarray
+    zf: np.ndarray
     if zi is None:
         # initialize with all zeros
         zi = np.zeros(list(y.shape[:-1]) + [1], dtype=y.dtype)

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
+from __future__ import annotations
+from typing import List, Optional, Union, Any, Set
 
 import os
 import glob
@@ -34,11 +36,11 @@ __GOODBOY.load_registry(
 
 with open(
     resource_filename(__name__, str(Path("example_data") / "index.json")), "r"
-) as fdesc:
-    __TRACKMAP = json.load(fdesc)
+) as _fdesc:
+    __TRACKMAP = json.load(_fdesc)
 
 
-def example(key, *, hq=False):
+def example(key: str, *, hq: bool = False) -> str:
     """Retrieve the example recording identified by 'key'.
 
     The first time an example is requested, it will be downloaded from
@@ -86,21 +88,21 @@ def example(key, *, hq=False):
     """
 
     if key not in __TRACKMAP:
-        raise ParameterError("Unknown example key: {}".format(key))
+        raise ParameterError(f"Unknown example key: {key}")
 
     if hq:
         ext = ".hq.ogg"
     else:
         ext = ".ogg"
 
-    return __GOODBOY.fetch(__TRACKMAP[key]["path"] + ext)
+    return str(__GOODBOY.fetch(__TRACKMAP[key]["path"] + ext))
 
 
 ex = example
 """Alias for example"""
 
 
-def list_examples():
+def list_examples() -> None:
     """List the available audio recordings included with librosa.
 
     Each recording is given a unique identifier (e.g., "brahms" or "nutcracker"),
@@ -116,10 +118,13 @@ def list_examples():
     print("AVAILABLE EXAMPLES")
     print("-" * 68)
     for key in sorted(__TRACKMAP.keys()):
+        if key == "pibble":
+            # Shh... she's sleeping
+            continue
         print("{:10}\t{}".format(key, __TRACKMAP[key]["desc"]))
 
 
-def example_info(key):
+def example_info(key: str) -> None:
     """Display licensing and metadata information for the given example recording.
 
     The first time an example is requested, it will be downloaded from
@@ -145,11 +150,11 @@ def example_info(key):
     """
 
     if key not in __TRACKMAP:
-        raise ParameterError("Unknown example key: {}".format(key))
+        raise ParameterError(f"Unknown example key: {key}")
 
-    license = __GOODBOY.fetch(__TRACKMAP[key]["path"] + ".txt")
+    license_file = __GOODBOY.fetch(__TRACKMAP[key]["path"] + ".txt")
 
-    with open(license, "r") as fdesc:
+    with open(license_file, "r") as fdesc:
         print("{:10s}\t{:s}".format(key, __TRACKMAP[key]["desc"]))
         print("-" * 68)
         for line in fdesc:
@@ -157,8 +162,14 @@ def example_info(key):
 
 
 def find_files(
-    directory, *, ext=None, recurse=True, case_sensitive=False, limit=None, offset=0
-):
+    directory: Union[str, os.PathLike[Any]],
+    *,
+    ext: Optional[Union[str, List[str]]] = None,
+    recurse: bool = True,
+    case_sensitive: bool = False,
+    limit: Optional[int] = None,
+    offset: int = 0,
+) -> List[str]:
     """Get a sorted list of (audio) files in a directory or directory sub-tree.
 
     Examples
@@ -232,19 +243,19 @@ def find_files(
     # Generate upper-case versions
     if not case_sensitive:
         # Force to lower-case
-        ext = set([e.lower() for e in ext])
+        ext = {e.lower() for e in ext}
         # Add in upper-case versions
-        ext |= set([e.upper() for e in ext])
+        ext |= {e.upper() for e in ext}
 
-    files = set()
+    fileset = set()
 
     if recurse:
-        for walk in os.walk(directory):
-            files |= __get_files(walk[0], ext)
+        for walk in os.walk(directory):  # type: ignore
+            fileset |= __get_files(walk[0], ext)
     else:
-        files = __get_files(directory, ext)
+        fileset = __get_files(directory, ext)
 
-    files = list(files)
+    files = list(fileset)
     files.sort()
     files = files[offset:]
     if limit is not None:
@@ -253,7 +264,7 @@ def find_files(
     return files
 
 
-def __get_files(dir_name, extensions):
+def __get_files(dir_name: Union[str, os.PathLike[Any]], extensions: Set[str]):
     """Helper function to get files in a single directory"""
 
     # Expand out the directory

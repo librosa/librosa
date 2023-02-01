@@ -16,12 +16,16 @@ except:
 import soundfile
 import audioread.rawread
 import librosa
+import librosa.core
+import librosa.core.spectrum
 import glob
 import numpy as np
 import scipy.io
+import scipy.signal
 import pytest
 import warnings
 from unittest import mock
+from typing import Any, Callable, Union, cast
 
 
 # -- utilities --#
@@ -287,6 +291,7 @@ def test_stft(infile):
         os.path.join("tests", DATA["wavfile"][0]), sr=None, mono=True
     )
 
+    window: Union[Callable[..., Any], str]
     if DATA["hann_w"][0, 0] == 0:
         # Set window to ones, swap back to nfft
         window = np.ones
@@ -416,7 +421,6 @@ def test_istft_preallocate(center, n_fft, hop_length, N):
 def test___reassign_frequencies(sr, n_fft, center):
     x = np.linspace(0, 5, 5 * sr, endpoint=False)
     y = np.sin(17 * x * 2 * np.pi) + np.sin(103 * x * 2 * np.pi)
-
     freqs, S = librosa.core.spectrum.__reassign_frequencies(
         y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=center
     )
@@ -781,7 +785,7 @@ def test_salience_aggregate():
         freqs=freqs,
         harmonics=harms,
         weights=weights,
-        aggregate=np.ma.max,
+        aggregate=np.max,
         kind="quadratic",
         fill_value=0.0,
     )
@@ -939,7 +943,7 @@ def test_get_duration_filename():
     filename = os.path.join("tests", "data", "test2_8000.wav")
     true_duration = 30.197625
 
-    duration_fn = librosa.get_duration(filename=filename)
+    duration_fn = librosa.get_duration(path=filename)
     y, sr = librosa.load(filename, sr=None)
     duration_y = librosa.get_duration(y=y, sr=sr)
 
@@ -951,7 +955,7 @@ def test_get_duration_mp3():
     filename = os.path.join("tests", "data", "test1_22050.mp3")
     true_duration = 4.587528344671202
 
-    duration_fn = librosa.get_duration(filename=filename)
+    duration_fn = librosa.get_duration(path=filename)
     y, sr = librosa.load(filename, sr=None)
     duration_y = librosa.get_duration(y=y, sr=sr)
     # mp3 duration at low sampling rate isn't too reliable
@@ -1060,7 +1064,7 @@ def test_to_mono_multi(y):
 
 
 @pytest.mark.parametrize("data", [np.random.randn(32)])
-@pytest.mark.parametrize("threshold", [None, 0, 1e-10])
+@pytest.mark.parametrize("threshold", [0, 1e-10])
 @pytest.mark.parametrize("ref_magnitude", [None, 0.1, np.max])
 @pytest.mark.parametrize("pad", [False, True])
 @pytest.mark.parametrize("zp", [False, True])
@@ -1152,7 +1156,7 @@ def test_piptrack_errors():
     pitches, mags = librosa.piptrack(
         y=None,
         sr=22050,
-        S=np.asarray([[1, 0, 0]]).T,
+        S=np.asarray([[1.0, 0.0, 0.0]]).T,
         n_fft=4096,
         hop_length=None,
         fmin=150,
@@ -1300,7 +1304,7 @@ def test_piptrack(freq, n_fft):
 @pytest.mark.parametrize("bins_per_octave", [12])
 @pytest.mark.parametrize("resolution", [1e-2])
 @pytest.mark.parametrize("sr", [11025, 22050])
-def test_estimate_tuning(sr, center_note, tuning, bins_per_octave, resolution):
+def test_estimate_tuning(sr, center_note: int, tuning: np.float_, bins_per_octave, resolution):
 
     target_hz = librosa.midi_to_hz(center_note + tuning)
 
@@ -1381,6 +1385,11 @@ def test__spectrogram(y_22050, n_fft, hop_length, power):
     assert np.allclose(2 * (S.shape[-2] - 1), n_fft_)
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test__spectrogram_no_nfft():
+    librosa.core.spectrum._spectrogram(S=None, n_fft=None)
+
+
 @pytest.mark.parametrize(
     "x", [np.linspace(0, 2e5, num=10), np.linspace(0, 2e5, num=10) * np.exp(1.0j)]
 )
@@ -1440,7 +1449,7 @@ def test_amplitude_to_db_complex():
     x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
 
     with warnings.catch_warnings(record=True) as out:
-        db1 = librosa.amplitude_to_db(x.astype(np.complex), top_db=None)
+        db1 = librosa.amplitude_to_db(x.astype(complex), top_db=None)
         assert len(out) > 0
         assert "complex" in str(out[0].message).lower()
 
@@ -1530,6 +1539,7 @@ def test_clicks(
     if times is not None:
         nmax = librosa.time_to_samples(times, sr=sr).max()
     else:
+        assert frames is not None
         nmax = librosa.frames_to_samples(frames, hop_length=hop_length).max()
 
     if length is not None:
@@ -1729,7 +1739,7 @@ def test_harmonics_1d():
             assert np.allclose(vals, y[: len(vals)])
         else:
             # Else check that harmonics match
-            step = h[i]
+            step = cast(int, h[i])
             vals = y[::step]
             assert np.allclose(vals, yh[i, : len(vals)])
 
@@ -1753,7 +1763,7 @@ def test_harmonics_2d():
             assert np.allclose(vals, y[: len(vals)])
         else:
             # Else check that harmonics match
-            step = h[i]
+            step = cast(int, h[i])
             vals = y[::step]
             assert np.allclose(vals, yh[i, : len(vals)])
 
@@ -1802,7 +1812,7 @@ def test_harmonics_2d_varying():
             assert np.allclose(vals, y[: len(vals)])
         else:
             # Else check that harmonics match
-            step = h[i]
+            step = cast(int, h[i])
             vals = y[::step]
             assert np.allclose(vals, yh[i, : len(vals)])
 
@@ -1976,7 +1986,7 @@ def test_pcen_drc(S_pcen, bias, power):
 
 
 def test_pcen_complex():
-    S = np.ones((9, 30), dtype=np.complex)
+    S = np.ones((9, 30), dtype=complex)
     Pexp = np.ones((9, 30))
 
     with warnings.catch_warnings(record=True) as out:
@@ -2142,8 +2152,8 @@ def test_get_fftlib():
 
 
 def test_set_fftlib():
-    librosa.set_fftlib("foo")
-    assert librosa.get_fftlib() == "foo"
+    librosa.set_fftlib("foo") # type: ignore
+    assert librosa.get_fftlib() == "foo" # type: ignore
     librosa.set_fftlib()
 
 
@@ -2233,6 +2243,12 @@ def test_griffinlim(
 def test_griffinlim_badinit():
     x = np.zeros((33, 3))
     librosa.griffinlim(x, init="garbage")
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_griffinlim_badrng():
+    x = np.zeros((33, 3))
+    librosa.griffinlim(x, random_state="garbage")  # type: ignore
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -2460,7 +2476,7 @@ def test_stft_bad_prealloc_shape():
 
     # Output shape here is incorrect, and should trigger a failure
     S1 = librosa.stft(
-        y, n_fft=512, hop_length=128, out=np.zeros((100, 10), dtype=np.complex)
+        y, n_fft=512, hop_length=128, out=np.zeros((100, 10), dtype=complex)
     )
 
 
@@ -2477,3 +2493,29 @@ def test_stft_bad_prealloc_dtype():
 def test_istft_bad_prealloc_shape():
     D = np.zeros((1025, 5), dtype=np.complex64)
     librosa.istft(D, out=np.zeros(100))
+
+
+# Tests to force audioread decoding
+def test_load_force_audioread():
+    path = os.path.join("tests", "data", "test2_8000.mkv")
+    with warnings.catch_warnings(record=True) as out:
+        y, sr = librosa.load(path)
+
+        assert len(out) > 0
+        assert "audioread" in str(out[0].message).lower()
+
+
+def test_get_duration_audioread():
+    path = os.path.join("tests", "data", "test2_8000.mkv")
+    duration = librosa.get_duration(path=path)
+
+    assert duration == 30.2
+
+
+def test_get_samplerate_audioread():
+    path = os.path.join("tests", "data", "test2_8000.mkv")
+    sr = librosa.get_samplerate(path=path)
+
+    assert sr == 8000
+
+

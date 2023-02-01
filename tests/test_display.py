@@ -25,6 +25,7 @@ import matplotlib.pyplot as plt
 import librosa
 import librosa.display
 import numpy as np
+from typing import Any, Dict
 
 # Workaround for old freetype builds with our image fixtures
 FT_VERSION = version.parse(matplotlib.ft2font.__freetype_version__)
@@ -546,8 +547,19 @@ def test_time_unit_lag(S_abs, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono(y, sr):
 
-    fig, ax = plt.subplots(nrows=1)
+    fig, ax = plt.subplots()
     librosa.display.waveshow(y, sr=sr, ax=ax)
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_mono_trans"], extensions=["png"], tolerance=6, style=STYLE
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_waveshow_mono_trans(y, sr):
+
+    fig, ax = plt.subplots()
+    librosa.display.waveshow(y, sr=sr, ax=ax, transpose=True)
     return fig
 
 
@@ -557,10 +569,23 @@ def test_waveshow_mono(y, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono_zoom(y, sr):
 
-    fig, ax = plt.subplots(nrows=1)
+    fig, ax = plt.subplots()
     out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(xlim=[1, 1.125])
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_mono_zoom_trans"], extensions=["png"], tolerance=6, style=STYLE
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_waveshow_mono_zoom_trans(y, sr):
+
+    fig, ax = plt.subplots()
+    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2, transpose=True)
+    # Zoom into 1/8 of a second, make sure it's out of the initial viewport
+    ax.set(ylim=[1, 1.125])
     return fig
 
 
@@ -570,7 +595,7 @@ def test_waveshow_mono_zoom(y, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono_zoom_out(y, sr):
 
-    fig, ax = plt.subplots(nrows=1)
+    fig, ax = plt.subplots()
     out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(xlim=[1, 1.125])
@@ -632,10 +657,9 @@ def test_waveshow_bad_maxpoints(y, sr):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("axis", ["x_axis", "y_axis"])
-def test_unknown_axis(S_abs, axis):
+def test_unknown_axis(S_abs, axis: str):
 
-    kwargs = dict()
-    kwargs.setdefault(axis, "something not in the axis map")
+    kwargs: Dict[str, Any] = {axis: "something not in the axis map"}
     plt.figure()
     librosa.display.specshow(S_abs, **kwargs)
 
@@ -646,7 +670,7 @@ def test_unknown_axis(S_abs, axis):
         np.arange(1, 10.0),  # strictly positive
         -np.arange(1, 10.0),  # strictly negative
         np.arange(-3, 4.0),  # signed,
-        np.arange(2, dtype=np.bool),
+        np.arange(2, dtype=bool),
     ],
 )  # binary
 def test_cmap_robust(data):
@@ -719,7 +743,7 @@ def test_sharex_waveplot_ms(y, sr, S_abs):
     return fig
 
 
-@pytest.mark.parametrize("format_str", ["cqt_hz", "cqt_note"])
+@pytest.mark.parametrize("format_str", ["cqt_hz", "cqt_note", "vqt_hz"])
 def test_axis_bound_warning(format_str):
 
     with pytest.warns(UserWarning):
@@ -734,6 +758,7 @@ def test_axis_bound_warning(format_str):
             fmin=11025,
             sr=22050,
             bins_per_octave=12,
+            intervals="ji3",
         )
 
 
@@ -1005,3 +1030,58 @@ def test_waveshow_deladaptor(y, sr):
 
     # Envelope should now still be visible
     assert envelope.get_visible() and not steps.get_visible()
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["specshow_vqt"], extensions=["png"], tolerance=6, style=STYLE
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_specshow_vqt(C):
+
+    fig, ax = plt.subplots(nrows=4, figsize=(12, 10), constrained_layout=True)
+
+    librosa.display.specshow(C, y_axis='vqt_hz', intervals="ji5", ax=ax[0])
+    librosa.display.specshow(C, y_axis='vqt_note', intervals="ji5", ax=ax[1])
+    librosa.display.specshow(C, y_axis='vqt_fjs', intervals="ji5", ax=ax[2])
+    librosa.display.specshow(C, y_axis='vqt_fjs', intervals="ji5", ax=ax[3],
+                             unicode=False)
+
+    for _ax in ax:
+        _ax.set(ylim=[55, 165])
+    return fig
+
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_chromafjs_badintervals():
+    formatter = librosa.display.ChromaFJSFormatter(intervals=dict())
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_chromafjs_badbpo():
+    formatter = librosa.display.ChromaFJSFormatter(intervals='ji3', bins_per_octave=None)
+
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["chroma_fjs"], extensions=["png"], tolerance=6, style=STYLE
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_specshow_chromafjs(C, sr):
+
+    # This isn't a VQT chroma, but that's not important here
+    chroma = librosa.feature.chroma_cqt(C=C, sr=sr, threshold=0.9)
+
+    intervals = librosa.plimit_intervals(primes=[3, 5])
+
+    fig, ax = plt.subplots(nrows=2, figsize=(12, 8), constrained_layout=True)
+
+    librosa.display.specshow(chroma, y_axis="chroma_fjs", intervals="ji5", ax=ax[0])
+    librosa.display.specshow(chroma, y_axis="chroma_fjs", intervals=intervals, ax=ax[1])
+
+    return fig
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_vqt_hz_nointervals(C, sr):
+    librosa.display.specshow(C, sr=sr, y_axis='vqt_hz')

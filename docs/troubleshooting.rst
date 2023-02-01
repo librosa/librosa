@@ -18,7 +18,8 @@ message::
     AttributeError: module 'librosa' has no attribute 'display'
 
 
-it is because the `librosa.display` submodule needs to be imported explicitly.
+it is because the `librosa.display` submodule needs to be imported explicitly in librosa versions
+earlier than 0.10.
 This is because `matplotlib` is an optional dependency for librosa, so we do not
 assume that all users have it installed, or want plotting capability.
 
@@ -29,6 +30,9 @@ To fix the problem, add the line
     import librosa.display
 
 to the beginning of your program.
+
+**NOTE**: this is no longer necessary beginning with the 0.10 release, but it won't hurt to include
+the explicit import statement.
 
 PySoundFile failed
 ^^^^^^^^^^^^^^^^^^

@@ -15,6 +15,7 @@ try:
 except KeyError:
     pass
 
+from typing import Optional
 import librosa
 import numpy as np
 import scipy.stats
@@ -59,24 +60,24 @@ def __test_cqt_size(
     return cqt_output
 
 
-def make_signal(sr, duration, fmin="C1", fmax="C8"):
+def make_signal(sr, duration, fmin: Optional[str] = "C1", fmax: Optional[str] = "C8"):
     """Generates a linear sine sweep"""
 
     if fmin is None:
-        fmin = 0.01
+        fmin_normfreq = 0.01
     else:
-        fmin = librosa.note_to_hz(fmin) / sr
+        fmin_normfreq = librosa.note_to_hz(fmin) / sr
 
     if fmax is None:
-        fmax = 0.5
+        fmax_normfreq = 0.5
     else:
-        fmax = librosa.note_to_hz(fmax) / sr
+        fmax_normfreq = librosa.note_to_hz(fmax) / sr
 
     return np.sin(
         np.cumsum(
             2
             * np.pi
-            * np.logspace(np.log10(fmin), np.log10(fmax), num=int(duration * sr))
+            * np.logspace(np.log10(fmin_normfreq), np.log10(fmax_normfreq), num=int(duration * sr))
         )
     )
 
@@ -388,15 +389,15 @@ def test_hybrid_cqt(
 @pytest.mark.parametrize(
     "y", [np.sin(2 * np.pi * librosa.midi_to_hz(60) * np.arange(2 * 22050) / 22050.0)]
 )
-def test_cqt_position(y, sr, note_min):
+def test_cqt_position(y, sr, note_min: int):
 
-    C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.midi_to_hz(note_min))) ** 2
+    C = np.abs(librosa.cqt(y, sr=sr, fmin=float(librosa.midi_to_hz(note_min)))) ** 2
 
     # Average over time
     Cbar = np.median(C, axis=1)
 
     # Find the peak
-    idx = np.argmax(Cbar)
+    idx = int(np.argmax(Cbar))
 
     assert idx == 60 - note_min
 
@@ -711,6 +712,12 @@ def test_griffinlim_cqt_badinit():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
+def test_griffinlim_cqt_badrng():
+    x = np.zeros((33, 3))
+    librosa.griffinlim_cqt(x, random_state="garbage")  # type: ignore
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_griffinlim_cqt_bad_momentum():
     x = np.zeros((33, 3))
     librosa.griffinlim_cqt(x, momentum=-1)
@@ -732,3 +739,16 @@ def test_cqt_precision(y_cqt, sr_cqt, dtype):
 def test_cqt_partial_octave(y_cqt, sr_cqt, n_bins_missing):
     # Test what happens when n_bins is +- 1 bin from complete octaves
     librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=72-n_bins_missing, bins_per_octave=12)
+
+
+def test_vqt_provided_intervals(y_cqt, sr_cqt):
+
+    # Generate a 20-ET vqt
+    V1 = librosa.vqt(y=y_cqt, sr=sr_cqt, bins_per_octave=20, n_bins=60, intervals="equal")
+
+    # Generate the same thing with a pre-set list of intervals
+    intervals = 2.0**(np.arange(20)/20.0)
+
+    V2 = librosa.vqt(y=y_cqt, sr=sr_cqt, n_bins=60, intervals=intervals)
+
+    assert np.allclose(V1, V2)

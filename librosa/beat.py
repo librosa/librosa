@@ -21,23 +21,24 @@ from . import onset
 from . import util
 from .feature import tempogram, fourier_tempogram
 from .util.exceptions import ParameterError
+from typing import Any, Callable, Optional, Tuple
 
 __all__ = ["beat_track", "tempo", "plp"]
 
 
 def beat_track(
     *,
-    y=None,
-    sr=22050,
-    onset_envelope=None,
-    hop_length=512,
-    start_bpm=120.0,
-    tightness=100,
-    trim=True,
-    bpm=None,
-    prior=None,
-    units="frames",
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    onset_envelope: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    start_bpm: float = 120.0,
+    tightness: float = 100,
+    trim: bool = True,
+    bpm: Optional[float] = None,
+    prior: Optional[scipy.stats.rv_continuous] = None,
+    units: str = "frames",
+) -> Tuple[float, np.ndarray]:
     r"""Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [#]_:
@@ -179,31 +180,29 @@ def beat_track(
     beats = __beat_tracker(onset_envelope, bpm, float(sr) / hop_length, tightness, trim)
 
     if units == "frames":
-        pass
+        return (bpm, beats)
     elif units == "samples":
-        beats = core.frames_to_samples(beats, hop_length=hop_length)
+        return (bpm, core.frames_to_samples(beats, hop_length=hop_length))
     elif units == "time":
-        beats = core.frames_to_time(beats, hop_length=hop_length, sr=sr)
+        return (bpm, core.frames_to_time(beats, hop_length=hop_length, sr=sr))
     else:
         raise ParameterError("Invalid unit type: {}".format(units))
-
-    return (bpm, beats)
 
 
 @cache(level=30)
 def tempo(
     *,
-    y=None,
-    sr=22050,
-    onset_envelope=None,
-    hop_length=512,
-    start_bpm=120,
-    std_bpm=1.0,
-    ac_size=8.0,
-    max_tempo=320.0,
-    aggregate=np.mean,
-    prior=None,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    onset_envelope: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    start_bpm: float = 120,
+    std_bpm: float = 1.0,
+    ac_size: float = 8.0,
+    max_tempo: Optional[float] = 320.0,
+    aggregate: Optional[Callable[..., Any]] = np.mean,
+    prior: Optional[scipy.stats.rv_continuous] = None,
+) -> np.ndarray:
     """Estimate the tempo (beats per minute)
 
     Parameters
@@ -343,7 +342,7 @@ def tempo(
 
     # Kill everything above the max tempo
     if max_tempo is not None:
-        max_idx = np.argmax(bpms < max_tempo)
+        max_idx = int(np.argmax(bpms < max_tempo))
         logprior[:max_idx] = -np.inf
     # explicit axis expansion
     logprior = util.expand_to(logprior, ndim=tg.ndim, axes=-2)
@@ -352,20 +351,21 @@ def tempo(
     # Using log1p here for numerical stability
     best_period = np.argmax(np.log1p(1e6 * tg) + logprior, axis=-2)
 
-    return np.take(bpms, best_period)
+    tempo_est: np.ndarray = np.take(bpms, best_period)
+    return tempo_est
 
 
 def plp(
     *,
-    y=None,
-    sr=22050,
-    onset_envelope=None,
-    hop_length=512,
-    win_length=384,
-    tempo_min=30,
-    tempo_max=300,
-    prior=None,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    onset_envelope: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    win_length: int = 384,
+    tempo_min: Optional[float] = 30,
+    tempo_max: Optional[float] = 300,
+    prior: Optional[scipy.stats.rv_continuous] = None,
+) -> np.ndarray:
     """Predominant local pulse (PLP) estimation. [#]_
 
     The PLP method analyzes the onset strength envelope in the frequency domain
@@ -546,7 +546,9 @@ def plp(
     return util.normalize(pulse, axis=-1)
 
 
-def __beat_tracker(onset_envelope, bpm, fft_res, tightness, trim):
+def __beat_tracker(
+    onset_envelope: np.ndarray, bpm: float, fft_res: float, tightness: float, trim: bool
+) -> np.ndarray:
     """Internal function that tracks beats in an onset strength envelope.
 
     Parameters
@@ -669,13 +671,13 @@ def __last_beat(cumscore):
     return np.argwhere((cumscore * maxes * 2 > med_score)).max()
 
 
-def __trim_beats(localscore, beats, trim):
+def __trim_beats(localscore: np.ndarray, beats: np.ndarray, trim: bool) -> np.ndarray:
     """Final post-processing: throw out spurious leading/trailing beats"""
 
     smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.hann(5), "same")
 
     if trim:
-        threshold = 0.5 * ((smooth_boe ** 2).mean() ** 0.5)
+        threshold = 0.5 * ((smooth_boe**2).mean() ** 0.5)
     else:
         threshold = 0.0
 

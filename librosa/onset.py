@@ -21,22 +21,23 @@ from . import util
 from .util.exceptions import ParameterError
 
 from .feature.spectral import melspectrogram
+from typing import Any, Callable, Iterable, Optional, Union, Sequence
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 
 
 def onset_detect(
     *,
-    y=None,
-    sr=22050,
-    onset_envelope=None,
-    hop_length=512,
-    backtrack=False,
-    energy=None,
-    units="frames",
-    normalize=True,
-    **kwargs,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    onset_envelope: Optional[np.ndarray] = None,
+    hop_length: int = 512,
+    backtrack: bool = False,
+    energy: Optional[np.ndarray] = None,
+    units: str = "frames",
+    normalize: bool = True,
+    **kwargs: Any,
+) -> np.ndarray:
     """Locate note onset events by picking peaks in an onset strength envelope.
 
     The `peak_pick` parameters were chosen by large-scale hyper-parameter
@@ -146,9 +147,14 @@ def onset_detect(
     # (a common normalization step to make the threshold more consistent)
     if normalize:
         # Normalize onset strength function to [0, 1] range
-        onset_envelope = onset_envelope - onset_envelope.min()
+        onset_envelope = onset_envelope - np.min(onset_envelope)
+
+        # Mypy does not realize that oenv is not None by now
         # Max-scale with safe division
-        onset_envelope /= np.max(onset_envelope) + util.tiny(onset_envelope)
+        onset_envelope /= np.max(onset_envelope) + util.tiny(onset_envelope)  # type: ignore
+
+    # help out mypy
+    assert onset_envelope is not None
 
     # Do we have any onsets to grab?
     if not onset_envelope.any() or not np.all(np.isfinite(onset_envelope)):
@@ -170,7 +176,7 @@ def onset_detect(
         if backtrack:
             if energy is None:
                 energy = onset_envelope
-
+            assert energy is not None
             onsets = onset_backtrack(onsets, energy)
 
     if units == "frames":
@@ -187,18 +193,18 @@ def onset_detect(
 
 def onset_strength(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    lag=1,
-    max_size=1,
-    ref=None,
-    detrend=False,
-    center=True,
-    feature=None,
-    aggregate=None,
-    **kwargs,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    lag: int = 1,
+    max_size: int = 1,
+    ref: Optional[np.ndarray] = None,
+    detrend: bool = False,
+    center: bool = True,
+    feature: Optional[Callable] = None,
+    aggregate: Optional[Union[Callable, bool]] = None,
+    **kwargs: Any,
+) -> np.ndarray:
     """Compute a spectral flux onset strength envelope.
 
     Onset strength at time ``t`` is determined by::
@@ -318,7 +324,7 @@ def onset_strength(
 
     if aggregate is False:
         raise ParameterError(
-            "aggregate={} cannot be False when computing full-spectrum onset strength."
+            f"aggregate parameter cannot be False when computing full-spectrum onset strength."
         )
 
     odf_all = onset_strength_multi(
@@ -339,7 +345,7 @@ def onset_strength(
     return odf_all[..., 0, :]
 
 
-def onset_backtrack(events, energy):
+def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
     """Backtrack detected onset events to the nearest preceding local
     minimum of an energy function.
 
@@ -411,27 +417,28 @@ def onset_backtrack(events, energy):
     minima = util.fix_frames(1 + minima, x_min=0)
 
     # Only match going left from the detected events
-    return minima[util.match_events(events, minima, right=False)]
+    results: np.ndarray = minima[util.match_events(events, minima, right=False)]
+    return results
 
 
 @cache(level=30)
 def onset_strength_multi(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    hop_length=512,
-    lag=1,
-    max_size=1,
-    ref=None,
-    detrend=False,
-    center=True,
-    feature=None,
-    aggregate=None,
-    channels=None,
-    **kwargs,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    lag: int = 1,
+    max_size: int = 1,
+    ref: Optional[np.ndarray] = None,
+    detrend: bool = False,
+    center: bool = True,
+    feature: Optional[Callable] = None,
+    aggregate: Optional[Union[Callable, bool]] = None,
+    channels: Optional[Union[Sequence[int], Sequence[slice]]] = None,
+    **kwargs: Any,
+) -> np.ndarray:
     """Compute a spectral flux onset strength envelope across multiple channels.
 
     Onset strength for channel ``i`` at time ``t`` is determined by::
@@ -588,7 +595,7 @@ def onset_strength_multi(
     else:
         pad = False
 
-    if aggregate:
+    if callable(aggregate):
         onset_env = util.sync(
             onset_env, channels, aggregate=aggregate, pad=pad, axis=-2
         )

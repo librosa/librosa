@@ -8,12 +8,21 @@ from numba import jit
 
 from .._cache import cache
 from ..util.exceptions import ParameterError
+from typing import Any
 
 __all__ = ["delta", "stack_memory"]
 
 
 @cache(level=40)
-def delta(data, *, width=9, order=1, axis=-1, mode="interp", **kwargs):
+def delta(
+    data: np.ndarray,
+    *,
+    width: int = 9,
+    order: int = 1,
+    axis: int = -1,
+    mode: str = "interp",
+    **kwargs: Any
+) -> np.ndarray:
     r"""Compute delta features: local estimate of the derivative
     of the input data along the selected axis.
 
@@ -111,13 +120,16 @@ def delta(data, *, width=9, order=1, axis=-1, mode="interp", **kwargs):
 
     kwargs.pop("deriv", None)
     kwargs.setdefault("polyorder", order)
-    return scipy.signal.savgol_filter(
+    result: np.ndarray = scipy.signal.savgol_filter(
         data, width, deriv=order, axis=axis, mode=mode, **kwargs
     )
+    return result
 
 
 @cache(level=40)
-def stack_memory(data, *, n_steps=2, delay=1, **kwargs):
+def stack_memory(
+    data: np.ndarray, *, n_steps: int = 2, delay: int = 1, **kwargs: Any
+) -> np.ndarray:
     """Short-term history embedding: vertically concatenate a data
     vector or matrix with delayed copies of itself.
 

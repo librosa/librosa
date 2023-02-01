@@ -1,12 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Unit conversion utilities"""
-
+from __future__ import annotations
 import re
 import numpy as np
 from . import notation
 from ..util.exceptions import ParameterError
 from ..util.decorators import vectorize
+from typing import Any, Callable, Dict, Iterable, Optional, Sized, Union, overload
+from .._typing import (
+    _IterableLike,
+    _FloatLike_co,
+    _SequenceLike,
+    _ScalarOrSequence,
+    _IntLike_co,
+)
 
 __all__ = [
     "frames_to_samples",
@@ -26,6 +34,7 @@ __all__ = [
     "hz_to_midi",
     "hz_to_mel",
     "hz_to_octs",
+    "hz_to_fjs",
     "mel_to_hz",
     "octs_to_hz",
     "A4_to_tuning",
@@ -53,7 +62,29 @@ __all__ = [
 ]
 
 
-def frames_to_samples(frames, *, hop_length=512, n_fft=None):
+@overload
+def frames_to_samples(
+    frames: _IntLike_co, *, hop_length: int = 512, n_fft: Optional[int] = None
+) -> np.integer[Any]:
+    ...
+
+
+@overload
+def frames_to_samples(
+    frames: _SequenceLike[_IntLike_co],
+    *,
+    hop_length: int = 512,
+    n_fft: Optional[int] = None,
+) -> np.ndarray:
+    ...
+
+
+def frames_to_samples(
+    frames: _ScalarOrSequence[_IntLike_co],
+    *,
+    hop_length: int = 512,
+    n_fft: Optional[int] = None,
+) -> Union[np.integer[Any], np.ndarray]:
     """Converts frame indices to audio sample indices.
 
     Parameters
@@ -93,7 +124,39 @@ def frames_to_samples(frames, *, hop_length=512, n_fft=None):
     return (np.asanyarray(frames) * hop_length + offset).astype(int)
 
 
-def samples_to_frames(samples, *, hop_length=512, n_fft=None):
+@overload
+def samples_to_frames(
+    samples: _IntLike_co, *, hop_length: int = ..., n_fft: Optional[int] = ...
+) -> np.integer[Any]:
+    ...
+
+
+@overload
+def samples_to_frames(
+    samples: _SequenceLike[_IntLike_co],
+    *,
+    hop_length: int = ...,
+    n_fft: Optional[int] = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def samples_to_frames(
+    samples: _ScalarOrSequence[_IntLike_co],
+    *,
+    hop_length: int = ...,
+    n_fft: Optional[int] = ...,
+) -> Union[np.integer[Any], np.ndarray]:
+    ...
+
+
+def samples_to_frames(
+    samples: _ScalarOrSequence[_IntLike_co],
+    *,
+    hop_length: int = 512,
+    n_fft: Optional[int] = None,
+) -> Union[np.integer[Any], np.ndarray]:
     """Converts sample indices into STFT frames.
 
     Examples
@@ -141,10 +204,49 @@ def samples_to_frames(samples, *, hop_length=512, n_fft=None):
         offset = int(n_fft // 2)
 
     samples = np.asanyarray(samples)
-    return np.floor((samples - offset) // hop_length).astype(int)
+    return np.asarray(np.floor((samples - offset) // hop_length), dtype=int)
 
 
-def frames_to_time(frames, *, sr=22050, hop_length=512, n_fft=None):
+@overload
+def frames_to_time(
+    frames: _IntLike_co,
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    n_fft: Optional[int] = ...,
+) -> np.floating[Any]:
+    ...
+
+
+@overload
+def frames_to_time(
+    frames: _SequenceLike[_IntLike_co],
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    n_fft: Optional[int] = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def frames_to_time(
+    frames: _ScalarOrSequence[_IntLike_co],
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    n_fft: Optional[int] = ...,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+
+def frames_to_time(
+    frames: _ScalarOrSequence[_IntLike_co],
+    *,
+    sr: float = 22050,
+    hop_length: int = 512,
+    n_fft: Optional[int] = None,
+) -> Union[np.floating[Any], np.ndarray]:
     """Converts frame counts to time (seconds).
 
     Parameters
@@ -184,7 +286,46 @@ def frames_to_time(frames, *, sr=22050, hop_length=512, n_fft=None):
     return samples_to_time(samples, sr=sr)
 
 
-def time_to_frames(times, *, sr=22050, hop_length=512, n_fft=None):
+@overload
+def time_to_frames(
+    times: _FloatLike_co,
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    n_fft: Optional[int] = ...,
+) -> np.integer[Any]:
+    ...
+
+
+@overload
+def time_to_frames(
+    times: _SequenceLike[_FloatLike_co],
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    n_fft: Optional[int] = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def time_to_frames(
+    times: _ScalarOrSequence[_FloatLike_co],
+    *,
+    sr: float = ...,
+    hop_length: int = ...,
+    n_fft: Optional[int] = ...,
+) -> Union[np.integer[Any], np.ndarray]:
+    ...
+
+
+def time_to_frames(
+    times: _ScalarOrSequence[_FloatLike_co],
+    *,
+    sr: float = 22050,
+    hop_length: int = 512,
+    n_fft: Optional[int] = None,
+) -> Union[np.integer[Any], np.ndarray]:
     """Converts time stamps into STFT frames.
 
     Parameters
@@ -232,7 +373,28 @@ def time_to_frames(times, *, sr=22050, hop_length=512, n_fft=None):
     return samples_to_frames(samples, hop_length=hop_length, n_fft=n_fft)
 
 
-def time_to_samples(times, *, sr=22050):
+@overload
+def time_to_samples(times: _FloatLike_co, *, sr: float = ...) -> np.integer[Any]:
+    ...
+
+
+@overload
+def time_to_samples(
+    times: _SequenceLike[_FloatLike_co], *, sr: float = ...
+) -> np.ndarray:
+    ...
+
+
+@overload
+def time_to_samples(
+    times: _ScalarOrSequence[_FloatLike_co], *, sr: float = ...
+) -> Union[np.integer[Any], np.ndarray]:
+    ...
+
+
+def time_to_samples(
+    times: _ScalarOrSequence[_FloatLike_co], *, sr: float = 22050
+) -> Union[np.integer[Any], np.ndarray]:
     """Convert timestamps (in seconds) to sample indices.
 
     Parameters
@@ -263,7 +425,28 @@ def time_to_samples(times, *, sr=22050):
     return (np.asanyarray(times) * sr).astype(int)
 
 
-def samples_to_time(samples, *, sr=22050):
+@overload
+def samples_to_time(samples: _IntLike_co, *, sr: float = ...) -> np.floating[Any]:
+    ...
+
+
+@overload
+def samples_to_time(
+    samples: _SequenceLike[_IntLike_co], *, sr: float = ...
+) -> np.ndarray:
+    ...
+
+
+@overload
+def samples_to_time(
+    samples: _ScalarOrSequence[_IntLike_co], *, sr: float = ...
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+
+def samples_to_time(
+    samples: _ScalarOrSequence[_IntLike_co], *, sr: float = 22050
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert sample indices to time (in seconds).
 
     Parameters
@@ -300,7 +483,28 @@ def samples_to_time(samples, *, sr=22050):
     return np.asanyarray(samples) / float(sr)
 
 
-def blocks_to_frames(blocks, *, block_length):
+@overload
+def blocks_to_frames(blocks: _IntLike_co, *, block_length: int) -> np.integer[Any]:
+    ...
+
+
+@overload
+def blocks_to_frames(
+    blocks: _SequenceLike[_IntLike_co], *, block_length: int
+) -> np.ndarray:
+    ...
+
+
+@overload
+def blocks_to_frames(
+    blocks: _ScalarOrSequence[_IntLike_co], *, block_length: int
+) -> Union[np.integer[Any], np.ndarray]:
+    ...
+
+
+def blocks_to_frames(
+    blocks: _ScalarOrSequence[_IntLike_co], *, block_length: int
+) -> Union[np.integer[Any], np.ndarray]:
     """Convert block indices to frame indices
 
     Parameters
@@ -336,7 +540,30 @@ def blocks_to_frames(blocks, *, block_length):
     return block_length * np.asanyarray(blocks)
 
 
-def blocks_to_samples(blocks, *, block_length, hop_length):
+@overload
+def blocks_to_samples(
+    blocks: _IntLike_co, *, block_length: int, hop_length: int
+) -> np.integer[Any]:
+    ...
+
+
+@overload
+def blocks_to_samples(
+    blocks: _SequenceLike[_IntLike_co], *, block_length: int, hop_length: int
+) -> np.ndarray:
+    ...
+
+
+@overload
+def blocks_to_samples(
+    blocks: _ScalarOrSequence[_IntLike_co], *, block_length: int, hop_length: int
+) -> Union[np.integer[Any], np.ndarray]:
+    ...
+
+
+def blocks_to_samples(
+    blocks: _ScalarOrSequence[_IntLike_co], *, block_length: int, hop_length: int
+) -> Union[np.integer[Any], np.ndarray]:
     """Convert block indices to sample indices
 
     Parameters
@@ -379,7 +606,38 @@ def blocks_to_samples(blocks, *, block_length, hop_length):
     return frames_to_samples(frames, hop_length=hop_length)
 
 
-def blocks_to_time(blocks, *, block_length, hop_length, sr):
+@overload
+def blocks_to_time(
+    blocks: _IntLike_co, *, block_length: int, hop_length: int, sr: int
+) -> np.floating[Any]:
+    ...
+
+
+@overload
+def blocks_to_time(
+    blocks: _SequenceLike[_IntLike_co], *, block_length: int, hop_length: int, sr: int
+) -> np.ndarray:
+    ...
+
+
+@overload
+def blocks_to_time(
+    blocks: _ScalarOrSequence[_IntLike_co],
+    *,
+    block_length: int,
+    hop_length: int,
+    sr: int,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+
+def blocks_to_time(
+    blocks: _ScalarOrSequence[_IntLike_co],
+    *,
+    block_length: int,
+    hop_length: int,
+    sr: int,
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert block indices to time (in seconds)
 
     Parameters
@@ -426,7 +684,26 @@ def blocks_to_time(blocks, *, block_length, hop_length, sr):
     return samples_to_time(samples, sr=sr)
 
 
-def note_to_hz(note, **kwargs):
+@overload
+def note_to_hz(note: str, **kwargs: Any) -> np.floating[Any]:
+    ...
+
+
+@overload
+def note_to_hz(note: _IterableLike[str], **kwargs: Any) -> np.ndarray:
+    ...
+
+
+@overload
+def note_to_hz(
+    note: Union[str, _IterableLike[str], Iterable[str]], **kwargs: Any
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+
+def note_to_hz(
+    note: Union[str, _IterableLike[str], Iterable[str]], **kwargs: Any
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert one or more note names to frequency (Hz)
 
     Examples
@@ -462,7 +739,26 @@ def note_to_hz(note, **kwargs):
     return midi_to_hz(note_to_midi(note, **kwargs))
 
 
-def note_to_midi(note, *, round_midi=True):
+@overload
+def note_to_midi(note: str, *, round_midi: bool = ...) -> Union[float, int]:
+    ...
+
+
+@overload
+def note_to_midi(note: _IterableLike[str], *, round_midi: bool = ...) -> np.ndarray:
+    ...
+
+
+@overload
+def note_to_midi(
+    note: Union[str, _IterableLike[str], Iterable[str]], *, round_midi: bool = ...
+) -> Union[float, int, np.ndarray]:
+    ...
+
+
+def note_to_midi(
+    note: Union[str, _IterableLike[str], Iterable[str]], *, round_midi: bool = True
+) -> Union[float, np.ndarray]:
     """Convert one or more spelled notes to MIDI number(s).
 
     Notes may be spelled out with optional accidentals or octave numbers.
@@ -524,8 +820,16 @@ def note_to_midi(note, *, round_midi=True):
     if not isinstance(note, str):
         return np.array([note_to_midi(n, round_midi=round_midi) for n in note])
 
-    pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
-    acc_map = {
+    pitch_map: Dict[str, int] = {
+        "C": 0,
+        "D": 2,
+        "E": 4,
+        "F": 5,
+        "G": 7,
+        "A": 9,
+        "B": 11,
+    }
+    acc_map: Dict[str, int] = {
         "#": 1,
         "": 0,
         "b": -1,
@@ -537,13 +841,8 @@ def note_to_midi(note, *, round_midi=True):
         "♮": 0,
     }
 
-    match = re.match(
-        r"^(?P<note>[A-Ga-g])"
-        r"(?P<accidental>[#♯𝄪b!♭𝄫♮]*)"
-        r"(?P<octave>[+-]?\d+)?"
-        r"(?P<cents>[+-]\d+)?$",
-        note,
-    )
+    match = notation.NOTE_RE.match(note)
+
     if not match:
         raise ParameterError("Improper note format: {:s}".format(note))
 
@@ -562,16 +861,59 @@ def note_to_midi(note, *, round_midi=True):
     else:
         cents = int(cents) * 1e-2
 
-    note_value = 12 * (octave + 1) + pitch_map[pitch] + offset + cents
+    note_value: float = 12 * (octave + 1) + pitch_map[pitch] + offset + cents
 
     if round_midi:
-        note_value = int(np.round(note_value))
+        return int(np.round(note_value))
+    else:
+        return note_value
 
-    return note_value
+
+@overload
+def midi_to_note(
+    midi: _FloatLike_co,
+    *,
+    octave: bool = ...,
+    cents: bool = ...,
+    key: str = ...,
+    unicode: bool = ...,
+) -> str:
+    ...
 
 
-@vectorize(excluded=['octave', 'cents', 'key', 'unicode'])
-def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
+@overload
+def midi_to_note(
+    midi: _SequenceLike[_FloatLike_co],
+    *,
+    octave: bool = ...,
+    cents: bool = ...,
+    key: str = ...,
+    unicode: bool = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def midi_to_note(
+    midi: _ScalarOrSequence[_FloatLike_co],
+    *,
+    octave: bool = ...,
+    cents: bool = ...,
+    key: str = ...,
+    unicode: bool = ...,
+) -> Union[str, np.ndarray]:
+    ...
+
+
+@vectorize(excluded=["octave", "cents", "key", "unicode"])
+def midi_to_note(
+    midi: _ScalarOrSequence[_FloatLike_co],
+    *,
+    octave: bool = True,
+    cents: bool = False,
+    key: str = "C:maj",
+    unicode: bool = True,
+) -> Union[str, np.ndarray]:
     """Convert one or more MIDI numbers to note strings.
 
     MIDI numbers will be rounded to the nearest integer.
@@ -651,8 +993,9 @@ def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
 
     note_map = notation.key_to_notes(key=key, unicode=unicode)
 
-    note_num = int(np.round(midi))
-    note_cents = int(100 * np.around(midi - note_num, 2))
+    # mypy does not understand vectorization, suppress type checks
+    note_num = int(np.round(midi))  # type: ignore
+    note_cents = int(100 * np.around(midi - note_num, 2))  # type: ignore
 
     note = note_map[note_num % 12]
 
@@ -664,7 +1007,26 @@ def midi_to_note(midi, *, octave=True, cents=False, key="C:maj", unicode=True):
     return note
 
 
-def midi_to_hz(notes):
+@overload
+def midi_to_hz(notes: _FloatLike_co) -> np.floating[Any]:
+    ...
+
+
+@overload
+def midi_to_hz(notes: _SequenceLike[_FloatLike_co]) -> np.ndarray:
+    ...
+
+
+@overload
+def midi_to_hz(
+    notes: _ScalarOrSequence[_FloatLike_co],
+) -> Union[np.ndarray, np.floating[Any]]:
+    ...
+
+
+def midi_to_hz(
+    notes: _ScalarOrSequence[_FloatLike_co],
+) -> Union[np.ndarray, np.floating[Any]]:
     """Get the frequency (Hz) of MIDI note(s)
 
     Examples
@@ -696,7 +1058,26 @@ def midi_to_hz(notes):
     return 440.0 * (2.0 ** ((np.asanyarray(notes) - 69.0) / 12.0))
 
 
-def hz_to_midi(frequencies):
+@overload
+def hz_to_midi(frequencies: _FloatLike_co) -> np.floating[Any]:
+    ...
+
+
+@overload
+def hz_to_midi(frequencies: _SequenceLike[_FloatLike_co]) -> np.ndarray:
+    ...
+
+
+@overload
+def hz_to_midi(
+    frequencies: _ScalarOrSequence[_FloatLike_co],
+) -> Union[np.ndarray, np.floating[Any]]:
+    ...
+
+
+def hz_to_midi(
+    frequencies: _ScalarOrSequence[_FloatLike_co],
+) -> Union[np.ndarray, np.floating[Any]]:
     """Get MIDI note number(s) for given frequencies
 
     Examples
@@ -723,10 +1104,30 @@ def hz_to_midi(frequencies):
     hz_to_note
     """
 
-    return 12 * (np.log2(np.asanyarray(frequencies)) - np.log2(440.0)) + 69
+    midi: np.ndarray = 12 * (np.log2(np.asanyarray(frequencies)) - np.log2(440.0)) + 69
+    return midi
 
 
-def hz_to_note(frequencies, **kwargs):
+@overload
+def hz_to_note(frequencies: _FloatLike_co, **kwargs: Any) -> str:
+    ...
+
+
+@overload
+def hz_to_note(frequencies: _SequenceLike[_FloatLike_co], **kwargs: Any) -> np.ndarray:
+    ...
+
+
+@overload
+def hz_to_note(
+    frequencies: _ScalarOrSequence[_FloatLike_co], **kwargs: Any
+) -> Union[str, np.ndarray]:
+    ...
+
+
+def hz_to_note(
+    frequencies: _ScalarOrSequence[_FloatLike_co], **kwargs: Any
+) -> Union[str, np.ndarray]:
     """Convert one or more frequencies (in Hz) to the nearest note names.
 
     Parameters
@@ -770,7 +1171,28 @@ def hz_to_note(frequencies, **kwargs):
     return midi_to_note(hz_to_midi(frequencies), **kwargs)
 
 
-def hz_to_mel(frequencies, *, htk=False):
+@overload
+def hz_to_mel(frequencies: _FloatLike_co, *, htk: bool = ...) -> np.floating[Any]:
+    ...
+
+
+@overload
+def hz_to_mel(
+    frequencies: _SequenceLike[_FloatLike_co], *, htk: bool = ...
+) -> np.ndarray:
+    ...
+
+
+@overload
+def hz_to_mel(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, htk: bool = ...
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+
+def hz_to_mel(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, htk: bool = False
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert Hz to Mels
 
     Examples
@@ -800,7 +1222,8 @@ def hz_to_mel(frequencies, *, htk=False):
     frequencies = np.asanyarray(frequencies)
 
     if htk:
-        return 2595.0 * np.log10(1.0 + frequencies / 700.0)
+        mels: np.ndarray = 2595.0 * np.log10(1.0 + frequencies / 700.0)
+        return mels
 
     # Fill in the linear part
     f_min = 0.0
@@ -825,7 +1248,26 @@ def hz_to_mel(frequencies, *, htk=False):
     return mels
 
 
-def mel_to_hz(mels, *, htk=False):
+@overload
+def mel_to_hz(mels: _FloatLike_co, *, htk: bool = ...) -> np.floating[Any]:
+    ...
+
+
+@overload
+def mel_to_hz(mels: _SequenceLike[_FloatLike_co], *, htk: bool = ...) -> np.ndarray:
+    ...
+
+
+@overload
+def mel_to_hz(
+    mels: _ScalarOrSequence[_FloatLike_co], *, htk: bool = ...
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+
+def mel_to_hz(
+    mels: _ScalarOrSequence[_FloatLike_co], *, htk: bool = False
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert mel bin numbers to frequencies
 
     Examples
@@ -879,7 +1321,39 @@ def mel_to_hz(mels, *, htk=False):
     return freqs
 
 
-def hz_to_octs(frequencies, *, tuning=0.0, bins_per_octave=12):
+@overload
+def hz_to_octs(
+    frequencies: _FloatLike_co, *, tuning: float = ..., bins_per_octave: int = ...
+) -> np.floating[Any]:
+    ...
+
+
+@overload
+def hz_to_octs(
+    frequencies: _SequenceLike[_FloatLike_co],
+    *,
+    tuning: float = ...,
+    bins_per_octave: int = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def hz_to_octs(
+    frequencies: _ScalarOrSequence[_FloatLike_co],
+    *,
+    tuning: float = ...,
+    bins_per_octave: int = ...,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+
+def hz_to_octs(
+    frequencies: _ScalarOrSequence[_FloatLike_co],
+    *,
+    tuning: float = 0.0,
+    bins_per_octave: int = 12,
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert frequencies (Hz) to (fractional) octave numbers.
 
     Examples
@@ -910,10 +1384,43 @@ def hz_to_octs(frequencies, *, tuning=0.0, bins_per_octave=12):
 
     A440 = 440.0 * 2.0 ** (tuning / bins_per_octave)
 
-    return np.log2(np.asanyarray(frequencies) / (float(A440) / 16))
+    octs: np.ndarray = np.log2(np.asanyarray(frequencies) / (float(A440) / 16))
+    return octs
 
 
-def octs_to_hz(octs, *, tuning=0.0, bins_per_octave=12):
+@overload
+def octs_to_hz(
+    octs: _FloatLike_co, *, tuning: float = ..., bins_per_octave: int = ...
+) -> np.floating[Any]:
+    ...
+
+
+@overload
+def octs_to_hz(
+    octs: _SequenceLike[_FloatLike_co],
+    *,
+    tuning: float = ...,
+    bins_per_octave: int = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def octs_to_hz(
+    octs: _ScalarOrSequence[_FloatLike_co],
+    *,
+    tuning: float = ...,
+    bins_per_octave: int = ...,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+
+def octs_to_hz(
+    octs: _ScalarOrSequence[_FloatLike_co],
+    *,
+    tuning: float = 0.0,
+    bins_per_octave: int = 12,
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert octaves numbers to frequencies.
 
     Octaves are counted relative to A.
@@ -948,7 +1455,28 @@ def octs_to_hz(octs, *, tuning=0.0, bins_per_octave=12):
     return (float(A440) / 16) * (2.0 ** np.asanyarray(octs))
 
 
-def A4_to_tuning(A4, *, bins_per_octave=12):
+@overload
+def A4_to_tuning(A4: _FloatLike_co, *, bins_per_octave: int = ...) -> np.floating[Any]:
+    ...
+
+
+@overload
+def A4_to_tuning(
+    A4: _SequenceLike[_FloatLike_co], *, bins_per_octave: int = ...
+) -> np.ndarray:
+    ...
+
+
+@overload
+def A4_to_tuning(
+    A4: _ScalarOrSequence[_FloatLike_co], *, bins_per_octave: int = ...
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+
+def A4_to_tuning(
+    A4: _ScalarOrSequence[_FloatLike_co], *, bins_per_octave: int = 12
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert a reference pitch frequency (e.g., ``A4=435``) to a tuning
     estimation, in fractions of a bin per octave.
 
@@ -994,10 +1522,34 @@ def A4_to_tuning(A4, *, bins_per_octave=12):
     --------
     tuning_to_A4
     """
-    return bins_per_octave * (np.log2(np.asanyarray(A4)) - np.log2(440.0))
+    tuning: np.ndarray = bins_per_octave * (np.log2(np.asanyarray(A4)) - np.log2(440.0))
+    return tuning
 
 
-def tuning_to_A4(tuning, *, bins_per_octave=12):
+@overload
+def tuning_to_A4(
+    tuning: _FloatLike_co, *, bins_per_octave: int = ...
+) -> np.floating[Any]:
+    ...
+
+
+@overload
+def tuning_to_A4(
+    tuning: _SequenceLike[_FloatLike_co], *, bins_per_octave: int = ...
+) -> np.ndarray:
+    ...
+
+
+@overload
+def tuning_to_A4(
+    tuning: _ScalarOrSequence[_FloatLike_co], *, bins_per_octave: int = ...
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
+
+def tuning_to_A4(
+    tuning: _ScalarOrSequence[_FloatLike_co], *, bins_per_octave: int = 12
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert a tuning deviation (from 0) in fractions of a bin per
     octave (e.g., ``tuning=-0.1``) to a reference pitch frequency
     relative to A440.
@@ -1047,7 +1599,7 @@ def tuning_to_A4(tuning, *, bins_per_octave=12):
     return 440.0 * 2.0 ** (np.asanyarray(tuning) / bins_per_octave)
 
 
-def fft_frequencies(*, sr=22050, n_fft=2048):
+def fft_frequencies(*, sr: float = 22050, n_fft: int = 2048) -> np.ndarray:
     """Alternative implementation of `np.fft.fftfreq`
 
     Parameters
@@ -1073,7 +1625,9 @@ def fft_frequencies(*, sr=22050, n_fft=2048):
     return np.fft.rfftfreq(n=n_fft, d=1.0 / sr)
 
 
-def cqt_frequencies(n_bins, *, fmin, bins_per_octave=12, tuning=0.0):
+def cqt_frequencies(
+    n_bins: int, *, fmin: float, bins_per_octave: int = 12, tuning: float = 0.0
+) -> np.ndarray:
     """Compute the center frequencies of Constant-Q bins.
 
     Examples
@@ -1102,13 +1656,17 @@ def cqt_frequencies(n_bins, *, fmin, bins_per_octave=12, tuning=0.0):
         Center frequency for each CQT bin
     """
 
-    correction = 2.0 ** (float(tuning) / bins_per_octave)
-    frequencies = 2.0 ** (np.arange(0, n_bins, dtype=float) / bins_per_octave)
+    correction: float = 2.0 ** (float(tuning) / bins_per_octave)
+    frequencies: np.ndarray = 2.0 ** (
+        np.arange(0, n_bins, dtype=float) / bins_per_octave
+    )
 
     return correction * fmin * frequencies
 
 
-def mel_frequencies(n_mels=128, *, fmin=0.0, fmax=11025.0, htk=False):
+def mel_frequencies(
+    n_mels: int = 128, *, fmin: float = 0.0, fmax: float = 11025.0, htk: bool = False
+) -> np.ndarray:
     """Compute an array of acoustic frequencies tuned to the mel scale.
 
     The mel scale is a quasi-logarithmic function of acoustic frequency
@@ -1187,10 +1745,13 @@ def mel_frequencies(n_mels=128, *, fmin=0.0, fmax=11025.0, htk=False):
 
     mels = np.linspace(min_mel, max_mel, n_mels)
 
-    return mel_to_hz(mels, htk=htk)
+    hz: np.ndarray = mel_to_hz(mels, htk=htk)
+    return hz
 
 
-def tempo_frequencies(n_bins, *, hop_length=512, sr=22050):
+def tempo_frequencies(
+    n_bins: int, *, hop_length: int = 512, sr: float = 22050
+) -> np.ndarray:
     """Compute the frequencies (in beats per minute) corresponding
     to an onset auto-correlation or tempogram matrix.
 
@@ -1227,7 +1788,9 @@ def tempo_frequencies(n_bins, *, hop_length=512, sr=22050):
     return bin_frequencies
 
 
-def fourier_tempo_frequencies(*, sr=22050, win_length=384, hop_length=512):
+def fourier_tempo_frequencies(
+    *, sr: float = 22050, win_length: int = 384, hop_length: int = 512
+) -> np.ndarray:
     """Compute the frequencies (in beats per minute) corresponding
     to a Fourier tempogram matrix.
 
@@ -1260,7 +1823,30 @@ def fourier_tempo_frequencies(*, sr=22050, win_length=384, hop_length=512):
 
 
 # A-weighting should be capitalized: suppress the naming warning
-def A_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
+@overload
+def A_weighting(
+    frequencies: _FloatLike_co, *, min_db: Optional[float] = ...
+) -> np.floating[Any]:  # pylint: disable=invalid-name
+    ...
+
+
+@overload
+def A_weighting(
+    frequencies: _SequenceLike[_FloatLike_co], *, min_db: Optional[float] = ...
+) -> np.ndarray:  # pylint: disable=invalid-name
+    ...
+
+
+@overload
+def A_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, min_db: Optional[float] = ...
+) -> Union[np.floating[Any], np.ndarray]:  # pylint: disable=invalid-name
+    ...
+
+
+def A_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, min_db: Optional[float] = -80.0
+) -> Union[np.floating[Any], np.ndarray]:  # pylint: disable=invalid-name
     """Compute the A-weighting of a set of frequencies.
 
     Parameters
@@ -1301,7 +1887,7 @@ def A_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997, 107.65265, 737.86223]) ** 2.0
-    weights = 2.0 + 20.0 * (
+    weights: np.ndarray = 2.0 + 20.0 * (
         np.log10(const[0])
         + 2 * np.log10(f_sq)
         - np.log10(f_sq + const[0])
@@ -1310,10 +1896,36 @@ def A_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
         - 0.5 * np.log10(f_sq + const[3])
     )
 
-    return weights if min_db is None else np.maximum(min_db, weights)
+    if min_db is None:
+        return weights
+    else:
+        return np.maximum(min_db, weights)
 
 
-def B_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
+@overload
+def B_weighting(
+    frequencies: _FloatLike_co, *, min_db: Optional[float] = ...
+) -> np.floating[Any]:  # pylint: disable=invalid-name
+    ...
+
+
+@overload
+def B_weighting(
+    frequencies: _SequenceLike[_FloatLike_co], *, min_db: Optional[float] = ...
+) -> np.ndarray:  # pylint: disable=invalid-name
+    ...
+
+
+@overload
+def B_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, min_db: Optional[float] = ...
+) -> Union[np.floating[Any], np.ndarray]:  # pylint: disable=invalid-name
+    ...
+
+
+def B_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, min_db: Optional[float] = -80.0
+) -> Union[np.floating[Any], np.ndarray]:  # pylint: disable=invalid-name
     """Compute the B-weighting of a set of frequencies.
 
     Parameters
@@ -1354,7 +1966,7 @@ def B_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997, 158.48932]) ** 2.0
-    weights = 0.17 + 20.0 * (
+    weights: np.ndarray = 0.17 + 20.0 * (
         np.log10(const[0])
         + 1.5 * np.log10(f_sq)
         - np.log10(f_sq + const[0])
@@ -1365,7 +1977,30 @@ def B_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     return weights if min_db is None else np.maximum(min_db, weights)
 
 
-def C_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
+@overload
+def C_weighting(
+    frequencies: _FloatLike_co, *, min_db: Optional[float] = ...
+) -> np.floating[Any]:  # pylint: disable=invalid-name
+    ...
+
+
+@overload
+def C_weighting(
+    frequencies: _SequenceLike[_FloatLike_co], *, min_db: Optional[float] = ...
+) -> np.ndarray:  # pylint: disable=invalid-name
+    ...
+
+
+@overload
+def C_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, min_db: Optional[float] = ...
+) -> Union[np.floating[Any], np.ndarray]:  # pylint: disable=invalid-name
+    ...
+
+
+def C_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, min_db: Optional[float] = -80.0
+) -> Union[np.floating[Any], np.ndarray]:  # pylint: disable=invalid-name
     """Compute the C-weighting of a set of frequencies.
 
     Parameters
@@ -1405,7 +2040,7 @@ def C_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997]) ** 2.0
-    weights = 0.062 + 20.0 * (
+    weights: np.ndarray = 0.062 + 20.0 * (
         np.log10(const[0])
         + np.log10(f_sq)
         - np.log10(f_sq + const[0])
@@ -1415,7 +2050,30 @@ def C_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     return weights if min_db is None else np.maximum(min_db, weights)
 
 
-def D_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
+@overload
+def D_weighting(
+    frequencies: _FloatLike_co, *, min_db: Optional[float] = ...
+) -> np.floating[Any]:  # pylint: disable=invalid-name
+    ...
+
+
+@overload
+def D_weighting(
+    frequencies: _SequenceLike[_FloatLike_co], *, min_db: Optional[float] = ...
+) -> np.ndarray:  # pylint: disable=invalid-name
+    ...
+
+
+@overload
+def D_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, min_db: Optional[float] = ...
+) -> Union[np.floating[Any], np.ndarray]:  # pylint: disable=invalid-name
+    ...
+
+
+def D_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, min_db: Optional[float] = -80.0
+) -> Union[np.floating[Any], np.ndarray]:  # pylint: disable=invalid-name
     """Compute the D-weighting of a set of frequencies.
 
     Parameters
@@ -1455,7 +2113,7 @@ def D_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([8.3046305e-3, 1018.7, 1039.6, 3136.5, 3424, 282.7, 1160]) ** 2.0
-    weights = 20.0 * (
+    weights: np.ndarray = 20.0 * (
         0.5 * np.log10(f_sq)
         - np.log10(const[0])
         + 0.5
@@ -1467,15 +2125,22 @@ def D_weighting(frequencies, *, min_db=-80.0):  # pylint: disable=invalid-name
         )
     )
 
-    return weights if min_db is None else np.maximum(min_db, weights)
+    if min_db is None:
+        return weights
+    else:
+        return np.maximum(min_db, weights)
 
 
-def Z_weighting(frequencies, *, min_db=None):  # pylint: disable=invalid-name
+def Z_weighting(
+    frequencies: Sized, *, min_db: Optional[float] = None
+) -> np.ndarray:  # pylint: disable=invalid-name
     weights = np.zeros(len(frequencies))
     return weights if min_db is None else np.maximum(min_db, weights)
 
 
-WEIGHTING_FUNCTIONS = {
+WEIGHTING_FUNCTIONS: Dict[
+    Optional[str], Callable[..., Union[np.floating[Any], np.ndarray]]
+] = {
     "A": A_weighting,
     "B": B_weighting,
     "C": C_weighting,
@@ -1485,7 +2150,30 @@ WEIGHTING_FUNCTIONS = {
 }
 
 
-def frequency_weighting(frequencies, *, kind="A", **kwargs):
+@overload
+def frequency_weighting(
+    frequencies: _FloatLike_co, *, kind: str = ..., **kwargs: Any
+) -> np.floating[Any]:  # pylint: disable=invalid-name
+    ...
+
+
+@overload
+def frequency_weighting(
+    frequencies: _SequenceLike[_FloatLike_co], *, kind: str = ..., **kwargs: Any
+) -> np.ndarray:  # pylint: disable=invalid-name
+    ...
+
+
+@overload
+def frequency_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, kind: str = ..., **kwargs: Any
+) -> Union[np.floating[Any], np.ndarray]:  # pylint: disable=invalid-name
+    ...
+
+
+def frequency_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, kind: str = "A", **kwargs: Any
+) -> Union[np.floating[Any], np.ndarray]:
     """Compute the weighting of a set of frequencies.
 
     Parameters
@@ -1528,7 +2216,12 @@ def frequency_weighting(frequencies, *, kind="A", **kwargs):
     return WEIGHTING_FUNCTIONS[kind](frequencies, **kwargs)
 
 
-def multi_frequency_weighting(frequencies, *, kinds="ZAC", **kwargs):
+def multi_frequency_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co],
+    *,
+    kinds: Iterable[str] = "ZAC",
+    **kwargs: Any,
+) -> np.ndarray:
     """Compute multiple weightings of a set of frequencies.
 
     Parameters
@@ -1574,7 +2267,14 @@ def multi_frequency_weighting(frequencies, *, kinds="ZAC", **kwargs):
     )
 
 
-def times_like(X, *, sr=22050, hop_length=512, n_fft=None, axis=-1):
+def times_like(
+    X: Union[np.ndarray, float],
+    *,
+    sr: float = 22050,
+    hop_length: int = 512,
+    n_fft: Optional[int] = None,
+    axis: int = -1,
+) -> np.ndarray:
     """Return an array of time values to match the time axis from a feature matrix.
 
     Parameters
@@ -1623,10 +2323,17 @@ def times_like(X, *, sr=22050, hop_length=512, n_fft=None, axis=-1):
              6.13935601e+01,   6.14167800e+01,   6.14400000e+01])
     """
     samples = samples_like(X, hop_length=hop_length, n_fft=n_fft, axis=axis)
-    return samples_to_time(samples, sr=sr)
+    time: np.ndarray = samples_to_time(samples, sr=sr)
+    return time
 
 
-def samples_like(X, *, hop_length=512, n_fft=None, axis=-1):
+def samples_like(
+    X: Union[np.ndarray, float],
+    *,
+    hop_length: int = 512,
+    n_fft: Optional[int] = None,
+    axis: int = -1,
+) -> np.ndarray:
     """Return an array of sample indices to match the time axis from a feature matrix.
 
     Parameters
@@ -1671,15 +2378,59 @@ def samples_like(X, *, hop_length=512, n_fft=None, axis=-1):
     >>> samples
     array([      0,     512,    1024, ..., 1353728, 1354240, 1354752])
     """
+    # suppress type checks because mypy does not understand isscalar
     if np.isscalar(X):
-        frames = np.arange(X)
+        frames = np.arange(X)  # type: ignore
     else:
-        frames = np.arange(X.shape[axis])
+        frames = np.arange(X.shape[axis])  # type: ignore
     return frames_to_samples(frames, hop_length=hop_length, n_fft=n_fft)
 
 
-@vectorize(excluded=['Sa', 'abbr', 'octave', 'unicode'])
-def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
+@overload
+def midi_to_svara_h(
+    midi: _FloatLike_co,
+    *,
+    Sa: _FloatLike_co,
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> str:
+    ...
+
+
+@overload
+def midi_to_svara_h(
+    midi: np.ndarray,
+    *,
+    Sa: _FloatLike_co,
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def midi_to_svara_h(
+    midi: Union[_FloatLike_co, np.ndarray],
+    *,
+    Sa: _FloatLike_co,
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> Union[str, np.ndarray]:
+    ...
+
+
+@vectorize(excluded=["Sa", "abbr", "octave", "unicode"])
+def midi_to_svara_h(
+    midi: Union[_FloatLike_co, np.ndarray],
+    *,
+    Sa: _FloatLike_co,
+    abbr: bool = True,
+    octave: bool = True,
+    unicode: bool = True,
+) -> Union[str, np.ndarray]:
     """Convert MIDI numbers to Hindustani svara
 
     Parameters
@@ -1764,7 +2515,8 @@ def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
 
     SVARA_MAP_SHORT = list(s[0] for s in SVARA_MAP)
 
-    svara_num = int(np.round(midi - Sa))
+    # mypy does not understand vectorization
+    svara_num = int(np.round(midi - Sa))  # type: ignore
 
     if abbr:
         svara = SVARA_MAP_SHORT[svara_num % 12]
@@ -1786,7 +2538,50 @@ def midi_to_svara_h(midi, *, Sa, abbr=True, octave=True, unicode=True):
     return svara
 
 
-def hz_to_svara_h(frequencies, *, Sa, abbr=True, octave=True, unicode=True):
+@overload
+def hz_to_svara_h(
+    frequencies: _FloatLike_co,
+    *,
+    Sa: _FloatLike_co,
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> str:
+    ...
+
+
+@overload
+def hz_to_svara_h(
+    frequencies: _SequenceLike[_FloatLike_co],
+    *,
+    Sa: _FloatLike_co,
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def hz_to_svara_h(
+    frequencies: _ScalarOrSequence[_FloatLike_co],
+    *,
+    Sa: _FloatLike_co,
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> Union[str, np.ndarray]:
+    ...
+
+
+def hz_to_svara_h(
+    frequencies: _ScalarOrSequence[_FloatLike_co],
+    *,
+    Sa: _FloatLike_co,
+    abbr: bool = True,
+    octave: bool = True,
+    unicode: bool = True,
+) -> Union[str, np.ndarray]:
     """Convert frequencies (in Hz) to Hindustani svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -1848,7 +2643,45 @@ def hz_to_svara_h(frequencies, *, Sa, abbr=True, octave=True, unicode=True):
     )
 
 
-def note_to_svara_h(notes, *, Sa, abbr=True, octave=True, unicode=True):
+@overload
+def note_to_svara_h(
+    notes: str, *, Sa: str, abbr: bool = ..., octave: bool = ..., unicode: bool = ...
+) -> str:
+    ...
+
+
+@overload
+def note_to_svara_h(
+    notes: _IterableLike[str],
+    *,
+    Sa: str,
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def note_to_svara_h(
+    notes: Union[str, _IterableLike[str]],
+    *,
+    Sa: str,
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> Union[str, np.ndarray]:
+    ...
+
+
+def note_to_svara_h(
+    notes: Union[str, _IterableLike[str]],
+    *,
+    Sa: str,
+    abbr: bool = True,
+    octave: bool = True,
+    unicode: bool = True,
+) -> Union[str, np.ndarray]:
     """Convert western notes to Hindustani svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -1907,8 +2740,55 @@ def note_to_svara_h(notes, *, Sa, abbr=True, octave=True, unicode=True):
     )
 
 
-@vectorize(excluded=['Sa', 'mela', 'abbr', 'octave', 'unicode'])
-def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
+@overload
+def midi_to_svara_c(
+    midi: _FloatLike_co,
+    *,
+    Sa: _FloatLike_co,
+    mela: Union[int, str],
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> str:
+    ...
+
+
+@overload
+def midi_to_svara_c(
+    midi: np.ndarray,
+    *,
+    Sa: _FloatLike_co,
+    mela: Union[int, str],
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def midi_to_svara_c(
+    midi: Union[float, np.ndarray],
+    *,
+    Sa: _FloatLike_co,
+    mela: Union[int, str],
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> Union[str, np.ndarray]:
+    ...
+
+
+@vectorize(excluded=["Sa", "mela", "abbr", "octave", "unicode"])  # type: ignore
+def midi_to_svara_c(
+    midi: Union[float, np.ndarray],
+    *,
+    Sa: _FloatLike_co,
+    mela: Union[int, str],
+    abbr: bool = True,
+    octave: bool = True,
+    unicode: bool = True,
+) -> Union[str, np.ndarray]:
     """Convert MIDI numbers to Carnatic svara within a given melakarta raga
 
     Parameters
@@ -1974,8 +2854,54 @@ def midi_to_svara_c(midi, *, Sa, mela, abbr=True, octave=True, unicode=True):
     return svara
 
 
+@overload
+def hz_to_svara_c(
+    frequencies: float,
+    *,
+    Sa: float,
+    mela: Union[int, str],
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> str:
+    ...
 
-def hz_to_svara_c(frequencies, *, Sa, mela, abbr=True, octave=True, unicode=True):
+
+@overload
+def hz_to_svara_c(
+    frequencies: np.ndarray,
+    *,
+    Sa: float,
+    mela: Union[int, str],
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def hz_to_svara_c(
+    frequencies: Union[float, np.ndarray],
+    *,
+    Sa: float,
+    mela: Union[int, str],
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> Union[str, np.ndarray]:
+    ...
+
+
+def hz_to_svara_c(
+    frequencies: Union[float, np.ndarray],
+    *,
+    Sa: float,
+    mela: Union[int, str],
+    abbr: bool = True,
+    octave: bool = True,
+    unicode: bool = True,
+) -> Union[str, np.ndarray]:
     """Convert frequencies (in Hz) to Carnatic svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -2041,7 +2967,54 @@ def hz_to_svara_c(frequencies, *, Sa, mela, abbr=True, octave=True, unicode=True
     )
 
 
-def note_to_svara_c(notes, *, Sa, mela, abbr=True, octave=True, unicode=True):
+@overload
+def note_to_svara_c(
+    notes: str,
+    *,
+    Sa: str,
+    mela: Union[str, int],
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> str:
+    ...
+
+
+@overload
+def note_to_svara_c(
+    notes: _IterableLike[str],
+    *,
+    Sa: str,
+    mela: Union[str, int],
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> np.ndarray:
+    ...
+
+
+@overload
+def note_to_svara_c(
+    notes: Union[str, _IterableLike[str]],
+    *,
+    Sa: str,
+    mela: Union[str, int],
+    abbr: bool = ...,
+    octave: bool = ...,
+    unicode: bool = ...,
+) -> Union[str, np.ndarray]:
+    ...
+
+
+def note_to_svara_c(
+    notes: Union[str, _IterableLike[str]],
+    *,
+    Sa: str,
+    mela: Union[str, int],
+    abbr: bool = True,
+    octave: bool = True,
+    unicode: bool = True,
+) -> Union[str, np.ndarray]:
     """Convert western notes to Carnatic svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -2101,3 +3074,98 @@ def note_to_svara_c(notes, *, Sa, mela, abbr=True, octave=True, unicode=True):
     return midi_to_svara_c(
         midis, Sa=note_to_midi(Sa), mela=mela, abbr=abbr, octave=octave, unicode=unicode
     )
+
+
+@overload
+def hz_to_fjs(
+    frequencies: _FloatLike_co,
+    *,
+    fmin: Optional[float] = ...,
+    unison: Optional[str] = ...,
+    unicode: bool = ...,
+) -> str:
+    ...
+
+
+@overload
+def hz_to_fjs(
+    frequencies: _SequenceLike[_FloatLike_co],
+    *,
+    fmin: Optional[float] = ...,
+    unison: Optional[str] = ...,
+    unicode: bool = ...,
+) -> np.ndarray:
+    ...
+
+
+def hz_to_fjs(
+    frequencies: _ScalarOrSequence[_FloatLike_co],
+    *,
+    fmin: Optional[float] = None,
+    unison: Optional[str] = None,
+    unicode: bool = False,
+) -> Union[str, np.ndarray]:
+    """Convert one or more frequencies (in Hz) from a just intonation
+    scale to notes in FJS notation.
+
+    Parameters
+    ----------
+    frequencies : float or iterable of float
+        Input frequencies, specified in Hz
+    fmin : float (optional)
+        The minimum frequency, corresponding to a unison note.
+        If not provided, it will be inferred as `min(frequencies)`
+    unison : str (optional)
+        The name of the unison note.
+        If not provided, it will be inferred as the scientific pitch
+        notation name of `fmin`, that is, `hz_to_note(fmin)`
+    unicode : bool
+        If `True`, then unicode symbols are used for accidentals.
+        If `False`, then low-order ASCII symbols are used for accidentals.
+
+    Returns
+    -------
+    notes : str or np.ndarray(dtype=str)
+        ``notes[i]`` is the closest note name to ``frequency[i]``
+        (or ``frequency`` if the input is scalar)
+
+    See Also
+    --------
+    hz_to_note
+    interval_to_fjs
+
+    Examples
+    --------
+    Get a single note name for a frequency, relative to A=55 Hz
+
+    >>> librosa.hz_to_fjs(66, fmin=55, unicode=True)
+    'C₅'
+
+    Get notation for a 5-limit frequency set starting at A=55
+
+    >>> freqs = librosa.interval_frequencies(24, intervals="ji5", fmin=55)
+    >>> freqs
+    array([ 55.   ,  58.667,  61.875,  66.   ,  68.75 ,  73.333,  77.344,
+        82.5  ,  88.   ,  91.667,  99.   , 103.125, 110.   , 117.333,
+       123.75 , 132.   , 137.5  , 146.667, 154.687, 165.   , 176.   ,
+       183.333, 198.   , 206.25 ])
+    >>> librosa.hz_to_fjs(freqs, unicode=True)
+    array(['A', 'B♭₅', 'B', 'C₅', 'C♯⁵', 'D', 'D♯⁵', 'E', 'F₅', 'F♯⁵', 'G₅',
+       'G♯⁵', 'A', 'B♭₅', 'B', 'C₅', 'C♯⁵', 'D', 'D♯⁵', 'E', 'F₅', 'F♯⁵',
+       'G₅', 'G♯⁵'], dtype='<U3')
+
+    """
+    if fmin is None:
+        # mypy doesn't know that min can handle scalars
+        fmin = np.min(frequencies)  # type: ignore
+    if unison is None:
+        unison = hz_to_note(fmin, octave=False, unicode=False)
+
+    if np.isscalar(frequencies):
+        # suppress type check - mypy does not understand scalar checks
+        intervals = frequencies / fmin  # type: ignore
+    else:
+        intervals = np.asarray(frequencies) / fmin
+
+    # mypy does not understand vectorization
+    return notation.interval_to_fjs(intervals, unison=unison, unicode=unicode)  # type: ignore

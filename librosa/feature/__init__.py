@@ -13,6 +13,7 @@ Spectral features
     chroma_stft
     chroma_cqt
     chroma_cens
+    chroma_vqt
     melspectrogram
     mfcc
     rms
@@ -54,7 +55,7 @@ Feature inversion
     inverse.mfcc_to_mel
     inverse.mfcc_to_audio
 """
-from .utils import *  # pylint: disable=wildcard-import
-from .spectral import *  # pylint: disable=wildcard-import
-from .rhythm import *  # pylint: disable=wildcard-import
-from . import inverse
+
+import lazy_loader as lazy
+
+__getattr__, __dir__, __all__ = lazy.attach_stub(__name__, __file__)

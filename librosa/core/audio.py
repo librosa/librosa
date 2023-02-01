@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Core IO, DSP and utility functions."""
+from __future__ import annotations
 
+import os
 import pathlib
 import warnings
 
@@ -10,13 +12,24 @@ import audioread
 import numpy as np
 import scipy.signal
 import soxr
+import lazy_loader as lazy
 
-from numba import jit
+from numba import jit, stencil, guvectorize
 from .fft import get_fftlib
 from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
+from ..util.decorators import deprecated
+from ..util.deprecation import Deprecated, rename_kw
+from .._typing import _FloatLike_co, _IntLike_co, _SequenceLike
+
+from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union, List
+from numpy.typing import DTypeLike, ArrayLike
+
+# Lazy-load optional dependencies
+samplerate = lazy.load("samplerate")
+resampy = lazy.load("resampy")
 
 __all__ = [
     "load",
@@ -40,15 +53,17 @@ __all__ = [
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
 def load(
-    path,
+    path: Union[
+        str, int, os.PathLike[Any], sf.SoundFile, audioread.AudioFile, BinaryIO
+    ],
     *,
-    sr=22050,
-    mono=True,
-    offset=0.0,
-    duration=None,
-    dtype=np.float32,
-    res_type="soxr_hq",
-):
+    sr: Optional[float] = 22050,
+    mono: bool = True,
+    offset: float = 0.0,
+    duration: Optional[float] = None,
+    dtype: DTypeLike = np.float32,
+    res_type: str = "soxr_hq",
+) -> Tuple[np.ndarray, float]:
     """Load an audio file as a floating point time series.
 
     Audio will be automatically resampled to the given rate
@@ -72,6 +87,9 @@ def load(
         Pre-constructed audioread decoders are also supported here, see the example
         below.  This can be used, for example, to force a specific decoder rather
         than relying upon audioread to select one for you.
+
+        .. warning:: audioread support is deprecated as of version 0.10.0.
+            audioread support be removed in version 1.0.
 
     sr : number > 0 [scalar]
         target sampling rate
@@ -157,10 +175,12 @@ def load(
         try:
             y, sr_native = __soundfile_load(path, offset, duration, dtype)
 
-        except RuntimeError as exc:
+        except sf.SoundFileRuntimeError as exc:
             # If soundfile failed, try audioread instead
             if isinstance(path, (str, pathlib.PurePath)):
-                warnings.warn("PySoundFile failed. Trying audioread instead.", stacklevel=2)
+                warnings.warn(
+                    "PySoundFile failed. Trying audioread instead.", stacklevel=2
+                )
                 y, sr_native = __audioread_load(path, offset, duration, dtype)
             else:
                 raise exc
@@ -204,13 +224,14 @@ def __soundfile_load(path, offset, duration, dtype):
     return y, sr_native
 
 
-def __audioread_load(path, offset, duration, dtype):
+@deprecated(version="0.10.0", version_removed="1.0")
+def __audioread_load(path, offset, duration, dtype: DTypeLike):
     """Load an audio buffer using audioread.
 
     This loads one block at a time, and then concatenates the results.
     """
 
-    y = []
+    buf = []
 
     if isinstance(path, tuple(audioread.available_backends())):
         # If we have an audioread object already, don't bother opening
@@ -248,17 +269,17 @@ def __audioread_load(path, offset, duration, dtype):
 
             if s_end < n:
                 # the end is in this frame.  crop.
-                frame = frame[: s_end - n_prev]
+                frame = frame[: int(s_end - n_prev)]  # pragma: no cover
 
             if n_prev <= s_start <= n:
                 # beginning is in this frame
                 frame = frame[(s_start - n_prev) :]
 
             # tack on the current frame
-            y.append(frame)
+            buf.append(frame)
 
-    if y:
-        y = np.concatenate(y)
+    if buf:
+        y = np.concatenate(buf)
         if n_channels > 1:
             y = y.reshape((-1, n_channels)).T
     else:
@@ -268,17 +289,17 @@ def __audioread_load(path, offset, duration, dtype):
 
 
 def stream(
-    path,
+    path: Union[str, int, sf.SoundFile, BinaryIO],
     *,
-    block_length,
-    frame_length,
-    hop_length,
-    mono=True,
-    offset=0.0,
-    duration=None,
-    fill_value=None,
-    dtype=np.float32,
-):
+    block_length: int,
+    frame_length: int,
+    hop_length: int,
+    mono: bool = True,
+    offset: float = 0.0,
+    duration: Optional[float] = None,
+    fill_value: Optional[float] = None,
+    dtype: DTypeLike = np.float32,
+) -> Generator[np.ndarray, None, None]:
     """Stream audio in fixed-length buffers.
 
     This is primarily useful for processing large files that won't
@@ -457,7 +478,7 @@ def stream(
 
 
 @cache(level=20)
-def to_mono(y):
+def to_mono(y: np.ndarray) -> np.ndarray:
     """Convert an audio signal to mono by averaging samples across channels.
 
     Parameters
@@ -496,13 +517,21 @@ def to_mono(y):
 
 @cache(level=20)
 def resample(
-    y, *, orig_sr, target_sr, res_type="soxr_hq", fix=True, scale=False, axis=-1, **kwargs
-):
+    y: np.ndarray,
+    *,
+    orig_sr: float,
+    target_sr: float,
+    res_type: str = "soxr_hq",
+    fix: bool = True,
+    scale: bool = False,
+    axis: int = -1,
+    **kwargs: Any,
+) -> np.ndarray:
     """Resample a time series from orig_sr to target_sr
 
-    By default, this uses a high-quality (but relatively slow) method ('kaiser_best')
-    for band-limited sinc interpolation.  The alternate ``res_type`` values listed below
-    offer different trade-offs of speed and quality.
+    By default, this uses a high-quality method (`soxr_hq`) for band-limited sinc
+    interpolation. The alternate ``res_type`` values listed below offer different
+    trade-offs of speed and quality.
 
     Parameters
     ----------
@@ -522,7 +551,7 @@ def resample(
             `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
             ``'soxr_hq'`` is the default setting of `soxr`.
         'soxr_qq'
-            `soxr` Quick cubic interpolation (very fast)
+            `soxr` Quick cubic interpolation (very fast, but not bandlimited)
         'kaiser_best'
             `resampy` high-quality mode
         'kaiser_fast'
@@ -532,11 +561,15 @@ def resample(
         'polyphase'
             `scipy.signal.resample_poly` polyphase filtering. (fast)
         'linear'
-            `samplerate` linear interpolation. (very fast)
+            `samplerate` linear interpolation. (very fast, but not bandlimited)
         'zero_order_hold'
-            `samplerate` repeat the last value between samples. (very fast)
+            `samplerate` repeat the last value between samples. (very fast, but not bandlimited)
         'sinc_best', 'sinc_medium' or 'sinc_fastest'
-            `samplerate` high-, medium-, and low-quality sinc interpolation.
+            `samplerate` high-, medium-, and low-quality bandlimited sinc interpolation.
+
+        .. note::
+            Not all options yield a bandlimited interpolator. If you use `soxr_qq`, `polyphase`,
+            `linear`, or `zero_order_hold`, you need to be aware of possible aliasing effects.
 
         .. note::
             `samplerate` and `resampy` are not installed with `librosa`.
@@ -621,7 +654,9 @@ def resample(
         orig_sr = int(orig_sr)
         target_sr = int(target_sr)
         gcd = np.gcd(orig_sr, target_sr)
-        y_hat = scipy.signal.resample_poly(y, target_sr // gcd, orig_sr // gcd, axis=axis)
+        y_hat = scipy.signal.resample_poly(
+            y, target_sr // gcd, orig_sr // gcd, axis=axis
+        )
     elif res_type in (
         "linear",
         "zero_order_hold",
@@ -629,18 +664,23 @@ def resample(
         "sinc_fastest",
         "sinc_medium",
     ):
-        import samplerate
-
         # Use numpy to vectorize the resampler along the target axis
         # This is because samplerate does not support ndim>2 generally.
-        y_hat = np.apply_along_axis(samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type)
+        y_hat = np.apply_along_axis(
+            samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type
+        )
     elif res_type.startswith("soxr"):
         # Use numpy to vectorize the resampler along the target axis
         # This is because soxr does not support ndim>2 generally.
-        y_hat = np.apply_along_axis(soxr.resample, axis=axis, arr=y, in_rate=orig_sr, out_rate=target_sr, quality=res_type)
+        y_hat = np.apply_along_axis(
+            soxr.resample,
+            axis=axis,
+            arr=y,
+            in_rate=orig_sr,
+            out_rate=target_sr,
+            quality=res_type,
+        )
     else:
-        import resampy
-
         y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=axis)
 
     if fix:
@@ -649,12 +689,21 @@ def resample(
     if scale:
         y_hat /= np.sqrt(ratio)
 
-    return y_hat.astype(y.dtype)
+    # Match dtypes
+    return np.asarray(y_hat, dtype=y.dtype)
 
 
 def get_duration(
-    *, y=None, sr=22050, S=None, n_fft=2048, hop_length=512, center=True, filename=None
-):
+    *,
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    center: bool = True,
+    path: Optional[Union[str, os.PathLike[Any]]] = None,
+    filename: Optional[Union[str, os.PathLike[Any], Deprecated]] = Deprecated(),
+) -> float:
     """Compute the duration (in seconds) of an audio time series,
     feature matrix, or filename.
 
@@ -705,7 +754,7 @@ def get_duration(
         - If ``True``, ``S[:, t]`` is centered at ``y[t * hop_length]``
         - If ``False``, then ``S[:, t]`` begins at ``y[t * hop_length]``
 
-    filename : str
+    path : str, path, or file-like
         If provided, all other parameters are ignored, and the
         duration is calculated directly from the audio file.
         Note that this avoids loading the contents into memory,
@@ -715,6 +764,12 @@ def get_duration(
         As in ``load``, this can also be an integer or open file-handle
         that can be processed by ``soundfile``.
 
+    filename : Deprecated
+        Equivalent to ``path``
+
+        .. warning:: This parameter has been renamed to ``path`` in 0.10.
+            Support for ``filename=`` will be removed in 1.0.
+
     Returns
     -------
     d : float >= 0
@@ -723,29 +778,43 @@ def get_duration(
     Raises
     ------
     ParameterError
-        if none of ``y``, ``S``, or ``filename`` are provided.
+        if none of ``y``, ``S``, or ``path`` are provided.
 
     Notes
     -----
-    `get_duration` can be applied to a file (``filename``), a spectrogram (``S``),
+    `get_duration` can be applied to a file (``path``), a spectrogram (``S``),
     or audio buffer (``y, sr``).  Only one of these three options should be
-    provided.  If you do provide multiple options (e.g., ``filename`` and ``S``),
-    then ``filename`` takes precedence over ``S``, and ``S`` takes precedence over
+    provided.  If you do provide multiple options (e.g., ``path`` and ``S``),
+    then ``path`` takes precedence over ``S``, and ``S`` takes precedence over
     ``(y, sr)``.
     """
 
-    if filename is not None:
+    path = rename_kw(
+        old_name="filename",
+        old_value=filename,
+        new_name="path",
+        new_value=path,
+        version_deprecated="0.10.0",
+        version_removed="1.0",
+    )
+
+    if path is not None:
         try:
-            return sf.info(filename).duration
-        except RuntimeError:
-            with audioread.audio_open(filename) as fdesc:
-                return fdesc.duration
+            return sf.info(path).duration  # type: ignore
+        except sf.SoundFileRuntimeError:
+            warnings.warn(
+                "PySoundFile failed. Trying audioread instead."
+                "\n\tAudioread support is deprecated in librosa 0.10.0"
+                " and will be removed in version 1.0.",
+                stacklevel=2,
+                category=FutureWarning,
+            )
+            with audioread.audio_open(path) as fdesc:
+                return fdesc.duration  # type: ignore
 
     if y is None:
         if S is None:
-            raise ParameterError(
-                "At least one of (y, sr), S, or filename must be provided"
-            )
+            raise ParameterError("At least one of (y, sr), S, or path must be provided")
 
         n_frames = S.shape[-1]
         n_samples = n_fft + hop_length * (n_frames - 1)
@@ -760,7 +829,7 @@ def get_duration(
     return float(n_samples) / sr
 
 
-def get_samplerate(path):
+def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
     """Get the sampling rate for a given file.
 
     Parameters
@@ -786,16 +855,25 @@ def get_samplerate(path):
     """
     try:
         if isinstance(path, sf.SoundFile):
-            return path.samplerate
+            return path.samplerate  # type: ignore
 
-        return sf.info(path).samplerate
-    except RuntimeError:
+        return sf.info(path).samplerate  # type: ignore
+    except sf.SoundFileRuntimeError:
+        warnings.warn(
+            "PySoundFile failed. Trying audioread instead."
+            "\n\tAudioread support is deprecated in librosa 0.10.0"
+            " and will be removed in version 1.0.",
+            stacklevel=2,
+            category=FutureWarning,
+        )
         with audioread.audio_open(path) as fdesc:
-            return fdesc.samplerate
+            return fdesc.samplerate  # type: ignore
 
 
 @cache(level=20)
-def autocorrelate(y, *, max_size=None, axis=-1):
+def autocorrelate(
+    y: np.ndarray, *, max_size: Optional[int] = None, axis: int = -1
+) -> np.ndarray:
     """Bounded-lag auto-correlation
 
     Parameters
@@ -866,10 +944,12 @@ def autocorrelate(y, *, max_size=None, axis=-1):
     subslice = [slice(None)] * autocorr.ndim
     subslice[axis] = slice(max_size)
 
-    return autocorr[tuple(subslice)]
+    autocorr_slice: np.ndarray = autocorr[tuple(subslice)]
+
+    return autocorr_slice
 
 
-def lpc(y, *, order, axis=-1):
+def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     """Linear Prediction Coefficients via Burg's method
 
     This function applies Burg's method to estimate coefficients of a linear
@@ -961,13 +1041,21 @@ def lpc(y, *, order, axis=-1):
     epsilon = util.tiny(den)
 
     # Call the helper, and swap the results back to the target axis position
-    return __lpc(
-        y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon
-    ).swapaxes(0, axis)
+    return np.swapaxes(
+        __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon), 0, axis
+    )
 
 
-@jit(nopython=True, cache=True)
-def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
+@jit(nopython=True, cache=True)  # type: ignore
+def __lpc(
+    y: np.ndarray,
+    order: int,
+    ar_coeffs: np.ndarray,
+    ar_coeffs_prev: np.ndarray,
+    reflect_coeff: np.ndarray,
+    den: np.ndarray,
+    epsilon: float,
+) -> np.ndarray:
     # This implementation follows the description of Burg's algorithm given in
     # section III of Marple's paper referenced in the docstring.
     #
@@ -987,7 +1075,7 @@ def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
     bwd_pred_error = y[:-1]
 
     # DEN_{M} from eqn 16 of Marple.
-    den[0] = np.sum(fwd_pred_error ** 2 + bwd_pred_error ** 2, axis=0)
+    den[0] = np.sum(fwd_pred_error**2 + bwd_pred_error**2, axis=0)
 
     for i in range(order):
         # can be removed if we keep the epsilon bias
@@ -1053,10 +1141,52 @@ def __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon):
     return ar_coeffs
 
 
+@stencil  # type: ignore
+def _zc_stencil(x: np.ndarray, threshold: float, zero_pos: bool) -> np.ndarray:
+    """Stencil to compute zero crossings"""
+    x0 = x[0]
+    if -threshold <= x0 <= threshold:
+        x0 = 0
+
+    x1 = x[-1]
+    if -threshold <= x1 <= threshold:
+        x1 = 0
+
+    if zero_pos:
+        return np.signbit(x0) != np.signbit(x1)  # type: ignore
+    else:
+        return np.sign(x0) != np.sign(x1)  # type: ignore
+
+
+@guvectorize(
+    [
+        "void(float32[:], float32, bool_, bool_[:])",
+        "void(float64[:], float64, bool_, bool_[:])",
+    ],
+    "(n),(),()->(n)",
+    cache=True,
+    nopython=True,
+)  # type: ignore
+def _zc_wrapper(
+    x: np.ndarray,
+    threshold: float,
+    zero_pos: bool,
+    y: np.ndarray,
+) -> None:  # pragma: no cover
+    """Vectorized wrapper for zero crossing stencil"""
+    y[:] = _zc_stencil(x, threshold, zero_pos)
+
+
 @cache(level=20)
 def zero_crossings(
-    y, *, threshold=1e-10, ref_magnitude=None, pad=True, zero_pos=True, axis=-1
-):
+    y: np.ndarray,
+    *,
+    threshold: float = 1e-10,
+    ref_magnitude: Optional[Union[float, Callable]] = None,
+    pad: bool = True,
+    zero_pos: bool = True,
+    axis: int = -1,
+) -> np.ndarray:
     """Find the zero-crossings of a signal ``y``: indices ``i`` such that
     ``sign(y[i]) != sign(y[j])``.
 
@@ -1068,8 +1198,8 @@ def zero_crossings(
     y : np.ndarray
         The input array
 
-    threshold : float > 0 or None
-        If specified, values where ``-threshold <= y <= threshold`` are
+    threshold : float >= 0
+        If non-zero, values where ``-threshold <= y <= threshold`` are
         clipped to 0.
 
     ref_magnitude : float > 0 or callable
@@ -1143,56 +1273,34 @@ def zero_crossings(
     (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
     """
 
-    # Clip within the threshold
-    if threshold is None:
-        threshold = 0.0
-
     if callable(ref_magnitude):
         threshold = threshold * ref_magnitude(np.abs(y))
 
     elif ref_magnitude is not None:
         threshold = threshold * ref_magnitude
 
-    if threshold > 0:
-        y = y.copy()
-        y[np.abs(y) <= threshold] = 0
+    yi = y.swapaxes(-1, axis)
+    z = np.empty_like(y, dtype=bool)
+    zi = z.swapaxes(-1, axis)
 
-    # Extract the sign bit
-    if zero_pos:
-        y_sign = np.signbit(y)
-    else:
-        y_sign = np.sign(y)
+    _zc_wrapper(yi, threshold, zero_pos, zi)
 
-    # Find the change-points by slicing
-    slice_pre = [slice(None)] * y.ndim
-    slice_pre[axis] = slice(1, None)
+    zi[..., 0] = pad
 
-    slice_post = [slice(None)] * y.ndim
-    slice_post[axis] = slice(-1)
-
-    # Since we've offset the input by one, pad back onto the front
-    padding = [(0, 0)] * y.ndim
-    padding[axis] = (1, 0)
-
-    return np.pad(
-        (y_sign[tuple(slice_post)] != y_sign[tuple(slice_pre)]),
-        padding,
-        mode="constant",
-        constant_values=pad,
-    )
+    return z
 
 
 def clicks(
     *,
-    times=None,
-    frames=None,
-    sr=22050,
-    hop_length=512,
-    click_freq=1000.0,
-    click_duration=0.1,
-    click=None,
-    length=None,
-):
+    times: Optional[_SequenceLike[_FloatLike_co]] = None,
+    frames: Optional[_SequenceLike[_IntLike_co]] = None,
+    sr: float = 22050,
+    hop_length: int = 512,
+    click_freq: float = 1000.0,
+    click_duration: float = 0.1,
+    click: Optional[np.ndarray] = None,
+    length: Optional[int] = None,
+) -> np.ndarray:
     """Construct a "click track".
 
     This returns a signal with the signal ``click`` sound placed at
@@ -1263,6 +1371,7 @@ def clicks(
     """
 
     # Compute sample positions from time or frames
+    positions: np.ndarray
     if times is None:
         if frames is None:
             raise ParameterError('either "times" or "frames" must be provided')
@@ -1319,7 +1428,14 @@ def clicks(
     return click_signal
 
 
-def tone(frequency, *, sr=22050, length=None, duration=None, phi=None):
+def tone(
+    frequency: _FloatLike_co,
+    *,
+    sr: float = 22050,
+    length: Optional[int] = None,
+    duration: Optional[float] = None,
+    phi: Optional[float] = None,
+) -> np.ndarray:
     """Construct a pure tone (cosine) signal at a given frequency.
 
     Parameters
@@ -1376,15 +1492,25 @@ def tone(frequency, *, sr=22050, length=None, duration=None, phi=None):
     if length is None:
         if duration is None:
             raise ParameterError('either "length" or "duration" must be provided')
-        length = duration * sr
+        length = int(np.ceil(duration * sr))
 
     if phi is None:
         phi = -np.pi * 0.5
 
-    return np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
+    y: np.ndarray = np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
+    return y
 
 
-def chirp(*, fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi=None):
+def chirp(
+    *,
+    fmin: _FloatLike_co,
+    fmax: _FloatLike_co,
+    sr: float = 22050,
+    length: Optional[int] = None,
+    duration: Optional[float] = None,
+    linear: bool = False,
+    phi: Optional[float] = None,
+) -> np.ndarray:
     """Construct a "chirp" or "sine-sweep" signal.
 
     The chirp sweeps from frequency ``fmin`` to ``fmax`` (in Hz).
@@ -1479,17 +1605,20 @@ def chirp(*, fmin, fmax, sr=22050, length=None, duration=None, linear=False, phi
         phi = -np.pi * 0.5
 
     method = "linear" if linear else "logarithmic"
-    return scipy.signal.chirp(
-        np.arange(duration, step=period),
+    y: np.ndarray = scipy.signal.chirp(
+        np.arange(int(np.ceil(duration * sr))) / sr,
         fmin,
         duration,
         fmax,
         method=method,
         phi=phi / np.pi * 180,  # scipy.signal.chirp uses degrees for phase offset
     )
+    return y
 
 
-def mu_compress(x, *, mu=255, quantize=True):
+def mu_compress(
+    x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255, quantize: bool = True
+) -> np.ndarray:
     """mu-law compression
 
     Given an input signal ``-1 <= x <= 1``, the mu-law compression
@@ -1570,20 +1699,24 @@ def mu_compress(x, *, mu=255, quantize=True):
             "mu-law input x={} must be in the " "range [-1, +1].".format(x)
         )
 
-    x_comp = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
+    x_comp: np.ndarray = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
 
     if quantize:
-        return (
+
+        y: np.ndarray = (
             np.digitize(
                 x_comp, np.linspace(-1, 1, num=int(1 + mu), endpoint=True), right=True
             )
             - int(mu + 1) // 2
         )
+        return y
 
     return x_comp
 
 
-def mu_expand(x, *, mu=255.0, quantize=True):
+def mu_expand(
+    x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255.0, quantize: bool = True
+) -> np.ndarray:
     """mu-law expansion
 
     This function is the inverse of ``mu_compress``. Given a mu-law compressed
@@ -1665,7 +1798,7 @@ def mu_expand(x, *, mu=255.0, quantize=True):
 
     if np.any(x < -1) or np.any(x > 1):
         raise ParameterError(
-            "Inverse mu-law input x={} must be " "in the range [-1, +1].".format(x)
+            f"Inverse mu-law input x={x} must be in the range [-1, +1]."
         )
 
     return np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)

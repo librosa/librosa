@@ -9,22 +9,24 @@ import scipy.interpolate
 import scipy.signal
 from ..util.exceptions import ParameterError
 from ..util import is_unique
+from numpy.typing import ArrayLike
+from typing import Callable, Optional, Sequence
 
 __all__ = ["salience", "interp_harmonics"]
 
 
 def salience(
-    S,
+    S: np.ndarray,
     *,
-    freqs,
-    harmonics,
-    weights=None,
-    aggregate=None,
-    filter_peaks=True,
-    fill_value=np.nan,
-    kind="linear",
-    axis=-2,
-):
+    freqs: np.ndarray,
+    harmonics: Sequence[float],
+    weights: Optional[ArrayLike] = None,
+    aggregate: Optional[Callable] = None,
+    filter_peaks: bool = True,
+    fill_value: float = np.nan,
+    kind: str = "linear",
+    axis: int = -2,
+) -> np.ndarray:
     """Harmonic salience function.
 
     Parameters
@@ -112,6 +114,7 @@ def salience(
 
     S_harm = interp_harmonics(S, freqs=freqs, harmonics=harmonics, kind=kind, axis=axis)
 
+    S_sal: np.ndarray
     if aggregate is np.average:
         S_sal = aggregate(S_harm, axis=axis - 1, weights=weights)
     else:
@@ -128,7 +131,15 @@ def salience(
     return S_sal
 
 
-def interp_harmonics(x, *, freqs, harmonics, kind="linear", fill_value=0, axis=-2):
+def interp_harmonics(
+    x: np.ndarray,
+    *,
+    freqs: np.ndarray,
+    harmonics: ArrayLike,
+    kind: str = "linear",
+    fill_value: float = 0,
+    axis: int = -2,
+) -> np.ndarray:
     """Compute the energy at harmonics of time-frequency representation.
 
     Given a frequency-based energy representation such as a spectrogram
@@ -237,8 +248,8 @@ def interp_harmonics(x, *, freqs, harmonics, kind="linear", fill_value=0, axis=-
         # Set the interpolation points
         f_out = np.multiply.outer(harmonics, freqs)
 
-        # Interpolate
-        return f_interp(f_out)
+        # Interpolate; suppress type checks
+        return f_interp(f_out)  # type: ignore
 
     elif freqs.shape == x.shape:
         if not np.all(is_unique(freqs, axis=axis)):
@@ -264,7 +275,7 @@ def interp_harmonics(x, *, freqs, harmonics, kind="linear", fill_value=0, axis=-
         # Rotate the vectorizing axis to the tail so that we get parallelism over frames
         # Afterward, we're swapping (-1, axis-1) instead of (-1,axis)
         # because a new dimension has been inserted
-        return (
+        return (  # type: ignore
             xfunc(freqs.swapaxes(axis, -1), x.swapaxes(axis, -1))
             .swapaxes(
                 # Return the original target axis to its place

@@ -5,6 +5,7 @@
 import warnings
 import numpy as np
 import scipy
+import numba
 
 
 from .spectrum import _spectrogram
@@ -13,20 +14,23 @@ from .._cache import cache
 from .. import util
 from .. import sequence
 from ..util.exceptions import ParameterError
+from numpy.typing import ArrayLike
+from typing import Any, Callable, Optional, Tuple, Union
+from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
 
 def estimate_tuning(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    resolution=0.01,
-    bins_per_octave=12,
-    **kwargs,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: Optional[int] = 2048,
+    resolution: float = 0.01,
+    bins_per_octave: int = 12,
+    **kwargs: Any,
+) -> float:
     """Estimate the tuning of an audio time series or spectrogram input.
 
     Parameters
@@ -102,7 +106,9 @@ def estimate_tuning(
     )
 
 
-def pitch_tuning(frequencies, *, resolution=0.01, bins_per_octave=12):
+def pitch_tuning(
+    frequencies: ArrayLike, *, resolution: float = 0.01, bins_per_octave: int = 12
+) -> float:
     """Given a collection of pitches, estimate its tuning offset
     (in fractions of a bin) relative to A440=440.0Hz.
 
@@ -168,26 +174,27 @@ def pitch_tuning(frequencies, *, resolution=0.01, bins_per_octave=12):
     counts, tuning = np.histogram(residual, bins)
 
     # return the histogram peak
-    return tuning[np.argmax(counts)]
+    tuning_est: float = tuning[np.argmax(counts)]
+    return tuning_est
 
 
 @cache(level=30)
 def piptrack(
     *,
-    y=None,
-    sr=22050,
-    S=None,
-    n_fft=2048,
-    hop_length=None,
-    fmin=150.0,
-    fmax=4000.0,
-    threshold=0.1,
-    win_length=None,
-    window="hann",
-    center=True,
-    pad_mode="constant",
-    ref=None,
-):
+    y: Optional[np.ndarray] = None,
+    sr: float = 22050,
+    S: Optional[np.ndarray] = None,
+    n_fft: Optional[int] = 2048,
+    hop_length: Optional[int] = None,
+    fmin: float = 150.0,
+    fmax: float = 4000.0,
+    threshold: float = 0.1,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
+    ref: Optional[Union[float, Callable]] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Pitch tracking on thresholded parabolically-interpolated STFT.
 
     This implementation uses the parabolic interpolation method described by [#]_.
@@ -321,20 +328,9 @@ def piptrack(
     # Do the parabolic interpolation everywhere,
     # then figure out where the peaks are
     # then restrict to the feasible range (fmin:fmax)
-    avg = 0.5 * (S[..., 2:, :] - S[..., :-2, :])
-
-    shift = 2 * S[..., 1:-1, :] - S[..., 2:, :] - S[..., :-2, :]
-
-    # Suppress divide-by-zeros.
-    # Points where shift == 0 will never be selected by localmax anyway
-    shift = avg / (shift + (np.abs(shift) < util.tiny(shift)))
-
-    # Pad back up to the same shape as S
-    padding = [(0, 0) for _ in S.shape]
-    padding[-2] = (1, 1)
-    avg = np.pad(avg, padding, mode="constant")
-    shift = np.pad(shift, padding, mode="constant")
-
+    avg = np.gradient(S, axis=-2)
+    shift = _parabolic_interpolation(S, axis=-2)
+    # this will get us the interpolated peak value
     dskew = 0.5 * avg * shift
 
     # Pre-allocate output
@@ -353,6 +349,7 @@ def piptrack(
     if callable(ref):
         ref_value = threshold * ref(S, axis=-2)
         # Reinsert the frequency axis here, in case the callable doesn't
+
         # support keepdims=True
         ref_value = np.expand_dims(ref_value, -2)
     else:
@@ -367,8 +364,12 @@ def piptrack(
 
 
 def _cumulative_mean_normalized_difference(
-    y_frames, frame_length, win_length, min_period, max_period
-):
+    y_frames: np.ndarray,
+    frame_length: int,
+    win_length: int,
+    min_period: int,
+    max_period: int,
+) -> np.ndarray:
     """Cumulative mean normalized difference function (equation 8 in [#]_)
 
     .. [#] De Cheveigné, Alain, and Hideki Kawahara.
@@ -400,7 +401,7 @@ def _cumulative_mean_normalized_difference(
     acf_frames[np.abs(acf_frames) < 1e-6] = 0
 
     # Energy terms.
-    energy_frames = np.cumsum(y_frames ** 2, axis=-2)
+    energy_frames = np.cumsum(y_frames**2, axis=-2)
     energy_frames = (
         energy_frames[..., win_length:, :] - energy_frames[..., :-win_length, :]
     )
@@ -420,49 +421,86 @@ def _cumulative_mean_normalized_difference(
         np.cumsum(yin_frames[..., 1 : max_period + 1, :], axis=-2) / tau_range
     )
     yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
-    yin_frames = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
+    yin_frames: np.ndarray = yin_numerator / (
+        yin_denominator + util.tiny(yin_denominator)
+    )
     return yin_frames
 
 
-def _parabolic_interpolation(y_frames):
+@numba.stencil  # type: ignore
+def _pi_stencil(x: np.ndarray) -> np.ndarray:
+    """Stencil to compute local parabolic interpolation"""
+
+    a = x[1] + x[-1] - 2 * x[0]
+    b = (x[1] - x[-1]) / 2
+
+    if np.abs(b) >= np.abs(a):
+        # If this happens, we'll shift by more than 1 bin
+        # Suppressing types because mypy has no idea about stencils
+        return 0  # type: ignore
+
+    return -b / a  # type: ignore
+
+
+@numba.guvectorize(
+    ["void(float32[:], float32[:])", "void(float64[:], float64[:])"],
+    "(n)->(n)",
+    cache=True,
+    nopython=True,
+)  # type: ignore
+def _pi_wrapper(x: np.ndarray, y: np.ndarray) -> None:  # pragma: no cover
+    """Vectorized wrapper for the parabolic interpolation stencil"""
+    y[:] = _pi_stencil(x)
+
+
+def _parabolic_interpolation(x: np.ndarray, *, axis: int = -2) -> np.ndarray:
     """Piecewise parabolic interpolation for yin and pyin.
 
     Parameters
     ----------
-    y_frames : np.ndarray [shape=(frame_length, n_frames)]
-        framed audio time series.
+    x : np.ndarray
+        array to interpolate
+    axis : int
+        axis along which to interpolate
 
     Returns
     -------
-    parabolic_shifts : np.ndarray [shape=(frame_length, n_frames)]
-        position of the parabola optima
-    """
+    parabolic_shifts : np.ndarray [shape=x.shape]
+        position of the parabola optima (relative to bin indices)
 
-    parabolic_shifts = np.zeros_like(y_frames)
-    parabola_a = (
-        y_frames[..., :-2, :] + y_frames[..., 2:, :] - 2 * y_frames[..., 1:-1, :]
-    ) / 2
-    parabola_b = (y_frames[..., 2:, :] - y_frames[..., :-2, :]) / 2
-    parabolic_shifts[..., 1:-1, :] = -parabola_b / (
-        2 * parabola_a + util.tiny(parabola_a)
-    )
-    parabolic_shifts[np.abs(parabolic_shifts) > 1] = 0
-    return parabolic_shifts
+        Note: the shift at bin `n` is determined as 0 if the estimated
+        optimum is outside the range `[n-1, n+1]`.
+    """
+    # Rotate the target axis to the end
+    xi = x.swapaxes(-1, axis)
+
+    # Allocate the output array and rotate target axis
+    shifts = np.empty_like(x)
+    shiftsi = shifts.swapaxes(-1, axis)
+
+    # Call the vectorized stencil
+    _pi_wrapper(xi, shiftsi)
+
+    # Handle the edge condition not covered by the stencil
+    shiftsi[..., -1] = 0
+    shiftsi[..., 0] = 0
+
+    return shifts
 
 
 def yin(
-    y,
+    y: np.ndarray,
     *,
-    fmin,
-    fmax,
-    sr=22050,
-    frame_length=2048,
-    win_length=None,
-    hop_length=None,
-    trough_threshold=0.1,
-    center=True,
-    pad_mode="constant",
-):
+    fmin: float,
+    fmax: float,
+    sr: float = 22050,
+    frame_length: int = 2048,
+    win_length: Optional[int] = None,
+    hop_length: Optional[int] = None,
+    trough_threshold: float = 0.1,
+    center: bool = True,
+    pad_mode: _PadMode = "constant",
+) -> np.ndarray:
     """Fundamental frequency (F0) estimation using the YIN algorithm.
 
     YIN is an autocorrelation based method for fundamental frequency estimation [#]_.
@@ -560,7 +598,7 @@ def yin(
 
     # Pad the time series so that frames are centered
     if center:
-        padding = [(0, 0) for _ in y.shape]
+        padding = [(0, 0)] * y.ndim
         padding[-1] = (frame_length // 2, frame_length // 2)
         y = np.pad(y, padding, mode=pad_mode)
 
@@ -611,30 +649,30 @@ def yin(
     )[..., 0, :]
 
     # Convert period to fundamental frequency.
-    f0 = sr / yin_period
+    f0: np.ndarray = sr / yin_period
     return f0
 
 
 def pyin(
-    y,
+    y: np.ndarray,
     *,
-    fmin,
-    fmax,
-    sr=22050,
-    frame_length=2048,
-    win_length=None,
-    hop_length=None,
-    n_thresholds=100,
-    beta_parameters=(2, 18),
-    boltzmann_parameter=2,
-    resolution=0.1,
-    max_transition_rate=35.92,
-    switch_prob=0.01,
-    no_trough_prob=0.01,
-    fill_na=np.nan,
-    center=True,
-    pad_mode="constant",
-):
+    fmin: float,
+    fmax: float,
+    sr: float = 22050,
+    frame_length: int = 2048,
+    win_length: Optional[int] = None,
+    hop_length: Optional[int] = None,
+    n_thresholds: int = 100,
+    beta_parameters: Tuple[float, float] = (2, 18),
+    boltzmann_parameter: float = 2,
+    resolution: float = 0.1,
+    max_transition_rate: float = 35.92,
+    switch_prob: float = 0.01,
+    no_trough_prob: float = 0.01,
+    fill_na: Optional[float] = np.nan,
+    center: bool = True,
+    pad_mode: _PadMode = "constant",
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 
     pYIN [#]_ is a modificatin of the YIN algorithm [#]_ for fundamental frequency (F0) estimation.

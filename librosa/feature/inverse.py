@@ -12,12 +12,21 @@ from ..core.spectrum import db_to_power
 from ..util.utils import tiny
 from .. import filters
 from ..util import nnls, expand_to
-
+from numpy.typing import DTypeLike
+from typing import Any, Callable, Optional, Union
+from .._typing import _WindowSpec, _PadModeSTFT
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
 
 
-def mel_to_stft(M, *, sr=22050, n_fft=2048, power=2.0, **kwargs):
+def mel_to_stft(
+    M: np.ndarray,
+    *,
+    sr: float = 22050,
+    n_fft: int = 2048,
+    power: float = 2.0,
+    **kwargs: Any,
+) -> np.ndarray:
     """Approximate STFT magnitude from a Mel power spectrogram.
 
     Parameters
@@ -102,21 +111,21 @@ def mel_to_stft(M, *, sr=22050, n_fft=2048, power=2.0, **kwargs):
 
 
 def mel_to_audio(
-    M,
+    M: np.ndarray,
     *,
-    sr=22050,
-    n_fft=2048,
-    hop_length=None,
-    win_length=None,
-    window="hann",
-    center=True,
-    pad_mode="constant",
-    power=2.0,
-    n_iter=32,
-    length=None,
-    dtype=np.float32,
-    **kwargs,
-):
+    sr: float = 22050,
+    n_fft: int = 2048,
+    hop_length: Optional[int] = None,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
+    power: float = 2.0,
+    n_iter: int = 32,
+    length: Optional[int] = None,
+    dtype: DTypeLike = np.float32,
+    **kwargs: Any,
+) -> np.ndarray:
     """Invert a mel power spectrogram to audio using Griffin-Lim.
 
     This is primarily a convenience wrapper for:
@@ -200,7 +209,15 @@ def mel_to_audio(
     )
 
 
-def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0):
+def mfcc_to_mel(
+    mfcc: np.ndarray,
+    *,
+    n_mels: int = 128,
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
+    ref: float = 1.0,
+    lifter: float = 0,
+) -> np.ndarray:
     """Invert Mel-frequency cepstral coefficients to approximate a Mel power
     spectrogram.
 
@@ -222,7 +239,7 @@ def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0
         If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
         Normalization is not supported for `dct_type=1`.
-    ref : number or callable
+    ref : float
         Reference power for (inverse) decibel calculation
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
@@ -269,8 +286,15 @@ def mfcc_to_mel(mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0
 
 
 def mfcc_to_audio(
-    mfcc, *, n_mels=128, dct_type=2, norm="ortho", ref=1.0, lifter=0, **kwargs
-):
+    mfcc: np.ndarray,
+    *,
+    n_mels: int = 128,
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
+    ref: float = 1.0,
+    lifter: float = 0,
+    **kwargs: Any,
+) -> np.ndarray:
     """Convert Mel-frequency cepstral coefficients to a time-domain audio signal
 
     This function is primarily a convenience wrapper for the following steps:
@@ -291,7 +315,7 @@ def mfcc_to_audio(
         If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an orthonormal
         DCT basis.
         Normalization is not supported for ``dct_type=1``.
-    ref : number or callable
+    ref : float
         Reference power for (inverse) decibel calculation
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::

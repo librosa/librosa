@@ -3,16 +3,19 @@
 # CREATED:2015-02-15 10:06:03 by Brian McFee <brian.mcfee@nyu.edu>
 """Helpful tools for deprecation"""
 
+from typing import Any, Callable, Iterable, Optional, Set, TypeVar, Union
 import warnings
 import functools
 from decorator import decorator
 import numpy as np
-
+from numpy.typing import DTypeLike
 
 __all__ = ["moved", "deprecated", "vectorize"]
 
 
-def moved(*, moved_from, version, version_removed):
+def moved(
+    *, moved_from: str, version: str, version_removed: str
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """This is a decorator which can be used to mark functions
     as moved/renamed.
 
@@ -28,7 +31,7 @@ def moved(*, moved_from, version, version_removed):
             "{:s}.".format(
                 moved_from, func.__module__, func.__name__, version, version_removed
             ),
-            category=DeprecationWarning,
+            category=FutureWarning,
             stacklevel=3,  # Would be 2, but the decorator adds a level
         )
         return func(*args, **kwargs)
@@ -36,7 +39,9 @@ def moved(*, moved_from, version, version_removed):
     return decorator(__wrapper)
 
 
-def deprecated(*, version, version_removed):
+def deprecated(
+    *, version: str, version_removed: str
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """This is a decorator which can be used to mark functions
     as deprecated.
 
@@ -49,7 +54,7 @@ def deprecated(*, version, version_removed):
             "\n\tIt will be removed in librosa version {:s}.".format(
                 func.__module__, func.__name__, version, version_removed
             ),
-            category=DeprecationWarning,
+            category=FutureWarning,
             stacklevel=3,  # Would be 2, but the decorator adds a level
         )
         return func(*args, **kwargs)
@@ -57,13 +62,30 @@ def deprecated(*, version, version_removed):
     return decorator(__wrapper)
 
 
-def vectorize(*, otypes=None, doc=None, excluded=None, cache=False, signature=None):
+_F = TypeVar("_F", bound=Callable[..., Any])
+
+
+def vectorize(
+    *,
+    otypes: Optional[Union[str, Iterable[DTypeLike]]] = None,
+    doc: Optional[str] = None,
+    excluded: Optional[Iterable[Union[int, str]]] = None,
+    cache: bool = False,
+    signature: Optional[str] = None
+) -> Callable[[_F], _F]:
     """This function is not quite a decorator, but is used as a wrapper
     to np.vectorize that preserves scalar behavior.
     """
 
     def __wrapper(function):
-        vecfunc = np.vectorize(function, otypes=otypes, doc=doc, excluded=excluded, cache=cache, signature=signature)
+        vecfunc = np.vectorize(
+            function,
+            otypes=otypes,
+            doc=doc,
+            excluded=excluded,
+            cache=cache,
+            signature=signature,
+        )
 
         @functools.wraps(function)
         def _vec(*args, **kwargs):
