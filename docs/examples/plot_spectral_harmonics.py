@@ -1,21 +1,21 @@
 # coding: utf-8
 """
-==================
-Spectral harmonics
-==================
+=================
+Harmonic spectrum
+=================
 
-This notebook demonstrates how to extract spectral harmonics from an audio signal.
+This notebook demonstrates how to extract the harmonic spectrum from an audio signal.
 The basic idea is to estimate the fundamental frequency (f0) at each time step,
-and extract the energy at integer multiples of f0 (*harmonics*).
-This representation can be used to compactly encode timbral content, either for
-resynthesis [1]_ or downstream analysis [2]_.
+and extract the energy at integer multiples of f0 (the *harmonics*).
+This representation can be used to represent the short-term evolution of timbre,
+either for resynthesis [1]_ or downstream analysis [2]_.
 
 .. [1] Bonada, Jordi, X. Serra, X. Amatriain, and A. Loscos.
     "Spectral processing."
     DAFX Digital Audio Effects (2011): 393-444.
 
 .. [2] Rafii, Zafar.
-    "The Constant-Q Harmonic Coefficients: A timbre feature designed for music signals [Lecture Notes]."
+    "The Constant-Q Harmonic Coefficients: A timbre feature designed for music signals."
     IEEE Signal Processing Magazine 39, no. 3 (2022): 90-96.
 """
 
@@ -48,7 +48,17 @@ Audio(data=y, rate=sr)
 #
 # We'll constrain `f0` to lie within the range 50 Hz
 # to 300 Hz.
-
+#
+# pyin returns three arrays:
+#   - `f0`, the sequence of fundamental frequency estimates
+#   - `voicing`, the sequence of indicator variables for whether
+#     a fundamental was detected or not at each time step
+#   - `voicing_probability`, the sequence of probabilities that each
+#     time step contains a fundamental frequency
+#
+# For this application, we'll only be using `f0`.  Note that by default,
+# pyin will set `f0[n] = np.nan` (not a number) whenever `voicing[n] == False`.
+# We'll handle this situation later on when resynthesizing the signal.
 f0, voicing, voicing_probability = librosa.pyin(y=y, sr=sr, fmin=50, fmax=300)
 
 ####################################################################
@@ -126,27 +136,26 @@ ax[1].set(ylabel='Harmonics')
 # nans with a frequency of 0.
 f0_synth = np.nan_to_num(f0)
 
-yout = np.zeros_like(y)
+y_out = np.zeros_like(y)
 
 for i, (factor, energy) in enumerate(zip(harmonics, harmonic_energy)):
     # Mix in a synthesized pitch contour
-    yout = yout + mir_eval.sonify.pitch_contour(times, f0_synth * factor,
+    y_out = y_out + mir_eval.sonify.pitch_contour(times, f0_synth * factor,
                                                 amplitudes=energy,
                                                 fs=sr,
                                                 length=len(y))
 
-Audio(data=yout, rate=sr)
+Audio(data=y_out, rate=sr)
 
 
-###################################################
-# The synthesized audio is by no means a perfect
-# reconstruction of the input signal.  Notably,
-# it is derived from a sparse sinusoidal modeling
-# assumption, and will therefore not do well at
-# representing transients.  The result is still
-# largely intelligible, however, and the decoupling
-# of f0 from harmonic energy allows us to modify
-# the synthesized signal in various ways.
+#######################################################
+# The synthesized audio is not a perfect reconstruction
+# of the input signal.  Notably, it is derived from a
+# sparse sinusoidal modeling assumption, and will
+# therefore not do well at representing transients.
+# The result is still largely intelligible, however,
+# and the decoupling of f0 from harmonic energy allows
+# us to modify the synthesized signal in various ways.
 #
 # For example, we can synthesize the same utterance
 # with a constant f0 to produce a monotone effect.
