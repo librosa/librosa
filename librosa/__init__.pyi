@@ -104,6 +104,7 @@ from .core import (
     vqt as vqt,
     salience as salience,
     interp_harmonics as interp_harmonics,
+    f0_harmonics as f0_harmonics,
     get_fftlib as get_fftlib,
     set_fftlib as set_fftlib,
     key_to_degrees as key_to_degrees,

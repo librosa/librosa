@@ -59,7 +59,7 @@ def test_tempo(tempo, sr, hop_length, ac_size, aggregate, prior):
     delay = librosa.time_to_samples(60.0 / tempo, sr=sr).item()
     y[::delay] = 1
 
-    tempo_est = librosa.beat.tempo(
+    tempo_est = librosa.feature.tempo(
         y=y,
         sr=sr,
         hop_length=hop_length,
@@ -105,7 +105,7 @@ def test_beat_no_onsets():
 @pytest.mark.parametrize("hop_length", [512])
 def test_tempo_no_onsets(start_bpm, aggregate, onsets, sr, hop_length):
 
-    tempo = librosa.beat.tempo(
+    tempo = librosa.feature.tempo(
         onset_envelope=onsets,
         sr=sr,
         hop_length=hop_length,
@@ -283,3 +283,17 @@ def deprecated_test_beat(infile):
 
     beat_times = librosa.frames_to_time(beats, sr=8000, hop_length=32)
     assert np.allclose(beat_times, DATA["beats"])
+
+
+def test_tempo_tgin(ysr):
+    # Test that tempo estimation tempogram input matches without
+    y, sr = ysr
+    # Use a non-standard win length
+    ac_size = 5
+    t1 = librosa.feature.tempo(y=y, sr=sr, ac_size=ac_size, aggregate=None)
+
+    win_length = librosa.time_to_frames(ac_size, sr=sr).item()
+    tg = librosa.feature.tempogram(y=y, sr=sr, win_length=win_length)
+    t2 = librosa.feature.tempo(tg=tg, sr=sr, aggregate=None)
+
+    assert np.allclose(t1, t2)

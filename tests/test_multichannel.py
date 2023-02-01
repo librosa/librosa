@@ -171,7 +171,7 @@ def test_tempo_multi(y_multi):
     y[0,::delay[0]] = 1
     y[1,::delay[1]] = 1
 
-    t = librosa.beat.tempo(
+    t = librosa.feature.tempo(
         y=y,
         sr=sr,
         hop_length=512,
@@ -180,7 +180,7 @@ def test_tempo_multi(y_multi):
         prior=None
     )
 
-    t0 = librosa.beat.tempo(
+    t0 = librosa.feature.tempo(
         y=y[0],
         sr=sr,
         hop_length=512,
@@ -189,7 +189,7 @@ def test_tempo_multi(y_multi):
         prior=None
     )
 
-    t1 = librosa.beat.tempo(
+    t1 = librosa.feature.tempo(
         y=y[1],
         sr=sr,
         hop_length=512,
@@ -1037,3 +1037,27 @@ def test_resample_highdim_axis(x, axis, res_type):
     # Verify that the target axis is the correct shape
     assert y.shape[axis] == 11025
     assert y.ndim == x.ndim
+
+
+@pytest.mark.parametrize('dynamic', [False, True])
+def test_f0_harmonics(y_multi, dynamic):
+
+    y, sr = y_multi
+    Df, _, S = librosa.reassigned_spectrogram(y, sr=sr, fill_nan=True)
+    freqs = librosa.fft_frequencies(sr=sr)
+
+    harmonics = np.array([1, 2, 3])
+
+    f0 = 100 + 30 * np.random.random_sample(size=(S.shape[0], S.shape[-1]))
+
+    if dynamic:
+        out = librosa.f0_harmonics(S, freqs=Df, f0=f0, harmonics=harmonics)
+        out0 = librosa.f0_harmonics(S[0], freqs=Df[0], f0=f0[0], harmonics=harmonics)
+        out1 = librosa.f0_harmonics(S[1], freqs=Df[1], f0=f0[1], harmonics=harmonics)
+    else:
+        out = librosa.f0_harmonics(S, freqs=freqs, f0=f0, harmonics=harmonics)
+        out0 = librosa.f0_harmonics(S[0], freqs=freqs, f0=f0[0], harmonics=harmonics)
+        out1 = librosa.f0_harmonics(S[1], freqs=freqs, f0=f0[1], harmonics=harmonics)
+
+    assert np.allclose(out[0], out0)
+    assert np.allclose(out[1], out1)
