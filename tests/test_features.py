@@ -967,3 +967,59 @@ def test_chroma_vqt_noinput():
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_chroma_cqt_noinput():
     librosa.feature.chroma_cqt(y=None, C=None)
+
+
+
+def test_tempogram_ratio_factors():
+    # Testing with synthetic data and specific factors
+
+    # tg is [0, 1, 2, 3, 4]  for each frame
+    tg = np.multiply.outer(np.arange(5), np.ones(4))
+    # frequencies are [1, 2, 4, 8, 16]
+    freqs = 2**np.arange(5)
+    factors = np.array([1, 2, 4])
+    bpm = np.array([4, 2, 1, 1.5])
+
+    tgr = librosa.feature.tempogram_ratio(tg=tg, freqs=freqs, factors=factors, bpm=bpm)
+
+    # frame 0: bpm = 4, factors are [1, 2, 4] => [4, 8, 16] => values 2 3 4
+    assert np.allclose(tgr[:, 0], [2, 3, 4])
+    # frame 1: bpm = 2, factors are [1, 2, 4] => [2, 4, 8] => values [0, 2, 3]
+    assert np.allclose(tgr[:, 1], [1, 2, 3])
+    # frame 2: bpm = 1, factors are [1, 2, 4] => [1, 2, 4] => values [0, 1, 2]
+    assert np.allclose(tgr[:, 2], [0, 1, 2])
+    # frame 3: bpm = 1.5, factors are [1, 2, 4] => [1.5, 3, 6] => values
+    # [0.5, 1.5, 2.5]
+    assert np.allclose(tgr[:, 3], [0.5, 1.5, 2.5])
+
+
+@pytest.fixture(scope="module")
+def tg_ex(y_ex):
+    y, sr = y_ex
+    return librosa.feature.tempogram(y=y, sr=sr)
+
+
+def test_tempogram_ratio_aggregate(y_ex, tg_ex):
+    # Verify that aggregation does its job
+    _, sr = y_ex
+    tgr1 = librosa.feature.tempogram_ratio(sr=sr, tg=tg_ex, aggregate=None)
+    tgr2 = librosa.feature.tempogram_ratio(sr=sr, tg=tg_ex, aggregate=np.median)
+    assert np.allclose(np.median(tgr1, axis=-1), tgr2)
+
+
+def test_tempogram_ratio_with_tg(y_ex, tg_ex):
+    # Verify equivalent behavior with/without pre-computed tempogram
+    y, sr = y_ex
+
+    tgr1 = librosa.feature.tempogram_ratio(y=y, sr=sr)
+    tgr2 = librosa.feature.tempogram_ratio(tg=tg_ex, sr=sr)
+
+    assert np.allclose(tgr1, tgr2)
+
+
+def test_tempogram_ratio_with_bpm(y_ex, tg_ex):
+    y, sr = y_ex
+    tempo = librosa.feature.tempo(tg=tg_ex, sr=sr, aggregate=None)
+    tgr1 = librosa.feature.tempogram_ratio(tg=tg_ex, sr=sr, bpm=None)
+    tgr2 = librosa.feature.tempogram_ratio(tg=tg_ex, sr=sr, bpm=tempo)
+    assert np.allclose(tgr1, tgr2)

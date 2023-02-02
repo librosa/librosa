@@ -2519,3 +2519,113 @@ def test_get_samplerate_audioread():
     assert sr == 8000
 
 
+def test_f0_harmonics_static():
+
+    freqs = np.arange(8)
+
+    data = np.multiply.outer(freqs, np.arange(2, 5))
+    # array([[ 0,  0,  0],
+    #        [ 2,  3,  4],
+    #        [ 4,  6,  8],
+    #        [ 6,  9, 12],
+    #        [ 8, 12, 16],
+    #        [10, 15, 20],
+    #        [12, 18, 24],
+    #        [14, 21, 28]])
+
+    f0 = np.array([1, 2, 0])
+    harmonics = [0.5, 1, 3]
+
+    yh = librosa.f0_harmonics(data, f0=f0, freqs=freqs, harmonics=harmonics)
+
+    assert yh.shape[0] == len(harmonics)
+    assert yh.shape[1:] == data.shape[1:]
+
+    # The 1 here comes from linear interpolation of the 0.5 subharmonic
+    # All else are data[1,2,3]
+    assert np.allclose(yh[:, 0], [1, 2, 6])
+    # Values here come from f0 = 2
+    assert np.allclose(yh[:, 1], [3, 6, 18])
+    # Last frame has f0 = 0, so all harmonics will evaluate to 0
+    assert np.allclose(yh[:, 2], [0, 0, 0])
+
+
+def test_f0_harmonics_dynamic():
+
+    # Cook up a dynamic frequency grid
+    freqs = np.add.outer(np.arange(8), np.arange(3))
+    # array([[0, 1, 2],
+    #        [1, 2, 3],
+    #        [2, 3, 4],
+    #        [3, 4, 5],
+    #        [4, 5, 6],
+    #        [5, 6, 7],
+    #        [6, 7, 8],
+    #        [7, 8, 9]])
+
+    # Broadcast multiply to make some measurements
+    data = freqs * np.arange(2, 5)
+    # array([[ 0,  3,  8],
+    #        [ 2,  6, 12],
+    #        [ 4,  9, 16],
+    #        [ 6, 12, 20],
+    #        [ 8, 15, 24],
+    #        [10, 18, 28],
+    #        [12, 21, 32],
+    #        [14, 24, 36]])
+
+    # f0 at each frame
+    f0 = np.array([2, 4, 5])
+
+    # Harmonics
+    harmonics = [0.5, 1, 2]
+
+    # Interpolate
+    yh = librosa.f0_harmonics(data, f0=f0, freqs=freqs, harmonics=harmonics)
+
+    assert yh.shape[0] == len(harmonics)
+    assert yh.shape[1:] == data.shape[1:]
+
+    # f0 in frame 0 = 2, f0 * h => [1, 2, 4]
+    # data[f0 * h] = [2, 4, 8]
+    assert np.allclose(yh[:, 0], [2, 4, 8])
+    # f0 in frame 1 = 4, f0 * h => [2, 4, 8]
+    # data[f0 * h] = [6, 12, 24]
+    assert np.allclose(yh[:, 1], [6, 12, 24])
+    # f0 in frame 2 = 5, f0 * h = [2.5, 5, 10]
+    # interpolation happens here
+    # last frequency falls off the edge of the frequency grid, filled as 0
+    assert np.allclose(yh[:, 2], [10, 20, 0])
+
+
+def test_f0_harmonics_1d_nonunique():
+    freqs = np.arange(-8, 8)**2
+    data = np.multiply.outer(freqs, np.arange(5))
+
+    h = [1, 2, 3]
+    f0 = np.ones(data.shape[-1])
+    with pytest.warns(UserWarning):
+        librosa.f0_harmonics(data, freqs=freqs, harmonics=h, f0=f0)
+
+
+def test_f0_harmonics_2d_nonunique():
+    freqs = np.add.outer(np.arange(-8, 8)**2, np.arange(5))
+
+    data = freqs * np.arange(5)
+
+    h = [1, 2, 3]
+    f0 = np.ones(data.shape[-1])
+    with pytest.warns(UserWarning):
+        librosa.f0_harmonics(data, freqs=freqs, harmonics=h, f0=f0)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_f0_harmonics_incompat():
+
+    # Freq axis does not match data shape
+    freqs = np.arange(5)
+    data = np.zeros((6, 7))
+    f0 = np.arange(7)
+    harmonics = np.arange(1, 3)
+
+    librosa.f0_harmonics(data, freqs=freqs, harmonics=harmonics, f0=f0)

@@ -31,8 +31,10 @@ Rhythm features
 .. autosummary::
     :toctree: generated/
 
+    tempo
     tempogram
     fourier_tempogram
+    tempogram_ratio
 
 Feature manipulation
 --------------------

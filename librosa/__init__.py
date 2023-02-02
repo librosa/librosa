@@ -78,6 +78,7 @@ Harmonics
 
     interp_harmonics
     salience
+    f0_harmonics
 
     phase_vocoder
 
