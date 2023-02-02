@@ -1264,7 +1264,7 @@ def path_enhance(
     return np.asanyarray(R_smooth)
 
 
-def __affinity_bandwidth(rec, bw_mode, k):
+def __affinity_bandwidth(rec: scipy.sparse.csr_matrix, bw_mode: Union[np.ndarray, int, float, str], k: int) -> Union[float, np.ndarray]:
     # rec should be a csr_matrix
 
     # the api allows users to specify a scalar bandwidth directly, besides the string based options.
