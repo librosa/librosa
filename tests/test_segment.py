@@ -96,7 +96,9 @@ def test_cross_similarity_affinity(metric, bandwidth):
 def test_cross_similarity_full():
     data = np.eye(10)
     data_ref = np.eye(10)
-    rec = librosa.segment.cross_similarity(data, data_ref, mode="distance", full=True)
+    rec = librosa.segment.cross_similarity(
+        data, data_ref, mode="distance", full=True
+    )
     assert np.all(rec >= 0)
 
 
@@ -263,7 +265,9 @@ def test_recurrence_affinity(metric, bandwidth, self):
 
 def test_recurrence_full():
     data = np.eye(10)
-    rec = librosa.segment.recurrence_matrix(data, mode="distance", full=True)
+    rec = librosa.segment.recurrence_matrix(
+        data, mode="distance", metric="euclidean", sparse= False, full=True
+    )
     assert np.all(rec >= 0)
 
 

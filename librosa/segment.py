@@ -66,7 +66,8 @@ def cross_similarity(
     metric: str = ...,
     sparse: Literal[False] = ...,
     mode: str = ...,
-    bandwidth: Optional[float] = ...,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
+    full: bool = False,
 ) -> np.ndarray:
     ...
 
@@ -80,7 +81,8 @@ def cross_similarity(
     metric: str = ...,
     sparse: Literal[True] = ...,
     mode: str = ...,
-    bandwidth: Optional[float] = ...,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
+    full: bool = False,
 ) -> scipy.sparse.csc_matrix:
     ...
 
@@ -94,7 +96,7 @@ def cross_similarity(
     metric: str = "euclidean",
     sparse: bool = False,
     mode: str = "connectivity",
-    bandwidth: Optional[_FloatLike_co] = None,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
     full: bool = False,
 ) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
     """Compute cross-similarity from one data sequence to a reference sequence.
@@ -143,8 +145,10 @@ def cross_similarity(
         ``exp( - distance(i, j) / bandwidth)`` where ``bandwidth`` is
         as specified below.
 
-    bandwidth : None, float > 0, or str
+    bandwidth : None, float > 0, ndarray, or str
         str options include ``{'med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}``
+
+        If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
 
         If using ``mode='affinity'``, this can be used to set the
         bandwidth on the affinity kernel.
@@ -353,9 +357,10 @@ def recurrence_matrix(
     sym: bool = ...,
     sparse: Literal[True] = ...,
     mode: str = ...,
-    bandwidth: Optional[float] = ...,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = ...,
     self: bool = ...,
     axis: int = ...,
+    full: bool = False,
 ) -> scipy.sparse.csc_matrix:
     ...
 
@@ -370,9 +375,10 @@ def recurrence_matrix(
     sym: bool = ...,
     sparse: Literal[False] = ...,
     mode: str = ...,
-    bandwidth: Optional[_FloatLike_co] = ...,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = ...,
     self: bool = ...,
     axis: int = ...,
+    full: bool = False,
 ) -> np.ndarray:
     ...
 
@@ -387,7 +393,7 @@ def recurrence_matrix(
     sym: bool = False,
     sparse: bool = False,
     mode: str = "connectivity",
-    bandwidth: Optional[_FloatLike_co] = None,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
     self: bool = False,
     axis: int = -1,
     full: bool = False,
@@ -453,8 +459,10 @@ def recurrence_matrix(
         ``exp( - distance(i, j) / bandwidth)`` where ``bandwidth`` is
         as specified below.
 
-    bandwidth : None, float > 0, or str
+    bandwidth : None, float > 0, ndarray, or str
         str options include ``{'med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}``
+
+        If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
 
         If using ``mode='affinity'``, the ``bandwidth`` option can be used to set the
         bandwidth on the affinity kernel.
