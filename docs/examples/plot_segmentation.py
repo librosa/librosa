@@ -169,7 +169,7 @@ ax[0].set(title='Structure components')
 #############################################################
 # Let's use these k components to cluster beats into segments
 # (Algorithm 1)
-KM = sklearn.cluster.KMeans(n_clusters=k)
+KM = sklearn.cluster.KMeans(n_clusters=k, n_init="auto")
 
 seg_ids = KM.fit_predict(X)
 
