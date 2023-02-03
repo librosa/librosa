@@ -42,8 +42,8 @@ from . import util
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 from typing import Any, Callable, Optional, TypeVar, Union, overload
-from typing_extensions import Literal, assert_never
-from ._typing import _WindowSpec, _FloatLike_co, _ensure_not_reachable
+from typing_extensions import Literal
+from ._typing import _WindowSpec, _FloatLike_co
 
 __all__ = [
     "cross_similarity",
