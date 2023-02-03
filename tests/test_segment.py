@@ -285,6 +285,18 @@ def test_empty_data_recurrence():
     librosa.segment.recurrence_matrix(data, mode="affinity")
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_empty_rows_recurrence():
+    data = np.zeros((10, 10))
+    data[0, 5] = 1
+    librosa.segment.recurrence_matrix(data, mode="affinity", bandwidth="mean_k")
+
+def test_empty_rows_recurrence_okay():
+    data = np.zeros((10, 10))
+    data[0, 5] = 1
+    librosa.segment.recurrence_matrix(data, mode="affinity", bandwidth="med_k_scalar")
+
+
 def test_recurrence_multi():
     srand()
     X = np.random.randn(2, 10, 100)

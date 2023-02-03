@@ -289,7 +289,7 @@ def cross_similarity(
 
     # using k for bandwidth estimation also and decouple k for full mode
     bandwidth_k = k
-    if full and (mode != 'connectivity'):
+    if full and (mode != "connectivity"):
         k = n
 
     # Build the neighbor search object
@@ -614,7 +614,7 @@ def recurrence_matrix(
 
     # using k for bandwidth estimation also and decouple k for full mode
     bandwidth_k = k
-    if full and (mode != 'connectivity'):
+    if full and (mode != "connectivity"):
         k = t
 
     # Build the neighbor search object
@@ -1315,7 +1315,11 @@ def path_enhance(
     return np.asanyarray(R_smooth)
 
 
-def __affinity_bandwidth(rec: scipy.sparse.csr_matrix, bw_mode: Optional[Union[np.ndarray, _FloatLike_co, str]], k: int) -> Union[float, np.ndarray]:
+def __affinity_bandwidth(
+    rec: scipy.sparse.csr_matrix,
+    bw_mode: Optional[Union[np.ndarray, _FloatLike_co, str]],
+    k: int,
+) -> Union[float, np.ndarray]:
     # rec should be a csr_matrix
 
     # the api allows users to specify a scalar bandwidth directly, besides the string based options.
@@ -1337,14 +1341,23 @@ def __affinity_bandwidth(rec: scipy.sparse.csr_matrix, bw_mode: Optional[Union[n
         scalar_bandwidth = float(bw_mode)
         if scalar_bandwidth <= 0:
             raise ParameterError(
-                "Invalid scalar bandwidth={}. Must be strictly positive.".format(scalar_bandwidth)
+                "Invalid scalar bandwidth={}. Must be strictly positive.".format(
+                    scalar_bandwidth
+                )
             )
         return scalar_bandwidth
 
     if bw_mode is None:
-        bw_mode = 'med_k_scalar'
+        bw_mode = "med_k_scalar"
 
-    if bw_mode not in ['med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']:
+    if bw_mode not in [
+        "med_k_scalar",
+        "mean_k",
+        "gmean_k",
+        "mean_k_avg",
+        "gmean_k_avg",
+        "mean_k_avg_and_pair",
+    ]:
         raise ParameterError(
             (
                 "Invalid bandwidth='{}'. Must be either a positive scalar or one of "
@@ -1360,47 +1373,59 @@ def __affinity_bandwidth(rec: scipy.sparse.csr_matrix, bw_mode: Optional[Union[n
         links = rec[i].nonzero()[1]
         # catch empty dists lists in knn_dists
         if len(links) == 0:
-            raise ParameterError("The sample at time point {} has no neighbors".format(i))
-
-        # Compute k nearest neighbors' distance and sort ascending
-        knn_dist_row = np.sort(rec[i, links].toarray()[0])[:k]
-        knn_dists.append(knn_dist_row)
+            # Disconnected vertices are only a problem for point-wise bandwidth estimation
+            if bw_mode not in ["med_k_scalar"]:
+                raise ParameterError(f"The sample at time point {i} has no neighbors")
+            else:
+                # If we have no links, then there's no distance
+                # shove a nan in here
+                knn_dists.append(np.array([np.nan]))
+        else:
+            # Compute k nearest neighbors' distance and sort ascending
+            knn_dist_row = np.sort(rec[i, links].toarray()[0])[:k]
+            knn_dists.append(knn_dist_row)
 
     # take the last element of each list for the distance to kth neighbor
     dist_to_k = np.asarray([dists[-1] for dists in knn_dists])
     avg_dist_to_first_ks = np.asarray([np.mean(dists) for dists in knn_dists])
 
-    if bw_mode == 'med_k_scalar':
+    if bw_mode == "med_k_scalar":
+        if not np.any(np.isfinite(dist_to_k)):
+            raise ParameterError("Cannot estimate bandwidth from an empty graph")
         return float(np.nanmedian(dist_to_k))
 
-    if bw_mode in ['mean_k', 'gmean_k']:
+    if bw_mode in ["mean_k", "gmean_k"]:
         # building bandwidth components (sigma) using sparse matrix structures and indices
         sigma_i_data = np.empty_like(rec.data)
         sigma_j_data = np.empty_like(rec.data)
         for row in range(t):
-            sigma_i_data[rec.indptr[row]:rec.indptr[row + 1]] = dist_to_k[row]
-            col_idx = rec.indices[rec.indptr[row]:rec.indptr[row + 1]]
-            sigma_j_data[rec.indptr[row]:rec.indptr[row + 1]] = dist_to_k[col_idx]
+            sigma_i_data[rec.indptr[row] : rec.indptr[row + 1]] = dist_to_k[row]
+            col_idx = rec.indices[rec.indptr[row] : rec.indptr[row + 1]]
+            sigma_j_data[rec.indptr[row] : rec.indptr[row + 1]] = dist_to_k[col_idx]
 
-        if bw_mode == 'mean_k':
+        if bw_mode == "mean_k":
             out = np.array((sigma_i_data + sigma_j_data) / 2)
-        elif bw_mode == 'gmean_k':
+        elif bw_mode == "gmean_k":
             out = np.array((sigma_i_data * sigma_j_data) ** 0.5)
 
-    if bw_mode in ['mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']:
+    if bw_mode in ["mean_k_avg", "gmean_k_avg", "mean_k_avg_and_pair"]:
         # building bandwidth components (sigma) using sparse matrix structures and indices
         sigma_i_data = np.empty_like(rec.data)
         sigma_j_data = np.empty_like(rec.data)
         for row in range(t):
-            sigma_i_data[rec.indptr[row]:rec.indptr[row + 1]] = avg_dist_to_first_ks[row]
-            col_idx = rec.indices[rec.indptr[row]:rec.indptr[row + 1]]
-            sigma_j_data[rec.indptr[row]:rec.indptr[row + 1]] = avg_dist_to_first_ks[col_idx]
+            sigma_i_data[rec.indptr[row] : rec.indptr[row + 1]] = avg_dist_to_first_ks[
+                row
+            ]
+            col_idx = rec.indices[rec.indptr[row] : rec.indptr[row + 1]]
+            sigma_j_data[rec.indptr[row] : rec.indptr[row + 1]] = avg_dist_to_first_ks[
+                col_idx
+            ]
 
-        if bw_mode == 'mean_k_avg':
+        if bw_mode == "mean_k_avg":
             out = np.array((sigma_i_data + sigma_j_data) / 2)
-        elif bw_mode == 'gmean_k_avg':
+        elif bw_mode == "gmean_k_avg":
             out = np.array((sigma_i_data * sigma_j_data) ** 0.5)
-        elif bw_mode == 'mean_k_avg_and_pair':
+        elif bw_mode == "mean_k_avg_and_pair":
             out = np.array((sigma_i_data + sigma_j_data + rec.data) / 3)
-    
+
     return out
