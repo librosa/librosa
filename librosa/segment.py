@@ -42,8 +42,8 @@ from . import util
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 from typing import Any, Callable, Optional, TypeVar, Union, overload
-from typing_extensions import Literal
-from ._typing import _WindowSpec, _FloatLike_co
+from typing_extensions import Literal, assert_never
+from ._typing import _WindowSpec, _FloatLike_co, _ensure_not_reachable
 
 __all__ = [
     "cross_similarity",
@@ -95,6 +95,7 @@ def cross_similarity(
     sparse: bool = False,
     mode: str = "connectivity",
     bandwidth: Optional[_FloatLike_co] = None,
+    full: bool = False,
 ) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
     """Compute cross-similarity from one data sequence to a reference sequence.
 
@@ -142,12 +143,55 @@ def cross_similarity(
         ``exp( - distance(i, j) / bandwidth)`` where ``bandwidth`` is
         as specified below.
 
-    bandwidth : None or float > 0
+    bandwidth : None, float > 0, or str
+        str options include ``{'med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}``
+
         If using ``mode='affinity'``, this can be used to set the
         bandwidth on the affinity kernel.
 
-        If no value is provided, it is set automatically to the median
+        If no value is provided or ``None``, default to ``'med_k_scalar'``.
+
+        If ``bandwidth='med_k_scalar'``, bandwidth is set automatically to the median
         distance to the k'th nearest neighbor of each ``data[:, i]``.
+
+        If ``bandwidth='mean_k'``, bandwidth is estimated for each sample-pair (i, j) by taking the
+        arithmetic mean between distances to the k-th nearest neighbor for sample i and sample j.
+
+        If ``bandwidth='gmean_k'``, bandwidth is estimated for each sample-pair (i, j) by taking the
+        geometric mean between distances to the k-th nearest neighbor for sample i and j [#z]_.
+
+        If ``bandwidth='mean_k_avg'``, bandwidth is estimated for each sample-pair (i, j) by taking the
+        arithmetic mean between the average distances to the first k-th nearest neighbors for
+        sample i and sample j.
+        This is similar to the approach in Wang et al. (2014) [#w]_ but does not include the distance
+        between i and j.
+
+        If ``bandwidth='gmean_k_avg'``, bandwidth is estimated for each sample-pair (i, j) by taking the
+        geometric mean between the average distances to the first k-th nearest neighbors for
+        sample i and sample j.
+
+        If ``bandwidth='mean_k_avg_and_pair'``, bandwidth is estimated for each sample-pair (i, j) by
+        taking the arithmetic mean between three terms: the average distances to the first
+        k-th nearest neighbors for sample i and sample j respectively, as well as
+        the distance between i and j.
+        This is similar to the approach in Wang et al. (2014). [#w]_
+
+        .. [#z] Zelnik-Manor, Lihi, and Pietro Perona. (2004).
+            "Self-tuning spectral clustering." Advances in neural information processing systems 17.
+
+        .. [#w] Wang, Bo, et al. (2014).
+            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333–337.
+            https://doi.org/10.1038/nmeth.2810
+
+    full : bool
+        If using ``mode ='affinity'`` or ``mode='distance'``, this option can be used to compute
+        the full affinity or distance matrix as opposed a sparse matrix with only none-zero terms
+        for the first k-neighbors of each sample.
+        This option has no effect when using ``mode='connectivity'``.
+
+        When using ``mode='distance'``, setting ``full=True`` will ignore ``k`` and ``width``.
+        When using ``mode='affinity'``, setting ``full=True`` will use ``k`` exclusively for
+        bandwidth estimation, and ignore ``width``.
 
     Returns
     -------
@@ -239,11 +283,10 @@ def cross_similarity(
 
     k = int(k)
 
-    if bandwidth is not None:
-        if bandwidth <= 0:
-            raise ParameterError(
-                "Invalid bandwidth={}. " "Must be strictly positive.".format(bandwidth)
-            )
+    # using k for bandwidth estimation also and decouple k for full mode
+    bandwidth_k = k
+    if full and (mode != 'connectivity'):
+        k = n
 
     # Build the neighbor search object
     # `auto` mode does not work with some choices of metric.  Rather than special-case
@@ -269,16 +312,17 @@ def cross_similarity(
 
     xsim = knn.kneighbors_graph(X=data, mode=kng_mode).tolil()
 
-    # Retain only the top-k links per point
-    for i in range(n):
-        # Get the links from point i
-        links = xsim[i].nonzero()[1]
+    if not full:
+        # Retain only the top-k links per point
+        for i in range(n):
+            # Get the links from point i
+            links = xsim[i].nonzero()[1]
 
-        # Order them ascending
-        idx = links[np.argsort(xsim[i, links].toarray())][0]
+            # Order them ascending
+            idx = links[np.argsort(xsim[i, links].toarray())][0]
 
-        # Everything past the kth closest gets squashed
-        xsim[i, idx[k:]] = 0
+            # Everything past the kth closest gets squashed
+            xsim[i, idx[k:]] = 0
 
     # Convert a compressed sparse row (CSR) format
     xsim = xsim.tocsr()
@@ -287,9 +331,8 @@ def cross_similarity(
     if mode == "connectivity":
         xsim = xsim.astype(bool)
     elif mode == "affinity":
-        if bandwidth is None:
-            bandwidth = np.nanmedian(xsim.max(axis=1).data)
-        xsim.data[:] = np.exp(xsim.data / (-1 * bandwidth))
+        aff_bandwidth = __affinity_bandwidth(xsim, bandwidth, bandwidth_k)
+        xsim.data[:] = np.exp(xsim.data / (-1 * aff_bandwidth))
 
     # Transpose to n_ref by n
     xsim = xsim.T
@@ -631,8 +674,8 @@ def recurrence_matrix(
         # Negatives are temporarily inserted above to preserve the sparsity structure
         # of the matrix without corrupting the bandwidth calculations
         rec.data[rec.data < 0] = 0.0
-        bandwidth = __affinity_bandwidth(rec, bandwidth, bandwidth_k)
-        rec.data[:] = np.exp(rec.data / (-1 * bandwidth))
+        aff_bandwidth = __affinity_bandwidth(rec, bandwidth, bandwidth_k)
+        rec.data[:] = np.exp(rec.data / (-1 * aff_bandwidth))
 
     # Transpose to be column-major
     rec = rec.T
@@ -1264,7 +1307,7 @@ def path_enhance(
     return np.asanyarray(R_smooth)
 
 
-def __affinity_bandwidth(rec: scipy.sparse.csr_matrix, bw_mode: Union[np.ndarray, int, float, str], k: int) -> Union[float, np.ndarray]:
+def __affinity_bandwidth(rec: scipy.sparse.csr_matrix, bw_mode: Optional[Union[np.ndarray, _FloatLike_co, str]], k: int) -> Union[float, np.ndarray]:
     # rec should be a csr_matrix
 
     # the api allows users to specify a scalar bandwidth directly, besides the string based options.
@@ -1280,15 +1323,15 @@ def __affinity_bandwidth(rec: scipy.sparse.csr_matrix, bw_mode: Union[np.ndarray
             raise ParameterError(
                 "Invalid bandwidth. All entries must be strictly positive."
             )
-        return bandwidth[rec.nonzero()]
+        return np.array(bandwidth[rec.nonzero()])
 
     elif isinstance(bw_mode, (int, float)):
-        bandwidth = bw_mode
-        if bandwidth <= 0:
+        scalar_bandwidth = float(bw_mode)
+        if scalar_bandwidth <= 0:
             raise ParameterError(
-                "Invalid scalar bandwidth={}. Must be strictly positive.".format(bandwidth)
+                "Invalid scalar bandwidth={}. Must be strictly positive.".format(scalar_bandwidth)
             )
-        return bandwidth
+        return scalar_bandwidth
 
     if bw_mode is None:
         bw_mode = 'med_k_scalar'
@@ -1316,13 +1359,11 @@ def __affinity_bandwidth(rec: scipy.sparse.csr_matrix, bw_mode: Union[np.ndarray
         knn_dists.append(knn_dist_row)
 
     # take the last element of each list for the distance to kth neighbor
-    
-    
     dist_to_k = np.asarray([dists[-1] for dists in knn_dists])
     avg_dist_to_first_ks = np.asarray([np.mean(dists) for dists in knn_dists])
 
     if bw_mode == 'med_k_scalar':
-        return np.nanmedian(dist_to_k)
+        return float(np.nanmedian(dist_to_k))
 
     if bw_mode in ['mean_k', 'gmean_k']:
         # building bandwidth components (sigma) using sparse matrix structures and indices
@@ -1334,9 +1375,9 @@ def __affinity_bandwidth(rec: scipy.sparse.csr_matrix, bw_mode: Union[np.ndarray
             sigma_j_data[rec.indptr[row]:rec.indptr[row + 1]] = dist_to_k[col_idx]
 
         if bw_mode == 'mean_k':
-            return (sigma_i_data + sigma_j_data) / 2
+            out = np.array((sigma_i_data + sigma_j_data) / 2)
         elif bw_mode == 'gmean_k':
-            return (sigma_i_data * sigma_j_data) ** 0.5
+            out = np.array((sigma_i_data * sigma_j_data) ** 0.5)
 
     if bw_mode in ['mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']:
         # building bandwidth components (sigma) using sparse matrix structures and indices
@@ -1348,8 +1389,10 @@ def __affinity_bandwidth(rec: scipy.sparse.csr_matrix, bw_mode: Union[np.ndarray
             sigma_j_data[rec.indptr[row]:rec.indptr[row + 1]] = avg_dist_to_first_ks[col_idx]
 
         if bw_mode == 'mean_k_avg':
-            return (sigma_i_data + sigma_j_data) / 2
+            out = np.array((sigma_i_data + sigma_j_data) / 2)
         elif bw_mode == 'gmean_k_avg':
-            return (sigma_i_data * sigma_j_data) ** 0.5
+            out = np.array((sigma_i_data * sigma_j_data) ** 0.5)
         elif bw_mode == 'mean_k_avg_and_pair':
-            return (sigma_i_data + sigma_j_data + rec.data) / 3
+            out = np.array((sigma_i_data + sigma_j_data + rec.data) / 3)
+    
+    return out

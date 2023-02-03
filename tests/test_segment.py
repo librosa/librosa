@@ -93,6 +93,13 @@ def test_cross_similarity_affinity(metric, bandwidth):
         assert np.allclose(-logvals, distance[i, j] * bandwidth)
 
 
+def test_cross_similarity_full():
+    data = np.eye(10)
+    data_ref = np.eye(10)
+    rec = librosa.segment.cross_similarity(data, data_ref, mode="distance", full=True)
+    assert np.all(rec >= 0)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_cross_similarity_badmode():
 
@@ -111,7 +118,7 @@ def test_cross_similarity_bad_bandwidth():
     srand()
     data_ref = np.random.randn(3, 50)
     data = np.random.randn(3, 70)
-    rec = librosa.segment.cross_similarity(data, data_ref, bandwidth=-2)
+    rec = librosa.segment.cross_similarity(data, data_ref, bandwidth=-2, mode='affinity')
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
