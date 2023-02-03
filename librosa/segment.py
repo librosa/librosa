@@ -1374,7 +1374,7 @@ def __affinity_bandwidth(
         # catch empty dists lists in knn_dists
         if len(links) == 0:
             # Disconnected vertices are only a problem for point-wise bandwidth estimation
-            if "scalar" not in bw_mode:
+            if bw_mode not in ["med_k_scalar"]:
                 raise ParameterError(f"The sample at time point {i} has no neighbors")
             else:
                 # If we have no links, then there's no distance
