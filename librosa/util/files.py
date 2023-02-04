@@ -121,7 +121,7 @@ def list_examples() -> None:
         if key == "pibble":
             # Shh... she's sleeping
             continue
-        print("{:10}\t{}".format(key, __TRACKMAP[key]["desc"]))
+        print(f"{key:10}\t{__TRACKMAP[key]['desc']}")
 
 
 def example_info(key: str) -> None:
@@ -155,7 +155,7 @@ def example_info(key: str) -> None:
     license_file = __GOODBOY.fetch(__TRACKMAP[key]["path"] + ".txt")
 
     with open(license_file, "r") as fdesc:
-        print("{:10s}\t{:s}".format(key, __TRACKMAP[key]["desc"]))
+        print(f"{key:10s}\t{__TRACKMAP[key]['desc']:s}")
         print("-" * 68)
         for line in fdesc:
             print(line)
