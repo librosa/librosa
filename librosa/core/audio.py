@@ -1694,14 +1694,11 @@ def mu_compress(
         )
 
     if np.any(x < -1) or np.any(x > 1):
-        raise ParameterError(
-            f"mu-law input x={x} must be in the range [-1, +1]."
-        )
+        raise ParameterError(f"mu-law input x={x} must be in the range [-1, +1].")
 
     x_comp: np.ndarray = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
 
     if quantize:
-
         y: np.ndarray = (
             np.digitize(
                 x_comp, np.linspace(-1, 1, num=int(1 + mu), endpoint=True), right=True

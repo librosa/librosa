@@ -149,7 +149,6 @@ class TimeFormatter(mplticker.Formatter):
     """
 
     def __init__(self, lag: bool = False, unit: Optional[str] = None):
-
         if unit not in ["h", "m", "s", "ms", None]:
             raise ParameterError(f"Unknown time unit: {unit}")
 
@@ -241,14 +240,12 @@ class NoteFormatter(mplticker.Formatter):
         key: str = "C:maj",
         unicode: bool = True,
     ):
-
         self.octave = octave
         self.major = major
         self.key = key
         self.unicode = unicode
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
-
         if x <= 0:
             return ""
 
@@ -322,7 +319,6 @@ class SvaraFormatter(mplticker.Formatter):
         mela: Optional[Union[str, int]] = None,
         unicode: bool = True,
     ):
-
         if Sa is None:
             raise ParameterError(
                 "Sa frequency is required for svara display formatting"
@@ -336,7 +332,6 @@ class SvaraFormatter(mplticker.Formatter):
         self.unicode = unicode
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
-
         if x <= 0:
             return ""
 
@@ -416,7 +411,6 @@ class FJSFormatter(mplticker.Formatter):
         unison: Optional[str] = None,
         unicode: bool = True,
     ):
-
         self.fmin = fmin
         self.major = major
         self.unison = unison
@@ -429,7 +423,6 @@ class FJSFormatter(mplticker.Formatter):
         )
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
-
         if x <= 0:
             return ""
 
@@ -480,11 +473,9 @@ class LogHzFormatter(mplticker.Formatter):
     """
 
     def __init__(self, major: bool = True):
-
         self.major = major
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
-
         if x <= 0:
             return ""
 
@@ -2021,7 +2012,7 @@ def waveshow(
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> sim = librosa.segment.recurrence_matrix(chroma, mode='affinity')
-    >>> librosa.display.specshow(sim, ax=ax['S'], sr=sr, 
+    >>> librosa.display.specshow(sim, ax=ax['S'], sr=sr,
     ...                          x_axis='time', y_axis='time',
     ...                          auto_aspect=False)
     >>> ax['S'].label_outer()
@@ -2042,9 +2033,7 @@ def waveshow(
         y = y[np.newaxis, :]
 
     if max_points <= 0:
-        raise ParameterError(
-            f"max_points={max_points} must be strictly positive"
-        )
+        raise ParameterError(f"max_points={max_points} must be strictly positive")
 
     # Create the adaptive drawing object
     axes = __check_axes(ax)

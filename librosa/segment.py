@@ -768,9 +768,7 @@ def recurrence_to_lag(
     axis = np.abs(axis)
 
     if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
-        raise ParameterError(
-            f"non-square recurrence matrix shape: {rec.shape}"
-        )
+        raise ParameterError(f"non-square recurrence matrix shape: {rec.shape}")
 
     sparse = scipy.sparse.issparse(rec)
 
@@ -1353,8 +1351,8 @@ def __affinity_bandwidth(
         "mean_k_avg_and_pair",
     ]:
         raise ParameterError(
-                f"Invalid bandwidth='{bw_mode}'. Must be either a positive scalar or one of "
-                "['med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']"
+            f"Invalid bandwidth='{bw_mode}'. Must be either a positive scalar or one of "
+            "['med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']"
         )
 
     # build a list of list that stores the distances to k nearest neighbors for all t points.

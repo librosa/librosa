@@ -223,9 +223,7 @@ def stft(
     if hop_length is None:
         hop_length = int(win_length // 4)
     elif not util.is_positive_int(hop_length):
-        raise ParameterError(
-            f"hop_length={hop_length} must be a positive integer"
-        )
+        raise ParameterError(f"hop_length={hop_length} must be a positive integer")
 
     # Check audio is valid
     util.valid_audio(y, mono=False)
@@ -585,7 +583,6 @@ def istft(
 
     frame = 0
     for bl_s in range(start_frame, n_frames, n_columns):
-
         bl_t = min(bl_s + n_columns, n_frames)
 
         # invert the block and apply the window function
@@ -1449,8 +1446,7 @@ def phase_vocoder(
     padding[-1] = (0, 2)
     D = np.pad(D, padding, mode="constant")
 
-    for (t, step) in enumerate(time_steps):
-
+    for t, step in enumerate(time_steps):
         columns = D[..., int(step) : int(step + 2)]
 
         # Weighting for linear magnitude interpolation
@@ -1620,7 +1616,6 @@ def iirt(
 
     slices: List[Union[int, slice]] = [slice(None) for _ in bands_power.shape]
     for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates, filterbank_ct)):
-
         slices[-2] = i
 
         # filter the signal
@@ -2451,9 +2446,7 @@ def pcen(
         raise ParameterError(f"eps={eps} must be strictly positive")
 
     if time_constant <= 0:
-        raise ParameterError(
-            f"time_constant={time_constant} must be strictly positive"
-        )
+        raise ParameterError(f"time_constant={time_constant} must be strictly positive")
 
     if not util.is_positive_int(max_size):
         raise ParameterError(f"max_size={max_size} must be a positive integer")
@@ -2547,7 +2540,6 @@ def griffinlim(
         Union[int, np.random.RandomState, np.random.Generator]
     ] = None,
 ) -> np.ndarray:
-
     """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
 
     Given a short-time Fourier transform magnitude matrix (``S``), the algorithm randomly

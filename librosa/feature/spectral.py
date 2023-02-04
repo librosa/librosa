@@ -471,9 +471,7 @@ def spectral_contrast(
     freq = np.atleast_1d(freq)
 
     if freq.ndim != 1 or len(freq) != S.shape[-2]:
-        raise ParameterError(
-            f"freq.shape mismatch: expected ({S.shape[-2]:d},)"
-        )
+        raise ParameterError(f"freq.shape mismatch: expected ({S.shape[-2]:d},)")
 
     if n_bands < 1 or not isinstance(n_bands, (int, np.integer)):
         raise ParameterError("n_bands must be a positive integer")

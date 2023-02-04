@@ -135,7 +135,6 @@ KEY_RE = re.compile(
 
 
 def thaat_to_degrees(thaat: str) -> np.ndarray:
-
     """Construct the svara indices (degrees) for a given thaat
 
     Parameters

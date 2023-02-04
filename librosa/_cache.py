@@ -30,7 +30,6 @@ class CacheManager(object):
     """
 
     def __init__(self, *args: Any, **kwargs: Any):
-
         level = kwargs.pop("level", 10)
 
         # Initialize the memory object

@@ -21,7 +21,7 @@ def delta(
     order: int = 1,
     axis: int = -1,
     mode: str = "interp",
-    **kwargs: Any
+    **kwargs: Any,
 ) -> np.ndarray:
     r"""Compute delta features: local estimate of the derivative
     of the input data along the selected axis.
@@ -109,7 +109,7 @@ def delta(
     if mode == "interp" and width > data.shape[axis]:
         raise ParameterError(
             f"when mode='interp', width={width} "
-            f"cannot exceed data.shape[axis]={data.shape[axis]}")
+            f"cannot exceed data.shape[axis]={data.shape[axis]}"
         )
 
     if width < 3 or np.mod(width, 2) != 1:

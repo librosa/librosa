@@ -1294,9 +1294,7 @@ def viterbi(
         or not np.allclose(p_init.sum(), 1)
         or p_init.shape != (n_states,)
     ):
-        raise ParameterError(
-            f"Invalid initial state distribution: p_init={p_init}"
-        )
+        raise ParameterError(f"Invalid initial state distribution: p_init={p_init}")
 
     log_trans = np.log(transition + epsilon)
     log_prob = np.log(prob + epsilon)
@@ -1523,9 +1521,7 @@ def viterbi_discriminative(
             f"Got p_state.shape={p_state.shape}"
         )
     elif np.any(p_state < 0) or not np.allclose(p_state.sum(axis=-1), 1):
-        raise ParameterError(
-            f"Invalid marginal state distribution: p_state={p_state}"
-        )
+        raise ParameterError(f"Invalid marginal state distribution: p_state={p_state}")
 
     if p_init is None:
         p_init = np.empty(n_states)
@@ -1535,9 +1531,7 @@ def viterbi_discriminative(
         or not np.allclose(p_init.sum(), 1)
         or p_init.shape != (n_states,)
     ):
-        raise ParameterError(
-            f"Invalid initial state distribution: p_init={p_init}"
-        )
+        raise ParameterError(f"Invalid initial state distribution: p_init={p_init}")
 
     # By Bayes' rule, P[X | Y] * P[Y] = P[Y | X] * P[X]
     # P[X] is constant for the sake of maximum likelihood inference
@@ -1744,9 +1738,7 @@ def viterbi_binary(
     assert p_state is not None
 
     if p_state.shape != (n_states,) or np.any(p_state < 0) or np.any(p_state > 1):
-        raise ParameterError(
-            f"Invalid marginal state distributions: p_state={p_state}"
-        )
+        raise ParameterError(f"Invalid marginal state distributions: p_state={p_state}")
 
     if p_init is None:
         p_init = np.empty(n_states)
@@ -1757,9 +1749,7 @@ def viterbi_binary(
     assert p_init is not None
 
     if p_init.shape != (n_states,) or np.any(p_init < 0) or np.any(p_init > 1):
-        raise ParameterError(
-            f"Invalid initial state distributions: p_init={p_init}"
-        )
+        raise ParameterError(f"Invalid initial state distributions: p_init={p_init}")
 
     shape_prefix = list(prob.shape[:-2])
     states = np.empty(shape_prefix + [n_states, n_steps], dtype=np.uint16)
@@ -1879,9 +1869,7 @@ def transition_loop(n_states: int, prob: Union[float, Iterable[float]]) -> np.nd
         )
 
     if np.any(prob < 0) or np.any(prob > 1):
-        raise ParameterError(
-            f"prob={prob} must have values in the range [0, 1]"
-        )
+        raise ParameterError(f"prob={prob} must have values in the range [0, 1]")
 
     for i, prob_i in enumerate(prob):
         transition[i] = (1.0 - prob_i) / (n_states - 1)
@@ -1946,9 +1934,7 @@ def transition_cycle(n_states: int, prob: Union[float, Iterable[float]]) -> np.n
         )
 
     if np.any(prob < 0) or np.any(prob > 1):
-        raise ParameterError(
-            f"prob={prob} must have values in the range [0, 1]"
-        )
+        raise ParameterError(f"prob={prob} must have values in the range [0, 1]")
 
     for i, prob_i in enumerate(prob):
         transition[i, np.mod(i + 1, n_states)] = 1.0 - prob_i

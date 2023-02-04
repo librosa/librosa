@@ -390,9 +390,7 @@ def valid_intervals(intervals: np.ndarray) -> bool:
         raise ParameterError("intervals must have shape (n, 2)")
 
     if np.any(intervals[:, 0] > intervals[:, 1]):
-        raise ParameterError(
-            f"intervals={intervals} must have non-negative durations"
-        )
+        raise ParameterError(f"intervals={intervals} must have non-negative durations")
 
     return True
 
@@ -985,9 +983,7 @@ def normalize(
         threshold = tiny(S)
 
     elif threshold <= 0:
-        raise ParameterError(
-            f"threshold={threshold} must be strictly positive"
-        )
+        raise ParameterError(f"threshold={threshold} must be strictly positive")
 
     if fill not in [None, False, True]:
         raise ParameterError(f"fill={fill} must be None or boolean")
@@ -1700,7 +1696,7 @@ def sync(
     idx_in = [slice(None)] * data.ndim
     idx_agg = [slice(None)] * data_agg.ndim
 
-    for (i, segment) in enumerate(slices):
+    for i, segment in enumerate(slices):
         idx_in[axis] = segment  # type: ignore
         idx_agg[axis] = i  # type: ignore
         data_agg[tuple(idx_agg)] = aggregate(data[tuple(idx_in)], axis=axis)

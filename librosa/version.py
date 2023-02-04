@@ -10,7 +10,6 @@ version = "0.10.0rc0"
 
 
 def __get_mod_version(modname):
-
     try:
         if modname in sys.modules:
             mod = sys.modules[modname]
@@ -41,7 +40,7 @@ def show_versions() -> None:
         "soxr",
         "typing_extensions",
         "lazy_loader",
-        "msgpack"
+        "msgpack",
     ]
 
     extra_deps = [

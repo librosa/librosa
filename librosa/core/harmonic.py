@@ -411,9 +411,9 @@ def f0_harmonics(
             return interp(f)
 
         xfunc = np.vectorize(_f_interps, signature="(f),(h)->(h)")
-        result = xfunc(
-            x.swapaxes(axis, -1), np.multiply.outer(f0, harmonics)
-        ).swapaxes(axis, -1)
+        result = xfunc(x.swapaxes(axis, -1), np.multiply.outer(f0, harmonics)).swapaxes(
+            axis, -1
+        )
 
     elif freqs.shape == x.shape:
         if not np.all(is_unique(freqs, axis=axis)):
@@ -421,6 +421,7 @@ def f0_harmonics(
                 "Frequencies are not unique. This may produce incorrect harmonic interpolations.",
                 stacklevel=2,
             )
+
         # We have a dynamic frequency grid, not so bad
         def _f_interpd(data, frequencies, f):
             idx = np.isfinite(frequencies)

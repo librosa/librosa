@@ -27,9 +27,10 @@ from typing import Any, Callable, Optional, Tuple
 __all__ = ["beat_track", "tempo", "plp"]
 
 
-tempo = moved(moved_from="librosa.beat.tempo",
-              version="0.10.0",
-              version_removed="1.0")(_tempo)
+tempo = moved(moved_from="librosa.beat.tempo", version="0.10.0", version_removed="1.0")(
+    _tempo
+)
+
 
 def beat_track(
     *,
@@ -473,7 +474,6 @@ def __beat_track_dp(localscore, period, tightness):
     # Are we on the first beat?
     first_beat = True
     for i, score_i in enumerate(localscore):
-
         # Are we reaching back before time 0?
         z_pad = np.maximum(0, min(-window[0], len(window)))
 

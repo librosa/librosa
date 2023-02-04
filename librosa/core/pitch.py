@@ -888,7 +888,6 @@ def __pyin_helper(
     n_pitch_bins,
     n_bins_per_semitone,
 ):
-
     yin_probs = np.zeros_like(yin_frames)
 
     for i, yin_frame in enumerate(yin_frames.T):
