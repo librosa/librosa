@@ -151,7 +151,7 @@ class TimeFormatter(mplticker.Formatter):
     def __init__(self, lag: bool = False, unit: Optional[str] = None):
 
         if unit not in ["h", "m", "s", "ms", None]:
-            raise ParameterError("Unknown time unit: {}".format(unit))
+            raise ParameterError(f"Unknown time unit: {unit}")
 
         self.unit = unit
         self.lag = lag
@@ -183,15 +183,15 @@ class TimeFormatter(mplticker.Formatter):
         elif self.unit == "m" or ((self.unit is None) and (vmax - vmin > 60)):
             s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
         elif self.unit == "s":
-            s = "{:.3g}".format(value)
+            s = f"{value:.3g}"
         elif self.unit == None and (vmax - vmin >= 1):
-            s = "{:.2g}".format(value)
+            s = f"{value:.2g}"
         elif self.unit == "ms":
             s = "{:.3g}".format(value * 1000)
         elif self.unit == None and (vmax - vmin < 1):
-            s = "{:.3f}".format(value)
+            s = f"{value:.3f}"
 
-        return "{:s}{:s}".format(sign, s)
+        return f"{sign:s}{s:s}"
 
 
 class NoteFormatter(mplticker.Formatter):
@@ -493,7 +493,7 @@ class LogHzFormatter(mplticker.Formatter):
         if not self.major and vmax > 4 * max(1, vmin):
             return ""
 
-        return "{:g}".format(x)
+        return f"{x:g}"
 
 
 class ChromaFormatter(mplticker.Formatter):
@@ -1697,7 +1697,7 @@ def __decorate_axis(
         axis.set_ticks([])
 
     else:
-        raise ParameterError("Unsupported axis type: {}".format(ax_type))
+        raise ParameterError(f"Unsupported axis type: {ax_type}")
 
 
 def __coord_fft_hz(
@@ -2043,7 +2043,7 @@ def waveshow(
 
     if max_points <= 0:
         raise ParameterError(
-            "max_points={} must be strictly positive".format(max_points)
+            f"max_points={max_points} must be strictly positive"
         )
 
     # Create the adaptive drawing object

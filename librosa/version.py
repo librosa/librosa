@@ -35,35 +35,38 @@ def show_versions() -> None:
         "sklearn",
         "joblib",
         "decorator",
-        "soundfile",
-        "resampy",
         "numba",
+        "soundfile",
         "pooch",
-        "packaging",
+        "soxr",
+        "typing_extensions",
+        "lazy_loader",
+        "msgpack"
     ]
 
     extra_deps = [
         "numpydoc",
         "sphinx",
         "sphinx_rtd_theme",
+        "matplotlib",
         "sphinx_multiversion",
         "sphinx_gallery",
         "mir_eval",
         "ipython",
-        "sphinxcontrib-svg2pdfconverter",
+        "sphinxcontrib.rsvgconverter",
         "pytest",
-        "pytest-mpl",
-        "pytest-cov",
-        "matplotlib",
+        "pytest_mpl",
+        "pytest_cov",
         "samplerate",
-        "soxr",
+        "resampy",
         "presets",
+        "packaging",
     ]
 
     print("INSTALLED VERSIONS")
     print("------------------")
-    print("python: {}\n".format(sys.version))
-    print("librosa: {}\n".format(version))
+    print(f"python: {sys.version}\n")
+    print(f"librosa: {version}\n")
     for dep in core_deps:
         print("{}: {}".format(dep, __get_mod_version(dep)))
     print("")

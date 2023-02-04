@@ -1690,13 +1690,12 @@ def mu_compress(
 
     if mu <= 0:
         raise ParameterError(
-            "mu-law compression parameter mu={} "
-            "must be strictly positive.".format(mu)
+            f"mu-law compression parameter mu={mu} must be strictly positive."
         )
 
     if np.any(x < -1) or np.any(x > 1):
         raise ParameterError(
-            "mu-law input x={} must be in the " "range [-1, +1].".format(x)
+            f"mu-law input x={x} must be in the range [-1, +1]."
         )
 
     x_comp: np.ndarray = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
@@ -1789,8 +1788,7 @@ def mu_expand(
     """
     if mu <= 0:
         raise ParameterError(
-            "Inverse mu-law compression parameter "
-            "mu={} must be strictly positive.".format(mu)
+            f"Inverse mu-law compression parameter mu={mu} must be strictly positive."
         )
 
     if quantize:
