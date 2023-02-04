@@ -191,7 +191,7 @@ def beat_track(
     elif units == "time":
         return (bpm, core.frames_to_time(beats, hop_length=hop_length, sr=sr))
     else:
-        raise ParameterError("Invalid unit type: {}".format(units))
+        raise ParameterError(f"Invalid unit type: {units}")
 
 
 def plp(
@@ -338,7 +338,7 @@ def plp(
 
     if tempo_min is not None and tempo_max is not None and tempo_max <= tempo_min:
         raise ParameterError(
-            "tempo_max={} must be larger than tempo_min={}".format(tempo_max, tempo_min)
+            f"tempo_max={tempo_max} must be larger than tempo_min={tempo_min}"
         )
 
     # Step 2: get the fourier tempogram

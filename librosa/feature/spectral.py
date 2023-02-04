@@ -472,7 +472,7 @@ def spectral_contrast(
 
     if freq.ndim != 1 or len(freq) != S.shape[-2]:
         raise ParameterError(
-            "freq.shape mismatch: expected " "({:d},)".format(S.shape[-2])
+            f"freq.shape mismatch: expected ({S.shape[-2]:d},)"
         )
 
     if n_bands < 1 or not isinstance(n_bands, (int, np.integer)):
@@ -1379,8 +1379,8 @@ def chroma_cqt(
         bins_per_octave = n_chroma
     elif np.remainder(bins_per_octave, n_chroma) != 0:
         raise ParameterError(
-            "bins_per_octave={} must be an integer "
-            "multiple of n_chroma={}".format(bins_per_octave, n_chroma)
+            f"bins_per_octave={bins_per_octave} must be an integer "
+            f"multiple of n_chroma={n_chroma}"
         )
 
     # Build the CQT if we don't have one already
@@ -1524,9 +1524,7 @@ def chroma_cens(
         or (isinstance(win_len_smooth, (int, np.integer)) and win_len_smooth > 0)
     ):
         raise ParameterError(
-            "win_len_smooth={} must be a positive integer or None".format(
-                win_len_smooth
-            )
+            f"win_len_smooth={win_len_smooth} must be a positive integer or None"
         )
 
     chroma = chroma_cqt(

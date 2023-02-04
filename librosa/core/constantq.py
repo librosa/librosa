@@ -1174,8 +1174,8 @@ def __early_downsample(
 
         if y.shape[-1] < downsample_factor:
             raise ParameterError(
-                "Input signal length={:d} is too short for "
-                "{:d}-octave CQT".format(len(y), n_octaves)
+                f"Input signal length={len(y):d} is too short for "
+                f"{n_octaves:d}-octave CQT"
             )
 
         new_sr = sr / float(downsample_factor)
@@ -1413,7 +1413,7 @@ def griffinlim_cqt(
         # Initialize an all ones complex matrix
         angles[:] = 1.0
     else:
-        raise ParameterError("init={} must either None or 'random'".format(init))
+        raise ParameterError(f"init={init} must either None or 'random'")
 
     # And initialize the previous iterate to 0
     rebuilt: np.ndarray = np.array(0.0)

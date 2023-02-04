@@ -688,8 +688,7 @@ def dtw_backtracking(
     """
     if subseq is False and start is not None:
         raise ParameterError(
-            "start is only allowed to be set if subseq is True "
-            "(start={}, subseq={})".format(start, subseq)
+            f"start is only allowed to be set if subseq is True (start={start}, subseq={subseq})"
         )
 
     # Default Parameters
@@ -1271,8 +1270,8 @@ def viterbi(
 
     if transition.shape != (n_states, n_states):
         raise ParameterError(
-            "transition.shape={}, must be "
-            "(n_states, n_states)={}".format(transition.shape, (n_states, n_states))
+            f"transition.shape={transition.shape}, must be "
+            f"(n_states, n_states)={n_states, n_states}"
         )
 
     if np.any(transition < 0) or not np.allclose(transition.sum(axis=1), 1):
@@ -1296,7 +1295,7 @@ def viterbi(
         or p_init.shape != (n_states,)
     ):
         raise ParameterError(
-            "Invalid initial state distribution: " "p_init={}".format(p_init)
+            f"Invalid initial state distribution: p_init={p_init}"
         )
 
     log_trans = np.log(transition + epsilon)
@@ -1495,8 +1494,8 @@ def viterbi_discriminative(
 
     if transition.shape != (n_states, n_states):
         raise ParameterError(
-            "transition.shape={}, must be "
-            "(n_states, n_states)={}".format(transition.shape, (n_states, n_states))
+            f"transition.shape={transition.shape}, must be "
+            f"(n_states, n_states)={n_states, n_states}"
         )
 
     if np.any(transition < 0) or not np.allclose(transition.sum(axis=1), 1):
@@ -1521,11 +1520,11 @@ def viterbi_discriminative(
     elif p_state.shape != (n_states,):
         raise ParameterError(
             "Marginal distribution p_state must have shape (n_states,). "
-            "Got p_state.shape={}".format(p_state.shape)
+            f"Got p_state.shape={p_state.shape}"
         )
     elif np.any(p_state < 0) or not np.allclose(p_state.sum(axis=-1), 1):
         raise ParameterError(
-            "Invalid marginal state distribution: " "p_state={}".format(p_state)
+            f"Invalid marginal state distribution: p_state={p_state}"
         )
 
     if p_init is None:
@@ -1537,7 +1536,7 @@ def viterbi_discriminative(
         or p_init.shape != (n_states,)
     ):
         raise ParameterError(
-            "Invalid initial state distribution: " "p_init={}".format(p_init)
+            f"Invalid initial state distribution: p_init={p_init}"
         )
 
     # By Bayes' rule, P[X | Y] * P[Y] = P[Y | X] * P[X]
@@ -1723,8 +1722,8 @@ def viterbi_binary(
         transition = np.tile(transition, (n_states, 1, 1))
     elif transition.shape != (n_states, 2, 2):
         raise ParameterError(
-            "transition.shape={}, must be (2, 2) or "
-            "(n_states, 2, 2)={}".format(transition.shape, (n_states))
+            f"transition.shape={transition.shape}, must be (2, 2) or "
+            f"(n_states, 2, 2)={n_states}"
         )
 
     if np.any(transition < 0) or not np.allclose(transition.sum(axis=-1), 1):
@@ -1746,7 +1745,7 @@ def viterbi_binary(
 
     if p_state.shape != (n_states,) or np.any(p_state < 0) or np.any(p_state > 1):
         raise ParameterError(
-            "Invalid marginal state distributions: p_state={}".format(p_state)
+            f"Invalid marginal state distributions: p_state={p_state}"
         )
 
     if p_init is None:
@@ -1759,7 +1758,7 @@ def viterbi_binary(
 
     if p_init.shape != (n_states,) or np.any(p_init < 0) or np.any(p_init > 1):
         raise ParameterError(
-            "Invalid initial state distributions: p_init={}".format(p_init)
+            f"Invalid initial state distributions: p_init={p_init}"
         )
 
     shape_prefix = list(prob.shape[:-2])
@@ -1876,12 +1875,12 @@ def transition_loop(n_states: int, prob: Union[float, Iterable[float]]) -> np.nd
 
     if prob.shape != (n_states,):
         raise ParameterError(
-            "prob={} must have length equal to n_states={}".format(prob, n_states)
+            f"prob={prob} must have length equal to n_states={n_states}"
         )
 
     if np.any(prob < 0) or np.any(prob > 1):
         raise ParameterError(
-            "prob={} must have values in the range [0, 1]".format(prob)
+            f"prob={prob} must have values in the range [0, 1]"
         )
 
     for i, prob_i in enumerate(prob):
@@ -1943,12 +1942,12 @@ def transition_cycle(n_states: int, prob: Union[float, Iterable[float]]) -> np.n
 
     if prob.shape != (n_states,):
         raise ParameterError(
-            "prob={} must have length equal to n_states={}".format(prob, n_states)
+            f"prob={prob} must have length equal to n_states={n_states}"
         )
 
     if np.any(prob < 0) or np.any(prob > 1):
         raise ParameterError(
-            "prob={} must have values in the range [0, 1]".format(prob)
+            f"prob={prob} must have values in the range [0, 1]"
         )
 
     for i, prob_i in enumerate(prob):
@@ -2046,11 +2045,11 @@ def transition_local(
 
     if width.shape != (n_states,):
         raise ParameterError(
-            "width={} must have length equal to n_states={}".format(width, n_states)
+            f"width={width} must have length equal to n_states={n_states}"
         )
 
     if np.any(width < 1):
-        raise ParameterError("width={} must be at least 1")
+        raise ParameterError(f"width={width} must be at least 1")
 
     transition = np.zeros((n_states, n_states), dtype=np.float64)
 

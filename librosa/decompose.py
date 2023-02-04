@@ -548,7 +548,7 @@ def nn_filter(
     if rec_s.shape[0] != S.shape[axis] or rec_s.shape[0] != rec_s.shape[1]:
         raise ParameterError(
             "Invalid self-similarity matrix shape "
-            "rec.shape={} for S.shape={}".format(rec_s.shape, S.shape)
+            f"rec.shape={rec.shape} for S.shape={S.shape}"
         )
 
     return __nn_filter_helper(

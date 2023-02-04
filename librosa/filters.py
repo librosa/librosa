@@ -1222,7 +1222,7 @@ def get_window(
             return np.asarray(window)
 
         raise ParameterError(
-            "Window size mismatch: " "{:d} != {:d}".format(len(window), Nx)
+            f"Window size mismatch: {len(window):d} != {Nx:d}"
         )
     else:
         raise ParameterError(f"Invalid window specification: {window!r}")

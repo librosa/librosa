@@ -186,7 +186,7 @@ def onset_detect(
     elif units == "time":
         onsets = core.frames_to_time(onsets, hop_length=hop_length, sr=sr)
     else:
-        raise ParameterError("Invalid unit type: {}".format(units))
+        raise ParameterError(f"Invalid unit type: {units}")
 
     return onsets
 
@@ -577,9 +577,7 @@ def onset_strength_multi(
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=-2)
     elif ref.shape != S.shape:
         raise ParameterError(
-            "Reference spectrum shape {} must match input spectrum {}".format(
-                ref.shape, S.shape
-            )
+            f"Reference spectrum shape {ref.shape} must match input spectrum {S.shape}"
         )
 
     # Compute difference to the reference, spaced by lag
