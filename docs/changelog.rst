@@ -11,15 +11,15 @@ v0.10.0
 
 New features
 
-    - `#1485`_ Added support for `"h"` (hours) and `"m"` (minutes) in `TimeFormatter`.  *Vincent Lostanlen*
-    - `#1495`_ Expanded options for bandwidth calculation in `recurrence_matrix` and `cross_similarity`. *Tom Xi*
-    - `#1529`_ Accelerated utility functions for squared magnitude `util.abs2` and `util.phasor`. *Brian McFee*
+    - `#1485`_ Added support for `"h"` (hours) and `"m"` (minutes) in `librosa.display.TimeFormatter`.  *Vincent Lostanlen*
+    - `#1495`_ Expanded options for bandwidth calculation in `librosa.segment.recurrence_matrix` and `librosa.segment.cross_similarity`. *Tom Xi*
+    - `#1529`_ Accelerated utility functions for squared magnitude `librosa.util.abs2` and `librosa.util.phasor`. *Brian McFee*
     - `#1514`_ `librosa.stft` support for pre-allocated output arrays.  *Brian McFee*
-    - `#1533`_ Accelerated `util.localmax` and `util.localmin`. *Brian McFee*
-    - `#1552`_ **EXPERIMENTAL** Support for just-intonation based variable-Q transforms and functional just system (FJS) notation. *Brian McFee*
+    - `#1533`_ Accelerated `librosa.util.localmax` and `librosa.util.localmin`. *Brian McFee*
+    - `#1552`_ **EXPERIMENTAL** Support for just-intonation based variable-Q transforms `librosa.vqt` and functional just system (FJS) notation. *Brian McFee*
     - `#1579`_ Imports are now done lazily, significantly reducing startup time. It is not longer necessary to explicitly `import librosa.display`. *Brian McFee*
     - `#1587`_, `#1632`_, `#1637`_ Type annotations. *Matan Gover, Brian McFee, Fabian Keller*
-    - `#1647`_ Harmonic spectrum interpolation and tempogram ratio features. *Brian McFee*
+    - `#1647`_ Harmonic spectrum interpolation `librosa.f0_harmonics` and tempogram ratio features `librosa.feature.tempogram_ratio`. *Brian McFee*
 
 Bug fixes
 
@@ -32,10 +32,10 @@ Bug fixes
 API changes
 
     - `#1561`_ `librosa.resample` now supports `axis=` for all sample rate conversion backends. *Brian McFee*
-    - `#1572`_ Notation conversion (e.g., `midi_to_note`) now vectorizes operations, and produces `numpy.ndarray` outputs rather than `list` when given iterable inputs. *Brian McFee*
+    - `#1572`_ Notation conversion (e.g., `librosa.midi_to_note`) now vectorizes operations, and produces `numpy.ndarray` outputs rather than `list` when given iterable inputs. *Brian McFee*
     - `#1625`_ Deprecations now raise `FutureWarning` instead of `DeprecationWarning`.
-    - `#1625`_ `get_duration` parameter `filename` has been renamed to `path`. *Brian McFee*
-    - `#1643`_ Removed support for `threshold=None` in `zero_crossings`. *Brian McFee*
+    - `#1625`_ `librosa.get_duration` parameter `filename` has been renamed to `path`. *Brian McFee*
+    - `#1643`_ Removed support for `threshold=None` in `librosa.zero_crossings`. *Brian McFee*
 
 
 
@@ -45,9 +45,9 @@ Documentation
     - `#1531`_ Updated LICENSE.md documentation. *Anton Kostin*
     - `#1536`_ Added keyword argument (`kwargs`) definitions to docstrings. *Emily Halvachs*
     - `#1537`_ Improvements to CONTRIBUTING.md. *Juanita Gomez*
-    - `#1545`_ Correction to docstring for `note_to_midi`. *Helmin Jinoz*
-    - `#1563`_ Improved `specshow` documentation to explain `cmap=` parameter. *Kian Eliasi*
-    - `#1573`_ Improved documentation for `semitone_filterbank`. *BdeGraff*
+    - `#1545`_ Correction to docstring for `librosa.note_to_midi`. *Helmin Jinoz*
+    - `#1563`_ Improved `librosa.display.specshow` documentation to explain `cmap=` parameter. *Kian Eliasi*
+    - `#1573`_ Improved documentation for `librosa.filters.semitone_filterbank`. *BdeGraff*
     - `#1586`_ Fixed figure layout in documentation builds. *Brian McFee*
     - `#1592`_ Fixed incorrect link to the documentation badge in README. *Zvi Baratz*
     - `#1614`_ Improved documentation for resampling. *Jon Petter Åsen*
@@ -62,17 +62,17 @@ Deprecations
 
 Other changes
 
-    - `#1501`_ Infer square / equal plot dimensions for compatible x/y axes.  *Kian Eliasi*
+    - `#1501`_ Infer square / equal plot dimensions for compatible x/y axes in `librosa.display.specshow`.  *Kian Eliasi*
     - `#1535`_ Standardized integer type checks throughout the library. *Alexandre Chabot-Leclerc*
-    - `#1539`_ Refactored `AdaptiveWaveplot` to allow callback disconnection. *Brian McFee*
+    - `#1539`_ Refactored `librosa.display.AdaptiveWaveplot` to allow callback disconnection. *Brian McFee*
     - `#1548`_ Removed deprecated `'hanning'` window specification from tests. *Brian McFee*
     - `#1551`_ Removed dependency on `contextlib2`. *Steve Kowalik*
-    - `#1565`_ Efficiency improvements to `autocorrelate`. *Brian McFee*
+    - `#1565`_ Efficiency improvements to `librosa.autocorrelate`. *Brian McFee*
     - `#1566`_ Changed the default sample rate conversion method from `kaiser_best` (resampy) to `soxr_hq` (soxr). *Brian McFee*
     - `#1581`_ Updated tests for numpy 1.23 compatibility. *Brian McFee*
-    - `#1617`_ Accelerated `yin` implementation. *Brian McFee*
+    - `#1617`_ Accelerated `librosa.yin` implementation. *Brian McFee*
     - `#1640`_ Updated display module dependencies to require matplotlib >= 3.3. *Brian McFee*
-    - `#1643`_ Accelerated `zero_crossings` implementation. *Brian McFee*
+    - `#1643`_ Accelerated `librosa.zero_crossings` implementation. *Brian McFee*
     - `#1646`_ Added support for transposed (vertical) display of waveforms. *Brian McFee*
 
 
