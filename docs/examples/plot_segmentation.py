@@ -30,7 +30,6 @@ import matplotlib.pyplot as plt
 import sklearn.cluster
 
 import librosa
-import librosa.display
 
 #############################
 # First, we'll load in a song

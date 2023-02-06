@@ -19,8 +19,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import librosa
 
-import librosa.display
-
 #############################################
 # Load an example signal
 y, sr = librosa.load(librosa.ex('trumpet'))

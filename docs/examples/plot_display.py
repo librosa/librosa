@@ -21,7 +21,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import librosa
-import librosa.display
 
 # %%
 # First, we'll load in a demo track
