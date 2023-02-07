@@ -36,7 +36,7 @@ def decompose(
     transformer: Optional[object] = None,
     sort: bool = False,
     fit: bool = True,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Decompose a feature matrix.
 
@@ -219,7 +219,7 @@ def hpss(
     mask: bool = False,
     margin: Union[
         _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
-    ] = 1.0
+    ] = 1.0,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Median-filtering harmonic percussive source separation (HPSS).
 
@@ -418,7 +418,7 @@ def nn_filter(
     rec: Optional[Union[scipy.sparse.spmatrix, np.ndarray]] = None,
     aggregate: Optional[Callable] = None,
     axis: int = -1,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> np.ndarray:
     """Filtering by nearest-neighbors.
 
@@ -548,7 +548,7 @@ def nn_filter(
     if rec_s.shape[0] != S.shape[axis] or rec_s.shape[0] != rec_s.shape[1]:
         raise ParameterError(
             "Invalid self-similarity matrix shape "
-            "rec.shape={} for S.shape={}".format(rec_s.shape, S.shape)
+            f"rec.shape={rec_s.shape} for S.shape={S.shape}"
         )
 
     return __nn_filter_helper(
@@ -583,7 +583,6 @@ def __nn_filter_helper(
     s_out = np.empty_like(S)
 
     for i in range(len(R_ptr) - 1):
-
         # Get the non-zeros out of the recurrence matrix
         targets = R_indices[R_ptr[i] : R_ptr[i + 1]]
 

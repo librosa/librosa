@@ -584,9 +584,7 @@ def yin(
 
     if win_length >= frame_length:
         raise ParameterError(
-            "win_length={} cannot exceed given frame_length={}".format(
-                win_length, frame_length
-            )
+            f"win_length={win_length} cannot exceed given frame_length={frame_length}"
         )
 
     # Set the default hop if it is not already specified.
@@ -789,9 +787,7 @@ def pyin(
 
     if win_length >= frame_length:
         raise ParameterError(
-            "win_length={} cannot exceed given frame_length={}".format(
-                win_length, frame_length
-            )
+            f"win_length={win_length} cannot exceed given frame_length={frame_length}"
         )
 
     # Set the default hop if it is not already specified.
@@ -892,7 +888,6 @@ def __pyin_helper(
     n_pitch_bins,
     n_bins_per_semitone,
 ):
-
     yin_probs = np.zeros_like(yin_frames)
 
     for i, yin_frame in enumerate(yin_frames.T):

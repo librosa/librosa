@@ -19,7 +19,6 @@ import matplotlib.pyplot as plt
 # sphinx_gallery_thumbnail_path = '_static/playback-thumbnail.png'
 
 import librosa
-import librosa.display
 
 # We'll need IPython.display's Audio widget
 from IPython.display import Audio

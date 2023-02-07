@@ -844,7 +844,7 @@ def note_to_midi(
     match = notation.NOTE_RE.match(note)
 
     if not match:
-        raise ParameterError("Improper note format: {:s}".format(note))
+        raise ParameterError(f"Improper note format: {note:s}")
 
     pitch = match.group("note").upper()
     offset = np.sum([acc_map[o] for o in match.group("accidental")])
@@ -1002,7 +1002,7 @@ def midi_to_note(
     if octave:
         note = "{:s}{:0d}".format(note, int(note_num / 12) - 1)
     if cents:
-        note = "{:s}{:+02d}".format(note, note_cents)
+        note = f"{note:s}{note_cents:+02d}"
 
     return note
 

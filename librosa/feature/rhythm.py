@@ -617,40 +617,41 @@ def tempogram_ratio(
     # Get a tempogram and time-varying tempo estimate
     if tg is None:
         tg = tempogram(
-                y=y,
-                sr=sr,
-                onset_envelope=onset_envelope,
-                hop_length=hop_length,
-                win_length=win_length,
-                center=center,
-                window=window,
-                norm=norm,
-            )
+            y=y,
+            sr=sr,
+            onset_envelope=onset_envelope,
+            hop_length=hop_length,
+            win_length=win_length,
+            center=center,
+            window=window,
+            norm=norm,
+        )
 
     if freqs is None:
-        freqs = tempo_frequencies(sr=sr,
-                                  n_bins=len(tg),
-                                  hop_length=hop_length)
+        freqs = tempo_frequencies(sr=sr, n_bins=len(tg), hop_length=hop_length)
 
     # Estimate tempo per-frame, no aggregation yet
     if bpm is None:
         bpm = tempo(
-                sr=sr,
-                tg=tg,
-                hop_length=hop_length,
-                start_bpm=start_bpm,
-                std_bpm=std_bpm,
-                max_tempo=max_tempo,
-                aggregate=None,
-                prior=prior,
-            )
+            sr=sr,
+            tg=tg,
+            hop_length=hop_length,
+            start_bpm=start_bpm,
+            std_bpm=std_bpm,
+            max_tempo=max_tempo,
+            aggregate=None,
+            prior=prior,
+        )
 
     if factors is None:
         # metric multiples from Prockup'15
-        factors = np.array([4, 8/3, 3, 2, 4/3, 3/2, 1, 2/3, 3/4, 1/2, 1/3, 3/8, 1/4])
+        factors = np.array(
+            [4, 8 / 3, 3, 2, 4 / 3, 3 / 2, 1, 2 / 3, 3 / 4, 1 / 2, 1 / 3, 3 / 8, 1 / 4]
+        )
 
-    tgr = f0_harmonics(tg, freqs=freqs, f0=bpm, harmonics=factors,
-                       kind=kind, fill_value=fill_value)
+    tgr = f0_harmonics(
+        tg, freqs=freqs, f0=bpm, harmonics=factors, kind=kind, fill_value=fill_value
+    )
 
     if aggregate is not None:
         return aggregate(tgr, axis=-1)  # type: ignore

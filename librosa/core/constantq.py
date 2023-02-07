@@ -688,7 +688,6 @@ def icqt(
             hops.insert(0, hops[0])
 
     for i, (my_sr, my_hop) in enumerate(zip(srs, hops)):
-
         # How many filters are in this octave?
         n_filters = min(bins_per_octave, n_bins - bins_per_octave * i)
 
@@ -776,7 +775,6 @@ def vqt(
     res_type: Optional[str] = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
-
     """Compute the variable-Q transform of an audio signal.
 
     This implementation is based on the recursive sub-sampling method
@@ -985,7 +983,6 @@ def vqt(
     my_y, my_sr, my_hop = y, sr, hop_length
 
     for i in range(n_octaves):
-
         # Slice out the current octave of filters
         if i == 0:
             sl = slice(-n_filters, None)
@@ -1174,8 +1171,8 @@ def __early_downsample(
 
         if y.shape[-1] < downsample_factor:
             raise ParameterError(
-                "Input signal length={:d} is too short for "
-                "{:d}-octave CQT".format(len(y), n_octaves)
+                f"Input signal length={len(y):d} is too short for "
+                f"{n_octaves:d}-octave CQT"
             )
 
         new_sr = sr / float(downsample_factor)
@@ -1413,7 +1410,7 @@ def griffinlim_cqt(
         # Initialize an all ones complex matrix
         angles[:] = 1.0
     else:
-        raise ParameterError("init={} must either None or 'random'".format(init))
+        raise ParameterError(f"init={init} must either None or 'random'")
 
     # And initialize the previous iterate to 0
     rebuilt: np.ndarray = np.array(0.0)

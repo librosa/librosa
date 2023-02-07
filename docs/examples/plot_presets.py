@@ -19,9 +19,7 @@ import matplotlib.pyplot as plt
 # Import the Preset class
 from presets import Preset
 
-
 # To use presets, we'll make a dummy import of librosa
-# and the display submodule here.
 import librosa as _librosa
 
 #########################################################################

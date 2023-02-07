@@ -205,12 +205,11 @@ def frame(
 
     if x.shape[axis] < frame_length:
         raise ParameterError(
-            "Input is too short (n={:d})"
-            " for frame_length={:d}".format(x.shape[axis], frame_length)
+            f"Input is too short (n={x.shape[axis]:d}) for frame_length={frame_length:d}"
         )
 
     if hop_length < 1:
-        raise ParameterError("Invalid hop_length: {:d}".format(hop_length))
+        raise ParameterError(f"Invalid hop_length: {hop_length:d}")
 
     # put our new within-frame axis at the end for now
     out_strides = x.strides + tuple([x.strides[axis]])
@@ -302,9 +301,7 @@ def valid_audio(y: np.ndarray, *, mono: Union[bool, Deprecated] = Deprecated()) 
 
     if y.ndim == 0:
         raise ParameterError(
-            "Audio data must be at least one-dimensional, given y.shape={}".format(
-                y.shape
-            )
+            f"Audio data must be at least one-dimensional, given y.shape={y.shape}"
         )
 
     if isinstance(mono, Deprecated):
@@ -312,8 +309,7 @@ def valid_audio(y: np.ndarray, *, mono: Union[bool, Deprecated] = Deprecated()) 
 
     if mono and y.ndim != 1:
         raise ParameterError(
-            "Invalid shape for monophonic audio: "
-            "ndim={:d}, shape={}".format(y.ndim, y.shape)
+            f"Invalid shape for monophonic audio: ndim={y.ndim:d}, shape={y.shape}"
         )
 
     if not np.isfinite(y).all():
@@ -394,9 +390,7 @@ def valid_intervals(intervals: np.ndarray) -> bool:
         raise ParameterError("intervals must have shape (n, 2)")
 
     if np.any(intervals[:, 0] > intervals[:, 1]):
-        raise ParameterError(
-            "intervals={} must have non-negative durations".format(intervals)
-        )
+        raise ParameterError(f"intervals={intervals} must have non-negative durations")
 
     return True
 
@@ -470,7 +464,7 @@ def pad_center(
 
     if lpad < 0:
         raise ParameterError(
-            ("Target size ({:d}) must be " "at least input size ({:d})").format(size, n)
+            f"Target size ({size:d}) must be at least input size ({n:d})"
         )
 
     return np.pad(data, lengths, **kwargs)
@@ -989,12 +983,10 @@ def normalize(
         threshold = tiny(S)
 
     elif threshold <= 0:
-        raise ParameterError(
-            "threshold={} must be strictly " "positive".format(threshold)
-        )
+        raise ParameterError(f"threshold={threshold} must be strictly positive")
 
     if fill not in [None, False, True]:
-        raise ParameterError("fill={} must be None or boolean".format(fill))
+        raise ParameterError(f"fill={fill} must be None or boolean")
 
     if not np.all(np.isfinite(S)):
         raise ParameterError("Input must be finite")
@@ -1029,7 +1021,7 @@ def normalize(
             fill_norm = mag.shape[axis] ** (-1.0 / norm)
 
     else:
-        raise ParameterError("Unsupported norm: {}".format(repr(norm)))
+        raise ParameterError(f"Unsupported norm: {repr(norm)}")
 
     # indices where norm is below the threshold
     small_idx = length < threshold
@@ -1464,12 +1456,11 @@ def sparsify_rows(
 
     elif x.ndim > 2:
         raise ParameterError(
-            "Input must have 2 or fewer dimensions. "
-            "Provided x.shape={}.".format(x.shape)
+            f"Input must have 2 or fewer dimensions. Provided x.shape={x.shape}."
         )
 
     if not 0.0 <= quantile < 1:
-        raise ParameterError("Invalid quantile {:.2f}".format(quantile))
+        raise ParameterError(f"Invalid quantile {quantile:.2f}")
 
     if dtype is None:
         dtype = x.dtype
@@ -1517,7 +1508,7 @@ def buf_to_float(
     scale = 1.0 / float(1 << ((8 * n_bytes) - 1))
 
     # Construct the format string
-    fmt = "<i{:d}".format(n_bytes)
+    fmt = f"<i{n_bytes:d}"
 
     # Rescale and format the data buffer
     return scale * np.frombuffer(x, fmt).astype(dtype)
@@ -1693,7 +1684,7 @@ def sync(
             np.asarray(idx), idx_min=0, idx_max=shape[axis], pad=pad
         )
     else:
-        raise ParameterError("Invalid index set: {}".format(idx))
+        raise ParameterError(f"Invalid index set: {idx}")
 
     agg_shape = list(shape)
     agg_shape[axis] = len(slices)
@@ -1705,7 +1696,7 @@ def sync(
     idx_in = [slice(None)] * data.ndim
     idx_agg = [slice(None)] * data_agg.ndim
 
-    for (i, segment) in enumerate(slices):
+    for i, segment in enumerate(slices):
         idx_in[axis] = segment  # type: ignore
         idx_agg[axis] = i  # type: ignore
         data_agg[tuple(idx_agg)] = aggregate(data[tuple(idx_in)], axis=axis)
@@ -1793,7 +1784,7 @@ def softmask(
            [False, False,  True]], dtype=bool)
     """
     if X.shape != X_ref.shape:
-        raise ParameterError("Shape mismatch: {}!={}".format(X.shape, X_ref.shape))
+        raise ParameterError(f"Shape mismatch: {X.shape}!={X_ref.shape}")
 
     if np.any(X < 0) or np.any(X_ref < 0):
         raise ParameterError("X and X_ref must be non-negative")
@@ -2144,7 +2135,7 @@ def shear(
     """
 
     if not np.issubdtype(type(factor), np.integer):
-        raise ParameterError("factor={} must be integer-valued".format(factor))
+        raise ParameterError(f"factor={factor} must be integer-valued")
 
     # Suppress type checks because mypy doesn't like numba jitting
     # or scipy sparse conversion

@@ -400,7 +400,6 @@ def remix(
         zeros = np.append(zeros, [len(y_mono)])
 
     for interval in intervals:
-
         if align_zeros:
             interval = zeros[util.match_events(interval, zeros)]
 

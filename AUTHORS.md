@@ -96,6 +96,11 @@ Contributors
 * Zvi Baratz <https://github.com/ZviBaratz>
 * Alexandre Chabot-Leclerc <https://github.com/achabotl>
 * Steve Kowalik <https://github.com/s-t-e-v-e-n-k>
+* Tom Xi <https://github.com/tomxi>
+* Matan Gover <https://github.com/matangover>
+* Fabian Keller <https://github.com/bluenote10>
+* BdeGraff <https://github.com/BdeGraff>
+* Jon Petter Åsen <https://github.com/jpaasen>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

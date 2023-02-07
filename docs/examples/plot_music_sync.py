@@ -8,7 +8,7 @@ In this short tutorial, we demonstrate the use of dynamic time warping (DTW) for
 which is implemented in `librosa`.
 
 We assume that you are familiar with the algorithm and focus on the application. Further information about
-the algorithm can be found in the literature, e. g. [1].
+the algorithm can be found in the literature, e. g. [1]_.
 
 Our example consists of two recordings of the first bars of the famous
 brass section lick in Stevie Wonder's rendition of "Sir Duke".
@@ -26,7 +26,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 
 import librosa
-import librosa.display
 
 
 ############################################################
@@ -137,5 +136,5 @@ for tp1, tp2 in wp_s[::len(wp_s)//n_arrows]:
 # Literature
 # ----------
 #
-# [1] Meinard Müller, Fundamentals of Music Processing — Audio, Analysis, Algorithms, Applications.
-# Springer Verlag, 2015.
+# .. [1] Meinard Müller, Fundamentals of Music Processing — Audio, Analysis, Algorithms, Applications.
+#     Springer Verlag, 2015.

@@ -21,7 +21,7 @@ def delta(
     order: int = 1,
     axis: int = -1,
     mode: str = "interp",
-    **kwargs: Any
+    **kwargs: Any,
 ) -> np.ndarray:
     r"""Compute delta features: local estimate of the derivative
     of the input data along the selected axis.
@@ -108,8 +108,8 @@ def delta(
 
     if mode == "interp" and width > data.shape[axis]:
         raise ParameterError(
-            "when mode='interp', width={} "
-            "cannot exceed data.shape[axis]={}".format(width, data.shape[axis])
+            f"when mode='interp', width={width} "
+            f"cannot exceed data.shape[axis]={data.shape[axis]}"
         )
 
     if width < 3 or np.mod(width, 2) != 1:
@@ -239,7 +239,7 @@ def stack_memory(
     if t < 1:
         raise ParameterError(
             "Cannot stack memory when input data has "
-            "no columns. Given data.shape={}".format(data.shape)
+            f"no columns. Given data.shape={data.shape}"
         )
     kwargs.setdefault("mode", "constant")
 

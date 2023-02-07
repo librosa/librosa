@@ -6,7 +6,11 @@ Rainbowgrams
 
 This notebook demonstrates how to use "Rainbowgrams" to simultaneously 
 visualize amplitude and (unwrapped) phase (differential) as demonstrated in the
-`NSynth paper <https://proceedings.mlr.press/v70/engel17a/engel17a.pdf>`_.
+`NSynth paper <https://proceedings.mlr.press/v70/engel17a/engel17a.pdf>`_ [1]_.
+
+.. [1] Engel, Jesse, Cinjon Resnick, Adam Roberts, Sander Dieleman, Mohammad Norouzi, Douglas Eck, and Karen Simonyan.
+    "Neural audio synthesis of musical notes with wavenet autoencoders."
+    In International Conference on Machine Learning, pp. 1068-1077. PMLR, 2017.
 
 """
 # Code source: Brian McFee
@@ -18,7 +22,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import librosa
 
-import librosa.display
 
 ############################################# 
 # We implemented a stft method to visualize the rainbowgram and demonstrated the result with a chirp signal.

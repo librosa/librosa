@@ -135,7 +135,6 @@ KEY_RE = re.compile(
 
 
 def thaat_to_degrees(thaat: str) -> np.ndarray:
-
     """Construct the svara indices (degrees) for a given thaat
 
     Parameters
@@ -204,7 +203,7 @@ def mela_to_degrees(mela: Union[str, int]) -> np.ndarray:
     elif 0 < mela <= 72:
         index = mela - 1
     else:
-        raise ParameterError("mela={} must be in range [1, 72]".format(mela))
+        raise ParameterError(f"mela={mela} must be in range [1, 72]")
 
     # always have Sa [0]
     degrees = [0]
@@ -363,7 +362,7 @@ def mela_to_svara(
     elif 0 < mela <= 72:
         mela_idx = mela - 1
     else:
-        raise ParameterError("mela={} must be in range [1, 72]".format(mela))
+        raise ParameterError(f"mela={mela} must be in range [1, 72]")
 
     # Determine Ri2/Ga1
     lower = mela_idx % 36

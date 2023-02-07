@@ -223,9 +223,7 @@ def stft(
     if hop_length is None:
         hop_length = int(win_length // 4)
     elif not util.is_positive_int(hop_length):
-        raise ParameterError(
-            "hop_length={} must be a positive integer".format(hop_length)
-        )
+        raise ParameterError(f"hop_length={hop_length} must be a positive integer")
 
     # Check audio is valid
     util.valid_audio(y, mono=False)
@@ -251,14 +249,12 @@ def stft(
             # >>> librosa.stft(..., pad_mode=my_pad_func)
 
             raise ParameterError(
-                "pad_mode='{}' is not supported by librosa.stft".format(pad_mode)
+                f"pad_mode='{pad_mode}' is not supported by librosa.stft"
             )
 
         if n_fft > y.shape[-1]:
             warnings.warn(
-                "n_fft={} is too large for input signal of length={}".format(
-                    n_fft, y.shape[-1]
-                )
+                f"n_fft={n_fft} is too large for input signal of length={y.shape[-1]}"
             )
 
         # Set up the padding array to be empty, and we'll fix the target dimension later
@@ -320,9 +316,7 @@ def stft(
     else:
         if n_fft > y.shape[-1]:
             raise ParameterError(
-                "n_fft={} is too large for uncentered analysis of input signal of length={}".format(
-                    n_fft, y.shape[-1]
-                )
+                f"n_fft={n_fft} is too large for uncentered analysis of input signal of length={y.shape[-1]}"
             )
 
         # "Middle" of the signal starts at sample 0
@@ -589,7 +583,6 @@ def istft(
 
     frame = 0
     for bl_s in range(start_frame, n_frames, n_columns):
-
         bl_t = min(bl_s + n_columns, n_frames)
 
         # invert the block and apply the window function
@@ -1453,8 +1446,7 @@ def phase_vocoder(
     padding[-1] = (0, 2)
     D = np.pad(D, padding, mode="constant")
 
-    for (t, step) in enumerate(time_steps):
-
+    for t, step in enumerate(time_steps):
         columns = D[..., int(step) : int(step + 2)]
 
         # Weighting for linear magnitude interpolation
@@ -1582,7 +1574,7 @@ def iirt(
     """
 
     if flayout not in ("ba", "sos"):
-        raise ParameterError("Unsupported flayout={}".format(flayout))
+        raise ParameterError(f"Unsupported flayout={flayout}")
 
     # check audio input
     util.valid_audio(y, mono=False)
@@ -1624,7 +1616,6 @@ def iirt(
 
     slices: List[Union[int, slice]] = [slice(None) for _ in bands_power.shape]
     for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates, filterbank_ct)):
-
         slices[-2] = i
 
         # filter the signal
@@ -2122,14 +2113,14 @@ def fmt(
     n = y.shape[axis]
 
     if n < 3:
-        raise ParameterError("y.shape[{:}]=={:} < 3".format(axis, n))
+        raise ParameterError(f"y.shape[{axis}]=={n} < 3")
 
     if t_min <= 0:
-        raise ParameterError("t_min must be a positive number")
+        raise ParameterError(f"t_min={t_min} must be a positive number")
 
     if n_fmt is None:
         if over_sample < 1:
-            raise ParameterError("over_sample must be >= 1")
+            raise ParameterError(f"over_sample={over_sample} must be >= 1")
 
         # The base is the maximum ratio between adjacent samples
         # Since the sample spacing is increasing, this is simply the
@@ -2139,7 +2130,7 @@ def fmt(
         n_fmt = int(np.ceil(over_sample * (np.log(n - 1) - np.log(t_min)) / log_base))
 
     elif n_fmt < 3:
-        raise ParameterError("n_fmt=={:} < 3".format(n_fmt))
+        raise ParameterError(f"n_fmt=={n_fmt} < 3")
     else:
         log_base = (np.log(n_fmt - 1) - np.log(n_fmt - 2)) / over_sample
 
@@ -2443,24 +2434,22 @@ def pcen(
     """
 
     if power < 0:
-        raise ParameterError("power={} must be nonnegative".format(power))
+        raise ParameterError(f"power={power} must be nonnegative")
 
     if gain < 0:
-        raise ParameterError("gain={} must be non-negative".format(gain))
+        raise ParameterError(f"gain={gain} must be non-negative")
 
     if bias < 0:
-        raise ParameterError("bias={} must be non-negative".format(bias))
+        raise ParameterError(f"bias={bias} must be non-negative")
 
     if eps <= 0:
-        raise ParameterError("eps={} must be strictly positive".format(eps))
+        raise ParameterError(f"eps={eps} must be strictly positive")
 
     if time_constant <= 0:
-        raise ParameterError(
-            "time_constant={} must be strictly positive".format(time_constant)
-        )
+        raise ParameterError(f"time_constant={time_constant} must be strictly positive")
 
     if not util.is_positive_int(max_size):
-        raise ParameterError("max_size={} must be a positive integer".format(max_size))
+        raise ParameterError(f"max_size={max_size} must be a positive integer")
 
     if b is None:
         t_frames = time_constant * sr / float(hop_length)
@@ -2472,7 +2461,7 @@ def pcen(
         b = (np.sqrt(1 + 4 * t_frames**2) - 1) / (2 * t_frames**2)
 
     if not 0 <= b <= 1:
-        raise ParameterError("b={} must be between 0 and 1".format(b))
+        raise ParameterError(f"b={b} must be between 0 and 1")
 
     if np.issubdtype(S.dtype, np.complexfloating):
         warnings.warn(
@@ -2494,8 +2483,8 @@ def pcen(
             if max_axis is None:
                 if S.ndim != 2:
                     raise ParameterError(
-                        "Max-filtering a {:d}-dimensional spectrogram "
-                        "requires you to specify max_axis".format(S.ndim)
+                        f"Max-filtering a {S.ndim:d}-dimensional spectrogram "
+                        "requires you to specify max_axis"
                     )
                 # if axis = 0, max_axis=1
                 # if axis = +- 1, max_axis = 0
@@ -2551,7 +2540,6 @@ def griffinlim(
         Union[int, np.random.RandomState, np.random.Generator]
     ] = None,
 ) -> np.ndarray:
-
     """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
 
     Given a short-time Fourier transform magnitude matrix (``S``), the algorithm randomly
@@ -2706,7 +2694,7 @@ def griffinlim(
         # Initialize an all ones complex matrix
         angles[:] = 1.0
     else:
-        raise ParameterError("init={} must either None or 'random'".format(init))
+        raise ParameterError(f"init={init} must either None or 'random'")
 
     # Place-holders for temporary data and reconstructed buffer
     rebuilt = None

@@ -149,9 +149,8 @@ class TimeFormatter(mplticker.Formatter):
     """
 
     def __init__(self, lag: bool = False, unit: Optional[str] = None):
-
         if unit not in ["h", "m", "s", "ms", None]:
-            raise ParameterError("Unknown time unit: {}".format(unit))
+            raise ParameterError(f"Unknown time unit: {unit}")
 
         self.unit = unit
         self.lag = lag
@@ -183,15 +182,15 @@ class TimeFormatter(mplticker.Formatter):
         elif self.unit == "m" or ((self.unit is None) and (vmax - vmin > 60)):
             s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
         elif self.unit == "s":
-            s = "{:.3g}".format(value)
+            s = f"{value:.3g}"
         elif self.unit == None and (vmax - vmin >= 1):
-            s = "{:.2g}".format(value)
+            s = f"{value:.2g}"
         elif self.unit == "ms":
             s = "{:.3g}".format(value * 1000)
         elif self.unit == None and (vmax - vmin < 1):
-            s = "{:.3f}".format(value)
+            s = f"{value:.3f}"
 
-        return "{:s}{:s}".format(sign, s)
+        return f"{sign:s}{s:s}"
 
 
 class NoteFormatter(mplticker.Formatter):
@@ -241,14 +240,12 @@ class NoteFormatter(mplticker.Formatter):
         key: str = "C:maj",
         unicode: bool = True,
     ):
-
         self.octave = octave
         self.major = major
         self.key = key
         self.unicode = unicode
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
-
         if x <= 0:
             return ""
 
@@ -322,7 +319,6 @@ class SvaraFormatter(mplticker.Formatter):
         mela: Optional[Union[str, int]] = None,
         unicode: bool = True,
     ):
-
         if Sa is None:
             raise ParameterError(
                 "Sa frequency is required for svara display formatting"
@@ -336,7 +332,6 @@ class SvaraFormatter(mplticker.Formatter):
         self.unicode = unicode
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
-
         if x <= 0:
             return ""
 
@@ -416,7 +411,6 @@ class FJSFormatter(mplticker.Formatter):
         unison: Optional[str] = None,
         unicode: bool = True,
     ):
-
         self.fmin = fmin
         self.major = major
         self.unison = unison
@@ -429,7 +423,6 @@ class FJSFormatter(mplticker.Formatter):
         )
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
-
         if x <= 0:
             return ""
 
@@ -480,11 +473,9 @@ class LogHzFormatter(mplticker.Formatter):
     """
 
     def __init__(self, major: bool = True):
-
         self.major = major
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
-
         if x <= 0:
             return ""
 
@@ -493,7 +484,7 @@ class LogHzFormatter(mplticker.Formatter):
         if not self.major and vmax > 4 * max(1, vmin):
             return ""
 
-        return "{:g}".format(x)
+        return f"{x:g}"
 
 
 class ChromaFormatter(mplticker.Formatter):
@@ -1697,7 +1688,7 @@ def __decorate_axis(
         axis.set_ticks([])
 
     else:
-        raise ParameterError("Unsupported axis type: {}".format(ax_type))
+        raise ParameterError(f"Unsupported axis type: {ax_type}")
 
 
 def __coord_fft_hz(
@@ -2021,7 +2012,7 @@ def waveshow(
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> sim = librosa.segment.recurrence_matrix(chroma, mode='affinity')
-    >>> librosa.display.specshow(sim, ax=ax['S'], sr=sr, 
+    >>> librosa.display.specshow(sim, ax=ax['S'], sr=sr,
     ...                          x_axis='time', y_axis='time',
     ...                          auto_aspect=False)
     >>> ax['S'].label_outer()
@@ -2042,9 +2033,7 @@ def waveshow(
         y = y[np.newaxis, :]
 
     if max_points <= 0:
-        raise ParameterError(
-            "max_points={} must be strictly positive".format(max_points)
-        )
+        raise ParameterError(f"max_points={max_points} must be strictly positive")
 
     # Create the adaptive drawing object
     axes = __check_axes(ax)

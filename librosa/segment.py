@@ -259,9 +259,7 @@ def cross_similarity(
 
     if not np.allclose(data_ref.shape[:-1], data.shape[:-1]):
         raise ParameterError(
-            "data_ref.shape={} and data.shape={} do not match on leading dimension(s)".format(
-                data_ref.shape, data.shape
-            )
+            f"data_ref.shape={data_ref.shape} and data.shape={data.shape} do not match on leading dimension(s)"
         )
 
     # swap data axes so the feature axis is last
@@ -277,10 +275,9 @@ def cross_similarity(
     if mode not in ["connectivity", "distance", "affinity"]:
         raise ParameterError(
             (
-                "Invalid mode='{}'. Must be one of "
-                "['connectivity', 'distance', "
-                "'affinity']"
-            ).format(mode)
+                f"Invalid mode='{mode}'. Must be one of "
+                "['connectivity', 'distance', 'affinity']"
+            )
         )
     if k is None:
         k = min(n_ref, 2 * np.ceil(np.sqrt(n_ref)))
@@ -602,10 +599,9 @@ def recurrence_matrix(
     if mode not in ["connectivity", "distance", "affinity"]:
         raise ParameterError(
             (
-                "Invalid mode='{}'. Must be one of "
-                "['connectivity', 'distance', "
-                "'affinity']"
-            ).format(mode)
+                f"Invalid mode='{mode}'. Must be one of "
+                "['connectivity', 'distance', 'affinity']"
+            )
         )
     if k is None:
         k = 2 * np.ceil(np.sqrt(t - 2 * width + 1))
@@ -772,9 +768,7 @@ def recurrence_to_lag(
     axis = np.abs(axis)
 
     if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
-        raise ParameterError(
-            "non-square recurrence matrix shape: " "{}".format(rec.shape)
-        )
+        raise ParameterError(f"non-square recurrence matrix shape: {rec.shape}")
 
     sparse = scipy.sparse.issparse(rec)
 
@@ -867,14 +861,14 @@ def lag_to_recurrence(
     """
 
     if axis not in [0, 1, -1]:
-        raise ParameterError("Invalid target axis: {}".format(axis))
+        raise ParameterError(f"Invalid target axis: {axis}")
 
     axis = np.abs(axis)
 
     if lag.ndim != 2 or (
         lag.shape[0] != lag.shape[1] and lag.shape[1 - axis] != 2 * lag.shape[axis]
     ):
-        raise ParameterError("Invalid lag matrix shape: {}".format(lag.shape))
+        raise ParameterError(f"Invalid lag matrix shape: {lag.shape}")
 
     # Since lag must be 2-dimensional, abs(axis) = axis
     t = lag.shape[axis]
@@ -1279,7 +1273,7 @@ def path_enhance(
         min_ratio = 1.0 / max_ratio
     elif min_ratio > max_ratio:
         raise ParameterError(
-            "min_ratio={} cannot exceed max_ratio={}".format(min_ratio, max_ratio)
+            f"min_ratio={min_ratio} cannot exceed max_ratio={max_ratio}"
         )
 
     R_smooth = None
@@ -1328,8 +1322,8 @@ def __affinity_bandwidth(
         # check if bw is the right size
         if bandwidth.shape != rec.shape:
             raise ParameterError(
-                "Invalid matrix bandwidth with bad shape: {}."
-                "Should be {}.".format(bandwidth.shape, rec.shape)
+                f"Invalid matrix bandwidth shape: {bandwidth.shape}."
+                f"Should be {rec.shape}."
             )
         if (bandwidth <= 0).any():
             raise ParameterError(
@@ -1341,9 +1335,7 @@ def __affinity_bandwidth(
         scalar_bandwidth = float(bw_mode)
         if scalar_bandwidth <= 0:
             raise ParameterError(
-                "Invalid scalar bandwidth={}. Must be strictly positive.".format(
-                    scalar_bandwidth
-                )
+                f"Invalid scalar bandwidth={scalar_bandwidth}. Must be strictly positive."
             )
         return scalar_bandwidth
 
@@ -1359,10 +1351,8 @@ def __affinity_bandwidth(
         "mean_k_avg_and_pair",
     ]:
         raise ParameterError(
-            (
-                "Invalid bandwidth='{}'. Must be either a positive scalar or one of "
-                "['med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']"
-            ).format(bw_mode)
+            f"Invalid bandwidth='{bw_mode}'. Must be either a positive scalar or one of "
+            "['med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']"
         )
 
     # build a list of list that stores the distances to k nearest neighbors for all t points.

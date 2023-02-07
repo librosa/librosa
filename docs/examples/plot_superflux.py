@@ -5,10 +5,16 @@ Superflux onsets
 ================
 
 This notebook demonstrates how to recover the Superflux onset detection algorithm of
-`Boeck and Widmer, 2013 <http://dafx13.nuim.ie/papers/09.dafx2013_submission_12.pdf>`_
+`Boeck and Widmer, 2013
+<http://dafx13.nuim.ie/papers/09.dafx2013_submission_12.pdf>`_ [1]_
 from librosa.
 
 This algorithm improves onset detection accuracy in the presence of vibrato.
+
+.. [1] Böck, Sebastian, and Gerhard Widmer. 
+    Maximum filter vibrato suppression for onset detection.
+    In Proc. of the 16th Int. Conf. on Digital Audio Effects (DAFx).
+    Maynooth, Ireland (Sept 2013), vol. 7, p. 4. 2013.
 """
 
 # Code source: Brian McFee
@@ -20,7 +26,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import librosa
-import librosa.display
 
 ######################################################
 # The method works fine for longer signals, but the
@@ -100,12 +105,12 @@ ax[2].set(xlim=[0, 5.0])
 
 
 ax[0].plot(frame_time, odf_default, label='Spectral flux')
-ax[0].vlines(onset_default, 0, odf_default.max(), label='Onsets')
+ax[0].vlines(onset_default, 0, odf_default.max(), color='r', label='Onsets')
 ax[0].legend()
 ax[0].label_outer()
 
 ax[1].plot(frame_time, odf_sf, color='g', label='Superflux')
-ax[1].vlines(onset_sf, 0, odf_sf.max(), label='Onsets')
+ax[1].vlines(onset_sf, 0, odf_sf.max(), color='r', label='Onsets')
 ax[1].legend()
 ax[0].label_outer()
 

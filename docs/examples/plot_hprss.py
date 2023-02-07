@@ -21,7 +21,6 @@ import matplotlib.pyplot as plt
 from IPython.display import Audio
 
 import librosa
-import librosa.display
 
 ########################
 # Load an example clip with harmonics and percussives

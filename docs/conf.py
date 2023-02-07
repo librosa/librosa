@@ -97,7 +97,6 @@ plot_pre_code = (
     + """
 import matplotlib
 import librosa
-import librosa.display
 matplotlib.rcParams['figure.constrained_layout.use'] = True
 """
 )

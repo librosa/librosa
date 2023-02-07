@@ -11,17 +11,31 @@ other sporadic foreground signals) from accompanying instrumentation.
     This example is primarily of historical interest, and we do not recommend
     this as a competitive method for vocal source separation.
     For a more recent treatment of vocal and music source separation, please
-    refer to `Open Source Tools & Data for Music Source Separation <https://source-separation.github.io/tutorial/landing.html>`_
-    (Manilow, Seetharaman, and Salamon 2020).
+    refer to `Open Source Tools & Data for Music Source Separation
+    <https://source-separation.github.io/tutorial/landing.html>`_ [1]_.
 
 This is based on the "REPET-SIM" method of `Rafii and Pardo, 2012
-<http://www.cs.northwestern.edu/~zra446/doc/Rafii-Pardo%20-%20Music-Voice%20Separation%20using%20the%20Similarity%20Matrix%20-%20ISMIR%202012.pdf>`_, but includes a couple of modifications and extensions:
+<http://www.cs.northwestern.edu/~zra446/doc/Rafii-Pardo%20-%20Music-Voice%20Separation%20using%20the%20Similarity%20Matrix%20-%20ISMIR%202012.pdf>`_
+[2]_, but includes a couple of modifications and extensions:
 
     - FFT windows overlap by 1/4, instead of 1/2
     - Non-local filtering is converted into a soft mask by Wiener filtering.
       This is similar in spirit to the soft-masking method used by `Fitzgerald, 2012
-      <http://arrow.dit.ie/cgi/viewcontent.cgi?article=1086&context=argcon>`_,
+      <http://arrow.dit.ie/cgi/viewcontent.cgi?article=1086&context=argcon>`_
+      [3]_,
       but is a bit more numerically stable in practice.
+
+.. [1] Manilow, Ethan, Prem Seetharman, and Justin Salamon.
+    "Open source tools & data for music source separation."
+    2020.
+
+.. [2] Rafii, Zafar, and Bryan Pardo.
+    "Music/Voice Separation Using the Similarity Matrix."
+    In ISMIR, pp. 583-588. 2012.
+
+.. [3] FitzGerald, Derry.
+    "Vocal separation using nearest neighbours and median filtering."
+    23rd IET Irish Signals and Systems Conference, Maynooth.  (2012): 98-98.
 """
 
 # Code source: Brian McFee
@@ -34,8 +48,6 @@ import matplotlib.pyplot as plt
 from IPython.display import Audio
 
 import librosa
-
-import librosa.display
 
 #############################################
 # Load an example with vocals.
