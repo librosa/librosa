@@ -8,7 +8,7 @@ dependencies:
   - audioread>=2.1.9
   - numpy>=1.20.3
   - scipy>=1.2.0
-  - scikit-learn>=0.20.0
+  - scikit-learn>=1.2.0
   - joblib>=0.14.0
   - decorator>=4.3.0
   - resampy>=0.2.2
