@@ -25,7 +25,7 @@ jobs:
                 include:
                     - os: ubuntu-latest
                       python-version: "3.8"
-                      channel-priority: "strict"
+                      channel-priority: "flexible"
                       envfile: ".github/environment-docs.yml"
         steps:
         - uses: actions/checkout@v3
