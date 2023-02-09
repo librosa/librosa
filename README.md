@@ -23,7 +23,7 @@ A python package for music and audio analysis.
   - [Building From Source](#building-from-source)
   - [Hints for Installation](#hints-for-the-installation)
     - [`soundfile`](#soundfile)
-    - [`audioread` and MP3 support](#audioread-and-mp3-support)
+    - [`audioread`](#audioread-and-mp3-support)
       - [Linux (`apt get`)](#linux-apt-get)
       - [Linux (`yum`)](#linux-yum)
       - [Mac](#mac)
