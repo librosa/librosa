@@ -69,7 +69,7 @@ jobs:
             sphinx-multiversion docs/ build/html
             touch build/html/.nojekyll
             cp docs/docsite-index-redirect.html build/html/index.html
-            ln -srf build/html/$(git tag -l --sort=creatordate |tail -1) build/html/latest  # auto-link the latest tag
+            ln -srf build/html/$(git tag -l --sort=creatordate |grep -v rc |tail -1) build/html/latest  # auto-link the latest tag
 
         - name: Push to web
           uses: tagus/git-deploy@v0.4.1
