@@ -2481,7 +2481,7 @@ _Number = Union[complex, "np.number[Any]"]
 _NumberOrArray = TypeVar("_NumberOrArray", bound=Union[_Number, np.ndarray])
 
 
-def abs2(x: _NumberOrArray) -> _NumberOrArray:
+def abs2(x: _NumberOrArray, dtype: Optional[DTypeLike] = None) -> _NumberOrArray:
     """Compute the squared magnitude of a real or complex array.
 
     This function is equivalent to calling `np.abs(x)**2` but it
@@ -2491,6 +2491,9 @@ def abs2(x: _NumberOrArray) -> _NumberOrArray:
     ----------
     x : np.ndarray or scalar, real or complex typed
         The input data, either real (float32, float64) or complex (complex64, complex128) typed
+    dtype : np.dtype, optional
+        The data type of the output array.
+        If not provided, it will be inferred from `x`
 
     Returns
     -------
@@ -2508,10 +2511,14 @@ def abs2(x: _NumberOrArray) -> _NumberOrArray:
     """
     if np.iscomplexobj(x):
         # suppress type check, mypy doesn't like vectorization
-        return _cabs2(x)  # type: ignore
+        y = _cabs2(x)
+        if dtype is None:
+            return y  # type: ignore
+        else:
+            return y.astype(dtype)  # type: ignore
     else:
         # suppress type check, mypy doesn't know this is real
-        return x**2  # type: ignore
+        return np.power(x, 2, dtype=dtype)  # type: ignore
 
 
 @numba.vectorize(
