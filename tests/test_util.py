@@ -1367,6 +1367,26 @@ def test_abs2_complex(x, dtype):
     assert p.dtype == librosa.util.dtype_c2r(x_cast.dtype)
 
 
+def test_abs2_int_dtype():
+    x = np.arange(5, dtype=np.int16)
+    y = librosa.util.abs2(x, dtype=None)
+    assert x.dtype == y.dtype
+
+    z = librosa.util.abs2(x, dtype=np.float32)
+    assert z.dtype == np.float32
+
+
+def test_abs2_complex_dtype():
+    x = np.arange(5, dtype=np.complex64)
+    y = librosa.util.abs2(x, dtype=None)
+    assert np.isrealobj(y)
+    # complex64 -> float32 by default
+    assert y.dtype == np.float32
+
+    z = librosa.util.abs2(x, dtype=np.float64)
+    # force it to float64
+    assert z.dtype == np.float64
+
 
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 @pytest.mark.parametrize('angles', [np.pi/2, [np.pi/2, -np.pi/3]])

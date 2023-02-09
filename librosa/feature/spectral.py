@@ -17,6 +17,7 @@ from ..core.spectrum import power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt, vqt
 from ..core.pitch import estimate_tuning
 from typing import Any, Optional, Union, Collection
+from numpy.typing import DTypeLike
 from .._typing import _FloatLike_co, _WindowSpec, _PadMode, _PadModeSTFT
 
 
@@ -807,6 +808,7 @@ def rms(
     hop_length: int = 512,
     center: bool = True,
     pad_mode: _PadMode = "constant",
+    dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
     """Compute root-mean-square (RMS) value for each frame, either from the
     audio samples ``y`` or from a spectrogram ``S``.
@@ -834,6 +836,8 @@ def rms(
     pad_mode : str
         Padding mode for centered analysis.  See `numpy.pad` for valid
         values.
+    dtype : np.dtype, optional
+        Data type of the output array.  Defaults to float32.
 
     Returns
     -------
@@ -880,7 +884,7 @@ def rms(
         x = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
         # Calculate power
-        power = np.mean(util.abs2(x), axis=-2, keepdims=True)
+        power = np.mean(util.abs2(x, dtype=dtype), axis=-2, keepdims=True)
     elif S is not None:
         # Check the frame length
         if S.shape[-2] != frame_length // 2 + 1:
@@ -893,7 +897,7 @@ def rms(
             )
 
         # power spectrogram
-        x = np.abs(S) ** 2
+        x = util.abs2(S, dtype=dtype)
 
         # Adjust the DC and sr/2 component
         x[..., 0, :] *= 0.5
