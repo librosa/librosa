@@ -10,19 +10,17 @@ v0.10.0
 *rc0: 2023-02-07*
 
 New features
-
     - `#1485`_ Added support for `"h"` (hours) and `"m"` (minutes) in `librosa.display.TimeFormatter`.  *Vincent Lostanlen*
     - `#1495`_ Expanded options for bandwidth calculation in `librosa.segment.recurrence_matrix` and `librosa.segment.cross_similarity`. *Tom Xi*
     - `#1529`_ Accelerated utility functions for squared magnitude `librosa.util.abs2` and `librosa.util.phasor`. *Brian McFee*
     - `#1514`_ `librosa.stft` support for pre-allocated output arrays.  *Brian McFee*
     - `#1533`_ Accelerated `librosa.util.localmax` and `librosa.util.localmin`. *Brian McFee*
-    - `#1552`_ **EXPERIMENTAL** Support for just-intonation based variable-Q transforms `librosa.vqt` and functional just system (FJS) notation. *Brian McFee*
+    - `#1552`_ **EXPERIMENTAL** Support for just-intonation based variable-Q transforms `librosa.vqt` and functional just system (FJS) notation. *Brian McFee, Vincent Lostanlen*
     - `#1579`_ Imports are now done lazily, significantly reducing startup time. It is not longer necessary to explicitly `import librosa.display`. *Brian McFee*
     - `#1587`_, `#1632`_, `#1637`_ Type annotations. *Matan Gover, Brian McFee, Fabian Keller*
     - `#1647`_ Harmonic spectrum interpolation `librosa.f0_harmonics` and tempogram ratio features `librosa.feature.tempogram_ratio`. *Brian McFee*
 
 Bug fixes
-
     - `#1560`_ Corrected an error in bandwidth estimation for window functions that take on negative sample values. *Brian McFee*
     - `#1571`_ Fixed rounding error in multirate filterbank calculation of sampling rates. *Brian McFee*
     - `#1594`_ Fixed incorrect use of deprecated numpy numerical types. *Mattia Di Gangi*
@@ -30,17 +28,16 @@ Bug fixes
 
 
 API changes
-
     - `#1561`_ `librosa.resample` now supports `axis=` for all sample rate conversion backends. *Brian McFee*
     - `#1572`_ Notation conversion (e.g., `librosa.midi_to_note`) now vectorizes operations, and produces `numpy.ndarray` outputs rather than `list` when given iterable inputs. *Brian McFee*
     - `#1625`_ Deprecations now raise `FutureWarning` instead of `DeprecationWarning`.
     - `#1625`_ `librosa.get_duration` parameter `filename` has been renamed to `path`. *Brian McFee*
     - `#1643`_ Removed support for `threshold=None` in `librosa.zero_crossings`. *Brian McFee*
+    - `#1665`_ Fixed overflow bug in `librosa.feature.rms` on integer inputs. *Brian McFee*
 
 
 
 Documentation
-
     - `#1520`_ Improved CONTRIBUTING.md documentation. *Kian Eliasi*
     - `#1531`_ Updated LICENSE.md documentation. *Anton Kostin*
     - `#1536`_ Added keyword argument (`kwargs`) definitions to docstrings. *Emily Halvachs*
@@ -54,14 +51,12 @@ Documentation
 
 
 Deprecations
-
     - `#1521`_ Removed backward compatibility support for positional arguments that are now keyword-only. *Brian McFee*
     - `#1577`_ Removed official support for python 3.6. *Brian McFee*
     - `#1625`_ The `audioread` backend is now deprecated and will be removed in a future release. *Brian McFee*
 
 
 Other changes
-
     - `#1501`_ Infer square / equal plot dimensions for compatible x/y axes in `librosa.display.specshow`.  *Kian Eliasi*
     - `#1535`_ Standardized integer type checks throughout the library. *Alexandre Chabot-Leclerc*
     - `#1539`_ Refactored `librosa.display.AdaptiveWaveplot` to allow callback disconnection. *Brian McFee*
@@ -120,6 +115,7 @@ Other changes
 .. _#1640: https://github.com/librosa/librosa/issues/1640
 .. _#1643: https://github.com/librosa/librosa/issues/1643
 .. _#1646: https://github.com/librosa/librosa/issues/1646
+.. _#1655: https://github.com/librosa/librosa/issues/1655
 
 
 
