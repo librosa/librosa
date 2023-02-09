@@ -2491,7 +2491,6 @@ def abs2(x: _NumberOrArray, dtype: Optional[DTypeLike] = None) -> _NumberOrArray
     ----------
     x : np.ndarray or scalar, real or complex typed
         The input data, either real (float32, float64) or complex (complex64, complex128) typed
-
     dtype : np.dtype, optional
         The data type of the output array.
         If not provided, it will be inferred from `x`
