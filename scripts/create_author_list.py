@@ -21,9 +21,7 @@ def get_contributors(repo_owner, repo_name):
         for contributor in response.json():
             contributions = contributor["weeks"]
             mod_lines = sum([week["d"] + week["a"] for week in contributions])
-            dates = [week["w"] for week in contributions]
-            date_range = max(dates) - min(dates)
-            contributors[contributor["author"]["login"]] = mod_lines / (1 + date_range)
+            contributors[contributor["author"]["login"]] = mod_lines
 
         if "next" in response.links:
             url = response.links["next"]["url"]
@@ -38,4 +36,4 @@ if __name__ == "__main__":
 
     contributors = get_contributors(repo_owner, repo_name)
     for contributor, mod_lines in contributors:
-        print(f"{contributor:30s}|\t{mod_lines:03.0g} lines added/deleted per week")
+        print(f"{contributor:30s}|\t{mod_lines:7d} lines added/deleted")

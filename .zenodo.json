@@ -1,0 +1,276 @@
+{
+    "license": "ISC",
+    "creators": [
+        {
+            "orcid": "0000-0001-6261-9747",
+            "affiliation": "New York University",
+            "name": "McFee, Brian"
+        },
+        {
+            "name":"Matt McVicar"
+        },
+        {
+            "name":"Daniel Faronbi"
+        },
+        {
+            "orcid": "0000-0003-3781-7244",
+            "name":"Iran Roman"
+        },
+        {
+            "name":"Matan Gover"
+        },
+        {
+            "orcid": "0000-0003-1306-3548",
+            "name":"Stefan Balke"
+        },
+        {
+            "name":"Scott Seyfarth"
+        },
+        {
+            "orcid": "0000-0002-9008-7562",
+            "name":"Ayoub Malek"
+        },
+        {
+            "orcid": "0000-0002-5009-8048",
+            "name":"Colin Raffel"
+        },
+        {
+            "orcid": "0000-0003-0580-1651",
+            "name":"Vincent Lostanlen"
+        },
+        {
+            "name":"Benjamin van Niekirk"
+        },
+        {
+            "name":"Dana Lee"
+        },
+        {
+            "name":"Frank Cwitkowitz"
+        },
+        {
+            "orcid": "0000-0003-1383-4541",
+            "name":"Frank Zalkow"
+        },
+        {
+            "orcid": "0000-0001-6459-7609",
+            "name":"Oriol Nieto"
+        },
+        {
+            "name":"Dan Ellis"
+        },
+        {
+            "name":"Jack Mason"
+        },
+        {
+            "name":"Kyungyun Lee"
+        },
+        {
+            "name":"Bea Steers"
+        },
+        {
+            "name":"Emily Halvachs"
+        },
+        {
+            "orcid": "0000-0002-8225-5191",
+            "name":"Carl Thomé"
+        },
+        {
+            "orcid": "0000-0002-2534-1165",
+            "name":"Fabian Robert-Stöter"
+        },
+        {
+            "name":"Rachel Bittner"
+        },
+        {
+            "name":"Ziyao Wei"
+        },
+        {
+            "name":"Adam Weiss"
+        },
+        {
+            "name":"Eric Battenberg"
+        },
+        {
+            "name":"Keunwoo Choi"
+        },
+        {
+            "orcid": "0000-0002-0720-0967",
+            "name":"Ryuichi Yamamoto"
+        },
+        {
+            "name":"CJ Carr"
+        },
+        {
+            "name":"Alex Metsai"
+        },
+        {
+            "name":"Stefan Sullivan"
+        },
+        {
+            "name":"Pius Friesch"
+        },
+        {
+            "name":"Asmitha Krishnakumar"
+        },
+        {
+            "orcid": "0000-0003-1001-4564",
+            "name":"Shunsuke Hidaka"
+        },
+        {
+            "name":"Steve Kowalik"
+        },
+        {
+            "name":"Fabian Keller"
+        },
+        {
+            "name":"Dan Mazur"
+        },
+        {
+            "orcid": "0000-0001-6609-6023",
+            "name":"Alexandre Chabot-Leclerc"
+        },
+        {
+            "name":"Curtis Hawthorne"
+        },
+        {
+            "name":"Chandrashekhar Ramaprasad"
+        },
+        {
+            "name":"Myungchul Keum"
+        },
+        {
+            "name":"Juanita Gomez"
+        },
+        {
+            "name":"Will Monroe"
+        },
+        {
+            "name":"Viktor Andreevitch Morozov"
+        },
+        {
+            "name":"Kian Eliasi"
+        },
+        {
+            "name":"nullmightybofo"
+        },
+        {
+            "name":"Paul Biberstein"
+        },
+        {
+            "name":"N. Dorukhan Sergin"
+        },
+        {
+            "orcid": "0000-0001-8158-5562",
+            "name":"Romain Hennequin"
+        },
+        {
+            "name":"Rimvydas Naktinis"
+        },
+        {
+            "name":"beantowel"
+        },
+        {
+            "orcid": "0000-0003-2892-0194",
+            "name":"Taewoon Kim"
+        },
+        {
+            "name":"Jon Petter \u00c5sen"
+        },
+        {
+            "name":"Joon Lim"
+        },
+        {
+            "name":"Alex Malins"
+        },
+        {
+            "name":"Dar\u00edo Here\u00f1\u00fa"
+        },
+        {
+            "name":"Stef van der Struijk"
+        },
+        {
+            "name":"Lorenz Nickel"
+        },
+        {
+            "name":"Jackie Wu"
+        },
+        {
+            "name":"Zhen Wang"
+        },
+        {
+            "name":"Tim Gates"
+        },
+        {
+            "name":"Matt Vollrath"
+        },
+        {
+            "orcid": "0000-0001-9813-221X",
+            "name":"Andy Sarroff"
+        },
+        {
+            "name":"Xiao-Ming"
+        },
+        {
+            "orcid": "0000-0001-8259-6028",
+            "name":"Alastair Porter"
+        },
+        {
+            "name":"Seth Kranzler"
+        },
+        {
+            "name":"Voodoohop"
+        },
+        {
+            "orcid": "0000-0003-4491-0025",
+            "name":"Mattia Di Gangi"
+        },
+        {
+            "name":"Helmi Jinoz"
+        },
+        {
+            "name":"Connor Guerrero"
+        },
+        {
+            "name":"Abduttayyeb Mazhar"
+        },
+        {
+            "name":"toddrme2178"
+        },
+        {
+            "orcid": "0000-0001-7159-1387",
+            "name":"Zvi Baratz"
+        },
+        {
+            "name":"Anton Kostin"
+        },
+        {
+            "name":"Xinlu Zhuang"
+        },
+        {
+            "name":"Cash TingHin Lo"
+        },
+        {
+            "name":"Pavel Campr"
+        },
+        {
+            "name":"Eric Semeniuc"
+        },
+        {
+            "orcid": "0000-0002-9590-7179",
+            "name":"Monsij Biswal"
+        },
+        {
+            "name":"Shayenne Moura"
+        },
+        {
+            "name":"Paul Brossier"
+        },
+        {
+            "name":"Hojin Lee"
+        },
+        {
+            "orcid": "0000-0001-9916-2285",
+            "name":"Waldir Pimenta"
+        }
+    ]
+}
