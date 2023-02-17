@@ -7,7 +7,7 @@ v0.10
 
 v0.10.0
 -------
-*rc0: 2023-02-07*
+2023-02-20
 
 New features
     - `#1485`_ Added support for `"h"` (hours) and `"m"` (minutes) in `librosa.display.TimeFormatter`.  *Vincent Lostanlen*
