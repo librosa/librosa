@@ -1038,7 +1038,7 @@ def test_waveshow_deladaptor(y, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_vqt(C):
 
-    fig, ax = plt.subplots(nrows=4, figsize=(12, 10), constrained_layout=True)
+    fig, ax = plt.subplots(nrows=4, figsize=(12, 10))
 
     librosa.display.specshow(C, y_axis='vqt_hz', intervals="ji5", ax=ax[0])
     librosa.display.specshow(C, y_axis='vqt_note', intervals="ji5", ax=ax[1])
@@ -1074,7 +1074,7 @@ def test_specshow_chromafjs(C, sr):
 
     intervals = librosa.plimit_intervals(primes=[3, 5])
 
-    fig, ax = plt.subplots(nrows=2, figsize=(12, 8), constrained_layout=True)
+    fig, ax = plt.subplots(nrows=2, figsize=(12, 8))
 
     librosa.display.specshow(chroma, y_axis="chroma_fjs", intervals="ji5", ax=ax[0])
     librosa.display.specshow(chroma, y_axis="chroma_fjs", intervals=intervals, ax=ax[1])

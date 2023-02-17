@@ -15,10 +15,10 @@ Contributors
 * Rachel Bittner <https://github.com/rabitt>
 * Stefan Balke <https://github.com/stefan-balke>
 * CJ Carr <https://github.com/Cortexelus>
-* Fabian Robert-Stoeter <https://github.com/faroit>
+* Fabian Robert-Stöter <https://github.com/faroit>
 * Keunwoo Choi <https://github.com/keunwoochoi>
 * Eric Humphrey <https://github.com/ejhumphrey>
-* Carl Thome <https://github.com/carlthome>
+* Carl Thomé <https://github.com/carlthome>
 * Seth Kranzler <https://github.com/polyrhythmatic>
 * Waldir Pimenta <https://github.com/waldyrious>
 * Hojin Lee <https://github.com/hojinlee>
@@ -91,7 +91,7 @@ Contributors
 * Kian Eliasi <https://github.com/kianelbo>
 * Anton Kostin <https://github.com/masguit42>
 * Emily Halvachs <https://github.com/Embot2000>
-* Juantia Gomez <https://github.com/juanis2112>
+* Juanita Gomez <https://github.com/juanis2112>
 * Helmi Jinoz <https://github.com/helminzo>
 * Zvi Baratz <https://github.com/ZviBaratz>
 * Alexandre Chabot-Leclerc <https://github.com/achabotl>
