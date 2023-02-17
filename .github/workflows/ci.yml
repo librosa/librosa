@@ -29,27 +29,27 @@ jobs:
 
                     - os: ubuntu-latest
                       python-version: "3.8"
-                      channel-priority: "flexible"
+                      channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
                       python-version: "3.9"
-                      channel-priority: "flexible"
+                      channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
                       python-version: "3.10"
-                      channel-priority: "flexible"
+                      channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: macos-latest
                       python-version: "3.10"
-                      channel-priority: "flexible"
+                      channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: windows-latest
                       python-version: "3.10"
-                      channel-priority: "flexible"
+                      channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
         steps:
@@ -89,7 +89,7 @@ jobs:
             activate-environment: test
             channel-priority: ${{ matrix.channel-priority }}
             environment-file: ${{ matrix.envfile }}
-            use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+            use-only-tar-bz2: false # IMPORTANT: This needs to be set for caching to work properly!
 
         - name: Conda info
           shell: bash -l {0}
