@@ -75,7 +75,7 @@ def mel_to_stft(
     Examples
     --------
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
-    >>> S = np.abs(librosa.stft(y))
+    >>> S = librosa.util.abs2(librosa.stft(y))
     >>> mel_spec = librosa.feature.melspectrogram(S=S, sr=sr)
     >>> S_inv = librosa.feature.inverse.mel_to_stft(mel_spec, sr=sr)
 
