@@ -309,8 +309,11 @@ def hybrid_cqt(
     # Get all CQT frequencies
     freqs = cqt_frequencies(n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
 
-    # Compute an alpha parameter, just in case we need it
-    alpha = __bpo_to_alpha(bins_per_octave)
+    # Pre-compute alpha
+    if n_bins == 1:
+        alpha = __et_relative_bw(bins_per_octave)
+    else:
+        alpha = filters._relative_bandwidth(freqs=freqs)
 
     # Compute the length of each constant-Q basis function
     lengths, _ = filters.wavelet_lengths(
@@ -486,7 +489,10 @@ def pseudo_cqt(
 
     freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
 
-    alpha = __bpo_to_alpha(bins_per_octave)
+    if n_bins == 1:
+        alpha = __et_relative_bw(bins_per_octave)
+    else:
+        alpha = filters._relative_bandwidth(freqs=freqs)
 
     lengths, _ = filters.wavelet_lengths(
         freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
@@ -656,7 +662,10 @@ def icqt(
 
     # truncate the cqt to max frames if helpful
     freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
-    alpha = __bpo_to_alpha(bins_per_octave)
+    if n_bins == 1:
+        alpha = __et_relative_bw(bins_per_octave)
+    else:
+        alpha = filters._relative_bandwidth(freqs=freqs)
 
     lengths, f_cutoff = filters.wavelet_lengths(
         freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
@@ -702,7 +711,7 @@ def icqt(
             sparsity,
             window=window,
             dtype=dtype,
-            alpha=alpha,
+            alpha=alpha[sl],
         )
 
         # Transpose the basis
@@ -944,7 +953,10 @@ def vqt(
     freqs_top = freqs[-bins_per_octave:]
 
     fmax_t: float = np.max(freqs_top)
-    alpha = __bpo_to_alpha(bins_per_octave)
+    if n_bins == 1:
+        alpha = __et_relative_bw(bins_per_octave)
+    else:
+        alpha = filters._relative_bandwidth(freqs=freqs)
 
     lengths, filter_cutoff = filters.wavelet_lengths(
         freqs=freqs,
@@ -991,6 +1003,7 @@ def vqt(
 
         # This may be incorrect with early downsampling
         freqs_oct = freqs[sl]
+        alpha_oct = alpha[sl]
 
         fft_basis, n_fft, _ = __vqt_filter_fft(
             my_sr,
@@ -1001,7 +1014,7 @@ def vqt(
             window=window,
             gamma=gamma,
             dtype=dtype,
-            alpha=alpha,
+            alpha=alpha_oct,
         )
 
         # Re-scale the filters to compensate for downsampling
@@ -1478,8 +1491,14 @@ def griffinlim_cqt(
     )
 
 
-def __bpo_to_alpha(bins_per_octave: int) -> float:
-    """Compute the alpha coefficient for a given number of bins per octave
+def __et_relative_bw(bins_per_octave: int) -> float:
+    """Compute the relative bandwidth coefficient for equal
+    (geometric) freuqency spacing and a give number of bins
+    per octave.
+
+    This is a special case of the more general `relative_bandwidth`
+    calculation that can be used when only a single basis frequency
+    is used.
 
     Parameters
     ----------
@@ -1487,8 +1506,9 @@ def __bpo_to_alpha(bins_per_octave: int) -> float:
 
     Returns
     -------
-    alpha : number > 0
+    alpha : np.ndarray > 0
+        Value is cast up to a 1d array to allow slicing
     """
 
     r = 2 ** (1 / bins_per_octave)
-    return (r**2 - 1) / (r**2 + 1)
+    return np.atleast_1d((r**2 - 1) / (r**2 + 1))
