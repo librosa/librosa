@@ -1491,7 +1491,7 @@ def griffinlim_cqt(
     )
 
 
-def __et_relative_bw(bins_per_octave: int) -> float:
+def __et_relative_bw(bins_per_octave: int) -> np.ndarray:
     """Compute the relative bandwidth coefficient for equal
     (geometric) freuqency spacing and a give number of bins
     per octave.

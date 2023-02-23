@@ -815,14 +815,14 @@ def wavelet_lengths(
     return lengths, f_cutoff
 
 
-def _relative_bandwidth(*, freqs: Optional[np.ndarray] = None):
+def _relative_bandwidth(*, freqs: np.ndarray) -> np.ndarray:
     """Compute the relative bandwidth for each of a set of specified frequencies.
 
     This function is used as a helper in wavelet basis construction.
 
     Parameters
     ----------
-    freqs : np.ndarray, optional
+    freqs : np.ndarray
         The array of frequencies
 
     Returns
