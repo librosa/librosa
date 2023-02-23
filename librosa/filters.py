@@ -828,7 +828,7 @@ def _relative_bandwidth(*, freqs: np.ndarray) -> np.ndarray:
     Returns
     -------
     alpha : np.ndarray
-        Relative bandwidth 
+        Relative bandwidth
     """
 
     if len(freqs) <= 1:
