@@ -660,7 +660,6 @@ def icqt(
 
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
 
-    # truncate the cqt to max frames if helpful
     freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
     if n_bins == 1:
         alpha = __et_relative_bw(bins_per_octave)
