@@ -745,11 +745,11 @@ def wavelet_lengths(
             Hearing research 47.1-2 (1990): 103-138.
 
     alpha : number > 0 [optional]
-        If only one frequency is provided (``len(freqs)==1``), then filter bandwidth
-        cannot be computed.  In that case, the ``alpha`` parameter described above
-        can be explicitly specified here.
-
-        If two or more frequencies are provided, this parameter is ignored.
+        Optional pre-computed relative bandwidth parameter.
+        Note that this must be provided if ``len(freqs)==1`` because bandwidth cannot be
+        inferred from a single frequency.
+        Otherwise, if left unspecified, it will be automatically derived by the rules
+        specified above.
 
     Returns
     -------
@@ -792,20 +792,10 @@ def wavelet_lengths(
             f"Frequency array={freqs} must be in strictly ascending order"
         )
 
-    # We need at least 2 frequencies to infer alpha
-    if len(freqs) > 1:
-        # Approximate the local octave resolution
-        bpo = np.empty(len(freqs))
-        logf = np.log2(freqs)
-        bpo[0] = 1 / (logf[1] - logf[0])
-        bpo[-1] = 1 / (logf[-1] - logf[-2])
-        bpo[1:-1] = 2 / (logf[2:] - logf[:-2])
-
-        alpha = (2.0 ** (2 / bpo) - 1) / (2.0 ** (2 / bpo) + 1)
     if alpha is None:
-        raise ParameterError(
-            "Cannot construct a wavelet basis for a single frequency if alpha is not provided"
-        )
+        alpha = _relative_bandwidth(freqs=freqs)
+    else:
+        alpha = np.asarray(alpha)
 
     gamma_: Union[_FloatLike_co, np.ndarray]
     if gamma is None:
@@ -823,6 +813,40 @@ def wavelet_lengths(
     lengths = Q * sr / (freqs + gamma_ / alpha)
 
     return lengths, f_cutoff
+
+
+def _relative_bandwidth(*, freqs: np.ndarray) -> np.ndarray:
+    """Compute the relative bandwidth for each of a set of specified frequencies.
+
+    This function is used as a helper in wavelet basis construction.
+
+    Parameters
+    ----------
+    freqs : np.ndarray
+        The array of frequencies
+
+    Returns
+    -------
+    alpha : np.ndarray
+        Relative bandwidth
+    """
+
+    if len(freqs) <= 1:
+        raise ParameterError(f"2 or more frequencies are required to compute bandwidths. Given freqs={freqs}")
+
+    # Approximate the local octave resolution around each frequency
+    bpo = np.empty_like(freqs)
+    logf = np.log2(freqs)
+    # Reflect at the lowest and highest frequencies
+    bpo[0] = 1 / (logf[1] - logf[0])
+    bpo[-1] = 1 / (logf[-1] - logf[-2])
+
+    # For everything else, do a centered difference
+    bpo[1:-1] = 2 / (logf[2:] - logf[:-2])
+
+    # Compute relative bandwidths
+    alpha = (2.0 ** (2 / bpo) - 1) / (2.0 ** (2 / bpo) + 1)
+    return alpha
 
 
 @cache(level=10)
@@ -878,11 +902,11 @@ def wavelet(
         By default, uses 64-bit (single precision) complex floating point.
 
     alpha : number > 0 [optional]
-        If only one frequency is provided (``len(freqs)==1``), then filter bandwidth
-        cannot be computed.  In that case, the ``alpha`` parameter described above
-        can be explicitly specified here.
-
-        If two or more frequencies are provided, this parameter is ignored.
+        Optional pre-computed relative bandwidth parameter.
+        Note that this must be provided if ``len(freqs)==1`` because bandwidth cannot be
+        inferred from a single frequency.
+        Otherwise, if left unspecified, it will be automatically derived by the rules
+        specified above.
 
     **kwargs : additional keyword arguments
         Arguments to `np.pad()` when ``pad==True``.
