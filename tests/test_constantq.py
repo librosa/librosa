@@ -243,7 +243,7 @@ def test_icqt_odd_hop(y_cqt_110, sr_cqt):
 
 
 @pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
-@pytest.mark.parametrize("n_bins", [12, 24])
+@pytest.mark.parametrize("n_bins", [1, 12, 24])
 @pytest.mark.parametrize("gamma", [None, 0, 2.5])
 @pytest.mark.parametrize("bins_per_octave", [12, 24])
 @pytest.mark.parametrize("tuning", [0])
