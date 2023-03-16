@@ -5,6 +5,14 @@ Changelog
 v0.10
 =====
 
+v0.10.0.post0
+-------------
+2023-03-16
+
+Maintenance release to avoid a dependency incompatibility with numpy versions 1.22.0, 1.22.1, and
+1.22.2.
+
+
 v0.10.0
 -------
 2023-02-20
