@@ -5,6 +5,14 @@ Changelog
 v0.10
 =====
 
+v0.10.0.post1
+-------------
+2023-03-16
+
+This maintenance release updates the dependency specifications to avoid an incompatibility with
+numpy versions 1.22.0, 1.22.1, and 1.22.2.  Functionality is otherwise identical to librosa version
+0.10.0.
+
 v0.10.0
 -------
 2023-02-20
