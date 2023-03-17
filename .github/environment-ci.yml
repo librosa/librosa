@@ -13,7 +13,7 @@ dependencies:
   - decorator>=4.3.0
   - numba>=0.51.0
   - pysoundfile>=0.12.1
-  - pooch>=1.0
+  - pooch>=1.0,<1.7
   - packaging>=20.0
   - soxr-python>=0.3.2
   - msgpack-python>=1.0

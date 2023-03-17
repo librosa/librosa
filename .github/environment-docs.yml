@@ -17,7 +17,7 @@ dependencies:
   - numpydoc>=1.1.0
   - ipython>=7.0
   - pysoundfile>=0.12.1
-  - pooch>=1.0.0
+  - pooch>=1.0.0,<1.7
   - packaging>=20.0
   - matplotlib>=3.5
   - sphinx>=5.1.0,<6
