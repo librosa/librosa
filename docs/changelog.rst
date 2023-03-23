@@ -5,6 +5,16 @@ Changelog
 v0.10
 =====
 
+v0.10.0.post2
+-------------
+2023-03-17
+
+This maintenance release updates the dependency specifications to avoid an incompatibility with
+pooch >= 1.7.0.
+This restriction only affects loading of specific example files, and does not otherwise affect
+functionality of the library.
+
+
 v0.10.0.post1
 -------------
 2023-03-16
