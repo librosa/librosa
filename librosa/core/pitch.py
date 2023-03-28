@@ -603,7 +603,7 @@ def yin(
     y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
     # Calculate minimum and maximum periods
-    min_period = max(int(np.floor(sr / fmax)), 1)
+    min_period = int(np.floor(sr / fmax))
     max_period = min(int(np.ceil(sr / fmin)), frame_length - win_length - 1)
 
     # Calculate cumulative mean normalized difference function.
@@ -805,7 +805,7 @@ def pyin(
     y_frames = util.frame(y, frame_length=frame_length, hop_length=hop_length)
 
     # Calculate minimum and maximum periods
-    min_period = max(int(np.floor(sr / fmax)), 1)
+    min_period = int(np.floor(sr / fmax))
     max_period = min(int(np.ceil(sr / fmin)), frame_length - win_length - 1)
 
     # Calculate cumulative mean normalized difference function.
@@ -957,7 +957,7 @@ def __check_yin_params(
     the following conditions:
 
     1. 0 < fmin <= fmax <= sr/2
-    2. frame_length - win_length - 1 > sr/fmax
+    2. frame_length - win_length - 1 > sr/fmin
     """
 
     if fmax >= sr / 2:
@@ -972,8 +972,10 @@ def __check_yin_params(
             f"win_length={win_length} cannot exceed given frame_length={frame_length}"
         )
 
-    if frame_length - win_length - 1 <= sr / fmax:
-        fmax_feasible = sr / (frame_length - win_length - 1)
+    if frame_length - win_length - 1 <= sr / fmin:
+        fmin_feasible = sr / (frame_length - win_length - 1)
+        frame_length_feasible = int(np.ceil(sr/fmin + win_length + 1))
         raise ParameterError(
-            f"fmax={fmax:.3f} must be at least {fmax_feasible:.3f} for frame_length={frame_length}, win_length={win_length}, and sr={sr}"
+            f"fmin={fmin:.3f} is too small for frame_length={frame_length}, win_length={win_length}, and sr={sr}. "
+            f"Either increase to fmin={fmin_feasible:.3f} or frame_length={frame_length_feasible}"
         )
