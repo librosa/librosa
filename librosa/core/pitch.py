@@ -582,7 +582,9 @@ def yin(
     if win_length is None:
         win_length = frame_length // 2
 
-    __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length, win_length=win_length)
+    __check_yin_params(
+        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length, win_length=win_length
+    )
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
@@ -782,7 +784,9 @@ def pyin(
     if win_length is None:
         win_length = frame_length // 2
 
-    __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length, win_length=win_length)
+    __check_yin_params(
+        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length, win_length=win_length
+    )
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
@@ -946,7 +950,9 @@ def __pyin_helper(
     return observation_probs[np.newaxis], voiced_prob
 
 
-def __check_yin_params(*, sr, fmax, fmin, frame_length, win_length):
+def __check_yin_params(
+    *, sr: float, fmax: float, fmin: float, frame_length: int, win_length: int
+):
     """Check the feasibility of yin/pyin parameters against
     the following conditions:
 
@@ -954,7 +960,7 @@ def __check_yin_params(*, sr, fmax, fmin, frame_length, win_length):
     2. frame_length - win_length - 1 > sr/fmax
     """
 
-    if fmax >= sr/2:
+    if fmax >= sr / 2:
         raise ParameterError(f"fmax={fmax:.3f} cannot exceed Nyquist frequency {sr/2}")
     if fmin >= fmax:
         raise ParameterError(f"fmin={fmin:.3f} cannot exceed fmax={fmax:.3f}")
