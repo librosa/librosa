@@ -1190,7 +1190,7 @@ def test_yin_chirp():
         (-1, 440, None, 2048),  # Negative fmin
         (440, 220, None, 2048),  # fmin > fmax
         (440, 16000, None, 2048),  # fmax > nyquist
-        (21, 440, None, 2048),  # frame_length - win_length - 1 <= sr/fmin
+        (10, 21, None, 2048),  # frame_length - win_length - 1 <= sr/fmax
     ],
 )
 def test_yin_fail(fmin, fmax, win_length, frame_length):
