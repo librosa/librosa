@@ -522,7 +522,7 @@ def yin(
         minimum frequency in Hertz.
         The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
-    fmax : number > fmin, < sr/2 [scalar]
+    fmax : number > fmin, <= sr/2 [scalar]
         maximum frequency in Hertz.
         The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
@@ -692,7 +692,7 @@ def pyin(
         minimum frequency in Hertz.
         The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
-    fmax : number > fmin, < sr/2 [scalar]
+    fmax : number > fmin, <= sr/2 [scalar]
         maximum frequency in Hertz.
         The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
@@ -956,7 +956,7 @@ def __check_yin_params(
     """Check the feasibility of yin/pyin parameters against
     the following conditions:
 
-    1. 0 < fmin <= fmax <= sr/2
+    1. 0 < fmin < fmax <= sr/2
     2. frame_length - win_length - 1 > sr/fmax
     """
 
