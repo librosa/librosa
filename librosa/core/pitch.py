@@ -960,21 +960,21 @@ def __check_yin_params(
     2. frame_length - win_length - 1 > sr/fmax
     """
 
-    if fmax >= sr / 2:
+    if fmax > sr / 2:
         raise ParameterError(f"fmax={fmax:.3f} cannot exceed Nyquist frequency {sr/2}")
     if fmin >= fmax:
-        raise ParameterError(f"fmin={fmin:.3f} cannot exceed fmax={fmax:.3f}")
+        raise ParameterError(f"fmin={fmin:.3f} must be less than fmax={fmax:.3f}")
     if fmin <= 0:
         raise ParameterError(f"fmin={fmin:.3f} must be strictly positive")
 
     if win_length >= frame_length:
         raise ParameterError(
-            f"win_length={win_length} cannot exceed given frame_length={frame_length}"
+            f"win_length={win_length} must be less than frame_length={frame_length}"
         )
 
-    if frame_length - win_length - 1 <= sr / fmax:
+    if frame_length - win_length - 1 <= sr // fmax:
         fmax_feasible = sr / (frame_length - win_length - 1)
-        frame_length_feasible = int(np.ceil(sr/fmax + win_length + 1))
+        frame_length_feasible = int(np.ceil(sr/fmax) + win_length + 1)
         raise ParameterError(
             f"fmax={fmax:.3f} is too small for frame_length={frame_length}, win_length={win_length}, and sr={sr}. "
             f"Either increase to fmax={fmax_feasible:.3f} or frame_length={frame_length_feasible}"
