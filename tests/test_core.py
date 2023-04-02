@@ -1183,10 +1183,14 @@ def test_yin_chirp():
 @pytest.mark.parametrize(
     "fmin,fmax,win_length,frame_length",
     [
-        (None, None, None, 2048),
-        (110, None, None, 2048),
-        (None, 880, None, 2048),
-        (110, 880, 2049, 2048),
+        (None, None, None, 2048),  # neither
+        (110, None, None, 2048),  # no fmax
+        (None, 880, None, 2048),  # no fmin
+        (110, 880, 2049, 2048),  # win_length >= frame_length
+        (-1, 440, None, 2048),  # Negative fmin
+        (440, 220, None, 2048),  # fmin > fmax
+        (440, 16000, None, 2048),  # fmax > nyquist
+        (10, 21, None, 2048),  # frame_length - win_length - 1 <= sr/fmax
     ],
 )
 def test_yin_fail(fmin, fmax, win_length, frame_length):
