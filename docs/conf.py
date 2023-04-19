@@ -71,6 +71,7 @@ extensions = [
     "matplotlib.sphinxext.plot_directive",  # docstring examples
     "sphinxcontrib.inkscapeconverter",  # used for badge / logo conversion in tex
     "sphinx_multiversion",  # historical builds
+    "sphinx_rtd_theme",  # for proper jquery behavior
 ]
 
 autosummary_generate = True
