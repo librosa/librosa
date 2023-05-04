@@ -282,7 +282,7 @@ def pitch_shift(
     n_steps : float [scalar]
         how many (fractional) steps to shift ``y``
 
-    bins_per_octave : float > 0 [scalar]
+    bins_per_octave : int > 0 [scalar]
         how many steps per octave
 
     res_type : string
