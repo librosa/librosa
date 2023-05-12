@@ -40,7 +40,6 @@ from . import core
 from . import decompose
 from . import feature
 from . import util
-from .feature import rms
 from .util.exceptions import ParameterError
 from typing import Any, Callable, Iterable, Optional, Tuple, Union, overload
 from typing_extensions import Literal
@@ -266,7 +265,7 @@ def pitch_shift(
     n_steps: float,
     bins_per_octave: int = 12,
     res_type: str = "soxr_hq",
-    volume: Union[str, None] = None,
+    scale: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
     """Shift the pitch of a waveform by ``n_steps`` steps.
@@ -292,9 +291,9 @@ def pitch_shift(
 
         See `librosa.resample` for more information.
 
-    volume: string or None
-        Volume adjustment. By default, None is used.
-        Current List - [rms-mean]
+    scale : bool
+        Scale the resampled signal so that ``y`` and ``y_hat`` have approximately
+        equal total energy.
 
     **kwargs : additional keyword arguments.
         See `librosa.decompose.stft` for details.
@@ -343,12 +342,8 @@ def pitch_shift(
         orig_sr=float(sr) / rate,
         target_sr=sr,
         res_type=res_type,
+        scale=scale,
     )
-
-    if volume == 'rms-mean':
-        original_rms_volume = np.mean(rms(y=y))
-        shifted_rms_volume = np.mean(rms(y=y_shift))
-        y_shift = y_shift * (original_rms_volume / shifted_rms_volume)
 
     # Crop to the same dimension as the input
     return util.fix_length(y_shift, size=y.shape[-1])
