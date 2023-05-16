@@ -265,6 +265,7 @@ def pitch_shift(
     n_steps: float,
     bins_per_octave: int = 12,
     res_type: str = "soxr_hq",
+    scale: bool = False,
     **kwargs: Any,
 ) -> np.ndarray:
     """Shift the pitch of a waveform by ``n_steps`` steps.
@@ -289,6 +290,10 @@ def pitch_shift(
         Resample type. By default, 'soxr_hq' is used.
 
         See `librosa.resample` for more information.
+
+    scale : bool
+        Scale the resampled signal so that ``y`` and ``y_hat`` have approximately
+        equal total energy.
 
     **kwargs : additional keyword arguments.
         See `librosa.decompose.stft` for details.
@@ -337,6 +342,7 @@ def pitch_shift(
         orig_sr=float(sr) / rate,
         target_sr=sr,
         res_type=res_type,
+        scale=scale,
     )
 
     # Crop to the same dimension as the input
