@@ -1328,7 +1328,7 @@ def chroma_cqt(
     threshold : float
         Pre-normalization energy threshold.  Values below the
         threshold are discarded, resulting in a sparse chromagram.
-    tuning : float
+    tuning : float [scalar] or None.
         Deviation (in fractions of a CQT bin) from A440 tuning
     n_chroma : int > 0
         Number of chroma bins to produce
@@ -1472,7 +1472,7 @@ def chroma_cens(
         Default: `C1 ~= 32.7 Hz`
     norm : int > 0, +-np.inf, or None
         Column-wise normalization of the chromagram.
-    tuning : float
+    tuning : float [scalar] or None.
         Deviation (in fractions of a CQT bin) from A440 tuning
     n_chroma : int > 0
         Number of chroma bins to produce
@@ -1747,7 +1747,7 @@ def tonnetz(
     threshold : float
         Pre-normalization energy threshold.  Values below the
         threshold are discarded, resulting in a sparse chromagram.
-    tuning : float
+    tuning : float [scalar] or None.
         Deviation (in fractions of a CQT bin) from A440 tuning
     n_chroma : int > 0
         Number of chroma bins to produce
