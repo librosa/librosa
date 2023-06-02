@@ -40,8 +40,6 @@ def mel_to_stft(
     power : float > 0 [scalar]
         Exponent for the magnitude melspectrogram
     **kwargs : additional keyword arguments for Mel filter bank parameters
-    n_mels : int > 0 [scalar]
-        number of Mel bands to generate
     fmin : float >= 0 [scalar]
         lowest frequency (in Hz)
     fmax : float >= 0 [scalar]
@@ -163,8 +161,6 @@ def mel_to_audio(
     dtype : np.dtype
         Real numeric type for the time-domain signal.  Default is 32-bit float.
     **kwargs : additional keyword arguments for Mel filter bank parameters
-    n_mels : int > 0 [scalar]
-        number of Mel bands to generate
     fmin : float >= 0 [scalar]
         lowest frequency (in Hz)
     fmax : float >= 0 [scalar]
