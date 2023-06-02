@@ -54,7 +54,7 @@ librosa_version = SourceFileLoader(
 ).load_module()
 
 # The short X.Y version.
-version = librosa_version.version
+version = librosa_version.short_version
 # The full version, including alpha/beta/rc tags.
 release = librosa_version.version
 
@@ -68,11 +68,22 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx_gallery.gen_gallery",  # advanced examples
     "numpydoc",  # docstring examples
-    "matplotlib.sphinxext.plot_directive",  # docstring examples
     "sphinxcontrib.inkscapeconverter",  # used for badge / logo conversion in tex
     "sphinx_multiversion",  # historical builds
     "sphinx_rtd_theme",  # for proper jquery behavior
 ]
+
+# Generate plots for example sections
+if "LIBROSA_DOC_DEBUG" in os.environ:
+    numpydoc_use_plots = False
+else:
+    extensions.extend([
+            "numpydoc",  # docstring examples
+            "matplotlib.sphinxext.plot_directive",  # docstring examples
+        ]
+    )
+    numpydoc_use_plots = True
+
 
 autosummary_generate = True
 
@@ -156,8 +167,6 @@ sphinx_gallery_conf = {
     "capture_repr": ("_repr_html_",),
 }
 
-# Generate plots for example sections
-numpydoc_use_plots = True
 
 
 intersphinx_mapping = {
@@ -389,5 +398,6 @@ smv_tag_whitelist = (
 smv_released_pattern = r".*tags.*"
 smv_remote_whitelist = r"^origin$"
 smv_prefer_remote_refs = True
-# Pull latest release dynamically
-smv_latest_version = version
+# Set the latest version via command-line
+#  $ sphinx-multiversion -D smv_latest_version=$(./scripts/get_latest_release.sh) docs build/html
+# smv_latest_version = version

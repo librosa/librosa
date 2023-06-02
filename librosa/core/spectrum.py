@@ -98,7 +98,9 @@ def stft(
 
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by ``window`` of length ``win_length``
-        and then padded with zeros to match ``n_fft``.
+        and then padded with zeros to match ``n_fft``.  Padding is added on
+        both the left- and the right-side of the window so that the window
+        is centered within the frame.
 
         Smaller values improve the temporal resolution of the STFT (i.e. the
         ability to discriminate impulses that are closely spaced in time)

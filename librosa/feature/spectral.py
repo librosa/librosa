@@ -1328,7 +1328,7 @@ def chroma_cqt(
     threshold : float
         Pre-normalization energy threshold.  Values below the
         threshold are discarded, resulting in a sparse chromagram.
-    tuning : float
+    tuning : float [scalar] or None.
         Deviation (in fractions of a CQT bin) from A440 tuning
     n_chroma : int > 0
         Number of chroma bins to produce
@@ -1472,7 +1472,7 @@ def chroma_cens(
         Default: `C1 ~= 32.7 Hz`
     norm : int > 0, +-np.inf, or None
         Column-wise normalization of the chromagram.
-    tuning : float
+    tuning : float [scalar] or None.
         Deviation (in fractions of a CQT bin) from A440 tuning
     n_chroma : int > 0
         Number of chroma bins to produce
@@ -1747,7 +1747,7 @@ def tonnetz(
     threshold : float
         Pre-normalization energy threshold.  Values below the
         threshold are discarded, resulting in a sparse chromagram.
-    tuning : float
+    tuning : float [scalar] or None.
         Deviation (in fractions of a CQT bin) from A440 tuning
     n_chroma : int > 0
         Number of chroma bins to produce
@@ -1907,8 +1907,8 @@ def mfcc(
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
     power : float > 0 [scalar]
-        Exponent for the magnitude melspectrogram.
-        e.g., 1 for energy, 2 for power, etc.
+        Exponent applied to the spectrum before calculating the melspectrogram when the input is a time signal,
+        e.g. 1 for magnitude, 2 for power **(default)**, etc.
     **kwargs : additional keyword arguments for Mel filter bank parameters
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
