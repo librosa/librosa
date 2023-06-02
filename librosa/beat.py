@@ -215,7 +215,7 @@ def plp(
     The local maxima of the pulse curve can be taken as estimated beat positions.
 
     This method may be preferred over the dynamic programming method of `beat_track`
-    when either the tempo is expected to vary significantly over time.  Additionally,
+    when the tempo is expected to vary significantly over time.  Additionally,
     since `plp` does not require the entire signal to make predictions, it may be
     preferable when beat-tracking long recordings in a streaming setting.
 
