@@ -1907,8 +1907,8 @@ def mfcc(
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
     power : float > 0 [scalar]
-        Exponent for the magnitude melspectrogram.
-        e.g., 1 for energy, 2 for power, etc.
+        Exponent applied to the spectrum before calculating the melspectrogram when the input is a time signal,
+        e.g. 1 for magnitude, 2 for power **(default)**, etc.
     **kwargs : additional keyword arguments for Mel filter bank parameters
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
