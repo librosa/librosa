@@ -2140,7 +2140,6 @@ def Z_weighting(
     but all frequencies are equally weighted.
     An optional threshold `min_db` can still be used to clip energies.
 
-
     Parameters
     ----------
     frequencies : scalar or np.ndarray [shape=(n,)]
