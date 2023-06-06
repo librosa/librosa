@@ -183,6 +183,7 @@ intersphinx_mapping = {
     "pooch": ("https://www.fatiando.org/pooch/latest/", None),
     "soxr": ("https://python-soxr.readthedocs.io/en/latest/", None),
     "mir_eval": ("https://craffel.github.io/mir_eval/", None),
+    "joblib": ("https://joblib.readthedocs.io/en/stable/", None),
     "IPython": ("https://ipython.readthedocs.io/en/stable/", None),
 }
 
