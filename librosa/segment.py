@@ -885,7 +885,7 @@ _F = TypeVar("_F", bound=Callable[..., Any])
 
 
 def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
-    """Filtering in the time-lag domain.
+    """Apply a filter in the time-lag domain.
 
     This is primarily useful for adapting image filters to operate on
     `recurrence_to_lag` output.
@@ -950,7 +950,7 @@ def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
     """
 
     def __my_filter(wrapped_f, *args, **kwargs):
-        """Decorator to wrap the filter"""
+        """Wrap the filter with lag conversions"""
         # Map the input data into time-lag space
         args = list(args)
 

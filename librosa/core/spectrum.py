@@ -1999,7 +1999,7 @@ def fmt(
     over_sample: float = 1,
     axis: int = -1,
 ) -> np.ndarray:
-    """The fast Mellin transform (FMT)
+    """Fast Mellin transform (FMT)
 
     The Mellin of a signal `y` is performed by interpolating `y` on an exponential time
     axis, applying a polynomial window, and then taking the discrete Fourier transform.
@@ -2766,7 +2766,7 @@ def _spectrogram(
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, int]:
-    """Helper function to retrieve a magnitude spectrogram.
+    """Retrieve a magnitude spectrogram.
 
     This is primarily used in feature extraction functions that can operate on
     either audio time-series or spectrogram input.

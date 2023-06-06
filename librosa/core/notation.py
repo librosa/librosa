@@ -476,7 +476,7 @@ def list_thaat() -> List[str]:
 
 @cache(level=10)
 def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
-    """Lists all 12 note names in the chromatic scale, as spelled according to
+    """List all 12 note names in the chromatic scale, as spelled according to
     a given key (major or minor).
 
     This function exists to resolve enharmonic equivalences between different

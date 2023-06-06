@@ -39,7 +39,10 @@ class CacheManager(object):
         self.level: int = level
 
     def __call__(self, level: int) -> Callable[[_F], _F]:
-        """Example usage:
+        """
+        Cache with an explicitly defined level.
+
+        Example usage:
 
         @cache(level=2)
         def semi_important_function(some_arguments):
@@ -47,8 +50,7 @@ class CacheManager(object):
         """
 
         def wrapper(function):
-            """Decorator function.  Adds an input/output cache to
-            the specified function."""
+            """Add an input/output cache to the specified function."""
             if self.memory.location is not None and self.level >= level:
                 return _decorator_apply(self.memory.cache, function)
 
@@ -58,18 +60,23 @@ class CacheManager(object):
         return wrapper
 
     def clear(self, *args: Any, **kwargs: Any) -> None:
+        """Clear the cache"""
         self.memory.clear(*args, **kwargs)
 
     def eval(self, *args: Any, **kwargs: Any) -> Any:
+        """Evaluate a function"""
         return self.memory.eval(*args, **kwargs)
 
     def format(self, *args: Any, **kwargs: Any) -> Any:
+        """Return the formatted representation of an object"""
         return self.memory.format(*args, **kwargs)
 
     def reduce_size(self, *args: Any, **kwargs: Any) -> None:
+        """Reduce the size of the cache"""
         self.memory.reduce_size(*args, **kwargs)  # pragma: no cover
 
     def warn(self, *args: Any, **kwargs: Any) -> None:
+        """Raise a warning"""
         self.memory.warn(*args, **kwargs)  # pragma: no cover
 
 

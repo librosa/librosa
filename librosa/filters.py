@@ -410,7 +410,7 @@ def chroma(
 
 
 def __float_window(window_spec):
-    """Decorator function for windows with fractional input.
+    """Decorate a window function to support fractional input lengths.
 
     This function guarantees that for fractional ``x``, the following hold:
 
@@ -421,7 +421,7 @@ def __float_window(window_spec):
     """
 
     def _wrap(n, *args, **kwargs):
-        """The wrapped window"""
+        """Wrap the window"""
         n_min, n_max = int(np.floor(n)), int(np.ceil(n))
 
         window = get_window(window_spec, n_min)
@@ -1143,10 +1143,8 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
     Parameters
     ----------
     window : callable or string
-        A window function, or the name of a window function.
-        Examples:
-        - scipy.signal.hann
-        - 'boxcar'
+        A window function, or the name of a window function,
+        e.g.: `scipy.signal.hann` or `'boxcar'`
     n : int > 0
         The number of coefficients to use in estimating the
         window bandwidth
@@ -1260,7 +1258,7 @@ def _multirate_fb(
     ftype: str = "ellip",
     flayout: str = "sos",
 ) -> Tuple[List[Any], np.ndarray]:
-    r"""Helper function to construct a multirate filterbank.
+    r"""Construct a multirate filterbank.
 
      A filter bank consists of multiple band-pass filters which divide the input signal
      into subbands. In the case of a multirate filter bank, the band-pass filters
@@ -1374,7 +1372,7 @@ def _multirate_fb(
 
 @cache(level=10)
 def mr_frequencies(tuning: float) -> Tuple[np.ndarray, np.ndarray]:
-    r"""Helper function for generating center frequency and sample rate pairs.
+    r"""Generate center frequencies and sample rate pairs.
 
     This function will return center frequency and corresponding sample rates
     to obtain similar pitch filterbank settings as described in [#]_.
@@ -1533,7 +1531,7 @@ def semitone_filterbank(
 
 @jit(nopython=True, cache=True)
 def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
-    """Helper function for window sum-square calculation."""
+    """Compute the sum-square envelope of a window."""
 
     n = len(x)
     n_fft = len(win_sq)

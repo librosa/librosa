@@ -389,7 +389,7 @@ def plp(
 def __beat_tracker(
     onset_envelope: np.ndarray, bpm: float, fft_res: float, tightness: float, trim: bool
 ) -> np.ndarray:
-    """Internal function that tracks beats in an onset strength envelope.
+    """Tracks beats in an onset strength envelope.
 
     Parameters
     ----------
@@ -441,7 +441,7 @@ def __beat_tracker(
 
 # -- Helper functions for beat tracking
 def __normalize_onsets(onsets):
-    """Maps onset strength function into the range [0, 1]"""
+    """Map onset strength function into the range [0, 1]"""
 
     norm = onsets.std(ddof=1)
     if norm > 0:
@@ -511,7 +511,7 @@ def __last_beat(cumscore):
 
 
 def __trim_beats(localscore: np.ndarray, beats: np.ndarray, trim: bool) -> np.ndarray:
-    """Final post-processing: throw out spurious leading/trailing beats"""
+    """Remove spurious leading and trailing beats"""
 
     smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.hann(5), "same")
 

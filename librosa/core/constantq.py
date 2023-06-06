@@ -1100,7 +1100,7 @@ def __vqt_filter_fft(
 def __trim_stack(
     cqt_resp: List[np.ndarray], n_bins: int, dtype: DTypeLike
 ) -> np.ndarray:
-    """Helper function to trim and stack a collection of CQT responses"""
+    """Trim and stack a collection of CQT responses"""
 
     max_col = min(c_i.shape[-1] for c_i in cqt_resp)
     # Grab any leading dimensions

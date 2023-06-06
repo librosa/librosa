@@ -420,7 +420,7 @@ def nn_filter(
     axis: int = -1,
     **kwargs: Any,
 ) -> np.ndarray:
-    """Filtering by nearest-neighbors.
+    """Filter by nearest-neighbor aggregation.
 
     Each data point (e.g, spectrogram column) is replaced
     by aggregating its nearest neighbors in feature space.

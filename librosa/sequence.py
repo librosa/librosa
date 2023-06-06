@@ -876,7 +876,6 @@ def rqa(
     >>> ax[1].legend()
     >>> ax[1].label_outer()
     """
-
     if gap_onset < 0:
         raise ParameterError("gap_onset={} must be strictly positive")
     if gap_extend < 0:
@@ -897,7 +896,6 @@ def __rqa_dp(
     sim: np.ndarray, gap_onset: float, gap_extend: float, knight: bool
 ) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
     """RQA dynamic programming implementation"""
-
     # The output array
     score = np.zeros(sim.shape, dtype=sim.dtype)
 
@@ -1053,7 +1051,6 @@ def __rqa_backtrack(score, pointers):
     Given the score matrix and backtracking index array,
     reconstruct the optimal path.
     """
-
     # backtracking rubric:
     #   0 ==> diagonal move
     #   1 ==> knight move up
@@ -1265,7 +1262,6 @@ def viterbi(
     >>> print(logp, path)
     -4.19173690823075 [0 0 1]
     """
-
     n_states, n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
@@ -1487,7 +1483,6 @@ def viterbi_discriminative(
     ...        yticklabels=[labels[i] for i in np.unique(chords_vit)])
     >>> ax.legend()
     """
-
     n_states, n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
@@ -1707,7 +1702,6 @@ def viterbi_binary(
     >>> librosa.sequence.viterbi_binary(prob, trans, p_state=0.5, p_init=0.5)
     array([[0, 0, 0, 0, 1, 1, 1, 0, 0, 0]])
     """
-
     prob = np.atleast_2d(prob)
 
     n_states, n_steps = prob.shape[-2:]
@@ -1803,7 +1797,6 @@ def transition_uniform(n_states: int) -> np.ndarray:
            [0.333, 0.333, 0.333],
            [0.333, 0.333, 0.333]])
     """
-
     if not is_positive_int(n_states):
         raise ParameterError(f"n_states={n_states} must be a positive integer")
 
@@ -1851,7 +1844,6 @@ def transition_loop(n_states: int, prob: Union[float, Iterable[float]]) -> np.nd
            [0.25 , 0.5  , 0.25 ],
            [0.375, 0.375, 0.25 ]])
     """
-
     if not (is_positive_int(n_states) and (n_states > 1)):
         raise ParameterError(f"n_states={n_states} must be a positive integer > 1")
 
@@ -1916,7 +1908,6 @@ def transition_cycle(n_states: int, prob: Union[float, Iterable[float]]) -> np.n
            [0. , 0. , 0.9, 0.1],
            [0.1, 0. , 0. , 0.9]])
     """
-
     if not (is_positive_int(n_states) and n_states > 1):
         raise ParameterError(f"n_states={n_states} must be a positive integer > 1")
 
@@ -2021,7 +2012,6 @@ def transition_local(
            [0.   , 0.   , 0.333, 0.333, 0.333],
            [0.   , 0.   , 0.   , 0.   , 1.   ]])
     """
-
     if not (is_positive_int(n_states) and n_states > 1):
         raise ParameterError(f"n_states={n_states} must be a positive integer > 1")
 

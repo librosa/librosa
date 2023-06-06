@@ -265,7 +265,7 @@ def find_files(
 
 
 def __get_files(dir_name: Union[str, os.PathLike[Any]], extensions: Set[str]):
-    """Helper function to get files in a single directory"""
+    """Get a list of files in a single directory"""
 
     # Expand out the directory
     dir_name = os.path.abspath(os.path.expanduser(dir_name))

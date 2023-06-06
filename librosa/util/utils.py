@@ -352,7 +352,7 @@ def valid_int(x: float, *, cast: Optional[Callable[[float], float]] = None) -> i
 
 
 def is_positive_int(x: float) -> bool:
-    """Checks that x is a positive integer, i.e. 1 or greater.
+    """Check that x is a positive integer, i.e. 1 or greater.
 
     Parameters
     ----------
@@ -1227,7 +1227,7 @@ def peak_pick(
     delta: float,
     wait: int,
 ) -> np.ndarray:
-    """Uses a flexible heuristic to pick peaks in a signal.
+    """Use a flexible heuristic to pick peaks in a signal.
 
     A sample n is selected as an peak if the corresponding ``x[n]``
     fulfills the following three conditions:
@@ -1582,7 +1582,7 @@ def sync(
     pad: bool = True,
     axis: int = -1,
 ) -> np.ndarray:
-    """Synchronous aggregation of a multi-dimensional array between boundaries
+    """Aggregate a multi-dimensional array between specified boundaries.
 
     .. note::
         In order to ensure total coverage, boundary points may be added
@@ -1891,7 +1891,7 @@ def tiny(x: Union[float, np.ndarray]) -> _FloatLike_co:
 
 
 def fill_off_diagonal(x: np.ndarray, *, radius: float, value: float = 0) -> None:
-    """Sets all cells of a matrix to a given ``value``
+    """Set all cells of a matrix to a given ``value``
     if they lie outside a constraint region.
 
     In this case, the constraint region is the
@@ -2365,7 +2365,7 @@ def dtype_c2r(d: DTypeLike, *, default: Optional[type] = np.float32) -> DTypeLik
 
 @numba.jit(nopython=True, cache=True)
 def __count_unique(x):
-    """Counts the number of unique values in an array.
+    """Count the number of unique values in an array.
 
     This function is a helper for `count_unique` and is not
     to be called directly.
@@ -2416,7 +2416,7 @@ def count_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
 
 @numba.jit(nopython=True, cache=True)
 def __is_unique(x):
-    """Determines if the input array has all unique values.
+    """Determine if the input array has all unique values.
 
     This function is a helper for `is_unique` and is not
     to be called directly.
@@ -2473,7 +2473,7 @@ def is_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
     ["float32(complex64)", "float64(complex128)"], nopython=True, cache=True, identity=0
 )  # type: ignore
 def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
-    """Helper function for efficiently computing abs2 on complex inputs"""
+    """Efficiently compute abs2 on complex inputs"""
     return x.real**2 + x.imag**2
 
 

@@ -1440,7 +1440,7 @@ def chroma_cens(
     win_len_smooth: Optional[int] = 41,
     smoothing_window: _WindowSpec = "hann",
 ) -> np.ndarray:
-    r"""Computes the chroma variant "Chroma Energy Normalized" (CENS)
+    r"""Compute the chroma variant "Chroma Energy Normalized" (CENS)
 
     To compute CENS features, following steps are taken after obtaining chroma vectors
     using `chroma_cqt`: [#]_.
@@ -1713,7 +1713,7 @@ def tonnetz(
     chroma: Optional[np.ndarray] = None,
     **kwargs: Any,
 ) -> np.ndarray:
-    """Computes the tonal centroid features (tonnetz)
+    """Compute the tonal centroid features (tonnetz)
 
     This representation uses the method of [#]_ to project chroma features
     onto a 6-dimensional basis representing the perfect fifth, minor third,

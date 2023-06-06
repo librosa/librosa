@@ -91,9 +91,7 @@ def hpss(y: np.ndarray, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
 
     >>> # Get a more isolated percussive component by widening its margin
     >>> y_harmonic, y_percussive = librosa.effects.hpss(y, margin=(1.0,5.0))
-
     """
-
     # Compute the STFT matrix
     stft = core.stft(y)
 
@@ -136,9 +134,7 @@ def harmonic(y: np.ndarray, **kwargs: Any) -> np.ndarray:
 
     >>> # Use a margin > 1.0 for greater harmonic separation
     >>> y_harmonic = librosa.effects.harmonic(y, margin=3.0)
-
     """
-
     # Compute the STFT matrix
     stft = core.stft(y)
 
@@ -180,9 +176,7 @@ def percussive(y: np.ndarray, **kwargs: Any) -> np.ndarray:
 
     >>> # Use a margin > 1.0 for greater percussive separation
     >>> y_percussive = librosa.effects.percussive(y, margin=3.0)
-
     """
-
     # Compute the STFT matrix
     stft = core.stft(y)
 
@@ -232,9 +226,7 @@ def time_stretch(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     Or half the original speed
 
     >>> y_slow = librosa.effects.time_stretch(y, rate=0.5)
-
     """
-
     if rate <= 0:
         raise ParameterError("rate must be a positive number")
 
@@ -328,7 +320,6 @@ def pitch_shift(
     >>> y_three_qt = librosa.effects.pitch_shift(y, sr=sr, n_steps=3,
     ...                                          bins_per_octave=24)
     """
-
     if not util.is_positive_int(bins_per_octave):
         raise ParameterError(
             f"bins_per_octave={bins_per_octave} must be a positive integer."
@@ -396,7 +387,6 @@ def remix(
 
     >>> y_out = librosa.effects.remix(y, intervals[::-1])
     """
-
     y_out = []
 
     if align_zeros:
@@ -454,7 +444,6 @@ def _signal_to_frame_nonsilent(
     non_silent : np.ndarray, shape=(m,), dtype=bool
         Indicator of non-silent frames
     """
-
     # Compute the MSE for the signal
     mse = feature.rms(y=y, frame_length=frame_length, hop_length=hop_length)
 
@@ -518,7 +507,6 @@ def trim(
     >>> print(librosa.get_duration(y), librosa.get_duration(yt))
     25.025986394557822 25.007891156462584
     """
-
     non_silent = _signal_to_frame_nonsilent(
         y,
         frame_length=frame_length,
@@ -582,9 +570,7 @@ def split(
     intervals : np.ndarray, shape=(m, 2)
         ``intervals[i] == (start_i, end_i)`` are the start and end time
         (in samples) of non-silent interval ``i``.
-
     """
-
     non_silent = _signal_to_frame_nonsilent(
         y,
         frame_length=frame_length,
@@ -836,7 +822,6 @@ def deemphasis(
     --------
     preemphasis
     """
-
     b = np.array([1.0, -coef], dtype=y.dtype)
     a = np.array([1.0], dtype=y.dtype)
 

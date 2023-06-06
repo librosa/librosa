@@ -85,7 +85,7 @@ def frames_to_samples(
     hop_length: int = 512,
     n_fft: Optional[int] = None,
 ) -> Union[np.integer[Any], np.ndarray]:
-    """Converts frame indices to audio sample indices.
+    """Convert frame indices to audio sample indices.
 
     Parameters
     ----------
@@ -157,7 +157,7 @@ def samples_to_frames(
     hop_length: int = 512,
     n_fft: Optional[int] = None,
 ) -> Union[np.integer[Any], np.ndarray]:
-    """Converts sample indices into STFT frames.
+    """Convert sample indices into STFT frames.
 
     Examples
     --------
@@ -247,7 +247,7 @@ def frames_to_time(
     hop_length: int = 512,
     n_fft: Optional[int] = None,
 ) -> Union[np.floating[Any], np.ndarray]:
-    """Converts frame counts to time (seconds).
+    """Convert frame counts to time (seconds).
 
     Parameters
     ----------
@@ -326,7 +326,7 @@ def time_to_frames(
     hop_length: int = 512,
     n_fft: Optional[int] = None,
 ) -> Union[np.integer[Any], np.ndarray]:
-    """Converts time stamps into STFT frames.
+    """Convert time stamps into STFT frames.
 
     Parameters
     ----------
@@ -2134,8 +2134,41 @@ def D_weighting(
 def Z_weighting(
     frequencies: Sized, *, min_db: Optional[float] = None
 ) -> np.ndarray:  # pylint: disable=invalid-name
+    """Apply no weighting curve (aka Z-weighting).
+
+    This function behaves similarly to `A_weighting`, `B_weighting`, etc.,
+    but all frequencies are equally weighted.
+    An optional threshold `min_db` can still be used to clip energies.
+
+
+    Parameters
+    ----------
+    frequencies : scalar or np.ndarray [shape=(n,)]
+        One or more frequencies (in Hz)
+    min_db : float [scalar] or None
+        Clip weights below this threshold.
+        If `None`, no clipping is performed.
+
+    Returns
+    -------
+    Z_weighting : scalar or np.ndarray [shape=(n,)]
+        ``Z_weighting[i]`` is the Z-weighting of ``frequencies[i]``
+
+    See Also
+    --------
+    perceptual_weighting
+    frequency_weighting
+    multi_frequency_weighting
+    A_weighting
+    B_weighting
+    C_weighting
+    D_weighting
+    """
     weights = np.zeros(len(frequencies))
-    return weights if min_db is None else np.maximum(min_db, weights)
+    if min_db is None:
+        return weights
+    else:
+        return np.maximum(min_db, weights)
 
 
 WEIGHTING_FUNCTIONS: Dict[
