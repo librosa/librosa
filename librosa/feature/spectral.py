@@ -1156,7 +1156,7 @@ def chroma_stft(
 
     .. [#] Ellis, Daniel P.W.  "Chroma feature analysis and synthesis"
            2007/04/21
-           http://labrosa.ee.columbia.edu/matlab/chroma-ansyn/
+           https://web.archive.org/web/20161221190727/http://labrosa.ee.columbia.edu/matlab/chroma-ansyn/
 
     Parameters
     ----------

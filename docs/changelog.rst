@@ -133,7 +133,7 @@ Other changes
 .. _#1640: https://github.com/librosa/librosa/issues/1640
 .. _#1643: https://github.com/librosa/librosa/issues/1643
 .. _#1646: https://github.com/librosa/librosa/issues/1646
-.. _#1655: https://github.com/librosa/librosa/issues/1655
+.. _#1665: https://github.com/librosa/librosa/issues/1665
 
 
 

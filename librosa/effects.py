@@ -680,7 +680,7 @@ def preemphasis(
         The default (0.97) matches the pre-emphasis filter used in the HTK
         implementation of MFCCs [#]_.
 
-        .. [#] http://htk.eng.cam.ac.uk/
+        .. [#] https://htk.eng.cam.ac.uk/
 
     zi : number
         Initial filter state.  When making successive calls to non-overlapping
@@ -801,7 +801,7 @@ def deemphasis(
         The default (0.97) matches the pre-emphasis filter used in the HTK
         implementation of MFCCs [#]_.
 
-        .. [#] http://htk.eng.cam.ac.uk/
+        .. [#] https://htk.eng.cam.ac.uk/
 
     zi : number
         Initial filter state. If inverting a previous preemphasis(), the same value should be used.

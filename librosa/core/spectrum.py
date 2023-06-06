@@ -1377,7 +1377,7 @@ def phase_vocoder(
 
     .. [#] Ellis, D. P. W. "A phase vocoder in Matlab."
         Columbia University, 2002.
-        http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/
+        https://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/
 
     .. [#] https://breakfastquay.com/rubberband/
 

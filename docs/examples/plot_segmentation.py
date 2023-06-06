@@ -5,7 +5,7 @@ Laplacian segmentation
 ======================
 
 This notebook implements the laplacian segmentation method of
-`McFee and Ellis, 2014 <http://bmcfee.github.io/papers/ismir2014_spectral.pdf>`_,
+`McFee and Ellis, 2014 <https://zenodo.org/record/1415778>`_,
 with a couple of minor stability improvements.
 
 Throughout the example, we will refer to equations in the paper by number, so it will be

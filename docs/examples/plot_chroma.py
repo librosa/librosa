@@ -19,7 +19,7 @@ also, introduces chroma variants implemented in librosa.
 #    1. Harmonic-percussive-residual source separation to eliminate transients.
 #    2. Nearest-neighbor smoothing to eliminate passing tones and sparse noise.  This is inspired by the
 #       recurrence-based smoothing technique of
-#       `Cho and Bello, 2011 <http://ismir2011.ismir.net/papers/OS8-4.pdf>`_.
+#       `Cho and Bello, 2011 <https://zenodo.org/record/1417557>`_.
 #    3. Local median filtering to suppress remaining discontinuities.
 
 # Code source: Brian McFee
@@ -151,7 +151,7 @@ ax[1].set(ylabel='CQT')
 
 ###################################################################################################
 # CENS features (`chroma_cens`) are variants of chroma features introduced in
-# `Müller and Ewart, 2011 <http://ismir2011.ismir.net/papers/PS2-8.pdf>`_, in which
+# `Müller and Ewart, 2011 <https://zenodo.org/record/1416032>`_, in which
 # additional post processing steps are performed on the constant-Q chromagram to obtain features
 # that are invariant to dynamics and timbre.
 #
