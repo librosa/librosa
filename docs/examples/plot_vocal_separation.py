@@ -20,7 +20,7 @@ This is based on the "REPET-SIM" method of `Rafii and Pardo, 2012 <https://zenod
     - FFT windows overlap by 1/4, instead of 1/2
     - Non-local filtering is converted into a soft mask by Wiener filtering.
       This is similar in spirit to the soft-masking method used by `Fitzgerald, 2012
-      <https://arrow.dit.ie/cgi/viewcontent.cgi?article=1086&context=argcon>`_ [3]_,
+      <https://arrow.tudublin.ie/cgi/viewcontent.cgi?article=1086&context=argcon>`_ [3]_,
       but is a bit more numerically stable in practice.
 
 .. [1] Manilow, Ethan, Prem Seetharman, and Justin Salamon.
