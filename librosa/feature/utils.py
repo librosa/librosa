@@ -103,7 +103,6 @@ def delta(
     >>> fig.colorbar(img2, ax=[ax[1]])
     >>> fig.colorbar(img3, ax=[ax[2]])
     """
-
     data = np.atleast_1d(data)
 
     if mode == "interp" and width > data.shape[axis]:
@@ -226,7 +225,6 @@ def stack_memory(
     >>> ax.text(1.0, 5/6, "Lag=2", transform=ax.transAxes, rotation=-90, ha="left", va="center")
     >>> ax.set(title='Time-lagged chroma', ylabel="")
     """
-
     if n_steps < 1:
         raise ParameterError("n_steps must be a positive integer")
 

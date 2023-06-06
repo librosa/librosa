@@ -197,7 +197,6 @@ def mela_to_degrees(mela: Union[str, int]) -> np.ndarray:
     >>> librosa.mela_to_degrees('kanakangi')
     array([0, 1, 2, 5, 7, 8, 9])
     """
-
     if isinstance(mela, str):
         index = MELAKARTA_MAP[mela.lower()] - 1
     elif 0 < mela <= 72:
@@ -340,7 +339,6 @@ def mela_to_svara(
     >>> librosa.mela_to_svara('chalanatta')
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
     """
-
     # The following will be constant for all ragas
     svara_map = [
         "Sa",
@@ -548,7 +546,6 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     >>> librosa.key_to_notes('Fb:min')
     ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
     """
-
     # Parse the key signature
     match = KEY_RE.match(key)
 

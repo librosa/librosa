@@ -30,9 +30,7 @@ def set_fftlib(lib: Optional[ModuleType] = None) -> None:
     Reset to default `numpy` implementation
 
     >>> librosa.set_fftlib()
-
     """
-
     global __FFTLIB
     if lib is None:
         from numpy import fft

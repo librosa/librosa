@@ -167,7 +167,6 @@ def cqt(
            [2.780e-03, 1.424e-01, ..., 4.225e-06, 2.388e-05],
            [5.147e-02, 6.959e-02, ..., 1.694e-05, 5.811e-06]])
     """
-
     # CQT is the special case of VQT with gamma=0
     return vqt(
         y=y,
@@ -293,9 +292,7 @@ def hybrid_cqt(
     Notes
     -----
     This function caches at level 20.
-
     """
-
     if fmin is None:
         # C1 by default
         fmin = note_to_hz("C1")
@@ -471,9 +468,7 @@ def pseudo_cqt(
     Notes
     -----
     This function caches at level 20.
-
     """
-
     if fmin is None:
         # C1 by default
         fmin = note_to_hz("C1")
@@ -918,7 +913,6 @@ def vqt(
     >>> ax[1].set_title('Variable-Q power spectrum')
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     """
-
     # If intervals are provided as an array, override BPO
     if not isinstance(intervals, str):
         bins_per_octave = len(intervals)
@@ -1066,7 +1060,6 @@ def __vqt_filter_fft(
     alpha=None,
 ):
     """Generate the frequency domain variable-Q filter basis."""
-
     basis, lengths = filters.wavelet(
         freqs=freqs,
         sr=sr,
@@ -1101,7 +1094,6 @@ def __trim_stack(
     cqt_resp: List[np.ndarray], n_bins: int, dtype: DTypeLike
 ) -> np.ndarray:
     """Trim and stack a collection of CQT responses"""
-
     max_col = min(c_i.shape[-1] for c_i in cqt_resp)
     # Grab any leading dimensions
     shape = list(cqt_resp[0].shape)
@@ -1130,7 +1122,6 @@ def __cqt_response(
     y, n_fft, hop_length, fft_basis, mode, window="ones", phase=True, dtype=None
 ):
     """Compute the filter response with a target STFT hop."""
-
     # Compute the STFT matrix
     D = stft(
         y, n_fft=n_fft, hop_length=hop_length, window=window, pad_mode=mode, dtype=dtype
@@ -1158,7 +1149,6 @@ def __cqt_response(
 
 def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
     """Compute the number of early downsampling operations"""
-
     downsample_count1 = max(0, int(np.ceil(np.log2(nyquist / filter_cutoff)) - 1) - 1)
 
     num_twos = __num_two_factors(hop_length)
@@ -1171,7 +1161,6 @@ def __early_downsample(
     y, sr, hop_length, res_type, n_octaves, nyquist, filter_cutoff, scale
 ):
     """Perform early downsampling on an audio signal, if it applies."""
-
     downsample_count = __early_downsample_count(
         nyquist, filter_cutoff, hop_length, n_octaves
     )
@@ -1508,6 +1497,5 @@ def __et_relative_bw(bins_per_octave: int) -> np.ndarray:
     alpha : np.ndarray > 0
         Value is cast up to a 1d array to allow slicing
     """
-
     r = 2 ** (1 / bins_per_octave)
     return np.atleast_1d((r**2 - 1) / (r**2 + 1))

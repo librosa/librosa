@@ -135,7 +135,6 @@ def onset_detect(
     ...            linestyle='--', label='Onsets')
     >>> ax[1].legend()
     """
-
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
@@ -321,7 +320,6 @@ def onset_strength(
     >>> ax[1].legend()
     >>> ax[1].set(ylabel='Normalized strength', yticks=[])
     """
-
     if aggregate is False:
         raise ParameterError(
             f"aggregate parameter cannot be False when computing full-spectrum onset strength."
@@ -406,7 +404,6 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
     >>> ax[2].vlines(librosa.frames_to_time(onset_bt_rms), 0, rms.max(), label='Backtracked (RMS)', color='r')
     >>> ax[2].legend()
     """
-
     # Find points where energy is non-increasing
     # all points:  energy[i] <= energy[i-1]
     # tail points: energy[i] < energy[i+1]
@@ -543,7 +540,6 @@ def onset_strength_multi(
     >>> ax[1].set(ylabel='Sub-bands', title='Sub-band onset strength')
     >>> fig.colorbar(img2, ax=[ax[1]])
     """
-
     if feature is None:
         feature = melspectrogram
         kwargs.setdefault("fmax", 0.5 * sr)

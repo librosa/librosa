@@ -116,7 +116,6 @@ def frames_to_samples(
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> beat_samples = librosa.frames_to_samples(beats)
     """
-
     offset = 0
     if n_fft is not None:
         offset = int(n_fft // 2)
@@ -198,7 +197,6 @@ def samples_to_frames(
     samples_to_time : convert sample indices to time values
     frames_to_samples : convert frame indices to sample indices
     """
-
     offset = 0
     if n_fft is not None:
         offset = int(n_fft // 2)
@@ -280,7 +278,6 @@ def frames_to_time(
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> beat_times = librosa.frames_to_time(beats, sr=sr)
     """
-
     samples = frames_to_samples(frames, hop_length=hop_length, n_fft=n_fft)
 
     return samples_to_time(samples, sr=sr)
@@ -365,9 +362,7 @@ def time_to_frames(
     >>> librosa.time_to_frames(np.arange(0, 1, 0.1),
     ...                         sr=22050, hop_length=512)
     array([ 0,  4,  8, 12, 17, 21, 25, 30, 34, 38])
-
     """
-
     samples = time_to_samples(times, sr=sr)
 
     return samples_to_frames(samples, hop_length=hop_length, n_fft=n_fft)
@@ -419,9 +414,7 @@ def time_to_samples(
     >>> librosa.time_to_samples(np.arange(0, 1, 0.1), sr=22050)
     array([    0,  2205,  4410,  6615,  8820, 11025, 13230, 15435,
            17640, 19845])
-
     """
-
     return (np.asanyarray(times) * sr).astype(int)
 
 
@@ -479,7 +472,6 @@ def samples_to_time(
             0.813,  0.836,  0.859,  0.882,  0.906,  0.929,  0.952,
             0.975,  0.998])
     """
-
     return np.asanyarray(samples) / float(sr)
 
 
@@ -816,7 +808,6 @@ def note_to_midi(
     >>> librosa.note_to_midi(['C', 'E', 'G'])
     array([12, 16, 19])
     """
-
     if not isinstance(note, str):
         return np.array([note_to_midi(n, round_midi=round_midi) for n in note])
 
@@ -987,7 +978,6 @@ def midi_to_note(
     hz_to_note
     key_to_notes
     """
-
     if cents and not octave:
         raise ParameterError("Cannot encode cents without octave information.")
 
@@ -1054,7 +1044,6 @@ def midi_to_hz(
     hz_to_midi
     note_to_hz
     """
-
     return 440.0 * (2.0 ** ((np.asanyarray(notes) - 69.0) / 12.0))
 
 
@@ -1103,7 +1092,6 @@ def hz_to_midi(
     note_to_midi
     hz_to_note
     """
-
     midi: np.ndarray = 12 * (np.log2(np.asanyarray(frequencies)) - np.log2(440.0)) + 69
     return midi
 
@@ -1218,7 +1206,6 @@ def hz_to_mel(
     --------
     mel_to_hz
     """
-
     frequencies = np.asanyarray(frequencies)
 
     if htk:
@@ -1294,7 +1281,6 @@ def mel_to_hz(
     --------
     hz_to_mel
     """
-
     mels = np.asanyarray(mels)
 
     if htk:
@@ -1381,7 +1367,6 @@ def hz_to_octs(
     --------
     octs_to_hz
     """
-
     A440 = 440.0 * 2.0 ** (tuning / bins_per_octave)
 
     octs: np.ndarray = np.log2(np.asanyarray(frequencies) / (float(A440) / 16))
@@ -1619,9 +1604,7 @@ def fft_frequencies(*, sr: float = 22050, n_fft: int = 2048) -> np.ndarray:
     >>> librosa.fft_frequencies(sr=22050, n_fft=16)
     array([     0.   ,   1378.125,   2756.25 ,   4134.375,
              5512.5  ,   6890.625,   8268.75 ,   9646.875,  11025.   ])
-
     """
-
     return np.fft.rfftfreq(n=n_fft, d=1.0 / sr)
 
 
@@ -1655,7 +1638,6 @@ def cqt_frequencies(
     frequencies : np.ndarray [shape=(n_bins,)]
         Center frequency for each CQT bin
     """
-
     correction: float = 2.0 ** (float(tuning) / bins_per_octave)
     frequencies: np.ndarray = 2.0 ** (
         np.arange(0, n_bins, dtype=float) / bins_per_octave
@@ -1738,7 +1720,6 @@ def mel_frequencies(
              8467.272,   9246.028,  10096.408,  11025.   ])
 
     """
-
     # 'Center freqs' of mel bands - uniformly spaced between limits
     min_mel = hz_to_mel(fmin, htk=htk)
     max_mel = hz_to_mel(fmax, htk=htk)
@@ -1779,7 +1760,6 @@ def tempo_frequencies(
     array([      inf,  2583.984,  1291.992, ...,     6.782,
                6.764,     6.747])
     """
-
     bin_frequencies = np.zeros(int(n_bins), dtype=np.float64)
 
     bin_frequencies[0] = np.inf
@@ -1814,9 +1794,7 @@ def fourier_tempo_frequencies(
 
     >>> librosa.fourier_tempo_frequencies(win_length=384)
     array([ 0.   ,  0.117,  0.234, ..., 22.266, 22.383, 22.5  ])
-
     """
-
     # sr / hop_length gets the frame rate
     # multiplying by 60 turns frames / sec into frames / minute
     return fft_frequencies(sr=sr * 60 / float(hop_length), n_fft=win_length)
@@ -2529,7 +2507,6 @@ def midi_to_svara_h(
     >>> librosa.midi_to_svara_h([72, 73, 74], Sa=60, abbr=False)
     array(['Ṡa', 'ṙe', 'Ṙe'], dtype='<U3')
     """
-
     SVARA_MAP = [
         "Sa",
         "re",
@@ -2668,7 +2645,6 @@ def hz_to_svara_h(
     >>> librosa.hz_to_svara_h(freqs, Sa=freqs[0], abbr=False)
     ['Sa', 're', 'Re', 'ga', 'Ga', 'ma', 'Ma', 'Pa', 'dha', 'Dha', 'ni', 'Ni']
     """
-
     midis = hz_to_midi(frequencies)
     return midi_to_svara_h(
         midis, Sa=hz_to_midi(Sa), abbr=abbr, octave=octave, unicode=unicode
@@ -2764,7 +2740,6 @@ def note_to_svara_h(
     >>> librosa.note_to_svara_h(['C4', 'G4', 'C5', 'G5'], Sa='C5')
     ['Ṣ', 'P̣', 'S', 'P']
     """
-
     midis = note_to_midi(notes, round_midi=False)
 
     return midi_to_svara_h(
@@ -2992,7 +2967,6 @@ def hz_to_svara_c(
     >>> librosa.hz_to_svara_c(freqs, Sa=freqs[0], mela=36)
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
     """
-
     midis = hz_to_midi(frequencies)
     return midi_to_svara_c(
         midis, Sa=hz_to_midi(Sa), mela=mela, abbr=abbr, octave=octave, unicode=unicode

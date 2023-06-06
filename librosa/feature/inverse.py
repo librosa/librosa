@@ -95,7 +95,6 @@ def mel_to_stft(
     >>> ax[2].set(title='Residual error (dB)')
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
-
     # Construct a mel basis with dtype matching the input data
     mel_basis = filters.mel(
         sr=sr, n_fft=n_fft, n_mels=M.shape[-2], dtype=M.dtype, **kwargs
@@ -188,7 +187,6 @@ def mel_to_audio(
     librosa.filters.mel
     librosa.feature.inverse.mel_to_stft
     """
-
     stft = mel_to_stft(M, sr=sr, n_fft=n_fft, power=power, **kwargs)
 
     return griffinlim(

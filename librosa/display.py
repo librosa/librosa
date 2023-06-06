@@ -156,7 +156,6 @@ class TimeFormatter(mplticker.Formatter):
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Return the time format as pos"""
-
         _, dmax = self.axis.get_data_interval()
         vmin, vmax = self.axis.get_view_interval()
 
@@ -849,7 +848,6 @@ def cmap(
     --------
     matplotlib.pyplot.colormaps
     """
-
     data = np.atleast_1d(data)
 
     if data.dtype == "bool":
@@ -1179,7 +1177,6 @@ def specshow(
     >>> ax[1].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
-
     if np.issubdtype(data.dtype, np.complexfloating):
         warnings.warn(
             "Trying to display complex-valued input. " "Showing magnitude instead.",
@@ -1267,14 +1264,12 @@ def __set_current_image(ax, img):
     If the provided ``ax`` is not `None`, then we assume that the user is using the object API.
     In this case, the pyplot current image is not set.
     """
-
     if ax is None:
         plt.sci(img)
 
 
 def __mesh_coords(ax_type, coords, n, **kwargs):
     """Compute axis coordinates"""
-
     if coords is not None:
         if len(coords) not in (n, n + 1):
             raise ParameterError(
@@ -1338,7 +1333,6 @@ def __check_axes(axes: Optional[mplaxes.Axes]) -> mplaxes.Axes:
 
 def __scale_axes(axes, ax_type, which):
     """Set the axis scaling"""
-
     kwargs = dict()
     thresh = "linthresh"
     base = "base"
@@ -1716,7 +1710,6 @@ def __coord_mel_hz(
     **_kwargs: Any,
 ) -> np.ndarray:
     """Get the frequencies for Mel bins"""
-
     if fmin is None:
         fmin = 0.0
     if fmax is None:

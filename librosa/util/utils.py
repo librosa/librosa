@@ -197,7 +197,6 @@ def frame(
     >>> np.allclose(S_patch[:, :, 1], S[:, 16:48])
     True
     """
-
     # This implementation is derived from numpy.lib.stride_tricks.sliding_window_view (1.20.0)
     # https://numpy.org/doc/stable/reference/generated/numpy.lib.stride_tricks.sliding_window_view.html
 
@@ -292,7 +291,6 @@ def valid_audio(y: np.ndarray, *, mono: Union[bool, Deprecated] = Deprecated()) 
     --------
     numpy.float32
     """
-
     if not isinstance(y, np.ndarray):
         raise ParameterError("Audio data must be of type numpy.ndarray")
 
@@ -341,7 +339,6 @@ def valid_int(x: float, *, cast: Optional[Callable[[float], float]] = None) -> i
     ParameterError
         If ``cast`` is provided and is not callable.
     """
-
     if cast is None:
         cast = np.floor
 
@@ -361,9 +358,7 @@ def is_positive_int(x: float) -> bool:
     Returns
     -------
     positive : bool
-
     """
-
     # Check type first to catch None values.
     return isinstance(x, (int, np.integer)) and (x > 0)
 
@@ -385,7 +380,6 @@ def valid_intervals(intervals: np.ndarray) -> bool:
     valid : bool
         True if ``intervals`` passes validation.
     """
-
     if intervals.ndim != 2 or intervals.shape[-1] != 2:
         raise ParameterError("intervals must have shape (n, 2)")
 
@@ -452,7 +446,6 @@ def pad_center(
     --------
     numpy.pad
     """
-
     kwargs.setdefault("mode", "constant")
 
     n = data.shape[axis]
@@ -517,7 +510,6 @@ def expand_to(
     >>> librosa.util.expand_to(x, ndim=4, axes=[1,2]).shape
     (1, 3, 3, 1)
     """
-
     # Force axes into a tuple
     axes_tup: Tuple[int]
     try:
@@ -584,7 +576,6 @@ def fix_length(
     --------
     numpy.pad
     """
-
     kwargs.setdefault("mode", "constant")
 
     n = data.shape[axis]
@@ -663,7 +654,6 @@ def fix_frames(
     ParameterError
         If ``frames`` contains negative values
     """
-
     frames = np.asarray(frames)
 
     if np.any(frames < 0):
@@ -796,7 +786,6 @@ def axis_sort(
     ParameterError
         If ``S`` does not have exactly 2 dimensions (``S.ndim != 2``)
     """
-
     if value is None:
         value = np.argmax
 
@@ -977,7 +966,6 @@ def normalize(
            [ 0.   ,  0.   ,  0.   ,  0.25 ],
            [ 0.1  ,  0.167,  0.25 ,  0.25 ]])
     """
-
     # Avoid div-by-zero
     if threshold is None:
         threshold = tiny(S)
@@ -1296,7 +1284,6 @@ def peak_pick(
     >>> ax[0].legend(frameon=True, framealpha=0.8)
     >>> ax[0].label_outer()
     """
-
     if pre_max < 0:
         raise ParameterError("pre_max must be non-negative")
     if pre_avg < 0:
@@ -1450,7 +1437,6 @@ def sparsify_rows(
               0.72 ,  0.625,  0.525,  0.424,  0.326,  0.   ,  0.   ,
               0.   ,  0.   ,  0.   ,  0.   ]])
     """
-
     if x.ndim == 1:
         x = x.reshape((1, -1))
 
@@ -1503,7 +1489,6 @@ def buf_to_float(
     x_float : np.ndarray [dtype=float]
         The input data buffer cast to floating point
     """
-
     # Invert the scale of the data
     scale = 1.0 / float(1 << ((8 * n_bytes) - 1))
 
@@ -1565,7 +1550,6 @@ def index_to_slice(
     [slice(0, 20, 5), slice(20, 35, 5), slice(35, 50, 5), slice(50, 65, 5), slice(65, 80, 5),
      slice(80, 95, 5), slice(95, 100, 5)]
     """
-
     # First, normalize the index set
     idx_fixed = fix_frames(idx, x_min=idx_min, x_max=idx_max, pad=pad)
 
@@ -1671,7 +1655,6 @@ def sync(
     >>> ax[2].set(title='Sub-beat synchronous CQT power, '
     ...                 'shape={}'.format(C_med_sub.shape))
     """
-
     if aggregate is None:
         aggregate = np.mean
 
@@ -1875,7 +1858,6 @@ def tiny(x: Union[float, np.ndarray]) -> _FloatLike_co:
     >>> librosa.util.tiny(5)
     1.1754944e-38
     """
-
     # Make sure we have an array view
     x = np.asarray(x)
 
@@ -2027,7 +2009,6 @@ def cyclic_gradient(
 @numba.jit(nopython=True, cache=True)  # type: ignore
 def __shear_dense(X: np.ndarray, *, factor: int = +1, axis: int = -1) -> np.ndarray:
     """Numba-accelerated shear for dense (ndarray) arrays"""
-
     if axis == 0:
         X = X.T
 
@@ -2133,7 +2114,6 @@ def shear(
            [0., 0., 1.],
            [0., 1., 0.]])
     """
-
     if not np.issubdtype(type(factor), np.integer):
         raise ParameterError(f"factor={factor} must be integer-valued")
 
@@ -2221,7 +2201,6 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
       WRITEBACKIFCOPY : False
       UPDATEIFCOPY : False
     """
-
     shapes = {arr.shape for arr in arrays}
     if len(shapes) > 1:
         raise ParameterError("all input arrays must have the same shape")
@@ -2421,7 +2400,6 @@ def __is_unique(x):
     This function is a helper for `is_unique` and is not
     to be called directly.
     """
-
     uniques = np.unique(x)
     return uniques.shape[0] == x.size
 
@@ -2463,9 +2441,7 @@ def is_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
     >>> # Check uniqueness along columns
     >>> librosa.util.is_unique(x, axis=-1)
     array([False, False,  True,  True,  True])
-
     """
-
     return np.apply_along_axis(__is_unique, axis, data)
 
 

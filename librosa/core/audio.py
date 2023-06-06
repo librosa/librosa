@@ -166,7 +166,6 @@ def load(
     >>> aro = audioread.ffdec.FFmpegAudioFile(librosa.ex('brahms'))
     >>> y, sr = librosa.load(aro)
     """
-
     if isinstance(path, tuple(audioread.available_backends())):
         # Force the audioread loader if we have a reader object already
         y, sr_native = __audioread_load(path, offset, duration, dtype)
@@ -230,7 +229,6 @@ def __audioread_load(path, offset, duration, dtype: DTypeLike):
 
     This loads one block at a time, and then concatenates the results.
     """
-
     buf = []
 
     if isinstance(path, tuple(audioread.available_backends())):
@@ -429,9 +427,7 @@ def stream(
     ...                                              n_fft=2048,
     ...                                              hop_length=2048,
     ...                                              center=False)
-
     """
-
     if not util.is_positive_int(block_length):
         raise ParameterError(f"block_length={block_length} must be a positive integer")
     if not util.is_positive_int(frame_length):
@@ -503,9 +499,7 @@ def to_mono(y: np.ndarray) -> np.ndarray:
     >>> y_mono = librosa.to_mono(y)
     >>> y_mono.shape
     (117601,)
-
     """
-
     # Validate the buffer.  Stereo is ok here.
     util.valid_audio(y, mono=False)
 
@@ -629,7 +623,6 @@ def resample(
     >>> y.shape, y_8k.shape
     ((117601,), (42668,))
     """
-
     # First, validate the audio buffer
     util.valid_audio(y, mono=False)
 
@@ -788,7 +781,6 @@ def get_duration(
     then ``path`` takes precedence over ``S``, and ``S`` takes precedence over
     ``(y, sr)``.
     """
-
     path = rename_kw(
         old_name="filename",
         old_value=filename,
@@ -915,7 +907,6 @@ def autocorrelate(
     >>> ax.plot(ac)
     >>> ax.set(title='Auto-correlation', xlabel='Lag (frames)')
     """
-
     if max_size is None:
         max_size = y.shape[axis]
 
@@ -1272,7 +1263,6 @@ def zero_crossings(
     >>> np.nonzero(z)
     (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
     """
-
     if callable(ref_magnitude):
         threshold = threshold * ref_magnitude(np.abs(y))
 
@@ -1369,7 +1359,6 @@ def clicks(
     >>> ax[0].label_outer()
     >>> ax[0].set_title(None)
     """
-
     # Compute sample positions from time or frames
     positions: np.ndarray
     if times is None:
@@ -1484,7 +1473,6 @@ def tone(
     >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
     ...                          x_axis='time', y_axis='mel', ax=ax)
     """
-
     if frequency is None:
         raise ParameterError('"frequency" must be provided')
 
@@ -1589,7 +1577,6 @@ def chirp(
     ...                          x_axis='time', y_axis='linear', ax=ax[1])
     >>> ax[1].set(title='Linear chirp')
     """
-
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
@@ -1685,9 +1672,7 @@ def mu_compress(
     >>> y = librosa.mu_compress(x, mu=15, quantize=True)
     >>> y
     array([-8, -7, -7, -6, -6, -5, -4, -2,  2,  4,  5,  6,  6,  7,  7,  7])
-
     """
-
     if mu <= 0:
         raise ParameterError(
             f"mu-law compression parameter mu={mu} must be strictly positive."

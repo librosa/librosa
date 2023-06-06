@@ -26,7 +26,6 @@ def __get_mod_version(modname):
 
 def show_versions() -> None:
     """Return the version information for all librosa dependencies."""
-
     core_deps = [
         "audioread",
         "numpy",

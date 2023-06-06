@@ -137,7 +137,6 @@ def tempogram(
     >>> ax[3].set(xlabel='BPM')
     >>> ax[3].grid(True)
     """
-
     from ..onset import onset_strength
 
     if win_length < 1:
@@ -261,7 +260,6 @@ def fourier_tempogram(
     ...                          ax=ax[2])
     >>> ax[2].set(title='Autocorrelation tempogram')
     """
-
     from ..onset import onset_strength
 
     if win_length < 1:
@@ -408,7 +406,6 @@ def tempo(
     >>> ax.set(title='Dynamic tempo estimation')
     >>> ax.legend()
     """
-
     if start_bpm <= 0:
         raise ParameterError("start_bpm must be strictly positive")
 
@@ -613,7 +610,6 @@ def tempogram_ratio(
     >>> ax[0].set(title="Tempogram")
     >>> ax[1].set(title="Tempogram ratio")
     """
-
     # Get a tempogram and time-varying tempo estimate
     if tg is None:
         tg = tempogram(
