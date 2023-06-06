@@ -66,6 +66,11 @@ jobs:
           shell: bash -l {0}
           run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
 
+        - name: Link checking
+          shell: bash -l {0}
+          working-directory: docs
+          run: make linkcheck
+
         - name: Build multi-version site
           shell: bash -l {0}
           run: |
