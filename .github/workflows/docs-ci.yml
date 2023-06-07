@@ -18,8 +18,8 @@ env:
   LIBROSA_DOC_DEBUG: True  # Disable docstring example execution
 
 jobs:
-    doc:
-        name: "CI Documentation build"
+    setup:
+        name: "Doc environment setup"
         runs-on: ${{ matrix.os }}
 
         strategy:
@@ -66,11 +66,21 @@ jobs:
           shell: bash -l {0}
           run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
 
+    linkcheck:
+        name: "Link checking"
+        runs-on: ${{ matrix.os }}
+        needs: "setup"
+        steps:
         - name: Link checking
           shell: bash -l {0}
           working-directory: docs
           run: make linkcheck
 
+    multiversion:
+        name: "Multi-version build"
+        runs-on: ${{ matrix.os }}
+        needs: "setup"
+        steps:
         - name: Build multi-version site
           shell: bash -l {0}
           run: |
@@ -78,7 +88,6 @@ jobs:
             touch build/html/.nojekyll
             cp docs/docsite-index-redirect.html build/html/index.html
             ln -srf build/html/$(./scripts/get_latest_release.sh) build/html/latest  # auto-link the latest tag
-
         - name: Check for broken links
           shell: bash -l {0}
           run: |
