@@ -21,7 +21,6 @@ jobs:
     setup:
         name: "Doc environment setup"
         runs-on: ${{ matrix.os }}
-
         strategy:
             fail-fast: true
             matrix:
@@ -69,6 +68,13 @@ jobs:
     linkcheck:
         name: "Link checking"
         runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: true
+            matrix:
+                include:
+                    - os: ubuntu-latest
+                      python-version: "3.8"
+                      channel-priority: "flexible"
         needs: "setup"
         steps:
         - name: Link checking
@@ -80,6 +86,13 @@ jobs:
         name: "Multi-version build"
         runs-on: ${{ matrix.os }}
         needs: "setup"
+        strategy:
+            fail-fast: true
+            matrix:
+                include:
+                    - os: ubuntu-latest
+                      python-version: "3.8"
+                      channel-priority: "flexible"
         steps:
         - name: Build multi-version site
           shell: bash -l {0}
