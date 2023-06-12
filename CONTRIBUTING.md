@@ -77,19 +77,15 @@ following rules before submitting a pull request:
 You can also check for common programming errors with the following
 tools:
 
--  Code with good test coverage (at least 80%), check with:
+-  Code with good test coverage, check with:
 
           $ pytest
 
 -  No pyflakes warnings, check with:
 
-           $ python -m pip install pyflakes
-           $ pyflakes path/to/module.py
+           $ python -m pip install flake8
+           $ flake8 librosa
 
--  AutoPEP8 can help you fix some of the easy redundant errors:
-
-           $ python -m pip install autopep8
-           $ autopep8 path/to/pep8.py
 
 Some tests in tests/test_display.py use baseline images for output comparison.
 If existing images need to be updated or new ones should be added:

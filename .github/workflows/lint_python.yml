@@ -52,7 +52,7 @@ jobs:
 
     - name: Style check
       shell: bash -l {0}
-      run: flake8 librosa --count --select=E9,F63,F7,F82 --show-source --statistics
+      run: python -m flake8 librosa
     
     - name: Docstring check  
       shell: bash -l {0}
