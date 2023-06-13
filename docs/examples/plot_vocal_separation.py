@@ -23,7 +23,7 @@ This is based on the "REPET-SIM" method of `Rafii and Pardo, 2012 <https://zenod
       <https://arrow.tudublin.ie/cgi/viewcontent.cgi?article=1086&context=argcon>`_ [3]_,
       but is a bit more numerically stable in practice.
 
-.. [1] Manilow, Ethan, Prem Seetharman, and Justin Salamon.
+.. [1] Manilow, Ethan, Prem Seetharaman, and Justin Salamon.
     "Open source tools & data for music source separation."
     2020.
 
