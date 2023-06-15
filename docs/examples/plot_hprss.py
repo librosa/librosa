@@ -8,9 +8,9 @@ This notebook illustrates how to separate an audio signal into
 its harmonic and percussive components.
 
 We'll compare the original median-filtering based approach of
-`Fitzgerald, 2010 <http://arrow.dit.ie/cgi/viewcontent.cgi?article=1078&context=argcon>`_
+`Fitzgerald, 2010 <https://arrow.tudublin.ie/cgi/viewcontent.cgi?article=1078&context=argcon>`_
 and its margin-based extension due to `Dreidger, Mueller and Disch, 2014
-<http://www.terasoft.com.tw/conf/ismir2014/proceedings/T110_127_Paper.pdf>`_.
+<https://zenodo.org/record/1415226>`_.
 
 
 """

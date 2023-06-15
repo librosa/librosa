@@ -22,7 +22,6 @@ def _nnls_obj(
     x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray
 ) -> Tuple[float, np.ndarray]:
     """Compute the objective and gradient for NNLS"""
-
     # Scipy's lbfgs flattens all arrays, so we first reshape
     # the iterate x
     x = x.reshape(shape)
@@ -61,7 +60,6 @@ def _nnls_lbfgs_block(
     x : np.ndarray [shape=(d, N)]
         Non-negative matrix such that Ax ~= B
     """
-
     # If we don't have an initial point, start at the projected
     # least squares solution
     if x_init is None:
@@ -140,7 +138,6 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
     >>> ax[1].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     """
-
     # If B is a single vector, punt up to the scipy method
     if B.ndim == 1:
         return scipy.optimize.nnls(A, B)[0]  # type: ignore

@@ -214,7 +214,6 @@ def mel(
     >>> ax.set(ylabel='Mel filter', title='Mel filter bank')
     >>> fig.colorbar(img, ax=ax)
     """
-
     if fmax is None:
         fmax = float(sr) / 2
 
@@ -364,7 +363,6 @@ def chroma(
     >>> ax.set(ylabel='Chroma filter', title='Chroma filter bank')
     >>> fig.colorbar(img, ax=ax)
     """
-
     wts = np.zeros((n_chroma, n_fft))
 
     # Get the FFT bins, not counting the DC component
@@ -410,7 +408,7 @@ def chroma(
 
 
 def __float_window(window_spec):
-    """Decorator function for windows with fractional input.
+    """Decorate a window function to support fractional input lengths.
 
     This function guarantees that for fractional ``x``, the following hold:
 
@@ -419,9 +417,8 @@ def __float_window(window_spec):
 
     For integer-valued ``x``, there should be no change in behavior.
     """
-
     def _wrap(n, *args, **kwargs):
-        """The wrapped window"""
+        """Wrap the window"""
         n_min, n_max = int(np.floor(n)), int(np.ceil(n))
 
         window = get_window(window_spec, n_min)
@@ -554,7 +551,6 @@ def constant_q(
     >>> librosa.display.specshow(F, x_axis='linear', y_axis='cqt_note', ax=ax[1])
     >>> ax[1].set(ylabel='CQ filters', title='CQ filter magnitudes (frequency domain)')
     """
-
     if fmin is None:
         fmin = note_to_hz("C1")
 
@@ -649,7 +645,6 @@ def constant_q_lengths(
     --------
     wavelet_lengths
     """
-
     if fmin <= 0:
         raise ParameterError("fmin must be strictly positive")
 
@@ -830,7 +825,6 @@ def _relative_bandwidth(*, freqs: np.ndarray) -> np.ndarray:
     alpha : np.ndarray
         Relative bandwidth
     """
-
     if len(freqs) <= 1:
         raise ParameterError(f"2 or more frequencies are required to compute bandwidths. Given freqs={freqs}")
 
@@ -957,7 +951,6 @@ def wavelet(
     >>> librosa.display.specshow(F, x_axis='linear', y_axis='cqt_note', ax=ax[1])
     >>> ax[1].set(ylabel='CQ filters', title='CQ filter magnitudes (frequency domain)')
     """
-
     # Pass-through parameters to get the filter lengths
     lengths, _ = wavelet_lengths(
         freqs=freqs,
@@ -1074,7 +1067,6 @@ def cq_to_chroma(
     >>> imgchroma = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[2])
     >>> ax[2].set(title='librosa.feature.chroma_stft')
     """
-
     # How many fractional bins are we merging?
     n_merge = float(bins_per_octave) / n_chroma
 
@@ -1143,10 +1135,8 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
     Parameters
     ----------
     window : callable or string
-        A window function, or the name of a window function.
-        Examples:
-        - scipy.signal.hann
-        - 'boxcar'
+        A window function, or the name of a window function,
+        e.g.: `scipy.signal.hann` or `'boxcar'`
     n : int > 0
         The number of coefficients to use in estimating the
         window bandwidth
@@ -1165,7 +1155,6 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
     --------
     get_window
     """
-
     if hasattr(window, "__name__"):
         key = window.__name__
     else:
@@ -1260,7 +1249,7 @@ def _multirate_fb(
     ftype: str = "ellip",
     flayout: str = "sos",
 ) -> Tuple[List[Any], np.ndarray]:
-    r"""Helper function to construct a multirate filterbank.
+    r"""Construct a multirate filterbank.
 
      A filter bank consists of multiple band-pass filters which divide the input signal
      into subbands. In the case of a multirate filter bank, the band-pass filters
@@ -1328,7 +1317,6 @@ def _multirate_fb(
         If ``sample_rates`` is ``None``.
         If ``center_freqs.shape`` does not match ``sample_rates.shape``.
     """
-
     if center_freqs is None:
         raise ParameterError("center_freqs must be provided.")
 
@@ -1374,7 +1362,7 @@ def _multirate_fb(
 
 @cache(level=10)
 def mr_frequencies(tuning: float) -> Tuple[np.ndarray, np.ndarray]:
-    r"""Helper function for generating center frequency and sample rate pairs.
+    r"""Generate center frequencies and sample rate pairs.
 
     This function will return center frequency and corresponding sample rates
     to obtain similar pitch filterbank settings as described in [#]_.
@@ -1406,7 +1394,6 @@ def mr_frequencies(tuning: float) -> Tuple[np.ndarray, np.ndarray]:
     --------
     librosa.filters.semitone_filterbank
     """
-
     center_freqs = midi_to_hz(np.arange(24 + tuning, 109 + tuning))
 
     sample_rates = np.asarray(
@@ -1520,7 +1507,6 @@ def semitone_filterbank(
     ...     ylabel='Semitone filter center frequency (Hz)'
     ... )
     """
-
     if (center_freqs is None) and (sample_rates is None):
         center_freqs, sample_rates = mr_frequencies(tuning)
 
@@ -1533,8 +1519,7 @@ def semitone_filterbank(
 
 @jit(nopython=True, cache=True)
 def __window_ss_fill(x, win_sq, n_frames, hop_length):  # pragma: no cover
-    """Helper function for window sum-square calculation."""
-
+    """Compute the sum-square envelope of a window."""
     n = len(x)
     n_fft = len(win_sq)
     for i in range(n_frames):
@@ -1665,7 +1650,6 @@ def diagonal_filter(
     -----
     This function caches at level 10.
     """
-
     if angle is None:
         angle = np.arctan(slope)
 

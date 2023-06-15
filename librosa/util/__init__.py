@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
+# Skip pydocstyle checks that erroneously trigger on "example"
+# noqa: D405,D214,D407
 """
 Utilities
 =========
@@ -66,7 +69,6 @@ Input validation
 
 File operations
 ---------------
-
 .. autosummary::
     :toctree: generated/
 
@@ -74,7 +76,6 @@ File operations
     example_info
     list_examples
     find_files
-
 """
 
 import lazy_loader as lazy

@@ -47,7 +47,6 @@ def __jaccard(int_a: np.ndarray, int_b: np.ndarray):  # pragma: no cover
 @numba.jit(nopython=True, cache=True)
 def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no cover
     """Find the best Jaccard match from query to candidates"""
-
     best_score = -1
     best_idx = -1
     for idx in candidates:
@@ -194,7 +193,6 @@ def match_intervals(
     >>> # [4, 5] => [4, 5]  (ints_from[2])
     >>> # [6, 7] => [4, 5]  (ints_from[2])
     """
-
     if len(intervals_from) == 0 or len(intervals_to) == 0:
         raise ParameterError("Attempting to match empty interval list")
 

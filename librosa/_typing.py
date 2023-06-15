@@ -76,8 +76,9 @@ _PadModeSTFT = Union[_STFTPad, Callable[..., Any]]
 
 def _ensure_not_reachable(__arg: Never):
     """
-    Helper function similar to typing_extension.assert_never, but doesn't
-    raise an exception so that we are forced to manually raise a more user
-    friendly exception afterwards.
+    Ensure that a code path is not reachable, like typing_extension.assert_never.
+
+    This doesn't raise an exception so that we are forced to manually
+    raise a more user friendly exception afterwards.
     """
     ...

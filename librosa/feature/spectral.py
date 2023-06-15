@@ -150,7 +150,6 @@ def spectral_centroid(
     >>> ax.legend(loc='upper right')
     >>> ax.set(title='log Power spectrogram')
     """
-
     # input is time domain:y or spectrogram:s
     #
 
@@ -303,7 +302,6 @@ def spectral_bandwidth(
     >>> ax[1].plot(times, centroid[0], label='Spectral centroid', color='w')
     >>> ax[1].legend(loc='lower right')
     """
-
     S, n_fft = _spectrogram(
         y=y,
         S=S,
@@ -453,7 +451,6 @@ def spectral_contrast(
     >>> fig.colorbar(img2, ax=[ax[1]])
     >>> ax[1].set(ylabel='Frequency bands', title='Spectral contrast')
     """
-
     S, n_fft = _spectrogram(
         y=y,
         S=S,
@@ -633,7 +630,6 @@ def spectral_rolloff(
     >>> ax.legend(loc='lower right')
     >>> ax.set(title='log Power spectrogram')
     """
-
     if not 0.0 < roll_percent < 1.0:
         raise ParameterError("roll_percent must lie in the range (0, 1)")
 
@@ -1019,7 +1015,6 @@ def poly_features(
     >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time', ax=ax[3])
     """
-
     S, n_fft = _spectrogram(
         y=y,
         S=S,
@@ -1111,9 +1106,7 @@ def zero_crossing_rate(
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> librosa.feature.zero_crossing_rate(y)
     array([[0.044, 0.074, ..., 0.488, 0.355]])
-
     """
-
     # check if audio is valid
     util.valid_audio(y, mono=False)
 
@@ -1156,7 +1149,7 @@ def chroma_stft(
 
     .. [#] Ellis, Daniel P.W.  "Chroma feature analysis and synthesis"
            2007/04/21
-           http://labrosa.ee.columbia.edu/matlab/chroma-ansyn/
+           https://www.ee.columbia.edu/~dpwe/resources/matlab/chroma-ansyn/
 
     Parameters
     ----------
@@ -1264,7 +1257,6 @@ def chroma_stft(
     >>> img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[1])
     >>> fig.colorbar(img, ax=[ax[1]])
     """
-
     S, n_fft = _spectrogram(
         y=y,
         S=S,
@@ -1374,7 +1366,6 @@ def chroma_cqt(
     >>> ax[1].set(title='chroma_cqt')
     >>> fig.colorbar(img, ax=ax)
     """
-
     cqt_func = {"full": cqt, "hybrid": hybrid_cqt}
 
     if bins_per_octave is None:
@@ -1440,7 +1431,7 @@ def chroma_cens(
     win_len_smooth: Optional[int] = 41,
     smoothing_window: _WindowSpec = "hann",
 ) -> np.ndarray:
-    r"""Computes the chroma variant "Chroma Energy Normalized" (CENS)
+    r"""Compute the chroma variant "Chroma Energy Normalized" (CENS)
 
     To compute CENS features, following steps are taken after obtaining chroma vectors
     using `chroma_cqt`: [#]_.
@@ -1520,7 +1511,6 @@ def chroma_cens(
     >>> ax[1].set(title='chroma_cens')
     >>> fig.colorbar(img, ax=ax)
     """
-
     if not (
         (win_len_smooth is None)
         or (isinstance(win_len_smooth, (int, np.integer)) and win_len_smooth > 0)
@@ -1663,7 +1653,6 @@ def chroma_vqt(
     >>> ax[1].set(ylabel='chroma_vqt')
     >>> fig.colorbar(img, ax=ax)
     """
-
     # If intervals are provided as an array, override BPO
     if not isinstance(intervals, str):
         bins_per_octave = len(intervals)
@@ -1713,7 +1702,7 @@ def tonnetz(
     chroma: Optional[np.ndarray] = None,
     **kwargs: Any,
 ) -> np.ndarray:
-    """Computes the tonal centroid features (tonnetz)
+    """Compute the tonal centroid features (tonnetz)
 
     This representation uses the method of [#]_ to project chroma features
     onto a 6-dimensional basis representing the perfect fifth, minor third,
@@ -1809,7 +1798,6 @@ def tonnetz(
     >>> fig.colorbar(img1, ax=[ax[0]])
     >>> fig.colorbar(img2, ax=[ax[1]])
     """
-
     if y is None and chroma is None:
         raise ParameterError(
             "Either the audio samples or the chromagram must be "
@@ -1996,7 +1984,6 @@ def mfcc(
     >>> ax[1].set(title='HTK-style (dct_type=3)')
     >>> fig.colorbar(img2, ax=[ax[1]])
     """
-
     if S is None:
         # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
@@ -2140,7 +2127,6 @@ def melspectrogram(
     >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
     >>> ax.set(title='Mel-frequency spectrogram')
     """
-
     S, n_fft = _spectrogram(
         y=y,
         S=S,

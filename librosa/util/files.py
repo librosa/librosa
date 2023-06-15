@@ -86,7 +86,6 @@ def example(key: str, *, hq: bool = False) -> str:
     librosa.util.list_examples
     pooch.os_cache
     """
-
     if key not in __TRACKMAP:
         raise ParameterError(f"Unknown example key: {key}")
 
@@ -148,7 +147,6 @@ def example_info(key: str) -> None:
     librosa.util.list_examples
     pooch.os_cache
     """
-
     if key not in __TRACKMAP:
         raise ParameterError(f"Unknown example key: {key}")
 
@@ -230,7 +228,6 @@ def find_files(
     files : list of str
         The list of audio files.
     """
-
     if ext is None:
         ext = ["aac", "au", "flac", "m4a", "mp3", "ogg", "wav"]
 
@@ -265,8 +262,7 @@ def find_files(
 
 
 def __get_files(dir_name: Union[str, os.PathLike[Any]], extensions: Set[str]):
-    """Helper function to get files in a single directory"""
-
+    """Get a list of files in a single directory"""
     # Expand out the directory
     dir_name = os.path.abspath(os.path.expanduser(dir_name))
 

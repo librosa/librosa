@@ -580,7 +580,6 @@ def recurrence_matrix(
     >>> fig.colorbar(imgsim, ax=ax[0], orientation='horizontal', ticks=[0, 1])
     >>> fig.colorbar(imgaff, ax=ax[1], orientation='horizontal')
     """
-
     data = np.atleast_2d(data)
 
     # Swap observations to the first dimension and flatten the rest
@@ -764,7 +763,6 @@ def recurrence_to_lag(
     ...                          hop_length=hop_length, ax=ax[1])
     >>> ax[1].set(title='Lag (no padding)')
     """
-
     axis = np.abs(axis)
 
     if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
@@ -859,7 +857,6 @@ def lag_to_recurrence(
     >>> ax[1, 1].set(title='Recurrence (without padding)')
     >>> ax[1, 1].label_outer()
     """
-
     if axis not in [0, 1, -1]:
         raise ParameterError(f"Invalid target axis: {axis}")
 
@@ -885,7 +882,7 @@ _F = TypeVar("_F", bound=Callable[..., Any])
 
 
 def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
-    """Filtering in the time-lag domain.
+    """Apply a filter in the time-lag domain.
 
     This is primarily useful for adapting image filters to operate on
     `recurrence_to_lag` output.
@@ -948,9 +945,8 @@ def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
     >>> ax[1, 1].set(title='Filtered affinity matrix')
     >>> ax[1, 1].label_outer()
     """
-
     def __my_filter(wrapped_f, *args, **kwargs):
-        """Decorator to wrap the filter"""
+        """Wrap the filter with lag conversions"""
         # Map the input data into time-lag space
         args = list(args)
 
@@ -1033,7 +1029,6 @@ def subsegment(
     >>> ax.legend()
     >>> ax.set(title='CQT + Beat and sub-beat markers')
     """
-
     frames = util.fix_frames(frames, x_min=0, x_max=data.shape[axis], pad=True)
 
     if n_segments < 1:
@@ -1116,7 +1111,6 @@ def agglomerative(
     >>> ax.legend()
     >>> ax.set(title='Power spectrogram')
     """
-
     # Make sure we have at least two dimensions
     data = np.atleast_2d(data)
 
@@ -1268,7 +1262,6 @@ def path_enhance(
     >>> fig.colorbar(img, ax=ax[0], orientation='horizontal')
     >>> fig.colorbar(imgpe, ax=ax[1], orientation='horizontal')
     """
-
     if min_ratio is None:
         min_ratio = 1.0 / max_ratio
     elif min_ratio > max_ratio:

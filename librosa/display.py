@@ -111,14 +111,13 @@ class TimeFormatter(mplticker.Formatter):
         `"s"` between 1 and 60 seconds; and to `"ms"` below 1 second.
 
 
-    See also
+    See Also
     --------
     matplotlib.ticker.Formatter
 
 
     Examples
     --------
-
     For normal time
 
     >>> import matplotlib.pyplot as plt
@@ -157,7 +156,6 @@ class TimeFormatter(mplticker.Formatter):
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Return the time format as pos"""
-
         _, dmax = self.axis.get_data_interval()
         vmin, vmax = self.axis.get_view_interval()
 
@@ -216,7 +214,7 @@ class NoteFormatter(mplticker.Formatter):
 
         If ``False``, use ASCII symbols for accidentals.
 
-    See also
+    See Also
     --------
     LogHzFormatter
     matplotlib.ticker.Formatter
@@ -246,6 +244,7 @@ class NoteFormatter(mplticker.Formatter):
         self.unicode = unicode
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
+        """Apply the formatter to position"""
         if x <= 0:
             return ""
 
@@ -290,7 +289,7 @@ class SvaraFormatter(mplticker.Formatter):
 
         If ``False``, use ASCII symbols for accidentals.
 
-    See also
+    See Also
     --------
     NoteFormatter
     matplotlib.ticker.Formatter
@@ -382,7 +381,7 @@ class FJSFormatter(mplticker.Formatter):
 
         If ``False``, use ASCII symbols for accidentals.
 
-    See also
+    See Also
     --------
     NoteFormatter
     hz_to_fjs
@@ -423,6 +422,7 @@ class FJSFormatter(mplticker.Formatter):
         )
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
+        """Apply the formatter to position"""
         if x <= 0:
             return ""
 
@@ -454,7 +454,7 @@ class LogHzFormatter(mplticker.Formatter):
 
         If ``False``, ticks are only labeled if the span is less than 2 octaves
 
-    See also
+    See Also
     --------
     NoteFormatter
     matplotlib.ticker.Formatter
@@ -476,6 +476,7 @@ class LogHzFormatter(mplticker.Formatter):
         self.major = major
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
+        """Apply the formatter to position"""
         if x <= 0:
             return ""
 
@@ -490,7 +491,7 @@ class LogHzFormatter(mplticker.Formatter):
 class ChromaFormatter(mplticker.Formatter):
     """A formatter for chroma axes
 
-    See also
+    See Also
     --------
     matplotlib.ticker.Formatter
 
@@ -564,7 +565,7 @@ class ChromaSvaraFormatter(mplticker.Formatter):
 class ChromaFJSFormatter(mplticker.Formatter):
     """A formatter for chroma axes with functional just notation
 
-    See also
+    See Also
     --------
     matplotlib.ticker.Formatter
 
@@ -622,7 +623,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
 class TonnetzFormatter(mplticker.Formatter):
     """A formatter for tonnetz axes
 
-    See also
+    See Also
     --------
     matplotlib.ticker.Formatter
 
@@ -705,6 +706,7 @@ class AdaptiveWaveplot:
         self.ax: Optional[mplaxes.Axes] = None
 
     def __del__(self) -> None:
+        """Disconnect callback methods on delete"""
         self.disconnect(strict=True)
 
     def connect(
@@ -846,7 +848,6 @@ def cmap(
     --------
     matplotlib.pyplot.colormaps
     """
-
     data = np.atleast_1d(data)
 
     if data.dtype == "bool":
@@ -1176,7 +1177,6 @@ def specshow(
     >>> ax[1].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
-
     if np.issubdtype(data.dtype, np.complexfloating):
         warnings.warn(
             "Trying to display complex-valued input. " "Showing magnitude instead.",
@@ -1258,19 +1258,18 @@ def specshow(
 
 
 def __set_current_image(ax, img):
-    """Helper to set the current image in pyplot mode.
+    """
+    Set the current image when working in pyplot mode.
 
     If the provided ``ax`` is not `None`, then we assume that the user is using the object API.
     In this case, the pyplot current image is not set.
     """
-
     if ax is None:
         plt.sci(img)
 
 
 def __mesh_coords(ax_type, coords, n, **kwargs):
     """Compute axis coordinates"""
-
     if coords is not None:
         if len(coords) not in (n, n + 1):
             raise ParameterError(
@@ -1334,7 +1333,6 @@ def __check_axes(axes: Optional[mplaxes.Axes]) -> mplaxes.Axes:
 
 def __scale_axes(axes, ax_type, which):
     """Set the axis scaling"""
-
     kwargs = dict()
     thresh = "linthresh"
     base = "base"
@@ -1712,7 +1710,6 @@ def __coord_mel_hz(
     **_kwargs: Any,
 ) -> np.ndarray:
     """Get the frequencies for Mel bins"""
-
     if fmin is None:
         fmin = 0.0
     if fmax is None:
@@ -1931,7 +1928,7 @@ def waveshow(
     marker : string
         Marker symbol to use for sample values. (default: no markers)
 
-        See also: `matplotlib.markers`.
+        See Also: `matplotlib.markers`.
 
     where : string, {'pre', 'mid', 'post'}
         This setting determines how both waveform and envelope plots interpolate

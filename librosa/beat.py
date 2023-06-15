@@ -158,7 +158,6 @@ def beat_track(
     ...            linestyle='--', label='Beats')
     >>> ax[1].legend()
     """
-
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
@@ -328,9 +327,7 @@ def plp(
     >>> ax[1].legend()
     >>> ax[1].set(title='librosa.beat.plp', xlim=[5, 20])
     >>> ax[1].xaxis.set_major_formatter(librosa.display.TimeFormatter())
-
     """
-
     # Step 1: get the onset envelope
     if onset_envelope is None:
         onset_envelope = onset.onset_strength(
@@ -389,7 +386,7 @@ def plp(
 def __beat_tracker(
     onset_envelope: np.ndarray, bpm: float, fft_res: float, tightness: float, trim: bool
 ) -> np.ndarray:
-    """Internal function that tracks beats in an onset strength envelope.
+    """Tracks beats in an onset strength envelope.
 
     Parameters
     ----------
@@ -409,7 +406,6 @@ def __beat_tracker(
     beats : np.ndarray [shape=(n,)]
         frame numbers of beat events
     """
-
     if bpm <= 0:
         raise ParameterError("bpm must be strictly positive")
 
@@ -441,8 +437,7 @@ def __beat_tracker(
 
 # -- Helper functions for beat tracking
 def __normalize_onsets(onsets):
-    """Maps onset strength function into the range [0, 1]"""
-
+    """Map onset strength function into the range [0, 1]"""
     norm = onsets.std(ddof=1)
     if norm > 0:
         onsets = onsets / norm
@@ -451,14 +446,12 @@ def __normalize_onsets(onsets):
 
 def __beat_local_score(onset_envelope, period):
     """Construct the local score for an onset envlope and given period"""
-
     window = np.exp(-0.5 * (np.arange(-period, period + 1) * 32.0 / period) ** 2)
     return scipy.signal.convolve(__normalize_onsets(onset_envelope), window, "same")
 
 
 def __beat_track_dp(localscore, period, tightness):
     """Core dynamic program for beat tracking"""
-
     backlink = np.zeros_like(localscore, dtype=int)
     cumscore = np.zeros_like(localscore)
 
@@ -502,7 +495,6 @@ def __beat_track_dp(localscore, period, tightness):
 
 def __last_beat(cumscore):
     """Get the last beat from the cumulative score array"""
-
     maxes = util.localmax(cumscore)
     med_score = np.median(cumscore[np.argwhere(maxes)])
 
@@ -511,8 +503,7 @@ def __last_beat(cumscore):
 
 
 def __trim_beats(localscore: np.ndarray, beats: np.ndarray, trim: bool) -> np.ndarray:
-    """Final post-processing: throw out spurious leading/trailing beats"""
-
+    """Remove spurious leading and trailing beats"""
     smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.hann(5), "same")
 
     if trim:

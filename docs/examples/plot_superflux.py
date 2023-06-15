@@ -6,7 +6,7 @@ Superflux onsets
 
 This notebook demonstrates how to recover the Superflux onset detection algorithm of
 `Boeck and Widmer, 2013
-<http://dafx13.nuim.ie/papers/09.dafx2013_submission_12.pdf>`_ [1]_
+<https://www.dafx.de/paper-archive/2013/papers/09.dafx2013_submission_12.pdf>`_ [1]_
 from librosa.
 
 This algorithm improves onset detection accuracy in the presence of vibrato.

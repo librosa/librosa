@@ -88,9 +88,7 @@ def interval_frequencies(
     >>> librosa.interval_frequencies(9, fmin=55, intervals=intervals)
     array([ 55.   ,  73.333,  82.5  , 110.   , 146.667, 165.   , 220.   ,
        293.333, 330.   ])
-
     """
-
     if isinstance(intervals, str):
         if intervals == "equal":
             # Maybe include tuning here?
@@ -221,7 +219,6 @@ def pythagorean_intervals(
         {2: -9, 3: 6}
     ]
     """
-
     # Generate all powers of 3 in log space
     pow3 = np.arange(bins_per_octave)
 
@@ -411,7 +408,6 @@ def plimit_intervals(
         {2: -3, 3: 1, 5: 1}
     ]
     """
-
     primes = np.atleast_1d(primes)
     logs = np.log2(primes, dtype=np.float64)
 

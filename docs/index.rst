@@ -6,8 +6,8 @@ blocks necessary to create music information retrieval systems.
 
 For a quick introduction to using librosa, please refer to the :doc:`tutorial`.
 For a more advanced introduction which describes the package design principles, please refer to the
-`librosa paper <http://conference.scipy.org/proceedings/scipy2015/pdfs/brian_mcfee.pdf>`_ at
-`SciPy 2015 <http://scipy2015.scipy.org>`_.
+`librosa paper <https://conference.scipy.org/proceedings/scipy2015/pdfs/brian_mcfee.pdf>`_ at
+`SciPy 2015 <https://scipy2015.scipy.org>`_.
 
 Citing librosa
 ==============

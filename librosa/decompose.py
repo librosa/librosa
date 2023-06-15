@@ -166,7 +166,6 @@ def decompose(
     >>> ax['D'].label_outer()
     >>> fig.colorbar(img, ax=list(ax.values()), format="%+2.f dB")
     """
-
     # Do a swapaxes and unroll
     orig_shape = list(S.shape)
 
@@ -351,9 +350,7 @@ def hpss(
     Get a more isolated percussive component by widening its margin
 
     >>> H, P = librosa.decompose.hpss(D, margin=(1.0,5.0))
-
     """
-
     phase: Union[float, np.ndarray]
 
     if np.iscomplexobj(S):
@@ -420,7 +417,7 @@ def nn_filter(
     axis: int = -1,
     **kwargs: Any,
 ) -> np.ndarray:
-    """Filtering by nearest-neighbors.
+    """Filter by nearest-neighbor aggregation.
 
     Each data point (e.g, spectrogram column) is replaced
     by aggregating its nearest neighbors in feature space.
@@ -530,7 +527,6 @@ def nn_filter(
     >>> fig.colorbar(imgr1, ax=[ax[3]])
     >>> fig.colorbar(imgr2, ax=[ax[4]])
     """
-
     if aggregate is None:
         aggregate = np.mean
 

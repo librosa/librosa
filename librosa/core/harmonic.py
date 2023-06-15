@@ -230,7 +230,6 @@ def interp_harmonics(
     ...     ax.flat[i].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
-
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
         # Build the 1-D interpolator.
         # All frames have a common domain, so we only need one interpolator here.
@@ -385,7 +384,6 @@ def f0_harmonics(
     >>> ax[1].set_yticklabels(harmonics)
     >>> ax[1].set(ylabel='Harmonics')
     """
-
     result: np.ndarray
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
         if not is_unique(freqs, axis=0):

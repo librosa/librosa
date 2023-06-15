@@ -9,13 +9,13 @@ functionality currently provided by *librosa*.
 Read specific formats
 ---------------------
 
-*librosa* uses `soundfile <https://github.com/bastibe/PySoundFile>`_ and `audioread <https://github.com/sampsyo/audioread>`_ for reading audio.
+*librosa* uses `soundfile <https://github.com/bastibe/PySoundFile>`_ and `audioread <https://github.com/beetbox/audioread>`_ for reading audio.
 As of v0.7, librosa uses `soundfile` by default, and falls back on `audioread` only when dealing with codecs unsupported by `soundfile`.
 For a list of codecs supported by `soundfile`, see the *libsndfile* `documentation <http://www.mega-nerd.com/libsndfile/>`_.
 
 .. warning:: audioread support is deprecated as of librosa 0.10.0, and will be removed completely in version 1.0.
 
-.. note:: See installation instruction for PySoundFile `here <http://pysoundfile.readthedocs.io>`_.
+.. note:: See installation instruction for PySoundFile `here <https://pysoundfile.readthedocs.io/en/latest/>`_.
 
 Librosa's load function is meant for the common case where you want to load an entire (fragment of a) recording into memory, but some applications require more flexibility.
 In these cases, we recommend using `soundfile` directly.

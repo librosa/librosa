@@ -16,10 +16,9 @@ __all__ = ["moved", "deprecated", "vectorize"]
 def moved(
     *, moved_from: str, version: str, version_removed: str
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """This is a decorator which can be used to mark functions
-    as moved/renamed.
+    """Mark functions as moved/renamed.
 
-    It will result in a warning being emitted when the function is used.
+    Using the decorated (old) function will result in a warning.
     """
 
     def __wrapper(func, *args, **kwargs):
@@ -42,10 +41,10 @@ def moved(
 def deprecated(
     *, version: str, version_removed: str
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
-    """This is a decorator which can be used to mark functions
-    as deprecated.
+    """Mark a function as deprecated.
 
-    It will result in a warning being emitted when the function is used."""
+    Using the decorated (old) function will result in a warning.
+    """
 
     def __wrapper(func, *args, **kwargs):
         """Warn the user, and then proceed."""
@@ -73,7 +72,9 @@ def vectorize(
     cache: bool = False,
     signature: Optional[str] = None
 ) -> Callable[[_F], _F]:
-    """This function is not quite a decorator, but is used as a wrapper
+    """Wrap a function for use with np.vectorize.
+
+    This function is not quite a decorator, but is used as a wrapper
     to np.vectorize that preserves scalar behavior.
     """
 

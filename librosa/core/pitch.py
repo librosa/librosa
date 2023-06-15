@@ -88,7 +88,6 @@ def estimate_tuning(
     ...                         fmax=librosa.note_to_hz('G#9'))
     -0.08000000000000002
     """
-
     pitch, mag = piptrack(y=y, sr=sr, S=S, n_fft=n_fft, **kwargs)
 
     # Only count magnitude where frequency is > 0
@@ -147,9 +146,7 @@ def pitch_tuning(
     >>> freqs = freqs[mags > np.median(mags)]
     >>> librosa.pitch_tuning(freqs)
     -0.07
-
     """
-
     frequencies = np.atleast_1d(frequencies)
 
     # Trim out any DC components
@@ -301,9 +298,7 @@ def piptrack(
 
     >>> pitches, magnitudes = librosa.piptrack(S=S, sr=sr, threshold=1,
     ...                                        ref=np.mean)
-
     """
-
     # Check that we received an audio time series or STFT
     S, n_fft = _spectrogram(
         y=y,
@@ -430,7 +425,6 @@ def _cumulative_mean_normalized_difference(
 @numba.stencil  # type: ignore
 def _pi_stencil(x: np.ndarray) -> np.ndarray:
     """Stencil to compute local parabolic interpolation"""
-
     a = x[1] + x[-1] - 2 * x[0]
     b = (x[1] - x[-1]) / 2
 
@@ -574,7 +568,6 @@ def yin(
     array([442.66354675, 441.95299983, 441.58010963, ...,
         871.161732  , 873.99001454, 877.04297681])
     """
-
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
@@ -776,7 +769,6 @@ def pyin(
     >>> ax.plot(times, f0, label='f0', color='cyan', linewidth=3)
     >>> ax.legend(loc='upper right')
     """
-
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
@@ -959,7 +951,6 @@ def __check_yin_params(
     1. 0 < fmin < fmax <= sr/2
     2. frame_length - win_length - 1 > sr/fmax
     """
-
     if fmax > sr / 2:
         raise ParameterError(f"fmax={fmax:.3f} cannot exceed Nyquist frequency {sr/2}")
     if fmin >= fmax:

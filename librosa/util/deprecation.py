@@ -11,6 +11,7 @@ class Deprecated(object):
     """A dummy class to catch usage of deprecated variable names"""
 
     def __repr__(self) -> str:
+        """Pretty-print display for deprecated objects"""
         return "<DEPRECATED parameter>"
 
 

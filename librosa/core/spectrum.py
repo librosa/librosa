@@ -216,7 +216,6 @@ def stft(
     >>> ax.set_title('Power spectrogram')
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     """
-
     # By default, use the entire frame
     if win_length is None:
         win_length = n_fft
@@ -493,7 +492,6 @@ def istft(
     >>> np.max(np.abs(y - y_out))
     8.940697e-08
     """
-
     if n_fft is None:
         n_fft = 2 * (stft_matrix.shape[-2] - 1)
 
@@ -742,9 +740,7 @@ def __reassign_frequencies(
            ...,
            [1.101e+04, 1.102e+04, ..., 1.105e+04, 1.102e+04],
            [1.102e+04, 1.102e+04, ..., 1.102e+04, 1.102e+04]])
-
     """
-
     # retrieve window samples if needed so that the window derivative can be
     # calculated
     if win_length is None:
@@ -905,9 +901,7 @@ def __reassign_times(
            ...,
            [ 2.268e-05, -6.177e-04, ...,  5.368e+00,  5.327e+00],
            [ 2.268e-05,  1.420e-03, ...,  5.307e+00,  5.328e+00]])
-
     """
-
     # retrieve window samples if needed so that the time-weighted window can be
     # calculated
     if win_length is None:
@@ -1179,7 +1173,6 @@ def reassigned_spectrogram(
     >>> ax[1].set_title("Reassigned spectrogram")
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
-
     if not callable(ref_power) and ref_power < 0:
         raise ParameterError("ref_power must be non-negative or callable.")
 
@@ -1338,9 +1331,7 @@ def magphase(D: np.ndarray, *, power: float = 1) -> Tuple[np.ndarray, np.ndarray
            [-4.342e-12, -1.543e+00, ..., -1.794e+00, -2.419e+00],
            [-3.142e+00, -3.142e+00, ...,  0.000e+00,  0.000e+00]],
           dtype=float32)
-
     """
-
     mag = np.abs(D)
 
     # Prevent NaNs and return magnitude 0, phase 1+0j for zero
@@ -1377,7 +1368,7 @@ def phase_vocoder(
 
     .. [#] Ellis, D. P. W. "A phase vocoder in Matlab."
         Columbia University, 2002.
-        http://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/
+        https://www.ee.columbia.edu/~dpwe/resources/matlab/pvoc/
 
     .. [#] https://breakfastquay.com/rubberband/
 
@@ -1423,7 +1414,6 @@ def phase_vocoder(
     --------
     pyrubberband
     """
-
     if n_fft is None:
         n_fft = 2 * (D.shape[-2] - 1)
 
@@ -1574,7 +1564,6 @@ def iirt(
     >>> ax[1].set_title('Semitone spectrogram (iirt)')
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     """
-
     if flayout not in ("ba", "sos"):
         raise ParameterError(f"Unsupported flayout={flayout}")
 
@@ -1757,7 +1746,6 @@ def power_to_db(
     >>> fig.colorbar(imgpow, ax=ax[0])
     >>> fig.colorbar(imgdb, ax=ax[1], format="%+2.0f dB")
     """
-
     S = np.asarray(S)
 
     if amin <= 0:
@@ -1863,7 +1851,6 @@ def amplitude_to_db(
     -----
     This function caches at level 30.
     """
-
     S = np.asarray(S)
 
     if np.issubdtype(S.dtype, np.complexfloating):
@@ -1981,7 +1968,6 @@ def perceptual_weighting(
     >>> fig.colorbar(img, ax=ax[0], format="%+2.0f dB")
     >>> fig.colorbar(imgp, ax=ax[1], format="%+2.0f dB")
     """
-
     offset = convert.frequency_weighting(frequencies, kind=kind).reshape((-1, 1))
 
     result: np.ndarray = offset + power_to_db(S, **kwargs)
@@ -1999,7 +1985,7 @@ def fmt(
     over_sample: float = 1,
     axis: int = -1,
 ) -> np.ndarray:
-    """The fast Mellin transform (FMT)
+    """Fast Mellin transform (FMT)
 
     The Mellin of a signal `y` is performed by interpolating `y` on an exponential time
     axis, applying a polynomial window, and then taking the discrete Fourier transform.
@@ -2111,7 +2097,6 @@ def fmt(
     >>> ax[2].semilogy(np.abs(odf_ac_scale), label='Scale transform magnitude')
     >>> ax[2].set(xlabel='scale coefficients')
     """
-
     n = y.shape[axis]
 
     if n < 3:
@@ -2434,7 +2419,6 @@ def pcen(
     >>> ax[1].set(title='Per-channel energy normalization (max_size=3)')
     >>> fig.colorbar(img, ax=ax)
     """
-
     if power < 0:
         raise ParameterError(f"power={power} must be nonnegative")
 
@@ -2662,7 +2646,6 @@ def griffinlim(
     >>> librosa.display.waveshow(y_istft, sr=sr, color='r', ax=ax[2])
     >>> ax[2].set_title('Magnitude-only istft reconstruction')
     """
-
     if random_state is None:
         rng = np.random.default_rng()
     elif isinstance(random_state, int):
@@ -2766,7 +2749,7 @@ def _spectrogram(
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, int]:
-    """Helper function to retrieve a magnitude spectrogram.
+    """Retrieve a magnitude spectrogram.
 
     This is primarily used in feature extraction functions that can operate on
     either audio time-series or spectrogram input.
@@ -2822,7 +2805,6 @@ def _spectrogram(
         - If ``S`` is provided, then ``n_fft`` is inferred from ``S``
         - Else, copied from input
     """
-
     if S is not None:
         # Infer n_fft from spectrogram shape, but only if it mismatches
         if n_fft is None or n_fft // 2 + 1 != S.shape[-2]:

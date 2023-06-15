@@ -30,7 +30,7 @@ or from within python, prior to importing *librosa*::
 
 Cache configuration
 -------------------
-The cache is implemented on top of `joblib.Memory <https://pythonhosted.org/joblib/memory.html>`_.
+The cache is implemented on top of `joblib.Memory`.
 The default configuration can be overridden by setting the following environment variables
 
   - `LIBROSA_CACHE_DIR` : path (on disk) to the cache directory
@@ -39,9 +39,7 @@ The default configuration can be overridden by setting the following environment
   - `LIBROSA_CACHE_VERBOSE` : controls how much debug info is displayed. `{int, non-negative}`
   - `LIBROSA_CACHE_LEVEL` : controls the caching level: the larger this value, the more data is cached. `{int}`
 
-Please refer to the `joblib.Memory` `documentation
-<https://pythonhosted.org/joblib/memory.html#memory-reference>`_ for a detailed explanation of these
-parameters.
+Please refer to the `joblib.Memory` documentation for a detailed explanation of these parameters.
 
 As of 0.7, librosa's cache wraps (rather than extends) the `joblib.Memory` object.
 The memory object can be directly accessed by `librosa.cache.memory`.
