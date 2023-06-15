@@ -41,7 +41,10 @@ from itertools import product
 import warnings
 
 import numpy as np
-import lazy_loader as lazy
+import matplotlib.cm as mcm
+import matplotlib.axes as mplaxes
+import matplotlib.ticker as mplticker
+import matplotlib.pyplot as plt
 
 from . import core
 from . import util
@@ -52,21 +55,11 @@ from ._typing import _FloatLike_co
 
 if TYPE_CHECKING:
     import matplotlib
-    import matplotlib.cm as mcm
-    import matplotlib.axes as mplaxes
-    import matplotlib.ticker as mplticker
-    import matplotlib.pyplot as plt
     from matplotlib.collections import QuadMesh, PolyCollection
     from matplotlib.lines import Line2D
     from matplotlib.path import Path as MplPath
     from matplotlib.markers import MarkerStyle
     from matplotlib.colors import Colormap
-else:
-    matplotlib = lazy.load("matplotlib")
-    mcm = lazy.load("matplotlib.cm")
-    mplaxes = lazy.load("matplotlib.axes")
-    mplticker = lazy.load("matplotlib.ticker")
-    plt = lazy.load("matplotlib.pyplot")
 
 
 __all__ = [
