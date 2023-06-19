@@ -242,12 +242,12 @@ def __audioread_load(path, offset, duration, dtype: DTypeLike):
         sr_native = input_file.samplerate
         n_channels = input_file.channels
 
-        s_start = int(np.round(sr_native * offset)) * n_channels
+        s_start = int(sr_native * offset) * n_channels
 
         if duration is None:
             s_end = np.inf
         else:
-            s_end = s_start + (int(np.round(sr_native * duration)) * n_channels)
+            s_end = s_start + (int(sr_native * duration) * n_channels)
 
         n = 0
 
@@ -1384,7 +1384,7 @@ def clicks(
 
         angular_freq = 2 * np.pi * click_freq / float(sr)
 
-        click = np.logspace(0, -10, num=int(np.round(sr * click_duration)), base=2.0)
+        click = np.logspace(0, -10, num=int(sr * click_duration), base=2.0)
 
         click *= np.sin(angular_freq * np.arange(len(click)))
 
@@ -1480,7 +1480,7 @@ def tone(
     if length is None:
         if duration is None:
             raise ParameterError('either "length" or "duration" must be provided')
-        length = int(np.ceil(duration * sr))
+        length = int(duration * sr)
 
     if phi is None:
         phi = -np.pi * 0.5
@@ -1593,7 +1593,7 @@ def chirp(
 
     method = "linear" if linear else "logarithmic"
     y: np.ndarray = scipy.signal.chirp(
-        np.arange(int(np.ceil(duration * sr))) / sr,
+        np.arange(int(duration * sr)) / sr,
         fmin,
         duration,
         fmax,
