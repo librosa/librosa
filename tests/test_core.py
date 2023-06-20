@@ -1590,7 +1590,7 @@ def test_tone(frequency, sr, length, duration, phi):
     if length is not None:
         assert len(y) == length
     else:
-        assert len(y) == np.ceil(duration * sr)
+        assert len(y) == int(duration * sr)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -1621,7 +1621,7 @@ def test_chirp(fmin, fmax, sr, length, duration, linear, phi):
     if length is not None:
         assert len(y) == length
     else:
-        assert len(y) == np.ceil(duration * sr)
+        assert len(y) == int(duration * sr)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
