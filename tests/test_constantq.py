@@ -168,7 +168,7 @@ def test_cqt(
         # This is our most common peak index in the CQT spectrum
         # we use the mode here over frames to sidestep transient effects
         # at the beginning and end of the CQT
-        common_peak = scipy.stats.mode(peaks)[0][0]
+        common_peak = scipy.stats.mode(peaks, keepdims=True)[0][0]
 
         # Convert peak index to frequency
         peak_frequency = fmin * 2 ** (common_peak / bins_per_octave)
@@ -206,7 +206,7 @@ def test_cqt_early_downsample(y_cqt_110, sr_cqt, n_bins, fmin, bins_per_octave):
         # This is our most common peak index in the CQT spectrum
         # we use the mode here over frames to sidestep transient effects
         # at the beginning and end of the CQT
-        common_peak = scipy.stats.mode(peaks)[0][0]
+        common_peak = scipy.stats.mode(peaks, keepdims=True)[0][0]
 
         # Convert peak index to frequency
         peak_frequency = fmin * 2 ** (common_peak / bins_per_octave)
@@ -298,7 +298,7 @@ def test_vqt(
         # This is our most common peak index in the CQT spectrum
         # we use the mode here over frames to sidestep transient effects
         # at the beginning and end of the CQT
-        common_peak = scipy.stats.mode(peaks)[0][0]
+        common_peak = scipy.stats.mode(peaks, keepdims=True)[0][0]
 
         # Convert peak index to frequency
         peak_frequency = fmin * 2 ** (common_peak / bins_per_octave)
