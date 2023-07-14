@@ -304,6 +304,7 @@ def test_vqt(
         peak_frequency = fmin * 2 ** (common_peak / bins_per_octave)
 
         # Check that it matches 110, which is an analysis frequency
+        assert np.isclose(peak_frequency, 110)
 
 
 @pytest.fixture(scope="module")
