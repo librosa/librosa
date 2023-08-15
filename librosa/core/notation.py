@@ -483,7 +483,7 @@ def list_thaat() -> List[str]:
 0
 
 >>> librosa.note_to_degree('D♮##b')
-2
+3
 
 """
 def note_to_degree(key: str) -> int:
