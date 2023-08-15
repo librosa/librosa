@@ -33,6 +33,20 @@ Other changes
     - `#1727`_ Support `pooch>=1.7.0`. *Brian McFee*
     - `#1731`_ Update test suite to support `scipy>=1.11`. *Brian McFee*
 
+.. _#1677: https://github.com/librosa/librosa/issues/1677
+.. _#1693: https://github.com/librosa/librosa/issues/1693
+.. _#1726: https://github.com/librosa/librosa/issues/1726
+.. _#1699: https://github.com/librosa/librosa/issues/1699
+.. _#1703: https://github.com/librosa/librosa/issues/1703
+.. _#1706: https://github.com/librosa/librosa/issues/1706
+.. _#1713: https://github.com/librosa/librosa/issues/1713
+.. _#1718: https://github.com/librosa/librosa/issues/1718
+.. _#1719: https://github.com/librosa/librosa/issues/1719
+.. _#1704: https://github.com/librosa/librosa/issues/1704
+.. _#1722: https://github.com/librosa/librosa/issues/1722
+.. _#1727: https://github.com/librosa/librosa/issues/1727
+.. _#1731: https://github.com/librosa/librosa/issues/1731
+
 
 v0.10.0.post2
 -------------
