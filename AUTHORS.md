@@ -101,6 +101,7 @@ Contributors
 * Fabian Keller <https://github.com/bluenote10>
 * BdeGraff <https://github.com/BdeGraff>
 * Jon Petter Åsen <https://github.com/jpaasen>
+* Eugene Rabinovich <https://github.com/erabinov>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
