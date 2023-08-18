@@ -66,9 +66,7 @@ def main():
     factorized = dict()
     for interval in all_intervals:
         # Compute the interval
-        log_value = 0
-        for p in interval:
-            log_value += np.log2(p) * interval[p]
+        log_value = np.dot([np.log2(p) for p in interval], [interval[p] for p in interval])
         value = np.around(np.power(2.0, log_value), 6)
 
         factorized[float(value)] = {
