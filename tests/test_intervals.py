@@ -185,9 +185,6 @@ def test_plimit_factorizations(sort, primes):
     assert len(intervals) == len(factors)
 
     for ival, facts in zip(intervals, factors):
-        value = 0.
-        for prime in facts:
-            value += facts[prime] * np.log2(prime)
-
+        value = 0. np.dot([facts[prime] for prime in facts],[np.log2(prime) for prime in facts])
         assert np.isclose(ival, np.power(2, value))
 
