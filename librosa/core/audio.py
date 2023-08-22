@@ -28,8 +28,8 @@ from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union, L
 from numpy.typing import DTypeLike, ArrayLike
 
 # Lazy-load optional dependencies
-samplerate = lazy.load("samplerate")
-resampy = lazy.load("resampy")
+samplerate = lazy.load("samplerate", error_on_import=True)
+resampy = lazy.load("resampy", error_on_import=True)
 
 __all__ = [
     "load",
