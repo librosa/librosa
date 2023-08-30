@@ -5,6 +5,49 @@ Changelog
 v0.10
 =====
 
+v0.10.1
+-------
+2023-08-16
+
+This release consists primarily of corrections to documentation and updates to tests and development
+environment specifications. 
+
+
+Bug fixes
+    - `#1677`_ Correct handling of octave boundaries in Variable-Q transform. *Brian McFee*
+    - `#1693`_ Stricter checks on yin and pyin parameters. *Brian McFee*
+    - `#1726`_ Enforce consistency of time-to-sample unit conversion. *Brian McFee*
+
+
+Documentation
+    - `#1699`_ Update the documentation to support sphinx 6.x. *Brian McFee*
+    - `#1703`_ Corrected `pitch_shift` documentation for `bins_per_octave`. *Shin Hyun*
+    - `#1706`_ Corrected typo on README.md.  *Iliya S.*
+    - `#1713`_ Multiple minor documentation updates. *Brian McFee*
+    - `#1718`_ Added continuous integration action for documentation builds. *Brian McFee*
+    - `#1719`_ Added advanced example for patch generation. *Brian McFee*
+
+Other changes
+    - `#1704`_ Added `scale=` parameter to `effects.pitch_shift`. *Shin Hyun*
+    - `#1722`_ Restructured `lazy_loader` usage of matplotlib. *Brian McFee*
+    - `#1727`_ Support `pooch>=1.7.0`. *Brian McFee*
+    - `#1731`_ Update test suite to support `scipy>=1.11`. *Brian McFee*
+
+.. _#1677: https://github.com/librosa/librosa/issues/1677
+.. _#1693: https://github.com/librosa/librosa/issues/1693
+.. _#1726: https://github.com/librosa/librosa/issues/1726
+.. _#1699: https://github.com/librosa/librosa/issues/1699
+.. _#1703: https://github.com/librosa/librosa/issues/1703
+.. _#1706: https://github.com/librosa/librosa/issues/1706
+.. _#1713: https://github.com/librosa/librosa/issues/1713
+.. _#1718: https://github.com/librosa/librosa/issues/1718
+.. _#1719: https://github.com/librosa/librosa/issues/1719
+.. _#1704: https://github.com/librosa/librosa/issues/1704
+.. _#1722: https://github.com/librosa/librosa/issues/1722
+.. _#1727: https://github.com/librosa/librosa/issues/1727
+.. _#1731: https://github.com/librosa/librosa/issues/1731
+
+
 v0.10.0.post2
 -------------
 2023-03-17
@@ -317,7 +360,7 @@ Documentation
 Other changes
     - `#1312`_ `librosa.display.specshow` can now automatically sets the aspect ratio of
       a plot if the axes are of the same type and shape. *N. Dorukhan Sergin*
-    - `#1323`_, `#1317_`, `#1308`_ simplified testing framework and migrated to GitHub Actions.  *Brian McFee*
+    - `#1323`_, `#1317`_, `#1308`_ simplified testing framework and migrated to GitHub Actions.  *Brian McFee*
     - `#1324`_ `librosa.display.specshow` is now future-proofed for matplotlib 3.5.  *Brian McFee*
     - `#1334`_ `librosa.display.specshow` now supports HTK-style Mel scaling. *Brian McFee*
     - `#1335`_, `#1336`_ `librosa.display.specshow` now supports pitch notation
