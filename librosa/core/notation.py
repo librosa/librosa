@@ -123,10 +123,8 @@ MELAKARTA_MAP = {
 
 
 # Pre-compiled regular expressions for note and key parsing
-
-# The exact structure of these REs is probably going to need to be revised. I've added an extra RE for parsing only unicode flat and sharp symbols.
 KEY_RE = re.compile(
-    r"^(?P<tonic>[A-Ga-g])" r"(?P<accidental>([#♯b!♭]{0,2}|[𝄪𝄫]*))" r":(?P<scale>(maj|min)(or)?)$"
+    r"^(?P<tonic>[A-Ga-g])" r"(?P<accidental>([#♯b!♭𝄪𝄫]*))" r":(?P<scale>(maj|min)(or)?)$"
 )
 NOTE_RE = re.compile(
     r"^(?P<note>[A-Ga-g])"
@@ -135,9 +133,7 @@ NOTE_RE = re.compile(
     r"(?P<cents>[+-]\d+)?$"
 )
 
-UNICODE_NOTE_RE = re.compile(
-    r"^(?P<tonic>[A-Ga-g])" r"(?P<accidental>[♯♭𝄪𝄫]*)$"
-)
+ACC_MAP = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1, "##": 2, "♯♯": 2, "𝄪": 2, "bb": -2, "♭♭": -2, "𝄫": -2}
 
 
 def thaat_to_degrees(thaat: str) -> np.ndarray:
@@ -477,53 +473,61 @@ def list_thaat() -> List[str]:
     """
     return list(THAAT_MAP.keys())
 
-"""Takes a note name and spits out the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
 
->>> librosa.note_to_degree('B#')
-0
-
->>> librosa.note_to_degree('D♮##b')
-3
-
-"""
 def note_to_degree(key: str) -> int:
+    """Takes a note name and spits out the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
+
+    >>> librosa.note_to_degree('B#')
+    0
+
+    >>> librosa.note_to_degree('D♮##b')
+    3
+
+    """
     match = NOTE_RE.match(key)
 
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
 
-    letter = match.group('tonic').upper()
+    letter = match.group('note').upper()
     accidental = match.group('accidental')
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
-    acc_map = {"#": 1, "": 0, '♮': 0,  "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
     counter = Counter(accidental)
-    return (pitch_map[letter]+sum([acc_map[acc] * counter[acc] for acc in acc_map]))%12
+    return (pitch_map[letter]+sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP]))%12
 
 
-"""Takes in a note name (assuming sharps and flats are represented in Unicode, but we allow sharps and flats to coexist in the note name, e.g. "C♭♯") and simplifies by canceling sharp-flat pairs, and doubling accidentals as appropriate.
+def simplify_note(key: str, unicode: bool = True) -> str:
+    """Takes in a note name and simplifies by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
->>> librosa.simplify_note('C♭♯')
-'C'
+    >>> librosa.simplify_note('C♭♯')
+    'C'
 
->>> librosa.simplify_note('C♭♭♭')
-'C𝄫♭'
+    >>> librosa.simplify_note('C♭♭♭')
+    'C♭𝄫'
 
-"""
-def simplify_note(key: str) -> str:
-    match = UNICODE_NOTE_RE.match(key)
+    """
+    match = NOTE_RE.match(key)
 
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
     
-    letter = match.group('tonic').upper()
+    letter = match.group('note').upper()
     accidental = match.group('accidental')
-    acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
     counter = Counter(accidental)
-    offset = sum([acc_map[acc] * counter[acc] for acc in acc_map])
+    offset = sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP])
+
+    simplified_note = letter
     if offset>=0:
-        return letter + "𝄪"*(offset//2)+"♯"*(offset%2)
+        simplified_note += "♯"*(offset%2)+ "𝄪"*(offset//2)
     else:
-        return letter + "𝄫"*(abs(offset)//2)+ "♭"*(offset%2)
+        simplified_note += "♭"*(offset%2)+ "𝄫"*(abs(offset)//2)
+
+    if not unicode:
+        translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb"})
+        simplified_note = simplified_note.translate(translations)
+    
+    return simplified_note
+    
 
 @cache(level=10)
 def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
@@ -607,25 +611,22 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
-    acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1, "##": 2, "♯♯": 2, "𝄪": 2, "bb": -2, "♭♭": -2, "𝄫": -2}
 
     tonic = match.group("tonic").upper()
     accidental = match.group("accidental")
 
-    #Assumes that accidental is in acc_map, i.e. that there are at most two sharps or separately two flats on the tonic. Could easily change this to accommodate more sharps in tonic name.
-
-    offset = acc_map[accidental]
+    offset = sum([ACC_MAP[acc] for acc in accidental])
 
     scale = match.group("scale")[:3].lower()
 
     multiple = abs(offset)>=2
 
-    #If multiple accidentals, we use recursion, then cycle through so that the enharmonic equivalent of C is at the beginning again. This is ready-to-go for triple accidentals, but perhaps works a bit inefficiently (the algorithm is linear in the number of sharps or flats, but could be made to be constant time).
+    #If multiple accidentals, we use recursion, then cycle through so that the enharmonic equivalent of C is at the beginning again.
 
     if multiple:
         sign_map = {+1: "♯", -1: "♭"}
-        additional_acc = sign_map[offset/abs(offset)]
-        intermediate_notes = key_to_notes(tonic+additional_acc+':'+scale)
+        additional_acc = sign_map[np.sign(offset)]
+        intermediate_notes = key_to_notes(tonic+additional_acc*(abs(offset)-1)+':'+scale)
         notes = deque([simplify_note(note+additional_acc) for note in intermediate_notes])
         #Cycle until the equivalent of 'C' is in the first position. This may be a bit inefficient; if additional_acc == +1, then we need to cycle all the way through.
         while(note_to_degree(notes[0])!=0):
@@ -775,11 +776,10 @@ def key_to_degrees(key: str) -> np.ndarray:
         raise ParameterError(f"Improper key format: {key:s}")
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
-    acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
     tonic = match.group("tonic").upper()
     accidental = match.group("accidental")
     counts = Counter(accidental)
-    offset = sum([acc_map[acc]*counts[acc] for acc in acc_map])
+    offset = sum([ACC_MAP[acc]*counts[acc] for acc in ACC_MAP])
 
     scale = match.group("scale")[:3].lower()
 
@@ -832,7 +832,7 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
     """
     # Starting the circle of fifths at F makes accidentals easier to count
     COFMAP = "FCGDAEB"
-
+    
     acc_map = {
         "#": 1,
         "": 0,
