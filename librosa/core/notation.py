@@ -475,7 +475,7 @@ def list_thaat() -> List[str]:
 
 
 def note_to_degree(key: str) -> int:
-    """Takes a note name and spits out the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
+    """Take a note name and spit out the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
 
     >>> librosa.note_to_degree('B#')
     0
@@ -497,7 +497,7 @@ def note_to_degree(key: str) -> int:
 
 
 def simplify_note(key: str, unicode: bool = True) -> str:
-    """Takes in a note name and simplifies by canceling sharp-flat pairs, and doubling accidentals as appropriate.
+    """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
     >>> librosa.simplify_note('C♭♯')
     'C'
