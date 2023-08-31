@@ -20,6 +20,14 @@ import librosa
 def test_key_to_notes_badkey():
     librosa.key_to_notes("not a key")
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_simplify_note_badnote():
+    librosa.simplify_note("not a note")
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_note_to_degree_badnote():
+    librosa.note_to_degree("not a note")
+
 
 @pytest.mark.parametrize(
     "key,ref_notes",
@@ -75,7 +83,6 @@ def test_key_to_notes(key, ref_notes):
     for (n, rn) in zip(notes, ref_notes):
         assert n == rn
 
-
 @pytest.mark.parametrize(
     "key,ref_notes",
     [
@@ -93,6 +100,19 @@ def test_key_to_notes_unicode(key, ref_notes):
     notes = librosa.key_to_notes(key, unicode=True)
     assert len(notes) == len(ref_notes)
     for (n, rn) in zip(notes, ref_notes):
+        assert n == rn
+
+@pytest.mark.parametrize(
+    "note, ref_simplified_ascii",
+    [
+        (
+            "G####bb", "G##"
+        )
+    ],
+)
+def test_simplify_note_ascii(note, ref_simplified_ascii):
+    simplified_note = librosa.simplify_note(note, unicode=False)
+    for (n, rn) in zip(simplified_note, ref_simplified_ascii):
         assert n == rn
 
 
