@@ -124,7 +124,7 @@ MELAKARTA_MAP = {
 
 # Pre-compiled regular expressions for note and key parsing
 KEY_RE = re.compile(
-    r"^(?P<tonic>[A-Ga-g])" r"(?P<accidental>([#♯b!♭𝄪𝄫]*))" r":(?P<scale>(maj|min)(or)?)$"
+    r"^(?P<tonic>[A-Ga-g])" r"(?P<accidental>([#♯b!♭𝄪𝄫♮]*))" r":(?P<scale>(maj|min)(or)?)$"
 )
 NOTE_RE = re.compile(
     r"^(?P<note>[A-Ga-g])"
@@ -133,7 +133,7 @@ NOTE_RE = re.compile(
     r"(?P<cents>[+-]\d+)?$"
 )
 
-ACC_MAP = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1, "##": 2, "♯♯": 2, "𝄪": 2, "bb": -2, "♭♭": -2, "𝄫": -2}
+ACC_MAP = {"#": 1, "♮": 0, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
 
 
 def thaat_to_degrees(thaat: str) -> np.ndarray:
