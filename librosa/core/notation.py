@@ -511,13 +511,13 @@ def note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[
     return (pitch_map[letter]+sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP]))%12
 
 @overload
-def simplify_note(key: str, unicode: bool= ...) -> str:
+def simplify_note(key: str, additional_acc: str =..., unicode: bool= ...) -> str:
     ...
-def simplify_degree(key: _IterableLike[str], unicode: bool = ... ) -> np.ndarray:
+def simplify_degree(key: _IterableLike[str], additional_acc: str=..., unicode: bool = ... ) -> np.ndarray:
     ...
-def simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], unicode: bool = ...) -> Union[str, np.ndarray]:
+def simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str =..., unicode: bool = ...) -> Union[str, np.ndarray]:
     ...
-def simplify_note(key: str, unicode: bool = True) -> str:
+def simplify_note(key: str, additional_acc='', unicode: bool = True) -> str:
     """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
     >>> librosa.simplify_note('C♭♯')
@@ -531,9 +531,9 @@ def simplify_note(key: str, unicode: bool = True) -> str:
 
     """
     if not isinstance(key,str):
-        return np.array([simplify_note(n) for n in key])
+        return np.array([simplify_note(n+additional_acc) for n in key])
 
-    match = NOTE_RE.match(key)
+    match = NOTE_RE.match(key+additional_acc)
 
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
@@ -654,11 +654,11 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
         sign_map = {+1: "♯", -1: "♭"}
         additional_acc = sign_map[np.sign(offset)]
         intermediate_notes = key_to_notes(tonic+additional_acc*(abs(offset)-1)+':'+scale)
-        notes = deque([simplify_note(note+additional_acc) for note in intermediate_notes])
+        notes = [simplify_note(note, additional_acc) for note in intermediate_notes]
+        degrees = note_to_degree(notes)
+        notes = np.roll(notes, shift=-np.argwhere(degrees == 0)[0])
         #Cycle until the equivalent of 'C' is in the first position. This may be a bit inefficient; if additional_acc == +1, then we need to cycle all the way through.
-        while(note_to_degree(notes[0])!=0):
-            notes.appendleft(notes.pop())
-
+        
         notes = list(notes)
 
         if not unicode:
