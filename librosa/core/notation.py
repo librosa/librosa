@@ -9,9 +9,9 @@ from collections import Counter, deque
 from .intervals import INTERVALS
 from .._cache import cache
 from ..util.exceptions import ParameterError
-from typing import Dict, List, Union, overload
+from typing import Dict, List, Iterable, Union, overload
 from ..util.decorators import vectorize
-from .._typing import _ScalarOrSequence, _FloatLike_co, _SequenceLike
+from .._typing import _ScalarOrSequence, _FloatLike_co, _SequenceLike, _IterableLike
 
 
 __all__ = [
@@ -473,8 +473,16 @@ def list_thaat() -> List[str]:
     """
     return list(THAAT_MAP.keys())
 
-
+@overload
 def note_to_degree(key: str) -> int:
+    ...
+@overload
+def note_to_degree(key: _IterableLike[str]) -> np.ndarray:
+    ...
+@overload
+def note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int, np.ndarray]:
+    ...
+def note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int,np.ndarray]:
     """Take a note name and spit out the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
 
     >>> librosa.note_to_degree('B#')
@@ -483,7 +491,14 @@ def note_to_degree(key: str) -> int:
     >>> librosa.note_to_degree('D♮##b')
     3
 
+    >>> librosa.note_to_degree(['B#','D♮##b'])
+    array([0,3])
+
     """
+    if not isinstance(key, str):
+        return np.array([note_to_degree(n) for n in key])
+
+
     match = NOTE_RE.match(key)
 
     if not match:
@@ -495,7 +510,13 @@ def note_to_degree(key: str) -> int:
     counter = Counter(accidental)
     return (pitch_map[letter]+sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP]))%12
 
-
+@overload
+def simplify_note(key: str, unicode: bool= ...) -> str:
+    ...
+def simplify_degree(key: _IterableLike[str], unicode: bool = ... ) -> np.ndarray:
+    ...
+def simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], unicode: bool = ...) -> Union[str, np.ndarray]:
+    ...
 def simplify_note(key: str, unicode: bool = True) -> str:
     """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
@@ -505,7 +526,13 @@ def simplify_note(key: str, unicode: bool = True) -> str:
     >>> librosa.simplify_note('C♭♭♭')
     'C♭𝄫'
 
+    >>> librosa.simplify_note(['C♭♯', 'C♭♭♭'])
+    array(['C', 'C♭𝄫']
+
     """
+    if not isinstance(key,str):
+        return np.array([simplify_note(n) for n in key])
+
     match = NOTE_RE.match(key)
 
     if not match:
