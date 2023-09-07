@@ -661,7 +661,6 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
         notes = [simplify_note(note, additional_acc) for note in intermediate_notes]
         degrees = note_to_degree(notes)
         notes = np.roll(notes, shift=-np.argwhere(degrees == 0)[0])
-        #Cycle until the equivalent of 'C' is in the first position. This may be a bit inefficient; if additional_acc == +1, then we need to cycle all the way through.
         
         notes = list(notes)
 
