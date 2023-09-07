@@ -5,7 +5,7 @@
 import re
 import numpy as np
 from numba import jit
-from collections import Counter, deque
+from collections import Counter
 from .intervals import INTERVALS
 from .._cache import cache
 from ..util.exceptions import ParameterError
@@ -513,10 +513,15 @@ def note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[
 @overload
 def simplify_note(key: str, additional_acc: str =..., unicode: bool= ...) -> str:
     ...
-def simplify_degree(key: _IterableLike[str], additional_acc: str=..., unicode: bool = ... ) -> np.ndarray:
+
+@overload
+def simplify_note(key: _IterableLike[str], additional_acc: str=..., unicode: bool = ... ) -> np.ndarray:
     ...
+
+@overload
 def simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str =..., unicode: bool = ...) -> Union[str, np.ndarray]:
     ...
+
 def simplify_note(key: str, additional_acc='', unicode: bool = True) -> str:
     """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
@@ -636,7 +641,6 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
     
-
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 
     tonic = match.group("tonic").upper()
