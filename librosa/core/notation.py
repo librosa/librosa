@@ -536,7 +536,7 @@ def simplify_note(key: str, additional_acc='', unicode: bool = True) -> str:
 
     """
     if not isinstance(key,str):
-        return np.array([simplify_note(n+additional_acc) for n in key])
+        return np.array([simplify_note(n+additional_acc, unicode=unicode) for n in key])
 
     match = NOTE_RE.match(key+additional_acc)
 
