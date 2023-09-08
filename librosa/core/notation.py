@@ -522,7 +522,7 @@ def simplify_note(key: _IterableLike[str], additional_acc: str=..., unicode: boo
 def simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str =..., unicode: bool = ...) -> Union[str, np.ndarray]:
     ...
 
-def simplify_note(key: str, additional_acc='', unicode: bool = True) -> str:
+def simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str='', unicode: bool = True) -> Union[str, np.ndarray]:
     """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
     >>> librosa.simplify_note('C♭♯')
