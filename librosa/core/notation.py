@@ -474,29 +474,29 @@ def list_thaat() -> List[str]:
     return list(THAAT_MAP.keys())
 
 @overload
-def note_to_degree(key: str) -> int:
+def __note_to_degree(key: str) -> int:
     ...
 @overload
-def note_to_degree(key: _IterableLike[str]) -> np.ndarray:
+def __note_to_degree(key: _IterableLike[str]) -> np.ndarray:
     ...
 @overload
-def note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int, np.ndarray]:
+def __note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int, np.ndarray]:
     ...
-def note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int,np.ndarray]:
+def __note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int,np.ndarray]:
     """Take a note name and spit out the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
 
-    >>> librosa.note_to_degree('B#')
+    >>> librosa.__note_to_degree('B#')
     0
 
-    >>> librosa.note_to_degree('D♮##b')
+    >>> librosa.__note_to_degree('D♮##b')
     3
 
-    >>> librosa.note_to_degree(['B#','D♮##b'])
+    >>> librosa.__note_to_degree(['B#','D♮##b'])
     array([0,3])
 
     """
     if not isinstance(key, str):
-        return np.array([note_to_degree(n) for n in key])
+        return np.array([__note_to_degree(n) for n in key])
 
 
     match = NOTE_RE.match(key)
@@ -511,32 +511,32 @@ def note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[
     return (pitch_map[letter]+sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP]))%12
 
 @overload
-def simplify_note(key: str, additional_acc: str =..., unicode: bool= ...) -> str:
+def __simplify_note(key: str, additional_acc: str =..., unicode: bool= ...) -> str:
     ...
 
 @overload
-def simplify_note(key: _IterableLike[str], additional_acc: str=..., unicode: bool = ... ) -> np.ndarray:
+def __simplify_note(key: _IterableLike[str], additional_acc: str=..., unicode: bool = ... ) -> np.ndarray:
     ...
 
 @overload
-def simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str =..., unicode: bool = ...) -> Union[str, np.ndarray]:
+def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str =..., unicode: bool = ...) -> Union[str, np.ndarray]:
     ...
 
-def simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str='', unicode: bool = True) -> Union[str, np.ndarray]:
+def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str='', unicode: bool = True) -> Union[str, np.ndarray]:
     """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
-    >>> librosa.simplify_note('C♭♯')
+    >>> librosa.__simplify_note('C♭♯')
     'C'
 
-    >>> librosa.simplify_note('C♭♭♭')
+    >>> librosa.__simplify_note('C♭♭♭')
     'C♭𝄫'
 
-    >>> librosa.simplify_note(['C♭♯', 'C♭♭♭'])
+    >>> librosa.__simplify_note(['C♭♯', 'C♭♭♭'])
     array(['C', 'C♭𝄫']
 
     """
     if not isinstance(key,str):
-        return np.array([simplify_note(n+additional_acc, unicode=unicode) for n in key])
+        return np.array([__simplify_note(n+additional_acc, unicode=unicode) for n in key])
 
     match = NOTE_RE.match(key+additional_acc)
 
@@ -658,8 +658,8 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
         sign_map = {+1: "♯", -1: "♭"}
         additional_acc = sign_map[np.sign(offset)]
         intermediate_notes = key_to_notes(tonic+additional_acc*(abs(offset)-1)+':'+scale)
-        notes = [simplify_note(note, additional_acc) for note in intermediate_notes]
-        degrees = note_to_degree(notes)
+        notes = [__simplify_note(note, additional_acc) for note in intermediate_notes]
+        degrees = __note_to_degree(notes)
         notes = np.roll(notes, shift=-np.argwhere(degrees == 0)[0])
         
         notes = list(notes)
