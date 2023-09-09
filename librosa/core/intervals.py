@@ -2,17 +2,28 @@
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
 
+import sys
 from typing import Collection, Dict, List, Union, overload, Iterable
 from typing_extensions import Literal
 import msgpack
-from pkg_resources import resource_filename
+
 import numpy as np
 from numpy.typing import ArrayLike
 from .._cache import cache
 from .._typing import _FloatLike_co
 
 
-with open(resource_filename(__name__, "intervals.msgpack"), "rb") as _fdesc:
+if sys.version_info < (3, 9):
+    # Use the old pkg_resources method to maintain backwards compatibility for Python < 3.9
+    from pkg_resources import resource_filename
+
+    resource_path = resource_filename(__name__, "intervals.msgpack")
+else:
+    from importlib import resources
+
+    resource_path = resources.files(__name__).joinpath("intervals.msgpack").as_posix()
+
+with open(resource_path, "rb") as _fdesc:
     # We use floats for dictionary keys, so strict mapping is disabled
     INTERVALS = msgpack.load(_fdesc, strict_map_key=False)
 
