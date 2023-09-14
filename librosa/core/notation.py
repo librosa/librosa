@@ -532,7 +532,7 @@ def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], addition
     'C♭𝄫'
 
     >>> librosa.__simplify_note(['C♭♯', 'C♭♭♭'])
-    array(['C', 'C♭𝄫']
+    array(['C', 'C♭𝄫'])
 
     """
     if not isinstance(key,str):

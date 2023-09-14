@@ -115,6 +115,19 @@ def test_simplify_note_ascii(note, ref_simplified_ascii):
     for (n, rn) in zip(simplified_note, ref_simplified_ascii):
         assert n == rn
 
+@pytest.mark.parametrize(
+    "notes, ref_simplified_array",
+    [
+        (
+            ['C♭♯', 'C♭♭♭'], ['C', 'C♭𝄫']
+        )
+    ],
+)
+def test_simplify_note_array(notes, ref_simplified_array):
+    simplified_note = librosa.core.notation.__simplify_note(notes)
+    for (n, rn) in zip(simplified_note, ref_simplified_array):
+        assert n == rn
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_key_to_degrees_badkey():
     librosa.key_to_degrees("not a key")
