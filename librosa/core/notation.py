@@ -5,12 +5,13 @@
 import re
 import numpy as np
 from numba import jit
+from collections import Counter
 from .intervals import INTERVALS
 from .._cache import cache
 from ..util.exceptions import ParameterError
-from typing import Dict, List, Union, overload
+from typing import Dict, List, Iterable, Union, overload
 from ..util.decorators import vectorize
-from .._typing import _ScalarOrSequence, _FloatLike_co, _SequenceLike
+from .._typing import _ScalarOrSequence, _FloatLike_co, _SequenceLike, _IterableLike
 
 
 __all__ = [
@@ -122,6 +123,9 @@ MELAKARTA_MAP = {
 
 
 # Pre-compiled regular expressions for note and key parsing
+KEY_RE = re.compile(
+    r"^(?P<tonic>[A-Ga-g])" r"(?P<accidental>([#♯b!♭𝄪𝄫♮]*))" r":(?P<scale>(maj|min)(or)?)$"
+)
 NOTE_RE = re.compile(
     r"^(?P<note>[A-Ga-g])"
     r"(?P<accidental>[#♯𝄪b!♭𝄫♮]*)"
@@ -129,9 +133,7 @@ NOTE_RE = re.compile(
     r"(?P<cents>[+-]\d+)?$"
 )
 
-KEY_RE = re.compile(
-    r"^(?P<tonic>[A-Ga-g])" r"(?P<accidental>[#♯b!♭]?)" r":(?P<scale>(maj|min)(or)?)$"
-)
+ACC_MAP = {"#": 1, "♮": 0, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
 
 
 def thaat_to_degrees(thaat: str) -> np.ndarray:
@@ -471,6 +473,93 @@ def list_thaat() -> List[str]:
     """
     return list(THAAT_MAP.keys())
 
+@overload
+def __note_to_degree(key: str) -> int:
+    ...
+@overload
+def __note_to_degree(key: _IterableLike[str]) -> np.ndarray:
+    ...
+@overload
+def __note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int, np.ndarray]:
+    ...
+def __note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int,np.ndarray]:
+    """Take a note name and spit out the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
+
+    >>> librosa.__note_to_degree('B#')
+    0
+
+    >>> librosa.__note_to_degree('D♮##b')
+    3
+
+    >>> librosa.__note_to_degree(['B#','D♮##b'])
+    array([0,3])
+
+    """
+    if not isinstance(key, str):
+        return np.array([__note_to_degree(n) for n in key])
+
+
+    match = NOTE_RE.match(key)
+
+    if not match:
+        raise ParameterError(f"Improper key format: {key:s}")
+
+    letter = match.group('note').upper()
+    accidental = match.group('accidental')
+    pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
+    counter = Counter(accidental)
+    return (pitch_map[letter]+sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP]))%12
+
+@overload
+def __simplify_note(key: str, additional_acc: str =..., unicode: bool= ...) -> str:
+    ...
+
+@overload
+def __simplify_note(key: _IterableLike[str], additional_acc: str=..., unicode: bool = ... ) -> np.ndarray:
+    ...
+
+@overload
+def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str =..., unicode: bool = ...) -> Union[str, np.ndarray]:
+    ...
+
+def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str='', unicode: bool = True) -> Union[str, np.ndarray]:
+    """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
+
+    >>> librosa.__simplify_note('C♭♯')
+    'C'
+
+    >>> librosa.__simplify_note('C♭♭♭')
+    'C♭𝄫'
+
+    >>> librosa.__simplify_note(['C♭♯', 'C♭♭♭'])
+    array(['C', 'C♭𝄫'])
+
+    """
+    if not isinstance(key,str):
+        return np.array([__simplify_note(n+additional_acc, unicode=unicode) for n in key])
+
+    match = NOTE_RE.match(key+additional_acc)
+
+    if not match:
+        raise ParameterError(f"Improper key format: {key:s}")
+    
+    letter = match.group('note').upper()
+    accidental = match.group('accidental')
+    counter = Counter(accidental)
+    offset = sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP])
+
+    simplified_note = letter
+    if offset>=0:
+        simplified_note += "♯"*(offset%2)+ "𝄪"*(offset//2)
+    else:
+        simplified_note += "♭"*(offset%2)+ "𝄫"*(abs(offset)//2)
+
+    if not unicode:
+        translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb"})
+        simplified_note = simplified_note.translate(translations)
+    
+    return simplified_note
+    
 
 @cache(level=10)
 def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
@@ -551,15 +640,36 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
 
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
-
+    
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
-    acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1}
 
     tonic = match.group("tonic").upper()
     accidental = match.group("accidental")
-    offset = acc_map[accidental]
+
+    offset = sum([ACC_MAP[acc] for acc in accidental])
 
     scale = match.group("scale")[:3].lower()
+
+    multiple = abs(offset)>=2
+
+    #If multiple accidentals, we use recursion, then cycle through so that the enharmonic equivalent of C is at the beginning again.
+
+    if multiple:
+        sign_map = {+1: "♯", -1: "♭"}
+        additional_acc = sign_map[np.sign(offset)]
+        intermediate_notes = key_to_notes(tonic+additional_acc*(abs(offset)-1)+':'+scale)
+        notes = [__simplify_note(note, additional_acc) for note in intermediate_notes]
+        degrees = __note_to_degree(notes)
+        notes = np.roll(notes, shift=-np.argwhere(degrees == 0)[0])
+        
+        notes = list(notes)
+
+        if not unicode:
+            translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb"})
+            notes = list(n.translate(translations) for n in notes)
+
+        return notes
+            
 
     # Determine major or minor
     major = scale == "maj"
@@ -645,6 +755,7 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
 
     return notes
 
+# I made this work even for key signatures like 'C#b#:min'
 
 def key_to_degrees(key: str) -> np.ndarray:
     """Construct the diatonic scale degrees for a given key.
@@ -681,6 +792,9 @@ def key_to_degrees(key: str) -> np.ndarray:
     >>> librosa.key_to_degrees('A:min')
     array([ 9, 11,  0,  2,  4,  5,  7])
 
+    >>> librosa.key_to_degrees('A:min')
+    array([ 9, 11,  0,  2,  4,  5,  7])
+
     """
     notes = dict(
         maj=np.array([0, 2, 4, 5, 7, 9, 11]), min=np.array([0, 2, 3, 5, 7, 8, 10])
@@ -692,10 +806,10 @@ def key_to_degrees(key: str) -> np.ndarray:
         raise ParameterError(f"Improper key format: {key:s}")
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
-    acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1}
     tonic = match.group("tonic").upper()
     accidental = match.group("accidental")
-    offset = acc_map[accidental]
+    counts = Counter(accidental)
+    offset = sum([ACC_MAP[acc]*counts[acc] for acc in ACC_MAP])
 
     scale = match.group("scale")[:3].lower()
 
@@ -748,7 +862,7 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
     """
     # Starting the circle of fifths at F makes accidentals easier to count
     COFMAP = "FCGDAEB"
-
+    
     acc_map = {
         "#": 1,
         "": 0,

@@ -20,6 +20,14 @@ import librosa
 def test_key_to_notes_badkey():
     librosa.key_to_notes("not a key")
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_simplify_note_badnote():
+    librosa.core.notation.__simplify_note("not a note")
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_note_to_degree_badnote():
+    librosa.core.notation.__note_to_degree("not a note")
+
 
 @pytest.mark.parametrize(
     "key,ref_notes",
@@ -62,6 +70,11 @@ def test_key_to_notes_badkey():
                 "A##",
             ],
         ),
+
+        # Test for multiple accidentals in tonic name.
+        ("F##:maj", ["B#", "C#", "C##", "D#", "D##", "E#", "E##", "F##", "G#", "G##", "A#", "A##"]),
+        ("Fbb:maj", ["Dbb", "Db", "Ebb", "Fbb", "Fb", "Gbb", "Gb", "Abb", "Bbbb", "Bbb", "Cbb", "Cb"]),
+        ("A###:min", ["A###", "B##", "B###", "C###", "D##", "D###", "E##", "E###", "F###", "G##", "G###", "A##"])
     ],
 )
 def test_key_to_notes(key, ref_notes):
@@ -69,7 +82,6 @@ def test_key_to_notes(key, ref_notes):
     assert len(notes) == len(ref_notes)
     for (n, rn) in zip(notes, ref_notes):
         assert n == rn
-
 
 @pytest.mark.parametrize(
     "key,ref_notes",
@@ -90,6 +102,31 @@ def test_key_to_notes_unicode(key, ref_notes):
     for (n, rn) in zip(notes, ref_notes):
         assert n == rn
 
+@pytest.mark.parametrize(
+    "note, ref_simplified_ascii",
+    [
+        (
+            "G####bb", "G##"
+        )
+    ],
+)
+def test_simplify_note_ascii(note, ref_simplified_ascii):
+    simplified_note = librosa.core.notation.__simplify_note(note, unicode=False)
+    for (n, rn) in zip(simplified_note, ref_simplified_ascii):
+        assert n == rn
+
+@pytest.mark.parametrize(
+    "notes, ref_simplified_array",
+    [
+        (
+            ['C♭♯', 'C♭♭♭'], ['C', 'C♭𝄫']
+        )
+    ],
+)
+def test_simplify_note_array(notes, ref_simplified_array):
+    simplified_note = librosa.core.notation.__simplify_note(notes)
+    for (n, rn) in zip(simplified_note, ref_simplified_array):
+        assert n == rn
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_key_to_degrees_badkey():
@@ -103,6 +140,7 @@ def test_key_to_degrees_badkey():
         ("C:min", [0, 2, 3, 5, 7, 8, 10]),
         ("A:min", [9, 11, 0, 2, 4, 5, 7]),
         ("Gb:maj", [6, 8, 10, 11, 1, 3, 5]),
+        ("A###:maj", [0, 2, 4, 5, 7, 9, 11])
     ],
 )
 def test_key_to_degrees(key, ref_degrees):
