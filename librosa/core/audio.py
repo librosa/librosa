@@ -57,7 +57,7 @@ def load(
         str, int, os.PathLike[Any], sf.SoundFile, audioread.AudioFile, BinaryIO
     ],
     *,
-    sr: Optional[float] = 22050,
+    sr: Optional[float] = 22050.0,
     mono: bool = True,
     offset: float = 0.0,
     duration: Optional[float] = None,
@@ -193,6 +193,9 @@ def load(
 
     else:
         sr = sr_native
+
+    # SR Cast
+    sr = float(sr)
 
     return y, sr
 
