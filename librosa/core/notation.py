@@ -676,6 +676,11 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
 
     >>> librosa.key_to_notes('Fb:min')
     ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
+
+    `G:loc` uses flats
+
+    >>> librosa.key_to_notes('G:loc')
+    ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B']
     """
     # Parse the key signature
     match = KEY_RE.match(key)
