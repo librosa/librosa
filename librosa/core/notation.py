@@ -577,13 +577,13 @@ def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], addition
     
 def __mode_to_key(signature: str, unicode: bool = True) -> str:
     """Translate a mode (eg D:dorian) into its equivalent major key. If unicode==True, return the accidentals as unicode symbols, regardless of nature of accidentals in signature. Otherwise, return accidentals as ASCII symbols.
-
+    
     >>> librosa.__mode_to_key('Db:loc')
     'E𝄫:maj'
 
     >>> librosa.__mode_to_key('D♭:loc', unicode = False)
     'Ebb:maj'
-
+    
     """
     match = KEY_RE.match(signature)
     
@@ -606,7 +606,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
 @cache(level=10)
 def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     """List all 12 note names in the chromatic scale, as spelled according to
-    a given key (major or minor).
+    a given key (major or minor) or mode.
 
     This function exists to resolve enharmonic equivalences between different
     spellings for the same pitch (e.g. C♯ vs D♭), and is primarily useful when producing

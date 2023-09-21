@@ -166,6 +166,22 @@ def test_key_to_degrees(key, ref_degrees):
     for (d, rd) in zip(degrees, ref_degrees):
         assert d == rd
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mode_to_key_badkey():
+    librosa.key_to_degrees("not a key")
+
+@pytest.mark.parametrize(
+    "mode, ref_mode",
+    [
+        (
+            'C:maj', 'C:maj'
+        )
+    ],
+)
+def test_mode_to_key_no_change(mode, ref_mode):
+    simplified_mode = librosa.core.notation.__mode_to_key(mode)
+    for (n, rn) in zip(mode, ref_mode):
+        assert n == rn
 
 def test_list_thaat():
     thaat = librosa.list_thaat()
