@@ -124,14 +124,29 @@ MELAKARTA_MAP = {
 
 # Pre-compiled regular expressions for note and key parsing
 KEY_RE = re.compile(
-    r"^(?P<tonic>[A-Ga-g])" r"(?P<accidental>([#♯b!♭𝄪𝄫♮]*))" r":(?P<scale>(maj|min)(or)?)$"
+    r"^(?P<tonic>[A-Ga-g])"
+        r"(?P<accidental>[#♯𝄪b!♭𝄫]*)"
+        r":((?P<scale>(maj|min)(or)?)|(?P<mode>(ion|dor|phr(yg)?|lyd|mix(olyd)?|aeol?|locr?)(ian)?))$"
 )
+
 NOTE_RE = re.compile(
     r"^(?P<note>[A-Ga-g])"
     r"(?P<accidental>[#♯𝄪b!♭𝄫♮]*)"
     r"(?P<octave>[+-]?\d+)?"
     r"(?P<cents>[+-]\d+)?$"
 )
+
+MAJOR_DICT = {
+    'ion': {'C': 'C', 'D': 'D', 'E': 'E', 'F': 'F', 'G': 'G', 'A': 'A', 'B': 'B'},
+    'dor': {'C': 'B♭', 'D': 'C', 'E': 'D', 'F': 'E♭', 'G': 'F', 'A': 'G', 'B': 'A'},
+    'phr': {'C': 'A♭', 'D': 'B♭', 'E': 'C', 'F': 'D♭', 'G': 'E♭', 'A': 'F', 'B': 'G'},
+    'lyd': {'C': 'G', 'D': 'A', 'E': 'B', 'F': 'C', 'G': 'D', 'A': 'E', 'B': 'F♯'},
+    'mix': {'C': 'F', 'D': 'G', 'E': 'A', 'F': 'B♭', 'G': 'C', 'A': 'D', 'B': 'E'},
+    'aeo': {'C': 'E♭', 'D': 'F', 'E': 'G', 'F': 'A♭', 'G': 'B♭', 'A': 'C', 'B': 'D'},
+    'loc': {'C': 'D♭', 'D': 'E♭', 'E': 'F', 'F': 'G♭', 'G': 'A♭', 'A': 'B♭', 'B': 'C'}
+}
+
+OFFSET_DICT = dict([(y,x) for (x,y) in enumerate(['ion', 'dor', 'phr', 'lyd', 'mix', 'aeo', 'loc'])])
 
 ACC_MAP = {"#": 1, "♮": 0, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
 
@@ -560,6 +575,33 @@ def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], addition
     
     return simplified_note
     
+def __mode_to_key(signature: str, unicode: bool = True) -> str:
+    """Translate a mode (eg D:dorian) into its equivalent major key. If unicode==True, return the accidentals as unicode symbols, regardless of nature of accidentals in signature. Otherwise, return accidentals as ASCII symbols.
+    
+    >>> librosa.__mode_to_key('Db:loc')
+    'E𝄫:maj'
+
+    >>> librosa.__mode_to_key('D♭:loc', unicode = False)
+    'Ebb:maj'
+
+    """
+    match = KEY_RE.match(signature)
+    
+    if not match:
+        raise ParameterError("Improper format: {:s}".format(signature))
+
+    if match.group('scale') or not match.group("mode"):
+        # We're already fine here, but let's pass the key through __simpify_note() to ensure good formatting.
+        signature = __simplify_note(match.group("tonic").upper()+match.group('accidental'), unicode=unicode)+(':'+match.group("scale") if match.group("scale") else '')
+        return signature
+        
+    # We have a mode, time to translate
+    mode = match.group("mode").lower()[:3]
+
+    # Get the relative major
+    tonic = MAJOR_DICT[mode][match.group("tonic").upper()]
+
+    return f"{__simplify_note(tonic+match.group('accidental'), unicode = unicode)}:maj"
 
 @cache(level=10)
 def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
@@ -647,6 +689,10 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     accidental = match.group("accidental")
 
     offset = sum([ACC_MAP[acc] for acc in accidental])
+
+    if match.group('mode') or not match.group('scale'):
+        equiv = __mode_to_key(key)
+        return key_to_notes(equiv, unicode=unicode)
 
     scale = match.group("scale")[:3].lower()
 
@@ -804,6 +850,13 @@ def key_to_degrees(key: str) -> np.ndarray:
 
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
+    
+    if match.group('mode') or not match.group('scale'):
+        equiv = __mode_to_key(key)
+        #print(equiv)
+        offset = OFFSET_DICT[match.group('mode')[:3]]
+        #print(offset)
+        return np.roll(key_to_degrees(equiv),-offset)
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
     tonic = match.group("tonic").upper()
