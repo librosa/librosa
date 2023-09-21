@@ -182,8 +182,8 @@ fig.colorbar(img, ax=ax)
 # pass this to specshow and it will spell the notes properly:
 fig, ax = plt.subplots()
 img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time',
-                               key='Eb:maj', ax=ax)
-ax.set(title='Chromagram explicitly in Eb:maj')
+                               key='F:dor', ax=ax)
+ax.set(title='Chromagram explicitly in F:dor')
 fig.colorbar(img, ax=ax)
 
 # %%
