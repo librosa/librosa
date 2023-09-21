@@ -2038,9 +2038,6 @@ def waveshow(
         version_removed="1.0",
     )
 
-    if "color" not in kwargs:
-        kwargs.setdefault("color", next(axes._get_lines.prop_cycler)["color"])
-
     # Reduce by envelope calculation
     # this choice of hop ensures that the envelope has at most max_points values
     hop_length = max(1, y.shape[-1] // max_points)
@@ -2063,6 +2060,10 @@ def waveshow(
         dec_axis = axes.yaxis
 
     (steps,) = axes.step(xdata, ydata, marker=marker, where=where, **kwargs)
+
+    # Pull color property from the steps object, if we don't already have it
+    if "color" not in kwargs:
+        kwargs.setdefault("color", steps.get_color())
 
     envelope = filler(
         times[: len(y_top) * hop_length : hop_length],
