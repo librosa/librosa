@@ -577,13 +577,13 @@ def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], addition
     
 def __mode_to_key(signature: str, unicode: bool = True) -> str:
     """Translate a mode (eg D:dorian) into its equivalent major key. If unicode==True, return the accidentals as unicode symbols, regardless of nature of accidentals in signature. Otherwise, return accidentals as ASCII symbols.
-    
+
     >>> librosa.__mode_to_key('Db:loc')
     'E𝄫:maj'
 
     >>> librosa.__mode_to_key('D♭:loc', unicode = False)
     'Ebb:maj'
-    
+
     """
     match = KEY_RE.match(signature)
     

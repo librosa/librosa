@@ -168,7 +168,7 @@ def test_key_to_degrees(key, ref_degrees):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_mode_to_key_badkey():
-    librosa.key_to_degrees("not a key")
+    librosa.__mode_to_key("not a key")
 
 @pytest.mark.parametrize(
     "mode, ref_mode",
