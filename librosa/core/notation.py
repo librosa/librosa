@@ -135,7 +135,7 @@ NOTE_RE = re.compile(
     r"(?P<octave>[+-]?\d+)?"
     r"(?P<cents>[+-]\d+)?$"
 )
-
+# A dictionary converting the tonic name to the associated major key, e.g. C Dorian uses the notes of the Bb major scale, hence MAJOR_DICT['dor']['C'] = 'B♭'
 MAJOR_DICT = {
     'ion': {'C': 'C', 'D': 'D', 'E': 'E', 'F': 'F', 'G': 'G', 'A': 'A', 'B': 'B'},
     'dor': {'C': 'B♭', 'D': 'C', 'E': 'D', 'F': 'E♭', 'G': 'F', 'A': 'G', 'B': 'A'},
