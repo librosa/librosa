@@ -858,9 +858,7 @@ def key_to_degrees(key: str) -> np.ndarray:
     
     if match.group('mode') or not match.group('scale'):
         equiv = __mode_to_key(key)
-        #print(equiv)
         offset = OFFSET_DICT[match.group('mode')[:3]]
-        #print(offset)
         return np.roll(key_to_degrees(equiv),-offset)
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
