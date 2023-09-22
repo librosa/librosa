@@ -601,7 +601,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     # Get the relative major
     tonic = MAJOR_DICT[mode][match.group("tonic").upper()]
 
-    return f"{__simplify_note(f"{tonic}{match.group('accidental')}, unicode = unicode)}:maj"
+    return f"{__simplify_note(f"{tonic}{match.group('accidental')}", unicode = unicode)}:maj"
 
 @cache(level=10)
 def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
