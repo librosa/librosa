@@ -146,7 +146,7 @@ MAJOR_DICT = {
     'loc': {'C': 'D♭', 'D': 'E♭', 'E': 'F', 'F': 'G♭', 'G': 'A♭', 'A': 'B♭', 'B': 'C'}
 }
 
-OFFSET_DICT = dict([(y,x) for (x,y) in enumerate(['ion', 'dor', 'phr', 'lyd', 'mix', 'aeo', 'loc'])])
+OFFSET_DICT = { "ion": 0, "dor": 1, "phr": 2, "lyd": 3, "mix": 4, "aeo": 5, "loc": 6 }
 
 ACC_MAP = {"#": 1, "♮": 0, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
 
