@@ -126,7 +126,7 @@ MELAKARTA_MAP = {
 KEY_RE = re.compile(
     r"^(?P<tonic>[A-Ga-g])"
         r"(?P<accidental>[#♯𝄪b!♭𝄫]*)"
-        r":((?P<scale>(maj|min)(or)?)|(?P<mode>(ion|dor|phr(yg)?|lyd|mix(olyd)?|aeol?|locr?)(ian)?))$"
+        r":((?P<scale>(maj|min)(or)?)|(?P<mode>(((ion|dor|phryg|lyd|mixolyd|aeol|locr)(ian)?)|phr|mix|aeo|loc)))$"
 )
 
 NOTE_RE = re.compile(
