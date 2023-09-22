@@ -606,7 +606,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
 @cache(level=10)
 def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     """List all 12 note names in the chromatic scale, as spelled according to
-    a given key (major or minor) or mode.
+    a given key (major or minor) or mode (ionian, dorian, phrygian, lydian, mixolydian, aeolian, locrian). The following abbreviations are accepted for the modes: either the first three letters of the mode name (e.g. "mix") or the mode name without "ian" (e.g. "mixolyd").
 
     This function exists to resolve enharmonic equivalences between different
     spellings for the same pitch (e.g. C♯ vs D♭), and is primarily useful when producing
