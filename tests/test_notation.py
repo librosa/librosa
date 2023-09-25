@@ -74,7 +74,16 @@ def test_note_to_degree_badnote():
         # Test for multiple accidentals in tonic name.
         ("F##:maj", ["B#", "C#", "C##", "D#", "D##", "E#", "E##", "F##", "G#", "G##", "A#", "A##"]),
         ("Fbb:maj", ["Dbb", "Db", "Ebb", "Fbb", "Fb", "Gbb", "Gb", "Abb", "Bbbb", "Bbb", "Cbb", "Cb"]),
-        ("A###:min", ["A###", "B##", "B###", "C###", "D##", "D###", "E##", "E###", "F###", "G##", "G###", "A##"])
+        ("A###:min", ["A###", "B##", "B###", "C###", "D##", "D###", "E##", "E###", "F###", "G##", "G###", "A##"]),
+
+        #Testing that the modes work. These were copied from the output generated in the discussion at https://github.com/librosa/librosa/pull/1739#issuecomment-1711949365.
+        ("E:ion",['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']),
+        ("E#:mix",['B#', 'C#', 'C##', 'D#', 'E', 'E#', 'F#', 'F##', 'G#', 'G##', 'A#', 'B']),
+        ("E#:lyd",['B#', 'C#', 'C##', 'D#', 'D##', 'E#', 'F#', 'F##', 'G#', 'G##', 'A#', 'A##']),
+        ("Gb:dor",['C', 'Db', 'D', 'Eb', 'Fb', 'F', 'Gb', 'G', 'Ab', 'Bbb', 'Bb', 'Cb']),
+        ("Gb:phr",['Dbb', 'Db', 'Ebb', 'Eb', 'Fb', 'Gbb', 'Gb', 'Abb', 'Ab', 'Bbb', 'Bb', 'Cb']),
+        ("B#:aeol",['B#', 'C#', 'C##', 'D#', 'E', 'E#', 'F#', 'F##', 'G#', 'A', 'A#', 'B']),
+        ("B#:loc",['B#', 'C#', 'D', 'D#', 'E', 'E#', 'F#', 'G', 'G#', 'A', 'A#', 'B'])
     ],
 )
 def test_key_to_notes(key, ref_notes):
@@ -140,7 +149,15 @@ def test_key_to_degrees_badkey():
         ("C:min", [0, 2, 3, 5, 7, 8, 10]),
         ("A:min", [9, 11, 0, 2, 4, 5, 7]),
         ("Gb:maj", [6, 8, 10, 11, 1, 3, 5]),
-        ("A###:maj", [0, 2, 4, 5, 7, 9, 11])
+        ("A###:maj", [0, 2, 4, 5, 7, 9, 11]),
+        ("C:ion", [ 0,  2,  4,  5,  7,  9, 11]),
+        ("C:dor", [ 0,  2,  3,  5,  7,  9, 10]),
+        ("C:phr", [ 0,  1,  3,  5,  7,  8, 10]),
+        ("D#:lyd", [ 3,  5,  7,  9, 10,  0,  2]),
+        ("D#:mix", [ 3,  5,  7,  8, 10,  0,  1]),
+        ("Ebb:aeol" , [2, 4, 5, 7, 9, 10, 0]),
+        ("Ebb:loc", [2, 3, 5, 7, 8, 10, 0])
+
     ],
 )
 def test_key_to_degrees(key, ref_degrees):
@@ -149,6 +166,22 @@ def test_key_to_degrees(key, ref_degrees):
     for (d, rd) in zip(degrees, ref_degrees):
         assert d == rd
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mode_to_key_badkey():
+    librosa.core.notation.__mode_to_key("not a key")
+
+@pytest.mark.parametrize(
+    "mode, ref_mode",
+    [
+        (
+            'C:maj', 'C:maj'
+        )
+    ],
+)
+def test_mode_to_key_no_change(mode, ref_mode):
+    simplified_mode = librosa.core.notation.__mode_to_key(mode)
+    for (n, rn) in zip(mode, ref_mode):
+        assert n == rn
 
 def test_list_thaat():
     thaat = librosa.list_thaat()
