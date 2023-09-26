@@ -626,11 +626,12 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     ----------
     key : string
         Must be in the form TONIC:key.  Tonic must be upper case (``CDEFGAB``),
-        key must be lower-case (``maj`` or ``min``).
+        key must be lower-case (``maj``, ``min``, ``dorian``, ``phrygian``, etc., as described above).
 
-        Single accidentals (``b!♭`` for flat, or ``#♯`` for sharp) are supported.
 
-        Examples: ``C:maj, Db:min, A♭:min``.
+        Single and multiple accidentals (``b!♭`` for flat, or ``#♯`` for sharp) are supported.
+
+        Examples: ``C:maj, Dbb:min, A♭:min, D:aeo, E𝄪:phr``.
 
     unicode : bool
         If ``True`` (default), use Unicode symbols (♯𝄪♭𝄫)for accidentals.

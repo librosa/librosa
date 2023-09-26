@@ -178,7 +178,7 @@ ax.set(title='Chromagram demonstration')
 fig.colorbar(img, ax=ax)
 
 # %%
-# If you also happen to know the key of the piece being analyzed, you can
+# If you also happen to know the key or mode of the piece being analyzed, you can
 # pass this to specshow and it will spell the notes properly:
 fig, ax = plt.subplots()
 img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time',
