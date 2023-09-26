@@ -626,10 +626,10 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     ----------
     key : string
         Must be in the form TONIC:key.  Tonic must be upper case (``CDEFGAB``),
-        key must be lower-case 
+        key must be lower-case
         (``major``, ``minor``, ``ionian``, ``dorian``, ``phrygian``, ``lydian``, ``mixolydian``, ``aeolian``, ``locrian``).
 
-        The following abbreviations are supported for the modes: either the first three letters of the mode name 
+        The following abbreviations are supported for the modes: either the first three letters of the mode name
         (e.g. "mix") or the mode name without "ian" (e.g. "mixolyd").
 
         Both ``major`` and ``maj`` are supported as mode abbreviations.
@@ -821,9 +821,11 @@ def key_to_degrees(key: str) -> np.ndarray:
     ----------
     key : str
         Must be in the form TONIC:key.  Tonic must be upper case (``CDEFGAB``),
-        key must be lower-case (``maj``, ``min``, ``ionian``, ``dorian``, ``phrygian``, ``lydian``, ``mixolydian``, ``aeolian``, ``locrian``).
+        key must be lower-case
+        (``maj``, ``min``, ``ionian``, ``dorian``, ``phrygian``, ``lydian``, ``mixolydian``, ``aeolian``, ``locrian``).
 
-        The following abbreviations are supported for the modes: either the first three letters of the mode name (e.g. "mix") or the mode name without "ian" (e.g. "mixolyd").
+        The following abbreviations are supported for the modes: either the first three letters of the mode name
+        (e.g. "mix") or the mode name without "ian" (e.g. "mixolyd").
 
         Both ``major`` and ``maj`` are supported as abbreviations.
 
