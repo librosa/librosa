@@ -819,11 +819,15 @@ def key_to_degrees(key: str) -> np.ndarray:
     ----------
     key : str
         Must be in the form TONIC:key.  Tonic must be upper case (``CDEFGAB``),
-        key must be lower-case (``maj`` or ``min``).
+        key must be lower-case (``maj``, ``min``, ``ionian``, ``dorian``, ``phrygian``, ``lydian``, ``mixolydian``, ``aeolian``, ``locrian``).
 
-        Single accidentals (``b!♭`` for flat, or ``#♯`` for sharp) are supported.
+        The following abbreviations are supported for the modes: either the first three letters of the mode name (e.g. "mix") or the mode name without "ian" (e.g. "mixolyd").
 
-        Examples: ``C:maj, Db:min, A♭:min``.
+        Both ``major`` and ``maj`` are supported as mode abbreviations.
+
+        Single and multiple accidentals (``b!♭`` for flat, or ``#♯`` for sharp) are supported.
+
+        Examples: ``C:maj, C:major, Dbb:min, A♭:min, D:aeo, E𝄪:phryg``.
 
     Returns
     -------
