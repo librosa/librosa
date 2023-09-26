@@ -1299,6 +1299,7 @@ def chroma_cqt(
     window: Optional[np.ndarray] = None,
     bins_per_octave: Optional[int] = 36,
     cqt_mode: str = "full",
+    pad_mode: _PadMode = "constant",
 ) -> np.ndarray:
     r"""Constant-Q chromagram
 
@@ -1335,6 +1336,10 @@ def chroma_cqt(
         If `None`, it will match ``n_chroma``.
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
+    pad_mode : string
+        Padding mode for centered frame analysis.
+
+        See also: `librosa.stft` and `numpy.pad`.
 
     Returns
     -------
@@ -1391,6 +1396,7 @@ def chroma_cqt(
                 n_bins=n_octaves * bins_per_octave,
                 bins_per_octave=bins_per_octave,
                 tuning=tuning,
+                pad_mode=pad_mode,
             )
         )
 
