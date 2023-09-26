@@ -606,7 +606,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
 @cache(level=10)
 def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     """List all 12 note names in the chromatic scale, as spelled according to
-    a given key (major or minor) or mode (ionian, dorian, phrygian, lydian, mixolydian, aeolian, locrian). The following abbreviations are accepted for the modes: either the first three letters of the mode name (e.g. "mix") or the mode name without "ian" (e.g. "mixolyd").
+    a given key (major or minor) or mode (see below for details and accepted abbreviations).
 
     This function exists to resolve enharmonic equivalences between different
     spellings for the same pitch (e.g. C♯ vs D♭), and is primarily useful when producing
@@ -626,12 +626,15 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     ----------
     key : string
         Must be in the form TONIC:key.  Tonic must be upper case (``CDEFGAB``),
-        key must be lower-case (``maj``, ``min``, ``dorian``, ``phrygian``, etc., as described above).
+        key must be lower-case (``maj``, ``min``, ``ionian``, ``dorian``, ``phrygian``, ``lydian``, ``mixolydian``, ``aeolian``, ``locrian``).
 
+        The following abbreviations are supported for the modes: either the first three letters of the mode name (e.g. "mix") or the mode name without "ian" (e.g. "mixolyd").
+
+        Both ``major`` and ``maj`` are supported as mode abbreviations.
 
         Single and multiple accidentals (``b!♭`` for flat, or ``#♯`` for sharp) are supported.
 
-        Examples: ``C:maj, Dbb:min, A♭:min, D:aeo, E𝄪:phr``.
+        Examples: ``C:maj, C:major, Dbb:min, A♭:min, D:aeo, E𝄪:phryg``.
 
     unicode : bool
         If ``True`` (default), use Unicode symbols (♯𝄪♭𝄫)for accidentals.
