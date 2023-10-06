@@ -194,10 +194,6 @@ def load(
     else:
         sr = sr_native
 
-    # SR Cast
-    if isinstance(sr, float) and sr.is_integer():
-        sr = int(sr)
-
     return y, sr
 
 
