@@ -57,19 +57,6 @@ jobs:
           with:
             submodules: true
 
-        - name: Install OS dependencies
-          shell: bash -l {0}
-          run: |
-            case "${{ runner.os }}" in
-            Linux)
-              sudo apt-get update -yy
-              sudo apt-get install -yy  libsamplerate0
-              ;; 
-            macOS)
-              brew install libsamplerate
-              ;;
-            esac
-
         - name: Cache conda
           uses: actions/cache@v3
           env:
@@ -82,7 +69,7 @@ jobs:
         - name: Install Conda environment
           uses: conda-incubator/setup-miniconda@v2
           with:
-            auto-update-conda: true
+            auto-update-conda: ! ${{ steps.cache.outputs.cache-hit }}
             python-version: ${{ matrix.python-version }}
             add-pip-as-python-dependency: true
             auto-activate-base: false
