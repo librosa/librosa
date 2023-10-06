@@ -69,7 +69,7 @@ jobs:
         - name: Install Conda environment
           uses: conda-incubator/setup-miniconda@v2
           with:
-            auto-update-conda: ! ${{ steps.cache.outputs.cache-hit }}
+            auto-update-conda: ${{ !steps.cache.outputs.cache-hit }}
             python-version: ${{ matrix.python-version }}
             add-pip-as-python-dependency: true
             auto-activate-base: false
