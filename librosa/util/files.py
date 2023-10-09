@@ -7,9 +7,9 @@ from typing import List, Optional, Union, Any, Set
 import os
 import glob
 import json
+from importlib import resources
 from pathlib import Path
 
-from pkg_resources import resource_filename
 import pooch
 
 from .exceptions import ParameterError
@@ -30,14 +30,12 @@ __GOODBOY = pooch.create(
     __data_path, base_url="https://librosa.org/data/audio/", registry=None
 )
 
-__GOODBOY.load_registry(
-    resource_filename(__name__, str(Path("example_data") / "registry.txt"))
-)
+with resources.path("librosa.util.example_data", "registry.txt") as reg:
+    __GOODBOY.load_registry(str(reg))
 
-with open(
-    resource_filename(__name__, str(Path("example_data") / "index.json")), "r"
-) as _fdesc:
-    __TRACKMAP = json.load(_fdesc)
+with resources.path("librosa.util.example_data", "index.json") as index:
+    with index.open("r") as _fdesc:
+        __TRACKMAP = json.load(_fdesc)
 
 
 def example(key: str, *, hq: bool = False) -> str:
