@@ -1226,7 +1226,7 @@ def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         n = wait + 1
     else:
         n = 1
-        
+
     while n < x.shape[0]:
         maxn = np.max( x[max(0, n-pre_max):min(n+post_max, x.shape[0])])
 
@@ -1243,7 +1243,7 @@ def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         if not peaks[n]:
             n += 1
             continue
-            
+
         # Skip the next `wait` frames
         n += wait + 1
 
@@ -1365,7 +1365,7 @@ def peak_pick(
 
     if sparse:
         return np.nonzero(peaks)[0]
-    
+
     return peaks
 
 
