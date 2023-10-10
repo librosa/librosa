@@ -36,6 +36,7 @@ def onset_detect(
     energy: Optional[np.ndarray] = None,
     units: str = "frames",
     normalize: bool = True,
+    sparse: bool = True,
     **kwargs: Any,
 ) -> np.ndarray:
     """Locate note onset events by picking peaks in an onset strength envelope.
@@ -47,13 +48,13 @@ def onset_detect(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)]
-        audio time series, must be monophonic
+    y : np.ndarray [shape=(..., n)]
+        audio time-series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    onset_envelope : np.ndarray [shape=(m,)]
+    onset_envelope : np.ndarray [shape=(..., m)]
         (optional) pre-computed onset strength envelope
 
     hop_length : int > 0 [scalar]
@@ -69,6 +70,8 @@ def onset_detect(
 
         This is primarily useful when using onsets as slice points for segmentation.
 
+        .. note:: backtracking is only supported when ``sparse=True``.
+
     energy : np.ndarray [shape=(m,)] (optional)
         An energy function to use for backtracking detected onset events.
         If none is provided, then ``onset_envelope`` is used.
@@ -80,6 +83,15 @@ def onset_detect(
 
         Otherwise, the onset envelope is left unnormalized.
 
+    sparse : bool
+        If ``True`` (default), detections are returned as an array of frames,
+        samples, or time indices (as specified by ``units=``).
+
+        If ``False``, detections are encoded as a dense boolean array where
+        ``onsets[n]`` is true if there's an onset at frame index ``n``.
+
+        .. note:: multi-channel input is only supported when ``sparse=False``.
+
     **kwargs : additional keyword arguments
         Additional parameters for peak picking.
 
@@ -87,7 +99,7 @@ def onset_detect(
 
     Returns
     -------
-    onsets : np.ndarray [shape=(n_onsets,)]
+    onsets : np.ndarray [shape=(n_onsets,) or onset_envelope.shape]
         estimated positions of detected onsets, in whichever units
         are specified.  By default, frame indices.
 
@@ -146,18 +158,22 @@ def onset_detect(
     # (a common normalization step to make the threshold more consistent)
     if normalize:
         # Normalize onset strength function to [0, 1] range
-        onset_envelope = onset_envelope - np.min(onset_envelope)
+        # Normalization is performed over the trailing axis
+        onset_envelope = onset_envelope - np.min(onset_envelope, axis=-1)
 
         # Mypy does not realize that oenv is not None by now
         # Max-scale with safe division
-        onset_envelope /= np.max(onset_envelope) + util.tiny(onset_envelope)  # type: ignore
+        onset_envelope /= np.max(onset_envelope, axis=-1) + util.tiny(onset_envelope)  # type: ignore
 
     # help out mypy
     assert onset_envelope is not None
 
     # Do we have any onsets to grab?
     if not onset_envelope.any() or not np.all(np.isfinite(onset_envelope)):
-        onsets = np.array([], dtype=int)
+        if sparse:
+            onsets = np.array([], dtype=int)
+        else:
+            onsets = np.zeros_like(onset_envelope, dtype=bool)
 
     else:
         # These parameter settings found by large-scale search
@@ -169,23 +185,27 @@ def onset_detect(
         kwargs.setdefault("delta", 0.07)
 
         # Peak pick the onset envelope
-        onsets = util.peak_pick(onset_envelope, **kwargs)
+        onsets = util.peak_pick(onset_envelope, sparse=sparse, axis=-1, **kwargs)
 
         # Optionally backtrack the events
         if backtrack:
+            if not sparse:
+                raise ParameterError("onset backtracking is only supported when sparse=True")
+
             if energy is None:
                 energy = onset_envelope
             assert energy is not None
             onsets = onset_backtrack(onsets, energy)
 
-    if units == "frames":
-        pass
-    elif units == "samples":
-        onsets = core.frames_to_samples(onsets, hop_length=hop_length)
-    elif units == "time":
-        onsets = core.frames_to_time(onsets, hop_length=hop_length, sr=sr)
-    else:
-        raise ParameterError(f"Invalid unit type: {units}")
+    if sparse:
+        if units == "frames":
+            pass
+        elif units == "samples":
+            onsets = core.frames_to_samples(onsets, hop_length=hop_length)
+        elif units == "time":
+            onsets = core.frames_to_time(onsets, hop_length=hop_length, sr=sr)
+        else:
+            raise ParameterError(f"Invalid unit type: {units}")
 
     return onsets
 
