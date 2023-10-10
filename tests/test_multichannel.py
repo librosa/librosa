@@ -1072,3 +1072,38 @@ def test_f0_harmonics(y_multi, dynamic):
 
     assert np.allclose(out[0], out0)
     assert np.allclose(out[1], out1)
+
+
+def test_peak_pick_multi():
+
+    x = np.random.randn(3, 1000) ** 2
+
+    pre_max = 5
+    post_max = 5
+    pre_avg = 10
+    post_avg = 10
+    wait = 10
+    delta = 0.5
+
+    pm = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=-1)
+
+    for i in range(x.shape[0]):
+        pmi = librosa.util.peak_pick(x[i], pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=-1)
+        assert np.allclose(pmi, pm[i])
+
+
+def test_peak_pick_axis():
+
+    x = np.random.randn(100, 500) ** 2
+
+    pre_max = 5
+    post_max = 5
+    pre_avg = 10
+    post_avg = 10
+    wait = 10
+    delta = 0.5
+
+    peaks = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=-1)
+    peaks_t = librosa.util.peak_pick(x.T, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=0)
+    
+    assert np.allclose(peaks_t.T, peaks)
