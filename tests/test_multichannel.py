@@ -1107,3 +1107,18 @@ def test_peak_pick_axis():
     peaks_t = librosa.util.peak_pick(x.T, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=0)
     
     assert np.allclose(peaks_t.T, peaks)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_peak_pick_multi_fail():
+
+    x = np.random.randn(3, 1000) ** 2
+
+    pre_max = 5
+    post_max = 5
+    pre_avg = 10
+    post_avg = 10
+    wait = 10
+    delta = 0.5
+
+    pm = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=True, axis=-1)
