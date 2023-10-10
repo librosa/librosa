@@ -1122,3 +1122,26 @@ def test_peak_pick_multi_fail():
     delta = 0.5
 
     pm = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=True, axis=-1)
+
+
+def test_onset_detect(y_multi):
+
+    # Verify that a stereo onset detection matches each channel individually
+    y, sr = y_multi
+
+    # Pre-compute the onset strength here using both channels to avoid any
+    # channel normalization issues if we were to process fully independently
+    oenv = librosa.onset.onset_strength(y=y, sr=sr)
+
+    D = librosa.onset.onset_detect(onset_envelope=oenv, sr=sr, sparse=False)
+    D0 = librosa.onset.onset_detect(onset_envelope=oenv[0], sr=sr, sparse=False)
+    D1 = librosa.onset.onset_detect(onset_envelope=oenv[1], sr=sr, sparse=False)
+
+    # Check each channel
+    assert np.allclose(D[0], D0)
+    assert np.allclose(D[1], D1)
+
+    # Check that they're not both the same
+    assert not np.allclose(D0, D1)
+
+

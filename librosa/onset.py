@@ -159,11 +159,11 @@ def onset_detect(
     if normalize:
         # Normalize onset strength function to [0, 1] range
         # Normalization is performed over the trailing axis
-        onset_envelope = onset_envelope - np.min(onset_envelope, axis=-1)
+        onset_envelope = onset_envelope - np.min(onset_envelope, keepdims=True, axis=-1)
 
         # Mypy does not realize that oenv is not None by now
         # Max-scale with safe division
-        onset_envelope /= np.max(onset_envelope, axis=-1) + util.tiny(onset_envelope)  # type: ignore
+        onset_envelope /= np.max(onset_envelope, keepdims=True, axis=-1) + util.tiny(onset_envelope)  # type: ignore
 
     # help out mypy
     assert onset_envelope is not None
