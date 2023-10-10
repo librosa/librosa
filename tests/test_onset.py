@@ -293,6 +293,19 @@ def test_onset_backtrack(ysr, oenv, hop, energy):
     assert np.all(energy[onsets_bt] <= energy[np.maximum(0, onsets_bt - 1)])
 
 
+def test_onset_sparse(ysr, oenv, hop, energy):
+    y, sr = ysr
+
+    onsets = librosa.onset.onset_detect(
+            y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=True
+    )
+    onsetsd = librosa.onset.onset_detect(
+            y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=False
+    )
+
+    assert np.allclose(onsets, np.flatnonzero(onsetsd))
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_onset_strength_noagg():
     S = np.zeros((3, 3))
