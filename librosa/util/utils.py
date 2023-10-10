@@ -1280,7 +1280,7 @@ def peak_pick(
 
     Parameters
     ----------
-    x : np.ndarray [shape=(n,)]
+    x : np.ndarray
         input signal to peak picks from
     pre_max : int >= 0 [scalar]
         number of samples before ``n`` over which max is computed
@@ -1360,7 +1360,7 @@ def peak_pick(
     __peak_pick(x.swapaxes(axis, -1), pre_max, post_max, pre_avg, post_avg, delta, wait, peaks.swapaxes(axis, -1))
 
     if sparse:
-        return np.nonzero(peaks)[0]
+        return np.flatnonzero(peaks)
 
     return peaks
 
