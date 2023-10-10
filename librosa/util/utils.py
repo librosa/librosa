@@ -1217,7 +1217,6 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
     nopython=True, cache=True)
 def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
     """Vectorized wrapper for the peak-picker"""
-    
     # Special case the first frame
     peaks[0] = (x[0] >= np.max(x[:min(post_max, x.shape[0])]))
     peaks[0] &= (x[0] >= np.mean(x[:min(post_avg, x.shape[0])]) + delta)
@@ -1343,13 +1342,10 @@ def peak_pick(
         raise ParameterError("delta must be non-negative")
     if wait < 0:
         raise ParameterError("wait must be non-negative")
-
     if post_max <= 0:
         raise ParameterError("post_max must be positive")
-
     if post_avg <= 0:
         raise ParameterError("post_avg must be positive")
-
     if sparse and x.ndim != 1:
         raise ParameterError("input array must be one-dimensional if sparse=True")
 
