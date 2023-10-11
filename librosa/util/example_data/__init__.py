@@ -1,1 +1,1 @@
-'''Resources for loading example data'''
+"""Resources for loading example data"""
