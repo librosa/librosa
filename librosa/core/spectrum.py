@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Utilities for spectral processing"""
+from __future__ import annotations
 import warnings
 
 import numpy as np
