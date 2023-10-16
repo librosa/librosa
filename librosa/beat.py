@@ -171,6 +171,9 @@ def beat_track(
     if not onset_envelope.any():
         return (0, np.array([], dtype=int))
 
+    if tightness <= 0:
+        raise ParameterError("tightness must be strictly positive")
+
     # Estimate BPM if one was not provided
     if bpm is None:
         bpm = _tempo(
@@ -208,7 +211,7 @@ def plp(
     """Predominant local pulse (PLP) estimation. [#]_
 
     The PLP method analyzes the onset strength envelope in the frequency domain
-    to find a locally stable tempo for each frame.  These local periodicities
+    to find a locally stable tempo for each frame.  These local frames_per_beaticities
     are used to synthesize local half-waves, which are combined such that peaks
     coincide with rhythmically salient frames (e.g. onset events on a musical time grid).
     The local maxima of the pulse curve can be taken as estimated beat positions.
@@ -396,7 +399,7 @@ def __beat_tracker(
         tempo estimate
     frame_rate : float [scalar]
         frame rate of the spectrogram (sr / hop_length, frames per second)
-    tightness : float [scalar]
+    tightness : float [scalar, positive]
         how closely do we adhere to bpm?
     trim : bool [scalar]
         trim leading/trailing beats with weak onsets?
@@ -411,13 +414,13 @@ def __beat_tracker(
 
     # convert bpm to frames per beat
     # [60 sec / min] * [frames / sec] / [beat / min] = [frames / beat]
-    period = round(60.0 * frame_rate / bpm)
+    frames_per_beat = round(60.0 * frame_rate / bpm)
 
     # localscore is a smoothed version of AGC'd onset envelope
-    localscore = __beat_local_score(onset_envelope, period)
+    localscore = __beat_local_score(onset_envelope, frames_per_beat)
 
     # run the DP
-    backlink, cumscore = __beat_track_dp(localscore, period, tightness)
+    backlink, cumscore = __beat_track_dp(localscore, frames_per_beat, tightness)
 
     # FIXME: populate a boolean array first, then map to sparse outputs
     # get the position of the last beat
@@ -441,19 +444,18 @@ def __beat_tracker(
 # -- Helper functions for beat tracking
 def __normalize_onsets(onsets):
     """Map onset strength function into the range [0, 1]"""
-    # FIXME: target axis
-    norm = onsets.std(ddof=1)
+    norm = onsets.std(ddof=1, axis=-1, keepdims=True)
     if norm > 0:
         onsets = onsets / norm
     return onsets
 
 
-def __beat_local_score(onset_envelope, period):
-    """Construct the local score for an onset envlope and given period"""
+def __beat_local_score(onset_envelope, frames_per_beat):
+    """Construct the local score for an onset envlope and given frames_per_beat"""
     # Smoothing occurs over a ±1 beat time window
     # magic number 32 makes the window extremely sharp
-    # FIXME: needs a separate period for each input channel
-    window = np.exp(-0.5 * (np.arange(-period, period + 1) * 32.0 / period) ** 2)
+    # FIXME: needs a separate frames_per_beat for each input channel
+    window = np.exp(-0.5 * (np.arange(-frames_per_beat, frames_per_beat + 1) * 32.0 / frames_per_beat) ** 2)
     return scipy.ndimage.convolve1d(__normalize_onsets(onset_envelope), 
                                     window,
                                     mode="constant",
@@ -461,23 +463,18 @@ def __beat_local_score(onset_envelope, period):
 
 
 # TODO: vectorize and jit this
-def __beat_track_dp(localscore, period, tightness):
+def __beat_track_dp(localscore, frames_per_beat, tightness):
     """Core dynamic program for beat tracking"""
-
     # FIXME: vectorizing this function will require these allocations
     # to lift to the call site
     backlink = np.zeros_like(localscore, dtype=int)
     cumscore = np.zeros_like(localscore)
 
     # Search range for previous beat
-    window = np.arange(-2 * period, -np.round(period / 2) + 1, dtype=int)
+    window = np.arange(-2 * frames_per_beat, -np.round(frames_per_beat / 2) + 1, dtype=int)
 
     # Make a score window, which begins biased toward start_bpm and skewed
-    # FIXME: this value check should also lift to the call site
-    if tightness <= 0:
-        raise ParameterError("tightness must be strictly positive")
-
-    txwt = -tightness * (np.log(-window / period) ** 2)
+    txwt = -tightness * (np.log(-window / frames_per_beat) ** 2)
     
     # Threshold for the first beat to count
     score_thresh = 0.01 * localscore.max()
@@ -486,11 +483,11 @@ def __beat_track_dp(localscore, period, tightness):
     first_beat = True
     for i, score_i in enumerate(localscore):
         # Are we reaching back before time 0?
-        z_pad = np.maximum(0, min(-window[0], len(window)))
+        z_pad = np.maximum(0, min(-window[0] - i, len(window)))
 
         # Search over all possible predecessors
         candidates = txwt.copy()
-        candidates[z_pad:] = candidates[z_pad:] + cumscore[window[z_pad:]]
+        candidates[z_pad:] += cumscore[i + window[z_pad:]]
 
         # Find the best preceding beat
         beat_location = np.argmax(candidates)
@@ -502,11 +499,8 @@ def __beat_track_dp(localscore, period, tightness):
         if first_beat and score_i < score_thresh:
             backlink[i] = -1
         else:
-            backlink[i] = window[beat_location]
+            backlink[i] = window[beat_location] + i
             first_beat = False
-
-        # Update the time range
-        window = window + 1
 
     return backlink, cumscore
 
