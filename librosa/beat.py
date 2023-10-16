@@ -13,6 +13,7 @@ Beat and tempo
 import numpy as np
 import scipy
 import scipy.stats
+import numba
 
 from ._cache import cache
 from . import core
@@ -21,7 +22,7 @@ from . import util
 from .feature import tempogram, fourier_tempogram
 from .feature import tempo as _tempo
 from .util.exceptions import ParameterError
-from .util.decorators import moved
+from .util.decorators import moved, vectorize
 from typing import Any, Callable, Optional, Tuple
 
 __all__ = ["beat_track", "tempo", "plp"]
@@ -170,9 +171,6 @@ def beat_track(
     # Do we have any onsets to grab?
     if not onset_envelope.any():
         return (0, np.array([], dtype=int))
-
-    if tightness <= 0:
-        raise ParameterError("tightness must be strictly positive")
 
     # Estimate BPM if one was not provided
     if bpm is None:
@@ -409,18 +407,23 @@ def __beat_tracker(
     beats : np.ndarray [shape=(n,)]
         frame numbers of beat events
     """
-    if bpm <= 0:
-        raise ParameterError("bpm must be strictly positive")
+    if np.any(bpm <= 0):
+        raise ParameterError(f"bpm={bpm} must be strictly positive")
 
-    # convert bpm to frames per beat
-    # [60 sec / min] * [frames / sec] / [beat / min] = [frames / beat]
-    frames_per_beat = round(60.0 * frame_rate / bpm)
+    if tightness <= 0:
+        raise ParameterError("tightness must be strictly positive")
+
+    # convert bpm to frames per beat (rounded)
+    # [frames / sec] * [60 sec / min] / [beat / min] = [frames / beat]
+    frames_per_beat = np.round(frame_rate * 60.0 / bpm)
 
     # localscore is a smoothed version of AGC'd onset envelope
-    localscore = __beat_local_score(onset_envelope, frames_per_beat)
+    localscore = __beat_local_score(__normalize_onsets(onset_envelope), frames_per_beat)
 
     # run the DP
-    backlink, cumscore = __beat_track_dp(localscore, frames_per_beat, tightness)
+    backlink = np.zeros_like(localscore, dtype=int)
+    cumscore = np.zeros_like(localscore)
+    __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore)
 
     # FIXME: populate a boolean array first, then map to sparse outputs
     # get the position of the last beat
@@ -443,40 +446,31 @@ def __beat_tracker(
 
 # -- Helper functions for beat tracking
 def __normalize_onsets(onsets):
-    """Map onset strength function into the range [0, 1]"""
+    """Normalize onset strength by its standard deviation"""
     norm = onsets.std(ddof=1, axis=-1, keepdims=True)
-    if norm > 0:
-        onsets = onsets / norm
-    return onsets
+    return onsets / (norm + util.tiny(onsets))
 
 
+@vectorize(signature="(t),()->(t)")
 def __beat_local_score(onset_envelope, frames_per_beat):
     """Construct the local score for an onset envlope and given frames_per_beat"""
     # Smoothing occurs over a ±1 beat time window
     # magic number 32 makes the window extremely sharp
-    # FIXME: needs a separate frames_per_beat for each input channel
     window = np.exp(-0.5 * (np.arange(-frames_per_beat, frames_per_beat + 1) * 32.0 / frames_per_beat) ** 2)
-    return scipy.ndimage.convolve1d(__normalize_onsets(onset_envelope), 
-                                    window,
-                                    mode="constant",
-                                    axis=-1)
+    return scipy.signal.convolve(onset_envelope, window, mode="same")
 
 
-# TODO: vectorize and jit this
-def __beat_track_dp(localscore, frames_per_beat, tightness):
+# TODO: vectorize this
+@numba.jit(nopython=True, cache=True)
+def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
     """Core dynamic program for beat tracking"""
-    # FIXME: vectorizing this function will require these allocations
-    # to lift to the call site
-    backlink = np.zeros_like(localscore, dtype=int)
-    cumscore = np.zeros_like(localscore)
-
-    # Search range for previous beat
-    window = np.arange(-2 * frames_per_beat, -np.round(frames_per_beat / 2) + 1, dtype=int)
+    # Search range for previous beat:
+    window = np.arange(-2 * frames_per_beat, -np.round(frames_per_beat / 2) + 1, dtype=np.int32)
 
     # Make a score window, which begins biased toward start_bpm and skewed
     txwt = -tightness * (np.log(-window / frames_per_beat) ** 2)
     
-    # Threshold for the first beat to count
+    # Threshold for the first beat to exceed
     score_thresh = 0.01 * localscore.max()
 
     # Are we on the first beat?
