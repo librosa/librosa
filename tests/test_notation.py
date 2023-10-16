@@ -112,6 +112,25 @@ def test_key_to_notes_unicode(key, ref_notes):
         assert n == rn
 
 @pytest.mark.parametrize(
+    "key,ref_notes",
+    [
+        (
+            "G#:maj",
+            ["B♯", "C♯", "D", "D♯", "E", "E♯", "F♯", "F𝄪", "G♯", "A", "A♯", "B"],
+        ),
+        (
+            "Cb:min",
+            ["C", "D♭", "E𝄫", "E♭", "F♭", "F", "G♭", "A𝄫", "A♭", "B𝄫", "B♭", "C♭"],
+        ),
+    ],
+)
+def test_key_to_notes_no_natural(key, ref_notes):
+    notes = librosa.key_to_notes(key, unicode=False, natural=False)
+    assert len(notes) == len(ref_notes)
+    for (n, rn) in zip(notes, ref_notes):
+        assert n == rn
+
+@pytest.mark.parametrize(
     "note, ref_simplified_ascii",
     [
         (

@@ -125,7 +125,7 @@ MELAKARTA_MAP = {
 # Pre-compiled regular expressions for note and key parsing
 KEY_RE = re.compile(
     r"^(?P<tonic>[A-Ga-g])"
-        r"(?P<accidental>[#♯𝄪b!♭𝄫n]*)"
+        r"(?P<accidental>[#♯𝄪b!♭𝄫]*)"
         r":((?P<scale>(maj|min)(or)?)|(?P<mode>(((ion|dor|phryg|lyd|mixolyd|aeol|locr)(ian)?)|phr|mix|aeo|loc)))$"
 )
 
@@ -604,7 +604,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     return __simplify_note(tonic+match.group("accidental"), unicode = unicode)+":maj"
 
 @cache(level=10)
-def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
+def key_to_notes(key: str, *, unicode: bool = True, natural: bool= True) -> List[str]:
     """List all 12 note names in the chromatic scale, as spelled according to
     a given key (major or minor) or mode (see below for details and accepted abbreviations).
 
@@ -634,7 +634,7 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
 
         Both ``major`` and ``maj`` are supported as mode abbreviations.
 
-        Single and multiple accidentals (``b!♭`` for flat, or ``#♯`` for sharp) are supported.
+        Single and multiple accidentals (``b!♭`` for flat, ``#♯`` for sharp, ``𝄪𝄫`` for double-accidentals, or any combination thereof) are supported.
 
         Examples: ``C:maj, C:major, Dbb:min, A♭:min, D:aeo, E𝄪:phryg``.
 
@@ -643,7 +643,12 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
 
         If ``False``, Unicode symbols will be mapped to low-order ASCII representations::
 
-            ♯ -> #, 𝄪 -> ##, ♭ -> b, 𝄫 -> bb
+            ♯ -> #, 𝄪 -> ##, ♭ -> b, 𝄫 -> bb, ♮ -> n
+
+    natural : bool
+        If ``True`` (default), print explicit natural symbol for any note which appears with an accidental in the corresponding scale (e.g. ``C♮`` will appear in ``key_to_notes("D:maj")``).
+
+        If ``False``, do not print natural symbols.
 
     Returns
     -------
@@ -804,13 +809,14 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
             notes_flat[index] = name
 
         notes = notes_flat
-    
-    # Apply natural signs to any note which has no other accidentals and does not appear in the scale for key.
-    scale_notes = key_to_degrees(key)
-    for place, note in enumerate(notes):
-        match = NOTE_RE.match(note)
-        if match.group('accidental')=='' and __note_to_degree(note) not in scale_notes:
-            notes[place] = match.group('note')+'♮'
+
+    if natural:
+        # Apply natural signs to any note which has no other accidentals and does not appear in the scale for key.
+        scale_notes = key_to_degrees(key)
+        for place, note in enumerate(notes):
+            match = NOTE_RE.match(note)
+            if match and match.group('accidental')=='' and __note_to_degree(note) not in scale_notes:
+                notes[place] = match.group('note')+'♮'
 
     # Finally, apply any unicode down-translation if necessary
     if not unicode:
