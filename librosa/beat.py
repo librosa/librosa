@@ -180,7 +180,7 @@ def beat_track(
             hop_length=hop_length,
             start_bpm=start_bpm,
             prior=prior,
-        )[0]
+        )[..., 0]
 
     # Then, run the tracker
     beats = __beat_tracker(onset_envelope, bpm, float(sr) / hop_length, tightness, trim)
@@ -421,9 +421,7 @@ def __beat_tracker(
     localscore = __beat_local_score(__normalize_onsets(onset_envelope), frames_per_beat)
 
     # run the DP
-    backlink = np.zeros_like(localscore, dtype=int)
-    cumscore = np.zeros_like(localscore)
-    __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore)
+    backlink, cumscore = __beat_track_dp(localscore, frames_per_beat, tightness)
 
     # FIXME: populate a boolean array first, then map to sparse outputs
     # get the position of the last beat
@@ -439,7 +437,8 @@ def __beat_tracker(
     beats = np.array(beats[::-1], dtype=int)
 
     # Discard spurious trailing beats
-    beats = __trim_beats(localscore, beats, trim)
+    if trim:
+        beats = __trim_beats(localscore, beats)
 
     return beats
 
@@ -460,8 +459,13 @@ def __beat_local_score(onset_envelope, frames_per_beat):
     return scipy.signal.convolve(onset_envelope, window, mode="same")
 
 
-# TODO: vectorize this
-@numba.jit(nopython=True, cache=True)
+@numba.guvectorize(
+        [
+            "void(float32[:], float32, float32, int32[:], float32[:])",
+            "void(float64[:], float32, float32, int32[:], float64[:])",
+        ],
+        "(t),(),()->(t),(t)",
+        nopython=True, cache=True)
 def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
     """Core dynamic program for beat tracking"""
     # Search range for previous beat:
@@ -496,20 +500,18 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
             backlink[i] = window[beat_location] + i
             first_beat = False
 
-    return backlink, cumscore
-
 
 def __last_beat(cumscore):
     """Get the last beat from the cumulative score array"""
     maxes = util.localmax(cumscore, axis=-1)
     # FIXME: vectorize this
-    med_score = np.median(cumscore[np.argwhere(maxes)])
+    med_score = np.median(cumscore[maxes])
 
     # The last of these is the last beat (since score generally increases)
     return np.argwhere((cumscore * maxes * 2 > med_score)).max()
 
 
-def __trim_beats(localscore: np.ndarray, beats: np.ndarray, trim: bool) -> np.ndarray:
+def __trim_beats(localscore: np.ndarray, beats: np.ndarray) -> np.ndarray:
     """Remove spurious leading and trailing beats"""
     smooth_boe = scipy.ndimage.convolve1d(localscore[beats],
                                           scipy.signal.hann(5),
@@ -517,10 +519,7 @@ def __trim_beats(localscore: np.ndarray, beats: np.ndarray, trim: bool) -> np.nd
                                           axis=-1)
 
     # FIXME: support target axes here
-    if trim:
-        threshold = 0.5 * ((smooth_boe**2).mean() ** 0.5)
-    else:
-        threshold = 0.0
+    threshold = 0.5 * ((smooth_boe**2).mean() ** 0.5)
 
     # FIXME:  rewrite this to operate on boolean array instead of indices
     valid = np.argwhere(smooth_boe > threshold)
