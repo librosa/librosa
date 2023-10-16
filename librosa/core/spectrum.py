@@ -22,7 +22,14 @@ from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
 from typing import Any, Callable, Optional, Tuple, List, Union, overload
 from typing_extensions import Literal
-from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
+from .._typing import (
+    _WindowSpec,
+    _PadMode,
+    _PadModeSTFT,
+    _SequenceLike,
+    _ScalarOrSequence,
+    _ComplexLike_co
+)
 
 __all__ = [
     "stft",
@@ -1810,14 +1817,44 @@ def db_to_power(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
     return ref * np.power(10.0, 0.1 * S_db)
 
 
+@overload
+def amplitude_to_db(
+    S: _ComplexLike_co,
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> np.floating[Any]:
+    ...
+
+@overload
+def amplitude_to_db(
+    S: _SequenceLike[_ComplexLike_co],
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def amplitude_to_db(
+    S: _ScalarOrSequence[_ComplexLike_co],
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
 @cache(level=30)
 def amplitude_to_db(
-    S: np.ndarray,
+    S: _ScalarOrSequence[_ComplexLike_co],
     *,
     ref: Union[float, Callable] = 1.0,
     amin: float = 1e-5,
     top_db: Optional[float] = 80.0,
-) -> np.ndarray:
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
     This is equivalent to ``power_to_db(S**2, ref=ref**2, amin=amin**2, top_db=top_db)``,
