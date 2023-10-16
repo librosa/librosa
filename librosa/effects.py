@@ -448,7 +448,7 @@ def _signal_to_frame_nonsilent(
     mse = feature.rms(y=y, frame_length=frame_length, hop_length=hop_length)
 
     # Convert to decibels and slice out the mse channel
-    db = core.amplitude_to_db(mse[..., 0, :], ref=ref, top_db=None)
+    db: np.ndarray = core.amplitude_to_db(mse[..., 0, :], ref=ref, top_db=None)
 
     # Aggregate everything but the time dimension
     if db.ndim > 1:
