@@ -384,7 +384,7 @@ def plp(
 
 
 def __beat_tracker(
-    onset_envelope: np.ndarray, bpm: float, fft_res: float, tightness: float, trim: bool
+    onset_envelope: np.ndarray, bpm: float, frame_rate: float, tightness: float, trim: bool
 ) -> np.ndarray:
     """Tracks beats in an onset strength envelope.
 
@@ -394,8 +394,8 @@ def __beat_tracker(
         onset strength envelope
     bpm : float [scalar]
         tempo estimate
-    fft_res : float [scalar]
-        resolution of the fft (sr / hop_length)
+    frame_rate : float [scalar]
+        frame rate of the spectrogram (sr / hop_length, frames per second)
     tightness : float [scalar]
         how closely do we adhere to bpm?
     trim : bool [scalar]
@@ -409,8 +409,9 @@ def __beat_tracker(
     if bpm <= 0:
         raise ParameterError("bpm must be strictly positive")
 
-    # convert bpm to a sample period for searching
-    period = round(60.0 * fft_res / bpm)
+    # convert bpm to frames per beat
+    # [60 sec / min] * [frames / sec] / [beat / min] = [frames / beat]
+    period = round(60.0 * frame_rate / bpm)
 
     # localscore is a smoothed version of AGC'd onset envelope
     localscore = __beat_local_score(onset_envelope, period)
@@ -418,10 +419,12 @@ def __beat_tracker(
     # run the DP
     backlink, cumscore = __beat_track_dp(localscore, period, tightness)
 
+    # FIXME: populate a boolean array first, then map to sparse outputs
     # get the position of the last beat
     beats = [__last_beat(cumscore)]
 
     # Reconstruct the beat path from backlinks
+    # FIXME: factor this out into a vectorized jit function
     while backlink[beats[-1]] >= 0:
         beats.append(backlink[beats[-1]])
 
@@ -438,6 +441,7 @@ def __beat_tracker(
 # -- Helper functions for beat tracking
 def __normalize_onsets(onsets):
     """Map onset strength function into the range [0, 1]"""
+    # FIXME: target axis
     norm = onsets.std(ddof=1)
     if norm > 0:
         onsets = onsets / norm
@@ -446,12 +450,22 @@ def __normalize_onsets(onsets):
 
 def __beat_local_score(onset_envelope, period):
     """Construct the local score for an onset envlope and given period"""
+    # Smoothing occurs over a ±1 beat time window
+    # magic number 32 makes the window extremely sharp
+    # FIXME: needs a separate period for each input channel
     window = np.exp(-0.5 * (np.arange(-period, period + 1) * 32.0 / period) ** 2)
-    return scipy.signal.convolve(__normalize_onsets(onset_envelope), window, "same")
+    return scipy.ndimage.convolve1d(__normalize_onsets(onset_envelope), 
+                                    window,
+                                    mode="constant",
+                                    axis=-1)
 
 
+# TODO: vectorize and jit this
 def __beat_track_dp(localscore, period, tightness):
     """Core dynamic program for beat tracking"""
+
+    # FIXME: vectorizing this function will require these allocations
+    # to lift to the call site
     backlink = np.zeros_like(localscore, dtype=int)
     cumscore = np.zeros_like(localscore)
 
@@ -459,10 +473,14 @@ def __beat_track_dp(localscore, period, tightness):
     window = np.arange(-2 * period, -np.round(period / 2) + 1, dtype=int)
 
     # Make a score window, which begins biased toward start_bpm and skewed
+    # FIXME: this value check should also lift to the call site
     if tightness <= 0:
         raise ParameterError("tightness must be strictly positive")
 
     txwt = -tightness * (np.log(-window / period) ** 2)
+    
+    # Threshold for the first beat to count
+    score_thresh = 0.01 * localscore.max()
 
     # Are we on the first beat?
     first_beat = True
@@ -481,7 +499,7 @@ def __beat_track_dp(localscore, period, tightness):
         cumscore[i] = score_i + candidates[beat_location]
 
         # Special case the first onset.  Stop if the localscore is small
-        if first_beat and score_i < 0.01 * localscore.max():
+        if first_beat and score_i < score_thresh:
             backlink[i] = -1
         else:
             backlink[i] = window[beat_location]
@@ -495,7 +513,8 @@ def __beat_track_dp(localscore, period, tightness):
 
 def __last_beat(cumscore):
     """Get the last beat from the cumulative score array"""
-    maxes = util.localmax(cumscore)
+    maxes = util.localmax(cumscore, axis=-1)
+    # FIXME: vectorize this
     med_score = np.median(cumscore[np.argwhere(maxes)])
 
     # The last of these is the last beat (since score generally increases)
@@ -504,13 +523,18 @@ def __last_beat(cumscore):
 
 def __trim_beats(localscore: np.ndarray, beats: np.ndarray, trim: bool) -> np.ndarray:
     """Remove spurious leading and trailing beats"""
-    smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.get_window("hann", 5, fftbins=False), "same")
+    smooth_boe = scipy.ndimage.convolve1d(localscore[beats],
+                                          scipy.signal.hann(5),
+                                          mode="constant",
+                                          axis=-1)
 
+    # FIXME: support target axes here
     if trim:
         threshold = 0.5 * ((smooth_boe**2).mean() ** 0.5)
     else:
         threshold = 0.0
 
+    # FIXME:  rewrite this to operate on boolean array instead of indices
     valid = np.argwhere(smooth_boe > threshold)
 
     return beats[valid.min() : valid.max()]
