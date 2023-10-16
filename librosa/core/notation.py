@@ -125,13 +125,13 @@ MELAKARTA_MAP = {
 # Pre-compiled regular expressions for note and key parsing
 KEY_RE = re.compile(
     r"^(?P<tonic>[A-Ga-g])"
-        r"(?P<accidental>[#♯𝄪b!♭𝄫]*)"
+        r"(?P<accidental>[#♯𝄪b!♭𝄫n]*)"
         r":((?P<scale>(maj|min)(or)?)|(?P<mode>(((ion|dor|phryg|lyd|mixolyd|aeol|locr)(ian)?)|phr|mix|aeo|loc)))$"
 )
 
 NOTE_RE = re.compile(
     r"^(?P<note>[A-Ga-g])"
-    r"(?P<accidental>[#♯𝄪b!♭𝄫♮]*)"
+    r"(?P<accidental>[#♯𝄪b!♭𝄫♮n]*)"
     r"(?P<octave>[+-]?\d+)?"
     r"(?P<cents>[+-]\d+)?$"
 )
@@ -148,7 +148,7 @@ MAJOR_DICT = {
 
 OFFSET_DICT = { "ion": 0, "dor": 1, "phr": 2, "lyd": 3, "mix": 4, "aeo": 5, "loc": 6 }
 
-ACC_MAP = {"#": 1, "♮": 0, "": 0, "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
+ACC_MAP = {"#": 1, "♮": 0, "": 0, "n": 0,  "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
 
 
 def thaat_to_degrees(thaat: str) -> np.ndarray:
@@ -570,7 +570,7 @@ def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], addition
         simplified_note += "♭"*(offset%2)+ "𝄫"*(abs(offset)//2)
 
     if not unicode:
-        translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb"})
+        translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb", "♮": "n"})
         simplified_note = simplified_note.translate(translations)
     
     return simplified_note
@@ -671,22 +671,22 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
     `A♯:min` will use sharps, but spell note 0 (`C`) as `B♯`
 
     >>> librosa.key_to_notes('A#:min')
-    ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
+    ['B♯', 'C♯', 'D♮', 'D♯', 'E♮', 'E♯', 'F♯', 'G♮', 'G♯', 'A♮', 'A♯', 'B♮']
 
     `G♯:maj` will use a double-sharp to spell note 7 (`G`) as `F𝄪`:
 
     >>> librosa.key_to_notes('G#:maj')
-    ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A', 'A♯', 'B']
+    ['B♯', 'C♯', 'D♮', 'D♯', 'E♮', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A♮', 'A♯', 'B♮']
 
     `F♭:min` will use double-flats
 
     >>> librosa.key_to_notes('Fb:min')
-    ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
+    ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F♮', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
 
     `G:loc` uses flats
 
     >>> librosa.key_to_notes('G:loc')
-    ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B']
+    ['C', 'D♭', 'D♮', 'E♭', 'E♮', 'F', 'G♭', 'G', 'A♭', 'A♮', 'B♭', 'B♮']
     """
     # Parse the key signature
     match = KEY_RE.match(key)
@@ -722,7 +722,7 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
         notes = list(notes)
 
         if not unicode:
-            translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb"})
+            translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb", "♮": "n"})
             notes = list(n.translate(translations) for n in notes)
 
         return notes
@@ -804,10 +804,17 @@ def key_to_notes(key: str, *, unicode: bool = True) -> List[str]:
             notes_flat[index] = name
 
         notes = notes_flat
+    
+    # Apply natural signs to any note which has no other accidentals and does not appear in the scale for key.
+    scale_notes = key_to_degrees(key)
+    for place, note in enumerate(notes):
+        match = NOTE_RE.match(note)
+        if match.group('accidental')=='' and __note_to_degree(note) not in scale_notes:
+            notes[place] = match.group('note')+'♮'
 
     # Finally, apply any unicode down-translation if necessary
     if not unicode:
-        translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb"})
+        translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb", "♮": "n"})
         notes = list(n.translate(translations) for n in notes)
 
     return notes
@@ -941,6 +948,7 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
         "♭": -1,
         "𝄫": -2,
         "♮": 0,
+        "n": 0
     }
 
     if unicode:
