@@ -423,18 +423,13 @@ def __beat_tracker(
     # run the DP
     backlink, cumscore = __beat_track_dp(localscore, frames_per_beat, tightness)
 
-    # FIXME: populate a boolean array first, then map to sparse outputs
-    # get the position of the last beat
-    beats = [__last_beat(cumscore)]
-
     # Reconstruct the beat path from backlinks
-    # FIXME: factor this out into a vectorized jit function
-    while backlink[beats[-1]] >= 0:
-        beats.append(backlink[beats[-1]])
+    tail = __last_beat(cumscore)
+    beats = np.zeros_like(onset_envelope, dtype=bool)
+    __dp_backtrack(backlink, tail, beats)
 
-    # Put the beats in ascending order
     # Convert into an array of frame numbers
-    beats = np.array(beats[::-1], dtype=int)
+    beats = np.flatnonzero(beats)
 
     # Discard spurious trailing beats
     if trim:
@@ -462,7 +457,7 @@ def __beat_local_score(onset_envelope, frames_per_beat):
 @numba.guvectorize(
         [
             "void(float32[:], float32, float32, int32[:], float32[:])",
-            "void(float64[:], float32, float32, int32[:], float64[:])",
+            "void(float64[:], float64, float32, int32[:], float64[:])",
         ],
         "(t),(),()->(t),(t)",
         nopython=True, cache=True)
@@ -501,16 +496,6 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
             first_beat = False
 
 
-def __last_beat(cumscore):
-    """Get the last beat from the cumulative score array"""
-    maxes = util.localmax(cumscore, axis=-1)
-    # FIXME: vectorize this
-    med_score = np.median(cumscore[maxes])
-
-    # The last of these is the last beat (since score generally increases)
-    return np.argwhere((cumscore * maxes * 2 > med_score)).max()
-
-
 def __trim_beats(localscore: np.ndarray, beats: np.ndarray) -> np.ndarray:
     """Remove spurious leading and trailing beats"""
     smooth_boe = scipy.ndimage.convolve1d(localscore[beats],
@@ -525,3 +510,58 @@ def __trim_beats(localscore: np.ndarray, beats: np.ndarray) -> np.ndarray:
     valid = np.argwhere(smooth_boe > threshold)
 
     return beats[valid.min() : valid.max()]
+
+
+def __last_beat(cumscore):
+
+    # Use a masked array to support multidimensional statistics
+    # We negate the mask here because of numpy masked array semantics
+    mask = ~util.localmax(cumscore, axis=-1)
+    masked_scores = np.ma.masked_array(data=cumscore, mask=mask)  # type: ignore
+    medians = np.ma.median(masked_scores, axis=-1, keepdims=True)
+    thresholds = 0.5 * np.ma.getdata(medians)
+
+    # Also find the last beat positions
+    tail = np.empty(shape=cumscore.shape[:-1], dtype=int)
+    __last_beat_selector(cumscore, mask, thresholds, tail)
+    return tail
+
+
+@numba.guvectorize(
+        [
+            "void(float32[:], bool_[:], float32, int64[:])",
+            "void(float64[:], bool_[:], float64, int64[:])",
+        ],
+        "(t),(t),()->()",
+        nopython=True, cache=True
+        )
+def __last_beat_selector(cumscore, mask, threshold, out):
+    """Vectorized helper to identify the last valid beat position:
+
+    cumscore[n] > threshold and not mask[n]
+    """
+    n = len(cumscore) - 1
+
+    out[0] = n
+    while n >= 0:
+        if not mask[n] and cumscore[n] >= threshold:
+            out[0] = n
+            break
+        else:
+            n -= 1
+
+
+@numba.guvectorize(
+        [
+            "void(int32[:], int32, bool_[:])",
+            "void(int64[:], int64, bool_[:])"
+        ],
+        "(t),()->(t)",
+        nopython=True, cache=True
+        )
+def __dp_backtrack(backlinks, tail, beats):
+
+    n = tail
+    while n >= 0:
+        beats[n] = True
+        n = backlinks[n]
