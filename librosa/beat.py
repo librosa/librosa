@@ -513,7 +513,7 @@ def __trim_beats(localscore: np.ndarray, beats: np.ndarray) -> np.ndarray:
 
 
 def __last_beat(cumscore):
-
+    """Identify the position of the last detected beat"""
     # Use a masked array to support multidimensional statistics
     # We negate the mask here because of numpy masked array semantics
     mask = ~util.localmax(cumscore, axis=-1)
@@ -560,7 +560,7 @@ def __last_beat_selector(cumscore, mask, threshold, out):
         nopython=True, cache=True
         )
 def __dp_backtrack(backlinks, tail, beats):
-
+    """Populate the beat indicator array from a sequence of backlinks"""
     n = tail
     while n >= 0:
         beats[n] = True
