@@ -733,7 +733,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
     if multiple:
         sign_map = {+1: "♯", -1: "♭"}
         additional_acc = sign_map[np.sign(offset)]
-        intermediate_notes = key_to_notes(tonic+additional_acc*(abs(offset)-1)+':'+scale, natural = natural)
+        intermediate_notes = key_to_notes(tonic+additional_acc*(abs(offset)-1)+':'+scale, natural = False)
         notes = [__simplify_note(note, additional_acc) for note in intermediate_notes]
         degrees = __note_to_degree(notes)
         notes = np.roll(notes, shift=-np.argwhere(degrees == 0)[0])
