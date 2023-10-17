@@ -125,7 +125,7 @@ MELAKARTA_MAP = {
 # Pre-compiled regular expressions for note and key parsing
 KEY_RE = re.compile(
     r"^(?P<tonic>[A-Ga-g])"
-        r"(?P<accidental>[#♯𝄪b!♭𝄫]*)"
+        r"(?P<accidental>[#♯𝄪b!♭𝄫♮n]*)"
         r":((?P<scale>(maj|min)(or)?)|(?P<mode>(((ion|dor|phryg|lyd|mixolyd|aeol|locr)(ian)?)|phr|mix|aeo|loc)))$"
 )
 
@@ -173,7 +173,6 @@ def thaat_to_degrees(thaat: str) -> np.ndarray:
 
     Examples
     --------
-
     >>> librosa.thaat_to_degrees('bilaval')
     array([ 0,  2,  4,  5,  7,  9, 11])
 
