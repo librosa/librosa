@@ -826,7 +826,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
 
     # Apply natural signs to any note which has no other accidentals and does not appear in the scale for key.
     if natural:
-        scale_notes = key_to_degrees(key)
+        scale_notes = set(key_to_degrees(key))
         for place, note in enumerate(notes):
             if __note_to_degree(note) in scale_notes:
                 continue
