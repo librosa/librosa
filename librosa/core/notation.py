@@ -23,7 +23,7 @@ __all__ = [
     "list_mela",
     "list_thaat",
     "fifths_to_note",
-    "interval_to_fjs",
+    "interval_to_fjs"
 ]
 
 THAAT_MAP = dict(
@@ -173,6 +173,7 @@ def thaat_to_degrees(thaat: str) -> np.ndarray:
 
     Examples
     --------
+
     >>> librosa.thaat_to_degrees('bilaval')
     array([ 0,  2,  4,  5,  7,  9, 11])
 
@@ -498,7 +499,7 @@ def __note_to_degree(key: _IterableLike[str]) -> np.ndarray:
 def __note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int, np.ndarray]:
     ...
 def __note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int,np.ndarray]:
-    """Take a note name and spit out the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
+    """Take a note name and return the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
 
     >>> librosa.__note_to_degree('B#')
     0
@@ -547,7 +548,7 @@ def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], addition
     'C♭𝄫'
 
     >>> librosa.__simplify_note(['C♭♯', 'C♭♭♭'])
-    array(['C', 'C♭𝄫'])
+    array(['C', 'C♭𝄫'], dtype='<U3')
 
     """
     if not isinstance(key,str):
@@ -604,7 +605,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     return __simplify_note(tonic+match.group("accidental"), unicode = unicode)+":maj"
 
 @cache(level=10)
-def key_to_notes(key: str, *, unicode: bool = True, natural: bool= True) -> List[str]:
+def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> List[str]:
     """List all 12 note names in the chromatic scale, as spelled according to
     a given key (major or minor) or mode (see below for details and accepted abbreviations).
 
@@ -646,9 +647,11 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= True) -> List
             ♯ -> #, 𝄪 -> ##, ♭ -> b, 𝄫 -> bb, ♮ -> n
 
     natural : bool
-        If ``True`` (default), print explicit natural symbol for any note which appears with an accidental in the corresponding scale (e.g. ``C♮`` will appear in ``key_to_notes("D:maj")``).
+        If ``True'', mark natural accidentals with a natural symbol (♮).
 
-        If ``False``, do not print natural symbols.
+        If ``False`` (default), do not print natural symbols.
+
+        For example, `note_to_degrees('D:maj')[0]` is `C` if `natural=False` (default) and `C♮` if `natural=True`.
 
     Returns
     -------
@@ -676,22 +679,34 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= True) -> List
     `A♯:min` will use sharps, but spell note 0 (`C`) as `B♯`
 
     >>> librosa.key_to_notes('A#:min')
-    ['B♯', 'C♯', 'D♮', 'D♯', 'E♮', 'E♯', 'F♯', 'G♮', 'G♯', 'A♮', 'A♯', 'B♮']
+    ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
     `G♯:maj` will use a double-sharp to spell note 7 (`G`) as `F𝄪`:
 
     >>> librosa.key_to_notes('G#:maj')
-    ['B♯', 'C♯', 'D♮', 'D♯', 'E♮', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A♮', 'A♯', 'B♮']
+    ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A', 'A♯', 'B']
 
     `F♭:min` will use double-flats
 
     >>> librosa.key_to_notes('Fb:min')
-    ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F♮', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
+    ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
 
     `G:loc` uses flats
 
     >>> librosa.key_to_notes('G:loc')
+    ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B']
+
+    If `natural=True`, print natural accidentals.
+
+    >>> librosa.key_to_notes('G:loc', natural=True)
     ['C', 'D♭', 'D♮', 'E♭', 'E♮', 'F', 'G♭', 'G', 'A♭', 'A♮', 'B♭', 'B♮']
+
+    >>> librosa.key_to_notes('D:maj', natural=True)
+    ['C♮', 'C♯', 'D', 'D♯', 'E', 'F♮', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
+
+    >>> librosa.key_to_notes('G#:maj', unicode = False, natural = True)
+    ['B#', 'C#', 'Dn', 'D#', 'En', 'E#', 'F#', 'F##', 'G#', 'An', 'A#', 'B']
+
     """
     # Parse the key signature
     match = KEY_RE.match(key)
@@ -708,7 +723,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= True) -> List
 
     if match.group('mode') or not match.group('scale'):
         equiv = __mode_to_key(key)
-        return key_to_notes(equiv, unicode=unicode)
+        return key_to_notes(equiv, unicode=unicode, natural = natural)
 
     scale = match.group("scale")[:3].lower()
 
@@ -719,7 +734,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= True) -> List
     if multiple:
         sign_map = {+1: "♯", -1: "♭"}
         additional_acc = sign_map[np.sign(offset)]
-        intermediate_notes = key_to_notes(tonic+additional_acc*(abs(offset)-1)+':'+scale)
+        intermediate_notes = key_to_notes(tonic+additional_acc*(abs(offset)-1)+':'+scale, natural = natural)
         notes = [__simplify_note(note, additional_acc) for note in intermediate_notes]
         degrees = __note_to_degree(notes)
         notes = np.roll(notes, shift=-np.argwhere(degrees == 0)[0])
@@ -940,6 +955,7 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
 
     >>> librosa.fifths_to_note(unison='Eb', fifths=11, unicode=False)
     'G#'
+
     """
     # Starting the circle of fifths at F makes accidentals easier to count
     COFMAP = "FCGDAEB"

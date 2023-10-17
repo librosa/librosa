@@ -87,26 +87,38 @@ def test_note_to_degree_badnote():
     ],
 )
 def test_key_to_notes(key, ref_notes):
-    notes = librosa.key_to_notes(key, unicode=False)
+    notes = librosa.key_to_notes(key, unicode=False, natural =True)
     assert len(notes) == len(ref_notes)
     for (n, rn) in zip(notes, ref_notes):
         assert n == rn
 
 @pytest.mark.parametrize(
-    "key,ref_notes",
+    "key,ref_notes,natural",
     [
         (
             "G#:maj",
-            ["B♯", "C♯", "D♮", "D♯", "E♮", "E♯", "F♯", "F𝄪", "G♯", "A♮", "A♯", "B♮"],
+            ["B♯", "C♯", "D", "D♯", "E", "E♯", "F♯", "F𝄪", "G♯", "A", "A♯", "B"],
+            False
         ),
         (
             "Cb:min",
-            ["C♮", "D♭", "E𝄫", "E♭", "F♭", "F♮", "G♭", "A𝄫", "A♭", "B𝄫", "B♭", "C♭"],
+            ["C", "D♭", "E𝄫", "E♭", "F♭", "F", "G♭", "A𝄫", "A♭", "B𝄫", "B♭", "C♭"],
+            False
+        ),
+        (
+            "G#:maj",
+            ["B♯", "C♯", "D♮", "D♯", "E♮", "E♯", "F♯", "F𝄪", "G♯", "A♮", "A♯", "B♮"],
+            True
+        ),
+        (
+            "G#:ion",
+            ["B♯", "C♯", "D♮", "D♯", "E♮", "E♯", "F♯", "F𝄪", "G♯", "A♮", "A♯", "B♮"],
+            True
         ),
     ],
 )
-def test_key_to_notes_unicode(key, ref_notes):
-    notes = librosa.key_to_notes(key, unicode=True)
+def test_key_to_notes_unicode(key, ref_notes, natural):
+    notes = librosa.key_to_notes(key, unicode=True, natural = natural)
     assert len(notes) == len(ref_notes)
     for (n, rn) in zip(notes, ref_notes):
         assert n == rn
