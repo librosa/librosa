@@ -824,13 +824,14 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
 
         notes = notes_flat
 
+    # Apply natural signs to any note which has no other accidentals and does not appear in the scale for key.
     if natural:
-        # Apply natural signs to any note which has no other accidentals and does not appear in the scale for key.
         scale_notes = key_to_degrees(key)
         for place, note in enumerate(notes):
-            match = NOTE_RE.match(note)
-            if match and match.group('accidental')=='' and __note_to_degree(note) not in scale_notes:
-                notes[place] = match.group('note')+'♮'
+            if __note_to_degree(note) in scale_notes:
+                continue
+            if len(note)==1:
+                notes[place] = note+'♮'
 
     # Finally, apply any unicode down-translation if necessary
     if not unicode:
