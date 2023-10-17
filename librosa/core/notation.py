@@ -23,7 +23,7 @@ __all__ = [
     "list_mela",
     "list_thaat",
     "fifths_to_note",
-    "interval_to_fjs"
+    "interval_to_fjs",
 ]
 
 THAAT_MAP = dict(
