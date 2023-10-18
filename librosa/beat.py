@@ -428,12 +428,13 @@ def __beat_tracker(
     beats = np.zeros_like(onset_envelope, dtype=bool)
     __dp_backtrack(backlink, tail, beats)
 
-    # Convert into an array of frame numbers
-    beats = np.flatnonzero(beats)
 
     # Discard spurious trailing beats
     if trim:
         beats = __trim_beats(localscore, beats)
+
+    # Convert into an array of frame numbers
+    beats = np.flatnonzero(beats)
 
     return beats
 
@@ -496,20 +497,39 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
             first_beat = False
 
 
-def __trim_beats(localscore: np.ndarray, beats: np.ndarray) -> np.ndarray:
-    """Remove spurious leading and trailing beats"""
-    smooth_boe = scipy.ndimage.convolve1d(localscore[beats],
-                                          scipy.signal.hann(5),
-                                          mode="constant",
-                                          axis=-1)
+@numba.guvectorize(
+    [
+        "void(float32[:], bool_[:], bool_[:])",
+        "void(float64[:], bool_[:], bool_[:])"
+        ],
+    "(t),(t)->(t)",
+    nopython=True, cache=True
+    )
+def __trim_beats(localscore, beats, beats_trimmed):
+    """Remove spurious leading and trailing beats from the detection array"""
 
-    # FIXME: support target axes here
-    threshold = 0.5 * ((smooth_boe**2).mean() ** 0.5)
+    # Populate the trimmed beats array with the existing values
+    beats_trimmed[:] = beats
 
-    # FIXME:  rewrite this to operate on boolean array instead of indices
-    valid = np.argwhere(smooth_boe > threshold)
+    # Compute the threshold: 1/2 RMS of the smoothed beat envelope
+    w = np.hanning(5)
+    # Slicing here to implement same-mode convolution in older numba where
+    # mode='same' is not yet supported
+    smooth_boe = np.convolve(localscore[beats], w)[len(w)//2:-len(w)//2+1]
 
-    return beats[valid.min() : valid.max()]
+    threshold = 0.5 * ((smooth_boe**2).mean()**0.5)
+
+    # Suppress bad beats
+    n = 0
+    while localscore[n] < threshold:
+        beats_trimmed[n] = False
+        n += 1
+
+    n = len(localscore) - 1
+    while localscore[n] < threshold:
+        beats_trimmed[n] = False
+        n -= 1
+    pass
 
 
 def __last_beat(cumscore):
@@ -518,7 +538,7 @@ def __last_beat(cumscore):
     # We negate the mask here because of numpy masked array semantics
     mask = ~util.localmax(cumscore, axis=-1)
     masked_scores = np.ma.masked_array(data=cumscore, mask=mask)  # type: ignore
-    medians = np.ma.median(masked_scores, axis=-1, keepdims=True)
+    medians = np.ma.median(masked_scores, axis=-1)
     thresholds = 0.5 * np.ma.getdata(medians)
 
     # Also find the last beat positions
