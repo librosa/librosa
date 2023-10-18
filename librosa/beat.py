@@ -45,6 +45,7 @@ def beat_track(
     bpm: Optional[float] = None,
     prior: Optional[scipy.stats.rv_continuous] = None,
     units: str = "frames",
+    sparse: bool = True
 ) -> Tuple[float, np.ndarray]:
     r"""Dynamic programming beat tracker.
 
@@ -61,11 +62,11 @@ def beat_track(
 
     Parameters
     ----------
-    y : np.ndarray [shape=(n,)] or None
+    y : np.ndarray [shape=(..., n)] or None
         audio time series
     sr : number > 0 [scalar]
         sampling rate of ``y``
-    onset_envelope : np.ndarray [shape=(n,)] or None
+    onset_envelope : np.ndarray [shape=(..., n)] or None
         (optional) pre-computed onset strength envelope.
     hop_length : int > 0 [scalar]
         number of audio samples between successive ``onset_envelope`` values
@@ -75,16 +76,28 @@ def beat_track(
         tightness of beat distribution around tempo
     trim : bool [scalar]
         trim leading/trailing beats with weak onsets
-    bpm : float [scalar]
+    bpm : float [scalar] or np.ndarray [shape=(...)]
         (optional) If provided, use ``bpm`` as the tempo instead of
         estimating it from ``onsets``.
+
+        If multichannel, a bpm estimate should be provided for each channel.
+
     prior : scipy.stats.rv_continuous [optional]
         An optional prior distribution over tempo.
         If provided, ``start_bpm`` will be ignored.
     units : {'frames', 'samples', 'time'}
         The units to encode detected beat events in.
         By default, 'frames' are used.
+    sparse : bool
+        If ``True`` (default), detections are returned as an array of frames,
+        samples, or time indices (as specified by ``units=``).
 
+        If ``False``, detections are encoded as a dense boolean array where
+        ``beats[n]`` is true if there's a beat at frame index ``n``.
+
+        .. note:: multi-channel input is only supported when ``sparse=False``.
+
+    
     Returns
     -------
     tempo : float [scalar, non-negative]
@@ -168,9 +181,16 @@ def beat_track(
             y=y, sr=sr, hop_length=hop_length, aggregate=np.median
         )
 
+    if sparse and onset_envelope.ndim != 1:
+        raise ParameterError("input array must be one-dimensional if sparse=True")
+
     # Do we have any onsets to grab?
     if not onset_envelope.any():
-        return (0, np.array([], dtype=int))
+        if sparse:
+            return (0, np.array([], dtype=int))
+        else:
+            return (np.zeros(shape=onset_envelope.shape[:-1]),
+                    np.zeros_like(onset_envelope, dtype=bool))
 
     # Estimate BPM if one was not provided
     if bpm is None:
@@ -185,14 +205,19 @@ def beat_track(
     # Then, run the tracker
     beats = __beat_tracker(onset_envelope, bpm, float(sr) / hop_length, tightness, trim)
 
-    if units == "frames":
-        return (bpm, beats)
-    elif units == "samples":
-        return (bpm, core.frames_to_samples(beats, hop_length=hop_length))
-    elif units == "time":
-        return (bpm, core.frames_to_time(beats, hop_length=hop_length, sr=sr))
-    else:
-        raise ParameterError(f"Invalid unit type: {units}")
+    if sparse:
+        beats = np.flatnonzero(beats)
+
+    if sparse:
+        if units == "frames":
+            pass
+        elif units == "samples":
+            return (bpm, core.frames_to_samples(beats, hop_length=hop_length))
+        elif units == "time":
+            return (bpm, core.frames_to_time(beats, hop_length=hop_length, sr=sr))
+        else:
+            raise ParameterError(f"Invalid unit type: {units}")
+    return (bpm, beats)
 
 
 def plp(
@@ -391,9 +416,9 @@ def __beat_tracker(
 
     Parameters
     ----------
-    onset_envelope : np.ndarray [shape=(n,)]
+    onset_envelope : np.ndarray [shape=(..., n,)]
         onset strength envelope
-    bpm : float [scalar]
+    bpm : float [scalar] or np.ndarray [shape=(...)]
         tempo estimate
     frame_rate : float [scalar]
         frame rate of the spectrogram (sr / hop_length, frames per second)
@@ -433,9 +458,6 @@ def __beat_tracker(
     if trim:
         beats = __trim_beats(localscore, beats)
 
-    # Convert into an array of frame numbers
-    beats = np.flatnonzero(beats)
-
     return beats
 
 
@@ -448,7 +470,7 @@ def __normalize_onsets(onsets):
 
 @vectorize(signature="(t),()->(t)")
 def __beat_local_score(onset_envelope, frames_per_beat):
-    """Construct the local score for an onset envlope and given frames_per_beat"""
+    """Construct the local score for an onset envelope and given frames_per_beat"""
     # Smoothing occurs over a ±1 beat time window
     # magic number 32 makes the window extremely sharp
     window = np.exp(-0.5 * (np.arange(-frames_per_beat, frames_per_beat + 1) * 32.0 / frames_per_beat) ** 2)
