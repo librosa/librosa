@@ -1145,3 +1145,22 @@ def test_onset_detect(y_multi):
     assert not np.allclose(D0, D1)
 
 
+
+@pytest.mark.parametrize('trim', [False, True])
+def test_beat_track_multi(y_multi, trim):
+    y, sr = y_multi
+
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=trim, sparse=False)
+    tempo0, beats0 = librosa.beat.beat_track(y=y, sr=sr, trim=trim, sparse=False)
+    tempo1, beats1 = librosa.beat.beat_track(y=y, sr=sr, trim=trim, sparse=False)
+
+    assert np.allclose(tempo[0], tempo0)
+    assert np.allclose(tempo[1], tempo1)
+    assert np.allclose(beats[0], beats0)
+    assert np.allclose(beats[1], beats1)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_beat_track_multi_sparse(y_multi):
+    y, sr = y_multi
+    librosa.beat.beat_track(y=y, sr=sr, sparse=True)

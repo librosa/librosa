@@ -90,12 +90,24 @@ def test_beat_no_onsets():
 
     onsets = np.zeros(duration * sr // hop_length)
 
+    # Sparse case
     tempo, beats = librosa.beat.beat_track(
-        onset_envelope=onsets, sr=sr, hop_length=hop_length
+        onset_envelope=onsets, sr=sr, hop_length=hop_length, sparse=True
     )
 
     assert np.allclose(tempo, 0)
     assert len(beats) == 0
+
+    # Dense case
+    tempo, beats = librosa.beat.beat_track(
+        onset_envelope=onsets, sr=sr, hop_length=hop_length, sparse=False
+    )
+
+    assert np.allclose(tempo, 0)
+    assert beats.shape == onsets.shape
+    assert not np.any(beats)
+
+
 
 
 @pytest.mark.parametrize("start_bpm", [40, 60, 117, 235])
@@ -218,6 +230,16 @@ def test_beat_units(ysr, hop_length, units, ctx):
             assert False
 
         assert np.allclose(t1, t2)
+
+
+def test_beat_sparse(ysr):
+    y, sr = ysr
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr, sparse=True)
+    _, beatsd = librosa.beat.beat_track(y=y, sr=sr, sparse=False)
+
+    # Verify that frame indices correspond to detections
+    assert np.all(beatsd[beats])
+    assert not np.any(~beatsd[beats])
 
 
 @pytest.mark.parametrize("hop_length", [256, 512])
