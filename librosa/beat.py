@@ -543,12 +543,12 @@ def __trim_beats(localscore, beats, beats_trimmed):
 
     # Suppress bad beats
     n = 0
-    while localscore[n] < threshold:
+    while localscore[n] <= threshold:
         beats_trimmed[n] = False
         n += 1
 
     n = len(localscore) - 1
-    while localscore[n] < threshold:
+    while localscore[n] <= threshold:
         beats_trimmed[n] = False
         n -= 1
     pass
