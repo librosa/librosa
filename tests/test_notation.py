@@ -36,21 +36,21 @@ def test_note_to_degree_badnote():
         ("C:maj", ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]),
         ("A:min", ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]),
         # Test for implicit accidentals, unambiguous
-        ("D:maj", ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]),
-        ("F:min", ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"]),
+        ("D:maj", ["Cn", "C#", "D", "D#", "E", "Fn", "F#", "G", "G#", "A", "A#", "B"]),
+        ("F:min", ["C", "Db", "Dn", "Eb", "En", "F", "Gb", "G", "Ab", "An", "Bb", "Bn"]),
         # Test for proper enharmonics with ties
-        ("Eb:min", ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "Cb"]),
-        ("D#:min", ["C", "C#", "D", "D#", "E", "E#", "F#", "G", "G#", "A", "A#", "B"]),
-        ("Gb:maj", ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "Cb"]),
-        ("F#:maj", ["C", "C#", "D", "D#", "E", "E#", "F#", "G", "G#", "A", "A#", "B"]),
+        ("Eb:min", ["Cn", "Db", "Dn", "Eb", "En", "F", "Gb", "Gn", "Ab", "An", "Bb", "Cb"]),
+        ("D#:min", ["Cn", "C#", "Dn", "D#", "En", "E#", "F#", "Gn", "G#", "An", "A#", "B"]),
+        ("Gb:maj", ["Cn", "Db", "Dn", "Eb", "En", "F", "Gb", "Gn", "Ab", "An", "Bb", "Cb"]),
+        ("F#:maj", ["Cn", "C#", "Dn", "D#", "En", "E#", "F#", "Gn", "G#", "An", "A#", "B"]),
         # Test for theoretical keys
         (
             "G#:maj",
-            ["B#", "C#", "D", "D#", "E", "E#", "F#", "F##", "G#", "A", "A#", "B"],
+            ["B#", "C#", "Dn", "D#", "En", "E#", "F#", "F##", "G#", "An", "A#", "Bn"],
         ),
         (
             "Cb:min",
-            ["C", "Db", "Ebb", "Eb", "Fb", "F", "Gb", "Abb", "Ab", "Bbb", "Bb", "Cb"],
+            ["Cn", "Db", "Ebb", "Eb", "Fb", "Fn", "Gb", "Abb", "Ab", "Bbb", "Bb", "Cb"],
         ),
         # Test the edge case of theoretical sharps
         (
@@ -77,17 +77,48 @@ def test_note_to_degree_badnote():
         ("A###:min", ["A###", "B##", "B###", "C###", "D##", "D###", "E##", "E###", "F###", "G##", "G###", "A##"]),
 
         #Testing that the modes work. These were copied from the output generated in the discussion at https://github.com/librosa/librosa/pull/1739#issuecomment-1711949365.
-        ("E:ion",['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']),
-        ("E#:mix",['B#', 'C#', 'C##', 'D#', 'E', 'E#', 'F#', 'F##', 'G#', 'G##', 'A#', 'B']),
+        ("E:ion",['Cn', 'C#', 'Dn', 'D#', 'E', 'Fn', 'F#', 'Gn', 'G#', 'A', 'A#', 'B']),
+        ("E#:mix",['B#', 'C#', 'C##', 'D#', 'En', 'E#', 'F#', 'F##', 'G#', 'G##', 'A#', 'Bn']),
         ("E#:lyd",['B#', 'C#', 'C##', 'D#', 'D##', 'E#', 'F#', 'F##', 'G#', 'G##', 'A#', 'A##']),
-        ("Gb:dor",['C', 'Db', 'D', 'Eb', 'Fb', 'F', 'Gb', 'G', 'Ab', 'Bbb', 'Bb', 'Cb']),
+        ("Gb:dor",['Cn', 'Db', 'Dn', 'Eb', 'Fb', 'Fn', 'Gb', 'Gn', 'Ab', 'Bbb', 'Bb', 'Cb']),
         ("Gb:phr",['Dbb', 'Db', 'Ebb', 'Eb', 'Fb', 'Gbb', 'Gb', 'Abb', 'Ab', 'Bbb', 'Bb', 'Cb']),
-        ("B#:aeol",['B#', 'C#', 'C##', 'D#', 'E', 'E#', 'F#', 'F##', 'G#', 'A', 'A#', 'B']),
-        ("B#:loc",['B#', 'C#', 'D', 'D#', 'E', 'E#', 'F#', 'G', 'G#', 'A', 'A#', 'B'])
+        ("B#:aeol",['B#', 'C#', 'C##', 'D#', 'En', 'E#', 'F#', 'F##', 'G#', 'An', 'A#', 'Bn']),
+        ("B#:loc",['B#', 'C#', 'Dn', 'D#', 'En', 'E#', 'F#', 'Gn', 'G#', 'An', 'A#', 'Bn'])
     ],
 )
 def test_key_to_notes(key, ref_notes):
-    notes = librosa.key_to_notes(key, unicode=False)
+    notes = librosa.key_to_notes(key, unicode=False, natural =True)
+    assert len(notes) == len(ref_notes)
+    for (n, rn) in zip(notes, ref_notes):
+        assert n == rn
+
+@pytest.mark.parametrize(
+    "key,ref_notes,natural",
+    [
+        (
+            "G#:maj",
+            ["B♯", "C♯", "D", "D♯", "E", "E♯", "F♯", "F𝄪", "G♯", "A", "A♯", "B"],
+            False
+        ),
+        (
+            "Cb:min",
+            ["C", "D♭", "E𝄫", "E♭", "F♭", "F", "G♭", "A𝄫", "A♭", "B𝄫", "B♭", "C♭"],
+            False
+        ),
+        (
+            "G#:maj",
+            ["B♯", "C♯", "D♮", "D♯", "E♮", "E♯", "F♯", "F𝄪", "G♯", "A♮", "A♯", "B♮"],
+            True
+        ),
+        (
+            "G#:ion",
+            ["B♯", "C♯", "D♮", "D♯", "E♮", "E♯", "F♯", "F𝄪", "G♯", "A♮", "A♯", "B♮"],
+            True
+        ),
+    ],
+)
+def test_key_to_notes_unicode(key, ref_notes, natural):
+    notes = librosa.key_to_notes(key, unicode=True, natural = natural)
     assert len(notes) == len(ref_notes)
     for (n, rn) in zip(notes, ref_notes):
         assert n == rn
@@ -105,8 +136,8 @@ def test_key_to_notes(key, ref_notes):
         ),
     ],
 )
-def test_key_to_notes_unicode(key, ref_notes):
-    notes = librosa.key_to_notes(key, unicode=True)
+def test_key_to_notes_no_natural(key, ref_notes):
+    notes = librosa.key_to_notes(key, unicode=True, natural=False)
     assert len(notes) == len(ref_notes)
     for (n, rn) in zip(notes, ref_notes):
         assert n == rn
@@ -116,7 +147,11 @@ def test_key_to_notes_unicode(key, ref_notes):
     [
         (
             "G####bb", "G##"
-        )
+        ),
+
+        (
+            "F#n", "F#"
+        ),
     ],
 )
 def test_simplify_note_ascii(note, ref_simplified_ascii):
