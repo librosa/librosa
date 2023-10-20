@@ -64,18 +64,25 @@ def beat_track(
     ----------
     y : np.ndarray [shape=(..., n)] or None
         audio time series
+
     sr : number > 0 [scalar]
         sampling rate of ``y``
+
     onset_envelope : np.ndarray [shape=(..., n)] or None
         (optional) pre-computed onset strength envelope.
+
     hop_length : int > 0 [scalar]
         number of audio samples between successive ``onset_envelope`` values
+
     start_bpm : float > 0 [scalar]
         initial guess for the tempo estimator (in beats per minute)
+
     tightness : float [scalar]
         tightness of beat distribution around tempo
+
     trim : bool [scalar]
         trim leading/trailing beats with weak onsets
+
     bpm : float [scalar] or np.ndarray [shape=(...)]
         (optional) If provided, use ``bpm`` as the tempo instead of
         estimating it from ``onsets``.
@@ -85,9 +92,11 @@ def beat_track(
     prior : scipy.stats.rv_continuous [optional]
         An optional prior distribution over tempo.
         If provided, ``start_bpm`` will be ignored.
+
     units : {'frames', 'samples', 'time'}
         The units to encode detected beat events in.
         By default, 'frames' are used.
+
     sparse : bool
         If ``True`` (default), detections are returned as an array of frames,
         samples, or time indices (as specified by ``units=``).
@@ -97,7 +106,6 @@ def beat_track(
 
         .. note:: multi-channel input is only supported when ``sparse=False``.
 
-    
     Returns
     -------
     tempo : float [scalar, non-negative]
