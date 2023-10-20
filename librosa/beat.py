@@ -23,7 +23,8 @@ from .feature import tempogram, fourier_tempogram
 from .feature import tempo as _tempo
 from .util.exceptions import ParameterError
 from .util.decorators import moved, vectorize
-from typing import Any, Callable, Optional, Tuple
+from typing import Any, Callable, Optional, Tuple, Union
+from ._typing import _FloatLike_co
 
 __all__ = ["beat_track", "tempo", "plp"]
 
@@ -42,11 +43,11 @@ def beat_track(
     start_bpm: float = 120.0,
     tightness: float = 100,
     trim: bool = True,
-    bpm: Optional[float] = None,
+    bpm: Optional[Union[_FloatLike_co, np.ndarray]] = None,
     prior: Optional[scipy.stats.rv_continuous] = None,
     units: str = "frames",
     sparse: bool = True
-) -> Tuple[float, np.ndarray]:
+) -> Tuple[Union[_FloatLike_co, np.ndarray], np.ndarray]:
     r"""Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [#]_:
@@ -108,11 +109,20 @@ def beat_track(
 
     Returns
     -------
-    tempo : float [scalar, non-negative]
+    tempo : float [scalar, non-negative] or np.ndarray
         estimated global tempo (in beats per minute)
-    beats : np.ndarray [shape=(m,)]
-        estimated beat event locations in the specified units
-        (default is frame indices)
+
+        If multi-channel and `bpm` is not provided, a separate
+        tempo will be returned for each channel
+    beats : np.ndarray
+        estimated beat event locations.
+
+        If `sparse=True` (default), beat locations are given in the specified units
+        (default is frame indices).
+
+        If `sparse=False` (required for multichannel input), beat events are
+        indicated by a boolean for each frame.
+
     .. note::
         If no onset strength could be detected, beat_tracker estimates 0 BPM
         and returns an empty list.
@@ -195,9 +205,9 @@ def beat_track(
     # Do we have any onsets to grab?
     if not onset_envelope.any():
         if sparse:
-            return (0, np.array([], dtype=int))
+            return (0.0, np.array([], dtype=int))
         else:
-            return (np.zeros(shape=onset_envelope.shape[:-1]),
+            return (np.zeros(shape=onset_envelope.shape[:-1], dtype=float),
                     np.zeros_like(onset_envelope, dtype=bool))
 
     # Estimate BPM if one was not provided
@@ -418,7 +428,7 @@ def plp(
 
 
 def __beat_tracker(
-    onset_envelope: np.ndarray, bpm: float, frame_rate: float, tightness: float, trim: bool
+    onset_envelope: np.ndarray, bpm: Union[_FloatLike_co, np.ndarray], frame_rate: float, tightness: float, trim: bool
 ) -> np.ndarray:
     """Tracks beats in an onset strength envelope.
 
