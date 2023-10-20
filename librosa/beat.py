@@ -122,7 +122,6 @@ def beat_track(
 
         If `sparse=False` (required for multichannel input), beat events are
         indicated by a boolean for each frame.
-
     .. note::
         If no onset strength could be detected, beat_tracker estimates 0 BPM
         and returns an empty list.
