@@ -1154,8 +1154,41 @@ def test_beat_track_multi(y_multi, trim):
     tempo0, beats0 = librosa.beat.beat_track(y=y, sr=sr, trim=trim, sparse=False)
     tempo1, beats1 = librosa.beat.beat_track(y=y, sr=sr, trim=trim, sparse=False)
 
+    assert isinstance(tempo, np.ndarray)
     assert np.allclose(tempo[0], tempo0)
     assert np.allclose(tempo[1], tempo1)
+    assert np.allclose(beats[0], beats0)
+    assert np.allclose(beats[1], beats1)
+
+
+def test_beat_track_multi_bpm_scalar(y_multi):
+    y, sr = y_multi
+
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr, sparse=False, bpm=100)
+    tempo0, beats0 = librosa.beat.beat_track(y=y, sr=sr, sparse=False, bpm=100)
+    tempo1, beats1 = librosa.beat.beat_track(y=y, sr=sr, sparse=False, bpm=100)
+
+    assert np.isscalar(tempo)
+    assert np.allclose(tempo, tempo0)
+    assert np.allclose(tempo, tempo1)
+    assert np.allclose(beats[0], beats0)
+    assert np.allclose(beats[1], beats1)
+
+
+def test_beat_track_multi_bpm_vector(y_multi):
+    y, sr = y_multi
+
+    bpm = librosa.feature.tempo(y=y, sr=sr)[..., 0]
+    assert isinstance(bpm, np.ndarray)
+
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr, sparse=False, bpm=bpm)
+    tempo0, beats0 = librosa.beat.beat_track(y=y, sr=sr, sparse=False, bpm=bpm[0])
+    tempo1, beats1 = librosa.beat.beat_track(y=y, sr=sr, sparse=False, bpm=bpm[1])
+
+    assert isinstance(tempo, np.ndarray)
+    assert np.allclose(tempo, bpm)
+    assert np.allclose(tempo[0], tempo0)
+    assert np.allclose(tempo[0], tempo1)
     assert np.allclose(beats[0], beats0)
     assert np.allclose(beats[1], beats1)
 
