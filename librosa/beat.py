@@ -537,7 +537,6 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
     )
 def __trim_beats(localscore, beats, beats_trimmed):
     """Remove spurious leading and trailing beats from the detection array"""
-
     # Populate the trimmed beats array with the existing values
     beats_trimmed[:] = beats
 
