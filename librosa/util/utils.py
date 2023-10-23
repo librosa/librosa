@@ -1304,7 +1304,8 @@ def peak_pick(
     Returns
     -------
     peaks : np.ndarray [shape=(n_peaks,) or shape=x.shape, dtype=int or bool]
-        indices of peaks in ``x``
+        indices of peaks in ``x`` (sparse=True)
+        or a boolean array where `peaks[..., n]` indicates a peak at frame index `n` (sparse=False)
 
     Raises
     ------
@@ -1320,6 +1321,11 @@ def peak_pick(
     >>> peaks = librosa.util.peak_pick(onset_env, pre_max=3, post_max=3, pre_avg=3, post_avg=5, delta=0.5, wait=10)
     >>> peaks
     array([  3,  27,  40,  61,  72,  88, 103])
+
+    Using dense output to make a boolean array of peak indicators
+    >>> librosa.util.peak_pick(onset_env, pre_max=3, post_max=3, pre_avg=3, post_avg=5,
+    ...                        delta=0.5, wait=10, sparse=False)
+    array([False, False, ..., False, False])
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=512)

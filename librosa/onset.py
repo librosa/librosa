@@ -103,9 +103,12 @@ def onset_detect(
         estimated positions of detected onsets, in whichever units
         are specified.  By default, frame indices.
 
+        If `sparse=False`, `onsets[..., n]` indicates an onset
+        detection at frame index `n`.
+
         .. note::
             If no onset strength could be detected, onset_detect returns
-            an empty list.
+            an empty array (sparse=True) or all-False array (sparse=False).
 
     Raises
     ------
