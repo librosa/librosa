@@ -513,36 +513,35 @@ def __beat_local_score(onset_envelope, frames_per_beat):
         nopython=True, cache=True)
 def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
     """Core dynamic program for beat tracking"""
-    # Search range for previous beat:
-    window = np.arange(-2 * frames_per_beat, -np.round(frames_per_beat / 2) + 1, dtype=np.int32)
-
-    # Make a score window, which begins biased toward start_bpm and skewed
-    txwt = -tightness * (np.log(-window / frames_per_beat) ** 2)
-    
     # Threshold for the first beat to exceed
     score_thresh = 0.01 * localscore.max()
 
     # Are we on the first beat?
     first_beat = True
+    backlink[0] = -1
     for i, score_i in enumerate(localscore):
-        # Are we reaching back before time 0?
-        z_pad = np.maximum(0, min(-window[0] - i, len(window)))
-
-        # Search over all possible predecessors
-        candidates = txwt.copy()
-        candidates[z_pad:] += cumscore[i + window[z_pad:]]
-
-        # Find the best preceding beat
-        beat_location = np.argmax(candidates)
+        best_score = 0.
+        beat_location = -1
+        # Search over all possible predecessors to find the best preceding beat
+        # NOTE: if we wanted to provide time-varying tempo estimates, we can do that by replacing
+        # frames_per_beat by frames_per_beat[i] in this loop body
+        for loc in range(i - np.round(frames_per_beat / 2), i - 2 * frames_per_beat - 1, - 1):
+            # Once we're searching past the start, break out
+            if loc < 0:
+                break
+            score = cumscore[loc] - tightness * (np.log(i - loc) - np.log(frames_per_beat))**2
+            if score > best_score:
+                best_score = score
+                beat_location = loc
 
         # Add the local score
-        cumscore[i] = score_i + candidates[beat_location]
+        cumscore[i] = score_i + best_score
 
         # Special case the first onset.  Stop if the localscore is small
         if first_beat and score_i < score_thresh:
             backlink[i] = -1
         else:
-            backlink[i] = window[beat_location] + i
+            backlink[i] = beat_location
             first_beat = False
 
 
