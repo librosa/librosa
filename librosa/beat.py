@@ -519,8 +519,9 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
     # Are we on the first beat?
     first_beat = True
     backlink[0] = -1
+    cumscore[0] = localscore[0]
     for i, score_i in enumerate(localscore):
-        best_score = 0.
+        best_score = - np.inf
         beat_location = -1
         # Search over all possible predecessors to find the best preceding beat
         # NOTE: if we wanted to provide time-varying tempo estimates, we can do that by replacing
@@ -535,7 +536,11 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
                 beat_location = loc
 
         # Add the local score
-        cumscore[i] = score_i + best_score
+        if beat_location >= 0:
+            cumscore[i] = score_i + best_score
+        else:
+            # No back-link found, so just use the current score
+            cumscore[i] = score_i
 
         # Special case the first onset.  Stop if the localscore is small
         if first_beat and score_i < score_thresh:
