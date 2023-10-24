@@ -261,7 +261,7 @@ def plp(
     """Predominant local pulse (PLP) estimation. [#]_
 
     The PLP method analyzes the onset strength envelope in the frequency domain
-    to find a locally stable tempo for each frame.  These local frames_per_beaticities
+    to find a locally stable tempo for each frame.  These local periodicities
     are used to synthesize local half-waves, which are combined such that peaks
     coincide with rhythmically salient frames (e.g. onset events on a musical time grid).
     The local maxima of the pulse curve can be taken as estimated beat positions.
