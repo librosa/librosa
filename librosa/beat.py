@@ -229,8 +229,14 @@ def beat_track(
             prior=prior,
         )
 
+    # Ensure that tempo is in a shape that is compatible with vectorization
+    _bpm = np.atleast_1d(bpm)
+    bpm_expanded = util.expand_to(_bpm,
+                                  ndim=onset_envelope.ndim,
+                                  axes=np.arange(_bpm.ndim))
+                                
     # Then, run the tracker
-    beats = __beat_tracker(onset_envelope, np.atleast_1d(bpm), float(sr) / hop_length, tightness, trim)
+    beats = __beat_tracker(onset_envelope, bpm_expanded, float(sr) / hop_length, tightness, trim)
 
     if sparse:
         beats = np.flatnonzero(beats)
@@ -493,15 +499,6 @@ def __normalize_onsets(onsets):
     """Normalize onset strength by its standard deviation"""
     norm = onsets.std(ddof=1, axis=-1, keepdims=True)
     return onsets / (norm + util.tiny(onsets))
-
-
-@vectorize(signature="(t),()->(t)")
-def __old_beat_local_score(onset_envelope, frames_per_beat):
-    """Construct the local score for an onset envelope and given frames_per_beat"""
-    # Smoothing occurs over a ±1 beat time window
-    # magic number 32 makes the window extremely sharp
-    window = np.exp(-0.5 * (np.arange(-frames_per_beat, frames_per_beat + 1) * 32.0 / frames_per_beat) ** 2)
-    return scipy.signal.convolve(onset_envelope, window, mode="same")
 
 
 @numba.guvectorize(
