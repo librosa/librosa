@@ -233,7 +233,7 @@ def beat_track(
     _bpm = np.atleast_1d(bpm)
     bpm_expanded = util.expand_to(_bpm,
                                   ndim=onset_envelope.ndim,
-                                  axes=np.arange(_bpm.ndim))
+                                  axes=range(_bpm.ndim))
                                 
     # Then, run the tracker
     beats = __beat_tracker(onset_envelope, bpm_expanded, float(sr) / hop_length, tightness, trim)
