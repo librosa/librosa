@@ -1178,7 +1178,7 @@ def test_beat_track_multi_bpm_scalar(y_multi):
 def test_beat_track_multi_bpm_vector(y_multi):
     y, sr = y_multi
 
-    bpm = np.array([150, 75])
+    bpm = np.array([[150], [75]])
     assert isinstance(bpm, np.ndarray)
 
     tempo, beats = librosa.beat.beat_track(y=y, sr=sr, sparse=False, bpm=bpm)

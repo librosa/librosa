@@ -227,10 +227,10 @@ def beat_track(
             hop_length=hop_length,
             start_bpm=start_bpm,
             prior=prior,
-        )[..., 0]
+        )
 
     # Then, run the tracker
-    beats = __beat_tracker(onset_envelope, bpm, float(sr) / hop_length, tightness, trim)
+    beats = __beat_tracker(onset_envelope, np.atleast_1d(bpm), float(sr) / hop_length, tightness, trim)
 
     if sparse:
         beats = np.flatnonzero(beats)
@@ -496,7 +496,7 @@ def __normalize_onsets(onsets):
 
 
 @vectorize(signature="(t),()->(t)")
-def __beat_local_score(onset_envelope, frames_per_beat):
+def __old_beat_local_score(onset_envelope, frames_per_beat):
     """Construct the local score for an onset envelope and given frames_per_beat"""
     # Smoothing occurs over a ±1 beat time window
     # magic number 32 makes the window extremely sharp
@@ -506,10 +506,25 @@ def __beat_local_score(onset_envelope, frames_per_beat):
 
 @numba.guvectorize(
         [
-            "void(float32[:], float32, float32, int32[:], float32[:])",
-            "void(float64[:], float64, float32, int32[:], float64[:])",
+            "void(float32[:], float32[:], float32[:])",
+            "void(float64[:], float64[:], float64[:])",
         ],
-        "(t),(),()->(t),(t)",
+        "(t),(n)->(t)",
+        nopython=True, cache=True)
+def __beat_local_score(onset_envelope, frames_per_beat, localscore):
+    window = np.exp(-0.5 * (np.arange(-frames_per_beat[0], frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2)
+    #return scipy.signal.convolve(onset_envelope, window, mode="same")
+    out = np.convolve(onset_envelope, window)
+    n_pad = min(len(onset_envelope), len(window))
+    localscore[:] = out[n_pad//2:n_pad//2 + len(onset_envelope)]
+
+
+@numba.guvectorize(
+        [
+            "void(float32[:], float32[:], float32, int32[:], float32[:])",
+            "void(float64[:], float64[:], float32, int32[:], float64[:])",
+        ],
+        "(t),(n),()->(t),(t)",
         nopython=True, cache=True)
 def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
     """Core dynamic program for beat tracking"""
@@ -526,11 +541,11 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
         # Search over all possible predecessors to find the best preceding beat
         # NOTE: if we wanted to provide time-varying tempo estimates, we can do that by replacing
         # frames_per_beat by frames_per_beat[i] in this loop body
-        for loc in range(i - np.round(frames_per_beat / 2), i - 2 * frames_per_beat - 1, - 1):
+        for loc in range(i - np.round(frames_per_beat[0] / 2), i - 2 * frames_per_beat[0] - 1, - 1):
             # Once we're searching past the start, break out
             if loc < 0:
                 break
-            score = cumscore[loc] - tightness * (np.log(i - loc) - np.log(frames_per_beat))**2
+            score = cumscore[loc] - tightness * (np.log(i - loc) - np.log(frames_per_beat[0]))**2
             if score > best_score:
                 best_score = score
                 beat_location = loc
