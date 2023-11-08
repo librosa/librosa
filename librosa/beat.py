@@ -241,7 +241,6 @@ def beat_track(
     if sparse:
         beats = np.flatnonzero(beats)
 
-    if sparse:
         if units == "frames":
             pass
         elif units == "samples":
