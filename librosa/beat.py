@@ -506,13 +506,35 @@ def __normalize_onsets(onsets):
             "void(float64[:], float64[:], float64[:])",
         ],
         "(t),(n)->(t)",
-        nopython=True, cache=True)
+        nopython=True, cache=False)
 def __beat_local_score(onset_envelope, frames_per_beat, localscore):
-    window = np.exp(-0.5 * (np.arange(-frames_per_beat[0], frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2)
-    #return scipy.signal.convolve(onset_envelope, window, mode="same")
-    out = np.convolve(onset_envelope, window)
-    n_pad = min(len(onset_envelope), len(window))
-    localscore[:] = out[n_pad//2:n_pad//2 + len(onset_envelope)]
+
+    N = len(onset_envelope)
+    
+    if len(frames_per_beat) == 1:
+        # Static tempo mode
+        window = np.exp(-0.5 * (np.arange(-frames_per_beat[0], frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2)
+        K = len(window)
+        # This is a vanilla same-mode convolution
+        for i in range(len(onset_envelope)):
+            localscore[i] = 0.
+            # we need i + K // 2 - k < N ==> k > i + K //2 - N
+            # and i + K // 2 - k >= 0 ==>    k <= i + K // 2
+            for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
+                localscore[i] += window[k] * onset_envelope[i + K//2 -k]
+                
+    elif len(frames_per_beat) == len(onset_envelope):
+        # Time-varying tempo estimates
+        # This isn't exactly a convolution anymore, since the filter is time-varying, but it's pretty close
+        for i in range(len(onset_envelope)):
+            window = np.exp(-0.5 * (np.arange(-frames_per_beat[i], frames_per_beat[i] + 1) * 32.0 / frames_per_beat[i]) ** 2)
+            K = 2 * int(frames_per_beat[i]) + 1
+            
+            localscore[i] = 0.
+            for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
+                localscore[i] += window[k] * onset_envelope[i + K // 2 - k]
+    else:
+        raise ParameterError(f"Invalid bpm shape={len(frames_per_beat)} does not match onset envelope shape={len(onset_envelope)}")
 
 
 @numba.guvectorize(
@@ -531,17 +553,22 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
     first_beat = True
     backlink[0] = -1
     cumscore[0] = localscore[0]
+
+    # If tv == 0, then tv * i will always be 0, so we only ever use frames_per_beat[0]
+    # If tv == 1, then tv * i = i, so we use the time-varying FPB
+    tv = int(len(frames_per_beat) > 1)
+
     for i, score_i in enumerate(localscore):
         best_score = - np.inf
         beat_location = -1
         # Search over all possible predecessors to find the best preceding beat
         # NOTE: if we wanted to provide time-varying tempo estimates, we can do that by replacing
         # frames_per_beat by frames_per_beat[i] in this loop body
-        for loc in range(i - np.round(frames_per_beat[0] / 2), i - 2 * frames_per_beat[0] - 1, - 1):
+        for loc in range(i - np.round(frames_per_beat[tv * i] / 2), i - 2 * frames_per_beat[tv * i] - 1, - 1):
             # Once we're searching past the start, break out
             if loc < 0:
                 break
-            score = cumscore[loc] - tightness * (np.log(i - loc) - np.log(frames_per_beat[0]))**2
+            score = cumscore[loc] - tightness * (np.log(i - loc) - np.log(frames_per_beat[tv * i]))**2
             if score > best_score:
                 best_score = score
                 beat_location = loc
