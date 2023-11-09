@@ -605,7 +605,7 @@ def __trim_beats(localscore, beats, beats_trimmed):
     w = np.hanning(5)
     # Slicing here to implement same-mode convolution in older numba where
     # mode='same' is not yet supported
-    smooth_boe = np.convolve(localscore[beats], w)[len(w)//2:len(localscore)]
+    smooth_boe = np.convolve(localscore[beats], w)[len(w)//2:len(localscore)+len(w)//2]
 
     threshold = 0.5 * ((smooth_boe**2).mean()**0.5)
 
