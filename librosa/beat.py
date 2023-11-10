@@ -470,6 +470,10 @@ def __beat_tracker(
     if tightness <= 0:
         raise ParameterError("tightness must be strictly positive")
 
+    # TODO: this might be better accomplished with a np.broadcast_shapes check
+    if bpm.shape[-1] not in (1, onset_envelope.shape[-1]):
+        raise ParameterError(f"Invalid bpm shape={bpm.shape} does not match onset envelope shape={onset_envelope.shape}")
+
     # convert bpm to frames per beat (rounded)
     # [frames / sec] * [60 sec / min] / [beat / min] = [frames / beat]
     frames_per_beat = np.round(frame_rate * 60.0 / bpm)
@@ -533,8 +537,7 @@ def __beat_local_score(onset_envelope, frames_per_beat, localscore):
             localscore[i] = 0.
             for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
                 localscore[i] += window[k] * onset_envelope[i + K // 2 - k]
-    else:
-        raise ParameterError(f"Invalid bpm shape={len(frames_per_beat)} does not match onset envelope shape={len(onset_envelope)}")
+
 
 
 @numba.guvectorize(
