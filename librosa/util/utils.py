@@ -119,8 +119,8 @@ def frame(
     axis : int
         The axis along which to frame.
     writeable : bool
-        If ``True``, then the framed view of ``x`` is read-only.
-        If ``False``, then the framed view is read-write.  Note that writing to the framed view
+        If ``False``, then the framed view of ``x`` is read-only.
+        If ``True``, then the framed view is read-write.  Note that writing to the framed view
         will also write to the input array ``x`` in this case.
     subok : bool
         If True, sub-classes will be passed-through, otherwise the returned array will be
