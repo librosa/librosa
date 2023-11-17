@@ -1663,14 +1663,44 @@ def iirt(
     return bands_power
 
 
+@overload
+def power_to_db(
+    S: _ComplexLike_co,
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> np.floating[Any]:
+    ...
+
+@overload
+def power_to_db(
+    S: _SequenceLike[_ComplexLike_co],
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def power_to_db(
+    S: _ScalarOrSequence[_ComplexLike_co],
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
 @cache(level=30)
 def power_to_db(
-    S: np.ndarray,
+    S: _ScalarOrSequence[_ComplexLike_co],
     *,
     ref: Union[float, Callable] = 1.0,
     amin: float = 1e-10,
     top_db: Optional[float] = 80.0,
-) -> np.ndarray:
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
     This computes the scaling ``10 * log10(S / ref)`` in a numerically

@@ -1463,8 +1463,13 @@ def test_amplitude_to_db_complex():
 
 
 def test_amplitude_to_db_scalar():
-    assert librosa.amplitude_to_db(1) == 0
+    assert np.isclose(librosa.amplitude_to_db(1), 0)
     assert np.isclose(librosa.amplitude_to_db(2), 6.0206)
+
+
+def test_power_to_db_scalar():
+    assert np.isclose(librosa.power_to_db(1), 0)
+    assert np.isclose(librosa.power_to_db(2), 3.0103)
 
 
 @pytest.mark.parametrize("ref_p", range(-3, 4))
