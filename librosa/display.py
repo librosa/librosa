@@ -41,7 +41,7 @@ from itertools import product
 import warnings
 
 import numpy as np
-import matplotlib.cm as mcm
+from matplotlib import colormaps as mcm
 import matplotlib.axes as mplaxes
 import matplotlib.ticker as mplticker
 import matplotlib.pyplot as plt
@@ -844,7 +844,7 @@ def cmap(
     data = np.atleast_1d(data)
 
     if data.dtype == "bool":
-        return mcm.get_cmap(cmap_bool, lut=2)
+        return mcm[cmap_bool]
 
     data = data[np.isfinite(data)]
 
@@ -856,9 +856,9 @@ def cmap(
     min_val, max_val = np.percentile(data, [min_p, max_p])
 
     if min_val >= 0 or max_val <= 0:
-        return mcm.get_cmap(cmap_seq)
+        return mcm[cmap_seq]
 
-    return mcm.get_cmap(cmap_div)
+    return mcm[cmap_div]
 
 
 def __envelope(x, hop):
