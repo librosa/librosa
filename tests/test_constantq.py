@@ -490,7 +490,8 @@ def test_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     )
 
     if not scale:
-        lengths = librosa.filters.constant_q_lengths(sr=sr_white, fmin=fmin, n_bins=n_bins)
+        freqs = librosa.cqt_frequencies(fmin=fmin, n_bins=n_bins)
+        lengths, _ = librosa.filters.wavelet_lengths(sr=sr_white, freqs=freqs)
         C /= np.sqrt(lengths[:, np.newaxis])
 
     # Only compare statistics across the time dimension
