@@ -373,7 +373,7 @@ def test_constant_q_badparams(sr, fmin, n_bins, bins_per_octave, filter_scale, n
 def test_window_bandwidth():
 
     hann_bw = librosa.filters.window_bandwidth("hann")
-    hann_scipy_bw = librosa.filters.window_bandwidth(scipy.signal.hann)
+    hann_scipy_bw = librosa.filters.window_bandwidth(scipy.signal.windows.hann)
     assert hann_bw == hann_scipy_bw
 
 
@@ -483,7 +483,7 @@ def test_get_window_func():
 
 
 @pytest.mark.parametrize(
-    "pre_win", [scipy.signal.hann(16), list(scipy.signal.hann(16)), [1, 1, 1]]
+    "pre_win", [scipy.signal.windows.hann(16), list(scipy.signal.windows.hann(16)), [1, 1, 1]]
 )
 def test_get_window_pre(pre_win):
     win = librosa.filters.get_window(pre_win, len(pre_win))
