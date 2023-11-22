@@ -785,7 +785,7 @@ def __reassign_frequencies(
     # equation 5.20 of Flandrin, Auger, & Chassande-Mottin 2002
     # the sign of the correction is reversed in some papers - see Plante,
     # Meyer, & Ainsworth 1998 pp. 283-284
-    correction = -np.imag(S_dh / S_h)
+    correction = -np.imag(S_dh / (S_h + util.tiny(S_h)))
 
     freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
     freqs = util.expand_to(freqs, ndim=correction.ndim, axes=-2) + correction * (
@@ -957,7 +957,7 @@ def __reassign_times(
     # equation 5.23 of Flandrin, Auger, & Chassande-Mottin 2002
     # the sign of the correction is reversed in some papers - see Plante,
     # Meyer, & Ainsworth 1998 pp. 283-284
-    correction = np.real(S_th / S_h)
+    correction = np.real(S_th / (S_h + util.tiny(S_h)))
 
     if center:
         pad_length = None
