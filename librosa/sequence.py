@@ -910,7 +910,7 @@ def __rqa_dp(
     #
     # If knight moves are disabled, then only the first entry is used.
     #
-    # Using dummy vectors here makes the code a bit cleaner down below.
+    # Using placeholder vectors here makes the code a bit cleaner down below.
     sim_values = np.zeros(3)
     score_values = np.zeros(3)
     vec = np.zeros(3)

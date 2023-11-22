@@ -745,11 +745,11 @@ def test_valid_intervals_fail(intval):
 
 def test_warning_deprecated():
     @librosa.util.decorators.deprecated(version="old_version", version_removed="new_version")
-    def __dummy():
+    def __placeholder():
         return True
 
     with warnings.catch_warnings(record=True) as out:
-        x = __dummy()
+        x = __placeholder()
 
         # Make sure we still get the right value
         assert x is True
@@ -766,11 +766,11 @@ def test_warning_deprecated():
 
 def test_warning_moved():
     @librosa.util.decorators.moved(moved_from="from", version="old_version", version_removed="new_version")
-    def __dummy():
+    def __placeholder():
         return True
 
     with warnings.catch_warnings(record=True) as out:
-        x = __dummy()
+        x = __placeholder()
 
         # Make sure we still get the right value
         assert x is True
