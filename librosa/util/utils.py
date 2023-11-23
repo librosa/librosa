@@ -1314,7 +1314,7 @@ def peak_pick(
     max_origin = np.ceil(0.5 * (pre_max - post_max))
     # Using mode='constant' and cval=x.min() effectively truncates
     # the sliding window at the boundaries
-    mov_max = scipy.ndimage.filters.maximum_filter1d(
+    mov_max = scipy.ndimage.maximum_filter1d(
         x, int(max_length), mode="constant", origin=int(max_origin), cval=x.min()
     )
 
@@ -1323,7 +1323,7 @@ def peak_pick(
     avg_origin = np.ceil(0.5 * (pre_avg - post_avg))
     # Here, there is no mode which results in the behavior we want,
     # so we'll correct below.
-    mov_avg = scipy.ndimage.filters.uniform_filter1d(
+    mov_avg = scipy.ndimage.uniform_filter1d(
         x, int(avg_length), mode="nearest", origin=int(avg_origin)
     )
 
