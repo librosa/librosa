@@ -99,7 +99,7 @@ def test_melfb(infile):
 
     # Our version only returns the real-valued part.
     # Pad out.
-    wts = np.pad(wts, [(0, 0), (0, int(DATA["nfft"][0] // 2 - 1))], mode="constant")
+    wts = np.pad(wts, [(0, 0), (0, DATA["nfft"][0, 0] // 2 - 1)], mode="constant")
 
     assert wts.shape == DATA["wts"].shape
     assert np.allclose(wts, DATA["wts"])
@@ -125,7 +125,7 @@ def test_melfbnorm(infile):
         norm=norm,
     )
     # Pad out.
-    wts = np.pad(wts, [(0, 0), (0, int(DATA["nfft"][0] // 2 - 1))], mode="constant")
+    wts = np.pad(wts, [(0, 0), (0, DATA["nfft"][0, 0] // 2 - 1)], mode="constant")
 
     assert wts.shape == DATA["wts"].shape
     assert np.allclose(wts, DATA["wts"])
@@ -191,7 +191,7 @@ def test_chromafb(infile):
 
     # Our version only returns the real-valued part.
     # Pad out.
-    wts = np.pad(wts, [(0, 0), (0, int(DATA["nfft"][0, 0] // 2 - 1))], mode="constant")
+    wts = np.pad(wts, [(0, 0), (0, DATA["nfft"][0, 0] // 2 - 1)], mode="constant")
 
     assert wts.shape == DATA["wts"].shape
     assert np.allclose(wts, DATA["wts"])
