@@ -2216,7 +2216,7 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
         shape = tuple([len(arrays)] + list(shape_in))
 
         # Find the common dtype for all inputs
-        dtype = np.find_common_type([arr.dtype for arr in arrays], [])
+        dtype = np.result_type(*arrays) 
 
         # Allocate an empty array of the right shape and type
         result = np.empty(shape, dtype=dtype, order="F")
