@@ -31,7 +31,7 @@ def met_stft(y, n_fft, hop_length, win_length, normalize):
             n_fft=n_fft,
             hop_length=hop_length,
             win_length=win_length,
-            window=scipy.signal.hamming,
+            window=scipy.signal.windows.hamming,
             center=False,
         )
     )

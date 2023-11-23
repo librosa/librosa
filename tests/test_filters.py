@@ -477,7 +477,7 @@ def test_get_window(window):
 
 def test_get_window_func():
 
-    w1 = librosa.filters.get_window(scipy.signal.boxcar, 32)
+    w1 = librosa.filters.get_window(scipy.signal.windows.boxcar, 32)
     w2 = scipy.signal.get_window("boxcar", 32)
     assert np.allclose(w1, w2)
 
