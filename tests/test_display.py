@@ -636,7 +636,7 @@ def test_waveshow_stereo(y, sr):
 def test_unknown_wavaxis(y, sr):
 
     plt.figure()
-    librosa.display.waveshow(y, sr=sr, x_axis="something not in the axis map")
+    librosa.display.waveshow(y, sr=sr, axis="something not in the axis map")
     return plt.gcf()
 
 
@@ -644,7 +644,7 @@ def test_unknown_wavaxis(y, sr):
 def test_waveshow_unknown_wavaxis(y, sr):
 
     plt.figure()
-    librosa.display.waveshow(y, sr=sr, x_axis="something not in the axis map")
+    librosa.display.waveshow(y, sr=sr, axis="something not in the axis map")
     return plt.gcf()
 
 
@@ -719,7 +719,7 @@ def test_sharex_specshow_ms(S_abs, y, sr):
                              x_axis="time", ax=ax)
     ax.set(xlabel="")  # hide the x label here, which is not propagated automatically
     ax2.margins(x=0)
-    librosa.display.waveshow(y, sr=sr, x_axis="ms", ax=ax2)
+    librosa.display.waveshow(y, sr=sr, axis="ms", ax=ax2)
     ax2.set(xlabel="")  # hide the x label here, which is not propagated automatically
     return fig
 
