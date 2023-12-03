@@ -124,6 +124,7 @@ def test_cqt_exceed_passband(y_cqt, sr_cqt, bpo):
 @pytest.mark.parametrize("res_type", ["polyphase"])
 @pytest.mark.parametrize("hop_length", [512, 2000])
 @pytest.mark.parametrize("sparsity", [0.01])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_cqt(
     y_cqt_110,
     sr_cqt,
@@ -254,6 +255,7 @@ def test_icqt_odd_hop(y_cqt_110, sr_cqt):
 @pytest.mark.parametrize("res_type", ["polyphase"])
 @pytest.mark.parametrize("sparsity", [0.01])
 @pytest.mark.parametrize("hop_length", [512])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_vqt(
     y_cqt_110,
     sr_cqt,
@@ -440,6 +442,7 @@ def y_impulse(sr_impulse, hop_impulse):
     return x
 
 
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
     # Test to resolve issue #348
     # Updated in #417 to use integrated energy, rather than frame-wise max
@@ -454,6 +457,7 @@ def test_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
     assert np.max(continuity) < 5e-4, continuity
 
 
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_hybrid_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
     # Test to resolve issue #341
     # Updated in #417 to use integrated energy instead of pointwise max
