@@ -601,6 +601,7 @@ def y_chirp():
 @pytest.mark.parametrize("fmin", [40.0])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("init", [None])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt(
     y_chirp,
     hop_length,
@@ -681,6 +682,7 @@ def test_griffinlim_cqt(
 
 
 @pytest.mark.parametrize("momentum", [0, 0.95])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_momentum(y_chirp, momentum):
 
     C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
@@ -692,6 +694,7 @@ def test_griffinlim_cqt_momentum(y_chirp, momentum):
 
 
 @pytest.mark.parametrize("random_state", [None, 0, np.random.RandomState()])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_rng(y_chirp, random_state):
 
     C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
@@ -703,6 +706,7 @@ def test_griffinlim_cqt_rng(y_chirp, random_state):
 
 
 @pytest.mark.parametrize("init", [None, "random"])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_init(y_chirp, init):
     C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
     y_rec = librosa.griffinlim_cqt(
@@ -713,12 +717,14 @@ def test_griffinlim_cqt_init(y_chirp, init):
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_badinit():
     x = np.zeros((33, 3))
     librosa.griffinlim_cqt(x, init="garbage")
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_badrng():
     x = np.zeros((33, 3))
     librosa.griffinlim_cqt(x, random_state="garbage")  # type: ignore
