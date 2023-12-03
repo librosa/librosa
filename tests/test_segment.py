@@ -378,6 +378,8 @@ def test_recurrence_to_lag_fail(size):
     "rec", [librosa.segment.recurrence_matrix(np.random.randn(3, 100), sparse=True)]
 )
 @pytest.mark.parametrize("fmt", ["csc", "csr", "lil", "bsr", "dia"])
+# This warning is expected when using fmt='dia'
+@pytest.mark.filterwarnings("ignore:Constructing a DIA matrix")
 def test_recurrence_to_lag_sparse(pad, axis, rec, fmt):
 
     rec_dense = rec.toarray()

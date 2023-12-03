@@ -509,7 +509,9 @@ def test_hybrid_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     )
 
     if not scale:
-        lengths = librosa.filters.constant_q_lengths(sr=sr_white, fmin=fmin, n_bins=n_bins)
+        # lengths = librosa.filters.constant_q_lengths(sr=sr_white, fmin=fmin, n_bins=n_bins)
+        freqs = fmin * 2.0**(np.arange(n_bins) / 12)
+        lengths, _ = librosa.filters.wavelet_lengths(freqs=freqs, sr=sr_white)
         C /= np.sqrt(lengths[:, np.newaxis])
 
     assert np.allclose(np.mean(C, axis=1), 1.0, atol=2.5e-1), np.mean(C, axis=1)

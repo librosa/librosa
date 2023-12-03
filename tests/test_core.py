@@ -2509,6 +2509,7 @@ def test_load_force_audioread():
         assert "audioread" in str(out[0].message).lower()
 
 
+@pytest.mark.filterwarnings("ignore:PySoundFile failed")
 def test_get_duration_audioread():
     path = os.path.join("tests", "data", "test2_8000.mkv")
     duration = librosa.get_duration(path=path)
@@ -2516,6 +2517,7 @@ def test_get_duration_audioread():
     assert duration == 30.2
 
 
+@pytest.mark.filterwarnings("ignore:PySoundFile failed")
 def test_get_samplerate_audioread():
     path = os.path.join("tests", "data", "test2_8000.mkv")
     sr = librosa.get_samplerate(path=path)
