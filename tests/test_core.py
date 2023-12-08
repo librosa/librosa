@@ -2213,7 +2213,6 @@ def test_griffinlim(
         n_fft=n_fft,
         window=window,
         center=center,
-        dtype=dtype,
         pad_mode=pad_mode,
     )
 
