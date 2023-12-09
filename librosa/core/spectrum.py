@@ -785,7 +785,7 @@ def __reassign_frequencies(
     # equation 5.20 of Flandrin, Auger, & Chassande-Mottin 2002
     # the sign of the correction is reversed in some papers - see Plante,
     # Meyer, & Ainsworth 1998 pp. 283-284
-    with np.errstate(divide="ignore"):
+    with np.errstate(invalid="ignore"):
         # We can ignore divide-by-zero here because NaN is an acceptable correction value
         correction = -np.imag(S_dh / S_h)
 
@@ -959,7 +959,7 @@ def __reassign_times(
     # equation 5.23 of Flandrin, Auger, & Chassande-Mottin 2002
     # the sign of the correction is reversed in some papers - see Plante,
     # Meyer, & Ainsworth 1998 pp. 283-284
-    with np.errstate(divide="ignore"):
+    with np.errstate(invalid="ignore"):
         # We can ignore divide-by-zero here because NaN is an acceptable correction value
         correction = np.real(S_th / S_h)
 
