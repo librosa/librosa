@@ -704,7 +704,6 @@ def icqt(
             norm,
             sparsity,
             window=window,
-            dtype=dtype,
             alpha=alpha[sl],
         )
 
