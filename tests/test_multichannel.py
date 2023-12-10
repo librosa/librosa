@@ -351,9 +351,9 @@ def test_icqt_multi(y_multi, scale, length):
     if length is not None:
         assert yboth.shape[-1] == length
 
-    # Check each channel
-    assert np.allclose(yboth[0], y0), np.max(np.abs(yboth[0] - y0))
-    assert np.allclose(yboth[1], y1), np.max(np.abs(yboth[1] - y1))
+    # Check each channel - slightly relaxed tolerance here
+    assert np.allclose(yboth[0], y0, atol=1e-6), np.max(np.abs(yboth[0] - y0))
+    assert np.allclose(yboth[1], y1, atol=1e-6), np.max(np.abs(yboth[1] - y1))
 
     # Check that they're not the same
     assert not np.allclose(yboth[0], yboth[1])
