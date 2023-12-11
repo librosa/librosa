@@ -481,11 +481,9 @@ def test___reassign_times(sr, n_fft):
     expected_times = librosa.samples_to_time(impulse_indices, sr=sr)
     expected[:, expected_bins] = np.tile(expected_times, (n_fft // 2 + 1, 1))
 
-    # ignore divide-by-zero warnings for frames with no energy
-    with warnings.catch_warnings(record=True):
-        times, S = librosa.core.spectrum.__reassign_times(
-            y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=False
-        )
+    times, S = librosa.core.spectrum.__reassign_times(
+        y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=False
+    )
 
     # times should be reassigned within 0.5% of the window duration
     assert np.allclose(times, expected, atol=0.005 * n_fft / sr, equal_nan=True)
@@ -498,11 +496,9 @@ def test___reassign_times_center():
     sr = 4000
     n_fft = 2048
 
-    # ignore divide-by-zero warnings for frames with no energy
-    with warnings.catch_warnings(record=True):
-        times, S = librosa.core.spectrum.__reassign_times(
-            y=y, sr=sr, hop_length=n_fft, win_length=n_fft, center=True
-        )
+    times, S = librosa.core.spectrum.__reassign_times(
+        y=y, sr=sr, hop_length=n_fft, win_length=n_fft, center=True
+    )
 
     expected = np.full_like(times, np.nan)
     expected[:, 1] = 2049 / float(sr)
@@ -1404,10 +1400,8 @@ def test__spectrogram_no_nfft():
 def test_power_to_db(x, ref, amin, top_db):
 
     if np.iscomplexobj(x):
-        with warnings.catch_warnings(record=True) as out:
+        with pytest.warns(UserWarning, match="power_to_db was called on complex input"):
             y = librosa.power_to_db(x, ref=ref, amin=amin, top_db=top_db)
-            assert len(out) > 0
-            assert "power_to_db was called on complex input" in str(out[0].message).lower()
     else:
         y = librosa.power_to_db(x, ref=ref, amin=amin, top_db=top_db)
 
@@ -1459,10 +1453,8 @@ def test_amplitude_to_db_complex():
     # Make some noise
     x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
 
-    with warnings.catch_warnings(record=True) as out:
+    with pytest.warns(UserWarning, match="amplitude_to_db was called on complex input"):
         db1 = librosa.amplitude_to_db(x.astype(complex), top_db=None)
-        assert len(out) > 0
-        assert "complex" in str(out[0].message).lower()
 
     db2 = librosa.power_to_db(x**2, top_db=None)
 
