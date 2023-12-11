@@ -177,6 +177,7 @@ def test_tempo(y, sr):
     baseline_images=["fourier_tempo"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short, but this is fine here
 def test_fourier_tempo(y, sr):
     T = librosa.feature.fourier_tempogram(y=y, sr=sr)
 

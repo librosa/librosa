@@ -663,6 +663,7 @@ def test_fourier_tempogram_fail_noinput():
 
 
 @pytest.mark.parametrize("hop_length", [512, 1024])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short, but this is fine here
 def test_fourier_tempogram_audio(y_ex, hop_length):
     y, sr = y_ex
     oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)

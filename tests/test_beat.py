@@ -235,6 +235,7 @@ def test_beat_units(ysr, hop_length, units, ctx):
 @pytest.mark.parametrize(
     "prior", [None, scipy.stats.lognorm(s=1, loc=np.log(120), scale=120)]
 )
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short, but this is fine here
 def test_plp(ysr, hop_length, win_length, tempo_min, tempo_max, use_onset, prior, ctx):
 
     y, sr = ysr
