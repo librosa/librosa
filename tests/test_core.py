@@ -965,7 +965,7 @@ def test_get_duration_mp3():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_get_duration_fail():
-    librosa.get_duration(y=None, S=None, filename=None)
+    librosa.get_duration(y=None, S=None, path=None)
 
 
 @pytest.mark.parametrize(
@@ -1339,10 +1339,11 @@ def test_estimate_tuning(sr, center_note: int, tuning: np.float_, bins_per_octav
 @pytest.mark.parametrize("resolution", [1e-2])
 @pytest.mark.parametrize("bins_per_octave", [12])
 def test_estimate_tuning_null(y, sr, resolution, bins_per_octave):
-    tuning_est = librosa.estimate_tuning(
-        resolution=resolution, bins_per_octave=bins_per_octave, y=y, sr=sr
-    )
-    assert np.allclose(tuning_est, 0)
+    with pytest.warns(UserWarning, match="Trying to estimate tuning"):
+        tuning_est = librosa.estimate_tuning(
+            resolution=resolution, bins_per_octave=bins_per_octave, y=y, sr=sr
+        )
+        assert np.allclose(tuning_est, 0)
 
 
 @pytest.mark.parametrize("n_fft", [1024, 755, 2048, 2049])

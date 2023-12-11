@@ -118,7 +118,8 @@ def test_unknown_time_unit(y):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_complex_input(S):
     plt.figure()
-    librosa.display.specshow(S)
+    with pytest.warns(UserWarning, match="Trying to display complex"):
+        librosa.display.specshow(S)
     return plt.gcf()
 
 
