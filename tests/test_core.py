@@ -1402,7 +1402,13 @@ def test__spectrogram_no_nfft():
 @pytest.mark.parametrize("top_db", [None, 0, 40, 80])
 def test_power_to_db(x, ref, amin, top_db):
 
-    y = librosa.power_to_db(x, ref=ref, amin=amin, top_db=top_db)
+    if np.iscomplexobj(x):
+        with warnings.catch_warnings(record=True) as out:
+            y = librosa.power_to_db(x, ref=ref, amin=amin, top_db=top_db)
+            assert len(out) > 0
+            assert "power_to_db was called on complex input" in str(out[0].message).lower()
+    else:
+        y = librosa.power_to_db(x, ref=ref, amin=amin, top_db=top_db)
 
     assert np.isrealobj(y)
     assert y.shape == x.shape
