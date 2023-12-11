@@ -531,6 +531,8 @@ def test_poly_multi_static(s_multi):
     assert not np.allclose(P0, P1)
 
 
+# Not worried about polyfit conditioning for this test
+@pytest.mark.filterwarnings("ignore:Polyfit may be poorly conditioned")
 def test_poly_multi_varying(tfr_multi):
 
     # Get some time-varying frequencies
@@ -755,6 +757,8 @@ def test_interp_harmonics_multi_static(s_multi):
     assert not np.allclose(H0, H1)
 
 
+# Not worried about this warning here
+@pytest.mark.filterwarnings("ignore:Frequencies are not unique")
 def test_interp_harmonics_multi_vary(tfr_multi):
     times, freqs, mags = tfr_multi
 
@@ -805,6 +809,8 @@ def test_salience_multi_static(s_multi, filter_peaks):
 
 
 @pytest.mark.parametrize("filter_peaks", [False, True])
+# Not worried about this warning here
+@pytest.mark.filterwarnings("ignore:Frequencies are not unique")
 def test_salience_multi_dynamic(tfr_multi, filter_peaks):
     times, freqs, S = tfr_multi
 
@@ -1040,6 +1046,8 @@ def test_resample_highdim_axis(x, axis, res_type):
 
 
 @pytest.mark.parametrize('dynamic', [False, True])
+# Not worried about this warning here
+@pytest.mark.filterwarnings("ignore:Frequencies are not unique")
 def test_f0_harmonics(y_multi, dynamic):
 
     y, sr = y_multi
