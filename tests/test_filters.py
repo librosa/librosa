@@ -85,6 +85,7 @@ def test_hz_to_octs(infile):
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "feature-melfb-*.mat"))
 )
+@pytest.mark.filterwarnings("ignore:Empty filters detected")
 def test_melfb(infile):
 
     DATA = load(infile)
