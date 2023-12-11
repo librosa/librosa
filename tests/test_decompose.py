@@ -62,7 +62,6 @@ def test_decompose_fit():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.filterwarnings("ignore:Maximum number of iterations")
 def test_decompose_multi_sort():
     librosa.decompose.decompose(np.zeros((3,3,3)), sort=True)
 

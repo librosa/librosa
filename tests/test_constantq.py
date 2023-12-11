@@ -124,7 +124,8 @@ def test_cqt_exceed_passband(y_cqt, sr_cqt, bpo):
 @pytest.mark.parametrize("res_type", ["polyphase"])
 @pytest.mark.parametrize("hop_length", [512, 2000])
 @pytest.mark.parametrize("sparsity", [0.01])
-@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # this is fine here
+@pytest.mark.filterwarnings("ignore:Trying to estimate tuning")  # we can ignore this too
 def test_cqt(
     y_cqt_110,
     sr_cqt,
@@ -513,7 +514,6 @@ def test_hybrid_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     )
 
     if not scale:
-        # lengths = librosa.filters.constant_q_lengths(sr=sr_white, fmin=fmin, n_bins=n_bins)
         freqs = fmin * 2.0**(np.arange(n_bins) / 12)
         lengths, _ = librosa.filters.wavelet_lengths(freqs=freqs, sr=sr_white)
         C /= np.sqrt(lengths[:, np.newaxis])
@@ -538,6 +538,7 @@ def y_icqt(sr_icqt):
 @pytest.mark.parametrize("length", [None, True])
 @pytest.mark.parametrize("res_type", ["soxr_hq", "polyphase"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short; this is fine
 def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type, dtype):
 
     bins_per_octave = over_sample * 12
