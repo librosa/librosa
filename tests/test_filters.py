@@ -20,6 +20,7 @@ except KeyError:
     pass
 
 from contextlib import nullcontext as dnr
+import warnings
 import glob
 import numpy as np
 import scipy.io
@@ -257,15 +258,19 @@ def test__window(n, window_name):
 @pytest.mark.parametrize("pad_fft", [False, True])
 def test_constant_q(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, norm):
 
-    F, lengths = librosa.filters.constant_q(
-        sr=sr,
-        fmin=fmin,
-        n_bins=n_bins,
-        bins_per_octave=bins_per_octave,
-        filter_scale=filter_scale,
-        pad_fft=pad_fft,
-        norm=norm,
-    )
+    with warnings.catch_warnings(record=True) as out:
+        F, lengths = librosa.filters.constant_q(
+            sr=sr,
+            fmin=fmin,
+            n_bins=n_bins,
+            bins_per_octave=bins_per_octave,
+            filter_scale=filter_scale,
+            pad_fft=pad_fft,
+            norm=norm,
+        )
+
+        assert len(out) > 0
+        assert "Deprecated" in str(out[0].message)
 
     assert np.all(lengths <= F.shape[1])
 
@@ -359,15 +364,19 @@ def test_wavelet_lengths_noalpha():
     ],
 )
 def test_constant_q_badparams(sr, fmin, n_bins, bins_per_octave, filter_scale, norm):
-    librosa.filters.constant_q(
-        sr=sr,
-        fmin=fmin,
-        n_bins=n_bins,
-        bins_per_octave=bins_per_octave,
-        filter_scale=filter_scale,
-        pad_fft=True,
-        norm=norm,
-    )
+    with warnings.catch_warnings(record=True) as out:
+        librosa.filters.constant_q(
+            sr=sr,
+            fmin=fmin,
+            n_bins=n_bins,
+            bins_per_octave=bins_per_octave,
+            filter_scale=filter_scale,
+            pad_fft=True,
+            norm=norm,
+        )
+
+        assert len(out) > 0
+        assert "Deprecated" in str(out[0].message)
 
 
 def test_window_bandwidth():
