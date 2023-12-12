@@ -74,6 +74,7 @@ def test_load_soundfile():
     assert np.isclose(sr, sr2)
 
 
+@pytest.mark.filterwarnings("ignore:librosa.core.audio.__audioread_load")
 def test_load_audioread():
     fname = os.path.join("tests", "data", "test1_44100.wav")
 
