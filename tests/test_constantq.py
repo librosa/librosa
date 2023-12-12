@@ -184,14 +184,15 @@ def test_cqt(
 @pytest.mark.parametrize("bins_per_octave", [12])
 @pytest.mark.parametrize("n_bins", [88])
 def test_cqt_early_downsample(y_cqt_110, sr_cqt, n_bins, fmin, bins_per_octave):
-    C = librosa.cqt(
-        y=y_cqt_110,
-        sr=sr_cqt,
-        fmin=fmin,
-        n_bins=n_bins,
-        bins_per_octave=bins_per_octave,
-        res_type=None,
-    )
+    with pytest.warns(FutureWarning, match="Support for VQT with res_type=None"):
+        C = librosa.cqt(
+            y=y_cqt_110,
+            sr=sr_cqt,
+            fmin=fmin,
+            n_bins=n_bins,
+            bins_per_octave=bins_per_octave,
+            res_type=None,
+        )
 
     # type is complex
     assert np.iscomplexobj(C)
