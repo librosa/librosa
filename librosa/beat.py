@@ -504,7 +504,7 @@ def __last_beat(cumscore):
 
 def __trim_beats(localscore: np.ndarray, beats: np.ndarray, trim: bool) -> np.ndarray:
     """Remove spurious leading and trailing beats"""
-    smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.hann(5), "same")
+    smooth_boe = scipy.signal.convolve(localscore[beats], scipy.signal.get_window("hann", 5, fftbins=False), "same")
 
     if trim:
         threshold = 0.5 * ((smooth_boe**2).mean() ** 0.5)

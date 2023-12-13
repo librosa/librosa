@@ -118,7 +118,8 @@ def test_unknown_time_unit(y):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_complex_input(S):
     plt.figure()
-    librosa.display.specshow(S)
+    with pytest.warns(UserWarning, match="Trying to display complex"):
+        librosa.display.specshow(S)
     return plt.gcf()
 
 
@@ -176,6 +177,7 @@ def test_tempo(y, sr):
     baseline_images=["fourier_tempo"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short, but this is fine here
 def test_fourier_tempo(y, sr):
     T = librosa.feature.fourier_tempogram(y=y, sr=sr)
 
@@ -636,7 +638,7 @@ def test_waveshow_stereo(y, sr):
 def test_unknown_wavaxis(y, sr):
 
     plt.figure()
-    librosa.display.waveshow(y, sr=sr, x_axis="something not in the axis map")
+    librosa.display.waveshow(y, sr=sr, axis="something not in the axis map")
     return plt.gcf()
 
 
@@ -644,7 +646,7 @@ def test_unknown_wavaxis(y, sr):
 def test_waveshow_unknown_wavaxis(y, sr):
 
     plt.figure()
-    librosa.display.waveshow(y, sr=sr, x_axis="something not in the axis map")
+    librosa.display.waveshow(y, sr=sr, axis="something not in the axis map")
     return plt.gcf()
 
 
@@ -719,7 +721,7 @@ def test_sharex_specshow_ms(S_abs, y, sr):
                              x_axis="time", ax=ax)
     ax.set(xlabel="")  # hide the x label here, which is not propagated automatically
     ax2.margins(x=0)
-    librosa.display.waveshow(y, sr=sr, x_axis="ms", ax=ax2)
+    librosa.display.waveshow(y, sr=sr, axis="ms", ax=ax2)
     ax2.set(xlabel="")  # hide the x label here, which is not propagated automatically
     return fig
 

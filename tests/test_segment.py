@@ -85,7 +85,7 @@ def test_cross_similarity_affinity(metric, bandwidth):
     i, j, vals = scipy.sparse.find(rec)
     logvals = np.log(vals)
 
-    ratio = -logvals / distance[i, j]
+    ratio = -logvals / (distance[i, j] + librosa.util.tiny(distance))
 
     if bandwidth is None:
         assert np.allclose(-logvals, distance[i, j] * np.nanmax(ratio))
@@ -255,7 +255,7 @@ def test_recurrence_affinity(metric, bandwidth, self):
     logvals = np.log(vals)
 
     # After log-scaling, affinity will match distance up to a constant factor
-    ratio = -logvals / distance[i, j]
+    ratio = -logvals / (distance[i, j] + librosa.util.tiny(distance))
     if bandwidth is None:
         # Estimate the global bandwidth using non-zero distances
         assert np.allclose(-logvals, distance[i, j] * np.nanmax(ratio))
@@ -378,6 +378,8 @@ def test_recurrence_to_lag_fail(size):
     "rec", [librosa.segment.recurrence_matrix(np.random.randn(3, 100), sparse=True)]
 )
 @pytest.mark.parametrize("fmt", ["csc", "csr", "lil", "bsr", "dia"])
+# This warning is expected when using fmt='dia'
+@pytest.mark.filterwarnings("ignore:Constructing a DIA matrix")
 def test_recurrence_to_lag_sparse(pad, axis, rec, fmt):
 
     rec_dense = rec.toarray()

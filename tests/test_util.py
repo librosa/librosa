@@ -748,20 +748,11 @@ def test_warning_deprecated():
     def __placeholder():
         return True
 
-    with warnings.catch_warnings(record=True) as out:
+    with pytest.warns(FutureWarning, match="Deprecated"):
         x = __placeholder()
 
         # Make sure we still get the right value
         assert x is True
-
-        # And that the warning triggered
-        assert len(out) > 0
-
-        # And that the category is correct
-        assert out[0].category is FutureWarning
-
-        # And that it says the right thing (roughly)
-        assert "deprecated" in str(out[0].message).lower()
 
 
 def test_warning_moved():
@@ -804,19 +795,10 @@ def test_warning_rename_kw_fail():
     ov = 27
     nv = 23
 
-    with warnings.catch_warnings(record=True) as out:
+    with pytest.warns(FutureWarning, match="renamed"):
         v = librosa.util.rename_kw(old_name="old", old_value=ov, new_name="new", new_value=nv, version_deprecated="0", version_removed="1")
 
         assert v == ov
-
-        # Make sure the warning triggered
-        assert len(out) > 0
-
-        # And that the category is correct
-        assert out[0].category is FutureWarning
-
-        # And that it says the right thing (roughly)
-        assert "renamed" in str(out[0].message).lower()
 
 
 @pytest.mark.parametrize("idx", [np.arange(10, 90, 10), np.arange(10, 90, 15)])

@@ -124,6 +124,8 @@ def test_cqt_exceed_passband(y_cqt, sr_cqt, bpo):
 @pytest.mark.parametrize("res_type", ["polyphase"])
 @pytest.mark.parametrize("hop_length", [512, 2000])
 @pytest.mark.parametrize("sparsity", [0.01])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # this is fine here
+@pytest.mark.filterwarnings("ignore:Trying to estimate tuning")  # we can ignore this too
 def test_cqt(
     y_cqt_110,
     sr_cqt,
@@ -182,14 +184,15 @@ def test_cqt(
 @pytest.mark.parametrize("bins_per_octave", [12])
 @pytest.mark.parametrize("n_bins", [88])
 def test_cqt_early_downsample(y_cqt_110, sr_cqt, n_bins, fmin, bins_per_octave):
-    C = librosa.cqt(
-        y=y_cqt_110,
-        sr=sr_cqt,
-        fmin=fmin,
-        n_bins=n_bins,
-        bins_per_octave=bins_per_octave,
-        res_type=None,
-    )
+    with pytest.warns(FutureWarning, match="Support for VQT with res_type=None"):
+        C = librosa.cqt(
+            y=y_cqt_110,
+            sr=sr_cqt,
+            fmin=fmin,
+            n_bins=n_bins,
+            bins_per_octave=bins_per_octave,
+            res_type=None,
+        )
 
     # type is complex
     assert np.iscomplexobj(C)
@@ -254,6 +257,7 @@ def test_icqt_odd_hop(y_cqt_110, sr_cqt):
 @pytest.mark.parametrize("res_type", ["polyphase"])
 @pytest.mark.parametrize("sparsity", [0.01])
 @pytest.mark.parametrize("hop_length", [512])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_vqt(
     y_cqt_110,
     sr_cqt,
@@ -440,6 +444,7 @@ def y_impulse(sr_impulse, hop_impulse):
     return x
 
 
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
     # Test to resolve issue #348
     # Updated in #417 to use integrated energy, rather than frame-wise max
@@ -454,6 +459,7 @@ def test_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
     assert np.max(continuity) < 5e-4, continuity
 
 
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_hybrid_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
     # Test to resolve issue #341
     # Updated in #417 to use integrated energy instead of pointwise max
@@ -490,7 +496,8 @@ def test_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     )
 
     if not scale:
-        lengths = librosa.filters.constant_q_lengths(sr=sr_white, fmin=fmin, n_bins=n_bins)
+        freqs = librosa.cqt_frequencies(fmin=fmin, n_bins=n_bins)
+        lengths, _ = librosa.filters.wavelet_lengths(sr=sr_white, freqs=freqs)
         C /= np.sqrt(lengths[:, np.newaxis])
 
     # Only compare statistics across the time dimension
@@ -508,7 +515,8 @@ def test_hybrid_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     )
 
     if not scale:
-        lengths = librosa.filters.constant_q_lengths(sr=sr_white, fmin=fmin, n_bins=n_bins)
+        freqs = fmin * 2.0**(np.arange(n_bins) / 12)
+        lengths, _ = librosa.filters.wavelet_lengths(freqs=freqs, sr=sr_white)
         C /= np.sqrt(lengths[:, np.newaxis])
 
     assert np.allclose(np.mean(C, axis=1), 1.0, atol=2.5e-1), np.mean(C, axis=1)
@@ -531,6 +539,7 @@ def y_icqt(sr_icqt):
 @pytest.mark.parametrize("length", [None, True])
 @pytest.mark.parametrize("res_type", ["soxr_hq", "polyphase"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short; this is fine
 def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type, dtype):
 
     bins_per_octave = over_sample * 12
@@ -598,6 +607,7 @@ def y_chirp():
 @pytest.mark.parametrize("fmin", [40.0])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("init", [None])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt(
     y_chirp,
     hop_length,
@@ -678,6 +688,7 @@ def test_griffinlim_cqt(
 
 
 @pytest.mark.parametrize("momentum", [0, 0.95])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_momentum(y_chirp, momentum):
 
     C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
@@ -689,6 +700,7 @@ def test_griffinlim_cqt_momentum(y_chirp, momentum):
 
 
 @pytest.mark.parametrize("random_state", [None, 0, np.random.RandomState()])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_rng(y_chirp, random_state):
 
     C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
@@ -700,6 +712,7 @@ def test_griffinlim_cqt_rng(y_chirp, random_state):
 
 
 @pytest.mark.parametrize("init", [None, "random"])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_init(y_chirp, init):
     C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
     y_rec = librosa.griffinlim_cqt(
@@ -710,12 +723,14 @@ def test_griffinlim_cqt_init(y_chirp, init):
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_badinit():
     x = np.zeros((33, 3))
     librosa.griffinlim_cqt(x, init="garbage")
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_badrng():
     x = np.zeros((33, 3))
     librosa.griffinlim_cqt(x, random_state="garbage")  # type: ignore

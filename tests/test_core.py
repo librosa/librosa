@@ -74,6 +74,7 @@ def test_load_soundfile():
     assert np.isclose(sr, sr2)
 
 
+@pytest.mark.filterwarnings("ignore:librosa.core.audio.__audioread_load")
 def test_load_audioread():
     fname = os.path.join("tests", "data", "test1_44100.wav")
 
@@ -481,11 +482,9 @@ def test___reassign_times(sr, n_fft):
     expected_times = librosa.samples_to_time(impulse_indices, sr=sr)
     expected[:, expected_bins] = np.tile(expected_times, (n_fft // 2 + 1, 1))
 
-    # ignore divide-by-zero warnings for frames with no energy
-    with warnings.catch_warnings(record=True):
-        times, S = librosa.core.spectrum.__reassign_times(
-            y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=False
-        )
+    times, S = librosa.core.spectrum.__reassign_times(
+        y=y, sr=sr, n_fft=n_fft, hop_length=n_fft, center=False
+    )
 
     # times should be reassigned within 0.5% of the window duration
     assert np.allclose(times, expected, atol=0.005 * n_fft / sr, equal_nan=True)
@@ -498,11 +497,9 @@ def test___reassign_times_center():
     sr = 4000
     n_fft = 2048
 
-    # ignore divide-by-zero warnings for frames with no energy
-    with warnings.catch_warnings(record=True):
-        times, S = librosa.core.spectrum.__reassign_times(
-            y=y, sr=sr, hop_length=n_fft, win_length=n_fft, center=True
-        )
+    times, S = librosa.core.spectrum.__reassign_times(
+        y=y, sr=sr, hop_length=n_fft, win_length=n_fft, center=True
+    )
 
     expected = np.full_like(times, np.nan)
     expected[:, 1] = 2049 / float(sr)
@@ -965,7 +962,7 @@ def test_get_duration_mp3():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_get_duration_fail():
-    librosa.get_duration(y=None, S=None, filename=None)
+    librosa.get_duration(y=None, S=None, path=None)
 
 
 @pytest.mark.parametrize(
@@ -1339,10 +1336,11 @@ def test_estimate_tuning(sr, center_note: int, tuning: np.float_, bins_per_octav
 @pytest.mark.parametrize("resolution", [1e-2])
 @pytest.mark.parametrize("bins_per_octave", [12])
 def test_estimate_tuning_null(y, sr, resolution, bins_per_octave):
-    tuning_est = librosa.estimate_tuning(
-        resolution=resolution, bins_per_octave=bins_per_octave, y=y, sr=sr
-    )
-    assert np.allclose(tuning_est, 0)
+    with pytest.warns(UserWarning, match="Trying to estimate tuning"):
+        tuning_est = librosa.estimate_tuning(
+            resolution=resolution, bins_per_octave=bins_per_octave, y=y, sr=sr
+        )
+        assert np.allclose(tuning_est, 0)
 
 
 @pytest.mark.parametrize("n_fft", [1024, 755, 2048, 2049])
@@ -1402,7 +1400,11 @@ def test__spectrogram_no_nfft():
 @pytest.mark.parametrize("top_db", [None, 0, 40, 80])
 def test_power_to_db(x, ref, amin, top_db):
 
-    y = librosa.power_to_db(x, ref=ref, amin=amin, top_db=top_db)
+    if np.iscomplexobj(x):
+        with pytest.warns(UserWarning, match="power_to_db was called on complex input"):
+            y = librosa.power_to_db(x, ref=ref, amin=amin, top_db=top_db)
+    else:
+        y = librosa.power_to_db(x, ref=ref, amin=amin, top_db=top_db)
 
     assert np.isrealobj(y)
     assert y.shape == x.shape
@@ -1452,10 +1454,8 @@ def test_amplitude_to_db_complex():
     # Make some noise
     x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
 
-    with warnings.catch_warnings(record=True) as out:
+    with pytest.warns(UserWarning, match="amplitude_to_db was called on complex input"):
         db1 = librosa.amplitude_to_db(x.astype(complex), top_db=None)
-        assert len(out) > 0
-        assert "complex" in str(out[0].message).lower()
 
     db2 = librosa.power_to_db(x**2, top_db=None)
 
@@ -2213,7 +2213,6 @@ def test_griffinlim(
         n_fft=n_fft,
         window=window,
         center=center,
-        dtype=dtype,
         pad_mode=pad_mode,
     )
 
@@ -2509,6 +2508,7 @@ def test_load_force_audioread():
         assert "audioread" in str(out[0].message).lower()
 
 
+@pytest.mark.filterwarnings("ignore:PySoundFile failed")
 def test_get_duration_audioread():
     path = os.path.join("tests", "data", "test2_8000.mkv")
     duration = librosa.get_duration(path=path)
@@ -2516,6 +2516,7 @@ def test_get_duration_audioread():
     assert duration == 30.2
 
 
+@pytest.mark.filterwarnings("ignore:PySoundFile failed")
 def test_get_samplerate_audioread():
     path = os.path.join("tests", "data", "test2_8000.mkv")
     sr = librosa.get_samplerate(path=path)

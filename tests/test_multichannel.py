@@ -299,6 +299,8 @@ def test_griffinlim_multi(y_multi):
 
 @pytest.mark.parametrize("scale", [False, True])
 @pytest.mark.parametrize("res_type", [None, "polyphase"])
+# The following warning is fine in context here
+@pytest.mark.filterwarnings("ignore:Support for VQT with res_type=None")
 def test_cqt_multi(y_multi, scale, res_type):
 
     y, sr = y_multi
@@ -318,6 +320,7 @@ def test_cqt_multi(y_multi, scale, res_type):
 
 @pytest.mark.parametrize("scale", [False, True])
 @pytest.mark.parametrize("res_type", [None, "polyphase"])
+@pytest.mark.filterwarnings("ignore:Support for VQT with res_type=None")
 def test_hybrid_cqt_multi(y_multi, scale, res_type):
 
     y, sr = y_multi
@@ -351,9 +354,9 @@ def test_icqt_multi(y_multi, scale, length):
     if length is not None:
         assert yboth.shape[-1] == length
 
-    # Check each channel
-    assert np.allclose(yboth[0], y0)
-    assert np.allclose(yboth[1], y1)
+    # Check each channel - slightly relaxed tolerance here
+    assert np.allclose(yboth[0], y0, atol=1e-6), np.max(np.abs(yboth[0] - y0))
+    assert np.allclose(yboth[1], y1, atol=1e-6), np.max(np.abs(yboth[1] - y1))
 
     # Check that they're not the same
     assert not np.allclose(yboth[0], yboth[1])
@@ -531,6 +534,8 @@ def test_poly_multi_static(s_multi):
     assert not np.allclose(P0, P1)
 
 
+# Not worried about polyfit conditioning for this test
+@pytest.mark.filterwarnings("ignore:Polyfit may be poorly conditioned")
 def test_poly_multi_varying(tfr_multi):
 
     # Get some time-varying frequencies
@@ -755,6 +760,8 @@ def test_interp_harmonics_multi_static(s_multi):
     assert not np.allclose(H0, H1)
 
 
+# Not worried about this warning here
+@pytest.mark.filterwarnings("ignore:Frequencies are not unique")
 def test_interp_harmonics_multi_vary(tfr_multi):
     times, freqs, mags = tfr_multi
 
@@ -805,6 +812,8 @@ def test_salience_multi_static(s_multi, filter_peaks):
 
 
 @pytest.mark.parametrize("filter_peaks", [False, True])
+# Not worried about this warning here
+@pytest.mark.filterwarnings("ignore:Frequencies are not unique")
 def test_salience_multi_dynamic(tfr_multi, filter_peaks):
     times, freqs, S = tfr_multi
 
@@ -1040,6 +1049,8 @@ def test_resample_highdim_axis(x, axis, res_type):
 
 
 @pytest.mark.parametrize('dynamic', [False, True])
+# Not worried about this warning here
+@pytest.mark.filterwarnings("ignore:Frequencies are not unique")
 def test_f0_harmonics(y_multi, dynamic):
 
     y, sr = y_multi

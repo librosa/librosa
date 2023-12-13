@@ -20,6 +20,7 @@ except KeyError:
     pass
 
 from contextlib import nullcontext as dnr
+import warnings
 import glob
 import numpy as np
 import scipy.io
@@ -84,6 +85,7 @@ def test_hz_to_octs(infile):
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "feature-melfb-*.mat"))
 )
+@pytest.mark.filterwarnings("ignore:Empty filters detected")
 def test_melfb(infile):
 
     DATA = load(infile)
@@ -99,7 +101,7 @@ def test_melfb(infile):
 
     # Our version only returns the real-valued part.
     # Pad out.
-    wts = np.pad(wts, [(0, 0), (0, int(DATA["nfft"][0] // 2 - 1))], mode="constant")
+    wts = np.pad(wts, [(0, 0), (0, DATA["nfft"][0, 0] // 2 - 1)], mode="constant")
 
     assert wts.shape == DATA["wts"].shape
     assert np.allclose(wts, DATA["wts"])
@@ -125,7 +127,7 @@ def test_melfbnorm(infile):
         norm=norm,
     )
     # Pad out.
-    wts = np.pad(wts, [(0, 0), (0, int(DATA["nfft"][0] // 2 - 1))], mode="constant")
+    wts = np.pad(wts, [(0, 0), (0, DATA["nfft"][0, 0] // 2 - 1)], mode="constant")
 
     assert wts.shape == DATA["wts"].shape
     assert np.allclose(wts, DATA["wts"])
@@ -191,7 +193,7 @@ def test_chromafb(infile):
 
     # Our version only returns the real-valued part.
     # Pad out.
-    wts = np.pad(wts, [(0, 0), (0, int(DATA["nfft"][0, 0] // 2 - 1))], mode="constant")
+    wts = np.pad(wts, [(0, 0), (0, DATA["nfft"][0, 0] // 2 - 1)], mode="constant")
 
     assert wts.shape == DATA["wts"].shape
     assert np.allclose(wts, DATA["wts"])
@@ -257,15 +259,16 @@ def test__window(n, window_name):
 @pytest.mark.parametrize("pad_fft", [False, True])
 def test_constant_q(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, norm):
 
-    F, lengths = librosa.filters.constant_q(
-        sr=sr,
-        fmin=fmin,
-        n_bins=n_bins,
-        bins_per_octave=bins_per_octave,
-        filter_scale=filter_scale,
-        pad_fft=pad_fft,
-        norm=norm,
-    )
+    with pytest.warns(FutureWarning, match="Deprecated"):
+        F, lengths = librosa.filters.constant_q(
+            sr=sr,
+            fmin=fmin,
+            n_bins=n_bins,
+            bins_per_octave=bins_per_octave,
+            filter_scale=filter_scale,
+            pad_fft=pad_fft,
+            norm=norm,
+        )
 
     assert np.all(lengths <= F.shape[1])
 
@@ -359,21 +362,22 @@ def test_wavelet_lengths_noalpha():
     ],
 )
 def test_constant_q_badparams(sr, fmin, n_bins, bins_per_octave, filter_scale, norm):
-    librosa.filters.constant_q(
-        sr=sr,
-        fmin=fmin,
-        n_bins=n_bins,
-        bins_per_octave=bins_per_octave,
-        filter_scale=filter_scale,
-        pad_fft=True,
-        norm=norm,
-    )
+    with pytest.warns(FutureWarning, match="Deprecated"):
+        librosa.filters.constant_q(
+            sr=sr,
+            fmin=fmin,
+            n_bins=n_bins,
+            bins_per_octave=bins_per_octave,
+            filter_scale=filter_scale,
+            pad_fft=True,
+            norm=norm,
+        )
 
 
 def test_window_bandwidth():
 
     hann_bw = librosa.filters.window_bandwidth("hann")
-    hann_scipy_bw = librosa.filters.window_bandwidth(scipy.signal.hann)
+    hann_scipy_bw = librosa.filters.window_bandwidth(scipy.signal.windows.hann)
     assert hann_bw == hann_scipy_bw
 
 
@@ -477,13 +481,13 @@ def test_get_window(window):
 
 def test_get_window_func():
 
-    w1 = librosa.filters.get_window(scipy.signal.boxcar, 32)
+    w1 = librosa.filters.get_window(scipy.signal.windows.boxcar, 32)
     w2 = scipy.signal.get_window("boxcar", 32)
     assert np.allclose(w1, w2)
 
 
 @pytest.mark.parametrize(
-    "pre_win", [scipy.signal.hann(16), list(scipy.signal.hann(16)), [1, 1, 1]]
+    "pre_win", [scipy.signal.windows.hann(16), list(scipy.signal.windows.hann(16)), [1, 1, 1]]
 )
 def test_get_window_pre(pre_win):
     win = librosa.filters.get_window(pre_win, len(pre_win))
