@@ -320,6 +320,7 @@ def test_cqt_multi(y_multi, scale, res_type):
 
 @pytest.mark.parametrize("scale", [False, True])
 @pytest.mark.parametrize("res_type", [None, "polyphase"])
+@pytest.mark.filterwarnings("ignore:Support for VQT with res_type=None")
 def test_hybrid_cqt_multi(y_multi, scale, res_type):
 
     y, sr = y_multi
