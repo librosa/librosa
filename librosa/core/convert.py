@@ -600,14 +600,14 @@ def blocks_to_samples(
 
 @overload
 def blocks_to_time(
-    blocks: _IntLike_co, *, block_length: int, hop_length: int, sr: int
+    blocks: _IntLike_co, *, block_length: int, hop_length: int, sr: float
 ) -> np.floating[Any]:
     ...
 
 
 @overload
 def blocks_to_time(
-    blocks: _SequenceLike[_IntLike_co], *, block_length: int, hop_length: int, sr: int
+    blocks: _SequenceLike[_IntLike_co], *, block_length: int, hop_length: int, sr: float
 ) -> np.ndarray:
     ...
 
@@ -618,7 +618,7 @@ def blocks_to_time(
     *,
     block_length: int,
     hop_length: int,
-    sr: int,
+    sr: float,
 ) -> Union[np.floating[Any], np.ndarray]:
     ...
 
@@ -628,7 +628,7 @@ def blocks_to_time(
     *,
     block_length: int,
     hop_length: int,
-    sr: int,
+    sr: float,
 ) -> Union[np.floating[Any], np.ndarray]:
     """Convert block indices to time (in seconds)
 
