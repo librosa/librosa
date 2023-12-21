@@ -9,8 +9,8 @@ Glossary
         corresponds to amplitude of the waveform at sample `t`.
     
     sampling rate
-        The (positive integer) number of samples per second of a time series.  
-        This is denoted by an integer variable `sr`.
+        The number of samples per second of a time series.  
+        This is denoted by a positive number `sr`.
 
     frame
         A short slice of a :term:`time series` used for analysis purposes.  This

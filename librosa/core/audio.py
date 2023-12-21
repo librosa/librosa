@@ -63,7 +63,7 @@ def load(
     duration: Optional[float] = None,
     dtype: DTypeLike = np.float32,
     res_type: str = "soxr_hq",
-) -> Tuple[np.ndarray, float]:
+) -> Tuple[np.ndarray, Union[int, float]]:
     """Load an audio file as a floating point time series.
 
     Audio will be automatically resampled to the given rate
