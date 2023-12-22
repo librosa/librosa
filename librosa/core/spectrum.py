@@ -1944,7 +1944,8 @@ def amplitude_to_db(
     out_array = magnitude if isinstance(magnitude, np.ndarray) else None
     power = np.square(magnitude, out=out_array)
 
-    return power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db)
+    db: np.ndarray = power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db)
+    return db
 
 
 @cache(level=30)
