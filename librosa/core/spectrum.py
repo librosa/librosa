@@ -1821,9 +1821,33 @@ def power_to_db(
     return log_spec
 
 
+@overload
+def db_to_power(
+    S_db: np.floating[Any],
+    *,
+    ref: float = ...,
+) -> np.floating[Any]:
+    ...
+
+@overload
+def db_to_power(
+        S_db: np.ndarray,
+    *,
+    ref: float = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def db_to_power(
+    S_db: Union[np.floating[Any], np.ndarray],
+    *,
+    ref: float = ...,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
 @cache(level=30)
-def db_to_power(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
-    """Convert a dB-scale spectrogram to a power spectrogram.
+def db_to_power(S_db: Union[np.floating[Any], np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
+    """Convert dB-scale values to a power values.
 
     This effectively inverts ``power_to_db``::
 
@@ -1832,20 +1856,20 @@ def db_to_power(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
     Parameters
     ----------
     S_db : np.ndarray
-        dB-scaled spectrogram
+        dB-scaled values
     ref : number > 0
         Reference power: output will be scaled by this value
 
     Returns
     -------
     S : np.ndarray
-        Power spectrogram
+        Power values
 
     Notes
     -----
     This function caches at level 30.
     """
-    return ref * np.power(10.0, 0.1 * S_db)
+    return ref * np.power(10.0, S_db * 0.1)
 
 
 @overload
@@ -1948,8 +1972,32 @@ def amplitude_to_db(
     return db
 
 
+@overload
+def db_to_amplitude(
+    S_db: np.floating[Any],
+    *,
+    ref: float = ...,
+) -> np.floating[Any]:
+    ...
+
+@overload
+def db_to_amplitude(
+    S_db: np.ndarray,
+    *,
+    ref: float = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def db_to_amplitude(
+    S_db: Union[np.floating[Any], np.ndarray],
+    *,
+    ref: float = ...,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
 @cache(level=30)
-def db_to_amplitude(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
+def db_to_amplitude(S_db: Union[np.floating[Any], np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
@@ -1959,14 +2007,14 @@ def db_to_amplitude(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
     Parameters
     ----------
     S_db : np.ndarray
-        dB-scaled spectrogram
+        dB-scaled values
     ref : number > 0
-        Optional reference power.
+        Optional reference amplitude.
 
     Returns
     -------
     S : np.ndarray
-        Linear magnitude spectrogram
+        Linear magnitude values
 
     Notes
     -----
