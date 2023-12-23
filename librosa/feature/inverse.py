@@ -276,7 +276,8 @@ def mfcc_to_mel(
         raise ParameterError("MFCC to mel lifter must be a non-negative number.")
 
     logmel = scipy.fftpack.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
-    return db_to_power(logmel, ref=ref)
+    melspec: np.ndarray = db_to_power(logmel, ref=ref)
+    return melspec
 
 
 def mfcc_to_audio(
