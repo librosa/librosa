@@ -29,7 +29,8 @@ from .._typing import (
     _PadModeSTFT,
     _SequenceLike,
     _ScalarOrSequence,
-    _ComplexLike_co
+    _ComplexLike_co,
+    _FloatLike_co
 )
 
 __all__ = [
@@ -1823,7 +1824,7 @@ def power_to_db(
 
 @overload
 def db_to_power(
-    S_db: np.floating[Any],
+    S_db: _FloatLike_co,
     *,
     ref: float = ...,
 ) -> np.floating[Any]:
@@ -1839,14 +1840,14 @@ def db_to_power(
 
 @overload
 def db_to_power(
-    S_db: Union[np.floating[Any], np.ndarray],
+    S_db: Union[_FloatLike_co, np.ndarray],
     *,
     ref: float = ...,
 ) -> Union[np.floating[Any], np.ndarray]:
     ...
 
 @cache(level=30)
-def db_to_power(S_db: Union[np.floating[Any], np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
+def db_to_power(S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
     """Convert dB-scale values to a power values.
 
     This effectively inverts ``power_to_db``::
@@ -1974,7 +1975,7 @@ def amplitude_to_db(
 
 @overload
 def db_to_amplitude(
-    S_db: np.floating[Any],
+    S_db: _FloatLike_co,
     *,
     ref: float = ...,
 ) -> np.floating[Any]:
@@ -1990,14 +1991,14 @@ def db_to_amplitude(
 
 @overload
 def db_to_amplitude(
-    S_db: Union[np.floating[Any], np.ndarray],
+    S_db: Union[_FloatLike_co, np.ndarray],
     *,
     ref: float = ...,
 ) -> Union[np.floating[Any], np.ndarray]:
     ...
 
 @cache(level=30)
-def db_to_amplitude(S_db: Union[np.floating[Any], np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
+def db_to_amplitude(S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
