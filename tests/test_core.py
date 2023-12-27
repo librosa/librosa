@@ -1462,6 +1462,26 @@ def test_amplitude_to_db_complex():
     assert np.allclose(db1, db2)
 
 
+def test_amplitude_to_db_scalar():
+    assert np.isclose(librosa.amplitude_to_db(1), 0)
+    assert np.isclose(librosa.amplitude_to_db(2), 6.0206)
+
+
+def test_power_to_db_scalar():
+    assert np.isclose(librosa.power_to_db(1), 0)
+    assert np.isclose(librosa.power_to_db(2), 3.0103)
+
+
+def test_db_to_amplitude_scalar():
+    assert np.isclose(librosa.db_to_amplitude(0), 1)
+    assert np.isclose(librosa.db_to_amplitude(6.0206), 2)
+
+
+def test_db_to_power_scalar():
+    assert np.isclose(librosa.db_to_power(0), 1)
+    assert np.isclose(librosa.db_to_power(3.0103), 2)
+
+
 @pytest.mark.parametrize("ref_p", range(-3, 4))
 @pytest.mark.parametrize("xp", [(np.abs(np.random.randn(1000)) + 1e-5) ** 2])
 def test_db_to_power_inv(ref_p, xp):

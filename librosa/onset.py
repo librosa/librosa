@@ -560,6 +560,9 @@ def onset_strength_multi(
         # Convert to dBs
         S = core.power_to_db(S)
 
+    # Assertion to make type checking happy
+    assert S is not None
+
     # Ensure that S is at least 2-d
     S = np.atleast_2d(S)
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Utilities for spectral processing"""
+from __future__ import annotations
 import warnings
 
 import numpy as np
@@ -22,7 +23,15 @@ from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
 from typing import Any, Callable, Optional, Tuple, List, Union, overload
 from typing_extensions import Literal
-from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
+from .._typing import (
+    _WindowSpec,
+    _PadMode,
+    _PadModeSTFT,
+    _SequenceLike,
+    _ScalarOrSequence,
+    _ComplexLike_co,
+    _FloatLike_co
+)
 
 __all__ = [
     "stft",
@@ -1655,14 +1664,44 @@ def iirt(
     return bands_power
 
 
+@overload
+def power_to_db(
+    S: _ComplexLike_co,
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> np.floating[Any]:
+    ...
+
+@overload
+def power_to_db(
+    S: _SequenceLike[_ComplexLike_co],
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def power_to_db(
+    S: _ScalarOrSequence[_ComplexLike_co],
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
 @cache(level=30)
 def power_to_db(
-    S: np.ndarray,
+    S: _ScalarOrSequence[_ComplexLike_co],
     *,
     ref: Union[float, Callable] = 1.0,
     amin: float = 1e-10,
     top_db: Optional[float] = 80.0,
-) -> np.ndarray:
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
     This computes the scaling ``10 * log10(S / ref)`` in a numerically
@@ -1783,9 +1822,33 @@ def power_to_db(
     return log_spec
 
 
+@overload
+def db_to_power(
+    S_db: _FloatLike_co,
+    *,
+    ref: float = ...,
+) -> np.floating[Any]:
+    ...
+
+@overload
+def db_to_power(
+        S_db: np.ndarray,
+    *,
+    ref: float = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def db_to_power(
+    S_db: Union[_FloatLike_co, np.ndarray],
+    *,
+    ref: float = ...,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
+
 @cache(level=30)
-def db_to_power(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
-    """Convert a dB-scale spectrogram to a power spectrogram.
+def db_to_power(S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
+    """Convert dB-scale values to a power values.
 
     This effectively inverts ``power_to_db``::
 
@@ -1794,30 +1857,60 @@ def db_to_power(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
     Parameters
     ----------
     S_db : np.ndarray
-        dB-scaled spectrogram
+        dB-scaled values
     ref : number > 0
         Reference power: output will be scaled by this value
 
     Returns
     -------
     S : np.ndarray
-        Power spectrogram
+        Power values
 
     Notes
     -----
     This function caches at level 30.
     """
-    return ref * np.power(10.0, 0.1 * S_db)
+    return ref * np.power(10.0, S_db * 0.1)
 
+
+@overload
+def amplitude_to_db(
+    S: _ComplexLike_co,
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> np.floating[Any]:
+    ...
+
+@overload
+def amplitude_to_db(
+    S: _SequenceLike[_ComplexLike_co],
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def amplitude_to_db(
+    S: _ScalarOrSequence[_ComplexLike_co],
+    *,
+    ref: Union[float, Callable] = ...,
+    amin: float = ...,
+    top_db: Optional[float] = ...,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
 
 @cache(level=30)
 def amplitude_to_db(
-    S: np.ndarray,
+    S: _ScalarOrSequence[_ComplexLike_co],
     *,
     ref: Union[float, Callable] = 1.0,
     amin: float = 1e-5,
     top_db: Optional[float] = 80.0,
-) -> np.ndarray:
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
     This is equivalent to ``power_to_db(S**2, ref=ref**2, amin=amin**2, top_db=top_db)``,
@@ -1873,13 +1966,39 @@ def amplitude_to_db(
     else:
         ref_value = np.abs(ref)
 
-    power = np.square(magnitude, out=magnitude)
+    out_array = magnitude if isinstance(magnitude, np.ndarray) else None
+    power = np.square(magnitude, out=out_array)
 
-    return power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db)
+    db: np.ndarray = power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db)
+    return db
 
+
+@overload
+def db_to_amplitude(
+    S_db: _FloatLike_co,
+    *,
+    ref: float = ...,
+) -> np.floating[Any]:
+    ...
+
+@overload
+def db_to_amplitude(
+    S_db: np.ndarray,
+    *,
+    ref: float = ...,
+) -> np.ndarray:
+    ...
+
+@overload
+def db_to_amplitude(
+    S_db: Union[_FloatLike_co, np.ndarray],
+    *,
+    ref: float = ...,
+) -> Union[np.floating[Any], np.ndarray]:
+    ...
 
 @cache(level=30)
-def db_to_amplitude(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
+def db_to_amplitude(S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
@@ -1889,14 +2008,14 @@ def db_to_amplitude(S_db: np.ndarray, *, ref: float = 1.0) -> np.ndarray:
     Parameters
     ----------
     S_db : np.ndarray
-        dB-scaled spectrogram
+        dB-scaled values
     ref : number > 0
-        Optional reference power.
+        Optional reference amplitude.
 
     Returns
     -------
     S : np.ndarray
-        Linear magnitude spectrogram
+        Linear magnitude values
 
     Notes
     -----
