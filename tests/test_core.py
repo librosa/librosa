@@ -2660,6 +2660,6 @@ def test_phase_vocoder_noop(y_22050):
 
     # Test no-op at full precision
     D = librosa.stft(y_22050, dtype=np.complex128)
-    Dout = librosa.phase_vocoder(D, rate=1)
-    assert np.allclose(D, Dout)
-    assert D is not Dout
+    D_out = librosa.phase_vocoder(D, rate=1)
+    assert np.allclose(D, D_out)
+    assert D is not D_out
