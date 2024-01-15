@@ -1392,13 +1392,13 @@ def phase_vocoder(
     >>> # Play at double speed
     >>> y, sr   = librosa.load(librosa.ex('trumpet'))
     >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
-    >>> D_fast  = librosa.phase_vocoder(D, rate=2.0, hop_length=512)
+    >>> D_fast  = librosa.phase_vocoder(D, rate=2.0)
     >>> y_fast  = librosa.istft(D_fast, hop_length=512)
 
     >>> # Or play at 1/3 speed
     >>> y, sr   = librosa.load(librosa.ex('trumpet'))
     >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
-    >>> D_slow  = librosa.phase_vocoder(D, rate=1./3, hop_length=512)
+    >>> D_slow  = librosa.phase_vocoder(D, rate=1./3)
     >>> y_slow  = librosa.istft(D_slow, hop_length=512)
 
     Parameters
@@ -1414,16 +1414,22 @@ def phase_vocoder(
         Default is linear interpolation.
         See `scipy.interpolation.interp1d` for supported modes.
 
-    hop_length : int > 0 [scalar] or None
+    hop_length : Deprecated; int > 0 [scalar] or None
         The number of samples between successive columns of ``D``.
 
         If None, defaults to ``n_fft//4 = (D.shape[0]-1)//2``
 
-    n_fft : int > 0 or None
+        .. warning:: This parameter is deprecated as of 0.10.2 and will
+            be removed in 1.0.  This parameter is now ignored.
+
+    n_fft : Deprecated; int > 0 or None
         The number of samples per frame in D.
         By default (None), this will be inferred from the shape of D.
         However, if D was constructed using an odd-length window, the correct
         frame length can be specified here.
+
+        .. warning:: This parameter is deprecated as of 0.10.2 and will
+            be removed in 1.0.  This parameter is now ignored.
 
     Returns
     -------
