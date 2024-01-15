@@ -2654,3 +2654,12 @@ def test_f0_harmonics_incompat():
     harmonics = np.arange(1, 3)
 
     librosa.f0_harmonics(data, freqs=freqs, harmonics=harmonics, f0=f0)
+
+
+def test_phase_vocoder_noop(y_22050):
+
+    # Test no-op at full precision
+    D = librosa.stft(y_22050, dtype=np.complex128)
+    Dout = librosa.phase_vocoder(D, rate=1)
+    assert np.allclose(D, Dout)
+    assert D is not Dout

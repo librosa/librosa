@@ -20,6 +20,7 @@ from .. import util
 from ..util.exceptions import ParameterError
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
+from ..util.deprecation import Deprecated
 from numpy.typing import DTypeLike
 from typing import Any, Callable, Optional, Tuple, List, Union, overload
 from typing_extensions import Literal
@@ -1366,8 +1367,9 @@ def phase_vocoder(
     D: np.ndarray,
     *,
     rate: float,
-    hop_length: Optional[int] = None,
-    n_fft: Optional[int] = None,
+    hop_length: Optional[Union[int, Deprecated]] = Deprecated(),
+    n_fft: Optional[Union[int, Deprecated]] = Deprecated(),
+    kind: str = 'linear',
 ) -> np.ndarray:
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
 
@@ -1407,6 +1409,11 @@ def phase_vocoder(
     rate : float > 0 [scalar]
         Speed-up factor: ``rate > 1`` is faster, ``rate < 1`` is slower.
 
+    kind : str
+        Interpolation mode for magnitude estimation.
+        Default is linear interpolation.
+        See `scipy.interpolation.interp1d` for supported modes.
+
     hop_length : int > 0 [scalar] or None
         The number of samples between successive columns of ``D``.
 
@@ -1426,52 +1433,37 @@ def phase_vocoder(
     See Also
     --------
     pyrubberband
+    scipy.interpolate.interp1d
     """
-    if n_fft is None:
-        n_fft = 2 * (D.shape[-2] - 1)
+    time_in = np.arange(0, D.shape[-1], 1)
 
-    if hop_length is None:
-        hop_length = int(n_fft // 4)
+    # Build the interpolator for magnitudes
+    fmag = scipy.interpolate.interp1d(time_in,
+                                      np.abs(D),
+                                      fill_value='extrapolate',
+                                      kind=kind,
+                                      copy=False,
+                                      assume_sorted=True,
+                                      axis=-1)
 
-    time_steps = np.arange(0, D.shape[-1], rate, dtype=np.float64)
+    # Compute the output time grid
+    time_out = np.arange(0, D.shape[-1], rate)
 
-    # Create an empty output array
-    shape = list(D.shape)
-    shape[-1] = len(time_steps)
-    d_stretch = np.zeros_like(D, shape=shape)
+    
+    # Compute the unwrapped phase differentials
+    angles_in = np.angle(D)
+    phase_diff = np.diff(np.unwrap(angles_in, axis=-1), axis=-1, prepend=0)
 
-    # Expected phase advance in each bin
-    phi_advance = np.linspace(0, np.pi * hop_length, D.shape[-2])
+    # For each output frame, we'll estimate the phase advance by looking up
+    # the phase advance from the subsequent input frame
+    lookup = np.ceil(time_out)
 
-    # Phase accumulator; initialize to the first sample
-    phase_acc = np.angle(D[..., 0])
-
-    # Pad 0 columns to simplify boundary logic
-    padding = [(0, 0) for _ in D.shape]
-    padding[-1] = (0, 2)
-    D = np.pad(D, padding, mode="constant")
-
-    for t, step in enumerate(time_steps):
-        columns = D[..., int(step) : int(step + 2)]
-
-        # Weighting for linear magnitude interpolation
-        alpha = np.mod(step, 1.0)
-        mag = (1.0 - alpha) * np.abs(columns[..., 0]) + alpha * np.abs(columns[..., 1])
-
-        # Store to output array
-        d_stretch[..., t] = util.phasor(phase_acc, mag=mag)
-
-        # Compute phase advance
-        dphase = np.angle(columns[..., 1]) - np.angle(columns[..., 0]) - phi_advance
-
-        # Wrap to -pi:pi range
-        dphase = dphase - 2.0 * np.pi * np.round(dphase / (2.0 * np.pi))
-
-        # Accumulate phase
-        phase_acc += phi_advance + dphase
-
-    return d_stretch
-
+    # Compute angle by accumulating phase differential estimates    
+    # clip-mode here to prevent walking off the end of the array
+    angles = np.cumsum(np.take(phase_diff, lookup.astype(int), axis=-1, mode='clip'), axis=-1)
+    
+    return util.phasor(angles=angles, mag=fmag(time_out))
+    
 
 @cache(level=20)
 def iirt(

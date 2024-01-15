@@ -55,6 +55,7 @@ def test_time_stretch(ysr, rate, ctx, n_fft):
         # We don't have to be too precise here, since this goes through an STFT
         assert np.allclose(orig_duration, rate * new_duration, rtol=1e-2, atol=1e-3)
 
+
 def test_time_stretch_multi(y_multi):
     y, sr = y_multi
 
