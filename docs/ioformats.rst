@@ -15,7 +15,7 @@ For a list of codecs supported by `soundfile`, see the *libsndfile* `documentati
 
 .. warning:: audioread support is deprecated as of librosa 0.10.0, and will be removed completely in version 1.0.
 
-.. note:: See installation instruction for PySoundFile `here <https://pysoundfile.readthedocs.io/en/latest/>`_.
+.. note:: See installation instruction for PySoundFile `here <https://python-soundfile.readthedocs.io/en/latest/>`_.
 
 Librosa's load function is meant for the common case where you want to load an entire (fragment of a) recording into memory, but some applications require more flexibility.
 In these cases, we recommend using `soundfile` directly.
@@ -119,7 +119,7 @@ Download and read from URL:
 
 Write out audio files
 ---------------------
-`PySoundFile <https://pysoundfile.readthedocs.io/en/latest/>`_ provides output functionality that can be used directly with numpy array audio buffers:
+`PySoundFile <https://python-soundfile.readthedocs.io/en/latest/>`_ provides output functionality that can be used directly with numpy array audio buffers:
 
 .. code-block:: python
     :linenos:
