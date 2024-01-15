@@ -1441,10 +1441,10 @@ def phase_vocoder(
     pyrubberband
     scipy.interpolate.interp1d
     """
-    time_in = np.arange(0, D.shape[-1], 1)
+    frames_in = np.arange(0, D.shape[-1], 1)
 
     # Build the interpolator for magnitudes
-    fmag = scipy.interpolate.interp1d(time_in,
+    fmag = scipy.interpolate.interp1d(frames_in,
                                       np.abs(D),
                                       fill_value='extrapolate',
                                       kind=kind,
@@ -1453,7 +1453,7 @@ def phase_vocoder(
                                       axis=-1)
 
     # Compute the output time grid
-    time_out = np.arange(0, D.shape[-1], rate)
+    frames_out = np.arange(0, D.shape[-1], rate)
 
     
     # Compute the unwrapped phase differentials
@@ -1462,14 +1462,16 @@ def phase_vocoder(
 
     # For each output frame, we'll estimate the phase advance by looking up
     # the phase advance from the subsequent input frame
-    lookup = np.ceil(time_out)
+    lookup = np.ceil(frames_out)
 
     # Compute angle by accumulating phase differential estimates    
     # clip-mode here to prevent walking off the end of the array
     angles = np.cumsum(np.take(phase_diff, lookup.astype(int), axis=-1, mode='clip'), axis=-1)
     
-    return util.phasor(angles=angles, mag=fmag(time_out))
+    stretched: np.ndarray = util.phasor(angles=angles, mag=fmag(frames_out))
     
+    return stretched
+
 
 @cache(level=20)
 def iirt(
