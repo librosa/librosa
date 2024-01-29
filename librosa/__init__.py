@@ -62,15 +62,6 @@ Spectral representations
     magphase
 
 
-Phase recovery
---------------
-.. autosummary::
-    :toctree: generated/
-
-    griffinlim
-    griffinlim_cqt
-
-
 Harmonics
 ---------
 .. autosummary::
