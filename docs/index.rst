@@ -40,6 +40,7 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
     :caption: API documentation
     :maxdepth: 1
 
+    spectral_representation
     magnitude_scaling
     phase_recovery
     core

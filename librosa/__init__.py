@@ -39,29 +39,6 @@ Signal generation
     chirp
 
 
-Spectral representations
-------------------------
-.. autosummary::
-    :toctree: generated/
-
-    stft
-    istft
-    reassigned_spectrogram
-
-    cqt
-    icqt
-    hybrid_cqt
-    pseudo_cqt
-
-    vqt
-
-    iirt
-
-    fmt
-
-    magphase
-
-
 Harmonics
 ---------
 .. autosummary::
