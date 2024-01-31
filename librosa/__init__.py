@@ -39,18 +39,6 @@ Signal generation
     chirp
 
 
-Harmonics
----------
-.. autosummary::
-    :toctree: generated/
-
-    interp_harmonics
-    salience
-    f0_harmonics
-
-    phase_vocoder
-
-
 Frequency range generation
 --------------------------
 .. autosummary::
