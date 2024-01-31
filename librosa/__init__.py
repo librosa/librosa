@@ -63,19 +63,6 @@ Frequency range generation
     fourier_tempo_frequencies
 
 
-Pitch and tuning
-----------------
-.. autosummary::
-    :toctree: generated/
-
-    pyin
-    yin
-
-    estimate_tuning
-    pitch_tuning
-    piptrack
-
-
 Miscellaneous
 -------------
 .. autosummary::

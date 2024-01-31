@@ -44,6 +44,7 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
     magnitude_scaling
     unit_conversion
     music_notation
+    pitch_and_tuning
     phase_recovery
     core
     display
