@@ -42,6 +42,7 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
 
     spectral_representation
     magnitude_scaling
+    unit_conversion
     phase_recovery
     core
     display
