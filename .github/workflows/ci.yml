@@ -47,13 +47,18 @@ jobs:
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
+                    - os: ubuntu-latest
+                      python-version: "3.12"
+                      channel-priority: "strict"
+                      envfile: ".github/environment-ci.yml"
+
                     - os: macos-latest
-                      python-version: "3.11"
+                      python-version: "3.12"
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
                     - os: windows-latest
-                      python-version: "3.11"
+                      python-version: "3.12"
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
