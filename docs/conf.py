@@ -177,7 +177,7 @@ intersphinx_mapping = {
     "matplotlib": ("https://matplotlib.org/stable/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
     "resampy": ("https://resampy.readthedocs.io/en/stable/", None),
-    "soundfile": ("https://pysoundfile.readthedocs.io/en/latest", None),
+    "soundfile": ("https://python-soundfile.readthedocs.io/en/latest", None),
     "samplerate": ("https://python-samplerate.readthedocs.io/en/latest/", None),
     "pyrubberband": ("https://pyrubberband.readthedocs.io/en/stable/", None),
     "pooch": ("https://www.fatiando.org/pooch/latest/", None),
