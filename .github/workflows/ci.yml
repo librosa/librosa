@@ -106,6 +106,7 @@ jobs:
           run: |
             conda info -a
             conda list
+            python -c "import scipy; scipy.show_config()"
 
         - name: Install librosa
           shell: bash -l {0}
