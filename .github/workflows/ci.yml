@@ -54,7 +54,7 @@ jobs:
 
                     - os: macos-latest
                       python-version: "3.12"
-                      channel-priority: "strict"
+                      channel-priority: "flexible"
                       envfile: ".github/environment-ci.yml"
 
                     - os: windows-latest
