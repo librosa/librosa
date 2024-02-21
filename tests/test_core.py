@@ -1227,7 +1227,10 @@ def test_pyin_multi():
     assert np.allclose(vpall[1], vp1)
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Skip on OSX due to openblas issue")
 def test_pyin_multi_center():
+    # Note: this test has issues on OSX with libopenblas 0.3.26,
+    # so we disable it for now.  We may re-enable it some time in the future.
     y = np.stack([librosa.tone(440, duration=1.0), librosa.tone(560, duration=1.0)])
 
     # Taper the signal
