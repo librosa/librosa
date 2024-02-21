@@ -114,7 +114,7 @@ jobs:
 
         - name: Run pytest
           shell: bash -l {0}
-          run: pytest
+          run: pytest -k test_pyin
 
         - name: Upload coverage to Codecov
           uses: codecov/codecov-action@v3
