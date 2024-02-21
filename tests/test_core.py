@@ -1246,9 +1246,9 @@ def test_pyin_multi_center():
     # ==> match on 2:-2
 
     # Loosening tolerances here to account for platform differences
-    assert np.allclose(fleft, fc[..., 2:-2], equal_nan=True), np.max(np.abs(fleft - fc[..., 2:-2]))
-    assert np.allclose(vleft, vc[..., 2:-2])
     assert np.allclose(vpleft, vpc[..., 2:-2])
+    assert np.allclose(vleft, vc[..., 2:-2])
+    assert np.allclose(fleft, fc[..., 2:-2], equal_nan=True), np.max(np.abs(fleft - fc[..., 2:-2]))
 
 
 def test_pyin_chirp():
