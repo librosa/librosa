@@ -19,6 +19,8 @@ dependencies:
   - msgpack-python>=1.0
   - lazy_loader>=0.1
   - typing_extensions>=4.1.1
+  # Forcing some version pins for debugging
+  - libopenblas==0.3.25
 
   # optional, but required for testing
   - matplotlib>=3.3.0
