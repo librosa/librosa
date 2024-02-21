@@ -13,6 +13,7 @@ try:
 except:
     pass
 
+import sys
 import soundfile
 import audioread.rawread
 import librosa
