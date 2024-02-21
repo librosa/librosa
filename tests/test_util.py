@@ -1036,7 +1036,7 @@ def test_nnls_vector(dtype_A, dtype_B):
     srand()
 
     # Make a random basis
-    A = np.random.randn(5, 7).astype(dtype_A)
+    A = np.random.randn(7, 5).astype(dtype_A)
 
     # Make a random latent vector
     x = np.random.randn(A.shape[1]) ** 2

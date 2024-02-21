@@ -47,13 +47,18 @@ jobs:
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
-                    - os: macos-latest
-                      python-version: "3.11"
+                    - os: ubuntu-latest
+                      python-version: "3.12"
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
+                    - os: macos-latest
+                      python-version: "3.12"
+                      channel-priority: "flexible"
+                      envfile: ".github/environment-ci.yml"
+
                     - os: windows-latest
-                      python-version: "3.11"
+                      python-version: "3.12"
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
@@ -101,6 +106,7 @@ jobs:
           run: |
             conda info -a
             conda list
+            python -c "import scipy; scipy.show_config()"
 
         - name: Install librosa
           shell: bash -l {0}

@@ -115,7 +115,7 @@ librosa (0.x.x, /path/to/librosa)
 If you're using `conda` to install librosa, then audio encoding dependencies will be handled automatically.
 
 If you're using `pip` on a Linux environment, you may need to install `libsndfile`
-manually.  Please refer to the [SoundFile installation documentation](https://pysoundfile.readthedocs.io/#installation) for details.
+manually.  Please refer to the [SoundFile installation documentation](https://python-soundfile.readthedocs.io/#installation) for details.
 
 ### `audioread` and MP3 support
 
