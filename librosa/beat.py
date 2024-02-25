@@ -491,8 +491,7 @@ def __beat_tracker(
 
 
     # Discard spurious trailing beats
-    if trim:
-        beats = __trim_beats(localscore, beats)
+    beats = __trim_beats(localscore, beats, trim)
 
     return beats
 
@@ -593,13 +592,13 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
 
 @numba.guvectorize(
     [
-        "void(float32[:], bool_[:], bool_[:])",
-        "void(float64[:], bool_[:], bool_[:])"
+        "void(float32[:], bool_[:], bool_, bool_[:])",
+        "void(float64[:], bool_[:], bool_, bool_[:])"
         ],
-    "(t),(t)->(t)",
+    "(t),(t),()->(t)",
     nopython=True, cache=True
     )
-def __trim_beats(localscore, beats, beats_trimmed):
+def __trim_beats(localscore, beats, trim, beats_trimmed):
     """Remove spurious leading and trailing beats from the detection array"""
     # Populate the trimmed beats array with the existing values
     beats_trimmed[:] = beats
@@ -610,7 +609,10 @@ def __trim_beats(localscore, beats, beats_trimmed):
     # mode='same' is not yet supported
     smooth_boe = np.convolve(localscore[beats], w)[len(w)//2:len(localscore)+len(w)//2]
 
-    threshold = 0.5 * ((smooth_boe**2).mean()**0.5)
+    if trim:
+        threshold = 0.5 * ((smooth_boe**2).mean()**0.5)
+    else:
+        threshold = 0.0
 
     # Suppress bad beats
     n = 0
