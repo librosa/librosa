@@ -69,7 +69,7 @@ def beat_track(
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
-    onset_envelope : np.ndarray [shape=(..., n)] or None
+    onset_envelope : np.ndarray [shape=(..., m)] or None
         (optional) pre-computed onset strength envelope.
 
     hop_length : int > 0 [scalar]
@@ -88,7 +88,11 @@ def beat_track(
         (optional) If provided, use ``bpm`` as the tempo instead of
         estimating it from ``onsets``.
 
-        If multichannel, a bpm estimate should be provided for each channel.
+        If multichannel, tempo estimates can be provided for all channels.
+
+        Tempo estimates may also be time-varying, in which case the shape
+        of ``bpm`` should match that of ``onset_envelope``, i.e.,
+        one estimate provided for each frame.
 
     prior : scipy.stats.rv_continuous [optional]
         An optional prior distribution over tempo.
@@ -103,7 +107,7 @@ def beat_track(
         samples, or time indices (as specified by ``units=``).
 
         If ``False``, detections are encoded as a dense boolean array where
-        ``beats[n]`` is true if there's a beat at frame index ``n``.
+        ``beats[..., n]`` is true if there's a beat at frame index ``n``.
 
         .. note:: multi-channel input is only supported when ``sparse=False``.
 
@@ -112,7 +116,7 @@ def beat_track(
     tempo : float [scalar, non-negative] or np.ndarray
         estimated global tempo (in beats per minute)
 
-        If multi-channel and `bpm` is not provided, a separate
+        If multi-channel and ``bpm`` is not provided, a separate
         tempo will be returned for each channel
     beats : np.ndarray
         estimated beat event locations.
@@ -510,11 +514,16 @@ def __normalize_onsets(onsets):
         "(t),(n)->(t)",
         nopython=True, cache=False)
 def __beat_local_score(onset_envelope, frames_per_beat, localscore):
+    # This function essentially implements a same-mode convolution,
+    # but also allows for a time-varying convolution-like filter to support dynamic tempo.
+
 
     N = len(onset_envelope)
     
     if len(frames_per_beat) == 1:
         # Static tempo mode
+        # NOTE: when we can bump the minimum numba to 0.58, we can eliminate this branch and just use
+        # np.convolve(..., mode='same') directly
         window = np.exp(-0.5 * (np.arange(-frames_per_beat[0], frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2)
         K = len(window)
         # This is a vanilla same-mode convolution
@@ -563,8 +572,8 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
         best_score = - np.inf
         beat_location = -1
         # Search over all possible predecessors to find the best preceding beat
-        # NOTE: if we wanted to provide time-varying tempo estimates, we can do that by replacing
-        # frames_per_beat by frames_per_beat[i] in this loop body
+        # NOTE: to provide time-varying tempo estimates, we replace
+        # frames_per_beat[0] by frames_per_beat[i] in this loop body.
         for loc in range(i - np.round(frames_per_beat[tv * i] / 2), i - 2 * frames_per_beat[tv * i] - 1, - 1):
             # Once we're searching past the start, break out
             if loc < 0:
@@ -608,6 +617,7 @@ def __trim_beats(localscore, beats, trim, beats_trimmed):
     # mode='same' is not yet supported
     smooth_boe = np.convolve(localscore[beats], w)[len(w)//2:len(localscore)+len(w)//2]
 
+    # This logic is to preserve old behavior and always discard beats detected with oenv==0
     if trim:
         threshold = 0.5 * ((smooth_boe**2).mean()**0.5)
     else:
