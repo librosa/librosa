@@ -489,9 +489,8 @@ def __beat_tracker(
     beats = np.zeros_like(onset_envelope, dtype=bool)
     __dp_backtrack(backlink, tail, beats)
 
-
     # Discard spurious trailing beats
-    beats = __trim_beats(localscore, beats, trim)
+    beats: np.ndarray = __trim_beats(localscore, beats, trim)
 
     return beats
 
