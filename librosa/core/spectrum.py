@@ -1441,7 +1441,7 @@ def phase_vocoder(
     d_stretch = np.zeros_like(D, shape=shape)
 
     # Expected phase advance in each bin per frame
-    phi_advance = hop_length * fft_frequencies(sr=2 * np.pi, n_fft=n_fft)
+    phi_advance = hop_length * convert.fft_frequencies(sr=2 * np.pi, n_fft=n_fft)
 
     # Phase accumulator; initialize to the first sample
     phase_acc = np.angle(D[..., 0])
