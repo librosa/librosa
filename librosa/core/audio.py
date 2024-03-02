@@ -10,6 +10,7 @@ import warnings
 import soundfile as sf
 import audioread
 import numpy as np
+import scipy
 import scipy.signal
 import soxr
 import lazy_loader as lazy
@@ -914,22 +915,27 @@ def autocorrelate(
 
     fft = get_fftlib()
 
-    # Pad out the signal to support full-length auto-correlation.
-    n_pad = 2 * y.shape[axis] - 1
+    real = not np.iscomplexobj(y)
 
-    if np.iscomplexobj(y):
+    # Pad out the signal to support full-length auto-correlation
+    if hasattr(scipy.fft, "next_fast_len"):
+        n_pad = scipy.fft.next_fast_len(2 * y.shape[axis] - 1, real=real)
+    else:
+        # TODO: Bump to scipy>=1.4.0 and remove this branch
+        n_pad = scipy.fftpack.next_fast_len(2 * y.shape[axis] - 1)
+
+    if real:
+        # Compute the power spectrum along the chosen axis
+        powspec = util.abs2(fft.rfft(y, n=n_pad, axis=axis))
+
+        # Convert back to time domain
+        autocorr = fft.irfft(powspec, n=n_pad, axis=axis)
+    else:
         # Compute the power spectrum along the chosen axis
         powspec = util.abs2(fft.fft(y, n=n_pad, axis=axis))
 
         # Convert back to time domain
         autocorr = fft.ifft(powspec, n=n_pad, axis=axis)
-    else:
-        # Compute the power spectrum along the chosen axis
-        # Pad out the signal to support full-length auto-correlation.
-        powspec = util.abs2(fft.rfft(y, n=n_pad, axis=axis))
-
-        # Convert back to time domain
-        autocorr = fft.irfft(powspec, n=n_pad, axis=axis)
 
     # Slice down to max_size
     subslice = [slice(None)] * autocorr.ndim
