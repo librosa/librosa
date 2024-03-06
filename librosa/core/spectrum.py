@@ -36,6 +36,7 @@ from .._typing import (
 __all__ = [
     "stft",
     "istft",
+    "cqa",
     "magphase",
     "iirt",
     "reassigned_spectrogram",
@@ -1291,6 +1292,344 @@ def reassigned_spectrogram(
         times = np.broadcast_to(frame_times[np.newaxis, :], S.shape)
 
     return freqs, times, mags
+
+
+@cache(level=20)
+def cqa(
+    y: np.ndarray,
+    *,
+    n_fft: int = 2048,
+    n: int = 1025,
+    base: float = 2,
+    bins: int = 144,
+    hop_length: Optional[int] = None,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    dtype: Optional[DTypeLike] = None,
+    pad_mode: _PadModeSTFT = "constant",
+    out: Optional[np.ndarray] = None,
+) -> np.ndarray:
+    """Conduct the constant-Q analysis of an audio signal.
+
+    This implementation is based on the method described in [#]_.
+
+    .. [#] Shih-Kuang Lee, “Arbitrary Discrete Fourier Analysis
+        and Its Application in Replayed Speech Detection,”
+        arXiv preprint arXiv:2403.01130, 2024.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)], real-valued
+        input signal. Multi-channel is supported.
+
+    n_fft : int > 0 [scalar]
+        length of the windowed signal after padding with zeros.
+        The number of rows in the STFT matrix ``D`` is ``(1 + n_fft/2)``.
+        The default value, ``n_fft=2048`` samples, corresponds to a physical
+        duration of 93 milliseconds at a sample rate of 22050 Hz, i.e. the
+        default sample rate in librosa. This value is well adapted for music
+        signals. However, in speech processing, the recommended value is 512,
+        corresponding to 23 milliseconds at a sample rate of 22050 Hz.
+        In any case, we recommend setting ``n_fft`` to a power of two for
+        optimizing the speed of the fast Fourier transform (FFT) algorithm.
+
+    n : int > 0 [scalar]
+        Number of the frequency components in spectrum.
+
+    base : float > 0 [scalar]
+        When base=2, bins is the number of bins per octave.
+
+    bins : int > 0 [scalar]
+        When base=2, bins is the number of bins per octave.
+
+    hop_length : int > 0 [scalar]
+        number of audio samples between adjacent STFT columns.
+
+        Smaller values increase the number of columns in ``D`` without
+        affecting the frequency resolution of the STFT.
+
+        If unspecified, defaults to ``win_length // 4`` (see below).
+
+    win_length : int <= n_fft [scalar]
+        Each frame of audio is windowed by ``window`` of length ``win_length``
+        and then padded with zeros to match ``n_fft``.  Padding is added on
+        both the left- and the right-side of the window so that the window
+        is centered within the frame.
+
+        Smaller values improve the temporal resolution of the STFT (i.e. the
+        ability to discriminate impulses that are closely spaced in time)
+        at the expense of frequency resolution (i.e. the ability to discriminate
+        pure tones that are closely spaced in frequency). This effect is known
+        as the time-frequency localization trade-off and needs to be adjusted
+        according to the properties of the input signal ``y``.
+
+        If unspecified, defaults to ``win_length = n_fft``.
+
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        Either:
+
+        - a window specification (string, tuple, or number);
+          see `scipy.signal.get_window`
+        - a window function, such as `scipy.signal.windows.hann`
+        - a vector or array of length ``n_fft``
+
+        Defaults to a raised cosine window (`'hann'`), which is adequate for
+        most applications in audio signal processing.
+
+        .. see also:: `filters.get_window`
+
+    center : boolean
+        If ``True``, the signal ``y`` is padded so that frame
+        ``D[:, t]`` is centered at ``y[t * hop_length]``.
+
+        If ``False``, then ``D[:, t]`` begins at ``y[t * hop_length]``.
+
+        Defaults to ``True``,  which simplifies the alignment of ``D`` onto a
+        time grid by means of `librosa.frames_to_samples`.
+        Note, however, that ``center`` must be set to `False` when analyzing
+        signals with `librosa.stream`.
+
+        .. see also:: `librosa.stream`
+
+    dtype : np.dtype, optional
+        Complex numeric type for ``D``.  Default is inferred to match the
+        precision of the input signal.
+
+    pad_mode : string or function
+        If ``center=True``, this argument is passed to `np.pad` for padding
+        the edges of the signal ``y``. By default (``pad_mode="constant"``),
+        ``y`` is padded on both sides with zeros.
+
+        .. note:: Not all padding modes supported by `numpy.pad` are supported here.
+            `wrap`, `mean`, `maximum`, `median`, and `minimum` are not supported.
+
+            Other modes that depend at most on input values at the edges of the
+            signal (e.g., `constant`, `edge`, `linear_ramp`) are supported.
+
+        If ``center=False``,  this argument is ignored.
+
+        .. see also:: `numpy.pad`
+
+    out : np.ndarray or None
+        A pre-allocated, complex-valued array to store the STFT results.
+        This must be of compatible shape and dtype for the given input parameters.
+
+        If `out` is larger than necessary for the provided input signal, then only
+        a prefix slice of `out` will be used.
+
+        If not provided, a new array is allocated and returned.
+
+    Returns
+    -------
+    D : np.ndarray [shape=(..., 1 + n_fft/2, n_frames), dtype=dtype]
+        Complex-valued matrix of constant Q short-term Fourier
+        transform coefficients.
+
+        If a pre-allocated `out` array is provided, then `D` will be
+        a reference to `out`.
+
+        If `out` is larger than necessary, then `D` will be a sliced
+        view: `D = out[..., :n_frames]`.
+
+    See Also
+    --------
+    cqt
+
+    Notes
+    -----
+    This function caches at level 20.
+
+    Examples
+    --------
+    >>> import librosa
+    >>> import numpy as np
+    >>> np.set_printoptions(threshold=3)
+    >>> np.set_printoptions(edgeitems=2)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> S = np.abs(librosa.cqa(y))
+    >>> S
+    array([[9.466e-03, 5.419e-03, ..., 8.829e-08, 1.278e-06],
+           [9.723e-03, 5.608e-03, ..., 8.740e-08, 1.278e-06],
+           ...,
+           [7.382e-04, 3.662e-04, ..., 6.234e-04, 4.811e-04],
+           [7.416e-04, 3.700e-04, ..., 5.109e-04, 9.598e-04]], dtype=float32)
+
+    Display a constant Q spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>>                                bins_per_octave=144,
+    >>>                                sr=sr, x_axis='time', y_axis='cqt_note', ax=ax)
+    >>> ax.set_title('Constant Q power spectrogram')
+    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    """
+    # By default, use the entire frame
+    if win_length is None:
+        win_length = n_fft
+
+    # Set the default hop, if it's not already specified
+    if hop_length is None:
+        hop_length = int(win_length // 4)
+    elif not util.is_positive_int(hop_length):
+        raise ParameterError(f"hop_length={hop_length} must be a positive integer")
+
+    # Check audio is valid
+    util.valid_audio(y, mono=False)
+
+    fft_window = get_window(window, win_length, fftbins=True)
+
+    # Pad the window out to n_fft size
+    fft_window = util.pad_center(fft_window, size=n_fft)
+
+    # Reshape so that the window can be broadcast
+    fft_window = util.expand_to(fft_window, ndim=1 + y.ndim, axes=-2)
+
+    # Pad the time series so that frames are centered
+    if center:
+        if pad_mode in ("wrap", "maximum", "mean", "median", "minimum"):
+            # Note: padding with a user-provided function "works", but
+            # use at your own risk.
+            # Since we don't pass-through kwargs here, any arguments
+            # to a user-provided pad function should be encapsulated
+            # by using functools.partial:
+            #
+            # >>> my_pad_func = functools.partial(pad_func, foo=x, bar=y)
+            # >>> librosa.stft(..., pad_mode=my_pad_func)
+
+            raise ParameterError(
+                f"pad_mode='{pad_mode}' is not supported by librosa.stft"
+            )
+
+        if n_fft > y.shape[-1]:
+            warnings.warn(
+                f"n_fft={n_fft} is too large for input signal of length={y.shape[-1]}"
+            )
+
+        # Set up the padding array to be empty, and we'll fix the target dimension later
+        padding = [(0, 0) for _ in range(y.ndim)]
+
+        # How many frames depend on left padding?
+        start_k = int(np.ceil(n_fft // 2 / hop_length))
+
+        # What's the first frame that depends on extra right-padding?
+        tail_k = (y.shape[-1] + n_fft // 2 - n_fft) // hop_length + 1
+
+        if tail_k <= start_k:
+            # If tail and head overlap, then just copy-pad the signal and carry on
+            start = 0
+            extra = 0
+            padding[-1] = (n_fft // 2, n_fft // 2)
+            y = np.pad(y, padding, mode=pad_mode)
+        else:
+            # If tail and head do not overlap, then we can implement padding on each part separately
+            # and avoid a full copy-pad
+
+            # "Middle" of the signal starts here, and does not depend on head padding
+            start = start_k * hop_length - n_fft // 2
+            padding[-1] = (n_fft // 2, 0)
+
+            # +1 here is to ensure enough samples to fill the window
+            # fixes bug #1567
+            y_pre = np.pad(
+                y[..., : (start_k - 1) * hop_length - n_fft // 2 + n_fft + 1],
+                padding,
+                mode=pad_mode,
+            )
+            y_frames_pre = util.frame(y_pre, frame_length=n_fft, hop_length=hop_length)
+            # Trim this down to the exact number of frames we should have
+            y_frames_pre = y_frames_pre[..., :start_k]
+
+            # How many extra frames do we have from the head?
+            extra = y_frames_pre.shape[-1]
+
+            # Determine if we have any frames that will fit inside the tail pad
+            if tail_k * hop_length - n_fft // 2 + n_fft <= y.shape[-1] + n_fft // 2:
+                padding[-1] = (0, n_fft // 2)
+                y_post = np.pad(
+                    y[..., (tail_k) * hop_length - n_fft // 2 :], padding, mode=pad_mode
+                )
+                y_frames_post = util.frame(
+                    y_post, frame_length=n_fft, hop_length=hop_length
+                )
+                # How many extra frames do we have from the tail?
+                extra += y_frames_post.shape[-1]
+            else:
+                # In this event, the first frame that touches tail padding would run off
+                # the end of the padded array
+                # We'll circumvent this by allocating an empty frame buffer for the tail
+                # this keeps the subsequent logic simple
+                post_shape = list(y_frames_pre.shape)
+                post_shape[-1] = 0
+                y_frames_post = np.empty_like(y_frames_pre, shape=post_shape)
+    else:
+        if n_fft > y.shape[-1]:
+            raise ParameterError(
+                f"n_fft={n_fft} is too large for uncentered analysis of input signal of length={y.shape[-1]}"
+            )
+
+        # "Middle" of the signal starts at sample 0
+        start = 0
+        # We have no extra frames
+        extra = 0
+
+    # Create constant Q Fourier matrix
+    omegas = np.exp(-1j * np.pi * pow(base, -np.arange(n)/int(bins))[::-1]).reshape(-1, 1)
+    m = omegas ** np.arange(n_fft)
+
+    if dtype is None:
+        dtype = util.dtype_r2c(y.dtype)
+
+    # Window the time series.
+    y_frames = util.frame(y[..., start:], frame_length=n_fft, hop_length=hop_length)
+
+    # Pre-allocate the STFT matrix
+    shape = list(y_frames.shape)
+
+    # This is our frequency dimension
+    shape[-2] = 1 + n_fft // 2
+
+    # If there's padding, there will be extra head and tail frames
+    shape[-1] += extra
+
+    if out is None:
+        cqa_matrix = np.zeros(shape, dtype=dtype, order="F")
+    elif not (np.allclose(out.shape[:-1], shape[:-1]) and out.shape[-1] >= shape[-1]):
+        raise ParameterError(
+            f"Shape mismatch for provided output array out.shape={out.shape} and target shape={shape}"
+        )
+    elif not np.iscomplexobj(out):
+        raise ParameterError(f"output with dtype={out.dtype} is not of complex type")
+    else:
+        if np.allclose(shape, out.shape):
+            cqa_matrix = out
+        else:
+            cqa_matrix = out[..., : shape[-1]]
+
+    # Fill in the warm-up
+    if center and extra > 0:
+        off_start = y_frames_pre.shape[-1]
+        cqa_matrix[..., :off_start] = np.matmul(m, fft_window * y_frames_pre)
+
+        off_end = y_frames_post.shape[-1]
+        if off_end > 0:
+            cqa_matrix[..., -off_end:] = np.matmul(m, fft_window * y_frames_post)
+    else:
+        off_start = 0
+
+    n_columns = int(
+        util.MAX_MEM_BLOCK // (np.prod(y_frames.shape[:-1]) * y_frames.itemsize)
+    )
+    n_columns = max(n_columns, 1)
+
+    for bl_s in range(0, y_frames.shape[-1], n_columns):
+        bl_t = min(bl_s + n_columns, y_frames.shape[-1])
+
+        cqa_matrix[..., bl_s + off_start : bl_t + off_start] = np.matmul(m, 
+            fft_window * y_frames[..., bl_s:bl_t]
+        )
+    return cqa_matrix
 
 
 def magphase(D: np.ndarray, *, power: float = 1) -> Tuple[np.ndarray, np.ndarray]:

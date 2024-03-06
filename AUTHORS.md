@@ -104,6 +104,7 @@ Contributors
 * Shin Hyun <https://github.com/kyaryunha>
 * Iliya S <https://github.com/zenitismus>
 * Eugene Rabinovich <https://github.com/erabinov>
+* Shih-Kuang Lee <https://github.com/shihkuanglee>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
