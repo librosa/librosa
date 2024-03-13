@@ -11,7 +11,7 @@ By default, the beat tracking algorithm [1]_ estimates a single tempo for the en
 signal, though it does tolerate small amounts of fluctuation around that tempo.
 This is well suited for songs that have an approximately constant tempo, but where
 individual beats may not be exactly spaced accordingly.
-It is not well suited for songs that have radical shifts in tempo, eg entire sections
+It is not well suited for songs that have radical shifts in tempo, e.g., entire sections
 that speed up or slow down, or gradual accelerations over long periods of time.
 
 The implementation in librosa (``librosa.beat.beat_track``) extends this algorithm
@@ -19,7 +19,7 @@ to support different tempo estimates at each time point in the signal, as
 demonstrated below.
 
 .. [1] Ellis, Daniel PW. "Beat tracking by dynamic programming."
-       Journal of New Music Research 36.1 (2007): 51-60.
+       Journal of New Music Research 36, no. 1 (2007): 51-60.
        http://labrosa.ee.columbia.edu/projects/beattrack/
 """
 
@@ -60,9 +60,9 @@ Audio(data=y, rate=sr)
 # track, we can see that it does not follow particularly well.
 # This is because the beat tracker is assuming a single (average) tempo across the
 # entire signal.
-# Note: here we are disabling trimming because we know the beats carry through to
-# the end of the signal.
-
+# Note: by default, `beat_track` assumes that there is silence at the end of the
+# signal, and trims last beats to avoid false detections. Here, there is no silence
+# at the end, so we set `trim=False` to avoid this effect.
 tempo, beats_static = librosa.beat.beat_track(y=y, sr=sr, units='time', trim=False)
 
 click_track = librosa.clicks(times=beats_static, sr=sr, click_freq=660,
@@ -75,30 +75,31 @@ Audio(data=y+click_track, rate=sr)
 # -------------
 # Dynamic tempo
 # -------------
-# Instead of using a single tempo, we can supply an array of tempo estimates
-# to the beat tracker.  This can be computed by disabling aggregation in the
-# tempo estimator as follows.
-
+# Instead of estimating an aggregated tempo for the whole signal, we now estimate
+# a time-varying tempo. For this purpose, we pass `aggregate=None` to 
+# `librosa.feature.tempo`. The return value tempo_dynamic, is an array:
 tempo_dynamic = librosa.feature.tempo(y=y, sr=sr, aggregate=None, std_bpm=4)
 
 # %%
-# Here, we've expanded the standard deviation of the tempo estimator from its
-# default of 1 to 4.  This is to account for the broad range of tempo drift in this
+# The parameter `std_bpm` is the standard deviation of the tempo estimator and 
+# has a default value of 1. Here, we have increased `std_bpm` to 4.
+# This is to account for the broad range of tempo drift in this
 # particular recording (30 BPM to 240 BPM).
-# We can plot the dynamic tempo estimate, along with the static estimate, to see how
-# they differ.
+# We can plot the dynamic and static tempo estimates to see how they differ.
 
 fig, ax = plt.subplots()
 times = librosa.times_like(tempo_dynamic, sr=sr)
 ax.plot(times, tempo_dynamic, label='Dynamic tempo estimate')
 ax.axhline(tempo, label='Static tempo estimate', color='r')
 ax.legend()
-ax.set(xlabel='Time [sec]', ylabel='Tempo [BPM]')
+ax.set(xlabel='Time (s)', ylabel='Tempo (BPM)')
 
 # %%
-# The dynamic tempo estimate is computed (by default) using a 8-second sliding
-# window.  It is clearly not perfect, containing many jagged and non-uniform steps,
-# but it does provide a rough picture of how tempo is changing over time.
+# `librosa.feature.tempo` estimates tempo over a sliding window whose duration 
+# `ac_size` is equal to 8 seconds by default.
+# In this example, the result is not perfect: `tempo_dynamic` contains jagged and
+# nonuniform steps.
+# However, it does provide a rough picture of how tempo is changing over time.
 #
 # We can now use this dynamic tempo in the beat tracker directly:
 
@@ -125,8 +126,9 @@ ax.legend()
 
 
 # %%
-# In the figure above (and sonified click track), it can be observed that the
-# beat estimates derived from dynamic tempo align well to the recording, while
-# the static tempo estimates attempt to force either too many (early in the
-# recording) or too few (late in the recording) detections, and suffer from
-# alignment problems.
+# In the figure above, we observe that `beats_dynamic`, the beat estimates derived
+# from dynamic tempo, align well to the audio recording.
+# On the contrary, `beats_static` suffers from alignment problems.
+# Indeed, it has too many detections towards the beginning of the recording—where
+# the static tempo estimate is too fast—and too few detections towards the end of
+# the recording—where the static tempo estimate is too slow.
