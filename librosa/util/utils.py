@@ -1353,7 +1353,9 @@ def peak_pick(
     if post_avg <= 0:
         raise ParameterError("post_avg must be positive")
     if sparse and x.ndim != 1:
-        raise ParameterError("input array must be one-dimensional if sparse=True")
+        raise ParameterError(f"sparse=True (default) does not support "
+                f"{x.ndim}-dimensional inputs. "
+                f"Either set sparse=False or process each dimension independently.")
 
     # Ensure valid index types
     pre_max = valid_int(pre_max, cast=np.ceil)

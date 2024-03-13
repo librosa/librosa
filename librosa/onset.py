@@ -70,7 +70,7 @@ def onset_detect(
 
         This is primarily useful when using onsets as slice points for segmentation.
 
-        .. note:: backtracking is only supported when ``sparse=True``.
+        .. note:: backtracking is only supported if ``sparse=True``.
 
     energy : np.ndarray [shape=(m,)] (optional)
         An energy function to use for backtracking detected onset events.
@@ -88,9 +88,9 @@ def onset_detect(
         samples, or time indices (as specified by ``units=``).
 
         If ``False``, detections are encoded as a dense boolean array where
-        ``onsets[n]`` is true if there's an onset at frame index ``n``.
+        ``onsets[n]`` is True if there's an onset at frame index ``n``.
 
-        .. note:: multi-channel input is only supported when ``sparse=False``.
+        .. note:: multi-channel input is only supported if ``sparse=False``.
 
     **kwargs : additional keyword arguments
         Additional parameters for peak picking.
@@ -193,7 +193,7 @@ def onset_detect(
         # Optionally backtrack the events
         if backtrack:
             if not sparse:
-                raise ParameterError("onset backtracking is only supported when sparse=True")
+                raise ParameterError("onset backtracking is only supported if sparse=True")
 
             if energy is None:
                 energy = onset_envelope
