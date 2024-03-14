@@ -63,7 +63,7 @@ jobs:
                       envfile: ".github/environment-ci.yml"
 
         steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
           with:
             submodules: true
 
@@ -81,7 +81,7 @@ jobs:
             esac
 
         - name: Cache conda
-          uses: actions/cache@v3
+          uses: actions/cache@v4
           env:
             # Increase this value to reset cache if etc/example-environment.yml has not changed
             CACHE_NUMBER: 0
@@ -90,7 +90,7 @@ jobs:
             key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
 
         - name: Install Conda environment
-          uses: conda-incubator/setup-miniconda@v2
+          uses: conda-incubator/setup-miniconda@v3
           with:
             auto-update-conda: true
             python-version: ${{ matrix.python-version }}
@@ -117,7 +117,7 @@ jobs:
           run: pytest
 
         - name: Upload coverage to Codecov
-          uses: codecov/codecov-action@v3
+          uses: codecov/codecov-action@v4
           with:
             token: ${{ secrets.CODECOV_TOKEN }}
             files: ./coverage.xml
