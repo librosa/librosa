@@ -13,7 +13,7 @@ def get_contributors(repo_owner, repo_name):
     contributors = {}
 
     while url:
-        response = requests.get(url)
+        response = requests.get(url, timeout=(3.05, 27))
 
         if response.status_code != 200:
             raise Exception(f"Failed to retrieve contributors: {response.json()['message']}")
