@@ -63,7 +63,7 @@ pcen_blocks = []
 zi = None
 
 # Create a handle for storing the block STFT outputs
-# After the first block has been processed, we can re-use
+# After the first block has been processed, we can reuse
 # this buffer instead of allocating a new one for each block.
 D = None
 

@@ -2,7 +2,7 @@ Caching
 ^^^^^^^
 
 This section covers the *librosa* function cache.  This allows you
-to store and re-use intermediate computations across sessions.
+to store and reuse intermediate computations across sessions.
 
 Enabling the cache
 ------------------
