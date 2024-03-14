@@ -51,7 +51,7 @@ jobs:
             activate-environment: docs
             channel-priority: ${{ matrix.channel-priority }}
             environment-file: ${{ matrix.envfile }}
-            use-only-tar-bz2: true # IMPORTANT: This needs to be set for caching to work properly!
+            use-only-tar-bz2: false # IMPORTANT: This needs to be set for caching to work properly!
 
         - name: Conda info
           shell: bash -l {0}
