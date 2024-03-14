@@ -1205,6 +1205,48 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
     return lmin
 
 
+
+@numba.guvectorize(
+    [
+        "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
+        "void(float64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
+        "void(int32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
+        "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
+    ],
+    "(n),(),(),(),(),(),()->(n)",
+    nopython=True, cache=True)
+def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
+    """Vectorized wrapper for the peak-picker"""
+    # Special case the first frame
+    peaks[0] = (x[0] >= np.max(x[:min(post_max, x.shape[0])]))
+    peaks[0] &= (x[0] >= np.mean(x[:min(post_avg, x.shape[0])]) + delta)
+
+    if peaks[0]:
+        n = wait + 1
+    else:
+        n = 1
+
+    while n < x.shape[0]:
+        maxn = np.max( x[max(0, n-pre_max):min(n+post_max, x.shape[0])])
+
+        # Are we the local max and sufficiently above average?
+        peaks[n] = (x[n] == maxn) 
+        
+        if not peaks[n]:
+            n += 1
+            continue
+
+        avgn = np.mean(x[max(0, n-pre_avg):min(n+post_avg, x.shape[0])])
+        peaks[n] &= (x[n] >= avgn + delta)
+
+        if not peaks[n]:
+            n += 1
+            continue
+
+        # Skip the next `wait` frames
+        n += wait + 1
+
+
 def peak_pick(
     x: np.ndarray,
     *,
@@ -1214,6 +1256,8 @@ def peak_pick(
     post_avg: int,
     delta: float,
     wait: int,
+    sparse: bool = True,
+    axis: int = -1
 ) -> np.ndarray:
     """Use a flexible heuristic to pick peaks in a signal.
 
@@ -1236,7 +1280,7 @@ def peak_pick(
 
     Parameters
     ----------
-    x : np.ndarray [shape=(n,)]
+    x : np.ndarray
         input signal to peak picks from
     pre_max : int >= 0 [scalar]
         number of samples before ``n`` over which max is computed
@@ -1250,11 +1294,18 @@ def peak_pick(
         threshold offset for mean
     wait : int >= 0 [scalar]
         number of samples to wait after picking a peak
+    sparse : bool [scalar]
+        If `True`, the output are indices of detected peaks.
+        If `False`, the output is a dense boolean array of the same
+        shape as ``x``.
+    axis : int [scalar]
+        the axis over which to detect peaks.
 
     Returns
     -------
-    peaks : np.ndarray [shape=(n_peaks,), dtype=int]
-        indices of peaks in ``x``
+    peaks : np.ndarray [shape=(n_peaks,) or shape=x.shape, dtype=int or bool]
+        indices of peaks in ``x`` (sparse=True)
+        or a boolean array where `peaks[..., n]` indicates a peak at frame index `n` (sparse=False)
 
     Raises
     ------
@@ -1270,6 +1321,11 @@ def peak_pick(
     >>> peaks = librosa.util.peak_pick(onset_env, pre_max=3, post_max=3, pre_avg=3, post_avg=5, delta=0.5, wait=10)
     >>> peaks
     array([  3,  27,  40,  61,  72,  88, 103])
+
+    Using dense output to make a boolean array of peak indicators
+    >>> librosa.util.peak_pick(onset_env, pre_max=3, post_max=3, pre_avg=3, post_avg=5,
+    ...                        delta=0.5, wait=10, sparse=False)
+    array([False, False, ..., False, False])
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=512)
@@ -1292,15 +1348,14 @@ def peak_pick(
         raise ParameterError("delta must be non-negative")
     if wait < 0:
         raise ParameterError("wait must be non-negative")
-
     if post_max <= 0:
         raise ParameterError("post_max must be positive")
-
     if post_avg <= 0:
         raise ParameterError("post_avg must be positive")
-
-    if x.ndim != 1:
-        raise ParameterError("input array must be one-dimensional")
+    if sparse and x.ndim != 1:
+        raise ParameterError(f"sparse=True (default) does not support "
+                f"{x.ndim}-dimensional inputs. "
+                f"Either set sparse=False or process each dimension independently.")
 
     # Ensure valid index types
     pre_max = valid_int(pre_max, cast=np.ceil)
@@ -1309,64 +1364,13 @@ def peak_pick(
     post_avg = valid_int(post_avg, cast=np.ceil)
     wait = valid_int(wait, cast=np.ceil)
 
-    # Get the maximum of the signal over a sliding window
-    max_length = pre_max + post_max
-    max_origin = np.ceil(0.5 * (pre_max - post_max))
-    # Using mode='constant' and cval=x.min() effectively truncates
-    # the sliding window at the boundaries
-    mov_max = scipy.ndimage.maximum_filter1d(
-        x, int(max_length), mode="constant", origin=int(max_origin), cval=x.min()
-    )
+    peaks = np.zeros_like(x, dtype=bool)
+    __peak_pick(x.swapaxes(axis, -1), pre_max, post_max, pre_avg, post_avg, delta, wait, peaks.swapaxes(axis, -1))
 
-    # Get the mean of the signal over a sliding window
-    avg_length = pre_avg + post_avg
-    avg_origin = np.ceil(0.5 * (pre_avg - post_avg))
-    # Here, there is no mode which results in the behavior we want,
-    # so we'll correct below.
-    mov_avg = scipy.ndimage.uniform_filter1d(
-        x, int(avg_length), mode="nearest", origin=int(avg_origin)
-    )
+    if sparse:
+        return np.flatnonzero(peaks)
 
-    # Correct sliding average at the beginning
-    n = 0
-    # Only need to correct in the range where the window needs to be truncated
-    while n - pre_avg < 0 and n < x.shape[0]:
-        # This just explicitly does mean(x[n - pre_avg:n + post_avg])
-        # with truncation
-        start = n - pre_avg
-        start = start if start > 0 else 0
-        mov_avg[n] = np.mean(x[start : n + post_avg])
-        n += 1
-    # Correct sliding average at the end
-    n = x.shape[0] - post_avg
-    # When post_avg > x.shape[0] (weird case), reset to 0
-    n = n if n > 0 else 0
-    while n < x.shape[0]:
-        start = n - pre_avg
-        start = start if start > 0 else 0
-        mov_avg[n] = np.mean(x[start : n + post_avg])
-        n += 1
-
-    # First mask out all entries not equal to the local max
-    detections = x * (x == mov_max)
-
-    # Then mask out all entries less than the thresholded average
-    detections = detections * (detections >= (mov_avg + delta))
-
-    # Initialize peaks array, to be filled greedily
-    peaks = []
-
-    # Remove onsets which are close together in time
-    last_onset = -np.inf
-
-    for i in np.nonzero(detections)[0]:
-        # Only report an onset if the "wait" samples was reported
-        if i > last_onset + wait:
-            peaks.append(i)
-            # Save last reported onset
-            last_onset = i
-
-    return np.array(peaks)
+    return peaks
 
 
 @cache(level=40)

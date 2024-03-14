@@ -501,7 +501,8 @@ def test_localmin(ndim, axis):
 @pytest.mark.parametrize("wait", [0, 1, 10])
 @pytest.mark.parametrize("delta", [0.05, 100.0])
 def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
-    peaks = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, delta=delta, wait=wait)
+    peaks = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, delta=delta, wait=wait, sparse=True)
+    dpeaks = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, delta=delta, wait=wait, sparse=False)
 
     for i in peaks:
         # Test 1: is it a peak in this window?
@@ -525,6 +526,9 @@ def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     # Test 3: peak separation
     assert not np.any(np.diff(peaks) <= wait)
 
+    # Test 4: check dense vs sparse
+    assert np.allclose(np.flatnonzero(dpeaks), peaks)
+
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("x", [np.random.randn(_) ** 2 for _ in [1, 5, 10, 100]])
@@ -543,12 +547,6 @@ def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 )
 def test_peak_pick_fail(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, delta=delta, wait=wait)
-
-
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_peak_pick_shape_fail():
-    # Can't pick peaks on 2d inputs
-    librosa.util.peak_pick(np.eye(2), pre_max=1, post_max=1, pre_avg=1, post_avg=1, delta=0.5, wait=1)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)

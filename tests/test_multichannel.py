@@ -1072,3 +1072,128 @@ def test_f0_harmonics(y_multi, dynamic):
 
     assert np.allclose(out[0], out0)
     assert np.allclose(out[1], out1)
+
+
+def test_peak_pick_multi():
+
+    x = np.random.randn(3, 1000) ** 2
+
+    pre_max = 5
+    post_max = 5
+    pre_avg = 10
+    post_avg = 10
+    wait = 10
+    delta = 0.5
+
+    pm = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=-1)
+
+    for i in range(x.shape[0]):
+        pmi = librosa.util.peak_pick(x[i], pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=-1)
+        assert np.allclose(pmi, pm[i])
+
+
+def test_peak_pick_axis():
+
+    x = np.random.randn(100, 500) ** 2
+
+    pre_max = 5
+    post_max = 5
+    pre_avg = 10
+    post_avg = 10
+    wait = 10
+    delta = 0.5
+
+    peaks = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=-1)
+    peaks_t = librosa.util.peak_pick(x.T, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=0)
+    
+    assert np.allclose(peaks_t.T, peaks)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_peak_pick_multi_fail():
+
+    x = np.random.randn(3, 1000) ** 2
+
+    pre_max = 5
+    post_max = 5
+    pre_avg = 10
+    post_avg = 10
+    wait = 10
+    delta = 0.5
+
+    pm = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=True, axis=-1)
+
+
+def test_onset_detect(y_multi):
+
+    # Verify that a stereo onset detection matches each channel individually
+    y, sr = y_multi
+
+    # Pre-compute the onset strength here using both channels to avoid any
+    # channel normalization issues if we were to process fully independently
+    oenv = librosa.onset.onset_strength(y=y, sr=sr)
+
+    D = librosa.onset.onset_detect(onset_envelope=oenv, sr=sr, sparse=False)
+    D0 = librosa.onset.onset_detect(onset_envelope=oenv[0], sr=sr, sparse=False)
+    D1 = librosa.onset.onset_detect(onset_envelope=oenv[1], sr=sr, sparse=False)
+
+    # Check each channel
+    assert np.allclose(D[0], D0)
+    assert np.allclose(D[1], D1)
+
+    # Check that they're not both the same
+    assert not np.allclose(D0, D1)
+
+
+
+@pytest.mark.parametrize('trim', [False, True])
+def test_beat_track_multi(y_multi, trim):
+    y, sr = y_multi
+
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=trim, sparse=False)
+    tempo0, beats0 = librosa.beat.beat_track(y=y[0], sr=sr, trim=trim, sparse=False)
+    tempo1, beats1 = librosa.beat.beat_track(y=y[1], sr=sr, trim=trim, sparse=False)
+
+    assert isinstance(tempo, np.ndarray)
+    assert np.allclose(tempo[0], tempo0)
+    assert np.allclose(tempo[1], tempo1)
+    assert np.allclose(beats[0], beats0)
+    assert np.allclose(beats[1], beats1)
+
+
+def test_beat_track_multi_bpm_scalar(y_multi):
+    y, sr = y_multi
+
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr, sparse=False, bpm=100)
+    tempo0, beats0 = librosa.beat.beat_track(y=y[0], sr=sr, sparse=False, bpm=100)
+    tempo1, beats1 = librosa.beat.beat_track(y=y[1], sr=sr, sparse=False, bpm=100)
+
+    assert np.isscalar(tempo)
+    assert np.allclose(tempo, tempo0)
+    assert np.allclose(tempo, tempo1)
+    assert np.allclose(beats[0], beats0)
+    assert np.allclose(beats[1], beats1)
+
+
+def test_beat_track_multi_bpm_vector(y_multi):
+    y, sr = y_multi
+
+    bpm = np.array([[150], [75]])
+    assert isinstance(bpm, np.ndarray)
+
+    tempo, beats = librosa.beat.beat_track(y=y, sr=sr, sparse=False, bpm=bpm)
+    tempo0, beats0 = librosa.beat.beat_track(y=y[0], sr=sr, sparse=False, bpm=bpm[0])
+    tempo1, beats1 = librosa.beat.beat_track(y=y[1], sr=sr, sparse=False, bpm=bpm[1])
+
+    assert isinstance(tempo, np.ndarray)
+    assert np.allclose(tempo, bpm)
+    assert np.allclose(tempo[0], tempo0)
+    assert np.allclose(tempo[1], tempo1)
+    assert np.allclose(beats[0], beats0)
+    assert np.allclose(beats[1], beats1)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_beat_track_multi_sparse(y_multi):
+    y, sr = y_multi
+    librosa.beat.beat_track(y=y, sr=sr, sparse=True)

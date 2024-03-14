@@ -229,6 +229,16 @@ def test_onset_detect_const(y, sr, hop_length):
     assert len(onsets) == 0 or (y[0] != 0 and len(onsets) == 1)
 
 
+def test_onset_detect_dense_const():
+
+    # Make an empty onset strength envelope
+    z = np.zeros(512)
+    onsets = librosa.onset.onset_detect(onset_envelope=z, sparse=False)
+    assert z.shape == onsets.shape
+    assert onsets.dtype is np.dtype(bool)
+    assert not np.any(onsets)
+
+
 @pytest.mark.parametrize(
     "units, ctx",
     [
@@ -291,6 +301,25 @@ def test_onset_backtrack(ysr, oenv, hop, energy):
 
     # And that the detected peaks are actually minima
     assert np.all(energy[onsets_bt] <= energy[np.maximum(0, onsets_bt - 1)])
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_onset_backtrack_fail(ysr):
+    y, sr = ysr
+    onsets = librosa.onset.onset_detect(y=y, sr=sr, backtrack=True, sparse=False)
+
+
+def test_onset_sparse(ysr, oenv, hop, energy):
+    y, sr = ysr
+
+    onsets = librosa.onset.onset_detect(
+            y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=True
+    )
+    onsetsd = librosa.onset.onset_detect(
+            y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=False
+    )
+
+    assert np.allclose(onsets, np.flatnonzero(onsetsd))
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
