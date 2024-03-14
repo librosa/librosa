@@ -1035,7 +1035,7 @@ def poly_features(
     if freq.ndim == 1:
         # If frequencies are constant over frames, then we only need to fit once
         fitter = np.vectorize(
-            lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)"  # type: ignore
+            lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)"
         )
         coefficients = fitter(S)
     else:
