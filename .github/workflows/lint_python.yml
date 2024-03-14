@@ -9,7 +9,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            python-version: "3.8"
+            python-version: "3.12"
             channel-priority: "flexible"
             envfile: ".github/environment-lint.yml"
     steps:
