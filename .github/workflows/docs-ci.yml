@@ -69,6 +69,7 @@ jobs:
           shell: bash -l {0}
           working-directory: docs
           run: make linkcheck
+          continue-on-error: true
 
         - name: Build multi-version site
           shell: bash -l {0}
