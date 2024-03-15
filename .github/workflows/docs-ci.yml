@@ -66,10 +66,13 @@ jobs:
           run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
 
         - name: Link checking
+          id: linkcheck
           shell: bash -l {0}
           working-directory: docs
           run: make linkcheck
           continue-on-error: true
+          env:
+            LINKCHECK_STATUS: ${{ job.status }}
 
         - name: Build multi-version site
           shell: bash -l {0}
@@ -84,3 +87,6 @@ jobs:
           run: |
             if [[ -n "$(find build/html/ -type l ! -exec test -e {} \; -print -quit)" ]]; then false; fi
 
+        - name: Final check for link status
+          if: env.LINKCHECK_STATUS == 'failure'
+          run: exit 1
