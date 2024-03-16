@@ -65,11 +65,6 @@ jobs:
           shell: bash -l {0}
           run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
 
-        - name: Link checking
-          shell: bash -l {0}
-          working-directory: docs
-          run: make linkcheck
-
         - name: Build multi-version site
           shell: bash -l {0}
           run: |
@@ -78,8 +73,13 @@ jobs:
             cp docs/docsite-index-redirect.html build/html/index.html
             ln -srf build/html/$(./scripts/get_latest_release.sh) build/html/latest  # auto-link the latest tag
 
+        - name: Link checking
+          id: linkcheck
+          shell: bash -l {0}
+          working-directory: docs
+          run: make linkcheck
+
         - name: Check for broken links
           shell: bash -l {0}
           run: |
             if [[ -n "$(find build/html/ -type l ! -exec test -e {} \; -print -quit)" ]]; then false; fi
-

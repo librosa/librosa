@@ -67,6 +67,7 @@ extensions = [
     "sphinx.ext.intersphinx",  # cross-linkage
     "sphinx.ext.mathjax",
     "sphinx_gallery.gen_gallery",  # advanced examples
+    "sphinx_copybutton",  # code example copy button
     "numpydoc",  # docstring examples
     "sphinxcontrib.inkscapeconverter",  # used for badge / logo conversion in tex
     "sphinx_multiversion",  # historical builds
@@ -100,6 +101,12 @@ np.set_printoptions(precision=3, linewidth=64, edgeitems=2, threshold=200)
 """
 
 numpydoc_show_class_members = False
+
+
+# ----------------------------------
+# Copybutton configs
+# ----------------------------------
+copybutton_exclude = '.linenos, .gp'
 
 # ------------------------------------------------------------------------------
 # Plot
