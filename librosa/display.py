@@ -934,8 +934,8 @@ def specshow(
     win_length: Optional[int] = None,
     fmin: Optional[float] = None,
     fmax: Optional[float] = None,
-    tmin: Optional[float] = 16,
-    tmax: Optional[float] = 480,
+    tempo_min: Optional[float] = 16,
+    tempo_max: Optional[float] = 480,
     tuning: float = 0.0,
     bins_per_octave: int = 12,
     key: str = "C:maj",
@@ -1064,10 +1064,10 @@ def specshow(
     fmax : float > 0 [scalar] or None
         Used for setting the Mel frequency scales
 
-    tmin : float > 0 [scalar]
+    tempo_min : float > 0 [scalar]
         Lowest tempo (in beats per minute) for tempogram display.
 
-    tmax : float > 0 [scalar]
+    tempo_max : float > 0 [scalar]
         Highest tempo (in beats per minute) for tempogram display.
 
     tuning : float
@@ -1218,8 +1218,8 @@ def specshow(
     __set_current_image(ax, out)
 
     # Set up axis scaling
-    __scale_axes(axes, x_axis, "x", tmin=tmin, tmax=tmax)
-    __scale_axes(axes, y_axis, "y", tmin=tmin, tmax=tmax)
+    __scale_axes(axes, x_axis, "x", tempo_min=tempo_min, tempo_max=tempo_max)
+    __scale_axes(axes, y_axis, "y", tempo_min=tempo_min, tempo_max=tempo_max)
 
     # Construct tickers and locators
     __decorate_axis(
@@ -1332,7 +1332,7 @@ def __check_axes(axes: Optional[mplaxes.Axes]) -> mplaxes.Axes:
     return axes
 
 
-def __scale_axes(axes, ax_type, which, tmin, tmax):
+def __scale_axes(axes, ax_type, which, tempo_min, tempo_max):
     """Set the axis scaling"""
     kwargs = dict()
     thresh = "linthresh"
@@ -1373,7 +1373,7 @@ def __scale_axes(axes, ax_type, which, tmin, tmax):
     elif ax_type in ["tempo", "fourier_tempo"]:
         mode = "log"
         kwargs[base] = 2
-        limit(tmin, tmax)
+        limit(tempo_min, tempo_max)
     else:
         return
 
