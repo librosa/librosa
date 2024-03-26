@@ -1096,7 +1096,6 @@ def __rqa_backtrack(score, pointers):
     return np.asarray(path, dtype=np.uint)
 
 
-@jit(nopython=True, cache=True)  # type: ignore
 def _viterbi(
     log_prob: np.ndarray, log_trans: np.ndarray, log_p_init: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
@@ -1125,6 +1124,7 @@ def _viterbi(
     state = np.zeros(n_steps, dtype=np.uint16)
     value = np.zeros((n_steps, n_states), dtype=np.float64)
     ptr = np.zeros((n_steps, n_states), dtype=np.uint16)
+    index = np.arange(n_states, dtype=np.uint16)
 
     # factor in initial state distribution
     value[0] = log_prob[0] + log_p_init
@@ -1141,11 +1141,9 @@ def _viterbi(
 
         trans_out = value[t - 1] + log_trans.T
 
-        # Unroll the max/argmax loop to enable numba support
-        for j in range(n_states):
-            ptr[t, j] = np.argmax(trans_out[j])
-            # value[t, j] = log_prob[t, j] + np.max(trans_out[j])
-            value[t, j] = log_prob[t, j] + trans_out[j, ptr[t][j]]
+        # Vectorize the max/argmax loop
+        ptr[t] = np.argmax(trans_out, axis=1)
+        value[t] = log_prob[t] + trans_out[index, ptr[t]]
 
     # Now roll backward
 
