@@ -3,16 +3,6 @@
 """
 Core IO and DSP
 ===============
-Miscellaneous
--------------
-.. autosummary::
-    :toctree: generated/
-
-    samples_like
-    times_like
-
-    get_fftlib
-    set_fftlib
 """
 
 import lazy_loader as lazy
