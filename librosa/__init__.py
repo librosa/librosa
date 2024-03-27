@@ -1,9 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Core IO and DSP
-===============
-"""
 
 import lazy_loader as lazy
 from .version import version as __version__

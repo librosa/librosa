@@ -48,7 +48,6 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
     pitch_and_tuning
     harmonics
     phase_recovery
-    core
     display
     feature
     onset
