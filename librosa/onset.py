@@ -313,7 +313,7 @@ def onset_strength(
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> D = np.abs(librosa.stft(y))
-    >>> times = librosa.times_like(D)
+    >>> times = librosa.times_like(D, sr=sr)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
     ...                          y_axis='log', x_axis='time', ax=ax[0])
@@ -399,7 +399,7 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr)
-    >>> times = librosa.times_like(oenv)
+    >>> times = librosa.times_like(oenv, sr=sr)
     >>> # Detect events without backtracking
     >>> onset_raw = librosa.onset.onset_detect(onset_envelope=oenv,
     ...                                        backtrack=False)

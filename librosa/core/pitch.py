@@ -563,8 +563,8 @@ def yin(
     --------
     Computing a fundamental frequency (F0) curve from an audio input
 
-    >>> y = librosa.chirp(fmin=440, fmax=880, duration=5.0)
-    >>> librosa.yin(y, fmin=440, fmax=880)
+    >>> y = librosa.chirp(fmin=440, fmax=880, duration=5.0, sr=22050)
+    >>> librosa.yin(y, fmin=440, fmax=880, sr=22050)
     array([442.66354675, 441.95299983, 441.58010963, ...,
         871.161732  , 873.99001454, 877.04297681])
     """
@@ -754,9 +754,10 @@ def pyin(
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> f0, voiced_flag, voiced_probs = librosa.pyin(y,
+    ...                                              sr=sr,
     ...                                              fmin=librosa.note_to_hz('C2'),
     ...                                              fmax=librosa.note_to_hz('C7'))
-    >>> times = librosa.times_like(f0)
+    >>> times = librosa.times_like(f0, sr=sr)
 
     Overlay F0 over a spectrogram
 
