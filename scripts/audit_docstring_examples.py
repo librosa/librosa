@@ -6,6 +6,9 @@
 #
 # It is then up to the user of this script to audit the docstring in question to determine
 # if any correction is necessary.
+#
+# Script co-authored by chatgpt v4 and Brian McFee
+
 import pkgutil
 import inspect
 import ast
