@@ -1565,7 +1565,7 @@ def iirt(
     --------
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
-    >>> D = np.abs(librosa.iirt(y))
+    >>> D = np.abs(librosa.iirt(y, sr=sr))
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> img = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
