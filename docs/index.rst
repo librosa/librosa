@@ -40,7 +40,14 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
     :caption: API documentation
     :maxdepth: 1
 
-    core
+    signals
+    spectral_representation
+    magnitude_scaling
+    unit_conversion
+    music_notation
+    pitch_and_tuning
+    harmonics
+    phase_recovery
     display
     feature
     onset
@@ -50,6 +57,7 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
     segment
     sequence
     util
+    miscellaneous
 
 
 .. toctree::
