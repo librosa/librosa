@@ -624,7 +624,7 @@ def trim(
     Silence here is determined as being more than a specified
     `top_db` decibels below the reference value `ref`.
     By default, `ref` is taken as the maximum RMS value over the signal.
-    
+
     Note that if the signal has a constant RMS value over its duration,
     then no regions will be significantly quieter than the maximum, and
     no trimming will be performed.  Specifically, this means that a silent
