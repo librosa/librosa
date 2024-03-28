@@ -41,9 +41,19 @@ from . import decompose
 from . import feature
 from . import util
 from .util.exceptions import ParameterError
-from typing import Any, Callable, Iterable, Optional, Tuple, Union, overload
+from typing import Any, Callable, Iterable, Optional, Tuple, List, Union, overload
 from typing_extensions import Literal
 from numpy.typing import ArrayLike
+from ._typing import (
+    _WindowSpec,
+    _PadMode,
+    _PadModeSTFT,
+    _SequenceLike,
+    _ScalarOrSequence,
+    _ComplexLike_co,
+    _IntLike_co,
+    _FloatLike_co,
+)
 
 __all__ = [
     "hpss",
@@ -57,7 +67,24 @@ __all__ = [
 ]
 
 
-def hpss(y: np.ndarray, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
+def hpss(
+    y: np.ndarray,
+    *,
+    kernel_size: Union[
+        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
+    ] = 31,
+    power: float = 2.0,
+    mask: bool = False,
+    margin: Union[
+        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
+    ] = 1.0,
+    n_fft: int = 2048,
+    hop_length: Optional[int] = None,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
+) -> Tuple[np.ndarray, np.ndarray]:
     """Decompose an audio time series into harmonic and percussive components.
 
     This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
@@ -67,8 +94,18 @@ def hpss(y: np.ndarray, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-    **kwargs : additional keyword arguments.
-        See `librosa.decompose.hpss` for details.
+    kernel_size
+    power
+    mask
+    margin
+        See `librosa.deocmpose.hpss`
+    n_fft
+    hop_length
+    win_length
+    window
+    center
+    pad_mode
+        See `librosa.stft`
 
     Returns
     -------
@@ -93,27 +130,79 @@ def hpss(y: np.ndarray, **kwargs: Any) -> Tuple[np.ndarray, np.ndarray]:
     >>> y_harmonic, y_percussive = librosa.effects.hpss(y, margin=(1.0,5.0))
     """
     # Compute the STFT matrix
-    stft = core.stft(y)
+    stft = core.stft(
+        y,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        center=center,
+        pad_mode=pad_mode,
+    )
 
     # Decompose into harmonic and percussives
-    stft_harm, stft_perc = decompose.hpss(stft, **kwargs)
+    stft_harm, stft_perc = decompose.hpss(
+        stft, kernel_size=kernel_size, power=power, mask=mask, margin=margin
+    )
 
     # Invert the STFTs.  Adjust length to match the input.
-    y_harm = core.istft(stft_harm, dtype=y.dtype, length=y.shape[-1])
-    y_perc = core.istft(stft_perc, dtype=y.dtype, length=y.shape[-1])
+    y_harm = core.istft(
+        stft_harm,
+        dtype=y.dtype,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        center=center,
+        length=y.shape[-1],
+    )
+    y_perc = core.istft(
+        stft_perc,
+        dtype=y.dtype,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        center=center,
+        length=y.shape[-1],
+    )
 
     return y_harm, y_perc
 
 
-def harmonic(y: np.ndarray, **kwargs: Any) -> np.ndarray:
+def harmonic(
+    y: np.ndarray,
+    *,
+    kernel_size: Union[
+        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
+    ] = 31,
+    power: float = 2.0,
+    mask: bool = False,
+    margin: Union[
+        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
+    ] = 1.0,
+    n_fft: int = 2048,
+    hop_length: Optional[int] = None,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
+) -> np.ndarray:
     """Extract harmonic elements from an audio time-series.
 
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-    **kwargs : additional keyword arguments.
-        See `librosa.decompose.hpss` for details.
+    kernel_size
+    power
+    mask
+    margin
+        See `librosa.deocmpose.hpss`
+    n_fft
+    hop_length
+    win_length
+    window
+    center
+    pad_mode
+        See `librosa.stft`
 
     Returns
     -------
@@ -136,26 +225,70 @@ def harmonic(y: np.ndarray, **kwargs: Any) -> np.ndarray:
     >>> y_harmonic = librosa.effects.harmonic(y, margin=3.0)
     """
     # Compute the STFT matrix
-    stft = core.stft(y)
+    stft = core.stft(
+        y,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        center=center,
+        pad_mode=pad_mode,
+    )
 
     # Remove percussives
-    stft_harm = decompose.hpss(stft, **kwargs)[0]
+    stft_harm = decompose.hpss(
+        stft, kernel_size=kernel_size, power=power, mask=mask, margin=margin
+    )[0]
 
     # Invert the STFTs
-    y_harm = core.istft(stft_harm, dtype=y.dtype, length=y.shape[-1])
+    y_harm = core.istft(
+        stft_harm,
+        dtype=y.dtype,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        center=center,
+        length=y.shape[-1],
+    )
 
     return y_harm
 
 
-def percussive(y: np.ndarray, **kwargs: Any) -> np.ndarray:
+def percussive(
+    y: np.ndarray,
+    *,
+    kernel_size: Union[
+        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
+    ] = 31,
+    power: float = 2.0,
+    mask: bool = False,
+    margin: Union[
+        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
+    ] = 1.0,
+    n_fft: int = 2048,
+    hop_length: Optional[int] = None,
+    win_length: Optional[int] = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
+) -> np.ndarray:
     """Extract percussive elements from an audio time-series.
 
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-    **kwargs : additional keyword arguments.
-        See `librosa.decompose.hpss` for details.
+    kernel_size
+    power
+    mask
+    margin
+        See `librosa.deocmpose.hpss`
+    n_fft
+    hop_length
+    win_length
+    window
+    center
+    pad_mode
+        See `librosa.stft`
 
     Returns
     -------
@@ -178,13 +311,30 @@ def percussive(y: np.ndarray, **kwargs: Any) -> np.ndarray:
     >>> y_percussive = librosa.effects.percussive(y, margin=3.0)
     """
     # Compute the STFT matrix
-    stft = core.stft(y)
+    stft = core.stft(
+        y,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        center=center,
+        pad_mode=pad_mode,
+    )
 
     # Remove harmonics
-    stft_perc = decompose.hpss(stft, **kwargs)[1]
+    stft_perc = decompose.hpss(
+        stft, kernel_size=kernel_size, power=power, mask=mask, margin=margin
+    )[1]
 
     # Invert the STFT
-    y_perc = core.istft(stft_perc, dtype=y.dtype, length=y.shape[-1])
+    y_perc = core.istft(
+        stft_perc,
+        dtype=y.dtype,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        center=center,
+        length=y.shape[-1],
+    )
 
     return y_perc
 
@@ -614,8 +764,7 @@ def preemphasis(
     coef: float = ...,
     zi: Optional[ArrayLike] = ...,
     return_zf: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -625,8 +774,7 @@ def preemphasis(
     coef: float = ...,
     zi: Optional[ArrayLike] = ...,
     return_zf: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -636,8 +784,7 @@ def preemphasis(
     coef: float = ...,
     zi: Optional[ArrayLike] = ...,
     return_zf: bool,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
 def preemphasis(
@@ -743,8 +890,7 @@ def deemphasis(
     coef: float = ...,
     zi: Optional[ArrayLike] = ...,
     return_zf: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -754,8 +900,7 @@ def deemphasis(
     coef: float = ...,
     zi: Optional[ArrayLike] = ...,
     return_zf: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 def deemphasis(
