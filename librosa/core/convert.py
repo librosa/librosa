@@ -114,7 +114,7 @@ def frames_to_samples(
     --------
     >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
-    >>> beat_samples = librosa.frames_to_samples(beats)
+    >>> beat_samples = librosa.frames_to_samples(beats, sr=sr)
     """
     offset = 0
     if n_fft is not None:
@@ -463,7 +463,7 @@ def samples_to_time(
     --------
     Get timestamps corresponding to every 512 samples
 
-    >>> librosa.samples_to_time(np.arange(0, 22050, 512))
+    >>> librosa.samples_to_time(np.arange(0, 22050, 512), sr=22050)
     array([ 0.   ,  0.023,  0.046,  0.07 ,  0.093,  0.116,  0.139,
             0.163,  0.186,  0.209,  0.232,  0.255,  0.279,  0.302,
             0.325,  0.348,  0.372,  0.395,  0.418,  0.441,  0.464,
@@ -1756,7 +1756,7 @@ def tempo_frequencies(
     --------
     Get the tempo frequencies corresponding to a 384-bin (8-second) tempogram
 
-    >>> librosa.tempo_frequencies(384)
+    >>> librosa.tempo_frequencies(384, sr=22050)
     array([      inf,  2583.984,  1291.992, ...,     6.782,
                6.764,     6.747])
     """
@@ -1792,7 +1792,7 @@ def fourier_tempo_frequencies(
     --------
     Get the tempo frequencies corresponding to a 384-bin (8-second) tempogram
 
-    >>> librosa.fourier_tempo_frequencies(win_length=384)
+    >>> librosa.fourier_tempo_frequencies(win_length=384, sr=22050)
     array([ 0.   ,  0.117,  0.234, ..., 22.266, 22.383, 22.5  ])
     """
     # sr / hop_length gets the frame rate
@@ -2320,14 +2320,14 @@ def times_like(
 
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> D = librosa.stft(y)
-    >>> times = librosa.times_like(D)
+    >>> times = librosa.times_like(D, sr=sr)
     >>> times
     array([0.   , 0.023, ..., 5.294, 5.317])
 
     Provide a scalar input:
 
     >>> n_frames = 2647
-    >>> times = librosa.times_like(n_frames)
+    >>> times = librosa.times_like(n_frames, sr=sr)
     >>> times
     array([  0.00000000e+00,   2.32199546e-02,   4.64399093e-02, ...,
              6.13935601e+01,   6.14167800e+01,   6.14400000e+01])

@@ -1465,7 +1465,7 @@ def tone(
     --------
     Generate a pure sine tone A4
 
-    >>> tone = librosa.tone(440, duration=1)
+    >>> tone = librosa.tone(440, duration=1, sr=22050)
 
     Or generate the same signal using `length`
 
@@ -1559,7 +1559,7 @@ def chirp(
     --------
     Generate a exponential chirp from A2 to A8
 
-    >>> exponential_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1)
+    >>> exponential_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1, sr=22050)
 
     Or generate the same signal using ``length``
 
@@ -1567,7 +1567,7 @@ def chirp(
 
     Or generate a linear chirp instead
 
-    >>> linear_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1, linear=True)
+    >>> linear_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1, linear=True, sr=22050)
 
     Display spectrogram for both exponential and linear chirps.
 

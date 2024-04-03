@@ -621,6 +621,15 @@ def trim(
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Trim leading and trailing silence from an audio signal.
 
+    Silence is defined as segments of the audio signal that are `top_db`
+    decibels (or more) quieter than a reference level, `ref`.
+    By default, `ref` is set to the signal's maximum RMS value.
+    It's important to note that if the entire signal maintains a uniform
+    RMS value, there will be no segments considered quieter than the maximum,
+    leading to no trimming.
+    This implies that a completely silent signal will remain untrimmed with the default `ref` setting.
+    In these situations, an explicit value for `ref` (in decibels) should be used instead.
+
     Parameters
     ----------
     y : np.ndarray, shape=(..., n)
@@ -654,7 +663,7 @@ def trim(
     >>> # Trim the beginning and ending silence
     >>> yt, index = librosa.effects.trim(y)
     >>> # Print the durations
-    >>> print(librosa.get_duration(y), librosa.get_duration(yt))
+    >>> print(librosa.get_duration(y, sr=sr), librosa.get_duration(yt, sr=sr))
     25.025986394557822 25.007891156462584
     """
     non_silent = _signal_to_frame_nonsilent(
@@ -677,7 +686,7 @@ def trim(
             int(core.frames_to_samples(nonzero[-1] + 1, hop_length=hop_length)),
         )
     else:
-        # The signal only contains zeros
+        # The entire signal is trimmed here: nothing is above the threshold
         start, end = 0, 0
 
     # Build the mono/stereo index
