@@ -17,6 +17,7 @@ from .util.exceptions import (
     ParameterError as ParameterError,
 )
 from .util.files import example as example, ex as ex
+from .util.files import cite as cite
 
 from .version import show_versions as show_versions
 

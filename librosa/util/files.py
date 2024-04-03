@@ -7,12 +7,14 @@ from typing import List, Optional, Union, Any, Set
 import os
 import glob
 import json
+import msgpack
 from importlib import resources
 from pathlib import Path
 
 import pooch
 
 from .exceptions import ParameterError
+from ..version import version as librosa_version
 
 
 __all__ = [
@@ -271,3 +273,43 @@ def __get_files(dir_name: Union[str, os.PathLike[Any]], extensions: Set[str]):
         myfiles |= set(glob.glob(globstr))
 
     return myfiles
+
+
+def cite(version: Optional[str]=None):
+    """Print the citation information for librosa.
+
+    Parameters
+    ----------
+    version : str or None
+        The version of librosa to cite. If None, the current version is used.
+
+    Returns
+    -------
+    doi : str
+        The DOI for the given version of librosa.
+
+    Raises
+    ------
+    ParameterError
+        If the requested version is not found in the citation index.
+
+    Examples
+    --------
+    >>> librosa.cite("0.10.1")
+    "https://doi.org/10.5281/zenodo.8252662"
+    """
+
+    if version is None:
+        version = librosa_version
+
+    version_data = __GOODBOY.fetch("version_index.msgpack")
+    with open(version_data, "rb") as fdesc:
+        version_index = msgpack.load(fdesc)
+
+    if version not in version_index:
+        if "dev" in version:
+            raise ParameterError(f"Version {version} is not yet released and therefore does not yet have a citable DOI.")
+        else:
+            raise ParameterError(f"Version {version} not found in the citation index")
+
+    return f"https://doi.org/{version_index[version]}"

@@ -1383,3 +1383,19 @@ def test_phasor(dtype, angles, mag):
 
     assert np.allclose(z, z2)
     assert z2.dtype == librosa.util.dtype_r2c(dtype)
+
+
+def test_cite_released():
+    version = "0.10.1"
+    doi = "https://doi.org/10.5281/zenodo.8252662"
+    assert doi == librosa.cite(version=version)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_cite_badversion():
+    librosa.cite(version="-1.5")
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_cite_unreleased():
+    librosa.cite("0.10.0.dev0")

@@ -76,6 +76,7 @@ File operations
     example_info
     list_examples
     find_files
+    cite
 """
 
 import lazy_loader as lazy
