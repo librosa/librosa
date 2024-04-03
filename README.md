@@ -197,6 +197,9 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
 
     [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.591533.svg)](https://doi.org/10.5281/zenodo.591533)
 
+  From librosa version 0.10.2 or later, you can also use `librosa.cite()`
+  to get the DOI link for any version of librosa.
+
 - If you wish to cite librosa for its design, motivation, etc., please cite the paper
   published at SciPy 2015:
 

@@ -7,6 +7,7 @@ from .files import (
     ex as ex,
     list_examples as list_examples,
     example_info as example_info,
+    cite as cite,
 )
 
 from .matching import (
