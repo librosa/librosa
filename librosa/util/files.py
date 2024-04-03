@@ -277,7 +277,7 @@ def __get_files(dir_name: Union[str, os.PathLike[Any]], extensions: Set[str]):
     return myfiles
 
 
-def cite(version: Optional[str]=None):
+def cite(version: Optional[str]=None) -> str:
     """Print the citation information for librosa.
 
     Parameters
