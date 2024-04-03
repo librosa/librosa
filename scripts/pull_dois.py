@@ -16,7 +16,7 @@ def get_zenodo_record_versions(doi):
 
     links_url = main_record.data['links']['versions']
 
-    version_data = requests.get(links_url).json()
+    version_data = requests.get(links_url, timeout=(3.05, 27)).json()
 
     matches = version_data['hits']['hits']
     doi_map = {m['metadata']['version']: m['doi'] for m in matches}

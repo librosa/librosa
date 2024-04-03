@@ -300,7 +300,6 @@ def cite(version: Optional[str]=None) -> str:
     >>> librosa.cite("0.10.1")
     "https://doi.org/10.5281/zenodo.8252662"
     """
-
     if version is None:
         version = librosa_version
 
