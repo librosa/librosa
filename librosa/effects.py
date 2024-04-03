@@ -621,15 +621,14 @@ def trim(
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Trim leading and trailing silence from an audio signal.
 
-    Silence here is determined as being more than a specified
-    `top_db` decibels below the reference value `ref`.
-    By default, `ref` is taken as the maximum RMS value over the signal.
-
-    Note that if the signal has a constant RMS value over its duration,
-    then no regions will be significantly quieter than the maximum, and
-    no trimming will be performed.  Specifically, this means that a silent
-    signal, by default, will not be trimmed at all with the default `ref`
-    setting.
+    Silence is defined as segments of the audio signal that are `top_db`
+    decibels (or more) quieter than a reference level, `ref`.
+    By default, `ref` is set to the signal's maximum RMS value.
+    It's important to note that if the entire signal maintains a uniform
+    RMS value, there will be no segments considered quieter than the maximum,
+    leading to no trimming.
+    This implies that a completely silent signal will remain untrimmed with the default `ref` setting.
+    In these situations, an explicit value for `ref` (in decibels) should be used instead.
 
     Parameters
     ----------
