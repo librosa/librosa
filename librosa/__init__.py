@@ -1,46 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Core IO and DSP
-===============
-
-Audio loading
--------------
-.. autosummary::
-    :toctree: generated/
-
-    load
-    stream
-    to_mono
-    resample
-    get_duration
-    get_samplerate
-
-
-Time-domain processing
-----------------------
-.. autosummary::
-    :toctree: generated/
-
-    autocorrelate
-    lpc
-    zero_crossings
-    mu_compress
-    mu_expand
-
-
 Signal generation
------------------
+=================
 .. autosummary::
     :toctree: generated/
 
     clicks
     tone
     chirp
+    load
+    stream
+    to_mono
+    resample
+    get_duration
+    get_samplerate
+    autocorrelate
+    lpc
+    zero_crossings
+    mu_compress
+    mu_expand
+    fft_frequencies
+    cqt_frequencies
+    mel_frequencies
+    tempo_frequencies
+    fourier_tempo_frequencies
 
 
 Spectral representations
-------------------------
+========================
 .. autosummary::
     :toctree: generated/
 
@@ -62,29 +50,8 @@ Spectral representations
     magphase
 
 
-Phase recovery
---------------
-.. autosummary::
-    :toctree: generated/
-
-    griffinlim
-    griffinlim_cqt
-
-
-Harmonics
----------
-.. autosummary::
-    :toctree: generated/
-
-    interp_harmonics
-    salience
-    f0_harmonics
-
-    phase_vocoder
-
-
 Magnitude scaling
------------------
+=================
 .. autosummary::
     :toctree: generated/
 
@@ -103,9 +70,9 @@ Magnitude scaling
 
     pcen
 
-
-Time unit conversion
---------------------
+    
+Unit conversion
+===============
 .. autosummary::
     :toctree: generated/
 
@@ -119,12 +86,6 @@ Time unit conversion
     blocks_to_frames
     blocks_to_samples
     blocks_to_time
-
-
-Frequency unit conversion
--------------------------
-.. autosummary::
-    :toctree: generated/
 
     hz_to_note
     hz_to_midi
@@ -150,7 +111,7 @@ Frequency unit conversion
 
 
 Music notation
---------------
+==============
 .. autosummary::
     :toctree: generated/
 
@@ -172,20 +133,8 @@ Music notation
     plimit_intervals
 
 
-Frequency range generation
---------------------------
-.. autosummary::
-    :toctree: generated/
-
-    fft_frequencies
-    cqt_frequencies
-    mel_frequencies
-    tempo_frequencies
-    fourier_tempo_frequencies
-
-
 Pitch and tuning
-----------------
+================
 .. autosummary::
     :toctree: generated/
 
@@ -197,8 +146,29 @@ Pitch and tuning
     piptrack
 
 
+Harmonics
+=========
+.. autosummary::
+    :toctree: generated/
+
+    interp_harmonics
+    salience
+    f0_harmonics
+
+    phase_vocoder
+
+    
+Phase recovery
+==============
+.. autosummary::
+    :toctree: generated/
+
+    griffinlim
+    griffinlim_cqt
+
+
 Miscellaneous
--------------
+=============
 .. autosummary::
     :toctree: generated/
 
