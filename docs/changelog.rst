@@ -34,7 +34,7 @@ Other changes and maintenance
     - `#1826`_ Expanded parameter pass-through support in `effects.hpss` and related functions. *Brian McFee*
     - `#1822`_ Allow `display.specshow` to control min and max tempo in tempogram plots. *Brian McFee*
     - `#1820`_ Updated github actions. *Brian McFee*
-    - `#1813`_ Improved performance of `autocorrelate`. *@alumkal*
+    - `#1813`_ Improved performance of `autocorrelate`. *Jize Guo*
     - `#1808`_, `#1769`_ Added python 3.11 and 3.12 to CI test matrix. *Brian McFee*
     - `#1790`_ Explicitly allow scalar inputs in decibel conversions. *Brian McFee*
     - `#1782`_ Modernized usage of matplotlib colormaps. *@psmskelton*

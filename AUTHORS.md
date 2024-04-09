@@ -105,7 +105,7 @@ Contributors
 * Iliya S <https://github.com/zenitismus>
 * Eugene Rabinovich <https://github.com/erabinov>
 * Gao Lei <https://github.com/alvingao>
-* alumkal <https://github.com/alumkal>
+* Jize Guo <https://github.com/alumkal>
 * psmskelton <https://github.com/psmskelton>
 * Matt Pitkin <https://github.com/mattpitkin>
 
