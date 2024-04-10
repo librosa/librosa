@@ -106,7 +106,7 @@ Contributors
 * Eugene Rabinovich <https://github.com/erabinov>
 * Gao Lei <https://github.com/alvingao>
 * Jize Guo <https://github.com/alumkal>
-* psmskelton <https://github.com/psmskelton>
+* Phillip S.M. Skelton <https://github.com/psmskelton>
 * Matt Pitkin <https://github.com/mattpitkin>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.

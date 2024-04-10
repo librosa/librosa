@@ -37,7 +37,7 @@ Other changes and maintenance
     - `#1813`_ Improved performance of `autocorrelate`. *Jize Guo*
     - `#1808`_, `#1769`_ Added python 3.11 and 3.12 to CI test matrix. *Brian McFee*
     - `#1790`_ Explicitly allow scalar inputs in decibel conversions. *Brian McFee*
-    - `#1782`_ Modernized usage of matplotlib colormaps. *@psmskelton*
+    - `#1782`_ Modernized usage of matplotlib colormaps. *Phillip S.M. Skelton*
     - `#1765`_ Modernized usage of importlib and package resources. *Matt Pitkin*
 
 .. _#1829: https://github.com/librosa/librosa/issues/1829
