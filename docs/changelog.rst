@@ -5,6 +5,68 @@ Changelog
 v0.10
 =====
 
+v0.10.2
+-------
+2024-05-02
+
+
+New features
+    - `#1829`_ `librosa.cite()` returns a DOI (document object identifier) for citing librosa in academic publications. *Brian McFee*
+    - `#1766`_ `librosa.beat.beat_track`, `librosa.onset.onset_detect`, and `librosa.util.peak_pick` now support multi-channel inputs. *Brian McFee*
+    - `#1739`_, `#1756`_, `#1762`_ `key_to_degrees` and `key_to_notes` now support multiple accidentals in the tonic, and modes (ionian, dorian, etc). *Eugene Rabinovich*
+    - `#1770`_ Out-of-key notes are now optionally decorated with natural (♮) accidentals. *Eugene Rabinovich*
+
+Bug fixes
+    - `#1814`_ Corrected an off-by-one error when computing phase advance in `librosa.phase_vocoder`. *Brian McFee*
+    - `#1784`_ Improved handling of warnings in the test suite, and fixed a bug in dtype propagation through `ivqt`. *Brian McFee*
+    - `#1733`_ Fixed an off-by-one error in trimming of detected beats. *Brian McFee*
+    - `#1755`_ Avoid deprecated features in matplotlib and ensure compatibility with mpl 3.8. *Brian McFee*
+
+Documentation
+    - `#1801`_ Improved top-level structure of the documentation site. *Dana Lee*
+    - `#1827`_ Improvements to example code in documentation to include sampling rate parameters whenever necessary. *Brian McFee*
+    - `#1821`_ Added "copy button" to code examples in documentation. *Brian McFee*
+    - `#1789`_ Fixed type annotations for sampling rate parameters. *Brian McFee*
+    - `#1780`_ Corrected mistake in `util.frame` documentation. *Gao Lei*
+    - `#1783`_ Removed problematic language from test code and documentation. *Dan Ellis*
+
+Other changes and maintenance
+    - `#1826`_ Expanded parameter pass-through support in `effects.hpss` and related functions. *Brian McFee*
+    - `#1822`_ Allow `display.specshow` to control min and max tempo in tempogram plots. *Brian McFee*
+    - `#1820`_ Updated github actions. *Brian McFee*
+    - `#1813`_ Improved performance of `autocorrelate`. *Jize Guo*
+    - `#1808`_, `#1769`_ Added python 3.11 and 3.12 to CI test matrix. *Brian McFee*
+    - `#1790`_ Explicitly allow scalar inputs in decibel conversions. *Brian McFee*
+    - `#1782`_ Modernized usage of matplotlib colormaps. *Phillip S.M. Skelton*
+    - `#1765`_ Modernized usage of importlib and package resources. *Matt Pitkin*
+
+.. _#1829: https://github.com/librosa/librosa/issues/1829
+.. _#1766: https://github.com/librosa/librosa/issues/1766
+.. _#1739: https://github.com/librosa/librosa/issues/1739
+.. _#1756: https://github.com/librosa/librosa/issues/1756
+.. _#1762: https://github.com/librosa/librosa/issues/1762
+.. _#1770: https://github.com/librosa/librosa/issues/1770
+.. _#1814: https://github.com/librosa/librosa/issues/1814
+.. _#1784: https://github.com/librosa/librosa/issues/1784
+.. _#1733: https://github.com/librosa/librosa/issues/1733
+.. _#1755: https://github.com/librosa/librosa/issues/1755
+.. _#1801: https://github.com/librosa/librosa/issues/1801
+.. _#1827: https://github.com/librosa/librosa/issues/1827
+.. _#1821: https://github.com/librosa/librosa/issues/1821
+.. _#1789: https://github.com/librosa/librosa/issues/1789
+.. _#1780: https://github.com/librosa/librosa/issues/1780
+.. _#1783: https://github.com/librosa/librosa/issues/1783
+.. _#1826: https://github.com/librosa/librosa/issues/1826
+.. _#1822: https://github.com/librosa/librosa/issues/1822
+.. _#1820: https://github.com/librosa/librosa/issues/1820
+.. _#1813: https://github.com/librosa/librosa/issues/1813
+.. _#1808: https://github.com/librosa/librosa/issues/1808
+.. _#1769: https://github.com/librosa/librosa/issues/1769
+.. _#1790: https://github.com/librosa/librosa/issues/1790
+.. _#1782: https://github.com/librosa/librosa/issues/1782
+.. _#1765: https://github.com/librosa/librosa/issues/1765
+
+
 v0.10.1
 -------
 2023-08-16

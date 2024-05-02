@@ -104,6 +104,10 @@ Contributors
 * Shin Hyun <https://github.com/kyaryunha>
 * Iliya S <https://github.com/zenitismus>
 * Eugene Rabinovich <https://github.com/erabinov>
+* Gao Lei <https://github.com/alvingao>
+* Jize Guo <https://github.com/alumkal>
+* Phillip S.M. Skelton <https://github.com/psmskelton>
+* Matt Pitkin <https://github.com/mattpitkin>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
