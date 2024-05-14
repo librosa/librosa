@@ -16,7 +16,7 @@ from packaging import version
 
 import pytest
 
-matplotlib = pytest.importorskip("matplotlib", minversion="3.4")
+import matplotlib
 
 STYLE = "default"
 
