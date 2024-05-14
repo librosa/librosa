@@ -5,6 +5,18 @@ Changelog
 v0.10
 =====
 
+
+v0.10.2.post1
+-------------
+2024-05-14
+
+Maintenance
+    - `#1839`_ Updated minimum matplotlib to 3.5.0.  There are no changes to the code in this release, only package metadata and tests.
+
+
+.. _#1839: https://github.com/librosa/librosa/pull/1839
+
+
 v0.10.2
 -------
 2024-05-02
@@ -23,7 +35,6 @@ Bug fixes
     - `#1755`_ Avoid deprecated features in matplotlib and ensure compatibility with mpl 3.8. *Brian McFee*
 
 Documentation
-    - `#1801`_ Improved top-level structure of the documentation site. *Dana Lee*
     - `#1827`_ Improvements to example code in documentation to include sampling rate parameters whenever necessary. *Brian McFee*
     - `#1821`_ Added "copy button" to code examples in documentation. *Brian McFee*
     - `#1789`_ Fixed type annotations for sampling rate parameters. *Brian McFee*
@@ -50,7 +61,6 @@ Other changes and maintenance
 .. _#1784: https://github.com/librosa/librosa/issues/1784
 .. _#1733: https://github.com/librosa/librosa/issues/1733
 .. _#1755: https://github.com/librosa/librosa/issues/1755
-.. _#1801: https://github.com/librosa/librosa/issues/1801
 .. _#1827: https://github.com/librosa/librosa/issues/1827
 .. _#1821: https://github.com/librosa/librosa/issues/1821
 .. _#1789: https://github.com/librosa/librosa/issues/1789

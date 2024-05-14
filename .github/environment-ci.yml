@@ -21,7 +21,7 @@ dependencies:
   - typing_extensions>=4.1.1
 
   # optional, but required for testing
-  - matplotlib>=3.3.0
+  - matplotlib>=3.5.0
   - pytest-mpl
   - pytest-cov
   - pytest
