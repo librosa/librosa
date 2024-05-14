@@ -8,7 +8,13 @@ v0.10
 
 v0.10.2.post1
 -------------
-2024-05-xx
+2024-05-14
+
+Maintenance
+    - `#1839`_ Updated minimum matplotlib to 3.5.0.  There are no changes to the code in this release, only package metadata and tests.
+
+
+.. _#1839: https://github.com/librosa/librosa/pull/1839
 
 
 v0.10.2
