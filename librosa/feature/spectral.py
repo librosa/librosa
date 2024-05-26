@@ -1836,7 +1836,7 @@ def mfcc(
     S: Optional[np.ndarray] = None,
     n_mfcc: int = 20,
     dct_type: int = 2,
-    norm: Optional[str] = "ortho",
+    norm_dct: Optional[str] = "ortho",
     lifter: float = 0,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -1860,7 +1860,7 @@ def mfcc(
     dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type.
         By default, DCT type-2 is used.
-    norm : None or 'ortho'
+    norm_dct : None or 'ortho'
         If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an ortho-normal
         DCT basis.
         Normalization is not supported for ``dct_type=1``.
@@ -1988,7 +1988,7 @@ def mfcc(
         # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
 
-    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[
+    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm_dct)[
         ..., :n_mfcc, :
     ]
 
