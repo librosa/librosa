@@ -1836,8 +1836,9 @@ def mfcc(
     S: Optional[np.ndarray] = None,
     n_mfcc: int = 20,
     dct_type: int = 2,
-    dct_norm: Optional[str] = "ortho",
+    norm: Optional[str] = "ortho",
     lifter: float = 0,
+    mel_norm: Optional[Union[Literal["slaney"], float]] = "slaney",
     **kwargs: Any,
 ) -> np.ndarray:
     """Mel-frequency cepstral coefficients (MFCCs)
@@ -1860,8 +1861,8 @@ def mfcc(
     dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type.
         By default, DCT type-2 is used.
-    dct_norm : None or 'ortho'
-        If ``dct_type`` is `2 or 3`, setting ``dct_norm='ortho'`` uses an ortho-normal
+    norm : None or 'ortho'
+        If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an ortho-normal
         DCT basis.
         Normalization is not supported for ``dct_type=1``.
     lifter : number >= 0
@@ -1869,6 +1870,7 @@ def mfcc(
             M[n, :] <- M[n, :] * (1 + sin(pi * (n + 1) / lifter) * lifter / 2)
         Setting ``lifter >= 2 * n_mfcc`` emphasizes the higher-order coefficients.
         As ``lifter`` increases, the coefficient weighting becomes approximately linear.
+    mel_norm : `norm` argument to `melspectrogram`
     **kwargs : additional keyword arguments to `melspectrogram`
         if operating on time series input
     n_fft : int > 0 [scalar]
@@ -1986,9 +1988,9 @@ def mfcc(
     """
     if S is None:
         # multichannel behavior may be different due to relative noise floor differences between channels
-        S = power_to_db(melspectrogram(y=y, sr=sr, **kwargs))
+        S = power_to_db(melspectrogram(y=y, sr=sr, norm = mel_norm, **kwargs))
 
-    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm_dct)[
+    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[
         ..., :n_mfcc, :
     ]
 
