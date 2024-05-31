@@ -1836,7 +1836,7 @@ def mfcc(
     S: Optional[np.ndarray] = None,
     n_mfcc: int = 20,
     dct_type: int = 2,
-    norm_dct: Optional[str] = "ortho",
+    dct_norm: Optional[str] = "ortho",
     lifter: float = 0,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -1860,8 +1860,8 @@ def mfcc(
     dct_type : {1, 2, 3}
         Discrete cosine transform (DCT) type.
         By default, DCT type-2 is used.
-    norm_dct : None or 'ortho'
-        If ``dct_type`` is `2 or 3`, setting ``norm='ortho'`` uses an ortho-normal
+    dct_norm : None or 'ortho'
+        If ``dct_type`` is `2 or 3`, setting ``dct_norm='ortho'`` uses an ortho-normal
         DCT basis.
         Normalization is not supported for ``dct_type=1``.
     lifter : number >= 0
