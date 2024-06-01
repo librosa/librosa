@@ -17,6 +17,7 @@ from ..core.spectrum import power_to_db, _spectrogram
 from ..core.constantq import cqt, hybrid_cqt, vqt
 from ..core.pitch import estimate_tuning
 from typing import Any, Optional, Union, Collection
+from typing_extensions import Literal
 from numpy.typing import DTypeLike
 from .._typing import _FloatLike_co, _WindowSpec, _PadMode, _PadModeSTFT
 
