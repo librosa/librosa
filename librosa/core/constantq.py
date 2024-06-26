@@ -708,7 +708,7 @@ def icqt(
         )
 
         # Transpose the basis
-        inv_basis = fft_basis.H.todense()
+        inv_basis = fft_basis.conjugate().T.todense()
 
         # Compute each filter's frequency-domain power
         freq_power = 1 / np.sum(util.abs2(np.asarray(inv_basis)), axis=0)
