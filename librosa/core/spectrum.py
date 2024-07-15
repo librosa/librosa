@@ -2208,14 +2208,14 @@ def fmt(
     >>> # Auto-correlate with up to 10 seconds lag
     >>> odf_ac = librosa.autocorrelate(odf, max_size=10 * sr // 512)
     >>> # Normalize
-    >>> odf_ac = librosa.util.normalize(odf_ac, norm=np.inf)
+    >>> odf_ac_norm = librosa.util.normalize(odf_ac, norm=np.inf)
     >>> # Compute the scale transform
-    >>> odf_ac_scale = librosa.fmt(librosa.util.normalize(odf_ac), n_fmt=512)
+    >>> odf_ac_scale = librosa.fmt(odf_ac_norm, n_fmt=512)
     >>> # Plot the results
     >>> fig, ax = plt.subplots(nrows=3)
     >>> ax[0].plot(odf, label='Onset strength')
     >>> ax[0].set(xlabel='Time (frames)', title='Onset strength')
-    >>> ax[1].plot(odf_ac, label='Onset autocorrelation')
+    >>> ax[1].plot(odf_ac_norm, label='Onset autocorrelation')
     >>> ax[1].set(xlabel='Lag (frames)', title='Onset autocorrelation')
     >>> ax[2].semilogy(np.abs(odf_ac_scale), label='Scale transform magnitude')
     >>> ax[2].set(xlabel='scale coefficients')
