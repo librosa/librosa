@@ -142,7 +142,7 @@ def onset_detect(
     >>> D = np.abs(librosa.stft(y))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          x_axis='time', y_axis='log', ax=ax[0])
+    ...                          x_axis='time', y_axis='log', ax=ax[0], sr=sr)
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
     >>> ax[1].plot(times, o_env, label='Onset strength')
@@ -316,7 +316,7 @@ def onset_strength(
     >>> times = librosa.times_like(D, sr=sr)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
-    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    ...                          y_axis='log', x_axis='time', ax=ax[0], sr=sr)
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
 
