@@ -1309,7 +1309,7 @@ def test_piptrack(freq, n_fft):
 @pytest.mark.parametrize("bins_per_octave", [12])
 @pytest.mark.parametrize("resolution", [1e-2])
 @pytest.mark.parametrize("sr", [11025, 22050])
-def test_estimate_tuning(sr, center_note: int, tuning: np.float_, bins_per_octave, resolution):
+def test_estimate_tuning(sr, center_note: int, tuning: float, bins_per_octave, resolution):
 
     target_hz = librosa.midi_to_hz(center_note + tuning)
 
