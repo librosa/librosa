@@ -63,7 +63,7 @@ def test_valid_audio_type():
 def test_valid_audio_nan():
     """valid_audio: NaN"""
     y = np.zeros(1000)
-    y[10] = np.NaN
+    y[10] = np.nan
     librosa.util.valid_audio(y)
 
 
