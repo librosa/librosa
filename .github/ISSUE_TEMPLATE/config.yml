@@ -6,6 +6,3 @@ contact_links:
   - name: Question/Support/Other
     url: https://groups.google.com/g/librosa
     about: If you have a usage question
-  - name: Chat with devs
-    url: https://discord.com/channels/786703927705862175/1022898599463493643
-    about: Ask short questions about contributing to librosa
