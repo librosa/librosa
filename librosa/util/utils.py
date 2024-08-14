@@ -2498,7 +2498,7 @@ def abs2(x: _NumberOrArray, dtype: Optional[DTypeLike] = None) -> _NumberOrArray
             return y.astype(dtype)  # type: ignore
     else:
         # suppress type check, mypy doesn't know this is real
-        return np.power(x, 2, dtype=dtype)  # type: ignore
+        return np.square(x, dtype=dtype)  # type: ignore
 
 
 @numba.vectorize(
