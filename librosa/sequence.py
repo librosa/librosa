@@ -243,7 +243,7 @@ def dtw(
         in `scipy.spatial.distance.cdist()`
 
     step_sizes_sigma : np.ndarray [shape=[n, 2]]
-        Specifies allowed step sizes as used by the dtw.
+        Specifies allowed step sizes as used by the DTW.
 
     weights_add : np.ndarray [shape=[n, ]]
         Additive weights to penalize certain step sizes.
@@ -272,12 +272,14 @@ def dtw(
     -------
     D : np.ndarray [shape=(N, M)]
         accumulated cost matrix.
-        D[N, M] is the total alignment cost.
-        When doing subsequence DTW, D[N,:] indicates a matching function.
-    wp : np.ndarray [shape=(N, 2)]
+        The value at the final index position ``D[-1, -1]`` is the total alignment cost.
+    wp : np.ndarray [shape=(L, 2)]
         Warping path with index pairs.
         Each row of the array contains an index pair (n, m).
         Only returned when ``backtrack`` is True.
+        Note that the length ``L`` of the warping path need not match the
+        lengths of the input data, depending on the ``step_sizes_sigma`` values
+        and ``subseq``.
     steps : np.ndarray [shape=(N, M)]
         Step matrix, containing the indices of the used steps from the cost
         accumulation step.
