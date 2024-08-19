@@ -272,7 +272,7 @@ def dtw(
     -------
     D : np.ndarray [shape=(N, M)]
         accumulated cost matrix.
-        The final value ``D[-1, -1]`` is the total alignment cost.
+        The value at the final index position ``D[-1, -1]`` is the total alignment cost.
     wp : np.ndarray [shape=(L, 2)]
         Warping path with index pairs.
         Each row of the array contains an index pair (n, m).
