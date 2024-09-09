@@ -142,7 +142,7 @@ def mel_to_audio(
         The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
     win_length : None or int > 0
         The window length of the STFT.  By default, it will equal ``n_fft``
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         A window specification as supported by `stft` or `istft`
     center : boolean
         If `True`, the STFT is assumed to use centered frames.
@@ -326,7 +326,7 @@ def mfcc_to_audio(
         The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
     win_length : None or int > 0
         The window length of the STFT.  By default, it will equal ``n_fft``
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         A window specification as supported by `stft` or `istft`
     center : boolean
         If `True`, the STFT is assumed to use centered frames.

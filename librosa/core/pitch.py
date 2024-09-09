@@ -235,11 +235,11 @@ def piptrack(
 
         If unspecified, defaults to ``win_length = n_fft``.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
 
         .. see also:: `filters.get_window`
 

@@ -120,13 +120,13 @@ def stft(
 
         If unspecified, defaults to ``win_length = n_fft``.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         Either:
 
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
 
         Defaults to a raised cosine window (`'hann'`), which is adequate for
         most applications in audio signal processing.
@@ -440,11 +440,11 @@ def istft(
         However, if an odd frame length was used, you can specify the correct
         length by setting ``n_fft``.
 
-    window : string, tuple, number, function, np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a user-specified window vector of length ``n_fft``
+        - a user-specified window vector of length ``win_length``
 
         .. see also:: `filters.get_window`
 
@@ -697,11 +697,11 @@ def __reassign_frequencies(
         Window length. Defaults to ``n_fft``.
         See ``stft`` for details.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a user-specified window vector of length ``n_fft``
+        - a user-specified window vector of length ``win_length``
 
         See `stft` for details.
 
@@ -860,11 +860,11 @@ def __reassign_times(
         Window length. Defaults to ``n_fft``.
         See `stft` for details.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a user-specified window vector of length ``n_fft``
+        - a user-specified window vector of length ``win_length``
 
         See `stft` for details.
 
@@ -1062,11 +1062,11 @@ def reassigned_spectrogram(
         Window length. Defaults to ``n_fft``.
         See `stft` for details.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a user-specified window vector of length ``n_fft``
+        - a user-specified window vector of length ``win_length``
 
         See `stft` for details.
 
@@ -2690,7 +2690,7 @@ def griffinlim(
         By default, this will be inferred from the shape of ``S`` as an even number.
         However, if an odd frame length was used, you can explicitly set ``n_fft``.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         A window specification as supported by `stft` or `istft`
 
     center : boolean
@@ -2902,11 +2902,11 @@ def _spectrogram(
 
         If unspecified, defaults to ``win_length = n_fft``.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
 
         .. see also:: `filters.get_window`
 

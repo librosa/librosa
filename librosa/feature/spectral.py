@@ -95,11 +95,11 @@ def spectral_centroid(
         The window will be of length ``win_length`` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
         .. see also:: `librosa.filters.get_window`
     center : boolean
         - If `True`, the signal ``y`` is padded so that frame
@@ -232,11 +232,11 @@ def spectral_bandwidth(
         The window will be of length ``win_length`` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
         .. see also:: `librosa.filters.get_window`
     center : boolean
         - If `True`, the signal ``y`` is padded so that frame
@@ -398,11 +398,11 @@ def spectral_contrast(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
         .. see also:: `librosa.filters.get_window`
     center : boolean
         - If `True`, the signal ``y`` is padded so that frame
@@ -568,11 +568,11 @@ def spectral_rolloff(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
         .. see also:: `librosa.filters.get_window`
     center : boolean
         - If `True`, the signal ``y`` is padded so that frame
@@ -717,11 +717,11 @@ def spectral_flatness(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
         .. see also:: `librosa.filters.get_window`
     center : boolean
         - If `True`, the signal ``y`` is padded so that frame
@@ -944,11 +944,11 @@ def poly_features(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
         .. see also:: `librosa.filters.get_window`
     center : boolean
         - If `True`, the signal ``y`` is padded so that frame
@@ -1173,11 +1173,11 @@ def chroma_stft(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
         .. see also:: `librosa.filters.get_window`
     center : boolean
         - If `True`, the signal ``y`` is padded so that frame
@@ -1884,11 +1884,11 @@ def mfcc(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
         see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
         .. see also:: `librosa.filters.get_window`
     center : boolean
         - If `True`, the signal ``y`` is padded so that frame
@@ -2051,11 +2051,11 @@ def melspectrogram(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
-        - a vector or array of length ``n_fft``
+        - a vector or array of length ``win_length``
         .. see also:: `librosa.filters.get_window`
     center : boolean
         - If `True`, the signal ``y`` is padded so that frame
