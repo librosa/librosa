@@ -57,13 +57,13 @@ body:
       description: >-
         Please run the following Python code snippet and paste the output here:
         ```
-        import platform; print(platform.platform())
-        import sys; print("Python", sys.version)
-        import numpy; print("NumPy", numpy.__version__)
-        import scipy; print("SciPy", scipy.__version__)
-        import librosa; print("librosa", librosa.__version__)
+        import platform; print(platform.platform());
+        import sys; print("Python", sys.version);
+        import numpy; print("NumPy", numpy.__version__);
+        import scipy; print("SciPy", scipy.__version__);
+        import librosa; print("librosa", librosa.__version__);
 
-        librosa.show_versions()
+        librosa.show_versions();
         ```
     validations:
       required: true
