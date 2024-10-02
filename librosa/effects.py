@@ -580,7 +580,7 @@ def _signal_to_frame_nonsilent(
     top_db : number
         The threshold (in decibels) below reference to consider as
         silence.
-        You can also use a negative value for `top_db` to treat any value 
+        You can also use a negative value for `top_db` to treat any value
         below `ref + |top_db|` as silent.  This will only make sense if
         `ref` is not `np.max`.
 
@@ -640,7 +640,7 @@ def trim(
     top_db : number
         The threshold (in decibels) below reference to consider as
         silence.
-        You can also use a negative value for `top_db` to treat any value 
+        You can also use a negative value for `top_db` to treat any value
         below `ref + |top_db|` as silent.  This will only make sense if
         `ref` is not `np.max`.
     ref : number or callable
