@@ -706,6 +706,12 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
     >>> librosa.key_to_notes('G#:maj', unicode = False, natural = True)
     ['B#', 'C#', 'Dn', 'D#', 'En', 'E#', 'F#', 'F##', 'G#', 'An', 'A#', 'B']
 
+    We can combine this with ``key_to_degrees`` to get the notes for a given scale:
+    
+    >>> notes = librosa.key_to_notes('D:maj')
+    >>> degrees = librosa.key_to_degrees('D:maj')
+    >>> print([notes[d] for d in degrees])
+    ['D', 'E', 'F♯', 'G', 'A', 'B', 'C♯']
     """
     # Parse the key signature
     match = KEY_RE.match(key)
