@@ -689,11 +689,8 @@ def trim(
         # The entire signal is trimmed here: nothing is above the threshold
         start, end = 0, 0
 
-    # Build the mono/stereo index
-    full_index = [slice(None)] * y.ndim
-    full_index[-1] = slice(start, end)
-
-    return y[tuple(full_index)], np.asarray([start, end])
+    # Slice the buffer and return the corresponding interval
+    return y[..., start:end], np.asarray([start, end])
 
 
 def split(
