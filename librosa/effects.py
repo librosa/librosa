@@ -577,9 +577,13 @@ def _signal_to_frame_nonsilent(
     hop_length : int > 0
         The number of samples between frames
 
-    top_db : number > 0
+    top_db : number
         The threshold (in decibels) below reference to consider as
-        silence
+        silence.
+
+        You can also use a negative value for `top_db` to treat any value 
+        below `ref + |top_db|` as silent.  This will only make sense if
+        `ref` is not `np.max`.
 
     ref : callable or float
         The reference amplitude
@@ -634,9 +638,13 @@ def trim(
     ----------
     y : np.ndarray, shape=(..., n)
         Audio signal. Multi-channel is supported.
-    top_db : number > 0
+    top_db : number
         The threshold (in decibels) below reference to consider as
-        silence
+        silence.
+
+        You can also use a negative value for `top_db` to treat any value 
+        below `ref + |top_db|` as silent.  This will only make sense if
+        `ref` is not `np.max`.
     ref : number or callable
         The reference amplitude.  By default, it uses `np.max` and compares
         to the peak amplitude in the signal.
