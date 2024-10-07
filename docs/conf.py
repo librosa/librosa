@@ -409,3 +409,6 @@ smv_prefer_remote_refs = True
 # Set the latest version via command-line
 #  $ sphinx-multiversion -D smv_latest_version=$(./scripts/get_latest_release.sh) docs build/html
 # smv_latest_version = version
+
+
+linkcheck_allow_unauthorized = True
