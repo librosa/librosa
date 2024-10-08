@@ -392,7 +392,7 @@ def time_stretch(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     )
 
     # Predict the length of y_stretch
-    len_stretch = int(round(y.shape[-1] / rate))
+    len_stretch = int(np.round(y.shape[-1] / rate))
 
     # Invert the STFT
     y_stretch = core.istft(stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
