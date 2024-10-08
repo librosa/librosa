@@ -323,7 +323,8 @@ def spectral_bandwidth(
             "Spectral bandwidth is only defined " "with non-negative energies"
         )
 
-    # centroid or center?
+    # If we don't have a centroid provided, compute it using the existing
+    # spectrogram S
     if centroid is None:
         centroid = spectral_centroid(
             y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length, freq=freq
