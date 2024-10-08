@@ -108,7 +108,8 @@ Contributors
 * Jize Guo <https://github.com/alumkal>
 * Phillip S.M. Skelton <https://github.com/psmskelton>
 * Matt Pitkin <https://github.com/mattpitkin>
-
+* Orkun Kınay <https://github.com/orkunkinay>
+  
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
 Large portions of librosa were ported from MATLAB code by Dan Ellis <http://www.ee.columbia.edu/~dpwe/resources/matlab/>.
