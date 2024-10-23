@@ -10,6 +10,7 @@ import numba
 
 from .spectrum import _spectrogram
 from . import convert
+from . import audio
 from .._cache import cache
 from .. import util
 from .. import sequence
@@ -389,21 +390,17 @@ def _cumulative_mean_normalized_difference(
     yin_frames : np.ndarray [shape=(max_period-min_period+1,n_frames)]
         Cumulative mean normalized difference function for each frame.
     """
-    # Autocorrelation.
-    a = np.fft.rfft(y_frames, frame_length, axis=-2)
-    b = np.fft.rfft(y_frames[..., win_length:0:-1, :], frame_length, axis=-2)
-    acf_frames = np.fft.irfft(a * b, frame_length, axis=-2)[..., win_length:, :]
-    acf_frames[np.abs(acf_frames) < 1e-6] = 0
+    acf_frames = audio.autocorrelate(y_frames, max_size=max_period+1, axis=-2)
 
     # Energy terms.
-    energy_frames = np.cumsum(y_frames**2, axis=-2)
-    energy_frames = (
-        energy_frames[..., win_length:, :] - energy_frames[..., :-win_length, :]
-    )
-    energy_frames[np.abs(energy_frames) < 1e-6] = 0
+    yin_frames = np.cumsum(np.square(y_frames), axis=-2)
 
-    # Difference function.
-    yin_frames = energy_frames[..., :1, :] + energy_frames - 2 * acf_frames
+    # Difference function: d(k) = 2 * (ACF(0) - ACF(k)) - sum_{m=0}^{k-1} y(m)^2
+    yin_frames[..., 1 : max_period + 1, :] = (
+        2 * (acf_frames[..., :1, :] - acf_frames[..., 1 : max_period + 1, :])
+        - yin_frames[..., 1 : max_period + 1, :]
+    )
+    yin_frames[..., 0, :] = 0
 
     # Cumulative mean normalized difference function.
     yin_numerator = yin_frames[..., min_period : max_period + 1, :]
