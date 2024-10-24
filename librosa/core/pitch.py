@@ -952,7 +952,7 @@ def __check_yin_params(
         fmin_feasible = sr / (frame_length - 1)
         frame_length_feasible = int(np.ceil(sr/fmin) + 1)
         raise ParameterError(
-            f"fmin={fmin:.3f} is too small for frame_length={frame_length} and sr={sr}."
+            f"fmin={fmin:.3f} is too small for frame_length={frame_length} and sr={sr}. "
             f"Either increase to fmin={fmin_feasible:.3f} or frame_length={frame_length_feasible}"
         )
 
@@ -961,13 +961,13 @@ def __check_yin_params(
         frame_length_optimal = int(np.ceil(sr/fmin) * 2 + 1)
 
         warnings.warn(
-            f"With fmin={fmin:.3f}, sr={sr} and frame_length={frame_length}, less than two periods of fmin"
-            f"fit into the frame, which can cause inaccurate pitch detection."
+            f"With fmin={fmin:.3f}, sr={sr} and frame_length={frame_length}, less than two periods of fmin "
+            f"fit into the frame, which can cause inaccurate pitch detection. "
             f"Consider increasing to fmin={fmin_optimal} or frame_length={frame_length_optimal}."
         )
 
     if win_length is not None:
         warnings.warn(
-            f"The win_length parameter has been depecrated in version 0.11.0"
+            f"The win_length parameter has been depecrated in version 0.11.0 "
             f"and has no effect. It will be removed in version 1.0.0."
         )
