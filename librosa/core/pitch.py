@@ -936,7 +936,10 @@ def __check_yin_params(
     the following conditions:
 
     1. 0 < fmin < fmax <= sr/2
-    2. frame_length - win_length - 1 > sr/fmax
+    2. sr / fmin < frame_length - 1: At least one period of fmin needs to fit into the frame.
+
+    Give a warning if parameters violate:
+    3. sr / fmin < frame_length / 2: Ideally, at least two periods of fmin should fit into the frame.
     """
     if fmax > sr / 2:
         raise ParameterError(f"fmax={fmax:.3f} cannot exceed Nyquist frequency {sr/2}")
@@ -945,15 +948,26 @@ def __check_yin_params(
     if fmin <= 0:
         raise ParameterError(f"fmin={fmin:.3f} must be strictly positive")
 
-    if win_length >= frame_length:
+    if sr / fmin >= frame_length - 1:
+        fmin_feasible = sr / (frame_length - 1)
+        frame_length_feasible = int(np.ceil(sr/fmin) + 1)
         raise ParameterError(
-            f"win_length={win_length} must be less than frame_length={frame_length}"
+            f"fmin={fmin:.3f} is too small for frame_length={frame_length} and sr={sr}."
+            f"Either increase to fmin={fmin_feasible:.3f} or frame_length={frame_length_feasible}"
         )
 
-    if frame_length - win_length - 1 <= sr // fmax:
-        fmax_feasible = sr / (frame_length - win_length - 1)
-        frame_length_feasible = int(np.ceil(sr/fmax) + win_length + 1)
-        raise ParameterError(
-            f"fmax={fmax:.3f} is too small for frame_length={frame_length}, win_length={win_length}, and sr={sr}. "
-            f"Either increase to fmax={fmax_feasible:.3f} or frame_length={frame_length_feasible}"
+    if sr / fmin >= frame_length // 2:
+        fmin_optimal = sr / (frame_length / 2)
+        frame_length_optimal = int(np.ceil(sr/fmin) * 2 + 1)
+
+        warnings.warn(
+            f"With fmin={fmin:.3f}, sr={sr} and frame_length={frame_length}, less than two periods of fmin"
+            f"fit into the frame, which can cause inaccurate pitch detection."
+            f"Consider increasing to fmin={fmin_optimal} or frame_length={frame_length_optimal}."
+        )
+
+    if win_length is not None:
+        warnings.warn(
+            f"The win_length parameter has been depecrated in version 0.11.0"
+            f"and has no effect. It will be removed in version 1.0.0."
         )
