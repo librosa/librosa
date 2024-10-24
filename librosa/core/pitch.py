@@ -361,8 +361,6 @@ def piptrack(
 
 def _cumulative_mean_normalized_difference(
     y_frames: np.ndarray,
-    frame_length: int,
-    win_length: int,
     min_period: int,
     max_period: int,
 ) -> np.ndarray:
@@ -376,10 +374,6 @@ def _cumulative_mean_normalized_difference(
     ----------
     y_frames : np.ndarray [shape=(frame_length, n_frames)]
         framed audio time series.
-    frame_length : int > 0 [scalar]
-        length of the frames in samples.
-    win_length : int > 0 [scalar]
-        length of the window for calculating autocorrelation in samples.
     min_period : int > 0 [scalar]
         minimum period.
     max_period : int > 0 [scalar]
@@ -523,9 +517,6 @@ def yin(
         length of the frames in samples.
         By default, ``frame_length=2048`` corresponds to a time scale of about 93 ms at
         a sampling rate of 22050 Hz.
-    win_length : None or int > 0 [scalar]
-        length of the window for calculating autocorrelation in samples.
-        If ``None``, defaults to ``frame_length // 2``
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent YIN predictions.
         If ``None``, defaults to ``frame_length // 4``.
@@ -543,6 +534,11 @@ def yin(
         ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
+    win_length : Deprecated
+        length of the window for calculating autocorrelation in samples.
+
+        .. warning:: This parameter is deprecated as of 0.11.0 and
+            will be removed in 1.0.
 
     Returns
     -------
@@ -568,10 +564,6 @@ def yin(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
-    # Set the default window length if it is not already specified.
-    if win_length is None:
-        win_length = frame_length // 2
-
     __check_yin_params(
         sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length, win_length=win_length
     )
@@ -594,11 +586,11 @@ def yin(
 
     # Calculate minimum and maximum periods
     min_period = int(np.floor(sr / fmax))
-    max_period = min(int(np.ceil(sr / fmin)), frame_length - win_length - 1)
+    max_period = min(int(np.ceil(sr / fmin)), frame_length - 1)
 
     # Calculate cumulative mean normalized difference function.
     yin_frames = _cumulative_mean_normalized_difference(
-        y_frames, frame_length, win_length, min_period, max_period
+        y_frames, min_period, max_period
     )
 
     # Parabolic interpolation.
@@ -692,9 +684,6 @@ def pyin(
         length of the frames in samples.
         By default, ``frame_length=2048`` corresponds to a time scale of about 93 ms at
         a sampling rate of 22050 Hz.
-    win_length : None or int > 0 [scalar]
-        length of the window for calculating autocorrelation in samples.
-        If ``None``, defaults to ``frame_length // 2``
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent pYIN predictions.
         If ``None``, defaults to ``frame_length // 4``.
@@ -729,6 +718,12 @@ def pyin(
         ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
+    win_length : Deprecated
+        length of the window for calculating autocorrelation in samples.
+
+        .. warning:: This parameter is deprecated as of 0.11.0 and
+            will be removed in 1.0.
+
 
     Returns
     -------
@@ -770,10 +765,6 @@ def pyin(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
-    # Set the default window length if it is not already specified.
-    if win_length is None:
-        win_length = frame_length // 2
-
     __check_yin_params(
         sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length, win_length=win_length
     )
@@ -796,11 +787,11 @@ def pyin(
 
     # Calculate minimum and maximum periods
     min_period = int(np.floor(sr / fmax))
-    max_period = min(int(np.ceil(sr / fmin)), frame_length - win_length - 1)
+    max_period = min(int(np.ceil(sr / fmin)), frame_length - 1)
 
     # Calculate cumulative mean normalized difference function.
     yin_frames = _cumulative_mean_normalized_difference(
-        y_frames, frame_length, win_length, min_period, max_period
+        y_frames, min_period, max_period
     )
 
     # Parabolic interpolation.
