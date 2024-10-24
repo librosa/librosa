@@ -963,7 +963,7 @@ def __check_yin_params(
         warnings.warn(
             f"With fmin={fmin:.3f}, sr={sr} and frame_length={frame_length}, less than two periods of fmin "
             f"fit into the frame, which can cause inaccurate pitch detection. "
-            f"Consider increasing to fmin={fmin_optimal} or frame_length={frame_length_optimal}.",
+            f"Consider increasing to fmin={fmin_optimal:.3f} or frame_length={frame_length_optimal}.",
             stacklevel=3
         )
 
