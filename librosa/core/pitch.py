@@ -384,27 +384,25 @@ def _cumulative_mean_normalized_difference(
     yin_frames : np.ndarray [shape=(max_period-min_period+1,n_frames)]
         Cumulative mean normalized difference function for each frame.
     """
-    acf_frames = audio.autocorrelate(y_frames, max_size=max_period+1, axis=-2)
+    acf_frames = audio.autocorrelate(y_frames, max_size=max_period + 1, axis=-2)
 
     # Energy terms.
     yin_frames = np.cumsum(np.square(y_frames), axis=-2)
 
     # Difference function: d(k) = 2 * (ACF(0) - ACF(k)) - sum_{m=0}^{k-1} y(m)^2
-    yin_frames[..., 1 : max_period + 1, :] = (
-        2 * (acf_frames[..., :1, :] - acf_frames[..., 1 : max_period + 1, :])
-        - yin_frames[..., 1 : max_period + 1, :]
-    )
+    k = slice(1, max_period + 1)
     yin_frames[..., 0, :] = 0
+    yin_frames[..., k, :] = (
+        2 * (acf_frames[..., 0, :] - acf_frames[..., k, :]) - yin_frames[..., :k.stop-1, :]
+    )
 
     # Cumulative mean normalized difference function.
     yin_numerator = yin_frames[..., min_period : max_period + 1, :]
     # broadcast this shape to have leading ones
-    tau_range = util.expand_to(
-        np.arange(1, max_period + 1), ndim=yin_frames.ndim, axes=-2
-    )
+    k_range = util.expand_to(np.r_[k], ndim=yin_frames.ndim, axes=-2)
 
     cumulative_mean = (
-        np.cumsum(yin_frames[..., 1 : max_period + 1, :], axis=-2) / tau_range
+        np.cumsum(yin_frames[..., k, :], axis=-2) / k_range
     )
     yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
     yin_frames: np.ndarray = yin_numerator / (
@@ -950,7 +948,7 @@ def __check_yin_params(
 
     if sr / fmin >= frame_length - 1:
         fmin_feasible = sr / (frame_length - 1)
-        frame_length_feasible = int(np.ceil(sr/fmin) + 1)
+        frame_length_feasible = int(np.ceil(sr / fmin) + 1)
         raise ParameterError(
             f"fmin={fmin:.3f} is too small for frame_length={frame_length} and sr={sr}. "
             f"Either increase to fmin={fmin_feasible:.3f} or frame_length={frame_length_feasible}"
@@ -958,18 +956,18 @@ def __check_yin_params(
 
     if sr / fmin >= frame_length // 2:
         fmin_optimal = sr / (frame_length / 2)
-        frame_length_optimal = int(np.ceil(sr/fmin) * 2 + 1)
+        frame_length_optimal = int(np.ceil(sr / fmin) * 2 + 1)
 
         warnings.warn(
             f"With fmin={fmin:.3f}, sr={sr} and frame_length={frame_length}, less than two periods of fmin "
             f"fit into the frame, which can cause inaccurate pitch detection. "
             f"Consider increasing to fmin={fmin_optimal:.3f} or frame_length={frame_length_optimal}.",
-            stacklevel=3
+            stacklevel=3,
         )
 
     if win_length is not None:
         warnings.warn(
             f"The win_length parameter has been deprecated in version 0.11.0 "
             f"and has no effect. It will be removed in version 1.0.0.",
-            stacklevel=3
+            stacklevel=3,
         )
