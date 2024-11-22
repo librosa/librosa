@@ -877,8 +877,7 @@ def pyin(
     t_switch = sequence.transition_loop(2, 1 - switch_prob)
     transition = np.kron(t_switch, transition)
 
-    p_init = np.zeros(2 * n_pitch_bins)
-    p_init[n_pitch_bins:] = 1 / n_pitch_bins
+    p_init = np.ones(2 * n_pitch_bins) / (2 * n_pitch_bins)
 
     states = sequence.viterbi(observation_probs, transition, p_init=p_init)
 
