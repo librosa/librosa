@@ -762,7 +762,8 @@ def pyin(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
-    __check_yin_params(
+   if not isinstance(win_length, Deprecated):
+       warnings.warn(FutureWarning, "win_length parameter is deprecated...")
         sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length, win_length=win_length
     )
 
