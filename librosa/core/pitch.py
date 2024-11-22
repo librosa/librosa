@@ -502,37 +502,46 @@ def yin(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported..
+
     fmin : number > 0 [scalar]
         minimum frequency in Hertz.
         The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
+
     fmax : number > fmin, <= sr/2 [scalar]
         maximum frequency in Hertz.
         The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
+
     sr : number > 0 [scalar]
         sampling rate of ``y`` in Hertz.
+
     frame_length : int > 0 [scalar]
         length of the frames in samples.
         By default, ``frame_length=2048`` corresponds to a time scale of about 93 ms at
         a sampling rate of 22050 Hz.
+
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent YIN predictions.
         If ``None``, defaults to ``frame_length // 4``.
+
     trough_threshold : number > 0 [scalar]
         absolute threshold for peak estimation.
+
     center : boolean
         If ``True``, the signal `y` is padded so that frame
         ``D[:, t]`` is centered at `y[t * hop_length]`.
         If ``False``, then ``D[:, t]`` begins at ``y[t * hop_length]``.
         Defaults to ``True``,  which simplifies the alignment of ``D`` onto a
         time grid by means of ``librosa.core.frames_to_samples``.
+
     pad_mode : string or function
         If ``center=True``, this argument is passed to ``np.pad`` for padding
         the edges of the signal ``y``. By default (``pad_mode="constant"``),
         ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
+
     win_length : Deprecated
         length of the window for calculating autocorrelation in samples.
 
@@ -677,60 +686,75 @@ def pyin(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
+
     fmin : number > 0 [scalar]
         minimum frequency in Hertz.
         The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
+
     fmax : number > fmin, <= sr/2 [scalar]
         maximum frequency in Hertz.
         The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
+
     sr : number > 0 [scalar]
         sampling rate of ``y`` in Hertz.
+
     frame_length : int > 0 [scalar]
         length of the frames in samples.
         By default, ``frame_length=2048`` corresponds to a time scale of about 93 ms at
         a sampling rate of 22050 Hz.
+
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent pYIN predictions.
         If ``None``, defaults to ``frame_length // 4``.
+
     n_thresholds : int > 0 [scalar]
         number of thresholds for peak estimation.
+
     beta_parameters : tuple
         shape parameters for the beta distribution prior over thresholds.
+
     boltzmann_parameter : number > 0 [scalar]
         shape parameter for the Boltzmann distribution prior over troughs.
         Larger values will assign more mass to smaller periods.
+
     resolution : float in `(0, 1)`
         Resolution of the pitch bins.
         0.01 corresponds to cents.
+
     max_transition_rate : float > 0
         maximum pitch transition rate in octaves per second.
+
     switch_prob : float in ``(0, 1)``
         probability of switching from voiced to unvoiced or vice versa.
+
     no_trough_prob : float in ``(0, 1)``
         maximum probability to add to global minimum if no trough is below threshold.
+
     fill_na : None, float, or ``np.nan``
         default value for unvoiced frames of ``f0``.
         If ``None``, the unvoiced frames will contain a best guess value.
+
     center : boolean
         If ``True``, the signal ``y`` is padded so that frame
         ``D[:, t]`` is centered at ``y[t * hop_length]``.
         If ``False``, then ``D[:, t]`` begins at ``y[t * hop_length]``.
         Defaults to ``True``,  which simplifies the alignment of ``D`` onto a
         time grid by means of ``librosa.core.frames_to_samples``.
+
     pad_mode : string or function
         If ``center=True``, this argument is passed to ``np.pad`` for padding
         the edges of the signal ``y``. By default (``pad_mode="constant"``),
         ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
+
     win_length : Deprecated
         length of the window for calculating autocorrelation in samples.
 
         .. warning:: This parameter is deprecated as of 0.11.0 and
             will be removed in 1.0.
-
 
     Returns
     -------
