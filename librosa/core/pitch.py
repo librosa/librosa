@@ -394,7 +394,7 @@ def _cumulative_mean_normalized_difference(
     k = slice(1, max_period + 1)
     yin_frames[..., 0, :] = 0
     yin_frames[..., k, :] = (
-        2 * (acf_frames[..., 0, :] - acf_frames[..., k, :]) - yin_frames[..., :k.stop-1, :]
+        2 * (acf_frames[..., 0:1, :] - acf_frames[..., k, :]) - yin_frames[..., :k.stop-1, :]
     )
 
     # Cumulative mean normalized difference function.
