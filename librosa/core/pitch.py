@@ -14,6 +14,7 @@ from . import audio
 from .._cache import cache
 from .. import util
 from .. import sequence
+from ..util import Deprecated
 from ..util.exceptions import ParameterError
 from numpy.typing import ArrayLike
 from typing import Any, Callable, Optional, Tuple, Union
@@ -478,7 +479,7 @@ def yin(
     fmax: float,
     sr: float = 22050,
     frame_length: int = 2048,
-    win_length: Optional[int] = None,
+    win_length: Optional[Union[int, Deprecated]] = Deprecated(),
     hop_length: Optional[int] = None,
     trough_threshold: float = 0.1,
     center: bool = True,
@@ -562,8 +563,16 @@ def yin(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
+    if not isinstance(win_length, Deprecated):
+        warnings.warn(
+            f"The win_length parameter has been deprecated in version 0.11.0 "
+            f"and has no effect. It will be removed in version 1.0.0.",
+            category=FutureWarning,
+            stacklevel=3,
+        )
+
     __check_yin_params(
-        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length, win_length=win_length
+        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length
     )
 
     # Set the default hop if it is not already specified.
@@ -637,7 +646,7 @@ def pyin(
     fmax: float,
     sr: float = 22050,
     frame_length: int = 2048,
-    win_length: Optional[int] = None,
+    win_length: Optional[Union[int, Deprecated]] = Deprecated(),
     hop_length: Optional[int] = None,
     n_thresholds: int = 100,
     beta_parameters: Tuple[float, float] = (2, 18),
@@ -763,9 +772,16 @@ def pyin(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
-   if not isinstance(win_length, Deprecated):
-       warnings.warn(FutureWarning, "win_length parameter is deprecated...")
-        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length, win_length=win_length
+    if not isinstance(win_length, Deprecated):
+        warnings.warn(
+            f"The win_length parameter has been deprecated in version 0.11.0 "
+            f"and has no effect. It will be removed in version 1.0.0.",
+            category=FutureWarning,
+            stacklevel=3,
+        )
+
+    __check_yin_params(
+        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length
     )
 
     # Set the default hop if it is not already specified.
@@ -931,7 +947,7 @@ def __pyin_helper(
 
 
 def __check_yin_params(
-    *, sr: float, fmax: float, fmin: float, frame_length: int, win_length: int
+    *, sr: float, fmax: float, fmin: float, frame_length: int
 ):
     """Check the feasibility of yin/pyin parameters against
     the following conditions:
@@ -965,12 +981,5 @@ def __check_yin_params(
             f"With fmin={fmin:.3f}, sr={sr} and frame_length={frame_length}, less than two periods of fmin "
             f"fit into the frame, which can cause inaccurate pitch detection. "
             f"Consider increasing to fmin={fmin_optimal:.3f} or frame_length={frame_length_optimal}.",
-            stacklevel=3,
-        )
-
-    if win_length is not None:
-        warnings.warn(
-            f"The win_length parameter has been deprecated in version 0.11.0 "
-            f"and has no effect. It will be removed in version 1.0.0.",
             stacklevel=3,
         )
