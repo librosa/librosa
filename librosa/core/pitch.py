@@ -596,6 +596,7 @@ def yin(
 
     # Find local minima.
     is_trough = util.localmin(yin_frames, axis=-2)
+    is_trough[..., 0, :] = yin_frames[..., 0, :] < yin_frames[..., 1, :]
 
     # Find minima below peak threshold.
     is_threshold_trough = np.logical_and(is_trough, yin_frames < trough_threshold)
@@ -871,6 +872,7 @@ def __pyin_helper(
         # 2. For each frame find the troughs.
         is_trough = util.localmin(yin_frame)
 
+        is_trough[0] = yin_frame[0] < yin_frame[1]
         (trough_index,) = np.nonzero(is_trough)
 
         if len(trough_index) == 0:
