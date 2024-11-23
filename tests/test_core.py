@@ -1219,6 +1219,16 @@ def test_yin_fail(fmin, fmax, frame_length):
         y, fmin=fmin, fmax=fmax, frame_length=frame_length
     )
 
+def test_yin_warn():
+    y = librosa.tone(110, duration=1.0)
+
+    # win_length is deprecated
+    with pytest.warns(FutureWarning, match="deprecated"):
+        librosa.yin(y, fmin=110, fmax=1000, win_length=1024)
+
+    # sr / fmin >= frame_length // 2
+    with pytest.warns(UserWarning, match="two periods"):
+        librosa.yin(y, fmin=20, fmax=1000)
 
 @pytest.mark.parametrize("freq", [110, 220, 440, 880])
 def test_pyin_tone(freq):
@@ -1344,6 +1354,13 @@ def test_pyin_fail(fmin, fmax, frame_length):
     librosa.pyin(
         y, fmin=fmin, fmax=fmax, frame_length=frame_length
     )
+
+def test_pyin_warn():
+    y = librosa.tone(110, duration=1.0)
+
+    # win_length is deprecated
+    with pytest.warns(FutureWarning, match="deprecated"):
+        librosa.pyin(y, fmin=110, fmax=1000, win_length=1024)
 
 
 @pytest.mark.parametrize("freq", [110, 220, 440, 880])
