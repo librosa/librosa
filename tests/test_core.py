@@ -1328,16 +1328,18 @@ def test_pyin_chirp_instant():
 
     # test if correct frames are voiced
     assert np.array_equal(voiced_flag, target_f0 > 0)
-    # test voiced frames are within one cent of the target
-    atol = 1e-2 * np.ones(np.count_nonzero(voiced_flag))
 
-    # higher tolerance for the first and last frames, accounting for abrupt start / end
-    atol[0] = 1e-1
-    atol[-1] = 1e-1
+    # test voiced frames are within one cent of the target
+    cents = np.log2(f0[voiced_flag])
+    target_cents = np.log2(target_f0[target_f0 > 0])
 
     assert np.allclose(
-        np.log2(f0[voiced_flag]), np.log2(target_f0[target_f0 > 0]), rtol=0, atol=atol
+        np.log2(cents[1:-1]), np.log2(target_cents[1:-1]), rtol=0, atol=1e-2
     )
+
+    # higher tolerance for the first and last frames, accounting for abrupt start / end
+    assert np.abs(cents[0] - target_cents[0]) <= 1e-1
+    assert np.abs(cents[-1] - target_cents[-1]) <= 1e-1
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
