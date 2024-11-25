@@ -1238,7 +1238,7 @@ def test_pyin_tone(freq):
 
 
 def test_pyin_multi():
-    y = np.stack([librosa.tone(440, duration=0.1), librosa.tone(560, duration=0.1)])
+    y = np.stack([librosa.tone(440, duration=1.0), librosa.tone(560, duration=1.0)])
 
     # Taper the signal
     h = librosa.filters.get_window("triangle", y.shape[-1])
