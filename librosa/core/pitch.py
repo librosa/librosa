@@ -388,7 +388,8 @@ def _cumulative_mean_normalized_difference(
     acf_frames = audio.autocorrelate(y_frames, max_size=max_period + 1, axis=-2)
 
     # Energy terms.
-    yin_frames = np.cumsum(np.square(y_frames), axis=-2)
+    yin_frames = np.square(y_frames)
+    np.cumsum(yin_frames, out=yin_frames, axis=-2)
 
     # Difference function: d(k) = 2 * (ACF(0) - ACF(k)) - sum_{m=0}^{k-1} y(m)^2
     k = slice(1, max_period + 1)
