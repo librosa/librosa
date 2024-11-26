@@ -1171,39 +1171,70 @@ def test_yin_tone(freq):
 
 
 def test_yin_chirp():
+    # test yin on a chirp, using output from the vamp plugin as ground truth
     y = librosa.chirp(fmin=220, fmax=640, duration=1.0)
-    f0 = librosa.yin(y, fmin=110, fmax=880, center=False)
+    f0 = librosa.yin(y, fmin=110, fmax=880, center=False, frame_length=1024, hop_length=512)
+
+    # adjust frames to the removal of win_length from yin
+    f0 = f0[:-2]
+
     target_f0 = np.load(os.path.join("tests", "data", "pitch-yin.npy"))
+    assert np.allclose(np.log2(f0), np.log2(target_f0), rtol=0, atol=1e-2)
+
+
+def test_yin_chirp_instant():
+    # test yin on a chirp, using frame-wise instantaneous frequency as ground truth
+    sr = 22050
+    chirp_min, chirp_max = 220, 640
+
+    t = np.arange(sr) / sr
+    f = chirp_min * (chirp_max / chirp_min) ** t
+
+    fl = 2048
+    hl = 512
+
+    y = librosa.chirp(fmin=chirp_min, fmax=chirp_max, sr=sr, duration=1.0, linear=False)
+    target_f0 = librosa.util.frame(f, frame_length=fl, hop_length=hl).mean(axis=0)
+
+    f0 = librosa.yin(y, fmin=110, fmax=880, sr=sr, frame_length=fl, hop_length=hl, center=False)
     assert np.allclose(np.log2(f0), np.log2(target_f0), rtol=0, atol=1e-2)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize(
-    "fmin,fmax,win_length,frame_length",
+    "fmin,fmax,frame_length",
     [
-        (None, None, None, 2048),  # neither
-        (110, None, None, 2048),  # no fmax
-        (None, 880, None, 2048),  # no fmin
-        (110, 880, 2049, 2048),  # win_length >= frame_length
-        (-1, 440, None, 2048),  # Negative fmin
-        (440, 220, None, 2048),  # fmin > fmax
-        (440, 16000, None, 2048),  # fmax > nyquist
-        (10, 21, None, 2048),  # frame_length - win_length - 1 <= sr/fmax
+        (None, None, 2048),  # neither
+        (110, None, 2048),  # no fmax
+        (None, 880, 2048),  # no fmin
+        (-1, 440, 2048),  # Negative fmin
+        (440, 220, 2048),  # fmin > fmax
+        (440, 16000, 2048),  # fmax > nyquist
+        (10, 21, 2048),  # sr / fmin >= frame_length - 1
     ],
 )
-def test_yin_fail(fmin, fmax, win_length, frame_length):
+def test_yin_fail(fmin, fmax, frame_length):
     y = librosa.tone(110, duration=1.0)
     librosa.yin(
-        y, fmin=fmin, fmax=fmax, win_length=win_length, frame_length=frame_length
+        y, fmin=fmin, fmax=fmax, frame_length=frame_length
     )
 
+def test_yin_warn():
+    y = librosa.tone(110, duration=1.0)
+
+    # win_length is deprecated
+    with pytest.warns(FutureWarning, match="deprecated"):
+        librosa.yin(y, fmin=110, fmax=1000, win_length=1024)
+
+    # sr / fmin >= frame_length // 2
+    with pytest.warns(UserWarning, match="two periods"):
+        librosa.yin(y, fmin=20, fmax=1000)
 
 @pytest.mark.parametrize("freq", [110, 220, 440, 880])
 def test_pyin_tone(freq):
     y = librosa.tone(freq, duration=1.0)
     f0, _, _ = librosa.pyin(y, fmin=110, fmax=1000, center=False)
-    # Skip the first frame, since the voicing prior does not allow it
-    assert np.allclose(np.log2(f0[1:]), np.log2(freq), rtol=0, atol=1e-2)
+    assert np.allclose(np.log2(f0), np.log2(freq), rtol=0, atol=1e-2)
 
 
 def test_pyin_multi():
@@ -1256,9 +1287,17 @@ def test_pyin_multi_center():
 
 
 def test_pyin_chirp():
+    # test yin on a chirp, using output from the vamp plugin as ground truth
     y = librosa.chirp(fmin=220, fmax=640, duration=1.0)
     y = np.pad(y, (22050,))
-    f0, voiced_flag, _ = librosa.pyin(y, fmin=110, fmax=880, center=False)
+
+    # default values as set in https://code.soundsoftware.ac.uk/projects/pyin/repository/
+    f0, voiced_flag, _ = librosa.pyin(y, fmin=60, fmax=900, center=False, frame_length=1024, hop_length=512, resolution=0.2)
+
+    # adjust frames to the removal of win_length from yin
+    f0 = f0[:-2]
+    voiced_flag = voiced_flag[:-2]
+
     target_f0 = np.load(os.path.join("tests", "data", "pitch-pyin.npy"))
     # test if correct frames are voiced
     assert np.array_equal(voiced_flag, target_f0 > 0)
@@ -1267,22 +1306,63 @@ def test_pyin_chirp():
         np.log2(f0[voiced_flag]), np.log2(target_f0[target_f0 > 0]), rtol=0, atol=1e-2
     )
 
+def test_pyin_chirp_instant():
+    # test pyin on a chirp, using frame-wise instantaneous frequency as ground truth
+    sr = 22050
+    chirp_min, chirp_max = 220, 640
+
+    t = np.arange(sr) / sr
+    f = chirp_min * (chirp_max / chirp_min) ** t
+    f = np.pad(f, (sr,))
+
+    fl = 2048
+    hl = 512
+
+    target_f0 = librosa.util.frame(f, frame_length=fl, hop_length=hl)
+    target_f0 = target_f0.mean(axis=0, where=target_f0 > 0)
+
+    y = librosa.chirp(fmin=chirp_min, fmax=chirp_max, sr=sr, duration=1.0, linear=False)
+    y = np.pad(y, (sr,))
+
+    f0, voiced_flag, _ = librosa.pyin(y, fmin=110, fmax=880, frame_length=fl, hop_length=hl, center=False)
+
+    # test if correct frames are voiced
+    assert np.array_equal(voiced_flag, target_f0 > 0)
+
+    # test voiced frames are within one cent of the target
+    cents = np.log2(f0[voiced_flag])
+    target_cents = np.log2(target_f0[target_f0 > 0])
+
+    assert np.allclose(
+        np.log2(cents[1:-1]), np.log2(target_cents[1:-1]), rtol=0, atol=1e-2
+    )
+
+    # higher tolerance for the first and last frames, accounting for abrupt start / end
+    assert np.abs(cents[0] - target_cents[0]) <= 1e-1
+    assert np.abs(cents[-1] - target_cents[-1]) <= 1e-1
+
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize(
-    "fmin,fmax,win_length,frame_length",
+    "fmin,fmax,frame_length",
     [
-        (None, None, None, 2048),
-        (110, None, None, 2048),
-        (None, 880, None, 2048),
-        (110, 880, 2049, 2048),
+        (None, None, 2048),
+        (110, None, 2048),
+        (None, 880, 2048),
     ],
 )
-def test_pyin_fail(fmin, fmax, win_length, frame_length):
+def test_pyin_fail(fmin, fmax, frame_length):
     y = librosa.tone(110, duration=1.0)
     librosa.pyin(
-        y, fmin=fmin, fmax=fmax, win_length=win_length, frame_length=frame_length
+        y, fmin=fmin, fmax=fmax, frame_length=frame_length
     )
+
+def test_pyin_warn():
+    y = librosa.tone(110, duration=1.0)
+
+    # win_length is deprecated
+    with pytest.warns(FutureWarning, match="deprecated"):
+        librosa.pyin(y, fmin=110, fmax=1000, win_length=1024)
 
 
 @pytest.mark.parametrize("freq", [110, 220, 440, 880])
