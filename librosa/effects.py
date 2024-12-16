@@ -98,7 +98,7 @@ def hpss(
     power
     mask
     margin
-        See `librosa.deocmpose.hpss`
+        See `librosa.decompose.hpss`
     n_fft
     hop_length
     win_length
@@ -195,7 +195,7 @@ def harmonic(
     power
     mask
     margin
-        See `librosa.deocmpose.hpss`
+        See `librosa.decompose.hpss`
     n_fft
     hop_length
     win_length
@@ -281,7 +281,7 @@ def percussive(
     power
     mask
     margin
-        See `librosa.deocmpose.hpss`
+        See `librosa.decompose.hpss`
     n_fft
     hop_length
     win_length
