@@ -412,3 +412,4 @@ smv_prefer_remote_refs = True
 
 
 linkcheck_allow_unauthorized = True
+linkcheck_ignore = ['https://www.ee.columbia.edu/~dpwe/resources/.*']
