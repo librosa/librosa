@@ -1,7 +1,6 @@
-[![librosa logo](docs/img/librosa_logo_text.svg)](https://librosa.org/)
+<h1><a href="https://librosa.org/"><img src="docs/img/librosa_logo_text.svg" alt="librosa logo"></a></h1>
 
 # librosa
-
 
 A python package for music and audio analysis.  
 
@@ -14,29 +13,26 @@ A python package for music and audio analysis.
 [![codecov](https://codecov.io/gh/librosa/librosa/branch/main/graph/badge.svg?token=ULWnUHaIJC)](https://codecov.io/gh/librosa/librosa)
 [![Docs](https://github.com/librosa/librosa/actions/workflows/docs.yml/badge.svg)](https://librosa.org/doc/latest/index.html)
 
-#  Table of Contents
+# Table of Contents
 
-- [Documentation](#Documentation)
-- [Installation](#Installation)
-  - [Using PyPI](#using-pypi)
-  - [Using Anaconda](#using-anaconda)
-  - [Building From Source](#building-from-source)
-  - [Hints for Installation](#hints-for-the-installation)
+- [librosa](#librosa)
+- [Table of Contents](#table-of-contents)
+  - [Documentation](#documentation)
+  - [Installation](#installation)
+    - [Using PyPI](#using-pypi)
+    - [Using Anaconda](#using-anaconda)
+    - [Building from source](#building-from-source)
+    - [Hints for the Installation](#hints-for-the-installation)
     - [`soundfile`](#soundfile)
-    - [`audioread`](#audioread-and-mp3-support)
-      - [Linux (`apt get`)](#linux-apt-get)
-      - [Linux (`yum`)](#linux-yum)
-      - [Mac](#mac)
-      - [Windows](#windows)
-- [Discussion](#discussion)
-- [Citing](#citing)
+    - [`audioread` and MP3 support](#audioread-and-mp3-support)
+  - [Discussion](#discussion)
+  - [Citing](#citing)
 
 ---
 
 ## Documentation
 
-
-See https://librosa.org/doc/ for a complete reference manual and introductory tutorials.
+See <https://librosa.org/doc/> for a complete reference manual and introductory tutorials.
 
 The [advanced example gallery](https://librosa.org/doc/latest/advanced.html) should give you a quick sense of the kinds
 of things that librosa can do.
@@ -45,58 +41,67 @@ of things that librosa can do.
 
 [Back To Top ↥](#librosa)
 
-
 ## Installation
-
 
 ### Using PyPI
 
 The latest stable release is available on PyPI, and you can install it by saying
-```
+
+```sh
 python -m pip install librosa
 ```
 
 ### Using Anaconda
 
 Anaconda users can install using ```conda-forge```:
-```
+
+```sh
 conda install -c conda-forge librosa
 ```
 
 ### Building from source
 
-To build librosa from source, say 
-```
+To build librosa from source, say
+
+```sh
+pip install setuptools
 python setup.py build
 ```
-Then, to install librosa, say 
-```
+
+Then, to install librosa, say
+
+```sh
 python setup.py install
 ```
+
 If all went well, you should be able to execute the following commands from a python console:
-```
+
+```pycon
 import librosa
 librosa.show_versions()
 ```
+
 This should print out a description of your software environment, along with the installed versions of other packages used by librosa.
 
 📝 OS X users should follow the installation guide given below.
 
 Alternatively, you can download or clone the repository and use `pip` to handle dependencies:
 
-```
+```sh
 unzip librosa.zip
 python -m pip install -e librosa
 ```
+
 or
 
-```
+```sh
 git clone https://github.com/librosa/librosa.git
 python -m pip install -e librosa
 ```
 
 By calling `pip list` you should see `librosa` now as an installed package:
-```
+
+```sh
 librosa (0.x.x, /path/to/librosa)
 ```
 
@@ -126,50 +131,55 @@ you may need to install either *ffmpeg* or *GStreamer*.
 
 If you are using Anaconda, install *ffmpeg* by calling
 
-```
+```sh
 conda install -c conda-forge ffmpeg
 ```
 
 If you are not using Anaconda, here are some common commands for different operating systems:
 
-- ####  Linux (`apt-get`): 
+- ####  Linux (`apt-get`)
 
-```
+```bash
 apt-get install ffmpeg
 ```
+
 or
- 
-```
+
+```bash
 apt-get install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
-- #### Linux (`yum`):
-```
+
+- #### Linux (`yum`)
+
+```bash
 yum install ffmpeg
 ```
+
 or
 
-
-```
+```bash
 yum install gstreamer1.0-plugins-base gstreamer1.0-plugins-ugly
 ```
 
-- #### Mac: 
-```
+- #### Mac
+
+```sh
 brew install ffmpeg
 ```
+
 or
 
-```
+```sh
 brew install gstreamer
 ```
 
-- #### Windows: 
+- #### Windows
 
 download ffmpeg binaries from this [website](https://www.gyan.dev/ffmpeg/builds/) or gstreamer binaries from this [website](https://gstreamer.freedesktop.org/)
 
-For GStreamer, you also need to install the Python bindings with 
+For GStreamer, you also need to install the Python bindings with
 
-```
+```sh
 python -m pip install pygobject
 ```
 
@@ -179,16 +189,14 @@ python -m pip install pygobject
 
 ## Discussion
 
-
 Please direct non-development questions and discussion topics to our web forum at
-https://groups.google.com/forum/#!forum/librosa
+<https://groups.google.com/forum/#!forum/librosa>
 
 ---
 
 [Back To Top ↥](#librosa)
 
 ## Citing
-
 
 If you want to cite librosa in a scholarly work, there are two ways to do it.
 
