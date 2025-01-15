@@ -8,8 +8,8 @@ import os
 import glob
 import json
 import msgpack
-from importlib import resources
-from pathlib import Path
+import contextlib
+import sys
 
 import pooch
 
@@ -32,12 +32,34 @@ __GOODBOY = pooch.create(
     __data_path, base_url="https://librosa.org/data/audio/", registry=None
 )
 
-with resources.path("librosa.util.example_data", "registry.txt") as reg:
+
+@contextlib.contextmanager
+def _resource_file(package: str, resource: str):
+    """This is a context manager for accessing resources in a package.
+
+    It acts as a shim to provide a consistent interface for accessing resources
+    since the 3.9 series deprecated the "path" method in favor of the "files" method.
+    """
+    if sys.version_info < (3, 9):
+
+        import importlib.resources as resources
+
+        with resources.path(package, resource) as path:
+            yield path
+
+    else:
+        from importlib.resources import files, as_file
+
+        with as_file(files(package).joinpath(resource)) as path:
+            yield path
+
+
+with _resource_file("librosa.util.example_data", "registry.txt") as reg:
     __GOODBOY.load_registry(str(reg))
     # We want to bypass version checks here to allow asynchronous updates for new releases
     __GOODBOY.registry['version_index.msgpack'] = None
 
-with resources.path("librosa.util.example_data", "index.json") as index:
+with _resource_file("librosa.util.example_data", "index.json") as index:
     with index.open("r") as _fdesc:
         __TRACKMAP = json.load(_fdesc)
 
