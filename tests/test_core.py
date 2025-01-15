@@ -1318,6 +1318,7 @@ def test_pyin_chirp_instant():
     fl = 2048
     hl = 512
 
+    # Note: this raises warnings on the empty frames
     target_f0 = librosa.util.frame(f, frame_length=fl, hop_length=hl)
     target_f0 = target_f0.mean(axis=0, where=target_f0 > 0)
 
@@ -1415,7 +1416,7 @@ def test_estimate_tuning(sr, center_note: int, tuning: float, bins_per_octave, r
     assert max_dev <= 3 * resolution
 
 
-@pytest.mark.parametrize("y", [np.zeros(1000)])
+@pytest.mark.parametrize("y", [np.zeros(4000)])
 @pytest.mark.parametrize("sr", [11025, 22050])
 @pytest.mark.parametrize("resolution", [1e-2])
 @pytest.mark.parametrize("bins_per_octave", [12])
