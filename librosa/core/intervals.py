@@ -2,7 +2,6 @@
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
 
-from importlib import resources
 from typing import Collection, Dict, List, Union, overload, Iterable
 from typing_extensions import Literal
 import msgpack
@@ -10,9 +9,10 @@ import numpy as np
 from numpy.typing import ArrayLike
 from .._cache import cache
 from .._typing import _FloatLike_co
+from ..util.files import _resource_file
 
 
-with resources.path("librosa.core", "intervals.msgpack") as imsgpack:
+with _resource_file("librosa.core", "intervals.msgpack") as imsgpack:
     with imsgpack.open("rb") as _fdesc:
         # We use floats for dictionary keys, so strict mapping is disabled
         INTERVALS = msgpack.load(_fdesc, strict_map_key=False)
