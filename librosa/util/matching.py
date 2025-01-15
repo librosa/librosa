@@ -275,7 +275,7 @@ def match_events(
 
     # If we can't match left or right, then only strict equivalence
     # counts as a match.
-    if not (left or right) and not np.all(np.in1d(events_from, events_to)):
+    if not (left or right) and not np.all(np.isin(events_from, events_to)):
         raise ParameterError(
             "Cannot match events with left=right=False "
             "and events_from is not contained "
