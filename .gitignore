@@ -1,61 +1,66 @@
+# Python bytecode files
 *.py[co]
 __pycache__
 
-__pycache__
-
 # Packages
+.installed.cfg
 *.egg
 *.egg-info
-dist
-build
-eggs
-parts
-bin
-var
-sdist
-develop-eggs
-.installed.cfg
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+parts/
+sdist/
+var/
 
 # Installer logs
 pip-log.txt
 
 # Unit test / coverage reports
 .coverage
-.tox
+.tox/
 tests/result_images/
 
-#Translations
+# Translations
 *.mo
 
-#Mr Developer
+# Mr Developer
 .mr.developer.cfg
 
 # Data files
-*/data/*
+data/
 *.mat
 
 # Mac OS X cruft
+._*
 .DS_Store
 .DS_Store?
-._*
 .Spotlight-V100
 .Trashes
 ehthumbs.db
 Thumbs.db
 
 # Sphinx stuff
-docs/generated/
-docs/_build/
-docs/auto_examples/
+/docs/_build/
+/docs/auto_examples/
+/docs/generated/
 
 # Vim
 *.swp
 
 # Testing and checkpoints
-.ipynb_checkpoints
 .coverage.*
+.ipynb_checkpoints/
 coverage.xml
 
-#IDE
+# IDE
 .idea/
-.vscode
+.vscode/
+*.code-workspace
+
+# py -m venv
+pyvenv.cfg
+/Lib/site-packages/
+/scripts/
