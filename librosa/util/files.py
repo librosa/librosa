@@ -11,6 +11,8 @@ import msgpack
 import contextlib
 import sys
 
+from importlib import resources
+
 import pooch
 
 from .exceptions import ParameterError
@@ -41,16 +43,11 @@ def _resource_file(package: str, resource: str):
     since the 3.9 series deprecated the "path" method in favor of the "files" method.
     """
     if sys.version_info < (3, 9):
-
-        import importlib.resources as resources
-
         with resources.path(package, resource) as path:
             yield path
 
     else:
-        from importlib.resources import files, as_file
-
-        with as_file(files(package).joinpath(resource)) as path:
+        with resources.as_file(resources.files(package).joinpath(resource)) as path:
             yield path
 
 
