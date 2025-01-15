@@ -1320,7 +1320,8 @@ def test_pyin_chirp_instant():
 
     # Note: this raises warnings on the empty frames
     target_f0 = librosa.util.frame(f, frame_length=fl, hop_length=hl)
-    target_f0 = target_f0.mean(axis=0, where=target_f0 > 0)
+    with pytest.warns(RuntimeWarning):
+        target_f0 = target_f0.mean(axis=0, where=target_f0 > 0)
 
     y = librosa.chirp(fmin=chirp_min, fmax=chirp_max, sr=sr, duration=1.0, linear=False)
     y = np.pad(y, (sr,))
