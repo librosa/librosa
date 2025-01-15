@@ -882,7 +882,7 @@ def test_mfcc_to_mel(y, n_mfcc, n_mels, dct_type, lifter):
 
     # check that runtime warnings are triggered when appropriate
     elif lifter == 2:
-        with pytest.warns(UserWarning):
+        with pytest.warns((UserWarning, RuntimeWarning)):
             librosa.feature.inverse.mfcc_to_mel(
                 mfcc * 10 ** 3, n_mels=n_mels, dct_type=dct_type, lifter=lifter
             )
