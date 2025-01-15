@@ -37,7 +37,7 @@ __GOODBOY = pooch.create(
 
 @contextlib.contextmanager
 def _resource_file(package: str, resource: str):
-    """This is a context manager for accessing resources in a package.
+    """Provide a context manager for accessing resources in a package.
 
     It acts as a shim to provide a consistent interface for accessing resources
     since the 3.9 series deprecated the "path" method in favor of the "files" method.
