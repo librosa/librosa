@@ -575,8 +575,8 @@ def yin(
 
     if not isinstance(win_length, Deprecated):
         warnings.warn(
-            f"The win_length parameter has been deprecated in version 0.11.0 "
-            f"and has no effect. It will be removed in version 1.0.0.",
+            "The win_length parameter has been deprecated in version 0.11.0 "
+            "and has no effect. It will be removed in version 1.0.0.",
             category=FutureWarning,
             stacklevel=3,
         )
@@ -799,8 +799,8 @@ def pyin(
 
     if not isinstance(win_length, Deprecated):
         warnings.warn(
-            f"The win_length parameter has been deprecated in version 0.11.0 "
-            f"and has no effect. It will be removed in version 1.0.0.",
+            "The win_length parameter has been deprecated in version 0.11.0 "
+            "and has no effect. It will be removed in version 1.0.0.",
             category=FutureWarning,
             stacklevel=3,
         )

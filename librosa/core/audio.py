@@ -25,8 +25,8 @@ from ..util.decorators import deprecated
 from ..util.deprecation import Deprecated, rename_kw
 from .._typing import _FloatLike_co, _IntLike_co, _SequenceLike
 
-from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union, List
-from numpy.typing import DTypeLike, ArrayLike
+from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
+from numpy.typing import DTypeLike
 
 # Lazy-load optional dependencies
 samplerate = lazy.load("samplerate")

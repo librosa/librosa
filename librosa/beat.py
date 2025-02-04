@@ -15,15 +15,14 @@ import scipy
 import scipy.stats
 import numba
 
-from ._cache import cache
 from . import core
 from . import onset
 from . import util
-from .feature import tempogram, fourier_tempogram
+from .feature import fourier_tempogram
 from .feature import tempo as _tempo
 from .util.exceptions import ParameterError
-from .util.decorators import moved, vectorize
-from typing import Any, Callable, Optional, Tuple, Union
+from .util.decorators import moved
+from typing import Optional, Tuple, Union
 from ._typing import _FloatLike_co
 
 __all__ = ["beat_track", "tempo", "plp"]

@@ -14,11 +14,10 @@ from numpy.lib.stride_tricks import as_strided
 from .._cache import cache
 from .exceptions import ParameterError
 from .deprecation import Deprecated
-from numpy.typing import ArrayLike, DTypeLike
+from numpy.typing import DTypeLike
 from typing import (
     Any,
     Callable,
-    Iterable,
     List,
     Dict,
     Optional,
