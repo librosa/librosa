@@ -918,11 +918,7 @@ def autocorrelate(
     real = not np.iscomplexobj(y)
 
     # Pad out the signal to support full-length auto-correlation
-    if hasattr(scipy.fft, "next_fast_len"):
-        n_pad = scipy.fft.next_fast_len(2 * y.shape[axis] - 1, real=real)
-    else:
-        # TODO: Bump to scipy>=1.4.0 and remove this branch
-        n_pad = scipy.fftpack.next_fast_len(2 * y.shape[axis] - 1)
+    n_pad = scipy.fft.next_fast_len(2 * y.shape[axis] - 1, real=real)
 
     if real:
         # Compute the power spectrum along the chosen axis
