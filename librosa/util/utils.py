@@ -2503,7 +2503,7 @@ def abs2(x: _NumberOrArray, dtype: Optional[DTypeLike] = None) -> _NumberOrArray
 @numba.vectorize(
     ["complex64(float32)", "complex128(float64)"], nopython=True, cache=True, identity=1
 )  # type: ignore
-def _phasor_angles(x) -> _ComplexLike_co:
+def _phasor_angles(x) -> np.complexfloating[Any, Any]:
     return np.cos(x) + 1j * np.sin(x)  # type: ignore
 
 
@@ -2516,7 +2516,7 @@ def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray
 
 
 @overload
-def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> _ComplexLike_co:
+def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> np.complexfloating[Any, Any]:
     ...
 
 
@@ -2524,7 +2524,7 @@ def phasor(
     angles: Union[np.ndarray, _Real],
     *,
     mag: Optional[Union[np.ndarray, _Number]] = None,
-) -> Union[np.ndarray, _ComplexLike_co]:
+) -> Union[np.ndarray, np.complexfloating[Any, Any]]:
     """Construct a complex phasor representation from angles.
 
     When `mag` is not provided, this is equivalent to:
