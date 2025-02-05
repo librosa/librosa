@@ -180,7 +180,7 @@ def test_resample_mono(resample_mono, sr_out, res_type, fix):
     )
 
     # First, check that the audio is valid
-    librosa.util.valid_audio(y2, mono=True)
+    librosa.util.valid_audio(y2)
 
     # If it's a no-op, make sure the signal is untouched
     if sr_out == sr_in:
@@ -226,7 +226,7 @@ def test_resample_stereo(resample_audio, sr_out, res_type, fix):
     )
 
     # First, check that the audio is valid
-    librosa.util.valid_audio(y2, mono=False)
+    librosa.util.valid_audio(y2)
 
     assert y2.ndim == y.ndim
 
@@ -265,7 +265,7 @@ def test_resample_scale(resample_mono, res_type, sr_out):
     )
 
     # First, check that the audio is valid
-    librosa.util.valid_audio(y2, mono=True)
+    librosa.util.valid_audio(y2)
 
     n_orig = np.sqrt(np.sum(np.abs(y) ** 2))
     n_res = np.sqrt(np.sum(np.abs(y2) ** 2))

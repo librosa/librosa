@@ -590,7 +590,7 @@ def yin(
         hop_length = frame_length // 4
 
     # Check that audio is valid.
-    util.valid_audio(y, mono=False)
+    util.valid_audio(y)
 
     # Pad the time series so that frames are centered
     if center:
@@ -814,7 +814,7 @@ def pyin(
         hop_length = frame_length // 4
 
     # Check that audio is valid.
-    util.valid_audio(y, mono=False)
+    util.valid_audio(y)
 
     # Pad the time series so that frames are centered
     if center:

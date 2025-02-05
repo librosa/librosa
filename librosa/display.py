@@ -2024,7 +2024,7 @@ def waveshow(
     >>> ax['h'].label_outer()
     >>> ax['h'].set(title='transpose=True')
     """
-    util.valid_audio(y, mono=False)
+    util.valid_audio(y)
 
     # Pad an extra channel dimension, if necessary
     if y.ndim == 1:

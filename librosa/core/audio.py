@@ -501,8 +501,8 @@ def to_mono(y: np.ndarray) -> np.ndarray:
     >>> y_mono.shape
     (117601,)
     """
-    # Validate the buffer.  Stereo is ok here.
-    util.valid_audio(y, mono=False)
+    # Validate the buffer
+    util.valid_audio(y)
 
     if y.ndim > 1:
         y = np.mean(y, axis=tuple(range(y.ndim - 1)))
@@ -625,7 +625,7 @@ def resample(
     ((117601,), (42668,))
     """
     # First, validate the audio buffer
-    util.valid_audio(y, mono=False)
+    util.valid_audio(y)
 
     if orig_sr == target_sr:
         return y
@@ -1012,7 +1012,7 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     if not util.is_positive_int(order):
         raise ParameterError(f"order={order} must be an integer > 0")
 
-    util.valid_audio(y, mono=False)
+    util.valid_audio(y)
 
     # Move the lpc axis around front, because numba is silly
     y = y.swapaxes(axis, 0)
@@ -1374,7 +1374,7 @@ def clicks(
 
     if click is not None:
         # Check that we have a well-formed audio buffer
-        util.valid_audio(click, mono=False)
+        util.valid_audio(click)
 
     else:
         # Create default click signal
