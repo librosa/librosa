@@ -57,8 +57,8 @@ def beat_track(
          tempo
 
     .. [#] Ellis, Daniel PW. "Beat tracking by dynamic programming."
-           Journal of New Music Research 36.1 (2007): 51-60.
-           http://labrosa.ee.columbia.edu/projects/beattrack/
+        Journal of New Music Research 36.1 (2007): 51-60.
+        http://labrosa.ee.columbia.edu/projects/beattrack/
 
     Parameters
     ----------
@@ -130,9 +130,10 @@ def beat_track(
 
         If `sparse=False` (required for multichannel input), beat events are
         indicated by a boolean for each frame.
-    .. note::
-        If no onset strength could be detected, beat_tracker estimates 0 BPM
-        and returns an empty list.
+
+        .. note::
+            If no onset strength could be detected, beat_tracker estimates 0 BPM
+            and returns an empty list.
 
     Raises
     ------
