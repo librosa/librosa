@@ -33,3 +33,4 @@ dependencies:
     - presets>=0.1.3
     - mir-eval>=0.6
     - sphinxcontrib-svg2pdfconverter>=1.1.1
+    - sphinxcontrib-googleanalytics>=0.4

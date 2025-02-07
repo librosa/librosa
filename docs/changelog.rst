@@ -34,6 +34,21 @@ Deprecations
     - Expired deprecation of `mono=` parameter in `util.valid_audio`.
     - `win_length` parameter in `yin` and `pyin`
 
+.. _#1831: https://github.com/librosa/librosa/pull/1831
+.. _#1898: https://github.com/librosa/librosa/pull/1898
+.. _#1860: https://github.com/librosa/librosa/pull/1860
+.. _#1864: https://github.com/librosa/librosa/pull/1864
+.. _#1900: https://github.com/librosa/librosa/pull/1900
+.. _#1897: https://github.com/librosa/librosa/pull/1897
+.. _#1878: https://github.com/librosa/librosa/pull/1878
+.. _#1851: https://github.com/librosa/librosa/pull/1851
+.. _#1844: https://github.com/librosa/librosa/pull/1844
+.. _#1899: https://github.com/librosa/librosa/pull/1899
+.. _#1891: https://github.com/librosa/librosa/pull/1891
+.. _#1866: https://github.com/librosa/librosa/pull/1866
+.. _#1858: https://github.com/librosa/librosa/pull/1858
+.. _#1856: https://github.com/librosa/librosa/pull/1856
+
 
 v0.10
 =====

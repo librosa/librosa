@@ -116,7 +116,13 @@ def beat_track(
         estimated global tempo (in beats per minute)
 
         If multi-channel and ``bpm`` is not provided, a separate
-        tempo will be returned for each channel
+        tempo will be returned for each channel.
+
+        .. note::
+            By default, the tempo is returned as an ndarray even for mono input.
+            In this case, the array will have a single element and be one-dimensional.
+            This is to ensure consistent return types for multi-channel input.
+
     beats : np.ndarray
         estimated beat event locations.
 
@@ -239,7 +245,7 @@ def beat_track(
     bpm_expanded = util.expand_to(_bpm,
                                   ndim=onset_envelope.ndim,
                                   axes=range(_bpm.ndim))
-                                
+
     # Then, run the tracker
     beats = __beat_tracker(onset_envelope, bpm_expanded, float(sr) / hop_length, tightness, trim)
 
