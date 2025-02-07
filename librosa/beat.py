@@ -122,7 +122,6 @@ def beat_track(
             By default, the tempo is returned as an ndarray even for mono input.
             In this case, the array will have a single element and be one-dimensional.
             This is to ensure consistent return types for multi-channel input.
-
     beats : np.ndarray
         estimated beat event locations.
 
