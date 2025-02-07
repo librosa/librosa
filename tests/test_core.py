@@ -2619,7 +2619,10 @@ def test_get_duration_audioread():
     path = os.path.join("tests", "data", "test2_8000.mkv")
     duration = librosa.get_duration(path=path)
 
-    assert duration == 30.2
+    # Duration is 30.2 seconds if using ffmpeg
+    # Duration is 30.23 seconds otherwise (eg gstreamer)
+    # To avoid floating point issues, we'll just check that it's close
+    assert np.isclose(duration, 30.2, atol=0.1)
 
 
 @pytest.mark.filterwarnings("ignore:PySoundFile failed")
