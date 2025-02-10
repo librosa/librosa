@@ -94,7 +94,7 @@ def test_load_audioread():
 def test_load_resample(res_type):
 
     sr_target = 16000
-    fn = librosa.ex("trumpet")
+    fn= os.path.join("tests", "data", "test1_44100.wav")
 
     y_native, sr = librosa.load(fn, sr=None, res_type=res_type)
 
