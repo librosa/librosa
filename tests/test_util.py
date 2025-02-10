@@ -1190,6 +1190,7 @@ def test_stack_consistent(x, axis):
         assert xs.flags["C_CONTIGUOUS"]
 
 
+@pytest.mark.noisolation
 @pytest.mark.parametrize("key", ["trumpet", "brahms", "nutcracker",
     "choice", "humpback", "libri1", "libri2", "libri3", "pistachio",
     "robin", "sweetwaltz", "fishin", "vibeace"])
@@ -1205,6 +1206,7 @@ def test_example_fail():
     librosa.example("no such track")
 
 
+@pytest.mark.noisolation
 @pytest.mark.parametrize("key", ["trumpet", "brahms", "nutcracker",
     "choice", "humpback", "libri1", "libri2", "libri3", "pistachio",
     "robin", "sweetwaltz", "fishin", "vibeace"])
@@ -1385,6 +1387,7 @@ def test_phasor(dtype, angles, mag):
     assert z2.dtype == librosa.util.dtype_r2c(dtype)
 
 
+@pytest.mark.noisolation
 def test_cite_released():
     version = "0.10.1"
     doi = "https://doi.org/10.5281/zenodo.8252662"
@@ -1396,6 +1399,7 @@ def test_cite_badversion():
     librosa.cite(version="-1.5")
 
 
+@pytest.mark.noisolation
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_cite_unreleased():
     librosa.cite("0.10.0.dev0")
