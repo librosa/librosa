@@ -1066,7 +1066,7 @@ def __lpc(
     # These two arrays hold the forward and backward prediction error. They
     # correspond to f_{M-1,k} and b_{M-1,k} in eqns 10, 11, 13 and 14 of
     # Marple. First they are used to compute the reflection coefficient at
-    # order M from M-1 then are re-used as f_{M,k} and b_{M,k} for each
+    # order M from M-1 then are used as f_{M,k} and b_{M,k} for each
     # iteration of the below loop
     fwd_pred_error = y[1:]
     bwd_pred_error = y[:-1]
