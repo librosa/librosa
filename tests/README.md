@@ -7,6 +7,8 @@ The MATLAB script ``makeTestData.m`` generates input/output examples under the `
 
 After generating the test data, run ``pytest`` from the top-level source directory to perform tests and verify the outputs.
 
+Note: for testing in isolated environments without network access, you can use ``pytest --librosa-isolation`` to bypass any tests which depend on externally hosted data (example audio files, citation data, etc).
+
 
 Generating test data
 ====================
