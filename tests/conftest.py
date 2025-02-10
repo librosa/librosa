@@ -11,12 +11,6 @@ def pytest_addoption(parser):
         default=False,
         help="Skip tests that require network access"
     )
-    parser.addoption(
-        "--librosa-optional",
-        action="store_false",
-        default=True,
-        help="Run tests that use optional dependencies"
-    )
 
 
 def pytest_collection_modifyitems(config, items):
@@ -28,3 +22,7 @@ def pytest_collection_modifyitems(config, items):
     for item in items:
         if "network" in item.keywords:
             item.add_marker(skip_isolation)
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "network: mark tests that require network access.")
