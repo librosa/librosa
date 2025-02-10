@@ -14,7 +14,6 @@ def pytest_addoption(parser):
 
 
 def pytest_collection_modifyitems(config, items):
-    print(config.getoption("--librosa-isolation"))
     if not config.getoption("--librosa-isolation"):
         # User wants to run network tests, so do nothing.
         return
