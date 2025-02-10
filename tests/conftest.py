@@ -26,5 +26,5 @@ def pytest_collection_modifyitems(config, items):
         return
     skip_isolation = pytest.mark.skip(reason="testing in isolation mode")
     for item in items:
-        if "noisolation" in item.keywords:
+        if "network" in item.keywords:
             item.add_marker(skip_isolation)

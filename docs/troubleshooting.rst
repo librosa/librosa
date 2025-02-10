@@ -71,3 +71,20 @@ There are two ways to address this issue:
 
 Note that in librosa 0.10 and later, you may not encounter this issue when importing the library, but it may arise later when executing functions.
 The solutions above are applicable in either case.
+
+
+Testing in isolated environments
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Librosa provides a few functions that require network access to collect externally hosted data.
+While these functions are optional to use, they can be problematic for running the test suite in
+environments that restrict network access, which most commonly occurs in packaging workflows.
+To run the test suite in such restricted environments, you can specify the ``--librosa-isolation`` parameter
+on the command-line to pytest
+
+.. code-block:: shell
+
+    pytest --librosa-isolation
+
+which will skip any test functions known to require network access.  Test coverage will necessarily be reduced, but
+the remaining tests should still pass without problems.
