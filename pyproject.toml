@@ -4,3 +4,8 @@ requires = [
     "wheel >= 0.29.0",
 ]
 build-backend = 'setuptools.build_meta'
+
+[tool.pytest.ini_options]
+markers = [
+    "noisolation: marks tests to be skipped in isolation mode"
+]
