@@ -271,6 +271,47 @@
         {
             "orcid": "0000-0001-9916-2285",
             "name":"Waldir Pimenta"
+        },
+        {
+            "name":"Jon Petter Åsen"
+        },
+        {
+            "name":"Shin Hyun"
+        },
+        {
+            "name":"Iliya S"
+        },
+        {
+            "name":"Eugene Rabinovich"
+        },
+        {
+            "name":"Geo Lei"
+        },
+        {
+            "name":"Jize Guo"
+        },
+        {
+            "name":"Phillip S.M. Skelton"
+        },
+        {
+            "name":"Matt Pitkin",
+            "orcid":"https://orcid.org/0000-0003-4548-526X"
+        },
+        {
+            "name":"Anmol Mishra"
+        },
+        {
+            "name":"Slava Chauvin"
+        },
+        {
+            "name":"BenedictSt"
+        },
+        {
+            "name":"Scott VanRavenswaay"
+        },
+        {
+            "name":"David Südholt",
+            "orcid":"https://orcid.org/0000-0002-6793-1227"
         }
     ]
 }
