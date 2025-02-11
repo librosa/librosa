@@ -8,7 +8,7 @@ import os
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
-except:
+except KeyError:
     pass
 
 import platform
@@ -82,9 +82,9 @@ def test_frame_0stride():
     assert np.allclose(xf, xfpad2)
 
 
-@pytest.mark.parametrize('frame_length', [5, 10])
-@pytest.mark.parametrize('hop_length', [1, 2])
-@pytest.mark.parametrize('ndim', [2, 3, 4, 5])
+@pytest.mark.parametrize("frame_length", [5, 10])
+@pytest.mark.parametrize("hop_length", [1, 2])
+@pytest.mark.parametrize("ndim", [2, 3, 4, 5])
 def test_frame_highdim(frame_length, hop_length, ndim):
     srand()
 
@@ -96,16 +96,19 @@ def test_frame_highdim(frame_length, hop_length, ndim):
         assert np.allclose(xf[i], xf0)
 
 
-@pytest.mark.parametrize('in_shape,axis,out_shape', [
-    ( (20, 20, 20, 20), 0, (6, 10, 20, 20, 20)),
-    ( (20, 20, 20, 20), 1, (20, 6, 10, 20, 20)),
-    ( (20, 20, 20, 20), 2, (20, 20, 6, 10, 20)),
-    ( (20, 20, 20, 20), 3, (20, 20, 20, 6, 10)),
-    ( (20, 20, 20, 20), -1, (20, 20, 20, 10, 6)),
-    ( (20, 20, 20, 20), -2, (20, 20, 10, 6, 20)),
-    ( (20, 20, 20, 20), -3, (20, 10, 6, 20, 20)),
-    ( (20, 20, 20, 20), -4, (10, 6, 20, 20, 20)),
-    ])
+@pytest.mark.parametrize(
+    "in_shape,axis,out_shape",
+    [
+        ((20, 20, 20, 20), 0, (6, 10, 20, 20, 20)),
+        ((20, 20, 20, 20), 1, (20, 6, 10, 20, 20)),
+        ((20, 20, 20, 20), 2, (20, 20, 6, 10, 20)),
+        ((20, 20, 20, 20), 3, (20, 20, 20, 6, 10)),
+        ((20, 20, 20, 20), -1, (20, 20, 20, 10, 6)),
+        ((20, 20, 20, 20), -2, (20, 20, 10, 6, 20)),
+        ((20, 20, 20, 20), -3, (20, 10, 6, 20, 20)),
+        ((20, 20, 20, 20), -4, (10, 6, 20, 20, 20)),
+    ],
+)
 def test_frame_targetaxis(in_shape, axis, out_shape):
     x = np.empty(in_shape)
     xf = librosa.util.frame(x, frame_length=10, hop_length=2, axis=axis)
@@ -225,7 +228,7 @@ def test_normalize(ndims, norm, axis):
         values = np.ones(1)
 
     else:
-        values = np.sum(X_norm ** norm, axis=axis) ** (1.0 / norm)
+        values = np.sum(X_norm**norm, axis=axis) ** (1.0 / norm)
 
     assert np.allclose(values, np.ones_like(values))
 
@@ -287,7 +290,7 @@ def test_normalize_fill_allaxes(X, norm):
     if norm is np.inf:
         assert np.allclose(Xn, 1)
     else:
-        assert np.allclose(np.sum(Xn ** norm) ** (1.0 / norm), 1)
+        assert np.allclose(np.sum(Xn**norm) ** (1.0 / norm), 1)
 
 
 @pytest.mark.parametrize("norm", [1, 2, np.inf])
@@ -501,8 +504,26 @@ def test_localmin(ndim, axis):
 @pytest.mark.parametrize("wait", [0, 1, 10])
 @pytest.mark.parametrize("delta", [0.05, 100.0])
 def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
-    peaks = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, delta=delta, wait=wait, sparse=True)
-    dpeaks = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, delta=delta, wait=wait, sparse=False)
+    peaks = librosa.util.peak_pick(
+        x,
+        pre_max=pre_max,
+        post_max=post_max,
+        pre_avg=pre_avg,
+        post_avg=post_avg,
+        delta=delta,
+        wait=wait,
+        sparse=True,
+    )
+    dpeaks = librosa.util.peak_pick(
+        x,
+        pre_max=pre_max,
+        post_max=post_max,
+        pre_avg=pre_avg,
+        post_avg=post_avg,
+        delta=delta,
+        wait=wait,
+        sparse=False,
+    )
 
     for i in peaks:
         # Test 1: is it a peak in this window?
@@ -546,7 +567,15 @@ def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
     ],
 )
 def test_peak_pick_fail(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
-    librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, delta=delta, wait=wait)
+    librosa.util.peak_pick(
+        x,
+        pre_max=pre_max,
+        post_max=post_max,
+        pre_avg=pre_avg,
+        post_avg=post_avg,
+        delta=delta,
+        wait=wait,
+    )
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -699,12 +728,14 @@ def test_valid_int_fail(x, cast):
 
 @pytest.mark.parametrize("x", [1, 64])
 def test_is_positive_int(x):
-    assert librosa.util.is_positive_int(x) == True
+    assert librosa.util.is_positive_int(x) is True
 
 
-@pytest.mark.parametrize("x", [None, 0, -1, 1.1, np.float64(1.2), -np.inf, np.finfo(float).eps])
+@pytest.mark.parametrize(
+    "x", [None, 0, -1, 1.1, np.float64(1.2), -np.inf, np.finfo(float).eps]
+)
 def test_is_positive_int_fail(x):
-    assert librosa.util.is_positive_int(x) == False
+    assert librosa.util.is_positive_int(x) is False
 
 
 @pytest.mark.parametrize(
@@ -742,7 +773,9 @@ def test_valid_intervals_fail(intval):
 
 
 def test_warning_deprecated():
-    @librosa.util.decorators.deprecated(version="old_version", version_removed="new_version")
+    @librosa.util.decorators.deprecated(
+        version="old_version", version_removed="new_version"
+    )
     def __placeholder():
         return True
 
@@ -754,7 +787,9 @@ def test_warning_deprecated():
 
 
 def test_warning_moved():
-    @librosa.util.decorators.moved(moved_from="from", version="old_version", version_removed="new_version")
+    @librosa.util.decorators.moved(
+        moved_from="from", version="old_version", version_removed="new_version"
+    )
     def __placeholder():
         return True
 
@@ -780,7 +815,14 @@ def test_warning_rename_kw_pass():
     nv = 23
 
     with warnings.catch_warnings(record=True) as out:
-        v = librosa.util.rename_kw(old_name="old", old_value=ov, new_name="new", new_value=nv, version_deprecated="0", version_removed="1")
+        v = librosa.util.rename_kw(
+            old_name="old",
+            old_value=ov,
+            new_name="new",
+            new_value=nv,
+            version_deprecated="0",
+            version_removed="1",
+        )
 
         assert v == nv
 
@@ -794,7 +836,14 @@ def test_warning_rename_kw_fail():
     nv = 23
 
     with pytest.warns(FutureWarning, match="renamed"):
-        v = librosa.util.rename_kw(old_name="old", old_value=ov, new_name="new", new_value=nv, version_deprecated="0", version_removed="1")
+        v = librosa.util.rename_kw(
+            old_name="old",
+            old_value=ov,
+            new_name="new",
+            new_value=nv,
+            version_deprecated="0",
+            version_removed="1",
+        )
 
         assert v == ov
 
@@ -1153,7 +1202,7 @@ def test_shear_sparse(fmt):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_shear_badfactor():
-    librosa.util.shear(np.eye(3), factor=None) # type: ignore
+    librosa.util.shear(np.eye(3), factor=None)  # type: ignore
 
 
 def test_stack_contig():
@@ -1191,9 +1240,24 @@ def test_stack_consistent(x, axis):
 
 
 @pytest.mark.network
-@pytest.mark.parametrize("key", ["trumpet", "brahms", "nutcracker",
-    "choice", "humpback", "libri1", "libri2", "libri3", "pistachio",
-    "robin", "sweetwaltz", "fishin", "vibeace"])
+@pytest.mark.parametrize(
+    "key",
+    [
+        "trumpet",
+        "brahms",
+        "nutcracker",
+        "choice",
+        "humpback",
+        "libri1",
+        "libri2",
+        "libri3",
+        "pistachio",
+        "robin",
+        "sweetwaltz",
+        "fishin",
+        "vibeace",
+    ],
+)
 @pytest.mark.parametrize("hq", [False, True])
 def test_example(key, hq):
 
@@ -1207,9 +1271,24 @@ def test_example_fail():
 
 
 @pytest.mark.network
-@pytest.mark.parametrize("key", ["trumpet", "brahms", "nutcracker",
-    "choice", "humpback", "libri1", "libri2", "libri3", "pistachio",
-    "robin", "sweetwaltz", "fishin", "vibeace"])
+@pytest.mark.parametrize(
+    "key",
+    [
+        "trumpet",
+        "brahms",
+        "nutcracker",
+        "choice",
+        "humpback",
+        "libri1",
+        "libri2",
+        "libri3",
+        "pistachio",
+        "robin",
+        "sweetwaltz",
+        "fishin",
+        "vibeace",
+    ],
+)
 def test_example_info(key):
 
     librosa.util.example_info(key)
@@ -1248,7 +1327,7 @@ def test_dtype_r2c(dtype, target):
         (np.int32, np.float32),
         (np.complex128, np.float64),
         (complex, float),
-        (np.dtype(complex), np.float64)
+        (np.dtype(complex), np.float64),
     ],
 )
 def test_dtype_c2r(dtype, target):
@@ -1256,7 +1335,6 @@ def test_dtype_c2r(dtype, target):
 
     # better to do a bidirectional subtype test than strict equality here
     assert np.issubdtype(inf_type, target) and np.issubdtype(target, inf_type)
-
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -1267,12 +1345,12 @@ def test_expand_to_badshape():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_expand_to_badndim():
-    x = np.zeros((3,3))
+    x = np.zeros((3, 3))
     librosa.util.expand_to(x, ndim=1, axes=[0, 1])
 
 
-@pytest.mark.parametrize('axes', [0, 1, -1, [0], [1], [-1]])
-@pytest.mark.parametrize('ndim', [2, 3, 4])
+@pytest.mark.parametrize("axes", [0, 1, -1, [0], [1], [-1]])
+@pytest.mark.parametrize("ndim", [2, 3, 4])
 def test_expand_to_1d(axes, ndim):
     x = np.arange(5)
     xout = librosa.util.expand_to(x, ndim=ndim, axes=axes)
@@ -1281,7 +1359,7 @@ def test_expand_to_1d(axes, ndim):
     assert xout.size == x.size
     assert np.allclose(x, xout.squeeze())
 
-    if not hasattr(axes, '__iter__'):
+    if not hasattr(axes, "__iter__"):
         axes = [axes]
 
     # Verify that remaining dimensions match
@@ -1292,8 +1370,8 @@ def test_expand_to_1d(axes, ndim):
         assert xout.shape[ax] == x.shape[i]
 
 
-@pytest.mark.parametrize('axes', [[0,1], [0, 2], [1, 2]])
-@pytest.mark.parametrize('ndim', [3, 4])
+@pytest.mark.parametrize("axes", [[0, 1], [0, 2], [1, 2]])
+@pytest.mark.parametrize("ndim", [3, 4])
 def test_expand_to_2d(axes, ndim):
     x = np.multiply.outer(np.arange(4), np.arange(6))
     xout = librosa.util.expand_to(x, ndim=ndim, axes=axes)
@@ -1332,20 +1410,20 @@ def test_is_unique():
     assert np.allclose(x1, [False, False, True, True, True])
 
 
-@pytest.mark.parametrize('x', [-2, 3, np.arange(-3, 3)])
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize("x", [-2, 3, np.arange(-3, 3)])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_abs2_real(x, dtype):
     x = dtype(x)
     p = librosa.util.abs2(x)
     assert np.allclose(p, x**2)
 
 
-@pytest.mark.parametrize('x', [(2 -2j), (3 +0j), (0.5j)**np.arange(6)])
-@pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
+@pytest.mark.parametrize("x", [(2 - 2j), (3 + 0j), (0.5j) ** np.arange(6)])
+@pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
 def test_abs2_complex(x, dtype):
     x_cast: Union[np.complexfloating[Any, Any], np.ndarray] = dtype(x)
     p = librosa.util.abs2(x_cast)
-    assert np.allclose(p, np.abs(x_cast)**2)
+    assert np.allclose(p, np.abs(x_cast) ** 2)
     assert p.dtype == librosa.util.dtype_c2r(x_cast.dtype)
 
 
@@ -1370,9 +1448,9 @@ def test_abs2_complex_dtype():
     assert z.dtype == np.float64
 
 
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
-@pytest.mark.parametrize('angles', [np.pi/2, [np.pi/2, -np.pi/3]])
-@pytest.mark.parametrize('mag', [None, 2])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("angles", [np.pi / 2, [np.pi / 2, -np.pi / 3]])
+@pytest.mark.parametrize("mag", [None, 2])
 def test_phasor(dtype, angles, mag):
 
     angles_cast: Union[np.floating[Any], np.ndarray] = dtype(angles)

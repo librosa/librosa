@@ -7,7 +7,7 @@ import os
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
-except:
+except KeyError:
     pass
 
 import pytest
@@ -106,8 +106,6 @@ def test_beat_no_onsets():
     assert np.allclose(tempo, 0)
     assert beats.shape == onsets.shape
     assert not np.any(beats)
-
-
 
 
 @pytest.mark.parametrize("start_bpm", [40, 60, 117, 235])
@@ -219,13 +217,10 @@ def test_beat_units(ysr, hop_length, units, ctx):
 
         if units == "time":
             t2 = b2
-
         elif units == "samples":
             t2 = librosa.samples_to_time(b2, sr=sr)
-
         elif units == "frames":
             t2 = librosa.frames_to_time(b2, sr=sr, hop_length=hop_length)
-        
         else:
             assert False
 
@@ -257,7 +252,9 @@ def test_beat_sparse(ysr):
 @pytest.mark.parametrize(
     "prior", [None, scipy.stats.lognorm(s=1, loc=np.log(120), scale=120)]
 )
-@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short, but this is fine here
+@pytest.mark.filterwarnings(
+    "ignore:n_fft=.*is too large"
+)  # our test signal is short, but this is fine here
 def test_plp(ysr, hop_length, win_length, tempo_min, tempo_max, use_onset, prior, ctx):
 
     y, sr = ysr

@@ -18,14 +18,15 @@ import pytest
 
 import matplotlib
 
-STYLE = "default"
-
 import matplotlib.pyplot as plt
 
 import librosa
 import librosa.display
 import numpy as np
 from typing import Any, Dict
+
+
+STYLE = "default"
 
 # Workaround for old freetype builds with our image fixtures
 FT_VERSION = version.parse(matplotlib.ft2font.__freetype_version__)
@@ -123,7 +124,9 @@ def test_complex_input(S):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(baseline_images=["abs"], extensions=["png"], tolerance=6, style=STYLE)
+@pytest.mark.mpl_image_compare(
+    baseline_images=["abs"], extensions=["png"], tolerance=6, style=STYLE
+)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_abs_input(S_abs):
     plt.figure()
@@ -177,7 +180,9 @@ def test_tempo(y, sr):
     baseline_images=["fourier_tempo"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short, but this is fine here
+@pytest.mark.filterwarnings(
+    "ignore:n_fft=.*is too large"
+)  # our test signal is short, but this is fine here
 def test_fourier_tempo(y, sr):
     T = librosa.feature.fourier_tempogram(y=y, sr=sr)
 
@@ -205,15 +210,15 @@ def test_tonnetz(C):
 def test_chroma(S_abs, sr):
     plt.figure()
     plt.subplot(3, 1, 1)
-    chr1 = librosa.feature.chroma_stft(S=S_abs ** 2, sr=sr)
+    chr1 = librosa.feature.chroma_stft(S=S_abs**2, sr=sr)
     librosa.display.specshow(chr1, y_axis="chroma")
 
     plt.subplot(3, 1, 2)
-    chr2 = librosa.feature.chroma_stft(S=S_abs ** 2, sr=sr, n_chroma=2 * 12)
+    chr2 = librosa.feature.chroma_stft(S=S_abs**2, sr=sr, n_chroma=2 * 12)
     librosa.display.specshow(chr2, y_axis="chroma", bins_per_octave=2 * 12)
 
     plt.subplot(3, 1, 3)
-    chr3 = librosa.feature.chroma_stft(S=S_abs ** 2, sr=sr, n_chroma=3 * 12)
+    chr3 = librosa.feature.chroma_stft(S=S_abs**2, sr=sr, n_chroma=3 * 12)
     librosa.display.specshow(chr3, y_axis="chroma", bins_per_octave=3 * 12)
     return plt.gcf()
 
@@ -254,7 +259,7 @@ def test_chroma_svara(C, sr):
 def test_double_chroma(S_abs, sr):
     plt.figure()
 
-    chr1 = librosa.feature.chroma_stft(S=S_abs ** 2, sr=sr)
+    chr1 = librosa.feature.chroma_stft(S=S_abs**2, sr=sr)
     chr1 = np.vstack((chr1, chr1))
     librosa.display.specshow(chr1, y_axis="chroma", bins_per_octave=12)
     return plt.gcf()
@@ -267,7 +272,7 @@ def test_double_chroma(S_abs, sr):
 def test_x_mel(S_abs):
     plt.figure()
 
-    M = librosa.feature.melspectrogram(S=S_abs ** 2)
+    M = librosa.feature.melspectrogram(S=S_abs**2)
     librosa.display.specshow(M.T, x_axis="mel")
     return plt.gcf()
 
@@ -279,7 +284,7 @@ def test_x_mel(S_abs):
 def test_y_mel(S_abs):
     plt.figure()
 
-    M = librosa.feature.melspectrogram(S=S_abs ** 2)
+    M = librosa.feature.melspectrogram(S=S_abs**2)
     librosa.display.specshow(M, y_axis="mel")
     return plt.gcf()
 
@@ -292,7 +297,7 @@ def test_y_mel_bounded(S_abs):
     plt.figure()
 
     fmin, fmax = 110, 880
-    M = librosa.feature.melspectrogram(S=S_abs ** 2, fmin=fmin, fmax=fmax)
+    M = librosa.feature.melspectrogram(S=S_abs**2, fmin=fmin, fmax=fmax)
     librosa.display.specshow(M, y_axis="mel", fmin=fmin, fmax=fmax)
     return plt.gcf()
 
@@ -555,7 +560,10 @@ def test_waveshow_mono(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_mono_trans"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["waveshow_mono_trans"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono_trans(y, sr):
@@ -579,7 +587,10 @@ def test_waveshow_mono_zoom(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_mono_zoom_trans"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["waveshow_mono_zoom_trans"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono_zoom_trans(y, sr):
@@ -592,7 +603,10 @@ def test_waveshow_mono_zoom_trans(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_mono_zoom_out"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["waveshow_mono_zoom_out"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_waveshow_mono_zoom_out(y, sr):
@@ -717,8 +731,9 @@ def test_sharex_specshow_ms(S_abs, y, sr):
     # Correct time range ~= 4.6 s or 4600ms
     # Due to shared x_axis, both plots are plotted in 's'.
     fig, (ax, ax2) = plt.subplots(nrows=2, figsize=(8, 8), sharex=True)
-    librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max),
-                             x_axis="time", ax=ax)
+    librosa.display.specshow(
+        librosa.amplitude_to_db(S_abs, ref=np.max), x_axis="time", ax=ax
+    )
     ax.set(xlabel="")  # hide the x label here, which is not propagated automatically
     ax2.margins(x=0)
     librosa.display.waveshow(y, sr=sr, axis="ms", ax=ax2)
@@ -739,8 +754,9 @@ def test_sharex_waveplot_ms(y, sr, S_abs):
     librosa.display.waveshow(y, sr=sr, ax=ax)
     ax.set(xlabel="")  # hide the x label here, which is not propagated automatically
     ax2.margins(x=0)
-    librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max),
-            x_axis="ms", ax=ax2)
+    librosa.display.specshow(
+        librosa.amplitude_to_db(S_abs, ref=np.max), x_axis="ms", ax=ax2
+    )
     ax2.set(xlabel="")  # hide the x label here, which is not propagated automatically
     return fig
 
@@ -818,7 +834,7 @@ def test_display_fft_svara(S_abs, sr):
 
 
 @pytest.mark.mpl_image_compare(
-        baseline_images=["nfft_odd"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["nfft_odd"], extensions=["png"], tolerance=6, style=STYLE
 )
 def test_display_fft_odd():
 
@@ -826,15 +842,15 @@ def test_display_fft_odd():
     N1 = 8
     N2 = N1 + 1
     sr = N1
-    S = np.tile(np.arange(1 + N1//2), (20, 1)).T
+    S = np.tile(np.arange(1 + N1 // 2), (20, 1)).T
     # Use the default inference
-    librosa.display.specshow(S, x_axis='time', y_axis='fft', sr=sr, ax=ax1)
+    librosa.display.specshow(S, x_axis="time", y_axis="fft", sr=sr, ax=ax1)
 
     # Force it to match exactly
-    librosa.display.specshow(S, x_axis='time', y_axis='fft', sr=sr, n_fft=N1, ax=ax2)
+    librosa.display.specshow(S, x_axis="time", y_axis="fft", sr=sr, n_fft=N1, ax=ax2)
 
     # Override with an odd number
-    librosa.display.specshow(S, x_axis='time', y_axis='fft', sr=sr, n_fft=N2, ax=ax3)
+    librosa.display.specshow(S, x_axis="time", y_axis="fft", sr=sr, n_fft=N2, ax=ax3)
 
     ax1.label_outer()
     ax2.label_outer()
@@ -844,7 +860,7 @@ def test_display_fft_odd():
 
 
 @pytest.mark.mpl_image_compare(
-        baseline_images=["nfft_odd_ftempo"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["nfft_odd_ftempo"], extensions=["png"], tolerance=6, style=STYLE
 )
 def test_display_fourier_tempo_odd():
 
@@ -852,15 +868,15 @@ def test_display_fourier_tempo_odd():
     N1 = 8
     N2 = N1 + 1
     sr = N1
-    S = np.tile(np.arange(1 + N1//2), (20, 1)).T
+    S = np.tile(np.arange(1 + N1 // 2), (20, 1)).T
     # Use the default inference
-    librosa.display.specshow(S, y_axis='fourier_tempo', sr=sr, ax=ax1)
+    librosa.display.specshow(S, y_axis="fourier_tempo", sr=sr, ax=ax1)
 
     # Force it to match exactly
-    librosa.display.specshow(S, y_axis='fourier_tempo', sr=sr, win_length=N1, ax=ax2)
+    librosa.display.specshow(S, y_axis="fourier_tempo", sr=sr, win_length=N1, ax=ax2)
 
     # Override with an odd number
-    librosa.display.specshow(S, y_axis='fourier_tempo', sr=sr, win_length=N2, ax=ax3)
+    librosa.display.specshow(S, y_axis="fourier_tempo", sr=sr, win_length=N2, ax=ax3)
 
     ax1.label_outer()
     ax2.label_outer()
@@ -919,7 +935,10 @@ def test_auto_aspect():
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_unicode_true"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["specshow_unicode_true"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_unicode_true(C, sr):
@@ -932,16 +951,24 @@ def test_specshow_unicode_true(C, sr):
     librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[0], unicode=True)
 
     # Hindustani, kafi thaat
-    librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[1], thaat="kafi", unicode=True)
+    librosa.display.specshow(
+        chroma, y_axis="chroma_h", Sa=5, ax=ax[1], thaat="kafi", unicode=True
+    )
 
     # Carnatic, mela 22
-    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=5, ax=ax[2], mela=22, unicode=True)
+    librosa.display.specshow(
+        chroma, y_axis="chroma_c", Sa=5, ax=ax[2], mela=22, unicode=True
+    )
 
     # Carnatic, mela 1
-    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=7, ax=ax[3], mela=1, unicode=True)
+    librosa.display.specshow(
+        chroma, y_axis="chroma_c", Sa=7, ax=ax[3], mela=1, unicode=True
+    )
 
     # Pitches
-    librosa.display.specshow(chroma, y_axis="chroma", ax=ax[4], key="Eb:maj", unicode=True)
+    librosa.display.specshow(
+        chroma, y_axis="chroma", ax=ax[4], key="Eb:maj", unicode=True
+    )
 
     for axi in ax:
         axi.label_outer()
@@ -950,7 +977,10 @@ def test_specshow_unicode_true(C, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_unicode_false"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["specshow_unicode_false"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_unicode_false(C, sr):
@@ -963,15 +993,23 @@ def test_specshow_unicode_false(C, sr):
     librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[0], unicode=False)
 
     # Hindustani, kafi thaat
-    librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[1], thaat="kafi", unicode=False)
+    librosa.display.specshow(
+        chroma, y_axis="chroma_h", Sa=5, ax=ax[1], thaat="kafi", unicode=False
+    )
 
     # Carnatic, mela 22
-    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=5, ax=ax[2], mela=22, unicode=False)
+    librosa.display.specshow(
+        chroma, y_axis="chroma_c", Sa=5, ax=ax[2], mela=22, unicode=False
+    )
 
     # Carnatic, mela 1
-    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=7, ax=ax[3], mela=1, unicode=False)
+    librosa.display.specshow(
+        chroma, y_axis="chroma_c", Sa=7, ax=ax[3], mela=1, unicode=False
+    )
 
-    librosa.display.specshow(chroma, y_axis="chroma", ax=ax[4], key="Eb:maj", unicode=False)
+    librosa.display.specshow(
+        chroma, y_axis="chroma", ax=ax[4], key="Eb:maj", unicode=False
+    )
 
     for axi in ax:
         axi.label_outer()
@@ -1042,16 +1080,16 @@ def test_specshow_vqt(C):
 
     fig, ax = plt.subplots(nrows=4, figsize=(12, 10))
 
-    librosa.display.specshow(C, y_axis='vqt_hz', intervals="ji5", ax=ax[0])
-    librosa.display.specshow(C, y_axis='vqt_note', intervals="ji5", ax=ax[1])
-    librosa.display.specshow(C, y_axis='vqt_fjs', intervals="ji5", ax=ax[2])
-    librosa.display.specshow(C, y_axis='vqt_fjs', intervals="ji5", ax=ax[3],
-                             unicode=False)
+    librosa.display.specshow(C, y_axis="vqt_hz", intervals="ji5", ax=ax[0])
+    librosa.display.specshow(C, y_axis="vqt_note", intervals="ji5", ax=ax[1])
+    librosa.display.specshow(C, y_axis="vqt_fjs", intervals="ji5", ax=ax[2])
+    librosa.display.specshow(
+        C, y_axis="vqt_fjs", intervals="ji5", ax=ax[3], unicode=False
+    )
 
     for _ax in ax:
         _ax.set(ylim=[55, 165])
     return fig
-
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -1061,8 +1099,9 @@ def test_chromafjs_badintervals():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_chromafjs_badbpo():
-    formatter = librosa.display.ChromaFJSFormatter(intervals='ji3', bins_per_octave=None)
-
+    formatter = librosa.display.ChromaFJSFormatter(
+        intervals="ji3", bins_per_octave=None
+    )
 
 
 @pytest.mark.mpl_image_compare(
@@ -1086,4 +1125,4 @@ def test_specshow_chromafjs(C, sr):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_vqt_hz_nointervals(C, sr):
-    librosa.display.specshow(C, sr=sr, y_axis='vqt_hz')
+    librosa.display.specshow(C, sr=sr, y_axis="vqt_hz")

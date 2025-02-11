@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-from __future__ import print_function
 import warnings
 import numpy as np
 
@@ -426,7 +425,7 @@ def poly_freq(request):
     freq = librosa.fft_frequencies()
 
     if request.param in (1, 2):
-        return freq ** request.param
+        return freq**request.param
 
     elif request.param == -1:
         return np.cumsum(np.abs(np.random.randn(1 + 2048 // 2)), axis=0)
@@ -443,7 +442,7 @@ def poly_S(poly_coeffs, poly_freq):
 
     S = np.zeros_like(poly_freq)
     for i, c in enumerate(poly_coeffs):
-        S += c * poly_freq ** i
+        S += c * poly_freq**i
 
     return S.reshape((poly_freq.shape[0], -1))
 
@@ -663,7 +662,9 @@ def test_fourier_tempogram_fail_noinput():
 
 
 @pytest.mark.parametrize("hop_length", [512, 1024])
-@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short, but this is fine here
+@pytest.mark.filterwarnings(
+    "ignore:n_fft=.*is too large"
+)  # our test signal is short, but this is fine here
 def test_fourier_tempogram_audio(y_ex, hop_length):
     y, sr = y_ex
     oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
@@ -833,7 +834,7 @@ def test_mel_to_stft(power, dtype, n_fft):
     assert stft.shape[0] == 1 + n_fft // 2
 
     # Check that the approximation is good in RMSE terms
-    assert np.sqrt(np.mean((mel_basis.dot(stft ** power) - mels) ** 2)) <= 5e-2
+    assert np.sqrt(np.mean((mel_basis.dot(stft**power) - mels) ** 2)) <= 5e-2
 
 
 def test_mel_to_audio():
@@ -864,7 +865,7 @@ def test_mfcc_to_mel(y, n_mfcc, n_mels, dct_type, lifter):
     if lifter < 0:
         with pytest.raises(librosa.ParameterError):
             librosa.feature.inverse.mfcc_to_mel(
-                mfcc * 10 ** 3, n_mels=n_mels, dct_type=dct_type, lifter=lifter
+                mfcc * 10**3, n_mels=n_mels, dct_type=dct_type, lifter=lifter
             )
 
     # check no lifter computations
@@ -884,7 +885,7 @@ def test_mfcc_to_mel(y, n_mfcc, n_mels, dct_type, lifter):
     elif lifter == 2:
         with pytest.warns((UserWarning, RuntimeWarning)):
             librosa.feature.inverse.mfcc_to_mel(
-                mfcc * 10 ** 3, n_mels=n_mels, dct_type=dct_type, lifter=lifter
+                mfcc * 10**3, n_mels=n_mels, dct_type=dct_type, lifter=lifter
             )
 
     # check if mfcc_to_mel works correctly with lifter
@@ -933,15 +934,15 @@ def test_mfcc_to_audio(y, n_mfcc, n_mels, dct_type, lifter):
 def test_chroma_vqt_bpo(y_ex):
     # Test that bins per octave is properly overridden in chroma
     y, sr = y_ex
-    chroma = librosa.feature.chroma_vqt(y=y, sr=sr,
-                                        intervals=[1, 1.25, 1.5],
-                                        bins_per_octave=12)
+    chroma = librosa.feature.chroma_vqt(
+        y=y, sr=sr, intervals=[1, 1.25, 1.5], bins_per_octave=12
+    )
 
     assert chroma.shape[0] == 3
 
-    chroma2 = librosa.feature.chroma_vqt(y=y, sr=sr,
-                                         intervals='equal',
-                                         bins_per_octave=12)
+    chroma2 = librosa.feature.chroma_vqt(
+        y=y, sr=sr, intervals="equal", bins_per_octave=12
+    )
 
     assert chroma2.shape[0] == 12
 
@@ -950,9 +951,8 @@ def test_chroma_vqt_threshold(y_ex):
 
     y, sr = y_ex
 
-    c1 = librosa.feature.chroma_vqt(y=y, sr=sr, intervals='pythagorean')
-    c2 = librosa.feature.chroma_vqt(y=y, sr=sr, intervals='pythagorean',
-                                    threshold=1)
+    c1 = librosa.feature.chroma_vqt(y=y, sr=sr, intervals="pythagorean")
+    c2 = librosa.feature.chroma_vqt(y=y, sr=sr, intervals="pythagorean", threshold=1)
 
     # Check that all thresholded points are zero
     assert np.allclose(c2[c2 < c1], 0)
@@ -962,13 +962,12 @@ def test_chroma_vqt_threshold(y_ex):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_chroma_vqt_noinput():
-    librosa.feature.chroma_vqt(y=None, V=None, intervals='ji3')
+    librosa.feature.chroma_vqt(y=None, V=None, intervals="ji3")
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_chroma_cqt_noinput():
     librosa.feature.chroma_cqt(y=None, C=None)
-
 
 
 def test_tempogram_ratio_factors():
@@ -977,7 +976,7 @@ def test_tempogram_ratio_factors():
     # tg is [0, 1, 2, 3, 4]  for each frame
     tg = np.multiply.outer(np.arange(5), np.ones(4))
     # frequencies are [1, 2, 4, 8, 16]
-    freqs = 2**np.arange(5)
+    freqs = 2 ** np.arange(5)
     factors = np.array([1, 2, 4])
     bpm = np.array([4, 2, 1, 1.5])
 

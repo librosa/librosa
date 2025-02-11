@@ -7,7 +7,7 @@ import os
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
-except:
+except KeyError:
     pass
 
 import numpy as np
@@ -121,7 +121,7 @@ def test_istft_bad_window():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize('y', [np.empty(22050)])
-@pytest.mark.parametrize('mode', ['wrap', 'maximum', 'minimum', 'median', 'mean'])
+@pytest.mark.parametrize("y", [np.empty(22050)])
+@pytest.mark.parametrize("mode", ["wrap", "maximum", "minimum", "median", "mean"])
 def test_stft_bad_pad(y, mode):
     librosa.stft(y, pad_mode=mode)

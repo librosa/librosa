@@ -140,7 +140,7 @@ def test_mel_norm(norm):
     if norm == 1:
         assert np.allclose(np.sum(np.abs(M), axis=1), 1)
     elif norm == 2:
-        assert np.allclose(np.sum(np.abs(M ** 2), axis=1), 1)
+        assert np.allclose(np.sum(np.abs(M**2), axis=1), 1)
     elif norm == np.inf:
         assert np.allclose(np.max(np.abs(M), axis=1), 1)
 
@@ -161,7 +161,9 @@ def test_mel_gap():
     htk = True
 
     with pytest.warns(UserWarning, match="Empty filters"):
-        librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax, htk=htk)
+        librosa.filters.mel(
+            sr=sr, n_fft=n_fft, n_mels=n_mels, fmin=fmin, fmax=fmax, htk=htk
+        )
 
 
 @pytest.mark.parametrize(
@@ -211,9 +213,9 @@ def test_chroma_issue1295(freq):
     actual_argmax = np.unravel_index(chroma_1.argmax(), chroma_1.shape)
 
     if freq == 261.63:
-        assert actual_argmax == (118, 0) # type: ignore[comparison-overlap]
+        assert actual_argmax == (118, 0)  # type: ignore[comparison-overlap]
     elif freq == 440:
-        assert actual_argmax == (90, 0) # type: ignore[comparison-overlap]
+        assert actual_argmax == (90, 0)  # type: ignore[comparison-overlap]
 
 
 @pytest.mark.parametrize("n", [16, 16.0, 16.25, 16.75])
@@ -296,7 +298,9 @@ def test_constant_q(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, no
 @pytest.mark.parametrize("gamma", [0, 10, None])
 def test_wavelet(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, norm, gamma):
 
-    freqs = librosa.cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
+    freqs = librosa.cqt_frequencies(
+        fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave
+    )
 
     F, lengths = librosa.filters.wavelet(
         freqs=freqs,
@@ -304,7 +308,7 @@ def test_wavelet(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, norm,
         filter_scale=filter_scale,
         pad_fft=pad_fft,
         norm=norm,
-        gamma=gamma
+        gamma=gamma,
     )
 
     assert np.all(lengths <= F.shape[1])
@@ -325,28 +329,27 @@ def test_wavelet(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, norm,
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavelet_lengths_badscale():
-    librosa.filters.wavelet_lengths(freqs=2**np.arange(3), filter_scale=-1)
+    librosa.filters.wavelet_lengths(freqs=2 ** np.arange(3), filter_scale=-1)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavelet_lengths_badgamma():
-    librosa.filters.wavelet_lengths(freqs=2**np.arange(3), gamma=-1)
+    librosa.filters.wavelet_lengths(freqs=2 ** np.arange(3), gamma=-1)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavelet_lengths_badfreqs():
-    librosa.filters.wavelet_lengths(freqs=2**np.arange(3) -20)
+    librosa.filters.wavelet_lengths(freqs=2 ** np.arange(3) - 20)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavelet_lengths_badfreqsorder():
-    librosa.filters.wavelet_lengths(freqs=2**np.arange(3)[::-1])
+    librosa.filters.wavelet_lengths(freqs=2 ** np.arange(3)[::-1])
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavelet_lengths_noalpha():
     librosa.filters.wavelet_lengths(freqs=[64], alpha=None)
-
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -467,7 +470,7 @@ def test_cq_to_chroma(n_octaves, semitones, n_chroma, fmin, base_c, window):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_get_window_fail():
 
-    librosa.filters.get_window(None, 32) # type: ignore
+    librosa.filters.get_window(None, 32)  # type: ignore
 
 
 @pytest.mark.parametrize("window", ["hann", "hann", 4.0, ("kaiser", 4.0)])
@@ -487,7 +490,8 @@ def test_get_window_func():
 
 
 @pytest.mark.parametrize(
-    "pre_win", [scipy.signal.windows.hann(16), list(scipy.signal.windows.hann(16)), [1, 1, 1]]
+    "pre_win",
+    [scipy.signal.windows.hann(16), list(scipy.signal.windows.hann(16)), [1, 1, 1]],
 )
 def test_get_window_pre(pre_win):
     win = librosa.filters.get_window(pre_win, len(pre_win))

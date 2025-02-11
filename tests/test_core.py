@@ -10,7 +10,7 @@ import os
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
-except:
+except KeyError:
     pass
 
 import sys
@@ -94,7 +94,7 @@ def test_load_audioread():
 def test_load_resample(res_type):
 
     sr_target = 16000
-    fn= os.path.join("tests", "data", "test1_44100.wav")
+    fn = os.path.join("tests", "data", "test1_44100.wav")
 
     y_native, sr = librosa.load(fn, sr=None, res_type=res_type)
 
@@ -374,7 +374,7 @@ def test_stft_preallocate_oversize(center, n_fft, hop_length, N):
     out = np.empty_like(D1, shape=shape)
     D2 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length, out=out)
     assert np.allclose(D1, D2)
-    assert np.allclose(D1, out[..., :D2.shape[-1]])
+    assert np.allclose(D1, out[..., : D2.shape[-1]])
 
 
 @pytest.mark.parametrize("center", [False, True])
@@ -1173,7 +1173,9 @@ def test_yin_tone(freq):
 def test_yin_chirp():
     # test yin on a chirp, using output from the vamp plugin as ground truth
     y = librosa.chirp(fmin=220, fmax=640, duration=1.0)
-    f0 = librosa.yin(y, fmin=110, fmax=880, center=False, frame_length=1024, hop_length=512)
+    f0 = librosa.yin(
+        y, fmin=110, fmax=880, center=False, frame_length=1024, hop_length=512
+    )
 
     # adjust frames to the removal of win_length from yin
     f0 = f0[:-2]
@@ -1196,7 +1198,9 @@ def test_yin_chirp_instant():
     y = librosa.chirp(fmin=chirp_min, fmax=chirp_max, sr=sr, duration=1.0, linear=False)
     target_f0 = librosa.util.frame(f, frame_length=fl, hop_length=hl).mean(axis=0)
 
-    f0 = librosa.yin(y, fmin=110, fmax=880, sr=sr, frame_length=fl, hop_length=hl, center=False)
+    f0 = librosa.yin(
+        y, fmin=110, fmax=880, sr=sr, frame_length=fl, hop_length=hl, center=False
+    )
     assert np.allclose(np.log2(f0), np.log2(target_f0), rtol=0, atol=1e-2)
 
 
@@ -1215,9 +1219,8 @@ def test_yin_chirp_instant():
 )
 def test_yin_fail(fmin, fmax, frame_length):
     y = librosa.tone(110, duration=1.0)
-    librosa.yin(
-        y, fmin=fmin, fmax=fmax, frame_length=frame_length
-    )
+    librosa.yin(y, fmin=fmin, fmax=fmax, frame_length=frame_length)
+
 
 def test_yin_warn():
     y = librosa.tone(110, duration=1.0)
@@ -1229,6 +1232,7 @@ def test_yin_warn():
     # sr / fmin >= frame_length // 2
     with pytest.warns(UserWarning, match="two periods"):
         librosa.yin(y, fmin=20, fmax=1000)
+
 
 @pytest.mark.parametrize("freq", [110, 220, 440, 880])
 def test_pyin_tone(freq):
@@ -1259,7 +1263,9 @@ def test_pyin_multi():
     assert np.allclose(vpall[1], vp1)
 
 
-@pytest.mark.skipif(sys.platform == "darwin", reason="Skip on OSX due to openblas issue")
+@pytest.mark.skipif(
+    sys.platform == "darwin", reason="Skip on OSX due to openblas issue"
+)
 def test_pyin_multi_center():
     # Note: this test has issues on OSX with libopenblas 0.3.26,
     # so we disable it for now.  We may re-enable it some time in the future.
@@ -1271,9 +1277,7 @@ def test_pyin_multi_center():
     # Filter it
     y = y * h[np.newaxis, :]
 
-    fleft, vleft, vpleft = librosa.pyin(
-        y, fmin=100, fmax=1000, center=False
-    )
+    fleft, vleft, vpleft = librosa.pyin(y, fmin=100, fmax=1000, center=False)
     fc, vc, vpc = librosa.pyin(y, fmin=100, fmax=1000, center=True)
 
     # Centering will pad by half a frame on either side
@@ -1283,7 +1287,9 @@ def test_pyin_multi_center():
     # Loosening tolerances here to account for platform differences
     assert np.allclose(vpleft, vpc[..., 2:-2])
     assert np.allclose(vleft, vc[..., 2:-2])
-    assert np.allclose(fleft, fc[..., 2:-2], equal_nan=True), np.max(np.abs(fleft - fc[..., 2:-2]))
+    assert np.allclose(fleft, fc[..., 2:-2], equal_nan=True), np.max(
+        np.abs(fleft - fc[..., 2:-2])
+    )
 
 
 def test_pyin_chirp():
@@ -1292,7 +1298,15 @@ def test_pyin_chirp():
     y = np.pad(y, (22050,))
 
     # default values as set in https://code.soundsoftware.ac.uk/projects/pyin/repository/
-    f0, voiced_flag, _ = librosa.pyin(y, fmin=60, fmax=900, center=False, frame_length=1024, hop_length=512, resolution=0.2)
+    f0, voiced_flag, _ = librosa.pyin(
+        y,
+        fmin=60,
+        fmax=900,
+        center=False,
+        frame_length=1024,
+        hop_length=512,
+        resolution=0.2,
+    )
 
     # adjust frames to the removal of win_length from yin
     f0 = f0[:-2]
@@ -1305,6 +1319,7 @@ def test_pyin_chirp():
     assert np.allclose(
         np.log2(f0[voiced_flag]), np.log2(target_f0[target_f0 > 0]), rtol=0, atol=1e-2
     )
+
 
 def test_pyin_chirp_instant():
     # test pyin on a chirp, using frame-wise instantaneous frequency as ground truth
@@ -1326,7 +1341,9 @@ def test_pyin_chirp_instant():
     y = librosa.chirp(fmin=chirp_min, fmax=chirp_max, sr=sr, duration=1.0, linear=False)
     y = np.pad(y, (sr,))
 
-    f0, voiced_flag, _ = librosa.pyin(y, fmin=110, fmax=880, frame_length=fl, hop_length=hl, center=False)
+    f0, voiced_flag, _ = librosa.pyin(
+        y, fmin=110, fmax=880, frame_length=fl, hop_length=hl, center=False
+    )
 
     # test if correct frames are voiced
     assert np.array_equal(voiced_flag, target_f0 > 0)
@@ -1355,9 +1372,8 @@ def test_pyin_chirp_instant():
 )
 def test_pyin_fail(fmin, fmax, frame_length):
     y = librosa.tone(110, duration=1.0)
-    librosa.pyin(
-        y, fmin=fmin, fmax=fmax, frame_length=frame_length
-    )
+    librosa.pyin(y, fmin=fmin, fmax=fmax, frame_length=frame_length)
+
 
 def test_pyin_warn():
     y = librosa.tone(110, duration=1.0)
@@ -1391,7 +1407,9 @@ def test_piptrack(freq, n_fft):
 @pytest.mark.parametrize("bins_per_octave", [12])
 @pytest.mark.parametrize("resolution", [1e-2])
 @pytest.mark.parametrize("sr", [11025, 22050])
-def test_estimate_tuning(sr, center_note: int, tuning: float, bins_per_octave, resolution):
+def test_estimate_tuning(
+    sr, center_note: int, tuning: float, bins_per_octave, resolution
+):
 
     target_hz = librosa.midi_to_hz(center_note + tuning)
 
@@ -1593,7 +1611,7 @@ def test_db_to_power(erp, db):
 
 
 @pytest.mark.parametrize("ref_p", range(-3, 4))
-@pytest.mark.parametrize("xp", [(np.abs(np.random.randn(1000)) + 1e-5)])
+@pytest.mark.parametrize("xp", [np.abs(np.random.randn(1000)) + 1e-5])
 def test_db_to_amplitude_inv(xp, ref_p):
 
     ref = 10.0**ref_p
@@ -2038,15 +2056,15 @@ def S_pcen():
 @pytest.mark.parametrize(
     "gain,bias,power,b,time_constant,eps,ms",
     [
-        (-1, 1, 1, 0.5, 0.5, 1e-6, 1),  #   gain < 0
-        (1, -1, 1, 0.5, 0.5, 1e-6, 1),  #   bias < 0
-        (1, 1, -0.1, 0.5, 0.5, 1e-6, 1),  #   power < 0
-        (1, 1, 1, -2, 0.5, 1e-6, 1),  #   b < 0
-        (1, 1, 1, 2, 0.5, 1e-6, 1),  #   b > 1
-        (1, 1, 1, 0.5, -2, 1e-6, 1),  #   time_constant <= 0
-        (1, 1, 1, 0.5, 0.5, 0, 1),  #   eps <= 0
+        (-1, 1, 1, 0.5, 0.5, 1e-6, 1),  # gain < 0
+        (1, -1, 1, 0.5, 0.5, 1e-6, 1),  # bias < 0
+        (1, 1, -0.1, 0.5, 0.5, 1e-6, 1),  # power < 0
+        (1, 1, 1, -2, 0.5, 1e-6, 1),  # b < 0
+        (1, 1, 1, 2, 0.5, 1e-6, 1),  # b > 1
+        (1, 1, 1, 0.5, -2, 1e-6, 1),  # time_constant <= 0
+        (1, 1, 1, 0.5, 0.5, 0, 1),  # eps <= 0
         (1, 1, 1, 0.5, 0.5, 1e-6, 1.5),
-        (1, 1, 1, 0.5, 0.5, 1e-6, 0),  #   max_size not int, < 1
+        (1, 1, 1, 0.5, 0.5, 1e-6, 0),  # max_size not int, < 1
     ],
 )
 def test_pcen_failures(gain, bias, power, b, time_constant, eps, ms, S_pcen):
@@ -2262,8 +2280,8 @@ def test_get_fftlib():
 
 
 def test_set_fftlib():
-    librosa.set_fftlib("foo") # type: ignore
-    assert librosa.get_fftlib() == "foo" # type: ignore
+    librosa.set_fftlib("foo")  # type: ignore
+    assert librosa.get_fftlib() == "foo"  # type: ignore
     librosa.set_fftlib()
 
 
@@ -2713,7 +2731,7 @@ def test_f0_harmonics_dynamic():
 
 
 def test_f0_harmonics_1d_nonunique():
-    freqs = np.arange(-8, 8)**2
+    freqs = np.arange(-8, 8) ** 2
     data = np.multiply.outer(freqs, np.arange(5))
 
     h = [1, 2, 3]
@@ -2723,7 +2741,7 @@ def test_f0_harmonics_1d_nonunique():
 
 
 def test_f0_harmonics_2d_nonunique():
-    freqs = np.add.outer(np.arange(-8, 8)**2, np.arange(5))
+    freqs = np.add.outer(np.arange(-8, 8) ** 2, np.arange(5))
 
     data = freqs * np.arange(5)
 

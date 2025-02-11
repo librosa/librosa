@@ -10,7 +10,7 @@ import os
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
-except:
+except KeyError:
     pass
 
 
@@ -220,7 +220,10 @@ def test_onset_detect_const(y, sr, hop_length):
 
     # Disable padding here
     onsets = librosa.onset.onset_detect(
-        y=y, sr=sr, onset_envelope=None, hop_length=hop_length,
+        y=y,
+        sr=sr,
+        onset_envelope=None,
+        hop_length=hop_length,
     )
 
     # We'll allow one onset at the start of the signal for these examples
@@ -313,10 +316,10 @@ def test_onset_sparse(ysr, oenv, hop, energy):
     y, sr = ysr
 
     onsets = librosa.onset.onset_detect(
-            y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=True
+        y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=True
     )
     onsetsd = librosa.onset.onset_detect(
-            y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=False
+        y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=False
     )
 
     assert np.allclose(onsets, np.flatnonzero(onsetsd))

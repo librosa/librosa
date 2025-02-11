@@ -9,7 +9,7 @@ import os
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
-except:
+except KeyError:
     pass
 
 import numpy as np
@@ -96,9 +96,7 @@ def test_cross_similarity_affinity(metric, bandwidth):
 def test_cross_similarity_full():
     data = np.eye(10)
     data_ref = np.eye(10)
-    rec = librosa.segment.cross_similarity(
-        data, data_ref, mode="distance", full=True
-    )
+    rec = librosa.segment.cross_similarity(data, data_ref, mode="distance", full=True)
     assert np.all(rec >= 0)
 
 
@@ -120,7 +118,9 @@ def test_cross_similarity_bad_bandwidth():
     srand()
     data_ref = np.random.randn(3, 50)
     data = np.random.randn(3, 70)
-    rec = librosa.segment.cross_similarity(data, data_ref, bandwidth=-2, mode='affinity')
+    rec = librosa.segment.cross_similarity(
+        data, data_ref, bandwidth=-2, mode="affinity"
+    )
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -135,12 +135,12 @@ def test_cross_similarity_multi():
     X1 = np.random.randn(2, 10, 100)
     X2 = np.random.randn(2, 10, 50)
 
-    R = librosa.segment.cross_similarity(X1, X2, mode='affinity')
+    R = librosa.segment.cross_similarity(X1, X2, mode="affinity")
     # This should give the same output as if we stacked out the leading channel
 
     X1f = np.concatenate([X1[0], X1[1]], axis=0)
     X2f = np.concatenate([X2[0], X2[1]], axis=0)
-    Rf = librosa.segment.cross_similarity(X1f, X2f, mode='affinity')
+    Rf = librosa.segment.cross_similarity(X1f, X2f, mode="affinity")
 
     assert np.allclose(R, Rf)
 
@@ -266,7 +266,7 @@ def test_recurrence_affinity(metric, bandwidth, self):
 def test_recurrence_full():
     data = np.eye(10)
     rec = librosa.segment.recurrence_matrix(
-        data, mode="distance", metric="euclidean", sparse= False, full=True
+        data, mode="distance", metric="euclidean", sparse=False, full=True
     )
     assert np.all(rec >= 0)
 
@@ -291,6 +291,7 @@ def test_empty_rows_recurrence():
     data[0, 5] = 1
     librosa.segment.recurrence_matrix(data, mode="affinity", bandwidth="mean_k")
 
+
 def test_empty_rows_recurrence_okay():
     data = np.zeros((10, 10))
     data[0, 5] = 1
@@ -301,11 +302,11 @@ def test_recurrence_multi():
     srand()
     X = np.random.randn(2, 10, 100)
 
-    R = librosa.segment.recurrence_matrix(X, mode='affinity')
+    R = librosa.segment.recurrence_matrix(X, mode="affinity")
     # This should give the same output as if we stacked out the leading channel
 
     Xf = np.concatenate([X[0], X[1]], axis=0)
-    Rf = librosa.segment.recurrence_matrix(Xf, mode='affinity')
+    Rf = librosa.segment.recurrence_matrix(Xf, mode="affinity")
 
     assert np.allclose(R, Rf)
 
@@ -322,26 +323,29 @@ def test_recurrence_badmode():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize("bandwidth", 
-                         [-2, 'FAKE', np.random.randn(2, 5), -1 * np.random.randn(100, 100)])
+@pytest.mark.parametrize(
+    "bandwidth", [-2, "FAKE", np.random.randn(2, 5), -1 * np.random.randn(100, 100)]
+)
 def test_recurrence_bad_bandwidth(bandwidth):
     srand()
     data = np.random.randn(3, 100)
-    rec = librosa.segment.recurrence_matrix(data, bandwidth=bandwidth, mode='affinity')
+    rec = librosa.segment.recurrence_matrix(data, bandwidth=bandwidth, mode="affinity")
 
 
 def test_recurrence_array_bandwidth():
     srand()
     data = np.random.randn(3, 100)
     bw = np.random.random((100, 100)) + 0.1
-    rec = librosa.segment.recurrence_matrix(data, bandwidth=bw, mode='affinity')
+    rec = librosa.segment.recurrence_matrix(data, bandwidth=bw, mode="affinity")
 
 
-@pytest.mark.parametrize("bw_mode", ['mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'])
+@pytest.mark.parametrize(
+    "bw_mode", ["mean_k", "gmean_k", "mean_k_avg", "gmean_k_avg", "mean_k_avg_and_pair"]
+)
 def test_automatic_bandwidth(bw_mode):
     srand()
     data = np.random.randn(3, 100)
-    rec = librosa.segment.recurrence_matrix(data, bandwidth=bw_mode, mode='affinity')
+    rec = librosa.segment.recurrence_matrix(data, bandwidth=bw_mode, mode="affinity")
 
 
 @pytest.mark.parametrize("n", [10, 100, 500])
