@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 """Unit conversion utilities"""
 from __future__ import annotations
-import re
 import numpy as np
 from . import notation
 from ..util.exceptions import ParameterError

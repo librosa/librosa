@@ -15,15 +15,14 @@ import scipy
 import scipy.stats
 import numba
 
-from ._cache import cache
 from . import core
 from . import onset
 from . import util
-from .feature import tempogram, fourier_tempogram
+from .feature import fourier_tempogram
 from .feature import tempo as _tempo
 from .util.exceptions import ParameterError
-from .util.decorators import moved, vectorize
-from typing import Any, Callable, Optional, Tuple, Union
+from .util.decorators import moved
+from typing import Optional, Tuple, Union
 from ._typing import _FloatLike_co
 
 __all__ = ["beat_track", "tempo", "plp"]
@@ -58,8 +57,8 @@ def beat_track(
          tempo
 
     .. [#] Ellis, Daniel PW. "Beat tracking by dynamic programming."
-           Journal of New Music Research 36.1 (2007): 51-60.
-           http://labrosa.ee.columbia.edu/projects/beattrack/
+        Journal of New Music Research 36.1 (2007): 51-60.
+        http://labrosa.ee.columbia.edu/projects/beattrack/
 
     Parameters
     ----------
@@ -117,7 +116,12 @@ def beat_track(
         estimated global tempo (in beats per minute)
 
         If multi-channel and ``bpm`` is not provided, a separate
-        tempo will be returned for each channel
+        tempo will be returned for each channel.
+
+        .. note::
+            By default, the tempo is returned as an ndarray even for mono input.
+            In this case, the array will have a single element and be one-dimensional.
+            This is to ensure consistent return types for multi-channel input.
     beats : np.ndarray
         estimated beat event locations.
 
@@ -126,9 +130,10 @@ def beat_track(
 
         If `sparse=False` (required for multichannel input), beat events are
         indicated by a boolean for each frame.
-    .. note::
-        If no onset strength could be detected, beat_tracker estimates 0 BPM
-        and returns an empty list.
+
+        .. note::
+            If no onset strength could be detected, beat_tracker estimates 0 BPM
+            and returns an empty list.
 
     Raises
     ------
@@ -240,7 +245,7 @@ def beat_track(
     bpm_expanded = util.expand_to(_bpm,
                                   ndim=onset_envelope.ndim,
                                   axes=range(_bpm.ndim))
-                                
+
     # Then, run the tracker
     beats = __beat_tracker(onset_envelope, bpm_expanded, float(sr) / hop_length, tightness, trim)
 

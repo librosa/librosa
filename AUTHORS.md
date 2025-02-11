@@ -108,6 +108,11 @@ Contributors
 * Jize Guo <https://github.com/alumkal>
 * Phillip S.M. Skelton <https://github.com/psmskelton>
 * Matt Pitkin <https://github.com/mattpitkin>
+* Anmol Mishra <https://github.com/dhunstack>
+* Slava Chauvin <https://github.com/ssslakter>
+* BenedictSt <https://github.com/BenedictSt>
+* Scott VanRavenswaay <https://github.com/scottvr>
+* David Südholt <https://github.com/dsuedholt>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

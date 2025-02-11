@@ -541,7 +541,9 @@ def test_blocks_to_frames(blocks, block_length):
 @pytest.mark.parametrize("block_length", [1, 4, 8])
 @pytest.mark.parametrize("hop_length", [1, 512])
 def test_blocks_to_samples(blocks, block_length, hop_length):
-    samples = librosa.blocks_to_samples(blocks, block_length=block_length, hop_length=hop_length)
+    samples = librosa.blocks_to_samples(
+        blocks, block_length=block_length, hop_length=hop_length
+    )
 
     # Check shape
     assert samples.ndim == np.asarray(blocks).ndim
@@ -559,7 +561,9 @@ def test_blocks_to_samples(blocks, block_length, hop_length):
 @pytest.mark.parametrize("hop_length", [1, 512])
 @pytest.mark.parametrize("sr", [22050, 44100])
 def test_blocks_to_time(blocks, block_length, hop_length, sr):
-    times = librosa.blocks_to_time(blocks, block_length=block_length, hop_length=hop_length, sr=sr)
+    times = librosa.blocks_to_time(
+        blocks, block_length=block_length, hop_length=hop_length, sr=sr
+    )
 
     # Check shape
     assert times.ndim == np.asarray(blocks).ndim
@@ -581,7 +585,9 @@ def test_blocks_to_time(blocks, block_length, hop_length, sr):
 @pytest.mark.parametrize("Sa", [12])
 def test_midi_to_svara_h(midi, Sa, abbr, octave, unicode):
 
-    svara = librosa.midi_to_svara_h(midi, Sa=Sa, abbr=abbr, octave=octave, unicode=unicode)
+    svara = librosa.midi_to_svara_h(
+        midi, Sa=Sa, abbr=abbr, octave=octave, unicode=unicode
+    )
 
     svara = np.asarray(svara)
     assert len(svara) == len(midi)
@@ -707,7 +713,9 @@ def test_midi_to_svara_c(midi, Sa, mela, abbr, octave, unicode):
     ],
 )
 def test_hz_to_svara_c(freq, Sa, mela, abbr, octave, unicode, result):
-    s = librosa.hz_to_svara_c(freq, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode)
+    s = librosa.hz_to_svara_c(
+        freq, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode
+    )
     assert s == result
 
 

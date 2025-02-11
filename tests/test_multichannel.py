@@ -8,7 +8,7 @@ import os
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
-except:
+except KeyError:
     pass
 
 import librosa
@@ -45,7 +45,20 @@ def tfr_multi(y_multi):
 
 @pytest.mark.parametrize("aggregate", [None, np.mean, np.sum])
 @pytest.mark.parametrize(
-    "ndim,axis", [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 2), (3, -1), (4, 0), (4, 3), (4, -1)]
+    "ndim,axis",
+    [
+        (1, 0),
+        (1, -1),
+        (2, 0),
+        (2, 1),
+        (2, -1),
+        (3, 0),
+        (3, 2),
+        (3, -1),
+        (4, 0),
+        (4, 3),
+        (4, -1),
+    ],
 )
 def test_sync_multi(aggregate, ndim: int, axis: int):
     data = np.ones([6] * ndim, dtype=float)
@@ -165,37 +178,22 @@ def test_tempo_multi(y_multi):
     sr = 22050
     tempi = [78, 128]
 
-    y = np.zeros((2, 20*sr))
+    y = np.zeros((2, 20 * sr))
 
     delay = [librosa.time_to_samples(60 / tempo, sr=sr).item() for tempo in tempi]
-    y[0,::delay[0]] = 1
-    y[1,::delay[1]] = 1
+    y[0, :: delay[0]] = 1
+    y[1, :: delay[1]] = 1
 
     t = librosa.feature.tempo(
-        y=y,
-        sr=sr,
-        hop_length=512,
-        ac_size=4,
-        aggregate=np.mean,
-        prior=None
+        y=y, sr=sr, hop_length=512, ac_size=4, aggregate=np.mean, prior=None
     )
 
     t0 = librosa.feature.tempo(
-        y=y[0],
-        sr=sr,
-        hop_length=512,
-        ac_size=4,
-        aggregate=np.mean,
-        prior=None
+        y=y[0], sr=sr, hop_length=512, ac_size=4, aggregate=np.mean, prior=None
     )
 
     t1 = librosa.feature.tempo(
-        y=y[1],
-        sr=sr,
-        hop_length=512,
-        ac_size=4,
-        aggregate=np.mean,
-        prior=None
+        y=y[1], sr=sr, hop_length=512, ac_size=4, aggregate=np.mean, prior=None
     )
 
     # Check each channel
@@ -434,7 +432,7 @@ def test_spectral_bandwidth_multi(s_multi):
 def test_spectral_bandwidth_multi_variable(s_multi):
     S, sr = s_multi
 
-    freq = np.asarray( np.random.randn(*S.shape))
+    freq = np.asarray(np.random.randn(*S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_bandwidth(sr=sr, freq=freq[0], S=S[0])
@@ -765,9 +763,15 @@ def test_interp_harmonics_multi_static(s_multi):
 def test_interp_harmonics_multi_vary(tfr_multi):
     times, freqs, mags = tfr_multi
 
-    Hall = librosa.interp_harmonics(mags, freqs=freqs, harmonics=[0.5, 1, 2], kind="nearest")
-    H0 = librosa.interp_harmonics(mags[0], freqs=freqs[0], harmonics=[0.5, 1, 2], kind="nearest")
-    H1 = librosa.interp_harmonics(mags[1], freqs=freqs[1], harmonics=[0.5, 1, 2], kind="nearest")
+    Hall = librosa.interp_harmonics(
+        mags, freqs=freqs, harmonics=[0.5, 1, 2], kind="nearest"
+    )
+    H0 = librosa.interp_harmonics(
+        mags[0], freqs=freqs[0], harmonics=[0.5, 1, 2], kind="nearest"
+    )
+    H1 = librosa.interp_harmonics(
+        mags[1], freqs=freqs[1], harmonics=[0.5, 1, 2], kind="nearest"
+    )
 
     assert np.allclose(Hall[0], H0)
     assert np.allclose(Hall[1], H1)
@@ -885,7 +889,7 @@ def test_yin_multi(y_multi):
     assert not np.allclose(P0, P1)
 
 
-@pytest.mark.parametrize('ref', [None, 1.0])
+@pytest.mark.parametrize("ref", [None, 1.0])
 def test_piptrack_multi(s_multi, ref):
     S, sr = s_multi
 
@@ -919,24 +923,28 @@ def test_nnls_multi(s_multi):
     # Verify that a stereo melspectrogram can be reconstructed
     # for each channel individually
     S, sr = s_multi
-    S = S[...,:int(S.shape[-1]/2)]
+    S = S[..., : int(S.shape[-1] / 2)]
 
-    # multichannel  
-    mel_basis = librosa.filters.mel(sr=sr, n_fft=2*S.shape[-2]-1, n_mels=256)
-    M = np.einsum('...ft,mf->...mt', S, mel_basis)
+    # multichannel
+    mel_basis = librosa.filters.mel(sr=sr, n_fft=2 * S.shape[-2] - 1, n_mels=256)
+    M = np.einsum("...ft,mf->...mt", S, mel_basis)
     S_recover = librosa.util.nnls(mel_basis, M)
 
     # channel 0
-    M0 = np.einsum('...ft,mf->...mt', S[0], mel_basis)
+    M0 = np.einsum("...ft,mf->...mt", S[0], mel_basis)
     S0_recover = librosa.util.nnls(mel_basis, M0)
 
     # channel 1
-    M1 = np.einsum('...ft,mf->...mt', S[1], mel_basis)
+    M1 = np.einsum("...ft,mf->...mt", S[1], mel_basis)
     S1_recover = librosa.util.nnls(mel_basis, M1)
 
     # Check each channel
-    assert np.allclose(S_recover[0], S0_recover, atol=1e-5, rtol=1e-5), np.max(np.abs(S_recover[0]-S0_recover))
-    assert np.allclose(S_recover[1], S1_recover, atol=1e-5, rtol=1e-5), np.max(np.abs(S_recover[1]-S1_recover))
+    assert np.allclose(S_recover[0], S0_recover, atol=1e-5, rtol=1e-5), np.max(
+        np.abs(S_recover[0] - S0_recover)
+    )
+    assert np.allclose(S_recover[1], S1_recover, atol=1e-5, rtol=1e-5), np.max(
+        np.abs(S_recover[1] - S1_recover)
+    )
 
     # Check that they're not both the same
     assert not np.allclose(S0_recover, S1_recover)
@@ -945,7 +953,7 @@ def test_nnls_multi(s_multi):
 # -- feature inversion tests
 @pytest.mark.parametrize("power", [1, 2])
 @pytest.mark.parametrize("n_fft", [1024, 2048])
-def test_mel_to_stft_multi(power,  n_fft):
+def test_mel_to_stft_multi(power, n_fft):
     srand()
 
     # Make a random mel spectrum, 4 frames
@@ -953,11 +961,11 @@ def test_mel_to_stft_multi(power,  n_fft):
 
     stft_orig = np.random.randn(2, n_fft // 2 + 1, 4) ** power
 
-    mels = np.einsum('...ft,mf->...mt', stft_orig, mel_basis)
+    mels = np.einsum("...ft,mf->...mt", stft_orig, mel_basis)
     stft = librosa.feature.inverse.mel_to_stft(mels, power=power, n_fft=n_fft)
-    mels0 = np.einsum('...ft,mf->...mt', stft_orig[0], mel_basis)
+    mels0 = np.einsum("...ft,mf->...mt", stft_orig[0], mel_basis)
     stft0 = librosa.feature.inverse.mel_to_stft(mels0, power=power, n_fft=n_fft)
-    mels1 = np.einsum('...ft,mf->...mt', stft_orig[1], mel_basis)
+    mels1 = np.einsum("...ft,mf->...mt", stft_orig[1], mel_basis)
     stft1 = librosa.feature.inverse.mel_to_stft(mels1, power=power, n_fft=n_fft)
 
     # Check each channel
@@ -998,7 +1006,6 @@ def test_mfcc_to_mel_multi(s_multi, n_mfcc, n_mels, dct_type):
     assert not np.allclose(mel_recover0, mel_recover1)
 
 
-
 def test_trim_multichannel(y_multi):
     y, sr = y_multi
 
@@ -1016,39 +1023,49 @@ def test_trim_multichannel(y_multi):
     assert ival[1] == min(ival0[1], ival1[1])
 
 
-@pytest.mark.parametrize('res_type', ('scipy', 'polyphase', 'sinc_fastest', 'kaiser_fast', 'soxr_qq'))
+@pytest.mark.parametrize(
+    "res_type", ("scipy", "polyphase", "sinc_fastest", "kaiser_fast", "soxr_qq")
+)
 def test_resample_multichannel(y_multi, res_type):
     # Test multi-channel resampling with all backends: scipy, samplerate, resampy, soxr
     y, sr = y_multi
 
-    y_res = librosa.resample(y=y, orig_sr=sr, target_sr=sr//2, res_type=res_type)
-    y0_res = librosa.resample(y=y[0], orig_sr=sr, target_sr=sr//2, res_type=res_type)
-    y1_res = librosa.resample(y=y[1], orig_sr=sr, target_sr=sr//2, res_type=res_type)
+    y_res = librosa.resample(y=y, orig_sr=sr, target_sr=sr // 2, res_type=res_type)
+    y0_res = librosa.resample(y=y[0], orig_sr=sr, target_sr=sr // 2, res_type=res_type)
+    y1_res = librosa.resample(y=y[1], orig_sr=sr, target_sr=sr // 2, res_type=res_type)
 
     assert np.allclose(y_res[0], y0_res)
     assert np.allclose(y_res[1], y1_res)
     assert y_res[0].shape == y0_res.shape
 
 
-@pytest.mark.parametrize('res_type', ('scipy', 'polyphase', 'sinc_fastest', 'kaiser_fast', 'soxr_qq'))
-@pytest.mark.parametrize('x', [np.zeros((2, 2, 2, 22050))])
+@pytest.mark.parametrize(
+    "res_type", ("scipy", "polyphase", "sinc_fastest", "kaiser_fast", "soxr_qq")
+)
+@pytest.mark.parametrize("x", [np.zeros((2, 2, 2, 22050))])
 def test_resample_highdim(x, res_type):
     # Just run these to verify that it doesn't crash with ndim>2
     y = librosa.resample(x, orig_sr=22050, target_sr=11025, res_type=res_type)
 
 
-@pytest.mark.parametrize('res_type', ('scipy', 'polyphase', 'sinc_fastest', 'kaiser_fast', 'soxr_qq'))
-@pytest.mark.parametrize('x, axis', [(np.zeros((2, 2, 2, 22050)), -1), (np.zeros((22050, 2, 3)), 0)])
+@pytest.mark.parametrize(
+    "res_type", ("scipy", "polyphase", "sinc_fastest", "kaiser_fast", "soxr_qq")
+)
+@pytest.mark.parametrize(
+    "x, axis", [(np.zeros((2, 2, 2, 22050)), -1), (np.zeros((22050, 2, 3)), 0)]
+)
 def test_resample_highdim_axis(x, axis, res_type):
     # Resample along the target axis
-    y = librosa.resample(x, orig_sr=22050, target_sr=11025, axis=axis, res_type=res_type)
+    y = librosa.resample(
+        x, orig_sr=22050, target_sr=11025, axis=axis, res_type=res_type
+    )
 
     # Verify that the target axis is the correct shape
     assert y.shape[axis] == 11025
     assert y.ndim == x.ndim
 
 
-@pytest.mark.parametrize('dynamic', [False, True])
+@pytest.mark.parametrize("dynamic", [False, True])
 # Not worried about this warning here
 @pytest.mark.filterwarnings("ignore:Frequencies are not unique")
 def test_f0_harmonics(y_multi, dynamic):
@@ -1085,10 +1102,30 @@ def test_peak_pick_multi():
     wait = 10
     delta = 0.5
 
-    pm = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=-1)
+    pm = librosa.util.peak_pick(
+        x,
+        pre_max=pre_max,
+        post_max=post_max,
+        pre_avg=pre_avg,
+        post_avg=post_avg,
+        wait=wait,
+        delta=delta,
+        sparse=False,
+        axis=-1,
+    )
 
     for i in range(x.shape[0]):
-        pmi = librosa.util.peak_pick(x[i], pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=-1)
+        pmi = librosa.util.peak_pick(
+            x[i],
+            pre_max=pre_max,
+            post_max=post_max,
+            pre_avg=pre_avg,
+            post_avg=post_avg,
+            wait=wait,
+            delta=delta,
+            sparse=False,
+            axis=-1,
+        )
         assert np.allclose(pmi, pm[i])
 
 
@@ -1103,9 +1140,29 @@ def test_peak_pick_axis():
     wait = 10
     delta = 0.5
 
-    peaks = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=-1)
-    peaks_t = librosa.util.peak_pick(x.T, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=False, axis=0)
-    
+    peaks = librosa.util.peak_pick(
+        x,
+        pre_max=pre_max,
+        post_max=post_max,
+        pre_avg=pre_avg,
+        post_avg=post_avg,
+        wait=wait,
+        delta=delta,
+        sparse=False,
+        axis=-1,
+    )
+    peaks_t = librosa.util.peak_pick(
+        x.T,
+        pre_max=pre_max,
+        post_max=post_max,
+        pre_avg=pre_avg,
+        post_avg=post_avg,
+        wait=wait,
+        delta=delta,
+        sparse=False,
+        axis=0,
+    )
+
     assert np.allclose(peaks_t.T, peaks)
 
 
@@ -1121,7 +1178,17 @@ def test_peak_pick_multi_fail():
     wait = 10
     delta = 0.5
 
-    pm = librosa.util.peak_pick(x, pre_max=pre_max, post_max=post_max, pre_avg=pre_avg, post_avg=post_avg, wait=wait, delta=delta, sparse=True, axis=-1)
+    pm = librosa.util.peak_pick(
+        x,
+        pre_max=pre_max,
+        post_max=post_max,
+        pre_avg=pre_avg,
+        post_avg=post_avg,
+        wait=wait,
+        delta=delta,
+        sparse=True,
+        axis=-1,
+    )
 
 
 def test_onset_detect(y_multi):
@@ -1145,8 +1212,7 @@ def test_onset_detect(y_multi):
     assert not np.allclose(D0, D1)
 
 
-
-@pytest.mark.parametrize('trim', [False, True])
+@pytest.mark.parametrize("trim", [False, True])
 def test_beat_track_multi(y_multi, trim):
     y, sr = y_multi
 

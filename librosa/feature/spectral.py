@@ -1110,7 +1110,7 @@ def zero_crossing_rate(
     array([[0.044, 0.074, ..., 0.488, 0.355]])
     """
     # check if audio is valid
-    util.valid_audio(y, mono=False)
+    util.valid_audio(y)
 
     if center:
         padding = [(0, 0) for _ in range(y.ndim)]

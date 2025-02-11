@@ -46,11 +46,7 @@ from typing_extensions import Literal
 from numpy.typing import ArrayLike
 from ._typing import (
     _WindowSpec,
-    _PadMode,
     _PadModeSTFT,
-    _SequenceLike,
-    _ScalarOrSequence,
-    _ComplexLike_co,
     _IntLike_co,
     _FloatLike_co,
 )

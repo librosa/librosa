@@ -41,7 +41,7 @@ from .util.exceptions import ParameterError
 from .filters import get_window
 from typing import Any, Iterable, List, Optional, Tuple, Union, overload
 from typing_extensions import Literal
-from ._typing import _WindowSpec, _IntLike_co
+from ._typing import _WindowSpec
 
 __all__ = [
     "dtw",

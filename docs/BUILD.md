@@ -27,7 +27,7 @@ deposited under `build/html`.  To deploy, we sync the compiled site to the
 
 Because the historical docs include example code that is executed to generate
 figures, the environment for building historical docs can be brittle.
-Presently, the oldest compiled doc is for release 0.8.1.
+Presently, the oldest compiled doc is for release 0.9.2.
 
 For debugging documentation builds, you can disable docstring example code
 execution by setting the `LIBROSA_DOC_DEBUG` environment variable prior to

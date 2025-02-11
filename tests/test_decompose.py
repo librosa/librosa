@@ -7,7 +7,7 @@ import os
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
-except:
+except KeyError:
     pass
 
 import numpy as np
@@ -60,10 +60,9 @@ def test_decompose_fit():
     assert np.allclose(W, W2)
 
 
-
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_decompose_multi_sort():
-    librosa.decompose.decompose(np.zeros((3,3,3)), sort=True)
+    librosa.decompose.decompose(np.zeros((3, 3, 3)), sort=True)
 
 
 @pytest.mark.filterwarnings("ignore:Maximum number of iterations")
@@ -72,14 +71,16 @@ def test_decompose_multi():
     X = np.random.random_sample(size=(2, 20, 100))
 
     # Fit with multichannel data
-    components, activations = librosa.decompose.decompose(X, n_components=20, random_state=0)
+    components, activations = librosa.decompose.decompose(
+        X, n_components=20, random_state=0
+    )
 
     # Reshape the data
     Xflat = np.vstack([X[0], X[1]])
     c_flat, a_flat = librosa.decompose.decompose(Xflat, n_components=20, random_state=0)
 
-    assert np.allclose(c_flat[:X.shape[1]], components[0])
-    assert np.allclose(c_flat[X.shape[1]:], components[1])
+    assert np.allclose(c_flat[: X.shape[1]], components[0])
+    assert np.allclose(c_flat[X.shape[1] :], components[1])
     assert np.allclose(activations, a_flat)
 
 
@@ -200,21 +201,24 @@ def test_nn_filter_mean_rec_sparse():
 
 @pytest.fixture(scope="module")
 def s_multi():
-    y, sr = librosa.load(os.path.join("tests", "data", "test1_44100.wav"), 
-                         sr=None, mono=False)
+    y, sr = librosa.load(
+        os.path.join("tests", "data", "test1_44100.wav"), sr=None, mono=False
+    )
     return np.abs(librosa.stft(y))
 
-@pytest.mark.parametrize('useR,sparse', [(False, False), (True, False), (True, True)])
+
+@pytest.mark.parametrize("useR,sparse", [(False, False), (True, False), (True, True)])
 def test_nn_filter_multi(s_multi, useR, sparse):
 
-    R = librosa.segment.recurrence_matrix(s_multi, mode='affinity', sparse=sparse)
+    R = librosa.segment.recurrence_matrix(s_multi, mode="affinity", sparse=sparse)
     if useR:
         R_multi = R
     else:
         R_multi = None
 
-    s_filt = librosa.decompose.nn_filter(s_multi, rec=R_multi, mode='affinity',
-        sparse=sparse)
+    s_filt = librosa.decompose.nn_filter(
+        s_multi, rec=R_multi, mode="affinity", sparse=sparse
+    )
     # Always use the same recurrence matrix for comparison
     s_filt0 = librosa.decompose.nn_filter(s_multi[0], rec=R)
     s_filt1 = librosa.decompose.nn_filter(s_multi[1], rec=R)

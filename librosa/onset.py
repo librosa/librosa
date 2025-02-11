@@ -21,7 +21,7 @@ from . import util
 from .util.exceptions import ParameterError
 
 from .feature.spectral import melspectrogram
-from typing import Any, Callable, Iterable, Optional, Union, Sequence
+from typing import Any, Callable, Optional, Union, Sequence
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 
@@ -345,7 +345,7 @@ def onset_strength(
     """
     if aggregate is False:
         raise ParameterError(
-            f"aggregate parameter cannot be False when computing full-spectrum onset strength."
+            "aggregate parameter cannot be False when computing full-spectrum onset strength."
         )
 
     odf_all = onset_strength_multi(

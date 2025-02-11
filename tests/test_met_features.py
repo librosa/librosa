@@ -9,7 +9,7 @@ import pytest
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
-except:
+except KeyError:
     pass
 
 import numpy as np

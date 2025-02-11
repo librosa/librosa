@@ -3,7 +3,7 @@
 # CREATED:2015-02-15 10:06:03 by Brian McFee <brian.mcfee@nyu.edu>
 """Helpful tools for deprecation"""
 
-from typing import Any, Callable, Iterable, Optional, Set, TypeVar, Union
+from typing import Any, Callable, Iterable, Optional, TypeVar, Union
 import warnings
 import functools
 from decorator import decorator

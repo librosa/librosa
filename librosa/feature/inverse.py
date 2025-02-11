@@ -13,7 +13,7 @@ from ..util.utils import tiny
 from .. import filters
 from ..util import nnls, expand_to
 from numpy.typing import DTypeLike
-from typing import Any, Callable, Optional, Union
+from typing import Any, Optional
 from .._typing import _WindowSpec, _PadModeSTFT
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]

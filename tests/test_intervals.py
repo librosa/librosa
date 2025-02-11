@@ -32,7 +32,7 @@ def test_plimit3():
     assert np.allclose(
         intervals,
         [
-            1,          # These are just alternating powers of 3/2
+            1,  # These are just alternating powers of 3/2
             3 / 2,
             4 / 3,
             9 / 8,
@@ -68,30 +68,30 @@ def test_plimit5():
     assert np.allclose(
         intervals,
         [
-            1,          # Unison
-            3 / 2,      # P5
-            4 / 3,      # P4
-            9 / 8,      # major wholetone
-            5 / 4,      # Pt M3
-            15 / 8,     # Pt M7
-            5 / 3,      # Pt M6
-            45 / 32,    # Pt TT
-            8 / 5,      # Pt m6
-            6 / 5,      # Pt m3
-            16 / 15,    # major diatonic semitone
-            9 / 5,      # Pt m7
-            16 / 9,     # Py m7
-            27 / 16,    # Py M6
-            10 / 9,     # minor wholetone
-            64 / 45,    # Pt dim5
-            32 / 27,    # Py m3
-            25 / 16,    # Pt aug5
-            75 / 64,    # Pt aug2 
-            25 / 24,    # minor chromatic semitone
+            1,  # Unison
+            3 / 2,  # P5
+            4 / 3,  # P4
+            9 / 8,  # major wholetone
+            5 / 4,  # Pt M3
+            15 / 8,  # Pt M7
+            5 / 3,  # Pt M6
+            45 / 32,  # Pt TT
+            8 / 5,  # Pt m6
+            6 / 5,  # Pt m3
+            16 / 15,  # major diatonic semitone
+            9 / 5,  # Pt m7
+            16 / 9,  # Py m7
+            27 / 16,  # Py M6
+            10 / 9,  # minor wholetone
+            64 / 45,  # Pt dim5
+            32 / 27,  # Py m3
+            25 / 16,  # Pt aug5
+            75 / 64,  # Pt aug2
+            25 / 24,  # minor chromatic semitone
             135 / 128,  # major limma
             225 / 128,  # Pt aug6
-            40 / 27,    # Pt narrow 5
-            25 / 18,    # Rameau's tritone
+            40 / 27,  # Pt narrow 5
+            25 / 18,  # Rameau's tritone
         ],
     )
 
@@ -108,30 +108,30 @@ def test_plimit7():
     assert np.allclose(
         intervals,
         [
-            1,          # Unison
-            3 / 2,      # P5
-            4 / 3,      # P4
-            9 / 8,      # major whole tone
-            5 / 4,      # Pt M3
-            15 / 8,     # Pt M7
-            5 / 3,      # Pt M6
-            45 / 32,    # Pt TT
-            8 / 5,      # Pt m6
-            6 / 5,      # Pt m3
-            16 / 15,    # major diatonic semitone
-            9 / 5,      # Pt m7
-            16 / 9,     # Py m7
-            27 / 16,    # Py M6
-            7 / 4,      # N7
-            21 / 16,    # septimal narrow 4
-            8 / 7,      # septimal whole tone
-            12 / 7,     # septimal M7
-            9 / 7,      # septimal M3
-            32 / 21,    # septimal wide fifth
-            7 / 6,      # septimal m3
-            63 / 32,    # septimal narrow octave
-            35 / 32,    # septimal N2
-            105 / 64,   # septimal N6
+            1,  # Unison
+            3 / 2,  # P5
+            4 / 3,  # P4
+            9 / 8,  # major whole tone
+            5 / 4,  # Pt M3
+            15 / 8,  # Pt M7
+            5 / 3,  # Pt M6
+            45 / 32,  # Pt TT
+            8 / 5,  # Pt m6
+            6 / 5,  # Pt m3
+            16 / 15,  # major diatonic semitone
+            9 / 5,  # Pt m7
+            16 / 9,  # Py m7
+            27 / 16,  # Py M6
+            7 / 4,  # N7
+            21 / 16,  # septimal narrow 4
+            8 / 7,  # septimal whole tone
+            12 / 7,  # septimal M7
+            9 / 7,  # septimal M3
+            32 / 21,  # septimal wide fifth
+            7 / 6,  # septimal m3
+            63 / 32,  # septimal narrow octave
+            35 / 32,  # septimal N2
+            105 / 64,  # septimal N6
         ],
     )
 
@@ -150,7 +150,9 @@ def test_interval_frequencies(n_bins, intervals, bins_per_octave):
     assert min(freqs) == 10
 
 
-@pytest.mark.parametrize("intervals", ["pythagorean", "ji3", "ji5", "ji7", [1, 3/2, 4/3, 5/4]])
+@pytest.mark.parametrize(
+    "intervals", ["pythagorean", "ji3", "ji5", "ji7", [1, 3 / 2, 4 / 3, 5 / 4]]
+)
 def test_intervals_sorted(intervals):
 
     freqs = librosa.interval_frequencies(12, fmin=1, intervals=intervals, sort=False)
@@ -163,13 +165,17 @@ def test_intervals_sorted(intervals):
 
 @pytest.mark.parametrize("sort", [False, True])
 def test_pythagorean_factorizations(sort):
-    intervals = librosa.pythagorean_intervals(bins_per_octave=20, sort=sort, return_factors=False)
-    factors = librosa.pythagorean_intervals(bins_per_octave=20, sort=sort, return_factors=True)
+    intervals = librosa.pythagorean_intervals(
+        bins_per_octave=20, sort=sort, return_factors=False
+    )
+    factors = librosa.pythagorean_intervals(
+        bins_per_octave=20, sort=sort, return_factors=True
+    )
 
     assert len(intervals) == len(factors)
 
     for ival, facts in zip(intervals, factors):
-        value = 0.
+        value = 0.0
         for prime in facts:
             value += facts[prime] * np.log2(prime)
 
@@ -179,15 +185,18 @@ def test_pythagorean_factorizations(sort):
 @pytest.mark.parametrize("sort", [False, True])
 @pytest.mark.parametrize("primes", [[3], [3, 5], [3, 5, 7]])
 def test_plimit_factorizations(sort, primes):
-    intervals = librosa.plimit_intervals(primes=primes, bins_per_octave=20, sort=sort, return_factors=False)
-    factors = librosa.plimit_intervals(primes=primes, bins_per_octave=20, sort=sort, return_factors=True)
+    intervals = librosa.plimit_intervals(
+        primes=primes, bins_per_octave=20, sort=sort, return_factors=False
+    )
+    factors = librosa.plimit_intervals(
+        primes=primes, bins_per_octave=20, sort=sort, return_factors=True
+    )
 
     assert len(intervals) == len(factors)
 
     for ival, facts in zip(intervals, factors):
-        value = 0.
+        value = 0.0
         for prime in facts:
             value += facts[prime] * np.log2(prime)
 
         assert np.isclose(ival, np.power(2, value))
-

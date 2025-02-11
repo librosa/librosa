@@ -7,19 +7,12 @@ import os
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
-except:
+except KeyError:
     pass
 
 import numpy as np
 import librosa
 import pytest
-
-
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_mono_valid_stereo():
-    """valid_audio: mono=True,  y.ndim==2"""
-    y = np.zeros((1000, 2)).T
-    librosa.util.valid_audio(y, mono=True)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -37,26 +30,20 @@ def test_valid_audio_scalar():
 def test_valid_stereo_or_mono():
     """valid_audio: mono=False, y.ndim==1"""
     y = np.zeros(1000)
-    librosa.util.valid_audio(y, mono=False)
-
-
-def test_valid_mono():
-    """valid_audio: mono=True,  y.ndim==1"""
-    y = np.zeros(1000)
-    librosa.util.valid_audio(y, mono=True)
+    librosa.util.valid_audio(y)
 
 
 def test_valid_stereo():
     """valid_audio: mono=False, y.ndim==2"""
     y = np.zeros((1000, 2)).T
-    librosa.util.valid_audio(y, mono=False)
+    librosa.util.valid_audio(y)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_valid_audio_type():
     """valid_audio: list input"""
     y = list(np.zeros(1000))
-    librosa.util.valid_audio(y) # type: ignore
+    librosa.util.valid_audio(y)  # type: ignore
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -84,7 +71,7 @@ def test_valid_audio_strided():
 def test_valid_audio_clang():
     """valid_audio: C-contiguous"""
     y = np.zeros(1000).reshape(2, 500)
-    librosa.util.valid_audio(y, mono=False)
+    librosa.util.valid_audio(y)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -134,7 +121,7 @@ def test_istft_bad_window():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize('y', [np.empty(22050)])
-@pytest.mark.parametrize('mode', ['wrap', 'maximum', 'minimum', 'median', 'mean'])
+@pytest.mark.parametrize("y", [np.empty(22050)])
+@pytest.mark.parametrize("mode", ["wrap", "maximum", "minimum", "median", "mean"])
 def test_stft_bad_pad(y, mode):
     librosa.stft(y, pad_mode=mode)

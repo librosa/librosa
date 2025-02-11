@@ -19,6 +19,7 @@ import librosa
 
 __EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
 
+
 @pytest.fixture(scope="module", params=["test1_44100.wav"])
 def y_multi(request):
     infile = request.param
@@ -54,6 +55,7 @@ def test_time_stretch(ysr, rate, ctx, n_fft):
 
         # We don't have to be too precise here, since this goes through an STFT
         assert np.allclose(orig_duration, rate * new_duration, rtol=1e-2, atol=1e-3)
+
 
 def test_time_stretch_multi(y_multi):
     y, sr = y_multi
@@ -154,13 +156,14 @@ def test_hpss(ysr):
 
     assert np.percentile(rms_orig, 0.01) > np.percentile(rms_res, 0.99)
 
+
 def test_hpss_multi(y_multi):
     y, sr = y_multi
 
     # compare each channel
     CH0, CP0 = librosa.effects.hpss(y[0])
     CH1, CP1 = librosa.effects.hpss(y[1])
-    CHall,CPall = librosa.effects.hpss(y)
+    CHall, CPall = librosa.effects.hpss(y)
 
     # Check each channel
     assert np.allclose(CH0, CHall[0])
@@ -224,12 +227,12 @@ def test_trim(y_trim, top_db, ref, trim_duration):
 
     # Verify logamp
     rms = librosa.feature.rms(y=librosa.to_mono(yt), center=False)
-    logamp = librosa.power_to_db(rms ** 2, ref=ref, top_db=None)
+    logamp = librosa.power_to_db(rms**2, ref=ref, top_db=None)
     assert np.all(logamp > -top_db)
 
     # Verify logamp
     rms_all = librosa.feature.rms(y=librosa.to_mono(y_trim)).squeeze()
-    logamp_all = librosa.power_to_db(rms_all ** 2, ref=ref, top_db=None)
+    logamp_all = librosa.power_to_db(rms_all**2, ref=ref, top_db=None)
 
     start = int(librosa.samples_to_frames(idx[0]))
     stop = int(librosa.samples_to_frames(idx[1]))
@@ -361,9 +364,9 @@ def test_preemphasis_multi(y_multi):
     y, sr = y_multi
 
     # compare each channel
-    C0,zf0 = librosa.effects.preemphasis(y[0],return_zf=True)
-    C1,zf1 = librosa.effects.preemphasis(y[1],return_zf=True)
-    Call,zf = librosa.effects.preemphasis(y,return_zf=True)
+    C0, zf0 = librosa.effects.preemphasis(y[0], return_zf=True)
+    C1, zf1 = librosa.effects.preemphasis(y[1], return_zf=True)
+    Call, zf = librosa.effects.preemphasis(y, return_zf=True)
 
     # Check each channel
     assert np.allclose(C0, Call[0])
@@ -373,16 +376,16 @@ def test_preemphasis_multi(y_multi):
 
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
-    assert not np.allclose(zf[0],zf[1])
+    assert not np.allclose(zf[0], zf[1])
 
 
 def test_deemphasis_multi(y_multi):
     y, sr = y_multi
 
     # compare each channel
-    C0,zf0 = librosa.effects.deemphasis(y[0],return_zf=True)
-    C1,zf1 = librosa.effects.deemphasis(y[1],return_zf=True)
-    Call,zf = librosa.effects.deemphasis(y,return_zf=True)
+    C0, zf0 = librosa.effects.deemphasis(y[0], return_zf=True)
+    C1, zf1 = librosa.effects.deemphasis(y[1], return_zf=True)
+    Call, zf = librosa.effects.deemphasis(y, return_zf=True)
 
     # Check each channel
     assert np.allclose(C0, Call[0])
@@ -392,7 +395,7 @@ def test_deemphasis_multi(y_multi):
 
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
-    assert not np.allclose(zf[0],zf[1])
+    assert not np.allclose(zf[0], zf[1])
 
 
 @pytest.mark.parametrize("coef", [0.5, 0.99])

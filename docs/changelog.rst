@@ -2,6 +2,54 @@
 Changelog
 *********
 
+v0.11.0
+-------
+2025-02-XX
+
+Maintenance
+
+    - `#1831`_ Numpy 2.0 is now supported.
+    - `#1898`_ Updated codecov action. *Brian McFee*
+    - `#1860`_ Updated GitHub issue templates. *Brian McFee*
+
+Enhancements
+    - `#1864`_ Accelerated `abs2` calculation on real-typed inputs. *Brian McFee*
+
+Bug fixes
+    - `#1900`_ Fixed an error in pooch registry definition. *Brian McFee*
+    - `#1897`_ Accommodate dependency resolution issues with `uv`. *David Südholt*
+    - `#1878`_ Improved accuracy for `yin` and `pyin`. *David Südholt*
+    - `#1851`_ Fixed sparse matrix compatibility for scipy>=1.14. *Brian McFee*
+    - `#1844`_ Fixed parameter name collision for norm argument in `feature.mfcc`. *Slava Chaunin*
+
+Documentation
+    - `#1899`_ Avoid documentation link-checking failures from unreliable URLs. *Brian McFee*
+    - `#1891`_ Corrected typo in effects module. *Scott VanRavenswaay*
+    - `#1878`_ Numerous documentation updates (spectral centroid, `key_to_notes`, `effects.trim`). *Brian McFee*
+    - `#1866`_ Updated documentation for `dtw`. *Brian McFee*
+    - `#1858`_ Fixed documentation example for onset detection. *@BenedictSt*
+    - `#1856`_ Updated documentation example for Fast Mellin Transform. *Anmol Mishra*
+
+Deprecations
+    - Expired deprecation of `mono=` parameter in `util.valid_audio`.
+    - `win_length` parameter in `yin` and `pyin`
+
+.. _#1831: https://github.com/librosa/librosa/pull/1831
+.. _#1898: https://github.com/librosa/librosa/pull/1898
+.. _#1860: https://github.com/librosa/librosa/pull/1860
+.. _#1864: https://github.com/librosa/librosa/pull/1864
+.. _#1900: https://github.com/librosa/librosa/pull/1900
+.. _#1897: https://github.com/librosa/librosa/pull/1897
+.. _#1878: https://github.com/librosa/librosa/pull/1878
+.. _#1851: https://github.com/librosa/librosa/pull/1851
+.. _#1844: https://github.com/librosa/librosa/pull/1844
+.. _#1899: https://github.com/librosa/librosa/pull/1899
+.. _#1891: https://github.com/librosa/librosa/pull/1891
+.. _#1866: https://github.com/librosa/librosa/pull/1866
+.. _#1858: https://github.com/librosa/librosa/pull/1858
+.. _#1856: https://github.com/librosa/librosa/pull/1856
+
+
 v0.10
 =====
 

@@ -575,8 +575,8 @@ def yin(
 
     if not isinstance(win_length, Deprecated):
         warnings.warn(
-            f"The win_length parameter has been deprecated in version 0.11.0 "
-            f"and has no effect. It will be removed in version 1.0.0.",
+            "The win_length parameter has been deprecated in version 0.11.0 "
+            "and has no effect. It will be removed in version 1.0.0.",
             category=FutureWarning,
             stacklevel=3,
         )
@@ -590,7 +590,7 @@ def yin(
         hop_length = frame_length // 4
 
     # Check that audio is valid.
-    util.valid_audio(y, mono=False)
+    util.valid_audio(y)
 
     # Pad the time series so that frames are centered
     if center:
@@ -799,8 +799,8 @@ def pyin(
 
     if not isinstance(win_length, Deprecated):
         warnings.warn(
-            f"The win_length parameter has been deprecated in version 0.11.0 "
-            f"and has no effect. It will be removed in version 1.0.0.",
+            "The win_length parameter has been deprecated in version 0.11.0 "
+            "and has no effect. It will be removed in version 1.0.0.",
             category=FutureWarning,
             stacklevel=3,
         )
@@ -814,7 +814,7 @@ def pyin(
         hop_length = frame_length // 4
 
     # Check that audio is valid.
-    util.valid_audio(y, mono=False)
+    util.valid_audio(y)
 
     # Pad the time series so that frames are centered
     if center:

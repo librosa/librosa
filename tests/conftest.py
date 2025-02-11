@@ -9,7 +9,7 @@ def pytest_addoption(parser):
         "--librosa-isolation",
         action="store_true",
         default=False,
-        help="Skip tests that require network access"
+        help="Skip tests that require network access",
     )
 
 
@@ -24,4 +24,6 @@ def pytest_collection_modifyitems(config, items):
 
 
 def pytest_configure(config):
-    config.addinivalue_line("markers", "network: mark tests that require network access.")
+    config.addinivalue_line(
+        "markers", "network: mark tests that require network access."
+    )

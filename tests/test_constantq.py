@@ -77,7 +77,9 @@ def make_signal(sr, duration, fmin: Optional[str] = "C1", fmax: Optional[str] = 
         np.cumsum(
             2
             * np.pi
-            * np.logspace(np.log10(fmin_normfreq), np.log10(fmax_normfreq), num=int(duration * sr))
+            * np.logspace(
+                np.log10(fmin_normfreq), np.log10(fmax_normfreq), num=int(duration * sr)
+            )
         )
     )
 
@@ -125,7 +127,9 @@ def test_cqt_exceed_passband(y_cqt, sr_cqt, bpo):
 @pytest.mark.parametrize("hop_length", [512, 2000])
 @pytest.mark.parametrize("sparsity", [0.01])
 @pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # this is fine here
-@pytest.mark.filterwarnings("ignore:Trying to estimate tuning")  # we can ignore this too
+@pytest.mark.filterwarnings(
+    "ignore:Trying to estimate tuning"
+)  # we can ignore this too
 def test_cqt(
     y_cqt_110,
     sr_cqt,
@@ -170,7 +174,7 @@ def test_cqt(
         # This is our most common peak index in the CQT spectrum
         # we use the mode here over frames to sidestep transient effects
         # at the beginning and end of the CQT
-        #common_peak = scipy.stats.mode(peaks, keepdims=True)[0][0]
+        # common_peak = scipy.stats.mode(peaks, keepdims=True)[0][0]
         common_peak = np.argmax(np.bincount(peaks))
 
         # Convert peak index to frequency
@@ -210,7 +214,7 @@ def test_cqt_early_downsample(y_cqt_110, sr_cqt, n_bins, fmin, bins_per_octave):
         # This is our most common peak index in the CQT spectrum
         # we use the mode here over frames to sidestep transient effects
         # at the beginning and end of the CQT
-        #common_peak = scipy.stats.mode(peaks, keepdims=True)[0][0]
+        # common_peak = scipy.stats.mode(peaks, keepdims=True)[0][0]
         common_peak = np.argmax(np.bincount(peaks))
 
         # Convert peak index to frequency
@@ -244,7 +248,9 @@ def test_cqt_odd_hop(y_cqt_110, sr_cqt):
 
 def test_icqt_odd_hop(y_cqt_110, sr_cqt):
     C = librosa.cqt(y=y_cqt_110, sr=sr_cqt, hop_length=1001, res_type="polyphase")
-    yi = librosa.icqt(C, sr=sr_cqt, hop_length=1001, res_type="polyphase", length=len(y_cqt_110))
+    yi = librosa.icqt(
+        C, sr=sr_cqt, hop_length=1001, res_type="polyphase", length=len(y_cqt_110)
+    )
 
 
 @pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
@@ -304,7 +310,7 @@ def test_vqt(
         # This is our most common peak index in the CQT spectrum
         # we use the mode here over frames to sidestep transient effects
         # at the beginning and end of the CQT
-        #common_peak = scipy.stats.mode(peaks, keepdims=True)[0][0]
+        # common_peak = scipy.stats.mode(peaks, keepdims=True)[0][0]
         common_peak = np.argmax(np.bincount(peaks))
 
         # Convert peak index to frequency
@@ -451,7 +457,7 @@ def test_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
 
     C = np.abs(librosa.cqt(y=y_impulse, sr=sr_impulse, hop_length=hop_impulse))
 
-    response = np.mean(C ** 2, axis=1)
+    response = np.mean(C**2, axis=1)
 
     continuity = np.abs(np.diff(response))
 
@@ -515,7 +521,7 @@ def test_hybrid_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     )
 
     if not scale:
-        freqs = fmin * 2.0**(np.arange(n_bins) / 12)
+        freqs = fmin * 2.0 ** (np.arange(n_bins) / 12)
         lengths, _ = librosa.filters.wavelet_lengths(freqs=freqs, sr=sr_white)
         C /= np.sqrt(lengths[:, np.newaxis])
 
@@ -539,7 +545,9 @@ def y_icqt(sr_icqt):
 @pytest.mark.parametrize("length", [None, True])
 @pytest.mark.parametrize("res_type", ["soxr_hq", "polyphase"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short; this is fine
+@pytest.mark.filterwarnings(
+    "ignore:n_fft=.*is too large"
+)  # our test signal is short; this is fine
 def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type, dtype):
 
     bins_per_octave = over_sample * 12
@@ -584,14 +592,14 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
     # We'll tolerate 10% RMSE
     # error is lower on more recent numpy/scipy builds
 
-    resnorm = np.sqrt(np.mean(residual ** 2))
+    resnorm = np.sqrt(np.mean(residual**2))
     assert resnorm <= 0.1, resnorm
 
 
 @pytest.fixture
 def y_chirp():
     sr = 22050
-    y = librosa.chirp(fmin=55, fmax=55 * 2 ** 3, length=sr // 8, sr=sr)
+    y = librosa.chirp(fmin=55, fmax=55 * 2**3, length=sr // 8, sr=sr)
     return y
 
 
@@ -757,16 +765,18 @@ def test_cqt_precision(y_cqt, sr_cqt, dtype):
 @pytest.mark.parametrize("n_bins_missing", range(-11, 11))
 def test_cqt_partial_octave(y_cqt, sr_cqt, n_bins_missing):
     # Test what happens when n_bins is +- 1 bin from complete octaves
-    librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=72-n_bins_missing, bins_per_octave=12)
+    librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=72 - n_bins_missing, bins_per_octave=12)
 
 
 def test_vqt_provided_intervals(y_cqt, sr_cqt):
 
     # Generate a 20-ET vqt
-    V1 = librosa.vqt(y=y_cqt, sr=sr_cqt, bins_per_octave=20, n_bins=60, intervals="equal")
+    V1 = librosa.vqt(
+        y=y_cqt, sr=sr_cqt, bins_per_octave=20, n_bins=60, intervals="equal"
+    )
 
     # Generate the same thing with a pre-set list of intervals
-    intervals = 2.0**(np.arange(20)/20.0)
+    intervals = 2.0 ** (np.arange(20) / 20.0)
 
     V2 = librosa.vqt(y=y_cqt, sr=sr_cqt, n_bins=60, intervals=intervals)
 

@@ -236,7 +236,7 @@ def stft(
         raise ParameterError(f"hop_length={hop_length} must be a positive integer")
 
     # Check audio is valid
-    util.valid_audio(y, mono=False)
+    util.valid_audio(y)
 
     fft_window = get_window(window, win_length, fftbins=True)
 
@@ -1581,7 +1581,7 @@ def iirt(
         raise ParameterError(f"Unsupported flayout={flayout}")
 
     # check audio input
-    util.valid_audio(y, mono=False)
+    util.valid_audio(y)
 
     # Set the default hop, if it's not already specified
     if hop_length is None:

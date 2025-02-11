@@ -186,7 +186,7 @@ def test_dtw_incompatible_sigma_diag():
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_dtw_incompatible_sigma_diag_precomp():
     C = np.ones((5, 3))
-    librosa.sequence.dtw(C=C, step_sizes_sigma=[[1, 1]]) # type: ignore
+    librosa.sequence.dtw(C=C, step_sizes_sigma=[[1, 1]])  # type: ignore
 
 
 def test_dtw_global_diagonal():
@@ -321,7 +321,9 @@ def test_dtw_multi():
     # Should give identical results to calling with concatenated inputs
     Xf = np.concatenate([X[0], X[1]], axis=0)
     Yf = np.concatenate([Y[0], Y[1]], axis=0)
-    Df, wpf, stepsf = librosa.sequence.dtw(X=Xf, Y=Yf, backtrack=True, return_steps=True)
+    Df, wpf, stepsf = librosa.sequence.dtw(
+        X=Xf, Y=Yf, backtrack=True, return_steps=True
+    )
 
     assert np.allclose(D, Df)
     assert np.allclose(wp, wpf)

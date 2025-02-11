@@ -14,11 +14,10 @@ from numpy.lib.stride_tricks import as_strided
 from .._cache import cache
 from .exceptions import ParameterError
 from .deprecation import Deprecated
-from numpy.typing import ArrayLike, DTypeLike
+from numpy.typing import DTypeLike
 from typing import (
     Any,
     Callable,
-    Iterable,
     List,
     Dict,
     Optional,
@@ -236,7 +235,7 @@ def frame(
 
 
 @cache(level=20)
-def valid_audio(y: np.ndarray, *, mono: Union[bool, Deprecated] = Deprecated()) -> bool:
+def valid_audio(y: np.ndarray) -> bool:
     """Determine whether a variable contains valid audio data.
 
     The following conditions must be satisfied:
@@ -246,19 +245,10 @@ def valid_audio(y: np.ndarray, *, mono: Union[bool, Deprecated] = Deprecated()) 
     - ``y.ndim != 0`` (must have at least one dimension)
     - ``np.isfinite(y).all()`` samples must be all finite values
 
-    If ``mono`` is specified, then we additionally require
-    - ``y.ndim == 1``
-
     Parameters
     ----------
     y : np.ndarray
         The input data to validate
-
-    mono : bool
-        Whether or not to require monophonic audio
-
-        .. warning:: The ``mono`` parameter is deprecated in version 0.9 and will be
-          removed in 0.10.
 
     Returns
     -------
@@ -276,16 +266,18 @@ def valid_audio(y: np.ndarray, *, mono: Union[bool, Deprecated] = Deprecated()) 
 
     Examples
     --------
-    >>> # By default, valid_audio allows only mono signals
-    >>> filepath = librosa.ex('trumpet', hq=True)
-    >>> y_mono, sr = librosa.load(filepath, mono=True)
-    >>> y_stereo, _ = librosa.load(filepath, mono=False)
-    >>> librosa.util.valid_audio(y_mono), librosa.util.valid_audio(y_stereo)
-    True, False
+    We can make an array that can be interpreted as an audio signal
 
-    >>> # To allow stereo signals, set mono=False
-    >>> librosa.util.valid_audio(y_stereo, mono=False)
+    >>> y = np.random.randn(5000)
+    >>> librosa.util.valid_audio(y)
     True
+
+    If we insert a non-finite sample value somewhere, it will fail
+
+    >>> y[5] = np.nan
+    >>> librosa.util.valid_audio(y)
+    ...
+    ParameterError: Audio buffer is not finite everywhere
 
     See Also
     --------
@@ -300,14 +292,6 @@ def valid_audio(y: np.ndarray, *, mono: Union[bool, Deprecated] = Deprecated()) 
     if y.ndim == 0:
         raise ParameterError(
             f"Audio data must be at least one-dimensional, given y.shape={y.shape}"
-        )
-
-    if isinstance(mono, Deprecated):
-        mono = False
-
-    if mono and y.ndim != 1:
-        raise ParameterError(
-            f"Invalid shape for monophonic audio: ndim={y.ndim:d}, shape={y.shape}"
         )
 
     if not np.isfinite(y).all():
@@ -2504,7 +2488,7 @@ def abs2(x: _NumberOrArray, dtype: Optional[DTypeLike] = None) -> _NumberOrArray
 @numba.vectorize(
     ["complex64(float32)", "complex128(float64)"], nopython=True, cache=True, identity=1
 )  # type: ignore
-def _phasor_angles(x) -> np.complex_:  # pragma: no cover
+def _phasor_angles(x) -> np.complexfloating[Any, Any]:
     return np.cos(x) + 1j * np.sin(x)  # type: ignore
 
 
@@ -2517,7 +2501,7 @@ def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray
 
 
 @overload
-def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> np.complex_:
+def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> np.complexfloating[Any, Any]:
     ...
 
 
@@ -2525,7 +2509,7 @@ def phasor(
     angles: Union[np.ndarray, _Real],
     *,
     mag: Optional[Union[np.ndarray, _Number]] = None,
-) -> Union[np.ndarray, np.complex_]:
+) -> Union[np.ndarray, np.complexfloating[Any, Any]]:
     """Construct a complex phasor representation from angles.
 
     When `mag` is not provided, this is equivalent to:
