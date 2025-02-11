@@ -21,14 +21,17 @@ import librosa
 
 from test_core import srand
 
-__EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
-
 
 @pytest.fixture(scope="module")
 def ysr():
-    return librosa.load(__EXAMPLE_FILE)
+    # Generate a pulse train at 120BPM
+    sr = 22050
+    y = np.zeros(5 * sr)
+    y[::sr // 2] = 1
+    return y, sr
 
 
+# TODO: reduce this parameter grid
 @pytest.mark.parametrize(
     "feature", [None, librosa.feature.melspectrogram, librosa.feature.chroma_stft]
 )
@@ -94,6 +97,7 @@ def melspec_sr(ysr):
     return S, sr
 
 
+# TODO: reduce this parameter grid
 @pytest.mark.parametrize(
     "feature", [None, librosa.feature.melspectrogram, librosa.feature.chroma_stft]
 )
