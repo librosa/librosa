@@ -19,12 +19,13 @@ import librosa
 
 from test_core import files, load
 
-__EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
-
 
 @pytest.fixture(scope="module", params=[22050, 44100])
 def ysr(request):
-    return librosa.load(__EXAMPLE_FILE, sr=request.param)
+    # Generate a pulse train at 120BPM
+    y = np.zeros(5 * request.param)
+    y[::request.param // 2] = 1
+    return y, request.param
 
 
 @pytest.mark.parametrize("infile", files(os.path.join("data", "beat-onset-*.mat")))
@@ -47,6 +48,7 @@ def test_onset_strength(infile):
     assert np.allclose(onsets[1:], DATA["onsetenv"][0])
 
 
+# TODO: reduce this parameter grid
 @pytest.mark.parametrize("tempo", [60, 80, 110, 160])
 @pytest.mark.parametrize("sr", [22050, 44100])
 @pytest.mark.parametrize("hop_length", [512, 1024])
