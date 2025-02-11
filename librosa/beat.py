@@ -169,6 +169,7 @@ def beat_track(
            7.105, 7.546, 7.988, 8.429])
 
     Output beat detections as a boolean array instead of frame indices
+
     >>> tempo, beats_dense = librosa.beat.beat_track(y=y, sr=sr, sparse=False)
     >>> beats_dense
     array([False, False, False,  True, False, False, False, False,
