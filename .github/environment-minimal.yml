@@ -6,7 +6,6 @@ dependencies:
   # required
   - pip
   - audioread==2.1.9
-  - numpy==1.22.3
   - scipy==1.6.0
   - scikit-learn==1.1.0
   - joblib==1.0.0
@@ -30,4 +29,5 @@ dependencies:
   - resampy==0.2.2
 
   - pip:
+    - numpy==1.22.3
     - samplerate
