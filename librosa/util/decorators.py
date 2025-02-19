@@ -25,7 +25,7 @@ def moved(
     Using the decorated (old) function will result in a warning.
     """
 
-    def __wrapper(func, *args: P.args, **kwargs: P.kwargs) -> R:
+    def __wrapper(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
         """Warn the user, and then proceed."""
         warnings.warn(
             "{:s}\n\tThis function was moved to '{:s}.{:s}' in "
@@ -50,7 +50,7 @@ def deprecated(
     Using the decorated (old) function will result in a warning.
     """
 
-    def __wrapper(func, *args: P.args, **kwargs: P.kwargs) -> R:
+    def __wrapper(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
         """Warn the user, and then proceed."""
         warnings.warn(
             "{:s}.{:s}\n\tDeprecated as of librosa version {:s}."
