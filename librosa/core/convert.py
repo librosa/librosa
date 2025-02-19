@@ -1584,7 +1584,7 @@ def tuning_to_A4(
 
 
 def fft_frequencies(*, sr: float = 22050, n_fft: int = 2048) -> np.ndarray:
-    """Alternative implementation of `np.fft.fftfreq`
+    """Alternative interface for `np.fft.rfftfreq`
 
     Parameters
     ----------

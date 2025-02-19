@@ -2274,7 +2274,7 @@ def test_pcen_stream_multi(axis):
 
 
 def test_get_fftlib():
-    import numpy.fft as fft
+    import scipy.fft as fft
 
     assert librosa.get_fftlib() is fft
 
@@ -2286,7 +2286,7 @@ def test_set_fftlib():
 
 
 def test_reset_fftlib():
-    import numpy.fft as fft
+    import scipy.fft as fft
 
     librosa.set_fftlib()
     assert librosa.get_fftlib() is fft
