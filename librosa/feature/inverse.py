@@ -4,8 +4,8 @@
 
 import warnings
 import numpy as np
-import scipy.fftpack
 
+from ..core.fft import get_fftlib
 from ..util.exceptions import ParameterError
 from ..core.spectrum import griffinlim
 from ..core.spectrum import db_to_power
@@ -253,7 +253,7 @@ def mfcc_to_mel(
     --------
     librosa.feature.mfcc
     librosa.feature.melspectrogram
-    scipy.fftpack.dct
+    scipy.fft.dct
     """
     if lifter > 0:
         n_mfcc = mfcc.shape[-2]
@@ -275,7 +275,8 @@ def mfcc_to_mel(
     elif lifter != 0:
         raise ParameterError("MFCC to mel lifter must be a non-negative number.")
 
-    logmel = scipy.fftpack.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
+    fft = get_fftlib()
+    logmel = fft.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
     melspec: np.ndarray = db_to_power(logmel, ref=ref)
     return melspec
 
@@ -363,7 +364,7 @@ def mfcc_to_audio(
     mel_to_audio
     librosa.feature.mfcc
     librosa.griffinlim
-    scipy.fftpack.dct
+    scipy.fft.dct
     """
     mel_spec = mfcc_to_mel(
         mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm, ref=ref, lifter=lifter

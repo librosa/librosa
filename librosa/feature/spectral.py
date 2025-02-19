@@ -5,12 +5,12 @@
 import numpy as np
 import scipy
 import scipy.signal
-import scipy.fftpack
 
 from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
 
+from ..core.fft import get_fftlib
 from ..core.convert import fft_frequencies
 from ..core.audio import zero_crossings
 from ..core.spectrum import power_to_db, _spectrogram
@@ -1923,7 +1923,7 @@ def mfcc(
     See Also
     --------
     melspectrogram
-    scipy.fftpack.dct
+    scipy.fft.dct
 
     Examples
     --------
@@ -1992,7 +1992,8 @@ def mfcc(
         # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, norm = mel_norm, **kwargs))
 
-    M: np.ndarray = scipy.fftpack.dct(S, axis=-2, type=dct_type, norm=norm)[
+    fft = get_fftlib()
+    M: np.ndarray = fft.dct(S, axis=-2, type=dct_type, norm=norm)[
         ..., :n_mfcc, :
     ]
 
