@@ -2280,15 +2280,18 @@ def test_get_fftlib():
 
 
 def test_set_fftlib():
-    librosa.set_fftlib("foo")  # type: ignore
+    with pytest.warns(FutureWarning):
+        librosa.set_fftlib("foo")  # type: ignore
     assert librosa.get_fftlib() == "foo"  # type: ignore
-    librosa.set_fftlib()
+    with pytest.warns(FutureWarning):
+        librosa.set_fftlib()
 
 
 def test_reset_fftlib():
     import scipy.fft as fft
 
-    librosa.set_fftlib()
+    with pytest.warns(FutureWarning):
+        librosa.set_fftlib()
     assert librosa.get_fftlib() is fft
 
 
