@@ -41,9 +41,7 @@ def set_fftlib(lib: Optional[ModuleType] = None) -> None:
     """
     global __FFTLIB
     if lib is None:
-        from scipy import fft
-
-        lib = fft
+        lib = scipy.fft
 
     __FFTLIB = lib
 
