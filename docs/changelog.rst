@@ -7,15 +7,16 @@ v0.11.0
 2025-02-XX
 
 Maintenance
-
     - `#1831`_ Numpy 2.0 is now supported.
     - `#1898`_ Updated codecov action. *Brian McFee*
     - `#1860`_ Updated GitHub issue templates. *Brian McFee*
 
 Enhancements
+    - `#1916`_ The default FFT backend has been changed from `numpy` to `scipy`.
     - `#1864`_ Accelerated `abs2` calculation on real-typed inputs. *Brian McFee*
 
 Bug fixes
+    - `#1916`_ Utility decorators now preserve type annotations properly. *Brian McFee*
     - `#1900`_ Fixed an error in pooch registry definition. *Brian McFee*
     - `#1897`_ Accommodate dependency resolution issues with `uv`. *David Südholt*
     - `#1878`_ Improved accuracy for `yin` and `pyin`. *David Südholt*
@@ -31,9 +32,11 @@ Documentation
     - `#1856`_ Updated documentation example for Fast Mellin Transform. *Anmol Mishra*
 
 Deprecations
+    - `#1916`_ `librosa.set_fftlib` is deprecated and will be removed in version 1.0.  Users should transition to using `scipy.fft.set_backend` instead.
     - Expired deprecation of `mono=` parameter in `util.valid_audio`.
     - `win_length` parameter in `yin` and `pyin`
 
+.. _#1916: https://github.com/librosa/librosa/pull/1916
 .. _#1831: https://github.com/librosa/librosa/pull/1831
 .. _#1898: https://github.com/librosa/librosa/pull/1898
 .. _#1860: https://github.com/librosa/librosa/pull/1860

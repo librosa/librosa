@@ -9,19 +9,23 @@ import functools
 from decorator import decorator
 import numpy as np
 from numpy.typing import DTypeLike
+from typing_extensions import ParamSpec  # Install typing_extensions in Python 3.8
 
 __all__ = ["moved", "deprecated", "vectorize"]
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def moved(
     *, moved_from: str, version: str, version_removed: str
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Mark functions as moved/renamed.
 
     Using the decorated (old) function will result in a warning.
     """
 
-    def __wrapper(func, *args, **kwargs):
+    def __wrapper(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
         """Warn the user, and then proceed."""
         warnings.warn(
             "{:s}\n\tThis function was moved to '{:s}.{:s}' in "
@@ -40,13 +44,13 @@ def moved(
 
 def deprecated(
     *, version: str, version_removed: str
-) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
     """Mark a function as deprecated.
 
     Using the decorated (old) function will result in a warning.
     """
 
-    def __wrapper(func, *args, **kwargs):
+    def __wrapper(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
         """Warn the user, and then proceed."""
         warnings.warn(
             "{:s}.{:s}\n\tDeprecated as of librosa version {:s}."
