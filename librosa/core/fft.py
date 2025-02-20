@@ -19,8 +19,9 @@ def set_fftlib(lib: Optional[ModuleType] = None) -> None:
     """Set the FFT library used by librosa.
 
     .. warning:: This functionality is deprecated in librosa 0.11 and will be
-        removed in 1.0.  To achieve the same effect, use the
-        `scipy.fft.set_backend` function.
+        removed in 1.0.  To achieve the same effect, use either the
+        `scipy.fft.set_backend` context manager or
+        `scipy.fft.set_global_backend` function.
 
     Parameters
     ----------
