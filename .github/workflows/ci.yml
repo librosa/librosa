@@ -79,6 +79,11 @@ jobs:
               brew install libsamplerate
               ;;
             esac
+        - name: Setup MSVC
+          if: runner.os == 'Windows'
+          run: |
+            choco install visualstudio2019buildtools --package-parameters "--add Microsoft.VisualStudio.Workload.VCTools --includeRecommended --includeOptional"
+            setx PATH "%PATH%;C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build"
 
         - name: Cache conda
           uses: actions/cache@v4
