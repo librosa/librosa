@@ -28,6 +28,7 @@ dependencies:
   - coverage
   - ffmpeg
   - resampy>=0.2.2
+  - msvc-headers-libs  # needed on windows for dependency builds
 
   - pip:
     - samplerate
