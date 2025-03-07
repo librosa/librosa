@@ -84,8 +84,8 @@ jobs:
           if: runner.os == 'Windows'
           shell: pwsh
           run: |
-            choco install visualstudio2022buildtools --version=17.2.4
-            choco install visualstudio2022-workload-vctools --version=17.2.4
+            choco install visualstudio2022buildtools
+            choco install visualstudio2022-workload-vctools
 
         - name: Cache conda
           uses: actions/cache@v4
