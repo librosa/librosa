@@ -67,6 +67,18 @@ jobs:
           with:
             submodules: true
 
+        - name: Create short temp directory (Windows only)
+          if: runner.os == 'Windows'
+          run: mkdir C:\tmp
+          shell: cmd
+
+        - name: Set environment variables (Windows only)
+          if: runner.os == 'Windows'
+          run: |
+            echo "TMP=C:\tmp" >> $env:GITHUB_ENV
+            echo "TEMP=C:\tmp" >> $env:GITHUB_ENV
+          shell: pwsh
+
         - name: Install OS dependencies
           shell: bash -l {0}
           run: |
@@ -79,13 +91,6 @@ jobs:
               brew install libsamplerate
               ;;
             esac
-
-        - name: Setup MSVC
-          if: runner.os == 'Windows'
-          shell: pwsh
-          run: |
-            choco install visualstudio2022buildtools
-            choco install visualstudio2022-workload-vctools
 
         - name: Cache conda
           uses: actions/cache@v4
