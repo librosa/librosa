@@ -4,12 +4,13 @@ Changelog
 
 v0.11.0
 -------
-2025-02-XX
+2025-03-XX
 
 Maintenance
     - `#1831`_ Numpy 2.0 is now supported.
     - `#1898`_ Updated codecov action. *Brian McFee*
     - `#1860`_ Updated GitHub issue templates. *Brian McFee*
+    - `#1921`_ Added linux-arm64 to the test matrix. *Brian McFee*
 
 Enhancements
     - `#1916`_ The default FFT backend has been changed from `numpy` to `scipy`.
@@ -36,6 +37,7 @@ Deprecations
     - Expired deprecation of `mono=` parameter in `util.valid_audio`.
     - `win_length` parameter in `yin` and `pyin`
 
+.. _#1921: https://github.com/librosa/librosa/pull/1921
 .. _#1916: https://github.com/librosa/librosa/pull/1916
 .. _#1831: https://github.com/librosa/librosa/pull/1831
 .. _#1898: https://github.com/librosa/librosa/pull/1898

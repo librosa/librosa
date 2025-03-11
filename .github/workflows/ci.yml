@@ -47,6 +47,11 @@ jobs:
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
+                    - os: ubuntu-24.04-arm
+                      python-version: "3.13"
+                      channel-priority: "strict"
+                      envfile: ".github/environment-ci.yml"
+
                     - os: ubuntu-latest
                       python-version: "3.13"
                       channel-priority: "strict"
@@ -99,7 +104,7 @@ jobs:
             CACHE_NUMBER: 0
           with:
             path: ~/conda_pkgs_dir
-            key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
+            key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
 
         - name: Install Conda environment
           uses: conda-incubator/setup-miniconda@v3
