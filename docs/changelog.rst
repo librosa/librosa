@@ -4,7 +4,7 @@ Changelog
 
 v0.11.0
 -------
-2025-03-XX
+2025-03-11
 
 Maintenance
     - `#1831`_ Numpy 2.0 is now supported.
