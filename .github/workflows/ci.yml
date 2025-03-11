@@ -47,6 +47,11 @@ jobs:
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
+                    - os: ubuntu-22.04-arm
+                      python-version: "3.13"
+                      channel-priority: "strict"
+                      envfile: ".github/environment-ci.yml"
+
                     - os: ubuntu-latest
                       python-version: "3.13"
                       channel-priority: "strict"
