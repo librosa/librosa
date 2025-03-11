@@ -108,8 +108,9 @@ def test_pitch_shift_multi(y_multi):
     Call = librosa.effects.pitch_shift(y, sr=sr, n_steps=1)
 
     # Check each channel
-    assert np.allclose(C0, Call[0])
-    assert np.allclose(C1, Call[1])
+    # Relaxing precision here due to architecture sensitivities on linux-arm64
+    assert np.allclose(C0, Call[0], atol=1e-6, rtol=1e-6)
+    assert np.allclose(C1, Call[1], atol=1e-6, rtol=1e-6)
 
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
