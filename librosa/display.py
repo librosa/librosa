@@ -38,6 +38,7 @@ Miscellaneous
 """
 from __future__ import annotations
 from itertools import product
+import re
 import warnings
 
 import numpy as np
@@ -45,6 +46,7 @@ from matplotlib import colormaps as mcm
 import matplotlib.axes as mplaxes
 import matplotlib.ticker as mplticker
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 from . import core
 from . import util
@@ -928,6 +930,7 @@ def specshow(
     y_coords: Optional[np.ndarray] = None,
     x_axis: Optional[str] = None,
     y_axis: Optional[str] = None,
+    vscale: Optional[Union[str, colors.Normalize]] = None,
     sr: float = 22050,
     hop_length: int = 512,
     n_fft: Optional[int] = None,
@@ -1185,6 +1188,13 @@ def specshow(
         )
         data = np.abs(data)
 
+    # Parse the value scale into a normalizer and possibly a colormap
+    norm, norm_cmap = __scale_data(vscale=vscale,
+                                   vmin=kwargs.get("vmin", None),
+                                   vmax=kwargs.get("vmax", None),
+                                   clip=kwargs.get("clip", None))
+    if norm_cmap is not None:
+        kwargs.setdefault("cmap", norm_cmap)
     kwargs.setdefault("cmap", cmap(data))
     kwargs.setdefault("rasterized", True)
     kwargs.setdefault("edgecolors", "None")
@@ -1213,7 +1223,7 @@ def specshow(
 
     axes = __check_axes(ax)
 
-    out = axes.pcolormesh(x_coords, y_coords, data, **kwargs)
+    out = axes.pcolormesh(x_coords, y_coords, data, norm=norm, **kwargs)
 
     __set_current_image(ax, out)
 
@@ -1829,6 +1839,133 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
     axes_compatible_and_not_none = (x_axis, y_axis) in _AXIS_COMPAT
     axes_same_lim = xlim == ylim
     return axes_compatible_and_not_none and axes_same_lim
+
+
+def __scale_data(vscale, vmin, vmax, clip):
+    """Parse the vscale parameter and construct a normalizer and colormap
+    if necessary"""
+
+    if vscale is None:
+        return None, None
+
+    if isinstance(vscale, colors.Normalize):
+        return vscale, None
+
+    # Otherwise, we're a string.
+    # First check for the easy cases
+    if vscale == "phase":
+        # TODO implement a phase normalizer
+        return None, "twilight"
+    elif vscale == "phase_unwrap":
+        # TODO implement a phase unwrap normalizer
+        return None, None
+    elif vscale == "phase_unwrap_diff":
+        # TODO implement a phase unwrap diff normalizer
+        return None, None
+    else:
+        # In some kind of dB mode
+        mode, scale_type, ref = __parse_vscale(vscale)
+        normalizer = dBNormalizer(mode, scale_type, ref,
+                                  vmin=vmin, vmax=vmax,
+                                  clip=clip)
+        # Use the default colormap for sequential data
+        return normalizer, cmap(np.array(1.0))
+
+
+VSCALE_PATTERN = re.compile(
+    r"^(?P<mode>dBFS|dB)"                  # Match "dBFS" or "dB"
+    r"(?:\[(?:(?P<type>power)"             # Optionally match [power
+    r"(?:,(?P<ref_power>\d+(?:\.\d+)?))?"  # Optionally match ,reference after power
+    r"|(?P<ref>\d+(?:\.\d+)?))\])?$"       # Or match reference alone
+)
+
+
+def __parse_vscale(vscale: str) -> Tuple[str, str, Optional[Union[float, str]]]:
+    """Parse a vscale string into mode, scale_type, and reference value.
+
+    Examples:
+    - 'dBFS' -> ('dBFS', 'amplitude', 'max')
+    - 'dBFS[power]' -> ('dBFS', 'power', 'max')
+    - 'dB[power,0.1]' -> ('dB', 'power', 0.1)
+    - 'dB[0.1]' -> ('dB', 'amplitude', 0.1)
+    - 'dB' -> ('dB', 'amplitude', None)
+
+    Parameters
+    ----------
+    vscale : str
+
+    Returns
+    -------
+    mode is one of 'dBFS' or 'dB'
+    scale_type is one of 'power' or 'amplitude'
+    ref is a float, None, or 'max'
+    """
+    match = VSCALE_PATTERN.fullmatch(vscale)
+    if not match:
+        raise ValueError(f"Invalid vscale specification: {vscale}")
+
+    mode = match.group('mode')
+
+    scale_type = 'power' if match.groupdict().get('type') else 'amplitude'
+
+    ref = match.groupdict().get('ref') or match.groupdict().get('ref_power')
+
+    if mode == 'dBFS':
+        if ref is not None:
+            raise ValueError("dBFS vscale cannot have an explicit reference value")
+        ref = 'max'
+    else:  # mode == 'dB'
+        ref = float(ref) if ref is not None else None
+    return mode, scale_type, ref
+
+
+class dBNormalizer(colors.Normalize):
+    def __init__(self, mode: str, scale_type: str, ref: Union[str, float] = None,
+                 vmin=None, vmax=None, clip=False):
+        super().__init__(vmin=vmin, vmax=vmax, clip=clip)
+        self.mode = mode
+        self.scale_type = scale_type
+        self.ref = ref
+        self.ref_ = 1
+
+    def __call__(self, value, clip=None):
+        data = np.abs(value) if np.iscomplexobj(value) else value
+
+        if self.mode == 'dBFS':
+            ref = np.max(data)
+        elif self.ref is None:
+            ref = 1.0  # Default reference if not specified explicitly
+        else:
+            ref = self.ref
+
+        if np.iscomplexobj(data):
+            data = np.abs(data)
+
+        if callable(ref):
+            self.ref_ = ref(data)
+        else:
+            self.ref_ = ref
+
+        if self.scale_type == 'power':
+            db_data = core.power_to_db(data, ref=self.ref_)
+        else:
+            db_data = core.amplitude_to_db(data, ref=self.ref_)
+
+        # TODO: expose top_db as a parameter
+        return 1 + (db_data / 80.0)
+
+    def inverse(self, value):
+        # TODO: this part doesn't work yet
+        # Invert the normalization from [0, 1] back to dB values
+        db_val = 80.0 * (value - 1)
+
+        # Convert back from dB scale to original amplitude or power scale
+        if self.scale_type == 'power':
+            inverse_scaler = core.db_to_power
+        else:
+            inverse_scaler = core.db_to_amplitude
+
+        return inverse_scaler(db_val, ref=self.ref_)
 
 
 def waveshow(

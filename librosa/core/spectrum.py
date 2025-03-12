@@ -1857,12 +1857,13 @@ def power_to_db(
         ref_value = np.abs(ref)
 
     log_spec: np.ndarray = 10.0 * np.log10(np.maximum(amin, magnitude))
-    log_spec -= 10.0 * np.log10(np.maximum(amin, ref_value))
+    min_value = 10.0 * np.log10(np.maximum(amin, ref_value))
+    log_spec -= min_value
 
     if top_db is not None:
         if top_db < 0:
             raise ParameterError("top_db must be non-negative")
-        log_spec = np.maximum(log_spec, log_spec.max() - top_db)
+        log_spec = np.clip(log_spec, a_min=np.max(log_spec, initial=0) - top_db, a_max=None)
 
     return log_spec
 
