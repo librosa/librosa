@@ -2401,7 +2401,7 @@ def test_griffinlim_badrng():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_griffinlim_momentum():
+def test_griffinlim_badmomentum():
     x = np.zeros((33, 3))
     librosa.griffinlim(x, momentum=-1)
 
