@@ -950,6 +950,7 @@ def specshow(
     unicode: bool = True,
     intervals: Optional[Union[str, np.ndarray]] = None,
     unison: Optional[str] = None,
+    top_db: Optional[float] = 80.0,
     ax: Optional[mplaxes.Axes] = None,
     **kwargs: Any,
 ) -> QuadMesh:
@@ -1132,6 +1133,10 @@ def specshow(
         Setting `unicode=False` will use ASCII glyphs.  This can be helpful
         if your font does not support musical notation symbols.
 
+    top_db : float
+        If using a decibel scale, how many dB below the reference to allow
+        before truncating.
+
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
@@ -1190,9 +1195,10 @@ def specshow(
 
     # Parse the value scale into a normalizer and possibly a colormap
     norm, norm_cmap = __scale_data(vscale=vscale,
-                                   vmin=kwargs.get("vmin", None),
-                                   vmax=kwargs.get("vmax", None),
-                                   clip=kwargs.get("clip", None))
+                                   top_db=top_db,
+                                   vmin=kwargs.pop("vmin", None),
+                                   vmax=kwargs.pop("vmax", None),
+                                   clip=kwargs.pop("clip", None))
     if norm_cmap is not None:
         kwargs.setdefault("cmap", norm_cmap)
     kwargs.setdefault("cmap", cmap(data))
@@ -1841,7 +1847,7 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
     return axes_compatible_and_not_none and axes_same_lim
 
 
-def __scale_data(vscale, vmin, vmax, clip):
+def __scale_data(vscale, top_db, vmin, vmax, clip):
     """Parse the vscale parameter and construct a normalizer and colormap
     if necessary"""
 
@@ -1867,6 +1873,7 @@ def __scale_data(vscale, vmin, vmax, clip):
         mode, scale_type, ref = __parse_vscale(vscale)
         normalizer = dBNormalizer(mode, scale_type, ref,
                                   vmin=vmin, vmax=vmax,
+                                  top_db=top_db,
                                   clip=clip)
         # Use the default colormap for sequential data
         return normalizer, cmap(np.array(1.0))
@@ -1921,22 +1928,25 @@ def __parse_vscale(vscale: str) -> Tuple[str, str, Optional[Union[float, str]]]:
 
 class dBNormalizer(colors.Normalize):
     def __init__(self, mode: str, scale_type: str, ref: Union[str, float] = None,
+                 top_db: Optional[float] = 80,
                  vmin=None, vmax=None, clip=False):
         super().__init__(vmin=vmin, vmax=vmax, clip=clip)
         self.mode = mode
         self.scale_type = scale_type
         self.ref = ref
         self.ref_ = 1
+        self.top_db = top_db
 
     def __call__(self, value, clip=None):
+        value, is_scalar = self.process_value(value)
         data = np.abs(value) if np.iscomplexobj(value) else value
 
-        if self.mode == 'dBFS':
+        if self.mode == 'dBFS' and len(value) > 0:
             ref = np.max(data)
         elif self.ref is None:
             ref = 1.0  # Default reference if not specified explicitly
         else:
-            ref = self.ref
+            ref = self.ref_
 
         if np.iscomplexobj(data):
             data = np.abs(data)
@@ -1947,17 +1957,16 @@ class dBNormalizer(colors.Normalize):
             self.ref_ = ref
 
         if self.scale_type == 'power':
-            db_data = core.power_to_db(data, ref=self.ref_)
+            db_data = core.power_to_db(data, top_db=self.top_db, ref=self.ref_)
         else:
-            db_data = core.amplitude_to_db(data, ref=self.ref_)
+            db_data = core.amplitude_to_db(data, top_db=self.top_db, ref=self.ref_)
 
-        # TODO: expose top_db as a parameter
-        return 1 + (db_data / 80.0)
+        return 1 + (db_data / self.top_db)
 
     def inverse(self, value):
-        # TODO: this part doesn't work yet
         # Invert the normalization from [0, 1] back to dB values
-        db_val = 80.0 * (value - 1)
+        value, is_scalar = self.process_value(value)
+        db_val = value * self.top_db - self.top_db
 
         # Convert back from dB scale to original amplitude or power scale
         if self.scale_type == 'power':
@@ -1965,7 +1974,8 @@ class dBNormalizer(colors.Normalize):
         else:
             inverse_scaler = core.db_to_amplitude
 
-        return inverse_scaler(db_val, ref=self.ref_)
+        x_val = inverse_scaler(db_val, ref=self.ref_)
+        return x_val
 
 
 def waveshow(
