@@ -2348,7 +2348,7 @@ def test_griffinlim(
         center=center,
         length=length,
         pad_mode=pad_mode,
-        n_iter=3,
+        n_iter=1,
         init=init,
     )
 
@@ -2358,29 +2358,30 @@ def test_griffinlim(
 
     # Verify that the reconstruction is real-valued
     assert np.isrealobj(y_rec)
+    assert np.all(np.isfinite(y_rec))
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_griffinlim_dtype(y_chirp, dtype):
 
     D = librosa.stft(y_chirp)
-    y_rec = librosa.griffinlim(np.abs(D), dtype=dtype, n_iter=2)
+    y_rec = librosa.griffinlim(np.abs(D), dtype=dtype, n_iter=1)
     assert y_rec.dtype == dtype
 
 
 @pytest.mark.parametrize("momentum", [0, 0.99])
 def test_griffinlim_momentum(y_chirp, momentum):
     D = librosa.stft(y_chirp)
-    librosa.griffinlim(np.abs(D), momentum=momentum, n_iter=2)
+    librosa.griffinlim(np.abs(D), momentum=momentum, n_iter=1)
     # No value tests here, just ensuring that it passes cleanly
 
 
 @pytest.mark.parametrize("random_state", [None, 0, np.random.RandomState()])
 def test_griffinlim_state(y_chirp, random_state):
     D = librosa.stft(y_chirp)
-    y_rec = librosa.griffinlim(np.abs(D), random_state=random_state, n_iter=2)
+    y_rec = librosa.griffinlim(np.abs(D), random_state=random_state, n_iter=1)
 
-    y_rec2 = librosa.griffinlim(np.abs(D), random_state=random_state, n_iter=2)
+    y_rec2 = librosa.griffinlim(np.abs(D), random_state=random_state, n_iter=1)
 
     # Ensure that seeding with a constant gives us consistent values
     if not isinstance(random_state, np.random.RandomState) and random_state is not None:

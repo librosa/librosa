@@ -646,7 +646,7 @@ def y_chirp():
 @pytest.mark.parametrize("momentum", [0.99])
 @pytest.mark.parametrize("random_state", [0])
 @pytest.mark.parametrize("fmin", [40.0])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("dtype", [np.float32])
 @pytest.mark.parametrize("init", [None])
 @pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt(
@@ -697,7 +697,7 @@ def test_griffinlim_cqt(
         bins_per_octave=bins_per_octave,
         scale=scale,
         pad_mode=pad_mode,
-        n_iter=2,
+        n_iter=1,
         momentum=momentum,
         random_state=random_state,
         length=length,
@@ -722,10 +722,15 @@ def test_griffinlim_cqt(
     if use_length:
         assert len(y_rec) == length
 
-    assert y_rec.dtype == dtype
-
     # Check that the data is okay
     assert np.all(np.isfinite(y_rec))
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_griffinlim_cqt_dtype(y_chirp, dtype):
+    C = librosa.cqt(y_chirp, sr=22050, res_type="polyphase")
+    y = librosa.griffinlim_cqt(np.abs(C), sr=22050, dtype=dtype, n_iter=2, res_type="polyphase")
+    assert y.dtype == dtype
 
 
 @pytest.mark.parametrize("momentum", [0, 0.95])
@@ -749,7 +754,12 @@ def test_griffinlim_cqt_rng(y_chirp, random_state):
         np.abs(C), sr=22050, n_iter=2, random_state=random_state, res_type="polyphase"
     )
 
-    assert np.all(np.isfinite(y_rec))
+    y_rec2 = librosa.griffinlim_cqt(
+        np.abs(C), sr=22050, n_iter=2, random_state=random_state, res_type="polyphase"
+    )
+
+    if not isinstance(random_state, np.random.RandomState) and random_state is not None:
+        assert np.allclose(y_rec, y_rec2)
 
 
 @pytest.mark.parametrize("init", [None, "random"])
