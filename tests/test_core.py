@@ -2307,11 +2307,8 @@ def y_chirp():
 @pytest.mark.parametrize("n_fft", [2048, 2049])
 @pytest.mark.parametrize("window", ["hann", "rect"])
 @pytest.mark.parametrize("center", [False, True])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("use_length", [False, True])
 @pytest.mark.parametrize("pad_mode", ["constant", "reflect"])
-@pytest.mark.parametrize("momentum", [0, 0.99])
-@pytest.mark.parametrize("random_state", [None, 0, np.random.RandomState()])
 @pytest.mark.parametrize("init", [None, "random"])
 def test_griffinlim(
     y_chirp,
@@ -2320,12 +2317,9 @@ def test_griffinlim(
     n_fft,
     window,
     center,
-    dtype,
     use_length,
     pad_mode,
-    momentum,
     init,
-    random_state,
 ):
 
     if use_length:
@@ -2352,21 +2346,45 @@ def test_griffinlim(
         n_fft=n_fft,
         window=window,
         center=center,
-        dtype=dtype,
         length=length,
         pad_mode=pad_mode,
         n_iter=3,
-        momentum=momentum,
         init=init,
-        random_state=random_state,
     )
 
-    # First, check length
+    # check length
     if use_length:
         assert len(y_rec) == length
 
-    # Next, check dtype
+    # Verify that the reconstruction is real-valued
+    assert np.isrealobj(y_rec)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_griffinlim_dtype(y_chirp, dtype):
+
+    D = librosa.stft(y_chirp)
+    y_rec = librosa.griffinlim(np.abs(D), dtype=dtype, n_iter=2)
     assert y_rec.dtype == dtype
+
+
+@pytest.mark.parametrize("momentum", [0, 0.99])
+def test_griffinlim_momentum(y_chirp, momentum):
+    D = librosa.stft(y_chirp)
+    librosa.griffinlim(np.abs(D), momentum=momentum, n_iter=2)
+    # No value tests here, just ensuring that it passes cleanly
+
+
+@pytest.mark.parametrize("random_state", [None, 0, np.random.RandomState()])
+def test_griffinlim_state(y_chirp, random_state):
+    D = librosa.stft(y_chirp)
+    y_rec = librosa.griffinlim(np.abs(D), random_state=random_state, n_iter=2)
+
+    y_rec2 = librosa.griffinlim(np.abs(D), random_state=random_state, n_iter=2)
+
+    # Ensure that seeding with a constant gives us consistent values
+    if not isinstance(random_state, np.random.RandomState) and random_state is not None:
+        assert np.allclose(y_rec, y_rec2)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
