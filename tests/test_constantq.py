@@ -596,7 +596,7 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
     assert resnorm <= 0.1, resnorm
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def y_chirp():
     sr = 22050
     y = librosa.chirp(fmin=55, fmax=55 * 2**3, length=sr // 8, sr=sr)

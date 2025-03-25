@@ -2295,7 +2295,7 @@ def test_reset_fftlib():
     assert librosa.get_fftlib() is fft
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def y_chirp():
     sr = 22050
     y = librosa.chirp(fmin=55, fmax=55 * 2**7, length=sr // 8, sr=sr)
