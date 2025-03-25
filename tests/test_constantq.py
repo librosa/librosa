@@ -529,7 +529,7 @@ def test_hybrid_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     assert np.allclose(np.std(C, axis=1), 0.5, atol=5e-1), np.std(C, axis=1)
 
 
-@pytest.fixture(scope="module", params=[22050, 44100])
+@pytest.fixture(scope="module", params=[22050, 16000])
 def sr_icqt(request):
     return request.param
 
@@ -542,13 +542,11 @@ def y_icqt(sr_icqt):
 @pytest.mark.parametrize("over_sample", [1, 3])
 @pytest.mark.parametrize("scale", [False, True])
 @pytest.mark.parametrize("hop_length", [384, 512])
-@pytest.mark.parametrize("length", [None, True])
-@pytest.mark.parametrize("res_type", ["soxr_hq", "polyphase"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("res_type", ["soxr_lq", "polyphase"])
 @pytest.mark.filterwarnings(
     "ignore:n_fft=.*is too large"
 )  # our test signal is short; this is fine
-def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type, dtype):
+def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, res_type):
 
     bins_per_octave = over_sample * 12
     n_bins = 7 * bins_per_octave
@@ -560,12 +558,11 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
         bins_per_octave=bins_per_octave,
         scale=scale,
         hop_length=hop_length,
+        res_type=res_type,
     )
 
-    if length:
-        _len = len(y_icqt)
-    else:
-        _len = None
+    _len = len(y_icqt)
+
     yinv = librosa.icqt(
         C,
         sr=sr_icqt,
@@ -574,16 +571,10 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
         bins_per_octave=bins_per_octave,
         length=_len,
         res_type=res_type,
-        dtype=dtype,
     )
 
-    assert yinv.dtype == dtype
-
     # Only test on the middle section
-    if length:
-        assert len(y_icqt) == len(yinv)
-    else:
-        yinv = librosa.util.fix_length(yinv, size=len(y_icqt))
+    assert len(y_icqt) == len(yinv)
 
     y_icqt = y_icqt[sr_icqt // 2 : -sr_icqt // 2]
     yinv = yinv[sr_icqt // 2 : -sr_icqt // 2]
@@ -594,6 +585,48 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
 
     resnorm = np.sqrt(np.mean(residual**2))
     assert resnorm <= 0.1, resnorm
+
+
+@pytest.mark.parametrize("hop_length", [384, 512])
+def test_icqt_nolength(y_icqt, sr_icqt, hop_length):
+    bins_per_octave = 12
+    n_bins = 7 * bins_per_octave
+
+    C = librosa.cqt(
+        y_icqt,
+        sr=sr_icqt,
+        n_bins=n_bins,
+        bins_per_octave=bins_per_octave,
+        scale=True,
+        hop_length=hop_length,
+    )
+
+    yinv = librosa.icqt(
+        C,
+        sr=sr_icqt,
+        scale=True,
+        hop_length=hop_length,
+        bins_per_octave=bins_per_octave,
+        length=None,
+        res_type="polyphase",
+    )
+    yinv = librosa.util.fix_length(yinv, size=len(y_icqt))
+
+    y_icqt = y_icqt[sr_icqt // 2 : -sr_icqt // 2]
+    yinv = yinv[sr_icqt // 2 : -sr_icqt // 2]
+
+    residual = np.abs(y_icqt - yinv)
+    resnorm = np.sqrt(np.mean(residual**2))
+    assert resnorm <= 0.1, resnorm
+
+
+
+def test_icqt_dtype(y_icqt, sr_icqt):
+    C = librosa.cqt(y_icqt, sr=sr_icqt)
+    y = librosa.icqt(C, sr=sr_icqt, dtype=np.float32)
+    assert y.dtype == np.float32
+    y = librosa.icqt(C, sr=sr_icqt, dtype=np.float64)
+    assert y.dtype == np.float64
 
 
 @pytest.fixture(scope="module")
