@@ -620,7 +620,6 @@ def test_icqt_nolength(y_icqt, sr_icqt, hop_length):
     assert resnorm <= 0.1, resnorm
 
 
-
 def test_icqt_dtype(y_icqt, sr_icqt):
     C = librosa.cqt(y_icqt, sr=sr_icqt)
     y = librosa.icqt(C, sr=sr_icqt, dtype=np.float32)
@@ -729,7 +728,9 @@ def test_griffinlim_cqt(
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_griffinlim_cqt_dtype(y_chirp, dtype):
     C = librosa.cqt(y_chirp, sr=22050, res_type="polyphase")
-    y = librosa.griffinlim_cqt(np.abs(C), sr=22050, dtype=dtype, n_iter=2, res_type="polyphase")
+    y = librosa.griffinlim_cqt(
+        np.abs(C), sr=22050, dtype=dtype, n_iter=2, res_type="polyphase"
+    )
     assert y.dtype == dtype
 
 

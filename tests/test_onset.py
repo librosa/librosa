@@ -27,7 +27,7 @@ def ysr():
     # Generate a pulse train at 120BPM
     sr = 22050
     y = np.zeros(5 * sr)
-    y[::sr // 2] = 1
+    y[:: sr // 2] = 1
     return y, sr
 
 
@@ -42,8 +42,15 @@ def ysr():
 @pytest.mark.parametrize("aggregate", [np.mean])
 @pytest.mark.parametrize("detrend", [False, True])
 def test_onset_strength_audio(
-    ysr, feature, n_fft, hop_length, center,
-    lag, max_size, detrend, aggregate,
+    ysr,
+    feature,
+    n_fft,
+    hop_length,
+    center,
+    lag,
+    max_size,
+    detrend,
+    aggregate,
 ):
 
     # This test only really checks output shape and dimension

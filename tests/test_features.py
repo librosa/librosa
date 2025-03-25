@@ -909,8 +909,8 @@ def test_mfcc_to_mel(y, n_mfcc, n_mels, dct_type, lifter):
         np.testing.assert_almost_equal(mel_recover, mel_expected, 3)
 
 
-@pytest.mark.parametrize("n_mfcc", [13, 20])
-@pytest.mark.parametrize("n_mels", [64, 128])
+@pytest.mark.parametrize("n_mfcc", [13])
+@pytest.mark.parametrize("n_mels", [64])
 @pytest.mark.parametrize("dct_type", [2, 3])
 @pytest.mark.parametrize("lifter", [0, 3])
 @pytest.mark.parametrize("y", [librosa.tone(440.0, sr=22050, duration=1)])

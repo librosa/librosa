@@ -24,7 +24,7 @@ from test_core import files, load
 def ysr(request):
     # Generate a pulse train at 120BPM
     y = np.zeros(5 * request.param)
-    y[::request.param // 2] = 1
+    y[:: request.param // 2] = 1
     return y, request.param
 
 
@@ -144,9 +144,7 @@ def oenv(ysr, hop):
 @pytest.mark.parametrize("bpm", [None, 150, 360])
 @pytest.mark.parametrize("tightness", [1e2, 1e4])
 @pytest.mark.parametrize("prior", [None, scipy.stats.uniform(60, 240)])
-def test_beat(
-    ysr, hop, oenv, with_audio, start_bpm, bpm, trim, tightness, prior
-):
+def test_beat(ysr, hop, oenv, with_audio, start_bpm, bpm, trim, tightness, prior):
 
     y, sr = ysr
 
