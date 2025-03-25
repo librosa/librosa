@@ -48,9 +48,8 @@ def test_onset_strength(infile):
     assert np.allclose(onsets[1:], DATA["onsetenv"][0])
 
 
-# TODO: reduce this parameter grid
-@pytest.mark.parametrize("tempo", [60, 80, 110, 160])
-@pytest.mark.parametrize("sr", [22050, 44100])
+@pytest.mark.parametrize("tempo", [60, 160])
+@pytest.mark.parametrize("sr", [22050, 16000])
 @pytest.mark.parametrize("hop_length", [512, 1024])
 @pytest.mark.parametrize("ac_size", [4, 8])
 @pytest.mark.parametrize("aggregate", [None, np.mean])
@@ -140,14 +139,13 @@ def oenv(ysr, hop):
 
 
 @pytest.mark.parametrize("with_audio", [False, True])
-@pytest.mark.parametrize("with_tempo", [False, True])
 @pytest.mark.parametrize("trim", [False, True])
 @pytest.mark.parametrize("start_bpm", [60, 120, 240])
 @pytest.mark.parametrize("bpm", [None, 150, 360])
 @pytest.mark.parametrize("tightness", [1e2, 1e4])
 @pytest.mark.parametrize("prior", [None, scipy.stats.uniform(60, 240)])
 def test_beat(
-    ysr, hop, oenv, with_audio, with_tempo, start_bpm, bpm, trim, tightness, prior
+    ysr, hop, oenv, with_audio, start_bpm, bpm, trim, tightness, prior
 ):
 
     y, sr = ysr
