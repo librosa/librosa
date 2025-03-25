@@ -69,6 +69,9 @@ def test_onset_strength_audio(
     assert oenv.ndim == 1
 
     # Calculate the number of frames that we should have for a centered analysis
+    # Note that centering is enforced at the feature level, so the output shape
+    # does not actually depend on the center parameter.
+    # This may be something to change in the future.
     target_shape = 1 + len(y) // hop_length
 
     if not detrend:
