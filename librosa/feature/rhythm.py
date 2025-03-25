@@ -11,13 +11,13 @@ from .._cache import cache
 from ..core.audio import autocorrelate
 from ..core.spectrum import stft
 from ..core.convert import tempo_frequencies, time_to_frames
-from ..core.harmonic import f0_harmonics
+from ..core.harmonic import f0_harmonics, interp_harmonics
 from ..util.exceptions import ParameterError
 from ..filters import get_window
 from typing import Optional, Callable, Any
 from .._typing import _WindowSpec
 
-__all__ = ["tempogram", "fourier_tempogram", "tempo", "tempogram_ratio"]
+__all__ = ["tempogram", "fourier_tempogram", "tempo", "tempogram_ratio", "metrogram"]
 
 
 # -- Rhythmic features -- #
@@ -653,3 +653,60 @@ def tempogram_ratio(
         return aggregate(tgr, axis=-1)  # type: ignore
 
     return tgr
+
+
+@cache(level=40)
+def metrogram(
+    *,
+    tg: np.ndarray,
+    freqs: np.ndarray,
+    factors: Optional[np.ndarray] = None,
+    aggregate: Callable[..., Any] = np.sum,
+    kind: str = "linear",
+    fill_value: float = 0,
+) -> np.ndarray:
+    """Metrogram Transform
+
+    Parameters
+    ----------
+    tg : np.ndarray
+        pre-computed fundamental tempogram.
+    freqs: np.ndarray
+        Frequencies (in BPM) of the tempogram axis.
+    factors : np.ndarray
+        Meter ratios to estimate.
+        If not provided, the factors are as specified above.
+    aggregate : callable [optional]
+        Aggregation function to collapse the tempo axis for each ratio
+        at each point in time. Defaults to `np.sum`.
+    kind:
+        Interpolation method used on the tempo axis.
+    fill_value:
+        The value to fill when extrapolating beyond the observed
+        tempo range.  
+
+    Returns
+    -------
+    metrogram : np.ndarray
+        Metrogram of shape (tg.shape[:-2], len(factors), tg.shape[-1])
+
+    See Also
+    --------
+    tempogram
+    tempogram_ratio
+
+    Examples
+    --------
+    """
+
+    if factors is None:
+        factors = np.array(
+            [1 / 3, 1 / 4, 1 / 5, 1 / 7]
+        )
+
+    tg_interp = interp_harmonics(
+        tg, freqs=freqs, harmonics=factors, kind=kind, fill_value=fill_value
+    )
+
+    return aggregate(tg_interp * tg[np.newaxis, ...], axis=-2)
+
