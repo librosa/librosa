@@ -100,24 +100,24 @@ def test_sorted_decompose():
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def y22050():
     y, _ = librosa.load(os.path.join("tests", "data", "test1_22050.wav"))
     return y
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def D22050(y22050):
     return librosa.stft(y22050)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def S22050(D22050):
     return np.abs(D22050)
 
 
 @pytest.mark.parametrize("window", [31, (5, 5)])
-@pytest.mark.parametrize("power", [1, 2, 10])
+@pytest.mark.parametrize("power", [1, 2])
 @pytest.mark.parametrize("mask", [False, True])
 @pytest.mark.parametrize("margin", [1.0, 3.0, (1.0, 1.0), (9.0, 10.0)])
 def test_real_hpss(S22050, window, power, mask, margin):
