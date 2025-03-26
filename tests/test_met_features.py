@@ -20,8 +20,6 @@ from test_core import load, files
 
 import librosa
 
-__EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
-
 
 def met_stft(y, n_fft, hop_length, win_length, normalize):
 
