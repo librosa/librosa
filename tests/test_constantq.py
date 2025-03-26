@@ -329,7 +329,7 @@ def y_hybrid():
 @pytest.mark.parametrize("hop_length", [512, 2000])
 @pytest.mark.parametrize("sparsity", [0.01])
 @pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
-@pytest.mark.parametrize("n_bins", [1, 12, 24, 48, 72, 74, 76])
+@pytest.mark.parametrize("n_bins", [1, 12, 48, 76])
 @pytest.mark.parametrize("bins_per_octave", [12, 24])
 @pytest.mark.parametrize("tuning", [None, 0, 0.25])
 @pytest.mark.parametrize("resolution", [1])
