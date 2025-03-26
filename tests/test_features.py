@@ -18,7 +18,6 @@ try:
 except KeyError:
     pass
 
-__EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
 warnings.resetwarnings()
 warnings.simplefilter("always")
 warnings.filterwarnings("module", ".*", FutureWarning, "scipy.*")
@@ -254,15 +253,24 @@ def test_spectral_rolloff_errors(S, pct):
 
 
 @pytest.fixture(scope="module")
-def y_ex():
-    return librosa.load(os.path.join("tests", "data", "test1_22050.wav"))
+def y_chirp():
+    sr = 22050
+    y = librosa.chirp(fmin=100, fmax=1000, sr=sr, duration=5)
+    return y, sr
 
 
-def test_spectral_contrast_log(y_ex):
+@pytest.fixture(scope="module")
+def y_clicks():
+    sr = 22050
+    y = librosa.clicks(times=np.arange(0.5, 12, 0.5), sr=sr, length=12 * sr)
+    return y, sr
+
+
+def test_spectral_contrast_log(y_chirp):
     # We already have a regression test for linear energy difference
     # This test just does a sanity-check on the log-scaled version
 
-    y, sr = y_ex
+    y, sr = y_chirp
 
     contrast = librosa.feature.spectral_contrast(y=y, sr=sr, linear=False)
 
@@ -332,8 +340,8 @@ def test_rms_const(n):
 @pytest.mark.parametrize("hop_length", [128, 512, 1024])
 @pytest.mark.parametrize("center", [False, True])
 @pytest.mark.parametrize("y2", [np.random.randn(100000)])
-def test_rms(y_ex, y2, frame_length, hop_length, center):
-    y1, sr = y_ex
+def test_rms(y_chirp, y2, frame_length, hop_length, center):
+    y1, sr = y_chirp
     # Ensure audio is divisible into frame size.
     y1 = librosa.util.fix_length(y1, size=y1.size - y1.size % frame_length)
     y2 = librosa.util.fix_length(y2, size=y2.size - y2.size % frame_length)
@@ -464,20 +472,20 @@ def test_tonnetz_fail_empty():
     librosa.feature.tonnetz(y=None, chroma=None)
 
 
-def test_tonnetz_audio(y_ex):
-    y, sr = y_ex
+def test_tonnetz_audio(y_chirp):
+    y, sr = y_chirp
     tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
     assert tonnetz.shape[0] == 6
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_chroma_cqt_badcombo(y_ex):
-    y, sr = y_ex
+def test_chroma_cqt_badcombo(y_chirp):
+    y, sr = y_chirp
     librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24, bins_per_octave=36)
 
 
-def test_tonnetz_cqt(y_ex):
-    y, sr = y_ex
+def test_tonnetz_cqt(y_chirp):
+    y, sr = y_chirp
     chroma_cqt = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=36)
     tonnetz = librosa.feature.tonnetz(chroma=chroma_cqt, sr=sr)
     assert tonnetz.shape[1] == chroma_cqt.shape[1]
@@ -513,8 +521,8 @@ def test_tempogram_fail_badwin(y, sr, win_length, window):
 
 
 @pytest.mark.parametrize("hop_length", [512, 1024])
-def test_tempogram_audio(y_ex, hop_length):
-    y, sr = y_ex
+def test_tempogram_audio(y_chirp, hop_length):
+    y, sr = y_chirp
 
     oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
 
@@ -665,8 +673,8 @@ def test_fourier_tempogram_fail_noinput():
 @pytest.mark.filterwarnings(
     "ignore:n_fft=.*is too large"
 )  # our test signal is short, but this is fine here
-def test_fourier_tempogram_audio(y_ex, hop_length):
-    y, sr = y_ex
+def test_fourier_tempogram_audio(y_chirp, hop_length):
+    y, sr = y_chirp
     oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     # Get the tempogram from audio
     t1 = librosa.feature.fourier_tempogram(
@@ -767,8 +775,8 @@ def test_cens():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("win_len_smooth", [-1, 0, 1.5, "foo"])
-def test_cens_fail(y_ex, win_len_smooth):
-    y, sr = y_ex
+def test_cens_fail(y_chirp, win_len_smooth):
+    y, sr = y_chirp
     librosa.feature.chroma_cens(y=y, sr=sr, win_len_smooth=win_len_smooth)
 
 
@@ -931,9 +939,9 @@ def test_mfcc_to_audio(y, n_mfcc, n_mels, dct_type, lifter):
     assert librosa.util.valid_audio(y_inv)
 
 
-def test_chroma_vqt_bpo(y_ex):
+def test_chroma_vqt_bpo(y_chirp):
     # Test that bins per octave is properly overridden in chroma
-    y, sr = y_ex
+    y, sr = y_chirp
     chroma = librosa.feature.chroma_vqt(
         y=y, sr=sr, intervals=[1, 1.25, 1.5], bins_per_octave=12
     )
@@ -947,9 +955,9 @@ def test_chroma_vqt_bpo(y_ex):
     assert chroma2.shape[0] == 12
 
 
-def test_chroma_vqt_threshold(y_ex):
+def test_chroma_vqt_threshold(y_chirp):
 
-    y, sr = y_ex
+    y, sr = y_chirp
 
     c1 = librosa.feature.chroma_vqt(y=y, sr=sr, intervals="pythagorean")
     c2 = librosa.feature.chroma_vqt(y=y, sr=sr, intervals="pythagorean", threshold=1)
@@ -994,22 +1002,22 @@ def test_tempogram_ratio_factors():
 
 
 @pytest.fixture(scope="module")
-def tg_ex(y_ex):
-    y, sr = y_ex
+def tg_ex(y_clicks):
+    y, sr = y_clicks
     return librosa.feature.tempogram(y=y, sr=sr)
 
 
-def test_tempogram_ratio_aggregate(y_ex, tg_ex):
+def test_tempogram_ratio_aggregate(y_clicks, tg_ex):
     # Verify that aggregation does its job
-    _, sr = y_ex
+    _, sr = y_clicks
     tgr1 = librosa.feature.tempogram_ratio(sr=sr, tg=tg_ex, aggregate=None)
     tgr2 = librosa.feature.tempogram_ratio(sr=sr, tg=tg_ex, aggregate=np.median)
     assert np.allclose(np.median(tgr1, axis=-1), tgr2)
 
 
-def test_tempogram_ratio_with_tg(y_ex, tg_ex):
+def test_tempogram_ratio_with_tg(y_clicks, tg_ex):
     # Verify equivalent behavior with/without pre-computed tempogram
-    y, sr = y_ex
+    y, sr = y_clicks
 
     tgr1 = librosa.feature.tempogram_ratio(y=y, sr=sr)
     tgr2 = librosa.feature.tempogram_ratio(tg=tg_ex, sr=sr)
@@ -1017,8 +1025,8 @@ def test_tempogram_ratio_with_tg(y_ex, tg_ex):
     assert np.allclose(tgr1, tgr2)
 
 
-def test_tempogram_ratio_with_bpm(y_ex, tg_ex):
-    y, sr = y_ex
+def test_tempogram_ratio_with_bpm(y_clicks, tg_ex):
+    y, sr = y_clicks
     tempo = librosa.feature.tempo(tg=tg_ex, sr=sr, aggregate=None)
     tgr1 = librosa.feature.tempogram_ratio(tg=tg_ex, sr=sr, bpm=None)
     tgr2 = librosa.feature.tempogram_ratio(tg=tg_ex, sr=sr, bpm=tempo)
