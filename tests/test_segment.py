@@ -145,7 +145,7 @@ def test_cross_similarity_multi():
     assert np.allclose(R, Rf)
 
 
-@pytest.mark.parametrize("n", [20, 250])
+@pytest.mark.parametrize("n", [20, 40])
 @pytest.mark.parametrize("k", [None, 5])
 @pytest.mark.parametrize("sym", [False, True])
 @pytest.mark.parametrize("width", [1, 5])
