@@ -281,10 +281,11 @@ def test_resample_poly_float(sr_in, sr_out):
     librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type="polyphase")
 
 
+@pytest.mark.skip(reason="Deprecated regression test")
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "core-stft-*.mat"))
 )
-def test_stft(infile):
+def test_stft_old(infile):
 
     DATA = load(infile)
 
@@ -315,6 +316,39 @@ def test_stft(infile):
 
     # conjugate matlab stft to fix the ' vs .' bug
     assert np.allclose(D, DATA["D"].conj())
+
+
+@pytest.mark.parametrize('center', [False, True])
+@pytest.mark.parametrize('n_fft', [256, 501])
+@pytest.mark.parametrize('window', ['hann', 'ones'])
+@pytest.mark.parametrize('hop_length', [None, 128])
+def test_stft(y_22050, n_fft, window, hop_length, center):
+
+    D = librosa.stft(y_22050, n_fft=n_fft, window=window, hop_length=hop_length, center=center)
+    assert D.ndim == 2
+
+    assert D.shape[0] == (n_fft // 2 + 1)
+    if hop_length is None:
+        hop_length = n_fft // 4
+    if center == False:
+        assert D.shape[-1] == 1 + (len(y_22050) - n_fft) // float(hop_length)
+    else:
+        assert D.shape[-1] == 1 + len(y_22050) // float(hop_length)
+
+    # This is essentially implementing all the STFT computation again, but
+    # much less efficiently than librosa's version
+    window = librosa.filters.get_window(window, n_fft, fftbins=True)
+
+    if center:
+        y_frames = librosa.util.frame(np.pad(y_22050, n_fft // 2, mode='constant'), 
+                                      frame_length=n_fft, hop_length=hop_length)
+    else:
+        y_frames = librosa.util.frame(y_22050, frame_length=n_fft, hop_length=hop_length)
+
+    D_direct = scipy.fft.rfft(y_frames * window[:, np.newaxis], axis=0)
+
+    assert np.allclose(D_direct, D)
+
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
