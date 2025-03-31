@@ -41,6 +41,10 @@ def srand(seed=628318530):
     pass
 
 
+def load(infile):
+    return scipy.io.loadmat(infile, chars_as_strings=True)
+
+
 def test_load_soundfile():
 
     fname = os.path.join("tests", "data", "test1_44100.wav")
