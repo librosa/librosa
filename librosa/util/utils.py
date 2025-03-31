@@ -1189,7 +1189,6 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
     return lmin
 
 
-
 @numba.guvectorize(
     [
         "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
@@ -1199,8 +1198,8 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
     ],
     "(n),(),(),(),(),(),()->(n)",
     nopython=True, cache=True)
-def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
-    """Vectorized wrapper for the peak-picker"""
+def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
+    """Vectorized wrapper for the greedy peak-picker"""
     # Special case the first frame
     peaks[0] = (x[0] >= np.max(x[:min(post_max, x.shape[0])]))
     peaks[0] &= (x[0] >= np.mean(x[:min(post_avg, x.shape[0])]) + delta)
@@ -1211,16 +1210,16 @@ def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         n = 1
 
     while n < x.shape[0]:
-        maxn = np.max( x[max(0, n-pre_max):min(n+post_max, x.shape[0])])
+        maxn = np.max(x[max(0, n - pre_max):min(n + post_max, x.shape[0])])
 
         # Are we the local max and sufficiently above average?
-        peaks[n] = (x[n] == maxn) 
-        
+        peaks[n] = (x[n] == maxn)
+
         if not peaks[n]:
             n += 1
             continue
 
-        avgn = np.mean(x[max(0, n-pre_avg):min(n+post_avg, x.shape[0])])
+        avgn = np.mean(x[max(0, n - pre_avg):min(n + post_avg, x.shape[0])])
         peaks[n] &= (x[n] >= avgn + delta)
 
         if not peaks[n]:
@@ -1229,6 +1228,56 @@ def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
 
         # Skip the next `wait` frames
         n += wait + 1
+
+
+
+@numba.guvectorize(
+    [
+        "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
+        "void(float64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
+        "void(int32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
+        "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
+    ],
+    "(n),(),(),(),(),(),()->(n)",
+    nopython=True, cache=True)
+def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
+    """Vectorized wrapper for optimal peak-picker by dynamic programming"""
+
+    values = np.zeros(len(x) + 1)
+    pointers = np.zeros(len(x) + 1, dtype=np.int32)
+    taken = np.zeros(len(x) + 1, dtype=np.bool_)
+
+    values[-1] = 0
+    pointers[-1] = -1
+    for n in range(len(x) - 1, -1, -1):
+        # Populate defaults in case we don't take this peak
+        values[n] = values[n + 1]
+        pointers[n] = n + 1
+
+        next_ptr = min(len(x), n + wait)
+
+        # Check if we're a local peak
+        maxn = np.max(x[max(0, n - pre_max):min(n + post_max, x.shape[0])])
+
+        # if not, move along
+        if x[n] < maxn:
+            continue
+
+        # Are we enough above average?
+        avgn = np.mean(x[max(0, n - pre_avg):min(n + post_avg, x.shape[0])])
+
+        # Only take this peak if it's better than not taking it
+        if x[n] >= avgn + delta and values[next_ptr] + 1 > values[n + 1]:
+            values[n] = values[next_ptr] + 1
+            pointers[n] = next_ptr
+            taken[n] = True
+
+    # Backtrack to find the selected peaks
+    n = 0
+    while pointers[n] >= 0:
+        if taken[n]:
+            peaks[n] = True
+        n = pointers[n]
 
 
 def peak_pick(
@@ -1241,6 +1290,7 @@ def peak_pick(
     delta: float,
     wait: int,
     sparse: bool = True,
+    method: Literal["greedy", "dp"] = "greedy",
     axis: int = -1
 ) -> np.ndarray:
     """Use a flexible heuristic to pick peaks in a signal.
@@ -1349,7 +1399,12 @@ def peak_pick(
     wait = valid_int(wait, cast=np.ceil)
 
     peaks = np.zeros_like(x, dtype=bool)
-    __peak_pick(x.swapaxes(axis, -1), pre_max, post_max, pre_avg, post_avg, delta, wait, peaks.swapaxes(axis, -1))
+    if method == 'greedy':
+        __peak_pick_greedy(x.swapaxes(axis, -1), pre_max, post_max, pre_avg, post_avg, delta, wait, peaks.swapaxes(axis, -1))
+    elif method == 'dp':
+        __peak_pick_dp(x.swapaxes(axis, -1), pre_max, post_max, pre_avg, post_avg, delta, wait, peaks.swapaxes(axis, -1))
+    else:
+        raise ParameterError(f"Unknown method {method}")
 
     if sparse:
         return np.flatnonzero(peaks)
