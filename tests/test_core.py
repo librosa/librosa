@@ -1042,6 +1042,7 @@ def test_autocorrelate(y, axis, max_size):
     assert np.allclose(ac, truth[axis][tuple(my_slice)])
 
 
+@pytest.mark.skip(reason="deprecated regression test")
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "core-lpcburg-*.mat"))
 )
@@ -1056,6 +1057,25 @@ def test_lpc_regress(infile):
 
         test_coeffs = librosa.lpc(signal, order=order)
         assert np.allclose(test_coeffs, est_coeffs)
+
+
+@pytest.fixture(scope="module")
+def y_chirp_lpc():
+
+    y = librosa.chirp(fmin=50, fmax=500, sr=22050, duration=2.0).astype(np.float64)
+    return y
+
+
+@pytest.mark.parametrize("order", [4, 8, 12])
+def test_lpc_order(y_chirp_lpc, order):
+
+    # Test LPC predictions by using them as feed-forward filter coefficients
+    # Use high-precision float to avoid numerical issues
+    a = librosa.lpc(y_chirp_lpc, order=order)
+    b = np.hstack([[0], -1 * a[1:]])
+    y_hat = scipy.signal.lfilter(b, [1], y_chirp_lpc)
+
+    assert np.allclose(y_hat[order:], y_chirp_lpc[order:], atol=1e-3)
 
 
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
