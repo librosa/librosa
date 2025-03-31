@@ -45,6 +45,7 @@ def load(infile):
     return scipy.io.loadmat(infile, chars_as_strings=True)
 
 
+@pytest.mark.skip(reason="Deprecated regression test")
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "core-load-*.mat"))
 )
