@@ -41,26 +41,6 @@ def srand(seed=628318530):
     pass
 
 
-def load(infile):
-    return scipy.io.loadmat(infile, chars_as_strings=True)
-
-
-@pytest.mark.skip(reason="Deprecated regression test")
-@pytest.mark.parametrize(
-    "infile", files(os.path.join("tests", "data", "core-load-*.mat"))
-)
-def test_load(infile):
-    DATA = load(infile)
-    y, sr = librosa.load(
-        os.path.join("tests", DATA["wavfile"][0]), sr=None, mono=DATA["mono"]
-    )
-
-    # Verify that the sample rate is correct
-    assert sr == DATA["sr"]
-
-    assert np.allclose(y, DATA["y"])
-
-
 def test_load_soundfile():
 
     fname = os.path.join("tests", "data", "test1_44100.wav")
@@ -282,43 +262,6 @@ def test_resample_poly_float(sr_in, sr_out):
     librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type="polyphase")
 
 
-@pytest.mark.skip(reason="Deprecated regression test")
-@pytest.mark.parametrize(
-    "infile", files(os.path.join("tests", "data", "core-stft-*.mat"))
-)
-def test_stft_old(infile):
-
-    DATA = load(infile)
-
-    # Load the file
-    (y, sr) = librosa.load(
-        os.path.join("tests", DATA["wavfile"][0]), sr=None, mono=True
-    )
-
-    window: Union[Callable[..., Any], str]
-    if DATA["hann_w"][0, 0] == 0:
-        # Set window to ones, swap back to nfft
-        window = np.ones
-        win_length = None
-
-    else:
-        window = "hann"
-        win_length = DATA["hann_w"][0, 0]
-
-    # Compute the STFT
-    D = librosa.stft(
-        y,
-        n_fft=DATA["nfft"][0, 0].astype(int),
-        hop_length=DATA["hop_length"][0, 0].astype(int),
-        win_length=win_length,
-        window=window,
-        center=False,
-    )
-
-    # conjugate matlab stft to fix the ' vs .' bug
-    assert np.allclose(D, DATA["D"].conj())
-
-
 @pytest.mark.parametrize('center', [False, True])
 @pytest.mark.parametrize('n_fft', [256, 501])
 @pytest.mark.parametrize('window', ['hann', 'ones'])
@@ -471,30 +414,6 @@ def test___reassign_frequencies(sr, n_fft, center):
 
     upper = freqs[(freqs >= 60) & (freqs < sr // 2) & (S_db > -30)]
     assert np.allclose(upper, 103, atol=3)
-
-
-# regression tests originally for `ifgram`
-@pytest.mark.skip(reason="redundant regression test")
-@pytest.mark.parametrize(
-    "infile", files(os.path.join("tests", "data", "core-ifgram-*.mat"))
-)
-def test___reassign_frequencies_regress(infile):
-    DATA = load(infile)
-
-    y, sr = librosa.load(os.path.join("tests", DATA["wavfile"][0]), sr=None, mono=True)
-
-    F, D = librosa.core.spectrum.__reassign_frequencies(
-        y=y,
-        sr=DATA["sr"][0, 0].astype(int),
-        n_fft=DATA["nfft"][0, 0].astype(int),
-        hop_length=DATA["hop_length"][0, 0].astype(int),
-        win_length=DATA["hann_w"][0, 0].astype(int),
-        center=False,
-    )
-
-    # D fails to match here because of fftshift()
-    # assert np.allclose(D, DATA['D'])
-    assert np.allclose(F, DATA["F"], rtol=1e-3, atol=1e-3)
 
 
 # results for longer windows containing multiple impulses will be unstable
@@ -1040,23 +959,6 @@ def test_autocorrelate(y, axis, max_size):
         assert not np.iscomplexobj(ac)
 
     assert np.allclose(ac, truth[axis][tuple(my_slice)])
-
-
-@pytest.mark.skip(reason="deprecated regression test")
-@pytest.mark.parametrize(
-    "infile", files(os.path.join("tests", "data", "core-lpcburg-*.mat"))
-)
-def test_lpc_regress(infile):
-
-    test_data = scipy.io.loadmat(infile, squeeze_me=True)
-    for i in range(len(test_data["signal"])):
-        signal = test_data["signal"][i]
-        order = int(test_data["order"][i])
-        true_coeffs = test_data["true_coeffs"][i]
-        est_coeffs = test_data["est_coeffs"][i]
-
-        test_coeffs = librosa.lpc(signal, order=order)
-        assert np.allclose(test_coeffs, est_coeffs)
 
 
 @pytest.fixture(scope="module")
