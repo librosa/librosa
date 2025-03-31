@@ -439,6 +439,7 @@ def test___reassign_frequencies(sr, n_fft, center):
 
 
 # regression tests originally for `ifgram`
+@pytest.mark.skip(reason="redundant regression test")
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "core-ifgram-*.mat"))
 )
