@@ -592,8 +592,8 @@ def test_peak_pick_badmethod():
         post_avg=3,
         delta=1,
         wait=1,
-        method="foo",
-    )  # type: ignore
+        method="foo",  # type: ignore
+    )
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
