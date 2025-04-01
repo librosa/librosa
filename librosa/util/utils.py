@@ -673,8 +673,7 @@ def axis_sort(
     axis: int = ...,
     index: Literal[False] = ...,
     value: Optional[Callable[..., Any]] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -684,8 +683,7 @@ def axis_sort(
     axis: int = ...,
     index: Literal[True],
     value: Optional[Callable[..., Any]] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 def axis_sort(
@@ -1197,12 +1195,14 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
         "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
     ],
     "(n),(),(),(),(),(),()->(n)",
-    nopython=True, cache=True)
+    nopython=True,
+    cache=True,
+)
 def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
     """Vectorized wrapper for the greedy peak-picker"""
     # Special case the first frame
-    peaks[0] = (x[0] >= np.max(x[:min(post_max, x.shape[0])]))
-    peaks[0] &= (x[0] >= np.mean(x[:min(post_avg, x.shape[0])]) + delta)
+    peaks[0] = x[0] >= np.max(x[: min(post_max, x.shape[0])])
+    peaks[0] &= x[0] >= np.mean(x[: min(post_avg, x.shape[0])]) + delta
 
     if peaks[0]:
         n = wait + 1
@@ -1210,17 +1210,17 @@ def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, pea
         n = 1
 
     while n < x.shape[0]:
-        maxn = np.max(x[max(0, n - pre_max):min(n + post_max, x.shape[0])])
+        maxn = np.max(x[max(0, n - pre_max) : min(n + post_max, x.shape[0])])
 
         # Are we the local max and sufficiently above average?
-        peaks[n] = (x[n] == maxn)
+        peaks[n] = x[n] == maxn
 
         if not peaks[n]:
             n += 1
             continue
 
-        avgn = np.mean(x[max(0, n - pre_avg):min(n + post_avg, x.shape[0])])
-        peaks[n] &= (x[n] >= avgn + delta)
+        avgn = np.mean(x[max(0, n - pre_avg) : min(n + post_avg, x.shape[0])])
+        peaks[n] &= x[n] >= avgn + delta
 
         if not peaks[n]:
             n += 1
@@ -1238,7 +1238,9 @@ def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, pea
         "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
     ],
     "(n),(),(),(),(),(),()->(n)",
-    nopython=True, cache=True)
+    nopython=True,
+    cache=True,
+)
 def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
     """Vectorized wrapper for optimal peak-picker by dynamic programming"""
 
@@ -1254,7 +1256,7 @@ def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         pointers[n] = n + 1
 
         # Check if we're a local peak
-        maxn = np.max(x[max(0, n - pre_max):min(n + post_max, x.shape[0])])
+        maxn = np.max(x[max(0, n - pre_max) : min(n + post_max, x.shape[0])])
 
         # if not a peak, move along
         if x[n] < maxn:
@@ -1263,7 +1265,7 @@ def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         next_ptr = min(len(x), n + wait + 1)
 
         # Are we enough above average?
-        avgn = np.mean(x[max(0, n - pre_avg):min(n + post_avg, x.shape[0])])
+        avgn = np.mean(x[max(0, n - pre_avg) : min(n + post_avg, x.shape[0])])
 
         # Only take this peak if it's better than not taking it
         if x[n] >= avgn + delta and values[next_ptr] + 1 > values[n + 1]:
@@ -1289,7 +1291,7 @@ def peak_pick(
     wait: int,
     sparse: bool = True,
     method: Literal["greedy", "dp"] = "greedy",
-    axis: int = -1
+    axis: int = -1,
 ) -> np.ndarray:
     """Use a flexible heuristic to pick peaks in a signal.
 
@@ -1334,7 +1336,7 @@ def peak_pick(
         The method used to pick peaks. The default is 'greedy', which implements
         the method of Böck et al. (2012).
         The 'dp' method implements a dynamic programming approach which
-        guarantees the maximal number of selected peaks. 
+        guarantees the maximal number of selected peaks.
         This method is slower than the greedy method, but may be more accurate.
     axis : int [scalar]
         the axis over which to detect peaks.
@@ -1391,9 +1393,11 @@ def peak_pick(
     if post_avg <= 0:
         raise ParameterError("post_avg must be positive")
     if sparse and x.ndim != 1:
-        raise ParameterError(f"sparse=True (default) does not support "
-                f"{x.ndim}-dimensional inputs. "
-                f"Either set sparse=False or process each dimension independently.")
+        raise ParameterError(
+            f"sparse=True (default) does not support "
+            f"{x.ndim}-dimensional inputs. "
+            f"Either set sparse=False or process each dimension independently."
+        )
 
     # Ensure valid index types
     pre_max = valid_int(pre_max, cast=np.ceil)
@@ -1403,10 +1407,28 @@ def peak_pick(
     wait = valid_int(wait, cast=np.ceil)
 
     peaks = np.zeros_like(x, dtype=bool)
-    if method == 'greedy':
-        __peak_pick_greedy(x.swapaxes(axis, -1), pre_max, post_max, pre_avg, post_avg, delta, wait, peaks.swapaxes(axis, -1))
-    elif method == 'dp':
-        __peak_pick_dp(x.swapaxes(axis, -1), pre_max, post_max, pre_avg, post_avg, delta, wait, peaks.swapaxes(axis, -1))
+    if method == "greedy":
+        __peak_pick_greedy(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            peaks.swapaxes(axis, -1),
+        )
+    elif method == "dp":
+        __peak_pick_dp(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            peaks.swapaxes(axis, -1),
+        )
     else:
         raise ParameterError(f"Unknown method {method}")
 
@@ -2107,15 +2129,13 @@ _ArrayOrSparseMatrix = TypeVar(
 
 
 @overload
-def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray:
-    ...
+def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 
 
 @overload
 def shear(
     X: scipy.sparse.spmatrix, *, factor: int = ..., axis: int = ...
-) -> scipy.sparse.spmatrix:
-    ...
+) -> scipy.sparse.spmatrix: ...
 
 
 def shear(
@@ -2263,7 +2283,7 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
         shape = tuple([len(arrays)] + list(shape_in))
 
         # Find the common dtype for all inputs
-        dtype = np.result_type(*arrays) 
+        dtype = np.result_type(*arrays)
 
         # Allocate an empty array of the right shape and type
         result = np.empty(shape, dtype=dtype, order="F")
@@ -2555,13 +2575,13 @@ _Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
 
 
 @overload
-def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray:
-    ...
+def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray: ...
 
 
 @overload
-def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> np.complexfloating[Any, Any]:
-    ...
+def phasor(
+    angles: _Real, *, mag: Optional[_Number] = ...
+) -> np.complexfloating[Any, Any]: ...
 
 
 def phasor(

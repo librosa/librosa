@@ -525,7 +525,7 @@ def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, method)
         delta=delta,
         wait=wait,
         sparse=False,
-        method=method
+        method=method,
     )
 
     for i in peaks:
@@ -584,8 +584,16 @@ def test_peak_pick_fail(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_peak_pick_badmethod():
     # suppress mypy type check here:
-    librosa.util.peak_pick(np.zeros(100), pre_max=3, post_max=3, pre_avg=3,
-                           post_avg=3, delta=1, wait=1, method="foo")  # type: ignore
+    librosa.util.peak_pick(
+        np.zeros(100),
+        pre_max=3,
+        post_max=3,
+        pre_avg=3,
+        post_avg=3,
+        delta=1,
+        wait=1,
+        method="foo",
+    )  # type: ignore
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
