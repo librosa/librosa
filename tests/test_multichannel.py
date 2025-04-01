@@ -1091,7 +1091,8 @@ def test_f0_harmonics(y_multi, dynamic):
     assert np.allclose(out[1], out1)
 
 
-def test_peak_pick_multi():
+@pytest.mark.parametrize("method", ["greedy", "dp"])
+def test_peak_pick_multi(method):
 
     x = np.random.randn(3, 1000) ** 2
 
@@ -1112,6 +1113,7 @@ def test_peak_pick_multi():
         delta=delta,
         sparse=False,
         axis=-1,
+        method=method,
     )
 
     for i in range(x.shape[0]):
@@ -1125,6 +1127,7 @@ def test_peak_pick_multi():
             delta=delta,
             sparse=False,
             axis=-1,
+            method=method,
         )
         assert np.allclose(pmi, pm[i])
 
