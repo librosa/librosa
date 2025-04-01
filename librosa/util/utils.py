@@ -1254,7 +1254,7 @@ def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         values[n] = values[n + 1]
         pointers[n] = n + 1
 
-        next_ptr = min(len(x), n + wait)
+        next_ptr = min(len(x), n + wait + 1)
 
         # Check if we're a local peak
         maxn = np.max(x[max(0, n - pre_max):min(n + post_max, x.shape[0])])
@@ -1275,8 +1275,7 @@ def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
     # Backtrack to find the selected peaks
     n = 0
     while pointers[n] >= 0:
-        if taken[n]:
-            peaks[n] = True
+        peaks[n] = taken[n]
         n = pointers[n]
 
 
@@ -1332,6 +1331,12 @@ def peak_pick(
         If `True`, the output are indices of detected peaks.
         If `False`, the output is a dense boolean array of the same
         shape as ``x``.
+    method : {'greedy', 'dp'} [scalar]
+        The method used to pick peaks. The default is 'greedy', which implements
+        the method of Böck et al. (2012).
+        The 'dp' method implements a dynamic programming approach which
+        guarantees the maximal number of selected peaks. 
+        This method is slower than the greedy method, but may be more accurate.
     axis : int [scalar]
         the axis over which to detect peaks.
 
