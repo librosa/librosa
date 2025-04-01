@@ -1243,7 +1243,6 @@ def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, pea
 )
 def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
     """Vectorized wrapper for optimal peak-picker by dynamic programming"""
-
     values = np.zeros(len(x) + 1)
     pointers = np.zeros(len(x) + 1, dtype=np.int32)
     taken = np.zeros(len(x) + 1, dtype=np.bool_)
