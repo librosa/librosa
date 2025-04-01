@@ -1230,7 +1230,6 @@ def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, pea
         n += wait + 1
 
 
-
 @numba.guvectorize(
     [
         "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
@@ -1254,14 +1253,14 @@ def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         values[n] = values[n + 1]
         pointers[n] = n + 1
 
-        next_ptr = min(len(x), n + wait + 1)
-
         # Check if we're a local peak
         maxn = np.max(x[max(0, n - pre_max):min(n + post_max, x.shape[0])])
 
-        # if not, move along
+        # if not a peak, move along
         if x[n] < maxn:
             continue
+
+        next_ptr = min(len(x), n + wait + 1)
 
         # Are we enough above average?
         avgn = np.mean(x[max(0, n - pre_avg):min(n + post_avg, x.shape[0])])
