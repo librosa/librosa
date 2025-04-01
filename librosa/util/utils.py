@@ -1232,20 +1232,23 @@ def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, pea
 
 @numba.guvectorize(
     [
-        "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(float64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(int32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
+        "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
+        "void(float64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
+        "void(int32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
+        "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
     ],
-    "(n),(),(),(),(),(),()->(n)",
+    "(n),(),(),(),(),(),(),()->(n)",
     nopython=True,
     cache=True,
 )
-def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
+def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, count, peaks):
     """Vectorized wrapper for optimal peak-picker by dynamic programming"""
     values = np.zeros(len(x) + 1)
     pointers = np.zeros(len(x) + 1, dtype=np.int32)
     taken = np.zeros(len(x) + 1, dtype=np.bool_)
+
+    # Use the integral image trick to accelerate partial sums for averages
+    cumulate = np.cumsum(x)
 
     values[-1] = 0
     pointers[-1] = -1
@@ -1261,14 +1264,24 @@ def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         if x[n] < maxn:
             continue
 
+        # Are we enough above average?
+        idx_prev = max(0, n - pre_avg)
+        idx_post = min(n + post_avg, x.shape[0])
+        if idx_prev == 0:
+            avgn = cumulate[idx_post - 1] / idx_post
+        else:
+            avgn = (cumulate[idx_post - 1] - cumulate[idx_prev - 1]) / (idx_post - idx_prev)
+
+        if count:
+            v = 1
+        else:
+            v = x[n]
+
         next_ptr = min(len(x), n + wait + 1)
 
-        # Are we enough above average?
-        avgn = np.mean(x[max(0, n - pre_avg) : min(n + post_avg, x.shape[0])])
-
         # Only take this peak if it's better than not taking it
-        if x[n] >= avgn + delta and values[next_ptr] + 1 > values[n + 1]:
-            values[n] = values[next_ptr] + 1
+        if x[n] >= avgn + delta and values[next_ptr] + v > values[n + 1]:
+            values[n] = values[next_ptr] + v
             pointers[n] = next_ptr
             taken[n] = True
 
@@ -1289,7 +1302,7 @@ def peak_pick(
     delta: float,
     wait: int,
     sparse: bool = True,
-    method: Literal["greedy", "dp"] = "greedy",
+    method: Literal["greedy", "dp_count", "dp_value"] = "greedy",
     axis: int = -1,
 ) -> np.ndarray:
     """Use a flexible heuristic to pick peaks in a signal.
@@ -1331,12 +1344,12 @@ def peak_pick(
         If `True`, the output are indices of detected peaks.
         If `False`, the output is a dense boolean array of the same
         shape as ``x``.
-    method : {'greedy', 'dp'} [scalar]
+    method : {'greedy', 'dp_count', 'dp_value'} [scalar]
         The method used to pick peaks. The default is 'greedy', which implements
         the method of Böck et al. (2012).
-        The 'dp' method implements a dynamic programming approach which
-        guarantees the maximal number of selected peaks.
-        This method is slower than the greedy method, but may be more accurate.
+        The 'dp_*' methods implement a dynamic programming method which seeks to
+        explicitly maximize either the number of selected peaks (`dp_count`) or
+        the sum of the values `x[p]` the selected peaks `p` (`dp_value`).
     axis : int [scalar]
         the axis over which to detect peaks.
 
@@ -1417,7 +1430,7 @@ def peak_pick(
             wait,
             peaks.swapaxes(axis, -1),
         )
-    elif method == "dp":
+    elif method == "dp_count":
         __peak_pick_dp(
             x.swapaxes(axis, -1),
             pre_max,
@@ -1426,6 +1439,19 @@ def peak_pick(
             post_avg,
             delta,
             wait,
+            True,
+            peaks.swapaxes(axis, -1),
+        )
+    elif method == "dp_value":
+        __peak_pick_dp(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            False,
             peaks.swapaxes(axis, -1),
         )
     else:

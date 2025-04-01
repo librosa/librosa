@@ -1091,7 +1091,7 @@ def test_f0_harmonics(y_multi, dynamic):
     assert np.allclose(out[1], out1)
 
 
-@pytest.mark.parametrize("method", ["greedy", "dp"])
+@pytest.mark.parametrize("method", ["greedy", "dp_count", "dp_value"])
 def test_peak_pick_multi(method):
 
     x = np.random.randn(3, 1000) ** 2

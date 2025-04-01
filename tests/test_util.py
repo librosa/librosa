@@ -503,7 +503,7 @@ def test_localmin(ndim, axis):
 @pytest.mark.parametrize("post_avg", [1, 10])
 @pytest.mark.parametrize("wait", [0, 1, 10])
 @pytest.mark.parametrize("delta", [0.05, 100.0])
-@pytest.mark.parametrize("method", ["greedy", "dp"])
+@pytest.mark.parametrize("method", ["greedy", "dp_count", "dp_value"])
 def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, method):
     peaks = librosa.util.peak_pick(
         x,
