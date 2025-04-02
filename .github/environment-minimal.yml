@@ -28,6 +28,9 @@ dependencies:
   - ffmpeg
   - resampy==0.2.2
 
+  # Working around cmake 4 incompatibility for now
+  - cmake<4.0.0
+
   - pip:
     - numpy==1.22.3
     - samplerate
