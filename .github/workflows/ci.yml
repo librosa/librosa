@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
     - main
+    - 1.0.0dev
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
