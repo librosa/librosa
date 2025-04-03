@@ -1347,7 +1347,7 @@ def peak_pick(
     method : {'greedy', 'dp_count', 'dp_value'} [scalar]
         The method used to pick peaks. The default is 'greedy', which implements
         the method of Böck et al. (2012).  The greedy method selects the earliest
-        possible peaks (i.e. those with minimial index values) subject to the
+        possible peaks (i.e. those with minimal index values) subject to the
         constraints described above.
         The 'dp_*' methods implement a dynamic programming method which seeks to
         explicitly maximize either the number of selected peaks (`dp_count`) or
