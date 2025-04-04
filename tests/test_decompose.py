@@ -102,7 +102,9 @@ def test_sorted_decompose():
 
 @pytest.fixture(scope="module")
 def y22050():
-    y, _ = librosa.load(os.path.join("tests", "data", "test1_22050.wav"))
+    sr = 22050
+    y = librosa.chirp(fmin=55, fmax=880, sr=sr, duration=5.0)
+    y += librosa.clicks(times=np.arange(0, 5, 0.5), sr=sr, length=len(y), click_duration=0.25)
     return y
 
 
@@ -201,9 +203,8 @@ def test_nn_filter_mean_rec_sparse():
 
 @pytest.fixture(scope="module")
 def s_multi():
-    y, sr = librosa.load(
-        os.path.join("tests", "data", "test1_44100.wav"), sr=None, mono=False
-    )
+    y = librosa.chirp(fmin=55, fmax=880, duration=5.0)
+    y = np.vstack([y, y[::-1]])
     return np.abs(librosa.stft(y))
 
 
