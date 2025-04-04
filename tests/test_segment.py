@@ -21,8 +21,6 @@ from test_core import srand
 
 import librosa
 
-__EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
-
 
 @pytest.mark.parametrize("n", [20, 250])
 @pytest.mark.parametrize("k", [None, 5])
@@ -469,7 +467,9 @@ def test_timelag_filter_pos1():
 
 @pytest.fixture(scope="module")
 def ysr():
-    return librosa.load(__EXAMPLE_FILE)
+    sr = 22050
+    y = librosa.chirp(fmin=100, fmax=2000, sr=sr, duration=5.0)
+    return y, sr
 
 
 @pytest.fixture(scope="module")
