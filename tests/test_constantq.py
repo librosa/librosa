@@ -726,6 +726,7 @@ def test_griffinlim_cqt(
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_dtype(y_chirp, dtype):
     C = librosa.cqt(y_chirp, sr=22050, res_type="polyphase")
     y = librosa.griffinlim_cqt(
