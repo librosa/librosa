@@ -25,10 +25,16 @@ from contextlib import nullcontext as dnr
 from test_core import srand
 
 
-@pytest.fixture(scope="module", params=["test1_44100.wav"])
-def y_multi(request):
-    infile = request.param
-    return librosa.load(os.path.join("tests", "data", infile), sr=None, mono=False)
+@pytest.fixture(scope="module")
+def y_multi():
+    sr = 44100
+    duration = 5.0
+    y1 = librosa.chirp(fmin=100, fmax=2000, sr=sr, duration=duration)
+    y1 += librosa.clicks(sr=sr, times=np.arange(0, duration, 0.33), length=len(y1))
+    y2 = librosa.chirp(fmin=50, fmax=1000, sr=sr, duration=duration)
+    y2 += librosa.clicks(sr=sr, times=np.arange(0, duration, 0.5), length=len(y2))
+    y = np.vstack([y1, y2])
+    return y, sr
 
 
 @pytest.fixture(scope="module")
@@ -453,9 +459,10 @@ def test_spectral_contrast_multi(s_multi):
     freq = None
 
     # compare each channel
-    C0 = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S[0])
-    C1 = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S[1])
-    Call = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S)
+    # FIXME: using linear mode because dB scaling has cross-channel sensitivities
+    C0 = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S[0], linear=True)
+    C1 = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S[1], linear=True)
+    Call = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S, linear=True)
 
     # Check each channel
     assert np.allclose(C0, Call[0])
