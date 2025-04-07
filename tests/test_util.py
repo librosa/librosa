@@ -635,39 +635,41 @@ def test_sparsify_rows(ndim, d, q):
     assert np.all(v_out >= (1.0 - q) * v_in)
 
 
-@pytest.mark.parametrize(
-    "searchdir",
-    [
-        os.path.join(os.path.curdir, "tests"),
-        os.path.join(os.path.curdir, "tests", "data"),
-    ],
-)
+@pytest.fixture(scope="module")
+def search_files(tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp("audio_test")
+    test_files = [
+        "test1_22050.mp3",
+        "test1_22050.wav",
+        "test1_44100.wav",
+        "test2_8000.wav",
+    ]
+
+    paths = []
+    subdir = tmp_path / "data"
+    subdir.mkdir(parents=True, exist_ok=True)
+    for filename in test_files:
+        file_path = subdir / filename
+        file_path.touch()  # Creates empty file
+        paths.append(str(file_path))
+
+    return tmp_path, paths
+
+
 @pytest.mark.parametrize("ext", [None, "wav", "WAV", ["wav"], ["WAV"]])
-@pytest.mark.parametrize("recurse", [True])
 @pytest.mark.parametrize(
     "case_sensitive", list({False} | {platform.system() != "Windows"})
 )
 @pytest.mark.parametrize("limit", [None, 1, 2])
 @pytest.mark.parametrize("offset", [0, 1, -1])
-@pytest.mark.parametrize(
-    "output",
-    [
-        [
-            os.path.join(os.path.abspath(os.path.curdir), "tests", "data", s)
-            for s in [
-                "test1_22050.mp3",
-                "test1_22050.wav",
-                "test1_44100.wav",
-                "test2_8000.wav",
-            ]
-        ]
-    ],
-)
-def test_find_files(searchdir, ext, recurse, case_sensitive, limit, offset, output):
+def test_find_files(search_files, ext, case_sensitive, limit, offset):
+
+    searchdir, output = search_files
+
     files = librosa.util.find_files(
         searchdir,
         ext=ext,
-        recurse=recurse,
+        recurse=True,
         case_sensitive=case_sensitive,
         limit=limit,
         offset=offset,
@@ -687,18 +689,18 @@ def test_find_files(searchdir, ext, recurse, case_sensitive, limit, offset, outp
         assert set(files) == set(targets[s1][s2])
 
 
-def test_find_files_nonrecurse():
-    files = librosa.util.find_files(
-        os.path.join(os.path.curdir, "tests"), recurse=False
-    )
+def test_find_files_nonrecurse(search_files):
+    searchdir, _ = search_files
+    files = librosa.util.find_files(searchdir, recurse=False)
     assert len(files) == 0
 
 
 # fail if ext is not none, we're case-sensitive, and looking for WAV
 @pytest.mark.parametrize("ext", ["WAV", ["WAV"]])
-def test_find_files_case_sensitive(ext):
+def test_find_files_case_sensitive(search_files, ext):
+    searchdir, files = search_files
     files = librosa.util.find_files(
-        os.path.join(os.path.curdir, "tests"), ext=ext, case_sensitive=True
+        searchdir, ext=ext, case_sensitive=True
     )
     # On windows, this test won't work
     if platform.system() != "Windows":
