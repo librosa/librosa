@@ -4,7 +4,6 @@
 import numpy as np
 
 import pytest
-from test_core import srand
 
 import librosa
 
@@ -304,9 +303,8 @@ def test_viterbi_discriminative_example_init():
 
 
 @pytest.fixture(scope="module")
-def x_disc():
-    srand()
-    x = np.random.random(size=(3, 5)) ** 2
+def x_disc(rng_mod):
+    x = rng_mod.random(size=(3, 5)) ** 2
     x /= x.sum(axis=0, keepdims=True)
     return x
 

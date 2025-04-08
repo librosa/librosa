@@ -19,8 +19,6 @@ import warnings
 import numpy as np
 import librosa
 
-from test_core import srand
-
 
 @pytest.fixture(scope="module")
 def ysr():
@@ -389,11 +387,9 @@ def test_onset_strength_badref():
     librosa.onset.onset_strength(S=S, ref=S[:, :2])
 
 
-def test_onset_strength_multi_ref():
-    srand()
-
+def test_onset_strength_multi_ref(rng):
     # Make a random positive spectrum
-    S = 1 + np.abs(np.random.randn(1025, 10))
+    S = 1 + np.abs(rng.standard_normal(size=(1025, 10)))
 
     # Test with a null reference
     null_ref = np.zeros_like(S)
