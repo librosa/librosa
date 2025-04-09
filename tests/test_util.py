@@ -384,7 +384,6 @@ def test_match_intervals_nonstrict(int_from, int_to, matches):
 @pytest.mark.parametrize("m", [1, 5, 20, 100])
 def test_match_events(n, m, rng):
 
-    srand()
     ev1 = np.abs(rng.standard_normal(size=n))
     ev2 = np.abs(rng.standard_normal(size=m))
 

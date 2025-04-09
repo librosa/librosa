@@ -8,7 +8,7 @@ import pytest
 
 import librosa
 
-from test_core import load, srand
+from test_core import load
 
 # Disable cache
 import os
@@ -410,7 +410,6 @@ def poly_coeffs(poly_order):
 
 @pytest.fixture(scope="module", params=[None, 1, 2, -1, "varying"])
 def poly_freq(request, rng_mod):
-    srand()
     freq = librosa.fft_frequencies()
 
     if request.param in (1, 2):
