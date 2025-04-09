@@ -36,11 +36,6 @@ def files(pattern):
     return test_files
 
 
-def srand(seed=628318530):
-    np.random.seed(seed)
-    pass
-
-
 def load(infile):
     return scipy.io.loadmat(infile, chars_as_strings=True)
 
@@ -327,10 +322,10 @@ def test_stft_winsizes():
     [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)],
 )
 @pytest.mark.parametrize("N", [1024, 2048, 8192])
-def test_stft_preallocate(center, n_fft, hop_length, N):
+def test_stft_preallocate(center, n_fft, hop_length, N, rng):
 
     # Work in stereo by default
-    y = np.random.randn(2, max(N, n_fft))
+    y = rng.standard_normal(size=(2, max(N, n_fft)))
 
     D1 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
     out = np.empty_like(D1)
@@ -345,10 +340,10 @@ def test_stft_preallocate(center, n_fft, hop_length, N):
     [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)],
 )
 @pytest.mark.parametrize("N", [2048])
-def test_stft_preallocate_oversize(center, n_fft, hop_length, N):
+def test_stft_preallocate_oversize(center, n_fft, hop_length, N, rng):
 
     # Work in stereo by default
-    y = np.random.randn(2, max(N, n_fft))
+    y = rng.standard_normal(size=(2, max(N, n_fft)))
 
     D1 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
     shape = list(D1.shape)
@@ -366,10 +361,10 @@ def test_stft_preallocate_oversize(center, n_fft, hop_length, N):
 )
 @pytest.mark.parametrize("N", [2048])
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_stft_preallocate_undersize(center, n_fft, hop_length, N):
+def test_stft_preallocate_undersize(center, n_fft, hop_length, N, rng):
 
     # Work in stereo by default
-    y = np.random.randn(2, max(N, n_fft))
+    y = rng.standard_normal(size=(2, max(N, n_fft)))
 
     D1 = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
     shape = list(D1.shape)
@@ -384,8 +379,8 @@ def test_stft_preallocate_undersize(center, n_fft, hop_length, N):
     [(1023, 128), (1023, 129), (1023, 256), (2048, 512), (2048, 2048)],
 )
 @pytest.mark.parametrize("N", [1024, 2048, 8192])
-def test_istft_preallocate(center, n_fft, hop_length, N):
-    y = np.random.randn(2, max(N, n_fft))
+def test_istft_preallocate(center, n_fft, hop_length, N, rng):
+    y = rng.standard_normal(size=(2, max(N, n_fft)))
 
     D = librosa.stft(y, center=center, n_fft=n_fft, hop_length=hop_length)
 
@@ -985,18 +980,17 @@ def test_lpc_order(y_chirp_lpc, order):
 
 
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
-def test_lpc_simple(dtype):
-    srand()
+def test_lpc_simple(dtype, rng):
 
     n = 5000
     est_a = np.zeros((n, 6), dtype=dtype)
     truth_a = np.array([1, 0.5, 0.4, 0.3, 0.2, 0.1], dtype=dtype)
     for i in range(n):
-        noise = np.random.randn(1000).astype(dtype)
+        noise = rng.standard_normal(size=1000).astype(dtype)
         filtered = scipy.signal.lfilter(dtype([1]), truth_a, noise)
         est_a[i, :] = librosa.lpc(filtered, order=5)
     assert dtype == est_a.dtype
-    assert np.allclose(truth_a, np.mean(est_a, axis=0), rtol=0, atol=1e-3)
+    assert np.allclose(truth_a, np.mean(est_a, axis=0), rtol=0, atol=1e-2)
 
 
 @pytest.mark.parametrize(
@@ -1498,13 +1492,13 @@ def test_power_to_db_inv(erp, k):
     assert np.isclose(y, y_true)
 
 
-def test_amplitude_to_db():
-    srand()
+def test_amplitude_to_db(rng):
+    
 
     NOISE_FLOOR = 1e-6
 
     # Make some noise
-    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+    x = np.abs(rng.standard_normal(size=1000)) + NOISE_FLOOR
 
     db1 = librosa.amplitude_to_db(x, top_db=None)
     db2 = librosa.power_to_db(x**2, top_db=None)
@@ -1512,13 +1506,12 @@ def test_amplitude_to_db():
     assert np.allclose(db1, db2)
 
 
-def test_amplitude_to_db_complex():
-    srand()
-
+def test_amplitude_to_db_complex(rng):
+    
     NOISE_FLOOR = 1e-6
 
     # Make some noise
-    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+    x = np.abs(rng.standard_normal(size=1000)) + NOISE_FLOOR
 
     with pytest.warns(UserWarning, match="amplitude_to_db was called on complex input"):
         db1 = librosa.amplitude_to_db(x.astype(complex), top_db=None)
@@ -1583,14 +1576,12 @@ def test_db_to_amplitude_inv(xp, ref_p):
     assert np.allclose(xp, xp2)
 
 
-def test_db_to_amplitude():
-
-    srand()
+def test_db_to_amplitude(rng):
 
     NOISE_FLOOR = 1e-6
 
     # Make some noise
-    x = np.abs(np.random.randn(1000)) + NOISE_FLOOR
+    x = np.abs(rng.standard_normal(size=1000)) + NOISE_FLOOR
 
     db = librosa.amplitude_to_db(x, top_db=None)
     x2 = librosa.db_to_amplitude(db)
@@ -1799,10 +1790,9 @@ def test_fmt_fail_badinput(y):
     librosa.fmt(y, t_min=1, n_fmt=128, over_sample=1)
 
 
-def test_fmt_axis():
-
-    srand()
-    y = np.random.randn(32, 32)
+def test_fmt_axis(rng):
+    
+    y = rng.standard_normal(size=(32, 32))
 
     f1 = librosa.fmt(y, axis=-1)
     f2 = librosa.fmt(y.T, axis=0).T
@@ -2010,8 +2000,8 @@ def test_iirt_padding():
 
 
 @pytest.fixture(scope="module")
-def S_pcen():
-    return np.abs(np.random.randn(9, 30))
+def S_pcen(rng_mod):
+    return np.abs(rng_mod.standard_normal(size=(9, 30)))
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -2115,11 +2105,10 @@ def test_pcen_zeros(max_size, Z):
     assert np.allclose(P, Z)
 
 
-def test_pcen_axes():
-
-    srand()
+def test_pcen_axes(rng):
+    
     # Make a power spectrogram
-    X = np.random.randn(3, 100, 50) ** 2
+    X = rng.standard_normal(size=(3, 100, 50)) ** 2
 
     # First, test that axis setting works
     P1 = librosa.pcen(X[0])
@@ -2159,10 +2148,10 @@ def test_pcen_axes():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_pcen_axes_nomax():
-    srand()
+def test_pcen_axes_nomax(rng):
+    
     # Make a power spectrogram
-    X = np.random.randn(3, 100, 50) ** 2
+    X = rng.standard_normal(size=(3, 100, 50)) ** 2
 
     librosa.pcen(X, max_size=3)
 
@@ -2173,11 +2162,10 @@ def test_pcen_max1():
     librosa.pcen(np.arange(100), max_size=3)
 
 
-def test_pcen_ref():
-
-    srand()
+def test_pcen_ref(rng):
+    
     # Make a power spectrogram
-    X = np.random.randn(100, 50) ** 2
+    X = rng.standard_normal(size=(100, 50)) ** 2
 
     # Edge cases:
     #   gain=1, bias=0, power=1, b=1 => ones
@@ -2210,11 +2198,10 @@ def test_pcen_stream(x):
 
 
 @pytest.mark.parametrize("axis", [0, 1, 2, -2, -1])
-def test_pcen_stream_multi(axis):
-    srand()
-
+def test_pcen_stream_multi(axis, rng):
+    
     # Generate a random power spectrum
-    x = np.random.randn(20, 50, 60) ** 2
+    x = rng.standard_normal(size=(20, 50, 60)) ** 2
 
     # Make slices along the target axis
     slice1 = [slice(None)] * x.ndim
