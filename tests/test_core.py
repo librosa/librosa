@@ -920,14 +920,14 @@ def test_get_duration_fail():
     librosa.get_duration(y=None, S=None, path=None)
 
 
-@pytest.mark.parametrize(
-    "y",
-    [np.random.randn(256, 384), np.exp(1.0j * np.random.randn(256, 384))],
-    ids=["real", "complex"],
-)
+@pytest.mark.parametrize( "real", [True, False])
 @pytest.mark.parametrize("axis", [0, 1, -1])
 @pytest.mark.parametrize("max_size", [None, 128, 256, 512])
-def test_autocorrelate(y, axis, max_size):
+def test_autocorrelate(real, axis, max_size, rng):
+
+    y = rng.standard_normal(size=(256, 2))
+    if not real:
+        y = np.exp(1.0j * y)
 
     truth = [
         np.asarray(
@@ -1017,7 +1017,7 @@ def test_to_mono_multi(y):
     assert len(y_mono) == y.shape[-1]
 
 
-@pytest.mark.parametrize("data", [np.random.randn(32)])
+@pytest.mark.parametrize("data", [np.cos(np.arange(32))])
 @pytest.mark.parametrize("threshold", [0, 1e-10])
 @pytest.mark.parametrize("ref_magnitude", [None, 0.1, np.max])
 @pytest.mark.parametrize("pad", [False, True])
@@ -1542,7 +1542,7 @@ def test_db_to_power_scalar():
 
 
 @pytest.mark.parametrize("ref_p", range(-3, 4))
-@pytest.mark.parametrize("xp", [(np.abs(np.random.randn(1000)) + 1e-5) ** 2])
+@pytest.mark.parametrize("xp", [np.arange(1e-5, 500, 0.5) ** 2])
 def test_db_to_power_inv(ref_p, xp):
 
     ref = 10.0**ref_p
@@ -1566,7 +1566,7 @@ def test_db_to_power(erp, db):
 
 
 @pytest.mark.parametrize("ref_p", range(-3, 4))
-@pytest.mark.parametrize("xp", [np.abs(np.random.randn(1000)) + 1e-5])
+@pytest.mark.parametrize("xp", [np.arange(1e-5, 500, 0.5)])
 def test_db_to_amplitude_inv(xp, ref_p):
 
     ref = 10.0**ref_p
@@ -1765,7 +1765,7 @@ def test_fmt_scale(y_orig, y_res, n_fmt, kind, atol, SCALE, OVER_SAMPLE):
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize("y", [np.random.randn(128)])
+@pytest.mark.parametrize("y", [np.ones(128)])
 @pytest.mark.parametrize(
     "t_min,n_fmt,over_sample",
     [
