@@ -22,8 +22,6 @@ import scipy.stats
 
 import pytest
 
-from test_core import srand
-
 
 def __test_cqt_size(
     y,
@@ -487,9 +485,8 @@ def sr_white():
 
 
 @pytest.fixture(scope="module")
-def y_white(sr_white):
-    srand()
-    return np.random.randn(10 * sr_white)
+def y_white(sr_white, rng_mod):
+    return rng_mod.standard_normal(size=10 * sr_white)
 
 
 @pytest.mark.parametrize("scale", [False, True])

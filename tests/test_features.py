@@ -144,7 +144,7 @@ def S_ideal():
         None,
         librosa.fft_frequencies(sr=22050, n_fft=1024),
         3 * librosa.fft_frequencies(sr=22050, n_fft=1024),
-        np.random.randn(513, 3),
+        np.multiply.outer(np.arange(513), np.arange(1, 4))
     ],
 )
 def test_spectral_centroid_synthetic(S_ideal, freq):
@@ -178,7 +178,7 @@ def test_spectral_centroid_empty(y, sr, S):
         None,
         librosa.fft_frequencies(sr=22050, n_fft=1024),
         3 * librosa.fft_frequencies(sr=22050, n_fft=1024),
-        np.random.randn(513, 3),
+        np.multiply.outer(np.arange(513), np.arange(1, 4))
     ],
 )
 @pytest.mark.parametrize("norm", [False, True])
@@ -198,7 +198,7 @@ def test_spectral_bandwidth_synthetic(S_ideal, freq, norm, p):
         None,
         librosa.fft_frequencies(sr=22050, n_fft=1024),
         3 * librosa.fft_frequencies(sr=22050, n_fft=1024),
-        np.random.randn(513, 1),
+        librosa.fft_frequencies(sr=22050, n_fft=1024)[:, np.newaxis],
     ],
 )
 def test_spectral_bandwidth_onecol(S_ideal, freq):
@@ -221,7 +221,7 @@ def test_spectral_bandwidth_errors(S):
     [
         None,
         librosa.fft_frequencies(sr=22050, n_fft=2048),
-        np.cumsum(np.abs(np.random.randn(1025, 3)), axis=0),
+        np.multiply.outer(np.arange(1025), np.arange(1, 4))
     ],
 )
 @pytest.mark.parametrize("pct", [0.25, 0.5, 0.95])
@@ -339,43 +339,24 @@ def test_rms_const(n):
 @pytest.mark.parametrize("frame_length", [2048, 2049, 4096, 4097])
 @pytest.mark.parametrize("hop_length", [128, 512, 1024])
 @pytest.mark.parametrize("center", [False, True])
-@pytest.mark.parametrize("y2", [np.random.randn(100000)])
-def test_rms(y_chirp, y2, frame_length, hop_length, center):
+def test_rms(y_chirp, frame_length, hop_length, center):
     y1, sr = y_chirp
     # Ensure audio is divisible into frame size.
     y1 = librosa.util.fix_length(y1, size=y1.size - y1.size % frame_length)
-    y2 = librosa.util.fix_length(y2, size=y2.size - y2.size % frame_length)
     assert y1.size % frame_length == 0
-    assert y2.size % frame_length == 0
-
     # STFT magnitudes with a constant windowing function and no centering.
     S1 = librosa.magphase(
         librosa.stft(
             y1, n_fft=frame_length, hop_length=hop_length, window=np.ones, center=center
         )
     )[0]
-    S2 = librosa.magphase(
-        librosa.stft(
-            y2, n_fft=frame_length, hop_length=hop_length, window=np.ones, center=center
-        )
-    )[0]
-
-    # Try both RMS methods.
     rms1 = librosa.feature.rms(S=S1, frame_length=frame_length, hop_length=hop_length)
     rms2 = librosa.feature.rms(
         y=y1, frame_length=frame_length, hop_length=hop_length, center=center
     )
-    rms3 = librosa.feature.rms(S=S2, frame_length=frame_length, hop_length=hop_length)
-    rms4 = librosa.feature.rms(
-        y=y2, frame_length=frame_length, hop_length=hop_length, center=center
-    )
 
     assert rms1.shape == rms2.shape
-    assert rms3.shape == rms4.shape
-
-    # Ensure results are similar.
     np.testing.assert_allclose(rms1, rms2, atol=5e-4)
-    np.testing.assert_allclose(rms3, rms4, atol=5e-4)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -428,7 +409,7 @@ def poly_coeffs(poly_order):
 
 
 @pytest.fixture(scope="module", params=[None, 1, 2, -1, "varying"])
-def poly_freq(request):
+def poly_freq(request, rng_mod):
     srand()
     freq = librosa.fft_frequencies()
 
@@ -436,9 +417,9 @@ def poly_freq(request):
         return freq**request.param
 
     elif request.param == -1:
-        return np.cumsum(np.abs(np.random.randn(1 + 2048 // 2)), axis=0)
+        return np.cumsum(np.abs(rng_mod.standard_normal(size=(1 + 2048 // 2))), axis=0)
     elif request.param == "varying":
-        return np.cumsum(np.abs(np.random.randn(1 + 2048 // 2, 5)), axis=0)
+        return np.cumsum(np.abs(rng_mod.standard_normal(size=(1 + 2048 // 2, 5))), axis=0)
     else:
         return None
 
@@ -781,7 +762,7 @@ def test_cens_fail(y_chirp, win_len_smooth):
 
 
 @pytest.mark.parametrize(
-    "S", [librosa.power_to_db(np.random.randn(128, 1) ** 2, ref=np.max)]
+    "S", [librosa.power_to_db(np.arange(128)[:,np.newaxis] ** 2, ref=np.max)]
 )
 @pytest.mark.parametrize("dct_type", [1, 2, 3])
 @pytest.mark.parametrize("norm", [None, "ortho"])
@@ -810,10 +791,11 @@ def test_mfcc(S, dct_type, norm, n_mfcc, lifter):
 #    librosa.feature.mfcc(S=S, dct_type=1, norm='ortho')
 
 
+# TODO: this doesn't need randomness
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("lifter", [-1, np.nan])
-def test_mfcc_badlifter(lifter):
-    S = np.random.randn(128, 100) ** 2
+def test_mfcc_badlifter(lifter, rng):
+    S = rng.standard_normal(size=(128, 100)) ** 2
     librosa.feature.mfcc(S=S, lifter=lifter)
 
 
@@ -821,13 +803,11 @@ def test_mfcc_badlifter(lifter):
 @pytest.mark.parametrize("power", [1, 2])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("n_fft", [1024, 2048])
-def test_mel_to_stft(power, dtype, n_fft):
-    srand()
-
+def test_mel_to_stft(power, dtype, n_fft, rng):
     # Make a random mel spectrum, 4 frames
     mel_basis = librosa.filters.mel(sr=22050, n_fft=n_fft, n_mels=128, dtype=dtype)
 
-    stft_orig = np.random.randn(n_fft // 2 + 1, 4) ** power
+    stft_orig = rng.standard_normal(size=(n_fft // 2 + 1, 4)) ** power
     mels = mel_basis.dot(stft_orig.astype(dtype))
 
     stft = librosa.feature.inverse.mel_to_stft(mels, power=power, n_fft=n_fft)

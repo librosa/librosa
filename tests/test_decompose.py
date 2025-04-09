@@ -18,8 +18,6 @@ import sklearn.decomposition
 
 import pytest
 
-from test_core import srand
-
 
 def test_default_decompose():
 
@@ -41,9 +39,8 @@ def test_given_decompose():
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
 
-def test_decompose_fit():
+def test_decompose_fit(rng):
 
-    srand()
 
     D = sklearn.decomposition.NMF(random_state=0)
 
@@ -53,7 +50,7 @@ def test_decompose_fit():
     (W, H) = librosa.decompose.decompose(X, transformer=D, fit=True)
 
     # Make random data and decompose with the same basis
-    X = np.asarray(np.random.randn(*X.shape) ** 2)
+    X = np.asarray(rng.standard_normal(size=X.shape) ** 2)
     (W2, H2) = librosa.decompose.decompose(X, transformer=D, fit=False)
 
     # Make sure the basis hasn't changed
@@ -66,9 +63,8 @@ def test_decompose_multi_sort():
 
 
 @pytest.mark.filterwarnings("ignore:Maximum number of iterations")
-def test_decompose_multi():
-    srand()
-    X = np.random.random_sample(size=(2, 20, 100))
+def test_decompose_multi(rng):
+    X = rng.random(size=(2, 20, 100))
 
     # Fit with multichannel data
     components, activations = librosa.decompose.decompose(
@@ -149,10 +145,9 @@ def test_complex_hpss(D22050):
     assert np.allclose(H + P, D22050)
 
 
-def test_nn_filter_mean():
+def test_nn_filter_mean(rng):
 
-    srand()
-    X = np.random.randn(10, 100)
+    X = rng.standard_normal(size=(10, 100))
 
     # Build a recurrence matrix, just for testing purposes
     rec = librosa.segment.recurrence_matrix(X)
@@ -165,10 +160,9 @@ def test_nn_filter_mean():
     assert np.allclose(X_filtered, X.dot(rec))
 
 
-def test_nn_filter_mean_rec():
+def test_nn_filter_mean_rec(rng):
 
-    srand()
-    X = np.random.randn(10, 100)
+    X = rng.standard_normal(size=(10, 100))
 
     # Build a recurrence matrix, just for testing purposes
     rec = librosa.segment.recurrence_matrix(X)
@@ -186,10 +180,9 @@ def test_nn_filter_mean_rec():
     assert np.allclose(X_filtered[:, 3:], (X.dot(rec))[:, 3:])
 
 
-def test_nn_filter_mean_rec_sparse():
+def test_nn_filter_mean_rec_sparse(rng):
 
-    srand()
-    X = np.random.randn(10, 100)
+    X = rng.standard_normal(size=(10, 100))
 
     # Build a recurrence matrix, just for testing purposes
     rec = librosa.segment.recurrence_matrix(X, sparse=True)
@@ -229,10 +222,9 @@ def test_nn_filter_multi(s_multi, useR, sparse):
     assert not np.allclose(s_filt0, s_filt1)
 
 
-def test_nn_filter_avg():
+def test_nn_filter_avg(rng):
 
-    srand()
-    X = np.random.randn(10, 100)
+    X = rng.standard_normal(size=(10, 100))
 
     # Build a recurrence matrix, just for testing purposes
     rec = librosa.segment.recurrence_matrix(X, mode="affinity")
@@ -251,11 +243,10 @@ def test_nn_filter_avg():
 )
 @pytest.mark.parametrize("sparse", [False, True])
 @pytest.mark.parametrize("data", [np.zeros((10, 100))])
-def test_nn_filter_badselfsim(data, x, y, sparse):
+def test_nn_filter_badselfsim(data, x, y, sparse, rng):
 
-    srand()
     # Build a recurrence matrix, just for testing purposes
-    rec = np.random.randn(x, y)
+    rec = rng.standard_normal(size=(x, y))
     if sparse:
         rec = scipy.sparse.csr_matrix(rec)
 
