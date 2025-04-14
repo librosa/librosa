@@ -41,7 +41,6 @@ def test_given_decompose():
 
 def test_decompose_fit(rng):
 
-
     D = sklearn.decomposition.NMF(random_state=0)
 
     X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
@@ -100,7 +99,9 @@ def test_sorted_decompose():
 def y22050():
     sr = 22050
     y = librosa.chirp(fmin=55, fmax=880, sr=sr, duration=5.0)
-    y += librosa.clicks(times=np.arange(0, 5, 0.5), sr=sr, length=len(y), click_duration=0.25)
+    y += librosa.clicks(
+        times=np.arange(0, 5, 0.5), sr=sr, length=len(y), click_duration=0.25
+    )
     return y
 
 

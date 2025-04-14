@@ -157,7 +157,8 @@ def test_viterbi_bad_init(trans, p_init, rng):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("trans", [np.ones((3, 3), dtype=float) / 3])
 @pytest.mark.parametrize(
-    "offset", [2, -1],
+    "offset",
+    [2, -1],
     ids=["p>1", "p<0"],
 )
 def test_viterbi_bad_obs(trans, offset, rng):
@@ -474,7 +475,8 @@ def test_viterbi_binary_example_init():
 
 @pytest.fixture(scope="module")
 def x_data(rng_mod):
-    return rng_mod.standard_normal(size=(3,5))**2
+    return rng_mod.standard_normal(size=(3, 5)) ** 2
+
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize(

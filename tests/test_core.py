@@ -110,9 +110,7 @@ def test_segment_load():
     assert np.allclose(y, y2[:, sample_offset : sample_offset + fs])
 
 
-@pytest.fixture(
-    scope="module", params=[22050, 44100]
-)
+@pytest.fixture(scope="module", params=[22050, 44100])
 def resample_audio(request):
     sr = request.param
     # Make a tone
@@ -120,7 +118,6 @@ def resample_audio(request):
     # Make stereo
     y = np.vstack([y, y])
     return (y, sr)
-
 
 
 @pytest.fixture(scope="module")
@@ -263,13 +260,15 @@ def test_resample_poly_float(sr_in, sr_out):
     librosa.resample(y, orig_sr=sr_in, target_sr=sr_out, res_type="polyphase")
 
 
-@pytest.mark.parametrize('center', [False, True])
-@pytest.mark.parametrize('n_fft', [256, 501])
-@pytest.mark.parametrize('window', ['hann', 'ones'])
-@pytest.mark.parametrize('hop_length', [None, 128])
+@pytest.mark.parametrize("center", [False, True])
+@pytest.mark.parametrize("n_fft", [256, 501])
+@pytest.mark.parametrize("window", ["hann", "ones"])
+@pytest.mark.parametrize("hop_length", [None, 128])
 def test_stft(y_22050, n_fft, window, hop_length, center):
 
-    D = librosa.stft(y_22050, n_fft=n_fft, window=window, hop_length=hop_length, center=center)
+    D = librosa.stft(
+        y_22050, n_fft=n_fft, window=window, hop_length=hop_length, center=center
+    )
     assert D.ndim == 2
 
     assert D.shape[0] == (n_fft // 2 + 1)
@@ -285,15 +284,19 @@ def test_stft(y_22050, n_fft, window, hop_length, center):
     window = librosa.filters.get_window(window, n_fft, fftbins=True)
 
     if center:
-        y_frames = librosa.util.frame(np.pad(y_22050, n_fft // 2, mode='constant'), 
-                                      frame_length=n_fft, hop_length=hop_length)
+        y_frames = librosa.util.frame(
+            np.pad(y_22050, n_fft // 2, mode="constant"),
+            frame_length=n_fft,
+            hop_length=hop_length,
+        )
     else:
-        y_frames = librosa.util.frame(y_22050, frame_length=n_fft, hop_length=hop_length)
+        y_frames = librosa.util.frame(
+            y_22050, frame_length=n_fft, hop_length=hop_length
+        )
 
     D_direct = scipy.fft.rfft(y_frames * window[:, np.newaxis], axis=0)
 
     assert np.allclose(D_direct, D)
-
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -917,7 +920,7 @@ def test_get_duration_fail():
     librosa.get_duration(y=None, S=None, path=None)
 
 
-@pytest.mark.parametrize( "real", [True, False])
+@pytest.mark.parametrize("real", [True, False])
 @pytest.mark.parametrize("axis", [0, 1, -1])
 @pytest.mark.parametrize("max_size", [None, 128, 256, 512])
 def test_autocorrelate(real, axis, max_size, rng):
@@ -1490,7 +1493,6 @@ def test_power_to_db_inv(erp, k):
 
 
 def test_amplitude_to_db(rng):
-    
 
     NOISE_FLOOR = 1e-6
 
@@ -1504,7 +1506,7 @@ def test_amplitude_to_db(rng):
 
 
 def test_amplitude_to_db_complex(rng):
-    
+
     NOISE_FLOOR = 1e-6
 
     # Make some noise
@@ -1788,7 +1790,7 @@ def test_fmt_fail_badinput(y):
 
 
 def test_fmt_axis(rng):
-    
+
     y = rng.standard_normal(size=(32, 32))
 
     f1 = librosa.fmt(y, axis=-1)
@@ -2102,7 +2104,7 @@ def test_pcen_zeros(max_size, Z):
 
 
 def test_pcen_axes(rng):
-    
+
     # Make a power spectrogram
     X = rng.standard_normal(size=(3, 100, 50)) ** 2
 
@@ -2145,7 +2147,7 @@ def test_pcen_axes(rng):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_pcen_axes_nomax(rng):
-    
+
     # Make a power spectrogram
     X = rng.standard_normal(size=(3, 100, 50)) ** 2
 
@@ -2159,7 +2161,7 @@ def test_pcen_max1():
 
 
 def test_pcen_ref(rng):
-    
+
     # Make a power spectrogram
     X = rng.standard_normal(size=(100, 50)) ** 2
 
@@ -2195,7 +2197,7 @@ def test_pcen_stream(x):
 
 @pytest.mark.parametrize("axis", [0, 1, 2, -2, -1])
 def test_pcen_stream_multi(axis, rng):
-    
+
     # Generate a random power spectrum
     x = rng.standard_normal(size=(20, 50, 60)) ** 2
 

@@ -144,7 +144,7 @@ def S_ideal():
         None,
         librosa.fft_frequencies(sr=22050, n_fft=1024),
         3 * librosa.fft_frequencies(sr=22050, n_fft=1024),
-        np.multiply.outer(np.arange(513), np.arange(1, 4))
+        np.multiply.outer(np.arange(513), np.arange(1, 4)),
     ],
 )
 def test_spectral_centroid_synthetic(S_ideal, freq):
@@ -178,7 +178,7 @@ def test_spectral_centroid_empty(y, sr, S):
         None,
         librosa.fft_frequencies(sr=22050, n_fft=1024),
         3 * librosa.fft_frequencies(sr=22050, n_fft=1024),
-        np.multiply.outer(np.arange(513), np.arange(1, 4))
+        np.multiply.outer(np.arange(513), np.arange(1, 4)),
     ],
 )
 @pytest.mark.parametrize("norm", [False, True])
@@ -221,7 +221,7 @@ def test_spectral_bandwidth_errors(S):
     [
         None,
         librosa.fft_frequencies(sr=22050, n_fft=2048),
-        np.multiply.outer(np.arange(1025), np.arange(1, 4))
+        np.multiply.outer(np.arange(1025), np.arange(1, 4)),
     ],
 )
 @pytest.mark.parametrize("pct", [0.25, 0.5, 0.95])
@@ -418,7 +418,9 @@ def poly_freq(request, rng_mod):
     elif request.param == -1:
         return np.cumsum(np.abs(rng_mod.standard_normal(size=(1 + 2048 // 2))), axis=0)
     elif request.param == "varying":
-        return np.cumsum(np.abs(rng_mod.standard_normal(size=(1 + 2048 // 2, 5))), axis=0)
+        return np.cumsum(
+            np.abs(rng_mod.standard_normal(size=(1 + 2048 // 2, 5))), axis=0
+        )
     else:
         return None
 
@@ -761,7 +763,7 @@ def test_cens_fail(y_chirp, win_len_smooth):
 
 
 @pytest.mark.parametrize(
-    "S", [librosa.power_to_db(np.arange(128)[:,np.newaxis] ** 2, ref=np.max)]
+    "S", [librosa.power_to_db(np.arange(128)[:, np.newaxis] ** 2, ref=np.max)]
 )
 @pytest.mark.parametrize("dct_type", [1, 2, 3])
 @pytest.mark.parametrize("norm", [None, "ortho"])

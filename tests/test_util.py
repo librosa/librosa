@@ -492,7 +492,7 @@ def test_localmin(ndim, axis, rng):
 @pytest.mark.parametrize("wait", [0, 1, 10])
 @pytest.mark.parametrize("delta", [0.05, 100.0])
 def test_peak_pick(d, pre_max, post_max, pre_avg, post_avg, delta, wait, rng):
-    x = rng.standard_normal(size=d)**2
+    x = rng.standard_normal(size=d) ** 2
     peaks = librosa.util.peak_pick(
         x,
         pre_max=pre_max,
@@ -556,7 +556,7 @@ def test_peak_pick(d, pre_max, post_max, pre_avg, post_avg, delta, wait, rng):
 )
 @pytest.mark.parametrize("d", [1, 5, 10, 100])
 def test_peak_pick_fail(d, pre_max, post_max, pre_avg, post_avg, delta, wait, rng):
-    x = rng.standard_normal(size=d)**2
+    x = rng.standard_normal(size=d) ** 2
     librosa.util.peak_pick(
         x,
         pre_max=pre_max,
@@ -687,9 +687,7 @@ def test_find_files_nonrecurse(search_files):
 @pytest.mark.parametrize("ext", ["WAV", ["WAV"]])
 def test_find_files_case_sensitive(search_files, ext):
     searchdir, files = search_files
-    files = librosa.util.find_files(
-        searchdir, ext=ext, case_sensitive=True
-    )
+    files = librosa.util.find_files(searchdir, ext=ext, case_sensitive=True)
     # On windows, this test won't work
     if platform.system() != "Windows":
         assert len(files) == 0
