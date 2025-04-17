@@ -1413,9 +1413,9 @@ def phase_vocoder(
 
     t_out : np.ndarray [shape=(n_output,)], optional
         Optional array of fractional input frame indices specifying the input time
-        corresponding to each output frame. Values must lie in [0, n_frames). 
+        corresponding to each output frame. Values must lie in [0, n_frames).
         This can be used for variable-rate time-stretching.
-        If given, `rate` must be None. 
+        If given, `rate` must be None.
 
     kind : str
         Interpolation kind for magnitude interpolation.
