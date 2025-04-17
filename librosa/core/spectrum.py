@@ -1468,7 +1468,7 @@ def phase_vocoder(
     i1 = np.minimum(i0 + 1, n_frames - 1)
 
     # Unwrapped phase
-    ph = np.unwrap(np.angle(D), axis=-1)
+    ph = np.angle(D)
 
     # Phase differences for each output frame
     diff = ph[..., i1] - ph[..., i0]  # (..., n_bins, n_out)
