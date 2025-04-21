@@ -1493,8 +1493,8 @@ def phase_vocoder(
         copy=False,
     )
 
-    mags = mag_interp(t_out)
-    return util.phasor(phase, mag=mags)
+    D_out: np.ndarray = util.phasor(phase, mag=mag_interp(t_out))
+    return D_out
 
 
 @cache(level=20)
