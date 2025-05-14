@@ -36,7 +36,7 @@ OLD_FT = not (FT_VERSION >= version.parse("2.10"))
 @pytest.fixture
 def audio():
 
-    __EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
+    __EXAMPLE_FILE = os.path.join("tests", "test_audio.ogg")
     y, sr = librosa.load(__EXAMPLE_FILE)
     return y, sr
 
