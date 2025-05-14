@@ -486,6 +486,13 @@ def test_tonnetz_msaf():
     assert tonnetz.shape[0] == 6
     assert np.allclose(tonnetz_msaf, tonnetz)
 
+    # TODO: replace this regression test with a proper test using synthetic chroma features
+    # we can compare the following chords:
+    #   maj3
+    #   min3
+    #   augmented: empty on 5 and M3, 3 distinct values on m3
+    #   dim7: empty on 5 and m3, 3 distinct values on M3
+
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_tempogram_fail_noinput():
