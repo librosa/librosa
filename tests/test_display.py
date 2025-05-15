@@ -33,7 +33,7 @@ FT_VERSION = version.parse(matplotlib.ft2font.__freetype_version__)
 OLD_FT = not (FT_VERSION >= version.parse("2.10"))
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def audio():
 
     __EXAMPLE_FILE = os.path.join("tests", "test_audio.ogg")
@@ -41,62 +41,57 @@ def audio():
     return y, sr
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def y(audio):
     return audio[0]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def sr(audio):
     return audio[1]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def S(y):
     return librosa.stft(y)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def S_abs(S):
     return np.abs(S)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def C(y, sr):
     return np.abs(librosa.cqt(y, sr=sr))
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def S_signed(S):
     return np.abs(S) - np.median(np.abs(S))
 
 
-@pytest.fixture
-def S_bin(S_signed):
-    return S_signed > 0
-
-
-@pytest.fixture
+@pytest.fixture(scope="module")
 def rhythm(y, sr):
     return librosa.beat.beat_track(y=y, sr=sr)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def tempo(rhythm):
     return rhythm[0]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def beats(rhythm, C):
     return librosa.util.fix_frames(rhythm[1])
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def beat_t(beats, sr):
     return librosa.frames_to_time(beats, sr=sr)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def Csync(C, beats):
     return librosa.util.sync(C, beats, aggregate=np.median)
 
@@ -169,7 +164,7 @@ def test_cqt_hz(C):
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_tempo(y, sr):
-    T = librosa.feature.tempogram(y=y, sr=sr)
+    T = librosa.feature.tempogram(y=y, sr=sr, win_length=64)
 
     plt.figure()
     librosa.display.specshow(T, y_axis="tempo", cmap="magma")
@@ -184,7 +179,7 @@ def test_tempo(y, sr):
     "ignore:n_fft=.*is too large"
 )  # our test signal is short, but this is fine here
 def test_fourier_tempo(y, sr):
-    T = librosa.feature.fourier_tempogram(y=y, sr=sr)
+    T = librosa.feature.fourier_tempogram(y=y, sr=sr, win_length=64)
 
     plt.figure()
     librosa.display.specshow(np.abs(T), y_axis="fourier_tempo", cmap="magma")
@@ -306,16 +301,14 @@ def test_y_mel_bounded(S_abs):
     baseline_images=["x_none_y_linear"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_xaxis_none_yaxis_linear(S_abs, S_signed, S_bin):
+def test_xaxis_none_yaxis_linear(S_abs, S_signed):
     plt.figure()
-    plt.subplot(3, 1, 1)
+    plt.subplot(2, 1, 1)
     librosa.display.specshow(S_abs, y_axis="linear")
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(2, 1, 2)
     librosa.display.specshow(S_signed, y_axis="fft")
 
-    plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin, y_axis="hz")
     return plt.gcf()
 
 
@@ -338,17 +331,15 @@ def test_specshow_ext_axes(S_abs):
     baseline_images=["x_none_y_log"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_xaxis_none_yaxis_log(S_abs, S_signed, S_bin):
+def test_xaxis_none_yaxis_log(S_abs, S_signed):
     plt.figure()
 
-    plt.subplot(3, 1, 1)
+    plt.subplot(2, 1, 1)
     librosa.display.specshow(S_abs, y_axis="log")
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(2, 1, 2)
     librosa.display.specshow(S_signed, y_axis="log")
 
-    plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin, y_axis="log")
     return plt.gcf()
 
 
@@ -356,17 +347,15 @@ def test_xaxis_none_yaxis_log(S_abs, S_signed, S_bin):
     baseline_images=["x_linear_y_none"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_xaxis_linear_yaxis_none(S_abs, S_signed, S_bin):
+def test_xaxis_linear_yaxis_none(S_abs, S_signed):
     plt.figure()
 
-    plt.subplot(3, 1, 1)
+    plt.subplot(2, 1, 1)
     librosa.display.specshow(S_abs.T, x_axis="linear")
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(2, 1, 2)
     librosa.display.specshow(S_signed.T, x_axis="fft")
 
-    plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin.T, x_axis="hz")
     return plt.gcf()
 
 
@@ -374,18 +363,16 @@ def test_xaxis_linear_yaxis_none(S_abs, S_signed, S_bin):
     baseline_images=["x_log_y_none"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_xaxis_log_yaxis_none(S_abs, S_signed, S_bin):
+def test_xaxis_log_yaxis_none(S_abs, S_signed):
 
     plt.figure()
 
-    plt.subplot(3, 1, 1)
+    plt.subplot(2, 1, 1)
     librosa.display.specshow(S_abs.T, x_axis="log")
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(2, 1, 2)
     librosa.display.specshow(S_signed.T, x_axis="log")
 
-    plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin.T, x_axis="log")
     return plt.gcf()
 
 

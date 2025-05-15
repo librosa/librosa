@@ -134,12 +134,13 @@ jobs:
           shell: bash -l {0}
           run: pytest --mpl-results-path=mpl_image_results/
 
-        - name: Upload test results if non-empty
+        - name: Upload image comparison failures if any
           if: failure() && hashFiles('mpl_image_results/**') != ''
           uses: actions/upload-artifact@v4
           with:
             name: mpl-test-results
             path: mpl_image_results/
+            retention-days: 7
 
         - name: Upload coverage to Codecov
           uses: codecov/codecov-action@v5
