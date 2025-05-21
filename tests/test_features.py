@@ -474,6 +474,7 @@ def test_tonnetz_cqt(y_chirp):
     assert tonnetz.shape[0] == 6
 
 
+# TODO: rewrite this test
 def test_tonnetz_msaf():
     # Use pre-computed chroma
     tonnetz_chroma = np.load(
@@ -724,6 +725,7 @@ def test_fourier_tempogram_invert(sr, hop_length, win_length, center, window):
     assert np.allclose(odf_inv[sl], odf[sl], atol=1e-6)
 
 
+# TODO: rewrite this test
 def test_cens():
     # load CQT data from Chroma Toolbox
     ct_cqt = load(os.path.join("tests", "data", "features-CT-cqt.mat"))

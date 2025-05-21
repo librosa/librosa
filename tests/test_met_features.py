@@ -40,6 +40,7 @@ def met_stft(y, n_fft, hop_length, win_length, normalize):
     return S
 
 
+# TODO: rewrite this test to work in-place
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "met-centroid-*.mat"))
 )
@@ -61,6 +62,7 @@ def test_spectral_centroid(infile):
     assert np.allclose(centroid, DATA["centroid"])
 
 
+# TODO: rewrite this test
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "met-contrast-*.mat"))
 )
@@ -82,6 +84,7 @@ def test_spectral_contrast(infile):
     assert np.allclose(contrast, DATA["contrast"], rtol=1e-3, atol=1e-2)
 
 
+# TODO: rewrite this test
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "met-rolloff-*.mat"))
 )
@@ -104,6 +107,7 @@ def test_spectral_rolloff(infile):
     assert np.allclose(rolloff, DATA["rolloff"])
 
 
+# TODO: rewrite this test
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "met-bandwidth-*.mat"))
 )

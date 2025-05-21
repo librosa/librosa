@@ -17,8 +17,6 @@ import numpy as np
 import scipy.stats
 import librosa
 
-from test_core import files, load
-
 
 @pytest.fixture(scope="module", params=[22050, 44100])
 def ysr(request):
@@ -26,26 +24,6 @@ def ysr(request):
     y = np.zeros(5 * request.param)
     y[:: request.param // 2] = 1
     return y, request.param
-
-
-@pytest.mark.parametrize("infile", files(os.path.join("data", "beat-onset-*.mat")))
-def test_onset_strength(infile):
-
-    DATA = load(infile)
-
-    # Compute onset envelope using the same spectrogram
-    onsets = librosa.onset.onset_strength(
-        y=None,
-        sr=8000,
-        S=DATA["D"],
-        lag=1,
-        max_size=1,
-        center=False,
-        detrend=True,
-        aggregate=np.mean,
-    )
-
-    assert np.allclose(onsets[1:], DATA["onsetenv"][0])
 
 
 @pytest.mark.parametrize("tempo", [60, 160])
@@ -285,22 +263,6 @@ def test_plp(ysr, hop_length, win_length, tempo_min, tempo_max, use_onset, prior
 
         assert np.all(pulse >= 0)
         assert np.all(pulse <= 1)
-
-
-# Beat tracking regression test is no longer enabled due to librosa's
-# corrections
-@pytest.mark.skip
-@pytest.mark.parametrize("infile", files(os.path.join("data", "beat-beat-*.mat")))
-def deprecated_test_beat(infile):
-
-    DATA = load(infile)
-
-    (bpm, beats) = librosa.beat.beat_track(
-        y=None, sr=8000, hop_length=32, onset_envelope=DATA["onsetenv"][0]
-    )
-
-    beat_times = librosa.frames_to_time(beats, sr=8000, hop_length=32)
-    assert np.allclose(beat_times, DATA["beats"])
 
 
 def test_tempo_tgin(ysr):

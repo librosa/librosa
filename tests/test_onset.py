@@ -143,15 +143,14 @@ def melspec_sr(ysr):
     return S, sr
 
 
-# TODO: reduce this parameter grid
 @pytest.mark.parametrize(
-    "feature", [None, librosa.feature.melspectrogram, librosa.feature.chroma_stft]
+    "feature", [None, librosa.feature.chroma_stft]
 )
 @pytest.mark.parametrize("n_fft", [512, 2048])
 @pytest.mark.parametrize("hop_length", [256, 512])
 @pytest.mark.parametrize("detrend", [False, True])
 @pytest.mark.parametrize("center", [False, True])
-@pytest.mark.parametrize("aggregate", [None, np.mean, np.max])
+@pytest.mark.parametrize("aggregate", [None, np.max])
 def test_onset_strength_spectrogram(
     melspec_sr, feature, n_fft, hop_length, detrend, center, aggregate
 ):
