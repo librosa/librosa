@@ -3,12 +3,12 @@
 
 import warnings
 import numpy as np
+import scipy
 
 import pytest
 
 import librosa
 
-from test_core import load
 
 # Disable cache
 import os
@@ -742,43 +742,59 @@ def test_fourier_tempogram_invert(sr, hop_length, win_length, center, window):
     assert np.allclose(odf_inv[sl], odf[sl], atol=1e-6)
 
 
-# TODO: rewrite this test
-def test_cens():
-    # load CQT data from Chroma Toolbox
-    ct_cqt = load(os.path.join("tests", "data", "features-CT-cqt.mat"))
+@pytest.fixture(scope="module")
+def cens_cqt():
 
-    fn_ct_chroma_cens = [
-        "features-CT-CENS_9-2.mat",
-        "features-CT-CENS_21-5.mat",
-        "features-CT-CENS_41-1.mat",
-    ]
+    # A synthetic CQT matrix with the following properties
+    #   - 12 bins per octave
+    #   - 4 octaves
+    #   - Each frame adds one more note
+    #       - 1 and 2 notes: full energy in cens
+    #       - 2 and 3 notes: 75%
+    #       - 3-5 notes: 50%
+    #       - > 5 notes: 25%
 
-    cens_params = [(9, 2), (21, 5), (41, 1)]
+    # We'll start with one octave and tile it
+    C = np.tri(12, M=8, k=-4)[::-1, ::-1]
+    C[:, -1] = 1
+    C = np.tile(C, (4, 1))
+    return C
 
-    for cur_test_case, cur_fn_ct_chroma_cens in enumerate(fn_ct_chroma_cens):
-        win_len_smooth = cens_params[cur_test_case][0]
-        downsample_smooth = cens_params[cur_test_case][1]
 
-        # plug into librosa cens computation
-        lr_chroma_cens = librosa.feature.chroma_cens(
-            C=ct_cqt["f_cqt"],
-            win_len_smooth=win_len_smooth,
-            fmin=librosa.core.midi_to_hz(1),
-            bins_per_octave=12,
-            n_octaves=10,
-        )
+def test_cens_nosmooth_nonorm(cens_cqt):
+    cens = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=None, norm=None, bins_per_octave=12)
 
-        # leaving out frames to match chroma toolbox behaviour
-        # lr_chroma_cens = librosa.resample(lr_chroma_cens, orig_sr=1, target_sr=1/downsample_smooth)
-        lr_chroma_cens = lr_chroma_cens[:, ::downsample_smooth]
+    # Last frame is uniform, so should be all 0.25
+    assert np.allclose(cens[:, -1], 0.25)
 
-        # load CENS-41-1 features
-        ct_chroma_cens = load(os.path.join("tests", "data", cur_fn_ct_chroma_cens))
+    # Value sequence for this data:
+    values = [1, 1, .75, .75, .5, .5, .5]
 
-        maxdev = np.abs(ct_chroma_cens["f_CENS"] - lr_chroma_cens)
-        assert np.allclose(
-            ct_chroma_cens["f_CENS"], lr_chroma_cens, rtol=1e-15, atol=1e-15
-        ), maxdev
+    # Check the quantization for 1-7 notes in chroma
+    for i in range(cens.shape[-1]-1):
+        assert np.allclose(cens[:i+1, i], values[i])
+        assert np.allclose(cens[i+1:, i], 0.0)
+
+
+def test_cens_nosmooth(cens_cqt):
+    cens = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=None, norm=None, bins_per_octave=12)
+    cens1 = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=None, norm=1, bins_per_octave=12)
+    cens2 = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=None, norm=2, bins_per_octave=12)
+
+    assert np.allclose(librosa.util.normalize(cens, norm=1), cens1)
+    assert np.allclose(librosa.util.normalize(cens, norm=2), cens2)
+
+
+def test_cens_nonorm(cens_cqt):
+    cens = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=None, norm=None, bins_per_octave=12)
+    cens_s = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=3, norm=None, bins_per_octave=12)
+
+    # We add 2 on the window to match cens
+    filter = librosa.filters.get_window("hann", 3+2, fftbins=False)[np.newaxis, :]
+    # Ensure that filter is normalized to sum to 1
+    filter /= filter.sum()
+
+    assert np.allclose(scipy.signal.convolve(cens, filter, mode="same"), cens_s)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
