@@ -143,9 +143,7 @@ def melspec_sr(ysr):
     return S, sr
 
 
-@pytest.mark.parametrize(
-    "feature", [None, librosa.feature.chroma_stft]
-)
+@pytest.mark.parametrize("feature", [None, librosa.feature.chroma_stft])
 @pytest.mark.parametrize("n_fft", [512, 2048])
 @pytest.mark.parametrize("hop_length", [256, 512])
 @pytest.mark.parametrize("detrend", [False, True])

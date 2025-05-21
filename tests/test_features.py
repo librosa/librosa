@@ -474,25 +474,42 @@ def test_tonnetz_cqt(y_chirp):
     assert tonnetz.shape[0] == 6
 
 
-# TODO: rewrite this test
-def test_tonnetz_msaf():
-    # Use pre-computed chroma
-    tonnetz_chroma = np.load(
-        os.path.join("tests", "data", "feature-tonnetz-chroma.npy")
-    )
-    tonnetz_msaf = np.load(os.path.join("tests", "data", "feature-tonnetz-msaf.npy"))
+def test_tonnetz():
+    # Idealized chroma for [F#:dim, A:aug, A:dim7]
+    chroma = np.array([[1, 0, 1],
+                       [0, 1, 0],
+                       [0, 0, 0],
+                       [0, 0, 1],
+                       [0, 0, 0],
+                       [0, 1, 0],
+                       [1, 0, 1],
+                       [0, 0, 0],
+                       [0, 0, 0],
+                       [1, 1, 1],
+                       [0, 0, 0],
+                       [0, 0, 0]], dtype=float)
 
-    tonnetz = librosa.feature.tonnetz(chroma=tonnetz_chroma)
-    assert tonnetz.shape[1] == tonnetz_chroma.shape[1]
-    assert tonnetz.shape[0] == 6
-    assert np.allclose(tonnetz_msaf, tonnetz)
+    tonnetz = librosa.feature.tonnetz(chroma=chroma)
 
-    # TODO: replace this regression test with a proper test using synthetic chroma features
-    # we can compare the following chords:
-    #   maj3
-    #   min3
-    #   augmented: empty on 5 and M3, 3 distinct values on m3
-    #   dim7: empty on 5 and m3, 3 distinct values on M3
+    # F#:dim is [0, 6, 9]
+    #   --> fifths space (1/3, 0)
+    #   --> min3 space (-1/3, 0)
+    #   --> maj3 space (0, 1) 
+    #   .. but maj3 space is scaled by half in tonnetz
+    assert np.allclose(tonnetz[:, 0], [1/3, 0, -1/3, 0, 0, 0.5]) 
+
+    # A:aug is [1, 5, 9]
+    #   --> origin in fifths space  (0, 0)
+    #   --> left position in min3 space  (-1, 0)
+    #   --> origin position in maj3 space   (0, 0)
+    assert np.allclose(tonnetz[:, 1], [0, 0, -1, 0, 0, 0])
+
+    # A:dim7 is [0, 3, 6, 9]
+    #  --> origin in fifths space (0, 0)
+    #  --> left position in min3 space (0, 0)
+    #  --> right position in maj3 space (1, 0)  
+    #  .. but maj3 space is scaled by half in tonnetz
+    assert np.allclose(tonnetz[:, 2], [0, 0, 0, 0, 0, 0.5])
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -794,18 +811,10 @@ def test_mfcc(S, dct_type, norm, n_mfcc, lifter):
         assert np.var(mfcc[0] / E_total) <= 1e-29
 
 
-# This test is no longer relevant since scipy 1.2.0
-# @pytest.mark.xfail(raises=NotImplementedError)
-# def test_mfcc_dct1_ortho():
-#    S = np.ones((65, 3))
-#    librosa.feature.mfcc(S=S, dct_type=1, norm='ortho')
-
-
-# TODO: this doesn't need randomness
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("lifter", [-1, np.nan])
 def test_mfcc_badlifter(lifter, rng):
-    S = rng.standard_normal(size=(128, 100)) ** 2
+    S = np.ones((128, 100))
     librosa.feature.mfcc(S=S, lifter=lifter)
 
 

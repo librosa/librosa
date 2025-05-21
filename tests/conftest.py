@@ -11,6 +11,7 @@ def rng_factory():
     def _factory():
         # Use a fixed seed for reproducibility
         return np.random.default_rng(seed=440)
+
     return _factory
 
 

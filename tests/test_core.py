@@ -840,9 +840,7 @@ def test_istft_reconstruction(y_chirp_istft, n_fft, hop_length, window):
 @pytest.mark.parametrize("duration", [None, 0, 0.5, 1, 2])
 @pytest.mark.parametrize("mono", [False, True])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize(
-    "filename", [os.path.join("tests", "test_audio.ogg")]
-)
+@pytest.mark.parametrize("filename", [os.path.join("tests", "test_audio.ogg")])
 def test_load_options(filename, offset, duration, mono, dtype):
     y, sr = librosa.load(
         filename, mono=mono, offset=offset, duration=duration, dtype=dtype
