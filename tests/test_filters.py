@@ -48,30 +48,58 @@ def load(infile):
 
 
 # -- Tests     --#
-@pytest.mark.parametrize(
-    "infile", files(os.path.join("tests", "data", "feature-hz_to_mel-*.mat"))
-)
-def test_hz_to_mel(infile):
-    DATA = load(infile)
-    z = librosa.hz_to_mel(DATA["f"], htk=DATA["htk"])
+def test_hz_to_mel_htk():
+    # Test the HTK mel scale
+    freqs = np.array([0, 500, 1000, 2000, 3000])
+    mels = np.array([0., 607.44591966,  999.98553714, 1521.35955416, 1876.45406012])
 
-    assert np.allclose(z, DATA["result"])
+    mel_est = librosa.hz_to_mel(freqs, htk=True)
+    assert np.allclose(mel_est, mels)
+
+    # Test the scalar version as well
+    for f, m in zip(freqs, mels):
+        m_est = librosa.hz_to_mel(f, htk=True)
+        assert np.isclose(m_est, m)
+
+def test_hz_to_mel_sl():
+    # Test the Slaney mel scale
+    freqs = np.array([0, 500, 1000, 2000, 3000])
+    mels = np.array([ 0.,  7.5, 15., 25.08188016, 30.97940199])
+    mel_est = librosa.hz_to_mel(freqs, htk=False)
+    assert np.allclose(mel_est, mels)
+
+    # Test the scalar version as well
+    for f, m in zip(freqs, mels):
+        m_est = librosa.hz_to_mel(f, htk=False)
+        assert np.isclose(m_est, m)
 
 
-@pytest.mark.parametrize(
-    "infile", files(os.path.join("tests", "data", "feature-mel_to_hz-*.mat"))
-)
-def test_mel_to_hz(infile):
+def test_mel_to_hz_htk():
+    # Test the HTK mel scale
+    mels = np.array([   0.,  200,  400,  600,  800, 1000, 1200, 1400, 1600, 1800])
+    freqs = np.array([   0.        ,  135.92888249,  298.25299511,  492.09787234,
+        723.58434605, 1000.02181646, 1330.13905319, 1724.35981432,
+       2195.13198618, 2757.32063694])
+    freq_est = librosa.mel_to_hz(mels, htk=True)
+    assert np.allclose(freq_est, freqs)
 
-    DATA = load(infile)
-    z = librosa.mel_to_hz(DATA["f"], htk=DATA["htk"])
-    assert np.allclose(z, DATA["result"])
+    for f, m in zip(freqs, mels):
+        f_est = librosa.mel_to_hz(m, htk=True)
+        assert np.isclose(f_est, f)
 
-    # Test for scalar conversion too
-    z0 = librosa.mel_to_hz(DATA["f"][0], htk=DATA["htk"])
-    assert np.allclose(z0, DATA["result"][0])
+def test_mel_to_hz_sl():
+    # Test the Slaney mel scale
+    mels = np.array([0, 5, 10, 15, 25, 30])
+    freqs = np.array([0.,  333.33333333,  666.66666667, 1000., 1988.77281813, 2804.64413074])
+    freq_est = librosa.mel_to_hz(mels, htk=False)
+    assert np.allclose(freq_est, freqs)
+
+    for f, m in zip(freqs, mels):
+        f_est = librosa.mel_to_hz(m, htk=False)
+        assert np.isclose(f_est, f)
 
 
+# TODO: rewrite
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "feature-hz_to_octs-*.mat"))
 )
@@ -82,6 +110,7 @@ def test_hz_to_octs(infile):
     assert np.allclose(z, DATA["result"])
 
 
+# TODO: rewrite
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "feature-melfb-*.mat"))
 )
@@ -107,6 +136,7 @@ def test_melfb(infile):
     assert np.allclose(wts, DATA["wts"])
 
 
+# TODO: rewrite
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "feature-melfbnorm-*.mat"))
 )
@@ -166,6 +196,7 @@ def test_mel_gap():
         )
 
 
+# TODO: rewrite
 @pytest.mark.parametrize(
     "infile", files(os.path.join("tests", "data", "feature-chromafb-*.mat"))
 )
