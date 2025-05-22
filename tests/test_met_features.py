@@ -21,45 +21,36 @@ from test_core import load, files
 import librosa
 
 
-def met_stft(y, n_fft, hop_length, win_length, normalize):
+@pytest.fixture(scope="module")
+def y_tone():
+    """Generate a test tone for use in the tests"""
+    sr = 22050
+    n_fft = 2048
+    # Frequency should be an analysis frequency for standard nfft
 
-    S = np.abs(
-        librosa.stft(
-            y,
-            n_fft=n_fft,
-            hop_length=hop_length,
-            win_length=win_length,
-            window=scipy.signal.windows.hamming,
-            center=False,
-        )
-    )
+    freq = 50 * sr / n_fft  # ~538.33 Hz
 
-    if normalize:
-        S = S / (S[0] + np.sum(2 * S[1:], axis=0))
+    y = librosa.tone(freq, sr=sr, duration=1.0)
+
+    return y
+
+
+@pytest.fixture(scope="module")
+def S_tone(y_tone):
+    """Generate a test STFT for use in the tests"""
+    S = np.abs(librosa.stft(y_tone, n_fft=2048, center=False, window='ones'))
 
     return S
 
 
-# TODO: rewrite this test to work in-place
-@pytest.mark.parametrize(
-    "infile", files(os.path.join("tests", "data", "met-centroid-*.mat"))
-)
-def test_spectral_centroid(infile):
-    DATA = load(infile)
+def test_spectral_centroid(y_tone, S_tone):
 
-    y, sr = librosa.load(os.path.join("tests", DATA["wavfile"][0]), sr=None, mono=True)
+    # Tone was generated at a specific frequency that should line up precisely
+    centroid1 = librosa.feature.spectral_centroid(y=y_tone, S=None, center=False, window='ones', n_fft=2048, sr=22050)
+    centroid2 = librosa.feature.spectral_centroid(y=None, S=S_tone, center=False, window='ones', n_fft=2048, sr=22050)
 
-    n_fft = DATA["nfft"][0, 0].astype(int)
-    hop_length = DATA["hop_length"][0, 0].astype(int)
-
-    # spectralCentroid uses normalized spectra
-    S = met_stft(y, n_fft, hop_length, n_fft, True)
-
-    centroid = librosa.feature.spectral_centroid(
-        S=S, sr=sr, n_fft=n_fft, hop_length=hop_length
-    )
-
-    assert np.allclose(centroid, DATA["centroid"])
+    assert np.allclose(centroid1, 50 * 22050 / 2048)
+    assert np.allclose(centroid2, 50 * 22050 / 2048)
 
 
 # TODO: rewrite this test
