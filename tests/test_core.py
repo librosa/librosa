@@ -1912,6 +1912,7 @@ def test_show_versions():
     librosa.show_versions()
 
 
+# TODO: rewrite this one
 def test_iirt():
     gt = scipy.io.loadmat(
         os.path.join("tests", "data", "features-CT-cqt"), squeeze_me=True

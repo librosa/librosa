@@ -522,6 +522,7 @@ def test_get_window_pre(pre_win):
     assert np.allclose(win, pre_win)
 
 
+# TODO: rewrite this one
 def test_semitone_filterbank():
     # We test against Chroma Toolbox' elliptical semitone filterbank
     # load data from chroma toolbox
