@@ -99,15 +99,23 @@ def test_mel_to_hz_sl():
         assert np.isclose(f_est, f)
 
 
-# TODO: rewrite
-@pytest.mark.parametrize(
-    "infile", files(os.path.join("tests", "data", "feature-hz_to_octs-*.mat"))
-)
-def test_hz_to_octs(infile):
-    DATA = load(infile)
-    z = librosa.hz_to_octs(DATA["f"])
+def test_hz_to_octs_440():
+    freqs = np.array([220, 440, 660, 880])
+    octs = np.array([3, 4, 3 + np.log2(3), 5])
 
-    assert np.allclose(z, DATA["result"])
+    octs_est = librosa.hz_to_octs(freqs)
+    assert np.allclose(octs_est, octs)
+    for f, o in zip(freqs, octs):
+        o_est = librosa.hz_to_octs(f)
+        assert np.isclose(o_est, o)
+
+
+@pytest.mark.parametrize('bpo', [12, 24, 36])
+def test_hz_to_octs_detune(bpo):
+    # If we're off by one semitone, then the octave should be
+    # off by 1/bpo
+    oct = librosa.hz_to_octs(440, tuning=-1, bins_per_octave=bpo)
+    assert np.isclose(oct, 4 + 1 / bpo)
 
 
 # TODO: rewrite
