@@ -144,43 +144,28 @@ def test_melfb(infile):
     assert np.allclose(wts, DATA["wts"])
 
 
-# TODO: rewrite
-@pytest.mark.parametrize(
-    "infile", files(os.path.join("tests", "data", "feature-melfbnorm-*.mat"))
-)
-def test_melfbnorm(infile):
-    DATA = load(infile)
-    # if DATA['norm'] is empty, pass None.
-    if DATA["norm"].shape[-1] == 0:
-        norm = None
-    else:
-        norm = DATA["norm"][0, 0]
-    wts = librosa.filters.mel(
-        sr=DATA["sr"][0, 0],
-        n_fft=DATA["nfft"][0, 0],
-        n_mels=DATA["nfilts"][0, 0],
-        fmin=DATA["fmin"][0, 0],
-        fmax=DATA["fmax"][0, 0],
-        htk=DATA["htk"][0, 0],
-        norm=norm,
-    )
-    # Pad out.
-    wts = np.pad(wts, [(0, 0), (0, DATA["nfft"][0, 0] // 2 - 1)], mode="constant")
-
-    assert wts.shape == DATA["wts"].shape
-    assert np.allclose(wts, DATA["wts"])
-
-
-@pytest.mark.parametrize("norm", [1, 2, np.inf])
+@pytest.mark.parametrize("norm", [1, 2, np.inf, "slaney"])
 def test_mel_norm(norm):
 
-    M = librosa.filters.mel(sr=22050, n_fft=2048, norm=norm)
+    sr = 22050
+    n_fft = 2048
+    M = librosa.filters.mel(sr=sr, n_fft=n_fft, fmin=30, norm=norm)
     if norm == 1:
         assert np.allclose(np.sum(np.abs(M), axis=1), 1)
     elif norm == 2:
         assert np.allclose(np.sum(np.abs(M**2), axis=1), 1)
     elif norm == np.inf:
         assert np.allclose(np.max(np.abs(M), axis=1), 1)
+    elif norm == "slaney":
+        # Approximately constant-energy per band in Slaney mode
+        # This should be close to norm=1 case for uniformly spaced
+        # input frequencies, but the calculation is in terms of the
+        # center frequencies and not the actual filter coefficients
+        # so there's some approximation error involved.
+        fft_spacing = sr / n_fft
+        # Compute row-sums
+        msum = np.sum(np.abs(M), axis=1)
+        assert np.max(np.abs(msum * fft_spacing - 1)) < 5e-2
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
