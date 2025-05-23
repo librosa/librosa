@@ -395,10 +395,7 @@ def chroma(
 
     # Maybe apply scaling for fft bins
     if octwidth is not None:
-        wts *= np.tile(
-            np.exp(-0.5 * (((frqbins / n_chroma - ctroct) / octwidth) ** 2)),
-            (n_chroma, 1),
-        )
+        wts *= np.exp(-0.5 * (((frqbins / n_chroma - ctroct) / octwidth) ** 2))[np.newaxis, :]
 
     if base_c:
         wts = np.roll(wts, -3 * (n_chroma // 12), axis=0)

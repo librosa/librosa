@@ -29,17 +29,6 @@ from unittest import mock
 from typing import Any, Callable, Union, cast
 
 
-# -- utilities --#
-def files(pattern):
-    test_files = glob.glob(pattern)
-    test_files.sort()
-    return test_files
-
-
-def load(infile):
-    return scipy.io.loadmat(infile, chars_as_strings=True)
-
-
 def test_load_soundfile():
 
     fname = os.path.join("tests", "test_audio.ogg")

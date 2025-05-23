@@ -189,40 +189,68 @@ def test_mel_gap():
         )
 
 
-# TODO: rewrite
-@pytest.mark.parametrize(
-    "infile", files(os.path.join("tests", "data", "feature-chromafb-*.mat"))
-)
-def test_chromafb(infile):
+@pytest.mark.parametrize("n_chroma", [12, 24])
+@pytest.mark.parametrize("n_fft", [128, 256])
+def test_chroma_shape(n_chroma, n_fft):
+    cfb = librosa.filters.chroma(sr=22050, n_fft=n_fft, n_chroma=n_chroma)
 
-    DATA = load(infile)
+    assert cfb.shape == (n_chroma, n_fft // 2 + 1)
 
-    octwidth = DATA["octwidth"][0, 0]
-    if octwidth == 0:
-        octwidth = None
 
-    # Convert A440 parameter to tuning parameter
-    A440 = DATA["a440"][0, 0]
+@pytest.mark.parametrize("norm", [1, 2, np.inf, None])
+def test_chroma_norm(norm):
+    cfbnonorm = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=12, norm=None,
+                                       octwidth=None)
+    cfb = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=12, norm=norm,
+                                 octwidth=None)
 
-    tuning = DATA["nchroma"][0, 0] * (np.log2(A440) - np.log2(440.0))
+    assert np.allclose(librosa.util.normalize(cfbnonorm, norm=norm, axis=0), cfb)
 
-    wts = librosa.filters.chroma(
-        sr=DATA["sr"][0, 0],
-        n_fft=DATA["nfft"][0, 0],
-        n_chroma=DATA["nchroma"][0, 0],
-        tuning=tuning,
-        ctroct=DATA["ctroct"][0, 0],
-        octwidth=octwidth,
-        norm=2,
-        base_c=False,
-    )
 
-    # Our version only returns the real-valued part.
-    # Pad out.
-    wts = np.pad(wts, [(0, 0), (0, DATA["nfft"][0, 0] // 2 - 1)], mode="constant")
+@pytest.mark.parametrize("n_chroma", [12, 24])
+def test_chroma_basec(n_chroma):
+    cfb_a = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=n_chroma, base_c=False)
+    cfb_c = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=n_chroma, base_c=True)
 
-    assert wts.shape == DATA["wts"].shape
-    assert np.allclose(wts, DATA["wts"])
+    assert np.allclose(np.roll(cfb_a, -3 * (n_chroma//12), axis=0), cfb_c)
+
+
+@pytest.mark.parametrize("n_chroma", [12, 24])
+@pytest.mark.parametrize("tuning", [-1, 1])
+def test_chroma_tuning(n_chroma, tuning):
+    # Generate two chroma banks, with tuning off by one semitone
+    cfb_a = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=n_chroma, tuning=0)
+    cfb_b = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=n_chroma, tuning=tuning)
+    
+    # These won't line up identically due to sampling accuracy, but the filters
+    # should be close to a circular shift of each other
+    A = cfb_a.dot(cfb_b.T)
+
+    # Roll everything back by one semitone to compensate for the tuning change
+    A = np.roll(A, -tuning, axis=0)
+    
+    # The maxima should be along the main diagonal now - check it
+    assert np.allclose(np.argmax(A, axis=0), np.arange(A.shape[0]))
+
+
+@pytest.mark.parametrize("ctroct", [5, 6])
+def test_chroma_ctroct(ctroct):
+    cfb = librosa.filters.chroma(sr=22050, n_fft=2048, n_chroma=12, ctroct=ctroct)
+
+    # Verify that the peak of each channel is in the center octave range
+    peaks = np.argmax(cfb, axis=1)
+    freqs = librosa.fft_frequencies(sr=22050, n_fft=2048)
+    peak_freqs = freqs[peaks]
+
+    # Convert to octaves
+    peak_octaves = librosa.hz_to_octs(peak_freqs)
+    assert np.allclose(np.round(peak_octaves), ctroct)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_chroma_dtype(dtype):
+    cfb = librosa.filters.chroma(sr=22050, n_fft=2048, n_chroma=12, dtype=dtype)
+    assert cfb.dtype == dtype
 
 
 # Testing two tones, 261.63 Hz and 440 Hz
