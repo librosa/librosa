@@ -209,6 +209,24 @@ def test_spectral_bandwidth_onecol(S_ideal, freq):
     assert bw.shape == (1, 1)
 
 
+def test_spectral_bandwidth_flat():
+    # Generate a flat spectrum
+    S = np.ones((1025, 1))
+
+    # Pre-computed reference values
+    bw1 = librosa.feature.spectral_bandwidth(S=S, p=1)
+    assert np.isclose(bw1, 2758.93902439)
+
+    bw2 = librosa.feature.spectral_bandwidth(S=S, p=2)
+    assert np.isclose(bw2, 3185.74989294)
+
+    # If the frequencies are just 0, 1, 2, ..., S.shape[0]-1
+    # then the bandwidth is std(arange(S.shape[0]))
+    freqs = np.arange(1025)
+    bwf = librosa.feature.spectral_bandwidth(S=S, freq=freqs)
+    assert np.isclose(bwf, np.std(freqs))
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("S", [-np.ones((17, 2)), -np.ones((17, 2)) * 1.0j])
 def test_spectral_bandwidth_errors(S):
@@ -276,6 +294,33 @@ def test_spectral_contrast_log(y_chirp):
 
     assert not np.any(contrast < 0)
 
+
+@pytest.mark.parametrize("linear", [False, True])
+def test_spectral_contrast_flat(linear):
+    # Generate a flat spectrum
+    S = np.ones((1025, 10))
+
+    # Pre-computed reference values
+    contrast = librosa.feature.spectral_contrast(S=S, linear=linear)
+
+    assert np.allclose(contrast, 0.0)
+
+
+@pytest.mark.parametrize("linear", [False, True])
+def test_spectral_contrast_maximum(linear):
+    S = np.zeros((1025, 1))
+
+    S[512, 0] = 1.0
+
+    # Using an extreme quantile value to force max/min
+    contrast = librosa.feature.spectral_contrast(S=S, linear=linear, quantile=0.001)
+
+    # Reference values for this synthetic spectrum
+    if linear:
+        assert np.allclose(contrast[:, 0], [0, 0, 0, 0, 0, 1, 0])
+    else:
+        assert np.allclose(contrast[:, 0], [20, 20, 20, 20, 20, 100, 20])
+        
 
 @pytest.mark.parametrize("S", [np.ones((1025, 10))])
 @pytest.mark.parametrize(
