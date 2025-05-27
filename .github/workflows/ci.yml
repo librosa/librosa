@@ -70,8 +70,6 @@ jobs:
 
         steps:
         - uses: actions/checkout@v4
-          with:
-            submodules: true
 
         - name: Create short temp directory (Windows only)
           if: runner.os == 'Windows'
