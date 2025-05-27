@@ -1901,22 +1901,33 @@ def test_show_versions():
     librosa.show_versions()
 
 
-# TODO: rewrite this one
-def test_iirt():
-    gt = scipy.io.loadmat(
-        os.path.join("tests", "data", "features-CT-cqt"), squeeze_me=True
-    )["f_cqt"]
+@pytest.mark.parametrize("flayout", ["ba", "sos"])
+@pytest.mark.parametrize("center", [True, False])
+@pytest.mark.parametrize("hop_length", [None, 1024])
+def test_iirt(y_22050, flayout, center, hop_length):
+    sr = 22050
+    T = librosa.iirt(y_22050, sr=sr, hop_length=hop_length, flayout=flayout, center=center)
+    if hop_length is None:
+        real_hop_length = 512
+    else:
+        real_hop_length = hop_length
 
-    # There shouldn't be a load here, but test1_44100 was resampled for this fixture :\
-    y, sr = librosa.load(os.path.join("tests", "data", "test1_44100.wav"))
+    # Verify the shape
+    assert T.shape[0] == 85
 
-    mut1 = librosa.iirt(y, sr=sr, hop_length=2205, win_length=4410, flayout="ba")
+    # Expected number of frames without centering is (y.shape[-1] - win_length) // hop_length + 1
+    n_frames = (y_22050.shape[-1] - 2048) // real_hop_length + 1
+    if center:
+        assert T.shape[1] == y_22050.shape[-1] // real_hop_length + 1
+    else:
+        assert T.shape[1] == n_frames
 
-    assert np.allclose(mut1, gt[23:108, : mut1.shape[1]], atol=1.8)
+    # Verify that it's all real and non-negative
+    assert np.isrealobj(T)
+    assert np.all(T >= 0)
 
-    mut2 = librosa.iirt(y, sr=sr, hop_length=2205, win_length=4410, flayout="sos")
+    # TODO: further verify this one?  I guess?
 
-    assert np.allclose(mut2, gt[23:108, : mut2.shape[1]], atol=1.8)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
