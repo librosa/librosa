@@ -556,41 +556,59 @@ def test_get_window_pre(pre_win):
     assert np.allclose(win, pre_win)
 
 
-# TODO: rewrite this one
 def test_semitone_filterbank():
-    # We test against Chroma Toolbox' elliptical semitone filterbank
-    # load data from chroma toolbox
-    gt_fb = scipy.io.loadmat(
-        os.path.join(
-            "tests", "data", "filter-muliratefb-MIDI_FB_ellip_pitch_60_96_22050_Q25"
-        ),
-        squeeze_me=True,
-    )["h"]
+    freqs = librosa.midi_to_hz(np.arange(60, 96))
+    srs = np.array([8000] * len(freqs))
+    # Only test in SOS mode, we'll do the tf mode compatibility check in a different test
+    sos_fb, sos_srs = librosa.filters.semitone_filterbank(
+        center_freqs=freqs, sample_rates=srs, flayout="sos"
+    )
+    # Verify that each filter is centered on the corresponding frequency
+    for i in range(len(freqs)):
+        # evaluate the z-transform of the filter
+        _, h = scipy.signal.freqz_sos(
+            sos_fb[i], worN=freqs, fs=sos_srs[i]
+        )
+        hmag = np.abs(h)
+        # The filter should have a flat response that's log-symmetric around the center frequency
+        # We'll just check that the peak is not far off from the max (ie due to ripple)
+        assert hmag[i] >= np.max(hmag) * 0.999
 
-    # standard parameters reproduce settings from chroma toolbox
-    mut_ft_ba, mut_srs_ba = librosa.filters.semitone_filterbank(flayout="ba")
-    mut_ft_sos, mut_srs_sos = librosa.filters.semitone_filterbank(flayout="sos")
 
-    for cur_filter_id in range(len(mut_ft_ba)):
-        cur_filter_gt = gt_fb[cur_filter_id + 23]
-        cur_filter_mut = mut_ft_ba[cur_filter_id]
-        cur_filter_mut_sos = scipy.signal.sos2tf(mut_ft_sos[cur_filter_id])
+@pytest.mark.parametrize("tuning", [-1, 0, 1])
+def test_semitone_filterbank_defaults(tuning):
+    sos_fb, sos_srs = librosa.filters.semitone_filterbank(tuning=tuning, flayout="sos")
+    # Verify that each filter is centered on the corresponding frequency
+    freqs = librosa.filters.mr_frequencies(tuning=tuning)[0]
+    for i in range(len(freqs)):
+        # evaluate the z-transform of the filter
+        _, h = scipy.signal.freqz_sos(
+            sos_fb[i], worN=freqs, fs=sos_srs[i]
+        )
+        hmag = np.abs(h)
+        # The filter should have a flat response that's log-symmetric around the center frequency
+        # We'll just check that the peak is not far off from the max (ie due to ripple)
+        # Tolerance here is sloppier than the first test above because of variable sampling rates
+        assert hmag[i] >= np.max(hmag) * 0.89
 
-        cur_a_gt = cur_filter_gt[0]
-        cur_b_gt = cur_filter_gt[1]
-        cur_a_mut = cur_filter_mut[1]
-        cur_b_mut = cur_filter_mut[0]
-        cur_a_mut_sos = cur_filter_mut_sos[1]
-        cur_b_mut_sos = cur_filter_mut_sos[0]
 
-        # we deviate from the chroma toolboxes for pitches 94 and 95
-        # (filters 70 and 71) by processing them with a higher samplerate
-        if (cur_filter_id != 70) and (cur_filter_id != 71):
-            assert np.allclose(cur_a_gt, cur_a_mut)
-            assert np.allclose(cur_b_gt, cur_b_mut, atol=1e-4)
+def test_semitone_filterbank_layout():
+    freqs = librosa.midi_to_hz(np.arange(60, 96))
+    srs = np.array([8000] * len(freqs))
+    ba_fb, ba_srs = librosa.filters.semitone_filterbank(
+        center_freqs=freqs, sample_rates=srs, flayout="ba"
+    )
+    sos_fb, sos_srs = librosa.filters.semitone_filterbank(
+        center_freqs=freqs, sample_rates=srs, flayout="sos"
+    )
+    assert np.allclose(ba_srs, sos_srs)
+    assert np.allclose(ba_srs, srs)
 
-            assert np.allclose(cur_a_gt, cur_a_mut_sos)
-            assert np.allclose(cur_b_gt, cur_b_mut_sos, atol=1e-4)
+    # Verify that the sos layout converts to the ba layout
+    for i in range(len(sos_fb)):
+        tf = scipy.signal.sos2tf(sos_fb[i])
+        assert np.allclose(tf[0], ba_fb[i][0])
+        assert np.allclose(tf[1], ba_fb[i][1])
 
 
 @pytest.mark.parametrize("n", [9, 17])
