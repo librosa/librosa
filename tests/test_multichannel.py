@@ -14,7 +14,6 @@ except KeyError:
 import librosa
 import glob
 import numpy as np
-import scipy.io
 import scipy.stats
 import pytest
 import warnings

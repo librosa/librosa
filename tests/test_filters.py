@@ -32,22 +32,6 @@ import pytest
 import librosa
 
 
-# -- utilities --#
-def files(pattern):
-    test_files = glob.glob(pattern)
-    test_files.sort()
-    return test_files
-
-
-def load(infile):
-    DATA = scipy.io.loadmat(infile, chars_as_strings=True)
-    return DATA
-
-
-# --           --#
-
-
-# -- Tests     --#
 def test_hz_to_mel_htk():
     # Test the HTK mel scale
     freqs = np.array([0, 500, 1000, 2000, 3000])
@@ -118,30 +102,52 @@ def test_hz_to_octs_detune(bpo):
     assert np.isclose(oct, 4 + 1 / bpo)
 
 
-# TODO: rewrite
-@pytest.mark.parametrize(
-    "infile", files(os.path.join("tests", "data", "feature-melfb-*.mat"))
-)
-@pytest.mark.filterwarnings("ignore:Empty filters detected")
-def test_melfb(infile):
+@pytest.mark.parametrize("sr", [22050])
+@pytest.mark.parametrize("n_fft", [1025, 2048])
+@pytest.mark.parametrize("n_mels", [40, 128])
+@pytest.mark.parametrize("fmin", [0, 30])
+@pytest.mark.parametrize("fmax", [None, 8000])
+@pytest.mark.parametrize("htk", [False, True])
+def test_melfb(sr, n_fft, n_mels, fmin, fmax, htk):
 
-    DATA = load(infile)
-
-    wts = librosa.filters.mel(
-        sr=DATA["sr"][0, 0],
-        n_fft=DATA["nfft"][0, 0],
-        n_mels=DATA["nfilts"][0, 0],
-        fmin=DATA["fmin"][0, 0],
-        fmax=DATA["fmax"][0, 0],
-        htk=DATA["htk"][0, 0],
+    melfb = librosa.filters.mel(
+        sr=sr,
+        n_fft=n_fft,
+        n_mels=n_mels,
+        fmin=fmin,
+        fmax=fmax,
+        htk=htk,
+        norm=None,  # We'll test normalization separately
     )
 
-    # Our version only returns the real-valued part.
-    # Pad out.
-    wts = np.pad(wts, [(0, 0), (0, DATA["nfft"][0, 0] // 2 - 1)], mode="constant")
+    if fmax is None:
+        real_fmax = sr / 2.0
+    else:
+        real_fmax = fmax
 
-    assert wts.shape == DATA["wts"].shape
-    assert np.allclose(wts, DATA["wts"])
+    # Check the shape
+    assert melfb.shape == (n_mels, 1 + n_fft // 2)
+
+    # Check non-negativity
+    assert np.all(melfb >= 0)
+
+    # TODO: check for triangular filter shapes, maybe?
+
+    # Check that the dominant frequencies are well approximated
+    # by the mel scale
+    # Two caveats here:
+    #   1. the peak may lie in between two DFT bins, so we allow a tolerance proportional to the spacing
+    #   2. because of how the filter bank is constructed, we over-allocate two mel bins and discard the edges
+    #      this is inherited from the fft2melmx.m logic here: https://www.ee.columbia.edu/~dpwe/resources/matlab/rastamat/fft2melmx.m
+    real_freqs = librosa.mel_frequencies(fmin=fmin, fmax=real_fmax, n_mels=n_mels + 2, htk=htk)[1:-1]
+    fft_freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+    peak_freqs = fft_freqs[np.argmax(melfb, axis=1)]
+
+    bin_width = sr / n_fft
+
+    assert np.allclose(peak_freqs, real_freqs, atol=bin_width)
+
+
 
 
 @pytest.mark.parametrize("norm", [1, 2, np.inf, "slaney"])
