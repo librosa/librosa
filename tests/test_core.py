@@ -265,9 +265,9 @@ def test_stft(y_22050, n_fft, window, hop_length, center):
     if hop_length is None:
         hop_length = n_fft // 4
     if center == False:
-        assert D.shape[-1] == 1 + (len(y_22050) - n_fft) // float(hop_length)
+        assert D.shape[-1] == 1 + (len(y_22050) - n_fft) // hop_length
     else:
-        assert D.shape[-1] == 1 + len(y_22050) // float(hop_length)
+        assert D.shape[-1] == 1 + len(y_22050) // hop_length
 
     # This is essentially implementing all the STFT computation again, but
     # much less efficiently than librosa's version
