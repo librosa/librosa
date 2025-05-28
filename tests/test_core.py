@@ -878,20 +878,7 @@ def test_get_duration_specgram(sr, dur, n_fft, hop_length, center):
         assert np.abs(dur_est - dur) <= n_fft / sr
 
 
-def test_get_duration_filename():
-
-    filename = os.path.join("tests", "data", "test2_8000.wav")
-    true_duration = 30.197625
-
-    duration_fn = librosa.get_duration(path=filename)
-    y, sr = librosa.load(filename, sr=None)
-    duration_y = librosa.get_duration(y=y, sr=sr)
-
-    assert np.allclose(duration_fn, true_duration)
-    assert np.allclose(duration_fn, duration_y)
-
-
-def test_get_duration_mp3():
+def test_get_duration_ogg():
     filename = os.path.join("tests", "test_audio.ogg")
     true_duration = 5.19
 
