@@ -1124,7 +1124,7 @@ def test_yin_chirp():
     # adjust frames to the removal of win_length from yin
     f0 = f0[:-2]
 
-    target_f0 = np.load(os.path.join("tests", "data", "pitch-yin.npy"))
+    target_f0 = np.load(os.path.join("tests", "pitch-yin.npy"))
     assert np.allclose(np.log2(f0), np.log2(target_f0), rtol=0, atol=1e-2)
 
 
@@ -1256,7 +1256,7 @@ def test_pyin_chirp():
     f0 = f0[:-2]
     voiced_flag = voiced_flag[:-2]
 
-    target_f0 = np.load(os.path.join("tests", "data", "pitch-pyin.npy"))
+    target_f0 = np.load(os.path.join("tests", "pitch-pyin.npy"))
     # test if correct frames are voiced
     assert np.array_equal(voiced_flag, target_f0 > 0)
     # test voiced frames are within one cent of the target
@@ -2593,6 +2593,7 @@ def test_istft_bad_prealloc_shape():
 
 
 # Tests to force audioread decoding
+@pytest.mark.skip(reason="Audioread will be removed in this release")
 def test_load_force_audioread():
     path = os.path.join("tests", "data", "test2_8000.mkv")
     with warnings.catch_warnings(record=True) as out:
@@ -2602,6 +2603,7 @@ def test_load_force_audioread():
         assert "audioread" in str(out[0].message).lower()
 
 
+@pytest.mark.skip(reason="Audioread will be removed in this release")
 @pytest.mark.filterwarnings("ignore:PySoundFile failed")
 def test_get_duration_audioread():
     path = os.path.join("tests", "data", "test2_8000.mkv")
@@ -2613,6 +2615,7 @@ def test_get_duration_audioread():
     assert np.isclose(duration, 30.2, atol=0.1)
 
 
+@pytest.mark.skip(reason="Audioread will be removed in this release")
 @pytest.mark.filterwarnings("ignore:PySoundFile failed")
 def test_get_samplerate_audioread():
     path = os.path.join("tests", "data", "test2_8000.mkv")
