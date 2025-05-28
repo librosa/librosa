@@ -134,7 +134,7 @@ def test_viterbi_init():
     ids=["sum!=1", "not square", "too small", "negative"],
 )
 def test_viterbi_bad_transition(trans, rng):
-    x = rng.standard_normal(size=(3, 5))
+    x = rng.random(size=(3, 5))
     librosa.sequence.viterbi(x, trans)
 
 
@@ -150,7 +150,7 @@ def test_viterbi_bad_transition(trans, rng):
     ids=["sum!=1", "wrong size", "negative"],
 )
 def test_viterbi_bad_init(trans, p_init, rng):
-    x = rng.standard_normal(size=(3, 5))
+    x = rng.random(size=(3, 5))
     librosa.sequence.viterbi(x, trans, p_init=p_init)
 
 
@@ -475,7 +475,7 @@ def test_viterbi_binary_example_init():
 
 @pytest.fixture(scope="module")
 def x_data(rng_mod):
-    return rng_mod.standard_normal(size=(3, 5)) ** 2
+    return rng_mod.random(size=(3, 5))
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
