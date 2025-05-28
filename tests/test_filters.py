@@ -35,7 +35,7 @@ import librosa
 def test_hz_to_mel_htk():
     # Test the HTK mel scale
     freqs = np.array([0, 500, 1000, 2000, 3000])
-    mels = np.array([0., 607.44591966,  999.98553714, 1521.35955416, 1876.45406012])
+    mels = np.array([0.0, 607.44591966, 999.98553714, 1521.35955416, 1876.45406012])
 
     mel_est = librosa.hz_to_mel(freqs, htk=True)
     assert np.allclose(mel_est, mels)
@@ -45,10 +45,11 @@ def test_hz_to_mel_htk():
         m_est = librosa.hz_to_mel(f, htk=True)
         assert np.isclose(m_est, m)
 
+
 def test_hz_to_mel_sl():
     # Test the Slaney mel scale
     freqs = np.array([0, 500, 1000, 2000, 3000])
-    mels = np.array([ 0.,  7.5, 15., 25.08188016, 30.97940199])
+    mels = np.array([0.0, 7.5, 15.0, 25.08188016, 30.97940199])
     mel_est = librosa.hz_to_mel(freqs, htk=False)
     assert np.allclose(mel_est, mels)
 
@@ -60,10 +61,21 @@ def test_hz_to_mel_sl():
 
 def test_mel_to_hz_htk():
     # Test the HTK mel scale
-    mels = np.array([   0.,  200,  400,  600,  800, 1000, 1200, 1400, 1600, 1800])
-    freqs = np.array([   0.        ,  135.92888249,  298.25299511,  492.09787234,
-        723.58434605, 1000.02181646, 1330.13905319, 1724.35981432,
-       2195.13198618, 2757.32063694])
+    mels = np.array([0.0, 200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800])
+    freqs = np.array(
+        [
+            0.0,
+            135.92888249,
+            298.25299511,
+            492.09787234,
+            723.58434605,
+            1000.02181646,
+            1330.13905319,
+            1724.35981432,
+            2195.13198618,
+            2757.32063694,
+        ]
+    )
     freq_est = librosa.mel_to_hz(mels, htk=True)
     assert np.allclose(freq_est, freqs)
 
@@ -71,10 +83,13 @@ def test_mel_to_hz_htk():
         f_est = librosa.mel_to_hz(m, htk=True)
         assert np.isclose(f_est, f)
 
+
 def test_mel_to_hz_sl():
     # Test the Slaney mel scale
     mels = np.array([0, 5, 10, 15, 25, 30])
-    freqs = np.array([0.,  333.33333333,  666.66666667, 1000., 1988.77281813, 2804.64413074])
+    freqs = np.array(
+        [0.0, 333.33333333, 666.66666667, 1000.0, 1988.77281813, 2804.64413074]
+    )
     freq_est = librosa.mel_to_hz(mels, htk=False)
     assert np.allclose(freq_est, freqs)
 
@@ -94,7 +109,7 @@ def test_hz_to_octs_440():
         assert np.isclose(o_est, o)
 
 
-@pytest.mark.parametrize('bpo', [12, 24, 36])
+@pytest.mark.parametrize("bpo", [12, 24, 36])
 def test_hz_to_octs_detune(bpo):
     # If we're off by one semitone, then the octave should be
     # off by 1/bpo
@@ -139,15 +154,15 @@ def test_melfb(sr, n_fft, n_mels, fmin, fmax, htk):
     #   1. the peak may lie in between two DFT bins, so we allow a tolerance proportional to the spacing
     #   2. because of how the filter bank is constructed, we over-allocate two mel bins and discard the edges
     #      this is inherited from the fft2melmx.m logic here: https://www.ee.columbia.edu/~dpwe/resources/matlab/rastamat/fft2melmx.m
-    real_freqs = librosa.mel_frequencies(fmin=fmin, fmax=real_fmax, n_mels=n_mels + 2, htk=htk)[1:-1]
+    real_freqs = librosa.mel_frequencies(
+        fmin=fmin, fmax=real_fmax, n_mels=n_mels + 2, htk=htk
+    )[1:-1]
     fft_freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
     peak_freqs = fft_freqs[np.argmax(melfb, axis=1)]
 
     bin_width = sr / n_fft
 
     assert np.allclose(peak_freqs, real_freqs, atol=bin_width)
-
-
 
 
 @pytest.mark.parametrize("norm", [1, 2, np.inf, "slaney"])
@@ -205,10 +220,12 @@ def test_chroma_shape(n_chroma, n_fft):
 
 @pytest.mark.parametrize("norm", [1, 2, np.inf, None])
 def test_chroma_norm(norm):
-    cfbnonorm = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=12, norm=None,
-                                       octwidth=None)
-    cfb = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=12, norm=norm,
-                                 octwidth=None)
+    cfbnonorm = librosa.filters.chroma(
+        sr=22050, n_fft=128, n_chroma=12, norm=None, octwidth=None
+    )
+    cfb = librosa.filters.chroma(
+        sr=22050, n_fft=128, n_chroma=12, norm=norm, octwidth=None
+    )
 
     assert np.allclose(librosa.util.normalize(cfbnonorm, norm=norm, axis=0), cfb)
 
@@ -218,7 +235,7 @@ def test_chroma_basec(n_chroma):
     cfb_a = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=n_chroma, base_c=False)
     cfb_c = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=n_chroma, base_c=True)
 
-    assert np.allclose(np.roll(cfb_a, -3 * (n_chroma//12), axis=0), cfb_c)
+    assert np.allclose(np.roll(cfb_a, -3 * (n_chroma // 12), axis=0), cfb_c)
 
 
 @pytest.mark.parametrize("n_chroma", [12, 24])
@@ -226,15 +243,17 @@ def test_chroma_basec(n_chroma):
 def test_chroma_tuning(n_chroma, tuning):
     # Generate two chroma banks, with tuning off by one semitone
     cfb_a = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=n_chroma, tuning=0)
-    cfb_b = librosa.filters.chroma(sr=22050, n_fft=128, n_chroma=n_chroma, tuning=tuning)
-    
+    cfb_b = librosa.filters.chroma(
+        sr=22050, n_fft=128, n_chroma=n_chroma, tuning=tuning
+    )
+
     # These won't line up identically due to sampling accuracy, but the filters
     # should be close to a circular shift of each other
     A = cfb_a.dot(cfb_b.T)
 
     # Roll everything back by one semitone to compensate for the tuning change
     A = np.roll(A, -tuning, axis=0)
-    
+
     # The maxima should be along the main diagonal now - check it
     assert np.allclose(np.argmax(A, axis=0), np.arange(A.shape[0]))
 
@@ -568,9 +587,7 @@ def test_semitone_filterbank():
         # evaluate the z-transform of the filter
         # TODO: when we bump scipy to 1.15, we can revise this to the newer name
         # freqz_sos
-        _, h = scipy.signal.sosfreqz(
-            sos_fb[i], worN=freqs, fs=sos_srs[i]
-        )
+        _, h = scipy.signal.sosfreqz(sos_fb[i], worN=freqs, fs=sos_srs[i])
         hmag = np.abs(h)
         # The filter should have a flat response that's log-symmetric around the center frequency
         # We'll just check that the peak is not far off from the max (ie due to ripple)
@@ -586,9 +603,7 @@ def test_semitone_filterbank_defaults(tuning):
         # evaluate the z-transform of the filter
         # TODO: when we bump scipy to 1.15, we can revise this to the newer name
         # freqz_sos
-        _, h = scipy.signal.sosfreqz(
-            sos_fb[i], worN=freqs, fs=sos_srs[i]
-        )
+        _, h = scipy.signal.sosfreqz(sos_fb[i], worN=freqs, fs=sos_srs[i])
         hmag = np.abs(h)
         # The filter should have a flat response that's log-symmetric around the center frequency
         # We'll just check that the peak is not far off from the max (ie due to ripple)

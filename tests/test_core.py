@@ -1893,7 +1893,9 @@ def test_show_versions():
 @pytest.mark.parametrize("hop_length", [None, 1024])
 def test_iirt(y_22050, flayout, center, hop_length):
     sr = 22050
-    T = librosa.iirt(y_22050, sr=sr, hop_length=hop_length, flayout=flayout, center=center)
+    T = librosa.iirt(
+        y_22050, sr=sr, hop_length=hop_length, flayout=flayout, center=center
+    )
     if hop_length is None:
         real_hop_length = 512
     else:
@@ -1914,7 +1916,6 @@ def test_iirt(y_22050, flayout, center, hop_length):
     assert np.all(T >= 0)
 
     # TODO: further verify this one?  I guess?
-
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)

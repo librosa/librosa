@@ -320,7 +320,7 @@ def test_spectral_contrast_maximum(linear):
         assert np.allclose(contrast[:, 0], [0, 0, 0, 0, 0, 1, 0])
     else:
         assert np.allclose(contrast[:, 0], [20, 20, 20, 20, 20, 100, 20])
-        
+
 
 @pytest.mark.parametrize("S", [np.ones((1025, 10))])
 @pytest.mark.parametrize(
@@ -521,27 +521,32 @@ def test_tonnetz_cqt(y_chirp):
 
 def test_tonnetz():
     # Idealized chroma for [F#:dim, A:aug, A:dim7]
-    chroma = np.array([[1, 0, 1],
-                       [0, 1, 0],
-                       [0, 0, 0],
-                       [0, 0, 1],
-                       [0, 0, 0],
-                       [0, 1, 0],
-                       [1, 0, 1],
-                       [0, 0, 0],
-                       [0, 0, 0],
-                       [1, 1, 1],
-                       [0, 0, 0],
-                       [0, 0, 0]], dtype=float)
+    chroma = np.array(
+        [
+            [1, 0, 1],
+            [0, 1, 0],
+            [0, 0, 0],
+            [0, 0, 1],
+            [0, 0, 0],
+            [0, 1, 0],
+            [1, 0, 1],
+            [0, 0, 0],
+            [0, 0, 0],
+            [1, 1, 1],
+            [0, 0, 0],
+            [0, 0, 0],
+        ],
+        dtype=float,
+    )
 
     tonnetz = librosa.feature.tonnetz(chroma=chroma)
 
     # F#:dim is [0, 6, 9]
     #   --> fifths space (1/3, 0)
     #   --> min3 space (-1/3, 0)
-    #   --> maj3 space (0, 1) 
+    #   --> maj3 space (0, 1)
     #   .. but maj3 space is scaled by half in tonnetz
-    assert np.allclose(tonnetz[:, 0], [1/3, 0, -1/3, 0, 0, 0.5]) 
+    assert np.allclose(tonnetz[:, 0], [1 / 3, 0, -1 / 3, 0, 0, 0.5])
 
     # A:aug is [1, 5, 9]
     #   --> origin in fifths space  (0, 0)
@@ -552,7 +557,7 @@ def test_tonnetz():
     # A:dim7 is [0, 3, 6, 9]
     #  --> origin in fifths space (0, 0)
     #  --> left position in min3 space (0, 0)
-    #  --> right position in maj3 space (1, 0)  
+    #  --> right position in maj3 space (1, 0)
     #  .. but maj3 space is scaled by half in tonnetz
     assert np.allclose(tonnetz[:, 2], [0, 0, 0, 0, 0, 0.5])
 
@@ -807,35 +812,47 @@ def cens_cqt():
 
 
 def test_cens_nosmooth_nonorm(cens_cqt):
-    cens = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=None, norm=None, bins_per_octave=12)
+    cens = librosa.feature.chroma_cens(
+        C=cens_cqt, win_len_smooth=None, norm=None, bins_per_octave=12
+    )
 
     # Last frame is uniform, so should be all 0.25
     assert np.allclose(cens[:, -1], 0.25)
 
     # Value sequence for this data:
-    values = [1, 1, .75, .75, .5, .5, .5]
+    values = [1, 1, 0.75, 0.75, 0.5, 0.5, 0.5]
 
     # Check the quantization for 1-7 notes in chroma
-    for i in range(cens.shape[-1]-1):
-        assert np.allclose(cens[:i+1, i], values[i])
-        assert np.allclose(cens[i+1:, i], 0.0)
+    for i in range(cens.shape[-1] - 1):
+        assert np.allclose(cens[: i + 1, i], values[i])
+        assert np.allclose(cens[i + 1 :, i], 0.0)
 
 
 def test_cens_nosmooth(cens_cqt):
-    cens = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=None, norm=None, bins_per_octave=12)
-    cens1 = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=None, norm=1, bins_per_octave=12)
-    cens2 = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=None, norm=2, bins_per_octave=12)
+    cens = librosa.feature.chroma_cens(
+        C=cens_cqt, win_len_smooth=None, norm=None, bins_per_octave=12
+    )
+    cens1 = librosa.feature.chroma_cens(
+        C=cens_cqt, win_len_smooth=None, norm=1, bins_per_octave=12
+    )
+    cens2 = librosa.feature.chroma_cens(
+        C=cens_cqt, win_len_smooth=None, norm=2, bins_per_octave=12
+    )
 
     assert np.allclose(librosa.util.normalize(cens, norm=1), cens1)
     assert np.allclose(librosa.util.normalize(cens, norm=2), cens2)
 
 
 def test_cens_nonorm(cens_cqt):
-    cens = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=None, norm=None, bins_per_octave=12)
-    cens_s = librosa.feature.chroma_cens(C=cens_cqt, win_len_smooth=3, norm=None, bins_per_octave=12)
+    cens = librosa.feature.chroma_cens(
+        C=cens_cqt, win_len_smooth=None, norm=None, bins_per_octave=12
+    )
+    cens_s = librosa.feature.chroma_cens(
+        C=cens_cqt, win_len_smooth=3, norm=None, bins_per_octave=12
+    )
 
     # We add 2 on the window to match cens
-    filter = librosa.filters.get_window("hann", 3+2, fftbins=False)[np.newaxis, :]
+    filter = librosa.filters.get_window("hann", 3 + 2, fftbins=False)[np.newaxis, :]
     # Ensure that filter is normalized to sum to 1
     filter /= filter.sum()
 
