@@ -1464,3 +1464,13 @@ def test_cite_badversion():
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_cite_unreleased():
     librosa.cite("0.10.0.dev0")
+
+
+@pytest.mark.parametrize("n_bytes", [1, 2, 4])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_buf_to_float(n_bytes, dtype):
+    x = np.arange(-10, 10, dtype=f"<i{n_bytes:d}")
+    x_float = librosa.util.buf_to_float(x, n_bytes=n_bytes, dtype=dtype)
+
+    assert x_float.dtype == dtype
+    assert np.allclose(x_float, x.astype(dtype) / (2 ** (n_bytes * 8 - 1)))
