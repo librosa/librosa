@@ -2722,3 +2722,58 @@ def test_f0_harmonics_incompat():
     harmonics = np.arange(1, 3)
 
     librosa.f0_harmonics(data, freqs=freqs, harmonics=harmonics, f0=f0)
+
+
+@pytest.mark.parametrize("rate", [0.5, 1, 3])
+def test_phase_vocoder_fixed_rate(rate, rng):
+    # Make a random complex spectrogram
+    D = rng.standard_normal(size=(257, 12)) + 1j * rng.standard_normal(size=(257, 12))
+    D_stretch = librosa.phase_vocoder(D, rate=rate)
+
+    # Check that the output has the correct shape
+    assert D_stretch.shape == (D.shape[0], int(np.ceil(D.shape[1] / rate)))
+
+    # Check that D interpolates the values properly
+    if rate >= 1:
+        assert np.allclose(np.abs(D[:, ::rate]), np.abs(D_stretch))
+    else:
+        assert np.allclose(np.abs(D), np.abs(D_stretch[:, ::int(1 / rate)]))
+
+
+def test_phase_vocoder_variable_rate(rng):
+    # Make a random complex spectrogram
+    D = rng.standard_normal(size=(257, 12)) + 1j * rng.standard_normal(size=(257, 12))
+
+    rate = 0.5
+
+    # We'll make constant rate vector, but it won't cover the whole input duration
+    # This is enough to verify the precomputed t_out code path
+    t_out = np.arange(0, D.shape[1] - 2, rate)
+
+    D_stretch = librosa.phase_vocoder(D, t_out=t_out)
+
+    assert D_stretch.shape == (D.shape[0], len(t_out))
+    assert np.allclose(np.abs(D[:, :-2]), np.abs(D_stretch[:, ::int(1 / rate)]))
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_phase_vocoder_bad_inputs():
+    D = np.zeros((257, 12), dtype=np.complex64)
+
+    # Can only specify one of rate or t_out
+    librosa.phase_vocoder(D, rate=1.0, t_out=np.arange(6))
+
+
+def test_phase_vocoder_hop_deprecated():
+    D = np.zeros((257, 12), dtype=np.complex64)
+
+    with pytest.warns(FutureWarning, match="`hop_length` parameter is deprecated"):
+        librosa.phase_vocoder(D, rate=1.0, hop_length=64)
+
+def test_phase_vocoder_nfft_deprecated():
+    D = np.zeros((257, 12), dtype=np.complex64)
+
+    with pytest.warns(FutureWarning, match="`n_fft` parameter is deprecated"):
+        librosa.phase_vocoder(D, rate=1.0, n_fft=64)
+
+
