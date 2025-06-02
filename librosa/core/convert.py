@@ -1655,7 +1655,7 @@ def mel_frequencies(
     appear equal in width over the full hearing range.
 
     Because the definition of the mel scale is conditioned by a finite number
-    of subjective psychoaoustical experiments, several implementations coexist
+    of subjective psychoacoustical experiments, several implementations coexist
     in the audio signal processing literature [#]_. By default, librosa replicates
     the behavior of the well-established MATLAB Auditory Toolbox of Slaney [#]_.
     According to this default implementation,  the conversion from Hertz to mel is

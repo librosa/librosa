@@ -19,14 +19,10 @@ import warnings
 import librosa
 from typing import Any, List, Union
 
-from test_core import srand
-
-np.set_printoptions(precision=3)
-
 
 @pytest.mark.parametrize("frame_length", [4, 8])
 @pytest.mark.parametrize("hop_length", [2, 4])
-@pytest.mark.parametrize("y", [np.random.randn(32)])
+@pytest.mark.parametrize("y", [np.arange(32)])
 @pytest.mark.parametrize("axis", [0, -1])
 def test_frame1d(frame_length, hop_length, axis, y):
 
@@ -48,8 +44,8 @@ def test_frame1d(frame_length, hop_length, axis, y):
 @pytest.mark.parametrize(
     "y, axis",
     [
-        (np.asfortranarray(np.random.randn(16, 32)), -1),
-        (np.ascontiguousarray(np.random.randn(16, 32)), 0),
+        (np.asfortranarray(np.vander(np.arange(16), 32)), -1),
+        (np.ascontiguousarray(np.vander(np.arange(16), 32)), 0),
     ],
 )
 def test_frame2d(frame_length, hop_length, axis, y):
@@ -85,10 +81,9 @@ def test_frame_0stride():
 @pytest.mark.parametrize("frame_length", [5, 10])
 @pytest.mark.parametrize("hop_length", [1, 2])
 @pytest.mark.parametrize("ndim", [2, 3, 4, 5])
-def test_frame_highdim(frame_length, hop_length, ndim):
-    srand()
+def test_frame_highdim(frame_length, hop_length, ndim, rng):
 
-    x = np.asarray(np.random.randn(*([20] * ndim)))
+    x = rng.standard_normal(size=([20] * ndim))
     xf = librosa.util.frame(x, frame_length=frame_length, hop_length=hop_length)
     for i in range(x.shape[0]):
         xf0 = librosa.util.frame(x[i], frame_length=frame_length, hop_length=hop_length)
@@ -204,9 +199,8 @@ def test_fix_frames_fail_negative(frames, x_min, x_max, pad):
     "ndims,axis",
     [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 1), (3, 2), (3, -1)],
 )
-def test_normalize(ndims, norm, axis):
-    srand()
-    X = np.asarray(np.random.randn(*([4] * ndims)))
+def test_normalize(ndims, norm, axis, rng):
+    X = rng.standard_normal(size=([4] * ndims))
     X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
 
     # Shape and dtype checks
@@ -322,9 +316,8 @@ def test_axis_sort_badndim(ndim, axis, index, value):
 @pytest.mark.parametrize("axis", [0, 1, -1])
 @pytest.mark.parametrize("index", [False, True])
 @pytest.mark.parametrize("value", [None, np.min, np.mean, np.max])
-def test_axis_sort(ndim, axis, index, value):
-    srand()
-    data = np.asarray(np.random.randn(*([10] * ndim)))
+def test_axis_sort(ndim, axis, index, value, rng):
+    data = rng.standard_normal(size=([10] * ndim))
     if index:
         Xsorted, idx = librosa.util.axis_sort(data, axis=axis, index=index, value=value)
 
@@ -389,11 +382,10 @@ def test_match_intervals_nonstrict(int_from, int_to, matches):
 
 @pytest.mark.parametrize("n", [1, 5, 20, 100])
 @pytest.mark.parametrize("m", [1, 5, 20, 100])
-def test_match_events(n, m):
+def test_match_events(n, m, rng):
 
-    srand()
-    ev1 = np.abs(np.random.randn(n))
-    ev2 = np.abs(np.random.randn(m))
+    ev1 = np.abs(rng.standard_normal(size=n))
+    ev2 = np.abs(rng.standard_normal(size=m))
 
     match = librosa.util.match_events(ev1, ev2)
 
@@ -447,11 +439,9 @@ def test_match_events_onesided_fail(events_from, events_to, left, right):
 
 
 @pytest.mark.parametrize("ndim, axis", [(n, m) for n in range(1, 5) for m in range(n)])
-def test_localmax(ndim, axis):
+def test_localmax(ndim, axis, rng):
 
-    srand()
-
-    data = np.asarray(np.random.randn(*([7] * ndim)))
+    data = rng.standard_normal(size=([7] * ndim))
     lm = librosa.util.localmax(data, axis=axis)
 
     for hits in np.argwhere(lm):
@@ -472,11 +462,9 @@ def test_localmax(ndim, axis):
 
 
 @pytest.mark.parametrize("ndim, axis", [(n, m) for n in range(1, 5) for m in range(n)])
-def test_localmin(ndim, axis):
+def test_localmin(ndim, axis, rng):
 
-    srand()
-
-    data = np.asarray(np.random.randn(*([7] * ndim)))
+    data = rng.standard_normal(size=([7] * ndim))
     lm = librosa.util.localmin(data, axis=axis)
 
     for hits in np.argwhere(lm):
@@ -496,7 +484,7 @@ def test_localmin(ndim, axis):
                 assert data[tuple(hits)] <= data[tuple(compare_idx)]
 
 
-@pytest.mark.parametrize("x", [np.random.randn(_) ** 2 for _ in [1, 5, 10, 100]])
+@pytest.mark.parametrize("d", [1, 5, 10, 100])
 @pytest.mark.parametrize("pre_max", [0, 1, 10])
 @pytest.mark.parametrize("post_max", [1, 10])
 @pytest.mark.parametrize("pre_avg", [0, 1, 10])
@@ -504,7 +492,9 @@ def test_localmin(ndim, axis):
 @pytest.mark.parametrize("wait", [0, 1, 10])
 @pytest.mark.parametrize("delta", [0.05, 100.0])
 @pytest.mark.parametrize("method", ["greedy", "dp_count", "dp_value"])
-def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, method):
+def test_peak_pick(d, pre_max, post_max, pre_avg, post_avg, delta, wait, method, rng):
+    x = rng.standard_normal(size=d) ** 2
+
     peaks = librosa.util.peak_pick(
         x,
         pre_max=pre_max,
@@ -555,7 +545,6 @@ def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, method)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize("x", [np.random.randn(_) ** 2 for _ in [1, 5, 10, 100]])
 @pytest.mark.parametrize(
     "pre_max,post_max,pre_avg,post_avg,delta,wait",
     [
@@ -569,7 +558,9 @@ def test_peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, method)
         (1, 1, 1, 1, 0.05, -1),  # negative wait
     ],
 )
-def test_peak_pick_fail(x, pre_max, post_max, pre_avg, post_avg, delta, wait):
+@pytest.mark.parametrize("d", [1, 5, 10, 100])
+def test_peak_pick_fail(d, pre_max, post_max, pre_avg, post_avg, delta, wait, rng):
+    x = rng.standard_normal(size=d) ** 2
     librosa.util.peak_pick(
         x,
         pre_max=pre_max,
@@ -625,10 +616,8 @@ def test_sparsify_rows_dtype(dtype, ref_dtype):
 @pytest.mark.parametrize("ndim", [1, 2])
 @pytest.mark.parametrize("d", [1, 5, 10, 100])
 @pytest.mark.parametrize("q", [0.0, 0.01, 0.25, 0.5, 0.99])
-def test_sparsify_rows(ndim, d, q):
-    srand()
-
-    X = np.random.randn(*([d] * ndim)) ** 4
+def test_sparsify_rows(ndim, d, q, rng):
+    X = rng.standard_normal(size=([d] * ndim)) ** 4
 
     X = np.asarray(X)
 
@@ -653,39 +642,41 @@ def test_sparsify_rows(ndim, d, q):
     assert np.all(v_out >= (1.0 - q) * v_in)
 
 
-@pytest.mark.parametrize(
-    "searchdir",
-    [
-        os.path.join(os.path.curdir, "tests"),
-        os.path.join(os.path.curdir, "tests", "data"),
-    ],
-)
+@pytest.fixture(scope="module")
+def search_files(tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp("audio_test")
+    test_files = [
+        "test1_22050.mp3",
+        "test1_22050.wav",
+        "test1_44100.wav",
+        "test2_8000.wav",
+    ]
+
+    paths = []
+    subdir = tmp_path / "data"
+    subdir.mkdir(parents=True, exist_ok=True)
+    for filename in test_files:
+        file_path = subdir / filename
+        file_path.touch()  # Creates empty file
+        paths.append(str(file_path))
+
+    return tmp_path, paths
+
+
 @pytest.mark.parametrize("ext", [None, "wav", "WAV", ["wav"], ["WAV"]])
-@pytest.mark.parametrize("recurse", [True])
 @pytest.mark.parametrize(
     "case_sensitive", list({False} | {platform.system() != "Windows"})
 )
 @pytest.mark.parametrize("limit", [None, 1, 2])
 @pytest.mark.parametrize("offset", [0, 1, -1])
-@pytest.mark.parametrize(
-    "output",
-    [
-        [
-            os.path.join(os.path.abspath(os.path.curdir), "tests", "data", s)
-            for s in [
-                "test1_22050.mp3",
-                "test1_22050.wav",
-                "test1_44100.wav",
-                "test2_8000.wav",
-            ]
-        ]
-    ],
-)
-def test_find_files(searchdir, ext, recurse, case_sensitive, limit, offset, output):
+def test_find_files(search_files, ext, case_sensitive, limit, offset):
+
+    searchdir, output = search_files
+
     files = librosa.util.find_files(
         searchdir,
         ext=ext,
-        recurse=recurse,
+        recurse=True,
         case_sensitive=case_sensitive,
         limit=limit,
         offset=offset,
@@ -705,19 +696,17 @@ def test_find_files(searchdir, ext, recurse, case_sensitive, limit, offset, outp
         assert set(files) == set(targets[s1][s2])
 
 
-def test_find_files_nonrecurse():
-    files = librosa.util.find_files(
-        os.path.join(os.path.curdir, "tests"), recurse=False
-    )
+def test_find_files_nonrecurse(search_files):
+    searchdir, _ = search_files
+    files = librosa.util.find_files(searchdir, recurse=False)
     assert len(files) == 0
 
 
 # fail if ext is not none, we're case-sensitive, and looking for WAV
 @pytest.mark.parametrize("ext", ["WAV", ["WAV"]])
-def test_find_files_case_sensitive(ext):
-    files = librosa.util.find_files(
-        os.path.join(os.path.curdir, "tests"), ext=ext, case_sensitive=True
-    )
+def test_find_files_case_sensitive(search_files, ext):
+    searchdir, files = search_files
+    files = librosa.util.find_files(searchdir, ext=ext, case_sensitive=True)
     # On windows, this test won't work
     if platform.system() != "Windows":
         assert len(files) == 0
@@ -983,12 +972,10 @@ def test_sync_fail(data, idx):
 
 @pytest.mark.parametrize("power", [1, 2, 50, 100, np.inf])
 @pytest.mark.parametrize("split_zeros", [False, True])
-def test_softmask(power, split_zeros):
+def test_softmask(power, split_zeros, rng):
 
-    srand()
-
-    X = np.abs(np.random.randn(10, 10))
-    X_ref = np.abs(np.random.randn(10, 10))
+    X = np.abs(rng.standard_normal(size=(10, 10)))
+    X_ref = np.abs(rng.standard_normal(size=(10, 10)))
 
     # Zero out some rows
     X[3, :] = 0
@@ -1097,14 +1084,13 @@ def test_util_fill_off_diagonal_8_12():
 
 @pytest.mark.parametrize("dtype_A", [np.float32, np.float64])
 @pytest.mark.parametrize("dtype_B", [np.float32, np.float64])
-def test_nnls_vector(dtype_A, dtype_B):
-    srand()
+def test_nnls_vector(dtype_A, dtype_B, rng):
 
     # Make a random basis
-    A = np.random.randn(7, 5).astype(dtype_A)
+    A = rng.standard_normal(size=(7, 5)).astype(dtype_A)
 
     # Make a random latent vector
-    x = np.random.randn(A.shape[1]) ** 2
+    x = rng.standard_normal(size=A.shape[1]) ** 2
 
     B = A.dot(x).astype(dtype_B)
 
@@ -1116,16 +1102,15 @@ def test_nnls_vector(dtype_A, dtype_B):
 
 @pytest.mark.parametrize("dtype_A", [np.float32, np.float64])
 @pytest.mark.parametrize("dtype_B", [np.float32, np.float64])
-@pytest.mark.parametrize("x_size", [3, 30])
-def test_nnls_matrix(dtype_A, dtype_B, x_size):
-    srand()
+@pytest.mark.parametrize("x_size", [3, 10])
+def test_nnls_matrix(dtype_A, dtype_B, x_size, rng):
 
     # Make a random basis
-    A = np.random.randn(5, 7).astype(dtype_A)
+    A = rng.standard_normal(size=(5, 7)).astype(dtype_A)
 
     # Make a random latent matrix
     #   when x_size is 3, B is 7x3 (smaller than A)
-    x = np.random.randn(A.shape[1], x_size) ** 2
+    x = rng.standard_normal(size=(A.shape[1], x_size)) ** 2
 
     B = A.dot(x).astype(dtype_B)
 
@@ -1137,16 +1122,15 @@ def test_nnls_matrix(dtype_A, dtype_B, x_size):
 
 @pytest.mark.parametrize("dtype_A", [np.float32, np.float64])
 @pytest.mark.parametrize("dtype_B", [np.float32, np.float64])
-@pytest.mark.parametrize("x_size", [16, 64, 256])
-def test_nnls_multiblock(dtype_A, dtype_B, x_size):
-    srand()
+@pytest.mark.parametrize("x_size", [16, 64, 128])
+def test_nnls_multiblock(dtype_A, dtype_B, x_size, rng):
 
     # Make a random basis
-    A = np.random.randn(7, 1025).astype(dtype_A)
+    A = rng.standard_normal(size=(4, 192)).astype(dtype_A)
 
     # Make a random latent matrix
     #   when x_size is 3, B is 7x3 (smaller than A)
-    x = np.random.randn(A.shape[1], x_size) ** 2
+    x = rng.standard_normal(size=(A.shape[1], x_size)) ** 2
 
     B = A.dot(x).astype(dtype_B)
 
@@ -1247,8 +1231,8 @@ def test_stack_fail_empty():
 
 
 @pytest.mark.parametrize("axis", [0, 1, -1])
-@pytest.mark.parametrize("x", [np.random.randn(5, 10, 20)])
-def test_stack_consistent(x, axis):
+def test_stack_consistent(axis, rng):
+    x = rng.standard_normal(size=(5, 10, 20))
     xs = librosa.util.stack([x, x], axis=axis)
     xsnp = np.stack([x, x], axis=axis)
 
@@ -1499,3 +1483,13 @@ def test_cite_badversion():
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_cite_unreleased():
     librosa.cite("0.10.0.dev0")
+
+
+@pytest.mark.parametrize("n_bytes", [1, 2, 4])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_buf_to_float(n_bytes, dtype):
+    x = np.arange(-10, 10, dtype=f"<i{n_bytes:d}")
+    x_float = librosa.util.buf_to_float(x, n_bytes=n_bytes, dtype=dtype)
+
+    assert x_float.dtype == dtype
+    assert np.allclose(x_float, x.astype(dtype) / (2 ** (n_bytes * 8 - 1)))

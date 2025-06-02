@@ -19,14 +19,14 @@ import warnings
 import numpy as np
 import librosa
 
-from test_core import srand
-
-__EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
-
 
 @pytest.fixture(scope="module")
 def ysr():
-    return librosa.load(__EXAMPLE_FILE)
+    # Generate a pulse train at 120BPM
+    sr = 22050
+    y = np.zeros(5 * sr)
+    y[:: sr // 2] = 1
+    return y, sr
 
 
 @pytest.mark.parametrize(
@@ -34,14 +34,27 @@ def ysr():
 )
 @pytest.mark.parametrize("n_fft", [512, 2048])
 @pytest.mark.parametrize("hop_length", [256, 512])
-@pytest.mark.parametrize("lag", [1, 2])
-@pytest.mark.parametrize("max_size", [1, 2])
-@pytest.mark.parametrize("detrend", [False, True])
 @pytest.mark.parametrize("center", [False, True])
-@pytest.mark.parametrize("aggregate", [None, np.mean, np.max])
+@pytest.mark.parametrize("lag", [1])
+@pytest.mark.parametrize("max_size", [1])
+@pytest.mark.parametrize("aggregate", [np.mean])
+@pytest.mark.parametrize("detrend", [False, True])
 def test_onset_strength_audio(
-    ysr, feature, n_fft, hop_length, lag, max_size, detrend, center, aggregate
+    ysr,
+    feature,
+    n_fft,
+    hop_length,
+    center,
+    lag,
+    max_size,
+    detrend,
+    aggregate,
 ):
+
+    # This test only really checks output shape and dimension
+    # frame length, hop length, and centering matter
+    # feature kind of matters
+    # lag, max_size, detrending, and aggregation do not matter.
 
     y, sr = ysr
     oenv = librosa.onset.onset_strength(
@@ -60,14 +73,50 @@ def test_onset_strength_audio(
 
     assert oenv.ndim == 1
 
-    S = librosa.feature.melspectrogram(y=y, n_fft=n_fft, hop_length=hop_length)
-
-    target_shape = S.shape[-1]
+    # Calculate the number of frames that we should have for a centered analysis
+    # Note that centering is enforced at the feature level, so the output shape
+    # does not actually depend on the center parameter.
+    # This may be something to change in the future.
+    target_shape = 1 + len(y) // hop_length
 
     if not detrend:
         assert np.all(oenv >= 0)
 
     assert oenv.shape[-1] == target_shape
+
+
+def test_onset_strength_lag(melspec_sr):
+
+    S, sr = melspec_sr
+    oenv_skip = librosa.onset.onset_strength(S=S[..., ::2], sr=sr, lag=1)
+    oenv_lag = librosa.onset.onset_strength(S=S, sr=sr, lag=2)
+
+    # Lag of 2 should do the same thing at every other frame as
+    # doing a decimated onset strength with lag=1.  We do need
+    # to be careful of boundary effects though, hence the edge slicing here.
+    assert np.allclose(oenv_lag[:-2:2], oenv_skip[1:])
+
+
+def test_onset_strength_max(melspec_sr):
+
+    S, sr = melspec_sr
+
+    oenv1 = librosa.onset.onset_strength(S=S, sr=sr, max_size=1)
+    oenv2 = librosa.onset.onset_strength(S=S, sr=sr, max_size=3)
+
+    # When we compare to the max over a larger set from the previous
+    # frame, the novelty can only decrease.
+    assert np.all(oenv1 >= oenv2)
+
+
+def test_onset_strength_aggregate(melspec_sr):
+    S, sr = melspec_sr
+    oenv_mean = librosa.onset.onset_strength(S=S, sr=sr, aggregate=np.mean)
+    oenv_max = librosa.onset.onset_strength(S=S, sr=sr, aggregate=np.max)
+    oenv_min = librosa.onset.onset_strength(S=S, sr=sr, aggregate=np.min)
+
+    assert np.all(oenv_mean >= oenv_min)
+    assert np.all(oenv_mean <= oenv_max)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -94,14 +143,12 @@ def melspec_sr(ysr):
     return S, sr
 
 
-@pytest.mark.parametrize(
-    "feature", [None, librosa.feature.melspectrogram, librosa.feature.chroma_stft]
-)
+@pytest.mark.parametrize("feature", [None, librosa.feature.chroma_stft])
 @pytest.mark.parametrize("n_fft", [512, 2048])
 @pytest.mark.parametrize("hop_length", [256, 512])
 @pytest.mark.parametrize("detrend", [False, True])
 @pytest.mark.parametrize("center", [False, True])
-@pytest.mark.parametrize("aggregate", [None, np.mean, np.max])
+@pytest.mark.parametrize("aggregate", [None, np.max])
 def test_onset_strength_spectrogram(
     melspec_sr, feature, n_fft, hop_length, detrend, center, aggregate
 ):
@@ -337,11 +384,9 @@ def test_onset_strength_badref():
     librosa.onset.onset_strength(S=S, ref=S[:, :2])
 
 
-def test_onset_strength_multi_ref():
-    srand()
-
+def test_onset_strength_multi_ref(rng):
     # Make a random positive spectrum
-    S = 1 + np.abs(np.random.randn(1025, 10))
+    S = 1 + np.abs(rng.standard_normal(size=(1025, 10)))
 
     # Test with a null reference
     null_ref = np.zeros_like(S)

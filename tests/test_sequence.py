@@ -4,7 +4,6 @@
 import numpy as np
 
 import pytest
-from test_core import srand
 
 import librosa
 
@@ -124,7 +123,6 @@ def test_viterbi_init():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize("x", [np.random.random(size=(3, 5))])
 @pytest.mark.parametrize(
     "trans",
     [
@@ -135,12 +133,12 @@ def test_viterbi_init():
     ],
     ids=["sum!=1", "not square", "too small", "negative"],
 )
-def test_viterbi_bad_transition(trans, x):
+def test_viterbi_bad_transition(trans, rng):
+    x = rng.random(size=(3, 5))
     librosa.sequence.viterbi(x, trans)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize("x", [np.random.random(size=(3, 5))])
 @pytest.mark.parametrize("trans", [np.ones((3, 3), dtype=float) / 3.0])
 @pytest.mark.parametrize(
     "p_init",
@@ -151,18 +149,20 @@ def test_viterbi_bad_transition(trans, x):
     ],
     ids=["sum!=1", "wrong size", "negative"],
 )
-def test_viterbi_bad_init(x, trans, p_init):
+def test_viterbi_bad_init(trans, p_init, rng):
+    x = rng.random(size=(3, 5))
     librosa.sequence.viterbi(x, trans, p_init=p_init)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("trans", [np.ones((3, 3), dtype=float) / 3])
 @pytest.mark.parametrize(
-    "x",
-    [np.random.random(size=(3, 5)) + 2, np.random.random(size=(3, 5)) - 1],
+    "offset",
+    [2, -1],
     ids=["p>1", "p<0"],
 )
-def test_viterbi_bad_obs(trans, x):
+def test_viterbi_bad_obs(trans, offset, rng):
+    x = rng.random(size=(3, 5)) + offset
     librosa.sequence.viterbi(x, trans)
 
 
@@ -304,9 +304,8 @@ def test_viterbi_discriminative_example_init():
 
 
 @pytest.fixture(scope="module")
-def x_disc():
-    srand()
-    x = np.random.random(size=(3, 5)) ** 2
+def x_disc(rng_mod):
+    x = rng_mod.random(size=(3, 5)) ** 2
     x /= x.sum(axis=0, keepdims=True)
     return x
 
@@ -474,8 +473,12 @@ def test_viterbi_binary_example_init():
     assert np.array_equal(path_c, path_c2)
 
 
+@pytest.fixture(scope="module")
+def x_data(rng_mod):
+    return rng_mod.random(size=(3, 5))
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize("x", [np.random.random(size=(3, 5)) ** 2])
 @pytest.mark.parametrize(
     "trans",
     [
@@ -486,11 +489,10 @@ def test_viterbi_binary_example_init():
     ],
     ids=["sum>1", "wrong size", "wrong shape", "negative"],
 )
-def test_viterbi_binary_bad_transition(x, trans):
-    librosa.sequence.viterbi_binary(x, trans)
+def test_viterbi_binary_bad_transition(x_data, trans):
+    librosa.sequence.viterbi_binary(x_data, trans)
 
 
-@pytest.mark.parametrize("x", [np.random.random(size=(3, 5)) ** 2])
 @pytest.mark.parametrize("trans", [np.ones((2, 2), dtype=float) * 0.5])
 @pytest.mark.parametrize(
     "p_init",
@@ -498,20 +500,19 @@ def test_viterbi_binary_bad_transition(x, trans):
     ids=["too big", "wrong shape", "negative"],
 )
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_viterbi_binary_bad_init(x, trans, p_init):
-    librosa.sequence.viterbi_binary(x, trans, p_init=p_init)
+def test_viterbi_binary_bad_init(x_data, trans, p_init):
+    librosa.sequence.viterbi_binary(x_data, trans, p_init=p_init)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize("x", [np.random.random(size=(3, 5)) ** 2])
 @pytest.mark.parametrize("trans", [np.ones((2, 2), dtype=float) * 0.5])
 @pytest.mark.parametrize(
     "p_state",
     [2 * np.ones(3, dtype=float), np.ones(4, dtype=float), -np.ones(3, dtype=float)],
     ids=["too big", "bad shape", "negative"],
 )
-def test_viterbi_binary_bad_marginal(p_state, trans, x):
-    librosa.sequence.viterbi_binary(x, trans, p_state=p_state)
+def test_viterbi_binary_bad_marginal(p_state, trans, x_data):
+    librosa.sequence.viterbi_binary(x_data, trans, p_state=p_state)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
