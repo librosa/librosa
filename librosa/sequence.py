@@ -382,9 +382,8 @@ def dtw(
 
         # Perform some shape-squashing here
         # Put the time axes around front
-        # Suppress types because mypy doesn't know these are ndarrays
-        X = np.swapaxes(X, -1, 0)  # type: ignore
-        Y = np.swapaxes(Y, -1, 0)  # type: ignore
+        X = np.swapaxes(X, -1, 0)
+        Y = np.swapaxes(Y, -1, 0)
 
         # Flatten the remaining dimensions
         # Use F-ordering to preserve columns
