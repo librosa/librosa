@@ -1242,8 +1242,8 @@ def test_beat_track_multi_bpm_scalar(y_multi):
     tempo1, beats1 = librosa.beat.beat_track(y=y[1], sr=sr, sparse=False, bpm=100)
 
     assert np.isscalar(tempo)
-    assert np.allclose(tempo, tempo0)
-    assert np.allclose(tempo, tempo1)
+    assert np.allclose(tempo, tempo0)  # type: ignore
+    assert np.allclose(tempo, tempo1)  # type: ignore
     assert np.allclose(beats[0], beats0)
     assert np.allclose(beats[1], beats1)
 
