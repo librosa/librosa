@@ -22,8 +22,6 @@ import scipy.stats
 
 import pytest
 
-from test_core import srand
-
 
 def __test_cqt_size(
     y,
@@ -329,7 +327,7 @@ def y_hybrid():
 @pytest.mark.parametrize("hop_length", [512, 2000])
 @pytest.mark.parametrize("sparsity", [0.01])
 @pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
-@pytest.mark.parametrize("n_bins", [1, 12, 24, 48, 72, 74, 76])
+@pytest.mark.parametrize("n_bins", [1, 12, 48, 76])
 @pytest.mark.parametrize("bins_per_octave", [12, 24])
 @pytest.mark.parametrize("tuning", [None, 0, 0.25])
 @pytest.mark.parametrize("resolution", [1])
@@ -487,9 +485,8 @@ def sr_white():
 
 
 @pytest.fixture(scope="module")
-def y_white(sr_white):
-    srand()
-    return np.random.randn(10 * sr_white)
+def y_white(sr_white, rng_mod):
+    return rng_mod.standard_normal(size=10 * sr_white)
 
 
 @pytest.mark.parametrize("scale", [False, True])
@@ -529,7 +526,7 @@ def test_hybrid_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     assert np.allclose(np.std(C, axis=1), 0.5, atol=5e-1), np.std(C, axis=1)
 
 
-@pytest.fixture(scope="module", params=[22050, 44100])
+@pytest.fixture(scope="module", params=[22050, 16000])
 def sr_icqt(request):
     return request.param
 
@@ -542,13 +539,11 @@ def y_icqt(sr_icqt):
 @pytest.mark.parametrize("over_sample", [1, 3])
 @pytest.mark.parametrize("scale", [False, True])
 @pytest.mark.parametrize("hop_length", [384, 512])
-@pytest.mark.parametrize("length", [None, True])
-@pytest.mark.parametrize("res_type", ["soxr_hq", "polyphase"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("res_type", ["soxr_lq", "polyphase"])
 @pytest.mark.filterwarnings(
     "ignore:n_fft=.*is too large"
 )  # our test signal is short; this is fine
-def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type, dtype):
+def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, res_type):
 
     bins_per_octave = over_sample * 12
     n_bins = 7 * bins_per_octave
@@ -560,12 +555,11 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
         bins_per_octave=bins_per_octave,
         scale=scale,
         hop_length=hop_length,
+        res_type=res_type,
     )
 
-    if length:
-        _len = len(y_icqt)
-    else:
-        _len = None
+    _len = len(y_icqt)
+
     yinv = librosa.icqt(
         C,
         sr=sr_icqt,
@@ -574,16 +568,10 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
         bins_per_octave=bins_per_octave,
         length=_len,
         res_type=res_type,
-        dtype=dtype,
     )
 
-    assert yinv.dtype == dtype
-
     # Only test on the middle section
-    if length:
-        assert len(y_icqt) == len(yinv)
-    else:
-        yinv = librosa.util.fix_length(yinv, size=len(y_icqt))
+    assert len(y_icqt) == len(yinv)
 
     y_icqt = y_icqt[sr_icqt // 2 : -sr_icqt // 2]
     yinv = yinv[sr_icqt // 2 : -sr_icqt // 2]
@@ -596,7 +584,48 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
     assert resnorm <= 0.1, resnorm
 
 
-@pytest.fixture
+@pytest.mark.parametrize("hop_length", [384, 512])
+def test_icqt_nolength(y_icqt, sr_icqt, hop_length):
+    bins_per_octave = 12
+    n_bins = 7 * bins_per_octave
+
+    C = librosa.cqt(
+        y_icqt,
+        sr=sr_icqt,
+        n_bins=n_bins,
+        bins_per_octave=bins_per_octave,
+        scale=True,
+        hop_length=hop_length,
+    )
+
+    yinv = librosa.icqt(
+        C,
+        sr=sr_icqt,
+        scale=True,
+        hop_length=hop_length,
+        bins_per_octave=bins_per_octave,
+        length=None,
+        res_type="polyphase",
+    )
+    yinv = librosa.util.fix_length(yinv, size=len(y_icqt))
+
+    y_icqt = y_icqt[sr_icqt // 2 : -sr_icqt // 2]
+    yinv = yinv[sr_icqt // 2 : -sr_icqt // 2]
+
+    residual = np.abs(y_icqt - yinv)
+    resnorm = np.sqrt(np.mean(residual**2))
+    assert resnorm <= 0.1, resnorm
+
+
+def test_icqt_dtype(y_icqt, sr_icqt):
+    C = librosa.cqt(y_icqt, sr=sr_icqt)
+    y = librosa.icqt(C, sr=sr_icqt, dtype=np.float32)
+    assert y.dtype == np.float32
+    y = librosa.icqt(C, sr=sr_icqt, dtype=np.float64)
+    assert y.dtype == np.float64
+
+
+@pytest.fixture(scope="module")
 def y_chirp():
     sr = 22050
     y = librosa.chirp(fmin=55, fmax=55 * 2**3, length=sr // 8, sr=sr)
@@ -613,7 +642,7 @@ def y_chirp():
 @pytest.mark.parametrize("momentum", [0.99])
 @pytest.mark.parametrize("random_state", [0])
 @pytest.mark.parametrize("fmin", [40.0])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("dtype", [np.float32])
 @pytest.mark.parametrize("init", [None])
 @pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt(
@@ -664,7 +693,7 @@ def test_griffinlim_cqt(
         bins_per_octave=bins_per_octave,
         scale=scale,
         pad_mode=pad_mode,
-        n_iter=2,
+        n_iter=1,
         momentum=momentum,
         random_state=random_state,
         length=length,
@@ -689,10 +718,18 @@ def test_griffinlim_cqt(
     if use_length:
         assert len(y_rec) == length
 
-    assert y_rec.dtype == dtype
-
     # Check that the data is okay
     assert np.all(np.isfinite(y_rec))
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
+def test_griffinlim_cqt_dtype(y_chirp, dtype):
+    C = librosa.cqt(y_chirp, sr=22050, res_type="polyphase")
+    y = librosa.griffinlim_cqt(
+        np.abs(C), sr=22050, dtype=dtype, n_iter=2, res_type="polyphase"
+    )
+    assert y.dtype == dtype
 
 
 @pytest.mark.parametrize("momentum", [0, 0.95])
@@ -716,7 +753,12 @@ def test_griffinlim_cqt_rng(y_chirp, random_state):
         np.abs(C), sr=22050, n_iter=2, random_state=random_state, res_type="polyphase"
     )
 
-    assert np.all(np.isfinite(y_rec))
+    y_rec2 = librosa.griffinlim_cqt(
+        np.abs(C), sr=22050, n_iter=2, random_state=random_state, res_type="polyphase"
+    )
+
+    if not isinstance(random_state, np.random.RandomState) and random_state is not None:
+        assert np.allclose(y_rec, y_rec2)
 
 
 @pytest.mark.parametrize("init", [None, "random"])

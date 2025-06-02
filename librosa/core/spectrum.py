@@ -1518,8 +1518,9 @@ def iirt(
         audio time series. Multi-channel is supported.
     sr : number > 0 [scalar]
         sampling rate of ``y``
-    win_length : int > 0, <= n_fft
-        Window length.
+    win_length : int > 0
+        Window length.  This is primarily used for centering (see below) and to
+        simplify compatibility with other frame-based analyses (like `stft`).
     hop_length : int > 0 [scalar]
         Hop length, number samples between subsequent frames.
         If not supplied, defaults to ``win_length // 4``.

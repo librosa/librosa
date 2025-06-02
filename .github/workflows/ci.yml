@@ -70,8 +70,6 @@ jobs:
 
         steps:
         - uses: actions/checkout@v4
-          with:
-            submodules: true
 
         - name: Create short temp directory (Windows only)
           if: runner.os == 'Windows'
@@ -132,7 +130,15 @@ jobs:
 
         - name: Run pytest
           shell: bash -l {0}
-          run: pytest
+          run: pytest --mpl-results-path=mpl_image_results/
+
+        - name: Upload image comparison failures if any
+          if: failure() && hashFiles('mpl_image_results/**') != ''
+          uses: actions/upload-artifact@v4
+          with:
+            name: mpl-test-results
+            path: mpl_image_results/
+            retention-days: 7
 
         - name: Upload coverage to Codecov
           uses: codecov/codecov-action@v5
