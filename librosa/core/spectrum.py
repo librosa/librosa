@@ -1418,8 +1418,8 @@ def phase_vocoder(
         If given, `rate` must be None.
 
     kind : str
-        Interpolation kind for magnitude interpolation.
-        Passed to `scipy.interpolate.interp1d`.
+        Interpolation kind for magnitude interpolation, e.g., 'linear' or 'nearest'.
+        See `scipy.interpolate.interp1d` for a full list of supported options.
 
     hop_length : int > 0 [scalar] or None
         The number of samples between successive columns of ``D``.
@@ -1450,8 +1450,24 @@ def phase_vocoder(
     """
     n_frames = D.shape[-1]
 
+    if not isinstance(hop_length, Deprecated):
+        warnings.warn(
+            "The `hop_length` parameter is deprecated as of 1.0 and will be removed in 1.1. "
+            "It is unused in the current implementation.",
+            FutureWarning,
+            stacklevel=2,
+        )
+
+    if not isinstance(n_fft, Deprecated):
+        warnings.warn(
+            "The `n_fft` parameter is deprecated as of 1.0 and will be removed in 1.1. "
+            "It is unused in the current implementation.",
+            FutureWarning,
+            stacklevel=2,
+        )
+
     if (rate is None) == (t_out is None):
-        raise ValueError("Must specify exactly one of `rate` or `t_out`")
+        raise ParameterError("Must specify exactly one of `rate` or `t_out`")
 
     if t_out is None:
         t_out = np.arange(0.0, n_frames, rate)
@@ -1459,7 +1475,7 @@ def phase_vocoder(
     t_out = np.asarray(t_out, dtype=float)
 
     if np.any(t_out < 0) or np.any(t_out >= n_frames):
-        raise ValueError("t_out values must be in the range [0, D.shape[-1])")
+        raise ParameterError("t_out values must be in the range [0, D.shape[-1])")
 
     if np.any(np.diff(t_out) < 0):
         warnings.warn("t_out is not monotonic; phase estimation may be unstable", stacklevel=2)
