@@ -1242,7 +1242,15 @@ def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, pea
     cache=True,
 )
 def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, count, peaks):
-    """Vectorized wrapper for optimal peak-picker by dynamic programming"""
+    """Vectorized wrapper for optimal peak-picker by dynamic programming
+
+    All parameters are the same as for `peak_pick`, except for `count` and `peaks`.
+
+    `count` is a boolean that indicates whether to maximize the number of peaks or
+    the sum of their values.
+
+    `peaks` is the pre-allocated output array.
+    """
     values = np.zeros(len(x) + 1)
     pointers = np.zeros(len(x) + 1, dtype=np.int32)
     taken = np.zeros(len(x) + 1, dtype=np.bool_)
