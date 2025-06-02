@@ -96,27 +96,6 @@ jobs:
               ;;
             esac
 
-        # - name: Cache conda
-        #   uses: actions/cache@v4
-        #   env:
-        #     # Increase this value to reset cache if etc/example-environment.yml has not changed
-        #     CACHE_NUMBER: 0
-        #   with:
-        #     path: ~/conda_pkgs_dir
-        #     key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
-        #
-        # - name: Install Conda environment
-        #   uses: conda-incubator/setup-miniconda@v3
-        #   with:
-        #     auto-update-conda: true
-        #     python-version: ${{ matrix.python-version }}
-        #     add-pip-as-python-dependency: true
-        #     auto-activate-base: false
-        #     activate-environment: test
-        #     channel-priority: ${{ matrix.channel-priority }}
-        #     environment-file: ${{ matrix.envfile }}
-        #     use-only-tar-bz2: false # IMPORTANT: This needs to be set for caching to work properly!
-
         - name: Setup Miniforge
           uses: conda-incubator/setup-miniconda@v3
           with:
