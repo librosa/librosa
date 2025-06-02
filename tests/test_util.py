@@ -491,8 +491,10 @@ def test_localmin(ndim, axis, rng):
 @pytest.mark.parametrize("post_avg", [1, 10])
 @pytest.mark.parametrize("wait", [0, 1, 10])
 @pytest.mark.parametrize("delta", [0.05, 100.0])
-def test_peak_pick(d, pre_max, post_max, pre_avg, post_avg, delta, wait, rng):
+@pytest.mark.parametrize("method", ["greedy", "dp_count", "dp_value"])
+def test_peak_pick(d, pre_max, post_max, pre_avg, post_avg, delta, wait, method, rng):
     x = rng.standard_normal(size=d) ** 2
+
     peaks = librosa.util.peak_pick(
         x,
         pre_max=pre_max,
@@ -502,6 +504,7 @@ def test_peak_pick(d, pre_max, post_max, pre_avg, post_avg, delta, wait, rng):
         delta=delta,
         wait=wait,
         sparse=True,
+        method=method,
     )
     dpeaks = librosa.util.peak_pick(
         x,
@@ -512,6 +515,7 @@ def test_peak_pick(d, pre_max, post_max, pre_avg, post_avg, delta, wait, rng):
         delta=delta,
         wait=wait,
         sparse=False,
+        method=method,
     )
 
     for i in peaks:
@@ -565,6 +569,21 @@ def test_peak_pick_fail(d, pre_max, post_max, pre_avg, post_avg, delta, wait, rn
         post_avg=post_avg,
         delta=delta,
         wait=wait,
+    )
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_peak_pick_badmethod():
+    # suppress mypy type check here:
+    librosa.util.peak_pick(
+        np.zeros(100),
+        pre_max=3,
+        post_max=3,
+        pre_avg=3,
+        post_avg=3,
+        delta=1,
+        wait=1,
+        method="foo",  # type: ignore
     )
 
 

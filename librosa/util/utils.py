@@ -673,8 +673,7 @@ def axis_sort(
     axis: int = ...,
     index: Literal[False] = ...,
     value: Optional[Callable[..., Any]] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -684,8 +683,7 @@ def axis_sort(
     axis: int = ...,
     index: Literal[True],
     value: Optional[Callable[..., Any]] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 def axis_sort(
@@ -1189,7 +1187,6 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
     return lmin
 
 
-
 @numba.guvectorize(
     [
         "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
@@ -1198,12 +1195,14 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
         "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
     ],
     "(n),(),(),(),(),(),()->(n)",
-    nopython=True, cache=True)
-def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
-    """Vectorized wrapper for the peak-picker"""
+    nopython=True,
+    cache=True,
+)
+def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
+    """Vectorized wrapper for the greedy peak-picker"""
     # Special case the first frame
-    peaks[0] = (x[0] >= np.max(x[:min(post_max, x.shape[0])]))
-    peaks[0] &= (x[0] >= np.mean(x[:min(post_avg, x.shape[0])]) + delta)
+    peaks[0] = x[0] >= np.max(x[: min(post_max, x.shape[0])])
+    peaks[0] &= x[0] >= np.mean(x[: min(post_avg, x.shape[0])]) + delta
 
     if peaks[0]:
         n = wait + 1
@@ -1211,17 +1210,17 @@ def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         n = 1
 
     while n < x.shape[0]:
-        maxn = np.max( x[max(0, n-pre_max):min(n+post_max, x.shape[0])])
+        maxn = np.max(x[max(0, n - pre_max) : min(n + post_max, x.shape[0])])
 
         # Are we the local max and sufficiently above average?
-        peaks[n] = (x[n] == maxn) 
-        
+        peaks[n] = x[n] == maxn
+
         if not peaks[n]:
             n += 1
             continue
 
-        avgn = np.mean(x[max(0, n-pre_avg):min(n+post_avg, x.shape[0])])
-        peaks[n] &= (x[n] >= avgn + delta)
+        avgn = np.mean(x[max(0, n - pre_avg) : min(n + post_avg, x.shape[0])])
+        peaks[n] &= x[n] >= avgn + delta
 
         if not peaks[n]:
             n += 1
@@ -1229,6 +1228,76 @@ def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
 
         # Skip the next `wait` frames
         n += wait + 1
+
+
+@numba.guvectorize(
+    [
+        "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
+        "void(float64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
+        "void(int32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
+        "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
+    ],
+    "(n),(),(),(),(),(),(),()->(n)",
+    nopython=True,
+    cache=True,
+)
+def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, count, peaks):
+    """Vectorized wrapper for optimal peak-picker by dynamic programming
+
+    All parameters are the same as for `peak_pick`, except for `count` and `peaks`.
+
+    `count` is a boolean that indicates whether to maximize the number of peaks or
+    the sum of their values.
+
+    `peaks` is the pre-allocated output array.
+    """
+    values = np.zeros(len(x) + 1)
+    pointers = np.zeros(len(x) + 1, dtype=np.int32)
+    taken = np.zeros(len(x) + 1, dtype=np.bool_)
+
+    # Use the integral image trick to accelerate partial sums for averages
+    cumulate = np.cumsum(x)
+
+    values[-1] = 0
+    pointers[-1] = -1
+    for n in range(len(x) - 1, -1, -1):
+        # Populate defaults in case we don't take this peak
+        values[n] = values[n + 1]
+        pointers[n] = n + 1
+
+        # Check if we're a local peak
+        maxn = np.max(x[max(0, n - pre_max) : min(n + post_max, x.shape[0])])
+
+        # if not a peak, move along
+        if x[n] < maxn:
+            continue
+
+        # Are we enough above average?
+        idx_prev = max(0, n - pre_avg)
+        idx_post = min(n + post_avg, x.shape[0])
+        if idx_prev == 0:
+            avgn = cumulate[idx_post - 1] / idx_post
+        else:
+            avgn = (cumulate[idx_post - 1] - cumulate[idx_prev - 1]) / (idx_post - idx_prev)
+
+        if count:
+            v = 1
+        else:
+            v = x[n]
+
+        next_ptr = min(len(x), n + wait + 1)
+
+        # Only take this peak if it's better than not taking it
+        if x[n] >= avgn + delta and values[next_ptr] + v > values[n + 1]:
+            values[n] = values[next_ptr] + v
+            pointers[n] = next_ptr
+            taken[n] = True
+
+    # Backtrack to find the selected peaks
+    n = 0
+    while pointers[n] >= 0:
+        peaks[n] = taken[n]
+        n = pointers[n]
 
 
 def peak_pick(
@@ -1241,7 +1310,8 @@ def peak_pick(
     delta: float,
     wait: int,
     sparse: bool = True,
-    axis: int = -1
+    method: Literal["greedy", "dp_count", "dp_value"] = "greedy",
+    axis: int = -1,
 ) -> np.ndarray:
     """Use a flexible heuristic to pick peaks in a signal.
 
@@ -1282,6 +1352,14 @@ def peak_pick(
         If `True`, the output are indices of detected peaks.
         If `False`, the output is a dense boolean array of the same
         shape as ``x``.
+    method : {'greedy', 'dp_count', 'dp_value'} [scalar]
+        The method used to pick peaks. The default is 'greedy', which implements
+        the method of Böck et al. (2012).  The greedy method selects the earliest
+        possible peaks (i.e. those with minimal index values) subject to the
+        constraints described above.
+        The 'dp_*' methods implement a dynamic programming method which seeks to
+        explicitly maximize either the number of selected peaks (`dp_count`) or
+        the sum of the values `x[p]` the selected peaks `p` (`dp_value`).
     axis : int [scalar]
         the axis over which to detect peaks.
 
@@ -1337,9 +1415,11 @@ def peak_pick(
     if post_avg <= 0:
         raise ParameterError("post_avg must be positive")
     if sparse and x.ndim != 1:
-        raise ParameterError(f"sparse=True (default) does not support "
-                f"{x.ndim}-dimensional inputs. "
-                f"Either set sparse=False or process each dimension independently.")
+        raise ParameterError(
+            f"sparse=True (default) does not support "
+            f"{x.ndim}-dimensional inputs. "
+            f"Either set sparse=False or process each dimension independently."
+        )
 
     # Ensure valid index types
     pre_max = valid_int(pre_max, cast=np.ceil)
@@ -1349,7 +1429,43 @@ def peak_pick(
     wait = valid_int(wait, cast=np.ceil)
 
     peaks = np.zeros_like(x, dtype=bool)
-    __peak_pick(x.swapaxes(axis, -1), pre_max, post_max, pre_avg, post_avg, delta, wait, peaks.swapaxes(axis, -1))
+    if method == "greedy":
+        __peak_pick_greedy(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            peaks.swapaxes(axis, -1),
+        )
+    elif method == "dp_count":
+        __peak_pick_dp(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            True,
+            peaks.swapaxes(axis, -1),
+        )
+    elif method == "dp_value":
+        __peak_pick_dp(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            False,
+            peaks.swapaxes(axis, -1),
+        )
+    else:
+        raise ParameterError(f"Unknown method {method}")
 
     if sparse:
         return np.flatnonzero(peaks)
@@ -2048,15 +2164,13 @@ _ArrayOrSparseMatrix = TypeVar(
 
 
 @overload
-def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray:
-    ...
+def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 
 
 @overload
 def shear(
     X: scipy.sparse.spmatrix, *, factor: int = ..., axis: int = ...
-) -> scipy.sparse.spmatrix:
-    ...
+) -> scipy.sparse.spmatrix: ...
 
 
 def shear(
@@ -2204,7 +2318,7 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
         shape = tuple([len(arrays)] + list(shape_in))
 
         # Find the common dtype for all inputs
-        dtype = np.result_type(*arrays) 
+        dtype = np.result_type(*arrays)
 
         # Allocate an empty array of the right shape and type
         result = np.empty(shape, dtype=dtype, order="F")
@@ -2496,13 +2610,13 @@ _Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
 
 
 @overload
-def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray:
-    ...
+def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray: ...
 
 
 @overload
-def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> np.complexfloating[Any, Any]:
-    ...
+def phasor(
+    angles: _Real, *, mag: Optional[_Number] = ...
+) -> np.complexfloating[Any, Any]: ...
 
 
 def phasor(
