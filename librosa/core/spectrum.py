@@ -18,6 +18,7 @@ from .audio import resample
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
+from ..util.deprecation import Deprecated
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
@@ -1365,9 +1366,11 @@ def magphase(D: np.ndarray, *, power: float = 1) -> Tuple[np.ndarray, np.ndarray
 def phase_vocoder(
     D: np.ndarray,
     *,
-    rate: float,
-    hop_length: Optional[int] = None,
-    n_fft: Optional[int] = None,
+    rate: Optional[float] = None,
+    t_out: Optional[np.ndarray] = None,
+    kind: str = "linear",
+    hop_length: Optional[Union[int, Deprecated]] = Deprecated(),
+    n_fft: Optional[Union[int, Deprecated]] = Deprecated(),
 ) -> np.ndarray:
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
 
@@ -1401,16 +1404,30 @@ def phase_vocoder(
 
     Parameters
     ----------
-    D : np.ndarray [shape=(..., d, t), dtype=complex]
+    D : np.ndarray [shape=(..., n_bins, n_frames), dtype=complex]
         STFT matrix
 
     rate : float > 0 [scalar]
         Speed-up factor: ``rate > 1`` is faster, ``rate < 1`` is slower.
+        Use this for constant-rate time-stretching.
+
+    t_out : np.ndarray [shape=(n_output,)], optional
+        Optional array of fractional input frame indices specifying the input time
+        corresponding to each output frame. Values must lie in [0, n_frames).
+        This can be used for variable-rate time-stretching.
+        If given, `rate` must be None.
+
+    kind : str
+        Interpolation kind for magnitude interpolation, e.g., 'linear' or 'nearest'.
+        See `scipy.interpolate.interp1d` for a full list of supported options.
 
     hop_length : int > 0 [scalar] or None
         The number of samples between successive columns of ``D``.
 
         If None, defaults to ``n_fft//4 = (D.shape[0]-1)//2``
+
+        .. warning:: This parameter is deprecated as of 1.0 and will
+            be removed in 1.1.  It is unused in the current implementation.
 
     n_fft : int > 0 or None
         The number of samples per frame in D.
@@ -1418,59 +1435,85 @@ def phase_vocoder(
         However, if D was constructed using an odd-length window, the correct
         frame length can be specified here.
 
+        .. warning:: This parameter is deprecated as of 1.0 and will
+            be removed in 1.1.  It is unused in the current implementation.
+
     Returns
     -------
-    D_stretched : np.ndarray [shape=(..., d, t / rate), dtype=complex]
-        time-stretched STFT
+    D_stretched : np.ndarray [shape=(..., n_bins, t / rate), dtype=complex]
+        time-stretched STFT.
+        For variable-rate stretching, the output will have `len(t_out)` frames.
 
     See Also
     --------
     pyrubberband
     """
-    if n_fft is None:
-        n_fft = 2 * (D.shape[-2] - 1)
+    n_frames = D.shape[-1]
 
-    if hop_length is None:
-        hop_length = int(n_fft // 4)
+    if not isinstance(hop_length, Deprecated):
+        warnings.warn(
+            "The `hop_length` parameter is deprecated as of 1.0 and will be removed in 1.1. "
+            "It is unused in the current implementation.",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-    time_steps = np.arange(0, D.shape[-1], rate, dtype=np.float64)
+    if not isinstance(n_fft, Deprecated):
+        warnings.warn(
+            "The `n_fft` parameter is deprecated as of 1.0 and will be removed in 1.1. "
+            "It is unused in the current implementation.",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-    # Create an empty output array
-    shape = list(D.shape)
-    shape[-1] = len(time_steps)
-    d_stretch = np.zeros_like(D, shape=shape)
+    if (rate is None) == (t_out is None):
+        raise ParameterError("Must specify exactly one of `rate` or `t_out`")
 
-    # Expected phase advance in each bin per frame
-    phi_advance = hop_length * convert.fft_frequencies(sr=2 * np.pi, n_fft=n_fft)
+    if (rate is not None) and (rate <= 0):
+        raise ParameterError(f"rate={rate} must be a positive number")
 
-    # Phase accumulator; initialize to the first sample
-    phase_acc = np.angle(D[..., 0])
+    if t_out is None:
+        t_out = np.arange(0.0, n_frames, rate)
 
-    # Pad 0 columns to simplify boundary logic
-    padding = [(0, 0) for _ in D.shape]
-    padding[-1] = (0, 2)
-    D = np.pad(D, padding, mode="constant")
+    t_out = np.asarray(t_out, dtype=float)
 
-    for t, step in enumerate(time_steps):
-        columns = D[..., int(step) : int(step + 2)]
+    if np.any(t_out < 0) or np.any(t_out >= n_frames):
+        raise ParameterError("t_out values must be in the range [0, D.shape[-1])")
 
-        # Weighting for linear magnitude interpolation
-        alpha = np.mod(step, 1.0)
-        mag = (1.0 - alpha) * np.abs(columns[..., 0]) + alpha * np.abs(columns[..., 1])
+    if np.any(np.diff(t_out) < 0):
+        warnings.warn("t_out is not monotonic; phase estimation may be unstable", stacklevel=2)
 
-        # Store to output array
-        d_stretch[..., t] = util.phasor(phase_acc, mag=mag)
+    i0 = np.floor(t_out).astype(int)
+    i1 = np.minimum(i0 + 1, n_frames - 1)
 
-        # Compute phase advance
-        dphase = np.angle(columns[..., 1]) - np.angle(columns[..., 0]) - phi_advance
+    # Unwrapped phase
+    ph = np.angle(D)
 
-        # Wrap to -pi:pi range
-        dphase = dphase - 2.0 * np.pi * np.round(dphase / (2.0 * np.pi))
+    # Phase differences for each output frame
+    diff = ph[..., i1] - ph[..., i0]  # (..., n_bins, n_out)
 
-        # Accumulate phase
-        phase_acc += phi_advance + dphase
+    # Initialize increments: shifted version of diff
+    phase = np.empty_like(diff)
+    # Initialize with the first output frame
+    phase[..., 0] = np.angle(D[..., i0[0]])
+    phase[..., 1:] = diff[..., :-1]
 
-    return d_stretch
+    # Cumulative phase; we can do this in-place to save a copy
+    np.cumsum(phase, axis=-1, out=phase)
+
+    # Interpolate magnitudes
+    mag_interp = scipy.interpolate.interp1d(
+        np.arange(n_frames),
+        np.abs(D),
+        kind=kind,
+        axis=-1,
+        fill_value="extrapolate",
+        assume_sorted=True,
+        copy=False,
+    )
+
+    D_stretched: np.ndarray = util.phasor(phase, mag=mag_interp(t_out))
+    return D_stretched
 
 
 @cache(level=20)
