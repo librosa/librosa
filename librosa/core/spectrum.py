@@ -1440,7 +1440,7 @@ def phase_vocoder(
 
     Returns
     -------
-    D_stretched : np.ndarray [shape=(..., d, t / rate), dtype=complex]
+    D_stretched : np.ndarray [shape=(..., n_bins, t / rate), dtype=complex]
         time-stretched STFT.
         For variable-rate stretching, the output will have `len(t_out)` frames.
 
@@ -1468,6 +1468,9 @@ def phase_vocoder(
 
     if (rate is None) == (t_out is None):
         raise ParameterError("Must specify exactly one of `rate` or `t_out`")
+
+    if (rate is not None) and (rate <= 0):
+        raise ParameterError(f"rate={rate} must be a positive number")
 
     if t_out is None:
         t_out = np.arange(0.0, n_frames, rate)
@@ -1509,8 +1512,8 @@ def phase_vocoder(
         copy=False,
     )
 
-    D_out: np.ndarray = util.phasor(phase, mag=mag_interp(t_out))
-    return D_out
+    D_stretched: np.ndarray = util.phasor(phase, mag=mag_interp(t_out))
+    return D_stretched
 
 
 @cache(level=20)

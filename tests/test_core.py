@@ -2794,3 +2794,9 @@ def test_phase_vocoder_nonmonotone():
     with pytest.warns(UserWarning, match="t_out is not monotonic"):
         D_stretch = librosa.phase_vocoder(D, t_out=t_out)
 
+@pytest.mark.parametrize("rate", [0, -1])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_phase_vocoder_negative_rate(rate):
+
+    D = np.zeros((3, 2), dtype=np.complex64)
+    librosa.phase_vocoder(D, rate=rate)
