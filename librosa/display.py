@@ -52,7 +52,7 @@ from . import core
 from . import util
 from .util.deprecation import rename_kw, Deprecated
 from .util.exceptions import ParameterError
-from typing import TYPE_CHECKING, Any, Collection, Optional, Union, Callable, Dict
+from typing import TYPE_CHECKING, Any, Collection, Optional, Union, Callable, Dict, Tuple
 from ._typing import _FloatLike_co
 
 if TYPE_CHECKING:
