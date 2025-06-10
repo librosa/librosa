@@ -1186,6 +1186,11 @@ def specshow(
     >>> ax[1].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
+    # Parse the value scale into a normalizer and possibly a colormap
+    data, norm_cmap = __scale_data(data,
+                                   vscale=vscale,
+                                   top_db=top_db)
+
     if np.issubdtype(data.dtype, np.complexfloating):
         warnings.warn(
             "Trying to display complex-valued input. " "Showing magnitude instead.",
@@ -1193,12 +1198,6 @@ def specshow(
         )
         data = np.abs(data)
 
-    # Parse the value scale into a normalizer and possibly a colormap
-    norm, norm_cmap = __scale_data(vscale=vscale,
-                                   top_db=top_db,
-                                   vmin=kwargs.pop("vmin", None),
-                                   vmax=kwargs.pop("vmax", None),
-                                   clip=kwargs.pop("clip", None))
     if norm_cmap is not None:
         kwargs.setdefault("cmap", norm_cmap)
     kwargs.setdefault("cmap", cmap(data))
@@ -1229,7 +1228,7 @@ def specshow(
 
     axes = __check_axes(ax)
 
-    out = axes.pcolormesh(x_coords, y_coords, data, norm=norm, **kwargs)
+    out = axes.pcolormesh(x_coords, y_coords, data, **kwargs)
 
     __set_current_image(ax, out)
 
@@ -1847,43 +1846,46 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
     return axes_compatible_and_not_none and axes_same_lim
 
 
-def __scale_data(vscale, top_db, vmin, vmax, clip):
-    """Parse the vscale parameter and construct a normalizer and colormap
+def __scale_data(data, *, vscale, top_db):
+    """Parse the vscale parameter and return the transformed data and colormap
     if necessary"""
 
+    # If vscale is None, we return the data as-is
     if vscale is None:
-        return None, None
+        return data, None
 
-    if isinstance(vscale, colors.Normalize):
-        return vscale, None
-
-    # Otherwise, we're a string.
     # First check for the easy cases
     if vscale == "phase":
-        # TODO implement a phase normalizer
-        return None, "twilight"
+        return np.angle(data), "twilight"
+
     elif vscale == "phase_unwrap":
-        # TODO implement a phase unwrap normalizer
-        return None, None
+        return np.unwrap(np.angle(data), axis=-1), "twilight"
+
     elif vscale == "phase_unwrap_diff":
-        # TODO implement a phase unwrap diff normalizer
-        return None, None
+        return np.diff(np.unwrap(np.angle(data), axis=-1), prepend=0.), "twilight"
+
     else:
         # In some kind of dB mode
         mode, scale_type, ref = __parse_vscale(vscale)
-        normalizer = dBNormalizer(mode, scale_type, ref,
-                                  vmin=vmin, vmax=vmax,
-                                  top_db=top_db,
-                                  clip=clip)
+        if mode == "dBFS":
+            ref = np.max(np.abs(data))
+        elif ref is None:
+            ref = 1.0
+
+        if scale_type == "power":
+            data = core.power_to_db(np.abs(data), top_db=top_db, ref=ref)
+        else:
+            data = core.amplitude_to_db(np.abs(data), top_db=top_db, ref=ref)
+
         # Use the default colormap for sequential data
-        return normalizer, cmap(np.array(1.0))
+        return data, cmap(np.array(1.0))
 
 
 VSCALE_PATTERN = re.compile(
-    r"^(?P<mode>dBFS|dB)"                  # Match "dBFS" or "dB"
-    r"(?:\[(?:(?P<type>power)"             # Optionally match [power
-    r"(?:,(?P<ref_power>\d+(?:\.\d+)?))?"  # Optionally match ,reference after power
-    r"|(?P<ref>\d+(?:\.\d+)?))\])?$"       # Or match reference alone
+    r"^(?P<mode>dBFS|dB)"                                   # Match "dBFS" or "dB"
+    r"(?:\[(?:(?P<type>power)"                              # Optionally match [power
+    r"(?:,(?P<ref_power>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?))?"  # Optional ref_power
+    r"|(?P<ref>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?))\])?$"       # Or ref alone
 )
 
 
@@ -1924,58 +1926,6 @@ def __parse_vscale(vscale: str) -> Tuple[str, str, Optional[Union[float, str]]]:
     else:  # mode == 'dB'
         ref = float(ref) if ref is not None else None
     return mode, scale_type, ref
-
-
-class dBNormalizer(colors.Normalize):
-    def __init__(self, mode: str, scale_type: str, ref: Union[str, float] = None,
-                 top_db: Optional[float] = 80,
-                 vmin=None, vmax=None, clip=False):
-        super().__init__(vmin=vmin, vmax=vmax, clip=clip)
-        self.mode = mode
-        self.scale_type = scale_type
-        self.ref = ref
-        self.ref_ = 1
-        self.top_db = top_db
-
-    def __call__(self, value, clip=None):
-        value, is_scalar = self.process_value(value)
-        data = np.abs(value) if np.iscomplexobj(value) else value
-
-        if self.mode == 'dBFS' and len(value) > 0:
-            ref = np.max(data)
-        elif self.ref is None:
-            ref = 1.0  # Default reference if not specified explicitly
-        else:
-            ref = self.ref_
-
-        if np.iscomplexobj(data):
-            data = np.abs(data)
-
-        if callable(ref):
-            self.ref_ = ref(data)
-        else:
-            self.ref_ = ref
-
-        if self.scale_type == 'power':
-            db_data = core.power_to_db(data, top_db=self.top_db, ref=self.ref_)
-        else:
-            db_data = core.amplitude_to_db(data, top_db=self.top_db, ref=self.ref_)
-
-        return 1 + (db_data / self.top_db)
-
-    def inverse(self, value):
-        # Invert the normalization from [0, 1] back to dB values
-        value, is_scalar = self.process_value(value)
-        db_val = value * self.top_db - self.top_db
-
-        # Convert back from dB scale to original amplitude or power scale
-        if self.scale_type == 'power':
-            inverse_scaler = core.db_to_power
-        else:
-            inverse_scaler = core.db_to_amplitude
-
-        x_val = inverse_scaler(db_val, ref=self.ref_)
-        return x_val
 
 
 def waveshow(
