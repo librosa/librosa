@@ -930,7 +930,7 @@ def specshow(
     y_coords: Optional[np.ndarray] = None,
     x_axis: Optional[str] = None,
     y_axis: Optional[str] = None,
-    vscale: Optional[Union[str, colors.Normalize]] = None,
+    vscale: Optional[str] = None,
     sr: float = 22050,
     hop_length: int = 512,
     n_fft: Optional[int] = None,
