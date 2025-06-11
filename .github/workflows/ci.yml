@@ -143,7 +143,7 @@ jobs:
           if: failure() && hashFiles('mpl_image_results/**') != ''
           uses: actions/upload-artifact@v4
           with:
-            name: mpl-test-results
+            name: mpl-test-results-${{ runner.os }}--${{ runner.arch }}--${{ matrix.python-version }}
             path: mpl_image_results/
             retention-days: 7
 
