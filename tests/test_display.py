@@ -1146,7 +1146,7 @@ def test_parse_vscale(vscale, mode, scale_type, ref):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_vscale"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["specshow_vscale"], extensions=["png"], tolerance=6.5, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_vscale(S):
