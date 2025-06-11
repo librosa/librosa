@@ -1860,11 +1860,9 @@ def __scale_data(data, *, vscale, top_db):
     ----------
     data : np.ndarray
         The data to be scaled and visualized.
-
     vscale : str or None
         The value scale to apply to the data.
         If None, the data is returned as-is.
-
     top_db : float
         The maximum decibel level to display when using a dB scale.
         This is only used if `vscale` is set to a dB mode.
@@ -1873,7 +1871,6 @@ def __scale_data(data, *, vscale, top_db):
     -------
     data : np.ndarray
         The scaled data, ready for visualization.
-
     cmap : matplotlib.colors.Colormap or None
         The colormap to use for visualization, or None if no scaling is applied.
     """
