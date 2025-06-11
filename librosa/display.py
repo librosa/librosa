@@ -1890,11 +1890,13 @@ def __scale_data(data, *, vscale, top_db):
 
     else:
         # In some kind of dB mode
-        mode, scale_type, ref = __parse_vscale(vscale)
-        if mode == "dBFS":
+        mode, scale_type, ref_ = __parse_vscale(vscale)
+        if ref_ == "max":
             ref = np.max(np.abs(data))
-        elif ref is None:
+        elif ref_ is None:
             ref = 1.0
+        else:
+            ref = float(ref_)
 
         if scale_type == "power":
             data = core.power_to_db(np.abs(data), top_db=top_db, ref=ref)
