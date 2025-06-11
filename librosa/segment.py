@@ -1013,7 +1013,7 @@ def subsegment(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(cqt, ref='dBFS',
+    >>> librosa.display.specshow(cqt, vscale='dBFS',
     ...                          y_axis='cqt_hz', x_axis='time', ax=ax)
     >>> lims = ax.get_ylim()
     >>> ax.vlines(beat_times, lims[0], lims[1], color='lime', alpha=0.9,
