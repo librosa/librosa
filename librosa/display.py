@@ -1874,7 +1874,6 @@ def __scale_data(data, *, vscale, top_db):
     cmap : matplotlib.colors.Colormap or None
         The colormap to use for visualization, or None if no scaling is applied.
     """
-
     # If vscale is None, we return the data as-is
     if vscale is None:
         return data, None
