@@ -1880,12 +1880,15 @@ def __scale_data(data, *, vscale, top_db):
 
     # First check for the easy cases
     if vscale == "phase":
+        # Phase should use a cyclic colormap
         return np.angle(data), "twilight"
 
     elif vscale == "phase_unwrap":
-        return np.unwrap(np.angle(data), axis=-1), "twilight"
+        # For unwrapped phase, use a signed colormap, since these now increase without bound
+        return np.unwrap(np.angle(data), axis=-1), cmap(np.array([-1, 1]))
 
     elif vscale == "phase_unwrap_diff":
+        # For unwrapped phase differences, we use a cyclic colormap again
         return np.diff(np.unwrap(np.angle(data), axis=-1), prepend=0.0), "twilight"
 
     else:

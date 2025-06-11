@@ -1117,7 +1117,7 @@ def test_vqt_hz_nointervals(C, sr):
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize('vscale', ['dBFS[1]','dBFS[power,1]'])
+@pytest.mark.parametrize("vscale", ["dBFS[1]", "dBFS[power,1]"])
 def test_parse_vscale_dbfs_ref(vscale):
     # This should raise an error because a reference value is
     # not allowed with dBFS
@@ -1125,22 +1125,24 @@ def test_parse_vscale_dbfs_ref(vscale):
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize('vscale', ['bad string', 'dB[gibberish]', 'dBFS[gibberish]'])
+@pytest.mark.parametrize("vscale", ["bad string", "dB[gibberish]", "dBFS[gibberish]"])
 def test_parse_vscale_fail(vscale):
     librosa.display.__parse_vscale(vscale)
 
 
-@pytest.mark.parametrize('vscale, mode, scale_type, ref',
-                         [
-                         ('dBFS', 'dBFS', 'amplitude', 'max'),
-                         ('dBFS[power]', 'dBFS', 'power', 'max'),
-                         ('dB', 'dB', 'amplitude', None),
-                         ('dB[2]', 'dB', 'amplitude', 2),
-                         ('dB[1e-1]', 'dB', 'amplitude', 0.1),
-                         ('dB[power]', 'dB', 'power', None),
-                         ('dB[power,2]', 'dB', 'power', 2),
-                         ('dB[power,1e-1]', 'dB', 'power', 0.1),
-                         ])
+@pytest.mark.parametrize(
+    "vscale, mode, scale_type, ref",
+    [
+        ("dBFS", "dBFS", "amplitude", "max"),
+        ("dBFS[power]", "dBFS", "power", "max"),
+        ("dB", "dB", "amplitude", None),
+        ("dB[2]", "dB", "amplitude", 2),
+        ("dB[1e-1]", "dB", "amplitude", 0.1),
+        ("dB[power]", "dB", "power", None),
+        ("dB[power,2]", "dB", "power", 2),
+        ("dB[power,1e-1]", "dB", "power", 0.1),
+    ],
+)
 def test_parse_vscale(vscale, mode, scale_type, ref):
     assert librosa.display.__parse_vscale(vscale) == (mode, scale_type, ref)
 
@@ -1150,21 +1152,58 @@ def test_parse_vscale(vscale, mode, scale_type, ref):
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_vscale(S):
-    fig, ax = plt.subplots(nrows=3, ncols=3, sharex=True, sharey=True, figsize=(12,12))
+    fig, ax = plt.subplots(nrows=3, ncols=3, sharex=True, sharey=True, figsize=(12, 12))
 
     # first column is dB, dBFS, dB with ref value
-    librosa.display.specshow(S, vscale='dB', y_axis='log', x_axis='time', ax=ax[0,0])
-    librosa.display.specshow(S, vscale='dBFS', y_axis='log', x_axis='time', ax=ax[1,0])
-    librosa.display.specshow(S, vscale='dB[1e-2]', y_axis='log', x_axis='time', ax=ax[2,0])
+    i1 = librosa.display.specshow(
+        S, vscale="dB", y_axis="log", x_axis="time", ax=ax[0, 0]
+    )
+    fig.colorbar(i1, ax=ax[0, 0])
+    ax[0, 0].set_title("dB")
+    i2 = librosa.display.specshow(
+        S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[1, 0]
+    )
+    fig.colorbar(i2, ax=ax[1, 0])
+    ax[1, 0].set_title("dBFS")
+    i3 = librosa.display.specshow(
+        S, vscale="dB[1e-2]", y_axis="log", x_axis="time", ax=ax[2, 0]
+    )
+    fig.colorbar(i3, ax=ax[2, 0])
+    ax[2, 0].set_title("dB, ref=1e-2")
+
     # second column is dB[power], dBFS[power], dB[power] with ref value
-    librosa.display.specshow(S, vscale='dB[power]', y_axis='log', x_axis='time', ax=ax[0,1])
-    librosa.display.specshow(S, vscale='dBFS[power]', y_axis='log', x_axis='time', ax=ax[1,1])
-    librosa.display.specshow(S, vscale='dB[power,1e-2]', y_axis='log', x_axis='time', ax=ax[2,1])
+    i4 = librosa.display.specshow(
+        S, vscale="dB[power]", y_axis="log", x_axis="time", ax=ax[0, 1]
+    )
+    fig.colorbar(i4, ax=ax[0, 1])
+    ax[0, 1].set_title("dB power")
+    i5 = librosa.display.specshow(
+        S, vscale="dBFS[power]", y_axis="log", x_axis="time", ax=ax[1, 1]
+    )
+    fig.colorbar(i5, ax=ax[1, 1])
+    ax[1, 1].set_title("dBFS power")
+    i6 = librosa.display.specshow(
+        S, vscale="dB[power,1e-2]", y_axis="log", x_axis="time", ax=ax[2, 1]
+    )
+    fig.colorbar(i6, ax=ax[2, 1])
+    ax[2, 1].set_title("dB power, ref=1e-2")
 
     # third column is phase, unwrapped phase, and unwrapped phase differentials
-    librosa.display.specshow(S, vscale='phase', y_axis='log', x_axis='time', ax=ax[0,2])
-    librosa.display.specshow(S, vscale='phase_unwrap', y_axis='log', x_axis='time', ax=ax[1,2])
-    librosa.display.specshow(S, vscale='phase_unwrap_diff', y_axis='log', x_axis='time', ax=ax[2,2])
+    i7 = librosa.display.specshow(
+        S, vscale="phase", y_axis="log", x_axis="time", ax=ax[0, 2]
+    )
+    fig.colorbar(i7, ax=ax[0, 2])
+    ax[0, 2].set_title("phase")
+    i8 = librosa.display.specshow(
+        S, vscale="phase_unwrap", y_axis="log", x_axis="time", ax=ax[1, 2]
+    )
+    fig.colorbar(i8, ax=ax[1, 2])
+    ax[1, 2].set_title("phase unwrapped")
+    i9 = librosa.display.specshow(
+        S, vscale="phase_unwrap_diff", y_axis="log", x_axis="time", ax=ax[2, 2]
+    )
+    fig.colorbar(i9, ax=ax[2, 2])
+    ax[2, 2].set_title("phase unwrapped diff")
 
     for _ax in ax.flat:
         _ax.label_outer()
