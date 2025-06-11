@@ -1173,25 +1173,24 @@ def specshow(
 
     Examples
     --------
-    Visualize an STFT power spectrum using default parameters
+    Visualize an STFT magnitude spectrum using default parameters
 
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=15)
     >>> fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True)
-    >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+    >>> D = librosa.stft(y)
     >>> img = librosa.display.specshow(D, y_axis='linear', x_axis='time',
-    ...                                sr=sr, ax=ax[0])
-    >>> ax[0].set(title='Linear-frequency power spectrogram')
+    ...                                vscale='dBFS', sr=sr, ax=ax[0])
+    >>> ax[0].set(title='Linear-frequency magnitude spectrogram')
     >>> ax[0].label_outer()
 
     Or on a logarithmic scale, and using a larger hop
 
     >>> hop_length = 1024
-    >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y, hop_length=hop_length)),
-    ...                             ref=np.max)
+    >>> D = librosa.stft(y, hop_length=hop_length)
     >>> librosa.display.specshow(D, y_axis='log', sr=sr, hop_length=hop_length,
-    ...                          x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Log-frequency power spectrogram')
+    ...                          vscale='dBFS', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Log-frequency magnitude spectrogram')
     >>> ax[1].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """

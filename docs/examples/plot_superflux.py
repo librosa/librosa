@@ -56,7 +56,7 @@ S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=n_fft,
 
 
 fig, ax = plt.subplots()
-librosa.display.specshow(S, vscale='dBFS[power'],
+librosa.display.specshow(S, vscale='dBFS[power]',
                          y_axis='mel', x_axis='time', sr=sr,
                          hop_length=hop_length, fmin=fmin, fmax=fmax, ax=ax)
 
