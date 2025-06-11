@@ -52,7 +52,16 @@ from . import core
 from . import util
 from .util.deprecation import rename_kw, Deprecated
 from .util.exceptions import ParameterError
-from typing import TYPE_CHECKING, Any, Collection, Optional, Union, Callable, Dict, Tuple
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Collection,
+    Optional,
+    Union,
+    Callable,
+    Dict,
+    Tuple,
+)
 from ._typing import _FloatLike_co
 
 if TYPE_CHECKING:
@@ -1187,9 +1196,7 @@ def specshow(
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
     # Parse the value scale into a normalizer and possibly a colormap
-    data, norm_cmap = __scale_data(data,
-                                   vscale=vscale,
-                                   top_db=top_db)
+    data, norm_cmap = __scale_data(data, vscale=vscale, top_db=top_db)
 
     if np.issubdtype(data.dtype, np.complexfloating):
         warnings.warn(
@@ -1848,7 +1855,29 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
 
 def __scale_data(data, *, vscale, top_db):
     """Parse the vscale parameter and return the transformed data and colormap
-    if necessary"""
+    if necessary
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The data to be scaled and visualized.
+
+    vscale : str or None
+        The value scale to apply to the data.
+        If None, the data is returned as-is.
+
+    top_db : float
+        The maximum decibel level to display when using a dB scale.
+        This is only used if `vscale` is set to a dB mode.
+
+    Returns
+    -------
+    data : np.ndarray
+        The scaled data, ready for visualization.
+
+    cmap : matplotlib.colors.Colormap or None
+        The colormap to use for visualization, or None if no scaling is applied.
+    """
 
     # If vscale is None, we return the data as-is
     if vscale is None:
@@ -1862,7 +1891,7 @@ def __scale_data(data, *, vscale, top_db):
         return np.unwrap(np.angle(data), axis=-1), "twilight"
 
     elif vscale == "phase_unwrap_diff":
-        return np.diff(np.unwrap(np.angle(data), axis=-1), prepend=0.), "twilight"
+        return np.diff(np.unwrap(np.angle(data), axis=-1), prepend=0.0), "twilight"
 
     else:
         # In some kind of dB mode
@@ -1882,17 +1911,18 @@ def __scale_data(data, *, vscale, top_db):
 
 
 VSCALE_PATTERN = re.compile(
-    r"^(?P<mode>dBFS|dB)"                                   # Match "dBFS" or "dB"
-    r"(?:\[(?:(?P<type>power)"                              # Optionally match [power
+    r"^(?P<mode>dBFS|dB)"  # Match "dBFS" or "dB"
+    r"(?:\[(?:(?P<type>power)"  # Optionally match [power
     r"(?:,(?P<ref_power>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?))?"  # Optional ref_power
-    r"|(?P<ref>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?))\])?$"       # Or ref alone
+    r"|(?P<ref>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?))\])?$"  # Or ref alone
 )
 
 
 def __parse_vscale(vscale: str) -> Tuple[str, str, Optional[Union[float, str]]]:
     """Parse a vscale string into mode, scale_type, and reference value.
 
-    Examples:
+    Examples
+    --------
     - 'dBFS' -> ('dBFS', 'amplitude', 'max')
     - 'dBFS[power]' -> ('dBFS', 'power', 'max')
     - 'dB[power,0.1]' -> ('dB', 'power', 0.1)
@@ -1913,16 +1943,16 @@ def __parse_vscale(vscale: str) -> Tuple[str, str, Optional[Union[float, str]]]:
     if not match:
         raise ValueError(f"Invalid vscale specification: {vscale}")
 
-    mode = match.group('mode')
+    mode = match.group("mode")
 
-    scale_type = 'power' if match.groupdict().get('type') else 'amplitude'
+    scale_type = "power" if match.groupdict().get("type") else "amplitude"
 
-    ref = match.groupdict().get('ref') or match.groupdict().get('ref_power')
+    ref = match.groupdict().get("ref") or match.groupdict().get("ref_power")
 
-    if mode == 'dBFS':
+    if mode == "dBFS":
         if ref is not None:
             raise ValueError("dBFS vscale cannot have an explicit reference value")
-        ref = 'max'
+        ref = "max"
     else:  # mode == 'dB'
         ref = float(ref) if ref is not None else None
     return mode, scale_type, ref
