@@ -140,7 +140,7 @@ def cqt(
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
+    >>> img = librosa.display.specshow(C, vscale='dBFS',
     ...                                sr=sr, x_axis='time', y_axis='cqt_note', ax=ax)
     >>> ax.set_title('Constant-Q power spectrum')
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
@@ -903,11 +903,11 @@ def vqt(
     >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> V = np.abs(librosa.vqt(y, sr=sr))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
+    >>> librosa.display.specshow(C, vscale='dBFS',
     ...                          sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[0])
     >>> ax[0].set(title='Constant-Q power spectrum', xlabel=None)
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(V, ref=np.max),
+    >>> img = librosa.display.specshow(V, vscale='dBFS',
     ...                                sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[1])
     >>> ax[1].set_title('Variable-Q power spectrum')
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")

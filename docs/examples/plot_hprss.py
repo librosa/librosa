@@ -47,17 +47,17 @@ rp = np.max(np.abs(D))
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 
-img = librosa.display.specshow(librosa.amplitude_to_db(np.abs(D), ref=rp),
+img = librosa.display.specshow(D, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[0])
 ax[0].set(title='Full spectrogram')
 ax[0].label_outer()
 
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_harmonic), ref=rp),
+librosa.display.specshow(D_harmonic, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[1])
 ax[1].set(title='Harmonic spectrogram')
 ax[1].label_outer()
 
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_percussive), ref=rp),
+librosa.display.specshow(D_percussive, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[2])
 ax[2].set(title='Percussive spectrogram')
 fig.colorbar(img, ax=ax)
@@ -103,36 +103,36 @@ D_harmonic16, D_percussive16 = librosa.decompose.hpss(D, margin=16)
 # In the plots below, note that vibrato has been suppressed from the harmonic
 # components, and vocals have been suppressed in the percussive components.
 fig, ax = plt.subplots(nrows=5, ncols=2, sharex=True, sharey=True, figsize=(10, 10))
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_harmonic), ref=rp),
+librosa.display.specshow(D_harmonic, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[0, 0])
 ax[0, 0].set(title='Harmonic')
 
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_percussive), ref=rp),
+librosa.display.specshow(D_percussive, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[0, 1])
 ax[0, 1].set(title='Percussive')
 
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_harmonic2), ref=rp),
+librosa.display.specshow(D_harmonic2, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[1, 0])
 
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_percussive2), ref=rp),
+librosa.display.specshow(D_percussive2, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[1, 1])
 
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_harmonic4), ref=rp),
+librosa.display.specshow(D_harmonic4, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[2, 0])
 
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_percussive4), ref=rp),
+librosa.display.specshow(D_percussive4, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[2, 1])
 
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_harmonic8), ref=rp),
+librosa.display.specshow(D_harmonic8, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[3, 0])
 
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_percussive8), ref=rp),
+librosa.display.specshow(D_percussive8, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[3, 1])
 
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_harmonic16), ref=rp),
+librosa.display.specshow(D_harmonic16, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[4, 0])
 
-librosa.display.specshow(librosa.amplitude_to_db(np.abs(D_percussive16), ref=rp),
+librosa.display.specshow(D_percussive16, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[4, 1])
 
 for i in range(5):

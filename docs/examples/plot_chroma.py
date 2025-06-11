@@ -51,7 +51,7 @@ C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=12*3, n_bins=7*12*3))
 
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
-img1 = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max)[idx],
+img1 = librosa.display.specshow(C[idx], vscale='dBFS',
                                 y_axis='cqt_note', x_axis='time', bins_per_octave=12*3,
                                 ax=ax[0])
 fig.colorbar(img1, ax=[ax[0]], format="%+2.f dB")
@@ -116,7 +116,7 @@ ax[1].set(ylabel='Median-filtered')
 # A final comparison between the CQT, original chromagram
 # and the result of our filtering.
 fig, ax = plt.subplots(nrows=3, sharex=True)
-librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max)[idx],
+librosa.display.specshow(C[idx], vscale='dBFS',
                          y_axis='cqt_note', x_axis='time',
                          bins_per_octave=12*3, ax=ax[0])
 ax[0].set(ylabel='CQT')

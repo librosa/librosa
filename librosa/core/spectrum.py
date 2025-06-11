@@ -221,8 +221,7 @@ def stft(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S,
-    ...                                                        ref=np.max),
+    >>> img = librosa.display.specshow(S, vscale='dBFS',
     ...                                y_axis='log', x_axis='time', ax=ax)
     >>> ax.set_title('Power spectrogram')
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
@@ -1613,11 +1612,11 @@ def iirt(
     >>> D = np.abs(librosa.iirt(y, sr=sr))
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
+    >>> img = librosa.display.specshow(C, vscale='dBFS',
     ...                                y_axis='cqt_hz', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Constant-Q transform')
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> img = librosa.display.specshow(D, vscale='dBFS',
     ...                                y_axis='cqt_hz', x_axis='time', ax=ax[1])
     >>> ax[1].set_title('Semitone spectrogram (iirt)')
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")

@@ -720,15 +720,14 @@ def axis_sort(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, ncols=2)
-    >>> img_w = librosa.display.specshow(librosa.amplitude_to_db(W, ref=np.max),
+    >>> img_w = librosa.display.specshow(W, vscale='dBFS',
     ...                                  y_axis='log', ax=ax[0, 0])
     >>> ax[0, 0].set(title='W')
     >>> ax[0, 0].label_outer()
     >>> img_act = librosa.display.specshow(H, x_axis='time', ax=ax[0, 1])
     >>> ax[0, 1].set(title='H')
     >>> ax[0, 1].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(W_sort,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(W_sort, vscale='dBFS',
     ...                          y_axis='log', ax=ax[1, 0])
     >>> ax[1, 0].set(title='W sorted')
     >>> librosa.display.specshow(H_sort, x_axis='time', ax=ax[1, 1])
@@ -1393,7 +1392,7 @@ def peak_pick(
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=512)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> D = np.abs(librosa.stft(y))
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> librosa.display.specshow(D, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[0].plot(times, onset_env, alpha=0.8, label='Onset strength')
     >>> ax[0].vlines(times[peaks], 0,
@@ -1742,19 +1741,16 @@ def sync(
     >>> beat_t = librosa.frames_to_time(beats, sr=sr)
     >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(C, vscale='dBFS',
     ...                          x_axis='time', ax=ax[0])
     >>> ax[0].set(title='CQT power, shape={}'.format(C.shape))
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C_med,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(C_med, vscale='dBFS',
     ...                          x_coords=beat_t, x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Beat synchronous CQT power, '
     ...                 'shape={}'.format(C_med.shape))
     >>> ax[1].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C_med_sub,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(C_med_sub, vscale='dBFS',
     ...                          x_coords=subbeat_t, x_axis='time', ax=ax[2])
     >>> ax[2].set(title='Sub-beat synchronous CQT power, '
     ...                 'shape={}'.format(C_med_sub.shape))

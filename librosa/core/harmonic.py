@@ -99,12 +99,11 @@ def salience(
     (1025, 115)
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          sr=sr, y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Magnitude spectrogram')
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_sal,
-    ...                                                        ref=np.max),
+    >>> img = librosa.display.specshow(S_sal, vscale='dBFS',
     ...                                sr=sr, y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Salience spectrogram')
     >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
@@ -216,6 +215,7 @@ def interp_harmonics(
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> harmonics = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
+    >>> ref_value = np.max(S)  # Common reference for dB scaling
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
     >>> S_harm = librosa.interp_harmonics(S, freqs=fft_freqs, harmonics=harmonics, axis=0)
     >>> print(S_harm.shape)
@@ -223,8 +223,7 @@ def interp_harmonics(
 
     >>> fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
     >>> for i, _sh in enumerate(S_harm):
-    ...     img = librosa.display.specshow(librosa.amplitude_to_db(_sh,
-    ...                                                      ref=S.max()),
+    ...     img = librosa.display.specshow(_sh, vscale=f'dB[{ref_value}]',
     ...                              sr=sr, y_axis='log', x_axis='time',
     ...                              ax=ax.flat[i])
     ...     ax.flat[i].set(title='h={:.3g}'.format(harmonics[i]))
@@ -372,14 +371,14 @@ def f0_harmonics(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax =plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          x_axis='time', y_axis='log', ax=ax[0])
     >>> times = librosa.times_like(f0)
     >>> for h in harmonics:
     ...     ax[0].plot(times, h * f0, label=f"{h}*f0")
     >>> ax[0].legend(ncols=4, loc='lower right')
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(f0_harm, ref=np.max),
+    >>> librosa.display.specshow(f0_harm, vscale='dBFS',
     ...                          x_axis='time', ax=ax[1])
     >>> ax[1].set_yticks(harmonics-1)
     >>> ax[1].set_yticklabels(harmonics)

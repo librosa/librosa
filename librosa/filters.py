@@ -1050,11 +1050,10 @@ def cq_to_chroma(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> imgcq = librosa.display.specshow(librosa.amplitude_to_db(CQT,
-    ...                                                         ref=np.max),
+    >>> imgcq = librosa.display.specshow(CQT, vscale='dBFS',
     ...                                  y_axis='cqt_note', x_axis='time',
     ...                                  ax=ax[0])
-    >>> ax[0].set(title='CQT Power')
+    >>> ax[0].set(title='CQT Magnitude')
     >>> ax[0].label_outer()
     >>> librosa.display.specshow(chromagram, y_axis='chroma', x_axis='time',
     ...                          ax=ax[1])

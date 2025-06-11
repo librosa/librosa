@@ -142,13 +142,12 @@ def decompose(
     >>> import matplotlib.pyplot as plt
     >>> layout = [list(".AAAA"), list("BCCCC"), list(".DDDD")]
     >>> fig, ax = plt.subplot_mosaic(layout, constrained_layout=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax['A'])
     >>> ax['A'].set(title='Input spectrogram')
     >>> ax['A'].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(comps,
-    >>>                                                  ref=np.max),
-    >>>                          y_axis='log', ax=ax['B'])
+    >>> librosa.display.specshow(comps, vscale='dBFS',
+    ...                          y_axis='log', ax=ax['B'])
     >>> ax['B'].set(title='Components')
     >>> ax['B'].label_outer()
     >>> ax['B'].sharey(ax['A'])
@@ -157,9 +156,8 @@ def decompose(
     >>> ax['C'].sharex(ax['A'])
     >>> ax['C'].label_outer()
     >>> S_approx = comps.dot(acts)
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_approx,
-    >>>                                                        ref=np.max),
-    >>>                                y_axis='log', x_axis='time', ax=ax['D'])
+    >>> img = librosa.display.specshow(S_approx, vscale='dBFS',
+    ...                                y_axis='log', x_axis='time', ax=ax['D'])
     >>> ax['D'].set(title='Reconstructed spectrogram')
     >>> ax['D'].sharex(ax['A'])
     >>> ax['D'].sharey(ax['A'])
@@ -301,18 +299,16 @@ def hpss(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(np.abs(D),
-    ...                                                        ref=np.max),
-    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    >>> img = librosa.display.specshow(D, vscale='dBFS',
+    ...                                y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Full power spectrogram')
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(H),
-    ...                                                  ref=np.max(np.abs(D))),
+    >>> ref = np.max(np.abs(D))  # reference for dBFS scaling comes from full mix
+    >>> librosa.display.specshow(H, vscale=f'dB[{ref}]',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Harmonic power spectrogram')
     >>> ax[1].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(P),
-    ...                                                  ref=np.max(np.abs(D))),
+    >>> librosa.display.specshow(P, vscale=f'dB[{ref}]',
     ...                          y_axis='log', x_axis='time', ax=ax[2])
     >>> ax[2].set(title='Percussive power spectrogram')
     >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')

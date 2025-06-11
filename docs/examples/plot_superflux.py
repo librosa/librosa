@@ -56,7 +56,7 @@ S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=n_fft,
 
 
 fig, ax = plt.subplots()
-librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+librosa.display.specshow(S, vscale='dBFS[power'],
                          y_axis='mel', x_axis='time', sr=sr,
                          hop_length=hop_length, fmin=fmin, fmax=fmax, ax=ax)
 
@@ -98,7 +98,7 @@ frame_time = librosa.frames_to_time(np.arange(len(odf_default)),
                                     sr=sr,
                                     hop_length=hop_length)
 
-librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+librosa.display.specshow(S, vscale='dBFS[power]',
                          y_axis='mel', x_axis='time', sr=sr,
                          hop_length=hop_length, fmin=fmin, fmax=fmax, ax=ax[2])
 ax[2].set(xlim=[0, 5.0])

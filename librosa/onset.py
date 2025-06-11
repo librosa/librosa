@@ -141,7 +141,7 @@ def onset_detect(
     >>> import matplotlib.pyplot as plt
     >>> D = np.abs(librosa.stft(y))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> librosa.display.specshow(D, vscale='dBFS',
     ...                          x_axis='time', y_axis='log', ax=ax[0], sr=sr)
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
@@ -314,7 +314,7 @@ def onset_strength(
     >>> D = np.abs(librosa.stft(y))
     >>> times = librosa.times_like(D, sr=sr)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> librosa.display.specshow(D, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0], sr=sr)
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
@@ -414,7 +414,7 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].label_outer()
     >>> ax[1].plot(times, oenv, label='Onset strength')
@@ -548,7 +548,7 @@ def onset_strength_multi(
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
     >>> D = np.abs(librosa.stft(y))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img1 = librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> img1 = librosa.display.specshow(D, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
