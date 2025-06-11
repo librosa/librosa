@@ -1938,7 +1938,7 @@ def __parse_vscale(vscale: str) -> Tuple[str, str, Optional[Union[float, str]]]:
     """
     match = VSCALE_PATTERN.fullmatch(vscale)
     if not match:
-        raise ValueError(f"Invalid vscale specification: {vscale}")
+        raise ParameterError(f"Invalid vscale specification: {vscale}")
 
     mode = match.group("mode")
 
@@ -1948,10 +1948,10 @@ def __parse_vscale(vscale: str) -> Tuple[str, str, Optional[Union[float, str]]]:
 
     if mode == "dBFS":
         if ref is not None:
-            raise ValueError("dBFS vscale cannot have an explicit reference value")
+            raise ParameterError("dBFS vscale cannot have an explicit reference value")
         ref = "max"
-    else:  # mode == 'dB'
-        ref = float(ref) if ref is not None else None
+    elif ref is not None:  # mode == 'dB'
+        ref = float(ref)
     return mode, scale_type, ref
 
 
