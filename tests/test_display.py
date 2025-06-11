@@ -37,7 +37,8 @@ OLD_FT = not (FT_VERSION >= version.parse("2.10"))
 def audio():
 
     __EXAMPLE_FILE = os.path.join("tests", "test_audio.ogg")
-    y, sr = librosa.load(__EXAMPLE_FILE)
+    # Force 64-bit here to avoid phase instabilities in display down the road
+    y, sr = librosa.load(__EXAMPLE_FILE, dtype=np.float64)
     return y, sr
 
 
