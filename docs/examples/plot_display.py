@@ -67,6 +67,21 @@ fig.colorbar(img, ax=ax)
 # For the remainder of this example, we'll use the object-oriented
 # interface.
 
+
+# %%
+# In the example above, we explicitly computed the decibel-scaled
+# spectrogram, but for librosa 1.0 and later, `specshow` can
+# compute this automatically using the `vscale` parameter:
+
+fig, ax = plt.subplots()
+img = librosa.display.specshow(D, vscale='dB', ax=ax)
+fig.colorbar(img, ax=ax)
+
+# %%
+# We'll be using this format for the rest of the examples,
+# and at the end, we'll go over different options for value
+# scaling.
+
 # %%
 # Decorating your plot
 # --------------------
@@ -81,7 +96,7 @@ fig.colorbar(img, ax=ax)
 # We can tell specshow to decorate the axes accordingly:
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(S_db, x_axis='time', y_axis='linear', ax=ax)
+img = librosa.display.specshow(D, vscale='dB', x_axis='time', y_axis='linear', ax=ax)
 ax.set(title='Now with labeled axes!')
 fig.colorbar(img, ax=ax, format="%+2.f dB")
 
@@ -100,7 +115,7 @@ fig.colorbar(img, ax=ax, format="%+2.f dB")
 # We can tell specshow to use log-scaled frequency axes just as above:
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(S_db, x_axis='time', y_axis='log', ax=ax)
+img = librosa.display.specshow(D, vscale='dB', x_axis='time', y_axis='log', ax=ax)
 ax.set(title='Using a logarithmic frequency axis')
 fig.colorbar(img, ax=ax, format="%+2.f dB")
 
@@ -115,8 +130,7 @@ fig.colorbar(img, ax=ax, format="%+2.f dB")
 
 fig, ax = plt.subplots()
 D_highres = librosa.stft(y, hop_length=256, n_fft=4096)
-S_db_hr = librosa.amplitude_to_db(np.abs(D_highres), ref=np.max)
-img = librosa.display.specshow(S_db_hr, hop_length=256, x_axis='time', y_axis='log',
+img = librosa.display.specshow(D_highres, vscale='dB', hop_length=256, x_axis='time', y_axis='log',
                                ax=ax)
 ax.set(title='Higher time and frequency resolution')
 fig.colorbar(img, ax=ax, format="%+2.f dB")
@@ -137,12 +151,12 @@ fig.colorbar(img, ax=ax, format="%+2.f dB")
 # Mel-scaled, constant-Q, variable-Q, chromagrams, tempograms, etc.
 #
 # specshow can plot these just as well.  For example, a Mel spectrogram
-# can be displayed as follows:
+# can be displayed as follows.  Note that we use `vscale='dB[power]'` to
+# indicate that the values are power spectrograms (the default for `melspectrogram`).
 
 fig, ax = plt.subplots()
 M = librosa.feature.melspectrogram(y=y, sr=sr)
-M_db = librosa.power_to_db(M, ref=np.max)
-img = librosa.display.specshow(M_db, y_axis='mel', x_axis='time', ax=ax)
+img = librosa.display.specshow(M, vscale='dB[power]', y_axis='mel', x_axis='time', ax=ax)
 ax.set(title='Mel spectrogram display')
 fig.colorbar(img, ax=ax, format="%+2.f dB")
 
@@ -152,14 +166,13 @@ fig.colorbar(img, ax=ax, format="%+2.f dB")
 # or their note names in scientific pitch notation:
 
 C = librosa.cqt(y=y, sr=sr)
-C_db = librosa.amplitude_to_db(np.abs(C), ref=np.max)
 
 fig, ax = plt.subplots()
-librosa.display.specshow(C_db, y_axis='cqt_hz', x_axis='time', ax=ax)
+librosa.display.specshow(C, vscale='dB', y_axis='cqt_hz', x_axis='time', ax=ax)
 ax.set(title='Frequency (Hz) axis decoration')
 
 fig, ax = plt.subplots()
-librosa.display.specshow(C_db, y_axis='cqt_note', x_axis='time', ax=ax)
+librosa.display.specshow(C, vscale='dB', y_axis='cqt_note', x_axis='time', ax=ax)
 ax.set(title='Pitch axis decoration')
 
 # %%
@@ -234,12 +247,12 @@ fig.colorbar(img, ax=ax)
 
 Sa = librosa.note_to_hz('F4')
 fig, ax = plt.subplots()
-librosa.display.specshow(C_db, y_axis='cqt_svara', Sa=Sa, x_axis='time', ax=ax)
+librosa.display.specshow(C, vscale='dB', y_axis='cqt_svara', Sa=Sa, x_axis='time', ax=ax)
 ax.set(title='Hindustani decoration',
        ylim=[Sa, 2*Sa])
 
 fig, ax = plt.subplots()
-librosa.display.specshow(C_db, y_axis='cqt_svara', Sa=Sa, mela=22, x_axis='time', ax=ax)
+librosa.display.specshow(C, vscale='dB', y_axis='cqt_svara', Sa=Sa, mela=22, x_axis='time', ax=ax)
 ax.set(title='Carnatic decoration',
        ylim=[Sa, 2*Sa])
 
@@ -293,7 +306,7 @@ fig.colorbar(img, ax=ax)
 # explicit `cmap`:
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(S_db, cmap='gray_r', y_axis='log', x_axis='time', ax=ax)
+img = librosa.display.specshow(D, vscale='dB', cmap='gray_r', y_axis='log', x_axis='time', ax=ax)
 ax.set(title='Inverted grayscale')
 fig.colorbar(img, ax=ax, format="%+2.f dB")
 
@@ -324,11 +337,11 @@ fig.colorbar(img, ax=ax)
 fig, ax = plt.subplots(nrows=3, ncols=1, sharex=True)
 
 # On the first subplot, show the original spectrogram
-img1 = librosa.display.specshow(S_db, x_axis='time', y_axis='log', ax=ax[0])
+img1 = librosa.display.specshow(D, vscale='dB', x_axis='time', y_axis='log', ax=ax[0])
 ax[0].set(title='STFT (log scale)')
 
 # On the second subplot, show the mel spectrogram
-img2 = librosa.display.specshow(M_db, x_axis='time', y_axis='mel', ax=ax[1])
+img2 = librosa.display.specshow(M, vscale='dB[power]', x_axis='time', y_axis='mel', ax=ax[1])
 ax[1].set(title='Mel')
 
 # On the third subplot, show the chroma features
@@ -397,6 +410,77 @@ fig.colorbar(img, ax=ax)
 
 # For clarity, we'll zoom in on a 15-second patch
 ax[1].set(xlim=[10, 25])
+
+# %%
+# Value scaling
+# -------------
+# As mentioned above, `specshow` can automatically scale the values
+# in the input data through the `vscale` parameter.
+# The most common use case for this is decibel scaling, which can
+# be done in a few ways.
+#
+# The first is to pass `vscale='dB'`, which will use the default
+# reference value of 1.0, and treat the input data as amplitudes.
+#
+# If a different reference value is desired, you can specify it
+# as, for example, `vscale='dB[0.01]'`, which will use 0.01 as the
+# reference value.
+#
+# A particularly common case is to set the reference value to the 
+# peak of the input data, which is also known as "decibel full scale (dBFS)".
+# This is supported directly by passing `vscale='dBFS'`.
+# Note that this will not change the appearance of the plot, but it will change
+# the underlying values as notated on a colorbar:
+
+fig, ax = plt.subplots(nrows=2)
+imgdb = librosa.display.specshow(D, vscale='dB', x_axis='time', y_axis='log', ax=ax[0])
+fig.colorbar(imgdb, ax=ax[0], format="%+2.f dB")
+ax[0].set(title='dB scaling with default reference')
+imgdbfs = librosa.display.specshow(D, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[1])
+fig.colorbar(imgdbfs, ax=ax[1], format="%+2.f dB")
+ax[1].set(title='dBFS scaling with peak reference')
+
+# %%
+# If the input data is power rather than amplitude, as in the mel spectrogram
+# example above, you can use `vscale='dB[power]'` to indicate this.
+# Reference values and full scale modes are also supported.
+#
+# Decibel scaling will always default to a sequential colormap, but this can be
+# overridden by setting the `cmap` parameter as in the examples above.
+
+# %%
+# Phase information can also be displayed using `vscale='phase'`.
+# When the input data is complex-valued (like an STFT), this will
+# display the angle of the complex values in radians in the range ±π.
+fig, ax = plt.subplots()
+img_phase = librosa.display.specshow(D, vscale='phase', x_axis='time', y_axis='log', ax=ax)
+fig.colorbar(img_phase, ax=ax, format="%+2.f rad")
+ax.set(title='Phase of the STFT')
+
+# %%
+# Two additional phase modes are supported.
+# The first is `vscale='phase_unwrap'`, which displays the phase
+# unwrapped along the horizontal axis.  Values in this mode are
+# still radians, but no longer constrained to the range ±π.
+
+fig, ax = plt.subplots()
+img_phase_unwrap = librosa.display.specshow(D, vscale='phase_unwrap',
+                                                x_axis='time', y_axis='log', ax=ax)
+fig.colorbar(img_phase_unwrap, ax=ax, format="%+2.f rad")
+# %%
+# The second mode is `vscale='phase_unwrap_diff'`, which displays the
+# differences of unwrapped phase values, which are again radians in the ±π range.
+
+fig, ax = plt.subplots()
+img_phase_unwrap_diff = librosa.display.specshow(D, vscale='phase_unwrap_diff',
+                                                    x_axis='time', y_axis='log', ax=ax)
+fig.colorbar(img_phase_unwrap_diff, ax=ax, format="%+2.f rad")
+
+# %%
+# Phase displays use a cyclic colormap (`twilight`) when the data is constrained
+# to the range ±π, which ensures that color properly represents continuity of angles.
+#
+# 
 
 # %%
 # Conclusion
