@@ -185,11 +185,11 @@ class TimeFormatter(mplticker.Formatter):
             s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
         elif self.unit == "s":
             s = f"{value:.3g}"
-        elif self.unit == None and (vmax - vmin >= 1):
+        elif self.unit is None and (vmax - vmin >= 1):
             s = f"{value:.2g}"
         elif self.unit == "ms":
             s = "{:.3g}".format(value * 1000)
-        elif self.unit == None and (vmax - vmin < 1):
+        elif self.unit is None and (vmax - vmin < 1):
             s = f"{value:.3f}"
 
         return f"{sign:s}{s:s}"
@@ -1067,6 +1067,18 @@ def specshow(
 
         If not provided, they are inferred from ``x_axis`` and ``y_axis``.
 
+    vscale : str
+        Optional value transformation for `data`.  The following are supported:
+        - 'dB' : decibels with `1` as a reference amplitude
+        - 'dB[<value>]' : decibels with the given value as a reference amplitude, e.g. 'dB[0.1]'.
+        - 'dB[power]' : like above, but treating `data` as power rather than amplitude measurements.
+        - 'dB[power,<value>]' : like above, but with an explicit reference power value, e.g. 'dB[power,0.1]'.
+        - 'dBFS' : decibels relative to full scale, using `np.max(data)` as a reference amplitude
+        - 'dBFS[power]' : like above, but treating `data` as power rather than amplitude measurements.
+        - 'phase' : phase values in radians, with a range of `[-π, π]`.
+        - 'phase_unwrap' : phase unwrapped in radians, with no range limit.
+        - 'phase_unwrap_diff' : unwrapped phase differences in radians
+
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
         scales.
@@ -1143,8 +1155,8 @@ def specshow(
         if your font does not support musical notation symbols.
 
     top_db : float
-        If using a decibel scale, how many dB below the reference to allow
-        before truncating.
+        If using a decibel scale, how many dB below the peak to allow
+        before clipping.
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -1158,8 +1170,13 @@ def specshow(
             - ``shading='auto'``
             - ``edgecolors='None'``
 
-        The ``cmap`` option if not provided, is inferred from data automatically.
-        Set ``cmap=None`` to use matplotlib's default colormap.
+    Notes
+    -----
+    The ``cmap`` option if not provided via `kwargs`, is inferred from data automatically.
+    If `vscale` is specified, the colormap will be sequential for decibels, cyclic for phase and phase differences,
+    and diverging for unwrapped phase.
+
+    To use matplotlib's default colormap, explicitly set ``cmap=None``.
 
     Returns
     -------
