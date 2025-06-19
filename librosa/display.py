@@ -1076,8 +1076,7 @@ def specshow(
         - 'dBFS' : decibels relative to full scale, using `np.max(data)` as a reference amplitude
         - 'dBFS[power]' : like above, but treating `data` as power rather than amplitude measurements.
         - 'phase' : phase values in radians, with a range of `[-π, π]`.
-        - 'phase_unwrap' : phase unwrapped in radians, with no range limit.
-        - 'phase_unwrap_diff' : unwrapped phase differences in radians
+        - 'phase_unwrap_diff' : unwrapped phase differences in radians.  This mode requires x_coords and y_coords to be provided
 
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
@@ -1211,23 +1210,6 @@ def specshow(
     >>> ax[1].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
-    # Parse the value scale into a normalizer and possibly a colormap
-    data, norm_cmap = __scale_data(data, vscale=vscale, top_db=top_db)
-
-    if np.issubdtype(data.dtype, np.complexfloating):
-        warnings.warn(
-            "Trying to display complex-valued input. " "Showing magnitude instead.",
-            stacklevel=2,
-        )
-        data = np.abs(data)
-
-    if norm_cmap is not None:
-        kwargs.setdefault("cmap", norm_cmap)
-    kwargs.setdefault("cmap", cmap(data))
-    kwargs.setdefault("rasterized", True)
-    kwargs.setdefault("edgecolors", "None")
-    kwargs.setdefault("shading", "auto")
-
     all_params = dict(
         kwargs=kwargs,
         sr=sr,
@@ -1248,6 +1230,23 @@ def specshow(
     # Get the x and y coordinates
     y_coords = __mesh_coords(y_axis, y_coords, data.shape[0], **all_params)
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
+
+    # Parse the value scale into a normalizer and possibly a colormap
+    data, norm_cmap = __scale_data(data, vscale=vscale, top_db=top_db, x_coords=x_coords, y_coords=y_coords)
+
+    if np.issubdtype(data.dtype, np.complexfloating):
+        warnings.warn(
+            "Trying to display complex-valued input. " "Showing magnitude instead.",
+            stacklevel=2,
+        )
+        data = np.abs(data)
+
+    if norm_cmap is not None:
+        kwargs.setdefault("cmap", norm_cmap)
+    kwargs.setdefault("cmap", cmap(data))
+    kwargs.setdefault("rasterized", True)
+    kwargs.setdefault("edgecolors", "None")
+    kwargs.setdefault("shading", "auto")
 
     axes = __check_axes(ax)
 
@@ -1869,7 +1868,7 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
     return axes_compatible_and_not_none and axes_same_lim
 
 
-def __scale_data(data, *, vscale, top_db):
+def __scale_data(data, *, vscale, top_db, x_coords, y_coords):
     """Parse the vscale parameter and return the transformed data and colormap
     if necessary
 
@@ -1900,13 +1899,20 @@ def __scale_data(data, *, vscale, top_db):
         # Phase should use a cyclic colormap
         return np.angle(data), "twilight_shifted"
 
-    elif vscale == "phase_unwrap":
-        # For unwrapped phase, use a signed colormap, since these now increase without bound
-        return np.unwrap(np.angle(data), axis=-1), cmap(np.array([-1, 1]))
-
     elif vscale == "phase_unwrap_diff":
-        # For unwrapped phase differences, we use a cyclic colormap again
-        return np.diff(np.unwrap(np.angle(data), axis=-1), prepend=0.0), "twilight_shifted"
+        # Compute the difference of unwrapped phase
+        diff = np.diff(np.unwrap(np.angle(data), axis=-1), prepend=0.0)
+        # Correct it compared to the expected phase advance on this time-frequency grid
+        #   - 2π*y counts radians per second
+        #   - diff(x) counts seconds per frame
+        #   - The product counts radians per frame
+        diff -= np.multiply.outer(2 * np.pi * y_coords, np.diff(x_coords, prepend=0.0)) 
+        # Wrap back to +-pi
+        diff += np.pi
+        np.mod(diff, 2 * np.pi, out=diff)
+        diff -= np.pi
+        # Use a cyclic colormap for the phase difference
+        return diff, "twilight_shifted"
 
     else:
         # In some kind of dB mode
