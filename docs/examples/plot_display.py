@@ -458,18 +458,12 @@ fig.colorbar(img_phase, ax=ax, format="%+2.f rad")
 ax.set(title='Phase of the STFT')
 
 # %%
-# Two additional phase modes are supported.
-# The first is `vscale='phase_unwrap'`, which displays the phase
-# unwrapped along the horizontal axis.  Values in this mode are
-# still radians, but no longer constrained to the range ±π.
-
-fig, ax = plt.subplots()
-img_phase_unwrap = librosa.display.specshow(D, vscale='phase_unwrap',
-                                                x_axis='time', y_axis='log', ax=ax)
-fig.colorbar(img_phase_unwrap, ax=ax, format="%+2.f rad")
-# %%
-# The second mode is `vscale='phase_unwrap_diff'`, which displays the
-# differences of unwrapped phase values, which are again radians in the ±π range.
+# Additionally, the `vscale='phase_unwrap_diff'` mode provides a more fine-grained
+# visualization which compares the phase at each time-frequency position to what
+# would be expected by a stationary sinusoid at that frequency propagating from the previous
+# time step.
+# This is useful for visualizing how the frequency content of the signal deviates from
+# the finite set of frequencies used in the analysis (e.g., the STFT or CQT).
 
 fig, ax = plt.subplots()
 img_phase_unwrap_diff = librosa.display.specshow(D, vscale='phase_unwrap_diff',
@@ -477,9 +471,10 @@ img_phase_unwrap_diff = librosa.display.specshow(D, vscale='phase_unwrap_diff',
 fig.colorbar(img_phase_unwrap_diff, ax=ax, format="%+2.f rad")
 
 # %%
-# Phase displays use a cyclic colormap (`twilight`) when the data is constrained
+# Phase displays use a cyclic colormap (`twilight_shifted`) when the data is constrained
 # to the range ±π, which ensures that color properly represents continuity of angles.
-#
+# The center value (0 radians) is represented by a light color, and the extremes
+# (±π) are represented by dark colors.
 # 
 
 # %%
