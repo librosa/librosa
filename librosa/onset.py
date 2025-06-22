@@ -166,7 +166,7 @@ def onset_detect(
 
         # Mypy does not realize that oenv is not None by now
         # Max-scale with safe division
-        onset_envelope /= np.max(onset_envelope, keepdims=True, axis=-1) + util.tiny(onset_envelope)  # type: ignore
+        onset_envelope /= np.max(onset_envelope, keepdims=True, axis=-1) + util.tiny(onset_envelope)
 
     # help out mypy
     assert onset_envelope is not None
