@@ -8,7 +8,7 @@ from numba import jit
 
 from .._cache import cache
 from ..util.exceptions import ParameterError
-from typing import Any
+from typing import Any, Literal
 
 __all__ = ["delta", "stack_memory"]
 
@@ -20,7 +20,7 @@ def delta(
     width: int = 9,
     order: int = 1,
     axis: int = -1,
-    mode: str = "interp",
+    mode: Literal["interp", "nearest", "mirror", "constant", "wrap"] = "interp",
     **kwargs: Any,
 ) -> np.ndarray:
     r"""Compute delta features: local estimate of the derivative

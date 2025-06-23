@@ -392,7 +392,7 @@ def dtw(
         Y = Y.reshape((Y.shape[0], -1), order="F")
 
         try:
-            C = cdist(X, Y, metric=metric)
+            C = cdist(X, Y, metric=metric)  # type: ignore[call-overload]
         except ValueError as exc:
             raise ParameterError(
                 "scipy.spatial.distance.cdist returned an error.\n"
