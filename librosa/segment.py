@@ -43,7 +43,7 @@ from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 from typing import Any, Callable, Optional, TypeVar, Union, overload
 from typing_extensions import Literal
-from ._typing import _WindowSpec, _FloatLike_co
+from ._typing import _FloatLike_co, _SparseMatrix, _WindowSpec
 
 __all__ = [
     "cross_similarity",
@@ -690,7 +690,7 @@ def recurrence_matrix(
 
 
 _ArrayOrSparseMatrix = TypeVar(
-    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, scipy.sparse.spmatrix]
+    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, _SparseMatrix]
 )
 
 
@@ -779,18 +779,19 @@ def recurrence_to_lag(
     if pad:
         if sparse:
             padding = np.asarray([[1, 0]], dtype=rec.dtype).swapaxes(axis, 0)
+            rec_fmt: Literal["csr", "csc"]
             if axis == 0:
                 rec_fmt = "csr"
             else:
                 rec_fmt = "csc"
-            rec = scipy.sparse.kron(padding, rec, format=rec_fmt)
+            rec = scipy.sparse.kron(padding, rec, format=rec_fmt)  # type: ignore[assignment]
         else:
             padding = np.array([(0, 0), (0, 0)])
             padding[(1 - axis), :] = [0, t]
             # Suppress type check, mypy doesn't know that rec is an ndarray here
             rec = np.pad(rec, padding, mode="constant")  # type: ignore
 
-    lag: _ArrayOrSparseMatrix = util.shear(rec, factor=-1, axis=axis)
+    lag: _ArrayOrSparseMatrix = util.shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
 
     if sparse:
         # Suppress type check, mypy doesn't know
@@ -870,11 +871,11 @@ def lag_to_recurrence(
     # Since lag must be 2-dimensional, abs(axis) = axis
     t = lag.shape[axis]
 
-    rec = util.shear(lag, factor=+1, axis=axis)
+    rec = util.shear(lag, factor=+1, axis=axis)  # type: ignore[arg-type]
 
     sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)
-    rec_slice: _ArrayOrSparseMatrix = rec[tuple(sub_slice)]
+    rec_slice: _ArrayOrSparseMatrix = rec[tuple(sub_slice)]  # type: ignore[assignment]
     return rec_slice
 
 
@@ -1353,7 +1354,9 @@ def __affinity_bandwidth(
     knn_dists = []
     for i in range(t):
         # Get the links from point i
-        links = rec[i].nonzero()[1]
+        # NOTE: This `type: ignore` is required for `scipy-stubs < 1.16.0.1`
+        # https://github.com/scipy/scipy-stubs/issues/663
+        links = rec[i].nonzero()[1]  # type: ignore[call-overload]
         # catch empty dists lists in knn_dists
         if len(links) == 0:
             # Disconnected vertices are only a problem for point-wise bandwidth estimation

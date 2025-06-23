@@ -4,22 +4,11 @@
 
 from __future__ import annotations
 
-import scipy.ndimage
-import scipy.sparse
-
-import numpy as np
-import numba
-from numpy.lib.stride_tricks import as_strided
-
-from .._cache import cache
-from .exceptions import ParameterError
-from .deprecation import Deprecated
-from numpy.typing import DTypeLike
 from typing import (
     Any,
     Callable,
-    List,
     Dict,
+    List,
     Optional,
     Sequence,
     Tuple,
@@ -27,8 +16,19 @@ from typing import (
     Union,
     overload,
 )
+
+import numba
+import numpy as np
+import scipy.ndimage
+import scipy.sparse
+from numpy.lib.stride_tricks import as_strided
+from numpy.typing import DTypeLike
 from typing_extensions import Literal
-from .._typing import _SequenceLike, _FloatLike_co, _ComplexLike_co
+
+from .._cache import cache
+from .._typing import _ComplexLike_co, _FloatLike_co, _SequenceLike, _SparseMatrix
+from .deprecation import Deprecated
+from .exceptions import ParameterError
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -1214,8 +1214,8 @@ def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         maxn = np.max( x[max(0, n-pre_max):min(n+post_max, x.shape[0])])
 
         # Are we the local max and sufficiently above average?
-        peaks[n] = (x[n] == maxn) 
-        
+        peaks[n] = (x[n] == maxn)
+
         if not peaks[n]:
             n += 1
             continue
@@ -1439,7 +1439,7 @@ def sparsify_rows(
     if dtype is None:
         dtype = x.dtype
 
-    x_sparse = scipy.sparse.lil_matrix(x.shape, dtype=dtype)
+    x_sparse = scipy.sparse.lil_matrix(x.shape, dtype=dtype)  # type: ignore[arg-type, type-var]
 
     mags = np.abs(x)
     norms = np.sum(mags, axis=1, keepdims=True)
@@ -2010,10 +2010,19 @@ def __shear_dense(X: np.ndarray, *, factor: int = +1, axis: int = -1) -> np.ndar
 
     return X_shear
 
+_SparseMatrixT = TypeVar(
+    "_SparseMatrixT",
+    scipy.sparse.bsr_matrix,
+    scipy.sparse.coo_matrix,
+    scipy.sparse.csc_matrix,
+    scipy.sparse.csr_matrix,
+    scipy.sparse.dia_matrix,
+    scipy.sparse.dok_matrix,
+    scipy.sparse.lil_matrix,
+)
 
-def __shear_sparse(
-    X: scipy.sparse.spmatrix, *, factor: int = +1, axis: int = -1
-) -> scipy.sparse.spmatrix:
+
+def __shear_sparse(X: _SparseMatrixT, *, factor: int = +1, axis: int = -1) -> _SparseMatrixT:
     """Fast shearing for sparse matrices
 
     Shearing is performed using CSC array indices,
@@ -2043,22 +2052,14 @@ def __shear_sparse(
 
 
 _ArrayOrSparseMatrix = TypeVar(
-    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, scipy.sparse.spmatrix]
+    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, _SparseMatrix]
 )
 
 
 @overload
-def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray:
-    ...
-
-
+def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 @overload
-def shear(
-    X: scipy.sparse.spmatrix, *, factor: int = ..., axis: int = ...
-) -> scipy.sparse.spmatrix:
-    ...
-
-
+def shear(X: _SparseMatrixT, *, factor: int = ..., axis: int = ...) -> _SparseMatrixT: ...
 def shear(
     X: _ArrayOrSparseMatrix, *, factor: int = 1, axis: int = -1
 ) -> _ArrayOrSparseMatrix:
@@ -2204,7 +2205,7 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
         shape = tuple([len(arrays)] + list(shape_in))
 
         # Find the common dtype for all inputs
-        dtype = np.result_type(*arrays) 
+        dtype = np.result_type(*arrays)
 
         # Allocate an empty array of the right shape and type
         result = np.empty(shape, dtype=dtype, order="F")

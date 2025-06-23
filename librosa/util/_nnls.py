@@ -75,9 +75,11 @@ def _nnls_lbfgs_block(
     shape = x_init.shape
 
     # optimize
-    x: np.ndarray
+
+    # The `type: ignore` is needed on scipy-stubs<1.16.0.1:
+    # https://github.com/scipy/scipy-stubs/issues/645
     x, obj_value, diagnostics = scipy.optimize.fmin_l_bfgs_b(
-        _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs
+        _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs  # type: ignore[arg-type]
     )
     # reshape the solution
     return x.reshape(shape)
@@ -140,7 +142,7 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
     """
     # If B is a single vector, punt up to the scipy method
     if B.ndim == 1:
-        return scipy.optimize.nnls(A, B)[0]  # type: ignore
+        return scipy.optimize.nnls(A, B)[0]
 
     n_columns = int(MAX_MEM_BLOCK // (np.prod(B.shape[:-1]) * A.itemsize))
     n_columns = max(n_columns, 1)

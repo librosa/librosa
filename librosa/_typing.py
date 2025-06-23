@@ -4,6 +4,7 @@ from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any, Sequen
 from typing_extensions import Literal, Never
 import numpy as np
 from numpy.typing import ArrayLike
+import scipy.sparse as sp
 
 
 _WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]
@@ -82,3 +83,13 @@ def _ensure_not_reachable(__arg: Never):
     raise a more user friendly exception afterwards.
     """
     ...
+
+_SparseMatrix = Union[
+    sp.bsr_matrix,
+    sp.coo_matrix,
+    sp.csc_matrix,
+    sp.csr_matrix,
+    sp.dia_matrix,
+    sp.dok_matrix,
+    sp.lil_matrix,
+]
