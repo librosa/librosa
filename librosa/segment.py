@@ -326,7 +326,7 @@ def cross_similarity(
             xsim[i, idx[k:]] = 0
 
     # Convert a compressed sparse row (CSR) format
-    xsim = xsim.tocsr()
+    xsim: scipy.sparse.csr_matrix = xsim.tocsr()
     xsim.eliminate_zeros()
 
     if mode == "connectivity":
@@ -336,10 +336,12 @@ def cross_similarity(
         xsim.data[:] = np.exp(xsim.data / (-1 * aff_bandwidth))
 
     # Transpose to n_ref by n
-    xsim = xsim.T
+    # NOTE: This `type: ignore` is only needed with `scipy-stubs < 1.16.0.1`
+    # https://github.com/scipy/scipy-stubs/issues/668
+    xsim: scipy.sparse.csc_matrix = xsim.T  # type: ignore[assignment]
 
     if not sparse:
-        xsim = xsim.toarray()
+        return xsim.toarray()
 
     return xsim
 
@@ -667,7 +669,7 @@ def recurrence_matrix(
         # This is why we have to do it after filling the diagonal in self-mode
         rec = rec.minimum(rec.T)
 
-    rec = rec.tocsr()
+    rec: scipy.sparse.csr_matrix = rec.tocsr()
     rec.eliminate_zeros()
 
     if mode == "connectivity":
@@ -681,10 +683,12 @@ def recurrence_matrix(
         rec.data[:] = np.exp(rec.data / (-1 * aff_bandwidth))
 
     # Transpose to be column-major
-    rec = rec.T
+    # NOTE: This `type: ignore` is only needed with `scipy-stubs < 1.16.0.1`
+    # https://github.com/scipy/scipy-stubs/issues/668
+    rec: scipy.sparse.csc_matrix = rec.T  # type: ignore[assignment]
 
     if not sparse:
-        rec = rec.toarray()
+        return rec.toarray()
 
     return rec
 
@@ -784,7 +788,7 @@ def recurrence_to_lag(
                 rec_fmt = "csr"
             else:
                 rec_fmt = "csc"
-            rec = scipy.sparse.kron(padding, rec, format=rec_fmt)  # type: ignore[assignment]
+            rec = scipy.sparse.kron(padding, rec, format=rec_fmt)
         else:
             padding = np.array([(0, 0), (0, 0)])
             padding[(1 - axis), :] = [0, t]
