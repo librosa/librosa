@@ -14,8 +14,8 @@ from ..core.convert import tempo_frequencies, time_to_frames
 from ..core.harmonic import f0_harmonics
 from ..util.exceptions import ParameterError
 from ..filters import get_window
-from typing import Optional, Callable, Any, Literal
-from .._typing import _WindowSpec
+from typing import Optional, Callable, Any
+from .._typing import _InterpKind, _WindowSpec
 
 __all__ = ["tempogram", "fourier_tempogram", "tempo", "tempogram_ratio"]
 
@@ -472,17 +472,7 @@ def tempogram_ratio(
     prior: Optional[scipy.stats.rv_continuous] = None,
     center: bool = True,
     window: _WindowSpec = "hann",
-    kind: Literal[
-        "linear",
-        "nearest",
-        "nearest-up",
-        "zero",
-        "slinear",
-        "quadratic",
-        "cubic",
-        "previous",
-        "next",
-    ] = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
     norm: Optional[float] = np.inf,
 ) -> np.ndarray:

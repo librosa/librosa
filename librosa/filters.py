@@ -1170,12 +1170,7 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
 
 
 @cache(level=10)
-def get_window(
-    window: _WindowSpec,
-    Nx: int,
-    *,
-    fftbins: Optional[bool] = True,
-) -> np.ndarray:
+def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndarray:
     """Compute a window function.
 
     This is a wrapper for `scipy.signal.get_window` that additionally
@@ -1227,9 +1222,9 @@ def get_window(
     elif isinstance(window, (str, tuple)) or np.isscalar(window):
         # TODO: if we add custom window functions in librosa, call them here
 
-        # The `type: ignore` is needed on `scipy-stubs<1.16.0.1`
+        # NOTE: The `type: ignore` is needed on `scipy-stubs<1.16.0.1`
         # https://github.com/scipy/scipy-stubs/issues/662
-        win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins or False)  # type: ignore[arg-type]
+        win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins)  # type: ignore[arg-type]
         return win
 
     elif isinstance(window, (np.ndarray, list)):
@@ -1421,7 +1416,7 @@ def semitone_filterbank(
     center_freqs: Optional[np.ndarray] = None,
     tuning: float = 0.0,
     sample_rates: Optional[np.ndarray] = None,
-    flayout: Literal["ba", "sos", "zpk"] = "ba",
+    flayout: Literal["ba", "sos"] = "ba",
     **kwargs: Any,
 ) -> Tuple[List[Any], np.ndarray]:
     r"""Construct a multi-rate bank of infinite-impulse response (IIR)
