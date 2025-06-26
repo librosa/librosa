@@ -7,24 +7,13 @@ import warnings
 import numpy as np
 import scipy.interpolate
 import scipy.signal
+from .._typing import _InterpKind
 from ..util.exceptions import ParameterError
 from ..util import is_unique
 from numpy.typing import ArrayLike
-from typing import Callable, Literal, Optional, Sequence
+from typing import Callable, Optional, Sequence
 
 __all__ = ["salience", "interp_harmonics", "f0_harmonics"]
-
-_InterpKind = Literal[
-    "linear",
-    "nearest",
-    "nearest-up",
-    "zero",
-    "slinear",
-    "quadratic",
-    "cubic",
-    "previous",
-    "next",
-]
 
 
 def salience(
