@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 """Tests for segmentation functions"""
-from typing import Union
-import warnings
+from typing import TYPE_CHECKING, Union
 
 # Disable cache
 import os
@@ -20,6 +19,9 @@ import pytest
 from test_core import srand
 
 import librosa
+
+if TYPE_CHECKING:
+    from librosa._typing import _SparseMatrix
 
 __EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
 
@@ -393,7 +395,10 @@ def test_recurrence_to_lag_sparse(pad, axis, rec, fmt):
     lag_sparse = librosa.segment.recurrence_to_lag(rec, pad=pad, axis=axis)
     lag_dense = librosa.segment.recurrence_to_lag(rec_dense, pad=pad, axis=axis)
 
+    # NOTE: due to a bug in mypy, the `issparse` typeguard will _widen_ the type of `lag_sparse`
     assert scipy.sparse.issparse(lag_sparse)
+    lag_sparse: _SparseMatrix
+
     assert rec.format == lag_sparse.format
     assert rec.dtype == lag_sparse.dtype
     assert np.allclose(lag_sparse.toarray(), lag_dense)

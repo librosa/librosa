@@ -1234,7 +1234,10 @@ def test_beat_track_multi_bpm_scalar(y_multi):
     tempo0, beats0 = librosa.beat.beat_track(y=y[0], sr=sr, sparse=False, bpm=100)
     tempo1, beats1 = librosa.beat.beat_track(y=y[1], sr=sr, sparse=False, bpm=100)
 
+    # NOTE: due to a bug in mypy, the `issparse` typeguard will _widen_ the type of `lag_sparse`
     assert np.isscalar(tempo)
+    tempo: float | np.floating | np.integer
+
     assert np.allclose(tempo, tempo0)
     assert np.allclose(tempo, tempo1)
     assert np.allclose(beats[0], beats0)
