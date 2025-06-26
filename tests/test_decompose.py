@@ -254,7 +254,7 @@ def test_nn_filter_badselfsim(data, x, y, sparse):
 
     srand()
     # Build a recurrence matrix, just for testing purposes
-    rec = np.random.randn(x, y)
+    rec: np.ndarray | scipy.sparse.csr_matrix = np.random.randn(x, y)
     if sparse:
         rec = scipy.sparse.csr_matrix(rec)
 
