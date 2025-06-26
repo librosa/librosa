@@ -354,16 +354,13 @@ def recurrence_matrix(
     width: int = ...,
     metric: str = ...,
     sym: bool = ...,
-    sparse: Literal[True] = ...,
+    sparse: Literal[True],
     mode: str = ...,
     bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = ...,
     self: bool = ...,
     axis: int = ...,
     full: bool = False,
-) -> scipy.sparse.csc_matrix:
-    ...
-
-
+) -> scipy.sparse.csc_matrix: ...
 @overload
 def recurrence_matrix(
     data: np.ndarray,
@@ -378,10 +375,7 @@ def recurrence_matrix(
     self: bool = ...,
     axis: int = ...,
     full: bool = False,
-) -> np.ndarray:
-    ...
-
-
+) -> np.ndarray: ...
 @cache(level=30)
 def recurrence_matrix(
     data: np.ndarray,
