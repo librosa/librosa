@@ -1369,7 +1369,7 @@ def phase_vocoder(
     *,
     rate: Optional[float] = None,
     t_out: Optional[np.ndarray] = None,
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     hop_length: Optional[Union[int, Deprecated]] = Deprecated(),
     n_fft: Optional[Union[int, Deprecated]] = Deprecated(),
 ) -> np.ndarray:
