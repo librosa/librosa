@@ -1011,7 +1011,9 @@ def test_autocorrelate(y, axis, max_size):
 )
 def test_lpc_regress(infile):
 
-    test_data = scipy.io.loadmat(infile, squeeze_me=True)
+    # NOTE: This `type: ignore` is only needed with `scipy-stubs < 1.16.0.1`
+    # https://github.com/scipy/scipy-stubs/issues/674
+    test_data: dict[str, np.ndarray] = scipy.io.loadmat(infile, squeeze_me=True)  # type: ignore[assignment]
     for i in range(len(test_data["signal"])):
         signal = test_data["signal"][i]
         order = int(test_data["order"][i])
@@ -1966,6 +1968,7 @@ def test_iirt():
     gt = scipy.io.loadmat(
         os.path.join("tests", "data", "features-CT-cqt"), squeeze_me=True
     )["f_cqt"]
+    assert isinstance(gt, np.ndarray)
 
     # There shouldn't be a load here, but test1_44100 was resampled for this fixture :\
     y, sr = librosa.load(os.path.join("tests", "data", "test1_44100.wav"))
@@ -1983,7 +1986,7 @@ def test_iirt():
 def test_iirt_flayout1(y_44100):
     y = y_44100
     sr = 44100
-    librosa.iirt(y, hop_length=2205, win_length=4410, flayout="foo")
+    librosa.iirt(y, hop_length=2205, win_length=4410, flayout="foo")  # type: ignore[arg-type]
 
 
 def test_iirt_peaks():

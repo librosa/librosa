@@ -507,6 +507,7 @@ def test_semitone_filterbank():
         ),
         squeeze_me=True,
     )["h"]
+    assert isinstance(gt_fb, np.ndarray)
 
     # standard parameters reproduce settings from chroma toolbox
     mut_ft_ba, mut_srs_ba = librosa.filters.semitone_filterbank(flayout="ba")
