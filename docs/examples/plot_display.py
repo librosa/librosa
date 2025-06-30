@@ -458,7 +458,7 @@ fig.colorbar(img_phase, ax=ax, format="%+2.f rad")
 ax.set(title='Phase of the STFT')
 
 # %%
-# Additionally, the `vscale='phase_unwrap_diff'` mode provides a more fine-grained
+# Additionally, the `vscale='dphase'` mode provides a more fine-grained
 # visualization which compares the phase at each time-frequency position to what
 # would be expected by a stationary sinusoid at that frequency propagating from the previous
 # time step.
@@ -466,9 +466,9 @@ ax.set(title='Phase of the STFT')
 # the finite set of frequencies used in the analysis (e.g., the STFT or CQT).
 
 fig, ax = plt.subplots()
-img_phase_unwrap_diff = librosa.display.specshow(D, vscale='phase_unwrap_diff',
+img_dphase = librosa.display.specshow(D, vscale='dphase',
                                                     x_axis='time', y_axis='log', ax=ax)
-fig.colorbar(img_phase_unwrap_diff, ax=ax, format="%+2.f rad")
+fig.colorbar(img_dphase, ax=ax, format="%+2.f rad")
 
 # %%
 # Phase displays use a cyclic colormap (`twilight_shifted`) when the data is constrained

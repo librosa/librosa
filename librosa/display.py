@@ -1076,7 +1076,7 @@ def specshow(
         - 'dBFS' : decibels relative to full scale, using `np.max(data)` as a reference amplitude
         - 'dBFS[power]' : like above, but treating `data` as power rather than amplitude measurements.
         - 'phase' : phase values in radians, with a range of `[-π, π]`.
-        - 'phase_unwrap_diff' : unwrapped phase differences in radians.  This mode requires x_coords and y_coords to be provided
+        - 'dphase' : unwrapped phase differences in radians.  This mode requires x_coords and y_coords to be provided
 
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
@@ -1899,7 +1899,7 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords):
         # Phase should use a cyclic colormap
         return np.angle(data), "twilight_shifted"
 
-    elif vscale == "phase_unwrap_diff":
+    elif vscale == "dphase":
         # Compute the difference of unwrapped phase
         diff = np.diff(np.unwrap(np.angle(data), axis=-1), prepend=0.0)
         # Correct it compared to the expected phase advance on this time-frequency grid

@@ -38,12 +38,12 @@ alpha = (mag - mag.min()) / (mag.max() - mag.min())
 
 ####################
 # `librosa.display.specshow` can be used to visualize the phase structure from the STFT directly
-# by using the `vscale='phase_unwrap_diff'` argument. 
+# by using the `vscale='dphase'` argument. 
 # This mode is used to visualize how the phase at each time-frequency location compares to what 
 # would be expected for a sinsuoid at that frequency compared to the phase at the previous time step.
 fig, ax = plt.subplots()
 img = librosa.display.specshow(D, 
-                         vscale='phase_unwrap_diff',
+                         vscale='dphase',
                          cmap='hsv', 
                          alpha=alpha,
                          ax=ax,
@@ -64,13 +64,13 @@ plt.show()
 # center point, so the resulting visualization may be misleading in some cases.
 # We can instead use the `twilight_shifted` colormap, which is designed to be perceptually uniform, with a
 # neutral color (gray) at the center value (0), diverging to red and blue at the extremes (±π).
-# This colormap is the default for the `vscale='phase_unwrap_diff'` mode, but we can also use it explicitly.
+# This colormap is the default for the `vscale='dphase'` mode, but we can also use it explicitly.
 #
 # Because the `twilight_shifted` colormap has dark values at the extremes, it can be easier to see if the background
 # is a neutral gray color, rather than black.
 fig, ax = plt.subplots()
 img = librosa.display.specshow(D,
-                         vscale='phase_unwrap_diff',
+                         vscale='dphase',
                          cmap='twilight_shifted', 
                          alpha=alpha,
                          ax=ax,
@@ -86,7 +86,7 @@ cbar.ax.set(yticklabels=['-π', '-π/2', 0, 'π/2', 'π'])
 #
 fig, ax = plt.subplots()
 img = librosa.display.specshow(D,
-                         vscale='phase_unwrap_diff',
+                         vscale='dphase',
                          cmap='twilight', 
                          alpha=alpha,
                          ax=ax,
@@ -98,14 +98,14 @@ cbar.ax.set(yticklabels=['-π', '-π/2', 0, 'π/2', 'π'])
 
 ####################
 # Similar phase structure plots can also be generated from other complex-valued transforms, such as the CQT.
-# The `vscale='phase_unwrap_diff'` will work with whatever time-frequency grid is provided by the `x_axis` and `y_axis` arguments.
+# The `vscale='dphase'` will work with whatever time-frequency grid is provided by the `x_axis` and `y_axis` arguments.
 
 C = librosa.cqt(y, sr=sr, n_bins=12*6, bins_per_octave=12)
 C_mag = librosa.amplitude_to_db(np.abs(C), ref=np.max)
 alpha_cqt = (C_mag - C_mag.min()) / (C_mag.max() - C_mag.min())
 fig, ax = plt.subplots()
 img = librosa.display.specshow(C, 
-                         vscale='phase_unwrap_diff',
+                         vscale='dphase',
                          cmap='twilight_shifted', 
                          alpha=alpha_cqt,
                          ax=ax,

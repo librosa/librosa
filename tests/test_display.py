@@ -1195,7 +1195,7 @@ def test_specshow_vscale(S):
     fig.colorbar(i7, ax=ax[0, 2])
     ax[0, 2].set_title("phase")
     i8 = librosa.display.specshow(
-        S, vscale="phase_unwrap_diff", y_axis="log", x_axis="time", ax=ax[1, 2]
+        S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1, 2]
     )
     fig.colorbar(i8, ax=ax[1, 2])
     ax[1, 2].set_title("phase unwrapped diff")
