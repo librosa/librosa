@@ -11,6 +11,7 @@ dependencies:
   - joblib==1.0.0
   - decorator==4.3.0
   - numba==0.53.0
+  - numpy==1.22.3
   - pysoundfile==0.12.1
   - pooch==1.1.0
   - packaging==20.0
@@ -29,5 +30,4 @@ dependencies:
   - resampy==0.2.2
 
   - pip:
-    - numpy==1.22.3
     - samplerate
