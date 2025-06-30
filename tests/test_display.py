@@ -1152,7 +1152,7 @@ def test_parse_vscale(vscale, mode, scale_type, ref):
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_vscale(S):
-    fig, ax = plt.subplots(nrows=3, ncols=3, sharex=False, sharey=False, figsize=(12, 12))
+    fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True, figsize=(12, 12))
 
     # first column is dB, dBFS, dB with ref value
     i1 = librosa.display.specshow(
@@ -1188,27 +1188,39 @@ def test_specshow_vscale(S):
     fig.colorbar(i6, ax=ax[2, 1])
     ax[2, 1].set_title("dB power, ref=1e-2")
 
+    for _ax in ax.flat:
+        _ax.label_outer()
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["specshow_vscale_phase"], extensions=["png"], tolerance=7, style=STYLE
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_specshow_vscale_phase(S):
+    fig, ax = plt.subplots(nrows=3, ncols=1, sharex=False, sharey=False, gridspec_kw={"hspace": 0.8})
+
     # third column is phase, unwrapped phase, and unwrapped phase differentials
     i7 = librosa.display.specshow(
-        S, vscale="phase", y_axis="log", x_axis="time", ax=ax[0, 2]
+        S, vscale="phase", y_axis="log", x_axis="time", ax=ax[0]
     )
-    fig.colorbar(i7, ax=ax[0, 2])
-    ax[0, 2].set_title("phase")
+    fig.colorbar(i7, ax=ax[0])
+    ax[0].set_title("phase")
 
     i8 = librosa.display.specshow(
-        S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1, 2]
+        S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1]
     )
-    fig.colorbar(i8, ax=ax[1, 2])
-    ax[1, 2].set_title("dphase")
+    fig.colorbar(i8, ax=ax[1])
+    ax[1].set_title("dphase")
 
     i9 = librosa.display.specshow(
-        S.T, vscale="dphase_t", x_axis="log", y_axis="time", ax=ax[2, 2]
+        S.T, vscale="dphase_t", x_axis="log", y_axis="time", ax=ax[2]
     )
-    fig.colorbar(i9, ax=ax[2, 2])
-    ax[2, 2].set_title("dphase_t")
+    fig.colorbar(i9, ax=ax[2])
+    ax[2].set_title("dphase_t")
 
     for _ax in ax.flat:
         _ax.label_outer()
 
-    fig.tight_layout()
     return fig
