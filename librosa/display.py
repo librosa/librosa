@@ -1077,6 +1077,7 @@ def specshow(
         - 'dBFS[power]' : like above, but treating `data` as power rather than amplitude measurements.
         - 'phase' : phase values in radians, with a range of `[-π, π]`.
         - 'dphase' : unwrapped phase differences in radians.  This mode requires x_coords and y_coords to be provided
+        - 'dphase_t' : as above, but differences are computed along the vertical axis instead of horizontal.
 
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
@@ -1901,7 +1902,7 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords):
 
     elif vscale == "dphase":
         # Compute the difference of unwrapped phase
-        diff = np.diff(np.unwrap(np.angle(data), axis=-1), prepend=0.0)
+        diff = np.diff(np.unwrap(np.angle(data), axis=-1), axis=-1, prepend=0.0)
         # Correct it compared to the expected phase advance on this time-frequency grid
         #   - 2π*y counts radians per second
         #   - diff(x) counts seconds per frame
@@ -1912,6 +1913,15 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords):
         np.mod(diff, 2 * np.pi, out=diff)
         diff -= np.pi
         # Use a cyclic colormap for the phase difference
+        return diff, "twilight_shifted"
+
+    elif vscale == "dphase_t":
+        # Same computation as above, but on the opposite axes
+        diff = np.diff(np.unwrap(np.angle(data), axis=0), axis=0, prepend=0.0)
+        diff -= np.multiply.outer(np.diff(y_coords, prepend=0.0), 2 * np.pi * x_coords)
+        diff += np.pi
+        np.mod(diff, 2 * np.pi, out=diff)
+        diff -= np.pi
         return diff, "twilight_shifted"
 
     else:

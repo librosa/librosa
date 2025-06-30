@@ -1152,7 +1152,7 @@ def test_parse_vscale(vscale, mode, scale_type, ref):
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_vscale(S):
-    fig, ax = plt.subplots(nrows=3, ncols=3, sharex=True, sharey=True, figsize=(12, 12))
+    fig, ax = plt.subplots(nrows=3, ncols=3, sharex=False, sharey=False, figsize=(12, 12))
 
     # first column is dB, dBFS, dB with ref value
     i1 = librosa.display.specshow(
@@ -1194,14 +1194,21 @@ def test_specshow_vscale(S):
     )
     fig.colorbar(i7, ax=ax[0, 2])
     ax[0, 2].set_title("phase")
+
     i8 = librosa.display.specshow(
         S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1, 2]
     )
     fig.colorbar(i8, ax=ax[1, 2])
-    ax[1, 2].set_title("phase unwrapped diff")
-    ax[2, 2].set_axis_off()
+    ax[1, 2].set_title("dphase")
+
+    i9 = librosa.display.specshow(
+        S.T, vscale="dphase_t", x_axis="log", y_axis="time", ax=ax[2, 2]
+    )
+    fig.colorbar(i9, ax=ax[2, 2])
+    ax[2, 2].set_title("dphase_t")
 
     for _ax in ax.flat:
         _ax.label_outer()
 
+    fig.tight_layout()
     return fig
