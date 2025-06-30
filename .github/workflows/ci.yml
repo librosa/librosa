@@ -23,7 +23,7 @@ jobs:
             matrix:
                 include:
                     - os: ubuntu-latest
-                      python-version: "3.8"
+                      python-version: "3.9"
                       envfile: ".github/environment-minimal.yml"
                       channel-priority: "flexible"
                       name: "Minimal dependencies"
