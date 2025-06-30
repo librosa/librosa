@@ -24,7 +24,7 @@ from . import segment
 from . import util
 from .util.exceptions import ParameterError
 from typing import Any, Callable, List, Optional, Tuple, Union
-from ._typing import _IntLike_co, _FloatLike_co
+from ._typing import _IntLike_co, _FloatLike_co, _SparseMatrix
 
 __all__ = ["decompose", "hpss", "nn_filter"]
 
@@ -379,11 +379,11 @@ def hpss(
         )
 
     # shape for kernels
-    harm_shape: List[_IntLike_co] = [1] * S.ndim
-    harm_shape[-1] = win_harm
+    harm_shape = [1] * S.ndim
+    harm_shape[-1] = int(win_harm)
 
-    perc_shape: List[_IntLike_co] = [1] * S.ndim
-    perc_shape[-2] = win_perc
+    perc_shape = [1] * S.ndim
+    perc_shape[-2] = int(win_perc)
 
     # Compute median filters. Pre-allocation here preserves memory layout.
     harm = np.empty_like(S)
@@ -412,7 +412,7 @@ def hpss(
 def nn_filter(
     S: np.ndarray,
     *,
-    rec: Optional[Union[scipy.sparse.spmatrix, np.ndarray]] = None,
+    rec: Optional[Union[np.ndarray, _SparseMatrix]] = None,
     aggregate: Optional[Callable] = None,
     axis: int = -1,
     **kwargs: Any,
@@ -529,8 +529,6 @@ def nn_filter(
     """
     if aggregate is None:
         aggregate = np.mean
-
-    rec_s: scipy.sparse.spmatrix
 
     if rec is None:
         kwargs = dict(kwargs)

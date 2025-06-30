@@ -1921,7 +1921,7 @@ def test_iirt(y_22050, flayout, center, hop_length):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_iirt_flayout1(y_22050):
     sr = 22050
-    librosa.iirt(y_22050, hop_length=1102, win_length=2205, flayout="foo")
+    librosa.iirt(y_22050, hop_length=1102, win_length=2205, flayout="foo")  # type: ignore[arg-type]
 
 
 def test_iirt_peaks():

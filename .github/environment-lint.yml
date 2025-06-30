@@ -20,5 +20,8 @@ dependencies:
   - pygments
   - black
 
+  # Stubs
+  - scipy-stubs
+
   - pip:
     - velin

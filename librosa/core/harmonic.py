@@ -7,6 +7,7 @@ import warnings
 import numpy as np
 import scipy.interpolate
 import scipy.signal
+from .._typing import _InterpKind
 from ..util.exceptions import ParameterError
 from ..util import is_unique
 from numpy.typing import ArrayLike
@@ -24,7 +25,7 @@ def salience(
     aggregate: Optional[Callable] = None,
     filter_peaks: bool = True,
     fill_value: float = np.nan,
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     axis: int = -2,
 ) -> np.ndarray:
     """Harmonic salience function.
@@ -140,7 +141,7 @@ def interp_harmonics(
     *,
     freqs: np.ndarray,
     harmonics: ArrayLike,
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
 ) -> np.ndarray:
@@ -255,7 +256,7 @@ def interp_harmonics(
         f_out = np.multiply.outer(harmonics, freqs)
 
         # Interpolate; suppress type checks
-        return f_interp(f_out)  # type: ignore
+        return f_interp(f_out)
 
     elif freqs.shape == x.shape:
         if not np.all(is_unique(freqs, axis=axis)):
@@ -306,7 +307,7 @@ def f0_harmonics(
     f0: np.ndarray,
     freqs: np.ndarray,
     harmonics: ArrayLike,
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
 ) -> np.ndarray:

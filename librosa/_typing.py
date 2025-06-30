@@ -4,6 +4,7 @@ from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any, Sequen
 from typing_extensions import Literal, Never
 import numpy as np
 from numpy.typing import ArrayLike
+import scipy.sparse as sp
 
 
 _WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]
@@ -82,3 +83,29 @@ def _ensure_not_reachable(__arg: Never):
     raise a more user friendly exception afterwards.
     """
     ...
+
+
+# The possible subclasses of `scipy.sparse.spmatrix & scipy.sparse._base._spbase` (their intersection)
+_SparseMatrix = Union[
+    sp.bsr_matrix,
+    sp.coo_matrix,
+    sp.csc_matrix,
+    sp.csr_matrix,
+    sp.dia_matrix,
+    sp.dok_matrix,
+    sp.lil_matrix,
+]
+
+# matches the `interp` argument in `scipy.interpolate.interp1d` on all supported SciPy versions
+# https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html
+_InterpKind = Literal[
+    "linear",
+    "nearest",
+    "nearest-up",
+    "zero",
+    "slinear",
+    "quadratic",
+    "cubic",
+    "previous",
+    "next",
+]

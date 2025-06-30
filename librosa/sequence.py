@@ -382,6 +382,7 @@ def dtw(
 
         # Perform some shape-squashing here
         # Put the time axes around front
+        # Suppress types because mypy doesn't know these are ndarrays
         X = np.swapaxes(X, -1, 0)
         Y = np.swapaxes(Y, -1, 0)
 
@@ -391,7 +392,7 @@ def dtw(
         Y = Y.reshape((Y.shape[0], -1), order="F")
 
         try:
-            C = cdist(X, Y, metric=metric)
+            C = cdist(X, Y, metric=metric)  # type: ignore[call-overload]
         except ValueError as exc:
             raise ParameterError(
                 "scipy.spatial.distance.cdist returned an error.\n"
