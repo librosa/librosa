@@ -76,10 +76,8 @@ def _nnls_lbfgs_block(
 
     # optimize
 
-    # The `type: ignore` is needed on scipy-stubs<1.16.0.1:
-    # https://github.com/scipy/scipy-stubs/issues/645
     x, obj_value, diagnostics = scipy.optimize.fmin_l_bfgs_b(
-        _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs  # type: ignore[arg-type]
+        _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs
     )
     # reshape the solution
     return x.reshape(shape)

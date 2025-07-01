@@ -1555,7 +1555,7 @@ def sparsify_rows(
     if dtype is None:
         dtype = x.dtype
 
-    x_sparse: scipy.sparse.lil_matrix = scipy.sparse.lil_matrix(x.shape, dtype=dtype)  # type: ignore[arg-type]
+    x_sparse: scipy.sparse.lil_matrix = scipy.sparse.lil_matrix(x.shape, dtype=dtype)
 
     mags = np.abs(x)
     norms = np.sum(mags, axis=1, keepdims=True)
@@ -1567,7 +1567,7 @@ def sparsify_rows(
 
     for i, j in enumerate(threshold_idx):
         idx = np.where(mags[i] >= mag_sort[i, j])
-        x_sparse[i, idx] = x[i, idx]
+        x_sparse[i, idx] = x[i, idx]  # type: ignore
 
     return x_sparse.tocsr()
 
@@ -2147,7 +2147,7 @@ def __shear_sparse(X: _SparseMatrixT, *, factor: int = +1, axis: int = -1) -> _S
     """
     fmt = X.format
     if axis == 0:
-        X = X.T
+        X = X.T  # type: ignore
 
     # Now we're definitely rolling on the correct axis
     X_shear = X.tocsc(copy=True)
@@ -2161,7 +2161,7 @@ def __shear_sparse(X: _SparseMatrixT, *, factor: int = +1, axis: int = -1) -> _S
     np.mod(X_shear.indices + roll, X_shear.shape[0], out=X_shear.indices)
 
     if axis == 0:
-        X_shear = X_shear.T
+        X_shear = X_shear.T  # type: ignore
 
     # And convert back to the input format
     return X_shear.asformat(fmt)

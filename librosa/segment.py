@@ -336,9 +336,7 @@ def cross_similarity(
         xsim.data[:] = np.exp(xsim.data / (-1 * aff_bandwidth))
 
     # Transpose to n_ref by n
-    # NOTE: This `type: ignore` is only needed with `scipy-stubs < 1.16.0.1`
-    # https://github.com/scipy/scipy-stubs/issues/668
-    xsim: scipy.sparse.csc_matrix = xsim.T  # type: ignore[assignment]
+    xsim: scipy.sparse.csc_matrix = xsim.T
 
     if not sparse:
         return xsim.toarray()
@@ -677,9 +675,7 @@ def recurrence_matrix(
         rec.data[:] = np.exp(rec.data / (-1 * aff_bandwidth))
 
     # Transpose to be column-major
-    # NOTE: This `type: ignore` is only needed with `scipy-stubs < 1.16.0.1`
-    # https://github.com/scipy/scipy-stubs/issues/668
-    rec: scipy.sparse.csc_matrix = rec.T  # type: ignore[assignment]
+    rec: scipy.sparse.csc_matrix = rec.T
 
     if not sparse:
         return rec.toarray()
@@ -1352,9 +1348,7 @@ def __affinity_bandwidth(
     knn_dists = []
     for i in range(t):
         # Get the links from point i
-        # NOTE: This `type: ignore` is required for `scipy-stubs < 1.16.0.1`
-        # https://github.com/scipy/scipy-stubs/issues/663
-        links = rec[i].nonzero()[1]  # type: ignore[call-overload]
+        links = rec[i].nonzero()[1]
         # catch empty dists lists in knn_dists
         if len(links) == 0:
             # Disconnected vertices are only a problem for point-wise bandwidth estimation

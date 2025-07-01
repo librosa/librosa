@@ -1219,9 +1219,7 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
     elif isinstance(window, (str, tuple)) or np.isscalar(window):
         # TODO: if we add custom window functions in librosa, call them here
 
-        # NOTE: The `type: ignore` is needed on `scipy-stubs<1.16.0.1`
-        # https://github.com/scipy/scipy-stubs/issues/662
-        win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins)  # type: ignore[arg-type]
+        win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins)
         return win
 
     elif isinstance(window, (np.ndarray, list)):
