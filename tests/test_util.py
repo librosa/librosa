@@ -632,9 +632,7 @@ def test_sparsify_rows(ndim, d, q, rng):
     xsd = np.asarray(xs.todense())
 
     for i in range(xs.shape[0]):
-        # NOTE: This `type: ignore` is only needed with `scipy-stubs < 1.16.0.1`
-        # https://github.com/scipy/scipy-stubs/issues/663
-        assert np.allclose(xsd[i, xs[i].indices], X[i, xs[i].indices])  # type: ignore[call-overload]
+        assert np.allclose(xsd[i, xs[i].indices], X[i, xs[i].indices])
 
     # Compute row-wise magnitude marginals
     v_in = np.sum(np.abs(X), axis=-1)
