@@ -1148,7 +1148,7 @@ def test_parse_vscale(vscale, mode, scale_type, ref):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_vscale"], extensions=["png"], tolerance=7, style=STYLE
+    baseline_images=["specshow_vscale"], extensions=["png"], tolerance=3, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_vscale(S):
@@ -1195,27 +1195,37 @@ def test_specshow_vscale(S):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_vscale_phase"], extensions=["png"], tolerance=7, style=STYLE
+    baseline_images=["specshow_vscale_phase"], extensions=["png"], tolerance=3, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_specshow_vscale_phase(S):
-    fig, ax = plt.subplots(nrows=3, ncols=1, sharex=False, sharey=False, gridspec_kw={"hspace": 0.8})
+def test_specshow_vscale_phase():
+    # Create a chirp
+    sr = 22050
+    y = librosa.chirp(fmin=110, fmax=880, duration=1, sr=sr, linear=False)
+    S = librosa.stft(y, n_fft=2048, hop_length=512)
+    alpha = np.abs(S)
+    alpha /= np.max(alpha)  # normalize to [0, 1]
+    fig, ax = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False, gridspec_kw={"hspace": 0.8}, figsize=(12, 4))
 
-    # third column is phase, unwrapped phase, and unwrapped phase differentials
+    # phase, phase difference, and phase difference transpose
+    # we use alpha channels here to avoid test failures for unstable phase estimates in quiet regions
     i7 = librosa.display.specshow(
-        S, vscale="phase", y_axis="log", x_axis="time", ax=ax[0]
+        S, vscale="phase", y_axis="log", x_axis="time", ax=ax[0],
+        alpha=alpha
     )
     fig.colorbar(i7, ax=ax[0])
     ax[0].set_title("phase")
 
     i8 = librosa.display.specshow(
-        S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1]
+        S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1],
+        alpha=alpha
     )
     fig.colorbar(i8, ax=ax[1])
     ax[1].set_title("dphase")
 
     i9 = librosa.display.specshow(
-        S.T, vscale="dphase_t", x_axis="log", y_axis="time", ax=ax[2]
+        S.T, vscale="dphase_t", x_axis="log", y_axis="time", ax=ax[2],
+        alpha=alpha.T
     )
     fig.colorbar(i9, ax=ax[2])
     ax[2].set_title("dphase_t")
