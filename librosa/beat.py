@@ -198,7 +198,7 @@ def beat_track(
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=hop_length)
     >>> M = librosa.feature.melspectrogram(y=y, sr=sr, hop_length=hop_length)
-    >>> librosa.display.specshow(librosa.power_to_db(M, ref=np.max),
+    >>> librosa.display.specshow(M, vscale='dBFS[power]',
     ...                          y_axis='mel', x_axis='time', hop_length=hop_length,
     ...                          ax=ax[0])
     >>> ax[0].label_outer()
@@ -352,8 +352,7 @@ def plp(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> librosa.display.specshow(librosa.power_to_db(melspec,
-    ...                                              ref=np.max),
+    >>> librosa.display.specshow(melspec, vscale='dBFS[power]',
     ...                          x_axis='time', y_axis='mel', ax=ax[0])
     >>> ax[0].set(title='Mel spectrogram')
     >>> ax[0].label_outer()

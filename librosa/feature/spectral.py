@@ -145,7 +145,7 @@ def spectral_centroid(
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(cent)
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax)
     >>> ax.plot(times, cent.T, label='Spectral centroid', color='w')
     >>> ax.legend(loc='upper right')
@@ -294,7 +294,7 @@ def spectral_bandwidth(
     >>> ax[0].set(ylabel='Hz', xticks=[], xlim=[times.min(), times.max()])
     >>> ax[0].legend()
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='log Power spectrogram')
     >>> ax[1].fill_between(times, np.maximum(0, centroid[0] - spec_bw[0]),
@@ -443,8 +443,7 @@ def spectral_contrast(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img1 = librosa.display.specshow(librosa.amplitude_to_db(S,
-    ...                                                  ref=np.max),
+    >>> img1 = librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> fig.colorbar(img1, ax=[ax[0]], format='%+2.0f dB')
     >>> ax[0].set(title='Power spectrogram')
@@ -624,7 +623,7 @@ def spectral_rolloff(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax)
     >>> ax.plot(librosa.times_like(rolloff), rolloff[0], label='Roll-off frequency (0.99)')
     >>> ax.plot(librosa.times_like(rolloff), rolloff_min[0], color='w',
@@ -861,7 +860,7 @@ def rms(
     >>> ax[0].set(xticks=[])
     >>> ax[0].legend()
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='log Power spectrogram')
 
@@ -1014,7 +1013,7 @@ def poly_features(
     >>> ax[2].plot(times, p2[0], label='order=2', alpha=0.8)
     >>> ax[2].set(ylabel='Quadratic term')
     >>> ax[2].legend()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[3])
     """
     S, n_fft = _spectrogram(
@@ -1252,7 +1251,7 @@ def chroma_stft(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> img = librosa.display.specshow(S, vscale='dBFS[power]',
     ...                                y_axis='log', x_axis='time', ax=ax[0])
     >>> fig.colorbar(img, ax=[ax[0]])
     >>> ax[0].label_outer()
@@ -1966,7 +1965,7 @@ def mfcc(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img = librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+    >>> img = librosa.display.specshow(S, vscale='dBFS[power]',
     ...                                x_axis='time', y_axis='mel', fmax=8000,
     ...                                ax=ax[0])
     >>> fig.colorbar(img, ax=[ax[0]])

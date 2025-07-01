@@ -29,21 +29,23 @@ import librosa
 sr = 22050
 y = librosa.chirp(fmin=32, fmax=32 * 2**5, sr=sr, duration=10, linear=True)
 D = librosa.stft(y)
-mag, phase = librosa.magphase(D)
 
-###########################################
-# We should be visualizing the demodulated phase differential derived by subtracting 2π*f*t 
-# from each phase estimate prior to unwrapping, where f and t are the frequency and time.
-freqs = librosa.fft_frequencies()
-times = librosa.times_like(D)
+# For rainbowgrams, we'll also need a separate array to represent the magnitude of the STFT.
+# Here we'll measure it in decibels, and scale it to the range of [0, 1].
+mag = librosa.amplitude_to_db(np.abs(D), ref=np.max)
+alpha = (mag - mag.min()) / (mag.max() - mag.min())
 
-phase_exp = 2*np.pi*np.multiply.outer(freqs,times)
+
 ####################
-# Plot the spectrum.
+# `librosa.display.specshow` can be used to visualize the phase structure from the STFT directly
+# by using the `vscale='dphase'` argument. 
+# This mode is used to visualize how the phase at each time-frequency location compares to what 
+# would be expected for a sinsuoid at that frequency compared to the phase at the previous time step.
 fig, ax = plt.subplots()
-img = librosa.display.specshow(np.diff(np.unwrap(np.angle(phase)-phase_exp, axis=1), axis=1, prepend=0),
+img = librosa.display.specshow(D, 
+                         vscale='dphase',
                          cmap='hsv', 
-                         alpha=librosa.amplitude_to_db(mag, ref=np.max)/80 + 1,
+                         alpha=alpha,
                          ax=ax,
                          y_axis='log', 
                          x_axis='time')
@@ -53,16 +55,63 @@ cbar.ax.set(yticklabels=['-π', '-π/2', "0", 'π/2', 'π']);
 plt.show()
 
 ################################
-# The above uses HSV colormap for phase fading to a black background. The twilight colormap 
-# can also work here, with the caveat that it uses black to code the extremes of the map (ie 0). 
-# We can sidestep this by using a neutral axis facecolor:
+# The above uses HSV colormap for phase, fading to a black background in quiet regions,
+# and essentially replicates the 'rainbowgram' visualization from the NSynth paper.
+# The center color (0, cyan) corresponds to a frequency matching the STFT's analysis frequency 
+# closely, while red values (±π) represent significant deviation from the center frequency.
+#
+# The HSV colormap does have abrupt perceptual transitions in brightness, and is not symmetric around its
+# center point, so the resulting visualization may be misleading in some cases.
+# We can instead use the `twilight_shifted` colormap, which is designed to be perceptually uniform, with a
+# neutral color (gray) at the center value (0), diverging to red and blue at the extremes (±π).
+# This colormap is the default for the `vscale='dphase'` mode, but we can also use it explicitly.
+#
+# Because the `twilight_shifted` colormap has dark values at the extremes, it can be easier to see if the background
+# is a neutral gray color, rather than black.
 fig, ax = plt.subplots()
-img = librosa.display.specshow(np.diff(np.unwrap(np.angle(phase)-phase_exp, axis=1), axis=1, prepend=0),
-                         cmap='twilight', 
-                         alpha=librosa.amplitude_to_db(mag, ref=np.max)/80 + 1,
+img = librosa.display.specshow(D,
+                         vscale='dphase',
+                         cmap='twilight_shifted', 
+                         alpha=alpha,
                          ax=ax,
                          y_axis='log', 
                          x_axis='time')
 ax.set_facecolor('#888')
 cbar = fig.colorbar(img, ticks=[-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
+cbar.ax.set(yticklabels=['-π', '-π/2', 0, 'π/2', 'π'])
+
+#########################
+# For printed material, it may be preferable to use a white background and invert the colormap.
+# This can be done using the regular `twilight` colormap, which has a dark center value (0) and diverges to light colors at the extremes (±π).
+#
+fig, ax = plt.subplots()
+img = librosa.display.specshow(D,
+                         vscale='dphase',
+                         cmap='twilight', 
+                         alpha=alpha,
+                         ax=ax,
+                         y_axis='log', 
+                         x_axis='time')
+ax.set_facecolor('#fff')
+cbar = fig.colorbar(img, ticks=[-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
+cbar.ax.set(yticklabels=['-π', '-π/2', 0, 'π/2', 'π'])
+
+####################
+# Similar phase structure plots can also be generated from other complex-valued transforms, such as the CQT.
+# The `vscale='dphase'` will work with whatever time-frequency grid is provided by the `x_axis` and `y_axis` arguments.
+
+C = librosa.cqt(y, sr=sr, n_bins=12*6, bins_per_octave=12)
+C_mag = librosa.amplitude_to_db(np.abs(C), ref=np.max)
+alpha_cqt = (C_mag - C_mag.min()) / (C_mag.max() - C_mag.min())
+fig, ax = plt.subplots()
+img = librosa.display.specshow(C, 
+                         vscale='dphase',
+                         cmap='twilight_shifted', 
+                         alpha=alpha_cqt,
+                         ax=ax,
+                         bins_per_octave=12,
+                         y_axis='cqt_hz', 
+                         x_axis='time')
+ax.set_facecolor('#888')
+cbar = fig.colorbar(img, ticks=[-np.pi, -np.pi/2, 0, np.pi/2, np.pi])   
 cbar.ax.set(yticklabels=['-π', '-π/2', 0, 'π/2', 'π'])

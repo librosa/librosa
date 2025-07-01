@@ -1353,7 +1353,7 @@ def clicks(
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
-    >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS[power]',
     ...                          x_axis='time', y_axis='mel', ax=ax[0])
     >>> librosa.display.waveshow(y_beat_times, sr=sr, label='Beat clicks',
     ...                          ax=ax[1])
@@ -1472,7 +1472,7 @@ def tone(
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> S = librosa.feature.melspectrogram(y=tone)
-    >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS[power]',
     ...                          x_axis='time', y_axis='mel', ax=ax)
     """
     if frequency is None:
@@ -1570,12 +1570,12 @@ def chirp(
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> S_exponential = np.abs(librosa.stft(y=exponential_chirp))
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S_exponential, ref=np.max),
+    >>> librosa.display.specshow(S_exponential, vscale='dBFS',
     ...                          x_axis='time', y_axis='linear', ax=ax[0])
     >>> ax[0].set(title='Exponential chirp', xlabel=None)
     >>> ax[0].label_outer()
     >>> S_linear = np.abs(librosa.stft(y=linear_chirp))
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S_linear, ref=np.max),
+    >>> librosa.display.specshow(S_linear, vscale='dBFS',
     ...                          x_axis='time', y_axis='linear', ax=ax[1])
     >>> ax[1].set(title='Linear chirp')
     """

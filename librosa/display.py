@@ -38,6 +38,7 @@ Miscellaneous
 """
 from __future__ import annotations
 from itertools import product
+import re
 import warnings
 
 import numpy as np
@@ -45,12 +46,22 @@ from matplotlib import colormaps as mcm
 import matplotlib.axes as mplaxes
 import matplotlib.ticker as mplticker
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 from . import core
 from . import util
 from .util.deprecation import rename_kw, Deprecated
 from .util.exceptions import ParameterError
-from typing import TYPE_CHECKING, Any, Collection, Optional, Union, Callable, Dict
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Collection,
+    Optional,
+    Union,
+    Callable,
+    Dict,
+    Tuple,
+)
 from ._typing import _FloatLike_co
 
 if TYPE_CHECKING:
@@ -174,11 +185,11 @@ class TimeFormatter(mplticker.Formatter):
             s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
         elif self.unit == "s":
             s = f"{value:.3g}"
-        elif self.unit == None and (vmax - vmin >= 1):
+        elif self.unit is None and (vmax - vmin >= 1):
             s = f"{value:.2g}"
         elif self.unit == "ms":
             s = "{:.3g}".format(value * 1000)
-        elif self.unit == None and (vmax - vmin < 1):
+        elif self.unit is None and (vmax - vmin < 1):
             s = f"{value:.3f}"
 
         return f"{sign:s}{s:s}"
@@ -928,6 +939,7 @@ def specshow(
     y_coords: Optional[np.ndarray] = None,
     x_axis: Optional[str] = None,
     y_axis: Optional[str] = None,
+    vscale: Optional[str] = None,
     sr: float = 22050,
     hop_length: int = 512,
     n_fft: Optional[int] = None,
@@ -947,6 +959,7 @@ def specshow(
     unicode: bool = True,
     intervals: Optional[Union[str, np.ndarray]] = None,
     unison: Optional[str] = None,
+    top_db: Optional[float] = 80.0,
     ax: Optional[mplaxes.Axes] = None,
     **kwargs: Any,
 ) -> QuadMesh:
@@ -1025,15 +1038,24 @@ def specshow(
         Time types:
 
         - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
-                Values are plotted in units of seconds.
+            Values are plotted in units of seconds.
+
         - 'h' : markers are shown as hours, minutes, and seconds.
+
         - 'm' : markers are shown as minutes and seconds.
+
         - 's' : markers are shown as seconds.
+
         - 'ms' : markers are shown as milliseconds.
+
         - 'lag' : like time, but past the halfway point counts as negative values.
+
         - 'lag_h' : same as lag, but in hours, minutes and seconds.
+
         - 'lag_m' : same as lag, but in minutes and seconds.
+
         - 'lag_s' : same as lag, but in seconds.
+
         - 'lag_ms' : same as lag, but in milliseconds.
 
         Rhythm:
@@ -1053,6 +1075,35 @@ def specshow(
         features in natural time coordinates.
 
         If not provided, they are inferred from ``x_axis`` and ``y_axis``.
+
+    vscale : str
+        Optional value transformation for `data`.  The following are supported:
+
+        - 'dB' : decibels with `1` as a reference amplitude
+
+        - 'dB[<value>]' : decibels with the given value as a reference amplitude, e.g. 'dB[0.1]'.
+
+        - 'dB[power]' : like above, but treating `data` as power rather than amplitude measurements.
+
+        - 'dB[power,<value>]' : like above, but with an explicit reference power value, e.g. 'dB[power,0.1]'.
+
+        - 'dBFS' : decibels relative to full scale, using `np.max(data)` as a reference amplitude
+
+        - 'dBFS[power]' : like above, but treating `data` as power rather than amplitude measurements.
+
+        - 'phase' : phase values in radians, with a range of `[-π, π]`.
+
+        - 'dphase' : unwrapped phase differences in radians.  Each pixel corresponds to the residual between the
+          observed phase and the expected phase if the frequency was stationary at the previous time step.
+          Values are in the range of `[-π, π]`.
+
+        - 'dphase_t' : as above, but differences are computed along the vertical axis instead of horizontal.
+          This is intended for use with transposed spectrograms where the time axis is vertical and the frequency axis is horizontal.
+
+        .. note::
+            When using phase difference modes (`dphase` or `dphase_t`), the x and y coordinates must be provided
+            via either the `x_axis` and `y_axis` parameters (e.g., `'time', 'fft'`), or explicitly by
+            the `x_coords` and `y_coords` parameters.  All time-like and frequency-like axes are supported.
 
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
@@ -1129,6 +1180,10 @@ def specshow(
         Setting `unicode=False` will use ASCII glyphs.  This can be helpful
         if your font does not support musical notation symbols.
 
+    top_db : float
+        If using a decibel scale, how many dB below the peak to allow
+        before clipping.
+
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
@@ -1141,8 +1196,13 @@ def specshow(
             - ``shading='auto'``
             - ``edgecolors='None'``
 
-        The ``cmap`` option if not provided, is inferred from data automatically.
-        Set ``cmap=None`` to use matplotlib's default colormap.
+    Notes
+    -----
+    The ``cmap`` option if not provided via `kwargs`, is inferred from data automatically.
+    If `vscale` is specified, the colormap will be sequential for decibels, and cyclic for phase 
+    and phase differences.
+
+    To use matplotlib's default colormap, explicitly set ``cmap=None``.
 
     Returns
     -------
@@ -1156,40 +1216,27 @@ def specshow(
 
     Examples
     --------
-    Visualize an STFT power spectrum using default parameters
+    Visualize an STFT magnitude spectrum using default parameters
 
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=15)
     >>> fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True)
-    >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+    >>> D = librosa.stft(y)
     >>> img = librosa.display.specshow(D, y_axis='linear', x_axis='time',
-    ...                                sr=sr, ax=ax[0])
-    >>> ax[0].set(title='Linear-frequency power spectrogram')
+    ...                                vscale='dBFS', sr=sr, ax=ax[0])
+    >>> ax[0].set(title='Linear-frequency magnitude spectrogram')
     >>> ax[0].label_outer()
 
     Or on a logarithmic scale, and using a larger hop
 
     >>> hop_length = 1024
-    >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y, hop_length=hop_length)),
-    ...                             ref=np.max)
+    >>> D = librosa.stft(y, hop_length=hop_length)
     >>> librosa.display.specshow(D, y_axis='log', sr=sr, hop_length=hop_length,
-    ...                          x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Log-frequency power spectrogram')
+    ...                          vscale='dBFS', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Log-frequency magnitude spectrogram')
     >>> ax[1].label_outer()
     >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
-    if np.issubdtype(data.dtype, np.complexfloating):
-        warnings.warn(
-            "Trying to display complex-valued input. " "Showing magnitude instead.",
-            stacklevel=2,
-        )
-        data = np.abs(data)
-
-    kwargs.setdefault("cmap", cmap(data))
-    kwargs.setdefault("rasterized", True)
-    kwargs.setdefault("edgecolors", "None")
-    kwargs.setdefault("shading", "auto")
-
     all_params = dict(
         kwargs=kwargs,
         sr=sr,
@@ -1210,6 +1257,23 @@ def specshow(
     # Get the x and y coordinates
     y_coords = __mesh_coords(y_axis, y_coords, data.shape[0], **all_params)
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
+
+    # Parse the value scale into a normalizer and possibly a colormap
+    data, norm_cmap = __scale_data(data, vscale=vscale, top_db=top_db, x_coords=x_coords, y_coords=y_coords)
+
+    if np.issubdtype(data.dtype, np.complexfloating):
+        warnings.warn(
+            "Trying to display complex-valued input. " "Showing magnitude instead.",
+            stacklevel=2,
+        )
+        data = np.abs(data)
+
+    if norm_cmap is not None:
+        kwargs.setdefault("cmap", norm_cmap)
+    kwargs.setdefault("cmap", cmap(data))
+    kwargs.setdefault("rasterized", True)
+    kwargs.setdefault("edgecolors", "None")
+    kwargs.setdefault("shading", "auto")
 
     axes = __check_axes(ax)
 
@@ -1829,6 +1893,131 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
     axes_compatible_and_not_none = (x_axis, y_axis) in _AXIS_COMPAT
     axes_same_lim = xlim == ylim
     return axes_compatible_and_not_none and axes_same_lim
+
+
+def __scale_data(data, *, vscale, top_db, x_coords, y_coords):
+    """Parse the vscale parameter and return the transformed data and colormap
+    if necessary
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The data to be scaled and visualized.
+    vscale : str or None
+        The value scale to apply to the data.
+        If None, the data is returned as-is.
+    top_db : float
+        The maximum decibel level to display when using a dB scale.
+        This is only used if `vscale` is set to a dB mode.
+    x_coords, y_coords : np.ndarray
+        Time and frequency coordinates for the data.
+        These should be constructed using the `__mesh_coords` function.
+
+    Returns
+    -------
+    data : np.ndarray
+        The scaled data, ready for visualization.
+    cmap : matplotlib.colors.Colormap or None
+        The colormap to use for visualization, or None if no scaling is applied.
+    """
+    # If vscale is None, we return the data as-is
+    if vscale is None:
+        return data, None
+
+    # First check for the easy cases
+    if vscale == "phase":
+        # Phase should use a cyclic colormap
+        return np.angle(data), "twilight_shifted"
+
+    elif vscale == "dphase":
+        # Compute the difference of unwrapped phase
+        diff = np.diff(np.unwrap(np.angle(data), axis=-1), axis=-1, prepend=0.0)
+        # Correct it compared to the expected phase advance on this time-frequency grid
+        #   - 2π*y counts radians per second
+        #   - diff(x) counts seconds per frame
+        #   - The product counts radians per frame
+        diff -= np.multiply.outer(2 * np.pi * y_coords, np.diff(x_coords, prepend=0.0)) 
+        # Wrap back to +-pi
+        diff += np.pi
+        np.mod(diff, 2 * np.pi, out=diff)
+        diff -= np.pi
+        # Use a cyclic colormap for the phase difference
+        return diff, "twilight_shifted"
+
+    elif vscale == "dphase_t":
+        # Same computation as above, but on the opposite axes
+        diff = np.diff(np.unwrap(np.angle(data), axis=0), axis=0, prepend=0.0)
+        diff -= np.multiply.outer(np.diff(y_coords, prepend=0.0), 2 * np.pi * x_coords)
+        diff += np.pi
+        np.mod(diff, 2 * np.pi, out=diff)
+        diff -= np.pi
+        return diff, "twilight_shifted"
+
+    else:
+        # In some kind of dB mode
+        mode, scale_type, ref_ = __parse_vscale(vscale)
+        if ref_ == "max":
+            ref = np.max(np.abs(data))
+        elif ref_ is None:
+            ref = 1.0
+        else:
+            ref = float(ref_)
+
+        if scale_type == "power":
+            data = core.power_to_db(np.abs(data), top_db=top_db, ref=ref)
+        else:
+            data = core.amplitude_to_db(np.abs(data), top_db=top_db, ref=ref)
+
+        # Use the default colormap for sequential data
+        return data, cmap(np.array(1.0))
+
+
+VSCALE_PATTERN = re.compile(
+    r"^(?P<mode>dBFS|dB)"  # Match "dBFS" or "dB"
+    r"(?:\[(?:(?P<type>power)"  # Optionally match [power
+    r"(?:,(?P<ref_power>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?))?"  # Optional ref_power
+    r"|(?P<ref>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?))\])?$"  # Or ref alone
+)
+
+
+def __parse_vscale(vscale: str) -> Tuple[str, str, Optional[Union[float, str]]]:
+    """Parse a vscale string into mode, scale_type, and reference value.
+
+    Examples
+    --------
+    - 'dBFS' -> ('dBFS', 'amplitude', 'max')
+    - 'dBFS[power]' -> ('dBFS', 'power', 'max')
+    - 'dB[power,0.1]' -> ('dB', 'power', 0.1)
+    - 'dB[0.1]' -> ('dB', 'amplitude', 0.1)
+    - 'dB' -> ('dB', 'amplitude', None)
+
+    Parameters
+    ----------
+    vscale : str
+
+    Returns
+    -------
+    mode is one of 'dBFS' or 'dB'
+    scale_type is one of 'power' or 'amplitude'
+    ref is a float, None, or 'max'
+    """
+    match = VSCALE_PATTERN.fullmatch(vscale)
+    if not match:
+        raise ParameterError(f"Invalid vscale specification: {vscale}")
+
+    mode = match.group("mode")
+
+    scale_type = "power" if match.groupdict().get("type") else "amplitude"
+
+    ref = match.groupdict().get("ref") or match.groupdict().get("ref_power")
+
+    if mode == "dBFS":
+        if ref is not None:
+            raise ParameterError("dBFS vscale cannot have an explicit reference value")
+        ref = "max"
+    elif ref is not None:  # mode == 'dB'
+        ref = float(ref)
+    return mode, scale_type, ref
 
 
 def waveshow(

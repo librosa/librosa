@@ -37,7 +37,8 @@ OLD_FT = not (FT_VERSION >= version.parse("2.10"))
 def audio():
 
     __EXAMPLE_FILE = os.path.join("tests", "test_audio.ogg")
-    y, sr = librosa.load(__EXAMPLE_FILE)
+    # Force 64-bit here to avoid phase instabilities in display down the road
+    y, sr = librosa.load(__EXAMPLE_FILE, dtype=np.float64)
     return y, sr
 
 
@@ -1113,3 +1114,123 @@ def test_specshow_chromafjs(C, sr):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_vqt_hz_nointervals(C, sr):
     librosa.display.specshow(C, sr=sr, y_axis="vqt_hz")
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize("vscale", ["dBFS[1]", "dBFS[power,1]"])
+def test_parse_vscale_dbfs_ref(vscale):
+    # This should raise an error because a reference value is
+    # not allowed with dBFS
+    librosa.display.__parse_vscale(vscale)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize("vscale", ["bad string", "dB[gibberish]", "dBFS[gibberish]"])
+def test_parse_vscale_fail(vscale):
+    librosa.display.__parse_vscale(vscale)
+
+
+@pytest.mark.parametrize(
+    "vscale, mode, scale_type, ref",
+    [
+        ("dBFS", "dBFS", "amplitude", "max"),
+        ("dBFS[power]", "dBFS", "power", "max"),
+        ("dB", "dB", "amplitude", None),
+        ("dB[2]", "dB", "amplitude", 2),
+        ("dB[1e-1]", "dB", "amplitude", 0.1),
+        ("dB[power]", "dB", "power", None),
+        ("dB[power,2]", "dB", "power", 2),
+        ("dB[power,1e-1]", "dB", "power", 0.1),
+    ],
+)
+def test_parse_vscale(vscale, mode, scale_type, ref):
+    assert librosa.display.__parse_vscale(vscale) == (mode, scale_type, ref)
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["specshow_vscale"], extensions=["png"], tolerance=6, style=STYLE
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_specshow_vscale(S):
+    fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True, figsize=(12, 12))
+
+    # first column is dB, dBFS, dB with ref value
+    i1 = librosa.display.specshow(
+        S, vscale="dB", y_axis="log", x_axis="time", ax=ax[0, 0]
+    )
+    fig.colorbar(i1, ax=ax[0, 0])
+    ax[0, 0].set_title("dB")
+    i2 = librosa.display.specshow(
+        S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[1, 0]
+    )
+    fig.colorbar(i2, ax=ax[1, 0])
+    ax[1, 0].set_title("dBFS")
+    i3 = librosa.display.specshow(
+        S, vscale="dB[1e-2]", y_axis="log", x_axis="time", ax=ax[2, 0]
+    )
+    fig.colorbar(i3, ax=ax[2, 0])
+    ax[2, 0].set_title("dB, ref=1e-2")
+
+    # second column is dB[power], dBFS[power], dB[power] with ref value
+    i4 = librosa.display.specshow(
+        S, vscale="dB[power]", y_axis="log", x_axis="time", ax=ax[0, 1]
+    )
+    fig.colorbar(i4, ax=ax[0, 1])
+    ax[0, 1].set_title("dB power")
+    i5 = librosa.display.specshow(
+        S, vscale="dBFS[power]", y_axis="log", x_axis="time", ax=ax[1, 1]
+    )
+    fig.colorbar(i5, ax=ax[1, 1])
+    ax[1, 1].set_title("dBFS power")
+    i6 = librosa.display.specshow(
+        S, vscale="dB[power,1e-2]", y_axis="log", x_axis="time", ax=ax[2, 1]
+    )
+    fig.colorbar(i6, ax=ax[2, 1])
+    ax[2, 1].set_title("dB power, ref=1e-2")
+
+    for _ax in ax.flat:
+        _ax.label_outer()
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["specshow_vscale_phase"], extensions=["png"], tolerance=3, style=STYLE
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_specshow_vscale_phase():
+    # Create a chirp
+    sr = 22050
+    y = librosa.chirp(fmin=110, fmax=880, duration=1, sr=sr, linear=False)
+    S = librosa.stft(y, n_fft=2048, hop_length=512)
+    alpha = np.abs(S)
+    alpha /= np.max(alpha)  # normalize to [0, 1]
+    fig, ax = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False, gridspec_kw={"hspace": 0.8}, figsize=(12, 4))
+
+    # phase, phase difference, and phase difference transpose
+    # we use alpha channels here to avoid test failures for unstable phase estimates in quiet regions
+    i7 = librosa.display.specshow(
+        S, vscale="phase", y_axis="log", x_axis="time", ax=ax[0],
+        alpha=alpha
+    )
+    fig.colorbar(i7, ax=ax[0])
+    ax[0].set_title("phase")
+
+    i8 = librosa.display.specshow(
+        S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1],
+        alpha=alpha
+    )
+    fig.colorbar(i8, ax=ax[1])
+    ax[1].set_title("dphase")
+
+    i9 = librosa.display.specshow(
+        S.T, vscale="dphase_t", x_axis="log", y_axis="time", ax=ax[2],
+        alpha=alpha.T
+    )
+    fig.colorbar(i9, ax=ax[2])
+    ax[2].set_title("dphase_t")
+
+    for _ax in ax.flat:
+        _ax.label_outer()
+
+    return fig

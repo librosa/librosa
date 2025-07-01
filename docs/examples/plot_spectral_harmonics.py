@@ -69,7 +69,7 @@ S = np.abs(librosa.stft(y))
 times = librosa.times_like(S, sr=sr)
 
 fig, ax = plt.subplots()
-librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+librosa.display.specshow(S, vscale='dBFS',
                          y_axis='log', x_axis='time', ax=ax)
 ax.plot(times, f0, linewidth=2, color='white', label='f0')
 ax.legend()
@@ -101,9 +101,9 @@ harmonic_energy = librosa.f0_harmonics(S, f0=f0, harmonics=harmonics, freqs=freq
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
 
-librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+librosa.display.specshow(S, vscale='dBFS',
                          y_axis='log', x_axis='time', ax=ax[0])
-librosa.display.specshow(librosa.amplitude_to_db(harmonic_energy, ref=np.max),
+librosa.display.specshow(harmonic_energy, vscale='dBFS',
                          x_axis='time', ax=ax[1])
 ax[0].label_outer()
 ax[1].set(ylabel='Harmonics')
