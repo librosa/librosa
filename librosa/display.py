@@ -1038,15 +1038,24 @@ def specshow(
         Time types:
 
         - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
-                Values are plotted in units of seconds.
+            Values are plotted in units of seconds.
+
         - 'h' : markers are shown as hours, minutes, and seconds.
+
         - 'm' : markers are shown as minutes and seconds.
+
         - 's' : markers are shown as seconds.
+
         - 'ms' : markers are shown as milliseconds.
+
         - 'lag' : like time, but past the halfway point counts as negative values.
+
         - 'lag_h' : same as lag, but in hours, minutes and seconds.
+
         - 'lag_m' : same as lag, but in minutes and seconds.
+
         - 'lag_s' : same as lag, but in seconds.
+
         - 'lag_ms' : same as lag, but in milliseconds.
 
         Rhythm:
@@ -1069,15 +1078,32 @@ def specshow(
 
     vscale : str
         Optional value transformation for `data`.  The following are supported:
+
         - 'dB' : decibels with `1` as a reference amplitude
+
         - 'dB[<value>]' : decibels with the given value as a reference amplitude, e.g. 'dB[0.1]'.
+
         - 'dB[power]' : like above, but treating `data` as power rather than amplitude measurements.
+
         - 'dB[power,<value>]' : like above, but with an explicit reference power value, e.g. 'dB[power,0.1]'.
+
         - 'dBFS' : decibels relative to full scale, using `np.max(data)` as a reference amplitude
+
         - 'dBFS[power]' : like above, but treating `data` as power rather than amplitude measurements.
+
         - 'phase' : phase values in radians, with a range of `[-π, π]`.
-        - 'dphase' : unwrapped phase differences in radians.  This mode requires x_coords and y_coords to be provided
+
+        - 'dphase' : unwrapped phase differences in radians.  Each pixel corresponds to the residual between the
+          observed phase and the expected phase if the frequency was stationary at the previous time step.
+          Values are in the range of `[-π, π]`.
+
         - 'dphase_t' : as above, but differences are computed along the vertical axis instead of horizontal.
+          This is intended for use with transposed spectrograms where the time axis is vertical and the frequency axis is horizontal.
+
+        .. note::
+            When using phase difference modes (`dphase` or `dphase_t`), the x and y coordinates must be provided
+            via either the `x_axis` and `y_axis` parameters (e.g., `'time', 'fft'`), or explicitly by
+            the `x_coords` and `y_coords` parameters.  All time-like and frequency-like axes are supported.
 
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
@@ -1175,10 +1201,6 @@ def specshow(
     The ``cmap`` option if not provided via `kwargs`, is inferred from data automatically.
     If `vscale` is specified, the colormap will be sequential for decibels, and cyclic for phase 
     and phase differences.
-
-    When using phase difference modes (`dphase` or `dphase_t`), the x and y coordinates must be provided
-    via either the `x_axis` and `y_axis` parameters (e.g., `'time', 'fft'`), or explicitly by 
-    the `x_coords` and `y_coords` parameters.  All time-like and frequency-like axes are supported.
 
     To use matplotlib's default colormap, explicitly set ``cmap=None``.
 
@@ -1887,6 +1909,9 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords):
     top_db : float
         The maximum decibel level to display when using a dB scale.
         This is only used if `vscale` is set to a dB mode.
+    x_coords, y_coords : np.ndarray
+        Time and frequency coordinates for the data.
+        These should be constructed using the `__mesh_coords` function.
 
     Returns
     -------
