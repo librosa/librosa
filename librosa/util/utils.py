@@ -1555,7 +1555,8 @@ def sparsify_rows(
     if dtype is None:
         dtype = x.dtype
 
-    x_sparse: scipy.sparse.lil_matrix = scipy.sparse.lil_matrix(x.shape, dtype=dtype)
+    x_sparse: scipy.sparse.lil_matrix = scipy.sparse.lil_matrix(x.shape, dtype=dtype)  #
+    type: ignore
 
     mags = np.abs(x)
     norms = np.sum(mags, axis=1, keepdims=True)
@@ -1567,7 +1568,7 @@ def sparsify_rows(
 
     for i, j in enumerate(threshold_idx):
         idx = np.where(mags[i] >= mag_sort[i, j])
-        x_sparse[i, idx] = x[i, idx]  # type: ignore
+        x_sparse[i, idx] = x[i, idx]
 
     return x_sparse.tocsr()
 

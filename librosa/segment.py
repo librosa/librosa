@@ -778,7 +778,7 @@ def recurrence_to_lag(
                 rec_fmt = "csr"
             else:
                 rec_fmt = "csc"
-            rec = scipy.sparse.kron(padding, rec, format=rec_fmt)
+            rec = scipy.sparse.kron(padding, rec, format=rec_fmt)  # type: ignore
         else:
             padding = np.array([(0, 0), (0, 0)])
             padding[(1 - axis), :] = [0, t]
