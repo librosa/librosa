@@ -1173,8 +1173,12 @@ def specshow(
     Notes
     -----
     The ``cmap`` option if not provided via `kwargs`, is inferred from data automatically.
-    If `vscale` is specified, the colormap will be sequential for decibels, cyclic for phase and phase differences,
-    and diverging for unwrapped phase.
+    If `vscale` is specified, the colormap will be sequential for decibels, and cyclic for phase 
+    and phase differences.
+
+    When using phase difference modes (`dphase` or `dphase_t`), the x and y coordinates must be provided
+    via either the `x_axis` and `y_axis` parameters (e.g., `'time', 'fft'`), or explicitly by 
+    the `x_coords` and `y_coords` parameters.  All time-like and frequency-like axes are supported.
 
     To use matplotlib's default colormap, explicitly set ``cmap=None``.
 
