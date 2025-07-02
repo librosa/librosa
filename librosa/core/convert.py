@@ -676,18 +676,18 @@ def blocks_to_time(
 
 
 @overload
-def note_to_hz(note: str, *, round_midi: bool) -> np.floating[Any]:
+def note_to_hz(note: str, *, round_midi: bool = ...) -> np.floating[Any]:
     ...
 
 
 @overload
-def note_to_hz(note: _IterableLike[str], *, round_midi: bool) -> np.ndarray:
+def note_to_hz(note: _IterableLike[str], *, round_midi: bool = ...) -> np.ndarray:
     ...
 
 
 @overload
 def note_to_hz(
-    note: Union[str, _IterableLike[str], Iterable[str]], *, round_midi: bool
+    note: Union[str, _IterableLike[str], Iterable[str]], *, round_midi: bool = ...
 ) -> Union[np.floating[Any], np.ndarray]:
     ...
 
