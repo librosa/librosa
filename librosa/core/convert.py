@@ -676,24 +676,24 @@ def blocks_to_time(
 
 
 @overload
-def note_to_hz(note: str, **kwargs: Any) -> np.floating[Any]:
+def note_to_hz(note: str, *, round_midi: bool) -> np.floating[Any]:
     ...
 
 
 @overload
-def note_to_hz(note: _IterableLike[str], **kwargs: Any) -> np.ndarray:
+def note_to_hz(note: _IterableLike[str], *, round_midi: bool) -> np.ndarray:
     ...
 
 
 @overload
 def note_to_hz(
-    note: Union[str, _IterableLike[str], Iterable[str]], **kwargs: Any
+    note: Union[str, _IterableLike[str], Iterable[str]], *, round_midi: bool
 ) -> Union[np.floating[Any], np.ndarray]:
     ...
 
 
 def note_to_hz(
-    note: Union[str, _IterableLike[str], Iterable[str]], **kwargs: Any
+    note: Union[str, _IterableLike[str], Iterable[str]], *, round_midi: bool = False
 ) -> Union[np.floating[Any], np.ndarray]:
     """Convert one or more note names to frequency (Hz)
 
@@ -705,16 +705,20 @@ def note_to_hz(
     >>> # Or multiple notes
     >>> librosa.note_to_hz(['A3', 'A4', 'A5'])
     array([ 220.,  440.,  880.])
-    >>> # Or notes with tuning deviations
+    >>> # Notes with tuning deviations
     >>> librosa.note_to_hz('C2-32', round_midi=False)
     array([ 64.209])
+    >>> # Or discarding tuning deviations
+    >>> librosa.note_to_hz('C2-32', round_midi=True)
+    array([ 65.406])
 
     Parameters
     ----------
     note : str or iterable of str
         One or more note names to convert
-    **kwargs : additional keyword arguments
-        Additional parameters to `note_to_midi`
+    round_midi : bool
+        If ``True``, quantize the note to the nearest MIDI pitch before conversion.
+        If ``False``, allow for cent deviations in converting to Hz.
 
     Returns
     -------
@@ -727,7 +731,7 @@ def note_to_hz(
     note_to_midi
     hz_to_note
     """
-    return midi_to_hz(note_to_midi(note, **kwargs))
+    return midi_to_hz(note_to_midi(note, round_midi=round_midi))
 
 
 @overload
