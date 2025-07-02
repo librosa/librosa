@@ -706,11 +706,11 @@ def note_to_hz(
     >>> librosa.note_to_hz(['A3', 'A4', 'A5'])
     array([ 220.,  440.,  880.])
     >>> # Notes with tuning deviations
-    >>> librosa.note_to_hz('C2-32', round_midi=False)
-    array([ 64.209])
+    >>> librosa.note_to_hz(['C2-32', 'C2']))
+    array([ 64.209,  65.406])
     >>> # Or discarding tuning deviations
-    >>> librosa.note_to_hz('C2-32', round_midi=True)
-    array([ 65.406])
+    >>> librosa.note_to_hz(['C2-32', 'C2'], round_midi=True)
+    array([ 65.406,  65.406])
 
     Parameters
     ----------
