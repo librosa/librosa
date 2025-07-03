@@ -716,7 +716,7 @@ def note_to_hz(
     ----------
     note : str or iterable of str
         One or more note names to convert
-    round_midi : bool
+    round_midi : bool (default=False)
         If ``True``, quantize the note to the nearest MIDI pitch before conversion.
         If ``False``, allow for cent deviations in converting to Hz.
 
