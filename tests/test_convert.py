@@ -252,6 +252,11 @@ def test_note_to_hz_badnote():
     librosa.note_to_hz("does not pass")
 
 
+def test_note_to_hz_default():
+    hz = librosa.note_to_hz("C2-30", round_midi=False)
+    assert np.isclose(hz, librosa.note_to_hz("C2-30"))
+
+
 @pytest.mark.parametrize(
     "midi_num,note,octave,cents",
     [
