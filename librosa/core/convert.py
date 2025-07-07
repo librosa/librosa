@@ -2461,7 +2461,7 @@ def midi_to_svara_h(
     >>> librosa.midi_to_svara_h([72, 73, 74], Sa=60, abbr=False)
     array(['Ṡa', 'ṙe', 'Ṙe'], dtype='<U3')
     """
-    if not np.isfinite(midi):  # type: ignore
+    if not np.isfinite(midi):
         return ""
 
     SVARA_MAP = [
@@ -2790,7 +2790,7 @@ def midi_to_svara_c(
     mela_to_svara
     list_mela
     """
-    if not np.isfinite(midi):  # type: ignore
+    if not np.isfinite(midi):
         return ""
 
     svara_num = int(np.round(midi - Sa))
