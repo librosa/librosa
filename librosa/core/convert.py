@@ -956,7 +956,7 @@ def midi_to_note(
     if cents and not octave:
         raise ParameterError("Cannot encode cents without octave information.")
 
-    if not np.isfinite(midi):
+    if not np.isfinite(midi):  # type: ignore
         return ""
 
     note_map = notation.key_to_notes(key=key, unicode=unicode)
@@ -2461,7 +2461,7 @@ def midi_to_svara_h(
     >>> librosa.midi_to_svara_h([72, 73, 74], Sa=60, abbr=False)
     array(['Ṡa', 'ṙe', 'Ṙe'], dtype='<U3')
     """
-    if not np.isfinite(midi):
+    if not np.isfinite(midi):  # type: ignore
         return ""
 
     SVARA_MAP = [
@@ -2790,7 +2790,7 @@ def midi_to_svara_c(
     mela_to_svara
     list_mela
     """
-    if not np.isfinite(midi):
+    if not np.isfinite(midi):  # type: ignore
         return ""
 
     svara_num = int(np.round(midi - Sa))
