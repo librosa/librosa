@@ -750,9 +750,11 @@ def test_note_to_svara_c(note, Sa, mela, abbr, octave, unicode, result):
 def test_midi_to_note_empty(value):
     assert librosa.midi_to_note(value) == ""
 
+
 @pytest.mark.parametrize("value", [np.inf, -np.inf, np.nan])
 def test_midi_to_svara_h(value):
     assert librosa.midi_to_svara_h(value, Sa=60) == ""
+
 
 @pytest.mark.parametrize("value", [np.inf, -np.inf, np.nan])
 def test_midi_to_svara_c(value):
