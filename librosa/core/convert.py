@@ -760,7 +760,10 @@ def note_to_midi(
 
     The leading note name is case-insensitive.
 
+    The empty string ``""`` maps to `np.nan`.
+
     Sharps are indicated with ``#``, flats may be indicated with ``!`` or ``b``.
+
 
     Parameters
     ----------
@@ -813,6 +816,9 @@ def note_to_midi(
     """
     if not isinstance(note, str):
         return np.array([note_to_midi(n, round_midi=round_midi) for n in note])
+
+    if note == "":
+        return np.nan
 
     pitch_map: Dict[str, int] = {
         "C": 0,
@@ -912,6 +918,8 @@ def midi_to_note(
 
     MIDI numbers will be rounded to the nearest integer.
 
+    Non-finite values (NaN, inf, -inf) will return an empty string.
+
     Notes will be of the format 'C0', 'C♯0', 'D0', ...
 
     Examples
@@ -983,6 +991,9 @@ def midi_to_note(
     """
     if cents and not octave:
         raise ParameterError("Cannot encode cents without octave information.")
+
+    if not np.isfinite(midi):
+        return ""
 
     note_map = notation.key_to_notes(key=key, unicode=unicode)
 
@@ -2446,6 +2457,8 @@ def midi_to_svara_h(
 ) -> Union[str, np.ndarray]:
     """Convert MIDI numbers to Hindustani svara
 
+    Non-finite midi numbers (e.g., NaN, inf) will return an empty string.
+
     Parameters
     ----------
     midi : numeric or np.ndarray
@@ -2510,6 +2523,9 @@ def midi_to_svara_h(
     >>> librosa.midi_to_svara_h([72, 73, 74], Sa=60, abbr=False)
     array(['Ṡa', 'ṙe', 'Ṙe'], dtype='<U3')
     """
+    if not np.isfinite(midi):
+        return ""
+
     SVARA_MAP = [
         "Sa",
         "re",
@@ -2801,6 +2817,8 @@ def midi_to_svara_c(
 ) -> Union[str, np.ndarray]:
     """Convert MIDI numbers to Carnatic svara within a given melakarta raga
 
+    Non-finite midi numbers (e.g., NaN, inf) will return an empty string.
+
     Parameters
     ----------
     midi : numeric
@@ -2843,6 +2861,10 @@ def midi_to_svara_c(
     mela_to_svara
     list_mela
     """
+
+    if not np.isfinite(midi):
+        return ""
+
     svara_num = int(np.round(midi - Sa))
 
     svara_map = notation.mela_to_svara(mela, abbr=abbr, unicode=unicode)
