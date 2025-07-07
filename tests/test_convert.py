@@ -752,12 +752,12 @@ def test_midi_to_note_empty(value):
 
 
 @pytest.mark.parametrize("value", [np.inf, -np.inf, np.nan])
-def test_midi_to_svara_h(value):
+def test_midi_to_svara_h_empty(value):
     assert librosa.midi_to_svara_h(value, Sa=60) == ""
 
 
 @pytest.mark.parametrize("value", [np.inf, -np.inf, np.nan])
-def test_midi_to_svara_c(value):
+def test_midi_to_svara_c_empty(value):
     assert librosa.midi_to_svara_c(value, Sa=60, mela=22) == ""
 
 
