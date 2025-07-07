@@ -2790,7 +2790,6 @@ def midi_to_svara_c(
     mela_to_svara
     list_mela
     """
-
     if not np.isfinite(midi):
         return ""
 
