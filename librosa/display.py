@@ -2462,7 +2462,7 @@ def colorbar_db(
     cbar = fig.colorbar(
         im,
         ax=ax,
-        format="{x:3.0f}",
+        format="%3.0f",
         **kwargs,
     )
 
