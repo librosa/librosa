@@ -2295,7 +2295,6 @@ def waveshow(
 
 def __radian_formatter(x, pos):
     """Format a tick value (in radians) as a rational multiple of pi"""
-
     m = x / np.pi
     # hard to imagine going finer than pi/16 (11°)
     frac = Fraction(m).limit_denominator(16)
@@ -2324,6 +2323,8 @@ def colorbar_phase(
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
     """Attach a colorbar to an image representing phase data in radians.
+
+    The colorbar will display ticks at rational multiples of π.
 
     Parameters
     ----------
@@ -2364,13 +2365,13 @@ def colorbar_phase(
     >>> im = librosa.display.specshow(S, ax=ax, y_axis='log', x_axis='time', vscale='phase')
     >>> librosa.display.colorbar_phase(im)
 
-    Attach a colorbar to one subplot axes
+    Attach a colorbar to one subplot axes, and show as multiples of π/3.
 
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> im_mag = librosa.display.specshow(S, ax=ax[0], y_axis='log', x_axis='time', vscale='dBFS')
     >>> cbar = librosa.display.colorbar_db(im_mag, ax=ax[0], label='dBFS')
     >>> im_ph = librosa.display.specshow(S, ax=ax[1], y_axis='log', x_axis='time', vscale='dphase')
-    >>> cbar = librosa.display.colorbar_phase(im_ph, ax=ax[1])
+    >>> cbar = librosa.display.colorbar_phase(im_ph, ax=ax[1], numticks=7)
     >>> ax[0].label_outer()
     """
     if fig is None:
@@ -2393,7 +2394,6 @@ def colorbar_phase(
 
 def colorbar_db(
     im: matplotlib.image.AxesImage,
-    numticks: int = 9,
     ax: matplotlib.Axes = None,
     fig: matplotlib.Figure = None,
     **kwargs: Any,
@@ -2404,9 +2404,6 @@ def colorbar_db(
     ----------
     im : matplotlib.image.AxesImage
         The image to which the colorbar will be attached.
-    numticks : int > 0
-        The number of ticks to display on the colorbar.
-        Default is 9.
     ax : matplotlib.axes.Axes or None
         The axes to which the colorbar will be attached.
         If None, the colorbar will be attached to the axes of `im`.
@@ -2459,7 +2456,6 @@ def colorbar_db(
     cbar = fig.colorbar(
         im,
         ax=ax,
-        ticks=mplticker.LinearLocator(numticks=numticks),
         format="{x:3.0f}",
         **kwargs,
     )
