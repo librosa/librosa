@@ -1234,3 +1234,44 @@ def test_specshow_vscale_phase():
         _ax.label_outer()
 
     return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["colorbar_db"],
+    extensions=["png"],
+    tolerance=3,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_colorbar_db(S):
+    fig, ax = plt.subplots(nrows=2)
+    i1 = librosa.display.specshow(S, vscale="dB", y_axis="log", x_axis="time",
+                                  ax=ax[0])
+    librosa.display.colorbar_db(i1, ax=ax[0])
+    i2 = librosa.display.specshow(S, vscale="dBFS", y_axis="log", x_axis="time",
+                                  ax=ax[1])
+    librosa.display.colorbar_db(i2, ax=ax[1], label="dBFS")
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["colorbar_phase"],
+    extensions=["png"],
+    tolerance=3,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_colorbar_phase(S):
+    alpha = np.abs(S)
+    alpha /= np.max(alpha)
+    fig, ax = plt.subplots(nrows=2)
+    i1 = librosa.display.specshow(S, vscale="phase", y_axis="log", x_axis="time",
+                                  alpha=alpha,
+                                  ax=ax[0])
+    librosa.display.colorbar_phase(i1, ax=ax[0])
+    i2 = librosa.display.specshow(S, vscale="dphase", y_axis="log", x_axis="time",
+                                  alpha=alpha,
+                                  ax=ax[1])
+    librosa.display.colorbar_phase(i2, ax=ax[1], label="Δ radians")
+    return fig
+
