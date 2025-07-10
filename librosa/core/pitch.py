@@ -790,7 +790,7 @@ def pyin(
     >>> fig, ax = plt.subplots()
     >>> img = librosa.display.specshow(D, x_axis='time', y_axis='log', ax=ax)
     >>> ax.set(title='pYIN fundamental frequency estimation')
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img)
     >>> ax.plot(times, f0, label='f0', color='cyan', linewidth=3)
     >>> ax.legend(loc='upper right')
     """

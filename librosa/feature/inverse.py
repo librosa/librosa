@@ -92,7 +92,7 @@ def mel_to_stft(
     >>> librosa.display.specshow(S_inv - S, vscale=f'dB[power,{S.max()}]', top_db=None,
     ...                          vmax=0, y_axis='log', x_axis='time', ax=ax[2])
     >>> ax[2].set(title='Residual error (dB)')
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     # Construct a mel basis with dtype matching the input data
     mel_basis = filters.mel(

@@ -445,7 +445,7 @@ def spectral_contrast(
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> img1 = librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0])
-    >>> fig.colorbar(img1, ax=[ax[0]], format='%+2.0f dB')
+    >>> librosa.display.colorbar_db(img1)
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
     >>> img2 = librosa.display.specshow(contrast, x_axis='time', ax=ax[1])
@@ -1253,7 +1253,7 @@ def chroma_stft(
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> img = librosa.display.specshow(S, vscale='dBFS[power]',
     ...                                y_axis='log', x_axis='time', ax=ax[0])
-    >>> fig.colorbar(img, ax=[ax[0]])
+    >>> librosa.display.colorbar_db(img)
     >>> ax[0].label_outer()
     >>> img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[1])
     >>> fig.colorbar(img, ax=[ax[1]])
@@ -1968,7 +1968,7 @@ def mfcc(
     >>> img = librosa.display.specshow(S, vscale='dBFS[power]',
     ...                                x_axis='time', y_axis='mel', fmax=8000,
     ...                                ax=ax[0])
-    >>> fig.colorbar(img, ax=[ax[0]])
+    >>> librosa.display.colorbar_db(img)
     >>> ax[0].set(title='Mel spectrogram')
     >>> ax[0].label_outer()
     >>> img = librosa.display.specshow(mfccs, x_axis='time', ax=ax[1])
@@ -2128,7 +2128,7 @@ def melspectrogram(
     >>> img = librosa.display.specshow(S_dB, x_axis='time',
     ...                          y_axis='mel', sr=sr,
     ...                          fmax=8000, ax=ax)
-    >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
+    >>> librosa.display.colorbar_db(img)
     >>> ax.set(title='Mel-frequency spectrogram')
     """
     S, n_fft = _spectrogram(

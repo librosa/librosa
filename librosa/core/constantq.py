@@ -143,7 +143,7 @@ def cqt(
     >>> img = librosa.display.specshow(C, vscale='dBFS',
     ...                                sr=sr, x_axis='time', y_axis='cqt_note', ax=ax)
     >>> ax.set_title('Constant-Q power spectrum')
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img)
 
     Limit the frequency range
 
@@ -910,7 +910,7 @@ def vqt(
     >>> img = librosa.display.specshow(V, vscale='dBFS',
     ...                                sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[1])
     >>> ax[1].set_title('Variable-Q power spectrum')
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     # If intervals are provided as an array, override BPO
     if not isinstance(intervals, str):

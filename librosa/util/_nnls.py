@@ -136,7 +136,7 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Reconstructed spectrogram (1025 bins)')
     >>> ax[1].label_outer()
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     # If B is a single vector, punt up to the scipy method
     if B.ndim == 1:

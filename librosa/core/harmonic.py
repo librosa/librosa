@@ -106,7 +106,7 @@ def salience(
     >>> img = librosa.display.specshow(S_sal, vscale='dBFS',
     ...                                sr=sr, y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Salience spectrogram')
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if aggregate is None:
         aggregate = np.average
@@ -228,7 +228,7 @@ def interp_harmonics(
     ...                              ax=ax.flat[i])
     ...     ax.flat[i].set(title='h={:.3g}'.format(harmonics[i]))
     ...     ax.flat[i].label_outer()
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
         # Build the 1-D interpolator.

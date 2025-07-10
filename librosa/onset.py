@@ -552,7 +552,7 @@ def onset_strength_multi(
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
-    >>> fig.colorbar(img1, ax=[ax[0]], format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img1, ax=ax[0])
 
     Construct a standard onset function over four sub-bands
 

@@ -1215,6 +1215,8 @@ def specshow(
 
     See Also
     --------
+    colormap_db
+    colormap_phase
     cmap : Automatic colormap detection
     matplotlib.pyplot.pcolormesh
 
@@ -1239,7 +1241,7 @@ def specshow(
     ...                          vscale='dBFS', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Log-frequency magnitude spectrogram')
     >>> ax[1].label_outer()
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     all_params = dict(
         kwargs=kwargs,
@@ -2315,7 +2317,7 @@ def __radian_formatter(x, pos):
 
 
 def colorbar_phase(
-    im: matplotlib.image.AxesImage,
+    im: matplotlib.cm.ScalarMappable,
     numticks: int = 9,
     ax: matplotlib.Axes = None,
     fig: matplotlib.Figure = None,
