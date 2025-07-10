@@ -60,7 +60,7 @@ ax[1].label_outer()
 librosa.display.specshow(D_percussive, vscale=f"dB[{rp}]",
                          y_axis='log', x_axis='time', ax=ax[2])
 ax[2].set(title='Percussive spectrogram')
-fig.colorbar(img, ax=ax)
+librosa.display.colorbar_db(img, ax=ax)
 
 #########################################################################
 # We can also invert the separated spectrograms to play back the audio.

@@ -54,7 +54,7 @@ fig, ax = plt.subplots(nrows=2, sharex=True)
 img1 = librosa.display.specshow(C[idx], vscale='dBFS',
                                 y_axis='cqt_note', x_axis='time', bins_per_octave=12*3,
                                 ax=ax[0])
-fig.colorbar(img1, ax=[ax[0]], format="%+2.f dB")
+librosa.display.colorbar_db(img1, ax=ax[0])
 ax[0].label_outer()
 
 img2 = librosa.display.specshow(chroma_orig[idx], y_axis='chroma', x_axis='time', ax=ax[1])

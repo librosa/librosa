@@ -33,7 +33,7 @@ S_full, phase = librosa.magphase(librosa.stft(y))
 fig, ax = plt.subplots()
 img = librosa.display.specshow(S_full, vscale='dBFS',
                                y_axis='log', x_axis='time', sr=sr, ax=ax)
-fig.colorbar(img, ax=ax);
+librosa.display.colorbar_db(img)
 
 ###########################################################
 # As you can see, there are periods of silence and
