@@ -12,6 +12,9 @@ Data visualization
     specshow
     waveshow
 
+    colorbar_db
+    colorbar_phase
+
 Axis formatting
 ---------------
 .. autosummary::
@@ -40,6 +43,7 @@ from __future__ import annotations
 from itertools import product
 import re
 import warnings
+from fractions import Fraction
 
 import numpy as np
 from matplotlib import colormaps as mcm
@@ -1199,7 +1203,7 @@ def specshow(
     Notes
     -----
     The ``cmap`` option if not provided via `kwargs`, is inferred from data automatically.
-    If `vscale` is specified, the colormap will be sequential for decibels, and cyclic for phase 
+    If `vscale` is specified, the colormap will be sequential for decibels, and cyclic for phase
     and phase differences.
 
     To use matplotlib's default colormap, explicitly set ``cmap=None``.
@@ -1259,7 +1263,9 @@ def specshow(
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
 
     # Parse the value scale into a normalizer and possibly a colormap
-    data, norm_cmap = __scale_data(data, vscale=vscale, top_db=top_db, x_coords=x_coords, y_coords=y_coords)
+    data, norm_cmap = __scale_data(
+        data, vscale=vscale, top_db=top_db, x_coords=x_coords, y_coords=y_coords
+    )
 
     if np.issubdtype(data.dtype, np.complexfloating):
         warnings.warn(
@@ -1936,7 +1942,7 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords):
         #   - 2π*y counts radians per second
         #   - diff(x) counts seconds per frame
         #   - The product counts radians per frame
-        diff -= np.multiply.outer(2 * np.pi * y_coords, np.diff(x_coords, prepend=0.0)) 
+        diff -= np.multiply.outer(2 * np.pi * y_coords, np.diff(x_coords, prepend=0.0))
         # Wrap back to +-pi
         diff += np.pi
         np.mod(diff, 2 * np.pi, out=diff)
@@ -2283,3 +2289,177 @@ def waveshow(
     __decorate_axis(dec_axis, axis)
 
     return adaptor
+
+
+def __radian_formatter(x, pos):
+    """Format a tick value (in radians) as a rational multiple of pi"""
+
+    m = x / np.pi
+    # hard to imagine going finer than pi/16 (11°)
+    frac = Fraction(m).limit_denominator(16)
+    num, den = frac.numerator, frac.denominator
+
+    if num == 0:
+        return "0"
+
+    sign = "-" if num * den < 0 else ""
+    num_abs = abs(num)
+
+    # Build numerator string
+    coeff = "" if num_abs == 1 else str(num_abs)
+
+    if den == 1:
+        return f"{sign}{coeff}π"
+    else:
+        return f"{sign}{coeff}π/{den}"
+
+
+def colorbar_phase(
+    im: matplotlib.image.AxesImage,
+    numticks: int = 9,
+    ax: matplotlib.Axes = None,
+    fig: matplotlib.Figure = None,
+    **kwargs: Any,
+) -> matplotlib.colorbar.Colorbar:
+    """Attach a colorbar to an image representing phase data in radians.
+
+    Parameters
+    ----------
+    im : matplotlib.image.AxesImage
+        The image to which the colorbar will be attached.
+    numticks : int > 0
+        The number of ticks to display on the colorbar.
+        Default is 9, corresponding to multiples of π/4.
+    ax : matplotlib.axes.Axes or None
+        The axes to which the colorbar will be attached.
+        If None, the colorbar will be attached to the axes of `im`.
+    fig : matplotlib.figure.Figure or None
+        The figure to which the colorbar will be attached.
+        If None, the colorbar will be attached to the figure of `im`.
+    **kwargs
+        Additional keyword arguments to pass to `fig.colorbar`.
+
+    Returns
+    -------
+    cbar : matplotlib.colorbar.Colorbar
+        The created colorbar object.
+
+    See Also
+    --------
+    specshow
+    colorbar_db
+    matplotlib.colorbar.Colorbar
+
+    Examples
+    --------
+    Attach a colorbar to a phase spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> import librosa
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> S = librosa.stft(y)
+    >>> fig, ax = plt.subplots()
+    >>> im = librosa.display.specshow(S, ax=ax, y_axis='log', x_axis='time', vscale='phase')
+    >>> librosa.display.colorbar_phase(im)
+
+    Attach a colorbar to one subplot axes
+
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> im_mag = librosa.display.specshow(S, ax=ax[0], y_axis='log', x_axis='time', vscale='dBFS')
+    >>> cbar = librosa.display.colorbar_db(im_mag, ax=ax[0], label='dBFS')
+    >>> im_ph = librosa.display.specshow(S, ax=ax[1], y_axis='log', x_axis='time', vscale='dphase')
+    >>> cbar = librosa.display.colorbar_phase(im_ph, ax=ax[1])
+    >>> ax[0].label_outer()
+    """
+    if fig is None:
+        fig = im.figure
+
+    if ax is None:
+        ax = im.axes
+
+    kwargs.setdefault("label", "radians")
+
+    cbar = fig.colorbar(
+        im,
+        ax=ax,
+        ticks=mplticker.LinearLocator(numticks=numticks),
+        format=mplticker.FuncFormatter(__radian_formatter),
+        **kwargs,
+    )
+    return cbar
+
+
+def colorbar_db(
+    im: matplotlib.image.AxesImage,
+    numticks: int = 9,
+    ax: matplotlib.Axes = None,
+    fig: matplotlib.Figure = None,
+    **kwargs: Any,
+) -> matplotlib.colorbar.Colorbar:
+    """Attach a colorbar to an image representing decibel-scaled data.
+
+    Parameters
+    ----------
+    im : matplotlib.image.AxesImage
+        The image to which the colorbar will be attached.
+    numticks : int > 0
+        The number of ticks to display on the colorbar.
+        Default is 9.
+    ax : matplotlib.axes.Axes or None
+        The axes to which the colorbar will be attached.
+        If None, the colorbar will be attached to the axes of `im`.
+    fig : matplotlib.figure.Figure or None
+        The figure to which the colorbar will be attached.
+        If None, the colorbar will be attached to the figure of `im`.
+    **kwargs
+        Additional keyword arguments to pass to `fig.colorbar`.
+
+    Returns
+    -------
+    cbar : matplotlib.colorbar.Colorbar
+        The created colorbar object.
+
+    See Also
+    --------
+    specshow
+    colorbar_phase
+    matplotlib.colorbar.Colorbar
+
+    Examples
+    --------
+    Attach a colorbar to a phase spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> import librosa
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> S = librosa.stft(y)
+    >>> fig, ax = plt.subplots()
+    >>> im = librosa.display.specshow(S, ax=ax, y_axis='log', x_axis='time', vscale='dB')
+    >>> librosa.display.colorbar_db(im)
+
+    Attach a colorbar to one subplot axes.  We can also set a label for the colorbar.
+
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> im_mag = librosa.display.specshow(S, ax=ax[0], y_axis='log', x_axis='time', vscale='dBFS')
+    >>> cbar = librosa.display.colorbar_db(im_mag, ax=ax[0], label='dBFS')
+    >>> im_ph = librosa.display.specshow(S, ax=ax[1], y_axis='log', x_axis='time', vscale='dphase')
+    >>> cbar = librosa.display.colorbar_phase(im_ph, ax=ax[1])
+    >>> ax[0].label_outer()
+    """
+    if fig is None:
+        fig = im.figure
+
+    if ax is None:
+        ax = im.axes
+
+    kwargs.setdefault("label", "dB")
+
+    cbar = fig.colorbar(
+        im,
+        ax=ax,
+        ticks=mplticker.LinearLocator(numticks=numticks),
+        format="{x:3.0f}",
+        **kwargs,
+    )
+
+    return cbar
