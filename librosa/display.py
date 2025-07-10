@@ -1282,7 +1282,7 @@ def specshow(
     kwargs.setdefault("rasterized", True)
     kwargs.setdefault("edgecolors", "None")
     kwargs.setdefault("shading", "auto")
-    if "phase" in vscale:
+    if vscale is not None and "phase" in vscale:
         # If we're displaying phase, try to ensure that the color gamut
         # covers the full range.
         # A user can override this if they want to.
