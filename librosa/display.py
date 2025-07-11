@@ -2422,7 +2422,7 @@ def colorbar_db(
         If None, the colorbar will be attached to the figure of `im`.
     format : str
         The format string for the colorbar ticks.
-        Default is "% -3.0f", which displays integer values.
+        Default is "% -3.f", which displays integer values.
         You can change this to a different format if needed.
     **kwargs
         Additional keyword arguments to pass to `fig.colorbar`.
