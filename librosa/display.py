@@ -1215,8 +1215,8 @@ def specshow(
 
     See Also
     --------
-    colormap_db
-    colormap_phase
+    colorbar_db
+    colorbar_phase
     cmap : Automatic colormap detection
     matplotlib.pyplot.pcolormesh
 
@@ -2388,11 +2388,12 @@ def colorbar_phase(
 
     kwargs.setdefault("label", "radians")
 
+    kwargs.setdefault("ticks", mplticker.LinearLocator(numticks=numticks))
+    kwargs.setdefault("format", mplticker.FuncFormatter(__radian_formatter))
+
     cbar = fig.colorbar(
         im,
         ax=ax,
-        ticks=mplticker.LinearLocator(numticks=numticks),
-        format=mplticker.FuncFormatter(__radian_formatter),
         **kwargs,
     )
     return cbar
@@ -2402,6 +2403,7 @@ def colorbar_db(
     im: matplotlib.image.AxesImage,
     ax: matplotlib.Axes = None,
     fig: matplotlib.Figure = None,
+    format: str = "%3.0f",
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
     """Attach a colorbar to an image representing decibel-scaled data.
@@ -2416,6 +2418,10 @@ def colorbar_db(
     fig : matplotlib.figure.Figure or None
         The figure to which the colorbar will be attached.
         If None, the colorbar will be attached to the figure of `im`.
+    format : str
+        The format string for the colorbar ticks.
+        Default is "%3.0f", which displays integer values.
+        You can change this to a different format if needed.
     **kwargs
         Additional keyword arguments to pass to `fig.colorbar`.
 
@@ -2462,7 +2468,7 @@ def colorbar_db(
     cbar = fig.colorbar(
         im,
         ax=ax,
-        format="%3.0f",
+        format=format,
         **kwargs,
     )
 
