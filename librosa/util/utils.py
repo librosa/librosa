@@ -733,8 +733,7 @@ def axis_sort(
     >>> librosa.display.specshow(H_sort, x_axis='time', ax=ax[1, 1])
     >>> ax[1, 1].set(title='H sorted')
     >>> ax[1, 1].label_outer()
-    >>> cbar = librosa.display.colorbar_db(img_w, ax=ax[:, 0],
-    ...                                    orientation='horizontal')
+    >>> cbar = librosa.display.colorbar_db(img_w, ax=ax[:, 0], orientation='horizontal')
     >>> cbar.ax.tick_params("x", rotation=45)
     >>> fig.colorbar(img_act, ax=ax[:, 1], orientation='horizontal')
 
