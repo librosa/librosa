@@ -50,8 +50,7 @@ img = librosa.display.specshow(D,
                          y_axis='log', 
                          x_axis='time')
 ax.set_facecolor('#000')
-cbar = fig.colorbar(img, ticks=[-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
-cbar.ax.set(yticklabels=['-π', '-π/2', "0", 'π/2', 'π']);
+librosa.display.colorbar_phase(img)
 plt.show()
 
 ################################
@@ -77,8 +76,7 @@ img = librosa.display.specshow(D,
                          y_axis='log', 
                          x_axis='time')
 ax.set_facecolor('#888')
-cbar = fig.colorbar(img, ticks=[-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
-cbar.ax.set(yticklabels=['-π', '-π/2', 0, 'π/2', 'π'])
+librosa.display.colorbar_phase(img)
 
 #########################
 # For printed material, it may be preferable to use a white background and invert the colormap.
@@ -93,8 +91,7 @@ img = librosa.display.specshow(D,
                          y_axis='log', 
                          x_axis='time')
 ax.set_facecolor('#fff')
-cbar = fig.colorbar(img, ticks=[-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
-cbar.ax.set(yticklabels=['-π', '-π/2', 0, 'π/2', 'π'])
+librosa.display.colorbar_phase(img)
 
 ####################
 # Similar phase structure plots can also be generated from other complex-valued transforms, such as the CQT.
@@ -113,5 +110,4 @@ img = librosa.display.specshow(C,
                          y_axis='cqt_hz', 
                          x_axis='time')
 ax.set_facecolor('#888')
-cbar = fig.colorbar(img, ticks=[-np.pi, -np.pi/2, 0, np.pi/2, np.pi])   
-cbar.ax.set(yticklabels=['-π', '-π/2', 0, 'π/2', 'π'])
+librosa.display.colorbar_phase(img)

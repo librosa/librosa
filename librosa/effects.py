@@ -857,7 +857,7 @@ def preemphasis(
     >>> ax[0].label_outer()
     >>> img = librosa.display.specshow(S_preemph, y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Pre-emphasized signal')
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
 
     Apply pre-emphasis in pieces for block streaming.  Note that the second block
     initializes ``zi`` with the final state ``zf`` returned by the first call.

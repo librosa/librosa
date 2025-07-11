@@ -224,7 +224,7 @@ def stft(
     >>> img = librosa.display.specshow(S, vscale='dBFS',
     ...                                y_axis='log', x_axis='time', ax=ax)
     >>> ax.set_title('Power spectrogram')
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img)
     """
     # By default, use the entire frame
     if win_length is None:
@@ -1185,7 +1185,7 @@ def reassigned_spectrogram(
     >>> ax[0].label_outer()
     >>> ax[1].scatter(times, freqs, c=mags_db, cmap="magma", alpha=0.1, s=5)
     >>> ax[1].set_title("Reassigned spectrogram")
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if not callable(ref_power) and ref_power < 0:
         raise ParameterError("ref_power must be non-negative or callable.")
@@ -1619,7 +1619,7 @@ def iirt(
     >>> img = librosa.display.specshow(D, vscale='dBFS',
     ...                                y_axis='cqt_hz', x_axis='time', ax=ax[1])
     >>> ax[1].set_title('Semitone spectrogram (iirt)')
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if flayout not in ("ba", "sos"):
         raise ParameterError(f"Unsupported flayout={flayout}")
@@ -1831,7 +1831,7 @@ def power_to_db(
     ...                                  sr=sr, y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Log-Power spectrogram')
     >>> fig.colorbar(imgpow, ax=ax[0])
-    >>> fig.colorbar(imgdb, ax=ax[1], format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(imgdb, ax=ax[1])
     """
     S = np.asarray(S)
 
@@ -2132,8 +2132,8 @@ def perceptual_weighting(
     ...                                 fmin=librosa.note_to_hz('A1'),
     ...                                 x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Perceptually weighted log CQT')
-    >>> fig.colorbar(img, ax=ax[0], format="%+2.0f dB")
-    >>> fig.colorbar(imgp, ax=ax[1], format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax[0])
+    >>> librosa.display.colorbar_db(imgp, ax=ax[1])
     """
     offset = convert.frequency_weighting(frequencies, kind=kind).reshape((-1, 1))
 
@@ -2572,7 +2572,7 @@ def pcen(
     >>> ax[0].label_outer()
     >>> imgpcen = librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel', ax=ax[1])
     >>> ax[1].set(title='Per-channel energy normalization')
-    >>> fig.colorbar(img, ax=ax[0], format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax[0])
     >>> fig.colorbar(imgpcen, ax=ax[1])
 
     Compare PCEN with and without max-filtering

@@ -98,11 +98,12 @@ fig.colorbar(img, ax=ax)
 fig, ax = plt.subplots()
 img = librosa.display.specshow(D, vscale='dB', x_axis='time', y_axis='linear', ax=ax)
 ax.set(title='Now with labeled axes!')
-fig.colorbar(img, ax=ax, format="%+2.f dB")
+librosa.display.colorbar_db(img)
 
 # %%
-# This is much better already!  Note that we also added a format string
-# to the colorbar, so readers know how to read the color scale.
+# This is much better already!  Note that we also switched from using
+# matplotlib's `colorbar` to librosa's `colorbar_db` helper, which
+# automatically formats the colorbar ticks in decibels.
 
 # %%
 # Changing axis scales
@@ -117,7 +118,7 @@ fig.colorbar(img, ax=ax, format="%+2.f dB")
 fig, ax = plt.subplots()
 img = librosa.display.specshow(D, vscale='dB', x_axis='time', y_axis='log', ax=ax)
 ax.set(title='Using a logarithmic frequency axis')
-fig.colorbar(img, ax=ax, format="%+2.f dB")
+librosa.display.colorbar_db(img)
 
 # %%
 # Changing the analysis parameters
@@ -133,7 +134,7 @@ D_highres = librosa.stft(y, hop_length=256, n_fft=4096)
 img = librosa.display.specshow(D_highres, vscale='dB', hop_length=256, x_axis='time', y_axis='log',
                                ax=ax)
 ax.set(title='Higher time and frequency resolution')
-fig.colorbar(img, ax=ax, format="%+2.f dB")
+librosa.display.colorbar_db(img)
 
 # %%
 # Note that only the parameters which are strictly necessary are supported by
@@ -158,7 +159,7 @@ fig, ax = plt.subplots()
 M = librosa.feature.melspectrogram(y=y, sr=sr)
 img = librosa.display.specshow(M, vscale='dB[power]', y_axis='mel', x_axis='time', ax=ax)
 ax.set(title='Mel spectrogram display')
-fig.colorbar(img, ax=ax, format="%+2.f dB")
+librosa.display.colorbar_db(img)
 
 # %%
 # Constant-Q plots, and other logarithmically scaled frequency representations
@@ -308,7 +309,7 @@ fig.colorbar(img, ax=ax)
 fig, ax = plt.subplots()
 img = librosa.display.specshow(D, vscale='dB', cmap='gray_r', y_axis='log', x_axis='time', ax=ax)
 ax.set(title='Inverted grayscale')
-fig.colorbar(img, ax=ax, format="%+2.f dB")
+librosa.display.colorbar_db(img)
 
 # %%
 # `specshow` uses `matplotlib.pyplot.pcolormesh` to generate the underlying image.
@@ -434,10 +435,10 @@ ax[1].set(xlim=[10, 25])
 
 fig, ax = plt.subplots(nrows=2)
 imgdb = librosa.display.specshow(D, vscale='dB', x_axis='time', y_axis='log', ax=ax[0])
-fig.colorbar(imgdb, ax=ax[0], format="%+2.f dB")
+librosa.display.colorbar_db(imgdb)
 ax[0].set(title='dB scaling with default reference')
 imgdbfs = librosa.display.specshow(D, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[1])
-fig.colorbar(imgdbfs, ax=ax[1], format="%+2.f dB")
+librosa.display.colorbar_db(imgdbfs)
 ax[1].set(title='dBFS scaling with peak reference')
 
 # %%
@@ -452,9 +453,12 @@ ax[1].set(title='dBFS scaling with peak reference')
 # Phase information can also be displayed using `vscale='phase'`.
 # When the input data is complex-valued (like an STFT), this will
 # display the angle of the complex values in radians in the range ±π.
+# Radians are most easily understood as fractions of π or 2π, and the
+# `librosa.display.colorbar_phase` helper will format the colorbar
+# accordingly.
 fig, ax = plt.subplots()
 img_phase = librosa.display.specshow(D, vscale='phase', x_axis='time', y_axis='log', ax=ax)
-fig.colorbar(img_phase, ax=ax, format="%+2.f rad")
+librosa.display.colorbar_phase(img_phase)
 ax.set(title='Phase of the STFT')
 
 # %%
@@ -468,7 +472,7 @@ ax.set(title='Phase of the STFT')
 fig, ax = plt.subplots()
 img_dphase = librosa.display.specshow(D, vscale='dphase',
                                                     x_axis='time', y_axis='log', ax=ax)
-fig.colorbar(img_dphase, ax=ax, format="%+2.f rad")
+librosa.display.colorbar_phase(img_dphase)
 
 # %%
 # Phase displays use a cyclic colormap (`twilight_shifted`) when the data is constrained

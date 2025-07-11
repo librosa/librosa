@@ -1489,7 +1489,7 @@ def semitone_filterbank(
     ...     vmax=3,
     ...     ax=ax
     ...     )
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB", label="Magnitude (dB)")
+    >>> librosa.display.colorbar_db(img)
     >>> ax.set(
     ...     xlim=[200, 600],
     ...     yticks=librosa.midi_to_hz(np.arange(60, 72)),

@@ -64,7 +64,7 @@ idx = slice(*librosa.time_to_frames([10, 15], sr=sr))
 fig, ax = plt.subplots()
 img = librosa.display.specshow(S_full[:, idx], vscale='dBFS',
                          y_axis='log', x_axis='time', sr=sr, ax=ax)
-fig.colorbar(img, ax=ax)
+librosa.display.colorbar_db(img)
 
 ###########################################################
 # The wiggly lines above are due to the vocal component.
@@ -135,7 +135,7 @@ ax[1].label_outer()
 librosa.display.specshow(S_foreground[:, idx], vscale='dBFS',
                          y_axis='log', x_axis='time', sr=sr, ax=ax[2])
 ax[2].set(title='Foreground')
-fig.colorbar(img, ax=ax)
+librosa.display.colorbar_db(img, ax=ax)
 
 
 ###########################################

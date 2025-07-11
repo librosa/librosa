@@ -162,7 +162,7 @@ def decompose(
     >>> ax['D'].sharex(ax['A'])
     >>> ax['D'].sharey(ax['A'])
     >>> ax['D'].label_outer()
-    >>> fig.colorbar(img, ax=list(ax.values()), format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img, ax=list(ax.values()))
     """
     # Do a swapaxes and unroll
     orig_shape = list(S.shape)
@@ -311,7 +311,7 @@ def hpss(
     >>> librosa.display.specshow(P, vscale=f'dB[{ref}]',
     ...                          y_axis='log', x_axis='time', ax=ax[2])
     >>> ax[2].set(title='Percussive power spectrogram')
-    >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
+    >>> librosa.display.colorbar_db(img, ax=ax)
 
     Or with a narrower horizontal filter
 
