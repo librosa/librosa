@@ -2307,9 +2307,9 @@ def __radian_formatter(x, pos):
     num, den = frac.numerator, frac.denominator
 
     if num == 0:
-        return "0"
+        return " 0"
 
-    sign = "-" if num * den < 0 else ""
+    sign = "-" if num * den < 0 else " "
     num_abs = abs(num)
 
     # Build numerator string
@@ -2323,9 +2323,10 @@ def __radian_formatter(x, pos):
 
 def colorbar_phase(
     im: matplotlib.cm.ScalarMappable,
+    *,
     numticks: int = 9,
-    ax: matplotlib.Axes = None,
-    fig: matplotlib.Figure = None,
+    ax: Optional[matplotlib.Axes] = None,
+    fig: Optional[matplotlib.Figure] = None,
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
     """Attach a colorbar to an image representing phase data in radians.
@@ -2401,9 +2402,10 @@ def colorbar_phase(
 
 def colorbar_db(
     im: matplotlib.image.AxesImage,
-    ax: matplotlib.Axes = None,
-    fig: matplotlib.Figure = None,
-    format: str = "%3.0f",
+    *,
+    ax: Optional[matplotlib.Axes] = None,
+    fig: Optional[matplotlib.Figure] = None,
+    format: Union[str, mplticker.Formatter] = "% -3.f",
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
     """Attach a colorbar to an image representing decibel-scaled data.
