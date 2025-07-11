@@ -83,7 +83,7 @@ def test_frame_0stride():
 @pytest.mark.parametrize("ndim", [2, 3, 4, 5])
 def test_frame_highdim(frame_length, hop_length, ndim, rng):
 
-    x = rng.standard_normal(size=([20] * ndim))
+    x = rng.standard_normal(size=tuple([20] * ndim))
     xf = librosa.util.frame(x, frame_length=frame_length, hop_length=hop_length)
     for i in range(x.shape[0]):
         xf0 = librosa.util.frame(x[i], frame_length=frame_length, hop_length=hop_length)
@@ -200,7 +200,7 @@ def test_fix_frames_fail_negative(frames, x_min, x_max, pad):
     [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 1), (3, 2), (3, -1)],
 )
 def test_normalize(ndims, norm, axis, rng):
-    X = rng.standard_normal(size=([4] * ndims))
+    X = rng.standard_normal(size=tuple([4] * ndims))
     X_norm = librosa.util.normalize(X, norm=norm, axis=axis)
 
     # Shape and dtype checks
@@ -317,7 +317,7 @@ def test_axis_sort_badndim(ndim, axis, index, value):
 @pytest.mark.parametrize("index", [False, True])
 @pytest.mark.parametrize("value", [None, np.min, np.mean, np.max])
 def test_axis_sort(ndim, axis, index, value, rng):
-    data = rng.standard_normal(size=([10] * ndim))
+    data = rng.standard_normal(size=tuple([10] * ndim))
     if index:
         Xsorted, idx = librosa.util.axis_sort(data, axis=axis, index=index, value=value)
 
@@ -441,7 +441,7 @@ def test_match_events_onesided_fail(events_from, events_to, left, right):
 @pytest.mark.parametrize("ndim, axis", [(n, m) for n in range(1, 5) for m in range(n)])
 def test_localmax(ndim, axis, rng):
 
-    data = rng.standard_normal(size=([7] * ndim))
+    data = rng.standard_normal(size=tuple([7] * ndim))
     lm = librosa.util.localmax(data, axis=axis)
 
     for hits in np.argwhere(lm):
@@ -464,7 +464,7 @@ def test_localmax(ndim, axis, rng):
 @pytest.mark.parametrize("ndim, axis", [(n, m) for n in range(1, 5) for m in range(n)])
 def test_localmin(ndim, axis, rng):
 
-    data = rng.standard_normal(size=([7] * ndim))
+    data = rng.standard_normal(size=tuple([7] * ndim))
     lm = librosa.util.localmin(data, axis=axis)
 
     for hits in np.argwhere(lm):
@@ -617,7 +617,7 @@ def test_sparsify_rows_dtype(dtype, ref_dtype):
 @pytest.mark.parametrize("d", [1, 5, 10, 100])
 @pytest.mark.parametrize("q", [0.0, 0.01, 0.25, 0.5, 0.99])
 def test_sparsify_rows(ndim, d, q, rng):
-    X = rng.standard_normal(size=([d] * ndim)) ** 4
+    X = rng.standard_normal(size=tuple([d] * ndim)) ** 4
 
     X = np.asarray(X)
 
