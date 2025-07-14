@@ -17,6 +17,7 @@ import librosa
 import sklearn.decomposition
 
 import pytest
+from typing import Union
 
 
 def test_default_decompose():
