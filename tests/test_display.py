@@ -69,7 +69,7 @@ def C(y, sr):
 
 @pytest.fixture(scope="module")
 def S_signed(S):
-    return np.round(np.abs(S) - np.median(np.abs(S)), decimals=4)
+    return np.round(np.abs(S) - np.mean(np.abs(S)), decimals=4)
 
 
 @pytest.fixture(scope="module")
