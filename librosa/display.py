@@ -823,6 +823,7 @@ def cmap(
     cmap_seq: str = "magma",
     cmap_bool: str = "gray_r",
     cmap_div: str = "coolwarm",
+    div_thresh: float = 0.0,
 ) -> Colormap:
     """Get a default colormap from the given data.
 
@@ -846,7 +847,10 @@ def cmap(
         The boolean colormap name
     cmap_div : str
         The diverging colormap name
-
+    div_thresh : float
+        The threshold for determining whether to use a diverging colormap.
+        If the data has values both above and below this threshold, then
+        a diverging colormap is used.
     Returns
     -------
     cmap : matplotlib.colors.Colormap
@@ -870,7 +874,7 @@ def cmap(
 
     min_val, max_val = np.percentile(data, [min_p, max_p])
 
-    if min_val >= 0 or max_val <= 0:
+    if min_val >= div_thresh or max_val <= div_thresh:
         return mcm[cmap_seq]
 
     return mcm[cmap_div]
@@ -964,6 +968,10 @@ def specshow(
     intervals: Optional[Union[str, np.ndarray]] = None,
     unison: Optional[str] = None,
     top_db: Optional[float] = 80.0,
+    cmap_seq: str = "magma",
+    cmap_bool: str = "gray_r",
+    cmap_div: str = "coolwarm",
+    div_thresh: float = 0.0,
     ax: Optional[mplaxes.Axes] = None,
     **kwargs: Any,
 ) -> QuadMesh:
@@ -1188,6 +1196,23 @@ def specshow(
         If using a decibel scale, how many dB below the peak to allow
         before clipping.
 
+    cmap_seq : str
+        The name of the sequential colormap to use for decibel scales.
+        Default is 'magma'.
+
+    cmap_bool : str
+        The name of the colormap to use for boolean data.
+        Default is 'gray_r'.
+
+    cmap_div : str
+        The name of the diverging colormap to use for diverging data.
+        Default is 'coolwarm'.
+
+    div_thresh : float
+        The threshold for determining whether to use a diverging colormap.
+        If the data has values both above and below this threshold, then
+        a diverging colormap is used.
+
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
@@ -1205,6 +1230,9 @@ def specshow(
     The ``cmap`` option if not provided via `kwargs`, is inferred from data automatically.
     If `vscale` is specified, the colormap will be sequential for decibels, and cyclic for phase
     and phase differences.
+
+    If a diverging colormap is inferred, the color scale is normalized so that the center
+    value (``div_thresh=0`` by default) is at the center of the colormap.
 
     To use matplotlib's default colormap, explicitly set ``cmap=None``.
 
@@ -1266,7 +1294,12 @@ def specshow(
 
     # Parse the value scale into a normalizer and possibly a colormap
     data, norm_cmap = __scale_data(
-        data, vscale=vscale, top_db=top_db, x_coords=x_coords, y_coords=y_coords
+        data,
+        vscale=vscale,
+        top_db=top_db,
+        x_coords=x_coords,
+        y_coords=y_coords,
+        cmap_seq=cmap_seq,
     )
 
     if np.issubdtype(data.dtype, np.complexfloating):
@@ -1278,7 +1311,21 @@ def specshow(
 
     if norm_cmap is not None:
         kwargs.setdefault("cmap", norm_cmap)
-    kwargs.setdefault("cmap", cmap(data))
+    elif "cmap" not in kwargs:
+        # Neither vscale nor the user gave us a cmap, so we have to infer it
+        kwargs["cmap"] = cmap(
+            data,
+            cmap_seq=cmap_seq,
+            cmap_bool=cmap_bool,
+            cmap_div=cmap_div,
+            div_thresh=div_thresh,
+        )
+        if kwargs["cmap"] == mcm[cmap_div]:
+            # If we have an inferred diverging colormap,
+            # use a twoslope normalizer around the divergence threshold.
+            # But only if the user didn't also set their own normalizer
+            kwargs.setdefault("norm", colors.TwoSlopeNorm(div_thresh))
+
     kwargs.setdefault("rasterized", True)
     kwargs.setdefault("edgecolors", "None")
     kwargs.setdefault("shading", "auto")
@@ -1909,7 +1956,7 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
     return axes_compatible_and_not_none and axes_same_lim
 
 
-def __scale_data(data, *, vscale, top_db, x_coords, y_coords):
+def __scale_data(data, *, vscale, top_db, x_coords, y_coords, cmap_seq):
     """Parse the vscale parameter and return the transformed data and colormap
     if necessary
 
@@ -1926,6 +1973,8 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords):
     x_coords, y_coords : np.ndarray
         Time and frequency coordinates for the data.
         These should be constructed using the `__mesh_coords` function.
+    cmap_seq : str
+        Default sequential colormap to use for dB scales.
 
     Returns
     -------
@@ -1983,7 +2032,7 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords):
             data = core.amplitude_to_db(np.abs(data), top_db=top_db, ref=ref)
 
         # Use the default colormap for sequential data
-        return data, cmap(np.array(1.0))
+        return data, cmap_seq
 
 
 VSCALE_PATTERN = re.compile(
