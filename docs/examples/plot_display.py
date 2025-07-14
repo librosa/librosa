@@ -298,13 +298,17 @@ fig.colorbar(img, ax=ax)
 #   - If the data is (mostly) positive or (mostly) negative, use a sequential
 #     colormap
 #   - If the data contains both positive and negative values, use a diverging
-#     colormap.
+#     colormap.  Colors are so that the center value (default `div_thresh=0`) 
+#     lies at the center of the colormap.
 #
 # The default sequential colormap is 'magma', which is perceptually uniform and
 # converts gracefully to grayscale.
 #
-# You can always override this automatic colormap selection by setting an
-# explicit `cmap`:
+# The default automatically selected colormaps (`gray_r`, `magma`, and `coolwarm`) 
+# can be controlled by the `cmap_bool`, `cmap_seq`, and `cmap_div` parameters, respectively.
+#
+# You can always override this automatic colormap selection by setting a
+# colormap explicitly through the `cmap` parameter, which will bypass all automatic inference:
 
 fig, ax = plt.subplots()
 img = librosa.display.specshow(D, vscale='dB', cmap='gray_r', y_axis='log', x_axis='time', ax=ax)
@@ -313,14 +317,13 @@ librosa.display.colorbar_db(img)
 
 # %%
 # `specshow` uses `matplotlib.pyplot.pcolormesh` to generate the underlying image.
-# Any parameters to `pcolormesh` can be passed through from `specshow`, for example,
-# to set explicit bounds on the minimum and maximum ranges for colors.
-# This can be helpful when centering divergent colormaps around 0 (or some other
-# reference point).
+# Any parameters to `pcolormesh` can be passed through from `specshow`.
+# For example, you can set the `edgecolor` parameter to draw a grid around each
+# cell in the image.
 
 max_var = np.max(np.abs(ccov))
 fig, ax = plt.subplots()
-img = librosa.display.specshow(ccov, vmin=-max_var, vmax=max_var,
+img = librosa.display.specshow(ccov, edgecolor='w',
                                y_axis='chroma', x_axis='chroma',
                                key='Eb:maj', ax=ax)
 ax.set(title='Chroma covariance')
