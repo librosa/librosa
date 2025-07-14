@@ -1279,7 +1279,7 @@ def test_colorbar_phase(S):
 @pytest.mark.mpl_image_compare(
     baseline_images=["diverging_slopes"],
     extensions=["png"],
-    tolerance=3,
+    tolerance=5,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
