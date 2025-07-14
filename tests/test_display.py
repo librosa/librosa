@@ -1275,3 +1275,75 @@ def test_colorbar_phase(S):
     librosa.display.colorbar_phase(i2, ax=ax[1], label="Δ radians")
     return fig
 
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["diverging_slopes"],
+    extensions=["png"],
+    tolerance=3,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_diverging_scales(S_signed):
+
+    # Cases to test:
+    # 0. Diverging scale with default cmap_div (auto norm)
+    # 1. Diverging scale with explicit cmap override (no norm)
+    # 2. Diverging scale with specified cmap_div (auto norm)
+    # 3. Inferred diverging scale with default cmap_div and vmin/vmax (auto norm, truncated)
+    # 4. Explicit diverging scale with vmin/vmax (no norm, truncated)
+    # 5. 
+    fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(12, 12), sharex=True, sharey=True)
+
+    # Diverging scale with default cmap_div (auto norm)
+    i1 = librosa.display.specshow(
+        S_signed, y_axis="log", x_axis="time", ax=ax[0, 0]
+    )
+    ax[0, 0].set_title("Default cmap_div (auto norm)")
+    fig.colorbar(i1, ax=ax[0, 0])
+
+    # Diverging scale with explicit cmap override (no norm)
+    i2 = librosa.display.specshow(
+        S_signed,
+        y_axis="log",
+        x_axis="time",
+        ax=ax[0, 1],
+        cmap='PuOr_r',
+    )
+    ax[0, 1].set_title("Explicit cmap override (no norm)")
+    fig.colorbar(i2, ax=ax[0, 1])
+
+    # Diverging scale with specified cmap_div (auto norm)
+    i3 = librosa.display.specshow(
+        S_signed, y_axis="log", x_axis="time", ax=ax[1, 0], cmap_div='Spectral_r'
+    )
+    ax[1, 0].set_title("Specified cmap_div (auto norm)")
+    fig.colorbar(i3, ax=ax[1, 0])
+
+    # Inferred diverging scale with default cmap_div and vmin/vmax (auto norm, truncated)
+    vmin = -10
+    vmax = 30
+    i4 = librosa.display.specshow(
+        S_signed, y_axis="log", x_axis="time", ax=ax[2, 0], vmin=vmin, vmax=vmax
+    )
+    ax[2, 0].set_title("Inferred cmap_div with vmin/vmax (auto norm, truncated)")
+    fig.colorbar(i4, ax=ax[2, 0])
+
+    # Explicit diverging scale with vmin/vmax (no norm, truncated)
+    i5 = librosa.display.specshow(
+        S_signed,
+        y_axis="log",
+        x_axis="time",
+        ax=ax[1, 1],
+        vmin=vmin,
+        vmax=vmax,
+        cmap='Spectral_r',
+    )
+    ax[1, 1].set_title("Explicit cmap_div with vmin/vmax (no norm, truncated)")
+    fig.colorbar(i5, ax=ax[1, 1])
+
+    # Hide the last axis
+    ax[2, 1].axis('off')
+
+    for axi in ax.flat:
+        axi.label_outer()
+    return fig
