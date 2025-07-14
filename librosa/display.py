@@ -851,6 +851,7 @@ def cmap(
         The threshold for determining whether to use a diverging colormap.
         If the data has values both above and below this threshold, then
         a diverging colormap is used.
+
     Returns
     -------
     cmap : matplotlib.colors.Colormap
@@ -1324,7 +1325,15 @@ def specshow(
             # If we have an inferred diverging colormap,
             # use a twoslope normalizer around the divergence threshold.
             # But only if the user didn't also set their own normalizer
-            kwargs.setdefault("norm", colors.TwoSlopeNorm(div_thresh))
+            # If the user gave vmin/vmax values, move them from kwargs to the norm
+            kwargs.setdefault(
+                "norm",
+                colors.TwoSlopeNorm(
+                    div_thresh,
+                    vmin=kwargs.pop("vmin", None),
+                    vmax=kwargs.pop("vmax", None),
+                ),
+            )
 
     kwargs.setdefault("rasterized", True)
     kwargs.setdefault("edgecolors", "None")
