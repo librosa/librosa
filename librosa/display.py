@@ -1329,7 +1329,7 @@ def specshow(
             kwargs.setdefault(
                 "norm",
                 colors.TwoSlopeNorm(
-                    div_thresh,
+                    vcenter=div_thresh,
                     vmin=kwargs.pop("vmin", None),
                     vmax=kwargs.pop("vmax", None),
                 ),

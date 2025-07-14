@@ -1291,7 +1291,7 @@ def test_diverging_scales(S_signed):
     # 2. Diverging scale with specified cmap_div (auto norm)
     # 3. Inferred diverging scale with default cmap_div and vmin/vmax (auto norm, truncated)
     # 4. Explicit diverging scale with vmin/vmax (no norm, truncated)
-    # 5. 
+    
     fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(12, 12), sharex=True, sharey=True)
 
     # Diverging scale with default cmap_div (auto norm)
