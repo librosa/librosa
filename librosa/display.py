@@ -1330,7 +1330,12 @@ def specshow(
             cmap_div=cmap_div,
             div_thresh=div_thresh,
         )
-        if kwargs["cmap"] == mcm[cmap_div]:
+        if isinstance(cmap_div, colors.Colormap):
+            is_diverging_cmap = kwargs["cmap"] == cmap_div
+        else:
+            is_diverging_cmap = kwargs["cmap"] == mcm.get(cmap_div, None)
+
+        if is_diverging_cmap:
             # If we have an inferred diverging colormap,
             # use a twoslope normalizer around the divergence threshold.
             # But only if the user didn't also set their own normalizer
