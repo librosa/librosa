@@ -1475,9 +1475,10 @@ def viterbi_discriminative(
 
     >>> # And plot the results
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(probs, x_axis='time', cmap='gray', ax=ax)
+    >>> img = librosa.display.specshow(probs, x_axis='time', ax=ax, div_thresh=1./25)
+    >>> fig.colorbar(img, ax=ax, label='Frame-wise class probability')
     >>> times = librosa.times_like(chords_vit)
-    >>> ax.scatter(times, chords_ind + 0.25, color='lime', alpha=0.5, marker='+',
+    >>> ax.scatter(times, chords_ind + 0.25, color='k', alpha=0.5, marker='x',
     ...            s=15, label='Independent')
     >>> ax.scatter(times, chords_vit - 0.25, color='deeppink', alpha=0.5, marker='o',
     ...            s=15, label='Viterbi')
