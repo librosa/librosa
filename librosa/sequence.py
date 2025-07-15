@@ -11,6 +11,7 @@ Sequence alignment
 
     dtw
     rqa
+    path_to_steps
 
 Viterbi decoding
 ----------------
@@ -34,6 +35,7 @@ Transition matrices
 from __future__ import annotations
 
 import numpy as np
+import scipy.interpolate
 from scipy.spatial.distance import cdist
 from numba import jit
 from .util import pad_center, fill_off_diagonal, is_positive_int, tiny, expand_to
@@ -1097,6 +1099,83 @@ def __rqa_backtrack(score, pointers):
 
     return np.asarray(path, dtype=np.uint)
 
+
+def path_to_steps(path: np.ndarray) -> np.ndarray:
+    """Convert a DTW warping path to an array of fractional steps.
+
+    This function primarily exists as a helper to construct non-linear
+    time grids for aligning two signals via phase vocoding, as illustrated
+    in the example below.
+
+    Parameters
+    ----------
+    path : np.ndarray [shape=(k, 2)]
+        A path of index pairs, e.g., from `dtw`.
+        ``path[i] = [n, m]`` indicates that step ``n`` of the first
+        signal aligns to step ``m`` of the second signal.
+
+    Returns
+    -------
+    steps : np.ndarray [shape=(k,)]
+        An array of fractional steps, where ``steps[i]`` is the fractional
+        frame index of the first signal to
+
+    See Also
+    --------
+    dtw
+    librosa.phase_vocoder
+
+    Examples
+    --------
+    This example generates a sine sweep over the same frequency range but at different speeds.
+    It then uses dynamic time warping to align the chroma features of the two signals.
+    Finally, the warping path is converted to a time grid that maps the second signal's frames
+    onto the first signal.  This can be used for variable-rate phase vocoding to align the two signals.
+
+    >>> # We'll plot these below
+    >>> import matplotlib.pyplot as plt
+    >>> # Generate the sweeps at different rates
+    >>> y1 = librosa.chirp(fmin=220, fmax=1760, duration=1.0, sr=22050)
+    >>> y2 = librosa.chirp(fmin=220, fmax=1760, duration=2.0, sr=22050)
+    >>> # Compute the chroma features
+    >>> C1 = librosa.feature.chroma_cqt(y=y1, sr=22050)
+    >>> C2 = librosa.feature.chroma_cqt(y=y2, sr=22050)
+    >>> # Compute the DTW path
+    >>> cost, path = librosa.sequence.dtw(C1, C2, subseq=False)
+    >>> path
+    array([[43, 86],
+           [42, 85],
+           [42, 84],
+           ...,
+           [ 0,  2],
+           [ 0,  1],
+           [ 0,  0]], shape=(87, 2))
+    >>> # Convert the path to a fractional step grid
+    >>> steps = librosa.sequence.path_to_steps(path)
+    >>> steps
+    array([ 0.,  0.,  0., ..., 42., 42., 43.], shape=(87,))
+    >>> # Compute STFT for the first signal
+    >>> D1 = librosa.stft(y1)
+    >>> # Phase vocode it to match the second signal using the time grid
+    >>> D1_vocoded = librosa.phase_vocoder(D1, t_out=steps)
+    >>> # Map back into the time domain.  Match duration of y2 exactly
+    >>> y1_vocoded = librosa.istft(D1_vocoded, length=len(y2))
+    
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> librosa.display.specshow(C1, x_axis='time', y_axis='chroma', ax=ax[0])
+    >>> ax[0].set(title='Chroma 1: fast')
+    >>> librosa.display.specshow(C2, x_axis='time', y_axis='chroma', ax=ax[1])
+    >>> ax[1].set(title='Chroma 2: slow')
+    >>> C3 = librosa.feature.chroma_cqt(y=y1_vocoded, sr=22050)
+    >>> librosa.display.specshow(C3, x_axis='time', y_axis='chroma', ax=ax[2])
+    >>> ax[2].set(title='Chroma 1 vocoded to match Chroma 2')
+    """
+
+    time_interp = scipy.interpolate.interp1d(path[:, 1], path[:, 0], kind='linear')
+    frames_in = np.arange(path[:, 1].min(), path[:, 1].max() + 1)
+    times = time_interp(frames_in)
+
+    return times
 
 @jit(nopython=True, cache=True)  # type: ignore
 def _viterbi(
