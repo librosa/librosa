@@ -35,7 +35,7 @@ Miscellaneous
 .. autosummary::
     :toctree: generated/
 
-    cmap
+    infer_cmap
     AdaptiveWaveplot
 
 """
