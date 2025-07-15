@@ -472,6 +472,29 @@ def test_multi_frequency_weighting(kinds):
     )
 
 
+def test_frequency_weighting_underflow_warning():
+
+    # Ensure that four warnings are issued for the following call
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        librosa.multi_frequency_weighting(
+            np.arange(3), kinds="ABCD", min_db=None
+        )
+        assert len(w) == 4
+        # Ensure that all warnings are about non-finite values
+        for warn in w:
+            assert issubclass(warn.category, UserWarning)
+            assert "non-finite" in str(warn.message)
+
+    # Now ensure that no warnings are issued when min_db is set
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        librosa.multi_frequency_weighting(
+            np.arange(3), kinds="ABCD", min_db=-100
+        )
+        assert len(w) == 0, "No warnings should be issued with min_db set"
+
+
 def test_samples_like():
 
     X = np.ones((3, 4, 5))

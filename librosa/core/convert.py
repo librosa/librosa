@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 """Unit conversion utilities"""
 from __future__ import annotations
+import warnings
 import numpy as np
 from . import notation
 from ..util.exceptions import ParameterError
@@ -1820,16 +1821,27 @@ def A_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997, 107.65265, 737.86223]) ** 2.0
-    weights: np.ndarray = 2.0 + 20.0 * (
-        np.log10(const[0])
-        + 2 * np.log10(f_sq)
-        - np.log10(f_sq + const[0])
-        - np.log10(f_sq + const[1])
-        - 0.5 * np.log10(f_sq + const[2])
-        - 0.5 * np.log10(f_sq + const[3])
-    )
+    with np.errstate(divide="ignore"):
+        # Temporarily ignore div-by-zero warnings since min_db might clean
+        # them up later
+        weights: np.ndarray = 2.0 + 20.0 * (
+            np.log10(const[0])
+            + 2 * np.log10(f_sq)
+            - np.log10(f_sq + const[0])
+            - np.log10(f_sq + const[1])
+            - 0.5 * np.log10(f_sq + const[2])
+            - 0.5 * np.log10(f_sq + const[3])
+        )
 
     if min_db is None:
+        if not np.all(np.isfinite(weights)):
+            # If we have any non-finite values, then we should return
+            # an array of NaNs
+            warnings.warn(
+                "A-weighting returned non-finite values. "
+                "This is likely due to low (~0 Hz) frequencies.",
+                stacklevel=2,
+            )
         return weights
     else:
         return np.maximum(min_db, weights)
@@ -1899,15 +1911,29 @@ def B_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997, 158.48932]) ** 2.0
-    weights: np.ndarray = 0.17 + 20.0 * (
-        np.log10(const[0])
-        + 1.5 * np.log10(f_sq)
-        - np.log10(f_sq + const[0])
-        - np.log10(f_sq + const[1])
-        - 0.5 * np.log10(f_sq + const[2])
-    )
+    with np.errstate(divide="ignore"):
+        # Temporarily ignore div-by-zero warnings since min_db might clean
+        # them up later
+        weights: np.ndarray = 0.17 + 20.0 * (
+            np.log10(const[0])
+            + 1.5 * np.log10(f_sq)
+            - np.log10(f_sq + const[0])
+            - np.log10(f_sq + const[1])
+            - 0.5 * np.log10(f_sq + const[2])
+        )
 
-    return weights if min_db is None else np.maximum(min_db, weights)
+    if min_db is None:
+        if not np.all(np.isfinite(weights)):
+            # If we have any non-finite values, then we should return
+            # an array of NaNs
+            warnings.warn(
+                "B-weighting returned non-finite values. "
+                "This is likely due to low (~0 Hz) frequencies.",
+                stacklevel=2,
+            )
+        return weights
+    else:
+        return np.maximum(min_db, weights)
 
 
 @overload
@@ -1973,14 +1999,26 @@ def C_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997]) ** 2.0
-    weights: np.ndarray = 0.062 + 20.0 * (
-        np.log10(const[0])
-        + np.log10(f_sq)
-        - np.log10(f_sq + const[0])
-        - np.log10(f_sq + const[1])
-    )
+    with np.errstate(divide="ignore"):
+        weights: np.ndarray = 0.062 + 20.0 * (
+            np.log10(const[0])
+            + np.log10(f_sq)
+            - np.log10(f_sq + const[0])
+            - np.log10(f_sq + const[1])
+        )
 
-    return weights if min_db is None else np.maximum(min_db, weights)
+    if min_db is None:
+        if not np.all(np.isfinite(weights)):
+            # If we have any non-finite values, then we should return
+            # an array of NaNs
+            warnings.warn(
+                "C-weighting returned non-finite values. "
+                "This is likely due to low (~0 Hz) frequencies.",
+                stacklevel=2,
+            )
+        return weights
+    else:
+        return np.maximum(min_db, weights)
 
 
 @overload
@@ -2046,19 +2084,28 @@ def D_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([8.3046305e-3, 1018.7, 1039.6, 3136.5, 3424, 282.7, 1160]) ** 2.0
-    weights: np.ndarray = 20.0 * (
-        0.5 * np.log10(f_sq)
-        - np.log10(const[0])
-        + 0.5
-        * (
-            +np.log10((const[1] - f_sq) ** 2 + const[2] * f_sq)
-            - np.log10((const[3] - f_sq) ** 2 + const[4] * f_sq)
-            - np.log10(const[5] + f_sq)
-            - np.log10(const[6] + f_sq)
+    with np.errstate(divide="ignore"):
+        weights: np.ndarray = 20.0 * (
+            0.5 * np.log10(f_sq)
+            - np.log10(const[0])
+            + 0.5
+            * (
+                +np.log10((const[1] - f_sq) ** 2 + const[2] * f_sq)
+                - np.log10((const[3] - f_sq) ** 2 + const[4] * f_sq)
+                - np.log10(const[5] + f_sq)
+                - np.log10(const[6] + f_sq)
+            )
         )
-    )
 
     if min_db is None:
+        if not np.all(np.isfinite(weights)):
+            # If we have any non-finite values, then we should return
+            # an array of NaNs
+            warnings.warn(
+                "D-weighting returned non-finite values. "
+                "This is likely due to low (~0 Hz) frequencies.",
+                stacklevel=2,
+            )
         return weights
     else:
         return np.maximum(min_db, weights)
