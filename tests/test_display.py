@@ -1336,7 +1336,7 @@ def test_diverging_scales(S_signed):
         ax=ax[1, 1],
         vmin=vmin,
         vmax=vmax,
-        cmap='Spectral_r',
+        cmap=matplotlib.colormaps['Spectral_r'],
     )
     ax[1, 1].set_title("Explicit cmap_div with vmin/vmax (no norm, truncated)")
     fig.colorbar(i5, ax=ax[1, 1])
