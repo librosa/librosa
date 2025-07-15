@@ -677,10 +677,10 @@ def test_unknown_axis(S_abs, axis: str):
         np.arange(2, dtype=bool),
     ],
 )  # binary
-def test_cmap_robust(data):
+def test_infer_cmap_robust(data):
 
-    cmap1 = librosa.display.cmap(data, robust=False)
-    cmap2 = librosa.display.cmap(data, robust=True)
+    cmap1 = librosa.display.infer_cmap(data, robust=False)
+    cmap2 = librosa.display.infer_cmap(data, robust=True)
 
     assert type(cmap1) is type(cmap2)
 

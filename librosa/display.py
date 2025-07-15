@@ -54,6 +54,7 @@ import matplotlib.colors as colors
 
 from . import core
 from . import util
+from .util.decorators import moved
 from .util.deprecation import rename_kw, Deprecated
 from .util.exceptions import ParameterError
 from typing import (
@@ -816,7 +817,7 @@ class AdaptiveWaveplot:
         ax.figure.canvas.draw_idle()
 
 
-def cmap(
+def infer_cmap(
     data: np.ndarray,
     *,
     robust: bool = True,
@@ -888,6 +889,12 @@ def cmap(
         return cmap_seq
 
     return cmap_div
+
+
+# Deprecation rename of cmap -> infer_cmap for 1.0
+cmap = moved(moved_from="librosa.display.cmap", version="1.0", version_removed="1.1")(
+    infer_cmap
+)
 
 
 def __envelope(x, hop):
@@ -1255,7 +1262,7 @@ def specshow(
     --------
     colorbar_db
     colorbar_phase
-    cmap : Automatic colormap detection
+    infer_cmap : Automatic colormap detection
     matplotlib.pyplot.pcolormesh
 
     Examples
@@ -1323,7 +1330,7 @@ def specshow(
         kwargs.setdefault("cmap", norm_cmap)
     elif "cmap" not in kwargs:
         # Neither vscale nor the user gave us a cmap, so we have to infer it
-        kwargs["cmap"] = cmap(
+        kwargs["cmap"] = infer_cmap(
             data,
             cmap_seq=cmap_seq,
             cmap_bool=cmap_bool,

@@ -292,7 +292,7 @@ fig.colorbar(img, ax=ax)
 # ----------
 # You may have noticed that the color mappings for the images above
 # were selected automatically by `specshow`.
-# This is done by `librosa.display.cmap` according to the following heuristic:
+# This is done by `librosa.display.infer_cmap` according to the following heuristic:
 #
 #   - If the data is boolean, use black-and-white
 #   - If the data is (mostly) positive or (mostly) negative, use a sequential
