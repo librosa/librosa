@@ -863,13 +863,13 @@ def cmap(
     """
     data = np.atleast_1d(data)
 
-    if not isinstance(cmap_seq, Colormap):
+    if not isinstance(cmap_seq, colors.Colormap):
         cmap_seq = mcm[cmap_seq]
 
-    if not isinstance(cmap_bool, Colormap):
+    if not isinstance(cmap_bool, colors.Colormap):
         cmap_bool = mcm[cmap_bool]
 
-    if not isinstance(cmap_div, Colormap):
+    if not isinstance(cmap_div, colors.Colormap):
         cmap_div = mcm[cmap_div]
 
     if data.dtype == "bool":
