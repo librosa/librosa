@@ -820,9 +820,9 @@ def cmap(
     data: np.ndarray,
     *,
     robust: bool = True,
-    cmap_seq: str = "magma",
-    cmap_bool: str = "gray_r",
-    cmap_div: str = "coolwarm",
+    cmap_seq: Union[str, Colormap] = "magma",
+    cmap_bool: Union[str, Colormap] = "gray_r",
+    cmap_div: Union[str, Colormap] = "coolwarm",
     div_thresh: float = 0.0,
 ) -> Colormap:
     """Get a default colormap from the given data.
@@ -841,12 +841,12 @@ def cmap(
     robust : bool
         If True, discard the top and bottom 2% of data when calculating
         range.
-    cmap_seq : str
-        The sequential colormap name
-    cmap_bool : str
-        The boolean colormap name
-    cmap_div : str
-        The diverging colormap name
+    cmap_seq : str or matplotlib.colors.Colormap
+        The sequential colormap
+    cmap_bool : str or matplotlib.colors.Colormap
+        The boolean colormap
+    cmap_div : str or matplotlib.colors.Colormap
+        The diverging colormap
     div_thresh : float
         The threshold for determining whether to use a diverging colormap.
         If the data has values both above and below this threshold, then
@@ -863,8 +863,17 @@ def cmap(
     """
     data = np.atleast_1d(data)
 
+    if not isinstance(cmap_seq, Colormap):
+        cmap_seq = mcm[cmap_seq]
+
+    if not isinstance(cmap_bool, Colormap):
+        cmap_bool = mcm[cmap_bool]
+
+    if not isinstance(cmap_div, Colormap):
+        cmap_div = mcm[cmap_div]
+
     if data.dtype == "bool":
-        return mcm[cmap_bool]
+        return cmap_bool
 
     data = data[np.isfinite(data)]
 
@@ -876,9 +885,9 @@ def cmap(
     min_val, max_val = np.percentile(data, [min_p, max_p])
 
     if min_val >= div_thresh or max_val <= div_thresh:
-        return mcm[cmap_seq]
+        return cmap_seq
 
-    return mcm[cmap_div]
+    return cmap_div
 
 
 def __envelope(x, hop):
@@ -969,9 +978,9 @@ def specshow(
     intervals: Optional[Union[str, np.ndarray]] = None,
     unison: Optional[str] = None,
     top_db: Optional[float] = 80.0,
-    cmap_seq: str = "magma",
-    cmap_bool: str = "gray_r",
-    cmap_div: str = "coolwarm",
+    cmap_seq: Union[str, Colormap] = "magma",
+    cmap_bool: Union[str, Colormap] = "gray_r",
+    cmap_div: Union[str, Colormap] = "coolwarm",
     div_thresh: float = 0.0,
     ax: Optional[mplaxes.Axes] = None,
     **kwargs: Any,
@@ -1197,15 +1206,15 @@ def specshow(
         If using a decibel scale, how many dB below the peak to allow
         before clipping.
 
-    cmap_seq : str
+    cmap_seq : str or matplotlib.colors.Colormap
         The name of the sequential colormap to use for decibel scales.
         Default is 'magma'.
 
-    cmap_bool : str
+    cmap_bool : str or matplotlib.colors.Colormap
         The name of the colormap to use for boolean data.
         Default is 'gray_r'.
 
-    cmap_div : str
+    cmap_div : str or matplotlib.colors.Colormap
         The name of the diverging colormap to use for diverging data.
         Default is 'coolwarm'.
 
@@ -1982,7 +1991,7 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords, cmap_seq):
     x_coords, y_coords : np.ndarray
         Time and frequency coordinates for the data.
         These should be constructed using the `__mesh_coords` function.
-    cmap_seq : str
+    cmap_seq : str or matplotlib.colors.Colormap
         Default sequential colormap to use for dB scales.
 
     Returns
