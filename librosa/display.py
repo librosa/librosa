@@ -873,7 +873,7 @@ def infer_cmap(
     if not isinstance(cmap_div, colors.Colormap):
         cmap_div = mcm[cmap_div]
 
-    if data.dtype == "bool":
+    if data.dtype.kind == 'b':
         return cmap_bool
 
     data = data[np.isfinite(data)]
