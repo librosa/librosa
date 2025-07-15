@@ -1195,7 +1195,10 @@ def test_specshow_vscale(S):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_vscale_phase"], extensions=["png"], tolerance=3, style=STYLE
+    baseline_images=["specshow_vscale_phase"],
+    extensions=["png"],
+    tolerance=3,
+    style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_vscale_phase():
@@ -1205,27 +1208,31 @@ def test_specshow_vscale_phase():
     S = librosa.stft(y, n_fft=2048, hop_length=512)
     alpha = np.abs(S)
     alpha /= np.max(alpha)  # normalize to [0, 1]
-    fig, ax = plt.subplots(nrows=1, ncols=3, sharex=False, sharey=False, gridspec_kw={"hspace": 0.8}, figsize=(12, 4))
+    fig, ax = plt.subplots(
+        nrows=1,
+        ncols=3,
+        sharex=False,
+        sharey=False,
+        gridspec_kw={"hspace": 0.8},
+        figsize=(12, 4),
+    )
 
     # phase, phase difference, and phase difference transpose
     # we use alpha channels here to avoid test failures for unstable phase estimates in quiet regions
     i7 = librosa.display.specshow(
-        S, vscale="phase", y_axis="log", x_axis="time", ax=ax[0],
-        alpha=alpha
+        S, vscale="phase", y_axis="log", x_axis="time", ax=ax[0], alpha=alpha
     )
     fig.colorbar(i7, ax=ax[0])
     ax[0].set_title("phase")
 
     i8 = librosa.display.specshow(
-        S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1],
-        alpha=alpha
+        S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1], alpha=alpha
     )
     fig.colorbar(i8, ax=ax[1])
     ax[1].set_title("dphase")
 
     i9 = librosa.display.specshow(
-        S.T, vscale="dphase_t", x_axis="log", y_axis="time", ax=ax[2],
-        alpha=alpha.T
+        S.T, vscale="dphase_t", x_axis="log", y_axis="time", ax=ax[2], alpha=alpha.T
     )
     fig.colorbar(i9, ax=ax[2])
     ax[2].set_title("dphase_t")
@@ -1245,11 +1252,11 @@ def test_specshow_vscale_phase():
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_colorbar_db(S):
     fig, ax = plt.subplots(nrows=2)
-    i1 = librosa.display.specshow(S, vscale="dB", y_axis="log", x_axis="time",
-                                  ax=ax[0])
+    i1 = librosa.display.specshow(S, vscale="dB", y_axis="log", x_axis="time", ax=ax[0])
     librosa.display.colorbar_db(i1, ax=ax[0])
-    i2 = librosa.display.specshow(S, vscale="dBFS", y_axis="log", x_axis="time",
-                                  ax=ax[1])
+    i2 = librosa.display.specshow(
+        S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[1]
+    )
     librosa.display.colorbar_db(i2, ax=ax[1], label="dBFS")
     return fig
 
@@ -1265,13 +1272,13 @@ def test_colorbar_phase(S):
     alpha = np.abs(S)
     alpha /= np.max(alpha)
     fig, ax = plt.subplots(nrows=2)
-    i1 = librosa.display.specshow(S, vscale="phase", y_axis="log", x_axis="time",
-                                  alpha=alpha,
-                                  ax=ax[0])
+    i1 = librosa.display.specshow(
+        S, vscale="phase", y_axis="log", x_axis="time", alpha=alpha, ax=ax[0]
+    )
     librosa.display.colorbar_phase(i1, ax=ax[0])
-    i2 = librosa.display.specshow(S, vscale="dphase", y_axis="log", x_axis="time",
-                                  alpha=alpha,
-                                  ax=ax[1])
+    i2 = librosa.display.specshow(
+        S, vscale="dphase", y_axis="log", x_axis="time", alpha=alpha, ax=ax[1]
+    )
     librosa.display.colorbar_phase(i2, ax=ax[1], label="Δ radians")
     return fig
 
@@ -1291,13 +1298,11 @@ def test_diverging_scales(S_signed):
     # 2. Diverging scale with specified cmap_div (auto norm)
     # 3. Inferred diverging scale with default cmap_div and vmin/vmax (auto norm, truncated)
     # 4. Explicit diverging scale with vmin/vmax (no norm, truncated)
-    
+
     fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(12, 12), sharex=True, sharey=True)
 
     # Diverging scale with default cmap_div (auto norm)
-    i1 = librosa.display.specshow(
-        S_signed, y_axis="log", x_axis="time", ax=ax[0, 0]
-    )
+    i1 = librosa.display.specshow(S_signed, y_axis="log", x_axis="time", ax=ax[0, 0])
     ax[0, 0].set_title("Default cmap_div (auto norm)")
     fig.colorbar(i1, ax=ax[0, 0])
 
@@ -1307,14 +1312,14 @@ def test_diverging_scales(S_signed):
         y_axis="log",
         x_axis="time",
         ax=ax[0, 1],
-        cmap='PuOr_r',
+        cmap="PuOr_r",
     )
     ax[0, 1].set_title("Explicit cmap override (no norm)")
     fig.colorbar(i2, ax=ax[0, 1])
 
     # Diverging scale with specified cmap_div (auto norm)
     i3 = librosa.display.specshow(
-        S_signed, y_axis="log", x_axis="time", ax=ax[1, 0], cmap_div='Spectral_r'
+        S_signed, y_axis="log", x_axis="time", ax=ax[1, 0], cmap_div="Spectral_r"
     )
     ax[1, 0].set_title("Specified cmap_div (auto norm)")
     fig.colorbar(i3, ax=ax[1, 0])
@@ -1323,7 +1328,13 @@ def test_diverging_scales(S_signed):
     vmin = -10
     vmax = 30
     i4 = librosa.display.specshow(
-        S_signed, y_axis="log", x_axis="time", ax=ax[2, 0], vmin=vmin, vmax=vmax
+        S_signed,
+        y_axis="log",
+        x_axis="time",
+        ax=ax[2, 0],
+        vmin=vmin,
+        vmax=vmax,
+        cmap_div=matplotlib.colormaps["coolwarm"],
     )
     ax[2, 0].set_title("Inferred cmap_div with vmin/vmax (auto norm, truncated)")
     fig.colorbar(i4, ax=ax[2, 0])
@@ -1336,13 +1347,13 @@ def test_diverging_scales(S_signed):
         ax=ax[1, 1],
         vmin=vmin,
         vmax=vmax,
-        cmap=matplotlib.colormaps['Spectral_r'],
+        cmap="Spectral_r",
     )
     ax[1, 1].set_title("Explicit cmap_div with vmin/vmax (no norm, truncated)")
     fig.colorbar(i5, ax=ax[1, 1])
 
     # Hide the last axis
-    ax[2, 1].axis('off')
+    ax[2, 1].axis("off")
 
     for axi in ax.flat:
         axi.label_outer()
