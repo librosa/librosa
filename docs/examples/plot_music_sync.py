@@ -45,6 +45,20 @@ ax[0].label_outer()
 librosa.display.waveshow(x_2, sr=fs, ax=ax[1])
 ax[1].set(title='Faster Version $X_2$')
 
+# %%
+# We can play them back using the `IPython.display` module.
+
+from IPython.display import Audio, display
+
+# Slower version (x_1):
+Audio(x_1, rate=fs)
+
+# %%
+# 
+
+# Faster version (x_2):
+Audio(x_2, rate=fs)
+
 #########################
 # -----------------------
 # Extract Chroma Features
@@ -56,11 +70,12 @@ x_1_chroma = librosa.feature.chroma_cqt(y=x_1, sr=fs,
 x_2_chroma = librosa.feature.chroma_cqt(y=x_2, sr=fs,
                                          hop_length=hop_length)
 
-fig, ax = plt.subplots(nrows=2, sharey=True)
+fig, ax = plt.subplots(nrows=2, sharey=True, sharex=True)
 img = librosa.display.specshow(x_1_chroma, x_axis='time',
                                y_axis='chroma',
                                hop_length=hop_length, ax=ax[0])
-ax[0].set(title='Chroma Representation of $X_1$')
+ax[0].label_outer()
+ax[0].set(title='Chroma Representation of $X_1$', xlabel='')
 librosa.display.specshow(x_2_chroma, x_axis='time',
                          y_axis='chroma',
                          hop_length=hop_length, ax=ax[1])
@@ -93,16 +108,16 @@ fig.colorbar(img, ax=ax)
 # (Thanks to F. Zalkow for the nice visualization.)
 from matplotlib.patches import ConnectionPatch
 
-fig, (ax1, ax2) = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8,4))
+fig, (ax_1, ax_2) = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8,4))
 
 # Plot x_2
-librosa.display.waveshow(x_2, sr=fs, ax=ax2)
-ax2.set(title='Faster Version $X_2$')
+librosa.display.waveshow(x_2, sr=fs, ax=ax_2)
+ax_2.set(title='Faster Version $X_2$')
 
 # Plot x_1
-librosa.display.waveshow(x_1, sr=fs, ax=ax1)
-ax1.set(title='Slower Version $X_1$')
-ax1.label_outer()
+librosa.display.waveshow(x_1, sr=fs, ax=ax_1)
+ax_1.set(title='Slower Version $X_1$')
+ax_1.label_outer()
 
 
 n_arrows = 20
@@ -110,12 +125,87 @@ for tp1, tp2 in wp_s[::len(wp_s)//n_arrows]:
     # Create a connection patch between the aligned time points
     # in each subplot
     con = ConnectionPatch(xyA=(tp1, 0), xyB=(tp2, 0),
-                          axesA=ax1, axesB=ax2,
+                          axesA=ax_1, axesB=ax_2,
                           coordsA='data', coordsB='data',
                           color='r', linestyle='--',
                           alpha=0.5)
     con.set_in_layout(False)  # This is needed to preserve layout
-    ax2.add_artist(con)
+    ax_2.add_artist(con)
+
+
+###########################################################
+# -----------------------------
+# Alignment and time stretching
+# -----------------------------
+# We can now use the warping path to align the two signals.
+# We will do this by applying a non-uniform time stretching
+# to the slower signal $X_1$ so that it matches the faster signal $X_2$.
+#
+# This requires two steps:
+#   1. Convert the warping path to a timing grid
+#   2. Use phase vocoding to stretch the slow signal
+
+steps = librosa.sequence.path_to_steps(wp)
+
+# Phase vocoding operates on the STFT of the signal
+x_1_stft = librosa.stft(x_1, hop_length=hop_length)
+# A bit of Griffin-Lim phase cleanup...
+
+stft_stretched = librosa.phase_vocoder(x_1_stft, t_out=steps)
+# Convert the stretched STFT back to the time domain
+x_1_stretched = librosa.istft(stft_stretched, hop_length=hop_length, length=len(x_2))
+
+# %% 
+# We can now visualize and listen to the stretched signal in comparison to the faster signal.
+#
+
+fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+librosa.display.waveshow(x_1, sr=fs, ax=ax[0])
+librosa.display.waveshow(x_1_stretched, sr=fs, ax=ax[1])
+librosa.display.waveshow(x_2, sr=fs, ax=ax[2])
+ax[0].label_outer()
+ax[0].set(xlabel='', title='Slower $X_1$')
+ax[1].label_outer()
+ax[1].set(xlabel='', title='Stretched $X_1$')
+ax[2].set(title='Faster $X_2$')
+
+# %%
+# On playback, we can hear that there are some noticeable artifacts
+# in the stretched signal, but it is time-aligned to the faster signal.
+# Here we will play the original fast signal in the left channel
+# and the time-stretched signal in the right channel.
+# 
+# 🎧 This example is best experienced with headphones.
+
+Audio(np.vstack([x_2, x_1_stretched]), rate=fs)
+
+# %% 
+# We can also apply the time stretching in the opposite direction
+# by reversing the roles of the warping path.
+
+steps_inv = librosa.sequence.path_to_steps(wp[:, ::-1])
+x_2_stft = librosa.stft(x_2, hop_length=hop_length)
+stft2_stretched = librosa.phase_vocoder(x_2_stft, t_out=steps_inv)
+x_2_stretched = librosa.istft(stft2_stretched, hop_length=hop_length, length=len(x_1))
+
+# %%
+# 
+
+fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+librosa.display.waveshow(x_1, sr=fs, ax=ax[0])
+librosa.display.waveshow(x_2_stretched, sr=fs, ax=ax[1])
+librosa.display.waveshow(x_2, sr=fs, ax=ax[2])
+ax[0].label_outer()
+ax[0].set(xlabel='', title='Slower $X_1$')
+ax[1].label_outer()
+ax[1].set(xlabel='', title='Stretched $X_2$')
+ax[2].set(title='Faster $X_2$')
+
+# %%
+# As before, we will play the original slow signal in the left channel
+# and the time-stretched signal in the right channel.
+Audio(np.vstack([x_1, x_2_stretched]), rate=fs)
+
 
 ###########################################################
 # -------------
@@ -128,9 +218,6 @@ for tp1, tp2 in wp_s[::len(wp_s)//n_arrows]:
 # One example is a player which enables you to navigate between
 # different recordings of the same piece of music,
 # e.g. one of Wagner's symphonies played by an orchestra or in a piano-reduced version.
-#
-# Another example is that you could apply time scale modification algorithms,
-# e.g. speed up the slower signal to the tempo of the faster one.
 #
 # ----------
 # Literature
