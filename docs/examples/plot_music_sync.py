@@ -161,7 +161,7 @@ x_1_stretched = librosa.istft(stft_stretched, hop_length=hop_length, length=len(
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 librosa.display.waveshow(x_1, sr=fs, ax=ax[0])
-librosa.display.waveshow(x_1_stretched, sr=fs, ax=ax[1])
+librosa.display.waveshow(x_1_stretched, sr=fs, ax=ax[1], color='orange')
 librosa.display.waveshow(x_2, sr=fs, ax=ax[2])
 ax[0].label_outer()
 ax[0].set(xlabel='', title='Slower $X_1$')
@@ -193,7 +193,7 @@ x_2_stretched = librosa.istft(stft2_stretched, hop_length=hop_length, length=len
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 librosa.display.waveshow(x_1, sr=fs, ax=ax[0])
-librosa.display.waveshow(x_2_stretched, sr=fs, ax=ax[1])
+librosa.display.waveshow(x_2_stretched, sr=fs, ax=ax[1], color='orange')
 librosa.display.waveshow(x_2, sr=fs, ax=ax[2])
 ax[0].label_outer()
 ax[0].set(xlabel='', title='Slower $X_1$')
