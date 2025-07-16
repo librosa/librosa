@@ -90,12 +90,18 @@ fig.colorbar(img, ax=ax)
 D, wp = librosa.sequence.dtw(X=x_1_chroma, Y=x_2_chroma, metric='cosine')
 wp_s = librosa.frames_to_time(wp, sr=fs, hop_length=hop_length)
 
+# By default, the path is returned in reverse order.  So let's put it forward
+wp_s = wp_s[::-1]
+
 fig, ax = plt.subplots()
 img = librosa.display.specshow(D, x_axis='time', y_axis='time', sr=fs,
                                cmap='gray_r', hop_length=hop_length, ax=ax)
 
-ax.plot(wp_s[:, 1], wp_s[:, 0], marker='o', color='C3')
-
+# Plot the warping path as a quiver plot
+dx, dy = np.diff(wp_s, axis=0, prepend=0).T
+ax.quiver(wp_s[:, 1], wp_s[:, 0], dx, dy,
+          angles='xy', scale_units='xy', scale=.35,
+          color='C3', alpha=0.5, label='Warping Path')
 ax.set(title='Warping Path on Acc. Cost Matrix $D$',
        xlabel='Time $(X_2)$', ylabel='Time $(X_1)$')
 fig.colorbar(img, ax=ax)
