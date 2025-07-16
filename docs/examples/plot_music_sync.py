@@ -42,7 +42,7 @@ librosa.display.waveshow(x_1, sr=fs, ax=ax[0])
 ax[0].set(title='Slower Version $X_1$')
 ax[0].label_outer()
 
-librosa.display.waveshow(x_2, sr=fs, ax=ax[1])
+librosa.display.waveshow(x_2, sr=fs, ax=ax[1], color='C1')
 ax[1].set(title='Faster Version $X_2$')
 
 # %%
@@ -100,8 +100,8 @@ img = librosa.display.specshow(D, x_axis='time', y_axis='time', sr=fs,
 # Plot the warping path as a quiver plot
 dx, dy = np.diff(wp_s, axis=0, prepend=0).T
 ax.quiver(wp_s[:, 1], wp_s[:, 0], dx, dy,
-          angles='xy', scale_units='xy', scale=.35,
-          color='C3', alpha=0.5, label='Warping Path')
+          angles='xy', scale=.75,
+          color='C3', label='Warping Path')
 ax.set(title='Warping Path on Acc. Cost Matrix $D$',
        xlabel='Time $(X_2)$', ylabel='Time $(X_1)$')
 fig.colorbar(img, ax=ax)
@@ -119,7 +119,7 @@ from matplotlib.patches import ConnectionPatch
 fig, (ax_1, ax_2) = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8,4))
 
 # Plot x_2
-librosa.display.waveshow(x_2, sr=fs, ax=ax_2)
+librosa.display.waveshow(x_2, sr=fs, ax=ax_2, color='C1')
 ax_2.set(title='Faster Version $X_2$')
 
 # Plot x_1
@@ -169,8 +169,8 @@ x_1_stretched = librosa.istft(stft_stretched, hop_length=hop_length, length=len(
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 librosa.display.waveshow(x_1, sr=fs, ax=ax[0])
-librosa.display.waveshow(x_1_stretched, sr=fs, ax=ax[1], color='C1')
-librosa.display.waveshow(x_2, sr=fs, ax=ax[2])
+librosa.display.waveshow(x_1_stretched, sr=fs, ax=ax[1])
+librosa.display.waveshow(x_2, sr=fs, ax=ax[2], color='C1')
 ax[0].label_outer()
 ax[0].set(xlabel='', title='Slower $X_1$')
 ax[1].label_outer()
@@ -202,7 +202,7 @@ x_2_stretched = librosa.istft(stft2_stretched, hop_length=hop_length, length=len
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 librosa.display.waveshow(x_1, sr=fs, ax=ax[0])
 librosa.display.waveshow(x_2_stretched, sr=fs, ax=ax[1], color='C1')
-librosa.display.waveshow(x_2, sr=fs, ax=ax[2])
+librosa.display.waveshow(x_2, sr=fs, ax=ax[2], color='C1')
 ax[0].label_outer()
 ax[0].set(xlabel='', title='Slower $X_1$')
 ax[1].label_outer()
