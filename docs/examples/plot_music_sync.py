@@ -93,7 +93,9 @@ wp_s = librosa.frames_to_time(wp, sr=fs, hop_length=hop_length)
 fig, ax = plt.subplots()
 img = librosa.display.specshow(D, x_axis='time', y_axis='time', sr=fs,
                                cmap='gray_r', hop_length=hop_length, ax=ax)
-ax.plot(wp_s[:, 1], wp_s[:, 0], marker='o', color='r')
+
+ax.plot(wp_s[:, 1], wp_s[:, 0], marker='o', color='C3')
+
 ax.set(title='Warping Path on Acc. Cost Matrix $D$',
        xlabel='Time $(X_2)$', ylabel='Time $(X_1)$')
 fig.colorbar(img, ax=ax)
@@ -127,7 +129,7 @@ for tp1, tp2 in wp_s[::len(wp_s)//n_arrows]:
     con = ConnectionPatch(xyA=(tp1, 0), xyB=(tp2, 0),
                           axesA=ax_1, axesB=ax_2,
                           coordsA='data', coordsB='data',
-                          color='r', linestyle='--',
+                          color='C3', linestyle='--',
                           alpha=0.5)
     con.set_in_layout(False)  # This is needed to preserve layout
     ax_2.add_artist(con)
@@ -161,7 +163,7 @@ x_1_stretched = librosa.istft(stft_stretched, hop_length=hop_length, length=len(
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 librosa.display.waveshow(x_1, sr=fs, ax=ax[0])
-librosa.display.waveshow(x_1_stretched, sr=fs, ax=ax[1], color='orange')
+librosa.display.waveshow(x_1_stretched, sr=fs, ax=ax[1], color='C1')
 librosa.display.waveshow(x_2, sr=fs, ax=ax[2])
 ax[0].label_outer()
 ax[0].set(xlabel='', title='Slower $X_1$')
@@ -181,9 +183,9 @@ Audio(np.vstack([x_2, x_1_stretched]), rate=fs)
 
 # %% 
 # We can also apply the time stretching in the opposite direction
-# by reversing the roles of the warping path.
+# by setting the `inverse` parameter of `path_to_steps` to `True`.
 
-steps_inv = librosa.sequence.path_to_steps(wp[:, ::-1])
+steps_inv = librosa.sequence.path_to_steps(wp, inverse=True)
 x_2_stft = librosa.stft(x_2, hop_length=hop_length)
 stft2_stretched = librosa.phase_vocoder(x_2_stft, t_out=steps_inv)
 x_2_stretched = librosa.istft(stft2_stretched, hop_length=hop_length, length=len(x_1))
@@ -193,7 +195,7 @@ x_2_stretched = librosa.istft(stft2_stretched, hop_length=hop_length, length=len
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 librosa.display.waveshow(x_1, sr=fs, ax=ax[0])
-librosa.display.waveshow(x_2_stretched, sr=fs, ax=ax[1], color='orange')
+librosa.display.waveshow(x_2_stretched, sr=fs, ax=ax[1], color='C1')
 librosa.display.waveshow(x_2, sr=fs, ax=ax[2])
 ax[0].label_outer()
 ax[0].set(xlabel='', title='Slower $X_1$')

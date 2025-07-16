@@ -1100,7 +1100,7 @@ def __rqa_backtrack(score, pointers):
     return np.asarray(path, dtype=np.uint)
 
 
-def path_to_steps(path: np.ndarray) -> np.ndarray:
+def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
     """Convert a DTW warping path to an array of fractional steps.
 
     This function primarily exists as a helper to construct non-linear
@@ -1113,6 +1113,13 @@ def path_to_steps(path: np.ndarray) -> np.ndarray:
         A path of index pairs, e.g., from `dtw`.
         ``path[i] = [n, m]`` indicates that step ``n`` of the first
         signal aligns to step ``m`` of the second signal.
+
+    inverse : bool
+        If ``False`` (default), the output is a time grid mapping the
+        first sequence (first column of ``path``) to the second sequence.
+
+        If ``True``, the output is a time grid mapping the second sequence
+        (second column of ``path``) to the first sequence.
 
     Returns
     -------
@@ -1171,11 +1178,17 @@ def path_to_steps(path: np.ndarray) -> np.ndarray:
     >>> ax[2].set(title='Chroma 1 vocoded to match Chroma 2')
     """
 
-    time_interp = scipy.interpolate.interp1d(path[:, 1], path[:, 0], kind='linear')
-    frames_in = np.arange(path[:, 1].min(), path[:, 1].max() + 1)
-    times = time_interp(frames_in)
+    if inverse:
+        idx_from, idx_to = 1, 0
+    else:
+        idx_from, idx_to = 0, 1
 
-    return times
+    step_interp = scipy.interpolate.interp1d(path[:, idx_to], path[:, idx_from], kind='linear')
+    frames_in = np.arange(path[:, idx_to].min(), path[:, idx_to].max() + 1)
+    steps = step_interp(frames_in)
+
+    return steps
+
 
 @jit(nopython=True, cache=True)  # type: ignore
 def _viterbi(
