@@ -1166,7 +1166,6 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
     >>> librosa.display.specshow(C3, x_axis='time', y_axis='chroma', ax=ax[2])
     >>> ax[2].set(title='Chroma 1 vocoded to match Chroma 2')
     """
-
     if inverse:
         idx_from, idx_to = 1, 0
     else:
