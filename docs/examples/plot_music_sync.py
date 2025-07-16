@@ -100,7 +100,7 @@ img = librosa.display.specshow(D, x_axis='time', y_axis='time', sr=fs,
 # Plot the warping path as a quiver plot
 dx, dy = np.diff(wp_s, axis=0, prepend=0).T
 ax.quiver(wp_s[:, 1], wp_s[:, 0], dx, dy,
-          angles='xy', scale=.75,
+          angles='xy', #scale=.75,
           color='C3', label='Warping Path')
 ax.set(title='Warping Path on Acc. Cost Matrix $D$',
        xlabel='Time $(X_2)$', ylabel='Time $(X_1)$')
