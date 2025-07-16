@@ -73,8 +73,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -90,8 +89,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -108,8 +106,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -125,8 +122,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -143,8 +139,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -160,8 +155,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -178,8 +172,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -195,8 +188,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]: ...
 
 
 def dtw(
@@ -717,8 +709,7 @@ def rqa(
     gap_extend: float = ...,
     knight_moves: bool = ...,
     backtrack: Literal[False],
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -729,8 +720,7 @@ def rqa(
     gap_extend: float = ...,
     knight_moves: bool = ...,
     backtrack: Literal[True] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -741,8 +731,7 @@ def rqa(
     gap_extend: float = ...,
     knight_moves: bool = ...,
     backtrack: bool = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
 def rqa(
@@ -1167,7 +1156,7 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
     >>> D1_vocoded = librosa.phase_vocoder(D1, t_out=steps)
     >>> # Map back into the time domain.  Match duration of y2 exactly
     >>> y1_vocoded = librosa.istft(D1_vocoded, length=len(y2))
-    
+
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
     >>> librosa.display.specshow(C1, x_axis='time', y_axis='chroma', ax=ax[0])
     >>> ax[0].set(title='Chroma 1: fast')
@@ -1183,7 +1172,9 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
     else:
         idx_from, idx_to = 0, 1
 
-    step_interp = scipy.interpolate.interp1d(path[:, idx_to], path[:, idx_from], kind='linear')
+    step_interp = scipy.interpolate.interp1d(
+        path[:, idx_to], path[:, idx_from], kind="linear"
+    )
     frames_in = np.arange(path[:, idx_to].min(), path[:, idx_to].max() + 1)
     steps = step_interp(frames_in)
 
@@ -1261,8 +1252,7 @@ def viterbi(
     *,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -1272,8 +1262,7 @@ def viterbi(
     *,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 def viterbi(
@@ -1426,8 +1415,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -1438,8 +1426,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -1450,8 +1437,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: bool,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
 def viterbi_discriminative(
@@ -1674,8 +1660,7 @@ def viterbi_binary(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -1686,8 +1671,7 @@ def viterbi_binary(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -1698,8 +1682,7 @@ def viterbi_binary(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: bool = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
 def viterbi_binary(
