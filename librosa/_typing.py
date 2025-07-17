@@ -9,8 +9,8 @@ import scipy.sparse as sp
 
 
 # RNG types
-SeedLike = int | np.integer | Sequence[int] | np.random.SeedSequence
-RNGLike = np.random.Generator | np.random.BitGenerator
+SeedLike = Union[int, np.integer, Sequence[int], np.random.SeedSequence]
+RNGLike = Union[np.random.Generator, np.random.BitGenerator]
 
 
 _WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]
