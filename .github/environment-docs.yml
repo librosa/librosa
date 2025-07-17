@@ -7,7 +7,7 @@ dependencies:
   - pip
   - audioread>=2.1.9
   - numpy>=1.22.3,<1.24.0
-  - scipy>=1.6.0,<1.13.0  # older versions of librosa need scipy<1.13.0 
+  - scipy>=1.8.0,<1.13.0  # older versions of librosa need scipy<1.13.0 
   - scikit-learn>=1.2.0
   - joblib>=1.0.0
   - decorator>=4.3.0
