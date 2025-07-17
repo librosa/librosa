@@ -119,7 +119,7 @@ norm = np.sqrt(dx**2 + dy**2) + librosa.util.tiny(dx)
 dx /= norm
 dy /= norm
 q = ax['B'].quiver(wp_s[:, 1], wp_s[:, 0], dy, dx,
-          angles='xy', pivot='mid', scale_units='xy', scale=10,
+          angles='xy', pivot='tip', scale_units='xy', scale=10,
           color='C3', width=0.001, headwidth=20., headlength=20., headaxislength=10.)
 ax['B'].set(title='Warping Path on Acc. Cost Matrix $D$')
 fig.colorbar(img, ax=ax['B'])
