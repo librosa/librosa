@@ -2347,11 +2347,10 @@ def test_griffinlim_deprecated_randomstate(y_chirp):
     D = librosa.stft(y=y_chirp)
     with pytest.warns(FutureWarning, match="renamed to 'rng'"):
         y1 = librosa.griffinlim(
-            np.abs(D), n_iter=2, random_state=np.random.RandomState(5)
+            np.abs(D), n_iter=2, random_state=5,
         )
     # And verify that it produces the same output as the new rng argument
-    # we'll ignore type safety here
-    y2 = librosa.griffinlim(np.abs(D), n_iter=2, rng=np.random.RandomState(5))  # type: ignore
+    y2 = librosa.griffinlim(np.abs(D), n_iter=2, rng=5)
     assert np.allclose(y1, y2)
 
 

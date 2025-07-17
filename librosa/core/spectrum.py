@@ -2833,7 +2833,7 @@ def griffinlim(
         if rng is not None:
             raise ParameterError(
                 f"Both random_state={random_state!r} and rng={rng!r} were provided. "
-                "Please use only one of these parameters."
+                "Please use only the rng parameter."
             )
 
         # Otherwise transfer the state object and throw a deprecation warning

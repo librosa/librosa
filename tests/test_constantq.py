@@ -806,16 +806,15 @@ def test_griffinlim_cqt_deprecated_randomstate(y_chirp):
             np.abs(C),
             sr=22050,
             n_iter=2,
-            random_state=np.random.RandomState(5),
+            random_state=5,
             res_type="polyphase",
         )
     # And verify that it produces the same output as the new rng argument
-    # We'll ignore type safety here
     y2 = librosa.griffinlim_cqt(
         np.abs(C),
         sr=22050,
         n_iter=2,
-        rng=np.random.RandomState(5),  # type: ignore
+        rng=5,
         res_type="polyphase",
     )
     assert np.allclose(y1, y2)
