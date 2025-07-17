@@ -1004,7 +1004,7 @@ def subsegment(
     --------
     Load audio, detect beat frames, and subdivide in twos by CQT
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=6.5)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
     >>> cqt = np.abs(librosa.cqt(y, sr=sr, bins_per_octave=36, n_bins=36*7, hop_length=512))
@@ -1018,12 +1018,18 @@ def subsegment(
     ...                          y_axis='cqt_hz', x_axis='time', ax=ax)
     >>> trans = mpt.blended_transform_factory(
     ...             ax.transData, ax.transAxes)
-    >>> ax.vlines(beat_times, 0, 1, color='C0', alpha=0.9,
-    ...            linewidth=3, label='Beats', transform=trans)
-    >>> ax.vlines(subseg_t, 0, 1, color='C3', linestyle=':', transform=trans,
-    ...            linewidth=2.5, alpha=0.9, label='Sub-beats')
+    >>> ax.plot(beat_times, np.zeros_like(beat_times), '^', zorder=3,
+    ...         markerfacecolor='C0', color='C0', linestyle='', clip_on=False,
+    ...         markersize=10, label='Beats', transform=trans)
+    >>> ax.vlines(beat_times, 0, 1, color='C0', linestyle='-', transform=trans,
+    ...            linewidth=2, alpha=0.9, zorder=3)
+    >>> ax.plot(subseg_t, np.zeros_like(subseg_t), '^', zorder=3,
+    ...         markerfacecolor='C2', color='C2', linestyle='', clip_on=False,
+    ...         markersize=6, label='Sub-beats', transform=trans)
+    >>> ax.vlines(subseg_t, 0, 1, color='C2', linestyle=':', transform=trans,
+    ...            linewidth=1.5, alpha=0.9)
     >>> ax.legend()
-    >>> ax.set(title='CQT + Beat and sub-beat markers', xlim=[10, 15])
+    >>> ax.set(title='CQT + Beat and sub-beat markers')
     """
     frames = util.fix_frames(frames, x_min=0, x_max=data.shape[axis], pad=True)
 
