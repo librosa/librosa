@@ -1092,9 +1092,13 @@ def __rqa_backtrack(score, pointers):
 def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
     """Convert a DTW warping path to an array of fractional steps.
 
+    The step sequence is computed by linear interpolation of the warping
+    path indices.
+
     This function primarily exists as a helper to construct non-linear
     time grids for aligning two signals via phase vocoding, as illustrated
     in the example below.
+
 
     Parameters
     ----------
@@ -1112,10 +1116,11 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
 
     Returns
     -------
-    steps : np.ndarray [shape=(k,)]
+    steps : np.ndarray [shape=(t,)]
         An array of fractional steps, where ``steps[i]`` is the index
         in the first sequence corresponding to the ``i``th step of the
-        second sequence.
+        second sequence.  The number of steps is determined by the range
+        of the target sequence indices.
 
     See Also
     --------

@@ -54,7 +54,7 @@ from IPython.display import Audio, display
 Audio(x_1, rate=fs)
 
 # %%
-# 
+
 
 # Faster version (x_2):
 Audio(x_2, rate=fs)
@@ -93,9 +93,24 @@ wp_s = librosa.frames_to_time(wp, sr=fs, hop_length=hop_length)
 # By default, the path is returned in reverse order.  So let's put it forward
 wp_s = wp_s[::-1]
 
-fig, ax = plt.subplots()
+# We'll make a subplot mosaic to show the chroma features for each signal
+# aligned with the DTW cost matrix.
+fig, ax = plt.subplot_mosaic(
+        '''
+        ABB
+        ABB
+        .CC
+        ''', height_ratios=[7, 7, 5], figsize=(10, 7))
+librosa.display.specshow(x_1_chroma.T, y_axis='time', x_axis='chroma', sr=fs, hop_length=hop_length,
+                         ax=ax['A'])
+ax['A'].set(ylabel='Time $X_1$', xlabel='')
+librosa.display.specshow(x_2_chroma, x_axis='time', y_axis='chroma', sr=fs, hop_length=hop_length,
+                         ax=ax['C'])
+ax['C'].set(xlabel='Time $X_2$', ylabel='')
 img = librosa.display.specshow(D, x_axis='time', y_axis='time', sr=fs,
-                               cmap='gray_r', hop_length=hop_length, ax=ax)
+                               cmap='gray_r', hop_length=hop_length, ax=ax['B'])
+ax['A'].sharey(ax['B'])
+ax['C'].sharex(ax['B'])
 
 # Plot the warping path as a quiver plot
 dx, dy = np.diff(wp_s, axis=0, prepend=0).T
@@ -103,13 +118,13 @@ dx, dy = np.diff(wp_s, axis=0, prepend=0).T
 norm = np.sqrt(dx**2 + dy**2) + librosa.util.tiny(dx)
 dx /= norm
 dy /= norm
-ax.quiver(wp_s[:, 1], wp_s[:, 0], dy, dx,
+q = ax['B'].quiver(wp_s[:, 1], wp_s[:, 0], dy, dx,
           angles='xy', pivot='mid', scale_units='xy', scale=10,
-          color='C3', label='Warping Path')
-ax.set(title='Warping Path on Acc. Cost Matrix $D$',
-       xlabel='Time $(X_2)$', ylabel='Time $(X_1)$')
-ax.legend(loc='upper left')
-fig.colorbar(img, ax=ax)
+          color='C3', width=0.001, headwidth=20., headlength=20., headaxislength=10.)
+ax['B'].set(title='Warping Path on Acc. Cost Matrix $D$')
+fig.colorbar(img, ax=ax['B'])
+
+ax['B'].label_outer()
 
 ##############################################
 # --------------------------------------------
