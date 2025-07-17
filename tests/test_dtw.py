@@ -346,12 +346,12 @@ def test_path_to_steps(subseq):
     # Some simple test cases to check path_to_steps
     # We toggle subseq here to ensure that bounds are handled correctly
     x1 = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
-    x2 = np.array([2, 4, 6, 8])
+    x2 = np.array([1, 4, 7])
 
     cost, path = librosa.sequence.dtw(x1, x2, subseq=subseq)
 
     steps = librosa.sequence.path_to_steps(path, inverse=False)
     if subseq:
-        assert np.array_equal(steps, [3, 4, 6, 7])
+        assert np.array_equal(steps, [3, 4, 5])
     else:
-        assert np.array_equal(steps, [0, 4, 6, 8])
+        assert np.array_equal(steps, [0, 3, 6])
