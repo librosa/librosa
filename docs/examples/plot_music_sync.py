@@ -100,10 +100,11 @@ fig, ax = plt.subplot_mosaic(
         ABB
         ABB
         .CC
-        ''', height_ratios=[7, 7, 5], figsize=(10, 7))
+        ''', height_ratios=[2, 2, 1], width_ratios=[1, 2, 2], figsize=(10, 7))
 librosa.display.specshow(x_1_chroma.T, y_axis='time', x_axis='chroma', sr=fs, hop_length=hop_length,
                          ax=ax['A'])
 ax['A'].set(ylabel='Time $X_1$', xlabel='')
+ax['A'].invert_xaxis() # Invert x-axis to match transposed chroma display
 librosa.display.specshow(x_2_chroma, x_axis='time', y_axis='chroma', sr=fs, hop_length=hop_length,
                          ax=ax['C'])
 ax['C'].set(xlabel='Time $X_2$', ylabel='')
