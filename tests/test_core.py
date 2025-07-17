@@ -2336,7 +2336,7 @@ def test_griffinlim_badrng():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_griffinlim_cqt_oldrng():
+def test_griffinlim_oldrng():
     x = np.zeros((33, 3))
     # We can't have both parameters set
     librosa.griffinlim(x, rng=0, random_state=0)
