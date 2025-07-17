@@ -1099,7 +1099,6 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
     time grids for aligning two signals via phase vocoding, as illustrated
     in the example below.
 
-
     Parameters
     ----------
     path : np.ndarray [shape=(k, 2)]
