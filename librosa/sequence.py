@@ -1113,8 +1113,9 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
     Returns
     -------
     steps : np.ndarray [shape=(k,)]
-        An array of fractional steps, where ``steps[i]`` is the fractional
-        frame index of the first signal to
+        An array of fractional steps, where ``steps[i]`` is the index
+        in the first sequence corresponding to the ``i``th step of the
+        second sequence.
 
     See Also
     --------

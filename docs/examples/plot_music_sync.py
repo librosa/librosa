@@ -19,7 +19,7 @@ Our objective is now to find an alignment between these two recordings by using 
 
 # Code source: Stefan Balke
 # License: ISC
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 6
 
 import numpy as np
 import matplotlib
@@ -202,7 +202,7 @@ stft2_stretched = librosa.phase_vocoder(x_2_stft, t_out=steps_inv)
 x_2_stretched = librosa.istft(stft2_stretched, hop_length=hop_length, length=len(x_1))
 
 # %%
-# 
+# And we can visualize the results just like before: 
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 librosa.display.waveshow(x_1, sr=fs, ax=ax[0])
@@ -215,7 +215,7 @@ ax[1].set(xlabel='', title='Stretched $X_2$')
 ax[2].set(title='Faster $X_2$')
 
 # %%
-# As before, we will play the original slow signal in the left channel
+# We will play the original slow signal in the left channel
 # and the time-stretched signal in the right channel.
 Audio(np.vstack([x_1, x_2_stretched]), rate=fs)
 
