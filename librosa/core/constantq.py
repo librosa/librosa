@@ -1079,7 +1079,9 @@ def __vqt_filter_fft(
     basis *= lengths[:, np.newaxis] / float(n_fft)
 
     # FFT and retain only the non-negative frequencies
-    # TODO: can we actually use rfft here even if the basis is complex?
+    # Note: in principle we could use an rfft here, but scipy.fft only allows
+    # real inputs, so we'd have to call twice.  That negates the speed advantage
+    # of using rfft in the first place.
     fft_basis = scipy.fft.fft(basis, n=n_fft, axis=1)[:, : (n_fft // 2) + 1]
 
     # sparsify the basis
