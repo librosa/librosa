@@ -10,7 +10,6 @@ from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
 
-from ..core.fft import get_fftlib
 from ..core.convert import fft_frequencies
 from ..core.audio import zero_crossings
 from ..core.spectrum import power_to_db, _spectrogram
@@ -19,7 +18,7 @@ from ..core.pitch import estimate_tuning
 from typing import Any, Optional, Union, Collection
 from typing_extensions import Literal
 from numpy.typing import DTypeLike
-from .._typing import _FloatLike_co, _WindowSpec, _PadMode, _PadModeSTFT
+from .._typing import _FloatLike_co, _WindowSpec, _PadMode, _PadModeSTFT, _DCTType, _DCTNorm
 
 
 __all__ = [
@@ -1836,8 +1835,8 @@ def mfcc(
     sr: float = 22050,
     S: Optional[np.ndarray] = None,
     n_mfcc: int = 20,
-    dct_type: int = 2,
-    norm: Optional[str] = "ortho",
+    dct_type: _DCTType = 2,
+    norm: Optional[_DCTNorm] = "ortho",
     lifter: float = 0,
     mel_norm: Optional[Union[Literal["slaney"], float]] = "slaney",
     **kwargs: Any,
@@ -1991,8 +1990,7 @@ def mfcc(
         # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, norm = mel_norm, **kwargs))
 
-    fft = get_fftlib()
-    M: np.ndarray = fft.dct(S, axis=-2, type=dct_type, norm=norm)[
+    M: np.ndarray = scipy.fft.dct(S, axis=-2, type=dct_type, norm=norm)[
         ..., :n_mfcc, :
     ]
 

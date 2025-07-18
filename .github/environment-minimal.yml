@@ -5,7 +5,6 @@ channels:
 dependencies:
   # required
   - pip
-  - audioread==2.1.9
   - scipy==1.8.0
   - scikit-learn==1.1.0
   - joblib==1.0.0

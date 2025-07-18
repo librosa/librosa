@@ -2125,7 +2125,6 @@ def waveshow(
     label: Optional[str] = None,
     transpose: bool = False,
     ax: Optional[mplaxes.Axes] = None,
-    x_axis: Optional[Union[str, Deprecated]] = Deprecated(),
     **kwargs: Any,
 ) -> AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
@@ -2195,12 +2194,6 @@ def waveshow(
         - 'lag_ms' : same as lag, but in milliseconds.
 
         - `None`, 'none', or 'off': ticks and tick markers are hidden.
-
-    x_axis : Deprecated
-        Equivalent to `axis` parameter, included for backward compatibility.
-
-        .. warning:: This parameter is deprecated as of 0.10.0 and
-            will be removed in 1.0.  Use `axis=` instead going forward.
 
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
@@ -2317,16 +2310,6 @@ def waveshow(
 
     # Create the adaptive drawing object
     axes = __check_axes(ax)
-
-    # Handle the x_axis->axis rename deprecation
-    axis = rename_kw(
-        old_name="x_axis",
-        old_value=x_axis,
-        new_name="axis",
-        new_value=axis,
-        version_deprecated="0.10.0",
-        version_removed="1.0",
-    )
 
     # Reduce by envelope calculation
     # this choice of hop ensures that the envelope has at most max_points values

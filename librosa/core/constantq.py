@@ -3,11 +3,11 @@
 """Constant-Q transforms"""
 import warnings
 import numpy as np
+import scipy
 from numba import jit
 
 from . import audio
 from .intervals import interval_frequencies
-from .fft import get_fftlib
 from .convert import cqt_frequencies, note_to_hz
 from .spectrum import stft, istft
 from .pitch import estimate_tuning
@@ -48,7 +48,7 @@ def cqt(
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    res_type: Optional[str] = "soxr_hq",
+    res_type: str = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
     """Compute the constant-Q transform of an audio signal.
@@ -782,7 +782,7 @@ def vqt(
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    res_type: Optional[str] = "soxr_hq",
+    res_type: str = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
     """Compute the variable-Q transform of an audio signal.
@@ -976,15 +976,6 @@ def vqt(
             "Try reducing the number of frequency bins."
         )
 
-    if res_type is None:
-        warnings.warn(
-            "Support for VQT with res_type=None is deprecated in librosa 0.10\n"
-            "and will be removed in version 1.0.",
-            category=FutureWarning,
-            stacklevel=2,
-        )
-        res_type = "soxr_hq"
-
     y, sr, hop_length = __early_downsample(
         y, sr, hop_length, res_type, n_octaves, nyquist, filter_cutoff, scale
     )
@@ -1088,8 +1079,10 @@ def __vqt_filter_fft(
     basis *= lengths[:, np.newaxis] / float(n_fft)
 
     # FFT and retain only the non-negative frequencies
-    fft = get_fftlib()
-    fft_basis = fft.fft(basis, n=n_fft, axis=1)[:, : (n_fft // 2) + 1]
+    # Note: in principle we could use an rfft here, but scipy.fft only allows
+    # real inputs, so we'd have to call twice.  That negates the speed advantage
+    # of using rfft in the first place.
+    fft_basis = scipy.fft.fft(basis, n=n_fft, axis=1)[:, : (n_fft // 2) + 1]
 
     # sparsify the basis
     fft_basis = util.sparsify_rows(fft_basis, quantile=sparsity, dtype=dtype)

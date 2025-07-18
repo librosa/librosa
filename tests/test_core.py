@@ -15,7 +15,6 @@ except KeyError:
 
 import sys
 import soundfile
-import audioread.rawread
 import librosa
 import librosa.core
 import librosa.core.spectrum
@@ -39,22 +38,6 @@ def test_load_soundfile():
 
     sfo = soundfile.SoundFile(fname)
     y2, sr2 = librosa.load(sfo, sr=None, mono=False)
-
-    assert np.allclose(y, y2)
-    assert np.isclose(sr, sr2)
-
-
-@pytest.mark.skip(reason="audioread backend is deprecated")
-@pytest.mark.filterwarnings("ignore:librosa.core.audio.__audioread_load")
-def test_load_audioread():
-    fname = os.path.join("tests", "test_audio.ogg")
-
-    # Load using an existing audioread object
-    reader = audioread.rawread.RawAudioFile(fname)
-    y, sr = librosa.load(reader, sr=None)
-
-    # Load using sndfile
-    y2, sr2 = librosa.load(fname, sr=None)
 
     assert np.allclose(y, y2)
     assert np.isclose(sr, sr2)
@@ -1156,10 +1139,6 @@ def test_yin_fail(fmin, fmax, frame_length):
 def test_yin_warn():
     y = librosa.tone(110, duration=1.0)
 
-    # win_length is deprecated
-    with pytest.warns(FutureWarning, match="deprecated"):
-        librosa.yin(y, fmin=110, fmax=1000, win_length=1024)
-
     # sr / fmin >= frame_length // 2
     with pytest.warns(UserWarning, match="two periods"):
         librosa.yin(y, fmin=20, fmax=1000)
@@ -1304,14 +1283,6 @@ def test_pyin_chirp_instant():
 def test_pyin_fail(fmin, fmax, frame_length):
     y = librosa.tone(110, duration=1.0)
     librosa.pyin(y, fmin=fmin, fmax=fmax, frame_length=frame_length)
-
-
-def test_pyin_warn():
-    y = librosa.tone(110, duration=1.0)
-
-    # win_length is deprecated
-    with pytest.warns(FutureWarning, match="deprecated"):
-        librosa.pyin(y, fmin=110, fmax=1000, win_length=1024)
 
 
 @pytest.mark.parametrize("freq", [110, 220, 440, 880])
@@ -2208,28 +2179,6 @@ def test_pcen_stream_multi(axis, rng):
     assert np.allclose(pfull, np.concatenate([p1, p2], axis=axis))
 
 
-def test_get_fftlib():
-    import scipy.fft as fft
-
-    assert librosa.get_fftlib() is fft
-
-
-def test_set_fftlib():
-    with pytest.warns(FutureWarning):
-        librosa.set_fftlib("foo")  # type: ignore
-    assert librosa.get_fftlib() == "foo"  # type: ignore
-    with pytest.warns(FutureWarning):
-        librosa.set_fftlib()
-
-
-def test_reset_fftlib():
-    import scipy.fft as fft
-
-    with pytest.warns(FutureWarning):
-        librosa.set_fftlib()
-    assert librosa.get_fftlib() is fft
-
-
 @pytest.fixture(scope="module")
 def y_chirp():
     sr = 22050
@@ -2597,38 +2546,6 @@ def test_stft_bad_prealloc_dtype():
 def test_istft_bad_prealloc_shape():
     D = np.zeros((1025, 5), dtype=np.complex64)
     librosa.istft(D, out=np.zeros(100))
-
-
-# Tests to force audioread decoding
-@pytest.mark.skip(reason="Audioread will be removed in this release")
-def test_load_force_audioread():
-    path = os.path.join("tests", "data", "test2_8000.mkv")
-    with warnings.catch_warnings(record=True) as out:
-        y, sr = librosa.load(path)
-
-        assert len(out) > 0
-        assert "audioread" in str(out[0].message).lower()
-
-
-@pytest.mark.skip(reason="Audioread will be removed in this release")
-@pytest.mark.filterwarnings("ignore:PySoundFile failed")
-def test_get_duration_audioread():
-    path = os.path.join("tests", "data", "test2_8000.mkv")
-    duration = librosa.get_duration(path=path)
-
-    # Duration is 30.2 seconds if using ffmpeg
-    # Duration is 30.23 seconds otherwise (eg gstreamer)
-    # To avoid floating point issues, we'll just check that it's close
-    assert np.isclose(duration, 30.2, atol=0.1)
-
-
-@pytest.mark.skip(reason="Audioread will be removed in this release")
-@pytest.mark.filterwarnings("ignore:PySoundFile failed")
-def test_get_samplerate_audioread():
-    path = os.path.join("tests", "data", "test2_8000.mkv")
-    sr = librosa.get_samplerate(path=path)
-
-    assert sr == 8000
 
 
 def test_f0_harmonics_static():

@@ -4,8 +4,8 @@
 
 import warnings
 import numpy as np
+import scipy
 
-from ..core.fft import get_fftlib
 from ..util.exceptions import ParameterError
 from ..core.spectrum import griffinlim
 from ..core.spectrum import db_to_power
@@ -14,7 +14,7 @@ from .. import filters
 from ..util import nnls, expand_to
 from numpy.typing import DTypeLike
 from typing import Any, Optional
-from .._typing import _WindowSpec, _PadModeSTFT
+from .._typing import _WindowSpec, _PadModeSTFT, _DCTNorm, _DCTType
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
 
@@ -206,8 +206,8 @@ def mfcc_to_mel(
     mfcc: np.ndarray,
     *,
     n_mels: int = 128,
-    dct_type: int = 2,
-    norm: Optional[str] = "ortho",
+    dct_type: _DCTType = 2,
+    norm: Optional[_DCTNorm] = "ortho",
     ref: float = 1.0,
     lifter: float = 0,
 ) -> np.ndarray:
@@ -274,8 +274,7 @@ def mfcc_to_mel(
     elif lifter != 0:
         raise ParameterError("MFCC to mel lifter must be a non-negative number.")
 
-    fft = get_fftlib()
-    logmel = fft.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
+    logmel = scipy.fft.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
     melspec: np.ndarray = db_to_power(logmel, ref=ref)
     return melspec
 
@@ -284,8 +283,8 @@ def mfcc_to_audio(
     mfcc: np.ndarray,
     *,
     n_mels: int = 128,
-    dct_type: int = 2,
-    norm: Optional[str] = "ortho",
+    dct_type: _DCTType = 2,
+    norm: Optional[_DCTNorm] = "ortho",
     ref: float = 1.0,
     lifter: float = 0,
     **kwargs: Any,
