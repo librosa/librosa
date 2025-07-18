@@ -330,42 +330,6 @@ def test__window(n, window_name):
 
 
 @pytest.mark.parametrize("sr", [11025])
-@pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C3")])
-@pytest.mark.parametrize("n_bins", [12, 24])
-@pytest.mark.parametrize("bins_per_octave", [12, 24])
-@pytest.mark.parametrize("filter_scale", [1, 2])
-@pytest.mark.parametrize("norm", [1, 2])
-@pytest.mark.parametrize("pad_fft", [False, True])
-def test_constant_q(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, norm):
-
-    with pytest.warns(FutureWarning, match="Deprecated"):
-        F, lengths = librosa.filters.constant_q(
-            sr=sr,
-            fmin=fmin,
-            n_bins=n_bins,
-            bins_per_octave=bins_per_octave,
-            filter_scale=filter_scale,
-            pad_fft=pad_fft,
-            norm=norm,
-        )
-
-    assert np.all(lengths <= F.shape[1])
-
-    assert len(F) == n_bins
-
-    if not pad_fft:
-        return
-
-    assert np.mod(np.log2(F.shape[1]), 1.0) == 0.0
-
-    # Check for vanishing negative frequencies
-    F_fft = np.abs(np.fft.fft(F, axis=1))
-    # Normalize by row-wise peak
-    F_fft = F_fft / np.max(F_fft, axis=1, keepdims=True)
-    assert not np.any(F_fft[:, -F_fft.shape[1] // 2 :] > 1e-4)
-
-
-@pytest.mark.parametrize("sr", [11025])
 @pytest.mark.parametrize("fmin", [librosa.note_to_hz("C3")])
 @pytest.mark.parametrize("n_bins", [12, 24])
 @pytest.mark.parametrize("bins_per_octave", [12, 24])
@@ -427,31 +391,6 @@ def test_wavelet_lengths_badfreqsorder():
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavelet_lengths_noalpha():
     librosa.filters.wavelet_lengths(freqs=[64], alpha=None)
-
-
-@pytest.mark.xfail(raises=librosa.ParameterError)
-@pytest.mark.parametrize(
-    "sr,fmin,n_bins,bins_per_octave,filter_scale,norm",
-    [
-        (11025, 11025 / 2.0, 1, 12, 1, 1),
-        (11025, -60, 1, 12, 1, 1),
-        (11025, 60, 1, -12, 1, 1),
-        (11025, 60, -1, 12, 1, 1),
-        (11025, 60, 1, 12, -1, 1),
-        (11025, 60, 1, 12, 1, -1),
-    ],
-)
-def test_constant_q_badparams(sr, fmin, n_bins, bins_per_octave, filter_scale, norm):
-    with pytest.warns(FutureWarning, match="Deprecated"):
-        librosa.filters.constant_q(
-            sr=sr,
-            fmin=fmin,
-            n_bins=n_bins,
-            bins_per_octave=bins_per_octave,
-            filter_scale=filter_scale,
-            pad_fft=True,
-            norm=norm,
-        )
 
 
 def test_window_bandwidth():
