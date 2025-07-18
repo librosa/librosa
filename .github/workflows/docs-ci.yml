@@ -85,7 +85,7 @@ jobs:
           if: github.event_name == 'pull_request'
           uses: actions/upload-artifact@v4
           with:
-            name: librosa-docs-${{ github.ref_name }}
+            name: librosa-docs-pr-${{ github.event.pull_request.number }}
             path: build/html
             retention-days: 7
             overwrite: true
