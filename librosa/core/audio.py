@@ -8,7 +8,6 @@ import pathlib
 import warnings
 
 import soundfile as sf
-import audioread
 import numpy as np
 import scipy
 import scipy.signal
@@ -55,7 +54,7 @@ __all__ = [
 # 'path' are unchanged across calls.
 def load(
     path: Union[
-        str, int, os.PathLike[Any], sf.SoundFile, audioread.AudioFile, BinaryIO
+        str, int, os.PathLike[Any], sf.SoundFile, BinaryIO
     ],
     *,
     sr: Optional[float] = 22050,
@@ -74,23 +73,16 @@ def load(
 
     Parameters
     ----------
-    path : string, int, pathlib.Path, soundfile.SoundFile, audioread object, or file-like object
+    path : string, int, pathlib.Path, soundfile.SoundFile, or file-like object
         path to the input file.
 
-        Any codec supported by `soundfile` or `audioread` will work.
+        Any codec supported by `soundfile` will work.
 
         Any string file paths, or any object implementing Python's
         file interface (e.g. `pathlib.Path`) are supported as `path`.
 
         If the codec is supported by `soundfile`, then `path` can also be
         an open file descriptor (int) or an existing `soundfile.SoundFile` object.
-
-        Pre-constructed audioread decoders are also supported here, see the example
-        below.  This can be used, for example, to force a specific decoder rather
-        than relying upon audioread to select one for you.
-
-        .. warning:: audioread support is deprecated as of version 0.10.0.
-            audioread support be removed in version 1.0.
 
     sr : number > 0 [scalar]
         target sampling rate
@@ -116,11 +108,6 @@ def load(
             By default, this uses `soxr`'s high-quality mode ('HQ').
 
             For alternative resampling modes, see `resample`
-
-        .. note::
-           `audioread` may truncate the precision of the audio data to 16 bits.
-
-           See :ref:`ioformats` for alternate loading methods.
 
     Returns
     -------
@@ -161,29 +148,8 @@ def load(
     >>> import soundfile
     >>> sfo = soundfile.SoundFile(librosa.ex('brahms'))
     >>> y, sr = librosa.load(sfo)
-
-    >>> # Load using an already open audioread object
-    >>> import audioread.ffdec  # Use ffmpeg decoder
-    >>> aro = audioread.ffdec.FFmpegAudioFile(librosa.ex('brahms'))
-    >>> y, sr = librosa.load(aro)
     """
-    if isinstance(path, tuple(audioread.available_backends())):
-        # Force the audioread loader if we have a reader object already
-        y, sr_native = __audioread_load(path, offset, duration, dtype)
-    else:
-        # Otherwise try soundfile first, and then fall back if necessary
-        try:
-            y, sr_native = __soundfile_load(path, offset, duration, dtype)
-
-        except sf.SoundFileRuntimeError as exc:
-            # If soundfile failed, try audioread instead
-            if isinstance(path, (str, pathlib.PurePath)):
-                warnings.warn(
-                    "PySoundFile failed. Trying audioread instead.", stacklevel=2
-                )
-                y, sr_native = __audioread_load(path, offset, duration, dtype)
-            else:
-                raise exc
+    y, sr_native = __soundfile_load(path, offset, duration, dtype)
 
     # Final cleanup for dtype and contiguity
     if mono:
@@ -220,69 +186,6 @@ def __soundfile_load(path, offset, duration, dtype):
 
         # Load the target number of frames, and transpose to match librosa form
         y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
-
-    return y, sr_native
-
-
-@deprecated(version="0.10.0", version_removed="1.0")
-def __audioread_load(path, offset, duration, dtype: DTypeLike):
-    """Load an audio buffer using audioread.
-
-    This loads one block at a time, and then concatenates the results.
-    """
-    buf = []
-
-    if isinstance(path, tuple(audioread.available_backends())):
-        # If we have an audioread object already, don't bother opening
-        reader = path
-    else:
-        # If the input was not an audioread object, try to open it
-        reader = audioread.audio_open(path)
-
-    with reader as input_file:
-        sr_native = input_file.samplerate
-        n_channels = input_file.channels
-
-        s_start = int(sr_native * offset) * n_channels
-
-        if duration is None:
-            s_end = np.inf
-        else:
-            s_end = s_start + (int(sr_native * duration) * n_channels)
-
-        n = 0
-
-        for frame in input_file:
-            frame = util.buf_to_float(frame, dtype=dtype)
-            n_prev = n
-            n = n + len(frame)
-
-            if n < s_start:
-                # offset is after the current frame
-                # keep reading
-                continue
-
-            if s_end < n_prev:
-                # we're off the end.  stop reading
-                break
-
-            if s_end < n:
-                # the end is in this frame.  crop.
-                frame = frame[: int(s_end - n_prev)]  # pragma: no cover
-
-            if n_prev <= s_start <= n:
-                # beginning is in this frame
-                frame = frame[(s_start - n_prev) :]
-
-            # tack on the current frame
-            buf.append(frame)
-
-    if buf:
-        y = np.concatenate(buf)
-        if n_channels > 1:
-            y = y.reshape((-1, n_channels)).T
-    else:
-        y = np.empty(0, dtype=dtype)
 
     return y, sr_native
 
@@ -695,8 +598,7 @@ def get_duration(
     n_fft: int = 2048,
     hop_length: int = 512,
     center: bool = True,
-    path: Optional[Union[str, os.PathLike[Any]]] = None,
-    filename: Optional[Union[str, os.PathLike[Any], Deprecated]] = Deprecated(),
+    path: Optional[Union[str, os.PathLike[Any]]] = None
 ) -> float:
     """Compute the duration (in seconds) of an audio time series,
     feature matrix, or filename.
@@ -758,12 +660,6 @@ def get_duration(
         As in ``load``, this can also be an integer or open file-handle
         that can be processed by ``soundfile``.
 
-    filename : Deprecated
-        Equivalent to ``path``
-
-        .. warning:: This parameter has been renamed to ``path`` in 0.10.
-            Support for ``filename=`` will be removed in 1.0.
-
     Returns
     -------
     d : float >= 0
@@ -782,28 +678,8 @@ def get_duration(
     then ``path`` takes precedence over ``S``, and ``S`` takes precedence over
     ``(y, sr)``.
     """
-    path = rename_kw(
-        old_name="filename",
-        old_value=filename,
-        new_name="path",
-        new_value=path,
-        version_deprecated="0.10.0",
-        version_removed="1.0",
-    )
-
     if path is not None:
-        try:
-            return sf.info(path).duration  # type: ignore
-        except sf.SoundFileRuntimeError:
-            warnings.warn(
-                "PySoundFile failed. Trying audioread instead."
-                "\n\tAudioread support is deprecated in librosa 0.10.0"
-                " and will be removed in version 1.0.",
-                stacklevel=2,
-                category=FutureWarning,
-            )
-            with audioread.audio_open(path) as fdesc:
-                return fdesc.duration  # type: ignore
+        return sf.info(path).duration  # type: ignore
 
     if y is None:
         if S is None:
@@ -846,21 +722,10 @@ def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
     >>> librosa.get_samplerate(path)
     22050
     """
-    try:
-        if isinstance(path, sf.SoundFile):
-            return path.samplerate  # type: ignore
+    if isinstance(path, sf.SoundFile):
+        return path.samplerate  # type: ignore
 
-        return sf.info(path).samplerate  # type: ignore
-    except sf.SoundFileRuntimeError:
-        warnings.warn(
-            "PySoundFile failed. Trying audioread instead."
-            "\n\tAudioread support is deprecated in librosa 0.10.0"
-            " and will be removed in version 1.0.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        with audioread.audio_open(path) as fdesc:
-            return fdesc.samplerate  # type: ignore
+    return sf.info(path).samplerate  # type: ignore
 
 
 @cache(level=20)
