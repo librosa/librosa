@@ -81,6 +81,16 @@ jobs:
             cp docs/docsite-index-redirect.html build/html/index.html
             ln -srf build/html/$(./scripts/get_latest_release.sh) build/html/latest  # auto-link the latest tag
 
+        - name: Upload compiled documentation site
+          if: github.event_name == 'pull_request'
+          uses: actions/upload-artifact@v4
+          with:
+            name: librosa-docs-${{ github.event.pull_request_number }}
+            path: build/html
+            retention-days: 7
+            overwrite: true
+            include-hidden-files: true
+
         - name: Link checking
           id: linkcheck
           shell: bash -l {0}
