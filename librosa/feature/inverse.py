@@ -284,7 +284,7 @@ def mfcc_to_audio(
     *,
     n_mels: int = 128,
     dct_type: _DCTType = 2,
-    norm: _DCTNorm = "ortho",
+    norm: Optional[_DCTNorm] = "ortho",
     ref: float = 1.0,
     lifter: float = 0,
     **kwargs: Any,
