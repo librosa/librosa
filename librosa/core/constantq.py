@@ -7,7 +7,6 @@ from numba import jit
 
 from . import audio
 from .intervals import interval_frequencies
-from .fft import get_fftlib
 from .convert import cqt_frequencies, note_to_hz
 from .spectrum import stft, istft
 from .pitch import estimate_tuning
@@ -1079,8 +1078,8 @@ def __vqt_filter_fft(
     basis *= lengths[:, np.newaxis] / float(n_fft)
 
     # FFT and retain only the non-negative frequencies
-    fft = get_fftlib()
-    fft_basis = fft.fft(basis, n=n_fft, axis=1)[:, : (n_fft // 2) + 1]
+    # TODO: can we actually use rfft here even if the basis is complex?
+    fft_basis = scipy.fft.fft(basis, n=n_fft, axis=1)[:, : (n_fft // 2) + 1]
 
     # sparsify the basis
     fft_basis = util.sparsify_rows(fft_basis, quantile=sparsity, dtype=dtype)

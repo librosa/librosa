@@ -2191,28 +2191,6 @@ def test_pcen_stream_multi(axis, rng):
     assert np.allclose(pfull, np.concatenate([p1, p2], axis=axis))
 
 
-def test_get_fftlib():
-    import scipy.fft as fft
-
-    assert librosa.get_fftlib() is fft
-
-
-def test_set_fftlib():
-    with pytest.warns(FutureWarning):
-        librosa.set_fftlib("foo")  # type: ignore
-    assert librosa.get_fftlib() == "foo"  # type: ignore
-    with pytest.warns(FutureWarning):
-        librosa.set_fftlib()
-
-
-def test_reset_fftlib():
-    import scipy.fft as fft
-
-    with pytest.warns(FutureWarning):
-        librosa.set_fftlib()
-    assert librosa.get_fftlib() is fft
-
-
 @pytest.fixture(scope="module")
 def y_chirp():
     sr = 22050

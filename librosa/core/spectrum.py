@@ -13,7 +13,6 @@ import scipy.interpolate
 from numba import jit
 
 from . import convert
-from .fft import get_fftlib
 from .audio import resample
 from .._cache import cache
 from .. import util
@@ -337,8 +336,6 @@ def stft(
         # We have no extra frames
         extra = 0
 
-    fft = get_fftlib()
-
     if dtype is None:
         dtype = util.dtype_r2c(y.dtype)
 
@@ -371,11 +368,11 @@ def stft(
     # Fill in the warm-up
     if center and extra > 0:
         off_start = y_frames_pre.shape[-1]
-        stft_matrix[..., :off_start] = fft.rfft(fft_window * y_frames_pre, axis=-2)
+        stft_matrix[..., :off_start] = scipy.fft.rfft(fft_window * y_frames_pre, axis=-2)
 
         off_end = y_frames_post.shape[-1]
         if off_end > 0:
-            stft_matrix[..., -off_end:] = fft.rfft(fft_window * y_frames_post, axis=-2)
+            stft_matrix[..., -off_end:] = scipy.fft.rfft(fft_window * y_frames_post, axis=-2)
     else:
         off_start = 0
 
@@ -387,7 +384,7 @@ def stft(
     for bl_s in range(0, y_frames.shape[-1], n_columns):
         bl_t = min(bl_s + n_columns, y_frames.shape[-1])
 
-        stft_matrix[..., bl_s + off_start : bl_t + off_start] = fft.rfft(
+        stft_matrix[..., bl_s + off_start : bl_t + off_start] = scipy.fft.rfft(
             fft_window * y_frames[..., bl_s:bl_t], axis=-2
         )
     return stft_matrix
@@ -555,8 +552,6 @@ def istft(
         # Since we'll be doing overlap-add here, this needs to be initialized to zero.
         y.fill(0.0)
 
-    fft = get_fftlib()
-
     if center:
         # First frame that does not depend on padding
         #  k * hop_length - n_fft//2 >= 0
@@ -566,7 +561,7 @@ def istft(
         start_frame = int(np.ceil((n_fft // 2) / hop_length))
 
         # Do overlap-add on the head block
-        ytmp = ifft_window * fft.irfft(stft_matrix[..., :start_frame], n=n_fft, axis=-2)
+        ytmp = ifft_window * scipy.fft.irfft(stft_matrix[..., :start_frame], n=n_fft, axis=-2)
 
         shape[-1] = n_fft + hop_length * (start_frame - 1)
         head_buffer = np.zeros(shape, dtype=dtype)
@@ -598,7 +593,7 @@ def istft(
         bl_t = min(bl_s + n_columns, n_frames)
 
         # invert the block and apply the window function
-        ytmp = ifft_window * fft.irfft(stft_matrix[..., bl_s:bl_t], n=n_fft, axis=-2)
+        ytmp = ifft_window * scipy.fft.irfft(stft_matrix[..., bl_s:bl_t], n=n_fft, axis=-2)
 
         # Overlap-add the istft block starting at the i'th frame
         __overlap_add(y[..., frame * hop_length + offset :], ytmp, hop_length)
@@ -2341,8 +2336,7 @@ def fmt(
 
     # Apply the window and fft
     # Normalization is absorbed into the window here for expedience
-    fft = get_fftlib()
-    result: np.ndarray = fft.rfft(
+    result: np.ndarray = scipy.fft.rfft(
         y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt), axis=axis
     )
     return result

@@ -4,8 +4,8 @@
 
 import warnings
 import numpy as np
+import scipy
 
-from ..core.fft import get_fftlib
 from ..util.exceptions import ParameterError
 from ..core.spectrum import griffinlim
 from ..core.spectrum import db_to_power
@@ -274,8 +274,7 @@ def mfcc_to_mel(
     elif lifter != 0:
         raise ParameterError("MFCC to mel lifter must be a non-negative number.")
 
-    fft = get_fftlib()
-    logmel = fft.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
+    logmel = scipy.fft.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
     melspec: np.ndarray = db_to_power(logmel, ref=ref)
     return melspec
 

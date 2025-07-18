@@ -100,11 +100,6 @@ from .harmonic import (
     f0_harmonics as f0_harmonics,
 )
 
-from .fft import (
-    get_fftlib as get_fftlib,
-    set_fftlib as set_fftlib,
-)
-
 from .notation import (
     key_to_degrees as key_to_degrees,
     key_to_notes as key_to_notes,

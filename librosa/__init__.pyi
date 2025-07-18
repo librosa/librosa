@@ -106,8 +106,6 @@ from .core import (
     salience as salience,
     interp_harmonics as interp_harmonics,
     f0_harmonics as f0_harmonics,
-    get_fftlib as get_fftlib,
-    set_fftlib as set_fftlib,
     key_to_degrees as key_to_degrees,
     key_to_notes as key_to_notes,
     mela_to_degrees as mela_to_degrees,

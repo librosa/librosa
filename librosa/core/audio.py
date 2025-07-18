@@ -15,7 +15,6 @@ import soxr
 import lazy_loader as lazy
 
 from numba import jit, stencil, guvectorize
-from .fft import get_fftlib
 from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
 from .. import util
@@ -778,8 +777,6 @@ def autocorrelate(
 
     max_size = int(min(max_size, y.shape[axis]))
 
-    fft = get_fftlib()
-
     real = not np.iscomplexobj(y)
 
     # Pad out the signal to support full-length auto-correlation
@@ -787,16 +784,16 @@ def autocorrelate(
 
     if real:
         # Compute the power spectrum along the chosen axis
-        powspec = util.abs2(fft.rfft(y, n=n_pad, axis=axis))
+        powspec = util.abs2(scipy.fft.rfft(y, n=n_pad, axis=axis))
 
         # Convert back to time domain
-        autocorr = fft.irfft(powspec, n=n_pad, axis=axis)
+        autocorr = scipy.fft.irfft(powspec, n=n_pad, axis=axis)
     else:
         # Compute the power spectrum along the chosen axis
-        powspec = util.abs2(fft.fft(y, n=n_pad, axis=axis))
+        powspec = util.abs2(scipy.fft.fft(y, n=n_pad, axis=axis))
 
         # Convert back to time domain
-        autocorr = fft.ifft(powspec, n=n_pad, axis=axis)
+        autocorr = scipy.fft.ifft(powspec, n=n_pad, axis=axis)
 
     # Slice down to max_size
     subslice = [slice(None)] * autocorr.ndim
