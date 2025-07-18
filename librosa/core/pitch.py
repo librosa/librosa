@@ -480,7 +480,6 @@ def yin(
     fmax: float,
     sr: float = 22050,
     frame_length: int = 2048,
-    win_length: Optional[Union[int, Deprecated]] = Deprecated(),
     hop_length: Optional[int] = None,
     trough_threshold: float = 0.1,
     center: bool = True,
@@ -543,12 +542,6 @@ def yin(
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
 
-    win_length : Deprecated
-        length of the window for calculating autocorrelation in samples.
-
-        .. warning:: This parameter is deprecated as of 0.11.0 and
-            will be removed in 1.0.
-
     Returns
     -------
     f0: np.ndarray [shape=(..., n_frames)]
@@ -572,14 +565,6 @@ def yin(
     """
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
-
-    if not isinstance(win_length, Deprecated):
-        warnings.warn(
-            "The win_length parameter has been deprecated in version 0.11.0 "
-            "and has no effect. It will be removed in version 1.0.0.",
-            category=FutureWarning,
-            stacklevel=3,
-        )
 
     __check_yin_params(
         sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length
@@ -656,7 +641,6 @@ def pyin(
     fmax: float,
     sr: float = 22050,
     frame_length: int = 2048,
-    win_length: Optional[Union[int, Deprecated]] = Deprecated(),
     hop_length: Optional[int] = None,
     n_thresholds: int = 100,
     beta_parameters: Tuple[float, float] = (2, 18),
@@ -751,12 +735,6 @@ def pyin(
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
 
-    win_length : Deprecated
-        length of the window for calculating autocorrelation in samples.
-
-        .. warning:: This parameter is deprecated as of 0.11.0 and
-            will be removed in 1.0.
-
     Returns
     -------
     f0: np.ndarray [shape=(..., n_frames)]
@@ -796,14 +774,6 @@ def pyin(
     """
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
-
-    if not isinstance(win_length, Deprecated):
-        warnings.warn(
-            "The win_length parameter has been deprecated in version 0.11.0 "
-            "and has no effect. It will be removed in version 1.0.0.",
-            category=FutureWarning,
-            stacklevel=3,
-        )
 
     __check_yin_params(
         sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length
