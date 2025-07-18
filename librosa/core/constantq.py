@@ -48,7 +48,7 @@ def cqt(
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    res_type: Optional[str] = "soxr_hq",
+    res_type: str = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
     """Compute the constant-Q transform of an audio signal.
@@ -782,7 +782,7 @@ def vqt(
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    res_type: Optional[str] = "soxr_hq",
+    res_type: str = "soxr_hq",
     dtype: Optional[DTypeLike] = None,
 ) -> np.ndarray:
     """Compute the variable-Q transform of an audio signal.
@@ -975,15 +975,6 @@ def vqt(
             f"Wavelet basis with max frequency={fmax_t} would exceed the Nyquist frequency={nyquist}. "
             "Try reducing the number of frequency bins."
         )
-
-    if res_type is None:
-        warnings.warn(
-            "Support for VQT with res_type=None is deprecated in librosa 0.10\n"
-            "and will be removed in version 1.0.",
-            category=FutureWarning,
-            stacklevel=2,
-        )
-        res_type = "soxr_hq"
 
     y, sr, hop_length = __early_downsample(
         y, sr, hop_length, res_type, n_octaves, nyquist, filter_cutoff, scale

@@ -300,9 +300,7 @@ def test_griffinlim_multi(y_multi):
 
 
 @pytest.mark.parametrize("scale", [False, True])
-@pytest.mark.parametrize("res_type", [None, "polyphase"])
-# The following warning is fine in context here
-@pytest.mark.filterwarnings("ignore:Support for VQT with res_type=None")
+@pytest.mark.parametrize("res_type", ["polyphase"])
 def test_cqt_multi(y_multi, scale, res_type):
 
     y, sr = y_multi
@@ -321,8 +319,7 @@ def test_cqt_multi(y_multi, scale, res_type):
 
 
 @pytest.mark.parametrize("scale", [False, True])
-@pytest.mark.parametrize("res_type", [None, "polyphase"])
-@pytest.mark.filterwarnings("ignore:Support for VQT with res_type=None")
+@pytest.mark.parametrize("res_type", ["polyphase"])
 def test_hybrid_cqt_multi(y_multi, scale, res_type):
 
     y, sr = y_multi

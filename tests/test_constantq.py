@@ -182,46 +182,6 @@ def test_cqt(
         assert np.isclose(peak_frequency, 110)
 
 
-@pytest.mark.parametrize("fmin", [librosa.note_to_hz("C1")])
-@pytest.mark.parametrize("bins_per_octave", [12])
-@pytest.mark.parametrize("n_bins", [88])
-def test_cqt_early_downsample(y_cqt_110, sr_cqt, n_bins, fmin, bins_per_octave):
-    with pytest.warns(FutureWarning, match="Support for VQT with res_type=None"):
-        C = librosa.cqt(
-            y=y_cqt_110,
-            sr=sr_cqt,
-            fmin=fmin,
-            n_bins=n_bins,
-            bins_per_octave=bins_per_octave,
-            res_type=None,
-        )
-
-    # type is complex
-    assert np.iscomplexobj(C)
-
-    # number of bins is correct
-    assert C.shape[0] == n_bins
-
-    if fmin is None:
-        fmin = librosa.note_to_hz("C1")
-
-    # check for peaks if 110 is within range
-    if 110 <= fmin * 2 ** (n_bins / bins_per_octave):
-        peaks = np.argmax(np.abs(C), axis=0)
-
-        # This is our most common peak index in the CQT spectrum
-        # we use the mode here over frames to sidestep transient effects
-        # at the beginning and end of the CQT
-        # common_peak = scipy.stats.mode(peaks, keepdims=True)[0][0]
-        common_peak = np.argmax(np.bincount(peaks))
-
-        # Convert peak index to frequency
-        peak_frequency = fmin * 2 ** (common_peak / bins_per_octave)
-
-        # Check that it matches 110, which is an analysis frequency
-        assert np.isclose(peak_frequency, 110)
-
-
 @pytest.mark.parametrize("hop_length", [256, 512])
 def test_cqt_frame_rate(y_cqt_110, sr_cqt, hop_length):
 
