@@ -1,10 +1,16 @@
 from __future__ import annotations
 
-from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any, Sequence
+from collections.abc import Sequence
+from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any
 from typing_extensions import Literal, Never
 import numpy as np
 from numpy.typing import ArrayLike
 import scipy.sparse as sp
+
+
+# RNG types
+SeedLike = Union[int, np.integer, Sequence[int], np.random.SeedSequence]
+RNGLike = Union[np.random.Generator, np.random.BitGenerator]
 
 
 _WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]

@@ -18,7 +18,7 @@ from .audio import resample
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
-from ..util.deprecation import Deprecated
+from ..util.deprecation import Deprecated, rename_kw
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
@@ -32,7 +32,9 @@ from .._typing import (
     _SequenceLike,
     _ScalarOrSequence,
     _ComplexLike_co,
-    _FloatLike_co
+    _FloatLike_co,
+    SeedLike,
+    RNGLike,
 )
 
 __all__ = [
@@ -1481,7 +1483,9 @@ def phase_vocoder(
         raise ParameterError("t_out values must be in the range [0, D.shape[-1])")
 
     if np.any(np.diff(t_out) < 0):
-        warnings.warn("t_out is not monotonic; phase estimation may be unstable", stacklevel=2)
+        warnings.warn(
+            "t_out is not monotonic; phase estimation may be unstable", stacklevel=2
+        )
 
     i0 = np.floor(t_out).astype(int)
     i1 = np.minimum(i0 + 1, n_frames - 1)
@@ -1715,8 +1719,8 @@ def power_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> np.floating[Any]:
-    ...
+) -> np.floating[Any]: ...
+
 
 @overload
 def power_to_db(
@@ -1725,8 +1729,8 @@ def power_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
+
 
 @overload
 def power_to_db(
@@ -1735,8 +1739,8 @@ def power_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> Union[np.floating[Any], np.ndarray]:
-    ...
+) -> Union[np.floating[Any], np.ndarray]: ...
+
 
 @cache(level=30)
 def power_to_db(
@@ -1871,27 +1875,29 @@ def db_to_power(
     S_db: _FloatLike_co,
     *,
     ref: float = ...,
-) -> np.floating[Any]:
-    ...
+) -> np.floating[Any]: ...
+
 
 @overload
 def db_to_power(
-        S_db: np.ndarray,
+    S_db: np.ndarray,
     *,
     ref: float = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
+
 
 @overload
 def db_to_power(
     S_db: Union[_FloatLike_co, np.ndarray],
     *,
     ref: float = ...,
-) -> Union[np.floating[Any], np.ndarray]:
-    ...
+) -> Union[np.floating[Any], np.ndarray]: ...
+
 
 @cache(level=30)
-def db_to_power(S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
+def db_to_power(
+    S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert dB-scale values to a power values.
 
     This effectively inverts ``power_to_db``::
@@ -1924,8 +1930,8 @@ def amplitude_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> np.floating[Any]:
-    ...
+) -> np.floating[Any]: ...
+
 
 @overload
 def amplitude_to_db(
@@ -1934,8 +1940,8 @@ def amplitude_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
+
 
 @overload
 def amplitude_to_db(
@@ -1944,8 +1950,8 @@ def amplitude_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> Union[np.floating[Any], np.ndarray]:
-    ...
+) -> Union[np.floating[Any], np.ndarray]: ...
+
 
 @cache(level=30)
 def amplitude_to_db(
@@ -2022,27 +2028,29 @@ def db_to_amplitude(
     S_db: _FloatLike_co,
     *,
     ref: float = ...,
-) -> np.floating[Any]:
-    ...
+) -> np.floating[Any]: ...
+
 
 @overload
 def db_to_amplitude(
     S_db: np.ndarray,
     *,
     ref: float = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
+
 
 @overload
 def db_to_amplitude(
     S_db: Union[_FloatLike_co, np.ndarray],
     *,
     ref: float = ...,
-) -> Union[np.floating[Any], np.ndarray]:
-    ...
+) -> Union[np.floating[Any], np.ndarray]: ...
+
 
 @cache(level=30)
-def db_to_amplitude(S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
+def db_to_amplitude(
+    S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
@@ -2358,8 +2366,7 @@ def pcen(
     max_axis: Optional[int] = ...,
     zi: Optional[np.ndarray] = ...,
     return_zf: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -2380,8 +2387,7 @@ def pcen(
     max_axis: Optional[int] = ...,
     zi: Optional[np.ndarray] = ...,
     return_zf: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -2402,8 +2408,7 @@ def pcen(
     max_axis: Optional[int] = ...,
     zi: Optional[np.ndarray] = ...,
     return_zf: bool = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
 @cache(level=30)
@@ -2689,9 +2694,10 @@ def griffinlim(
     pad_mode: _PadModeSTFT = "constant",
     momentum: float = 0.99,
     init: Optional[str] = "random",
+    rng: Optional[Union[RNGLike, SeedLike]] = None,
     random_state: Optional[
-        Union[int, np.random.RandomState, np.random.Generator]
-    ] = None,
+        Union[int, np.random.RandomState, np.random.Generator, Deprecated]
+    ] = Deprecated(),
 ) -> np.ndarray:
     """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
 
@@ -2767,7 +2773,15 @@ def griffinlim(
         an initial guess for phase can be provided, or when you want to resume
         Griffin-Lim from a previous output.
 
+    rng : None, int, sequence of int, np.random.Generator, or np.random.RandomState
+        Pseudorandom number generator state. When `rng` is None, a new
+        `numpy.random.Generator` is created using entropy from the
+        operating system. Types other than `numpy.random.Generator` are
+        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+
     random_state : None, int, np.random.RandomState, or np.random.Generator
+        .. warning:: This parameter is deprecated in 1.0.0 and will be removed in 1.2.0.
+
         If int, random_state is the seed used by the random number generator
         for phase initialization.
 
@@ -2775,6 +2789,8 @@ def griffinlim(
         generator itself.
 
         If `None`, defaults to the `np.random.default_rng()` object.
+
+        An exception is raised if both `rng` and `random_state` are provided.
 
     Returns
     -------
@@ -2804,23 +2820,36 @@ def griffinlim(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.waveshow(y, sr=sr, color='b', ax=ax[0])
+    >>> librosa.display.waveshow(y, sr=sr, color='C0', ax=ax[0])
     >>> ax[0].set(title='Original', xlabel=None)
     >>> ax[0].label_outer()
-    >>> librosa.display.waveshow(y_inv, sr=sr, color='g', ax=ax[1])
+    >>> librosa.display.waveshow(y_inv, sr=sr, color='C1', ax=ax[1])
     >>> ax[1].set(title='Griffin-Lim reconstruction', xlabel=None)
     >>> ax[1].label_outer()
-    >>> librosa.display.waveshow(y_istft, sr=sr, color='r', ax=ax[2])
+    >>> librosa.display.waveshow(y_istft, sr=sr, color='C2', ax=ax[2])
     >>> ax[2].set_title('Magnitude-only istft reconstruction')
     """
-    if random_state is None:
-        rng = np.random.default_rng()
-    elif isinstance(random_state, int):
-        rng = np.random.RandomState(seed=random_state)  # type: ignore
-    elif isinstance(random_state, (np.random.RandomState, np.random.Generator)):
-        rng = random_state  # type: ignore
-    else:
-        raise ParameterError(f"Unsupported random_state={random_state!r}")
+    if not isinstance(random_state, Deprecated):
+        if rng is not None:
+            raise ParameterError(
+                f"Both random_state={random_state!r} and rng={rng!r} were provided. "
+                "Please use only the rng parameter."
+            )
+
+        # Otherwise transfer the state object and throw a deprecation warning
+        rng = rename_kw(
+            old_name="random_state",
+            old_value=random_state,
+            new_name="rng",
+            new_value=rng,
+            version_deprecated="1.0.0",
+            version_removed="1.2.0",
+        )
+
+    # Coerce the various input types to a proper Generator
+    # This branch is necessary until we bump to numpy 2.2
+    if not isinstance(rng, np.random.RandomState):
+        rng = np.random.default_rng(rng)
 
     if momentum > 1:
         warnings.warn(

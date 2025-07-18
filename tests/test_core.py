@@ -2311,15 +2311,15 @@ def test_griffinlim_momentum(y_chirp, momentum):
     # No value tests here, just ensuring that it passes cleanly
 
 
-@pytest.mark.parametrize("random_state", [None, 0, np.random.RandomState()])
-def test_griffinlim_state(y_chirp, random_state):
+@pytest.mark.parametrize("rng", [None, 0, np.random.RandomState()])
+def test_griffinlim_state(y_chirp, rng):
     D = librosa.stft(y_chirp)
-    y_rec = librosa.griffinlim(np.abs(D), random_state=random_state, n_iter=1)
+    y_rec = librosa.griffinlim(np.abs(D), rng=rng, n_iter=1)
 
-    y_rec2 = librosa.griffinlim(np.abs(D), random_state=random_state, n_iter=1)
+    y_rec2 = librosa.griffinlim(np.abs(D), rng=rng, n_iter=1)
 
     # Ensure that seeding with a constant gives us consistent values
-    if not isinstance(random_state, np.random.RandomState) and random_state is not None:
+    if not isinstance(rng, np.random.RandomState) and rng is not None:
         assert np.allclose(y_rec, y_rec2)
 
 
@@ -2329,10 +2329,29 @@ def test_griffinlim_badinit():
     librosa.griffinlim(x, init="garbage")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=TypeError)
 def test_griffinlim_badrng():
     x = np.zeros((33, 3))
-    librosa.griffinlim(x, random_state="garbage")  # type: ignore
+    librosa.griffinlim(x, rng="garbage")  # type: ignore
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_griffinlim_oldrng():
+    x = np.zeros((33, 3))
+    # We can't have both parameters set
+    librosa.griffinlim(x, rng=0, random_state=0)
+
+
+def test_griffinlim_deprecated_randomstate(y_chirp):
+    # Test that the deprecated random_state argument raises a warning
+    D = librosa.stft(y=y_chirp)
+    with pytest.warns(FutureWarning, match="renamed to 'rng'"):
+        y1 = librosa.griffinlim(
+            np.abs(D), n_iter=2, random_state=5,
+        )
+    # And verify that it produces the same output as the new rng argument
+    y2 = librosa.griffinlim(np.abs(D), n_iter=2, rng=5)
+    assert np.allclose(y1, y2)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -2737,7 +2756,7 @@ def test_phase_vocoder_fixed_rate(rate, rng):
     if rate >= 1:
         assert np.allclose(np.abs(D[:, ::rate]), np.abs(D_stretch))
     else:
-        assert np.allclose(np.abs(D), np.abs(D_stretch[:, ::int(1 / rate)]))
+        assert np.allclose(np.abs(D), np.abs(D_stretch[:, :: int(1 / rate)]))
 
 
 def test_phase_vocoder_variable_rate(rng):
@@ -2753,7 +2772,7 @@ def test_phase_vocoder_variable_rate(rng):
     D_stretch = librosa.phase_vocoder(D, t_out=t_out)
 
     assert D_stretch.shape == (D.shape[0], len(t_out))
-    assert np.allclose(np.abs(D[:, :-2]), np.abs(D_stretch[:, ::int(1 / rate)]))
+    assert np.allclose(np.abs(D[:, :-2]), np.abs(D_stretch[:, :: int(1 / rate)]))
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -2793,6 +2812,7 @@ def test_phase_vocoder_nonmonotone():
 
     with pytest.warns(UserWarning, match="t_out is not monotonic"):
         D_stretch = librosa.phase_vocoder(D, t_out=t_out)
+
 
 @pytest.mark.parametrize("rate", [0, -1])
 @pytest.mark.xfail(raises=librosa.ParameterError)
