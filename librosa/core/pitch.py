@@ -38,7 +38,7 @@ def estimate_tuning(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio signal. Multi-channel is supported..
+        audio signal. Multi-channel is supported.
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
     S : np.ndarray [shape=(..., d, t)] or None
@@ -395,7 +395,8 @@ def _cumulative_mean_normalized_difference(
     k = slice(1, max_period + 1)
     yin_frames[..., 0, :] = 0
     yin_frames[..., k, :] = (
-        2 * (acf_frames[..., 0:1, :] - acf_frames[..., k, :]) - yin_frames[..., :k.stop-1, :]
+        2 * (acf_frames[..., 0:1, :] - acf_frames[..., k, :])
+        - yin_frames[..., : k.stop - 1, :]
     )
 
     # Cumulative mean normalized difference function.
@@ -403,9 +404,7 @@ def _cumulative_mean_normalized_difference(
     # broadcast this shape to have leading ones
     k_range = util.expand_to(np.r_[k], ndim=yin_frames.ndim, axes=-2)
 
-    cumulative_mean = (
-        np.cumsum(yin_frames[..., k, :], axis=-2) / k_range
-    )
+    cumulative_mean = np.cumsum(yin_frames[..., k, :], axis=-2) / k_range
     yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
     yin_frames: np.ndarray = yin_numerator / (
         yin_denominator + util.tiny(yin_denominator)
@@ -566,9 +565,7 @@ def yin(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
-    __check_yin_params(
-        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length
-    )
+    __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length)
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
@@ -775,9 +772,7 @@ def pyin(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
-    __check_yin_params(
-        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length
-    )
+    __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length)
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
@@ -940,9 +935,7 @@ def __pyin_helper(
     return observation_probs[np.newaxis], voiced_prob
 
 
-def __check_yin_params(
-    *, sr: float, fmax: float, fmin: float, frame_length: int
-):
+def __check_yin_params(*, sr: float, fmax: float, fmin: float, frame_length: int):
     """Check the feasibility of yin/pyin parameters against
     the following conditions:
 
