@@ -56,8 +56,6 @@ from ._typing import _WindowSpec, _FloatLike_co
 __all__ = [
     "mel",
     "chroma",
-    "constant_q",
-    "constant_q_lengths",
     "cq_to_chroma",
     "window_bandwidth",
     "get_window",

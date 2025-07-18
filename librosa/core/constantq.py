@@ -3,6 +3,7 @@
 """Constant-Q transforms"""
 import warnings
 import numpy as np
+import scipy
 from numba import jit
 
 from . import audio
