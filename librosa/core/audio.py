@@ -781,7 +781,8 @@ def autocorrelate(
 
     # Pad out the signal to support full-length auto-correlation
     n_pad = scipy.fft.next_fast_len(2 * y.shape[axis] - 1, real=real)
-
+    
+    autocorr: np.ndarray
     if real:
         # Compute the power spectrum along the chosen axis
         powspec = util.abs2(scipy.fft.rfft(y, n=n_pad, axis=axis))

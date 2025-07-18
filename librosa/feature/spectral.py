@@ -18,7 +18,7 @@ from ..core.pitch import estimate_tuning
 from typing import Any, Optional, Union, Collection
 from typing_extensions import Literal
 from numpy.typing import DTypeLike
-from .._typing import _FloatLike_co, _WindowSpec, _PadMode, _PadModeSTFT
+from .._typing import _FloatLike_co, _WindowSpec, _PadMode, _PadModeSTFT, _DCTType, _DCTNorm
 
 
 __all__ = [
@@ -1835,8 +1835,8 @@ def mfcc(
     sr: float = 22050,
     S: Optional[np.ndarray] = None,
     n_mfcc: int = 20,
-    dct_type: int = 2,
-    norm: Optional[str] = "ortho",
+    dct_type: _DCTType = 2,
+    norm: Optional[_DCTNorm] = "ortho",
     lifter: float = 0,
     mel_norm: Optional[Union[Literal["slaney"], float]] = "slaney",
     **kwargs: Any,

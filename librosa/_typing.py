@@ -115,3 +115,8 @@ _InterpKind = Literal[
     "previous",
     "next",
 ]
+
+
+# DCT normalization modes
+_DCTNorm = Literal["backward", "ortho", "forward"]
+_DCTType = Literal[1, 2, 3, 4]
