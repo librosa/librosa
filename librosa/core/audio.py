@@ -412,6 +412,73 @@ def to_mono(y: np.ndarray) -> np.ndarray:
     return y
 
 
+def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad: bool = True) -> np.ndarray:
+    """Combine two signals into a stereo signal.
+
+
+    Parameters
+    ----------
+    left : np.ndarray [shape=(..., n)]
+        Left channel signal. Multi-channel is supported.
+    right : np.ndarray [shape=(..., n)]
+        Right channel signal. Multi-channel is supported.
+    downmix : bool
+        If `True`, downmix the left and right channels to mono before combining.
+        If `False`, the left and right signals are additively combined.
+    pad : bool
+        If `True`, pad the shorter channel with zeros to match the length of the longer channel.
+        If `False`, the longer channel is trimmed to match the length of the shorter channel.
+    Returns
+    -------
+    y_stereo : np.ndarray [shape=(2, n)]
+        Stereo signal with left channel in the first row and right channel in the second row.
+
+    See Also
+    --------
+    to_mono
+    to_multi
+    util.fix_length
+
+    Examples
+    --------
+
+    """
+    # First, deal with padding
+    if pad:
+        size = max(left.shape[-1], right.shape[-1])
+    else:
+        size = min(left.shape[-1], right.shape[-1])
+
+    # This implements either padding or trimming
+    left = util.fix_length(left, size=size, axis=-1)
+    right = util.fix_length(right, size=size, axis=-1)
+
+    # Get a compatible dtype for both channels
+    dtype = np.promote_types(left.dtype, right.dtype)
+
+    # Create an empty stereo output buffer
+    output = np.zeros((2, size), dtype=dtype)
+    if downmix:
+        output[0] = to_mono(left)
+        output[1] = to_mono(right)
+    else:
+        if left.ndim == 1:
+            output[0] = left
+        elif left.ndim == 2 and left.shape[0] == 2:
+            output[:] = left
+        else:
+            raise ParameterError(f"left input has unsupported shape {left.shape} for downmix=False")
+
+        if right.ndim == 1:
+            output[1] += right
+        elif right.ndim == 2 and right.shape[0] == 2:
+            output[:] += right
+        else:
+            raise ParameterError(f"right input has unsupported shape {left.shape} for downmix=False")
+
+    return output
+
+
 @cache(level=20)
 def resample(
     y: np.ndarray,
