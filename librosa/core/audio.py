@@ -555,7 +555,7 @@ def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad:
         elif right.ndim == 2 and right.shape[0] == 2:
             output[:] += right
         else:
-            raise ParameterError(f"right input has unsupported shape {left.shape} for downmix=False")
+            raise ParameterError(f"right input has unsupported shape {right.shape} for downmix=False")
 
     return output
 
