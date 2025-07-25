@@ -384,7 +384,7 @@ def to_mono(*signals: np.ndarray, pad: bool = True) -> np.ndarray:
 
     Parameters
     ----------
-    signals : np.ndarray [shape=(..., n)]
+    *signals : np.ndarray [shape=(..., n)]
         One or more signals to convert to mono.
         Each input signal can be mono or multi-channel, and they need not all have
         identical lengths.
@@ -557,16 +557,14 @@ def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True) -> np
 
     Parameters
     ----------
-    signals : np.ndarray [shape=(..., n)]
+    *signals : np.ndarray [shape=(..., n)]
         One or more signals to combine into a multi-channel signal.
         Each input signal can be mono or multi-channel, and they need not all have
         identical lengths.
-
     downmix : bool
         If `True`, downmix each input signal to mono before combining.
         If `False`, the input signals are additively combined, and all must have
         identical channel layouts (shape excluding the trailing length dimension).
-
     pad : bool
         If `True`, pad the output to match the length of the longest input signal.
         If `False`, trim the output to match the length of the shortest input signal.
