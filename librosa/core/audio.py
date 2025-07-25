@@ -35,6 +35,7 @@ __all__ = [
     "stream",
     "to_mono",
     "to_stereo",
+    "to_multi",
     "resample",
     "get_duration",
     "get_samplerate",
@@ -467,6 +468,7 @@ def to_mono(*signals: np.ndarray, pad: bool = True) -> np.ndarray:
     return output
 
 
+@cache(level=20)
 def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad: bool = True) -> np.ndarray:
     """Combine two signals into a stereo signal.
 
@@ -545,6 +547,91 @@ def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad:
             output[:] += right
         else:
             raise ParameterError(f"right input has unsupported shape {left.shape} for downmix=False")
+
+    return output
+
+
+@cache(level=20)
+def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True) -> np.ndarray:
+    """Combine multiple signals into a multi-channel signal.
+
+    Parameters
+    ----------
+    signals : np.ndarray [shape=(..., n)]
+        One or more signals to combine into a multi-channel signal.
+        Each input signal can be mono or multi-channel, and they need not all have
+        identical lengths.
+
+    downmix : bool
+        If `True`, downmix each input signal to mono before combining.
+        If `False`, the input signals are additively combined, and all must have
+        identical channel layouts (shape excluding the trailing length dimension).
+
+    pad : bool
+        If `True`, pad the output to match the length of the longest input signal.
+        If `False`, trim the output to match the length of the shortest input signal.
+
+    Returns
+    -------
+    y_multi : np.ndarray [shape=(m, n_out) or shape=(..., n_out)]
+        Multi-channel combination of the input signals, where `m` corresponds
+        to the number of signals (if `downmix=True`), and `n_out` is the length
+        of the output signal determined by the padding mode.
+
+    See Also
+    --------
+    to_mono
+    to_stereo
+    util.fix_length
+
+    Examples
+    --------
+    Combine three mono signals of different lengths into a multi-channel signal
+
+    >>> y1 = librosa.tone(440.0, sr=22050, duration=1.0)
+    >>> y2 = librosa.tone(550.0, sr=22050, duration=1.0)
+    >>> y3 = librosa.tone(660.0, sr=22050, duration=2.0)
+    >>> y_multi = librosa.to_multi(y1, y2, y3, pad=True)
+    >>> y_multi.shape
+    (3, 44100)
+    """
+    # Validate the buffer(s) and identify lengths, dtypes, etc
+    n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
+    dtype = signals[0].dtype
+    if downmix:
+        # If all channels are downmixed to mono,
+        # then the layout will be (n_signals, n_out)
+        n_channels = tuple((len(signals),))
+    else:
+        # If we're not downmixing, then all have to have
+        # identical channel layout
+        n_channels = tuple(y.shape[:-1])
+
+    for y in signals:
+        util.valid_audio(y)
+        n_min = min(n_min, y.shape[-1])
+        n_max = max(n_max, y.shape[-1])
+        dtype = np.promote_types(dtype, y.dtype)
+        if not downmix and y.shape[:-1] != n_channels:
+            raise ParameterError(f"Cannot combine signals with different channel layouts {y.shape[:-1]} when downmix=False")
+
+    # Allocate and initialize the output buffer
+    if pad:
+        size = n_max
+    else:
+        size = n_min
+
+    output = np.zeros((list(n_channels) + (size,)), dtype=dtype)
+    if downmix:
+        # Downmix each signal to mono and mix into the output
+        for i, y in enumerate(signals):
+            output[i] = util.fix_length(to_mono(y), size=size, axis=-1)
+    else:
+        # Truncate and mix into the output
+        for i, y in enumerate(signals):
+            output += util.fix_length(y, size=size, axis=-1)
+        # Divide by the number of input signals given
+        output /= len(signals)
 
     return output
 

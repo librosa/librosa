@@ -69,6 +69,7 @@ from .core import (
     resample as resample,
     to_mono as to_mono,
     to_stereo as to_stereo,
+    to_multi as to_multi,
     get_duration as get_duration,
     get_samplerate as get_samplerate,
     autocorrelate as autocorrelate,
