@@ -417,7 +417,6 @@ def to_mono(*signals: np.ndarray, pad: bool = True) -> np.ndarray:
         >>> y_mono = librosa.to_mono(y1, y2)
         >>> y_mono = librosa.to_mono(np.vstack((y1, y2))
 
-
     See Also
     --------
     to_stereo
