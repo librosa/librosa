@@ -388,9 +388,11 @@ def to_mono(*signals: np.ndarray, pad: bool = True) -> np.ndarray:
         One or more signals to convert to mono.
         Each input signal can be mono or multi-channel, and they need not all have
         identical lengths.
+
     pad : bool
         If `True`, pad the output to match the length of the longest input:
         `n_out = max(y.shape[-1] for y in signals)`.
+
         If `False`, trim the output to match the length of the shortest input:
         `n_out = min(y.shape[-1] for y in signals)`.
 
@@ -476,11 +478,15 @@ def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad:
     ----------
     left : np.ndarray [shape=(..., n)]
         Left channel signal. Multi-channel is supported.
+
     right : np.ndarray [shape=(..., m)]
         Right channel signal. Multi-channel is supported.
+
     downmix : bool
         If `True`, downmix the left and right channels to mono before combining.
+
         If `False`, the left and right signals are additively combined.
+
     pad : bool
         If `True`, pad the shorter channel with zeros to match the length of the longer channel.
         If `False`, the longer channel is trimmed to match the length of the shorter channel.
@@ -495,6 +501,10 @@ def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad:
     to_mono
     to_multi
     util.fix_length
+
+    Notes
+    -----
+    This function caches at level 20.
 
     Examples
     --------
@@ -561,10 +571,13 @@ def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True) -> np
         One or more signals to combine into a multi-channel signal.
         Each input signal can be mono or multi-channel, and they need not all have
         identical lengths.
+
     downmix : bool
         If `True`, downmix each input signal to mono before combining.
+
         If `False`, the input signals are additively combined, and all must have
         identical channel layouts (shape excluding the trailing length dimension).
+
     pad : bool
         If `True`, pad the output to match the length of the longest input signal.
         If `False`, trim the output to match the length of the shortest input signal.
@@ -581,6 +594,10 @@ def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True) -> np
     to_mono
     to_stereo
     util.fix_length
+
+    Notes
+    -----
+    This function caches at level 20.
 
     Examples
     --------
