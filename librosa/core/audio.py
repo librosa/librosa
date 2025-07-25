@@ -635,7 +635,7 @@ def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True) -> np
     else:
         size = n_min
 
-    output = np.zeros((list(n_channels) + (size,)), dtype=dtype)
+    output = np.zeros((list(n_channels) + [size,]), dtype=dtype)
     if downmix:
         # Downmix each signal to mono and mix into the output
         for i, y in enumerate(signals):
