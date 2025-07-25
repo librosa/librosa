@@ -95,6 +95,26 @@ __all__ = [
 
 # mypy: disable-error-code="attr-defined"
 
+# Nominal center frequencies for oct3 bands
+__OCT3_FREQUENCIES = np.array([
+        16,     20,     25,
+        31.5,   40,     50,
+        63,     80,     100,
+        125,    160,    200,
+        250,    315,    400,
+        500,    630,    800,
+        1000,   1250,   1600,
+        2000,   2500,   3150,
+        4000,   5000,   6300,
+        8000,   10000,  12500,
+        16000,  20000,  25000,
+        # --- ultrasonic up to 800KHz
+        31500,  40000,  50000,
+        63000,  80000,  100000,
+        125000, 160000, 200000,
+        250000, 315000, 400000,
+        500000, 630000, 800000,])
+
 
 class TimeFormatter(mplticker.Formatter):
     """A tick formatter for time axes.
@@ -1439,15 +1459,20 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         "fft_note": __coord_fft_hz,
         "fft_svara": __coord_fft_hz,
         "hz": __coord_fft_hz,
+        "oct3": __coord_fft_hz,
+        "log_oct3": __coord_fft_hz,
         "log": __coord_fft_hz,
         "mel": __coord_mel_hz,
+        "mel_oct3": __coord_mel_hz,
         "cqt": __coord_cqt_hz,
         "cqt_hz": __coord_cqt_hz,
         "cqt_note": __coord_cqt_hz,
         "cqt_svara": __coord_cqt_hz,
+        "cqt_oct3": __coord_cqt_hz,
         "vqt_fjs": __coord_vqt_hz,
         "vqt_hz": __coord_vqt_hz,
         "vqt_note": __coord_vqt_hz,
+        "vqt_oct3": __coord_vqt_hz,
         "chroma": __coord_chroma,
         "chroma_c": __coord_chroma,
         "chroma_h": __coord_chroma,
@@ -1502,7 +1527,7 @@ def __scale_axes(axes, ax_type, which, tempo_min, tempo_max):
         limit = axes.set_ylim
 
     # Map ticker scales
-    if ax_type == "mel":
+    if ax_type in ["mel", "mel_oct3"]:
         mode = "symlog"
         kwargs[thresh] = 1000.0
         kwargs[base] = 2
@@ -1512,14 +1537,16 @@ def __scale_axes(axes, ax_type, which, tempo_min, tempo_max):
         "cqt_hz",
         "cqt_note",
         "cqt_svara",
+        "cqt_oct3",
         "vqt_hz",
         "vqt_note",
         "vqt_fjs",
+        "vqt_oct3",
     ]:
         mode = "log"
         kwargs[base] = 2
 
-    elif ax_type in ["log", "fft_note", "fft_svara"]:
+    elif ax_type in ["log", "fft_note", "fft_svara", "log_oct3"]:
         mode = "symlog"
         kwargs[base] = 2
         kwargs[thresh] = float(core.note_to_hz("C2"))
@@ -1833,6 +1860,15 @@ def __decorate_axis(
     elif ax_type in ["linear", "hz", "fft"]:
         axis.set_major_formatter(mplticker.ScalarFormatter())
         axis.set_label_text("Hz")
+
+    elif ax_type in ["oct3", "mel_oct3", "cqt_oct3", "vqt_oct3", "log_oct3"]:
+        axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=12))
+        #axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=36))
+        axis.set_minor_locator(mplticker.FixedLocator([]))
+        axis.set_major_formatter(mplticker.EngFormatter(useOffset=True, unit='Hz'))
+        axis.set_minor_formatter(mplticker.EngFormatter(useOffset=True, unit='Hz'))
+        axis.set_label_text("Frequency")
+        # TODO: figure out minor locator
 
     elif ax_type in ["frames"]:
         axis.set_label_text("Frames")
