@@ -605,7 +605,7 @@ def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True) -> np
     else:
         # If we're not downmixing, then all have to have
         # identical channel layout
-        n_channels = tuple(y.shape[:-1])
+        n_channels = tuple(signals[0].shape[:-1])
 
     for y in signals:
         util.valid_audio(y)
