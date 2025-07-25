@@ -34,6 +34,7 @@ __all__ = [
     "load",
     "stream",
     "to_mono",
+    "to_stereo",
     "resample",
     "get_duration",
     "get_samplerate",
@@ -377,50 +378,103 @@ def stream(
 
 
 @cache(level=20)
-def to_mono(y: np.ndarray) -> np.ndarray:
+def to_mono(*signals: np.ndarray, pad: bool = True) -> np.ndarray:
     """Convert an audio signal to mono by averaging samples across channels.
 
     Parameters
     ----------
-    y : np.ndarray [shape=(..., n)]
-        audio time series. Multi-channel is supported.
+    signals : np.ndarray [shape=(..., n)]
+        One or more signals to convert to mono.
+        Each input signal can be mono or multi-channel, and they need not all have
+        identical lengths.
+    pad : bool
+        If `True`, pad the output to match the length of the longest input:
+        `n_out = max(y.shape[-1] for y in signals)`.
+        If `False`, trim the output to match the length of the shortest input:
+        `n_out = min(y.shape[-1] for y in signals)`.
 
     Returns
     -------
-    y_mono : np.ndarray [shape=(n,)]
-        ``y`` as a monophonic time-series
+    y_mono : np.ndarray [shape=(n_out,)]
+        All signals averaged together into a single mono signal.
 
     Notes
     -----
     This function caches at level 20.
 
+    The dtype of the output signal will be the most general type that can
+    accommodate all input signals.  If the input signals have different
+    dtypes, the output will be promoted to the most general type.
+
+    .. warning:: Any input signal with more than one channel will be 
+      downmixed to mono prior to being combined with other signals.
+      This means that the following are generally not equivalent
+      for multi-channel inputs `y1` and `y2`:
+
+        >>> y_mono = librosa.to_mono(y1, y2)
+        >>> y_mono = librosa.to_mono(np.vstack((y1, y2))
+
+
+    See Also
+    --------
+    to_stereo
+    to_multi
+    util.fix_length
+
     Examples
     --------
+    Downmix a stereo input
+
     >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
     >>> y.shape
     (2, 117601)
     >>> y_mono = librosa.to_mono(y)
     >>> y_mono.shape
     (117601,)
+
+    Mix three independent mono inputs with different lengths
+
+    >>> y_440 = librosa.tone(440.0, sr=22050, duration=1.0)
+    >>> y_550 = librosa.tone(550.0, sr=22050, duration=1.5)
+    >>> y_660 = librosa.tone(660.0, sr=22050, duration=2.0)
+    >>> y_mono = librosa.to_mono(y_440, y_550, y_660, pad=True)
+    >>> y_mono.shape
+    (44100,)
     """
-    # Validate the buffer
-    util.valid_audio(y)
+    # Validate the buffer(s) and identify lengths, dtypes, etc
+    n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
+    dtype = signals[0].dtype
+    for y in signals:
+        util.valid_audio(y)
+        n_min = min(n_min, y.shape[-1])
+        n_max = max(n_max, y.shape[-1])
+        dtype = np.promote_types(dtype, y.dtype)
 
-    if y.ndim > 1:
-        y = np.mean(y, axis=tuple(range(y.ndim - 1)))
+    # Allocate and initialize the output buffer
+    if pad:
+        size = n_max
+    else:
+        size = n_min
 
-    return y
+    output = np.zeros((size,), dtype=dtype)
+
+    # Now, average the signals together
+    for y in signals:
+        output += util.fix_length(np.mean(y, axis=tuple(range(y.ndim - 1))), 
+                                  size=output.shape[-1], axis=-1)
+    # Divide by the number of input signals given
+    output /= len(signals)
+    return output
 
 
 def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad: bool = True) -> np.ndarray:
     """Combine two signals into a stereo signal.
 
-
     Parameters
     ----------
     left : np.ndarray [shape=(..., n)]
         Left channel signal. Multi-channel is supported.
-    right : np.ndarray [shape=(..., n)]
+    right : np.ndarray [shape=(..., m)]
         Right channel signal. Multi-channel is supported.
     downmix : bool
         If `True`, downmix the left and right channels to mono before combining.
@@ -428,9 +482,10 @@ def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad:
     pad : bool
         If `True`, pad the shorter channel with zeros to match the length of the longer channel.
         If `False`, the longer channel is trimmed to match the length of the shorter channel.
+
     Returns
     -------
-    y_stereo : np.ndarray [shape=(2, n)]
+    y_stereo : np.ndarray [shape=(2, n_out)]
         Stereo signal with left channel in the first row and right channel in the second row.
 
     See Also
@@ -441,7 +496,22 @@ def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad:
 
     Examples
     --------
+    Combine two mono signals into a hard-panned stereo signal
 
+    >>> y1 = librosa.tone(440.0, sr=22050, duration=1.0)
+    >>> y2 = librosa.tone(550.0, sr=22050, duration=1.0)
+    >>> y_stereo = librosa.to_stereo(left=y1, right=y2)
+
+    Downmix a stereo signal into the left channel, and mix a third
+    mono signal into the right channel
+
+    >>> y3 = librosa.tone(660.0, sr=22050, duration=1.0)
+    >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=True)
+
+    Keep the original stereo signal separated, but mix a third signal into the
+    right channel:
+
+    >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=False)
     """
     # First, deal with padding
     if pad:

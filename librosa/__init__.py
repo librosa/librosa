@@ -11,8 +11,9 @@ Audio loading
 
     load
     stream
-    to_mono
     resample
+    to_mono
+    to_stereo
     get_duration
     get_samplerate
 
