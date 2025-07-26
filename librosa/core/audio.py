@@ -555,11 +555,14 @@ def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmi
     elif left is None:
         # These are somewhat inefficient ways to allocate a silent channel,
         # but it makes the logic simple and clear below
-        left: np.ndarray = np.zeros_like(right)
+        left = np.zeros_like(right)
     elif right is None:
-        right: np.ndarray = np.zeros_like(left)
+        right = np.zeros_like(left)
     else:
         onesided = False
+
+    # This assert tells mypy that both arrays now exist
+    assert left is not None and right is not None
 
     # First, deal with padding
     if pad:
