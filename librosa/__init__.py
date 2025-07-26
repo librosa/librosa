@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
+LIBROSA
+Librosa is a python package for music and audio analysis. 
+It provides the building blocks necessary to create music information retrieval systems.
+
+Core functionality includes functions to load audio from disk, compute various spectrogram representations, and a variety of commonly used tools for music analysis. 
+
+Documentation available at <https://librosa.org/doc/latest/>
+"""
+"""
 Core IO and DSP
 ===============
 
