@@ -379,7 +379,7 @@ def stream(
 
 
 @cache(level=20)
-def to_mono(*signals: np.ndarray, pad: bool = True) -> np.ndarray:
+def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.ndarray:
     """Convert an audio signal to mono by averaging samples across channels.
 
     Parameters
@@ -396,10 +396,15 @@ def to_mono(*signals: np.ndarray, pad: bool = True) -> np.ndarray:
         If `False`, trim the output to match the length of the shortest input:
         `n_out = min(y.shape[-1] for y in signals)`.
 
+    norm : bool
+        If `True` (default), signals are combined by averaging.
+
+        If `False`, signals are combined by summing.
+
     Returns
     -------
     y_mono : np.ndarray [shape=(n_out,)]
-        All signals averaged together into a single mono signal.
+        All signals combined together into a single mono signal.
 
     Notes
     -----
@@ -412,7 +417,7 @@ def to_mono(*signals: np.ndarray, pad: bool = True) -> np.ndarray:
     .. warning:: Any input signal with more than one channel will be 
       downmixed to mono prior to being combined with other signals.
       This means that the following are generally not equivalent
-      for multi-channel inputs `y1` and `y2`:
+      for multi-channel inputs `y1` and `y2` when `norm=True`:
 
         >>> y_mono = librosa.to_mono(y1, y2)
         >>> y_mono = librosa.to_mono(np.vstack((y1, y2)))
@@ -460,17 +465,24 @@ def to_mono(*signals: np.ndarray, pad: bool = True) -> np.ndarray:
 
     output = np.zeros((size,), dtype=dtype)
 
+    if norm:
+        combine = np.mean
+    else:
+        combine = np.sum
+
     # Now, average the signals together
     for y in signals:
-        output += util.fix_length(np.mean(y, axis=tuple(range(y.ndim - 1))), 
+        output += util.fix_length(combine(y, axis=tuple(range(y.ndim - 1))), 
                                   size=output.shape[-1], axis=-1)
-    # Divide by the number of input signals given
-    output /= len(signals)
+    if norm:
+        # Divide by the number of input signals given
+        output /= len(signals)
+
     return output
 
 
 @cache(level=20)
-def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmix: bool = True, pad: bool = True) -> np.ndarray:
+def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmix: bool = True, pad: bool = True, norm: bool = True) -> np.ndarray:
     """Combine two signals into a stereo signal.
 
     Parameters
@@ -489,6 +501,11 @@ def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmi
     pad : bool
         If `True`, pad the shorter channel with zeros to match the length of the longer channel.
         If `False`, the longer channel is trimmed to match the length of the shorter channel.
+
+    norm : bool
+        If `True` (default), signals are combined by averaging.
+
+        If `False`, signals are combined by summing.
 
     Returns
     -------
@@ -530,6 +547,8 @@ def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmi
 
     >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=False)
     """
+    # This flag tracks whether we had only one signal to begin with
+    onesided = True
     if left is None and right is None:
         raise ParameterError("At least one of 'left' or 'right' must be provided")
 
@@ -539,6 +558,8 @@ def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmi
         left = np.zeros_like(right)
     elif right is None:
         right = np.zeros_like(left)
+    else:
+        onesided = False
 
     # First, deal with padding
     if pad:
@@ -556,8 +577,8 @@ def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmi
     # Create an empty stereo output buffer
     output = np.zeros((2, size), dtype=dtype)
     if downmix:
-        output[0] = to_mono(left)
-        output[1] = to_mono(right)
+        output[0] = to_mono(left, norm=norm)
+        output[1] = to_mono(right, norm=norm)
     else:
         if left.ndim == 1:
             output[0] = left
@@ -572,12 +593,15 @@ def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmi
             output[:] += right
         else:
             raise ParameterError(f"right input has unsupported shape {right.shape} for downmix=False")
+        if norm and not onesided:
+            # Only normalize here if we had both channels on input
+            output /= 2
 
     return output
 
 
 @cache(level=20)
-def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True) -> np.ndarray:
+def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True, norm: bool = True) -> np.ndarray:
     """Combine multiple signals into a multi-channel signal.
 
     Parameters
@@ -595,7 +619,13 @@ def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True) -> np
 
     pad : bool
         If `True`, pad the output to match the length of the longest input signal.
+
         If `False`, trim the output to match the length of the shortest input signal.
+
+    norm : bool
+        If `True` (default), signals are combined by averaging.
+
+        If `False`, signals are combined by summing.
 
     Returns
     -------
@@ -655,13 +685,14 @@ def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True) -> np
     if downmix:
         # Downmix each signal to mono and mix into the output
         for i, y in enumerate(signals):
-            output[i] = util.fix_length(to_mono(y), size=size, axis=-1)
+            output[i] = util.fix_length(to_mono(y, norm=norm), size=size, axis=-1)
     else:
         # Truncate and mix into the output
         for y in signals:
             output += util.fix_length(y, size=size, axis=-1)
-        # Divide by the number of input signals given
-        output /= len(signals)
+        if norm:
+            # Divide by the number of input signals given
+            output /= len(signals)
 
     return output
 
