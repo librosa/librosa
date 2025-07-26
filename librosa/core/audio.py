@@ -555,9 +555,9 @@ def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmi
     elif left is None:
         # These are somewhat inefficient ways to allocate a silent channel,
         # but it makes the logic simple and clear below
-        left = np.zeros_like(right)
+        left: np.ndarray = np.zeros_like(right)
     elif right is None:
-        right = np.zeros_like(left)
+        right: np.ndarray = np.zeros_like(left)
     else:
         onesided = False
 
