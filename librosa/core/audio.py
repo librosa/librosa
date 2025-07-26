@@ -470,15 +470,15 @@ def to_mono(*signals: np.ndarray, pad: bool = True) -> np.ndarray:
 
 
 @cache(level=20)
-def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad: bool = True) -> np.ndarray:
+def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmix: bool = True, pad: bool = True) -> np.ndarray:
     """Combine two signals into a stereo signal.
 
     Parameters
     ----------
-    left : np.ndarray [shape=(..., n)]
+    left : np.ndarray [shape=(..., n)] or None
         Left channel signal. Multi-channel is supported.
 
-    right : np.ndarray [shape=(..., m)]
+    right : np.ndarray [shape=(..., m)] or None
         Right channel signal. Multi-channel is supported.
 
     downmix : bool
@@ -489,6 +489,10 @@ def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad:
     pad : bool
         If `True`, pad the shorter channel with zeros to match the length of the longer channel.
         If `False`, the longer channel is trimmed to match the length of the shorter channel.
+
+    Notes
+    -----
+    At least one of `left` or `right` must be provided.
 
     Returns
     -------
@@ -513,6 +517,11 @@ def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad:
     >>> y2 = librosa.tone(550.0, sr=22050, duration=1.0)
     >>> y_stereo = librosa.to_stereo(left=y1, right=y2)
 
+    Upmix a mono signal into the left or right channel in stereo
+
+    >>> y_left = librosa.to_stereo(left=y1, right=None)
+    >>> y_right = librosa.to_stereo(left=None, right=y2)
+
     Downmix a stereo signal into the left channel, and mix a third
     mono signal into the right channel
 
@@ -524,6 +533,16 @@ def to_stereo(*, left: np.ndarray, right: np.ndarray, downmix: bool = True, pad:
 
     >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=False)
     """
+    if left is None and right is None:
+        raise ParameterError("At least one of 'left' or 'right' must be provided")
+
+    elif left is None:
+        # These are somewhat inefficient ways to allocate a silent channel,
+        # but it makes the logic simple and clear below
+        left = np.zeros_like(right)
+    elif right is None:
+        right = np.zeros_like(left)
+
     # First, deal with padding
     if pad:
         size = max(left.shape[-1], right.shape[-1])
