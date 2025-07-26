@@ -490,10 +490,6 @@ def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmi
         If `True`, pad the shorter channel with zeros to match the length of the longer channel.
         If `False`, the longer channel is trimmed to match the length of the shorter channel.
 
-    Notes
-    -----
-    At least one of `left` or `right` must be provided.
-
     Returns
     -------
     y_stereo : np.ndarray [shape=(2, n_out)]
@@ -507,6 +503,7 @@ def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmi
 
     Notes
     -----
+    At least one of `left` or `right` must be provided.
     This function caches at level 20.
 
     Examples
@@ -661,7 +658,7 @@ def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True) -> np
             output[i] = util.fix_length(to_mono(y), size=size, axis=-1)
     else:
         # Truncate and mix into the output
-        for i, y in enumerate(signals):
+        for y in signals:
             output += util.fix_length(y, size=size, axis=-1)
         # Divide by the number of input signals given
         output /= len(signals)
