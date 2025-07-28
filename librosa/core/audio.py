@@ -447,6 +447,8 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
     (44100,)
     """
     # Validate the buffer(s) and identify lengths, dtypes, etc
+    if not signals:
+        raise ParameterError("At least one signal must be provided to `to_mono`.")
     n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
     dtype = signals[0].dtype
     for y in signals:
@@ -671,6 +673,8 @@ def to_multi(
     (3, 44100)
     """
     # Validate the buffer(s) and identify lengths, dtypes, etc
+    if not signals:
+        raise ParameterError("At least one signal must be provided.")
     n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
     dtype = signals[0].dtype
     if downmix:
