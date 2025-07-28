@@ -54,9 +54,7 @@ __all__ = [
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
 def load(
-    path: Union[
-        str, int, os.PathLike[Any], sf.SoundFile, BinaryIO
-    ],
+    path: Union[str, int, os.PathLike[Any], sf.SoundFile, BinaryIO],
     *,
     sr: Optional[float] = 22050,
     mono: bool = True,
@@ -414,7 +412,7 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
     accommodate all input signals.  If the input signals have different
     dtypes, the output will be promoted to the most general type.
 
-    .. warning:: Any input signal with more than one channel will be 
+    .. warning:: Any input signal with more than one channel will be
       downmixed to mono prior to being combined with other signals.
       This means that the following are generally not equivalent
       for multi-channel inputs `y1` and `y2` when `norm=True`:
@@ -472,8 +470,9 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
 
     # Now, average the signals together
     for y in signals:
-        output += util.fix_length(combine(y, axis=tuple(range(y.ndim - 1))), 
-                                  size=output.shape[-1], axis=-1)
+        output += util.fix_length(
+            combine(y, axis=tuple(range(y.ndim - 1))), size=output.shape[-1], axis=-1
+        )
     if norm:
         # Divide by the number of input signals given
         output /= len(signals)
@@ -482,7 +481,14 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
 
 
 @cache(level=20)
-def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmix: bool = True, pad: bool = True, norm: bool = True) -> np.ndarray:
+def to_stereo(
+    *,
+    left: Optional[np.ndarray],
+    right: Optional[np.ndarray],
+    downmix: bool = True,
+    pad: bool = True,
+    norm: bool = True,
+) -> np.ndarray:
     """Combine two signals into a stereo signal.
 
     Parameters
@@ -588,14 +594,18 @@ def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmi
         elif left.ndim == 2 and left.shape[0] == 2:
             output[:] = left
         else:
-            raise ParameterError(f"left input has unsupported shape {left.shape} for downmix=False")
+            raise ParameterError(
+                f"left input has unsupported shape {left.shape} for downmix=False"
+            )
 
         if right.ndim == 1:
             output[1] += right
         elif right.ndim == 2 and right.shape[0] == 2:
             output[:] += right
         else:
-            raise ParameterError(f"right input has unsupported shape {right.shape} for downmix=False")
+            raise ParameterError(
+                f"right input has unsupported shape {right.shape} for downmix=False"
+            )
         if norm and not onesided:
             # Only normalize here if we had both channels on input
             output /= 2
@@ -604,7 +614,9 @@ def to_stereo(*, left: Optional[np.ndarray], right: Optional[np.ndarray], downmi
 
 
 @cache(level=20)
-def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True, norm: bool = True) -> np.ndarray:
+def to_multi(
+    *signals: np.ndarray, downmix: bool = True, pad: bool = True, norm: bool = True
+) -> np.ndarray:
     """Combine multiple signals into a multi-channel signal.
 
     Parameters
@@ -664,19 +676,21 @@ def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True, norm:
     if downmix:
         # If all channels are downmixed to mono,
         # then the layout will be (n_signals, n_out)
-        n_channels = tuple((len(signals),))
+        channel_layout = tuple((len(signals),))
     else:
         # If we're not downmixing, then all have to have
         # identical channel layout
-        n_channels = tuple(signals[0].shape[:-1])
+        channel_layout = tuple(signals[0].shape[:-1])
 
     for y in signals:
         util.valid_audio(y)
         n_min = min(n_min, y.shape[-1])
         n_max = max(n_max, y.shape[-1])
         dtype = np.promote_types(dtype, y.dtype)
-        if not downmix and y.shape[:-1] != n_channels:
-            raise ParameterError(f"Cannot combine signals with different channel layouts {y.shape[:-1]} when downmix=False")
+        if not downmix and y.shape[:-1] != channel_layout:
+            raise ParameterError(
+                f"Cannot combine signals with different channel layouts {y.shape[:-1]} when downmix=False"
+            )
 
     # Allocate and initialize the output buffer
     if pad:
@@ -684,7 +698,7 @@ def to_multi(*signals: np.ndarray, downmix: bool = True, pad: bool = True, norm:
     else:
         size = n_min
 
-    output = np.zeros((n_channels + (size,)), dtype=dtype)
+    output = np.zeros((*channel_layout, size), dtype=dtype)
     if downmix:
         # Downmix each signal to mono and mix into the output
         for i, y in enumerate(signals):
@@ -885,7 +899,7 @@ def get_duration(
     n_fft: int = 2048,
     hop_length: int = 512,
     center: bool = True,
-    path: Optional[Union[str, os.PathLike[Any]]] = None
+    path: Optional[Union[str, os.PathLike[Any]]] = None,
 ) -> float:
     """Compute the duration (in seconds) of an audio time series,
     feature matrix, or filename.
@@ -1069,7 +1083,7 @@ def autocorrelate(
 
     # Pad out the signal to support full-length auto-correlation
     n_pad = scipy.fft.next_fast_len(2 * y.shape[axis] - 1, real=real)
-    
+
     autocorr: np.ndarray
     if real:
         # Compute the power spectrum along the chosen axis
