@@ -415,4 +415,4 @@ smv_prefer_remote_refs = True
 
 
 linkcheck_allow_unauthorized = True
-linkcheck_ignore = ['https://www.ee.columbia.edu/~dpwe/resources/.*']
+linkcheck_ignore = ['https://www.ee.columbia.edu/~dpwe/resources/.*', 'https://htk.eng.cam.ac.uk/.*']
