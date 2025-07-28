@@ -952,8 +952,9 @@ def test_lpc_simple(dtype, rng):
 
 
 @pytest.mark.parametrize(
-    "y", [np.arange(5.0), np.ones((2, 5), dtype=float), np.ones((3, 5), dtype=float)], 
-          ids=["mono", "stereo", "multi"]
+    "y",
+    [np.arange(5.0), np.ones((2, 5), dtype=float), np.ones((3, 5), dtype=float)],
+    ids=["mono", "stereo", "multi"],
 )
 def test_to_mono(y):
 
@@ -995,10 +996,13 @@ def test_to_mono_args(rng):
 
 
 @pytest.mark.parametrize(
-    "y", [np.ones((2, 10)), np.ones((2, 3, 10)), np.ones((2, 3, 4, 10))],
-    ids=["2d", "3d", "4d"])
+    "y",
+    [np.ones((2, 10)), np.ones((2, 3, 10)), np.ones((2, 3, 4, 10))],
+    ids=["2d", "3d", "4d"],
+)
 @pytest.mark.parametrize(
-    "norm", [False, True], 
+    "norm",
+    [False, True],
 )
 def test_to_mono_multi(y, norm):
     y_mono = librosa.to_mono(y, norm=norm)
@@ -1018,7 +1022,9 @@ def test_to_mono_multi(y, norm):
 @pytest.mark.parametrize("pad", [False, True])
 def test_to_mono_pad(pad):
     y1 = np.ones((2, 10))
-    y2 = np.zeros(5,)
+    y2 = np.zeros(
+        5,
+    )
 
     y_mono = librosa.to_mono(y1, y2, pad=pad)
 
@@ -1059,17 +1065,16 @@ def test_to_stereo_downmix(downmix, norm):
     y = np.ones((2, 10))
     y[1] *= -1
 
-
     y_stereo = librosa.to_stereo(left=y, right=y, downmix=downmix, norm=norm)
 
     assert y_stereo.shape == (2, 10)
 
     if downmix:
-        # If downmixing, then both channels should be the same
+        # If downmixing, then both channels should cancel out
         assert np.allclose(y_stereo[0], 0)
         assert np.allclose(y_stereo[1], 0)
     else:
-        # If not downmixing, then both channels should be the same as the input
+        # If not downmixing, then both signals are mixed but channels stay separate
         if norm:
             assert np.allclose(y_stereo[0], y[0])
             assert np.allclose(y_stereo[1], y[1])
@@ -1122,6 +1127,64 @@ def test_to_stereo_pad(pad):
         assert y_stereo.shape == (2, 10)
     else:
         assert y_stereo.shape == (2, 5)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_multi_noinput():
+    librosa.to_multi()
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_multi_mismatch():
+    y1 = np.ones((3, 10))
+    y2 = np.ones((2, 10))
+
+    librosa.to_multi(y1, y2, downmix=False)
+
+
+@pytest.mark.parametrize("pad", [False, True])
+def test_to_multi_pad(pad):
+    y1 = np.ones(5)
+    y2 = np.zeros(10)
+    y3 = np.ones(15)
+
+    y_multi = librosa.to_multi(y1, y2, y3, pad=pad)
+    if pad:
+        assert y_multi.shape == (3, 15)
+    else:
+        assert y_multi.shape == (3, 5)
+        assert np.allclose(y_multi[0], y1)
+        assert np.allclose(y_multi[1], y2[:5])
+        assert np.allclose(y_multi[2], y3[:5])
+
+
+@pytest.mark.parametrize("downmix", [False, True])
+@pytest.mark.parametrize("norm", [False, True])
+def test_to_multi_layout(downmix, norm):
+    y = np.ones((2, 4, 10))
+
+    y_multi = librosa.to_multi(y, 2 * y, 3 * y, downmix=downmix, norm=norm)
+
+    if downmix:
+        # Three inputs that are each downmixed and stacked
+        assert y_multi.shape == (3, 10)
+        if norm:
+            assert np.allclose(y_multi[0], 1)
+            assert np.allclose(y_multi[1], 2)
+            assert np.allclose(y_multi[2], 3)
+        else:
+            assert np.allclose(y_multi[0], 8)
+            assert np.allclose(y_multi[1], 16)
+            assert np.allclose(y_multi[2], 24)
+    else:
+        # Three inputs, but we're not downmixing, so they all get combined
+        assert y_multi.shape == (2, 4, 10)
+        if norm:
+            # averaged values: (1 + 2 + 3)/3 = 6/3 = 2
+            assert np.allclose(y_multi, 2)
+        else:
+            # summed values: 1 + 2 + 3 = 6
+            assert np.allclose(y_multi, 6)
 
 
 @pytest.mark.parametrize("data", [np.cos(np.arange(32))])
@@ -2445,7 +2508,9 @@ def test_griffinlim_deprecated_randomstate(y_chirp):
     D = librosa.stft(y=y_chirp)
     with pytest.warns(FutureWarning, match="renamed to 'rng'"):
         y1 = librosa.griffinlim(
-            np.abs(D), n_iter=2, random_state=5,
+            np.abs(D),
+            n_iter=2,
+            random_state=5,
         )
     # And verify that it produces the same output as the new rng argument
     y2 = librosa.griffinlim(np.abs(D), n_iter=2, rng=5)
