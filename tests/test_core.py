@@ -1015,6 +1015,19 @@ def test_to_mono_multi(y, norm):
         assert np.allclose(y_mono, np.prod(y.shape[:-1]))
 
 
+@pytest.mark.parametrize("pad", [False, True])
+def test_to_mono_pad(pad):
+    y1 = np.ones((2, 10))
+    y2 = np.zeros(5,)
+
+    y_mono = librosa.to_mono(y1, y2, pad=pad)
+
+    if pad:
+        assert y_mono.shape == (10,)
+    else:
+        assert y_mono.shape == (5,)
+
+
 @pytest.mark.parametrize("data", [np.cos(np.arange(32))])
 @pytest.mark.parametrize("threshold", [0, 1e-10])
 @pytest.mark.parametrize("ref_magnitude", [None, 0.1, np.max])
