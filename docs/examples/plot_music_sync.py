@@ -206,7 +206,7 @@ ax[2].set(title='Faster $X_2$')
 # 
 # 🎧 This example is best experienced with headphones.
 
-Audio(np.vstack([x_2, x_1_stretched]), rate=fs)
+Audio(librosa.to_stereo(left=x_2, right=x_1_stretched), rate=fs)
 
 # %% 
 # We can also apply the time stretching in the opposite direction
@@ -233,7 +233,7 @@ ax[2].set(title='Faster $X_2$')
 # %%
 # We will play the original slow signal in the left channel
 # and the time-stretched signal in the right channel.
-Audio(np.vstack([x_1, x_2_stretched]), rate=fs)
+Audio(librosa.to_stereo(left=x_1, right=x_2_stretched), rate=fs)
 
 
 ###########################################################

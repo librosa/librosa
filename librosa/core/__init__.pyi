@@ -47,6 +47,8 @@ from .audio import (
     load as load,
     stream as stream,
     to_mono as to_mono,
+    to_stereo as to_stereo,
+    to_multi as to_multi,
     resample as resample,
     get_duration as get_duration,
     get_samplerate as get_samplerate,

@@ -952,7 +952,9 @@ def test_lpc_simple(dtype, rng):
 
 
 @pytest.mark.parametrize(
-    "y", [np.arange(5.0), np.zeros((2, 5), dtype=float)], ids=["mono", "stereo"]
+    "y",
+    [np.arange(5.0), np.ones((2, 5), dtype=float), np.ones((3, 5), dtype=float)],
+    ids=["mono", "stereo", "multi"],
 )
 def test_to_mono(y):
 
@@ -965,14 +967,224 @@ def test_to_mono(y):
         assert np.allclose(y, y_mono)
 
 
-@pytest.mark.parametrize(
-    "y", [np.ones((2, 10)), np.ones((2, 3, 10)), np.ones((2, 3, 4, 10))]
-)
-def test_to_mono_multi(y):
-    y_mono = librosa.to_mono(y)
+@pytest.mark.parametrize("norm", [False, True])
+@pytest.mark.parametrize("nchannels", [1, 2, 3])
+def test_to_mono_norm(norm, nchannels):
+    y = np.ones((nchannels, 5))
+    y_mono = librosa.to_mono(y, norm=norm)
 
     assert y_mono.ndim == 1
     assert len(y_mono) == y.shape[-1]
+
+    if norm:
+        assert np.allclose(y_mono, 1)
+    else:
+        assert np.allclose(y_mono, nchannels)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_mono_empty():
+    librosa.to_mono()
+
+
+def test_to_mono_args(rng):
+    y = rng.standard_normal(size=(3, 10))
+
+    y_mono1 = librosa.to_mono(y)
+    y_mono2 = librosa.to_mono(y[0], y[1], y[2])
+    assert np.allclose(y_mono1, y_mono2)
+
+
+@pytest.mark.parametrize(
+    "y",
+    [np.ones((2, 10)), np.ones((2, 3, 10)), np.ones((2, 3, 4, 10))],
+    ids=["2d", "3d", "4d"],
+)
+@pytest.mark.parametrize(
+    "norm",
+    [False, True],
+)
+def test_to_mono_multi(y, norm):
+    y_mono = librosa.to_mono(y, norm=norm)
+
+    assert y_mono.ndim == 1
+    assert len(y_mono) == y.shape[-1]
+
+    if norm:
+        # If we normalize, then everything should be 1
+        assert np.allclose(y_mono, 1)
+    else:
+        # If we don't normalize, then the sum will be the product
+        # of the number of leading channels
+        assert np.allclose(y_mono, np.prod(y.shape[:-1]))
+
+
+@pytest.mark.parametrize("pad", [False, True])
+def test_to_mono_pad(pad):
+    y1 = np.ones((2, 10))
+    y2 = np.zeros(
+        5,
+    )
+
+    y_mono = librosa.to_mono(y1, y2, pad=pad)
+
+    if pad:
+        assert y_mono.shape == (10,)
+    else:
+        assert y_mono.shape == (5,)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_stereo_fail():
+    librosa.to_stereo(left=None, right=None)
+
+
+@pytest.mark.parametrize("downmix", [False, True])
+def test_to_stereo_single(downmix):
+    y = np.ones((10,))
+    y_stereo = librosa.to_stereo(left=y, right=None, downmix=downmix)
+
+    assert y_stereo.shape == (2, 10)
+
+    # Both channels should be the same
+    assert np.allclose(y_stereo[0], y)
+    assert np.allclose(y_stereo[1], 0)
+
+    y_stereo = librosa.to_stereo(left=None, right=y, downmix=downmix)
+
+    assert y_stereo.shape == (2, 10)
+
+    # Both channels should be the same
+    assert np.allclose(y_stereo[0], 0)
+    assert np.allclose(y_stereo[1], y)
+
+
+@pytest.mark.parametrize("downmix", [False, True])
+@pytest.mark.parametrize("norm", [False, True])
+def test_to_stereo_downmix(downmix, norm):
+    y = np.ones((2, 10))
+    y[1] *= -1
+
+    y_stereo = librosa.to_stereo(left=y, right=y, downmix=downmix, norm=norm)
+
+    assert y_stereo.shape == (2, 10)
+
+    if downmix:
+        # If downmixing, then both channels should cancel out
+        assert np.allclose(y_stereo[0], 0)
+        assert np.allclose(y_stereo[1], 0)
+    else:
+        # If not downmixing, then both signals are mixed but channels stay separate
+        if norm:
+            assert np.allclose(y_stereo[0], y[0])
+            assert np.allclose(y_stereo[1], y[1])
+        else:
+            assert np.allclose(y_stereo[0], 2 * y[0])
+            assert np.allclose(y_stereo[1], 2 * y[1])
+
+
+def test_to_stereo_mixed():
+    y1 = np.ones((10,))
+    y2 = np.zeros((2, 10))
+
+    y_stereo = librosa.to_stereo(left=y1, right=y2)
+
+    assert y_stereo.shape == (2, 10)
+
+    # Left channel should be y1, right channel should be y2
+    assert np.allclose(y_stereo[0], y1)
+    assert np.allclose(y_stereo[1], y2)
+
+    # Now try it in reverse
+    y_stereo = librosa.to_stereo(left=y2, right=y1)
+
+    assert y_stereo.shape == (2, 10)
+
+    # Left channel should be y1, right channel should be y2
+    assert np.allclose(y_stereo[0], y2)
+    assert np.allclose(y_stereo[1], y1)
+
+
+def test_to_stereo_downmix_mismatch():
+    y1 = np.ones((3, 10))
+    y2 = np.ones((2, 10))
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.to_stereo(left=y1, right=y2, downmix=False)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.to_stereo(left=y2, right=y1, downmix=False)
+
+
+@pytest.mark.parametrize("pad", [False, True])
+def test_to_stereo_pad(pad):
+    y1 = np.ones((10,))
+    y2 = np.zeros((5,))
+
+    y_stereo = librosa.to_stereo(left=y1, right=y2, pad=pad)
+
+    if pad:
+        assert y_stereo.shape == (2, 10)
+    else:
+        assert y_stereo.shape == (2, 5)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_multi_noinput():
+    librosa.to_multi()
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_multi_mismatch():
+    y1 = np.ones((3, 10))
+    y2 = np.ones((2, 10))
+
+    librosa.to_multi(y1, y2, downmix=False)
+
+
+@pytest.mark.parametrize("pad", [False, True])
+def test_to_multi_pad(pad):
+    y1 = np.ones(5)
+    y2 = np.zeros(10)
+    y3 = np.ones(15)
+
+    y_multi = librosa.to_multi(y1, y2, y3, pad=pad)
+    if pad:
+        assert y_multi.shape == (3, 15)
+    else:
+        assert y_multi.shape == (3, 5)
+        assert np.allclose(y_multi[0], y1)
+        assert np.allclose(y_multi[1], y2[:5])
+        assert np.allclose(y_multi[2], y3[:5])
+
+
+@pytest.mark.parametrize("downmix", [False, True])
+@pytest.mark.parametrize("norm", [False, True])
+def test_to_multi_layout(downmix, norm):
+    y = np.ones((2, 4, 10))
+
+    y_multi = librosa.to_multi(y, 2 * y, 3 * y, downmix=downmix, norm=norm)
+
+    if downmix:
+        # Three inputs that are each downmixed and stacked
+        assert y_multi.shape == (3, 10)
+        if norm:
+            assert np.allclose(y_multi[0], 1)
+            assert np.allclose(y_multi[1], 2)
+            assert np.allclose(y_multi[2], 3)
+        else:
+            assert np.allclose(y_multi[0], 8)
+            assert np.allclose(y_multi[1], 16)
+            assert np.allclose(y_multi[2], 24)
+    else:
+        # Three inputs, but we're not downmixing, so they all get combined
+        assert y_multi.shape == (2, 4, 10)
+        if norm:
+            # averaged values: (1 + 2 + 3)/3 = 6/3 = 2
+            assert np.allclose(y_multi, 2)
+        else:
+            # summed values: 1 + 2 + 3 = 6
+            assert np.allclose(y_multi, 6)
 
 
 @pytest.mark.parametrize("data", [np.cos(np.arange(32))])
@@ -2296,7 +2508,9 @@ def test_griffinlim_deprecated_randomstate(y_chirp):
     D = librosa.stft(y=y_chirp)
     with pytest.warns(FutureWarning, match="renamed to 'rng'"):
         y1 = librosa.griffinlim(
-            np.abs(D), n_iter=2, random_state=5,
+            np.abs(D),
+            n_iter=2,
+            random_state=5,
         )
     # And verify that it produces the same output as the new rng argument
     y2 = librosa.griffinlim(np.abs(D), n_iter=2, rng=5)
