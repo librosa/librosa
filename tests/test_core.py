@@ -952,7 +952,8 @@ def test_lpc_simple(dtype, rng):
 
 
 @pytest.mark.parametrize(
-    "y", [np.arange(5.0), np.zeros((2, 5), dtype=float)], ids=["mono", "stereo"]
+    "y", [np.arange(5.0), np.ones((2, 5), dtype=float), np.ones((3, 5), dtype=float)], 
+          ids=["mono", "stereo", "multi"]
 )
 def test_to_mono(y):
 
@@ -965,14 +966,53 @@ def test_to_mono(y):
         assert np.allclose(y, y_mono)
 
 
-@pytest.mark.parametrize(
-    "y", [np.ones((2, 10)), np.ones((2, 3, 10)), np.ones((2, 3, 4, 10))]
-)
-def test_to_mono_multi(y):
-    y_mono = librosa.to_mono(y)
+@pytest.mark.parametrize("norm", [False, True])
+@pytest.mark.parametrize("nchannels", [1, 2, 3])
+def test_to_mono_norm(norm, nchannels):
+    y = np.ones((nchannels, 5))
+    y_mono = librosa.to_mono(y, norm=norm)
 
     assert y_mono.ndim == 1
     assert len(y_mono) == y.shape[-1]
+
+    if norm:
+        assert np.allclose(y_mono, 1)
+    else:
+        assert np.allclose(y_mono, nchannels)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_mono_empty():
+    librosa.to_mono()
+
+
+def test_to_mono_args(rng):
+    y = rng.standard_normal(size=(3, 10))
+
+    y_mono1 = librosa.to_mono(y)
+    y_mono2 = librosa.to_mono(y[0], y[1], y[2])
+    assert np.allclose(y_mono1, y_mono2)
+
+
+@pytest.mark.parametrize(
+    "y", [np.ones((2, 10)), np.ones((2, 3, 10)), np.ones((2, 3, 4, 10))],
+    ids=["2d", "3d", "4d"])
+@pytest.mark.parametrize(
+    "norm", [False, True], 
+)
+def test_to_mono_multi(y, norm):
+    y_mono = librosa.to_mono(y, norm=norm)
+
+    assert y_mono.ndim == 1
+    assert len(y_mono) == y.shape[-1]
+
+    if norm:
+        # If we normalize, then everything should be 1
+        assert np.allclose(y_mono, 1)
+    else:
+        # If we don't normalize, then the sum will be the product
+        # of the number of leading channels
+        assert np.allclose(y_mono, np.prod(y.shape[:-1]))
 
 
 @pytest.mark.parametrize("data", [np.cos(np.arange(32))])
