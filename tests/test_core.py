@@ -1028,6 +1028,102 @@ def test_to_mono_pad(pad):
         assert y_mono.shape == (5,)
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_stereo_fail():
+    librosa.to_stereo(left=None, right=None)
+
+
+@pytest.mark.parametrize("downmix", [False, True])
+def test_to_stereo_single(downmix):
+    y = np.ones((10,))
+    y_stereo = librosa.to_stereo(left=y, right=None, downmix=downmix)
+
+    assert y_stereo.shape == (2, 10)
+
+    # Both channels should be the same
+    assert np.allclose(y_stereo[0], y)
+    assert np.allclose(y_stereo[1], 0)
+
+    y_stereo = librosa.to_stereo(left=None, right=y, downmix=downmix)
+
+    assert y_stereo.shape == (2, 10)
+
+    # Both channels should be the same
+    assert np.allclose(y_stereo[0], 0)
+    assert np.allclose(y_stereo[1], y)
+
+
+@pytest.mark.parametrize("downmix", [False, True])
+@pytest.mark.parametrize("norm", [False, True])
+def test_to_stereo_downmix(downmix, norm):
+    y = np.ones((2, 10))
+    y[1] *= -1
+
+
+    y_stereo = librosa.to_stereo(left=y, right=y, downmix=downmix, norm=norm)
+
+    assert y_stereo.shape == (2, 10)
+
+    if downmix:
+        # If downmixing, then both channels should be the same
+        assert np.allclose(y_stereo[0], 0)
+        assert np.allclose(y_stereo[1], 0)
+    else:
+        # If not downmixing, then both channels should be the same as the input
+        if norm:
+            assert np.allclose(y_stereo[0], y[0])
+            assert np.allclose(y_stereo[1], y[1])
+        else:
+            assert np.allclose(y_stereo[0], 2 * y[0])
+            assert np.allclose(y_stereo[1], 2 * y[1])
+
+
+def test_to_stereo_mixed():
+    y1 = np.ones((10,))
+    y2 = np.zeros((2, 10))
+
+    y_stereo = librosa.to_stereo(left=y1, right=y2)
+
+    assert y_stereo.shape == (2, 10)
+
+    # Left channel should be y1, right channel should be y2
+    assert np.allclose(y_stereo[0], y1)
+    assert np.allclose(y_stereo[1], y2)
+
+    # Now try it in reverse
+    y_stereo = librosa.to_stereo(left=y2, right=y1)
+
+    assert y_stereo.shape == (2, 10)
+
+    # Left channel should be y1, right channel should be y2
+    assert np.allclose(y_stereo[0], y2)
+    assert np.allclose(y_stereo[1], y1)
+
+
+def test_to_stereo_downmix_mismatch():
+    y1 = np.ones((3, 10))
+    y2 = np.ones((2, 10))
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.to_stereo(left=y1, right=y2, downmix=False)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.to_stereo(left=y2, right=y1, downmix=False)
+
+
+@pytest.mark.parametrize("pad", [False, True])
+def test_to_stereo_pad(pad):
+    y1 = np.ones((10,))
+    y2 = np.zeros((5,))
+
+    y_stereo = librosa.to_stereo(left=y1, right=y2, pad=pad)
+
+    if pad:
+        assert y_stereo.shape == (2, 10)
+    else:
+        assert y_stereo.shape == (2, 5)
+
+
 @pytest.mark.parametrize("data", [np.cos(np.arange(32))])
 @pytest.mark.parametrize("threshold", [0, 1e-10])
 @pytest.mark.parametrize("ref_magnitude", [None, 0.1, np.max])
