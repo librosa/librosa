@@ -97,7 +97,6 @@ __all__ = [
 
 # Nominal center frequencies for oct3 bands
 __OCT3_FREQUENCIES = np.array([
-        16,     20,     25,
         31.5,   40,     50,
         63,     80,     100,
         125,    160,    200,
@@ -1861,14 +1860,20 @@ def __decorate_axis(
         axis.set_major_formatter(mplticker.ScalarFormatter())
         axis.set_label_text("Hz")
 
-    elif ax_type in ["oct3", "mel_oct3", "cqt_oct3", "vqt_oct3", "log_oct3"]:
-        axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=12))
-        #axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=36))
-        axis.set_minor_locator(mplticker.FixedLocator([]))
-        axis.set_major_formatter(mplticker.EngFormatter(useOffset=True, unit='Hz'))
-        axis.set_minor_formatter(mplticker.EngFormatter(useOffset=True, unit='Hz'))
+    elif ax_type in ["oct3", "cqt_oct3", "vqt_oct3", "log_oct3", "mel_oct3"]:
+        # Label once per octave
+        if ax_type == 'mel_oct3':
+            # Suppress major ticks for frequencies below 100 Hz in mel mode
+            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[5::3]))
+        else:
+            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[::3]))
+        axis.set_major_formatter(mplticker.EngFormatter(unit='Hz'))
         axis.set_label_text("Frequency")
-        # TODO: figure out minor locator
+        # Minor ticks at the 1/3 octaves
+        axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=None))
+        # TODO: implement a 2-octave adaptive wrapper for minor tick labels
+        # axis.set_minor_formatter(mplticker.EngFormatter(unit='Hz'))
+        axis.set_minor_formatter(mplticker.NullFormatter())
 
     elif ax_type in ["frames"]:
         axis.set_label_text("Frames")
