@@ -1369,7 +1369,7 @@ def test_diverging_scales(S_signed):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_oct3(S_abs, C):
 
-    fig, ax = plt.subplots(nrows=2, ncols=2, constrained_layout=True)
+    fig, ax = plt.subplots(nrows=2, ncols=2)
 
     # STFT, Mel
     # CQT, VQT
