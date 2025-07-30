@@ -51,6 +51,7 @@ import matplotlib.axes as mplaxes
 import matplotlib.ticker as mplticker
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import matplotlib.patches as mpatches
 
 from . import core
 from . import util
@@ -722,6 +723,7 @@ class AdaptiveWaveplot:
         sr: float = 22050,
         max_samples: int = 11025,
         transpose: bool = False,
+        label: Optional[str] = None,
     ):
         self.times = times
         self.samples = y
@@ -732,7 +734,11 @@ class AdaptiveWaveplot:
         self.transpose = transpose
         self.cid: Optional[int] = None
         self.ax: Optional[mplaxes.Axes] = None
-
+        # This creates an invisible patch to contain the label
+        self.label_patch_ = mpatches.Rectangle((np.nan, np.nan), 0, 0,
+                                               facecolor=self.steps.get_color(),
+                                               label=label)
+                                               
     def __del__(self) -> None:
         """Disconnect callback methods on delete"""
         self.disconnect(strict=True)
@@ -764,6 +770,7 @@ class AdaptiveWaveplot:
 
         # Attach to axes and store the connection id
         self.ax = ax
+        self.ax.add_patch(self.label_patch_)
         self.cid = ax.callbacks.connect(signal, self.update)
 
     def disconnect(self, *, strict: bool = False) -> None:
@@ -2403,11 +2410,10 @@ def waveshow(
         y_bottom,
         y_top,
         step=where,
-        label=label,
         **kwargs,
     )
     adaptor = AdaptiveWaveplot(
-        times, y[0], steps, envelope, sr=sr, max_samples=max_points, transpose=transpose
+        times, y[0], steps, envelope, sr=sr, max_samples=max_points, transpose=transpose, label=label
     )
 
     adaptor.connect(axes, signal=signal)
