@@ -2192,6 +2192,8 @@ def waveshow(
     label: Optional[str] = None,
     transpose: bool = False,
     ax: Optional[mplaxes.Axes] = None,
+    invert: bool = False,
+    invert_color : Union[str, tuple, None] = None,
     **kwargs: Any,
 ) -> AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
@@ -2287,6 +2289,18 @@ def waveshow(
 
     transpose : bool
         If `True`, display the wave vertically instead of horizontally.
+
+    invert : bool
+        If `True`, invert the foreground and background of the display, so that the axes background
+        is colored.
+        If `False` (default), the waveform display is colored and the background is unchanged.
+
+        .. note:: This option should only be used if the wave display is the only element in the axes.
+
+    invert_color : str, tuple, None
+        If `invert` is `True`, this parameter specifies the color to use for the inverted
+        waveform display.
+        If `None` (default), the color is set to the current axes background color.
 
     **kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between` and
@@ -2420,6 +2434,21 @@ def waveshow(
 
     # Force an initial update to ensure the state is consistent
     adaptor.update(axes)
+
+    # Handle color inversion if needed
+    if invert:
+        # If no inverted color is given, just swap it from the axes face
+        if invert_color is None:
+            invert_color = axes.patch.get_facecolor()
+        
+        # Get the fg color from the steps plot    
+        color = steps.get_color()
+    
+        # Set the axes facecolor to our wave color
+        axes.patch.set_facecolor(color)
+        adaptor.label_patch_.set_facecolor(color)
+        steps.set_color(invert_color)
+        envelope.set_color(invert_color)
 
     # Construct tickers and locators
     __decorate_axis(dec_axis, axis)
