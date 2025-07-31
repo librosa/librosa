@@ -734,10 +734,15 @@ class AdaptiveWaveplot:
         self.transpose = transpose
         self.cid: Optional[int] = None
         self.ax: Optional[mplaxes.Axes] = None
+
+        # Only set the label on the patch if we have one to set
+        kwargs = dict()
+        if label is not None:
+            kwargs["label"] = label
         # This creates an invisible patch to contain the label
         self.label_patch_ = mpatches.Rectangle((np.nan, np.nan), 0, 0,
                                                facecolor=self.steps.get_color(),
-                                               label=label)
+                                               **kwargs)
                                                
     def __del__(self) -> None:
         """Disconnect callback methods on delete"""
