@@ -935,6 +935,13 @@ _cqt_ax_types = (
     "cqt_hz",
     "cqt_note",
     "cqt_svara",
+    "cqt_oct3",
+)
+_vqt_ax_types = (
+    "vqt_hz",
+    "vqt_note",
+    "vqt_oct3",
+    "vqt_fjs",
 )
 _freq_ax_types = (
     "linear",
@@ -942,6 +949,7 @@ _freq_ax_types = (
     "hz",
     "fft_note",
     "fft_svara",
+    "oct3",
 )
 _time_ax_types = (
     "time",
@@ -961,6 +969,7 @@ _misc_ax_types = (
     "tempo",
     "fourier_tempo",
     "mel",
+    "mel_oct3",
     "log",
     "tonnetz",
     "frames",
@@ -970,6 +979,7 @@ _AXIS_COMPAT = set(
     [(t, t) for t in _misc_ax_types]
     + [t for t in product(_chroma_ax_types, _chroma_ax_types)]
     + [t for t in product(_cqt_ax_types, _cqt_ax_types)]
+    + [t for t in product(_vqt_ax_types, _vqt_ax_types)]
     + [t for t in product(_freq_ax_types, _freq_ax_types)]
     + [t for t in product(_time_ax_types, _time_ax_types)]
     + [t for t in product(_lag_ax_types, _lag_ax_types)]
@@ -1051,17 +1061,26 @@ def specshow(
         - 'linear', 'fft', 'hz' : frequency range is determined by
           the FFT window and sampling rate.
         - 'log' : the spectrum is displayed on a log scale.
+        - 'oct3' : the spectrum is displayed on a log scale with frequencies marked in scientific notation at 1/3-octave intervals
         - 'fft_note': the spectrum is displayed on a log scale with pitches marked.
         - 'fft_svara': the spectrum is displayed on a log scale with svara marked.
         - 'mel' : frequencies are determined by the mel scale.
+        - 'mel_oct3' : like 'oct3' above, but using the mel scale.
         - 'cqt_hz' : frequencies are determined by the CQT scale.
+        - 'cqt_oct3' : like 'oct3' above, but using the CQT scale.
         - 'cqt_note' : pitches are determined by the CQT scale.
         - 'cqt_svara' : like `cqt_note` but using Hindustani or Carnatic svara
+        - 'vqt_hz' : like `cqt_hz` but using Variable-Q Transform (VQT) scale.
+        - 'vqt_oct3' : like 'oct3' above, but using the VQT scale.
         - 'vqt_fjs' : like `cqt_note` but using Functional Just System (FJS)
           notation.  This requires a just intonation-based variable-Q
           transform representation.
+        - 'vqt_note' : like 'cqt_note' but using the VQT scale.
 
         All frequency types are plotted in units of Hz.
+
+        `oct3`-type use SI prefixes for frequencies, e.g., `1 kHz`, `2 MHz`, and are
+        well adapted for scientific applications using high-frequency data.
 
         Any spectrogram parameters (hop_length, sr, bins_per_octave, etc.)
         used to generate the input data should also be provided when
