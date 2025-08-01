@@ -95,6 +95,25 @@ __all__ = [
 
 # mypy: disable-error-code="attr-defined"
 
+# Nominal center frequencies for oct3 bands
+__OCT3_FREQUENCIES = np.array([
+        31.5,   40,     50,
+        63,     80,     100,
+        125,    160,    200,
+        250,    315,    400,
+        500,    630,    800,
+        1000,   1250,   1600,
+        2000,   2500,   3150,
+        4000,   5000,   6300,
+        8000,   10000,  12500,
+        16000,  20000,  25000,
+        # --- ultrasonic up to 800KHz
+        31500,  40000,  50000,
+        63000,  80000,  100000,
+        125000, 160000, 200000,
+        250000, 315000, 400000,
+        500000, 630000, 800000,])
+
 
 class TimeFormatter(mplticker.Formatter):
     """A tick formatter for time axes.
@@ -916,6 +935,13 @@ _cqt_ax_types = (
     "cqt_hz",
     "cqt_note",
     "cqt_svara",
+    "cqt_oct3",
+)
+_vqt_ax_types = (
+    "vqt_hz",
+    "vqt_note",
+    "vqt_oct3",
+    "vqt_fjs",
 )
 _freq_ax_types = (
     "linear",
@@ -923,6 +949,7 @@ _freq_ax_types = (
     "hz",
     "fft_note",
     "fft_svara",
+    "oct3",
 )
 _time_ax_types = (
     "time",
@@ -942,6 +969,7 @@ _misc_ax_types = (
     "tempo",
     "fourier_tempo",
     "mel",
+    "mel_oct3",
     "log",
     "tonnetz",
     "frames",
@@ -951,6 +979,7 @@ _AXIS_COMPAT = set(
     [(t, t) for t in _misc_ax_types]
     + [t for t in product(_chroma_ax_types, _chroma_ax_types)]
     + [t for t in product(_cqt_ax_types, _cqt_ax_types)]
+    + [t for t in product(_vqt_ax_types, _vqt_ax_types)]
     + [t for t in product(_freq_ax_types, _freq_ax_types)]
     + [t for t in product(_time_ax_types, _time_ax_types)]
     + [t for t in product(_lag_ax_types, _lag_ax_types)]
@@ -1032,17 +1061,26 @@ def specshow(
         - 'linear', 'fft', 'hz' : frequency range is determined by
           the FFT window and sampling rate.
         - 'log' : the spectrum is displayed on a log scale.
+        - 'oct3' : the spectrum is displayed on a log scale with frequencies marked in scientific notation at 1/3-octave intervals
         - 'fft_note': the spectrum is displayed on a log scale with pitches marked.
         - 'fft_svara': the spectrum is displayed on a log scale with svara marked.
         - 'mel' : frequencies are determined by the mel scale.
+        - 'mel_oct3' : like 'oct3' above, but using the mel scale.
         - 'cqt_hz' : frequencies are determined by the CQT scale.
+        - 'cqt_oct3' : like 'oct3' above, but using the CQT scale.
         - 'cqt_note' : pitches are determined by the CQT scale.
         - 'cqt_svara' : like `cqt_note` but using Hindustani or Carnatic svara
+        - 'vqt_hz' : like `cqt_hz` but using Variable-Q Transform (VQT) scale.
+        - 'vqt_oct3' : like 'oct3' above, but using the VQT scale.
         - 'vqt_fjs' : like `cqt_note` but using Functional Just System (FJS)
           notation.  This requires a just intonation-based variable-Q
           transform representation.
+        - 'vqt_note' : like 'cqt_note' but using the VQT scale.
 
         All frequency types are plotted in units of Hz.
+
+        `oct3`-type use SI prefixes for frequencies, e.g., `1 kHz`, `2 MHz`, and are
+        well adapted for scientific applications using high-frequency data.
 
         Any spectrogram parameters (hop_length, sr, bins_per_octave, etc.)
         used to generate the input data should also be provided when
@@ -1439,15 +1477,20 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         "fft_note": __coord_fft_hz,
         "fft_svara": __coord_fft_hz,
         "hz": __coord_fft_hz,
+        "oct3": __coord_fft_hz,
+        "log_oct3": __coord_fft_hz,
         "log": __coord_fft_hz,
         "mel": __coord_mel_hz,
+        "mel_oct3": __coord_mel_hz,
         "cqt": __coord_cqt_hz,
         "cqt_hz": __coord_cqt_hz,
         "cqt_note": __coord_cqt_hz,
         "cqt_svara": __coord_cqt_hz,
+        "cqt_oct3": __coord_cqt_hz,
         "vqt_fjs": __coord_vqt_hz,
         "vqt_hz": __coord_vqt_hz,
         "vqt_note": __coord_vqt_hz,
+        "vqt_oct3": __coord_vqt_hz,
         "chroma": __coord_chroma,
         "chroma_c": __coord_chroma,
         "chroma_h": __coord_chroma,
@@ -1502,7 +1545,7 @@ def __scale_axes(axes, ax_type, which, tempo_min, tempo_max):
         limit = axes.set_ylim
 
     # Map ticker scales
-    if ax_type == "mel":
+    if ax_type in ["mel", "mel_oct3"]:
         mode = "symlog"
         kwargs[thresh] = 1000.0
         kwargs[base] = 2
@@ -1512,14 +1555,16 @@ def __scale_axes(axes, ax_type, which, tempo_min, tempo_max):
         "cqt_hz",
         "cqt_note",
         "cqt_svara",
+        "cqt_oct3",
         "vqt_hz",
         "vqt_note",
         "vqt_fjs",
+        "vqt_oct3",
     ]:
         mode = "log"
         kwargs[base] = 2
 
-    elif ax_type in ["log", "fft_note", "fft_svara"]:
+    elif ax_type in ["log", "fft_note", "fft_svara", "log_oct3"]:
         mode = "symlog"
         kwargs[base] = 2
         kwargs[thresh] = float(core.note_to_hz("C2"))
@@ -1833,6 +1878,21 @@ def __decorate_axis(
     elif ax_type in ["linear", "hz", "fft"]:
         axis.set_major_formatter(mplticker.ScalarFormatter())
         axis.set_label_text("Hz")
+
+    elif ax_type in ["oct3", "cqt_oct3", "vqt_oct3", "log_oct3", "mel_oct3"]:
+        # Label once per octave
+        if ax_type == 'mel_oct3':
+            # Suppress major ticks for frequencies below 100 Hz in mel mode
+            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[5::3]))
+        else:
+            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[::3]))
+        axis.set_major_formatter(mplticker.EngFormatter(unit='Hz'))
+        axis.set_label_text("Frequency")
+        # Minor ticks at the 1/3 octaves
+        axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=None))
+        # TODO: implement a 2-octave adaptive wrapper for minor tick labels
+        # axis.set_minor_formatter(mplticker.EngFormatter(unit='Hz'))
+        axis.set_minor_formatter(mplticker.NullFormatter())
 
     elif ax_type in ["frames"]:
         axis.set_label_text("Frames")
