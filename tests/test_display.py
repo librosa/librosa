@@ -1237,9 +1237,6 @@ def test_specshow_vscale_phase():
     fig.colorbar(i9, ax=ax[2])
     ax[2].set_title("dphase_t")
 
-    for _ax in ax.flat:
-        _ax.label_outer()
-
     return fig
 
 
