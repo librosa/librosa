@@ -2583,7 +2583,7 @@ def wavebars(
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
-    patch_kwargs : dict
+    **patch_kwargs : dict
         Additional keyword arguments to pass to `matplotlib.patches.FancyBboxPatch`
 
     Returns
