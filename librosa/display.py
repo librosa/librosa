@@ -51,6 +51,7 @@ import matplotlib.axes as mplaxes
 import matplotlib.ticker as mplticker
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import matplotlib.patches as mpatches
 
 from . import core
 from . import util
@@ -722,6 +723,7 @@ class AdaptiveWaveplot:
         sr: float = 22050,
         max_samples: int = 11025,
         transpose: bool = False,
+        label: Optional[str] = None,
     ):
         self.times = times
         self.samples = y
@@ -733,6 +735,15 @@ class AdaptiveWaveplot:
         self.cid: Optional[int] = None
         self.ax: Optional[mplaxes.Axes] = None
 
+        # Only set the label on the patch if we have one to set
+        kwargs = dict()
+        if label is not None:
+            kwargs["label"] = label
+        # This creates an invisible patch to contain the label
+        self.label_patch_ = mpatches.Rectangle((np.nan, np.nan), 0, 0,
+                                               facecolor=self.steps.get_color(),
+                                               **kwargs)
+                                               
     def __del__(self) -> None:
         """Disconnect callback methods on delete"""
         self.disconnect(strict=True)
@@ -764,6 +775,7 @@ class AdaptiveWaveplot:
 
         # Attach to axes and store the connection id
         self.ax = ax
+        self.ax.add_patch(self.label_patch_)
         self.cid = ax.callbacks.connect(signal, self.update)
 
     def disconnect(self, *, strict: bool = False) -> None:
@@ -2185,6 +2197,8 @@ def waveshow(
     label: Optional[str] = None,
     transpose: bool = False,
     ax: Optional[mplaxes.Axes] = None,
+    invert: bool = False,
+    invert_color : Union[str, tuple, None] = None,
     **kwargs: Any,
 ) -> AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
@@ -2280,6 +2294,18 @@ def waveshow(
 
     transpose : bool
         If `True`, display the wave vertically instead of horizontally.
+
+    invert : bool
+        If `True`, invert the foreground and background of the display, so that the axes background
+        is colored.
+        If `False` (default), the waveform display is colored and the background is unchanged.
+
+        .. note:: This option should only be used if the wave display is the only element in the axes.
+
+    invert_color : str, tuple, None
+        If `invert` is `True`, this parameter specifies the color to use for the inverted
+        waveform display.
+        If `None` (default), the color is set to the current axes background color.
 
     **kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between` and
@@ -2403,17 +2429,31 @@ def waveshow(
         y_bottom,
         y_top,
         step=where,
-        label=label,
         **kwargs,
     )
     adaptor = AdaptiveWaveplot(
-        times, y[0], steps, envelope, sr=sr, max_samples=max_points, transpose=transpose
+        times, y[0], steps, envelope, sr=sr, max_samples=max_points, transpose=transpose, label=label
     )
 
     adaptor.connect(axes, signal=signal)
 
     # Force an initial update to ensure the state is consistent
     adaptor.update(axes)
+
+    # Handle color inversion if needed
+    if invert:
+        # If no inverted color is given, just swap it from the axes face
+        if invert_color is None:
+            invert_color = axes.patch.get_facecolor()
+        
+        # Get the fg color from the steps plot    
+        color = steps.get_color()
+    
+        # Set the axes facecolor to our wave color
+        axes.patch.set_facecolor(color)
+        adaptor.label_patch_.set_facecolor(color)
+        steps.set_color(invert_color)
+        envelope.set_color(invert_color)
 
     # Construct tickers and locators
     __decorate_axis(dec_axis, axis)

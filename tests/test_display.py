@@ -624,6 +624,34 @@ def test_waveshow_ext_axes(y):
 
 
 @pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_inverted"],
+    extensions=["png"],
+    tolerance=3,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_waveshow_inverted(y, sr):
+
+    fig, ax = plt.subplots(nrows=3, sharex=True)
+    # Original waveshow
+    librosa.display.waveshow(y, sr=sr, ax=ax[0], invert=False, label='Regular')
+    ax[0].legend(loc='upper right')
+
+    # Inverted with default (axes face) color
+    librosa.display.waveshow(y, sr=sr, ax=ax[1], invert=True, invert_color=None, label='Inverted')
+    ax[1].legend(loc='upper right')
+
+    # Inverted with custom color
+    librosa.display.waveshow(y, sr=sr, ax=ax[2], invert=True, invert_color="#2d2d2d", label='Inverted custom')
+    ax[2].legend(loc='upper right')
+
+    for axi in ax.flat:
+        axi.label_outer()
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_stereo"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
