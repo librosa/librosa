@@ -1428,7 +1428,7 @@ def test_oct3(S_abs, C):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_wavebars(y, sr):
 
-    fig, ax = plt.subplots(nrows=6, layout='compressed', figsize=(8, 12))
+    fig, ax = plt.subplots(nrows=6, layout='tight', figsize=(8, 12))
 
     librosa.display.wavebars(y, sr=sr, ax=ax[0], label='100')
     librosa.display.wavebars(y, sr=sr, color='C1', n_bars=150, 
