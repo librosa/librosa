@@ -2529,23 +2529,18 @@ def wavebars(
     ----------
     y : np.ndarray [shape=(n,) or (2,n)]
         audio time series (mono or stereo)
-
     sr : number > 0 [scalar]
         sampling rate of ``y`` (samples per second)
-
     n_bars : int > 0
         Number of bars to display in the waveform plot.
         The total time extent of the plot will be divided into `n_bars` segments,
         and the amplitude envelope of each segment will be represented as a bar.
-
     gap_ratio : float in [0, 1]
         The fraction of the bar width that will be left as a gap between adjacent bars.
-
     rounding_ratio : float in [0, 1]
         The fraction of the bar width that will be used for rounding the corners of the bars.
         A value of 0.5 will produce bars with rounded corners, while a value of 0 will produce
         rectangular bars.
-
     axis : str or None
         Display style of the axis ticks and tick markers. Accepted values are:
         - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
@@ -2559,30 +2554,23 @@ def wavebars(
         - 'lag_s' : same as lag, but in seconds.
         - 'lag_ms' : same as lag, but in milliseconds.
         - `None`, 'none', or 'off': ticks and tick markers are hidden.
-
     offset : float
         Offset (in seconds) to start the waveform plot.
-
     invert : bool
         If `True`, invert the foreground and background of the display, so that the axes background
         is colored.
         If `False` (default), the envelope display is colored and the background is unchanged.
-
     invert_color : str, tuple, None
         If `invert` is `True`, this parameter specifies the color to use for the inverted
         waveform display.
         If `None` (default), the color is set to the current axes background color.
-
     transpose : bool
         If `True`, display the wave vertically instead of horizontally.
-
     label : str or None
         The label string applied to this plot.
         If `None`, no label is applied.
-
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
-
     **patch_kwargs : dict
         Additional keyword arguments to pass to `matplotlib.patches.FancyBboxPatch`
 
