@@ -1451,3 +1451,42 @@ def test_wavebars(y, sr):
         axi.legend()
 
     return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["wavebars_transpose"],
+    extensions=["png"],
+    tolerance=5,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_wavebars_transpose(y, sr):
+
+    fig, ax = plt.subplots(ncols=6, layout='compressed', figsize=(12, 8))
+
+    librosa.display.wavebars(y, sr=sr, ax=ax[0], label='100',
+                             transpose=True)
+    librosa.display.wavebars(y, sr=sr, color='C1', n_bars=150, 
+                             rounding_ratio=0, transpose=True,
+                             ax=ax[1], label='150 square')
+    librosa.display.wavebars(y, sr=sr, color='C2', n_bars=50,
+                             transpose=True,
+                             ax=ax[2], invert=True, label='50 inverted')
+    librosa.display.wavebars(y, sr=sr, color='C3', gap_ratio=0,
+                             transpose=True,
+                             ax=ax[3], label='no gap')
+    librosa.display.wavebars(y, sr=sr, color='C4', offset=30,
+                             transpose=True,
+                             rounding_ratio=0.3, invert=True,
+                             invert_color='#2d2d2d',
+                             ax=ax[4],
+                             label='offset 30, invert dark')
+    librosa.display.wavebars(y, sr=sr, ax=ax[5], color='C5',
+                             axis='ms', transpose=True,
+                             label='time_ms')
+
+    for axi in ax.flat:
+        axi.legend()
+
+    return fig
+
