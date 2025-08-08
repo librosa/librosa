@@ -2231,6 +2231,7 @@ def waveshow(
     where: str = "post",
     label: Optional[str] = None,
     transpose: bool = False,
+    mask: Optional[np.ndarray] = None,
     ax: Optional[mplaxes.Axes] = None,
     invert: bool = False,
     invert_color: Union[str, tuple, None] = None,
@@ -2463,11 +2464,15 @@ def waveshow(
     if "color" not in kwargs:
         kwargs.setdefault("color", steps.get_color())
 
+    if mask is not None:
+        mask = mask[: len(y_top) * hop_length : hop_length]
+
     envelope = filler(
         times[: len(y_top) * hop_length : hop_length],
         y_bottom,
         y_top,
         step=where,
+        where=mask,
         **kwargs,
     )
     adaptor = AdaptiveWaveplot(
