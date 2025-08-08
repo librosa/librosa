@@ -1462,7 +1462,7 @@ def test_wavebars(y, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_wavebars_transpose(y, sr):
 
-    fig, ax = plt.subplots(ncols=6, layout='compressed', figsize=(12, 8))
+    fig, ax = plt.subplots(ncols=6, layout='tight', figsize=(12, 8))
 
     librosa.display.wavebars(y, sr=sr, ax=ax[0], label='100',
                              transpose=True)
