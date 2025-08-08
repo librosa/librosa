@@ -11,6 +11,7 @@ Data visualization
 
     specshow
     waveshow
+    wavebars
 
     colorbar_db
     colorbar_phase
@@ -52,6 +53,7 @@ import matplotlib.ticker as mplticker
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.patches as mpatches
+import matplotlib.collections as mcollections
 
 from . import core
 from . import util
@@ -97,23 +99,56 @@ __all__ = [
 # mypy: disable-error-code="attr-defined"
 
 # Nominal center frequencies for oct3 bands
-__OCT3_FREQUENCIES = np.array([
-        31.5,   40,     50,
-        63,     80,     100,
-        125,    160,    200,
-        250,    315,    400,
-        500,    630,    800,
-        1000,   1250,   1600,
-        2000,   2500,   3150,
-        4000,   5000,   6300,
-        8000,   10000,  12500,
-        16000,  20000,  25000,
+__OCT3_FREQUENCIES = np.array(
+    [
+        31.5,
+        40,
+        50,
+        63,
+        80,
+        100,
+        125,
+        160,
+        200,
+        250,
+        315,
+        400,
+        500,
+        630,
+        800,
+        1000,
+        1250,
+        1600,
+        2000,
+        2500,
+        3150,
+        4000,
+        5000,
+        6300,
+        8000,
+        10000,
+        12500,
+        16000,
+        20000,
+        25000,
         # --- ultrasonic up to 800KHz
-        31500,  40000,  50000,
-        63000,  80000,  100000,
-        125000, 160000, 200000,
-        250000, 315000, 400000,
-        500000, 630000, 800000,])
+        31500,
+        40000,
+        50000,
+        63000,
+        80000,
+        100000,
+        125000,
+        160000,
+        200000,
+        250000,
+        315000,
+        400000,
+        500000,
+        630000,
+        800000,
+    ]
+)
 
 
 class TimeFormatter(mplticker.Formatter):
@@ -740,10 +775,10 @@ class AdaptiveWaveplot:
         if label is not None:
             kwargs["label"] = label
         # This creates an invisible patch to contain the label
-        self.label_patch_ = mpatches.Rectangle((np.nan, np.nan), 0, 0,
-                                               facecolor=self.steps.get_color(),
-                                               **kwargs)
-                                               
+        self.label_patch_ = mpatches.Rectangle(
+            (np.nan, np.nan), 0, 0, facecolor=self.steps.get_color(), **kwargs
+        )
+
     def __del__(self) -> None:
         """Disconnect callback methods on delete"""
         self.disconnect(strict=True)
@@ -904,7 +939,7 @@ def infer_cmap(
     if not isinstance(cmap_div, colors.Colormap):
         cmap_div = mcm[cmap_div]
 
-    if data.dtype.kind == 'b':
+    if data.dtype.kind == "b":
         return cmap_bool
 
     data = data[np.isfinite(data)]
@@ -1893,12 +1928,12 @@ def __decorate_axis(
 
     elif ax_type in ["oct3", "cqt_oct3", "vqt_oct3", "log_oct3", "mel_oct3"]:
         # Label once per octave
-        if ax_type == 'mel_oct3':
+        if ax_type == "mel_oct3":
             # Suppress major ticks for frequencies below 100 Hz in mel mode
             axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[5::3]))
         else:
             axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[::3]))
-        axis.set_major_formatter(mplticker.EngFormatter(unit='Hz'))
+        axis.set_major_formatter(mplticker.EngFormatter(unit="Hz"))
         axis.set_label_text("Frequency")
         # Minor ticks at the 1/3 octaves
         axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=None))
@@ -2198,7 +2233,7 @@ def waveshow(
     transpose: bool = False,
     ax: Optional[mplaxes.Axes] = None,
     invert: bool = False,
-    invert_color : Union[str, tuple, None] = None,
+    invert_color: Union[str, tuple, None] = None,
     **kwargs: Any,
 ) -> AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
@@ -2273,7 +2308,7 @@ def waveshow(
         Axes to plot on instead of the default `plt.gca()`.
 
     offset : float
-        Horizontal offset (in seconds) to start the waveform plot
+        Offset (in seconds) to start the waveform plot
 
     marker : string
         Marker symbol to use for sample values. (default: no markers)
@@ -2321,6 +2356,7 @@ def waveshow(
 
     See Also
     --------
+    wavebars
     AdaptiveWaveplot
     matplotlib.pyplot.step
     matplotlib.pyplot.fill_between
@@ -2432,7 +2468,14 @@ def waveshow(
         **kwargs,
     )
     adaptor = AdaptiveWaveplot(
-        times, y[0], steps, envelope, sr=sr, max_samples=max_points, transpose=transpose, label=label
+        times,
+        y[0],
+        steps,
+        envelope,
+        sr=sr,
+        max_samples=max_points,
+        transpose=transpose,
+        label=label,
     )
 
     adaptor.connect(axes, signal=signal)
@@ -2445,10 +2488,10 @@ def waveshow(
         # If no inverted color is given, just swap it from the axes face
         if invert_color is None:
             invert_color = axes.patch.get_facecolor()
-        
-        # Get the fg color from the steps plot    
+
+        # Get the fg color from the steps plot
         color = steps.get_color()
-    
+
         # Set the axes facecolor to our wave color
         axes.patch.set_facecolor(color)
         adaptor.label_patch_.set_facecolor(color)
@@ -2459,6 +2502,198 @@ def waveshow(
     __decorate_axis(dec_axis, axis)
 
     return adaptor
+
+
+def wavebars(
+    y: np.ndarray,
+    *,
+    sr: float = 22050,
+    n_bars: int = 100,
+    gap_ratio: float = 0.4,
+    rounding_ratio: float = 0.5,
+    axis: Optional[str] = "time",
+    offset: float = 0.0,
+    invert: bool = False,
+    invert_color: Union[str, tuple, None] = None,
+    transpose: bool = False,
+    label: Optional[str] = None,
+    ax: Optional[mplaxes.Axes] = None,
+    **patch_kwargs: Any,
+) -> mcollections.PatchCollection:
+    """Visualize a waveform as a series of bars representing the amplitude envelope.
+
+    This visualization is appropriate for displaying a simplified view of the
+    signal, and is best suited for small figures where simplicity is desired.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,) or (2,n)]
+        audio time series (mono or stereo)
+
+    sr : number > 0 [scalar]
+        sampling rate of ``y`` (samples per second)
+
+    n_bars : int > 0
+        Number of bars to display in the waveform plot.
+        The total time extent of the plot will be divided into `n_bars` segments,
+        and the amplitude envelope of each segment will be represented as a bar.
+
+    gap_ratio : float in [0, 1]
+        The fraction of the bar width that will be left as a gap between adjacent bars.
+
+    rounding_ratio : float in [0, 1]
+        The fraction of the bar width that will be used for rounding the corners of the bars.
+        A value of 0.5 will produce bars with rounded corners, while a value of 0 will produce
+        rectangular bars.
+
+    axis : str or None
+        Display style of the axis ticks and tick markers. Accepted values are:
+        - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
+        - 'h' : markers are shown as hours, minutes, and seconds.
+        - 'm' : markers are shown as minutes and seconds.
+        - 's' : markers are shown as seconds.
+        - 'ms' : markers are shown as milliseconds.
+        - 'lag' : like time, but past the halfway point counts as negative values.
+        - 'lag_h' : same as lag, but in hours.
+        - 'lag_m' : same as lag, but in minutes.
+        - 'lag_s' : same as lag, but in seconds.
+        - 'lag_ms' : same as lag, but in milliseconds.
+        - `None`, 'none', or 'off': ticks and tick markers are hidden.
+
+    offset : float
+        Offset (in seconds) to start the waveform plot.
+
+    invert : bool
+        If `True`, invert the foreground and background of the display, so that the axes background
+        is colored.
+        If `False` (default), the envelope display is colored and the background is unchanged.
+
+    invert_color : str, tuple, None
+        If `invert` is `True`, this parameter specifies the color to use for the inverted
+        waveform display.
+        If `None` (default), the color is set to the current axes background color.
+
+    transpose : bool
+        If `True`, display the wave vertically instead of horizontally.
+
+    label : str or None
+        The label string applied to this plot.
+        If `None`, no label is applied.
+
+    ax : matplotlib.axes.Axes or None
+        Axes to plot on instead of the default `plt.gca()`.
+
+    patch_kwargs : dict
+        Additional keyword arguments to pass to `matplotlib.patches.FancyBboxPatch`
+
+    Returns
+    -------
+    matplotlib.collections.PatchCollection
+        A collection of patches representing the amplitude envelope of the waveform.
+
+    See Also
+    --------
+    waveshow
+
+    Examples
+    --------
+    Plot a waveform as bars, compared to the `waveshow` version of the plot
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.ex('libri1'), duration=10)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> librosa.display.waveshow(y=y, sr=sr, ax=ax[0], label='waveshow()')
+    >>> ax[0].legend()
+    >>> ax[0].label_outer()
+    >>> librosa.display.wavebars(y=y, sr=sr, ax=ax[1], label='wavebars()')
+    >>> ax[1].legend()
+    >>> plt.show()
+
+    Make plots with varying amounts of detail, squared corners, and inverted colors.
+
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> librosa.display.wavebars(y=y, sr=sr, n_bars=100, rounding_ratio=0,
+    ...                          invert=True, ax=ax[0], label='100 bars')
+    >>> librosa.display.wavebars(y=y, sr=sr, n_bars=200, rounding_ratio=0,
+    ...                          color='C1', invert=True, ax=ax[1], label='200 bars')
+    >>> librosa.display.wavebars(y=y, sr=sr, n_bars=50, rounding_ratio=0,
+    ...                          color='C2', invert=True, ax=ax[2], label='50 bars')
+    >>> ax[0].legend()
+    >>> ax[1].legend()
+    >>> ax[2].legend()
+    >>> ax[0].label_outer()
+    >>> ax[1].label_outer()
+    """
+    util.valid_audio(y)
+
+    if y.ndim == 1:
+        y = y[np.newaxis, :]
+
+    patch_kwargs.setdefault("linewidth", 0)
+
+    axes = __check_axes(ax)
+
+    hop = max(1, y.shape[-1] // n_bars)
+    env = __envelope(y, hop)
+    env_bottom, env_top = env[-1], env[0]
+
+    bar_width = (hop / sr) * (1 - gap_ratio)
+    rounding_size = bar_width * rounding_ratio
+
+    times = offset + core.times_like(env, sr=sr, hop_length=hop)
+
+    patches = []
+    boxstyle = f"round,pad=0,rounding_size={rounding_size}"
+    for t, a0, a1 in zip(times, env_bottom, env_top):
+        base = min(-rounding_size, -a0)
+        top = max(rounding_size, a1)
+        if transpose:
+            xy, width, height = (base, t), top - base, bar_width
+        else:
+            xy, width, height = (t, base), bar_width, top - base
+
+        p = mpatches.FancyBboxPatch(
+            xy,
+            width,
+            height,
+            boxstyle=boxstyle,
+        )
+        patches.append(p)
+
+    coll = mcollections.PatchCollection(
+        patches, transform=axes.transData, **patch_kwargs
+    )
+    axes.add_collection(coll)
+
+    # Create a proxy artist if we have a label to set
+    # Even if we don't have a label, we'll still need it for handling inversion later on
+    proxy = mpatches.FancyBboxPatch(
+        (np.nan, np.nan), 1, 1, boxstyle=boxstyle, label=label, **patch_kwargs
+    )
+    if label is not None:
+        axes.add_patch(proxy)
+
+    axes.autoscale_view()
+
+    if invert:
+        # If no inverted color is given, just swap it from the axes face
+        if invert_color is None:
+            invert_color = axes.patch.get_facecolor()
+
+        # Get the fg color from the steps plot
+        color = coll.get_facecolor()
+
+        # Set the axes facecolor to our wave color
+        axes.patch.set_facecolor(color)
+        proxy.set_facecolor(color)
+        coll.set_facecolor(invert_color)
+
+    if transpose:
+        __decorate_axis(axes.yaxis, axis)
+    else:
+        __decorate_axis(axes.xaxis, axis)
+
+    return coll
 
 
 def __radian_formatter(x, pos):
