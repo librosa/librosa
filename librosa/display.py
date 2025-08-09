@@ -2265,6 +2265,9 @@ def waveshow(
     ----------
     y : np.ndarray [shape=(n,) or (2,n)]
         audio time series (mono or stereo)
+        If stereo, the left channel's amplitude envelope will be used for the top of the plot,,
+        and the right channel's amplitude envelope (negated) will be used for the bottom of the plot.
+        If mono, the signal's envelope is mirrored across the axis.
 
     sr : number > 0 [scalar]
         sampling rate of ``y`` (samples per second)
@@ -2529,6 +2532,9 @@ def wavebars(
     ----------
     y : np.ndarray [shape=(n,) or (2,n)]
         audio time series (mono or stereo)
+        If stereo, the left channel's amplitude envelope will be used for the top of the bars,
+        and the right channel's amplitude envelope (negated) will be used for the bottom of the bars.
+        If mono, the signal's envelope is mirrored across the axis.
     sr : number > 0 [scalar]
         sampling rate of ``y`` (samples per second)
     n_bars : int > 0
