@@ -2659,8 +2659,9 @@ def wavebars(
         )
         patches.append(p)
 
+    patch_kwargs.setdefault("transform", axes.transData)
     coll = mcollections.PatchCollection(
-        patches, transform=axes.transData, **patch_kwargs
+        patches, **patch_kwargs
     )
     axes.add_collection(coll)
 
