@@ -1500,7 +1500,6 @@ def test_wavebars_transpose(y, sr):
 def test_wavef0(y, sr):
     fig, ax = plt.subplots(nrows=2, figsize=(8, 6))
 
-
     f0, _, _ = librosa.pyin(y, fmin=librosa.note_to_hz("C2"),
                             fmax=librosa.note_to_hz("C7"), sr=sr)
     # Waveform with f0
@@ -1524,7 +1523,6 @@ def test_wavef0(y, sr):
 def test_wavef0_transpose(y, sr):
     fig, ax = plt.subplots(ncols=2, figsize=(6, 8))
 
-
     f0, _, _ = librosa.pyin(y, fmin=librosa.note_to_hz("C2"),
                             fmax=librosa.note_to_hz("C7"), sr=sr)
     # Waveform with f0
@@ -1539,6 +1537,7 @@ def test_wavef0_transpose(y, sr):
     ax[1].legend(loc='lower right')
 
     return fig
+
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavef0_bad_method(y, sr):
