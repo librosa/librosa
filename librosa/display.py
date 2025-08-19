@@ -2412,6 +2412,12 @@ def waveshow(
     transpose : bool
         If `True`, display the wave vertically instead of horizontally.
 
+    mask : np.ndarray [shape=(n,)] or None
+        If provided, this mask will be used to determine which samples to display.
+        The mask should be a boolean array of the same shape as `y`, where `True`
+        indicates that the sample should be displayed, and `False` indicates that it
+        should be ignored.
+
     invert : bool
         If `True`, invert the foreground and background of the display, so that the axes background
         is colored.
