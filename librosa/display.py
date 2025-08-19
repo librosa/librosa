@@ -12,6 +12,7 @@ Data visualization
     specshow
     waveshow
     wavebars
+    wavef0
 
     colorbar_db
     colorbar_phase
@@ -38,6 +39,7 @@ Miscellaneous
 
     infer_cmap
     AdaptiveWaveplot
+    Transformf0
 
 """
 from __future__ import annotations
@@ -47,6 +49,7 @@ import warnings
 from fractions import Fraction
 
 import numpy as np
+import scipy.interpolate
 from matplotlib import colormaps as mcm
 import matplotlib.axes as mplaxes
 import matplotlib.ticker as mplticker
@@ -54,6 +57,8 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.patches as mpatches
 import matplotlib.collections as mcollections
+import matplotlib.transforms as mtransforms
+import matplotlib.lines as mlines
 
 from . import core
 from . import util
@@ -881,6 +886,79 @@ class AdaptiveWaveplot:
             self.steps.set_visible(False)
 
         ax.figure.canvas.draw_idle()
+
+
+class Transformf0(mtransforms.Transform):
+    """A utility class to handle f0-displacement for waveform visualizations."""
+
+    def __init__(
+        self,
+        f0: np.ndarray,
+        *,
+        sr: float = 22050,
+        hop_length: int = 512,
+        bins_per_octave: int = 12,
+        norm: float = 1,
+        offset: float = 0,
+        transpose: bool = False,
+    ):
+
+        super().__init__(shorthand_name="Transformf0")
+        times = offset + core.times_like(f0, sr=sr, hop_length=hop_length)
+        self.f0_interp = scipy.interpolate.interp1d(
+            times,
+            f0,
+            kind="previous",
+            copy=False,
+            bounds_error=False,
+            assume_sorted=True,
+        )
+        self.norm = norm
+        self.bins_per_octave = bins_per_octave
+        self.f0 = f0
+        self.sr = sr
+        self.hop_length = hop_length
+        self.offset = offset
+        self.transpose = transpose
+
+        self.input_dims = 2
+        self.output_dims = 2
+        self.is_separable = False
+        self.has_inverse = True
+
+    def transform_non_affine(self, values: np.ndarray) -> np.ndarray:
+        if self.transpose:
+            idx = (1, 0)
+        else:
+            idx = (0, 1)
+        times = values[:, idx[0]]
+        samples = values[:, idx[1]]
+
+        output = np.empty_like(values)
+        output[:, idx[0]] = times
+        output[:, idx[1]] = 2.0 ** (
+            samples / self.norm / self.bins_per_octave
+        ) * self.f0_interp(times)
+
+        return output
+
+    def inverted(self, values: np.ndarray) -> np.ndarray:
+        if self.transpose:
+            idx = (1, 0)
+        else:
+            idx = (0, 1)
+
+        times = values[:, idx[0]]
+        samples = values[:, idx[1]]
+
+        output = np.empty_like(values)
+        output[:, idx[0]] = times
+        output[:, idx[1]] = (
+            (np.log2(samples) - np.log2(self.f0_interp(times)))
+            * self.norm
+            * self.bins_per_octave
+        )
+        return output
 
 
 def infer_cmap(
@@ -2660,9 +2738,7 @@ def wavebars(
         patches.append(p)
 
     patch_kwargs.setdefault("transform", axes.transData)
-    coll = mcollections.PatchCollection(
-        patches, **patch_kwargs
-    )
+    coll = mcollections.PatchCollection(patches, **patch_kwargs)
     axes.add_collection(coll)
 
     # Create a proxy artist if we have a label to set
@@ -2694,6 +2770,224 @@ def wavebars(
         __decorate_axis(axes.xaxis, axis)
 
     return coll
+
+
+def wavef0(
+    y: np.ndarray,
+    *,
+    f0: np.ndarray,
+    sr: float = 22050,
+    hop_length: int = 512,
+    bins_per_octave: int = 12,
+    time_axis: str = "time",
+    freq_axis: str = "cqt_note",
+    offset: float = 0.0,
+    key: str = "C:maj",
+    Sa: Optional[float] = None,
+    mela: Optional[Union[str, int]] = None,
+    thaat: Optional[str] = None,
+    unicode: bool = True,
+    ax: Optional[mplaxes.Axes] = None,
+    method: str = "waveshow",
+    transpose: bool = False,
+    **kwargs: Any,
+) -> Union[AdaptiveWaveplot, mcollections.PatchCollection]:
+    """Visualize a waveform with an f0-displacement.
+
+    This can be used to simultaneously visualize the fundamental frequency (f0)
+    estimates and the waveform or amplitude envelope of an audio signal in one
+    compact display.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,) or (2,n)]
+        audio time series (mono or stereo)
+        If stereo, the left channel's amplitude envelope will be used for the top of
+        the plot,
+        and the right channel's amplitude envelope (negated) will be used for the
+        bottom of the plot.
+        If mono, the signal's envelope is mirrored across the axis.
+    f0 : np.ndarray [shape=(n,)]
+        Fundamental frequency (f0) estimates in Hz.
+        This should be computed using a pitch estimation algorithm such as
+        `librosa.pyin` or `librosa.yin`.
+    sr : number > 0 [scalar]
+        sampling rate of ``y`` (samples per second)
+    hop_length : int > 0
+        Hop length (in samples) between successive f0 estimates.
+        This should match the hop length used to compute `f0`.
+    bins_per_octave : int > 0
+        Number of frequency bins per octave.
+        This is used to determine the frequency axis for the f0 estimates.
+    time_axis : str
+        Display style of the time axis ticks and tick markers.
+        Accepted values are:
+          - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
+          - 'h' : markers are shown as hours, minutes, and seconds.
+          - 'm' : markers are shown as minutes and seconds.
+          - 's' : markers are shown as seconds.
+          - 'ms' : markers are shown as milliseconds.
+          - 'lag' : like time, but past the halfway point counts as negative values.
+          - 'lag_h' : same as lag, but in hours.
+          - 'lag_m' : same as lag, but in minutes.
+          - 'lag_s' : same as lag, but in seconds.
+          - 'lag_ms' : same as lag, but in milliseconds.
+          - `None`, 'none', or 'off': ticks and tick markers are hidden.
+    freq_axis : str
+        Display style of the frequency axis ticks and tick markers.
+        Accepted values are:
+          - 'cqt_note' : markers are shown as note names.
+          - 'cqt_hz' : markers are shown as frequencies in Hz.
+          - 'cqt_svara' : markers are shown as Indian classical music svara names.
+    offset : float
+        Offset (in seconds) to start the waveform plot.
+    key : str
+        Key signature for the frequency axis.
+        This is used to determine the note names for the frequency axis when using
+        `cqt_note` mode.
+    Sa : float or None
+        Sa (tonic) frequency in Hz for the frequency axis.
+        Required for `cqt_svara` mode.
+    mela : str or int or None
+        Mela (scale) name or index for the frequency axis.
+        This is used to determine the svara names for the frequency axis when using
+        `cqt_svara` mode.
+    thaat : str or None
+        Thaat (scale) name for the frequency axis.
+        This is used to determine the svara names for the frequency axis when using
+        `cqt_svara` mode.
+    unicode : bool
+        If `True`, use Unicode characters for frequency axis labels.
+    ax : matplotlib.axes.Axes or None
+        Axes to plot on instead of the default `plt.gca()`.
+    method : str
+        Method to use for visualizing the waveform with f0 displacement.
+        Accepted values are:
+          - 'waveshow' : Use `librosa.display.waveshow` to visualize the waveform with an f0 displacement.
+          - 'wavebars' : Use `librosa.display.wavebars` to visualize the waveform as bars with an f0 displacement.
+    transpose : bool
+        If `True`, display the wave vertically instead of horizontally.
+    **kwargs : dict
+        Additional keyword arguments to pass to `librosa.display.waveshow` or
+        `librosa.display.wavebars`, depending on the `method` parameter.
+
+    Returns
+    -------
+    AdaptiveWaveplot or PatchCollection
+        An object of type `librosa.display.AdaptiveWaveplot` if `method='waveshow'`,
+        or a `matplotlib.collections.PatchCollection` if `method='wavebars'`.
+
+    See Also
+    --------
+    waveshow
+    wavebars
+
+    Examples
+    --------
+    Visualize a waveform with an f0 displacement using `waveshow`
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> f0, _, _ = librosa.pyin(y, fmin=librosa.note_to_hz('C2'),
+    ...                         fmax=librosa.note_to_hz('C7'),
+    ...                         sr=sr, hop_length=512)
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.wavef0(y=y, f0=f0, sr=sr, ax=ax,
+    ...                        method='waveshow')
+    >>> ax.set(title='Waveform with f0 displacement (waveshow)')
+    >>> plt.show()
+
+    Visualize a waveform with an f0 displacement using `wavebars`, and Hz
+    labels instead of note names.
+    Using a larger number of bars shows more detail here.
+
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.wavef0(y=y, f0=f0, sr=sr, ax=ax, n_bars=256,
+    ...                        method='wavebars', freq_axis='cqt_hz')
+    >>> ax.set(title='Waveform with f0 displacement (wavebars, cqt_hz)')
+    """
+    # Create the adaptive drawing object
+    axes = __check_axes(ax)
+    norm = max(y.max(), -y.min())
+
+    trans = Transformf0(
+        f0,
+        sr=sr,
+        hop_length=hop_length,
+        bins_per_octave=bins_per_octave,
+        norm=norm,
+        offset=offset,
+        transpose=transpose,
+    )
+
+    if method == "waveshow":
+        times = offset + np.arange(y.shape[-1]) / sr
+        mask = np.isfinite(trans.f0_interp(times))
+        adaptor = waveshow(
+            y=y,
+            sr=sr,
+            axis=time_axis,
+            offset=offset,
+            mask=mask,
+            ax=axes,
+            transform=trans + axes.transData,
+            transpose=transpose,
+            **kwargs,
+        )
+
+        # Kludge the data limits because the fillbetween collections does not automatically
+        # update the data limits
+        xy = adaptor.envelope.get_datalim(trans + axes.transData).get_points()
+
+        f0min = np.nanmin(f0)
+        f0max = np.nanmax(f0)
+
+        if transpose:
+            handle = mlines.Line2D([xy[0, 0] + f0min, xy[1, 0] + f0max], xy[:, 1])
+        else:
+            handle = mlines.Line2D(xy[:, 0], [xy[0, 1] + f0min, xy[1, 1] + f0max])
+
+        axes.add_line(handle)
+        axes.autoscale_view()
+        handle.remove()
+        # end kludge
+
+        out = adaptor
+    elif method == "wavebars":
+        out = wavebars(
+            y=y,
+            sr=sr,
+            axis=time_axis,
+            offset=offset,
+            ax=axes,
+            transform=trans + axes.transData,
+            transpose=transpose,
+            **kwargs,
+        )
+
+    # and transposed mode here
+    if transpose:
+        __decorate_axis(
+            axes.xaxis,
+            freq_axis,
+            key=key,
+            Sa=Sa,
+            mela=mela,
+            thaat=thaat,
+            unicode=unicode,
+        )
+    else:
+        __decorate_axis(
+            axes.yaxis,
+            freq_axis,
+            key=key,
+            Sa=Sa,
+            mela=mela,
+            thaat=thaat,
+            unicode=unicode,
+        )
+
+    return out
 
 
 def __radian_formatter(x, pos):
