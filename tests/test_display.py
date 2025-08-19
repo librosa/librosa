@@ -1490,3 +1490,58 @@ def test_wavebars_transpose(y, sr):
 
     return fig
 
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["wavef0"],
+        extensions=["png"],
+        style=STYLE,
+    )
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_wavef0(y, sr):
+    fig, ax = plt.subplots(nrows=2, figsize=(8, 6))
+
+
+    f0, _, _ = librosa.pyin(y, fmin=librosa.note_to_hz("C2"),
+                            fmax=librosa.note_to_hz("C7"), sr=sr)
+    # Waveform with f0
+    librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label='waveshow')
+    ax[0].legend(loc='lower right')
+
+    # Waveform with f0 and pitch
+    librosa.display.wavef0(y, sr=sr, f0=f0, method='wavebars', freq_axis='cqt_hz',
+                           color='C1', ax=ax[1], label='wavebars')
+    ax[1].legend(loc='lower right')
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["wavef0_transpose"],
+        extensions=["png"],
+        style=STYLE,
+    )
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_wavef0_transpose(y, sr):
+    fig, ax = plt.subplots(ncols=2, figsize=(6, 8))
+
+
+    f0, _, _ = librosa.pyin(y, fmin=librosa.note_to_hz("C2"),
+                            fmax=librosa.note_to_hz("C7"), sr=sr)
+    # Waveform with f0
+    librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label='waveshow',
+                           transpose=True)
+    ax[0].legend(loc='lower right')
+
+    # Waveform with f0 and pitch
+    librosa.display.wavef0(y, sr=sr, f0=f0, method='wavebars', freq_axis='cqt_hz',
+                           color='C1', ax=ax[1], label='wavebars',
+                           transpose=True)
+    ax[1].legend(loc='lower right')
+
+    return fig
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_wavef0_bad_method(y, sr):
+    f0, _, _ = librosa.pyin(y, fmin=librosa.note_to_hz("C2"),
+                            fmax=librosa.note_to_hz("C7"), sr=sr)
+    librosa.display.wavef0(y, f0=f0, sr=sr, method='bad_method')

@@ -2970,6 +2970,8 @@ def wavef0(
             transpose=transpose,
             **kwargs,
         )
+    else:
+        raise ParameterError(f"Invalid display method={method}.")
 
     # and transposed mode here
     if transpose:
