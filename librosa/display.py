@@ -901,7 +901,7 @@ class Transformf0(mtransforms.Transform):
         norm: float = 1,
         offset: float = 0,
         transpose: bool = False,
-        inverted: bool = False,
+        is_inverted: bool = False,
     ):
 
         super().__init__(shorthand_name="Transformf0")
@@ -925,7 +925,7 @@ class Transformf0(mtransforms.Transform):
         self.input_dims = 2
         self.output_dims = 2
         self.is_separable = False
-        self.inverted = inverted
+        self.is_inverted = is_inverted
 
     def transform_non_affine(self, values: np.ndarray) -> np.ndarray:
         if self.transpose:
@@ -937,7 +937,7 @@ class Transformf0(mtransforms.Transform):
 
         output = np.empty_like(values)
         output[:, idx[0]] = times
-        if self.inverted:
+        if self.is_inverted:
             output[:, idx[1]] = (
                 (np.log2(samples) - np.log2(self.f0_interp(times)))
                 * self.norm
@@ -959,7 +959,7 @@ class Transformf0(mtransforms.Transform):
             norm=self.norm,
             offset=self.offset,
             transpose=self.transpose,
-            inverted=~self.inverted,
+            is_inverted=not self.is_inverted,
         )
 
 
