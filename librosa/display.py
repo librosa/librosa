@@ -901,6 +901,7 @@ class Transformf0(mtransforms.Transform):
         norm: float = 1,
         offset: float = 0,
         transpose: bool = False,
+        inverted: bool = False,
     ):
 
         super().__init__(shorthand_name="Transformf0")
@@ -924,7 +925,7 @@ class Transformf0(mtransforms.Transform):
         self.input_dims = 2
         self.output_dims = 2
         self.is_separable = False
-        self.has_inverse = True
+        self.inverted = inverted
 
     def transform_non_affine(self, values: np.ndarray) -> np.ndarray:
         if self.transpose:
@@ -936,29 +937,30 @@ class Transformf0(mtransforms.Transform):
 
         output = np.empty_like(values)
         output[:, idx[0]] = times
-        output[:, idx[1]] = 2.0 ** (
-            samples / self.norm / self.bins_per_octave
-        ) * self.f0_interp(times)
-
-        return output
-
-    def inverted(self, values: np.ndarray) -> np.ndarray:
-        if self.transpose:
-            idx = (1, 0)
+        if self.inverted:
+            output[:, idx[1]] = (
+                (np.log2(samples) - np.log2(self.f0_interp(times)))
+                * self.norm
+                * self.bins_per_octave
+            )
         else:
-            idx = (0, 1)
+            output[:, idx[1]] = 2.0 ** (
+                samples / self.norm / self.bins_per_octave
+            ) * self.f0_interp(times)
 
-        times = values[:, idx[0]]
-        samples = values[:, idx[1]]
-
-        output = np.empty_like(values)
-        output[:, idx[0]] = times
-        output[:, idx[1]] = (
-            (np.log2(samples) - np.log2(self.f0_interp(times)))
-            * self.norm
-            * self.bins_per_octave
-        )
         return output
+
+    def inverted(self) -> Transformf0:
+        return Transformf0(
+            f0=self.f0,
+            sr=self.sr,
+            hop_length=self.hop_length,
+            bins_per_octave=self.bins_per_octave,
+            norm=self.norm,
+            offset=self.offset,
+            transpose=self.transpose,
+            inverted=~self.inverted,
+        )
 
 
 def infer_cmap(
