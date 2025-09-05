@@ -1973,18 +1973,20 @@ def mfcc(
     >>> img = librosa.display.specshow(mfccs, x_axis='time', ax=ax[1])
     >>> fig.colorbar(img, ax=[ax[1]])
     >>> ax[1].set(title='MFCC')
+    >>> plt.show()
 
     Compare different DCT bases
 
     >>> m_slaney = librosa.feature.mfcc(y=y, sr=sr, dct_type=2)
     >>> m_htk = librosa.feature.mfcc(y=y, sr=sr, dct_type=3)
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, layout='compressed')
     >>> img1 = librosa.display.specshow(m_slaney, x_axis='time', ax=ax[0])
     >>> ax[0].set(title='RASTAMAT / Auditory toolbox (dct_type=2)')
     >>> fig.colorbar(img, ax=[ax[0]])
     >>> img2 = librosa.display.specshow(m_htk, x_axis='time', ax=ax[1])
     >>> ax[1].set(title='HTK-style (dct_type=3)')
     >>> fig.colorbar(img2, ax=[ax[1]])
+    >>> plt.show()
     """
     if S is None:
         # multichannel behavior may be different due to relative noise floor differences between channels

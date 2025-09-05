@@ -372,6 +372,7 @@ def plp(
     ...          label='Predominant local pulse (PLP)')
     >>> ax[2].set(title='Log-normal tempo prior, mean=120', xlim=[5, 20])
     >>> ax[2].legend()
+    >>> plt.show()
 
     PLP local maxima can be used as estimates of beat positions.
 
@@ -396,6 +397,7 @@ def plp(
     >>> ax[1].legend()
     >>> ax[1].set(title='librosa.beat.plp', xlim=[5, 20])
     >>> ax[1].xaxis.set_major_formatter(librosa.display.TimeFormatter())
+    >>> plt.show()
     """
     # Step 1: get the onset envelope
     if onset_envelope is None:

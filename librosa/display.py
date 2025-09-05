@@ -191,6 +191,7 @@ class TimeFormatter(mplticker.Formatter):
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> ax.set(xlabel='Time')
+    >>> plt.show()
 
     Manually set the physical time unit of the x-axis to milliseconds
 
@@ -200,6 +201,7 @@ class TimeFormatter(mplticker.Formatter):
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit='ms'))
     >>> ax.set(xlabel='Time (ms)')
+    >>> plt.show()
 
     For lag plots
 
@@ -209,6 +211,7 @@ class TimeFormatter(mplticker.Formatter):
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(lag=True))
     >>> ax.set(xlabel='Lag')
+    >>> plt.show()
     """
 
     def __init__(self, lag: bool = False, unit: Optional[str] = None):
@@ -2392,6 +2395,7 @@ def waveshow(
     >>> librosa.display.waveshow(y_perc, sr=sr, color='r', alpha=0.5, ax=ax[2], label='Percussive')
     >>> ax[2].set(title='Multiple waveforms')
     >>> ax[2].legend()
+    >>> plt.show()
 
     Zooming in on a plot to show raw sample values
 
@@ -2403,10 +2407,11 @@ def waveshow(
     >>> ax.label_outer()
     >>> ax.legend()
     >>> ax2.legend()
+    >>> plt.show()
 
     Plotting a transposed wave along with a self-similarity matrix
 
-    >>> fig, ax = plt.subplot_mosaic("hSSS;hSSS;hSSS;.vvv")
+    >>> fig, ax = plt.subplot_mosaic("hSSS;hSSS;hSSS;.vvv", layout='compressed')
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> sim = librosa.segment.recurrence_matrix(chroma, mode='affinity')
@@ -2423,6 +2428,7 @@ def waveshow(
     >>> librosa.display.waveshow(y, ax=ax['h'], transpose=True)
     >>> ax['h'].label_outer()
     >>> ax['h'].set(title='transpose=True')
+    >>> plt.show()
     """
     util.valid_audio(y)
 
@@ -2762,6 +2768,7 @@ def colorbar_phase(
     >>> fig, ax = plt.subplots()
     >>> im = librosa.display.specshow(S, ax=ax, y_axis='log', x_axis='time', vscale='phase')
     >>> librosa.display.colorbar_phase(im)
+    >>> plt.show()
 
     Attach a colorbar to one subplot axes, and show as multiples of π/3.
 
@@ -2771,6 +2778,7 @@ def colorbar_phase(
     >>> im_ph = librosa.display.specshow(S, ax=ax[1], y_axis='log', x_axis='time', vscale='dphase')
     >>> cbar = librosa.display.colorbar_phase(im_ph, ax=ax[1], numticks=7)
     >>> ax[0].label_outer()
+    >>> plt.show()
     """
     if fig is None:
         fig = im.figure
@@ -2840,6 +2848,7 @@ def colorbar_db(
     >>> fig, ax = plt.subplots()
     >>> im = librosa.display.specshow(S, ax=ax, y_axis='log', x_axis='time', vscale='dB')
     >>> librosa.display.colorbar_db(im)
+    >>> plt.show()
 
     Attach a colorbar to one subplot axes.  We can also set a label for the colorbar.
 
@@ -2849,6 +2858,7 @@ def colorbar_db(
     >>> im_ph = librosa.display.specshow(S, ax=ax[1], y_axis='log', x_axis='time', vscale='dphase')
     >>> cbar = librosa.display.colorbar_phase(im_ph, ax=ax[1])
     >>> ax[0].label_outer()
+    >>> plt.show()
     """
     if fig is None:
         fig = im.figure

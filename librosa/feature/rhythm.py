@@ -391,6 +391,7 @@ def tempo(
     >>> ax.set(xlabel='Tempo (BPM)', title='Static tempo estimation')
     >>> ax.grid(True)
     >>> ax.legend()
+    >>> plt.show()
 
     Plot dynamic tempo estimates over a tempogram
 
@@ -405,6 +406,7 @@ def tempo(
     ...          label='Tempo estimate (lognorm prior)')
     >>> ax.set(title='Dynamic tempo estimation')
     >>> ax.legend()
+    >>> plt.show()
     """
     if start_bpm <= 0:
         raise ParameterError("start_bpm must be strictly positive")
