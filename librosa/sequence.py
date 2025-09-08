@@ -855,6 +855,7 @@ def rqa(
     >>> ax[1].plot(L_path[:, 1], L_path[:, 0], label='Optimal path', color='c')
     >>> ax[1].legend()
     >>> ax[1].label_outer()
+    >>> plt.show()
 
     Full alignment using gaps and knight moves
 
@@ -868,6 +869,7 @@ def rqa(
     >>> ax[1].plot(path[:, 1], path[:, 0], label='Optimal path', color='c')
     >>> ax[1].legend()
     >>> ax[1].label_outer()
+    >>> plt.show()
     """
     if gap_onset < 0:
         raise ParameterError("gap_onset={} must be strictly positive")
@@ -1554,6 +1556,7 @@ def viterbi_discriminative(
     >>> librosa.display.specshow(chroma, x_axis='time', y_axis='chroma', ax=ax[0])
     >>> librosa.display.specshow(weights, x_axis='chroma', ax=ax[1])
     >>> ax[1].set(yticks=np.arange(25) + 0.5, yticklabels=labels, ylabel='Chord')
+    >>> plt.show()
 
     >>> # And plot the results
     >>> fig, ax = plt.subplots()
@@ -1567,6 +1570,7 @@ def viterbi_discriminative(
     >>> ax.set(yticks=np.unique(chords_vit),
     ...        yticklabels=[labels[i] for i in np.unique(chords_vit)])
     >>> ax.legend()
+    >>> plt.show()
     """
     n_states, n_steps = prob.shape[-2:]
 

@@ -208,6 +208,7 @@ def interp_harmonics(
     >>> ax.set(yticks=np.arange(len(harmonics)),
     ...        yticklabels=['{:.3g}'.format(_) for _ in harmonics],
     ...        ylabel='Harmonic', xlabel='Tempo (BPM)')
+    >>> plt.show()
 
     We can also compute frequency harmonics for spectrograms.
     To calculate sub-harmonic energy, use values < 1.
@@ -229,6 +230,7 @@ def interp_harmonics(
     ...     ax.flat[i].set(title='h={:.3g}'.format(harmonics[i]))
     ...     ax.flat[i].label_outer()
     >>> librosa.display.colorbar_db(img, ax=ax)
+    >>> plt.show()
     """
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
         # Build the 1-D interpolator.
