@@ -68,6 +68,7 @@ from typing import (
     Optional,
     Union,
     Callable,
+    Literal,
     Dict,
     Tuple,
 )
@@ -224,11 +225,14 @@ class TimeFormatter(mplticker.Formatter):
         if unit not in ["h", "m", "s", "ms", None]:
             raise ParameterError(f"Unknown time unit: {unit}")
 
+        super().__init__()
         self.unit = unit
         self.lag = lag
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Return the time format as pos"""
+        assert self.axis is not None
+
         _, dmax = self.axis.get_data_interval()
         vmin, vmax = self.axis.get_view_interval()
 
@@ -311,6 +315,8 @@ class NoteFormatter(mplticker.Formatter):
         key: str = "C:maj",
         unicode: bool = True,
     ):
+        super().__init__()
+
         self.octave = octave
         self.major = major
         self.key = key
@@ -320,6 +326,8 @@ class NoteFormatter(mplticker.Formatter):
         """Apply the formatter to position"""
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
@@ -396,6 +404,7 @@ class SvaraFormatter(mplticker.Formatter):
                 "Sa frequency is required for svara display formatting"
             )
 
+        super().__init__()
         self.Sa = Sa
         self.octave = octave
         self.major = major
@@ -406,6 +415,8 @@ class SvaraFormatter(mplticker.Formatter):
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
@@ -483,6 +494,7 @@ class FJSFormatter(mplticker.Formatter):
         unison: Optional[str] = None,
         unicode: bool = True,
     ):
+        super().__init__()
         self.fmin = fmin
         self.major = major
         self.unison = unison
@@ -498,6 +510,8 @@ class FJSFormatter(mplticker.Formatter):
         """Apply the formatter to position"""
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
@@ -546,12 +560,15 @@ class LogHzFormatter(mplticker.Formatter):
     """
 
     def __init__(self, major: bool = True):
+        super().__init__()
         self.major = major
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Apply the formatter to position"""
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         vmin, vmax = self.axis.get_view_interval()
 
@@ -579,6 +596,7 @@ class ChromaFormatter(mplticker.Formatter):
     """
 
     def __init__(self, key: str = "C:maj", unicode: bool = True):
+        super().__init__()
         self.key = key
         self.unicode = unicode
 
@@ -611,6 +629,7 @@ class ChromaSvaraFormatter(mplticker.Formatter):
         abbr: bool = True,
         unicode: bool = True,
     ):
+        super().__init__()
         if Sa is None:
             Sa = 0
         self.Sa = Sa
@@ -660,6 +679,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
         unicode: bool = True,
         bins_per_octave: Optional[int] = None,
     ):
+        super().__init__()
         self.unison = unison
         self.unicode = unicode
         self.intervals = intervals
@@ -2260,7 +2280,7 @@ def waveshow(
     axis: Optional[str] = "time",
     offset: float = 0.0,
     marker: Union[str, MplPath, MarkerStyle] = "",
-    where: str = "post",
+    where: Literal["pre", "post", "mid"] = "post",
     label: Optional[str] = None,
     transpose: bool = False,
     ax: Optional[mplaxes.Axes] = None,
@@ -2350,7 +2370,7 @@ def waveshow(
 
         See Also: `matplotlib.markers`.
 
-    where : string, {'pre', 'mid', 'post'}
+    where : {'pre', 'mid', 'post'}
         This setting determines how both waveform and envelope plots interpolate
         between observations.
 
@@ -2483,14 +2503,16 @@ def waveshow(
 
     # Only plot up to max_points worth of data here
     xdata, ydata = times[:max_points], y[0, :max_points]
-    filler = axes.fill_between
-    signal = "xlim_changed"
-    dec_axis = axes.xaxis
+    dec_axis: matplotlib.axis.Axis
     if transpose:
         ydata, xdata = xdata, ydata
         filler = axes.fill_betweenx
         signal = "ylim_changed"
         dec_axis = axes.yaxis
+    else:
+        filler = axes.fill_between
+        signal = "xlim_changed"
+        dec_axis = axes.xaxis
 
     (steps,) = axes.step(xdata, ydata, marker=marker, where=where, **kwargs)
 
@@ -2758,8 +2780,8 @@ def colorbar_phase(
     im: matplotlib.cm.ScalarMappable,
     *,
     numticks: int = 9,
-    ax: Optional[matplotlib.Axes] = None,
-    fig: Optional[matplotlib.Figure] = None,
+    ax: Optional[matplotlib.axes.Axes] = None,
+    fig: Optional[matplotlib.figure.Figure] = None,
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
     """Attach a colorbar to an image representing phase data in radians.
@@ -2838,8 +2860,8 @@ def colorbar_phase(
 def colorbar_db(
     im: matplotlib.image.AxesImage,
     *,
-    ax: Optional[matplotlib.Axes] = None,
-    fig: Optional[matplotlib.Figure] = None,
+    ax: Optional[matplotlib.axes.Axes] = None,
+    fig: Optional[matplotlib.figure.Figure | matplotlib.figure.SubFigure] = None,
     format: Union[str, mplticker.Formatter] = "% -3.f",
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
@@ -2903,6 +2925,9 @@ def colorbar_db(
         ax = im.axes
 
     kwargs.setdefault("label", "dB")
+
+    # This should not happen, but we need it for type checking
+    assert fig is not None
 
     cbar = fig.colorbar(
         im,
