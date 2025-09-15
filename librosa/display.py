@@ -1701,7 +1701,7 @@ def __decorate_axis(
 
     if ax_type == "tonnetz":
         axis.set_major_formatter(TonnetzFormatter())
-        axis.set_major_locator(mplticker.FixedLocator(np.arange(6)))
+        axis.set_major_locator(mplticker.FixedLocator([0, 1, 2, 3, 4, 5]))
         axis.set_label_text("Tonnetz")
 
     elif ax_type == "chroma":
