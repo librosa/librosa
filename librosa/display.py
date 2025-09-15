@@ -1708,7 +1708,7 @@ def __decorate_axis(
         axis.set_major_formatter(ChromaFormatter(key=key, unicode=unicode))
         degrees = core.key_to_degrees(key)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer([0, 12, 24, 36, 48, 60, 72, 84, 96, 108], degrees).ravel())
+            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel())
         )
         axis.set_label_text("Pitch class")
 
@@ -1724,7 +1724,7 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel())
         )
         axis.set_label_text("Svara")
 
@@ -1738,7 +1738,7 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel())
         )
         axis.set_label_text("Svara")
 
