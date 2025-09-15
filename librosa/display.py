@@ -1782,7 +1782,7 @@ def __decorate_axis(
             # If intervals are explicit, tick them all
             degrees = np.arange(bins_per_octave)
 
-        axis.set_major_locator(mplticker.FixedLocator(degrees))
+        axis.set_major_locator(mplticker.FixedLocator(degrees))  # type: ignore[arg-type]
         axis.set_label_text("Pitch class")
 
     elif ax_type in ["tempo", "fourier_tempo"]:
@@ -1884,7 +1884,7 @@ def __decorate_axis(
                     fmin=fmin,
                     intervals=intervals,
                     bins_per_octave=12,
-                )
+                )  # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Note")
@@ -1902,7 +1902,7 @@ def __decorate_axis(
                 base=2.0,
                 subs=core.interval_frequencies(
                     12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12
-                ),
+                ),  # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Hz")
@@ -1920,7 +1920,7 @@ def __decorate_axis(
                 base=2.0,
                 subs=core.interval_frequencies(
                     12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12
-                ),
+                ), # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Note")
@@ -1947,7 +1947,7 @@ def __decorate_axis(
         axis.set_major_locator(mplticker.SymmetricalLogLocator(axis.get_transform()))
         axis.set_minor_formatter(NoteFormatter(key=key, major=False, unicode=unicode))
         axis.set_minor_locator(
-            mplticker.LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))  # type: ignore[arg-type]
         )
         axis.set_label_text("Note")
 
@@ -1985,13 +1985,13 @@ def __decorate_axis(
         # Label once per octave
         if ax_type == "mel_oct3":
             # Suppress major ticks for frequencies below 100 Hz in mel mode
-            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[5::3]))
+            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[5::3]))  # type: ignore[arg-type]
         else:
-            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[::3]))
+            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[::3]))  # type: ignore[arg-type]
         axis.set_major_formatter(mplticker.EngFormatter(unit="Hz"))
         axis.set_label_text("Frequency")
         # Minor ticks at the 1/3 octaves
-        axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=None))
+        axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=None))  # type: ignore[arg-type]
         # TODO: implement a 2-octave adaptive wrapper for minor tick labels
         # axis.set_minor_formatter(mplticker.EngFormatter(unit='Hz'))
         axis.set_minor_formatter(mplticker.NullFormatter())
@@ -2513,7 +2513,7 @@ def waveshow(
         signal = "ylim_changed"
         dec_axis = axes.yaxis
     else:
-        filler = axes.fill_between
+        filler = axes.fill_between  # type: ignore[assignment]
         signal = "xlim_changed"
         dec_axis = axes.xaxis
 
@@ -2745,8 +2745,8 @@ def wavebars(
         color = coll.get_facecolor()
 
         # Set the axes facecolor to our wave color
-        axes.patch.set_facecolor(color)
-        proxy.set_facecolor(color)
+        axes.patch.set_facecolor(color)  # type: ignore[arg-type]
+        proxy.set_facecolor(color)  # type: ignore[arg-type]
         coll.set_facecolor(invert_color)
 
     if transpose:
