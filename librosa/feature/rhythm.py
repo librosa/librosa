@@ -661,21 +661,45 @@ def metrogram(
     tg: np.ndarray,
     freqs: np.ndarray,
     factors: Optional[np.ndarray] = None,
-    aggregate: Callable[..., Any] = np.sum,
+    aggregate: Optional[Callable[..., Any]] = np.sum,
     kind: str = "linear",
     fill_value: float = 0,
 ) -> np.ndarray:
-    """Metrogram Transform
+    """Metrogram Transform. [1]_
+
+    This function summarizes the presence of rhythmic ratios in a tempogram. For example, a tempogram with two simultaneous energy peaks at 90BPM and 30BPM would have a strong presence of the 1/3 ratio. This makes it possible to perform meter estimation by finding the ratio between the beat's and downbeat's frequency.
+
+    By default, the factors used here are as specified by [2]_. 
+
+    +-------+--------+----------------+
+    | Index | Factor | Time Signature |
+    +=======+========+================+
+    |     0 |   1/3  | 3/4            |
+    +-------+--------+----------------+
+    |     1 |   1/4  | 4/4            |
+    +-------+--------+----------------+
+    |     2 |   1/5  | 5/4            |
+    +-------+--------+----------------+
+    |     3 |   1/7  | 7/4            |
+    +-------+--------+----------------+
+
+    .. [1] Cozens, James, and Simon Godsill.
+       "Dynamic Time Signature Recognition, Tempo Inference, and Beat Tracking Through the Metrogram Transform."
+       In IEEE Open Journal of Signal Processing, pp. 1–9, 2023.
+
+    .. [2] Abimbola, Jeremiah, Daniel Kostrzewa, and Paweł Kasprowski.
+       "METER2800: A novel dataset for music time signature detection."
+       In Data in Brief, vol. 51, 109736, 2023.
 
     Parameters
     ----------
     tg : np.ndarray
-        pre-computed fundamental tempogram.
+        Pre-computed tempogram.
     freqs: np.ndarray
         Frequencies (in BPM) of the tempogram axis.
     factors : np.ndarray
-        Meter ratios to estimate.
-        If not provided, the factors are as specified above.
+        Metric ratios to estimate.
+        If not provided, the default factors are 1/3, 1/4, 1/5, and 1/7.
     aggregate : callable [optional]
         Aggregation function to collapse the tempo axis for each ratio
         at each point in time. Defaults to `np.sum`.
@@ -688,7 +712,8 @@ def metrogram(
     Returns
     -------
     metrogram : np.ndarray
-        Metrogram of shape (tg.shape[:-2], len(factors), tg.shape[-1])
+        The metrogram transform for the specified factors.
+        If `aggregate` is set to `None`, the ratios for all individual tempo bins are returned.
 
     See Also
     --------
@@ -708,5 +733,11 @@ def metrogram(
         tg, freqs=freqs, harmonics=factors, kind=kind, fill_value=fill_value
     )
 
-    return aggregate(tg_interp * tg[np.newaxis, ...], axis=-2)
+    
+    product = tg_interp * tg[np.newaxis, ...]
+
+    if aggregate is not None:
+        return aggregate(product, axis=-2)
+
+    return product
 
