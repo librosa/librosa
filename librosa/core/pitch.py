@@ -668,6 +668,7 @@ def pyin(
     fill_na: Optional[float] = np.nan,
     center: bool = True,
     pad_mode: _PadMode = "constant",
+    viterbi_function: Callable = sequence.viterbi,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 
@@ -750,6 +751,10 @@ def pyin(
         ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
+
+    viterbi_function : Callable
+        Function to use for Viterbi decoding.
+        Defaults to ``librosa.sequence.viterbi``.
 
     win_length : Deprecated
         length of the window for calculating autocorrelation in samples.
@@ -880,7 +885,7 @@ def pyin(
 
     p_init = np.ones(2 * n_pitch_bins) / (2 * n_pitch_bins)
 
-    states = sequence.viterbi(observation_probs, transition, p_init=p_init)
+    states = viterbi_function(observation_probs, transition, p_init=p_init)
 
     # Find f0 corresponding to each decoded pitch bin.
     freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))
