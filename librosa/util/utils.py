@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import scipy.ndimage
 import scipy.sparse
+import scipy.interpolate
 
 import numpy as np
 import numba
@@ -65,6 +66,7 @@ __all__ = [
     "is_unique",
     "abs2",
     "phasor",
+    "interp_broadcast"
 ]
 
 
@@ -2569,3 +2571,117 @@ def phasor(
         z *= mag
 
     return z  # type: ignore
+
+
+def interp_broadcast(
+    x1: np.ndarray,
+    x2: np.ndarray,
+    x1_pos: np.ndarray,
+    x2_pos: np.ndarray,
+    interp_pos: Optional[np.ndarray],
+    func: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = np.multiply,
+    kind: str = "linear",
+    fill_value: float = 0,
+    axis: int = -2,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    """Interpolate to broadcast two arrays
+
+    This function interpolates two arrays along a given axis to be on a common grid, and performs a broadcast operation (eg. `np.multiply`) to combine them. It is useful for retrieving the DFT / AC product [1]_ and the Fundamental Tempogram [2]_.
+
+    .. [1] Peeters, G.
+       "Spectral and Temporal Periodicity Representations of Rhythm for the Automatic Classification of Music Audio Signal."
+       In IEEE Transactions on Audio, Speech, and Language Processing, vol. 19, no. 5, pp. 1242–1252, July 2011.
+
+    .. [2] Cozens, James, and Simon Godsill.
+       "Dynamic Time Signature Recognition, Tempo Inference, and Beat Tracking Through the Metrogram Transform."
+       In IEEE Open Journal of Signal Processing, pp. 1–9, 2023.
+
+    Parameters
+    ----------
+    x1 : np.ndarray
+        An array with broadcast compatible dimensions (except along the axis of interpolation) with `x2`.
+
+    x2 : np.ndarray
+        An array with broadcast compatible dimensions (except along the axis of interpolation) with `x1`.
+
+    x1_pos : np.ndarray
+        Positioning data along the axis of interpolation for `x1`.
+
+    x2_pos : np.ndarray
+        Positioning data along the axis of interpolation for `x2`.
+
+    interp_pos: np.ndarray
+        Positioning data for the interpolation grid.
+        Default: `x1_pos`.
+
+    func: function [optional]
+        A function that combines the two interpolated arrays.
+        Default: `np.multiply`.
+
+    axis: int
+        The axis of interpolation.
+        Default: `-2`
+
+    kind : str
+        Interpolation type.  See `scipy.interpolate.interp1d`.
+        Default: `"linear"`
+
+    fill_value : float
+        The value to fill when extrapolating beyond the observed range.
+        Default: `0`
+
+    Returns
+    -------
+    result : np.ndarray or (np.ndarray, np.ndarray)
+        The result from combining both arrays after interpolation.
+        If `func` is set to `None`, returns the interpolated arrays separately `(y1, y2)`.
+
+    Examples
+    --------
+    See Also
+    --------
+    metrogram
+
+    """
+
+    if interp_pos is None:
+        interp_pos = x1_pos
+
+    if x1.ndim != x2.ndim:
+        raise ParameterError(
+            f"x1 (ndim={x1.ndim}) and x2 (ndim={x2.ndim}) have a different number of dimensions."
+        )
+
+    for i in range(x1.ndim):
+        if x1.shape[i] != x2.shape[i] and i != axis:
+            raise ParameterError(
+                f"x1.shape={x1.shape} and x2.shape={x2.shape} would remain broadcast incompatible after interpolating along axis {axis}."
+            )
+
+    x1_interp = scipy.interpolate.interp1d(
+        x1_pos,
+        x1,
+        axis=axis,
+        kind=kind,
+        copy=False,
+        bounds_error=False,
+        fill_value=fill_value
+    )
+
+    x2_interp = scipy.interpolate.interp1d(
+        x2_pos,
+        x2,
+        axis=axis,
+        kind=kind,
+        copy=False,
+        bounds_error=False,
+        fill_value=fill_value
+    )
+
+    y1 = x1_interp(interp_pos)
+    y2 = x2_interp(interp_pos)
+
+    if func is None:
+        return y1, y2
+
+    return func(y1, y2)
