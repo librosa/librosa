@@ -702,7 +702,7 @@ def metrogram(
         If not provided, the default factors are 1/3, 1/4, 1/5, and 1/7.
     aggregate : callable [optional]
         Aggregation function to collapse the tempo axis for each ratio
-        at each point in time. Defaults to `np.sum`.
+        at each point in time. Defaults to ``np.sum``.
     kind:
         Interpolation method used on the tempo axis.
     fill_value:
@@ -713,7 +713,7 @@ def metrogram(
     -------
     metrogram : np.ndarray
         The metrogram transform for the specified factors.
-        If `aggregate` is set to `None`, the ratios for all individual tempo bins are returned.
+        If ``aggregate`` is set to ``None``, the ratios for all individual tempo bins are returned.
 
     See Also
     --------
