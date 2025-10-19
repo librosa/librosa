@@ -2586,7 +2586,7 @@ def interp_broadcast(
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Interpolate to broadcast two arrays
 
-    This function interpolates two arrays along a given axis to be on a common grid, and performs a broadcast operation (eg. `np.multiply`) to combine them. It is useful for retrieving the DFT / AC product [1]_ and the Fundamental Tempogram [2]_.
+    This function interpolates two arrays along a given axis to be on a common grid, and performs a broadcast operation (eg. ``np.multiply``) to combine them. It is useful for retrieving the DFT / AC product [1]_ and the Fundamental Tempogram [2]_.
 
     .. [1] Peeters, G.
        "Spectral and Temporal Periodicity Representations of Rhythm for the Automatic Classification of Music Audio Signal."
@@ -2599,48 +2599,49 @@ def interp_broadcast(
     Parameters
     ----------
     x1 : np.ndarray
-        An array with broadcast compatible dimensions (except along the axis of interpolation) with `x2`.
+        An array with broadcast compatible dimensions (except along the axis of interpolation) with ``x2``.
 
     x2 : np.ndarray
-        An array with broadcast compatible dimensions (except along the axis of interpolation) with `x1`.
+        An array with broadcast compatible dimensions (except along the axis of interpolation) with ``x1``.
 
     x1_pos : np.ndarray
-        Positioning data along the axis of interpolation for `x1`.
+        Positioning data along the axis of interpolation for ``x1``.
 
     x2_pos : np.ndarray
-        Positioning data along the axis of interpolation for `x2`.
+        Positioning data along the axis of interpolation for ``x2``.
 
     interp_pos: np.ndarray
         Positioning data for the interpolation grid.
-        Default: `x1_pos`.
+        Default: ``x1_pos``.
 
     func: function [optional]
         A function that combines the two interpolated arrays.
-        Default: `np.multiply`.
+        Default: ``np.multiply``.
 
     axis: int
         The axis of interpolation.
-        Default: `-2`
+        Default: ``-2``
 
     kind : str
-        Interpolation type.  See `scipy.interpolate.interp1d`.
-        Default: `"linear"`
+        Interpolation type.  See ``scipy.interpolate.interp1d``.
+        Default: ``"linear"``
 
     fill_value : float
         The value to fill when extrapolating beyond the observed range.
-        Default: `0`
+        Default: ``0``
 
     Returns
     -------
     result : np.ndarray or (np.ndarray, np.ndarray)
         The result from combining both arrays after interpolation.
-        If `func` is set to `None`, returns the interpolated arrays separately `(y1, y2)`.
+        If ``func`` is set to ``None``, returns the interpolated arrays separately ``(y1, y2)``.
 
     Examples
     --------
+
     See Also
     --------
-    metrogram
+    librosa.feature.metrogram
 
     """
 
