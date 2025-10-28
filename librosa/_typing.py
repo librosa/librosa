@@ -1,9 +1,16 @@
 from __future__ import annotations
 
-from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any, Sequence
+from collections.abc import Sequence
+from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any
 from typing_extensions import Literal, Never
 import numpy as np
 from numpy.typing import ArrayLike
+import scipy.sparse as sp
+
+
+# RNG types
+SeedLike = Union[int, np.integer, Sequence[int], np.random.SeedSequence]
+RNGLike = Union[np.random.Generator, np.random.BitGenerator]
 
 
 _WindowSpec = Union[str, Tuple[Any, ...], float, Callable[[int], np.ndarray], ArrayLike]
@@ -82,3 +89,34 @@ def _ensure_not_reachable(__arg: Never):
     raise a more user friendly exception afterwards.
     """
     ...
+
+
+# The possible subclasses of `scipy.sparse.spmatrix & scipy.sparse._base._spbase` (their intersection)
+_SparseMatrix = Union[
+    sp.bsr_matrix,
+    sp.coo_matrix,
+    sp.csc_matrix,
+    sp.csr_matrix,
+    sp.dia_matrix,
+    sp.dok_matrix,
+    sp.lil_matrix,
+]
+
+# matches the `interp` argument in `scipy.interpolate.interp1d` on all supported SciPy versions
+# https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html
+_InterpKind = Literal[
+    "linear",
+    "nearest",
+    "nearest-up",
+    "zero",
+    "slinear",
+    "quadratic",
+    "cubic",
+    "previous",
+    "next",
+]
+
+
+# DCT normalization modes
+_DCTNorm = Literal["backward", "ortho", "forward"]
+_DCTType = Literal[1, 2, 3, 4]

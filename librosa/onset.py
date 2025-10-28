@@ -141,7 +141,7 @@ def onset_detect(
     >>> import matplotlib.pyplot as plt
     >>> D = np.abs(librosa.stft(y))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> librosa.display.specshow(D, vscale='dBFS',
     ...                          x_axis='time', y_axis='log', ax=ax[0], sr=sr)
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
@@ -164,9 +164,8 @@ def onset_detect(
         # Normalization is performed over the trailing axis
         onset_envelope = onset_envelope - np.min(onset_envelope, keepdims=True, axis=-1)
 
-        # Mypy does not realize that oenv is not None by now
         # Max-scale with safe division
-        onset_envelope /= np.max(onset_envelope, keepdims=True, axis=-1) + util.tiny(onset_envelope)  # type: ignore
+        onset_envelope /= np.max(onset_envelope, keepdims=True, axis=-1) + util.tiny(onset_envelope)
 
     # help out mypy
     assert onset_envelope is not None
@@ -315,7 +314,7 @@ def onset_strength(
     >>> D = np.abs(librosa.stft(y))
     >>> times = librosa.times_like(D, sr=sr)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> librosa.display.specshow(D, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0], sr=sr)
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
@@ -415,7 +414,7 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].label_outer()
     >>> ax[1].plot(times, oenv, label='Onset strength')
@@ -549,11 +548,11 @@ def onset_strength_multi(
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
     >>> D = np.abs(librosa.stft(y))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img1 = librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> img1 = librosa.display.specshow(D, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
-    >>> fig.colorbar(img1, ax=[ax[0]], format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img1, ax=ax[0])
 
     Construct a standard onset function over four sub-bands
 

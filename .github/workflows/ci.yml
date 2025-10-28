@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
     - main
+    - 1.0.0dev
 
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,7 +23,7 @@ jobs:
             matrix:
                 include:
                     - os: ubuntu-latest
-                      python-version: "3.8"
+                      python-version: "3.9"
                       envfile: ".github/environment-minimal.yml"
                       channel-priority: "flexible"
                       name: "Minimal dependencies"
@@ -69,8 +70,6 @@ jobs:
 
         steps:
         - uses: actions/checkout@v4
-          with:
-            submodules: true
 
         - name: Create short temp directory (Windows only)
           if: runner.os == 'Windows'
@@ -97,26 +96,33 @@ jobs:
               ;;
             esac
 
-        - name: Cache conda
-          uses: actions/cache@v4
-          env:
-            # Increase this value to reset cache if etc/example-environment.yml has not changed
-            CACHE_NUMBER: 0
-          with:
-            path: ~/conda_pkgs_dir
-            key: ${{ runner.os }}-${{ runner.arch }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
-
-        - name: Install Conda environment
+        - name: Setup Miniforge
           uses: conda-incubator/setup-miniconda@v3
           with:
-            auto-update-conda: true
-            python-version: ${{ matrix.python-version }}
-            add-pip-as-python-dependency: true
-            auto-activate-base: false
+            miniforge-version: latest
             activate-environment: test
-            channel-priority: ${{ matrix.channel-priority }}
-            environment-file: ${{ matrix.envfile }}
-            use-only-tar-bz2: false # IMPORTANT: This needs to be set for caching to work properly!
+
+        - name: Get Date
+          id: get-date
+          run: echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
+          shell: bash
+
+        - name: Cache Conda env
+          uses: actions/cache@v4
+          with:
+            path: ${{ env.CONDA }}/envs
+            key:
+              conda-${{ runner.os }}--${{ runner.arch }}--${{
+              steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER
+              }}-${{ matrix.python-version }}-${{ hashFiles( matrix.envfile ) }}
+          env:
+            CACHE_NUMBER: 0
+          id: cache
+
+        - name: Update environment
+          run:
+            mamba env update -n test -f ${{ matrix.envfile }} 
+          if: steps.cache.outputs.cache-hit != 'true'
 
         - name: Conda info
           shell: bash -l {0}
@@ -131,7 +137,15 @@ jobs:
 
         - name: Run pytest
           shell: bash -l {0}
-          run: pytest
+          run: pytest --mpl-results-path=mpl_image_results/
+
+        - name: Upload image comparison failures if any
+          if: failure() && hashFiles('mpl_image_results/**') != ''
+          uses: actions/upload-artifact@v4
+          with:
+            name: mpl-test-results-${{ runner.os }}--${{ runner.arch }}--${{ matrix.python-version }}
+            path: mpl_image_results/
+            retention-days: 7
 
         - name: Upload coverage to Codecov
           uses: codecov/codecov-action@v5

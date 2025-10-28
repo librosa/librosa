@@ -33,70 +33,66 @@ FT_VERSION = version.parse(matplotlib.ft2font.__freetype_version__)
 OLD_FT = not (FT_VERSION >= version.parse("2.10"))
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def audio():
 
-    __EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
-    y, sr = librosa.load(__EXAMPLE_FILE)
+    __EXAMPLE_FILE = os.path.join("tests", "test_audio.ogg")
+    # Force 64-bit here to avoid phase instabilities in display down the road
+    y, sr = librosa.load(__EXAMPLE_FILE, dtype=np.float64)
     return y, sr
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def y(audio):
     return audio[0]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def sr(audio):
     return audio[1]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def S(y):
     return librosa.stft(y)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def S_abs(S):
     return np.abs(S)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def C(y, sr):
     return np.abs(librosa.cqt(y, sr=sr))
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def S_signed(S):
-    return np.abs(S) - np.median(np.abs(S))
+    return np.round(np.abs(S) - np.mean(np.abs(S)), decimals=4)
 
 
-@pytest.fixture
-def S_bin(S_signed):
-    return S_signed > 0
-
-
-@pytest.fixture
+@pytest.fixture(scope="module")
 def rhythm(y, sr):
     return librosa.beat.beat_track(y=y, sr=sr)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def tempo(rhythm):
     return rhythm[0]
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def beats(rhythm, C):
     return librosa.util.fix_frames(rhythm[1])
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def beat_t(beats, sr):
     return librosa.frames_to_time(beats, sr=sr)
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def Csync(C, beats):
     return librosa.util.sync(C, beats, aggregate=np.median)
 
@@ -169,7 +165,7 @@ def test_cqt_hz(C):
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_tempo(y, sr):
-    T = librosa.feature.tempogram(y=y, sr=sr)
+    T = librosa.feature.tempogram(y=y, sr=sr, win_length=64)
 
     plt.figure()
     librosa.display.specshow(T, y_axis="tempo", cmap="magma")
@@ -184,7 +180,7 @@ def test_tempo(y, sr):
     "ignore:n_fft=.*is too large"
 )  # our test signal is short, but this is fine here
 def test_fourier_tempo(y, sr):
-    T = librosa.feature.fourier_tempogram(y=y, sr=sr)
+    T = librosa.feature.fourier_tempogram(y=y, sr=sr, win_length=64)
 
     plt.figure()
     librosa.display.specshow(np.abs(T), y_axis="fourier_tempo", cmap="magma")
@@ -306,16 +302,14 @@ def test_y_mel_bounded(S_abs):
     baseline_images=["x_none_y_linear"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_xaxis_none_yaxis_linear(S_abs, S_signed, S_bin):
+def test_xaxis_none_yaxis_linear(S_abs, S_signed):
     plt.figure()
-    plt.subplot(3, 1, 1)
+    plt.subplot(2, 1, 1)
     librosa.display.specshow(S_abs, y_axis="linear")
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(2, 1, 2)
     librosa.display.specshow(S_signed, y_axis="fft")
 
-    plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin, y_axis="hz")
     return plt.gcf()
 
 
@@ -338,17 +332,15 @@ def test_specshow_ext_axes(S_abs):
     baseline_images=["x_none_y_log"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_xaxis_none_yaxis_log(S_abs, S_signed, S_bin):
+def test_xaxis_none_yaxis_log(S_abs, S_signed):
     plt.figure()
 
-    plt.subplot(3, 1, 1)
+    plt.subplot(2, 1, 1)
     librosa.display.specshow(S_abs, y_axis="log")
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(2, 1, 2)
     librosa.display.specshow(S_signed, y_axis="log")
 
-    plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin, y_axis="log")
     return plt.gcf()
 
 
@@ -356,17 +348,15 @@ def test_xaxis_none_yaxis_log(S_abs, S_signed, S_bin):
     baseline_images=["x_linear_y_none"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_xaxis_linear_yaxis_none(S_abs, S_signed, S_bin):
+def test_xaxis_linear_yaxis_none(S_abs, S_signed):
     plt.figure()
 
-    plt.subplot(3, 1, 1)
+    plt.subplot(2, 1, 1)
     librosa.display.specshow(S_abs.T, x_axis="linear")
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(2, 1, 2)
     librosa.display.specshow(S_signed.T, x_axis="fft")
 
-    plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin.T, x_axis="hz")
     return plt.gcf()
 
 
@@ -374,18 +364,16 @@ def test_xaxis_linear_yaxis_none(S_abs, S_signed, S_bin):
     baseline_images=["x_log_y_none"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_xaxis_log_yaxis_none(S_abs, S_signed, S_bin):
+def test_xaxis_log_yaxis_none(S_abs, S_signed):
 
     plt.figure()
 
-    plt.subplot(3, 1, 1)
+    plt.subplot(2, 1, 1)
     librosa.display.specshow(S_abs.T, x_axis="log")
 
-    plt.subplot(3, 1, 2)
+    plt.subplot(2, 1, 2)
     librosa.display.specshow(S_signed.T, x_axis="log")
 
-    plt.subplot(3, 1, 3)
-    librosa.display.specshow(S_bin.T, x_axis="log")
     return plt.gcf()
 
 
@@ -636,6 +624,34 @@ def test_waveshow_ext_axes(y):
 
 
 @pytest.mark.mpl_image_compare(
+    baseline_images=["waveshow_inverted"],
+    extensions=["png"],
+    tolerance=3,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_waveshow_inverted(y, sr):
+
+    fig, ax = plt.subplots(nrows=3, sharex=True)
+    # Original waveshow
+    librosa.display.waveshow(y, sr=sr, ax=ax[0], invert=False, label='Regular')
+    ax[0].legend(loc='upper right')
+
+    # Inverted with default (axes face) color
+    librosa.display.waveshow(y, sr=sr, ax=ax[1], invert=True, invert_color=None, label='Inverted')
+    ax[1].legend(loc='upper right')
+
+    # Inverted with custom color
+    librosa.display.waveshow(y, sr=sr, ax=ax[2], invert=True, invert_color="#2d2d2d", label='Inverted custom')
+    ax[2].legend(loc='upper right')
+
+    for axi in ax.flat:
+        axi.label_outer()
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_stereo"], extensions=["png"], tolerance=6, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -689,10 +705,10 @@ def test_unknown_axis(S_abs, axis: str):
         np.arange(2, dtype=bool),
     ],
 )  # binary
-def test_cmap_robust(data):
+def test_infer_cmap_robust(data):
 
-    cmap1 = librosa.display.cmap(data, robust=False)
-    cmap2 = librosa.display.cmap(data, robust=True)
+    cmap1 = librosa.display.infer_cmap(data, robust=False)
+    cmap2 = librosa.display.infer_cmap(data, robust=True)
 
     assert type(cmap1) is type(cmap2)
 
@@ -1126,3 +1142,351 @@ def test_specshow_chromafjs(C, sr):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_vqt_hz_nointervals(C, sr):
     librosa.display.specshow(C, sr=sr, y_axis="vqt_hz")
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize("vscale", ["dBFS[1]", "dBFS[power,1]"])
+def test_parse_vscale_dbfs_ref(vscale):
+    # This should raise an error because a reference value is
+    # not allowed with dBFS
+    librosa.display.__parse_vscale(vscale)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.parametrize("vscale", ["bad string", "dB[gibberish]", "dBFS[gibberish]"])
+def test_parse_vscale_fail(vscale):
+    librosa.display.__parse_vscale(vscale)
+
+
+@pytest.mark.parametrize(
+    "vscale, mode, scale_type, ref",
+    [
+        ("dBFS", "dBFS", "amplitude", "max"),
+        ("dBFS[power]", "dBFS", "power", "max"),
+        ("dB", "dB", "amplitude", None),
+        ("dB[2]", "dB", "amplitude", 2),
+        ("dB[1e-1]", "dB", "amplitude", 0.1),
+        ("dB[power]", "dB", "power", None),
+        ("dB[power,2]", "dB", "power", 2),
+        ("dB[power,1e-1]", "dB", "power", 0.1),
+    ],
+)
+def test_parse_vscale(vscale, mode, scale_type, ref):
+    assert librosa.display.__parse_vscale(vscale) == (mode, scale_type, ref)
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["specshow_vscale"], extensions=["png"], tolerance=6, style=STYLE
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_specshow_vscale(S):
+    fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True, figsize=(12, 12))
+
+    # first column is dB, dBFS, dB with ref value
+    i1 = librosa.display.specshow(
+        S, vscale="dB", y_axis="log", x_axis="time", ax=ax[0, 0]
+    )
+    fig.colorbar(i1, ax=ax[0, 0])
+    ax[0, 0].set_title("dB")
+    i2 = librosa.display.specshow(
+        S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[1, 0]
+    )
+    fig.colorbar(i2, ax=ax[1, 0])
+    ax[1, 0].set_title("dBFS")
+    i3 = librosa.display.specshow(
+        S, vscale="dB[1e-2]", y_axis="log", x_axis="time", ax=ax[2, 0]
+    )
+    fig.colorbar(i3, ax=ax[2, 0])
+    ax[2, 0].set_title("dB, ref=1e-2")
+
+    # second column is dB[power], dBFS[power], dB[power] with ref value
+    i4 = librosa.display.specshow(
+        S, vscale="dB[power]", y_axis="log", x_axis="time", ax=ax[0, 1]
+    )
+    fig.colorbar(i4, ax=ax[0, 1])
+    ax[0, 1].set_title("dB power")
+    i5 = librosa.display.specshow(
+        S, vscale="dBFS[power]", y_axis="log", x_axis="time", ax=ax[1, 1]
+    )
+    fig.colorbar(i5, ax=ax[1, 1])
+    ax[1, 1].set_title("dBFS power")
+    i6 = librosa.display.specshow(
+        S, vscale="dB[power,1e-2]", y_axis="log", x_axis="time", ax=ax[2, 1]
+    )
+    fig.colorbar(i6, ax=ax[2, 1])
+    ax[2, 1].set_title("dB power, ref=1e-2")
+
+    for _ax in ax.flat:
+        _ax.label_outer()
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["specshow_vscale_phase"],
+    extensions=["png"],
+    tolerance=3,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_specshow_vscale_phase():
+    # Create a chirp
+    sr = 22050
+    y = librosa.chirp(fmin=110, fmax=880, duration=1, sr=sr, linear=False)
+    S = librosa.stft(y, n_fft=2048, hop_length=512)
+    alpha = np.abs(S)
+    alpha /= np.max(alpha)  # normalize to [0, 1]
+    fig, ax = plt.subplots(
+        nrows=1,
+        ncols=3,
+        sharex=False,
+        sharey=False,
+        gridspec_kw={"hspace": 0.8},
+        figsize=(12, 4),
+    )
+
+    # phase, phase difference, and phase difference transpose
+    # we use alpha channels here to avoid test failures for unstable phase estimates in quiet regions
+    i7 = librosa.display.specshow(
+        S, vscale="phase", y_axis="log", x_axis="time", ax=ax[0], alpha=alpha
+    )
+    fig.colorbar(i7, ax=ax[0])
+    ax[0].set_title("phase")
+
+    i8 = librosa.display.specshow(
+        S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1], alpha=alpha
+    )
+    fig.colorbar(i8, ax=ax[1])
+    ax[1].set_title("dphase")
+
+    i9 = librosa.display.specshow(
+        S.T, vscale="dphase_t", x_axis="log", y_axis="time", ax=ax[2], alpha=alpha.T
+    )
+    fig.colorbar(i9, ax=ax[2])
+    ax[2].set_title("dphase_t")
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["colorbar_db"],
+    extensions=["png"],
+    tolerance=3,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_colorbar_db(S):
+    fig, ax = plt.subplots(nrows=2)
+    i1 = librosa.display.specshow(S, vscale="dB", y_axis="log", x_axis="time", ax=ax[0])
+    librosa.display.colorbar_db(i1, ax=ax[0])
+    i2 = librosa.display.specshow(
+        S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[1]
+    )
+    librosa.display.colorbar_db(i2, ax=ax[1], label="dBFS")
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["colorbar_phase"],
+    extensions=["png"],
+    tolerance=3,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_colorbar_phase(S):
+    alpha = np.abs(S)
+    alpha /= np.max(alpha)
+    fig, ax = plt.subplots(nrows=2)
+    i1 = librosa.display.specshow(
+        S, vscale="phase", y_axis="log", x_axis="time", alpha=alpha, ax=ax[0]
+    )
+    librosa.display.colorbar_phase(i1, ax=ax[0])
+    i2 = librosa.display.specshow(
+        S, vscale="dphase", y_axis="log", x_axis="time", alpha=alpha, ax=ax[1]
+    )
+    librosa.display.colorbar_phase(i2, ax=ax[1], label="Δ radians")
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["diverging_slopes"],
+    extensions=["png"],
+    tolerance=5,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_diverging_scales(S_signed):
+
+    # Cases to test:
+    # 0. Diverging scale with default cmap_div (auto norm)
+    # 1. Diverging scale with explicit cmap override (no norm)
+    # 2. Diverging scale with specified cmap_div (auto norm)
+    # 3. Inferred diverging scale with default cmap_div and vmin/vmax (auto norm, truncated)
+    # 4. Explicit diverging scale with vmin/vmax (no norm, truncated)
+
+    fig, ax = plt.subplots(nrows=3, ncols=2, figsize=(12, 12), sharex=True, sharey=True)
+
+    # Diverging scale with default cmap_div (auto norm)
+    i1 = librosa.display.specshow(S_signed, y_axis="log", x_axis="time", ax=ax[0, 0])
+    ax[0, 0].set_title("Default cmap_div (auto norm)")
+    fig.colorbar(i1, ax=ax[0, 0])
+
+    # Diverging scale with explicit cmap override (no norm)
+    i2 = librosa.display.specshow(
+        S_signed,
+        y_axis="log",
+        x_axis="time",
+        ax=ax[0, 1],
+        cmap="PuOr_r",
+    )
+    ax[0, 1].set_title("Explicit cmap override (no norm)")
+    fig.colorbar(i2, ax=ax[0, 1])
+
+    # Diverging scale with specified cmap_div (auto norm)
+    i3 = librosa.display.specshow(
+        S_signed, y_axis="log", x_axis="time", ax=ax[1, 0], cmap_div="Spectral_r"
+    )
+    ax[1, 0].set_title("Specified cmap_div (auto norm)")
+    fig.colorbar(i3, ax=ax[1, 0])
+
+    # Inferred diverging scale with default cmap_div and vmin/vmax (auto norm, truncated)
+    vmin = -10
+    vmax = 30
+    i4 = librosa.display.specshow(
+        S_signed,
+        y_axis="log",
+        x_axis="time",
+        ax=ax[2, 0],
+        vmin=vmin,
+        vmax=vmax,
+        cmap_div=matplotlib.colormaps["coolwarm"],
+    )
+    ax[2, 0].set_title("Inferred cmap_div with vmin/vmax (auto norm, truncated)")
+    fig.colorbar(i4, ax=ax[2, 0])
+
+    # Explicit diverging scale with vmin/vmax (no norm, truncated)
+    i5 = librosa.display.specshow(
+        S_signed,
+        y_axis="log",
+        x_axis="time",
+        ax=ax[1, 1],
+        vmin=vmin,
+        vmax=vmax,
+        cmap="Spectral_r",
+    )
+    ax[1, 1].set_title("Explicit cmap_div with vmin/vmax (no norm, truncated)")
+    fig.colorbar(i5, ax=ax[1, 1])
+
+    # Hide the last axis
+    ax[2, 1].axis("off")
+
+    for axi in ax.flat:
+        axi.label_outer()
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["oct3"],
+    extensions=["png"],
+    tolerance=5,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_oct3(S_abs, C):
+
+    fig, ax = plt.subplots(nrows=2, ncols=2)
+
+    # STFT, Mel
+    # CQT, VQT
+
+    librosa.display.specshow(S_abs, vscale='dBFS', y_axis='log_oct3',
+                             ax=ax[0, 0])
+
+    M = librosa.feature.melspectrogram(S=S_abs**2)
+    librosa.display.specshow(M, vscale='dBFS[power]',
+                             y_axis='mel_oct3', ax=ax[0, 1])
+
+    librosa.display.specshow(C, vscale='dBFS', y_axis='cqt_oct3',
+                             ax=ax[1, 0])
+
+    librosa.display.specshow(C, vscale='dBFS', y_axis='vqt_oct3',
+                             ax=ax[1, 1], intervals='equal')
+
+    # Put the ticks on the right just to reduce crowding
+    ax[0, 1].yaxis.tick_right()
+    ax[1, 1].yaxis.tick_right()
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["wavebars"],
+    extensions=["png"],
+    tolerance=5,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_wavebars(y, sr):
+
+    fig, ax = plt.subplots(nrows=6, layout='tight', figsize=(8, 12))
+
+    librosa.display.wavebars(y, sr=sr, ax=ax[0], label='100')
+    librosa.display.wavebars(y, sr=sr, color='C1', n_bars=150, 
+                             rounding_ratio=0, 
+                             ax=ax[1], label='150 square')
+    librosa.display.wavebars(y, sr=sr, color='C2', n_bars=50,
+                             ax=ax[2], invert=True, label='50 inverted')
+    librosa.display.wavebars(y, sr=sr, color='C3', gap_ratio=0,
+                             ax=ax[3], label='no gap')
+    librosa.display.wavebars(y, sr=sr, color='C4', offset=30, 
+                             rounding_ratio=0.3, invert=True,
+                             invert_color='#2d2d2d',
+                             ax=ax[4],
+                             label='offset 30, invert dark')
+    librosa.display.wavebars(y, sr=sr, ax=ax[5], color='C5',
+                             axis='ms',
+                             label='time_ms')
+
+    for axi in ax.flat:
+        axi.legend()
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["wavebars_transpose"],
+    extensions=["png"],
+    tolerance=5,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_wavebars_transpose(y, sr):
+
+    fig, ax = plt.subplots(ncols=6, layout='tight', figsize=(12, 8))
+
+    librosa.display.wavebars(y, sr=sr, ax=ax[0], label='100',
+                             transpose=True)
+    librosa.display.wavebars(y, sr=sr, color='C1', n_bars=150, 
+                             rounding_ratio=0, transpose=True,
+                             ax=ax[1], label='150 square')
+    librosa.display.wavebars(y, sr=sr, color='C2', n_bars=50,
+                             transpose=True,
+                             ax=ax[2], invert=True, label='50 inverted')
+    librosa.display.wavebars(y, sr=sr, color='C3', gap_ratio=0,
+                             transpose=True,
+                             ax=ax[3], label='no gap')
+    librosa.display.wavebars(y, sr=sr, color='C4', offset=30,
+                             transpose=True,
+                             rounding_ratio=0.3, invert=True,
+                             invert_color='#2d2d2d',
+                             ax=ax[4],
+                             label='offset 30, invert dark')
+    librosa.display.wavebars(y, sr=sr, ax=ax[5], color='C5',
+                             axis='ms', transpose=True,
+                             label='time_ms')
+
+    for axi in ax.flat:
+        axi.legend()
+
+    return fig
+

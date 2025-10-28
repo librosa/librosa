@@ -10,7 +10,6 @@ from .. import util
 from .. import filters
 from ..util.exceptions import ParameterError
 
-from ..core.fft import get_fftlib
 from ..core.convert import fft_frequencies
 from ..core.audio import zero_crossings
 from ..core.spectrum import power_to_db, _spectrogram
@@ -19,7 +18,7 @@ from ..core.pitch import estimate_tuning
 from typing import Any, Optional, Union, Collection
 from typing_extensions import Literal
 from numpy.typing import DTypeLike
-from .._typing import _FloatLike_co, _WindowSpec, _PadMode, _PadModeSTFT
+from .._typing import _FloatLike_co, _WindowSpec, _PadMode, _PadModeSTFT, _DCTType, _DCTNorm
 
 
 __all__ = [
@@ -145,7 +144,7 @@ def spectral_centroid(
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(cent)
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax)
     >>> ax.plot(times, cent.T, label='Spectral centroid', color='w')
     >>> ax.legend(loc='upper right')
@@ -294,7 +293,7 @@ def spectral_bandwidth(
     >>> ax[0].set(ylabel='Hz', xticks=[], xlim=[times.min(), times.max()])
     >>> ax[0].legend()
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='log Power spectrogram')
     >>> ax[1].fill_between(times, np.maximum(0, centroid[0] - spec_bw[0]),
@@ -443,10 +442,9 @@ def spectral_contrast(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img1 = librosa.display.specshow(librosa.amplitude_to_db(S,
-    ...                                                  ref=np.max),
+    >>> img1 = librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0])
-    >>> fig.colorbar(img1, ax=[ax[0]], format='%+2.0f dB')
+    >>> librosa.display.colorbar_db(img1)
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
     >>> img2 = librosa.display.specshow(contrast, x_axis='time', ax=ax[1])
@@ -624,7 +622,7 @@ def spectral_rolloff(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax)
     >>> ax.plot(librosa.times_like(rolloff), rolloff[0], label='Roll-off frequency (0.99)')
     >>> ax.plot(librosa.times_like(rolloff), rolloff_min[0], color='w',
@@ -861,7 +859,7 @@ def rms(
     >>> ax[0].set(xticks=[])
     >>> ax[0].legend()
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='log Power spectrogram')
 
@@ -1014,7 +1012,7 @@ def poly_features(
     >>> ax[2].plot(times, p2[0], label='order=2', alpha=0.8)
     >>> ax[2].set(ylabel='Quadratic term')
     >>> ax[2].legend()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[3])
     """
     S, n_fft = _spectrogram(
@@ -1252,9 +1250,9 @@ def chroma_stft(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> img = librosa.display.specshow(S, vscale='dBFS[power]',
     ...                                y_axis='log', x_axis='time', ax=ax[0])
-    >>> fig.colorbar(img, ax=[ax[0]])
+    >>> librosa.display.colorbar_db(img)
     >>> ax[0].label_outer()
     >>> img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[1])
     >>> fig.colorbar(img, ax=[ax[1]])
@@ -1837,8 +1835,8 @@ def mfcc(
     sr: float = 22050,
     S: Optional[np.ndarray] = None,
     n_mfcc: int = 20,
-    dct_type: int = 2,
-    norm: Optional[str] = "ortho",
+    dct_type: _DCTType = 2,
+    norm: Optional[_DCTNorm] = "ortho",
     lifter: float = 0,
     mel_norm: Optional[Union[Literal["slaney"], float]] = "slaney",
     **kwargs: Any,
@@ -1966,34 +1964,35 @@ def mfcc(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img = librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+    >>> img = librosa.display.specshow(S, vscale='dBFS[power]',
     ...                                x_axis='time', y_axis='mel', fmax=8000,
     ...                                ax=ax[0])
-    >>> fig.colorbar(img, ax=[ax[0]])
+    >>> librosa.display.colorbar_db(img)
     >>> ax[0].set(title='Mel spectrogram')
     >>> ax[0].label_outer()
     >>> img = librosa.display.specshow(mfccs, x_axis='time', ax=ax[1])
     >>> fig.colorbar(img, ax=[ax[1]])
     >>> ax[1].set(title='MFCC')
+    >>> plt.show()
 
     Compare different DCT bases
 
     >>> m_slaney = librosa.feature.mfcc(y=y, sr=sr, dct_type=2)
     >>> m_htk = librosa.feature.mfcc(y=y, sr=sr, dct_type=3)
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, layout='compressed')
     >>> img1 = librosa.display.specshow(m_slaney, x_axis='time', ax=ax[0])
     >>> ax[0].set(title='RASTAMAT / Auditory toolbox (dct_type=2)')
     >>> fig.colorbar(img, ax=[ax[0]])
     >>> img2 = librosa.display.specshow(m_htk, x_axis='time', ax=ax[1])
     >>> ax[1].set(title='HTK-style (dct_type=3)')
     >>> fig.colorbar(img2, ax=[ax[1]])
+    >>> plt.show()
     """
     if S is None:
         # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, norm = mel_norm, **kwargs))
 
-    fft = get_fftlib()
-    M: np.ndarray = fft.dct(S, axis=-2, type=dct_type, norm=norm)[
+    M: np.ndarray = scipy.fft.dct(S, axis=-2, type=dct_type, norm=norm)[
         ..., :n_mfcc, :
     ]
 
@@ -2129,7 +2128,7 @@ def melspectrogram(
     >>> img = librosa.display.specshow(S_dB, x_axis='time',
     ...                          y_axis='mel', sr=sr,
     ...                          fmax=8000, ax=ax)
-    >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
+    >>> librosa.display.colorbar_db(img)
     >>> ax.set(title='Mel-frequency spectrogram')
     """
     S, n_fft = _spectrogram(

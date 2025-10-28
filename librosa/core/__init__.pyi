@@ -47,6 +47,8 @@ from .audio import (
     load as load,
     stream as stream,
     to_mono as to_mono,
+    to_stereo as to_stereo,
+    to_multi as to_multi,
     resample as resample,
     get_duration as get_duration,
     get_samplerate as get_samplerate,
@@ -98,11 +100,6 @@ from .harmonic import (
     salience as salience,
     interp_harmonics as interp_harmonics,
     f0_harmonics as f0_harmonics,
-)
-
-from .fft import (
-    get_fftlib as get_fftlib,
-    set_fftlib as set_fftlib,
 )
 
 from .notation import (

@@ -11,8 +11,10 @@ Audio loading
 
     load
     stream
-    to_mono
     resample
+    to_mono
+    to_stereo
+    to_multi
     get_duration
     get_samplerate
 
@@ -204,9 +206,6 @@ Miscellaneous
 
     samples_like
     times_like
-
-    get_fftlib
-    set_fftlib
 """
 
 import lazy_loader as lazy

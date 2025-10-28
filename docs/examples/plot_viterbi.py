@@ -31,9 +31,9 @@ S_full, phase = librosa.magphase(librosa.stft(y))
 ###################
 # Plot the spectrum
 fig, ax = plt.subplots()
-img = librosa.display.specshow(librosa.amplitude_to_db(S_full, ref=np.max),
+img = librosa.display.specshow(S_full, vscale='dBFS',
                                y_axis='log', x_axis='time', sr=sr, ax=ax)
-fig.colorbar(img, ax=ax);
+librosa.display.colorbar_db(img)
 
 ###########################################################
 # As you can see, there are periods of silence and
@@ -88,7 +88,7 @@ ax.legend();
 
 plt.figure(figsize=(12, 6))
 fig, ax = plt.subplots(nrows=2, sharex=True)
-librosa.display.specshow(librosa.amplitude_to_db(S_full, ref=np.max),
+librosa.display.specshow(S_full, vscale='dBFS',
                          y_axis='log', x_axis='time', sr=sr, ax=ax[0])
 ax[0].label_outer()
 ax[1].step(times, p>=0.5, label='Non-silent')
@@ -124,7 +124,7 @@ states = librosa.sequence.viterbi_discriminative(full_p, transition)
 
 # sphinx_gallery_thumbnail_number = 5
 fig, ax = plt.subplots(nrows=2, sharex=True)
-librosa.display.specshow(librosa.amplitude_to_db(S_full, ref=np.max),
+librosa.display.specshow(S_full, vscale='dBFS',
                          y_axis='log', x_axis='time', sr=sr, ax=ax[0])
 ax[0].label_outer()
 ax[1].step(times, p>=0.5, label='Frame-wise')

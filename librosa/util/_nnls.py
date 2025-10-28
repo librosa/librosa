@@ -75,7 +75,7 @@ def _nnls_lbfgs_block(
     shape = x_init.shape
 
     # optimize
-    x: np.ndarray
+
     x, obj_value, diagnostics = scipy.optimize.fmin_l_bfgs_b(
         _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs
     )
@@ -124,23 +124,23 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[2])
     >>> ax[2].set(title='Original spectrogram (1025 bins)')
     >>> ax[2].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(M, ref=np.max),
+    >>> librosa.display.specshow(M, vscale='dBFS',
     ...                          y_axis='mel', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Mel spectrogram (128 bins)')
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_recover, ref=np.max(S)),
+    >>> img = librosa.display.specshow(S_recover, vscale=f'dB[{S.max()}]',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Reconstructed spectrogram (1025 bins)')
     >>> ax[1].label_outer()
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     # If B is a single vector, punt up to the scipy method
     if B.ndim == 1:
-        return scipy.optimize.nnls(A, B)[0]  # type: ignore
+        return scipy.optimize.nnls(A, B)[0]
 
     n_columns = int(MAX_MEM_BLOCK // (np.prod(B.shape[:-1]) * A.itemsize))
     n_columns = max(n_columns, 1)

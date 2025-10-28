@@ -19,8 +19,8 @@ from numpy.typing import DTypeLike
 from typing import (
     Any,
     Callable,
-    List,
     Dict,
+    List,
     Optional,
     Sequence,
     Tuple,
@@ -28,8 +28,19 @@ from typing import (
     Union,
     overload,
 )
+
+import numba
+import numpy as np
+import scipy.ndimage
+import scipy.sparse
+from numpy.lib.stride_tricks import as_strided
+from numpy.typing import DTypeLike
 from typing_extensions import Literal
-from .._typing import _SequenceLike, _FloatLike_co, _ComplexLike_co
+
+from .._cache import cache
+from .._typing import _ComplexLike_co, _FloatLike_co, _SequenceLike, _SparseMatrix
+from .deprecation import Deprecated
+from .exceptions import ParameterError
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -675,8 +686,7 @@ def axis_sort(
     axis: int = ...,
     index: Literal[False] = ...,
     value: Optional[Callable[..., Any]] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -686,8 +696,7 @@ def axis_sort(
     axis: int = ...,
     index: Literal[True],
     value: Optional[Callable[..., Any]] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 def axis_sort(
@@ -724,21 +733,21 @@ def axis_sort(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, ncols=2)
-    >>> img_w = librosa.display.specshow(librosa.amplitude_to_db(W, ref=np.max),
+    >>> img_w = librosa.display.specshow(W, vscale='dBFS',
     ...                                  y_axis='log', ax=ax[0, 0])
     >>> ax[0, 0].set(title='W')
     >>> ax[0, 0].label_outer()
     >>> img_act = librosa.display.specshow(H, x_axis='time', ax=ax[0, 1])
     >>> ax[0, 1].set(title='H')
     >>> ax[0, 1].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(W_sort,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(W_sort, vscale='dBFS',
     ...                          y_axis='log', ax=ax[1, 0])
     >>> ax[1, 0].set(title='W sorted')
     >>> librosa.display.specshow(H_sort, x_axis='time', ax=ax[1, 1])
     >>> ax[1, 1].set(title='H sorted')
     >>> ax[1, 1].label_outer()
-    >>> fig.colorbar(img_w, ax=ax[:, 0], orientation='horizontal')
+    >>> cbar = librosa.display.colorbar_db(img_w, ax=ax[:, 0], orientation='horizontal')
+    >>> cbar.ax.tick_params("x", rotation=45)
     >>> fig.colorbar(img_act, ax=ax[:, 1], orientation='horizontal')
 
     Parameters
@@ -1191,7 +1200,6 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
     return lmin
 
 
-
 @numba.guvectorize(
     [
         "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
@@ -1200,12 +1208,14 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
         "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
     ],
     "(n),(),(),(),(),(),()->(n)",
-    nopython=True, cache=True)
-def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
-    """Vectorized wrapper for the peak-picker"""
+    nopython=True,
+    cache=True,
+)
+def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
+    """Vectorized wrapper for the greedy peak-picker"""
     # Special case the first frame
-    peaks[0] = (x[0] >= np.max(x[:min(post_max, x.shape[0])]))
-    peaks[0] &= (x[0] >= np.mean(x[:min(post_avg, x.shape[0])]) + delta)
+    peaks[0] = x[0] >= np.max(x[: min(post_max, x.shape[0])])
+    peaks[0] &= x[0] >= np.mean(x[: min(post_avg, x.shape[0])]) + delta
 
     if peaks[0]:
         n = wait + 1
@@ -1213,17 +1223,17 @@ def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         n = 1
 
     while n < x.shape[0]:
-        maxn = np.max( x[max(0, n-pre_max):min(n+post_max, x.shape[0])])
+        maxn = np.max(x[max(0, n - pre_max) : min(n + post_max, x.shape[0])])
 
         # Are we the local max and sufficiently above average?
-        peaks[n] = (x[n] == maxn) 
-        
+        peaks[n] = x[n] == maxn
+
         if not peaks[n]:
             n += 1
             continue
 
-        avgn = np.mean(x[max(0, n-pre_avg):min(n+post_avg, x.shape[0])])
-        peaks[n] &= (x[n] >= avgn + delta)
+        avgn = np.mean(x[max(0, n - pre_avg) : min(n + post_avg, x.shape[0])])
+        peaks[n] &= x[n] >= avgn + delta
 
         if not peaks[n]:
             n += 1
@@ -1231,6 +1241,76 @@ def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
 
         # Skip the next `wait` frames
         n += wait + 1
+
+
+@numba.guvectorize(
+    [
+        "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
+        "void(float64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
+        "void(int32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
+        "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
+    ],
+    "(n),(),(),(),(),(),(),()->(n)",
+    nopython=True,
+    cache=True,
+)
+def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, count, peaks):
+    """Vectorized wrapper for optimal peak-picker by dynamic programming
+
+    All parameters are the same as for `peak_pick`, except for `count` and `peaks`.
+
+    `count` is a boolean that indicates whether to maximize the number of peaks or
+    the sum of their values.
+
+    `peaks` is the pre-allocated output array.
+    """
+    values = np.zeros(len(x) + 1)
+    pointers = np.zeros(len(x) + 1, dtype=np.int32)
+    taken = np.zeros(len(x) + 1, dtype=np.bool_)
+
+    # Use the integral image trick to accelerate partial sums for averages
+    cumulate = np.cumsum(x)
+
+    values[-1] = 0
+    pointers[-1] = -1
+    for n in range(len(x) - 1, -1, -1):
+        # Populate defaults in case we don't take this peak
+        values[n] = values[n + 1]
+        pointers[n] = n + 1
+
+        # Check if we're a local peak
+        maxn = np.max(x[max(0, n - pre_max) : min(n + post_max, x.shape[0])])
+
+        # if not a peak, move along
+        if x[n] < maxn:
+            continue
+
+        # Are we enough above average?
+        idx_prev = max(0, n - pre_avg)
+        idx_post = min(n + post_avg, x.shape[0])
+        if idx_prev == 0:
+            avgn = cumulate[idx_post - 1] / idx_post
+        else:
+            avgn = (cumulate[idx_post - 1] - cumulate[idx_prev - 1]) / (idx_post - idx_prev)
+
+        if count:
+            v = 1
+        else:
+            v = x[n]
+
+        next_ptr = min(len(x), n + wait + 1)
+
+        # Only take this peak if it's better than not taking it
+        if x[n] >= avgn + delta and values[next_ptr] + v > values[n + 1]:
+            values[n] = values[next_ptr] + v
+            pointers[n] = next_ptr
+            taken[n] = True
+
+    # Backtrack to find the selected peaks
+    n = 0
+    while pointers[n] >= 0:
+        peaks[n] = taken[n]
+        n = pointers[n]
 
 
 def peak_pick(
@@ -1243,7 +1323,8 @@ def peak_pick(
     delta: float,
     wait: int,
     sparse: bool = True,
-    axis: int = -1
+    method: Literal["greedy", "dp_count", "dp_value"] = "greedy",
+    axis: int = -1,
 ) -> np.ndarray:
     """Use a flexible heuristic to pick peaks in a signal.
 
@@ -1284,6 +1365,14 @@ def peak_pick(
         If `True`, the output are indices of detected peaks.
         If `False`, the output is a dense boolean array of the same
         shape as ``x``.
+    method : {'greedy', 'dp_count', 'dp_value'} [scalar]
+        The method used to pick peaks. The default is 'greedy', which implements
+        the method of Böck et al. (2012).  The greedy method selects the earliest
+        possible peaks (i.e. those with minimal index values) subject to the
+        constraints described above.
+        The 'dp_*' methods implement a dynamic programming method which seeks to
+        explicitly maximize either the number of selected peaks (`dp_count`) or
+        the sum of the values `x[p]` the selected peaks `p` (`dp_value`).
     axis : int [scalar]
         the axis over which to detect peaks.
 
@@ -1317,7 +1406,7 @@ def peak_pick(
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=512)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> D = np.abs(librosa.stft(y))
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> librosa.display.specshow(D, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[0].plot(times, onset_env, alpha=0.8, label='Onset strength')
     >>> ax[0].vlines(times[peaks], 0,
@@ -1339,9 +1428,11 @@ def peak_pick(
     if post_avg <= 0:
         raise ParameterError("post_avg must be positive")
     if sparse and x.ndim != 1:
-        raise ParameterError(f"sparse=True (default) does not support "
-                f"{x.ndim}-dimensional inputs. "
-                f"Either set sparse=False or process each dimension independently.")
+        raise ParameterError(
+            f"sparse=True (default) does not support "
+            f"{x.ndim}-dimensional inputs. "
+            f"Either set sparse=False or process each dimension independently."
+        )
 
     # Ensure valid index types
     pre_max = valid_int(pre_max, cast=np.ceil)
@@ -1351,7 +1442,43 @@ def peak_pick(
     wait = valid_int(wait, cast=np.ceil)
 
     peaks = np.zeros_like(x, dtype=bool)
-    __peak_pick(x.swapaxes(axis, -1), pre_max, post_max, pre_avg, post_avg, delta, wait, peaks.swapaxes(axis, -1))
+    if method == "greedy":
+        __peak_pick_greedy(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            peaks.swapaxes(axis, -1),
+        )
+    elif method == "dp_count":
+        __peak_pick_dp(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            True,
+            peaks.swapaxes(axis, -1),
+        )
+    elif method == "dp_value":
+        __peak_pick_dp(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            False,
+            peaks.swapaxes(axis, -1),
+        )
+    else:
+        raise ParameterError(f"Unknown method {method}")
 
     if sparse:
         return np.flatnonzero(peaks)
@@ -1441,7 +1568,7 @@ def sparsify_rows(
     if dtype is None:
         dtype = x.dtype
 
-    x_sparse = scipy.sparse.lil_matrix(x.shape, dtype=dtype)
+    x_sparse: scipy.sparse.lil_matrix = scipy.sparse.lil_matrix(x.shape, dtype=dtype)  # type: ignore
 
     mags = np.abs(x)
     norms = np.sum(mags, axis=1, keepdims=True)
@@ -1628,19 +1755,16 @@ def sync(
     >>> beat_t = librosa.frames_to_time(beats, sr=sr)
     >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(C, vscale='dBFS',
     ...                          x_axis='time', ax=ax[0])
     >>> ax[0].set(title='CQT power, shape={}'.format(C.shape))
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C_med,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(C_med, vscale='dBFS',
     ...                          x_coords=beat_t, x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Beat synchronous CQT power, '
     ...                 'shape={}'.format(C_med.shape))
     >>> ax[1].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C_med_sub,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(C_med_sub, vscale='dBFS',
     ...                          x_coords=subbeat_t, x_axis='time', ax=ax[2])
     >>> ax[2].set(title='Sub-beat synchronous CQT power, '
     ...                 'shape={}'.format(C_med_sub.shape))
@@ -2012,10 +2136,19 @@ def __shear_dense(X: np.ndarray, *, factor: int = +1, axis: int = -1) -> np.ndar
 
     return X_shear
 
+_SparseMatrixT = TypeVar(
+    "_SparseMatrixT",
+    scipy.sparse.bsr_matrix,
+    scipy.sparse.coo_matrix,
+    scipy.sparse.csc_matrix,
+    scipy.sparse.csr_matrix,
+    scipy.sparse.dia_matrix,
+    scipy.sparse.dok_matrix,
+    scipy.sparse.lil_matrix,
+)
 
-def __shear_sparse(
-    X: scipy.sparse.spmatrix, *, factor: int = +1, axis: int = -1
-) -> scipy.sparse.spmatrix:
+
+def __shear_sparse(X: _SparseMatrixT, *, factor: int = +1, axis: int = -1) -> _SparseMatrixT:
     """Fast shearing for sparse matrices
 
     Shearing is performed using CSC array indices,
@@ -2024,7 +2157,7 @@ def __shear_sparse(
     """
     fmt = X.format
     if axis == 0:
-        X = X.T
+        X = X.T  # type: ignore
 
     # Now we're definitely rolling on the correct axis
     X_shear = X.tocsc(copy=True)
@@ -2038,29 +2171,21 @@ def __shear_sparse(
     np.mod(X_shear.indices + roll, X_shear.shape[0], out=X_shear.indices)
 
     if axis == 0:
-        X_shear = X_shear.T
+        X_shear = X_shear.T  # type: ignore
 
     # And convert back to the input format
     return X_shear.asformat(fmt)
 
 
 _ArrayOrSparseMatrix = TypeVar(
-    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, scipy.sparse.spmatrix]
+    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, _SparseMatrix]
 )
 
 
 @overload
-def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray:
-    ...
-
-
+def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 @overload
-def shear(
-    X: scipy.sparse.spmatrix, *, factor: int = ..., axis: int = ...
-) -> scipy.sparse.spmatrix:
-    ...
-
-
+def shear(X: _SparseMatrixT, *, factor: int = ..., axis: int = ...) -> _SparseMatrixT: ...
 def shear(
     X: _ArrayOrSparseMatrix, *, factor: int = 1, axis: int = -1
 ) -> _ArrayOrSparseMatrix:
@@ -2206,7 +2331,7 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
         shape = tuple([len(arrays)] + list(shape_in))
 
         # Find the common dtype for all inputs
-        dtype = np.result_type(*arrays) 
+        dtype = np.result_type(*arrays)
 
         # Allocate an empty array of the right shape and type
         result = np.empty(shape, dtype=dtype, order="F")
@@ -2498,13 +2623,13 @@ _Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
 
 
 @overload
-def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray:
-    ...
+def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray: ...
 
 
 @overload
-def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> np.complexfloating[Any, Any]:
-    ...
+def phasor(
+    angles: _Real, *, mag: Optional[_Number] = ...
+) -> np.complexfloating[Any, Any]: ...
 
 
 def phasor(

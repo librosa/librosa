@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
     - main
+    - 1.0.0dev
 
   
 concurrency:
@@ -34,26 +35,33 @@ jobs:
           with:
             fetch-depth: 0
 
-        - name: Cache conda
-          uses: actions/cache@v4
-          env:
-            # Increase this value to reset cache if etc/example-environment.yml has not changed
-            CACHE_NUMBER: 0
-          with:
-            path: ~/conda_pkgs_dir
-            key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
-
-        - name: Install Conda environment
+        - name: Setup Miniforge
           uses: conda-incubator/setup-miniconda@v3
           with:
-            auto-update-conda: false
-            python-version: ${{ matrix.python-version }}
-            add-pip-as-python-dependency: true
-            auto-activate-base: false
+            miniforge-version: latest
             activate-environment: docs
-            channel-priority: ${{ matrix.channel-priority }}
-            environment-file: ${{ matrix.envfile }}
-            use-only-tar-bz2: false # IMPORTANT: This needs to be set for caching to work properly!
+
+        - name: Get Date
+          id: get-date
+          run: echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
+          shell: bash
+
+        - name: Cache Conda env
+          uses: actions/cache@v4
+          with:
+            path: ${{ env.CONDA }}/envs
+            key:
+              conda-${{ runner.os }}--${{ runner.arch }}--${{
+              steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER
+              }}-${{ matrix.python-version }}-${{ hashFiles( matrix.envfile ) }}
+          env:
+            CACHE_NUMBER: 0
+          id: cache
+
+        - name: Update environment
+          run:
+            mamba env update -n docs -f ${{ matrix.envfile }} 
+          if: steps.cache.outputs.cache-hit != 'true'
 
         - name: Conda info
           shell: bash -l {0}
@@ -72,6 +80,16 @@ jobs:
             touch build/html/.nojekyll
             cp docs/docsite-index-redirect.html build/html/index.html
             ln -srf build/html/$(./scripts/get_latest_release.sh) build/html/latest  # auto-link the latest tag
+
+        - name: Upload compiled documentation site
+          if: github.event_name == 'pull_request'
+          uses: actions/upload-artifact@v4
+          with:
+            name: librosa-docs-pr-${{ github.event.pull_request.number }}
+            path: build/html
+            retention-days: 7
+            overwrite: true
+            include-hidden-files: true
 
         - name: Link checking
           id: linkcheck

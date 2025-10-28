@@ -15,7 +15,7 @@ from ..core.harmonic import f0_harmonics, interp_harmonics
 from ..util.exceptions import ParameterError
 from ..filters import get_window
 from typing import Optional, Callable, Any
-from .._typing import _WindowSpec
+from .._typing import _InterpKind, _WindowSpec
 
 __all__ = ["tempogram", "fourier_tempogram", "tempo", "tempogram_ratio", "metrogram"]
 
@@ -391,6 +391,7 @@ def tempo(
     >>> ax.set(xlabel='Tempo (BPM)', title='Static tempo estimation')
     >>> ax.grid(True)
     >>> ax.legend()
+    >>> plt.show()
 
     Plot dynamic tempo estimates over a tempogram
 
@@ -405,6 +406,7 @@ def tempo(
     ...          label='Tempo estimate (lognorm prior)')
     >>> ax.set(title='Dynamic tempo estimation')
     >>> ax.legend()
+    >>> plt.show()
     """
     if start_bpm <= 0:
         raise ParameterError("start_bpm must be strictly positive")
@@ -472,7 +474,7 @@ def tempogram_ratio(
     prior: Optional[scipy.stats.rv_continuous] = None,
     center: bool = True,
     window: _WindowSpec = "hann",
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
     norm: Optional[float] = np.inf,
 ) -> np.ndarray:
