@@ -2725,32 +2725,24 @@ def interp_broadcast(
     ----------
     x1 : np.ndarray
         An array with broadcast compatible dimensions (except along the axis of interpolation) with ``x2``.
-
     x2 : np.ndarray
         An array with broadcast compatible dimensions (except along the axis of interpolation) with ``x1``.
-
     x1_pos : np.ndarray
         Positioning data along the axis of interpolation for ``x1``.
-
     x2_pos : np.ndarray
         Positioning data along the axis of interpolation for ``x2``.
-
-    interp_pos: np.ndarray
+    interp_pos : np.ndarray
         Positioning data for the interpolation grid.
         Default: ``x1_pos``.
-
-    func: function [optional]
+    func : function [optional]
         A function that combines the two interpolated arrays.
         Default: ``np.multiply``.
-
-    axis: int
+    axis : int
         The axis of interpolation.
         Default: ``-2``
-
     kind : str
         Interpolation type.  See ``scipy.interpolate.interp1d``.
         Default: ``"linear"``
-
     fill_value : float
         The value to fill when extrapolating beyond the observed range.
         Default: ``0``

@@ -671,7 +671,7 @@ def metrogram(
 
     This function summarizes the presence of rhythmic ratios in a tempogram. For example, a tempogram with two simultaneous energy peaks at 90BPM and 30BPM would have a strong presence of the 1/3 ratio. This makes it possible to perform meter estimation by finding the ratio between the beat's and downbeat's frequency.
 
-    By default, the factors used here are as specified by [2]_. 
+    By default, the factors used here are as specified by [2]_.
 
     +-------+--------+----------------+
     | Index | Factor | Time Signature |
@@ -697,7 +697,7 @@ def metrogram(
     ----------
     tg : np.ndarray
         Pre-computed tempogram.
-    freqs: np.ndarray
+    freqs : np.ndarray
         Frequencies (in BPM) of the tempogram axis.
     factors : np.ndarray
         Metric ratios to estimate.
@@ -705,9 +705,9 @@ def metrogram(
     aggregate : callable [optional]
         Aggregation function to collapse the tempo axis for each ratio
         at each point in time. Defaults to ``np.sum``.
-    kind:
+    kind : str
         Interpolation method used on the tempo axis.
-    fill_value:
+    fill_value : float
         The value to fill when extrapolating beyond the observed
         tempo range.  
 
