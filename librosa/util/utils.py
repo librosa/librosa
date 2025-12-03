@@ -2771,9 +2771,9 @@ def interp_broadcast(
             f"x1 (ndim={x1.ndim}) and x2 (ndim={x2.ndim}) have a different number of dimensions."
         )
 
-    if axis < -x1.ndim and axis >= x1.ndim:
+    if axis < -x1.ndim or axis >= x1.ndim:
         raise ParameterError(
-            f"index axis={axis} is out of range for dimensions ndim={x1.ndim}"
+            f"axis={axis} is out of range for array dimensions ndim={x1.ndim}"
         )
 
     for i in range(x1.ndim):

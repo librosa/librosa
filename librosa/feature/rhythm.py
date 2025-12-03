@@ -666,6 +666,7 @@ def metrogram(
     aggregate: Optional[Callable[..., Any]] = np.sum,
     kind: str = "linear",
     fill_value: float = 0,
+    axis: int = -2
 ) -> np.ndarray:
     """Metrogram Transform. [1]_
 
@@ -709,7 +710,9 @@ def metrogram(
         Interpolation method used on the tempo axis.
     fill_value : float
         The value to fill when extrapolating beyond the observed
-        tempo range.  
+        tempo range.
+    axis : int
+        The tempogram axis representing tempo or frequency.
 
     Returns
     -------
@@ -731,15 +734,19 @@ def metrogram(
             [1 / 3, 1 / 4, 1 / 5, 1 / 7]
         )
 
-    tg_interp = interp_harmonics(
-        tg, freqs=freqs, harmonics=factors, kind=kind, fill_value=fill_value
-    )
+    if axis < -tg.ndim or axis >= tg.ndim:
+        raise ParameterError(
+            f"axis={axis} is out of range for tempogram dimensions ndim={tg.ndim}"
+        )
 
+    tg_interp = interp_harmonics(
+        tg, freqs=freqs, harmonics=factors, kind=kind, fill_value=fill_value, axis=axis
+    )
     
-    product = tg_interp * tg[np.newaxis, ...]
+    product = tg_interp * np.expand_dims(tg, axis=axis)
 
     if aggregate is not None:
-        return aggregate(product, axis=-2)
+        return aggregate(product, axis=axis)
 
     return product
 
