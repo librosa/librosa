@@ -2699,9 +2699,10 @@ def phasor(
 
 
 def interp_broadcast(
+    *,
     x1: np.ndarray,
-    x2: np.ndarray,
     x1_pos: np.ndarray,
+    x2: np.ndarray,
     x2_pos: np.ndarray,
     interp_pos: Optional[np.ndarray],
     func: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = np.multiply,
@@ -2725,10 +2726,10 @@ def interp_broadcast(
     ----------
     x1 : np.ndarray
         An array with broadcast compatible dimensions (except along the axis of interpolation) with ``x2``.
-    x2 : np.ndarray
-        An array with broadcast compatible dimensions (except along the axis of interpolation) with ``x1``.
     x1_pos : np.ndarray
         Positioning data along the axis of interpolation for ``x1``.
+    x2 : np.ndarray
+        An array with broadcast compatible dimensions (except along the axis of interpolation) with ``x1``.
     x2_pos : np.ndarray
         Positioning data along the axis of interpolation for ``x2``.
     interp_pos : np.ndarray
@@ -2770,10 +2771,15 @@ def interp_broadcast(
             f"x1 (ndim={x1.ndim}) and x2 (ndim={x2.ndim}) have a different number of dimensions."
         )
 
+    if axis < -x1.ndim and axis >= x1.ndim:
+        raise ParameterError(
+            f"index axis={axis} is out of range for dimensions ndim={x1.ndim}"
+        )
+
     for i in range(x1.ndim):
         if x1.shape[i] != x2.shape[i] and i != axis:
             raise ParameterError(
-                f"x1.shape={x1.shape} and x2.shape={x2.shape} would remain broadcast incompatible after interpolating along axis {axis}."
+                f"x1.shape={x1.shape} and x2.shape={x2.shape} would remain broadcast incompatible after interpolating along axis={axis}."
             )
 
     x1_interp = scipy.interpolate.interp1d(
