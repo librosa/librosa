@@ -2697,6 +2697,33 @@ def phasor(
 
     return z  # type: ignore
 
+@overload
+def interp_broadcast(
+    *,
+    x1: np.ndarray,
+    x1_pos: np.ndarray,
+    x2: np.ndarray,
+    x2_pos: np.ndarray,
+    interp_pos: Optional[np.ndarray],
+    func: None,
+    kind: str = "linear",
+    fill_value: float = 0,
+    axis: int = -2,
+) -> Tuple[np.ndarray, np.ndarray]: ...
+
+@overload
+def interp_broadcast(
+    *,
+    x1: np.ndarray,
+    x1_pos: np.ndarray,
+    x2: np.ndarray,
+    x2_pos: np.ndarray,
+    interp_pos: Optional[np.ndarray],
+    func: Callable[[np.ndarray, np.ndarray], np.ndarray] = np.multiply,
+    kind: str = "linear",
+    fill_value: float = 0,
+    axis: int = -2,
+) -> np.ndarray: ...
 
 def interp_broadcast(
     *,
