@@ -670,7 +670,9 @@ def metrogram(
 ) -> np.ndarray:
     """Metrogram Transform. [1]_
 
-    This function summarizes the presence of rhythmic ratios in a tempogram. For example, a tempogram with two simultaneous energy peaks at 90BPM and 30BPM would have a strong presence of the 1/3 ratio. This makes it possible to perform meter estimation by finding the ratio between the beat's and downbeat's frequency.
+    This function summarizes the presence of rhythmic ratios in a tempogram. For example, a tempogram with two
+    simultaneous energy peaks at 90BPM and 30BPM would have a strong presence of the 1/3 ratio. This makes it possible
+    to perform meter estimation by finding the ratio between the beat's and downbeat's frequency.
 
     By default, the factors used here are as specified by [2]_.
 
@@ -749,4 +751,3 @@ def metrogram(
         return aggregate(product, axis=axis)
 
     return product
-

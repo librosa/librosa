@@ -2697,6 +2697,7 @@ def phasor(
 
     return z  # type: ignore
 
+
 @overload
 def interp_broadcast(
     *,
@@ -2710,6 +2711,7 @@ def interp_broadcast(
     fill_value: float = 0,
     axis: int = -2,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
+
 
 @overload
 def interp_broadcast(
@@ -2725,6 +2727,7 @@ def interp_broadcast(
     axis: int = -2,
 ) -> np.ndarray: ...
 
+
 def interp_broadcast(
     *,
     x1: np.ndarray,
@@ -2739,24 +2742,31 @@ def interp_broadcast(
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Interpolate to broadcast two arrays
 
-    This function interpolates two arrays along a given axis to be on a common grid, and performs a broadcast operation (eg. ``np.multiply``) to combine them. It is useful for retrieving the DFT / AC product [1]_ and the Fundamental Tempogram [2]_.
+    This function interpolates two arrays along a given axis to be on a common grid, and performs a
+    broadcast operation (eg. ``np.multiply``) to combine them. It is useful for retrieving the DFT /
+    AC product [1]_ and the Fundamental Tempogram [2]_.
 
     .. [1] Peeters, G.
-       "Spectral and Temporal Periodicity Representations of Rhythm for the Automatic Classification of Music Audio Signal."
-       In IEEE Transactions on Audio, Speech, and Language Processing, vol. 19, no. 5, pp. 1242–1252, July 2011.
+       "Spectral and Temporal Periodicity Representations of Rhythm for the Automatic Classification
+       of Music AudioSignal."
+       In IEEE Transactions on Audio, Speech, and Language Processing, vol. 19, no. 5, pp.
+       1242–1252, July 2011.
 
     .. [2] Cozens, James, and Simon Godsill.
-       "Dynamic Time Signature Recognition, Tempo Inference, and Beat Tracking Through the Metrogram Transform."
+       "Dynamic Time Signature Recognition, Tempo Inference, and Beat Tracking Through the Metrogram
+       Transform."
        In IEEE Open Journal of Signal Processing, pp. 1–9, 2023.
 
     Parameters
     ----------
     x1 : np.ndarray
-        An array with broadcast compatible dimensions (except along the axis of interpolation) with ``x2``.
+        An array with broadcast compatible dimensions (except along the axis of interpolation) with
+        ``x2``.
     x1_pos : np.ndarray
         Positioning data along the axis of interpolation for ``x1``.
     x2 : np.ndarray
-        An array with broadcast compatible dimensions (except along the axis of interpolation) with ``x1``.
+        An array with broadcast compatible dimensions (except along the axis of interpolation) with
+        ``x1``.
     x2_pos : np.ndarray
         Positioning data along the axis of interpolation for ``x2``.
     interp_pos : np.ndarray
@@ -2787,7 +2797,6 @@ def interp_broadcast(
     See Also
     --------
     librosa.feature.metrogram
-
     """
 
     if interp_pos is None:
@@ -2806,7 +2815,8 @@ def interp_broadcast(
     for i in range(x1.ndim):
         if x1.shape[i] != x2.shape[i] and i != (axis + x1.ndim) % x1.ndim:
             raise ParameterError(
-                f"x1.shape={x1.shape} and x2.shape={x2.shape} would remain broadcast incompatible after interpolating along axis={axis}."
+                f"x1.shape={x1.shape} and x2.shape={x2.shape} would remain broadcast incompatible \
+                after interpolating along axis={axis}."
             )
 
     x1_interp = scipy.interpolate.interp1d(
