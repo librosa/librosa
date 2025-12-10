@@ -726,6 +726,34 @@ def metrogram(
 
     Examples
     --------
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>>
+    >>> y, sr = librosa.load(librosa.ex("sweetwaltz"))
+    >>>
+    >>> # extend the window, to capture the slower downbeat pulses
+    >>> win_length = 384 * 4
+    >>>
+    >>> fourier_tempogram = librosa.feature.fourier_tempogram(y=y, win_length=win_length)
+    >>> fourier_freqs = librosa.fourier_tempo_frequencies(win_length=win_length)
+    >>> ac_tempogram = librosa.feature.tempogram(y=y, win_length=win_length)
+    >>> ac_freqs = librosa.tempo_frequencies(ac_tempogram.shape[-2])
+    >>>
+    >>> # combine Fourier and AC tempo grid, and remove 0 and inf to avoid nan results
+    >>> funt_freqs = np.union1d(fourier_freqs, ac_freqs)[1:-1]
+    >>> fundamental_tempogram = librosa.util.interp_broadcast(
+    ...     x1=ac_tempogram,
+    ...     x1_pos=ac_freqs,
+    ...     x2=fourier_tempogram[..., :-1],  # both tempograms must be of equal length along time
+    ...     x2_pos=fourier_freqs,
+    ...     interp_pos=funt_freqs,
+    >>> )
+    >>>
+    >>> metrogram = librosa.feature.metrogram(tg=fundamental_tempogram, freqs=funt_freqs)
+    >>>
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.specshow(np.abs(metrogram), x_axis="time", ax=ax)
+    >>> ax.set(title="Metrogram")
     """
 
     if factors is None:
