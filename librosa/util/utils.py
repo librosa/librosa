@@ -2793,6 +2793,31 @@ def interp_broadcast(
 
     Examples
     --------
+    >>> import numpy as np
+    >>>
+    >>> # create two arrays of different lengths and sampling positions
+    >>> x1 = np.array([0, 1, 0])
+    >>> x1_pos = np.array([0, 1 / 2, 1])
+    >>> x2 = np.array([0, 2, 2, 0])
+    >>> x2_pos = np.array([0, 1 / 3, 2 / 3, 1])
+    >>>
+    >>> # choose arbitrary interpolation points
+    >>> interp_pos = np.array([0, 0.25, 0.5, 0.75, 1])
+    >>>
+    >>> # perform broadcast addition through quadratic interpolation
+    >>> result = librosa.util.interp_broadcast(
+    ...     x1=x1,
+    ...     x1_pos=x1_pos,
+    ...     x2=x2,
+    ...     x2_pos=x2_pos,
+    ...     interp_pos=interp_pos,
+    ...     func=np.add,
+    ...     axis=0,
+    ...     kind="quadratic",
+    >>> )
+    >>>
+    >>> result
+    array([0.    , 2.4375, 3.25  , 2.4375, 0.    ])
 
     See Also
     --------
