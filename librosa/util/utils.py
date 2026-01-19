@@ -2705,7 +2705,7 @@ def interp_broadcast(
     x1_pos: np.ndarray,
     x2: np.ndarray,
     x2_pos: np.ndarray,
-    interp_pos: Optional[np.ndarray],
+    interp_pos: Optional[np.ndarray] = None,
     op: None,
     kind: str = "linear",
     fill_value: float = 0,
@@ -2720,7 +2720,7 @@ def interp_broadcast(
     x1_pos: np.ndarray,
     x2: np.ndarray,
     x2_pos: np.ndarray,
-    interp_pos: Optional[np.ndarray],
+    interp_pos: Optional[np.ndarray] = None,
     op: Callable[[np.ndarray, np.ndarray], np.ndarray] = np.multiply,
     kind: str = "linear",
     fill_value: float = 0,
@@ -2734,7 +2734,7 @@ def interp_broadcast(
     x1_pos: np.ndarray,
     x2: np.ndarray,
     x2_pos: np.ndarray,
-    interp_pos: Optional[np.ndarray],
+    interp_pos: Optional[np.ndarray] = None,
     op: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = np.multiply,
     kind: str = "linear",
     fill_value: float = 0,
@@ -2795,29 +2795,23 @@ def interp_broadcast(
     --------
     >>> import numpy as np
     >>>
-    >>> # create two arrays of different lengths and sampling positions
-    >>> x1 = np.array([0, 1, 0])
-    >>> x1_pos = np.array([0, 1 / 2, 1])
-    >>> x2 = np.array([0, 2, 2, 0])
-    >>> x2_pos = np.array([0, 1 / 3, 2 / 3, 1])
+    >>> # two arrays of different lengths and sampling positions
+    >>> x1 = np.array([1, 1, 1])
+    >>> x1_pos = np.array([0, 0.5, 1])
+    >>> x2 = np.array([5, 10])
+    >>> x2_pos = np.array([0, 1])
     >>>
-    >>> # choose arbitrary interpolation points
-    >>> interp_pos = np.array([0, 0.25, 0.5, 0.75, 1])
-    >>>
-    >>> # perform broadcast addition through quadratic interpolation
-    >>> result = librosa.util.interp_broadcast(
+    >>> # interpolate to x1_pos and broadcast multiply (the defaults)
+    >>> product = librosa.util.interp_broadcast(
     ...     x1=x1,
     ...     x1_pos=x1_pos,
     ...     x2=x2,
     ...     x2_pos=x2_pos,
-    ...     interp_pos=interp_pos,
-    ...     op=np.add,
     ...     axis=0,
-    ...     kind="quadratic",
     >>> )
     >>>
-    >>> result
-    array([0.    , 2.4375, 3.25  , 2.4375, 0.    ])
+    >>> product
+    array([ 5. ,  7.5, 10. ])
 
     See Also
     --------
