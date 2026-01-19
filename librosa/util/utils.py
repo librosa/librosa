@@ -4,18 +4,6 @@
 
 from __future__ import annotations
 
-import scipy.ndimage
-import scipy.sparse
-import scipy.interpolate
-
-import numpy as np
-import numba
-from numpy.lib.stride_tricks import as_strided
-
-from .._cache import cache
-from .exceptions import ParameterError
-from .deprecation import Deprecated
-from numpy.typing import DTypeLike
 from typing import (
     Any,
     Callable,
