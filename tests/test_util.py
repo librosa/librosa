@@ -1493,3 +1493,89 @@ def test_buf_to_float(n_bytes, dtype):
 
     assert x_float.dtype == dtype
     assert np.allclose(x_float, x.astype(dtype) / (2 ** (n_bytes * 8 - 1)))
+
+
+@pytest.fixture(scope="module")
+def interp_arrays():
+    x1 = np.array([1, 2, 4, 8, 16])
+    x1_pos = np.linspace(0, 2, len(x1))
+    x2 = np.array([32, 64, 128, 256, 1024])
+    x2_pos = np.linspace(1, 3, len(x2))
+    # expected result when we interp x2 on x1 and multiply them
+    x2_on_x1 = np.array([0, 0, 128, 512, 2048])
+    return x1, x1_pos, x2, x2_pos, x2_on_x1
+
+
+def test_interp_broadcast_1d(interp_arrays):
+    x1, x1_pos, x2, x2_pos, x2_on_x1 = interp_arrays
+
+    result = librosa.util.interp_broadcast(
+        x1=x1,
+        x1_pos=x1_pos,
+        x2=x2,
+        x2_pos=x2_pos,
+        axis=0,
+    )
+
+    assert np.allclose(result, x2_on_x1)
+
+
+def test_interp_broadcast_2d(interp_arrays):
+    x1, x1_pos, x2, x2_pos, x2_on_x1 = interp_arrays
+    # stack two 1D arrays to create a 2D array
+    x1 = np.column_stack([x1, x1])
+    x2 = np.column_stack([x2, x2])
+
+    result = librosa.util.interp_broadcast(
+        x1=x1,
+        x1_pos=x1_pos,
+        x2=x2,
+        x2_pos=x2_pos,
+    )
+
+    assert np.allclose(result, np.column_stack([x2_on_x1, x2_on_x1]))
+
+
+def test_interp_broadcast_op(interp_arrays):
+    # test that custom operators work
+    x1, x1_pos, x2, x2_pos, _ = interp_arrays
+
+    result = librosa.util.interp_broadcast(
+        x1=x1,
+        x1_pos=x1_pos,
+        x2=x2,
+        x2_pos=x2_pos,
+        axis=0,
+        op=np.add
+    )
+
+    y1, y2 = librosa.util.interp_broadcast(
+        x1=x1,
+        x1_pos=x1_pos,
+        x2=x2,
+        x2_pos=x2_pos,
+        axis=0,
+        op=None
+    )
+
+    assert np.allclose(result, np.add(y1, y2))
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_interp_broadcast_dims():
+    librosa.util.interp_broadcast(
+        x1=np.zeros((9, 1)),
+        x1_pos=np.arange(9),
+        x2=np.zeros((1, 8, 1)),
+        x2_pos=np.arange(8),
+    )
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_interp_broadcast_shape():
+    librosa.util.interp_broadcast(
+        x1=np.zeros((2, 9, 1)),
+        x1_pos=np.arange(9),
+        x2=np.zeros((1, 8, 1)),
+        x2_pos=np.arange(8),
+    )
