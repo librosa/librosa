@@ -2706,7 +2706,7 @@ def interp_broadcast(
     x2: np.ndarray,
     x2_pos: np.ndarray,
     interp_pos: Optional[np.ndarray],
-    func: None,
+    op: None,
     kind: str = "linear",
     fill_value: float = 0,
     axis: int = -2,
@@ -2721,7 +2721,7 @@ def interp_broadcast(
     x2: np.ndarray,
     x2_pos: np.ndarray,
     interp_pos: Optional[np.ndarray],
-    func: Callable[[np.ndarray, np.ndarray], np.ndarray] = np.multiply,
+    op: Callable[[np.ndarray, np.ndarray], np.ndarray] = np.multiply,
     kind: str = "linear",
     fill_value: float = 0,
     axis: int = -2,
@@ -2735,16 +2735,16 @@ def interp_broadcast(
     x2: np.ndarray,
     x2_pos: np.ndarray,
     interp_pos: Optional[np.ndarray],
-    func: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = np.multiply,
+    op: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = np.multiply,
     kind: str = "linear",
     fill_value: float = 0,
     axis: int = -2,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    """Interpolate to broadcast two arrays
+    """Broadcast two arrays using interpolation
 
-    This function interpolates two arrays along a given axis to be on a common grid, and performs a
-    broadcast operation (eg. ``np.multiply``) to combine them. It is useful for retrieving the DFT /
-    AC product [1]_ and the Fundamental Tempogram [2]_.
+    Interpolates two arrays along a given axis to a common grid, and performs a broadcast operation
+    (eg. ``np.multiply``) to combine them. It is useful for retrieving the DFT / AC product [1]_ and
+    the Fundamental Tempogram [2]_.
 
     .. [1] Peeters, G.
        "Spectral and Temporal Periodicity Representations of Rhythm for the Automatic Classification
@@ -2772,8 +2772,8 @@ def interp_broadcast(
     interp_pos : np.ndarray
         Positioning data for the interpolation grid.
         Default: ``x1_pos``.
-    func : function [optional]
-        A function that combines the two interpolated arrays.
+    op : function [optional]
+        A broadcast operation performed on the two interpolated arrays.
         Default: ``np.multiply``.
     axis : int
         The axis of interpolation.
@@ -2789,7 +2789,7 @@ def interp_broadcast(
     -------
     result : np.ndarray or (np.ndarray, np.ndarray)
         The result from combining both arrays after interpolation.
-        If ``func`` is set to ``None``, returns the interpolated arrays separately ``(y1, y2)``.
+        If ``op`` is set to ``None``, returns the interpolated arrays separately ``(y1, y2)``.
 
     Examples
     --------
@@ -2811,7 +2811,7 @@ def interp_broadcast(
     ...     x2=x2,
     ...     x2_pos=x2_pos,
     ...     interp_pos=interp_pos,
-    ...     func=np.add,
+    ...     op=np.add,
     ...     axis=0,
     ...     kind="quadratic",
     >>> )
@@ -2867,7 +2867,7 @@ def interp_broadcast(
     y1 = x1_interp(interp_pos)
     y2 = x2_interp(interp_pos)
 
-    if func is None:
+    if op is None:
         return y1, y2
 
-    return func(y1, y2)
+    return op(y1, y2)
