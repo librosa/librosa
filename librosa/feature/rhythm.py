@@ -739,8 +739,8 @@ def metrogram(
     >>> ac_tempogram = librosa.feature.tempogram(y=y, win_length=win_length)
     >>> ac_freqs = librosa.tempo_frequencies(ac_tempogram.shape[-2])
     >>>
-    >>> # combine Fourier and AC tempo grid, and remove 0 and inf to avoid nan results
-    >>> funt_freqs = np.union1d(fourier_freqs, ac_freqs)[1:-1]
+    >>> # combine Fourier and AC tempo grid, and remove inf to avoid nan results
+    >>> funt_freqs = np.union1d(fourier_freqs, ac_freqs)[:-1]
     >>> fundamental_tempogram = librosa.util.interp_broadcast(
     ...     x1=ac_tempogram,
     ...     x1_pos=ac_freqs,
