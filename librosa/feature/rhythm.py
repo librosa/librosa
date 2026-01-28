@@ -755,7 +755,6 @@ def metrogram(
     >>> librosa.display.specshow(np.abs(metrogram), x_axis="time", ax=ax)
     >>> ax.set(title="Metrogram")
     """
-
     if factors is None:
         factors = np.array(
             [1 / 3, 1 / 4, 1 / 5, 1 / 7]

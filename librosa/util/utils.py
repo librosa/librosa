@@ -2805,7 +2805,6 @@ def interp_broadcast(
     --------
     librosa.feature.metrogram
     """
-
     if interp_pos is None:
         interp_pos = x1_pos
 
