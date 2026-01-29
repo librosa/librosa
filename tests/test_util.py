@@ -1579,3 +1579,25 @@ def test_interp_broadcast_shape():
         x2=np.zeros((1, 8, 1)),
         x2_pos=np.arange(8),
     )
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_interp_broadcast_axis_lower_bound():
+    librosa.util.interp_broadcast(
+        x1=np.zeros((9, 1)),
+        x1_pos=np.arange(9),
+        x2=np.zeros((9, 1)),
+        x2_pos=np.arange(9),
+        axis=-3,
+    )
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_interp_broadcast_axis_upper_bound():
+    librosa.util.interp_broadcast(
+        x1=np.zeros((9, 1)),
+        x1_pos=np.arange(9),
+        x2=np.zeros((9, 1)),
+        x2_pos=np.arange(9),
+        axis=2,
+    )
