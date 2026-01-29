@@ -785,6 +785,7 @@ def test_waveshow_update_gc_guard():
 
     plt.close(fig)
 
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("axis", ["x_axis", "y_axis"])
 def test_unknown_axis(S_abs, axis: str):
