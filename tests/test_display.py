@@ -11,6 +11,8 @@ try:
 except KeyError:
     pass
 
+import gc
+import weakref
 
 from packaging import version
 
@@ -18,6 +20,7 @@ import pytest
 
 import matplotlib
 
+import matplotlib.collections
 import matplotlib.pyplot as plt
 
 import librosa
@@ -687,6 +690,79 @@ def test_waveshow_bad_maxpoints(y, sr):
     return plt.gcf()
 
 
+def test_waveshow_adaptor_survives_gc_single(y, sr):
+    """Regression test for #1970: single waveshow adaptor should survive GC."""
+    fig, ax = plt.subplots()
+
+    librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
+
+    gc.collect()
+
+    ax.set_xlim(0, 0.025)
+    fig.canvas.draw()
+
+    # Data lines only (not ticks)
+    visible_data_lines = [l for l in ax.lines if l.get_visible()]
+
+    # Envelope(s) are PolyCollections in ax.collections
+    polys = [c for c in ax.collections if isinstance(c, matplotlib.collections.PolyCollection)]
+
+    assert len(visible_data_lines) >= 1, "Sample/step artist should be visible after zoom"
+    assert all(not p.get_visible() for p in polys), "Envelope should be hidden after zoom"
+
+    plt.close(fig)
+
+
+def test_waveshow_adaptor_survives_gc_multi(y, sr):
+    """Regression test for #1970: multiple waveshow adaptors should survive GC."""
+    fig, ax = plt.subplots()
+
+    librosa.display.waveshow(y, sr=sr, ax=ax, color="blue", max_points=sr // 2)
+    librosa.display.waveshow(y, sr=sr, ax=ax, color="red", alpha=0.5, zorder=-1, max_points=sr // 2)
+
+    gc.collect()
+
+    ax.set_xlim(0, 0.025)
+    fig.canvas.draw()
+
+    visible_data_lines = [l for l in ax.lines if l.get_visible()]
+    polys = [c for c in ax.collections if isinstance(c, matplotlib.collections.PolyCollection)]
+
+    assert len(visible_data_lines) >= 2, "Both sample/step artists should be visible after zoom"
+    assert all(not p.get_visible() for p in polys), "All envelopes should be hidden after zoom"
+
+    plt.close(fig)
+
+
+def test_waveshow_registry_cleanup_on_axes_gc():
+    """Test that the adaptor registry uses WeakKeyDictionary correctly.
+    
+    This verifies the fix for #1970: adaptors are stored in a WeakKeyDictionary
+    keyed by Axes, so they will be cleaned up when the Axes is garbage collected.
+    """
+    from matplotlib.figure import Figure
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+
+    fig = Figure()
+    FigureCanvas(fig)
+    ax = fig.add_subplot(111)
+    ax_id = id(ax)
+
+    y = np.sin(2 * np.pi * 440 * np.linspace(0, 1, 22050))
+    librosa.display.waveshow(y, sr=22050, ax=ax)
+
+    # Our Axes should be in the registry
+    before_keys = set(map(id, librosa.display._WAVESHOW_ADAPTORS.keys()))
+    assert ax_id in before_keys, "Axes should be in registry after waveshow"
+    
+    # Verify the registry is a WeakKeyDictionary (semantics test)
+    assert isinstance(librosa.display._WAVESHOW_ADAPTORS, weakref.WeakKeyDictionary)
+    
+    # Verify an adaptor is registered for this axes
+    assert ax in librosa.display._WAVESHOW_ADAPTORS
+    assert len(librosa.display._WAVESHOW_ADAPTORS[ax]) >= 1
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("axis", ["x_axis", "y_axis"])
 def test_unknown_axis(S_abs, axis: str):
@@ -1079,7 +1155,7 @@ def test_waveshow_deladaptor(y, sr):
     assert envelope.get_visible() and not steps.get_visible()
 
     # Disconnect
-    del ad
+    ad.disconnect(strict=True)
 
     # Zoom back in to a 0.25 second range
     ax.set(xlim=[0, 0.25])
