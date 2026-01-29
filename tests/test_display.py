@@ -763,6 +763,28 @@ def test_waveshow_registry_cleanup_on_axes_gc():
     assert len(librosa.display._WAVESHOW_ADAPTORS[ax]) >= 1
 
 
+def test_waveshow_update_gc_guard():
+
+    fig, ax = plt.subplots()
+    y = np.sin(2 * np.pi * 440 * np.linspace(0, 1, 22050, endpoint=False))
+    adaptor = librosa.display.waveshow(y, sr=22050, ax=ax)
+
+    # Simulate a dead weakref
+    class _Tmp:
+        pass
+
+    tmp = _Tmp()
+    adaptor._steps_ref = weakref.ref(tmp)  # type: ignore[arg-type]
+    del tmp
+    gc.collect()
+
+    assert adaptor.steps is None
+
+    # Should return early without error (exercises the GC guard)
+    adaptor.update(ax)
+
+    plt.close(fig)
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("axis", ["x_axis", "y_axis"])
 def test_unknown_axis(S_abs, axis: str):

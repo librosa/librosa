@@ -791,14 +791,17 @@ class AdaptiveWaveplot:
     # Preserve the old attribute API by exposing properties with same names
     @property
     def steps(self) -> Optional[Line2D]:
+        """The step plot artist (Line2D), or None if garbage collected."""
         return self._steps_ref()
 
     @property
     def envelope(self) -> Optional[PolyCollection]:
+        """The envelope artist (PolyCollection), or None if garbage collected."""
         return self._envelope_ref()
 
     @property
     def ax(self) -> Optional[mplaxes.Axes]:
+        """The connected Axes, or None if not connected or garbage collected."""
         return None if self._ax_ref is None else self._ax_ref()
 
     def __del__(self) -> None:
