@@ -45,6 +45,7 @@ from itertools import product
 import re
 import warnings
 from fractions import Fraction
+import weakref
 
 import numpy as np
 from matplotlib import colormaps as mcm
@@ -97,6 +98,11 @@ __all__ = [
 ]
 
 # mypy: disable-error-code="attr-defined"
+
+# Keeps adaptors alive as long as their Axes exists, preventing GC
+_WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[
+    mplaxes.Axes, set["AdaptiveWaveplot"]
+] = weakref.WeakKeyDictionary()
 
 # Nominal center frequencies for oct3 bands
 __OCT3_FREQUENCIES = np.array(
@@ -765,13 +771,13 @@ class AdaptiveWaveplot:
     ):
         self.times = times
         self.samples = y
-        self.steps = steps
-        self.envelope = envelope
+        self._steps_ref = weakref.ref(steps)
+        self._envelope_ref = weakref.ref(envelope)
         self.sr = sr
         self.max_samples = max_samples
         self.transpose = transpose
         self.cid: Optional[int] = None
-        self.ax: Optional[mplaxes.Axes] = None
+        self._ax_ref: Optional[weakref.ref[mplaxes.Axes]] = None
 
         # Only set the label on the patch if we have one to set
         kwargs = dict()
@@ -779,8 +785,24 @@ class AdaptiveWaveplot:
             kwargs["label"] = label
         # This creates an invisible patch to contain the label
         self.label_patch_ = mpatches.Rectangle(
-            (np.nan, np.nan), 0, 0, facecolor=self.steps.get_color(), **kwargs
+            (np.nan, np.nan), 0, 0, facecolor=steps.get_color(), **kwargs
         )
+
+    # Preserve the old attribute API by exposing properties with same names
+    @property
+    def steps(self) -> Optional[Line2D]:
+        """The step plot artist (Line2D), or None if garbage collected."""
+        return self._steps_ref()
+
+    @property
+    def envelope(self) -> Optional[PolyCollection]:
+        """The envelope artist (PolyCollection), or None if garbage collected."""
+        return self._envelope_ref()
+
+    @property
+    def ax(self) -> Optional[mplaxes.Axes]:
+        """The connected Axes, or None if not connected or garbage collected."""
+        return None if self._ax_ref is None else self._ax_ref()
 
     def __del__(self) -> None:
         """Disconnect callback methods on delete"""
@@ -812,8 +834,8 @@ class AdaptiveWaveplot:
         self.disconnect()
 
         # Attach to axes and store the connection id
-        self.ax = ax
-        self.ax.add_patch(self.label_patch_)
+        self._ax_ref = weakref.ref(ax)
+        ax.add_patch(self.label_patch_)
         self.cid = ax.callbacks.connect(signal, self.update)
 
     def disconnect(self, *, strict: bool = False) -> None:
@@ -832,11 +854,12 @@ class AdaptiveWaveplot:
         --------
         connect
         """
-        if self.ax:
-            self.ax.callbacks.disconnect(self.cid)
+        ax = self.ax
+        if ax is not None and self.cid is not None:
+            ax.callbacks.disconnect(self.cid)
             self.cid = None
-            if strict:
-                self.ax = None
+        if strict:
+            self._ax_ref = None
 
     def update(self, ax: mplaxes.Axes) -> None:
         """Update the matplotlib display according to the current viewport limits.
@@ -848,23 +871,29 @@ class AdaptiveWaveplot:
         ax : matplotlib.axes.Axes
             The axes object to update
         """
+        # Deref artists and bail if they've been garbage collected
+        steps = self.steps
+        envelope = self.envelope
+        if steps is None or envelope is None:
+            return
+
         lims = ax.viewLim
 
         if self.transpose:
             dim = lims.height * self.sr
             start, end = lims.y0, lims.y1
             xdata, ydata = self.samples, self.times
-            data = self.steps.get_ydata()
+            data = steps.get_ydata()
         else:
             dim = lims.width * self.sr
             start, end = lims.x0, lims.x1
             xdata, ydata = self.times, self.samples
-            data = self.steps.get_xdata()
+            data = steps.get_xdata()
         # Does our width cover fewer than max_samples?
         # If so, then use the sample-based plot
         if dim <= self.max_samples:
-            self.envelope.set_visible(False)
-            self.steps.set_visible(True)
+            envelope.set_visible(False)
+            steps.set_visible(True)
 
             # Now check our viewport
             if start <= data[0] or end >= data[-1]:
@@ -874,14 +903,14 @@ class AdaptiveWaveplot:
                 idx_start = np.searchsorted(
                     self.times, midpoint_time - 0.5 * self.max_samples / self.sr
                 )
-                self.steps.set_data(
+                steps.set_data(
                     xdata[idx_start : idx_start + self.max_samples],
                     ydata[idx_start : idx_start + self.max_samples],
                 )
         else:
             # Otherwise, use the envelope plot
-            self.envelope.set_visible(True)
-            self.steps.set_visible(False)
+            envelope.set_visible(True)
+            steps.set_visible(False)
 
         ax.figure.canvas.draw_idle()
 
@@ -2486,6 +2515,13 @@ def waveshow(
         transpose=transpose,
         label=label,
     )
+
+    # Register adaptor to keep it alive as long as Axes exists
+    bucket = _WAVESHOW_ADAPTORS.get(axes)
+    if bucket is None:
+        bucket = set()
+        _WAVESHOW_ADAPTORS[axes] = bucket
+    bucket.add(adaptor)
 
     adaptor.connect(axes, signal=signal)
 
