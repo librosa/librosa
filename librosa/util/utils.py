@@ -2796,7 +2796,7 @@ def interp_broadcast(
     ...     x2=x2,
     ...     x2_pos=x2_pos,
     ...     axis=0,
-    >>> )
+    ... )
     >>>
     >>> product
     array([ 5. ,  7.5, 10. ])
