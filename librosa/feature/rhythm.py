@@ -748,7 +748,7 @@ def metrogram(
     ...     x2=fourier_tempogram[..., :-1],  # both tempograms must be of equal length along time
     ...     x2_pos=fourier_freqs,
     ...     interp_pos=funt_freqs,
-    >>> )
+    ... )
     >>>
     >>> metrogram = librosa.feature.metrogram(tg=fundamental_tempogram, freqs=funt_freqs)
     >>>
