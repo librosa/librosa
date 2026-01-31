@@ -2821,8 +2821,8 @@ def interp_broadcast(
     for i in range(x1.ndim):
         if x1.shape[i] != x2.shape[i] and i != (axis + x1.ndim) % x1.ndim:
             raise ParameterError(
-                f"x1.shape={x1.shape} and x2.shape={x2.shape} would remain broadcast incompatible \
-                after interpolating along axis={axis}."
+                f"x1.shape={x1.shape} and x2.shape={x2.shape} would remain "
+                f"broadcast incompatible after interpolating along axis={axis}."
             )
 
     x1_interp = scipy.interpolate.interp1d(
