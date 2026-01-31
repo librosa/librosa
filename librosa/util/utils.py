@@ -2736,7 +2736,7 @@ def interp_broadcast(
 
     .. [1] Peeters, G.
        "Spectral and Temporal Periodicity Representations of Rhythm for the Automatic Classification
-       of Music AudioSignal."
+       of Music Audio Signal."
        In IEEE Transactions on Audio, Speech, and Language Processing, vol. 19, no. 5, pp.
        1242–1252, July 2011.
 
