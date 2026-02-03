@@ -71,6 +71,8 @@ from typing import (
     Literal,
     Dict,
     Tuple,
+    Sequence,
+    cast
 )
 from ._typing import _FloatLike_co
 
@@ -1711,7 +1713,7 @@ def __decorate_axis(
         axis.set_major_formatter(ChromaFormatter(key=key, unicode=unicode))
         degrees = core.key_to_degrees(key)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel())
+            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
         )
         axis.set_label_text("Pitch class")
 
