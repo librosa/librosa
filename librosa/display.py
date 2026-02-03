@@ -1729,7 +1729,7 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel())
+            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
         )
         axis.set_label_text("Svara")
 
@@ -1743,7 +1743,7 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel())
+            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
         )
         axis.set_label_text("Svara")
 
