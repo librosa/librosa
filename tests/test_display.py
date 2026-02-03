@@ -809,14 +809,13 @@ def test_infer_cmap_robust(data):
     cmap1 = librosa.display.infer_cmap(data, robust=False)
     cmap2 = librosa.display.infer_cmap(data, robust=True)
 
-    assert type(cmap1) is type(cmap2)
-
-    if isinstance(cmap1, matplotlib.colors.ListedColormap):
+    if isinstance(cmap1, matplotlib.colors.ListedColormap) and isinstance(cmap2, matplotlib.colors.ListedColormap):
         assert np.allclose(cmap1.colors, cmap2.colors)
-    elif isinstance(cmap1, matplotlib.colors.LinearSegmentedColormap):
+    elif isinstance(cmap1, matplotlib.colors.LinearSegmentedColormap) and isinstance(cmap2, matplotlib.colors.LinearSegmentedColormap):
         assert cmap1.name == cmap2.name
     else:
         assert cmap1 == cmap2
+        assert type(cmap1) is type(cmap2)
 
 
 @pytest.mark.mpl_image_compare(
@@ -1135,6 +1134,9 @@ def test_specshow_unicode_false(C, sr):
 def test_waveshow_disconnect(y, sr):
     fig, ax = plt.subplots()
     ad = librosa.display.waveshow(y=y, sr=sr, ax=ax)
+
+    assert ad.envelope is not None
+    assert ad.steps is not None
 
     # By default, envelope should be visible and steps should not
     assert ad.envelope.get_visible() and not ad.steps.get_visible()
