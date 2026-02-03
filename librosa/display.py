@@ -799,14 +799,17 @@ class AdaptiveWaveplot:
         self.cid: Optional[int] = None
         self._ax_ref: Optional[weakref.ref[mplaxes.Axes]] = None
 
-        # Only set the label on the patch if we have one to set
-        kwargs = dict()
-        if label is not None:
-            kwargs["label"] = label
         # This creates an invisible patch to contain the label
-        self.label_patch_ = mpatches.Rectangle(
-            (np.nan, np.nan), 0, 0, facecolor=steps.get_color(), **kwargs
-        )
+        # Doing backflips here with redundant code to make mypy happy
+        if label is None:
+            self.label_patch_ = mpatches.Rectangle(
+                (np.nan, np.nan), 0, 0, facecolor=steps.get_color()
+            )
+        else:
+            self.label_patch_ = mpatches.Rectangle(
+                (np.nan, np.nan), 0, 0, facecolor=steps.get_color(), label=label
+            )
+
 
     # Preserve the old attribute API by exposing properties with same names
     @property
