@@ -1561,23 +1561,39 @@ def test_interp_broadcast_op(interp_arrays):
     assert np.allclose(result, np.add(y1, y2))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_interp_broadcast_dims():
-    librosa.util.interp_broadcast(
+def test_interp_broadcast_missing_dims():
+    # test with missing dims
+    result = librosa.util.interp_broadcast(
         x1=np.zeros((9, 1)),
         x1_pos=np.arange(9),
-        x2=np.zeros((1, 8, 1)),
+        x2=np.zeros((5, 8, 1)),
         x2_pos=np.arange(8),
+        axis=-2
     )
+    assert result.shape == (5, 9, 1)
+
+
+def test_interp_broadcast_compatible_shape():
+    # test with unequal dims, if one dim is 1
+    result = librosa.util.interp_broadcast(
+        x1=np.zeros((2, 9, 10)),
+        x1_pos=np.arange(9),
+        x2=np.zeros((2, 8, 1)),
+        x2_pos=np.arange(8),
+        axis=-2
+    )
+    assert result.shape == (2, 9, 10)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_interp_broadcast_shape():
+def test_interp_broadcast_incompatible_shape():
+    # test with unequal dims, neither dim is 1
     librosa.util.interp_broadcast(
-        x1=np.zeros((2, 9, 1)),
+        x1=np.zeros((2, 9, 10)),
         x1_pos=np.arange(9),
-        x2=np.zeros((1, 8, 1)),
+        x2=np.zeros((2, 8, 11)),
         x2_pos=np.arange(8),
+        axis=-2
     )
 
 

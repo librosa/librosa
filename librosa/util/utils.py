@@ -2808,22 +2808,11 @@ def interp_broadcast(
     if interp_pos is None:
         interp_pos = x1_pos
 
-    if x1.ndim != x2.ndim:
+    min_ndim = min(x1.ndim, x2.ndim)
+    if axis < -min_ndim or axis >= min_ndim:
         raise ParameterError(
-            f"x1 (ndim={x1.ndim}) and x2 (ndim={x2.ndim}) have a different number of dimensions."
+            f"axis={axis} is out of range for minimum ndim={min_ndim}"
         )
-
-    if axis < -x1.ndim or axis >= x1.ndim:
-        raise ParameterError(
-            f"axis={axis} is out of range for array dimensions ndim={x1.ndim}"
-        )
-
-    for i in range(x1.ndim):
-        if x1.shape[i] != x2.shape[i] and i != (axis + x1.ndim) % x1.ndim:
-            raise ParameterError(
-                f"x1.shape={x1.shape} and x2.shape={x2.shape} would remain "
-                f"broadcast incompatible after interpolating along axis={axis}."
-            )
 
     x1_interp = scipy.interpolate.interp1d(
         x1_pos,
@@ -2850,5 +2839,14 @@ def interp_broadcast(
 
     if op is None:
         return y1, y2
+
+    try:
+        np.broadcast_shapes(y1.shape, y2.shape)
+    except ValueError as exc:
+        raise ParameterError(
+            f"Interpolating x1.shape={x1.shape} and x2.shape={x2.shape} along "
+            f"axis={axis} leads to y1.shape={y1.shape} and y2.shape={y2.shape}, "
+            "which are not broadcast compatible."
+        ) from exc
 
     return op(y1, y2)
