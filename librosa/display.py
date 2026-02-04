@@ -2938,9 +2938,6 @@ def colorbar_db(
 
     kwargs.setdefault("label", "dB")
 
-    # This should not happen, but we need it for type checking
-    assert fig is not None
-
     cbar = fig.colorbar(
         im,
         ax=ax,
