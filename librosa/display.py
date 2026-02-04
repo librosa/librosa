@@ -2789,7 +2789,7 @@ def colorbar_phase(
     *,
     numticks: int = 9,
     ax: Optional[matplotlib.axes.Axes] = None,
-    fig: Optional[matplotlib.figure.Figure] = None,
+    fig: Optional[matplotlib.figure.FigureBase] = None,
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
     """Attach a colorbar to an image representing phase data in radians.
@@ -2808,7 +2808,7 @@ def colorbar_phase(
     ax : matplotlib.axes.Axes or None
         The axes to which the colorbar will be attached.
         If None, the colorbar will be attached to the axes of `im`.
-    fig : matplotlib.figure.Figure or None
+    fig : matplotlib.figure.Figure, SubFigure, or None
         The figure to which the colorbar will be attached.
         If None, the colorbar will be attached to the figure of `im`.
     **kwargs
@@ -2871,7 +2871,7 @@ def colorbar_db(
     im: matplotlib.cm.ScalarMappable,
     *,
     ax: Optional[matplotlib.axes.Axes] = None,
-    fig: Optional[matplotlib.figure.Figure | matplotlib.figure.SubFigure] = None,
+    fig: Optional[matplotlib.figure.FigureBase] = None,
     format: Union[str, mplticker.Formatter] = "% -3.f",
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
@@ -2886,7 +2886,7 @@ def colorbar_db(
     ax : matplotlib.axes.Axes or None
         The axes to which the colorbar will be attached.
         If None, the colorbar will be attached to the axes of `im`.
-    fig : matplotlib.figure.Figure or None
+    fig : matplotlib.figure.Figure, SubFigure, or None
         The figure to which the colorbar will be attached.
         If None, the colorbar will be attached to the figure of `im`.
     format : str
