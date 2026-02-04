@@ -26,7 +26,7 @@ from numpy.typing import DTypeLike
 from typing_extensions import Literal
 
 from .._cache import cache
-from .._typing import _ComplexLike_co, _FloatLike_co, _SequenceLike, _SparseMatrix
+from .._typing import _ComplexLike_co, _FloatLike_co, _SequenceLike, _SparseMatrix, _InterpKind
 from .deprecation import Deprecated
 from .exceptions import ParameterError
 
@@ -2695,7 +2695,7 @@ def interp_broadcast(
     x2_pos: np.ndarray,
     interp_pos: Optional[np.ndarray] = None,
     op: None,
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
@@ -2710,7 +2710,7 @@ def interp_broadcast(
     x2_pos: np.ndarray,
     interp_pos: Optional[np.ndarray] = None,
     op: Callable[[np.ndarray, np.ndarray], np.ndarray] = np.multiply,
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
 ) -> np.ndarray: ...
@@ -2724,7 +2724,7 @@ def interp_broadcast(
     x2_pos: np.ndarray,
     interp_pos: Optional[np.ndarray] = None,
     op: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = np.multiply,
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:

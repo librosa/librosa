@@ -664,7 +664,7 @@ def metrogram(
     freqs: np.ndarray,
     factors: Optional[np.ndarray] = None,
     aggregate: Optional[Callable[..., Any]] = np.sum,
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
 ) -> np.ndarray:
     """Metrogram Transform. [1]_
