@@ -2798,8 +2798,10 @@ def colorbar_phase(
 
     Parameters
     ----------
-    im : matplotlib.image.AxesImage
+    im : matplotlib.cm.ScalarMappable
         The image to which the colorbar will be attached.
+        Generally this will be a `matplotlib.image.AxesImage` or `matplotlib.collections.QuadMesh`
+        as returned by `specshow`.
     numticks : int > 0
         The number of ticks to display on the colorbar.
         Default is 9, corresponding to multiples of π/4.
@@ -2866,7 +2868,7 @@ def colorbar_phase(
 
 
 def colorbar_db(
-    im: matplotlib.image.AxesImage,
+    im: matplotlib.cm.ScalarMappable,
     *,
     ax: Optional[matplotlib.axes.Axes] = None,
     fig: Optional[matplotlib.figure.Figure | matplotlib.figure.SubFigure] = None,
@@ -2877,8 +2879,10 @@ def colorbar_db(
 
     Parameters
     ----------
-    im : matplotlib.image.AxesImage
+    im : matplotlib.cm.ScalarMappable
         The image to which the colorbar will be attached.
+        Generally this will be a `matplotlib.image.AxesImage` or `matplotlib.collections.QuadMesh`
+        as returned by `specshow`.
     ax : matplotlib.axes.Axes or None
         The axes to which the colorbar will be attached.
         If None, the colorbar will be attached to the axes of `im`.

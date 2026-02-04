@@ -1166,6 +1166,9 @@ def test_waveshow_deladaptor(y, sr):
     ad = librosa.display.waveshow(y=y, sr=sr, ax=ax)
 
     envelope, steps = ad.envelope, ad.steps
+    # These should be live for the rest of the tests to function
+    assert envelope is not None
+    assert steps is not None
     # By default, envelope should be visible and steps should not
     assert envelope.get_visible() and not steps.get_visible()
 
