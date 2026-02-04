@@ -26,7 +26,7 @@ from numpy.typing import DTypeLike
 from typing_extensions import Literal
 
 from .._cache import cache
-from .._typing import _ComplexLike_co, _FloatLike_co, _SequenceLike, _SparseMatrix
+from .._typing import _ComplexLike_co, _FloatLike_co, _SequenceLike, _SparseMatrix, _InterpKind
 from .deprecation import Deprecated
 from .exceptions import ParameterError
 
@@ -65,6 +65,7 @@ __all__ = [
     "is_unique",
     "abs2",
     "phasor",
+    "interp_broadcast"
 ]
 
 
@@ -2683,3 +2684,169 @@ def phasor(
         z *= mag
 
     return z  # type: ignore
+
+
+@overload
+def interp_broadcast(
+    *,
+    x1: np.ndarray,
+    x1_pos: np.ndarray,
+    x2: np.ndarray,
+    x2_pos: np.ndarray,
+    interp_pos: Optional[np.ndarray] = None,
+    op: None,
+    kind: _InterpKind = "linear",
+    fill_value: float = 0,
+    axis: int = -2,
+) -> Tuple[np.ndarray, np.ndarray]: ...
+
+
+@overload
+def interp_broadcast(
+    *,
+    x1: np.ndarray,
+    x1_pos: np.ndarray,
+    x2: np.ndarray,
+    x2_pos: np.ndarray,
+    interp_pos: Optional[np.ndarray] = None,
+    op: Callable[[np.ndarray, np.ndarray], np.ndarray] = np.multiply,
+    kind: _InterpKind = "linear",
+    fill_value: float = 0,
+    axis: int = -2,
+) -> np.ndarray: ...
+
+
+def interp_broadcast(
+    *,
+    x1: np.ndarray,
+    x1_pos: np.ndarray,
+    x2: np.ndarray,
+    x2_pos: np.ndarray,
+    interp_pos: Optional[np.ndarray] = None,
+    op: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = np.multiply,
+    kind: _InterpKind = "linear",
+    fill_value: float = 0,
+    axis: int = -2,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    """Broadcast two arrays using interpolation
+
+    Interpolates two arrays along a given axis to a common grid, and performs a broadcast operation
+    (eg. ``np.multiply``) to combine them. It is useful for retrieving the DFT / AC product [1]_ and
+    the Fundamental Tempogram [2]_.
+
+    .. [1] Peeters, G.
+       "Spectral and Temporal Periodicity Representations of Rhythm for the Automatic Classification
+       of Music Audio Signal."
+       In IEEE Transactions on Audio, Speech, and Language Processing, vol. 19, no. 5, pp.
+       1242–1252, July 2011.
+
+    .. [2] Cozens, James, and Simon Godsill.
+       "Dynamic Time Signature Recognition, Tempo Inference, and Beat Tracking Through the Metrogram
+       Transform."
+       In IEEE Open Journal of Signal Processing, pp. 1–9, 2023.
+
+    Parameters
+    ----------
+    x1 : np.ndarray
+        An array with broadcast compatible dimensions (except along the axis of interpolation) with
+        ``x2``.
+    x1_pos : np.ndarray
+        Positioning data along the axis of interpolation for ``x1``.
+    x2 : np.ndarray
+        An array with broadcast compatible dimensions (except along the axis of interpolation) with
+        ``x1``.
+    x2_pos : np.ndarray
+        Positioning data along the axis of interpolation for ``x2``.
+    interp_pos : np.ndarray
+        Positioning data for the interpolation grid.
+        Default: ``x1_pos``.
+    op : function [optional]
+        A broadcast operation performed on the two interpolated arrays.
+        Default: ``np.multiply``.
+    axis : int
+        The axis of interpolation.
+        Default: ``-2``
+    kind : str
+        Interpolation type.  See ``scipy.interpolate.interp1d``.
+        Default: ``"linear"``
+    fill_value : float
+        The value to fill when extrapolating beyond the observed range.
+        Default: ``0``
+
+    Returns
+    -------
+    result : np.ndarray or (np.ndarray, np.ndarray)
+        The result from combining both arrays after interpolation.
+        If ``op`` is set to ``None``, returns the interpolated arrays separately ``(y1, y2)``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>>
+    >>> # two arrays of different lengths and sampling positions
+    >>> x1 = np.array([1, 1, 1])
+    >>> x1_pos = np.array([0, 0.5, 1])
+    >>> x2 = np.array([5, 10])
+    >>> x2_pos = np.array([0, 1])
+    >>>
+    >>> # interpolate to x1_pos and broadcast multiply (the defaults)
+    >>> product = librosa.util.interp_broadcast(
+    ...     x1=x1,
+    ...     x1_pos=x1_pos,
+    ...     x2=x2,
+    ...     x2_pos=x2_pos,
+    ...     axis=0,
+    ... )
+    >>>
+    >>> product
+    array([ 5. ,  7.5, 10. ])
+
+    See Also
+    --------
+    librosa.feature.metrogram
+    """
+    if interp_pos is None:
+        interp_pos = x1_pos
+
+    min_ndim = min(x1.ndim, x2.ndim)
+    if axis < -min_ndim or axis >= min_ndim:
+        raise ParameterError(
+            f"axis={axis} is out of range for minimum ndim={min_ndim}"
+        )
+
+    x1_interp = scipy.interpolate.interp1d(
+        x1_pos,
+        x1,
+        axis=axis,
+        kind=kind,
+        copy=False,
+        bounds_error=False,
+        fill_value=fill_value
+    )
+
+    x2_interp = scipy.interpolate.interp1d(
+        x2_pos,
+        x2,
+        axis=axis,
+        kind=kind,
+        copy=False,
+        bounds_error=False,
+        fill_value=fill_value
+    )
+
+    y1 = x1_interp(interp_pos)
+    y2 = x2_interp(interp_pos)
+
+    if op is None:
+        return y1, y2
+
+    try:
+        np.broadcast_shapes(y1.shape, y2.shape)
+    except ValueError as exc:
+        raise ParameterError(
+            f"Interpolating x1.shape={x1.shape} and x2.shape={x2.shape} along "
+            f"axis={axis} leads to y1.shape={y1.shape} and y2.shape={y2.shape}, "
+            "which are not broadcast compatible."
+        ) from exc
+
+    return op(y1, y2)
