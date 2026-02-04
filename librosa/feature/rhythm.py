@@ -765,9 +765,10 @@ def metrogram(
         tg, freqs=freqs, harmonics=factors, kind=kind, fill_value=fill_value, axis=-2
     )
 
-    product = tg_interp * np.expand_dims(tg, axis=-3)
+    product: np.ndarray = tg_interp * np.expand_dims(tg, axis=-3)
 
     if aggregate is not None:
-        return aggregate(product, axis=-2)
+        product_agg: np.ndarray = aggregate(product, axis=-2)
+        return product_agg
 
     return product

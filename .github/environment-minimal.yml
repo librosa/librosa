@@ -9,8 +9,8 @@ dependencies:
   - scikit-learn==1.1.0
   - joblib==1.0.0
   - decorator==4.3.0
-  - numba==0.53.0
-  - numpy==1.22.3
+  - numba==0.58.1
+  - numpy==1.26.0
   - pysoundfile==0.12.1
   - pooch==1.1.0
   - packaging==20.0
@@ -20,7 +20,7 @@ dependencies:
   - typing_extensions==4.1.1
 
   # optional, but required for testing
-  - matplotlib==3.7.0
+  - matplotlib~=3.9.0
   - pytest-mpl
   - pytest-cov
   - pytest

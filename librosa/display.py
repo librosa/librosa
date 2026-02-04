@@ -68,8 +68,11 @@ from typing import (
     Optional,
     Union,
     Callable,
+    Literal,
     Dict,
     Tuple,
+    Sequence,
+    cast
 )
 from ._typing import _FloatLike_co
 
@@ -224,11 +227,14 @@ class TimeFormatter(mplticker.Formatter):
         if unit not in ["h", "m", "s", "ms", None]:
             raise ParameterError(f"Unknown time unit: {unit}")
 
+        super().__init__()
         self.unit = unit
         self.lag = lag
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Return the time format as pos"""
+        assert self.axis is not None
+
         _, dmax = self.axis.get_data_interval()
         vmin, vmax = self.axis.get_view_interval()
 
@@ -311,6 +317,8 @@ class NoteFormatter(mplticker.Formatter):
         key: str = "C:maj",
         unicode: bool = True,
     ):
+        super().__init__()
+
         self.octave = octave
         self.major = major
         self.key = key
@@ -320,6 +328,8 @@ class NoteFormatter(mplticker.Formatter):
         """Apply the formatter to position"""
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
@@ -396,6 +406,7 @@ class SvaraFormatter(mplticker.Formatter):
                 "Sa frequency is required for svara display formatting"
             )
 
+        super().__init__()
         self.Sa = Sa
         self.octave = octave
         self.major = major
@@ -406,6 +417,8 @@ class SvaraFormatter(mplticker.Formatter):
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
@@ -483,6 +496,7 @@ class FJSFormatter(mplticker.Formatter):
         unison: Optional[str] = None,
         unicode: bool = True,
     ):
+        super().__init__()
         self.fmin = fmin
         self.major = major
         self.unison = unison
@@ -498,6 +512,8 @@ class FJSFormatter(mplticker.Formatter):
         """Apply the formatter to position"""
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
@@ -546,12 +562,15 @@ class LogHzFormatter(mplticker.Formatter):
     """
 
     def __init__(self, major: bool = True):
+        super().__init__()
         self.major = major
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Apply the formatter to position"""
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         vmin, vmax = self.axis.get_view_interval()
 
@@ -579,6 +598,7 @@ class ChromaFormatter(mplticker.Formatter):
     """
 
     def __init__(self, key: str = "C:maj", unicode: bool = True):
+        super().__init__()
         self.key = key
         self.unicode = unicode
 
@@ -611,6 +631,7 @@ class ChromaSvaraFormatter(mplticker.Formatter):
         abbr: bool = True,
         unicode: bool = True,
     ):
+        super().__init__()
         if Sa is None:
             Sa = 0
         self.Sa = Sa
@@ -660,6 +681,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
         unicode: bool = True,
         bins_per_octave: Optional[int] = None,
     ):
+        super().__init__()
         self.unison = unison
         self.unicode = unicode
         self.intervals = intervals
@@ -779,14 +801,17 @@ class AdaptiveWaveplot:
         self.cid: Optional[int] = None
         self._ax_ref: Optional[weakref.ref[mplaxes.Axes]] = None
 
-        # Only set the label on the patch if we have one to set
-        kwargs = dict()
-        if label is not None:
-            kwargs["label"] = label
         # This creates an invisible patch to contain the label
-        self.label_patch_ = mpatches.Rectangle(
-            (np.nan, np.nan), 0, 0, facecolor=steps.get_color(), **kwargs
-        )
+        # Doing backflips here with redundant code to make mypy happy
+        if label is None:
+            self.label_patch_ = mpatches.Rectangle(
+                (np.nan, np.nan), 0, 0, facecolor=steps.get_color()
+            )
+        else:
+            self.label_patch_ = mpatches.Rectangle(
+                (np.nan, np.nan), 0, 0, facecolor=steps.get_color(), label=label
+            )
+
 
     # Preserve the old attribute API by exposing properties with same names
     @property
@@ -896,7 +921,10 @@ class AdaptiveWaveplot:
             steps.set_visible(True)
 
             # Now check our viewport
-            if start <= data[0] or end >= data[-1]:
+            # we have to squash mypy errors on operand compatibility
+            # here because the type annotations from matplotlib are too
+            # loose.
+            if start <= data[0] or end >= data[-1]:  # type: ignore[operator,index]
                 # Viewport expands beyond current data in steps; update
                 # we want to cover a window of self.max_samples centered on the current viewport
                 midpoint_time = (start + end) / 2
@@ -1678,14 +1706,14 @@ def __decorate_axis(
 
     if ax_type == "tonnetz":
         axis.set_major_formatter(TonnetzFormatter())
-        axis.set_major_locator(mplticker.FixedLocator(np.arange(6)))
+        axis.set_major_locator(mplticker.FixedLocator([0, 1, 2, 3, 4, 5]))
         axis.set_label_text("Tonnetz")
 
     elif ax_type == "chroma":
         axis.set_major_formatter(ChromaFormatter(key=key, unicode=unicode))
         degrees = core.key_to_degrees(key)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
         )
         axis.set_label_text("Pitch class")
 
@@ -1701,7 +1729,7 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
         )
         axis.set_label_text("Svara")
 
@@ -1715,7 +1743,7 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
         )
         axis.set_label_text("Svara")
 
@@ -1759,7 +1787,7 @@ def __decorate_axis(
             # If intervals are explicit, tick them all
             degrees = np.arange(bins_per_octave)
 
-        axis.set_major_locator(mplticker.FixedLocator(degrees))
+        axis.set_major_locator(mplticker.FixedLocator(degrees))  # type: ignore[arg-type]
         axis.set_label_text("Pitch class")
 
     elif ax_type in ["tempo", "fourier_tempo"]:
@@ -1861,7 +1889,7 @@ def __decorate_axis(
                     fmin=fmin,
                     intervals=intervals,
                     bins_per_octave=12,
-                )
+                )  # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Note")
@@ -1879,7 +1907,7 @@ def __decorate_axis(
                 base=2.0,
                 subs=core.interval_frequencies(
                     12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12
-                ),
+                ),  # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Hz")
@@ -1897,7 +1925,7 @@ def __decorate_axis(
                 base=2.0,
                 subs=core.interval_frequencies(
                     12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12
-                ),
+                ), # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Note")
@@ -1924,7 +1952,7 @@ def __decorate_axis(
         axis.set_major_locator(mplticker.SymmetricalLogLocator(axis.get_transform()))
         axis.set_minor_formatter(NoteFormatter(key=key, major=False, unicode=unicode))
         axis.set_minor_locator(
-            mplticker.LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))  # type: ignore[arg-type]
         )
         axis.set_label_text("Note")
 
@@ -1962,13 +1990,13 @@ def __decorate_axis(
         # Label once per octave
         if ax_type == "mel_oct3":
             # Suppress major ticks for frequencies below 100 Hz in mel mode
-            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[5::3]))
+            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[5::3]))  # type: ignore[arg-type]
         else:
-            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[::3]))
+            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[::3]))  # type: ignore[arg-type]
         axis.set_major_formatter(mplticker.EngFormatter(unit="Hz"))
         axis.set_label_text("Frequency")
         # Minor ticks at the 1/3 octaves
-        axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=None))
+        axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=None))  # type: ignore[arg-type]
         # TODO: implement a 2-octave adaptive wrapper for minor tick labels
         # axis.set_minor_formatter(mplticker.EngFormatter(unit='Hz'))
         axis.set_minor_formatter(mplticker.NullFormatter())
@@ -2260,7 +2288,7 @@ def waveshow(
     axis: Optional[str] = "time",
     offset: float = 0.0,
     marker: Union[str, MplPath, MarkerStyle] = "",
-    where: str = "post",
+    where: Literal["pre", "post", "mid"] = "post",
     label: Optional[str] = None,
     transpose: bool = False,
     ax: Optional[mplaxes.Axes] = None,
@@ -2350,7 +2378,7 @@ def waveshow(
 
         See Also: `matplotlib.markers`.
 
-    where : string, {'pre', 'mid', 'post'}
+    where : {'pre', 'mid', 'post'}
         This setting determines how both waveform and envelope plots interpolate
         between observations.
 
@@ -2483,14 +2511,16 @@ def waveshow(
 
     # Only plot up to max_points worth of data here
     xdata, ydata = times[:max_points], y[0, :max_points]
-    filler = axes.fill_between
-    signal = "xlim_changed"
-    dec_axis = axes.xaxis
+    dec_axis: matplotlib.axis.Axis
     if transpose:
         ydata, xdata = xdata, ydata
         filler = axes.fill_betweenx
         signal = "ylim_changed"
         dec_axis = axes.yaxis
+    else:
+        filler = axes.fill_between  # type: ignore[assignment]
+        signal = "xlim_changed"
+        dec_axis = axes.xaxis
 
     (steps,) = axes.step(xdata, ydata, marker=marker, where=where, **kwargs)
 
@@ -2720,8 +2750,8 @@ def wavebars(
         color = coll.get_facecolor()
 
         # Set the axes facecolor to our wave color
-        axes.patch.set_facecolor(color)
-        proxy.set_facecolor(color)
+        axes.patch.set_facecolor(color)  # type: ignore[arg-type]
+        proxy.set_facecolor(color)  # type: ignore[arg-type]
         coll.set_facecolor(invert_color)
 
     if transpose:
@@ -2758,8 +2788,8 @@ def colorbar_phase(
     im: matplotlib.cm.ScalarMappable,
     *,
     numticks: int = 9,
-    ax: Optional[matplotlib.Axes] = None,
-    fig: Optional[matplotlib.Figure] = None,
+    ax: Optional[matplotlib.axes.Axes] = None,
+    fig: Optional[matplotlib.figure.FigureBase] = None,
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
     """Attach a colorbar to an image representing phase data in radians.
@@ -2768,15 +2798,17 @@ def colorbar_phase(
 
     Parameters
     ----------
-    im : matplotlib.image.AxesImage
+    im : matplotlib.cm.ScalarMappable
         The image to which the colorbar will be attached.
+        Generally this will be a `matplotlib.image.AxesImage` or `matplotlib.collections.QuadMesh`
+        as returned by `specshow`.
     numticks : int > 0
         The number of ticks to display on the colorbar.
         Default is 9, corresponding to multiples of π/4.
     ax : matplotlib.axes.Axes or None
         The axes to which the colorbar will be attached.
         If None, the colorbar will be attached to the axes of `im`.
-    fig : matplotlib.figure.Figure or None
+    fig : matplotlib.figure.Figure, SubFigure, or None
         The figure to which the colorbar will be attached.
         If None, the colorbar will be attached to the figure of `im`.
     **kwargs
@@ -2836,10 +2868,10 @@ def colorbar_phase(
 
 
 def colorbar_db(
-    im: matplotlib.image.AxesImage,
+    im: matplotlib.cm.ScalarMappable,
     *,
-    ax: Optional[matplotlib.Axes] = None,
-    fig: Optional[matplotlib.Figure] = None,
+    ax: Optional[matplotlib.axes.Axes] = None,
+    fig: Optional[matplotlib.figure.FigureBase] = None,
     format: Union[str, mplticker.Formatter] = "% -3.f",
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
@@ -2847,12 +2879,14 @@ def colorbar_db(
 
     Parameters
     ----------
-    im : matplotlib.image.AxesImage
+    im : matplotlib.cm.ScalarMappable
         The image to which the colorbar will be attached.
+        Generally this will be a `matplotlib.image.AxesImage` or `matplotlib.collections.QuadMesh`
+        as returned by `specshow`.
     ax : matplotlib.axes.Axes or None
         The axes to which the colorbar will be attached.
         If None, the colorbar will be attached to the axes of `im`.
-    fig : matplotlib.figure.Figure or None
+    fig : matplotlib.figure.Figure, SubFigure, or None
         The figure to which the colorbar will be attached.
         If None, the colorbar will be attached to the figure of `im`.
     format : str
