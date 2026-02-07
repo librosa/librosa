@@ -716,10 +716,10 @@ def icqt(
         )
 
         # Transpose the basis
-        inv_basis = fft_basis.conjugate().T.todense()
+        inv_basis = fft_basis.conjugate().T.toarray()
 
         # Compute each filter's frequency-domain power
-        freq_power = 1 / np.sum(util.abs2(np.asarray(inv_basis)), axis=0)
+        freq_power = 1 / np.sum(util.abs2(inv_basis), axis=0)
 
         # Compensate for length normalization in the forward transform
         freq_power *= n_fft / lengths[sl]

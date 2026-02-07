@@ -617,11 +617,11 @@ def test_sparsify_rows_dtype(dtype, ref_dtype):
 @pytest.mark.parametrize("d", [1, 5, 10, 100])
 @pytest.mark.parametrize("q", [0.0, 0.01, 0.25, 0.5, 0.99])
 def test_sparsify_rows(ndim, d, q, rng):
-    X = rng.standard_normal(size=tuple([d] * ndim)) ** 4
-
-    X = np.asarray(X)
+    X = rng.standard_normal(size=tuple([d] * ndim)) ** 4  # always ndarray as size is specified
 
     xs = librosa.util.sparsify_rows(X, quantile=q)
+    assert isinstance(xs, scipy.sparse.sparray)
+    assert not isinstance(xs, scipy.sparse.spmatrix)
 
     if ndim == 1:
         X = X.reshape((1, -1))
@@ -629,10 +629,15 @@ def test_sparsify_rows(ndim, d, q, rng):
     assert np.allclose(xs.shape, X.shape)
 
     # And make sure that xs matches X on nonzeros
-    xsd = np.asarray(xs.todense())
+    xsd = xs.toarray()  # always ndarray now
 
     for i in range(xs.shape[0]):
-        assert np.allclose(xsd[i, xs[i].indices], X[i, xs[i].indices])
+        # Get column indices for row i using CSR internal structure
+        # (1D sparse slicing is not supported for sparse arrays)
+        row_start = xs.indptr[i]
+        row_end = xs.indptr[i+1]
+        row_indices = xs.indices[row_start:row_end]
+        assert np.allclose(xsd[i, row_indices], X[i, row_indices])
 
     # Compute row-wise magnitude marginals
     v_in = np.sum(np.abs(X), axis=-1)
@@ -1183,21 +1188,45 @@ def test_shear_dense():
 
 @pytest.mark.parametrize("fmt", ["csc", "csr", "lil", "dok"])
 def test_shear_sparse(fmt):
-    E = scipy.sparse.identity(3, format=fmt)
+    E = scipy.sparse.eye_array(3, format=fmt)
 
     E_shear = librosa.util.shear(E, factor=1, axis=0)
+    assert scipy.sparse.issparse(E_shear)
+    assert not isinstance(E_shear, scipy.sparse.spmatrix)
+    assert isinstance(
+        E_shear,
+        (scipy.sparse.csc_array, scipy.sparse.csr_array, scipy.sparse.lil_array, scipy.sparse.dok_array),
+    )
     assert E_shear.format == fmt
     assert np.allclose(E_shear.toarray(), np.asarray([[1, 0, 0], [0, 0, 1], [0, 1, 0]]))
 
     E_shear = librosa.util.shear(E, factor=1, axis=1)
+    assert scipy.sparse.issparse(E_shear)
+    assert not isinstance(E_shear, scipy.sparse.spmatrix)
+    assert isinstance(
+        E_shear,
+        (scipy.sparse.csc_array, scipy.sparse.csr_array, scipy.sparse.lil_array, scipy.sparse.dok_array),
+    )
     assert E_shear.format == fmt
     assert np.allclose(E_shear.toarray(), np.asarray([[1, 0, 0], [0, 0, 1], [0, 1, 0]]))
 
     E_shear = librosa.util.shear(E, factor=-1, axis=1)
+    assert scipy.sparse.issparse(E_shear)
+    assert not isinstance(E_shear, scipy.sparse.spmatrix)
+    assert isinstance(
+        E_shear,
+        (scipy.sparse.csc_array, scipy.sparse.csr_array, scipy.sparse.lil_array, scipy.sparse.dok_array),
+    )
     assert E_shear.format == fmt
     assert np.allclose(E_shear.toarray(), np.asarray([[1, 1, 1], [0, 0, 0], [0, 0, 0]]))
 
     E_shear = librosa.util.shear(E, factor=-1, axis=0)
+    assert scipy.sparse.issparse(E_shear)
+    assert not isinstance(E_shear, scipy.sparse.spmatrix)
+    assert isinstance(
+        E_shear,
+        (scipy.sparse.csc_array, scipy.sparse.csr_array, scipy.sparse.lil_array, scipy.sparse.dok_array),
+    )
     assert E_shear.format == fmt
     assert np.allclose(E_shear.toarray(), np.asarray([[1, 0, 0], [1, 0, 0], [1, 0, 0]]))
 
