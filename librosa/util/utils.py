@@ -1581,7 +1581,7 @@ def sparsify_rows(
     # important for mypy: let us give a 2 tuple, not x.shape (tuple[int, ...])
     out_shape = (x.shape[0], x.shape[1])
 
-    # construct via `COO` then CSR (avoids LIL constructor/assignment typing gaps)
+    # construct via coo_array then CSR (avoids LIL constructor/assignment typing gaps)
     x_coo = scipy.sparse.coo_array(
         (np.asarray(vals, dtype=out_dtype),
          (np.asarray(rows, dtype=np.intp), np.asarray(cols, dtype=np.intp))),
