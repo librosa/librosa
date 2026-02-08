@@ -1572,8 +1572,6 @@ def sparsify_rows(
 
     for i, j in enumerate(threshold_idx):
         idx = np.flatnonzero(mags[i] >= mag_sort[i, j])
-        if idx.size == 0:
-            continue
         rows.extend([i] * int(idx.size))
         cols.extend(idx.tolist())
         vals.extend(x[i, idx].astype(out_dtype, copy=False).tolist())

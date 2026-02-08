@@ -1236,6 +1236,15 @@ def test_shear_badfactor():
     librosa.util.shear(np.eye(3), factor=None)  # type: ignore
 
 
+@pytest.mark.parametrize("x", [
+    scipy.sparse.csr_array([1, 0, 2]),
+    scipy.sparse.coo_array([1, 0, 2]),
+])
+def test_shear_sparse_1d_raises(x):
+    with pytest.raises(librosa.ParameterError, match=r"Input must be 2D"):
+        librosa.util.shear(x, factor=1, axis=0)
+
+
 def test_stack_contig():
     x1 = np.ones(3)
     x2 = -np.ones(3)
