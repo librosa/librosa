@@ -37,7 +37,7 @@ from __future__ import annotations
 import numpy as np
 import scipy.interpolate
 from scipy.spatial.distance import cdist
-from numba import jit
+from numba import jit, prange
 from .util import pad_center, fill_off_diagonal, is_positive_int, tiny, expand_to
 from .util.exceptions import ParameterError
 from .filters import get_window
@@ -1187,7 +1187,7 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
     return steps
 
 
-@jit(nopython=True, cache=True)  # type: ignore
+@jit(nopython=True, cache=False)  # type: ignore
 def _viterbi(
     log_prob: np.ndarray, log_trans: np.ndarray, log_p_init: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
@@ -1220,7 +1220,7 @@ def _viterbi(
     # factor in initial state distribution
     value[0] = log_prob[0] + log_p_init
 
-    for t in range(1, n_steps):
+    for t in prange(1, n_steps):
         # Want V[t, j] <- p[t, j] * max_k V[t-1, k] * A[k, j]
         #    assume at time t-1 we were in state k
         #    transition k -> j
@@ -1251,6 +1251,16 @@ def _viterbi(
     return state, logp
 
 
+@jit(cache=True, parallel=True)
+def _viterbi_parallel(log_prob, log_trans, log_p_init):
+    return _viterbi(log_prob, log_trans, log_p_init)
+
+
+@jit(cache=True, parallel=False)
+def _viterbi_serial(log_prob, log_trans, log_p_init):
+    return _viterbi(log_prob, log_trans, log_p_init)
+
+
 @overload
 def viterbi(
     prob: np.ndarray,
@@ -1268,6 +1278,7 @@ def viterbi(
     *,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
+    parallel: bool = ...,
 ) -> np.ndarray: ...
 
 
@@ -1277,6 +1288,7 @@ def viterbi(
     *,
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
+    parallel: bool = False,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Viterbi decoding from observation likelihoods.
 
@@ -1387,7 +1399,11 @@ def viterbi(
 
     def _helper(lp):
         # Transpose input
-        _state, logp = _viterbi(lp.T, log_trans, log_p_init)
+        if parallel:
+            _state, logp = _viterbi_parallel(lp.T, log_trans, log_p_init)
+        else:
+            _state, logp = _viterbi_serial(lp.T, log_trans, log_p_init)
+
         # Transpose outputs for return
         return _state.T, logp
 

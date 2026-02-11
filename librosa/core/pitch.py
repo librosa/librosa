@@ -641,6 +641,7 @@ def pyin(
     fill_na: Optional[float] = np.nan,
     center: bool = True,
     pad_mode: _PadMode = "constant",
+    parallel: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 
@@ -822,7 +823,7 @@ def pyin(
 
     p_init = np.ones(2 * n_pitch_bins) / (2 * n_pitch_bins)
 
-    states = sequence.viterbi(observation_probs, transition, p_init=p_init)
+    states = sequence.viterbi(observation_probs, transition, p_init=p_init, parallel=parallel)
 
     # Find f0 corresponding to each decoded pitch bin.
     freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))
