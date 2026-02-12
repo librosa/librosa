@@ -1251,8 +1251,10 @@ def _viterbi(
     return state, logp
 
 
+# Make separate jit compilations for parallel and serial versions of the Viterbi algorithm.
 _viterbi_parallel_core = jit(parallel=True, cache=False)(_viterbi)
 _viterbi_serial_core = jit(parallel=False, cache=False)(_viterbi)
+
 @jit(cache=True, parallel=True)
 def _viterbi_parallel(log_prob, log_trans, log_p_init):
     return _viterbi_parallel_core(log_prob, log_trans, log_p_init)
@@ -1270,6 +1272,7 @@ def viterbi(
     *,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
+    parallel: bool = ...,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
@@ -1290,7 +1293,7 @@ def viterbi(
     *,
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
-    parallel: bool = False,
+    parallel: bool = True,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Viterbi decoding from observation likelihoods.
 
@@ -1318,6 +1321,12 @@ def viterbi(
         If not provided, a uniform distribution is assumed.
     return_logp : bool
         If ``True``, return the log-likelihood of the state sequence.
+    parallel : bool
+        If ``True``, use parallelized computation for the inner loop of
+        the Viterbi algorithm.  This can speed up computation for large
+        numbers of states, but may have some overhead for small state spaces.
+        If ``False`` (default), use a serial implementation.
+        There should be no difference in the output between the two implementations.
 
     Returns
     -------
@@ -1439,6 +1448,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
+    parallel: bool = ...,
 ) -> np.ndarray: ...
 
 
@@ -1450,6 +1460,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
+    parallel: bool = ...,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
@@ -1461,6 +1472,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: bool,
+    parallel: bool = ...,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
@@ -1471,6 +1483,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = None,
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
+    parallel: bool = True,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Viterbi decoding from discriminative state predictions.
 
@@ -1510,6 +1523,12 @@ def viterbi_discriminative(
         If not provided, it is assumed to be uniform.
     return_logp : bool
         If ``True``, return the log-likelihood of the state sequence.
+    parallel : bool
+        If ``True``, use parallelized computation for the inner loop of
+        the Viterbi algorithm.  This can speed up computation for large
+        numbers of states, but may have some overhead for small state spaces.
+        If ``False`` (default), use a serial implementation.
+        There should be no difference in the output between the two implementations.
 
     Returns
     -------
@@ -1653,7 +1672,11 @@ def viterbi_discriminative(
 
     def _helper(lp):
         # Transpose input
-        _state, logp = _viterbi(lp.T, log_trans, log_p_init)
+        if parallel:
+            _state, logp = _viterbi_parallel(lp.T, log_trans, log_p_init)
+        else:
+            _state, logp = _viterbi_serial(lp.T, log_trans, log_p_init)
+
         # Transpose outputs for return
         return _state.T, logp
 
@@ -1686,6 +1709,7 @@ def viterbi_binary(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
+    parallel: bool = ...,
 ) -> np.ndarray: ...
 
 
@@ -1697,6 +1721,7 @@ def viterbi_binary(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
+    parallel: bool = ...,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
@@ -1708,6 +1733,7 @@ def viterbi_binary(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: bool = ...,
+    parallel: bool = ...,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
@@ -1718,6 +1744,7 @@ def viterbi_binary(
     p_state: Optional[np.ndarray] = None,
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
+    parallel: bool = True,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Viterbi decoding from binary (multi-label), discriminative state predictions.
 
@@ -1771,6 +1798,13 @@ def viterbi_binary(
 
     return_logp : bool
         If ``True``, return the (unnormalized) log-likelihood of the state sequences.
+
+    parallel : bool
+        If ``True``, use parallelized computation for the inner loop of
+        the Viterbi algorithm.  This can speed up computation for large
+        numbers of states, but may have some overhead for small state spaces.
+        If ``False`` (default), use a serial implementation.
+        There should be no difference in the output between the two implementations.
 
     Returns
     -------
@@ -1873,6 +1907,7 @@ def viterbi_binary(
             p_state=p_state_binary,
             p_init=p_init_binary,
             return_logp=True,
+            parallel=parallel,
         )
 
     if return_logp:
