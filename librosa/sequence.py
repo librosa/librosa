@@ -1187,7 +1187,7 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
     return steps
 
 
-@jit(nopython=True, cache=False)  # type: ignore
+#@jit(nopython=True, cache=False)  # type: ignore
 def _viterbi(
     log_prob: np.ndarray, log_trans: np.ndarray, log_p_init: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
@@ -1251,14 +1251,16 @@ def _viterbi(
     return state, logp
 
 
+_viterbi_parallel_core = jit(parallel=True, cache=False)(_viterbi)
+_viterbi_serial_core = jit(parallel=False, cache=False)(_viterbi)
 @jit(cache=True, parallel=True)
 def _viterbi_parallel(log_prob, log_trans, log_p_init):
-    return _viterbi(log_prob, log_trans, log_p_init)
+    return _viterbi_parallel_core(log_prob, log_trans, log_p_init)
 
 
 @jit(cache=True, parallel=False)
 def _viterbi_serial(log_prob, log_trans, log_p_init):
-    return _viterbi(log_prob, log_trans, log_p_init)
+    return _viterbi_serial_core(log_prob, log_trans, log_p_init)
 
 
 @overload
