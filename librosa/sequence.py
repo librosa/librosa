@@ -1255,12 +1255,12 @@ def _viterbi(
 _viterbi_parallel_core = jit(parallel=True, cache=False)(_viterbi)
 _viterbi_serial_core = jit(parallel=False, cache=False)(_viterbi)
 
-@jit(cache=True, parallel=True)
+@jit(cache=True)
 def _viterbi_parallel(log_prob, log_trans, log_p_init):
     return _viterbi_parallel_core(log_prob, log_trans, log_p_init)
 
 
-@jit(cache=True, parallel=False)
+@jit(cache=True)
 def _viterbi_serial(log_prob, log_trans, log_p_init):
     return _viterbi_serial_core(log_prob, log_trans, log_p_init)
 
