@@ -1220,7 +1220,7 @@ def _viterbi(
     # factor in initial state distribution
     value[0] = log_prob[0] + log_p_init
 
-    for t in prange(1, n_steps):
+    for t in range(1, n_steps):
         # Want V[t, j] <- p[t, j] * max_k V[t-1, k] * A[k, j]
         #    assume at time t-1 we were in state k
         #    transition k -> j
@@ -1233,7 +1233,7 @@ def _viterbi(
         trans_out = value[t - 1] + log_trans.T
 
         # Unroll the max/argmax loop to enable numba support
-        for j in range(n_states):
+        for j in prange(n_states):
             ptr[t, j] = np.argmax(trans_out[j])
             # value[t, j] = log_prob[t, j] + np.max(trans_out[j])
             value[t, j] = log_prob[t, j] + trans_out[j, ptr[t][j]]
