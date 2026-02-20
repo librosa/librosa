@@ -248,8 +248,8 @@ def test_nn_filter_avg(rng):
 def test_nn_filter_badselfsim(data, x, y, sparse, rng):
 
     # Build a recurrence matrix, just for testing purposes
-    rec: Union[np.ndarray, scipy.sparse.csr_matrix] = rng.standard_normal(size=(x, y))
+    rec: Union[np.ndarray, scipy.sparse.csr_array] = rng.standard_normal(size=(x, y))
     if sparse:
-        rec = scipy.sparse.csr_matrix(rec)
+        rec = scipy.sparse.csr_array(rec)
 
     librosa.decompose.nn_filter(data, rec=rec)
