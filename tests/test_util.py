@@ -1231,6 +1231,18 @@ def test_shear_sparse(fmt):
     assert np.allclose(E_shear.toarray(), np.asarray([[1, 0, 0], [1, 0, 0], [1, 0, 0]]))
 
 
+@pytest.mark.parametrize("fmt", ["csc", "csr", "lil", "dok"])
+def test_shear_sparse_matrix_preserves_type(fmt):
+    E = scipy.sparse.eye(3, format=fmt)  # NOTE: matrix constructor
+
+    E_shear = librosa.util.shear(E, factor=1, axis=0)
+    assert scipy.sparse.issparse(E_shear)
+    assert isinstance(E_shear, scipy.sparse.spmatrix)
+    assert not isinstance(E_shear, scipy.sparse.sparray)
+    assert E_shear.format == fmt
+    assert np.allclose(E_shear.toarray(), np.asarray([[1,0,0],[0,0,1],[0,1,0]]))
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_shear_badfactor():
     librosa.util.shear(np.eye(3), factor=None)  # type: ignore

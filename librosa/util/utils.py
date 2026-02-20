@@ -27,7 +27,7 @@ from numpy.typing import DTypeLike
 from typing_extensions import Literal
 
 from .._cache import cache
-from .._typing import _ComplexLike_co, _FloatLike_co, _SequenceLike, _SparseArray, _InterpKind
+from .._typing import _ComplexLike_co, _FloatLike_co, _SequenceLike, _SparseArray, _SparseMatrix, _InterpKind
 from .deprecation import Deprecated
 from .exceptions import ParameterError
 
@@ -1566,26 +1566,14 @@ def sparsify_rows(
 
     threshold_idx = np.argmin(cumulative_mag < quantile, axis=1)
 
-    rows: list[int] = []
-    cols: list[int] = []
-    vals: list[object] = []
+    # threshold value per row
+    thresh = mag_sort[np.arange(x.shape[0]), threshold_idx]  # (n_rows,)
 
-    for i, j in enumerate(threshold_idx):
-        idx = np.flatnonzero(mags[i] >= mag_sort[i, j])
-        rows.extend([i] * int(idx.size))
-        cols.extend(idx.tolist())
-        vals.extend(x[i, idx].astype(out_dtype, copy=False).tolist())
+    # mask-multiply
+    mask = mags >= thresh[:, np.newaxis]
+    out = (x * mask).astype(out_dtype, copy=False)
 
-    # important for mypy: let us give a 2 tuple, not x.shape (tuple[int, ...])
-    out_shape = (x.shape[0], x.shape[1])
-
-    # construct via coo_array then CSR (avoids LIL constructor/assignment typing gaps)
-    x_coo = scipy.sparse.coo_array(
-        (np.asarray(vals, dtype=out_dtype),
-         (np.asarray(rows, dtype=np.intp), np.asarray(cols, dtype=np.intp))),
-        shape=out_shape,
-    )
-    return x_coo.tocsr()
+    return scipy.sparse.csr_array(out)
 
 
 def buf_to_float(
@@ -2140,18 +2128,18 @@ def __shear_dense(X: np.ndarray, *, factor: int = +1, axis: int = -1) -> np.ndar
     return X_shear
 
 if TYPE_CHECKING:
-    def _asformat_sparse(X: _SparseArray, fmt: str) -> _SparseArray: ...
+    def _asformat_sparse(X: Union[_SparseArray, _SparseMatrix], fmt: str) -> Union[_SparseArray, _SparseMatrix]: ...
 else:
     def _asformat_sparse(X, fmt):
         return X.asformat(fmt)
 
 
 def __shear_sparse(
-    X: _SparseArray, *, factor: int = +1, axis: int = -1
-) -> _SparseArray:
-    """Fast shearing for sparse arrays
+    X: Union[_SparseArray, _SparseMatrix], *, factor: int = +1, axis: int = -1
+) -> Union[_SparseArray, _SparseMatrix]:
+    """Fast shearing for sparse arrays/matrices
 
-    Shearing is performed using CSC array indices,
+    Shearing is performed using CSC indices,
     and the result is converted back to whatever sparse format
     the data was originally provided in.
     """
@@ -2159,12 +2147,17 @@ def __shear_sparse(
         raise ParameterError(f"Input must be 2D. Provided shape={X.shape}.")
 
     fmt = X.format
+    is_matrix = isinstance(X, scipy.sparse.spmatrix)
 
     # If axis==0, operate on the transpose, but don't reassign X (avoids mypy ignore)
     X_in = X.T if axis == 0 else X
 
-    # Now we're definitely rolling on the correct axis, and definitely CSC *array*
-    X_shear = scipy.sparse.csc_array(X_in, copy=True)
+    # Now we're definitely rolling on the correct axis, and definitely CSC
+    X_shear: Union[scipy.sparse.csc_array, scipy.sparse.csc_matrix]
+    if is_matrix:
+        X_shear = scipy.sparse.csc_matrix(X_in, copy=True)
+    else:
+        X_shear = scipy.sparse.csc_array(X_in, copy=True)
 
     # The idea here is to repeat the shear amount (factor * range)
     # by the number of non-zeros for each column.
@@ -2175,8 +2168,11 @@ def __shear_sparse(
     np.mod(X_shear.indices + roll, X_shear.shape[0], out=X_shear.indices)
 
     if axis == 0:
-        # Undo the transpose; normalize back to CSC array for consistent downstream typing
-        X_shear = scipy.sparse.csc_array(X_shear.T)
+        # Undo the transpose; normalize back to CSC for consistent downstream typing
+        if is_matrix:
+            X_shear = scipy.sparse.csc_matrix(X_shear.T)
+        else:
+            X_shear = scipy.sparse.csc_array(X_shear.T)
 
     # And convert back to the input format
     return _asformat_sparse(X_shear, fmt)
@@ -2184,11 +2180,11 @@ def __shear_sparse(
 @overload
 def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 @overload
-def shear(X: _SparseArray, *, factor: int = ..., axis: int = ...) -> _SparseArray: ...
+def shear(X: Union[_SparseArray, _SparseMatrix], *, factor: int = ..., axis: int = ...) -> Union[_SparseArray, _SparseMatrix]: ...
 def shear(
-    X: Union[np.ndarray, _SparseArray], *, factor: int = 1, axis: int = -1
-) -> Union[np.ndarray, _SparseArray]:
-    """Shear an array by a given factor.
+    X: Union[np.ndarray, _SparseArray, _SparseMatrix], *, factor: int = 1, axis: int = -1
+) -> Union[np.ndarray, _SparseArray, _SparseMatrix]:
+    """Shear an array (or matrix) by a given factor.
 
     The column ``X[:, n]`` will be displaced (rolled)
     by ``factor * n``
@@ -2200,8 +2196,8 @@ def shear(
 
     Parameters
     ----------
-    X : np.ndarray [ndim=2] or scipy.sparse array
-        The array to be sheared
+    X : np.ndarray [ndim=2] or scipy.sparse array/matrix
+        The array/matrix to be sheared
     factor : integer
         The shear factor: ``X[:, n] -> np.roll(X[:, n], factor * n)``
     axis : integer
@@ -2210,7 +2206,7 @@ def shear(
     Returns
     -------
     X_shear : same type as ``X``
-        The sheared matrix
+        The sheared matrix or array
 
     Examples
     --------

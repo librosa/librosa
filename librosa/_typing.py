@@ -90,6 +90,15 @@ def _ensure_not_reachable(__arg: Never):
     """
     ...
 
+_SparseMatrix = Union[
+    sp.bsr_matrix,
+    sp.coo_matrix,
+    sp.csc_matrix,
+    sp.csr_matrix,
+    sp.dia_matrix,
+    sp.dok_matrix,
+    sp.lil_matrix,
+]
 
 _SparseArray = Union[
     sp.bsr_array,
