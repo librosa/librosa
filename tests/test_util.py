@@ -1239,8 +1239,8 @@ def test_shear_sparse_matrix_preserves_type(fmt):
     assert scipy.sparse.issparse(E_shear)
     assert isinstance(E_shear, scipy.sparse.spmatrix)
     assert not isinstance(E_shear, scipy.sparse.sparray)
-    assert E_shear.format == fmt
-    assert np.allclose(E_shear.toarray(), np.asarray([[1,0,0],[0,0,1],[0,1,0]]))
+    assert E_shear.format == fmt  # type: ignore[attr-defined]
+    assert np.allclose(E_shear.toarray(), np.asarray([[1,0,0],[0,0,1],[0,1,0]]))  # type: ignore[attr-defined]
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
