@@ -1132,22 +1132,18 @@ def _viterbi(
     value[0] = log_prob[0] + log_p_init
 
     for t in range(1, n_steps):
-        # Want V[t, j] <- p[t, j] * max_k V[t-1, k] * A[k, j]
-        #    assume at time t-1 we were in state k
-        #    transition k -> j
-
-        # Broadcast over rows:
-        #    Tout[k, j] = V[t-1, k] * A[k, j]
-        #    then take the max over columns
-        # We'll do this in log-space for stability
-
-        trans_out = value[t - 1] + log_trans.T
-
-        # Unroll the max/argmax loop to enable numba support
+        # Avoid materializing an intermediate (n_states x n_states) matrix.
         for j in range(n_states):
-            ptr[t, j] = np.argmax(trans_out[j])
-            # value[t, j] = log_prob[t, j] + np.max(trans_out[j])
-            value[t, j] = log_prob[t, j] + trans_out[j, ptr[t][j]]
+            best_idx = 0
+            best_val = value[t - 1, 0] + log_trans[0, j]
+            for k in range(1, n_states):
+                candidate = value[t - 1, k] + log_trans[k, j]
+                if candidate > best_val:
+                    best_val = candidate
+                    best_idx = k
+
+            ptr[t, j] = best_idx
+            value[t, j] = log_prob[t, j] + best_val
 
     # Now roll backward
 
