@@ -1483,6 +1483,112 @@ def test_pyin_chirp_instant():
     assert np.abs(cents[-1] - target_cents[-1]) <= 1e-1
 
 
+def test_pyin_sparse_transition_cache():
+    sparse_transition = librosa.core.pitch.__pyin_sparse_transition
+    sparse_transition.cache_clear()
+
+    n_pitch_bins = 24
+    transition_width = 5
+    switch_prob = 0.01
+
+    offsets_a, src_idx_a, src_logp_a = sparse_transition(
+        n_pitch_bins, transition_width, switch_prob
+    )
+    info_a = sparse_transition.cache_info()
+
+    offsets_b, src_idx_b, src_logp_b = sparse_transition(
+        n_pitch_bins, transition_width, switch_prob
+    )
+    info_b = sparse_transition.cache_info()
+
+    n_states = 2 * n_pitch_bins
+    assert offsets_a.shape == (n_states + 1,)
+    assert src_idx_a.ndim == 1
+    assert src_logp_a.ndim == 1
+    assert src_idx_a.shape == src_logp_a.shape
+    assert np.all(np.diff(offsets_a) > 0)
+
+    # Same call should hit cache and return the exact same objects.
+    assert offsets_a is offsets_b
+    assert src_idx_a is src_idx_b
+    assert src_logp_a is src_logp_b
+    assert info_a.misses == 1
+    assert info_a.hits == 0
+    assert info_b.misses == 1
+    assert info_b.hits == 1
+
+
+@pytest.mark.parametrize("batch_shape", [(), (3,), (2, 2)])
+def test_pyin_viterbi_matches_sequence_viterbi(batch_shape):
+    rng = np.random.default_rng(1234)
+
+    n_pitch_bins = 24
+    n_states = 2 * n_pitch_bins
+    n_steps = 32
+    transition_width = 5
+    switch_prob = 0.01
+
+    obs_shape = batch_shape + (n_states, n_steps)
+    observation_probs = rng.random(obs_shape) + 1e-8
+    observation_probs /= observation_probs.sum(axis=-2, keepdims=True)
+
+    transition = librosa.sequence.transition_local(
+        n_pitch_bins, transition_width, window="triangle", wrap=False
+    )
+    t_switch = librosa.sequence.transition_loop(2, 1 - switch_prob)
+    transition = np.kron(t_switch, transition)
+    p_init = np.ones(n_states, dtype=np.float64) / n_states
+
+    states_dense = librosa.sequence.viterbi(
+        observation_probs, transition, p_init=p_init
+    )
+    states_sparse = librosa.core.pitch.__pyin_viterbi(
+        observation_probs,
+        n_pitch_bins=n_pitch_bins,
+        transition_width=transition_width,
+        switch_prob=switch_prob,
+    )
+
+    assert states_sparse.shape == states_dense.shape
+    assert np.array_equal(states_sparse, states_dense)
+
+
+def test_pyin_viterbi_fail_uint16_capacity():
+    n_states = np.iinfo(np.uint16).max + 3
+    n_steps = 1
+    observation_probs = np.ones((n_states, n_steps), dtype=np.float64) / n_states
+
+    with pytest.raises(librosa.ParameterError, match="exceeds uint16 decoding capacity"):
+        librosa.core.pitch.__pyin_viterbi(
+            observation_probs,
+            n_pitch_bins=n_states // 2,
+            transition_width=1,
+            switch_prob=0.01,
+        )
+
+
+def test_pyin_viterbi_fail_empty_transition_column():
+    observation_probs = np.ones((2, 4), dtype=np.float64) / 2
+    bad_offsets = np.array([0, 1, 1], dtype=np.int64)
+    src_idx = np.array([0], dtype=np.int64)
+    src_logp = np.array([0.0], dtype=np.float64)
+
+    with mock.patch.object(
+        librosa.core.pitch,
+        "__pyin_sparse_transition",
+        return_value=(bad_offsets, src_idx, src_logp),
+    ):
+        with pytest.raises(
+            librosa.ParameterError, match="at least one state has no incoming transitions"
+        ):
+            librosa.core.pitch.__pyin_viterbi(
+                observation_probs,
+                n_pitch_bins=1,
+                transition_width=1,
+                switch_prob=0.01,
+            )
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize(
     "fmin,fmax,frame_length",

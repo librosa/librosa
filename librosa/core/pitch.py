@@ -3,6 +3,7 @@
 """Pitch-tracking and tuning estimation"""
 
 import warnings
+from functools import lru_cache
 import numpy as np
 import scipy
 import numba
@@ -21,6 +22,118 @@ from typing import Any, Callable, Optional, Tuple, Union
 from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
+
+
+@numba.jit(nopython=True, cache=True)  # type: ignore
+def __viterbi_sparse_numba(
+    log_prob_t: np.ndarray,
+    offsets: np.ndarray,
+    src_idx: np.ndarray,
+    src_logp: np.ndarray,
+    log_p_init: np.ndarray,
+) -> np.ndarray:
+    """Sparse-column Viterbi for fixed transition sparsity."""
+    n_steps, n_states = log_prob_t.shape
+
+    state = np.zeros(n_steps, dtype=np.uint16)
+    value = np.zeros((n_steps, n_states), dtype=np.float64)
+    ptr = np.zeros((n_steps, n_states), dtype=np.uint16)
+
+    value[0] = log_prob_t[0] + log_p_init
+
+    for t in range(1, n_steps):
+        for j in range(n_states):
+            start = offsets[j]
+            end = offsets[j + 1]
+
+            k0 = src_idx[start]
+            best_idx = k0
+            best_val = value[t - 1, k0] + src_logp[start]
+
+            for p in range(start + 1, end):
+                k = src_idx[p]
+                candidate = value[t - 1, k] + src_logp[p]
+                if candidate > best_val:
+                    best_val = candidate
+                    best_idx = k
+
+            ptr[t, j] = best_idx
+            value[t, j] = log_prob_t[t, j] + best_val
+
+    state[-1] = np.argmax(value[-1])
+    for t in range(n_steps - 2, -1, -1):
+        state[t] = ptr[t + 1, state[t + 1]]
+
+    return state
+
+
+@lru_cache(maxsize=32)
+def __pyin_sparse_transition(
+    n_pitch_bins: int, transition_width: int, switch_prob: float
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Build sparse transition representation for pYIN Viterbi decoding."""
+    transition = sequence.transition_local(
+        n_pitch_bins, transition_width, window="triangle", wrap=False
+    )
+    t_switch = sequence.transition_loop(2, 1 - switch_prob)
+    transition = np.kron(t_switch, transition)
+
+    n_states = transition.shape[0]
+    offsets = np.zeros(n_states + 1, dtype=np.int64)
+    src_blocks = []
+    logp_blocks = []
+    pos = 0
+
+    for j in range(n_states):
+        src = np.flatnonzero(transition[:, j] > 0)
+        src_blocks.append(src.astype(np.int64))
+        logp_blocks.append(np.log(transition[src, j]))
+        pos += src.size
+        offsets[j + 1] = pos
+
+    src_idx = np.concatenate(src_blocks)
+    src_logp = np.concatenate(logp_blocks)
+    return offsets, src_idx, src_logp
+
+
+def __pyin_viterbi(
+    observation_probs: np.ndarray, *, n_pitch_bins: int, transition_width: int, switch_prob: float
+) -> np.ndarray:
+    """Decode pYIN observation probabilities with sparse Viterbi."""
+    n_states = observation_probs.shape[-2]
+    if n_states != 2 * n_pitch_bins:
+        raise ParameterError(
+            f"Invalid pYIN state count: {n_states} (expected {2 * n_pitch_bins})"
+        )
+    if n_states > np.iinfo(np.uint16).max + 1:
+        raise ParameterError(
+            f"pYIN state count {n_states} exceeds uint16 decoding capacity "
+            f"({np.iinfo(np.uint16).max + 1})"
+        )
+
+    offsets, src_idx, src_logp = __pyin_sparse_transition(
+        n_pitch_bins, transition_width, switch_prob
+    )
+    if not np.all(np.diff(offsets) > 0):
+        raise ParameterError(
+            "Invalid pYIN sparse transition: at least one state has no incoming transitions."
+        )
+
+    p_init = np.ones(n_states, dtype=np.float64) / n_states
+    log_p_init = np.log(p_init + util.tiny(p_init))
+
+    batch_shape = observation_probs.shape[:-2]
+    n_steps = observation_probs.shape[-1]
+    batched_probs = observation_probs.reshape((-1, n_states, n_steps))
+    batched_states = np.empty((batched_probs.shape[0], n_steps), dtype=np.uint16)
+
+    for i in range(batched_probs.shape[0]):
+        log_prob_t = np.log(batched_probs[i].T + util.tiny(batched_probs[i]))
+        batched_states[i] = __viterbi_sparse_numba(
+            log_prob_t, offsets, src_idx, src_logp, log_p_init
+        )
+
+    return batched_states.reshape(batch_shape + (n_steps,))
 
 
 def estimate_tuning(
@@ -808,21 +921,15 @@ def pyin(
     helper = np.vectorize(_helper, signature="(f,t),(k,t)->(1,d,t),(j,t)")
     observation_probs, voiced_prob = helper(yin_frames, parabolic_shifts)
 
-    # Construct transition matrix.
+    # Decode using sparse Viterbi transition structure.
     max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
     transition_width = max_semitones_per_frame * n_bins_per_semitone + 1
-    # Construct the within voicing transition probabilities
-    transition = sequence.transition_local(
-        n_pitch_bins, transition_width, window="triangle", wrap=False
+    states = __pyin_viterbi(
+        observation_probs,
+        n_pitch_bins=n_pitch_bins,
+        transition_width=transition_width,
+        switch_prob=switch_prob,
     )
-
-    # Include across voicing transition probabilities
-    t_switch = sequence.transition_loop(2, 1 - switch_prob)
-    transition = np.kron(t_switch, transition)
-
-    p_init = np.ones(2 * n_pitch_bins) / (2 * n_pitch_bins)
-
-    states = sequence.viterbi(observation_probs, transition, p_init=p_init)
 
     # Find f0 corresponding to each decoded pitch bin.
     freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))
