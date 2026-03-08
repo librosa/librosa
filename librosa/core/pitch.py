@@ -24,22 +24,22 @@ from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
 
-@numba.jit(nopython=True, cache=True)  # type: ignore
+@numba.jit(nopython=True, cache=True, fastmath=True)  # type: ignore
 def __viterbi_sparse_numba(
     log_prob_t: np.ndarray,
     offsets: np.ndarray,
     src_idx: np.ndarray,
     src_logp: np.ndarray,
-    log_p_init: np.ndarray,
 ) -> np.ndarray:
     """Sparse-column Viterbi for fixed transition sparsity."""
     n_steps, n_states = log_prob_t.shape
 
-    state = np.zeros(n_steps, dtype=np.uint16)
-    value = np.zeros((n_steps, n_states), dtype=np.float64)
-    ptr = np.zeros((n_steps, n_states), dtype=np.uint16)
+    state = np.empty(n_steps, dtype=np.uint16)
+    ptr = np.empty((n_steps, n_states), dtype=np.uint16)
+    value_prev = np.empty(n_states, dtype=np.float64)
+    value_curr = np.empty(n_states, dtype=np.float64)
 
-    value[0] = log_prob_t[0] + log_p_init
+    value_prev[:] = log_prob_t[0]
 
     for t in range(1, n_steps):
         for j in range(n_states):
@@ -48,19 +48,21 @@ def __viterbi_sparse_numba(
 
             k0 = src_idx[start]
             best_idx = k0
-            best_val = value[t - 1, k0] + src_logp[start]
+            best_val = value_prev[k0] + src_logp[start]
 
             for p in range(start + 1, end):
                 k = src_idx[p]
-                candidate = value[t - 1, k] + src_logp[p]
+                candidate = value_prev[k] + src_logp[p]
                 if candidate > best_val:
                     best_val = candidate
                     best_idx = k
 
             ptr[t, j] = best_idx
-            value[t, j] = log_prob_t[t, j] + best_val
+            value_curr[j] = log_prob_t[t, j] + best_val
 
-    state[-1] = np.argmax(value[-1])
+        value_prev, value_curr = value_curr, value_prev
+
+    state[-1] = np.argmax(value_prev)
     for t in range(n_steps - 2, -1, -1):
         state[t] = ptr[t + 1, state[t + 1]]
 
@@ -86,7 +88,7 @@ def __pyin_sparse_transition(
 
     for j in range(n_states):
         src = np.flatnonzero(transition[:, j] > 0)
-        src_blocks.append(src.astype(np.int64))
+        src_blocks.append(src.astype(np.uint16))
         logp_blocks.append(np.log(transition[src, j]))
         pos += src.size
         offsets[j + 1] = pos
@@ -119,21 +121,94 @@ def __pyin_viterbi(
             "Invalid pYIN sparse transition: at least one state has no incoming transitions."
         )
 
-    p_init = np.ones(n_states, dtype=np.float64) / n_states
-    log_p_init = np.log(p_init + util.tiny(p_init))
-
     batch_shape = observation_probs.shape[:-2]
     n_steps = observation_probs.shape[-1]
     batched_probs = observation_probs.reshape((-1, n_states, n_steps))
     batched_states = np.empty((batched_probs.shape[0], n_steps), dtype=np.uint16)
+    epsilon = util.tiny(observation_probs)
+    log_prob_t = np.empty((n_steps, n_states), dtype=np.float64)
 
     for i in range(batched_probs.shape[0]):
-        log_prob_t = np.log(batched_probs[i].T + util.tiny(batched_probs[i]))
-        batched_states[i] = __viterbi_sparse_numba(
-            log_prob_t, offsets, src_idx, src_logp, log_p_init
-        )
+        np.copyto(log_prob_t, batched_probs[i].T)
+        log_prob_t += epsilon
+        np.log(log_prob_t, out=log_prob_t)
+        batched_states[i] = __viterbi_sparse_numba(log_prob_t, offsets, src_idx, src_logp)
 
     return batched_states.reshape(batch_shape + (n_steps,))
+
+
+@numba.jit(nopython=True, cache=True, fastmath=True)  # type: ignore
+def __pyin_helper_probabilities(
+    yin_frames: np.ndarray,
+    threshold_values: np.ndarray,
+    boltzmann_decay: np.ndarray,
+    beta_probs: np.ndarray,
+    no_trough_prob: float,
+) -> np.ndarray:
+    """Compute pYIN trough probabilities for a single framed observation."""
+    n_periods, n_frames = yin_frames.shape
+    yin_probs = np.zeros((n_periods, n_frames), dtype=yin_frames.dtype)
+    base_scale = 1.0 - boltzmann_decay[1]
+
+    for i in range(n_frames):
+        trough_index = np.empty(n_periods, dtype=np.int64)
+        trough_count = 0
+
+        if yin_frames[0, i] < yin_frames[1, i]:
+            trough_index[trough_count] = 0
+            trough_count += 1
+
+        for p in range(1, n_periods - 1):
+            v = yin_frames[p, i]
+            if v < yin_frames[p - 1, i] and v <= yin_frames[p + 1, i]:
+                trough_index[trough_count] = p
+                trough_count += 1
+
+        if yin_frames[n_periods - 1, i] < yin_frames[n_periods - 2, i]:
+            trough_index[trough_count] = n_periods - 1
+            trough_count += 1
+
+        if trough_count == 0:
+            continue
+
+        trough_heights = np.empty(trough_count, dtype=np.float64)
+        positions = np.empty(trough_count, dtype=np.int64)
+        probs = np.zeros(trough_count, dtype=np.float64)
+        global_min = 0
+        global_min_value = yin_frames[trough_index[0], i]
+
+        for r in range(trough_count):
+            val = yin_frames[trough_index[r], i]
+            trough_heights[r] = val
+            if val < global_min_value:
+                global_min_value = val
+                global_min = r
+
+        for m in range(threshold_values.shape[0]):
+            threshold = threshold_values[m]
+            n_troughs = 0
+
+            for r in range(trough_count):
+                if trough_heights[r] < threshold:
+                    positions[r] = n_troughs
+                    n_troughs += 1
+                else:
+                    positions[r] = -1
+
+            if n_troughs > 0:
+                scale = beta_probs[m] * base_scale / (1.0 - boltzmann_decay[n_troughs])
+                for r in range(trough_count):
+                    pos = positions[r]
+                    if pos >= 0:
+                        probs[r] += scale * boltzmann_decay[pos]
+
+            if trough_heights[global_min] >= threshold:
+                probs[global_min] += no_trough_prob * beta_probs[m]
+
+        for r in range(trough_count):
+            yin_probs[trough_index[r], i] = probs[r]
+
+    return yin_probs
 
 
 def estimate_tuning(
@@ -955,46 +1030,13 @@ def __pyin_helper(
     n_pitch_bins,
     n_bins_per_semitone,
 ):
-    yin_probs = np.zeros_like(yin_frames)
-
-    for i, yin_frame in enumerate(yin_frames.T):
-        # 2. For each frame find the troughs.
-        is_trough = util.localmin(yin_frame)
-
-        is_trough[0] = yin_frame[0] < yin_frame[1]
-        (trough_index,) = np.nonzero(is_trough)
-
-        if len(trough_index) == 0:
-            continue
-
-        # 3. Find the troughs below each threshold.
-        # these are the local minima of the frame, could get them directly without the trough index
-        trough_heights = yin_frame[trough_index]
-        trough_thresholds = np.less.outer(trough_heights, thresholds[1:])
-
-        # 4. Define the prior over the troughs.
-        # Smaller periods are weighted more.
-        trough_positions = np.cumsum(trough_thresholds, axis=0) - 1
-        n_troughs = np.count_nonzero(trough_thresholds, axis=0)
-
-        trough_prior = scipy.stats.boltzmann.pmf(
-            trough_positions, boltzmann_parameter, n_troughs
-        )
-
-        trough_prior[~trough_thresholds] = 0
-
-        # 5. For each threshold add probability to global minimum if no trough is below threshold,
-        # else add probability to each trough below threshold biased by prior.
-
-        probs = trough_prior.dot(beta_probs)
-
-        global_min = np.argmin(trough_heights)
-        n_thresholds_below_min = np.count_nonzero(~trough_thresholds[global_min, :])
-        probs[global_min] += no_trough_prob * np.sum(
-            beta_probs[:n_thresholds_below_min]
-        )
-
-        yin_probs[trough_index, i] = probs
+    threshold_values = thresholds[1:]
+    boltzmann_decay = np.exp(
+        -boltzmann_parameter * np.arange(yin_frames.shape[0] + 1, dtype=np.float64)
+    )
+    yin_probs = __pyin_helper_probabilities(
+        yin_frames, threshold_values, boltzmann_decay, beta_probs, no_trough_prob
+    )
 
     yin_period, frame_index = np.nonzero(yin_probs)
 

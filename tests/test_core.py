@@ -17,6 +17,7 @@ import sys
 import soundfile
 import librosa
 import librosa.core
+import librosa.core.pitch
 import librosa.core.spectrum
 import glob
 import numpy as np
@@ -1483,6 +1484,90 @@ def test_pyin_chirp_instant():
     assert np.abs(cents[-1] - target_cents[-1]) <= 1e-1
 
 
+def test_pyin_helper_matches_reference():
+    rng = np.random.default_rng(1234)
+
+    yin_frames = rng.random((48, 9))
+    parabolic_shifts = rng.uniform(-0.5, 0.5, size=yin_frames.shape)
+
+    sr = 22050
+    thresholds = np.linspace(0, 1, 11)
+    beta_probs = np.diff(scipy.stats.beta.cdf(thresholds, 2, 18))
+    boltzmann_parameter = 2
+    no_trough_prob = 0.01
+    min_period = 16
+    fmin = 65.0
+    n_pitch_bins = 96
+    n_bins_per_semitone = 10
+
+    def _reference_helper():
+        yin_probs = np.zeros_like(yin_frames)
+
+        for i, yin_frame in enumerate(yin_frames.T):
+            is_trough = librosa.util.localmin(yin_frame)
+            is_trough[0] = yin_frame[0] < yin_frame[1]
+            (trough_index,) = np.nonzero(is_trough)
+
+            if len(trough_index) == 0:
+                continue
+
+            trough_heights = yin_frame[trough_index]
+            trough_thresholds = np.less.outer(trough_heights, thresholds[1:])
+            trough_positions = np.cumsum(trough_thresholds, axis=0) - 1
+            n_troughs = np.count_nonzero(trough_thresholds, axis=0)
+
+            trough_prior = scipy.stats.boltzmann.pmf(
+                trough_positions, boltzmann_parameter, n_troughs
+            )
+            trough_prior[~trough_thresholds] = 0
+
+            probs = trough_prior.dot(beta_probs)
+
+            global_min = np.argmin(trough_heights)
+            n_thresholds_below_min = np.count_nonzero(~trough_thresholds[global_min, :])
+            probs[global_min] += no_trough_prob * np.sum(
+                beta_probs[:n_thresholds_below_min]
+            )
+
+            yin_probs[trough_index, i] = probs
+
+        yin_period, frame_index = np.nonzero(yin_probs)
+        period_candidates = min_period + yin_period
+        period_candidates = period_candidates + parabolic_shifts[yin_period, frame_index]
+        f0_candidates = sr / period_candidates
+
+        bin_index = 12 * n_bins_per_semitone * np.log2(f0_candidates / fmin)
+        bin_index = np.clip(np.round(bin_index), 0, n_pitch_bins).astype(int)
+
+        observation_probs = np.zeros((2 * n_pitch_bins, yin_frames.shape[1]))
+        observation_probs[bin_index, frame_index] = yin_probs[yin_period, frame_index]
+
+        voiced_prob = np.clip(
+            np.sum(observation_probs[:n_pitch_bins, :], axis=0, keepdims=True), 0, 1
+        )
+        observation_probs[n_pitch_bins:, :] = (1 - voiced_prob) / n_pitch_bins
+
+        return observation_probs[np.newaxis], voiced_prob
+
+    observation_probs, voiced_prob = librosa.core.pitch.__pyin_helper(
+        yin_frames,
+        parabolic_shifts,
+        sr,
+        thresholds,
+        boltzmann_parameter,
+        beta_probs,
+        no_trough_prob,
+        min_period,
+        fmin,
+        n_pitch_bins,
+        n_bins_per_semitone,
+    )
+    ref_observation_probs, ref_voiced_prob = _reference_helper()
+
+    assert np.allclose(observation_probs, ref_observation_probs)
+    assert np.allclose(voiced_prob, ref_voiced_prob)
+
+
 def test_pyin_sparse_transition_cache():
     sparse_transition = librosa.core.pitch.__pyin_sparse_transition
     sparse_transition.cache_clear()
@@ -1562,6 +1647,18 @@ def test_pyin_viterbi_fail_uint16_capacity():
         librosa.core.pitch.__pyin_viterbi(
             observation_probs,
             n_pitch_bins=n_states // 2,
+            transition_width=1,
+            switch_prob=0.01,
+        )
+
+
+def test_pyin_viterbi_fail_invalid_state_count():
+    observation_probs = np.ones((3, 4), dtype=np.float64) / 3
+
+    with pytest.raises(librosa.ParameterError, match="Invalid pYIN state count"):
+        librosa.core.pitch.__pyin_viterbi(
+            observation_probs,
+            n_pitch_bins=1,
             transition_width=1,
             switch_prob=0.01,
         )
