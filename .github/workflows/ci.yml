@@ -106,6 +106,7 @@ jobs:
           with:
             miniforge-version: latest
             activate-environment: test
+            python-version: ${{ matrix.python-version }}
 
         - name: Get Date
           id: get-date
