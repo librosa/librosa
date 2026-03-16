@@ -22,6 +22,8 @@ from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
+_PYIN_VITERBI_IMPLS = ("legacy", "fast")
+
 
 def estimate_tuning(
     *,
@@ -666,6 +668,7 @@ def pyin(
     switch_prob: float = 0.01,
     no_trough_prob: float = 0.01,
     fill_na: Optional[float] = np.nan,
+    viterbi_impl: str = "legacy",
     center: bool = True,
     pad_mode: _PadMode = "constant",
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -737,6 +740,10 @@ def pyin(
         default value for unvoiced frames of ``f0``.
         If ``None``, the unvoiced frames will contain a best guess value.
 
+    viterbi_impl : str
+        Viterbi backend used for the pYIN HMM smoothing stage.
+        One of ``"legacy"`` or ``"fast"``.
+
     center : boolean
         If ``True``, the signal ``y`` is padded so that frame
         ``D[:, t]`` is centered at ``y[t * hop_length]``.
@@ -796,6 +803,12 @@ def pyin(
     """
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
+
+    if viterbi_impl not in _PYIN_VITERBI_IMPLS:
+        raise ParameterError(
+            f'Invalid pyin viterbi_impl="{viterbi_impl}". '
+            f"Expected one of {_PYIN_VITERBI_IMPLS}."
+        )
 
     if not isinstance(win_length, Deprecated):
         warnings.warn(
@@ -880,7 +893,12 @@ def pyin(
 
     p_init = np.ones(2 * n_pitch_bins) / (2 * n_pitch_bins)
 
-    states = sequence.viterbi(observation_probs, transition, p_init=p_init)
+    states = __pyin_viterbi(
+        observation_probs,
+        transition,
+        p_init=p_init,
+        viterbi_impl=viterbi_impl,
+    )
 
     # Find f0 corresponding to each decoded pitch bin.
     freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))
@@ -891,6 +909,109 @@ def pyin(
         f0[~voiced_flag] = fill_na
 
     return f0[..., 0, :], voiced_flag[..., 0, :], voiced_prob[..., 0, :]
+
+
+@numba.jit(nopython=True, cache=True)  # type: ignore
+def __pyin_transition_structure(
+    transition: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:  # pragma: no cover
+    n_states = transition.shape[0]
+    max_width = 0
+    for target in range(n_states):
+        count = 0
+        for source in range(n_states):
+            if transition[source, target] > 0:
+                count += 1
+        if count > max_width:
+            max_width = count
+
+    source_idx = np.zeros((n_states, max_width), dtype=np.uint16)
+    log_trans = np.full((n_states, max_width), -np.inf, dtype=np.float64)
+    counts = np.zeros(n_states, dtype=np.uint16)
+
+    for target in range(n_states):
+        count = 0
+        for source in range(n_states):
+            value = transition[source, target]
+            if value > 0:
+                source_idx[target, count] = source
+                log_trans[target, count] = np.log(value)
+                count += 1
+        counts[target] = count
+
+    return source_idx, log_trans, counts
+
+
+@numba.jit(nopython=True, cache=True)  # type: ignore
+def __pyin_viterbi_sparse(
+    log_prob: np.ndarray,
+    source_idx: np.ndarray,
+    log_trans: np.ndarray,
+    counts: np.ndarray,
+    log_p_init: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
+    n_steps, n_states = log_prob.shape
+    state = np.zeros(n_steps, dtype=np.uint16)
+    value = np.zeros((n_steps, n_states), dtype=np.float64)
+    ptr = np.zeros((n_steps, n_states), dtype=np.uint16)
+
+    value[0] = log_prob[0] + log_p_init
+
+    for t in range(1, n_steps):
+        prev = value[t - 1]
+        for target in range(n_states):
+            best_source = 0
+            best_val = -np.inf
+            count = counts[target]
+            for k in range(count):
+                source = source_idx[target, k]
+                candidate = prev[source] + log_trans[target, k]
+                if candidate > best_val:
+                    best_val = candidate
+                    best_source = source
+            ptr[t, target] = best_source
+            value[t, target] = log_prob[t, target] + best_val
+
+    state[-1] = np.argmax(value[-1])
+
+    for t in range(n_steps - 2, -1, -1):
+        state[t] = ptr[t + 1, state[t + 1]]
+
+    logp = value[-1:, state[-1]]
+    return state, logp
+
+
+def __pyin_viterbi(
+    prob: np.ndarray,
+    transition: np.ndarray,
+    *,
+    p_init: np.ndarray,
+    viterbi_impl: str,
+) -> np.ndarray:
+    if viterbi_impl == "legacy":
+        return sequence.viterbi(prob, transition, p_init=p_init)
+
+    n_states, _ = prob.shape[-2:]
+    epsilon = util.tiny(prob)
+    log_prob = np.log(prob + epsilon)
+    log_p_init = np.log(p_init + epsilon)
+    source_idx, log_trans, counts = __pyin_transition_structure(transition)
+
+    def _helper(lp):
+        state, _ = __pyin_viterbi_sparse(
+            lp.T,
+            source_idx,
+            log_trans,
+            counts,
+            log_p_init,
+        )
+        return state.T
+
+    if log_prob.ndim == 2:
+        return _helper(log_prob)
+
+    __viterbi = np.vectorize(_helper, otypes=[np.uint16], signature="(s,t)->(t)")
+    return __viterbi(log_prob)
 
 
 def __pyin_helper(

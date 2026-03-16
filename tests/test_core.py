@@ -1241,6 +1241,20 @@ def test_pyin_tone(freq):
     assert np.allclose(np.log2(f0), np.log2(freq), rtol=0, atol=1e-2)
 
 
+@pytest.mark.parametrize("freq", [110, 440])
+def test_pyin_viterbi_impl_parity_tone(freq):
+    y = librosa.tone(freq, duration=1.0)
+    f0_legacy, vf_legacy, vp_legacy = librosa.pyin(
+        y, fmin=110, fmax=1000, center=False, fill_na=-1, viterbi_impl="legacy"
+    )
+    f0_fast, vf_fast, vp_fast = librosa.pyin(
+        y, fmin=110, fmax=1000, center=False, fill_na=-1, viterbi_impl="fast"
+    )
+    assert np.array_equal(f0_legacy, f0_fast)
+    assert np.array_equal(vf_legacy, vf_fast)
+    assert np.array_equal(vp_legacy, vp_fast)
+
+
 def test_pyin_multi():
     y = np.stack([librosa.tone(440, duration=1.0), librosa.tone(560, duration=1.0)])
 
@@ -1261,6 +1275,23 @@ def test_pyin_multi():
     assert np.allclose(vall[1], v1)
     assert np.allclose(vpall[0], vp0)
     assert np.allclose(vpall[1], vp1)
+
+
+def test_pyin_viterbi_impl_parity_multi():
+    y = np.stack([librosa.tone(440, duration=1.0), librosa.tone(560, duration=1.0)])
+    h = librosa.filters.get_window("triangle", y.shape[-1])
+    y = y * h[np.newaxis, :]
+
+    fall_legacy, vall_legacy, vpall_legacy = librosa.pyin(
+        y, fmin=100, fmax=1000, center=False, fill_na=-1, viterbi_impl="legacy"
+    )
+    fall_fast, vall_fast, vpall_fast = librosa.pyin(
+        y, fmin=100, fmax=1000, center=False, fill_na=-1, viterbi_impl="fast"
+    )
+
+    assert np.array_equal(fall_legacy, fall_fast)
+    assert np.array_equal(vall_legacy, vall_fast)
+    assert np.array_equal(vpall_legacy, vpall_fast)
 
 
 @pytest.mark.skipif(
@@ -1319,6 +1350,32 @@ def test_pyin_chirp():
     assert np.allclose(
         np.log2(f0[voiced_flag]), np.log2(target_f0[target_f0 > 0]), rtol=0, atol=1e-2
     )
+
+
+def test_pyin_viterbi_impl_parity_chirp():
+    y = librosa.chirp(fmin=220, fmax=640, duration=1.0)
+    y = np.pad(y, (22050,))
+
+    kwargs = dict(
+        fmin=60,
+        fmax=900,
+        center=False,
+        frame_length=1024,
+        hop_length=512,
+        resolution=0.2,
+        fill_na=-1,
+    )
+
+    f0_legacy, voiced_legacy, prob_legacy = librosa.pyin(
+        y, viterbi_impl="legacy", **kwargs
+    )
+    f0_fast, voiced_fast, prob_fast = librosa.pyin(
+        y, viterbi_impl="fast", **kwargs
+    )
+
+    assert np.array_equal(f0_legacy, f0_fast)
+    assert np.array_equal(voiced_legacy, voiced_fast)
+    assert np.array_equal(prob_legacy, prob_fast)
 
 
 def test_pyin_chirp_instant():
@@ -1381,6 +1438,12 @@ def test_pyin_warn():
     # win_length is deprecated
     with pytest.warns(FutureWarning, match="deprecated"):
         librosa.pyin(y, fmin=110, fmax=1000, win_length=1024)
+
+
+def test_pyin_viterbi_impl_fail():
+    y = librosa.tone(110, duration=1.0)
+    with pytest.raises(librosa.ParameterError):
+        librosa.pyin(y, fmin=110, fmax=1000, viterbi_impl="bogus")
 
 
 @pytest.mark.parametrize("freq", [110, 220, 440, 880])
