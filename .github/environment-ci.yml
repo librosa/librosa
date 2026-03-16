@@ -29,4 +29,5 @@ dependencies:
   - resampy>=0.2.2
 
   - pip:
+    - --no-binary samplerate
     - samplerate
