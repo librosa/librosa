@@ -887,10 +887,6 @@ def pyin(
         n_pitch_bins, transition_width, window="triangle", wrap=False
     )
 
-    # Include across voicing transition probabilities
-    t_switch = sequence.transition_loop(2, 1 - switch_prob)
-    transition = np.kron(t_switch, transition)
-
     p_init = np.ones(2 * n_pitch_bins) / (2 * n_pitch_bins)
 
     states = __pyin_viterbi(
@@ -898,6 +894,7 @@ def pyin(
         transition,
         p_init=p_init,
         viterbi_impl=viterbi_impl,
+        switch_prob=switch_prob,
     )
 
     # Find f0 corresponding to each decoded pitch bin.
@@ -943,6 +940,73 @@ def __pyin_transition_structure(
 
 
 @numba.jit(nopython=True, cache=True)  # type: ignore
+def __pyin_transition_structure_kron(
+    transition_local: np.ndarray,
+    switch_prob: float,
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:  # pragma: no cover
+    """Build predecessor structure for kron([[1-s, s], [s, 1-s]], transition_local)."""
+    n_pitch_bins = transition_local.shape[0]
+    n_states = 2 * n_pitch_bins
+    tiny = np.finfo(0.0).tiny
+
+    max_count = 0
+    for target_pitch in range(n_pitch_bins):
+        count = 0
+        for source_pitch in range(n_pitch_bins):
+            if transition_local[source_pitch, target_pitch] > 0:
+                count += 1
+        if count > max_count:
+            max_count = count
+
+    max_width = 2 * max_count
+    source_idx = np.zeros((n_states, max_width), dtype=np.int32)
+    log_trans = np.full((n_states, max_width), -np.inf, dtype=np.float64)
+    counts = np.zeros(n_states, dtype=np.int32)
+
+    same_prob = 1.0 - switch_prob
+    cross_prob = switch_prob
+
+    for target_pitch in range(n_pitch_bins):
+        # Voiced target ordering matches dense source scan: voiced sources first,
+        # then unvoiced sources.
+        target_voiced = target_pitch
+        for source_pitch in range(n_pitch_bins):
+            value = transition_local[source_pitch, target_pitch]
+            if value > 0:
+                idx = counts[target_voiced]
+                source_idx[target_voiced, idx] = source_pitch
+                log_trans[target_voiced, idx] = np.log(same_prob * value + tiny)
+                counts[target_voiced] += 1
+        for source_pitch in range(n_pitch_bins):
+            value = transition_local[source_pitch, target_pitch]
+            if value > 0:
+                idx = counts[target_voiced]
+                source_idx[target_voiced, idx] = source_pitch + n_pitch_bins
+                log_trans[target_voiced, idx] = np.log(cross_prob * value + tiny)
+                counts[target_voiced] += 1
+
+        # Unvoiced target ordering matches dense source scan: voiced sources first,
+        # then unvoiced sources.
+        target_unvoiced = target_pitch + n_pitch_bins
+        for source_pitch in range(n_pitch_bins):
+            value = transition_local[source_pitch, target_pitch]
+            if value > 0:
+                idx = counts[target_unvoiced]
+                source_idx[target_unvoiced, idx] = source_pitch
+                log_trans[target_unvoiced, idx] = np.log(cross_prob * value + tiny)
+                counts[target_unvoiced] += 1
+        for source_pitch in range(n_pitch_bins):
+            value = transition_local[source_pitch, target_pitch]
+            if value > 0:
+                idx = counts[target_unvoiced]
+                source_idx[target_unvoiced, idx] = source_pitch + n_pitch_bins
+                log_trans[target_unvoiced, idx] = np.log(same_prob * value + tiny)
+                counts[target_unvoiced] += 1
+
+    return source_idx, log_trans, counts
+
+
+@numba.jit(nopython=True, cache=True)  # type: ignore
 def __pyin_viterbi_sparse(
     log_prob: np.ndarray,
     source_idx: np.ndarray,
@@ -983,19 +1047,23 @@ def __pyin_viterbi_sparse(
 
 def __pyin_viterbi(
     prob: np.ndarray,
-    transition: np.ndarray,
+    transition_local: np.ndarray,
     *,
     p_init: np.ndarray,
     viterbi_impl: str,
+    switch_prob: float,
 ) -> np.ndarray:
     if viterbi_impl == "legacy":
+        t_switch = sequence.transition_loop(2, 1 - switch_prob)
+        transition = np.kron(t_switch, transition_local)
         return sequence.viterbi(prob, transition, p_init=p_init)
 
-    n_states, _ = prob.shape[-2:]
     epsilon = util.tiny(prob)
     log_prob = np.log(prob + epsilon)
     log_p_init = np.log(p_init + epsilon)
-    source_idx, log_trans, counts = __pyin_transition_structure(transition)
+    source_idx, log_trans, counts = __pyin_transition_structure_kron(
+        transition_local, switch_prob
+    )
 
     def _helper(lp):
         state, _ = __pyin_viterbi_sparse(
@@ -1010,7 +1078,7 @@ def __pyin_viterbi(
     if log_prob.ndim == 2:
         return _helper(log_prob)
 
-    __viterbi = np.vectorize(_helper, otypes=[np.uint16], signature="(s,t)->(t)")
+    __viterbi = np.vectorize(_helper, otypes=[np.int32], signature="(s,t)->(t)")
     return __viterbi(log_prob)
 
 

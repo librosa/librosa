@@ -102,17 +102,16 @@ def prepare_pyin_state(
 
     max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
     transition_width = max_semitones_per_frame * n_bins_per_semitone + 1
-    transition = librosa.sequence.transition_local(
+    transition_local = librosa.sequence.transition_local(
         n_pitch_bins, transition_width, window="triangle", wrap=False
     )
-    t_switch = librosa.sequence.transition_loop(2, 1 - switch_prob)
-    transition = np.kron(t_switch, transition)
     p_init = np.ones(2 * n_pitch_bins) / (2 * n_pitch_bins)
 
     return {
         "observation_probs": observation_probs,
         "voiced_prob": voiced_prob,
-        "transition": transition,
+        "transition_local": transition_local,
+        "switch_prob": switch_prob,
         "p_init": p_init,
         "frames": int(observation_probs.shape[-1]),
     }
@@ -124,15 +123,17 @@ def benchmark(args):
 
     legacy_states = PYIN_VITERBI(
         state["observation_probs"],
-        state["transition"],
+        state["transition_local"],
         p_init=state["p_init"],
         viterbi_impl="legacy",
+        switch_prob=state["switch_prob"],
     )
     fast_states = PYIN_VITERBI(
         state["observation_probs"],
-        state["transition"],
+        state["transition_local"],
         p_init=state["p_init"],
         viterbi_impl="fast",
+        switch_prob=state["switch_prob"],
     )
 
     f0_legacy, voiced_legacy, prob_legacy = librosa.pyin(
@@ -165,9 +166,10 @@ def benchmark(args):
         "pyin_viterbi_legacy_ms": time_call(
             lambda: PYIN_VITERBI(
                 state["observation_probs"],
-                state["transition"],
+                state["transition_local"],
                 p_init=state["p_init"],
                 viterbi_impl="legacy",
+                switch_prob=state["switch_prob"],
             ),
             warmup=args.warmup,
             iters=args.iters,
@@ -175,9 +177,10 @@ def benchmark(args):
         "pyin_viterbi_fast_ms": time_call(
             lambda: PYIN_VITERBI(
                 state["observation_probs"],
-                state["transition"],
+                state["transition_local"],
                 p_init=state["p_init"],
                 viterbi_impl="fast",
+                switch_prob=state["switch_prob"],
             ),
             warmup=args.warmup,
             iters=args.iters,

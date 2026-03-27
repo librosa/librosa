@@ -1294,6 +1294,33 @@ def test_pyin_viterbi_impl_parity_multi():
     assert np.array_equal(vpall_legacy, vpall_fast)
 
 
+def test_pyin_kron_transition_structure_matches_dense():
+    n_pitch_bins = 72
+    transition_width = 11
+    switch_prob = 0.01
+
+    transition_local = librosa.sequence.transition_local(
+        n_pitch_bins, transition_width, window="triangle", wrap=False
+    )
+    t_switch = librosa.sequence.transition_loop(2, 1 - switch_prob)
+    transition_dense = np.kron(t_switch, transition_local)
+
+    source_dense, log_dense, counts_dense = librosa.core.pitch.__pyin_transition_structure(
+        transition_dense
+    )
+    source_kron, log_kron, counts_kron = librosa.core.pitch.__pyin_transition_structure_kron(
+        transition_local, switch_prob
+    )
+
+    assert np.array_equal(counts_dense, counts_kron)
+    for target in range(source_dense.shape[0]):
+        count = int(counts_dense[target])
+        assert np.array_equal(source_dense[target, :count], source_kron[target, :count])
+        assert np.allclose(
+            log_dense[target, :count], log_kron[target, :count], rtol=0, atol=1e-12
+        )
+
+
 @pytest.mark.skipif(
     sys.platform == "darwin", reason="Skip on OSX due to openblas issue"
 )
