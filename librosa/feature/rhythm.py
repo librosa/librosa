@@ -16,6 +16,7 @@ from ..util.exceptions import ParameterError
 from ..filters import get_window
 from typing import Optional, Callable, Any
 from .._typing import _WindowSpec
+from scipy.interpolate import interp1d
 
 __all__ = ["tempogram", "fourier_tempogram", "tempo", "tempogram_ratio"]
 
@@ -653,3 +654,76 @@ def tempogram_ratio(
         return aggregate(tgr, axis=-1)  # type: ignore
 
     return tgr
+def hybrid_tempogram(
+    y=None,
+    sr=22050,
+    onset_envelope=None,
+    hop_length=512,
+    win_length=384,
+    **kwargs,
+):
+    """Compute a hybrid tempogram.
+
+    A hybrid tempogram combines Fourier-based and Autocorrelation-based
+    tempograms onto a common frequency grid, as described in [1]_.
+
+    .. [1] Peeters, G. (2005). 
+       "Time-varying hierarchical rhythm description."
+       International Symposium on Computer Music Modeling and Retrieval.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series. Multi-channel is supported.
+
+    sr : number > 0 [scalar]
+        sampling rate of ``y``
+
+    onset_envelope : np.ndarray [shape=(..., n)] or None
+        onset strength envelope.
+
+    hop_length : int > 0 [scalar]
+        hop length, number of samples between successive frames.
+
+    win_length : int > 0 [scalar]
+        window length for the tempogram analysis.
+
+    **kwargs : additional keyword arguments
+        passed to `tempogram` and `fourier_tempogram`.
+
+    Returns
+    -------
+    tempogram : np.ndarray [shape=(..., n_frequencies, n_frames)]
+        the hybrid tempogram
+    """
+
+   # 1. Compute Fourier tempogram
+    tg_f = fourier_tempogram(
+        y=y, sr=sr, onset_envelope=onset_envelope, 
+        hop_length=hop_length, win_length=win_length, **kwargs
+    )
+    freqs = tempo_frequencies(tg_f.shape[-2], sr=sr, hop_length=hop_length)
+
+    # 2. Compute Autocorrelation tempogram
+    tg_a = tempogram(
+        y=y, sr=sr, onset_envelope=onset_envelope, 
+        hop_length=hop_length, win_length=win_length, **kwargs
+    )
+    lags = tempo_frequencies(tg_a.shape[-2], sr=sr, hop_length=hop_length)
+
+    # 3. Hybrid Interpolation
+    from scipy.interpolate import interp1d
+    f_interp = interp1d(lags, tg_a, axis=-2, bounds_error=False, fill_value=0.0)
+    tg_a_resampled = f_interp(freqs)
+
+    # 4. Shape Matching (Crucial Fix)
+    # Sometimes frames differ by 1 due to padding. We take the minimum.
+    n_frames = min(tg_f.shape[-1], tg_a_resampled.shape[-1])
+    
+    # 5. Merging (Geometric Mean)
+    # Ensure values are non-negative before sqrt to avoid NaNs
+    # Also handle potential NaNs from interpolation
+    product = np.abs(tg_f[..., :n_frames]) * tg_a_resampled[..., :n_frames]
+    hybrid = np.sqrt(np.maximum(0, np.nan_to_num(product)))
+
+    return hybrid
