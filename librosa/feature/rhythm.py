@@ -10,13 +10,13 @@ from .. import util
 from .._cache import cache
 from ..core.audio import autocorrelate
 from ..core.spectrum import stft
-from ..core.convert import tempo_frequencies, time_to_frames,fourier_tempo_frequencies 
-from ..core.harmonic import f0_harmonics
+from ..core.convert import tempo_frequencies, time_to_frames, fourier_tempo_frequencies
+from ..core.harmonic import f0_harmonics, interp_harmonics
 from ..util.exceptions import ParameterError
 from ..filters import get_window
 from typing import Optional, Callable, Any
-from .._typing import _WindowSpec
-from scipy.interpolate import interp1d
+from .._typing import _InterpKind, _WindowSpec
+import scipy.interpolate
 
 __all__ = ["tempogram", "fourier_tempogram", "tempo", "tempogram_ratio"]
 
