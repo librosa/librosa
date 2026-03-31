@@ -18,7 +18,7 @@ from typing import Optional, Callable, Any
 from .._typing import _InterpKind, _WindowSpec
 import scipy.interpolate
 
-__all__ = ["tempogram", "fourier_tempogram", "tempo", "tempogram_ratio"]
+__all__ = ["tempogram", "fourier_tempogram", "tempo", "tempogram_ratio", "metrogram", "hybrid_tempogram"]
 
 
 # -- Rhythmic features -- #
