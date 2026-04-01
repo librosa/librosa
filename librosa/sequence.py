@@ -11,6 +11,7 @@ Sequence alignment
 
     dtw
     rqa
+    path_to_steps
 
 Viterbi decoding
 ----------------
@@ -34,6 +35,7 @@ Transition matrices
 from __future__ import annotations
 
 import numpy as np
+import scipy.interpolate
 from scipy.spatial.distance import cdist
 from numba import jit
 from .util import pad_center, fill_off_diagonal, is_positive_int, tiny, expand_to
@@ -71,8 +73,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -88,8 +89,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -106,8 +106,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -123,8 +122,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -141,8 +139,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -158,8 +155,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -176,8 +172,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -193,8 +188,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]: ...
 
 
 def dtw(
@@ -383,8 +377,8 @@ def dtw(
         # Perform some shape-squashing here
         # Put the time axes around front
         # Suppress types because mypy doesn't know these are ndarrays
-        X = np.swapaxes(X, -1, 0)  # type: ignore
-        Y = np.swapaxes(Y, -1, 0)  # type: ignore
+        X = np.swapaxes(X, -1, 0)
+        Y = np.swapaxes(Y, -1, 0)
 
         # Flatten the remaining dimensions
         # Use F-ordering to preserve columns
@@ -392,7 +386,7 @@ def dtw(
         Y = Y.reshape((Y.shape[0], -1), order="F")
 
         try:
-            C = cdist(X, Y, metric=metric)
+            C = cdist(X, Y, metric=metric)  # type: ignore[call-overload]
         except ValueError as exc:
             raise ParameterError(
                 "scipy.spatial.distance.cdist returned an error.\n"
@@ -715,8 +709,7 @@ def rqa(
     gap_extend: float = ...,
     knight_moves: bool = ...,
     backtrack: Literal[False],
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -727,8 +720,7 @@ def rqa(
     gap_extend: float = ...,
     knight_moves: bool = ...,
     backtrack: Literal[True] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -739,8 +731,7 @@ def rqa(
     gap_extend: float = ...,
     knight_moves: bool = ...,
     backtrack: bool = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
 def rqa(
@@ -864,6 +855,7 @@ def rqa(
     >>> ax[1].plot(L_path[:, 1], L_path[:, 0], label='Optimal path', color='c')
     >>> ax[1].legend()
     >>> ax[1].label_outer()
+    >>> plt.show()
 
     Full alignment using gaps and knight moves
 
@@ -877,6 +869,7 @@ def rqa(
     >>> ax[1].plot(path[:, 1], path[:, 0], label='Optimal path', color='c')
     >>> ax[1].legend()
     >>> ax[1].label_outer()
+    >>> plt.show()
     """
     if gap_onset < 0:
         raise ParameterError("gap_onset={} must be strictly positive")
@@ -1098,6 +1091,102 @@ def __rqa_backtrack(score, pointers):
     return np.asarray(path, dtype=np.uint)
 
 
+def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
+    """Convert a DTW warping path to an array of fractional steps.
+
+    The step sequence is computed by linear interpolation of the warping
+    path indices.
+
+    This function primarily exists as a helper to construct non-linear
+    time grids for aligning two signals via phase vocoding, as illustrated
+    in the example below.
+
+    Parameters
+    ----------
+    path : np.ndarray [shape=(k, 2)]
+        A path of index pairs, e.g., from `dtw`.
+        ``path[i] = [n, m]`` indicates that step ``n`` of the first
+        signal aligns to step ``m`` of the second signal.
+
+    inverse : bool
+        If ``False`` (default), the output is a time grid mapping the
+        first sequence (first column of ``path``) to the second sequence.
+
+        If ``True``, the output is a time grid mapping the second sequence
+        (second column of ``path``) to the first sequence.
+
+    Returns
+    -------
+    steps : np.ndarray [shape=(t,)]
+        An array of fractional steps, where ``steps[i]`` is the index
+        in the first sequence corresponding to the ``i``th step of the
+        second sequence.  The number of steps is determined by the range
+        of the target sequence indices.
+
+    See Also
+    --------
+    dtw
+    librosa.phase_vocoder
+
+    Examples
+    --------
+    This example generates a sine sweep over the same frequency range but at different speeds.
+    It then uses dynamic time warping to align the chroma features of the two signals.
+    Finally, the warping path is converted to a time grid that maps the second signal's frames
+    onto the first signal.  This can be used for variable-rate phase vocoding to align the two signals.
+
+    >>> # We'll plot these below
+    >>> import matplotlib.pyplot as plt
+    >>> # Generate the sweeps at different rates
+    >>> y1 = librosa.chirp(fmin=220, fmax=1760, duration=1.0, sr=22050)
+    >>> y2 = librosa.chirp(fmin=220, fmax=1760, duration=2.0, sr=22050)
+    >>> # Compute the chroma features
+    >>> C1 = librosa.feature.chroma_cqt(y=y1, sr=22050)
+    >>> C2 = librosa.feature.chroma_cqt(y=y2, sr=22050)
+    >>> # Compute the DTW path
+    >>> cost, path = librosa.sequence.dtw(C1, C2, subseq=False)
+    >>> path
+    array([[43, 86],
+           [42, 85],
+           [42, 84],
+           ...,
+           [ 0,  2],
+           [ 0,  1],
+           [ 0,  0]], shape=(87, 2))
+    >>> # Convert the path to a fractional step grid
+    >>> steps = librosa.sequence.path_to_steps(path)
+    >>> steps
+    array([ 0.,  0.,  0., ..., 42., 42., 43.], shape=(87,))
+    >>> # Compute STFT for the first signal
+    >>> D1 = librosa.stft(y1)
+    >>> # Phase vocode it to match the second signal using the time grid
+    >>> D1_vocoded = librosa.phase_vocoder(D1, t_out=steps)
+    >>> # Map back into the time domain.  Match duration of y2 exactly
+    >>> y1_vocoded = librosa.istft(D1_vocoded, length=len(y2))
+
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> librosa.display.specshow(C1, x_axis='time', y_axis='chroma', ax=ax[0])
+    >>> ax[0].set(title='Chroma 1: fast')
+    >>> librosa.display.specshow(C2, x_axis='time', y_axis='chroma', ax=ax[1])
+    >>> ax[1].set(title='Chroma 2: slow')
+    >>> C3 = librosa.feature.chroma_cqt(y=y1_vocoded, sr=22050)
+    >>> librosa.display.specshow(C3, x_axis='time', y_axis='chroma', ax=ax[2])
+    >>> ax[2].set(title='Chroma 1 vocoded to match Chroma 2')
+    """
+    if inverse:
+        idx_from, idx_to = 1, 0
+    else:
+        idx_from, idx_to = 0, 1
+
+    step_interp = scipy.interpolate.interp1d(
+        path[:, idx_to], path[:, idx_from], kind="linear"
+    )
+    frames_in = np.arange(path[:, idx_to].min(), path[:, idx_to].max() + 1)
+    steps = step_interp(frames_in)
+
+    return steps
+
+
 @jit(nopython=True, cache=True)  # type: ignore
 def _viterbi(
     log_prob: np.ndarray, log_trans: np.ndarray, log_p_init: np.ndarray
@@ -1169,8 +1258,7 @@ def viterbi(
     *,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -1180,8 +1268,7 @@ def viterbi(
     *,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 def viterbi(
@@ -1334,8 +1421,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -1346,8 +1432,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -1358,8 +1443,7 @@ def viterbi_discriminative(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: bool,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
 def viterbi_discriminative(
@@ -1472,18 +1556,21 @@ def viterbi_discriminative(
     >>> librosa.display.specshow(chroma, x_axis='time', y_axis='chroma', ax=ax[0])
     >>> librosa.display.specshow(weights, x_axis='chroma', ax=ax[1])
     >>> ax[1].set(yticks=np.arange(25) + 0.5, yticklabels=labels, ylabel='Chord')
+    >>> plt.show()
 
     >>> # And plot the results
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(probs, x_axis='time', cmap='gray', ax=ax)
+    >>> img = librosa.display.specshow(probs, x_axis='time', ax=ax, div_thresh=1./25)
+    >>> fig.colorbar(img, ax=ax, label='Frame-wise class probability')
     >>> times = librosa.times_like(chords_vit)
-    >>> ax.scatter(times, chords_ind + 0.25, color='lime', alpha=0.5, marker='+',
+    >>> ax.scatter(times, chords_ind + 0.25, color='k', alpha=0.5, marker='x',
     ...            s=15, label='Independent')
     >>> ax.scatter(times, chords_vit - 0.25, color='deeppink', alpha=0.5, marker='o',
     ...            s=15, label='Viterbi')
     >>> ax.set(yticks=np.unique(chords_vit),
     ...        yticklabels=[labels[i] for i in np.unique(chords_vit)])
     >>> ax.legend()
+    >>> plt.show()
     """
     n_states, n_steps = prob.shape[-2:]
 
@@ -1581,8 +1668,7 @@ def viterbi_binary(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -1593,8 +1679,7 @@ def viterbi_binary(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -1605,8 +1690,7 @@ def viterbi_binary(
     p_state: Optional[np.ndarray] = ...,
     p_init: Optional[np.ndarray] = ...,
     return_logp: bool = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
 def viterbi_binary(

@@ -38,7 +38,7 @@ def estimate_tuning(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio signal. Multi-channel is supported..
+        audio signal. Multi-channel is supported.
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
     S : np.ndarray [shape=(..., d, t)] or None
@@ -395,7 +395,8 @@ def _cumulative_mean_normalized_difference(
     k = slice(1, max_period + 1)
     yin_frames[..., 0, :] = 0
     yin_frames[..., k, :] = (
-        2 * (acf_frames[..., 0:1, :] - acf_frames[..., k, :]) - yin_frames[..., :k.stop-1, :]
+        2 * (acf_frames[..., 0:1, :] - acf_frames[..., k, :])
+        - yin_frames[..., : k.stop - 1, :]
     )
 
     # Cumulative mean normalized difference function.
@@ -403,9 +404,7 @@ def _cumulative_mean_normalized_difference(
     # broadcast this shape to have leading ones
     k_range = util.expand_to(np.r_[k], ndim=yin_frames.ndim, axes=-2)
 
-    cumulative_mean = (
-        np.cumsum(yin_frames[..., k, :], axis=-2) / k_range
-    )
+    cumulative_mean = np.cumsum(yin_frames[..., k, :], axis=-2) / k_range
     yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
     yin_frames: np.ndarray = yin_numerator / (
         yin_denominator + util.tiny(yin_denominator)
@@ -480,7 +479,6 @@ def yin(
     fmax: float,
     sr: float = 22050,
     frame_length: int = 2048,
-    win_length: Optional[Union[int, Deprecated]] = Deprecated(),
     hop_length: Optional[int] = None,
     trough_threshold: float = 0.1,
     center: bool = True,
@@ -503,51 +501,37 @@ def yin(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported..
-
     fmin : number > 0 [scalar]
         minimum frequency in Hertz.
         The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
-
     fmax : number > fmin, <= sr/2 [scalar]
         maximum frequency in Hertz.
         The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
-
     sr : number > 0 [scalar]
         sampling rate of ``y`` in Hertz.
-
     frame_length : int > 0 [scalar]
         length of the frames in samples.
         By default, ``frame_length=2048`` corresponds to a time scale of about 93 ms at
         a sampling rate of 22050 Hz.
-
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent YIN predictions.
         If ``None``, defaults to ``frame_length // 4``.
-
     trough_threshold : number > 0 [scalar]
         absolute threshold for peak estimation.
-
     center : boolean
         If ``True``, the signal `y` is padded so that frame
         ``D[:, t]`` is centered at `y[t * hop_length]`.
         If ``False``, then ``D[:, t]`` begins at ``y[t * hop_length]``.
         Defaults to ``True``,  which simplifies the alignment of ``D`` onto a
         time grid by means of ``librosa.core.frames_to_samples``.
-
     pad_mode : string or function
         If ``center=True``, this argument is passed to ``np.pad`` for padding
         the edges of the signal ``y``. By default (``pad_mode="constant"``),
         ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
-
-    win_length : Deprecated
-        length of the window for calculating autocorrelation in samples.
-
-        .. warning:: This parameter is deprecated as of 0.11.0 and
-            will be removed in 1.0.
 
     Returns
     -------
@@ -573,17 +557,7 @@ def yin(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
-    if not isinstance(win_length, Deprecated):
-        warnings.warn(
-            "The win_length parameter has been deprecated in version 0.11.0 "
-            "and has no effect. It will be removed in version 1.0.0.",
-            category=FutureWarning,
-            stacklevel=3,
-        )
-
-    __check_yin_params(
-        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length
-    )
+    __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length)
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
@@ -656,7 +630,6 @@ def pyin(
     fmax: float,
     sr: float = 22050,
     frame_length: int = 2048,
-    win_length: Optional[Union[int, Deprecated]] = Deprecated(),
     hop_length: Optional[int] = None,
     n_thresholds: int = 100,
     beta_parameters: Tuple[float, float] = (2, 18),
@@ -687,75 +660,54 @@ def pyin(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-
     fmin : number > 0 [scalar]
         minimum frequency in Hertz.
         The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
-
     fmax : number > fmin, <= sr/2 [scalar]
         maximum frequency in Hertz.
         The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
-
     sr : number > 0 [scalar]
         sampling rate of ``y`` in Hertz.
-
     frame_length : int > 0 [scalar]
         length of the frames in samples.
         By default, ``frame_length=2048`` corresponds to a time scale of about 93 ms at
         a sampling rate of 22050 Hz.
-
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent pYIN predictions.
         If ``None``, defaults to ``frame_length // 4``.
-
     n_thresholds : int > 0 [scalar]
         number of thresholds for peak estimation.
-
     beta_parameters : tuple
         shape parameters for the beta distribution prior over thresholds.
-
     boltzmann_parameter : number > 0 [scalar]
         shape parameter for the Boltzmann distribution prior over troughs.
         Larger values will assign more mass to smaller periods.
-
     resolution : float in `(0, 1)`
         Resolution of the pitch bins.
         0.01 corresponds to cents.
-
     max_transition_rate : float > 0
         maximum pitch transition rate in octaves per second.
-
     switch_prob : float in ``(0, 1)``
         probability of switching from voiced to unvoiced or vice versa.
-
     no_trough_prob : float in ``(0, 1)``
         maximum probability to add to global minimum if no trough is below threshold.
-
     fill_na : None, float, or ``np.nan``
         default value for unvoiced frames of ``f0``.
         If ``None``, the unvoiced frames will contain a best guess value.
-
     center : boolean
         If ``True``, the signal ``y`` is padded so that frame
         ``D[:, t]`` is centered at ``y[t * hop_length]``.
         If ``False``, then ``D[:, t]`` begins at ``y[t * hop_length]``.
         Defaults to ``True``,  which simplifies the alignment of ``D`` onto a
         time grid by means of ``librosa.core.frames_to_samples``.
-
     pad_mode : string or function
         If ``center=True``, this argument is passed to ``np.pad`` for padding
         the edges of the signal ``y``. By default (``pad_mode="constant"``),
         ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
-
-    win_length : Deprecated
-        length of the window for calculating autocorrelation in samples.
-
-        .. warning:: This parameter is deprecated as of 0.11.0 and
-            will be removed in 1.0.
 
     Returns
     -------
@@ -790,24 +742,14 @@ def pyin(
     >>> fig, ax = plt.subplots()
     >>> img = librosa.display.specshow(D, x_axis='time', y_axis='log', ax=ax)
     >>> ax.set(title='pYIN fundamental frequency estimation')
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img)
     >>> ax.plot(times, f0, label='f0', color='cyan', linewidth=3)
     >>> ax.legend(loc='upper right')
     """
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
-    if not isinstance(win_length, Deprecated):
-        warnings.warn(
-            "The win_length parameter has been deprecated in version 0.11.0 "
-            "and has no effect. It will be removed in version 1.0.0.",
-            category=FutureWarning,
-            stacklevel=3,
-        )
-
-    __check_yin_params(
-        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length
-    )
+    __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length)
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
@@ -970,9 +912,7 @@ def __pyin_helper(
     return observation_probs[np.newaxis], voiced_prob
 
 
-def __check_yin_params(
-    *, sr: float, fmax: float, fmin: float, frame_length: int
-):
+def __check_yin_params(*, sr: float, fmax: float, fmin: float, frame_length: int):
     """Check the feasibility of yin/pyin parameters against
     the following conditions:
 

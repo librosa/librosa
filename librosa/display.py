@@ -11,6 +11,10 @@ Data visualization
 
     specshow
     waveshow
+    wavebars
+
+    colorbar_db
+    colorbar_phase
 
 Axis formatting
 ---------------
@@ -32,25 +36,44 @@ Miscellaneous
 .. autosummary::
     :toctree: generated/
 
-    cmap
+    infer_cmap
     AdaptiveWaveplot
 
 """
 from __future__ import annotations
 from itertools import product
+import re
 import warnings
+from fractions import Fraction
+import weakref
 
 import numpy as np
 from matplotlib import colormaps as mcm
 import matplotlib.axes as mplaxes
 import matplotlib.ticker as mplticker
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+import matplotlib.patches as mpatches
+import matplotlib.collections as mcollections
 
 from . import core
 from . import util
+from .util.decorators import moved
 from .util.deprecation import rename_kw, Deprecated
 from .util.exceptions import ParameterError
-from typing import TYPE_CHECKING, Any, Collection, Optional, Union, Callable, Dict
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Collection,
+    Optional,
+    Union,
+    Callable,
+    Literal,
+    Dict,
+    Tuple,
+    Sequence,
+    cast
+)
 from ._typing import _FloatLike_co
 
 if TYPE_CHECKING:
@@ -78,6 +101,63 @@ __all__ = [
 ]
 
 # mypy: disable-error-code="attr-defined"
+
+# Keeps adaptors alive as long as their Axes exists, preventing GC
+_WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[
+    mplaxes.Axes, set["AdaptiveWaveplot"]
+] = weakref.WeakKeyDictionary()
+
+# Nominal center frequencies for oct3 bands
+__OCT3_FREQUENCIES = np.array(
+    [
+        31.5,
+        40,
+        50,
+        63,
+        80,
+        100,
+        125,
+        160,
+        200,
+        250,
+        315,
+        400,
+        500,
+        630,
+        800,
+        1000,
+        1250,
+        1600,
+        2000,
+        2500,
+        3150,
+        4000,
+        5000,
+        6300,
+        8000,
+        10000,
+        12500,
+        16000,
+        20000,
+        25000,
+        # --- ultrasonic up to 800KHz
+        31500,
+        40000,
+        50000,
+        63000,
+        80000,
+        100000,
+        125000,
+        160000,
+        200000,
+        250000,
+        315000,
+        400000,
+        500000,
+        630000,
+        800000,
+    ]
+)
 
 
 class TimeFormatter(mplticker.Formatter):
@@ -120,6 +200,7 @@ class TimeFormatter(mplticker.Formatter):
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> ax.set(xlabel='Time')
+    >>> plt.show()
 
     Manually set the physical time unit of the x-axis to milliseconds
 
@@ -129,6 +210,7 @@ class TimeFormatter(mplticker.Formatter):
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit='ms'))
     >>> ax.set(xlabel='Time (ms)')
+    >>> plt.show()
 
     For lag plots
 
@@ -138,17 +220,21 @@ class TimeFormatter(mplticker.Formatter):
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(lag=True))
     >>> ax.set(xlabel='Lag')
+    >>> plt.show()
     """
 
     def __init__(self, lag: bool = False, unit: Optional[str] = None):
         if unit not in ["h", "m", "s", "ms", None]:
             raise ParameterError(f"Unknown time unit: {unit}")
 
+        super().__init__()
         self.unit = unit
         self.lag = lag
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Return the time format as pos"""
+        assert self.axis is not None
+
         _, dmax = self.axis.get_data_interval()
         vmin, vmax = self.axis.get_view_interval()
 
@@ -174,11 +260,11 @@ class TimeFormatter(mplticker.Formatter):
             s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
         elif self.unit == "s":
             s = f"{value:.3g}"
-        elif self.unit == None and (vmax - vmin >= 1):
+        elif self.unit is None and (vmax - vmin >= 1):
             s = f"{value:.2g}"
         elif self.unit == "ms":
             s = "{:.3g}".format(value * 1000)
-        elif self.unit == None and (vmax - vmin < 1):
+        elif self.unit is None and (vmax - vmin < 1):
             s = f"{value:.3f}"
 
         return f"{sign:s}{s:s}"
@@ -231,6 +317,8 @@ class NoteFormatter(mplticker.Formatter):
         key: str = "C:maj",
         unicode: bool = True,
     ):
+        super().__init__()
+
         self.octave = octave
         self.major = major
         self.key = key
@@ -240,6 +328,8 @@ class NoteFormatter(mplticker.Formatter):
         """Apply the formatter to position"""
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
@@ -316,6 +406,7 @@ class SvaraFormatter(mplticker.Formatter):
                 "Sa frequency is required for svara display formatting"
             )
 
+        super().__init__()
         self.Sa = Sa
         self.octave = octave
         self.major = major
@@ -326,6 +417,8 @@ class SvaraFormatter(mplticker.Formatter):
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
@@ -403,6 +496,7 @@ class FJSFormatter(mplticker.Formatter):
         unison: Optional[str] = None,
         unicode: bool = True,
     ):
+        super().__init__()
         self.fmin = fmin
         self.major = major
         self.unison = unison
@@ -418,6 +512,8 @@ class FJSFormatter(mplticker.Formatter):
         """Apply the formatter to position"""
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         # Only use cent precision if our vspan is less than an octave
         vmin, vmax = self.axis.get_view_interval()
@@ -466,12 +562,15 @@ class LogHzFormatter(mplticker.Formatter):
     """
 
     def __init__(self, major: bool = True):
+        super().__init__()
         self.major = major
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Apply the formatter to position"""
         if x <= 0:
             return ""
+
+        assert self.axis is not None
 
         vmin, vmax = self.axis.get_view_interval()
 
@@ -499,6 +598,7 @@ class ChromaFormatter(mplticker.Formatter):
     """
 
     def __init__(self, key: str = "C:maj", unicode: bool = True):
+        super().__init__()
         self.key = key
         self.unicode = unicode
 
@@ -531,6 +631,7 @@ class ChromaSvaraFormatter(mplticker.Formatter):
         abbr: bool = True,
         unicode: bool = True,
     ):
+        super().__init__()
         if Sa is None:
             Sa = 0
         self.Sa = Sa
@@ -580,6 +681,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
         unicode: bool = True,
         bins_per_octave: Optional[int] = None,
     ):
+        super().__init__()
         self.unison = unison
         self.unicode = unicode
         self.intervals = intervals
@@ -687,16 +789,45 @@ class AdaptiveWaveplot:
         sr: float = 22050,
         max_samples: int = 11025,
         transpose: bool = False,
+        label: Optional[str] = None,
     ):
         self.times = times
         self.samples = y
-        self.steps = steps
-        self.envelope = envelope
+        self._steps_ref = weakref.ref(steps)
+        self._envelope_ref = weakref.ref(envelope)
         self.sr = sr
         self.max_samples = max_samples
         self.transpose = transpose
         self.cid: Optional[int] = None
-        self.ax: Optional[mplaxes.Axes] = None
+        self._ax_ref: Optional[weakref.ref[mplaxes.Axes]] = None
+
+        # This creates an invisible patch to contain the label
+        # Doing backflips here with redundant code to make mypy happy
+        if label is None:
+            self.label_patch_ = mpatches.Rectangle(
+                (np.nan, np.nan), 0, 0, facecolor=steps.get_color()
+            )
+        else:
+            self.label_patch_ = mpatches.Rectangle(
+                (np.nan, np.nan), 0, 0, facecolor=steps.get_color(), label=label
+            )
+
+
+    # Preserve the old attribute API by exposing properties with same names
+    @property
+    def steps(self) -> Optional[Line2D]:
+        """The step plot artist (Line2D), or None if garbage collected."""
+        return self._steps_ref()
+
+    @property
+    def envelope(self) -> Optional[PolyCollection]:
+        """The envelope artist (PolyCollection), or None if garbage collected."""
+        return self._envelope_ref()
+
+    @property
+    def ax(self) -> Optional[mplaxes.Axes]:
+        """The connected Axes, or None if not connected or garbage collected."""
+        return None if self._ax_ref is None else self._ax_ref()
 
     def __del__(self) -> None:
         """Disconnect callback methods on delete"""
@@ -728,7 +859,8 @@ class AdaptiveWaveplot:
         self.disconnect()
 
         # Attach to axes and store the connection id
-        self.ax = ax
+        self._ax_ref = weakref.ref(ax)
+        ax.add_patch(self.label_patch_)
         self.cid = ax.callbacks.connect(signal, self.update)
 
     def disconnect(self, *, strict: bool = False) -> None:
@@ -747,11 +879,12 @@ class AdaptiveWaveplot:
         --------
         connect
         """
-        if self.ax:
-            self.ax.callbacks.disconnect(self.cid)
+        ax = self.ax
+        if ax is not None and self.cid is not None:
+            ax.callbacks.disconnect(self.cid)
             self.cid = None
-            if strict:
-                self.ax = None
+        if strict:
+            self._ax_ref = None
 
     def update(self, ax: mplaxes.Axes) -> None:
         """Update the matplotlib display according to the current viewport limits.
@@ -763,51 +896,61 @@ class AdaptiveWaveplot:
         ax : matplotlib.axes.Axes
             The axes object to update
         """
+        # Deref artists and bail if they've been garbage collected
+        steps = self.steps
+        envelope = self.envelope
+        if steps is None or envelope is None:
+            return
+
         lims = ax.viewLim
 
         if self.transpose:
             dim = lims.height * self.sr
             start, end = lims.y0, lims.y1
             xdata, ydata = self.samples, self.times
-            data = self.steps.get_ydata()
+            data = steps.get_ydata()
         else:
             dim = lims.width * self.sr
             start, end = lims.x0, lims.x1
             xdata, ydata = self.times, self.samples
-            data = self.steps.get_xdata()
+            data = steps.get_xdata()
         # Does our width cover fewer than max_samples?
         # If so, then use the sample-based plot
         if dim <= self.max_samples:
-            self.envelope.set_visible(False)
-            self.steps.set_visible(True)
+            envelope.set_visible(False)
+            steps.set_visible(True)
 
             # Now check our viewport
-            if start <= data[0] or end >= data[-1]:
+            # we have to squash mypy errors on operand compatibility
+            # here because the type annotations from matplotlib are too
+            # loose.
+            if start <= data[0] or end >= data[-1]:  # type: ignore[operator,index]
                 # Viewport expands beyond current data in steps; update
                 # we want to cover a window of self.max_samples centered on the current viewport
                 midpoint_time = (start + end) / 2
                 idx_start = np.searchsorted(
                     self.times, midpoint_time - 0.5 * self.max_samples / self.sr
                 )
-                self.steps.set_data(
+                steps.set_data(
                     xdata[idx_start : idx_start + self.max_samples],
                     ydata[idx_start : idx_start + self.max_samples],
                 )
         else:
             # Otherwise, use the envelope plot
-            self.envelope.set_visible(True)
-            self.steps.set_visible(False)
+            envelope.set_visible(True)
+            steps.set_visible(False)
 
         ax.figure.canvas.draw_idle()
 
 
-def cmap(
+def infer_cmap(
     data: np.ndarray,
     *,
     robust: bool = True,
-    cmap_seq: str = "magma",
-    cmap_bool: str = "gray_r",
-    cmap_div: str = "coolwarm",
+    cmap_seq: Union[str, colors.Colormap] = "magma",
+    cmap_bool: Union[str, colors.Colormap] = "gray_r",
+    cmap_div: Union[str, colors.Colormap] = "coolwarm",
+    div_thresh: float = 0.0,
 ) -> Colormap:
     """Get a default colormap from the given data.
 
@@ -825,12 +968,16 @@ def cmap(
     robust : bool
         If True, discard the top and bottom 2% of data when calculating
         range.
-    cmap_seq : str
-        The sequential colormap name
-    cmap_bool : str
-        The boolean colormap name
-    cmap_div : str
-        The diverging colormap name
+    cmap_seq : str or matplotlib.colors.Colormap
+        The sequential colormap
+    cmap_bool : str or matplotlib.colors.Colormap
+        The boolean colormap
+    cmap_div : str or matplotlib.colors.Colormap
+        The diverging colormap
+    div_thresh : float
+        The threshold for determining whether to use a diverging colormap.
+        If the data has values both above and below this threshold, then
+        a diverging colormap is used.
 
     Returns
     -------
@@ -843,8 +990,17 @@ def cmap(
     """
     data = np.atleast_1d(data)
 
-    if data.dtype == "bool":
-        return mcm[cmap_bool]
+    if not isinstance(cmap_seq, colors.Colormap):
+        cmap_seq = mcm[cmap_seq]
+
+    if not isinstance(cmap_bool, colors.Colormap):
+        cmap_bool = mcm[cmap_bool]
+
+    if not isinstance(cmap_div, colors.Colormap):
+        cmap_div = mcm[cmap_div]
+
+    if data.dtype.kind == "b":
+        return cmap_bool
 
     data = data[np.isfinite(data)]
 
@@ -855,10 +1011,16 @@ def cmap(
 
     min_val, max_val = np.percentile(data, [min_p, max_p])
 
-    if min_val >= 0 or max_val <= 0:
-        return mcm[cmap_seq]
+    if min_val >= div_thresh or max_val <= div_thresh:
+        return cmap_seq
 
-    return mcm[cmap_div]
+    return cmap_div
+
+
+# Deprecation rename of cmap -> infer_cmap for 1.0
+cmap = moved(moved_from="librosa.display.cmap", version="1.0", version_removed="1.1")(
+    infer_cmap
+)
 
 
 def __envelope(x, hop):
@@ -880,6 +1042,13 @@ _cqt_ax_types = (
     "cqt_hz",
     "cqt_note",
     "cqt_svara",
+    "cqt_oct3",
+)
+_vqt_ax_types = (
+    "vqt_hz",
+    "vqt_note",
+    "vqt_oct3",
+    "vqt_fjs",
 )
 _freq_ax_types = (
     "linear",
@@ -887,6 +1056,7 @@ _freq_ax_types = (
     "hz",
     "fft_note",
     "fft_svara",
+    "oct3",
 )
 _time_ax_types = (
     "time",
@@ -906,6 +1076,7 @@ _misc_ax_types = (
     "tempo",
     "fourier_tempo",
     "mel",
+    "mel_oct3",
     "log",
     "tonnetz",
     "frames",
@@ -915,6 +1086,7 @@ _AXIS_COMPAT = set(
     [(t, t) for t in _misc_ax_types]
     + [t for t in product(_chroma_ax_types, _chroma_ax_types)]
     + [t for t in product(_cqt_ax_types, _cqt_ax_types)]
+    + [t for t in product(_vqt_ax_types, _vqt_ax_types)]
     + [t for t in product(_freq_ax_types, _freq_ax_types)]
     + [t for t in product(_time_ax_types, _time_ax_types)]
     + [t for t in product(_lag_ax_types, _lag_ax_types)]
@@ -928,6 +1100,7 @@ def specshow(
     y_coords: Optional[np.ndarray] = None,
     x_axis: Optional[str] = None,
     y_axis: Optional[str] = None,
+    vscale: Optional[str] = None,
     sr: float = 22050,
     hop_length: int = 512,
     n_fft: Optional[int] = None,
@@ -947,6 +1120,11 @@ def specshow(
     unicode: bool = True,
     intervals: Optional[Union[str, np.ndarray]] = None,
     unison: Optional[str] = None,
+    top_db: Optional[float] = 80.0,
+    cmap_seq: Union[str, colors.Colormap] = "magma",
+    cmap_bool: Union[str, colors.Colormap] = "gray_r",
+    cmap_div: Union[str, colors.Colormap] = "coolwarm",
+    div_thresh: float = 0.0,
     ax: Optional[mplaxes.Axes] = None,
     **kwargs: Any,
 ) -> QuadMesh:
@@ -990,17 +1168,26 @@ def specshow(
         - 'linear', 'fft', 'hz' : frequency range is determined by
           the FFT window and sampling rate.
         - 'log' : the spectrum is displayed on a log scale.
+        - 'oct3' : the spectrum is displayed on a log scale with frequencies marked in scientific notation at 1/3-octave intervals
         - 'fft_note': the spectrum is displayed on a log scale with pitches marked.
         - 'fft_svara': the spectrum is displayed on a log scale with svara marked.
         - 'mel' : frequencies are determined by the mel scale.
+        - 'mel_oct3' : like 'oct3' above, but using the mel scale.
         - 'cqt_hz' : frequencies are determined by the CQT scale.
+        - 'cqt_oct3' : like 'oct3' above, but using the CQT scale.
         - 'cqt_note' : pitches are determined by the CQT scale.
         - 'cqt_svara' : like `cqt_note` but using Hindustani or Carnatic svara
+        - 'vqt_hz' : like `cqt_hz` but using Variable-Q Transform (VQT) scale.
+        - 'vqt_oct3' : like 'oct3' above, but using the VQT scale.
         - 'vqt_fjs' : like `cqt_note` but using Functional Just System (FJS)
           notation.  This requires a just intonation-based variable-Q
           transform representation.
+        - 'vqt_note' : like 'cqt_note' but using the VQT scale.
 
         All frequency types are plotted in units of Hz.
+
+        `oct3`-type use SI prefixes for frequencies, e.g., `1 kHz`, `2 MHz`, and are
+        well adapted for scientific applications using high-frequency data.
 
         Any spectrogram parameters (hop_length, sr, bins_per_octave, etc.)
         used to generate the input data should also be provided when
@@ -1025,15 +1212,24 @@ def specshow(
         Time types:
 
         - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
-                Values are plotted in units of seconds.
+            Values are plotted in units of seconds.
+
         - 'h' : markers are shown as hours, minutes, and seconds.
+
         - 'm' : markers are shown as minutes and seconds.
+
         - 's' : markers are shown as seconds.
+
         - 'ms' : markers are shown as milliseconds.
+
         - 'lag' : like time, but past the halfway point counts as negative values.
+
         - 'lag_h' : same as lag, but in hours, minutes and seconds.
+
         - 'lag_m' : same as lag, but in minutes and seconds.
+
         - 'lag_s' : same as lag, but in seconds.
+
         - 'lag_ms' : same as lag, but in milliseconds.
 
         Rhythm:
@@ -1053,6 +1249,35 @@ def specshow(
         features in natural time coordinates.
 
         If not provided, they are inferred from ``x_axis`` and ``y_axis``.
+
+    vscale : str
+        Optional value transformation for `data`.  The following are supported:
+
+        - 'dB' : decibels with `1` as a reference amplitude
+
+        - 'dB[<value>]' : decibels with the given value as a reference amplitude, e.g. 'dB[0.1]'.
+
+        - 'dB[power]' : like above, but treating `data` as power rather than amplitude measurements.
+
+        - 'dB[power,<value>]' : like above, but with an explicit reference power value, e.g. 'dB[power,0.1]'.
+
+        - 'dBFS' : decibels relative to full scale, using `np.max(data)` as a reference amplitude
+
+        - 'dBFS[power]' : like above, but treating `data` as power rather than amplitude measurements.
+
+        - 'phase' : phase values in radians, with a range of `[-π, π]`.
+
+        - 'dphase' : unwrapped phase differences in radians.  Each pixel corresponds to the residual between the
+          observed phase and the expected phase if the frequency was stationary at the previous time step.
+          Values are in the range of `[-π, π]`.
+
+        - 'dphase_t' : as above, but differences are computed along the vertical axis instead of horizontal.
+          This is intended for use with transposed spectrograms where the time axis is vertical and the frequency axis is horizontal.
+
+        .. note::
+            When using phase difference modes (`dphase` or `dphase_t`), the x and y coordinates must be provided
+            via either the `x_axis` and `y_axis` parameters (e.g., `'time', 'fft'`), or explicitly by
+            the `x_coords` and `y_coords` parameters.  All time-like and frequency-like axes are supported.
 
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
@@ -1129,6 +1354,27 @@ def specshow(
         Setting `unicode=False` will use ASCII glyphs.  This can be helpful
         if your font does not support musical notation symbols.
 
+    top_db : float
+        If using a decibel scale, how many dB below the peak to allow
+        before clipping.
+
+    cmap_seq : str or matplotlib.colors.Colormap
+        The name of the sequential colormap to use for decibel scales.
+        Default is 'magma'.
+
+    cmap_bool : str or matplotlib.colors.Colormap
+        The name of the colormap to use for boolean data.
+        Default is 'gray_r'.
+
+    cmap_div : str or matplotlib.colors.Colormap
+        The name of the diverging colormap to use for diverging data.
+        Default is 'coolwarm'.
+
+    div_thresh : float
+        The threshold for determining whether to use a diverging colormap.
+        If the data has values both above and below this threshold, then
+        a diverging colormap is used.
+
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
@@ -1141,8 +1387,16 @@ def specshow(
             - ``shading='auto'``
             - ``edgecolors='None'``
 
-        The ``cmap`` option if not provided, is inferred from data automatically.
-        Set ``cmap=None`` to use matplotlib's default colormap.
+    Notes
+    -----
+    The ``cmap`` option if not provided via `kwargs`, is inferred from data automatically.
+    If `vscale` is specified, the colormap will be sequential for decibels, and cyclic for phase
+    and phase differences.
+
+    If a diverging colormap is inferred, the color scale is normalized so that the center
+    value (``div_thresh=0`` by default) is at the center of the colormap.
+
+    To use matplotlib's default colormap, explicitly set ``cmap=None``.
 
     Returns
     -------
@@ -1151,45 +1405,34 @@ def specshow(
 
     See Also
     --------
-    cmap : Automatic colormap detection
+    colorbar_db
+    colorbar_phase
+    infer_cmap : Automatic colormap detection
     matplotlib.pyplot.pcolormesh
 
     Examples
     --------
-    Visualize an STFT power spectrum using default parameters
+    Visualize an STFT magnitude spectrum using default parameters
 
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=15)
     >>> fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True)
-    >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
+    >>> D = librosa.stft(y)
     >>> img = librosa.display.specshow(D, y_axis='linear', x_axis='time',
-    ...                                sr=sr, ax=ax[0])
-    >>> ax[0].set(title='Linear-frequency power spectrogram')
+    ...                                vscale='dBFS', sr=sr, ax=ax[0])
+    >>> ax[0].set(title='Linear-frequency magnitude spectrogram')
     >>> ax[0].label_outer()
 
     Or on a logarithmic scale, and using a larger hop
 
     >>> hop_length = 1024
-    >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y, hop_length=hop_length)),
-    ...                             ref=np.max)
+    >>> D = librosa.stft(y, hop_length=hop_length)
     >>> librosa.display.specshow(D, y_axis='log', sr=sr, hop_length=hop_length,
-    ...                          x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Log-frequency power spectrogram')
+    ...                          vscale='dBFS', x_axis='time', ax=ax[1])
+    >>> ax[1].set(title='Log-frequency magnitude spectrogram')
     >>> ax[1].label_outer()
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
-    if np.issubdtype(data.dtype, np.complexfloating):
-        warnings.warn(
-            "Trying to display complex-valued input. " "Showing magnitude instead.",
-            stacklevel=2,
-        )
-        data = np.abs(data)
-
-    kwargs.setdefault("cmap", cmap(data))
-    kwargs.setdefault("rasterized", True)
-    kwargs.setdefault("edgecolors", "None")
-    kwargs.setdefault("shading", "auto")
-
     all_params = dict(
         kwargs=kwargs,
         sr=sr,
@@ -1210,6 +1453,63 @@ def specshow(
     # Get the x and y coordinates
     y_coords = __mesh_coords(y_axis, y_coords, data.shape[0], **all_params)
     x_coords = __mesh_coords(x_axis, x_coords, data.shape[1], **all_params)
+
+    # Parse the value scale into a normalizer and possibly a colormap
+    data, norm_cmap = __scale_data(
+        data,
+        vscale=vscale,
+        top_db=top_db,
+        x_coords=x_coords,
+        y_coords=y_coords,
+        cmap_seq=cmap_seq,
+    )
+
+    if np.issubdtype(data.dtype, np.complexfloating):
+        warnings.warn(
+            "Trying to display complex-valued input. " "Showing magnitude instead.",
+            stacklevel=2,
+        )
+        data = np.abs(data)
+
+    if norm_cmap is not None:
+        kwargs.setdefault("cmap", norm_cmap)
+    elif "cmap" not in kwargs:
+        # Neither vscale nor the user gave us a cmap, so we have to infer it
+        kwargs["cmap"] = infer_cmap(
+            data,
+            cmap_seq=cmap_seq,
+            cmap_bool=cmap_bool,
+            cmap_div=cmap_div,
+            div_thresh=div_thresh,
+        )
+        if isinstance(cmap_div, colors.Colormap):
+            is_diverging_cmap = kwargs["cmap"] == cmap_div
+        else:
+            is_diverging_cmap = kwargs["cmap"] == mcm.get(cmap_div, None)
+
+        if is_diverging_cmap:
+            # If we have an inferred diverging colormap,
+            # use a twoslope normalizer around the divergence threshold.
+            # But only if the user didn't also set their own normalizer
+            # If the user gave vmin/vmax values, move them from kwargs to the norm
+            kwargs.setdefault(
+                "norm",
+                colors.TwoSlopeNorm(
+                    vcenter=div_thresh,
+                    vmin=kwargs.pop("vmin", None),
+                    vmax=kwargs.pop("vmax", None),
+                ),
+            )
+
+    kwargs.setdefault("rasterized", True)
+    kwargs.setdefault("edgecolors", "None")
+    kwargs.setdefault("shading", "auto")
+    if vscale is not None and "phase" in vscale:
+        # If we're displaying phase, try to ensure that the color gamut
+        # covers the full range.
+        # A user can override this if they want to.
+        kwargs.setdefault("vmin", -np.pi)
+        kwargs.setdefault("vmax", np.pi)
 
     axes = __check_axes(ax)
 
@@ -1284,15 +1584,20 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
         "fft_note": __coord_fft_hz,
         "fft_svara": __coord_fft_hz,
         "hz": __coord_fft_hz,
+        "oct3": __coord_fft_hz,
+        "log_oct3": __coord_fft_hz,
         "log": __coord_fft_hz,
         "mel": __coord_mel_hz,
+        "mel_oct3": __coord_mel_hz,
         "cqt": __coord_cqt_hz,
         "cqt_hz": __coord_cqt_hz,
         "cqt_note": __coord_cqt_hz,
         "cqt_svara": __coord_cqt_hz,
+        "cqt_oct3": __coord_cqt_hz,
         "vqt_fjs": __coord_vqt_hz,
         "vqt_hz": __coord_vqt_hz,
         "vqt_note": __coord_vqt_hz,
+        "vqt_oct3": __coord_vqt_hz,
         "chroma": __coord_chroma,
         "chroma_c": __coord_chroma,
         "chroma_h": __coord_chroma,
@@ -1347,7 +1652,7 @@ def __scale_axes(axes, ax_type, which, tempo_min, tempo_max):
         limit = axes.set_ylim
 
     # Map ticker scales
-    if ax_type == "mel":
+    if ax_type in ["mel", "mel_oct3"]:
         mode = "symlog"
         kwargs[thresh] = 1000.0
         kwargs[base] = 2
@@ -1357,14 +1662,16 @@ def __scale_axes(axes, ax_type, which, tempo_min, tempo_max):
         "cqt_hz",
         "cqt_note",
         "cqt_svara",
+        "cqt_oct3",
         "vqt_hz",
         "vqt_note",
         "vqt_fjs",
+        "vqt_oct3",
     ]:
         mode = "log"
         kwargs[base] = 2
 
-    elif ax_type in ["log", "fft_note", "fft_svara"]:
+    elif ax_type in ["log", "fft_note", "fft_svara", "log_oct3"]:
         mode = "symlog"
         kwargs[base] = 2
         kwargs[thresh] = float(core.note_to_hz("C2"))
@@ -1399,14 +1706,14 @@ def __decorate_axis(
 
     if ax_type == "tonnetz":
         axis.set_major_formatter(TonnetzFormatter())
-        axis.set_major_locator(mplticker.FixedLocator(np.arange(6)))
+        axis.set_major_locator(mplticker.FixedLocator([0, 1, 2, 3, 4, 5]))
         axis.set_label_text("Tonnetz")
 
     elif ax_type == "chroma":
         axis.set_major_formatter(ChromaFormatter(key=key, unicode=unicode))
         degrees = core.key_to_degrees(key)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
         )
         axis.set_label_text("Pitch class")
 
@@ -1422,7 +1729,7 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
         )
         axis.set_label_text("Svara")
 
@@ -1436,7 +1743,7 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            mplticker.FixedLocator(np.add.outer(12 * np.arange(10), degrees).ravel())
+            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
         )
         axis.set_label_text("Svara")
 
@@ -1480,7 +1787,7 @@ def __decorate_axis(
             # If intervals are explicit, tick them all
             degrees = np.arange(bins_per_octave)
 
-        axis.set_major_locator(mplticker.FixedLocator(degrees))
+        axis.set_major_locator(mplticker.FixedLocator(degrees))  # type: ignore[arg-type]
         axis.set_label_text("Pitch class")
 
     elif ax_type in ["tempo", "fourier_tempo"]:
@@ -1582,7 +1889,7 @@ def __decorate_axis(
                     fmin=fmin,
                     intervals=intervals,
                     bins_per_octave=12,
-                )
+                )  # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Note")
@@ -1600,7 +1907,7 @@ def __decorate_axis(
                 base=2.0,
                 subs=core.interval_frequencies(
                     12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12
-                ),
+                ),  # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Hz")
@@ -1618,7 +1925,7 @@ def __decorate_axis(
                 base=2.0,
                 subs=core.interval_frequencies(
                     12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12
-                ),
+                ), # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Note")
@@ -1645,7 +1952,7 @@ def __decorate_axis(
         axis.set_major_locator(mplticker.SymmetricalLogLocator(axis.get_transform()))
         axis.set_minor_formatter(NoteFormatter(key=key, major=False, unicode=unicode))
         axis.set_minor_locator(
-            mplticker.LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))
+            mplticker.LogLocator(base=2.0, subs=2.0 ** (np.arange(1, 12) / 12.0))  # type: ignore[arg-type]
         )
         axis.set_label_text("Note")
 
@@ -1678,6 +1985,21 @@ def __decorate_axis(
     elif ax_type in ["linear", "hz", "fft"]:
         axis.set_major_formatter(mplticker.ScalarFormatter())
         axis.set_label_text("Hz")
+
+    elif ax_type in ["oct3", "cqt_oct3", "vqt_oct3", "log_oct3", "mel_oct3"]:
+        # Label once per octave
+        if ax_type == "mel_oct3":
+            # Suppress major ticks for frequencies below 100 Hz in mel mode
+            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[5::3]))  # type: ignore[arg-type]
+        else:
+            axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[::3]))  # type: ignore[arg-type]
+        axis.set_major_formatter(mplticker.EngFormatter(unit="Hz"))
+        axis.set_label_text("Frequency")
+        # Minor ticks at the 1/3 octaves
+        axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=None))  # type: ignore[arg-type]
+        # TODO: implement a 2-octave adaptive wrapper for minor tick labels
+        # axis.set_minor_formatter(mplticker.EngFormatter(unit='Hz'))
+        axis.set_minor_formatter(mplticker.NullFormatter())
 
     elif ax_type in ["frames"]:
         axis.set_label_text("Frames")
@@ -1831,6 +2153,133 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
     return axes_compatible_and_not_none and axes_same_lim
 
 
+def __scale_data(data, *, vscale, top_db, x_coords, y_coords, cmap_seq):
+    """Parse the vscale parameter and return the transformed data and colormap
+    if necessary
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The data to be scaled and visualized.
+    vscale : str or None
+        The value scale to apply to the data.
+        If None, the data is returned as-is.
+    top_db : float
+        The maximum decibel level to display when using a dB scale.
+        This is only used if `vscale` is set to a dB mode.
+    x_coords, y_coords : np.ndarray
+        Time and frequency coordinates for the data.
+        These should be constructed using the `__mesh_coords` function.
+    cmap_seq : str or matplotlib.colors.Colormap
+        Default sequential colormap to use for dB scales.
+
+    Returns
+    -------
+    data : np.ndarray
+        The scaled data, ready for visualization.
+    cmap : matplotlib.colors.Colormap or None
+        The colormap to use for visualization, or None if no scaling is applied.
+    """
+    # If vscale is None, we return the data as-is
+    if vscale is None:
+        return data, None
+
+    # First check for the easy cases
+    if vscale == "phase":
+        # Phase should use a cyclic colormap
+        return np.angle(data), "twilight_shifted"
+
+    elif vscale == "dphase":
+        # Compute the difference of unwrapped phase
+        diff = np.diff(np.unwrap(np.angle(data), axis=-1), axis=-1, prepend=0.0)
+        # Correct it compared to the expected phase advance on this time-frequency grid
+        #   - 2π*y counts radians per second
+        #   - diff(x) counts seconds per frame
+        #   - The product counts radians per frame
+        diff -= np.multiply.outer(2 * np.pi * y_coords, np.diff(x_coords, prepend=0.0))
+        # Wrap back to +-pi
+        diff += np.pi
+        np.mod(diff, 2 * np.pi, out=diff)
+        diff -= np.pi
+        # Use a cyclic colormap for the phase difference
+        return diff, "twilight_shifted"
+
+    elif vscale == "dphase_t":
+        # Same computation as above, but on the opposite axes
+        diff = np.diff(np.unwrap(np.angle(data), axis=0), axis=0, prepend=0.0)
+        diff -= np.multiply.outer(np.diff(y_coords, prepend=0.0), 2 * np.pi * x_coords)
+        diff += np.pi
+        np.mod(diff, 2 * np.pi, out=diff)
+        diff -= np.pi
+        return diff, "twilight_shifted"
+
+    else:
+        # In some kind of dB mode
+        mode, scale_type, ref_ = __parse_vscale(vscale)
+        if ref_ == "max":
+            ref = np.max(np.abs(data))
+        elif ref_ is None:
+            ref = 1.0
+        else:
+            ref = float(ref_)
+
+        if scale_type == "power":
+            data = core.power_to_db(np.abs(data), top_db=top_db, ref=ref)
+        else:
+            data = core.amplitude_to_db(np.abs(data), top_db=top_db, ref=ref)
+
+        # Use the default colormap for sequential data
+        return data, cmap_seq
+
+
+VSCALE_PATTERN = re.compile(
+    r"^(?P<mode>dBFS|dB)"  # Match "dBFS" or "dB"
+    r"(?:\[(?:(?P<type>power)"  # Optionally match [power
+    r"(?:,(?P<ref_power>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?))?"  # Optional ref_power
+    r"|(?P<ref>[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?))\])?$"  # Or ref alone
+)
+
+
+def __parse_vscale(vscale: str) -> Tuple[str, str, Optional[Union[float, str]]]:
+    """Parse a vscale string into mode, scale_type, and reference value.
+
+    Examples
+    --------
+    - 'dBFS' -> ('dBFS', 'amplitude', 'max')
+    - 'dBFS[power]' -> ('dBFS', 'power', 'max')
+    - 'dB[power,0.1]' -> ('dB', 'power', 0.1)
+    - 'dB[0.1]' -> ('dB', 'amplitude', 0.1)
+    - 'dB' -> ('dB', 'amplitude', None)
+
+    Parameters
+    ----------
+    vscale : str
+
+    Returns
+    -------
+    mode is one of 'dBFS' or 'dB'
+    scale_type is one of 'power' or 'amplitude'
+    ref is a float, None, or 'max'
+    """
+    match = VSCALE_PATTERN.fullmatch(vscale)
+    if not match:
+        raise ParameterError(f"Invalid vscale specification: {vscale}")
+
+    mode = match.group("mode")
+
+    scale_type = "power" if match.groupdict().get("type") else "amplitude"
+
+    ref = match.groupdict().get("ref") or match.groupdict().get("ref_power")
+
+    if mode == "dBFS":
+        if ref is not None:
+            raise ParameterError("dBFS vscale cannot have an explicit reference value")
+        ref = "max"
+    elif ref is not None:  # mode == 'dB'
+        ref = float(ref)
+    return mode, scale_type, ref
+
+
 def waveshow(
     y: np.ndarray,
     *,
@@ -1839,11 +2288,12 @@ def waveshow(
     axis: Optional[str] = "time",
     offset: float = 0.0,
     marker: Union[str, MplPath, MarkerStyle] = "",
-    where: str = "post",
+    where: Literal["pre", "post", "mid"] = "post",
     label: Optional[str] = None,
     transpose: bool = False,
     ax: Optional[mplaxes.Axes] = None,
-    x_axis: Optional[Union[str, Deprecated]] = Deprecated(),
+    invert: bool = False,
+    invert_color: Union[str, tuple, None] = None,
     **kwargs: Any,
 ) -> AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
@@ -1875,6 +2325,9 @@ def waveshow(
     ----------
     y : np.ndarray [shape=(n,) or (2,n)]
         audio time series (mono or stereo)
+        If stereo, the left channel's amplitude envelope will be used for the top of the plot,,
+        and the right channel's amplitude envelope (negated) will be used for the bottom of the plot.
+        If mono, the signal's envelope is mirrored across the axis.
 
     sr : number > 0 [scalar]
         sampling rate of ``y`` (samples per second)
@@ -1914,24 +2367,18 @@ def waveshow(
 
         - `None`, 'none', or 'off': ticks and tick markers are hidden.
 
-    x_axis : Deprecated
-        Equivalent to `axis` parameter, included for backward compatibility.
-
-        .. warning:: This parameter is deprecated as of 0.10.0 and
-            will be removed in 1.0.  Use `axis=` instead going forward.
-
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
 
     offset : float
-        Horizontal offset (in seconds) to start the waveform plot
+        Offset (in seconds) to start the waveform plot
 
     marker : string
         Marker symbol to use for sample values. (default: no markers)
 
         See Also: `matplotlib.markers`.
 
-    where : string, {'pre', 'mid', 'post'}
+    where : {'pre', 'mid', 'post'}
         This setting determines how both waveform and envelope plots interpolate
         between observations.
 
@@ -1945,6 +2392,18 @@ def waveshow(
 
     transpose : bool
         If `True`, display the wave vertically instead of horizontally.
+
+    invert : bool
+        If `True`, invert the foreground and background of the display, so that the axes background
+        is colored.
+        If `False` (default), the waveform display is colored and the background is unchanged.
+
+        .. note:: This option should only be used if the wave display is the only element in the axes.
+
+    invert_color : str, tuple, None
+        If `invert` is `True`, this parameter specifies the color to use for the inverted
+        waveform display.
+        If `None` (default), the color is set to the current axes background color.
 
     **kwargs
         Additional keyword arguments to `matplotlib.pyplot.fill_between` and
@@ -1960,6 +2419,7 @@ def waveshow(
 
     See Also
     --------
+    wavebars
     AdaptiveWaveplot
     matplotlib.pyplot.step
     matplotlib.pyplot.fill_between
@@ -1992,6 +2452,7 @@ def waveshow(
     >>> librosa.display.waveshow(y_perc, sr=sr, color='r', alpha=0.5, ax=ax[2], label='Percussive')
     >>> ax[2].set(title='Multiple waveforms')
     >>> ax[2].legend()
+    >>> plt.show()
 
     Zooming in on a plot to show raw sample values
 
@@ -2003,10 +2464,11 @@ def waveshow(
     >>> ax.label_outer()
     >>> ax.legend()
     >>> ax2.legend()
+    >>> plt.show()
 
     Plotting a transposed wave along with a self-similarity matrix
 
-    >>> fig, ax = plt.subplot_mosaic("hSSS;hSSS;hSSS;.vvv")
+    >>> fig, ax = plt.subplot_mosaic("hSSS;hSSS;hSSS;.vvv", layout='compressed')
     >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> sim = librosa.segment.recurrence_matrix(chroma, mode='affinity')
@@ -2023,6 +2485,7 @@ def waveshow(
     >>> librosa.display.waveshow(y, ax=ax['h'], transpose=True)
     >>> ax['h'].label_outer()
     >>> ax['h'].set(title='transpose=True')
+    >>> plt.show()
     """
     util.valid_audio(y)
 
@@ -2036,16 +2499,6 @@ def waveshow(
     # Create the adaptive drawing object
     axes = __check_axes(ax)
 
-    # Handle the x_axis->axis rename deprecation
-    axis = rename_kw(
-        old_name="x_axis",
-        old_value=x_axis,
-        new_name="axis",
-        new_value=axis,
-        version_deprecated="0.10.0",
-        version_removed="1.0",
-    )
-
     # Reduce by envelope calculation
     # this choice of hop ensures that the envelope has at most max_points values
     hop_length = max(1, y.shape[-1] // max_points)
@@ -2058,14 +2511,16 @@ def waveshow(
 
     # Only plot up to max_points worth of data here
     xdata, ydata = times[:max_points], y[0, :max_points]
-    filler = axes.fill_between
-    signal = "xlim_changed"
-    dec_axis = axes.xaxis
+    dec_axis: matplotlib.axis.Axis
     if transpose:
         ydata, xdata = xdata, ydata
         filler = axes.fill_betweenx
         signal = "ylim_changed"
         dec_axis = axes.yaxis
+    else:
+        filler = axes.fill_between  # type: ignore[assignment]
+        signal = "xlim_changed"
+        dec_axis = axes.xaxis
 
     (steps,) = axes.step(xdata, ydata, marker=marker, where=where, **kwargs)
 
@@ -2078,19 +2533,416 @@ def waveshow(
         y_bottom,
         y_top,
         step=where,
-        label=label,
         **kwargs,
     )
     adaptor = AdaptiveWaveplot(
-        times, y[0], steps, envelope, sr=sr, max_samples=max_points, transpose=transpose
+        times,
+        y[0],
+        steps,
+        envelope,
+        sr=sr,
+        max_samples=max_points,
+        transpose=transpose,
+        label=label,
     )
+
+    # Register adaptor to keep it alive as long as Axes exists
+    bucket = _WAVESHOW_ADAPTORS.get(axes)
+    if bucket is None:
+        bucket = set()
+        _WAVESHOW_ADAPTORS[axes] = bucket
+    bucket.add(adaptor)
 
     adaptor.connect(axes, signal=signal)
 
     # Force an initial update to ensure the state is consistent
     adaptor.update(axes)
 
+    # Handle color inversion if needed
+    if invert:
+        # If no inverted color is given, just swap it from the axes face
+        if invert_color is None:
+            invert_color = axes.patch.get_facecolor()
+
+        # Get the fg color from the steps plot
+        color = steps.get_color()
+
+        # Set the axes facecolor to our wave color
+        axes.patch.set_facecolor(color)
+        adaptor.label_patch_.set_facecolor(color)
+        steps.set_color(invert_color)
+        envelope.set_color(invert_color)
+
     # Construct tickers and locators
     __decorate_axis(dec_axis, axis)
 
     return adaptor
+
+
+def wavebars(
+    y: np.ndarray,
+    *,
+    sr: float = 22050,
+    n_bars: int = 100,
+    gap_ratio: float = 0.4,
+    rounding_ratio: float = 0.5,
+    axis: Optional[str] = "time",
+    offset: float = 0.0,
+    invert: bool = False,
+    invert_color: Union[str, tuple, None] = None,
+    transpose: bool = False,
+    label: Optional[str] = None,
+    ax: Optional[mplaxes.Axes] = None,
+    **patch_kwargs: Any,
+) -> mcollections.PatchCollection:
+    """Visualize a waveform as a series of bars representing the amplitude envelope.
+
+    This visualization is appropriate for displaying a simplified view of the
+    signal, and is best suited for small figures where simplicity is desired.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,) or (2,n)]
+        audio time series (mono or stereo)
+        If stereo, the left channel's amplitude envelope will be used for the top of the bars,
+        and the right channel's amplitude envelope (negated) will be used for the bottom of the bars.
+        If mono, the signal's envelope is mirrored across the axis.
+    sr : number > 0 [scalar]
+        sampling rate of ``y`` (samples per second)
+    n_bars : int > 0
+        Number of bars to display in the waveform plot.
+        The total time extent of the plot will be divided into `n_bars` segments,
+        and the amplitude envelope of each segment will be represented as a bar.
+    gap_ratio : float in [0, 1]
+        The fraction of the bar width that will be left as a gap between adjacent bars.
+    rounding_ratio : float in [0, 1]
+        The fraction of the bar width that will be used for rounding the corners of the bars.
+        A value of 0.5 will produce bars with rounded corners, while a value of 0 will produce
+        rectangular bars.
+    axis : str or None
+        Display style of the axis ticks and tick markers. Accepted values are:
+        - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
+        - 'h' : markers are shown as hours, minutes, and seconds.
+        - 'm' : markers are shown as minutes and seconds.
+        - 's' : markers are shown as seconds.
+        - 'ms' : markers are shown as milliseconds.
+        - 'lag' : like time, but past the halfway point counts as negative values.
+        - 'lag_h' : same as lag, but in hours.
+        - 'lag_m' : same as lag, but in minutes.
+        - 'lag_s' : same as lag, but in seconds.
+        - 'lag_ms' : same as lag, but in milliseconds.
+        - `None`, 'none', or 'off': ticks and tick markers are hidden.
+    offset : float
+        Offset (in seconds) to start the waveform plot.
+    invert : bool
+        If `True`, invert the foreground and background of the display, so that the axes background
+        is colored.
+        If `False` (default), the envelope display is colored and the background is unchanged.
+    invert_color : str, tuple, None
+        If `invert` is `True`, this parameter specifies the color to use for the inverted
+        waveform display.
+        If `None` (default), the color is set to the current axes background color.
+    transpose : bool
+        If `True`, display the wave vertically instead of horizontally.
+    label : str or None
+        The label string applied to this plot.
+        If `None`, no label is applied.
+    ax : matplotlib.axes.Axes or None
+        Axes to plot on instead of the default `plt.gca()`.
+    **patch_kwargs : dict
+        Additional keyword arguments to pass to `matplotlib.patches.FancyBboxPatch`
+
+    Returns
+    -------
+    matplotlib.collections.PatchCollection
+        A collection of patches representing the amplitude envelope of the waveform.
+
+    See Also
+    --------
+    waveshow
+
+    Examples
+    --------
+    Plot a waveform as bars, compared to the `waveshow` version of the plot
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.ex('libri1'), duration=10)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> librosa.display.waveshow(y=y, sr=sr, ax=ax[0], label='waveshow()')
+    >>> ax[0].legend()
+    >>> ax[0].label_outer()
+    >>> librosa.display.wavebars(y=y, sr=sr, ax=ax[1], label='wavebars()')
+    >>> ax[1].legend()
+    >>> plt.show()
+
+    Make plots with varying amounts of detail, squared corners, and inverted colors.
+
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> librosa.display.wavebars(y=y, sr=sr, n_bars=100, rounding_ratio=0,
+    ...                          invert=True, ax=ax[0], label='100 bars')
+    >>> librosa.display.wavebars(y=y, sr=sr, n_bars=200, rounding_ratio=0,
+    ...                          color='C1', invert=True, ax=ax[1], label='200 bars')
+    >>> librosa.display.wavebars(y=y, sr=sr, n_bars=50, rounding_ratio=0,
+    ...                          color='C2', invert=True, ax=ax[2], label='50 bars')
+    >>> ax[0].legend()
+    >>> ax[1].legend()
+    >>> ax[2].legend()
+    >>> ax[0].label_outer()
+    >>> ax[1].label_outer()
+    """
+    util.valid_audio(y)
+
+    if y.ndim == 1:
+        y = y[np.newaxis, :]
+
+    patch_kwargs.setdefault("linewidth", 0)
+
+    axes = __check_axes(ax)
+
+    hop = max(1, y.shape[-1] // n_bars)
+    env = __envelope(y, hop)
+    env_bottom, env_top = env[-1], env[0]
+
+    bar_width = (hop / sr) * (1 - gap_ratio)
+    rounding_size = bar_width * rounding_ratio
+
+    times = offset + core.times_like(env, sr=sr, hop_length=hop)
+
+    patches = []
+    boxstyle = f"round,pad=0,rounding_size={rounding_size}"
+    for t, a0, a1 in zip(times, env_bottom, env_top):
+        base = min(-rounding_size, -a0)
+        top = max(rounding_size, a1)
+        if transpose:
+            xy, width, height = (base, t), top - base, bar_width
+        else:
+            xy, width, height = (t, base), bar_width, top - base
+
+        p = mpatches.FancyBboxPatch(
+            xy,
+            width,
+            height,
+            boxstyle=boxstyle,
+        )
+        patches.append(p)
+
+    coll = mcollections.PatchCollection(
+        patches, transform=axes.transData, **patch_kwargs
+    )
+    axes.add_collection(coll)
+
+    # Create a proxy artist if we have a label to set
+    # Even if we don't have a label, we'll still need it for handling inversion later on
+    proxy = mpatches.FancyBboxPatch(
+        (np.nan, np.nan), 1, 1, boxstyle=boxstyle, label=label, **patch_kwargs
+    )
+    if label is not None:
+        axes.add_patch(proxy)
+
+    axes.autoscale_view()
+
+    if invert:
+        # If no inverted color is given, just swap it from the axes face
+        if invert_color is None:
+            invert_color = axes.patch.get_facecolor()
+
+        # Get the fg color from the steps plot
+        color = coll.get_facecolor()
+
+        # Set the axes facecolor to our wave color
+        axes.patch.set_facecolor(color)  # type: ignore[arg-type]
+        proxy.set_facecolor(color)  # type: ignore[arg-type]
+        coll.set_facecolor(invert_color)
+
+    if transpose:
+        __decorate_axis(axes.yaxis, axis)
+    else:
+        __decorate_axis(axes.xaxis, axis)
+
+    return coll
+
+
+def __radian_formatter(x, pos):
+    """Format a tick value (in radians) as a rational multiple of pi"""
+    m = x / np.pi
+    # hard to imagine going finer than pi/16 (11°)
+    frac = Fraction(m).limit_denominator(16)
+    num, den = frac.numerator, frac.denominator
+
+    if num == 0:
+        return " 0"
+
+    sign = "-" if num * den < 0 else " "
+    num_abs = abs(num)
+
+    # Build numerator string
+    coeff = "" if num_abs == 1 else str(num_abs)
+
+    if den == 1:
+        return f"{sign}{coeff}π"
+    else:
+        return f"{sign}{coeff}π/{den}"
+
+
+def colorbar_phase(
+    im: matplotlib.cm.ScalarMappable,
+    *,
+    numticks: int = 9,
+    ax: Optional[matplotlib.axes.Axes] = None,
+    fig: Optional[matplotlib.figure.FigureBase] = None,
+    **kwargs: Any,
+) -> matplotlib.colorbar.Colorbar:
+    """Attach a colorbar to an image representing phase data in radians.
+
+    The colorbar will display ticks at rational multiples of π.
+
+    Parameters
+    ----------
+    im : matplotlib.cm.ScalarMappable
+        The image to which the colorbar will be attached.
+        Generally this will be a `matplotlib.image.AxesImage` or `matplotlib.collections.QuadMesh`
+        as returned by `specshow`.
+    numticks : int > 0
+        The number of ticks to display on the colorbar.
+        Default is 9, corresponding to multiples of π/4.
+    ax : matplotlib.axes.Axes or None
+        The axes to which the colorbar will be attached.
+        If None, the colorbar will be attached to the axes of `im`.
+    fig : matplotlib.figure.Figure, SubFigure, or None
+        The figure to which the colorbar will be attached.
+        If None, the colorbar will be attached to the figure of `im`.
+    **kwargs
+        Additional keyword arguments to pass to `fig.colorbar`.
+
+    Returns
+    -------
+    cbar : matplotlib.colorbar.Colorbar
+        The created colorbar object.
+
+    See Also
+    --------
+    specshow
+    colorbar_db
+    matplotlib.colorbar.Colorbar
+
+    Examples
+    --------
+    Attach a colorbar to a phase spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> import librosa
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> S = librosa.stft(y)
+    >>> fig, ax = plt.subplots()
+    >>> im = librosa.display.specshow(S, ax=ax, y_axis='log', x_axis='time', vscale='phase')
+    >>> librosa.display.colorbar_phase(im)
+    >>> plt.show()
+
+    Attach a colorbar to one subplot axes, and show as multiples of π/3.
+
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> im_mag = librosa.display.specshow(S, ax=ax[0], y_axis='log', x_axis='time', vscale='dBFS')
+    >>> cbar = librosa.display.colorbar_db(im_mag, ax=ax[0], label='dBFS')
+    >>> im_ph = librosa.display.specshow(S, ax=ax[1], y_axis='log', x_axis='time', vscale='dphase')
+    >>> cbar = librosa.display.colorbar_phase(im_ph, ax=ax[1], numticks=7)
+    >>> ax[0].label_outer()
+    >>> plt.show()
+    """
+    if fig is None:
+        fig = im.figure
+
+    if ax is None:
+        ax = im.axes
+
+    kwargs.setdefault("label", "radians")
+
+    kwargs.setdefault("ticks", mplticker.LinearLocator(numticks=numticks))
+    kwargs.setdefault("format", mplticker.FuncFormatter(__radian_formatter))
+
+    cbar = fig.colorbar(
+        im,
+        ax=ax,
+        **kwargs,
+    )
+    return cbar
+
+
+def colorbar_db(
+    im: matplotlib.cm.ScalarMappable,
+    *,
+    ax: Optional[matplotlib.axes.Axes] = None,
+    fig: Optional[matplotlib.figure.FigureBase] = None,
+    format: Union[str, mplticker.Formatter] = "% -3.f",
+    **kwargs: Any,
+) -> matplotlib.colorbar.Colorbar:
+    """Attach a colorbar to an image representing decibel-scaled data.
+
+    Parameters
+    ----------
+    im : matplotlib.cm.ScalarMappable
+        The image to which the colorbar will be attached.
+        Generally this will be a `matplotlib.image.AxesImage` or `matplotlib.collections.QuadMesh`
+        as returned by `specshow`.
+    ax : matplotlib.axes.Axes or None
+        The axes to which the colorbar will be attached.
+        If None, the colorbar will be attached to the axes of `im`.
+    fig : matplotlib.figure.Figure, SubFigure, or None
+        The figure to which the colorbar will be attached.
+        If None, the colorbar will be attached to the figure of `im`.
+    format : str
+        The format string for the colorbar ticks.
+        Default is "% -3.f", which displays integer values.
+        You can change this to a different format if needed.
+    **kwargs
+        Additional keyword arguments to pass to `fig.colorbar`.
+
+    Returns
+    -------
+    cbar : matplotlib.colorbar.Colorbar
+        The created colorbar object.
+
+    See Also
+    --------
+    specshow
+    colorbar_phase
+    matplotlib.colorbar.Colorbar
+
+    Examples
+    --------
+    Attach a colorbar to a magnitude spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> import librosa
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> S = librosa.stft(y)
+    >>> fig, ax = plt.subplots()
+    >>> im = librosa.display.specshow(S, ax=ax, y_axis='log', x_axis='time', vscale='dB')
+    >>> librosa.display.colorbar_db(im)
+    >>> plt.show()
+
+    Attach a colorbar to one subplot axes.  We can also set a label for the colorbar.
+
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> im_mag = librosa.display.specshow(S, ax=ax[0], y_axis='log', x_axis='time', vscale='dBFS')
+    >>> cbar = librosa.display.colorbar_db(im_mag, ax=ax[0], label='dBFS')
+    >>> im_ph = librosa.display.specshow(S, ax=ax[1], y_axis='log', x_axis='time', vscale='dphase')
+    >>> cbar = librosa.display.colorbar_phase(im_ph, ax=ax[1])
+    >>> ax[0].label_outer()
+    >>> plt.show()
+    """
+    if fig is None:
+        fig = im.figure
+
+    if ax is None:
+        ax = im.axes
+
+    kwargs.setdefault("label", "dB")
+
+    cbar = fig.colorbar(
+        im,
+        ax=ax,
+        format=format,
+        **kwargs,
+    )
+
+    return cbar
