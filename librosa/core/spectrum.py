@@ -13,11 +13,11 @@ import scipy.interpolate
 from numba import jit
 
 from . import convert
-from .fft import get_fftlib
 from .audio import resample
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
+from ..util.deprecation import Deprecated, rename_kw
 from ..filters import get_window, semitone_filterbank
 from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
@@ -27,10 +27,13 @@ from .._typing import (
     _WindowSpec,
     _PadMode,
     _PadModeSTFT,
+    _InterpKind,
     _SequenceLike,
     _ScalarOrSequence,
     _ComplexLike_co,
-    _FloatLike_co
+    _FloatLike_co,
+    SeedLike,
+    RNGLike,
 )
 
 __all__ = [
@@ -219,11 +222,10 @@ def stft(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S,
-    ...                                                        ref=np.max),
+    >>> img = librosa.display.specshow(S, vscale='dBFS',
     ...                                y_axis='log', x_axis='time', ax=ax)
     >>> ax.set_title('Power spectrogram')
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img)
     """
     # By default, use the entire frame
     if win_length is None:
@@ -334,8 +336,6 @@ def stft(
         # We have no extra frames
         extra = 0
 
-    fft = get_fftlib()
-
     if dtype is None:
         dtype = util.dtype_r2c(y.dtype)
 
@@ -368,11 +368,11 @@ def stft(
     # Fill in the warm-up
     if center and extra > 0:
         off_start = y_frames_pre.shape[-1]
-        stft_matrix[..., :off_start] = fft.rfft(fft_window * y_frames_pre, axis=-2)
+        stft_matrix[..., :off_start] = scipy.fft.rfft(fft_window * y_frames_pre, axis=-2)
 
         off_end = y_frames_post.shape[-1]
         if off_end > 0:
-            stft_matrix[..., -off_end:] = fft.rfft(fft_window * y_frames_post, axis=-2)
+            stft_matrix[..., -off_end:] = scipy.fft.rfft(fft_window * y_frames_post, axis=-2)
     else:
         off_start = 0
 
@@ -384,7 +384,7 @@ def stft(
     for bl_s in range(0, y_frames.shape[-1], n_columns):
         bl_t = min(bl_s + n_columns, y_frames.shape[-1])
 
-        stft_matrix[..., bl_s + off_start : bl_t + off_start] = fft.rfft(
+        stft_matrix[..., bl_s + off_start : bl_t + off_start] = scipy.fft.rfft(
             fft_window * y_frames[..., bl_s:bl_t], axis=-2
         )
     return stft_matrix
@@ -552,8 +552,6 @@ def istft(
         # Since we'll be doing overlap-add here, this needs to be initialized to zero.
         y.fill(0.0)
 
-    fft = get_fftlib()
-
     if center:
         # First frame that does not depend on padding
         #  k * hop_length - n_fft//2 >= 0
@@ -563,7 +561,7 @@ def istft(
         start_frame = int(np.ceil((n_fft // 2) / hop_length))
 
         # Do overlap-add on the head block
-        ytmp = ifft_window * fft.irfft(stft_matrix[..., :start_frame], n=n_fft, axis=-2)
+        ytmp = ifft_window * scipy.fft.irfft(stft_matrix[..., :start_frame], n=n_fft, axis=-2)
 
         shape[-1] = n_fft + hop_length * (start_frame - 1)
         head_buffer = np.zeros(shape, dtype=dtype)
@@ -595,7 +593,7 @@ def istft(
         bl_t = min(bl_s + n_columns, n_frames)
 
         # invert the block and apply the window function
-        ytmp = ifft_window * fft.irfft(stft_matrix[..., bl_s:bl_t], n=n_fft, axis=-2)
+        ytmp = ifft_window * scipy.fft.irfft(stft_matrix[..., bl_s:bl_t], n=n_fft, axis=-2)
 
         # Overlap-add the istft block starting at the i'th frame
         __overlap_add(y[..., frame * hop_length + offset :], ytmp, hop_length)
@@ -1184,7 +1182,7 @@ def reassigned_spectrogram(
     >>> ax[0].label_outer()
     >>> ax[1].scatter(times, freqs, c=mags_db, cmap="magma", alpha=0.1, s=5)
     >>> ax[1].set_title("Reassigned spectrogram")
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if not callable(ref_power) and ref_power < 0:
         raise ParameterError("ref_power must be non-negative or callable.")
@@ -1365,9 +1363,11 @@ def magphase(D: np.ndarray, *, power: float = 1) -> Tuple[np.ndarray, np.ndarray
 def phase_vocoder(
     D: np.ndarray,
     *,
-    rate: float,
-    hop_length: Optional[int] = None,
-    n_fft: Optional[int] = None,
+    rate: Optional[float] = None,
+    t_out: Optional[np.ndarray] = None,
+    kind: _InterpKind = "linear",
+    hop_length: Optional[Union[int, Deprecated]] = Deprecated(),
+    n_fft: Optional[Union[int, Deprecated]] = Deprecated(),
 ) -> np.ndarray:
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
 
@@ -1401,16 +1401,30 @@ def phase_vocoder(
 
     Parameters
     ----------
-    D : np.ndarray [shape=(..., d, t), dtype=complex]
+    D : np.ndarray [shape=(..., n_bins, n_frames), dtype=complex]
         STFT matrix
 
     rate : float > 0 [scalar]
         Speed-up factor: ``rate > 1`` is faster, ``rate < 1`` is slower.
+        Use this for constant-rate time-stretching.
+
+    t_out : np.ndarray [shape=(n_output,)], optional
+        Optional array of fractional input frame indices specifying the input time
+        corresponding to each output frame. Values must lie in [0, n_frames).
+        This can be used for variable-rate time-stretching.
+        If given, `rate` must be None.
+
+    kind : str
+        Interpolation kind for magnitude interpolation, e.g., 'linear' or 'nearest'.
+        See `scipy.interpolate.interp1d` for a full list of supported options.
 
     hop_length : int > 0 [scalar] or None
         The number of samples between successive columns of ``D``.
 
         If None, defaults to ``n_fft//4 = (D.shape[0]-1)//2``
+
+        .. warning:: This parameter is deprecated as of 1.0 and will
+            be removed in 1.1.  It is unused in the current implementation.
 
     n_fft : int > 0 or None
         The number of samples per frame in D.
@@ -1418,59 +1432,87 @@ def phase_vocoder(
         However, if D was constructed using an odd-length window, the correct
         frame length can be specified here.
 
+        .. warning:: This parameter is deprecated as of 1.0 and will
+            be removed in 1.1.  It is unused in the current implementation.
+
     Returns
     -------
-    D_stretched : np.ndarray [shape=(..., d, t / rate), dtype=complex]
-        time-stretched STFT
+    D_stretched : np.ndarray [shape=(..., n_bins, t / rate), dtype=complex]
+        time-stretched STFT.
+        For variable-rate stretching, the output will have `len(t_out)` frames.
 
     See Also
     --------
     pyrubberband
     """
-    if n_fft is None:
-        n_fft = 2 * (D.shape[-2] - 1)
+    n_frames = D.shape[-1]
 
-    if hop_length is None:
-        hop_length = int(n_fft // 4)
+    if not isinstance(hop_length, Deprecated):
+        warnings.warn(
+            "The `hop_length` parameter is deprecated as of 1.0 and will be removed in 1.1. "
+            "It is unused in the current implementation.",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-    time_steps = np.arange(0, D.shape[-1], rate, dtype=np.float64)
+    if not isinstance(n_fft, Deprecated):
+        warnings.warn(
+            "The `n_fft` parameter is deprecated as of 1.0 and will be removed in 1.1. "
+            "It is unused in the current implementation.",
+            FutureWarning,
+            stacklevel=2,
+        )
 
-    # Create an empty output array
-    shape = list(D.shape)
-    shape[-1] = len(time_steps)
-    d_stretch = np.zeros_like(D, shape=shape)
+    if (rate is None) == (t_out is None):
+        raise ParameterError("Must specify exactly one of `rate` or `t_out`")
 
-    # Expected phase advance in each bin per frame
-    phi_advance = hop_length * convert.fft_frequencies(sr=2 * np.pi, n_fft=n_fft)
+    if (rate is not None) and (rate <= 0):
+        raise ParameterError(f"rate={rate} must be a positive number")
 
-    # Phase accumulator; initialize to the first sample
-    phase_acc = np.angle(D[..., 0])
+    if t_out is None:
+        t_out = np.arange(0.0, n_frames, rate)
 
-    # Pad 0 columns to simplify boundary logic
-    padding = [(0, 0) for _ in D.shape]
-    padding[-1] = (0, 2)
-    D = np.pad(D, padding, mode="constant")
+    t_out = np.asarray(t_out, dtype=float)
 
-    for t, step in enumerate(time_steps):
-        columns = D[..., int(step) : int(step + 2)]
+    if np.any(t_out < 0) or np.any(t_out >= n_frames):
+        raise ParameterError("t_out values must be in the range [0, D.shape[-1])")
 
-        # Weighting for linear magnitude interpolation
-        alpha = np.mod(step, 1.0)
-        mag = (1.0 - alpha) * np.abs(columns[..., 0]) + alpha * np.abs(columns[..., 1])
+    if np.any(np.diff(t_out) < 0):
+        warnings.warn(
+            "t_out is not monotonic; phase estimation may be unstable", stacklevel=2
+        )
 
-        # Store to output array
-        d_stretch[..., t] = util.phasor(phase_acc, mag=mag)
+    i0 = np.floor(t_out).astype(int)
+    i1 = np.minimum(i0 + 1, n_frames - 1)
 
-        # Compute phase advance
-        dphase = np.angle(columns[..., 1]) - np.angle(columns[..., 0]) - phi_advance
+    # Unwrapped phase
+    ph = np.angle(D)
 
-        # Wrap to -pi:pi range
-        dphase = dphase - 2.0 * np.pi * np.round(dphase / (2.0 * np.pi))
+    # Phase differences for each output frame
+    diff = ph[..., i1] - ph[..., i0]  # (..., n_bins, n_out)
 
-        # Accumulate phase
-        phase_acc += phi_advance + dphase
+    # Initialize increments: shifted version of diff
+    phase = np.empty_like(diff)
+    # Initialize with the first output frame
+    phase[..., 0] = np.angle(D[..., i0[0]])
+    phase[..., 1:] = diff[..., :-1]
 
-    return d_stretch
+    # Cumulative phase; we can do this in-place to save a copy
+    np.cumsum(phase, axis=-1, out=phase)
+
+    # Interpolate magnitudes
+    mag_interp = scipy.interpolate.interp1d(
+        np.arange(n_frames),
+        np.abs(D),
+        kind=kind,
+        axis=-1,
+        fill_value="extrapolate",
+        assume_sorted=True,
+        copy=False,
+    )
+
+    D_stretched: np.ndarray = util.phasor(phase, mag=mag_interp(t_out))
+    return D_stretched
 
 
 @cache(level=20)
@@ -1483,7 +1525,7 @@ def iirt(
     center: bool = True,
     tuning: float = 0.0,
     pad_mode: _PadMode = "constant",
-    flayout: str = "sos",
+    flayout: Literal["ba", "sos"] = "sos",
     res_type: str = "soxr_hq",
     **kwargs: Any,
 ) -> np.ndarray:
@@ -1518,8 +1560,9 @@ def iirt(
         audio time series. Multi-channel is supported.
     sr : number > 0 [scalar]
         sampling rate of ``y``
-    win_length : int > 0, <= n_fft
-        Window length.
+    win_length : int > 0
+        Window length.  This is primarily used for centering (see below) and to
+        simplify compatibility with other frame-based analyses (like `stft`).
     hop_length : int > 0 [scalar]
         Hop length, number samples between subsequent frames.
         If not supplied, defaults to ``win_length // 4``.
@@ -1568,14 +1611,14 @@ def iirt(
     >>> D = np.abs(librosa.iirt(y, sr=sr))
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
+    >>> img = librosa.display.specshow(C, vscale='dBFS',
     ...                                y_axis='cqt_hz', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Constant-Q transform')
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> img = librosa.display.specshow(D, vscale='dBFS',
     ...                                y_axis='cqt_hz', x_axis='time', ax=ax[1])
     >>> ax[1].set_title('Semitone spectrogram (iirt)')
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if flayout not in ("ba", "sos"):
         raise ParameterError(f"Unsupported flayout={flayout}")
@@ -1671,8 +1714,8 @@ def power_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> np.floating[Any]:
-    ...
+) -> np.floating[Any]: ...
+
 
 @overload
 def power_to_db(
@@ -1681,8 +1724,8 @@ def power_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
+
 
 @overload
 def power_to_db(
@@ -1691,8 +1734,8 @@ def power_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> Union[np.floating[Any], np.ndarray]:
-    ...
+) -> Union[np.floating[Any], np.ndarray]: ...
+
 
 @cache(level=30)
 def power_to_db(
@@ -1787,7 +1830,7 @@ def power_to_db(
     ...                                  sr=sr, y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Log-Power spectrogram')
     >>> fig.colorbar(imgpow, ax=ax[0])
-    >>> fig.colorbar(imgdb, ax=ax[1], format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(imgdb, ax=ax[1])
     """
     S = np.asarray(S)
 
@@ -1827,27 +1870,29 @@ def db_to_power(
     S_db: _FloatLike_co,
     *,
     ref: float = ...,
-) -> np.floating[Any]:
-    ...
+) -> np.floating[Any]: ...
+
 
 @overload
 def db_to_power(
-        S_db: np.ndarray,
+    S_db: np.ndarray,
     *,
     ref: float = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
+
 
 @overload
 def db_to_power(
     S_db: Union[_FloatLike_co, np.ndarray],
     *,
     ref: float = ...,
-) -> Union[np.floating[Any], np.ndarray]:
-    ...
+) -> Union[np.floating[Any], np.ndarray]: ...
+
 
 @cache(level=30)
-def db_to_power(S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
+def db_to_power(
+    S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert dB-scale values to a power values.
 
     This effectively inverts ``power_to_db``::
@@ -1880,8 +1925,8 @@ def amplitude_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> np.floating[Any]:
-    ...
+) -> np.floating[Any]: ...
+
 
 @overload
 def amplitude_to_db(
@@ -1890,8 +1935,8 @@ def amplitude_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
+
 
 @overload
 def amplitude_to_db(
@@ -1900,8 +1945,8 @@ def amplitude_to_db(
     ref: Union[float, Callable] = ...,
     amin: float = ...,
     top_db: Optional[float] = ...,
-) -> Union[np.floating[Any], np.ndarray]:
-    ...
+) -> Union[np.floating[Any], np.ndarray]: ...
+
 
 @cache(level=30)
 def amplitude_to_db(
@@ -1978,27 +2023,29 @@ def db_to_amplitude(
     S_db: _FloatLike_co,
     *,
     ref: float = ...,
-) -> np.floating[Any]:
-    ...
+) -> np.floating[Any]: ...
+
 
 @overload
 def db_to_amplitude(
     S_db: np.ndarray,
     *,
     ref: float = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
+
 
 @overload
 def db_to_amplitude(
     S_db: Union[_FloatLike_co, np.ndarray],
     *,
     ref: float = ...,
-) -> Union[np.floating[Any], np.ndarray]:
-    ...
+) -> Union[np.floating[Any], np.ndarray]: ...
+
 
 @cache(level=30)
-def db_to_amplitude(S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0) -> Union[np.floating[Any], np.ndarray]:
+def db_to_amplitude(
+    S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0
+) -> Union[np.floating[Any], np.ndarray]:
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
@@ -2088,8 +2135,8 @@ def perceptual_weighting(
     ...                                 fmin=librosa.note_to_hz('A1'),
     ...                                 x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Perceptually weighted log CQT')
-    >>> fig.colorbar(img, ax=ax[0], format="%+2.0f dB")
-    >>> fig.colorbar(imgp, ax=ax[1], format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax[0])
+    >>> librosa.display.colorbar_db(imgp, ax=ax[1])
     """
     offset = convert.frequency_weighting(frequencies, kind=kind).reshape((-1, 1))
 
@@ -2103,7 +2150,7 @@ def fmt(
     *,
     t_min: float = 0.5,
     n_fmt: Optional[int] = None,
-    kind: str = "cubic",
+    kind: _InterpKind = "cubic",
     beta: float = 0.5,
     over_sample: float = 1,
     axis: int = -1,
@@ -2201,6 +2248,7 @@ def fmt(
     >>> ax[1].semilogy(np.abs(scale2), linestyle='--', label='Stretched')
     >>> ax[1].set(xlabel='scale coefficients', title='Scale transform magnitude')
     >>> ax[1].legend()
+    >>> plt.show()
 
     >>> # Plot the scale transform of an onset strength autocorrelation
     >>> y, sr = librosa.load(librosa.ex('choice'))
@@ -2212,13 +2260,14 @@ def fmt(
     >>> # Compute the scale transform
     >>> odf_ac_scale = librosa.fmt(odf_ac_norm, n_fmt=512)
     >>> # Plot the results
-    >>> fig, ax = plt.subplots(nrows=3)
+    >>> fig, ax = plt.subplots(nrows=3, layout='compressed')
     >>> ax[0].plot(odf, label='Onset strength')
     >>> ax[0].set(xlabel='Time (frames)', title='Onset strength')
     >>> ax[1].plot(odf_ac_norm, label='Onset autocorrelation')
     >>> ax[1].set(xlabel='Lag (frames)', title='Onset autocorrelation')
     >>> ax[2].semilogy(np.abs(odf_ac_scale), label='Scale transform magnitude')
     >>> ax[2].set(xlabel='scale coefficients')
+    >>> plt.show()
     """
     n = y.shape[axis]
 
@@ -2289,8 +2338,7 @@ def fmt(
 
     # Apply the window and fft
     # Normalization is absorbed into the window here for expedience
-    fft = get_fftlib()
-    result: np.ndarray = fft.rfft(
+    result: np.ndarray = scipy.fft.rfft(
         y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt), axis=axis
     )
     return result
@@ -2314,8 +2362,7 @@ def pcen(
     max_axis: Optional[int] = ...,
     zi: Optional[np.ndarray] = ...,
     return_zf: Literal[False] = ...,
-) -> np.ndarray:
-    ...
+) -> np.ndarray: ...
 
 
 @overload
@@ -2336,8 +2383,7 @@ def pcen(
     max_axis: Optional[int] = ...,
     zi: Optional[np.ndarray] = ...,
     return_zf: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -2358,8 +2404,7 @@ def pcen(
     max_axis: Optional[int] = ...,
     zi: Optional[np.ndarray] = ...,
     return_zf: bool = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
 @cache(level=30)
@@ -2528,8 +2573,9 @@ def pcen(
     >>> ax[0].label_outer()
     >>> imgpcen = librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel', ax=ax[1])
     >>> ax[1].set(title='Per-channel energy normalization')
-    >>> fig.colorbar(img, ax=ax[0], format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax[0])
     >>> fig.colorbar(imgpcen, ax=ax[1])
+    >>> plt.show()
 
     Compare PCEN with and without max-filtering
 
@@ -2541,6 +2587,7 @@ def pcen(
     >>> img = librosa.display.specshow(pcen_max, x_axis='time', y_axis='mel', ax=ax[1])
     >>> ax[1].set(title='Per-channel energy normalization (max_size=3)')
     >>> fig.colorbar(img, ax=ax)
+    >>> plt.show()
     """
     if power < 0:
         raise ParameterError(f"power={power} must be nonnegative")
@@ -2645,9 +2692,10 @@ def griffinlim(
     pad_mode: _PadModeSTFT = "constant",
     momentum: float = 0.99,
     init: Optional[str] = "random",
+    rng: Optional[Union[RNGLike, SeedLike]] = None,
     random_state: Optional[
-        Union[int, np.random.RandomState, np.random.Generator]
-    ] = None,
+        Union[int, np.random.RandomState, np.random.Generator, Deprecated]
+    ] = Deprecated(),
 ) -> np.ndarray:
     """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
 
@@ -2723,7 +2771,15 @@ def griffinlim(
         an initial guess for phase can be provided, or when you want to resume
         Griffin-Lim from a previous output.
 
+    rng : None, int, sequence of int, np.random.Generator, or np.random.RandomState
+        Pseudorandom number generator state. When `rng` is None, a new
+        `numpy.random.Generator` is created using entropy from the
+        operating system. Types other than `numpy.random.Generator` are
+        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+
     random_state : None, int, np.random.RandomState, or np.random.Generator
+        .. warning:: This parameter is deprecated in 1.0.0 and will be removed in 1.2.0.
+
         If int, random_state is the seed used by the random number generator
         for phase initialization.
 
@@ -2731,6 +2787,8 @@ def griffinlim(
         generator itself.
 
         If `None`, defaults to the `np.random.default_rng()` object.
+
+        An exception is raised if both `rng` and `random_state` are provided.
 
     Returns
     -------
@@ -2760,23 +2818,36 @@ def griffinlim(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.waveshow(y, sr=sr, color='b', ax=ax[0])
+    >>> librosa.display.waveshow(y, sr=sr, color='C0', ax=ax[0])
     >>> ax[0].set(title='Original', xlabel=None)
     >>> ax[0].label_outer()
-    >>> librosa.display.waveshow(y_inv, sr=sr, color='g', ax=ax[1])
+    >>> librosa.display.waveshow(y_inv, sr=sr, color='C1', ax=ax[1])
     >>> ax[1].set(title='Griffin-Lim reconstruction', xlabel=None)
     >>> ax[1].label_outer()
-    >>> librosa.display.waveshow(y_istft, sr=sr, color='r', ax=ax[2])
+    >>> librosa.display.waveshow(y_istft, sr=sr, color='C2', ax=ax[2])
     >>> ax[2].set_title('Magnitude-only istft reconstruction')
     """
-    if random_state is None:
-        rng = np.random.default_rng()
-    elif isinstance(random_state, int):
-        rng = np.random.RandomState(seed=random_state)  # type: ignore
-    elif isinstance(random_state, (np.random.RandomState, np.random.Generator)):
-        rng = random_state  # type: ignore
-    else:
-        raise ParameterError(f"Unsupported random_state={random_state!r}")
+    if not isinstance(random_state, Deprecated):
+        if rng is not None:
+            raise ParameterError(
+                f"Both random_state={random_state!r} and rng={rng!r} were provided. "
+                "Please use only the rng parameter."
+            )
+
+        # Otherwise transfer the state object and throw a deprecation warning
+        rng = rename_kw(
+            old_name="random_state",
+            old_value=random_state,
+            new_name="rng",
+            new_value=rng,
+            version_deprecated="1.0.0",
+            version_removed="1.2.0",
+        )
+
+    # Coerce the various input types to a proper Generator
+    # This branch is necessary until we bump to numpy 2.2
+    if not isinstance(rng, np.random.RandomState):
+        rng = np.random.default_rng(rng)
 
     if momentum > 1:
         warnings.warn(

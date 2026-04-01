@@ -7,6 +7,7 @@ import warnings
 import numpy as np
 import scipy.interpolate
 import scipy.signal
+from .._typing import _InterpKind
 from ..util.exceptions import ParameterError
 from ..util import is_unique
 from numpy.typing import ArrayLike
@@ -24,7 +25,7 @@ def salience(
     aggregate: Optional[Callable] = None,
     filter_peaks: bool = True,
     fill_value: float = np.nan,
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     axis: int = -2,
 ) -> np.ndarray:
     """Harmonic salience function.
@@ -98,15 +99,14 @@ def salience(
     (1025, 115)
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          sr=sr, y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Magnitude spectrogram')
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_sal,
-    ...                                                        ref=np.max),
+    >>> img = librosa.display.specshow(S_sal, vscale='dBFS',
     ...                                sr=sr, y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Salience spectrogram')
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if aggregate is None:
         aggregate = np.average
@@ -140,7 +140,7 @@ def interp_harmonics(
     *,
     freqs: np.ndarray,
     harmonics: ArrayLike,
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
 ) -> np.ndarray:
@@ -208,6 +208,7 @@ def interp_harmonics(
     >>> ax.set(yticks=np.arange(len(harmonics)),
     ...        yticklabels=['{:.3g}'.format(_) for _ in harmonics],
     ...        ylabel='Harmonic', xlabel='Tempo (BPM)')
+    >>> plt.show()
 
     We can also compute frequency harmonics for spectrograms.
     To calculate sub-harmonic energy, use values < 1.
@@ -215,6 +216,7 @@ def interp_harmonics(
     >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> harmonics = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
+    >>> ref_value = np.max(S)  # Common reference for dB scaling
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
     >>> S_harm = librosa.interp_harmonics(S, freqs=fft_freqs, harmonics=harmonics, axis=0)
     >>> print(S_harm.shape)
@@ -222,13 +224,13 @@ def interp_harmonics(
 
     >>> fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
     >>> for i, _sh in enumerate(S_harm):
-    ...     img = librosa.display.specshow(librosa.amplitude_to_db(_sh,
-    ...                                                      ref=S.max()),
+    ...     img = librosa.display.specshow(_sh, vscale=f'dB[{ref_value}]',
     ...                              sr=sr, y_axis='log', x_axis='time',
     ...                              ax=ax.flat[i])
     ...     ax.flat[i].set(title='h={:.3g}'.format(harmonics[i]))
     ...     ax.flat[i].label_outer()
-    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
+    >>> plt.show()
     """
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
         # Build the 1-D interpolator.
@@ -255,7 +257,7 @@ def interp_harmonics(
         f_out = np.multiply.outer(harmonics, freqs)
 
         # Interpolate; suppress type checks
-        return f_interp(f_out)  # type: ignore
+        return f_interp(f_out)
 
     elif freqs.shape == x.shape:
         if not np.all(is_unique(freqs, axis=axis)):
@@ -306,7 +308,7 @@ def f0_harmonics(
     f0: np.ndarray,
     freqs: np.ndarray,
     harmonics: ArrayLike,
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
 ) -> np.ndarray:
@@ -371,14 +373,14 @@ def f0_harmonics(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax =plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          x_axis='time', y_axis='log', ax=ax[0])
     >>> times = librosa.times_like(f0)
     >>> for h in harmonics:
     ...     ax[0].plot(times, h * f0, label=f"{h}*f0")
     >>> ax[0].legend(ncols=4, loc='lower right')
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(f0_harm, ref=np.max),
+    >>> librosa.display.specshow(f0_harm, vscale='dBFS',
     ...                          x_axis='time', ax=ax[1])
     >>> ax[1].set_yticks(harmonics-1)
     >>> ax[1].set_yticklabels(harmonics)

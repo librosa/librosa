@@ -10,7 +10,7 @@ from .. import util
 from .._cache import cache
 from ..core.audio import autocorrelate
 from ..core.spectrum import stft
-from ..core.convert import tempo_frequencies, time_to_frames, fourier_tempo_frequencies
+from ..core.convert import tempo_frequencies, time_to_frames
 from ..core.harmonic import f0_harmonics, interp_harmonics
 from ..util.exceptions import ParameterError
 from ..filters import get_window
@@ -399,6 +399,7 @@ def tempo(
     >>> ax.set(xlabel='Tempo (BPM)', title='Static tempo estimation')
     >>> ax.grid(True)
     >>> ax.legend()
+    >>> plt.show()
 
     Plot dynamic tempo estimates over a tempogram
 
@@ -413,6 +414,7 @@ def tempo(
     ...          label='Tempo estimate (lognorm prior)')
     >>> ax.set(title='Dynamic tempo estimation')
     >>> ax.legend()
+    >>> plt.show()
     """
     if start_bpm <= 0:
         raise ParameterError("start_bpm must be strictly positive")
@@ -480,7 +482,7 @@ def tempogram_ratio(
     prior: Optional[scipy.stats.rv_continuous] = None,
     center: bool = True,
     window: _WindowSpec = "hann",
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
     norm: Optional[float] = np.inf,
 ) -> np.ndarray:
@@ -693,9 +695,7 @@ def hybrid_tempogram(
         window=window,
     )
     # Use fourier_tempo_frequencies for the Fourier grid
-    freqs = fourier_tempo_frequencies(
-        sr=sr, hop_length=hop_length, win_length=win_length
-    )
+    freqs = tempo_frequencies(sr=sr, hop_length=hop_length, win_length=win_length)
 
     # 2. Compute Autocorrelation tempogram
     tg_a = tempogram(
@@ -731,6 +731,7 @@ def hybrid_tempogram(
     return hybrid
 
 
+@cache(level=40)
 @cache(level=40)
 def metrogram(
     *,
@@ -769,6 +770,11 @@ def metrogram(
        "METER2800: A novel dataset for music time signature detection."
        In Data in Brief, vol. 51, 109736, 2023.
 
+    See Also
+    --------
+    tempogram
+    tempogram_ratio
+
     Parameters
     ----------
     tg : np.ndarray
@@ -792,6 +798,33 @@ def metrogram(
     metrogram : np.ndarray
         The metrogram transform for the specified factors.
         If ``aggregate`` is set to ``None``, the ratios for all individual tempo bins are returned.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> import librosa
+    >>> y, sr = librosa.load(librosa.ex("sweetwaltz"))
+    >>> # extend the window, to capture the slower downbeat pulses
+    >>> win_length = 384 * 4
+    >>> fourier_tempogram = librosa.feature.fourier_tempogram(y=y, win_length=win_length)
+    >>> fourier_freqs = librosa.fourier_tempo_frequencies(win_length=win_length)
+    >>> ac_tempogram = librosa.feature.tempogram(y=y, win_length=win_length)
+    >>> ac_freqs = librosa.tempo_frequencies(ac_tempogram.shape[-2])
+    >>> # combine Fourier and AC tempo grid (alternatively, you may use either one)
+    >>> # we remove np.inf from ac_freqs to avoid nan results
+    >>> funt_freqs = np.union1d(fourier_freqs, ac_freqs[1:])
+    >>> fundamental_tempogram = librosa.util.interp_broadcast(
+    ...     x1=ac_tempogram,
+    ...     x1_pos=ac_freqs,
+    ...     x2=fourier_tempogram[..., :-1],  # both tempograms must be of equal length along time
+    ...     x2_pos=fourier_freqs,
+    ...     interp_pos=funt_freqs,
+    ... )
+    >>> metrogram = librosa.feature.metrogram(tg=fundamental_tempogram, freqs=funt_freqs)
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.specshow(np.abs(metrogram), x_axis="time", ax=ax)
+    >>> ax.set(title="Metrogram")
     """
     if factors is None:
         factors = np.array([1 / 3, 1 / 4, 1 / 5, 1 / 7])

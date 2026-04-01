@@ -25,6 +25,7 @@ from .rhythm import (
     hybrid_tempogram as hybrid_tempogram,
     tempo as tempo,
     tempogram_ratio as tempogram_ratio,
+    metrogram as metrogram
 )
 
 from . import (
