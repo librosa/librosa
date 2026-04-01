@@ -1220,6 +1220,10 @@ def _viterbi(
     # factor in initial state distribution
     value[0] = log_prob[0] + log_p_init
 
+    pred_states = []
+    for j in range(n_states):
+        pred_states.append(np.flatnonzero(log_trans[:, j] >= -86))
+
     for t in range(1, n_steps):
         # Want V[t, j] <- p[t, j] * max_k V[t-1, k] * A[k, j]
         #    assume at time t-1 we were in state k
@@ -1234,10 +1238,16 @@ def _viterbi(
 
         # Unroll the max/argmax loop to enable numba support
         for j in range(n_states):
-            tmp_out = value[t - 1] + log_trans[:, j]
-            ptr[t, j] = np.argmax(tmp_out)
-            # value[t, j] = log_prob[t, j] + np.max(trans_out[j])
-            value[t, j] = log_prob[t, j] + tmp_out[ptr[t][j]]
+            #tmp_out = value[t - 1] + log_trans[:, j]
+            #ptr[t, j] = np.argmax(tmp_out)
+            #value[t, j] = log_prob[t, j] + tmp_out[ptr[t][j]]
+            best_cost = -np.inf
+            for k in pred_states[j]:
+                cost = value[t-1, k] + log_trans[k, j]
+                if cost > best_cost:
+                    ptr[t, j] = k
+                    best_cost = cost
+            value[t, j] = log_prob[t, j] + best_cost
 
     # Now roll backward
 
