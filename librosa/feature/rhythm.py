@@ -666,6 +666,7 @@ def tempogram_ratio(
 
 
 def hybrid_tempogram(
+    *,
     y=None,
     sr=22050,
     onset_envelope=None,
@@ -676,7 +677,8 @@ def hybrid_tempogram(
     interp_kwargs=None,
 ):
     """Compute a hybrid tempogram.
-    # ... (apna purana docstring yahan rakhna) ...
+    
+    # ... (Apna docstring yahan zaroor rakhna jo pehle se tha) ...
     """
     import scipy.interpolate
 
@@ -694,8 +696,11 @@ def hybrid_tempogram(
         center=center,
         window=window,
     )
-    # Use fourier_tempo_frequencies for the Fourier grid
-    freqs = tempo_frequencies(sr=sr, hop_length=hop_length, win_length=win_length)
+    
+    # FIX: Correctly using fourier_tempo_frequencies with win_length
+    freqs = fourier_tempo_frequencies(
+        sr=sr, hop_length=hop_length, win_length=win_length
+    )
 
     # 2. Compute Autocorrelation tempogram
     tg_a = tempogram(
