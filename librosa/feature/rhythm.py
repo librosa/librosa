@@ -18,7 +18,14 @@ from typing import Optional, Callable, Any
 from .._typing import _InterpKind, _WindowSpec
 import scipy.interpolate
 
-__all__ = ["tempogram", "fourier_tempogram", "tempo", "tempogram_ratio", "metrogram", "hybrid_tempogram"]
+__all__ = [
+    "tempogram",
+    "fourier_tempogram",
+    "tempo",
+    "tempogram_ratio",
+    "metrogram",
+    "hybrid_tempogram",
+]
 
 
 # -- Rhythmic features -- #
@@ -654,6 +661,8 @@ def tempogram_ratio(
         return aggregate(tgr, axis=-1)  # type: ignore
 
     return tgr
+
+
 def hybrid_tempogram(
     y=None,
     sr=22050,
@@ -675,18 +684,28 @@ def hybrid_tempogram(
 
     # 1. Compute Fourier tempogram
     tg_f = fourier_tempogram(
-        y=y, sr=sr, onset_envelope=onset_envelope, 
-        hop_length=hop_length, win_length=win_length, 
-        center=center, window=window
+        y=y,
+        sr=sr,
+        onset_envelope=onset_envelope,
+        hop_length=hop_length,
+        win_length=win_length,
+        center=center,
+        window=window,
     )
     # Use fourier_tempo_frequencies for the Fourier grid
-    freqs = fourier_tempo_frequencies(sr=sr, hop_length=hop_length, win_length=win_length)
+    freqs = fourier_tempo_frequencies(
+        sr=sr, hop_length=hop_length, win_length=win_length
+    )
 
     # 2. Compute Autocorrelation tempogram
     tg_a = tempogram(
-        y=y, sr=sr, onset_envelope=onset_envelope, 
-        hop_length=hop_length, win_length=win_length, 
-        center=center, window=window
+        y=y,
+        sr=sr,
+        onset_envelope=onset_envelope,
+        hop_length=hop_length,
+        win_length=win_length,
+        center=center,
+        window=window,
     )
     lags = tempo_frequencies(tg_a.shape[-2], sr=sr, hop_length=hop_length)
 
@@ -710,3 +729,81 @@ def hybrid_tempogram(
     hybrid = np.sqrt(np.maximum(0, product))
 
     return hybrid
+
+
+@cache(level=40)
+def metrogram(
+    *,
+    tg: np.ndarray,
+    freqs: np.ndarray,
+    factors: Optional[np.ndarray] = None,
+    aggregate: Optional[Callable[..., Any]] = np.sum,
+    kind: _InterpKind = "linear",
+    fill_value: float = 0,
+) -> np.ndarray:
+    """Metrogram Transform. [1]_
+
+    This function summarizes the presence of rhythmic ratios in a tempogram. For example, a tempogram with two
+    simultaneous energy peaks at 90BPM and 30BPM would have a strong presence of the 1/3 ratio. This makes it possible
+    to perform meter estimation by finding the ratio between the beat's and downbeat's frequency.
+
+    By default, the factors used here are as specified by [2]_.
+
+    +-------+--------+----------------+
+    | Index | Factor | Time Signature |
+    +=======+========+================+
+    |     0 |   1/3  | 3/4            |
+    +-------+--------+----------------+
+    |     1 |   1/4  | 4/4            |
+    +-------+--------+----------------+
+    |     2 |   1/5  | 5/4            |
+    +-------+--------+----------------+
+    |     3 |   1/7  | 7/4            |
+    +-------+--------+----------------+
+
+    .. [1] Cozens, James, and Simon Godsill.
+       "Dynamic Time Signature Recognition, Tempo Inference, and Beat Tracking Through the Metrogram Transform."
+       In IEEE Open Journal of Signal Processing, pp. 1–9, 2023.
+
+    .. [2] Abimbola, Jeremiah, Daniel Kostrzewa, and Paweł Kasprowski.
+       "METER2800: A novel dataset for music time signature detection."
+       In Data in Brief, vol. 51, 109736, 2023.
+
+    Parameters
+    ----------
+    tg : np.ndarray
+        Pre-computed tempogram.
+    freqs : np.ndarray
+        Frequencies (in BPM) of the tempogram axis.
+    factors : np.ndarray
+        Metric ratios to estimate.
+        If not provided, the default factors are 1/3, 1/4, 1/5, and 1/7.
+    aggregate : callable [optional]
+        Aggregation function to collapse the tempo axis for each ratio
+        at each point in time. Defaults to ``np.sum``.
+    kind : str
+        Interpolation method used on the tempo axis.
+    fill_value : float
+        The value to fill when extrapolating beyond the observed
+        tempo range.
+
+    Returns
+    -------
+    metrogram : np.ndarray
+        The metrogram transform for the specified factors.
+        If ``aggregate`` is set to ``None``, the ratios for all individual tempo bins are returned.
+    """
+    if factors is None:
+        factors = np.array([1 / 3, 1 / 4, 1 / 5, 1 / 7])
+
+    tg_interp = interp_harmonics(
+        tg, freqs=freqs, harmonics=factors, kind=kind, fill_value=fill_value, axis=-2
+    )
+
+    product: np.ndarray = tg_interp * np.expand_dims(tg, axis=-3)
+
+    if aggregate is not None:
+        product_agg: np.ndarray = aggregate(product, axis=-2)
+        return product_agg
+
+    return product
