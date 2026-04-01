@@ -1230,13 +1230,14 @@ def _viterbi(
         #    then take the max over columns
         # We'll do this in log-space for stability
 
-        trans_out = value[t - 1] + log_trans.T
+#        trans_out = value[t - 1] + log_trans.T
 
         # Unroll the max/argmax loop to enable numba support
         for j in range(n_states):
-            ptr[t, j] = np.argmax(trans_out[j])
+            tmp_out = value[t - 1] + log_trans[:, j]
+            ptr[t, j] = np.argmax(tmp_out)
             # value[t, j] = log_prob[t, j] + np.max(trans_out[j])
-            value[t, j] = log_prob[t, j] + trans_out[j, ptr[t][j]]
+            value[t, j] = log_prob[t, j] + tmp_out[ptr[t][j]]
 
     # Now roll backward
 
