@@ -677,8 +677,10 @@ def hybrid_tempogram(
     interp_kwargs=None,
 ):
     """Compute a hybrid tempogram.
-    
-    # ... (Apna docstring yahan zaroor rakhna jo pehle se tha) ...
+
+    This function computes a hybrid representation by combining the
+    Fourier tempogram and autocorrelation tempogram. The tempograms are
+    aligned onto a common frequency grid and merged using the geometric mean.
     """
     import scipy.interpolate
 
