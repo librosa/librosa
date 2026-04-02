@@ -667,15 +667,15 @@ def tempogram_ratio(
 
 def hybrid_tempogram(
     *,
-    y=None,
-    sr=22050,
-    onset_envelope=None,
-    hop_length=512,
-    win_length=384,
-    center=True,
-    window="hann",
-    interp_kwargs=None,
-):
+    y: "np.ndarray" = None,
+    sr: float = 22050,
+    onset_envelope: "np.ndarray" = None,
+    hop_length: int = 512,
+    win_length: int = 384,
+    center: bool = True,
+    window: str = "hann",
+    interp_kwargs: dict = None,
+) -> "np.ndarray":
     """Compute a hybrid tempogram.
 
     This function computes a hybrid representation by combining the
@@ -685,7 +685,7 @@ def hybrid_tempogram(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        Audio time series.  Multi-channel is supported.
+        Audio time series. Multi-channel is supported.
     sr : float > 0
         Sampling rate
     onset_envelope : np.ndarray [shape=(..., n)] or None
@@ -705,15 +705,35 @@ def hybrid_tempogram(
     -------
     hybrid : np.ndarray
         The hybrid tempogram combining both representations
-    """
-    import scipy.interpolate
 
-    # Safe defaults that allow extrapolation without out-of-bounds error
-    bounds_error = False
-    fill_value = 0.0
-    if interp_kwargs is not None:
-        bounds_error = interp_kwargs.get("bounds_error", False)
-        fill_value = interp_kwargs.get("fill_value", 0.0)
+    References
+    ----------
+    .. [1] Peeters, Geoffroy. "Rhythm Classification Using Periodicities and the Beat-Histogram."
+        Proceedings of the 6th International Conference on Music Information Retrieval (ISMIR). 2005.
+
+    Examples
+    --------
+    Compute a hybrid tempogram
+
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> hop_length = 512
+    >>> htemp = librosa.feature.hybrid_tempogram(y=y, sr=sr, hop_length=hop_length)
+
+    Display the result
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(htemp, x_axis='time',
+    ...                                y_axis='tempo', hop_length=hop_length,
+    ...                                ax=ax)
+    >>> ax.set(title='Hybrid Tempogram')
+    >>> fig.colorbar(img, ax=ax)
+    """
+    kwargs = dict(interp_kwargs) if interp_kwargs is not None else dict()
+    kwargs.setdefault("bounds_error", False)
+    kwargs.setdefault("fill_value", 0.0)
+    kwargs.setdefault("assume_sorted", True)
+    kwargs.setdefault("copy", False)
 
     # 1. Compute Fourier tempogram
     tg_f = fourier_tempogram(
@@ -750,13 +770,11 @@ def hybrid_tempogram(
     lags_finite = lags[1:]
 
     # 4. Hybrid Interpolation
-    # Explicitly pass parameters to satisfy mypy type checking
     f_interp = scipy.interpolate.interp1d(
         lags_finite,
         tg_a_finite,
         axis=-2,
-        bounds_error=bounds_error,
-        fill_value=fill_value
+        **kwargs  # type: ignore
     )
     tg_a_resampled = f_interp(freqs)
 
