@@ -681,12 +681,37 @@ def hybrid_tempogram(
     This function computes a hybrid representation by combining the
     Fourier tempogram and autocorrelation tempogram. The tempograms are
     aligned onto a common frequency grid and merged using the geometric mean.
+    
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)] or None
+        Audio time series.  Multi-channel is supported.
+    sr : float > 0
+        Sampling rate
+    onset_envelope : np.ndarray [shape=(..., n)] or None
+        Optional pre-computed onset strength envelope
+    hop_length : int > 0
+        Number of samples between frames
+    win_length : int > 0
+        Window length for analysis
+    center : bool
+        Whether to center the frames
+    window : str
+        Window type
+    interp_kwargs : dict or None
+        Additional keyword arguments for interpolation
+        
+    Returns
+    -------
+    hybrid : np.ndarray
+        The hybrid tempogram combining both representations
     """
     import scipy.interpolate
-
-    # Default interpolation kwargs
-    if interp_kwargs is None:
-        interp_kwargs = dict(bounds_error=False, fill_value=0.0)
+    
+    # Safe defaults that allow extrapolation without out-of-bounds error
+    kwargs = dict(bounds_error=False, fill_value=0.0)
+    if interp_kwargs is not None:
+        kwargs.update(interp_kwargs)
 
     # 1. Compute Fourier tempogram
     tg_f = fourier_tempogram(
@@ -699,7 +724,7 @@ def hybrid_tempogram(
         window=window,
     )
     
-    # FIX: Correctly using fourier_tempo_frequencies with win_length
+    # Get Fourier tempogram frequencies
     freqs = fourier_tempo_frequencies(
         sr=sr, hop_length=hop_length, win_length=win_length
     )
@@ -714,25 +739,26 @@ def hybrid_tempogram(
         center=center,
         window=window,
     )
+    
+    # Get autocorrelation tempogram frequencies (lags)
     lags = tempo_frequencies(tg_a.shape[-2], sr=sr, hop_length=hop_length)
 
-    # 3. Restrict to finite frequencies
-    # The 0-lag (index 0) corresponds to +infinite BPM, so we drop it
+    # 3. Restrict to finite frequencies (drop 0-lag / infinite BPM)
     tg_a_finite = tg_a[..., 1:, :]
     lags_finite = lags[1:]
 
     # 4. Hybrid Interpolation
+    # interp1d natively handles multi-channel arrays via axis=-2. No reshaping needed!
     f_interp = scipy.interpolate.interp1d(
-        lags_finite, tg_a_finite, axis=-2, **interp_kwargs
+        lags_finite, tg_a_finite, axis=-2, **kwargs
     )
     tg_a_resampled = f_interp(freqs)
 
-    # 5. Shape Matching
-    n_frames = min(tg_f.shape[-1], tg_a_resampled.shape[-1])
+    # 5. Shape Matching - align time frames
+    n_frames_min = min(tg_f.shape[-1], tg_a_resampled.shape[-1])
 
     # 6. Merging (Geometric Mean)
-    # Using np.maximum(0, ...) to ensure safety before sqrt
-    product = np.abs(tg_f[..., :n_frames]) * tg_a_resampled[..., :n_frames]
+    product = np.abs(tg_f[..., :n_frames_min]) * np.abs(tg_a_resampled[..., :n_frames_min])
     hybrid = np.sqrt(np.maximum(0, product))
 
     return hybrid
