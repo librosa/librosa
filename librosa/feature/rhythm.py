@@ -681,7 +681,7 @@ def hybrid_tempogram(
     This function computes a hybrid representation by combining the
     Fourier tempogram and autocorrelation tempogram. The tempograms are
     aligned onto a common frequency grid and merged using the geometric mean.
-    
+
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
@@ -700,14 +700,14 @@ def hybrid_tempogram(
         Window type
     interp_kwargs : dict or None
         Additional keyword arguments for interpolation
-        
+
     Returns
     -------
     hybrid : np.ndarray
         The hybrid tempogram combining both representations
     """
     import scipy.interpolate
-    
+
     # Safe defaults that allow extrapolation without out-of-bounds error
     kwargs = dict(bounds_error=False, fill_value=0.0)
     if interp_kwargs is not None:
@@ -723,7 +723,7 @@ def hybrid_tempogram(
         center=center,
         window=window,
     )
-    
+
     # Get Fourier tempogram frequencies
     freqs = fourier_tempo_frequencies(
         sr=sr, hop_length=hop_length, win_length=win_length
@@ -739,7 +739,7 @@ def hybrid_tempogram(
         center=center,
         window=window,
     )
-    
+
     # Get autocorrelation tempogram frequencies (lags)
     lags = tempo_frequencies(tg_a.shape[-2], sr=sr, hop_length=hop_length)
 
