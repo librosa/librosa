@@ -709,9 +709,11 @@ def hybrid_tempogram(
     import scipy.interpolate
 
     # Safe defaults that allow extrapolation without out-of-bounds error
-    kwargs = dict(bounds_error=False, fill_value=0.0)
+    bounds_error = False
+    fill_value = 0.0
     if interp_kwargs is not None:
-        kwargs.update(interp_kwargs)
+        bounds_error = interp_kwargs.get("bounds_error", False)
+        fill_value = interp_kwargs.get("fill_value", 0.0)
 
     # 1. Compute Fourier tempogram
     tg_f = fourier_tempogram(
@@ -748,9 +750,13 @@ def hybrid_tempogram(
     lags_finite = lags[1:]
 
     # 4. Hybrid Interpolation
-    # interp1d natively handles multi-channel arrays via axis=-2. No reshaping needed!
+    # Explicitly pass parameters to satisfy mypy type checking
     f_interp = scipy.interpolate.interp1d(
-        lags_finite, tg_a_finite, axis=-2, **kwargs
+        lags_finite,
+        tg_a_finite,
+        axis=-2,
+        bounds_error=bounds_error,
+        fill_value=fill_value
     )
     tg_a_resampled = f_interp(freqs)
 
@@ -763,8 +769,6 @@ def hybrid_tempogram(
 
     return hybrid
 
-
-@cache(level=40)
 @cache(level=40)
 def metrogram(
     *,
