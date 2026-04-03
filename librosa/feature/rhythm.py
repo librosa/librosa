@@ -664,23 +664,26 @@ def tempogram_ratio(
 
     return tgr
 
-
 def hybrid_tempogram(
     *,
-    y: "np.ndarray" = None,
+    y: Optional[np.ndarray] = None,
     sr: float = 22050,
-    onset_envelope: "np.ndarray" = None,
+    onset_envelope: Optional[np.ndarray] = None,
     hop_length: int = 512,
     win_length: int = 384,
     center: bool = True,
     window: str = "hann",
-    interp_kwargs: dict = None,
-) -> "np.ndarray":
+    **kwargs: Any,
+) -> np.ndarray:
     """Compute a hybrid tempogram.
 
     This function computes a hybrid representation by combining the
     Fourier tempogram and autocorrelation tempogram. The tempograms are
-    aligned onto a common frequency grid and merged using the geometric mean.
+    aligned onto a common frequency grid and merged using the geometric mean [1]_.
+
+    .. [1] Peeters, Geoffroy. "Rhythm Classification Using Periodicities and the
+           Beat-Histogram." Proceedings of the 6th International Conference on Music
+           Information Retrieval (ISMIR). 2005.
 
     Parameters
     ----------
@@ -698,42 +701,59 @@ def hybrid_tempogram(
         Whether to center the frames
     window : str
         Window type
-    interp_kwargs : dict or None
-        Additional keyword arguments for interpolation
+    **kwargs : additional keyword arguments
+        Additional keyword arguments passed to `scipy.interpolate.interp1d`
 
     Returns
     -------
     hybrid : np.ndarray
         The hybrid tempogram combining both representations
 
-    References
-    ----------
-    .. [1] Peeters, Geoffroy. "Rhythm Classification Using Periodicities and the Beat-Histogram."
-        Proceedings of the 6th International Conference on Music Information Retrieval (ISMIR). 2005.
+    See Also
+    --------
+    tempogram
+    fourier_tempogram
 
     Examples
     --------
-    Compute a hybrid tempogram
+    Compute local onset autocorrelation
 
     >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 512
-    >>> htemp = librosa.feature.hybrid_tempogram(y=y, sr=sr, hop_length=hop_length)
+    >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
 
-    Display the result
+    Compute the autocorrelation, Fourier, and hybrid tempograms
+
+    >>> tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
+    ...                                       hop_length=hop_length)
+    >>> fourier_tempogram = librosa.feature.fourier_tempogram(onset_envelope=oenv, sr=sr,
+    ...                                                       hop_length=hop_length)
+    >>> hybrid_tempogram = librosa.feature.hybrid_tempogram(onset_envelope=oenv, sr=sr,
+    ...                                                     hop_length=hop_length)
+
+    Plot the results
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(htemp, x_axis='time',
-    ...                                y_axis='tempo', hop_length=hop_length,
-    ...                                ax=ax)
-    >>> ax.set(title='Hybrid Tempogram')
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True)
+    >>> librosa.display.specshow(tempogram, x_axis='time', y_axis='tempo',
+    ...                          hop_length=hop_length, ax=ax[0])
+    >>> ax[0].set(title='Autocorrelation Tempogram')
+    >>> ax[0].label_outer()
+    >>> librosa.display.specshow(np.abs(fourier_tempogram), x_axis='time',
+    ...                          y_axis='fourier_tempo', hop_length=hop_length, ax=ax[1])
+    >>> ax[1].set(title='Fourier Tempogram')
+    >>> ax[1].label_outer()
+    >>> img = librosa.display.specshow(hybrid_tempogram, x_axis='time',
+    ...                                y_axis='fourier_tempo', hop_length=hop_length,
+    ...                                ax=ax[2])
+    >>> ax[2].set(title='Hybrid Tempogram')
     >>> fig.colorbar(img, ax=ax)
     """
-    kwargs = dict(interp_kwargs) if interp_kwargs is not None else dict()
-    kwargs.setdefault("bounds_error", False)
-    kwargs.setdefault("fill_value", 0.0)
-    kwargs.setdefault("assume_sorted", True)
-    kwargs.setdefault("copy", False)
+    interp_kwargs_dict: dict[str, Any] = kwargs if kwargs else {}
+    interp_kwargs_dict.setdefault("bounds_error", False)
+    interp_kwargs_dict.setdefault("fill_value", 0.0)
+    interp_kwargs_dict.setdefault("assume_sorted", True)
+    interp_kwargs_dict.setdefault("copy", False)
 
     # 1. Compute Fourier tempogram
     tg_f = fourier_tempogram(
@@ -771,10 +791,7 @@ def hybrid_tempogram(
 
     # 4. Hybrid Interpolation
     f_interp = scipy.interpolate.interp1d(
-        lags_finite,
-        tg_a_finite,
-        axis=-2,
-        **kwargs  # type: ignore
+        lags_finite, tg_a_finite, axis=-2, **interp_kwargs_dict
     )
     tg_a_resampled = f_interp(freqs)
 
@@ -785,7 +802,7 @@ def hybrid_tempogram(
     product = np.abs(tg_f[..., :n_frames_min]) * np.abs(tg_a_resampled[..., :n_frames_min])
     hybrid = np.sqrt(np.maximum(0, product))
 
-    return hybrid
+    return np.asarray(hybrid)
 
 @cache(level=40)
 def metrogram(
