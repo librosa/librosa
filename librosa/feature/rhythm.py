@@ -752,7 +752,6 @@ def hybrid_tempogram(
     interp_kwargs_dict: dict[str, Any] = kwargs if kwargs else {}
     interp_kwargs_dict.setdefault("bounds_error", False)
     interp_kwargs_dict.setdefault("fill_value", 0.0)
-    interp_kwargs_dict.setdefault("assume_sorted", True)
     interp_kwargs_dict.setdefault("copy", False)
 
     # 1. Compute Fourier tempogram
