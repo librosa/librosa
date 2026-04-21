@@ -699,8 +699,9 @@ def hybrid_tempogram(
         Window length for analysis
     center : bool
         Whether to center the frames
-    window : str
-        Window type
+    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
+        A window specification as supported by `scipy.signal.get_window`
+        and `librosa.filters.get_window`.
     **kwargs : additional keyword arguments
         Additional keyword arguments passed to `scipy.interpolate.interp1d`
 
