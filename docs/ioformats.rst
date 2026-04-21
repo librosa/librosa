@@ -10,7 +10,7 @@ Read specific formats
 ---------------------
 
 *librosa* uses `soundfile <https://github.com/bastibe/PySoundFile>`_ for reading audio.
-For a list of codecs supported by `soundfile`, see the *libsndfile* `documentation <http://www.mega-nerd.com/libsndfile/>`_.
+For a list of codecs supported by `soundfile`, see the *libsndfile* `documentation <https://libsndfile.github.io/libsndfile/>`_.
 
 .. note:: See installation instruction for PySoundFile `here <https://python-soundfile.readthedocs.io/en/latest/>`_.
 
