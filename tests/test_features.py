@@ -6,7 +6,6 @@ import numpy as np
 import scipy
 import pytest
 import librosa
-from typing import Optional, Any
 
 # Disable cache
 import os
@@ -1137,8 +1136,14 @@ def test_metrogram_aggregate(y_clicks, tg_ex):
     met2 = librosa.feature.metrogram(tg=tg_ex[1:], freqs=freqs, aggregate=np.max)
     assert np.allclose(np.max(met1, axis=-2), met2)
 def test_hybrid_tempogram():
-    # Load a short snippet of sample audio to keep tests fast
-    y, sr = librosa.load(librosa.ex("trumpet"), duration=2.0)
+    # Synthesize a short deterministic click track to avoid I/O flakiness
+    sr = 22050
+    duration = 2.0
+    n_samples = int(sr * duration)
+    y = np.zeros(n_samples, dtype=float)
+    click_positions = np.arange(0, n_samples, sr // 4)
+    y[click_positions] = 1.0
+    
     hop_length = 512
 
     # 1. Basic execution and shape verification

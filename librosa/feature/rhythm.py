@@ -10,7 +10,7 @@ from .. import util
 from .._cache import cache
 from ..core.audio import autocorrelate
 from ..core.spectrum import stft
-from ..core.convert import tempo_frequencies, time_to_frames,fourier_tempo_frequencies
+from ..core.convert import tempo_frequencies, time_to_frames, fourier_tempo_frequencies
 from ..core.harmonic import f0_harmonics, interp_harmonics
 from ..util.exceptions import ParameterError
 from ..filters import get_window
@@ -672,7 +672,7 @@ def hybrid_tempogram(
     hop_length: int = 512,
     win_length: int = 384,
     center: bool = True,
-    window: str = "hann",
+    window: _WindowSpec = "hann",
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a hybrid tempogram.
@@ -753,6 +753,14 @@ def hybrid_tempogram(
     interp_kwargs_dict.setdefault("bounds_error", False)
     interp_kwargs_dict.setdefault("fill_value", 0.0)
     interp_kwargs_dict.setdefault("copy", False)
+    interp_kwargs_dict.setdefault("axis", -2)
+
+    # Calculate onset envelope once to avoid redundant STFT computations
+    if onset_envelope is None:
+        if y is None:
+            raise ParameterError("Either y or onset_envelope must be provided")
+        from ..onset import onset_strength
+        onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
     # 1. Compute Fourier tempogram
     tg_f = fourier_tempogram(
@@ -790,7 +798,7 @@ def hybrid_tempogram(
 
     # 4. Hybrid Interpolation
     f_interp = scipy.interpolate.interp1d(
-        lags_finite, tg_a_finite, axis=-2, **interp_kwargs_dict
+        lags_finite, tg_a_finite, **interp_kwargs_dict
     )
     tg_a_resampled = f_interp(freqs)
 
