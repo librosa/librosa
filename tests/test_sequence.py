@@ -93,6 +93,47 @@ def test_viterbi_multichannel():
     assert np.allclose(logp2, logp[2])
 
 
+@pytest.mark.parametrize("transition_min_prob", [None, 0, 1e-10, 0.25])
+def test_viterbi_sparse(transition_min_prob):
+    
+    p_init = np.asarray([0.6, 0.4])
+    transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])
+    emit_p = [
+        dict(normal=0.5, cold=0.4, dizzy=0.1),
+        dict(normal=0.1, cold=0.3, dizzy=0.6),
+    ]
+    obs = ["normal", "cold", "dizzy"]
+    prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
+    path, logp = librosa.sequence.viterbi(
+        prob, transition, p_init=p_init, return_logp=True,
+        transition_min_prob=transition_min_prob
+    )
+
+    ref_path, reg_logp = librosa.sequence.viterbi(
+        prob, transition, p_init=p_init, return_logp=True,
+        transition_min_prob=None
+    )
+
+    assert np.array_equal(path, ref_path)
+    assert np.isclose(logp, reg_logp)
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_viterbi_sparse_fail():
+    p_init = np.asarray([0.6, 0.4])
+    transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])
+    emit_p = [
+        dict(normal=0.5, cold=0.4, dizzy=0.1),
+        dict(normal=0.1, cold=0.3, dizzy=0.6),
+    ]
+    obs = ["normal", "cold", "dizzy"]
+    prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
+    # This threshold is above all transition probabilities into state 1
+    # so the algorithm should raise an error about disconnected states
+    librosa.sequence.viterbi(
+        prob, transition, p_init=p_init, return_logp=True,
+        transition_min_prob=0.65
+    )
+
 def test_viterbi_init():
     # Example from https://en.wikipedia.org/wiki/Viterbi_algorithm#Example
 
