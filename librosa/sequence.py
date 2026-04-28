@@ -1227,7 +1227,11 @@ def _viterbi(
     if np.isfinite(log_trans_threshold):
         pred_states = []
         for j in range(n_states):
-            pred_states.append(np.flatnonzero(log_trans[:, j] >= log_trans_threshold))
+            possible_states = np.flatnonzero(log_trans[:, j] >= log_trans_threshold)
+            if len(possible_states) == 0:
+                raise ParameterError(f"Empty transition matrix detected for state {j} in Viterbi. "
+                                     f"Try reducing your minimum transition probability threshold.")
+            pred_states.append(possible_states)
 
         for t in range(1, n_steps):
             # Want V[t, j] <- p[t, j] * max_k V[t-1, k] * A[k, j]
