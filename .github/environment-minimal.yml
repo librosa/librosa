@@ -5,12 +5,12 @@ channels:
 dependencies:
   # required
   - pip
-  - scipy==1.8.0
+  - scipy==1.12.0
   - scikit-learn==1.1.0
   - joblib==1.0.0
   - decorator==4.3.0
-  - numba==0.53.0
-  - numpy==1.23.0
+  - numba==0.58.1
+  - numpy==1.26.0
   - pysoundfile==0.12.1
   - pooch==1.1.0
   - packaging==20.0

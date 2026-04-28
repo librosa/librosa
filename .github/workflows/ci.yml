@@ -48,23 +48,28 @@ jobs:
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
-                    - os: ubuntu-24.04-arm
-                      python-version: "3.13"
-                      channel-priority: "strict"
-                      envfile: ".github/environment-ci.yml"
-
                     - os: ubuntu-latest
                       python-version: "3.13"
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
+                    - os: ubuntu-24.04-arm
+                      python-version: "3.14"
+                      channel-priority: "strict"
+                      envfile: ".github/environment-ci.yml"
+
+                    - os: ubuntu-latest
+                      python-version: "3.14"
+                      channel-priority: "strict"
+                      envfile: ".github/environment-ci.yml"
+
                     - os: macos-latest
-                      python-version: "3.13"
+                      python-version: "3.14"
                       channel-priority: "flexible"
                       envfile: ".github/environment-ci.yml"
 
                     - os: windows-latest
-                      python-version: "3.13"
+                      python-version: "3.14"
                       channel-priority: "strict"
                       envfile: ".github/environment-ci.yml"
 
@@ -101,6 +106,7 @@ jobs:
           with:
             miniforge-version: latest
             activate-environment: test
+            python-version: ${{ matrix.python-version }}
 
         - name: Get Date
           id: get-date

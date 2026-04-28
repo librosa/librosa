@@ -7,7 +7,7 @@ dependencies:
   - pip
   - audioread>=2.1.9
   - numpy>=1.22.3,<1.24.0
-  - scipy>=1.8.0,<1.13.0  # older versions of librosa need scipy<1.13.0 
+  - scipy>=1.12.0,<1.13.0  # older versions of librosa need scipy<1.13.0 
   - scikit-learn>=1.2.0
   - joblib>=1.0.0
   - decorator>=4.3.0
@@ -19,8 +19,8 @@ dependencies:
   - pysoundfile>=0.12.1
   - pooch>=1.1.0,<1.7
   - packaging>=20.0
-  - matplotlib>=3.8
-  - sphinx>=5.1.0
+  - matplotlib>=3.9
+  - sphinx>=5.1.0,<9.0
   - msgpack-python>=1.0
   - sphinx-gallery>=0.10.1
   - sphinx_rtd_theme>=1.2.0

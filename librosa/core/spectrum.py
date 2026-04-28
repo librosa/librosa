@@ -2248,6 +2248,7 @@ def fmt(
     >>> ax[1].semilogy(np.abs(scale2), linestyle='--', label='Stretched')
     >>> ax[1].set(xlabel='scale coefficients', title='Scale transform magnitude')
     >>> ax[1].legend()
+    >>> plt.show()
 
     >>> # Plot the scale transform of an onset strength autocorrelation
     >>> y, sr = librosa.load(librosa.ex('choice'))
@@ -2259,13 +2260,14 @@ def fmt(
     >>> # Compute the scale transform
     >>> odf_ac_scale = librosa.fmt(odf_ac_norm, n_fmt=512)
     >>> # Plot the results
-    >>> fig, ax = plt.subplots(nrows=3)
+    >>> fig, ax = plt.subplots(nrows=3, layout='compressed')
     >>> ax[0].plot(odf, label='Onset strength')
     >>> ax[0].set(xlabel='Time (frames)', title='Onset strength')
     >>> ax[1].plot(odf_ac_norm, label='Onset autocorrelation')
     >>> ax[1].set(xlabel='Lag (frames)', title='Onset autocorrelation')
     >>> ax[2].semilogy(np.abs(odf_ac_scale), label='Scale transform magnitude')
     >>> ax[2].set(xlabel='scale coefficients')
+    >>> plt.show()
     """
     n = y.shape[axis]
 
@@ -2573,6 +2575,7 @@ def pcen(
     >>> ax[1].set(title='Per-channel energy normalization')
     >>> librosa.display.colorbar_db(img, ax=ax[0])
     >>> fig.colorbar(imgpcen, ax=ax[1])
+    >>> plt.show()
 
     Compare PCEN with and without max-filtering
 
@@ -2584,6 +2587,7 @@ def pcen(
     >>> img = librosa.display.specshow(pcen_max, x_axis='time', y_axis='mel', ax=ax[1])
     >>> ax[1].set(title='Per-channel energy normalization (max_size=3)')
     >>> fig.colorbar(img, ax=ax)
+    >>> plt.show()
     """
     if power < 0:
         raise ParameterError(f"power={power} must be nonnegative")

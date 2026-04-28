@@ -4,11 +4,8 @@
 import warnings
 import numpy as np
 import scipy
-
 import pytest
-
 import librosa
-
 
 # Disable cache
 import os
@@ -1108,3 +1105,88 @@ def test_tempogram_ratio_with_bpm(y_clicks, tg_ex):
     tgr1 = librosa.feature.tempogram_ratio(tg=tg_ex, sr=sr, bpm=None)
     tgr2 = librosa.feature.tempogram_ratio(tg=tg_ex, sr=sr, bpm=tempo)
     assert np.allclose(tgr1, tgr2)
+
+
+def test_metrogram_factors():
+    # Testing with synthetic data and specific meters
+    factors = np.array([1 / 3, 1 / 4, 1 / 5, 1 / 7])
+    freqs = np.array([1 / 7, 1 / 5, 1 / 4, 1 / 3, 1])
+
+    # each tg frame corresponds to a meter starting from 7/4
+    tg = np.vstack((np.eye(4), np.ones(4)))
+
+    met = librosa.feature.metrogram(tg=tg, freqs=freqs, factors=factors)
+
+    # frame 0: meter = 7/4, factors are [1/3, 1/4, 1/5, 1/7] => values [0 0 0 1]
+    assert np.allclose(met[:, 0], [0, 0, 0, 1])
+    # frame 1: meter = 5/4, factors are [1/3, 1/4, 1/5, 1/7] => values [0 0 1 0]
+    assert np.allclose(met[:, 1], [0, 0, 1, 0])
+    # frame 2: meter = 4/4, factors are [1/3, 1/4, 1/5, 1/7] => values [0 1 0 0]
+    assert np.allclose(met[:, 2], [0, 1, 0, 0])
+    # frame 3: meter = 3/4, factors are [1/3, 1/4, 1/5, 1/7] => values [1 0 0 0]
+    assert np.allclose(met[:, 3], [1, 0, 0, 0])
+
+
+def test_metrogram_aggregate(y_clicks, tg_ex):
+    # Verify that aggregation does its job
+    _, sr = y_clicks
+    # the first freq is np.inf, we remove it to avoid nans
+    freqs = librosa.tempo_frequencies(sr=sr, n_bins=len(tg_ex))[1:]
+    met1 = librosa.feature.metrogram(tg=tg_ex[1:], freqs=freqs, aggregate=None)
+    met2 = librosa.feature.metrogram(tg=tg_ex[1:], freqs=freqs, aggregate=np.max)
+    assert np.allclose(np.max(met1, axis=-2), met2)
+def test_hybrid_tempogram():
+    # Synthesize a short deterministic click track to avoid I/O flakiness
+    sr = 22050
+    duration = 2.0
+    n_samples = int(sr * duration)
+    y = np.zeros(n_samples, dtype=float)
+    click_positions = np.arange(0, n_samples, sr // 4)
+    y[click_positions] = 1.0
+    
+    hop_length = 512
+
+    # 1. Basic execution and shape verification
+    htg = librosa.feature.hybrid_tempogram(y=y, sr=sr, hop_length=hop_length)
+    
+    assert htg.ndim == 2, "Output should be a 2D array for mono audio"
+    assert htg.shape[0] > 0, "Frequency dimension should not be empty"
+    assert htg.shape[1] > 0, "Time frames dimension should not be empty"
+
+    # 2. Value constraints (Geometric mean ensures non-negative results)
+    assert np.all(htg >= 0), "All values in the hybrid tempogram must be non-negative"
+    assert np.all(np.isfinite(htg)), "Output must not contain NaNs or Infs"
+
+    # 3. Multi-channel (stereo) audio support
+    y_stereo = np.vstack([y, y])
+    htg_stereo = librosa.feature.hybrid_tempogram(y=y_stereo, sr=sr, hop_length=hop_length)
+    
+    assert htg_stereo.ndim == 3, "Output should be a 3D array for stereo audio"
+    assert htg_stereo.shape[-1] == htg.shape[-1], "Time frames must match between mono and stereo"
+    assert htg_stereo.shape[-2] == htg.shape[-2], "Frequency bins must match between mono and stereo"
+
+    # 4. Custom parameters (Ensures coverage for kwargs and specific win_length)
+    htg_custom = librosa.feature.hybrid_tempogram(
+        y=y, 
+        sr=sr, 
+        hop_length=hop_length, 
+        win_length=256,
+        kind='linear',
+        fill_value=0.0
+    )
+    assert htg_custom.ndim == 2
+    assert np.all(np.isfinite(htg_custom)), "Custom interpolation should not produce NaNs"
+
+    # 5. Test with silent audio (all zeros)
+    y_silent = np.zeros_like(y)
+    htg_silent = librosa.feature.hybrid_tempogram(y=y_silent, sr=sr, hop_length=hop_length)
+    assert np.all(htg_silent == 0), "Hybrid tempogram of silence should be all zeros"
+
+    # 6. Verify frequency grid alignment
+    freqs = librosa.fourier_tempo_frequencies(sr=sr, hop_length=hop_length, win_length=384)
+    assert htg.shape[-2] == len(freqs), "Frequency dimension must match Fourier tempo grid"
+
+    # 7. Test with arbitrary multi-channel shape (e.g., 5 channels)
+    y_multi = np.tile(y, (5, 1))
+    htg_multi = librosa.feature.hybrid_tempogram(y=y_multi, sr=sr, hop_length=hop_length)
+    assert htg_multi.shape == (5, len(freqs), htg.shape[-1]), "Multi-channel shape mismatch"

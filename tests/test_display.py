@@ -11,6 +11,8 @@ try:
 except KeyError:
     pass
 
+import gc
+import weakref
 
 from packaging import version
 
@@ -18,6 +20,7 @@ import pytest
 
 import matplotlib
 
+import matplotlib.collections
 import matplotlib.pyplot as plt
 
 import librosa
@@ -687,6 +690,102 @@ def test_waveshow_bad_maxpoints(y, sr):
     return plt.gcf()
 
 
+def test_waveshow_adaptor_survives_gc_single(y, sr):
+    """Regression test for #1970: single waveshow adaptor should survive GC."""
+    fig, ax = plt.subplots()
+
+    librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
+
+    gc.collect()
+
+    ax.set_xlim(0, 0.025)
+    fig.canvas.draw()
+
+    # Data lines only (not ticks)
+    visible_data_lines = [l for l in ax.lines if l.get_visible()]
+
+    # Envelope(s) are PolyCollections in ax.collections
+    polys = [c for c in ax.collections if isinstance(c, matplotlib.collections.PolyCollection)]
+
+    assert len(visible_data_lines) >= 1, "Sample/step artist should be visible after zoom"
+    assert all(not p.get_visible() for p in polys), "Envelope should be hidden after zoom"
+
+    plt.close(fig)
+
+
+def test_waveshow_adaptor_survives_gc_multi(y, sr):
+    """Regression test for #1970: multiple waveshow adaptors should survive GC."""
+    fig, ax = plt.subplots()
+
+    librosa.display.waveshow(y, sr=sr, ax=ax, color="blue", max_points=sr // 2)
+    librosa.display.waveshow(y, sr=sr, ax=ax, color="red", alpha=0.5, zorder=-1, max_points=sr // 2)
+
+    gc.collect()
+
+    ax.set_xlim(0, 0.025)
+    fig.canvas.draw()
+
+    visible_data_lines = [l for l in ax.lines if l.get_visible()]
+    polys = [c for c in ax.collections if isinstance(c, matplotlib.collections.PolyCollection)]
+
+    assert len(visible_data_lines) >= 2, "Both sample/step artists should be visible after zoom"
+    assert all(not p.get_visible() for p in polys), "All envelopes should be hidden after zoom"
+
+    plt.close(fig)
+
+
+def test_waveshow_registry_cleanup_on_axes_gc():
+    """Test that the adaptor registry uses WeakKeyDictionary correctly.
+    
+    This verifies the fix for #1970: adaptors are stored in a WeakKeyDictionary
+    keyed by Axes, so they will be cleaned up when the Axes is garbage collected.
+    """
+    from matplotlib.figure import Figure
+    from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+
+    fig = Figure()
+    FigureCanvas(fig)
+    ax = fig.add_subplot(111)
+    ax_id = id(ax)
+
+    y = np.sin(2 * np.pi * 440 * np.linspace(0, 1, 22050))
+    librosa.display.waveshow(y, sr=22050, ax=ax)
+
+    # Our Axes should be in the registry
+    before_keys = set(map(id, librosa.display._WAVESHOW_ADAPTORS.keys()))
+    assert ax_id in before_keys, "Axes should be in registry after waveshow"
+    
+    # Verify the registry is a WeakKeyDictionary (semantics test)
+    assert isinstance(librosa.display._WAVESHOW_ADAPTORS, weakref.WeakKeyDictionary)
+    
+    # Verify an adaptor is registered for this axes
+    assert ax in librosa.display._WAVESHOW_ADAPTORS
+    assert len(librosa.display._WAVESHOW_ADAPTORS[ax]) >= 1
+
+
+def test_waveshow_update_gc_guard():
+
+    fig, ax = plt.subplots()
+    y = np.sin(2 * np.pi * 440 * np.linspace(0, 1, 22050, endpoint=False))
+    adaptor = librosa.display.waveshow(y, sr=22050, ax=ax)
+
+    # Simulate a dead weakref
+    class _Tmp:
+        pass
+
+    tmp = _Tmp()
+    adaptor._steps_ref = weakref.ref(tmp)  # type: ignore[arg-type]
+    del tmp
+    gc.collect()
+
+    assert adaptor.steps is None
+
+    # Should return early without error (exercises the GC guard)
+    adaptor.update(ax)
+
+    plt.close(fig)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("axis", ["x_axis", "y_axis"])
 def test_unknown_axis(S_abs, axis: str):
@@ -710,14 +809,13 @@ def test_infer_cmap_robust(data):
     cmap1 = librosa.display.infer_cmap(data, robust=False)
     cmap2 = librosa.display.infer_cmap(data, robust=True)
 
-    assert type(cmap1) is type(cmap2)
-
-    if isinstance(cmap1, matplotlib.colors.ListedColormap):
+    if isinstance(cmap1, matplotlib.colors.ListedColormap) and isinstance(cmap2, matplotlib.colors.ListedColormap):
         assert np.allclose(cmap1.colors, cmap2.colors)
-    elif isinstance(cmap1, matplotlib.colors.LinearSegmentedColormap):
+    elif isinstance(cmap1, matplotlib.colors.LinearSegmentedColormap) and isinstance(cmap2, matplotlib.colors.LinearSegmentedColormap):
         assert cmap1.name == cmap2.name
     else:
         assert cmap1 == cmap2
+        assert type(cmap1) is type(cmap2)
 
 
 @pytest.mark.mpl_image_compare(
@@ -1037,6 +1135,9 @@ def test_waveshow_disconnect(y, sr):
     fig, ax = plt.subplots()
     ad = librosa.display.waveshow(y=y, sr=sr, ax=ax)
 
+    assert ad.envelope is not None
+    assert ad.steps is not None
+
     # By default, envelope should be visible and steps should not
     assert ad.envelope.get_visible() and not ad.steps.get_visible()
 
@@ -1065,6 +1166,9 @@ def test_waveshow_deladaptor(y, sr):
     ad = librosa.display.waveshow(y=y, sr=sr, ax=ax)
 
     envelope, steps = ad.envelope, ad.steps
+    # These should be live for the rest of the tests to function
+    assert envelope is not None
+    assert steps is not None
     # By default, envelope should be visible and steps should not
     assert envelope.get_visible() and not steps.get_visible()
 
@@ -1079,7 +1183,7 @@ def test_waveshow_deladaptor(y, sr):
     assert envelope.get_visible() and not steps.get_visible()
 
     # Disconnect
-    del ad
+    ad.disconnect(strict=True)
 
     # Zoom back in to a 0.25 second range
     ax.set(xlim=[0, 0.25])

@@ -617,11 +617,11 @@ def test_sparsify_rows_dtype(dtype, ref_dtype):
 @pytest.mark.parametrize("d", [1, 5, 10, 100])
 @pytest.mark.parametrize("q", [0.0, 0.01, 0.25, 0.5, 0.99])
 def test_sparsify_rows(ndim, d, q, rng):
-    X = rng.standard_normal(size=tuple([d] * ndim)) ** 4
-
-    X = np.asarray(X)
+    X = rng.standard_normal(size=tuple([d] * ndim)) ** 4  # always ndarray as size is specified
 
     xs = librosa.util.sparsify_rows(X, quantile=q)
+    assert isinstance(xs, scipy.sparse.sparray)
+    assert not isinstance(xs, scipy.sparse.spmatrix)
 
     if ndim == 1:
         X = X.reshape((1, -1))
@@ -629,10 +629,15 @@ def test_sparsify_rows(ndim, d, q, rng):
     assert np.allclose(xs.shape, X.shape)
 
     # And make sure that xs matches X on nonzeros
-    xsd = np.asarray(xs.todense())
+    xsd = xs.toarray()  # always ndarray now
 
     for i in range(xs.shape[0]):
-        assert np.allclose(xsd[i, xs[i].indices], X[i, xs[i].indices])
+        # Get column indices for row i using CSR internal structure
+        # (1D sparse slicing is not supported for sparse arrays)
+        row_start = xs.indptr[i]
+        row_end = xs.indptr[i+1]
+        row_indices = xs.indices[row_start:row_end]
+        assert np.allclose(xsd[i, row_indices], X[i, row_indices])
 
     # Compute row-wise magnitude marginals
     v_in = np.sum(np.abs(X), axis=-1)
@@ -1183,28 +1188,77 @@ def test_shear_dense():
 
 @pytest.mark.parametrize("fmt", ["csc", "csr", "lil", "dok"])
 def test_shear_sparse(fmt):
-    E = scipy.sparse.identity(3, format=fmt)
+    E = scipy.sparse.eye_array(3, format=fmt)
 
     E_shear = librosa.util.shear(E, factor=1, axis=0)
+    assert scipy.sparse.issparse(E_shear)
+    assert not isinstance(E_shear, scipy.sparse.spmatrix)
+    assert isinstance(
+        E_shear,
+        (scipy.sparse.csc_array, scipy.sparse.csr_array, scipy.sparse.lil_array, scipy.sparse.dok_array),
+    )
     assert E_shear.format == fmt
     assert np.allclose(E_shear.toarray(), np.asarray([[1, 0, 0], [0, 0, 1], [0, 1, 0]]))
 
     E_shear = librosa.util.shear(E, factor=1, axis=1)
+    assert scipy.sparse.issparse(E_shear)
+    assert not isinstance(E_shear, scipy.sparse.spmatrix)
+    assert isinstance(
+        E_shear,
+        (scipy.sparse.csc_array, scipy.sparse.csr_array, scipy.sparse.lil_array, scipy.sparse.dok_array),
+    )
     assert E_shear.format == fmt
     assert np.allclose(E_shear.toarray(), np.asarray([[1, 0, 0], [0, 0, 1], [0, 1, 0]]))
 
     E_shear = librosa.util.shear(E, factor=-1, axis=1)
+    assert scipy.sparse.issparse(E_shear)
+    assert not isinstance(E_shear, scipy.sparse.spmatrix)
+    assert isinstance(
+        E_shear,
+        (scipy.sparse.csc_array, scipy.sparse.csr_array, scipy.sparse.lil_array, scipy.sparse.dok_array),
+    )
     assert E_shear.format == fmt
     assert np.allclose(E_shear.toarray(), np.asarray([[1, 1, 1], [0, 0, 0], [0, 0, 0]]))
 
     E_shear = librosa.util.shear(E, factor=-1, axis=0)
+    assert scipy.sparse.issparse(E_shear)
+    assert not isinstance(E_shear, scipy.sparse.spmatrix)
+    assert isinstance(
+        E_shear,
+        (scipy.sparse.csc_array, scipy.sparse.csr_array, scipy.sparse.lil_array, scipy.sparse.dok_array),
+    )
     assert E_shear.format == fmt
     assert np.allclose(E_shear.toarray(), np.asarray([[1, 0, 0], [1, 0, 0], [1, 0, 0]]))
+
+
+@pytest.mark.parametrize("fmt", ["csc", "csr", "lil", "dok"])
+def test_shear_sparse_matrix_preserves_type(fmt):
+    E = scipy.sparse.eye(3, format=fmt)  # NOTE: matrix constructor
+
+    E_shear = librosa.util.shear(E, factor=1, axis=0)
+    assert scipy.sparse.issparse(E_shear)
+    assert isinstance(E_shear, scipy.sparse.spmatrix)
+    assert not isinstance(E_shear, scipy.sparse.sparray)
+    assert E_shear.format == fmt  # type: ignore[attr-defined]
+    assert np.allclose(E_shear.toarray(), np.asarray([[1,0,0],[0,0,1],[0,1,0]]))  # type: ignore[attr-defined]
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_shear_badfactor():
     librosa.util.shear(np.eye(3), factor=None)  # type: ignore
+
+
+def test_shear_sparse_1d_raises():
+    try:
+        x = scipy.sparse.coo_array([1, 0, 2])
+    except Exception:
+        pytest.skip("SciPy cannot construct a 1D sparse array in this build")
+
+    if x.ndim != 1:
+        pytest.skip("SciPy coerces 1D sparse array constructors to 2D in this version")
+
+    with pytest.raises(librosa.ParameterError, match="Input must be 2D"):
+        librosa.util.shear(x, factor=1, axis=0)
 
 
 def test_stack_contig():
@@ -1493,3 +1547,127 @@ def test_buf_to_float(n_bytes, dtype):
 
     assert x_float.dtype == dtype
     assert np.allclose(x_float, x.astype(dtype) / (2 ** (n_bytes * 8 - 1)))
+
+
+@pytest.fixture(scope="module")
+def interp_arrays():
+    x1 = np.array([1, 2, 4, 8, 16])
+    x1_pos = np.linspace(0, 2, len(x1))
+    x2 = np.array([32, 64, 128, 256, 1024])
+    x2_pos = np.linspace(1, 3, len(x2))
+    # expected result when we interp x2 on x1 and multiply them
+    x2_on_x1 = np.array([0, 0, 128, 512, 2048])
+    return x1, x1_pos, x2, x2_pos, x2_on_x1
+
+
+def test_interp_broadcast_1d(interp_arrays):
+    x1, x1_pos, x2, x2_pos, x2_on_x1 = interp_arrays
+
+    result = librosa.util.interp_broadcast(
+        x1=x1,
+        x1_pos=x1_pos,
+        x2=x2,
+        x2_pos=x2_pos,
+        axis=0,
+    )
+
+    assert np.allclose(result, x2_on_x1)
+
+
+def test_interp_broadcast_2d(interp_arrays):
+    x1, x1_pos, x2, x2_pos, x2_on_x1 = interp_arrays
+    # stack two 1D arrays to create a 2D array
+    x1 = np.column_stack([x1, x1])
+    x2 = np.column_stack([x2, x2])
+
+    result = librosa.util.interp_broadcast(
+        x1=x1,
+        x1_pos=x1_pos,
+        x2=x2,
+        x2_pos=x2_pos,
+    )
+
+    assert np.allclose(result, np.column_stack([x2_on_x1, x2_on_x1]))
+
+
+def test_interp_broadcast_op(interp_arrays):
+    # test that custom operators work
+    x1, x1_pos, x2, x2_pos, _ = interp_arrays
+
+    result = librosa.util.interp_broadcast(
+        x1=x1,
+        x1_pos=x1_pos,
+        x2=x2,
+        x2_pos=x2_pos,
+        axis=0,
+        op=np.add
+    )
+
+    y1, y2 = librosa.util.interp_broadcast(
+        x1=x1,
+        x1_pos=x1_pos,
+        x2=x2,
+        x2_pos=x2_pos,
+        axis=0,
+        op=None
+    )
+
+    assert np.allclose(result, np.add(y1, y2))
+
+
+def test_interp_broadcast_missing_dims():
+    # test with missing dims
+    result = librosa.util.interp_broadcast(
+        x1=np.zeros((9, 1)),
+        x1_pos=np.arange(9),
+        x2=np.zeros((5, 8, 1)),
+        x2_pos=np.arange(8),
+        axis=-2
+    )
+    assert result.shape == (5, 9, 1)
+
+
+def test_interp_broadcast_compatible_shape():
+    # test with unequal dims, if one dim is 1
+    result = librosa.util.interp_broadcast(
+        x1=np.zeros((2, 9, 10)),
+        x1_pos=np.arange(9),
+        x2=np.zeros((2, 8, 1)),
+        x2_pos=np.arange(8),
+        axis=-2
+    )
+    assert result.shape == (2, 9, 10)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_interp_broadcast_incompatible_shape():
+    # test with unequal dims, neither dim is 1
+    librosa.util.interp_broadcast(
+        x1=np.zeros((2, 9, 10)),
+        x1_pos=np.arange(9),
+        x2=np.zeros((2, 8, 11)),
+        x2_pos=np.arange(8),
+        axis=-2
+    )
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_interp_broadcast_axis_lower_bound():
+    librosa.util.interp_broadcast(
+        x1=np.zeros((9, 1)),
+        x1_pos=np.arange(9),
+        x2=np.zeros((9, 1)),
+        x2_pos=np.arange(9),
+        axis=-3,
+    )
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_interp_broadcast_axis_upper_bound():
+    librosa.util.interp_broadcast(
+        x1=np.zeros((9, 1)),
+        x1_pos=np.arange(9),
+        x2=np.zeros((9, 1)),
+        x2_pos=np.arange(9),
+        axis=2,
+    )
