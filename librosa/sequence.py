@@ -32,6 +32,7 @@ Transition matrices
     transition_cycle
     transition_local
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -1189,7 +1190,10 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
 
 @jit(nopython=True, cache=True)  # type: ignore
 def _viterbi(
-    log_prob: np.ndarray, log_trans: np.ndarray, log_p_init: np.ndarray, log_trans_threshold: float
+    log_prob: np.ndarray,
+    log_trans: np.ndarray,
+    log_p_init: np.ndarray,
+    log_trans_threshold: float,
 ) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
     """Core Viterbi algorithm.
 
@@ -1210,6 +1214,7 @@ def _viterbi(
         Use -np.inf to perform a full search (exact viterbi).
         Otherwise, only transitions with (log) probability above the threshold
         are considered in the loop.
+
     Returns
     -------
     None
@@ -1229,30 +1234,20 @@ def _viterbi(
         for j in range(n_states):
             possible_states = np.flatnonzero(log_trans[:, j] >= log_trans_threshold)
             if len(possible_states) == 0:
-                raise ParameterError(f"Empty transition matrix detected for state {j} in Viterbi. "
-                                     f"Try reducing your minimum transition probability threshold.")
+                raise ParameterError(
+                    f"Empty transition matrix detected for state {j} in Viterbi. "
+                    f"Try reducing your minimum transition probability threshold."
+                )
             pred_states.append(possible_states)
 
         for t in range(1, n_steps):
             # Want V[t, j] <- p[t, j] * max_k V[t-1, k] * A[k, j]
             #    assume at time t-1 we were in state k
             #    transition k -> j
-    
-            # Broadcast over rows:
-            #    Tout[k, j] = V[t-1, k] * A[k, j]
-            #    then take the max over columns
-            # We'll do this in log-space for stability
-    
-    #        trans_out = value[t - 1] + log_trans.T
-
-            # Unroll the max/argmax loop to enable numba support
             for j in range(n_states):
-                #tmp_out = value[t - 1] + log_trans[:, j]
-                #ptr[t, j] = np.argmax(tmp_out)
-                #value[t, j] = log_prob[t, j] + tmp_out[ptr[t][j]]
                 best_cost = -np.inf
                 for k in pred_states[j]:
-                    cost = value[t-1, k] + log_trans[k, j]
+                    cost = value[t - 1, k] + log_trans[k, j]
                     if cost > best_cost:
                         ptr[t, j] = k
                         best_cost = cost
@@ -1263,7 +1258,7 @@ def _viterbi(
             for j in range(n_states):
                 best_cost = -np.inf
                 for k in range(n_states):
-                    cost = value[t-1, k] + log_trans[k, j]
+                    cost = value[t - 1, k] + log_trans[k, j]
                     if cost > best_cost:
                         ptr[t, j] = k
                         best_cost = cost
@@ -1916,7 +1911,7 @@ def viterbi_binary(
             p_state=p_state_binary,
             p_init=p_init_binary,
             return_logp=True,
-            transition_min_prob=transition_min_prob
+            transition_min_prob=transition_min_prob,
         )
 
     if return_logp:
