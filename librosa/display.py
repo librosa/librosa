@@ -1189,6 +1189,11 @@ def specshow(
         `oct3`-type use SI prefixes for frequencies, e.g., `1 kHz`, `2 MHz`, and are
         well adapted for scientific applications using high-frequency data.
 
+        .. note::
+            The 'log', 'fft_note', 'fft_svara', 'log_oct3', 'mel', and
+            'mel_oct3' axes use symmetric-log scaling to retain frequency
+            bins near 0 Hz.  CQT and VQT axes use logarithmic scaling.
+
         Any spectrogram parameters (hop_length, sr, bins_per_octave, etc.)
         used to generate the input data should also be provided when
         calling `specshow`.
