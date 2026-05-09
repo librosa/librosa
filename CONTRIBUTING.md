@@ -138,7 +138,7 @@ Documentation
 You can edit the documentation using any text editor and then generate
 the HTML output by typing ``make html`` from the docs/ directory.
 The resulting HTML files will be placed in _build/html/ and are viewable 
-in a web browser. See the README file in the doc/ directory for more information.
+in a web browser. For detailed instructions on building the documentation, see [docs/BUILD.md](https://github.com/librosa/librosa/blob/main/docs/BUILD.md).
 
 For building the documentation, you will need some additional dependencies.
 These can be installed by executing the following command:

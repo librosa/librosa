@@ -73,7 +73,8 @@ extensions = [
     "sphinx_multiversion",  # historical builds
     "sphinx_rtd_theme",  # for proper jquery behavior
     "sphinxcontrib.googleanalytics",  # google analytics
-]
+    "myst_parser",  # markdown support for CONTRIBUTING.md inclusion
+]  
 
 # Generate plots for example sections
 if "LIBROSA_DOC_DEBUG" in os.environ:
