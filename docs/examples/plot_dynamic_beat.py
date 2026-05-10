@@ -69,7 +69,7 @@ click_track = librosa.clicks(times=beats_static, sr=sr, click_freq=660,
                              click_duration=0.25, length=len(y))
 
 print(f"Tempo estimate: {tempo[0]:.2f} BPM")
-Audio(data=y+click_track, rate=sr)
+Audio(data=librosa.to_stereo(left=y, right=click_track), rate=sr)
 
 #########################################
 # -------------
@@ -109,7 +109,7 @@ tempo, beats_dynamic = librosa.beat.beat_track(y=y, sr=sr, units='time',
 click_dynamic = librosa.clicks(times=beats_dynamic, sr=sr, click_freq=660,
                                click_duration=0.25, length=len(y))
 
-Audio(data=y+click_dynamic, rate=sr)
+Audio(data=librosa.to_stereo(left=y, right=click_dynamic), rate=sr)
 
 # %%
 # (Note that since we're providing the tempo estimates as input to the beat tracker,

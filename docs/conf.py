@@ -405,7 +405,7 @@ smv_branch_whitelist = (
     r"^main$"  # build main branch, and anything relating to documentation
 )
 smv_tag_whitelist = (
-    r"^((0\.9\.2)|(0\.10\.2)|(0\.11\.\d+))$"  # use this for final builds
+    r"^((0\.10\.2)|(0\.11\.\d+)|(1\.0\.\d+))$"  # use this for final builds
 )
 smv_released_pattern = r".*tags.*"
 smv_remote_whitelist = r"^origin$"
@@ -416,4 +416,5 @@ smv_prefer_remote_refs = True
 
 
 linkcheck_allow_unauthorized = True
-linkcheck_ignore = ['https://www.ee.columbia.edu/~dpwe/resources/.*']
+linkcheck_ignore = ['https://www.ee.columbia.edu/~dpwe/resources/.*', 'https://htk.eng.cam.ac.uk/.*',
+                    'https://zenodo.org/.*']

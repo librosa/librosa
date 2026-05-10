@@ -21,6 +21,7 @@ Array operations
     softmask
     stack
     sync
+    interp_broadcast
 
     axis_sort
     normalize

@@ -56,4 +56,5 @@ from .utils import (
     is_unique as is_unique,
     abs2 as abs2,
     phasor as phasor,
+    interp_broadcast as interp_broadcast
 )
