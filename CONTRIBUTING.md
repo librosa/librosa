@@ -60,7 +60,7 @@ Finally, click 'Create pull request' to send your changes to the
 maintainers for review. This will send an email to the committers.
 
 (If any of the above seems like magic to you, then look up the 
-[Git documentation](http://git-scm.com/documentation) on the web.)
+[Git documentation](https://git-scm.com/docs) on the web.)
 
 It is recommended to check that your contribution complies with the
 following rules before submitting a pull request:
