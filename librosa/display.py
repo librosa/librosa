@@ -12,6 +12,7 @@ Data visualization
     specshow
     waveshow
     wavebars
+    multiplot
 
     colorbar_db
     colorbar_phase
@@ -76,8 +77,9 @@ from typing import (
     List,
     Sequence,
     cast,
+    function,
 )
-from ._typing import _FloatLike_co
+from ._typing import _FloatLike_co, ArrayLike
 
 if TYPE_CHECKING:
     import matplotlib
@@ -2978,7 +2980,7 @@ def _squeeze_shape(shape: Tuple[int, ...]) -> Tuple[int, ...]:
 
 def _resolve_multiplot(
     func: Literal["wave", "bars", "img"],
-) -> Tuple[Callable, int, List[str]]:
+) -> Tuple[function, int, List[str]]:
     """Resolver for multiplot function names.
 
     Parameters
@@ -2998,9 +3000,9 @@ def _resolve_multiplot(
         be removed from the style cycle when sharing properties.
     """
     display_map = {
-        "wave": (librosa.display.waveshow, 1, []),
-        "bars": (librosa.display.wavebars, 1, []),
-        "img": (librosa.display.specshow, 2, ["color"]),
+        "wave": (waveshow, 1, []),
+        "bars": (wavebars, 1, []),
+        "img": (specshow, 2, ["color"]),
     }
 
     try:
@@ -3149,7 +3151,14 @@ def _setup_axes(
         if np.isscalar(axes):
             output_shape = tuple()
 
-        axes = np.atleast_2d(axes)
+        axes = np.atleast_2d(np.asarray(axes))
+
+    # Ensure that axes object is now encapsulated in numpy arrays
+    axes = np.asarray(axes, dtype=object)
+
+    # Populate fig if we haven't already
+    if fig is None:
+        fig = axes.flat[0].get_figure()
 
     if _squeeze_shape(axes.shape) != _squeeze_shape(axshape):
         raise ParameterError(
@@ -3172,6 +3181,7 @@ def _setup_labels(
     shape : tuple of int
         The shape of the grid of axes, determined by the shape of the input data and the
         specified orientation.
+
     Returns
     -------
     np.ndarray
@@ -3185,7 +3195,7 @@ def _setup_labels(
 
 
 def _setup_prop_group(
-    share_properties: Optional[Union[bool, Literal["row", "col"], Sequence]],
+    share_properties: Optional[Union[bool, Literal["row", "col"], ArrayLike]],
     shape: Tuple[int, ...],
 ) -> np.ndarray:
     """Set up the property groups for a multiplot grid.
@@ -3215,10 +3225,10 @@ def _setup_prop_group(
         return np.ones(shape, dtype=int)
 
     if isinstance(share_properties, str) and share_properties == "row":
-        return np.indices(shape)[0]
+        return np.asarray(np.indices(shape)[0])
 
     if isinstance(share_properties, str) and share_properties == "col":
-        return np.indices(shape)[-1]
+        return np.asarray(np.indices(shape)[-1])
 
     prop_group = np.asarray(share_properties)
 
@@ -3288,43 +3298,54 @@ def multiplot(
         - Displaying multiple waveforms from a multi-channel audio file.
         - Displaying multiple spectrograms from a multi-channel audio file.
 
-
     Parameters
     ----------
     func : str
         The name of the display function to use for the multiplot. Accepted values are 'wave', 'bars', and 'img'.
+
     data : np.ndarray
         The input data for the multiplot. The shape of this data will determine the layout of the grid. The last dimensions of the
         data should correspond to the expected input shape of the display function (e.g., (n,) for 'wave' and 'bars', and (n, m)
         for 'img').
+
     axes : matplotlib.axes.Axes, np.ndarray, or None
         The axes to use for the multiplot. If None, a new figure and axes will be created. If a single Axes object is provided, it
         will be used for all subplots. If an array of Axes objects is provided, it must be compatible with the shape of the data.
+
     fig : matplotlib.figure.FigureBase or None
         The figure to use for the multiplot. If None, a new figure will be created if needed.
+
     orient : str
         The orientation of the multiplot grid. Accepted values are 'h' for horizontal and 'v' for vertical. This determines how the
         subplots are arranged when the input data has a single  non-singleton dimension (e.g., shape (n, k) with k > 1).
+
     share_properties : bool, str, np.ndarray, or None
         The property sharing scheme for the multiplot grid. Accepted values are:
-        - `None` or `False`: no properties are shared, and each subplot is treated
-            as a unique group.
+
+        - `None` or `False`: no properties are shared, and each subplot is treated as a unique group.
         - `True`: all subplots share the same properties and belong to a single group.
         - 'row': subplots in the same row share properties and belong to the same group
         - 'col': subplots in the same column share properties and belong to the same group.
         - np.ndarray: a custom array of group identifiers for each subplot. The shape of the
-            array must match the shape of the axes grid.
+          array must match the shape of the axes grid.  Any two elements with the same value
+          are considered to be in the same group and will share properties.
+
     fig_kw : dict or None
         Additional keyword arguments to pass to `plt.subplots` when creating a new figure.
+
     sharex : bool
         Whether to share the x-axis among subplots when creating a new figure.
+
     sharey : bool
         Whether to share the y-axis among subplots when creating a new figure.
+
     label_outer : bool
         Whether to only show labels on the outer axes when using shared axes.
+
     labels : sequence of str or None
         The labels to apply to each subplot in the multiplot grid. If None, no labels
         will be applied. If a sequence is provided, it must be compatible with the shape of the axes.
+
     **kwargs
         Additional keyword arguments to pass to the display function for each subplot.
 
@@ -3333,10 +3354,25 @@ def multiplot(
     np.ndarray
         An array of display objects returned by the display function for each subplot in the multiplot grid
         The shape of this array will be compatible with the shape of the axes grid.
+
+    Examples
+    --------
+    Display multiple synchronized signals stacked in an array.  We'll use ``librosa.decompose.hpss`` as an example.
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
+    >>> yh, yp = librosa.effects.hpss(y)
+    >>> data = librosa.to_multi(y, yh, yp)
+    >>> librosa.display.multiplot('wave', data, share_properties='row', labels=['original', 'harmonic', 'percussive'], sharex=True, sharey=True)
+    >>> plt.show()
     """
+    # Identify the display function and the expected data dimensions for each subplot
     function, dims, badprops = _resolve_multiplot(func)
+
+    # Determine the layout of the multiplot grid based on the data shape and orientation
     data, axshape, nrows, ncols = _get_layout(data, dims, orient)
 
+    # Set up the figure and axes for the multiplot grid
     fig, axes, output_shape = _setup_axes(
         axes=axes,
         fig=fig,
@@ -3350,12 +3386,15 @@ def multiplot(
         sharey=sharey,
     )
 
-    labels = _setup_labels(labels, axes.shape)
+    # Set up the labels and properties for each subplot in the multiplot grid
+    labels: np.ndarray = _setup_labels(labels, axes.shape)
     prop_group = _setup_prop_group(share_properties, axes.shape)
-    properties = _setup_properties(prop_group, badprops)
+    properties: np.ndarray = _setup_properties(prop_group, badprops)
 
+    # Allocate the output array
     output = np.empty_like(axes, dtype=object)
 
+    # Iterate over each subplot and call the display function with the appropriate data, axes, labels, and properties
     for idx in np.ndindex(axshape):
         flat_idx = np.ravel_multi_index(idx, axshape)
         output.flat[flat_idx] = function(
@@ -3369,4 +3408,5 @@ def multiplot(
         if label_outer:
             axes.flat[flat_idx].label_outer()
 
+    # Reshape the output array to match the shape of the axes grid
     return output.reshape(output_shape)
