@@ -146,6 +146,7 @@ plot_rcparams = {
     "figure.subplot.top": 0.85,
     "figure.subplot.wspace": 0.4,
     "text.usetex": False,
+    "savefig.bbox": "tight",
 }
 
 

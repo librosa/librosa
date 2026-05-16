@@ -16,6 +16,7 @@ Data visualization
 
     colorbar_db
     colorbar_phase
+    legend_for_axes
 
 Axis formatting
 ---------------
@@ -58,6 +59,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.patches as mpatches
 import matplotlib.collections as mcollections
+from matplotlib.transforms import Bbox
 
 from . import core
 from . import util
@@ -2998,7 +3000,7 @@ def _resolve_multiplot(
         A list of property names that are not supported by the display function and should
         be removed from the style cycle when sharing properties.
     """
-    display_map: dict[str, tuple[Callable[..., Any], int, list[str]]]  = {
+    display_map: dict[str, tuple[Callable[..., Any], int, list[str]]] = {
         "wave": (waveshow, 1, []),
         "bars": (wavebars, 1, []),
         "img": (specshow, 2, ["color"]),
@@ -3359,6 +3361,7 @@ def multiplot(
     waveshow
     wavebars
     specshow
+    legend_for_axes
 
     Examples
     --------
@@ -3368,20 +3371,21 @@ def multiplot(
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> yh, yp = librosa.effects.hpss(y)
-    >>> y_stack = librosa.to_multi(y, yh, yp)
+    >>> y_stack = librosa.to_multi(y, yh, yp)  # Stack signals into one (3,n) array
     >>> librosa.display.multiplot('wave', y_stack, sr=sr, share_properties='row',
     ...                           labels=['original', 'harmonic', 'percussive'],
     ...                           sharex=True, sharey=True,
     ...                           label_outer=True,
     ...                           invert=True)
+    >>> librosa.display.legend_for_axes()  # Helper to create a single legend across subplots
     >>> plt.show()
 
-    Multiplot can also accept preconstructed axes as input, provided that they 
+    Multiplot can also accept preconstructed axes as input, provided that they
     are compatible with the shape of the data.  The below example does this
     with a spectrogram display.
 
     >>> stft = librosa.stft(y=y_stack)
-    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True, figsize=(12, 5))
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True, figsize=(8, 8))
     >>> img = librosa.display.multiplot('img', stft, axes=ax,
     ...                                 label_outer=True,
     ...                                 x_axis='time', y_axis='log', vscale='dBFS')
@@ -3432,3 +3436,152 @@ def multiplot(
 
     # Reshape the output array to match the shape of the axes grid
     return output.reshape(output_shape)
+
+
+def legend_for_axes(
+    axes: Optional[Union[matplotlib.axes.Axes, np.ndarray]] = None,
+    *,
+    loc: Optional[str] = None,
+    pad: float = 0.02,
+    fraction: float = 0.2,
+    width: Optional[float] = None,
+    height: Optional[float] = None,
+    fig: Optional[matplotlib.figure.FigureBase] = None,
+    **kwargs,
+) -> matplotlib.legend.Legend:
+    """Create a figure-level legend for a collection of axes.
+
+    Parameters
+    ----------
+    axes : matplotlib.axes.Axes or array-like of Axes, optional
+        Axes to include in the legend aggregation.
+        If not provided, axes are taken from `fig.axes`, or from the
+        current figure if `fig` is not provided.
+    loc : str, optional
+        Legend location, passed through to `matplotlib.figure.Figure.legend`.
+        If not provided, a default is inferred from `axes` shape:
+
+        - 1D input -> ``"center left"``
+        - shape ``(n, 1)`` -> ``"center left"``
+        - shape ``(1, n)`` -> ``"lower center"``
+        - shape ``(m, n)`` with ``m > 1`` and ``n > 1`` -> ``"center left"``
+
+        If `bbox_to_anchor` is not provided in `kwargs`, a legend box is
+        synthesized relative to the union of the selected axes based on `loc`.
+    pad : float
+        Padding, in figure-relative coordinates, between the selected
+        axes region and the legend box.
+    fraction : float
+        Fraction of the selected axes extent to use for the default legend-box
+        thickness when `width` or `height` is not provided.
+
+        For left/right placement, the default legend-box width is
+        `fraction * union.width`.
+
+        For above/below placement, the default legend-box height is
+        `fraction * union.height`.
+    width : float, optional
+        Width of the synthesized legend box in figure-relative coordinates.
+        Ignored if `bbox_to_anchor` is provided.
+    height : float, optional
+        Height of the synthesized legend box in figure-relative coordinates.
+        Ignored if `bbox_to_anchor` is provided.
+    fig : matplotlib.figure.Figure, optional
+        Figure on which to create the legend.
+        If not provided, it is inferred from `axes`, or from `plt.gcf()`
+        if `axes` is also not provided.
+    **kwargs
+        Additional keyword arguments passed to `matplotlib.figure.Figure.legend`.
+
+    Returns
+    -------
+    legend : matplotlib.legend.Legend
+        The created legend.
+    """
+    if axes is None:
+        if fig is None:
+            fig = plt.gcf()
+        axes = fig.axes
+
+    axes = np.asarray(axes, dtype=object)
+
+    if axes.ndim == 0:
+        axes = axes.reshape(1)
+    elif axes.ndim > 2:
+        raise ParameterError(
+            f"Cannot infer legend placement for axes with ndim={axes.ndim}"
+        )
+
+    axes_list = axes.ravel().tolist()
+
+    if not axes_list:
+        raise ParameterError("No axes provided for legend aggregation")
+
+    if fig is None:
+        fig = axes_list[0].figure
+
+    for ax in axes_list:
+        if ax.figure is not fig:
+            raise ParameterError("All axes must belong to the same figure")
+
+    handles = []
+    labels = []
+
+    for ax in axes_list:
+        hlist, llist = ax.get_legend_handles_labels()
+        handles.extend(hlist)
+        labels.extend(llist)
+
+    if loc is None:
+        if axes.ndim == 1:
+            loc = "center left"
+        elif axes.shape[0] == 1 and axes.shape[1] > 1:
+            loc = "lower center"
+        elif axes.shape[1] == 1 and axes.shape[0] > 1:
+            loc = "center left"
+        else:
+            loc = "center left"
+
+    if "bbox_to_anchor" not in kwargs:
+        union = Bbox.union([ax.get_position() for ax in axes_list])
+        uw = union.width
+        uh = union.height
+
+        if loc in ("upper left", "center left", "lower left"):
+            # Place legend box to the right of the selected axes
+            w = width if width is not None else fraction * uw
+            h = height if height is not None else uh
+            x0 = union.x1 + pad
+            y0 = union.y0
+
+        elif loc in ("upper right", "center right", "lower right"):
+            # Place legend box to the left of the selected axes
+            w = width if width is not None else fraction * uw
+            h = height if height is not None else uh
+            x0 = union.x0 - pad - w
+            y0 = union.y0
+
+        elif loc == "lower center":
+            # Place legend box above the selected axes
+            w = width if width is not None else uw
+            h = height if height is not None else fraction * uh
+            x0 = union.x0
+            y0 = union.y1 + pad
+
+        elif loc == "upper center":
+            # Place legend box below the selected axes
+            w = width if width is not None else uw
+            h = height if height is not None else fraction * uh
+            x0 = union.x0
+            y0 = union.y0 - pad - h
+
+        else:
+            raise ParameterError(
+                f"Automatic bbox placement is not defined for loc={loc!r}. "
+                "Please provide bbox_to_anchor explicitly."
+            )
+
+        kwargs["bbox_to_anchor"] = Bbox.from_extents(x0, y0, x0 + w, y0 + h)
+        kwargs["bbox_transform"] = fig.transFigure
+
+    return fig.legend(handles, labels, loc=loc, **kwargs)
