@@ -3362,13 +3362,30 @@ def multiplot(
 
     Examples
     --------
-    Display multiple synchronized signals stacked in an array.  We'll use ``librosa.decompose.hpss`` as an example.
+    Display multiple synchronized signals stacked in an array.  We'll let multiplot create
+    the figure and axes objects for us.
 
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> yh, yp = librosa.effects.hpss(y)
-    >>> data = librosa.to_multi(y, yh, yp)
-    >>> librosa.display.multiplot('wave', data, share_properties='row', labels=['original', 'harmonic', 'percussive'], sharex=True, sharey=True)
+    >>> y_stack = librosa.to_multi(y, yh, yp)
+    >>> librosa.display.multiplot('wave', y_stack, sr=sr, share_properties='row',
+    ...                           labels=['original', 'harmonic', 'percussive'],
+    ...                           sharex=True, sharey=True,
+    ...                           label_outer=True,
+    ...                           invert=True)
+    >>> plt.show()
+
+    Multiplot can also accept preconstructed axes as input, provided that they 
+    are compatible with the shape of the data.  The below example does this
+    with a spectrogram display.
+
+    >>> stft = librosa.stft(y=y_stack)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True, figsize=(12, 5))
+    >>> img = librosa.display.multiplot('img', stft, axes=ax,
+    ...                                 label_outer=True,
+    ...                                 x_axis='time', y_axis='log', vscale='dBFS')
+    >>> librosa.display.colorbar_db(img[0], ax=ax, label='dBFS')
     >>> plt.show()
     """
     # Identify the display function and the expected data dimensions for each subplot
