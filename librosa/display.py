@@ -77,7 +77,6 @@ from typing import (
     List,
     Sequence,
     cast,
-    function,
 )
 from ._typing import _FloatLike_co, ArrayLike
 
@@ -2980,7 +2979,7 @@ def _squeeze_shape(shape: Tuple[int, ...]) -> Tuple[int, ...]:
 
 def _resolve_multiplot(
     func: Literal["wave", "bars", "img"],
-) -> Tuple[function, int, List[str]]:
+) -> Tuple[Callable[..., Any], int, List[str]]:
     """Resolver for multiplot function names.
 
     Parameters
@@ -2999,7 +2998,7 @@ def _resolve_multiplot(
         A list of property names that are not supported by the display function and should
         be removed from the style cycle when sharing properties.
     """
-    display_map = {
+    display_map: dict[str, tuple[Callable[..., Any], int, list[str]]]  = {
         "wave": (waveshow, 1, []),
         "bars": (wavebars, 1, []),
         "img": (specshow, 2, ["color"]),
@@ -3354,6 +3353,12 @@ def multiplot(
     np.ndarray
         An array of display objects returned by the display function for each subplot in the multiplot grid
         The shape of this array will be compatible with the shape of the axes grid.
+
+    See Also
+    --------
+    waveshow
+    wavebars
+    specshow
 
     Examples
     --------
