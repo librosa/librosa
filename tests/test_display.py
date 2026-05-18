@@ -1601,6 +1601,31 @@ def test_legend_for_axes_no_axes():
     librosa.display.legend_for_axes(fig=fig)
 
 
+def test_legend_for_axes_current():
+    fig, ax = plt.subplots(nrows=2, ncols=2)
+    ax[0,0].plot(np.arange(4), label='line')
+
+    leg = librosa.display.legend_for_axes()
+    assert leg is not None
+    assert leg.figure is fig
+
+
+def test_legend_for_axes_scalar():
+    fig, ax = plt.subplots()
+    ax.plot(np.arange(4), label='line')
+    leg = librosa.display.legend_for_axes(axes=ax)
+    assert leg is not None
+    assert leg.figure is fig
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_legend_for_axes_toomanydimensions():
+    fig, ax = plt.subplots(nrows=2, ncols=2)
+
+    ax_stack = np.stack([ax, ax], axis=0)
+    librosa.display.legend_for_axes(axes=ax_stack)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_legend_for_axes_mismatched_figures():
     fig1, ax1 = plt.subplots()
