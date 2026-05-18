@@ -3309,12 +3309,12 @@ def multiplot(
     func : str
         The name of the display function to use for the multiplot. Accepted values are 'wave', 'bars', and 'img'.
 
-    data : np.ndarray or multiple ndarrays
-        The input data for the multiplot. 
+    *data : np.ndarray or multiple ndarrays
+        The input data for the multiplot.
         The last dimensions of the data should correspond to the expected input shape of the display function (e.g., (n,) for 'wave' and 'bars', and (n, m)
         for 'img').
         `data` can either be a single multi-dimensional array, or multiple separate arrays to plot.  If a single array is provided, the shape of the
-        array will determine the layout of the multiplot grid.  If multiple arrays are provided, they will be plotted in the order they are given, and the 
+        array will determine the layout of the multiplot grid.  If multiple arrays are provided, they will be plotted in the order they are given, and the
         number of arrays will determine the layout of the multiplot grid.
 
     axes : matplotlib.axes.Axes, np.ndarray, or None
@@ -3470,6 +3470,7 @@ def legend_for_axes(
         Axes to include in the legend aggregation.
         If not provided, axes are taken from `fig.axes`, or from the
         current figure if `fig` is not provided.
+
     loc : str, optional
         Legend location, passed through to `matplotlib.figure.Figure.legend`.
         If not provided, a default is inferred from `axes` shape:
@@ -3481,9 +3482,11 @@ def legend_for_axes(
 
         If `bbox_to_anchor` is not provided in `kwargs`, a legend box is
         synthesized relative to the union of the selected axes based on `loc`.
+
     pad : float
         Padding, in figure-relative coordinates, between the selected
         axes region and the legend box.
+
     fraction : float
         Fraction of the selected axes extent to use for the default legend-box
         thickness when `width` or `height` is not provided.
@@ -3493,16 +3496,20 @@ def legend_for_axes(
 
         For above/below placement, the default legend-box height is
         `fraction * union.height`.
+
     width : float, optional
         Width of the synthesized legend box in figure-relative coordinates.
         Ignored if `bbox_to_anchor` is provided.
+
     height : float, optional
         Height of the synthesized legend box in figure-relative coordinates.
         Ignored if `bbox_to_anchor` is provided.
+
     fig : matplotlib.figure.Figure, optional
         Figure on which to create the legend.
         If not provided, it is inferred from `axes`, or from `plt.gcf()`
         if `axes` is also not provided.
+
     **kwargs
         Additional keyword arguments passed to `matplotlib.figure.Figure.legend`.
 
