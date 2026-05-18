@@ -1777,6 +1777,84 @@ def test_legend_for_axes_below():
     return fig
 
 
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_default_1d"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_default_1d():
+    fig, axes = plt.subplots(nrows=3, figsize=(8, 6), sharex=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    fig.subplots_adjust(right=0.8)
+    librosa.display.legend_for_axes(axes=axes)
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_default_row"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_default_row():
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(8, 4), sharey=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    axes = np.asarray(axes)[np.newaxis, :]
+    fig.subplots_adjust(top=0.8)
+    librosa.display.legend_for_axes(axes=axes)
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_default_col"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_default_col():
+    fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(8, 6), sharex=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    axes = np.asarray(axes)[:, np.newaxis]
+    fig.subplots_adjust(right=0.8)
+    librosa.display.legend_for_axes(axes=axes)
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_default_grid"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_default_grid():
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 6), sharex=True, sharey=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    fig.subplots_adjust(right=0.8)
+    librosa.display.legend_for_axes(axes=axes)
+
+    return fig
+
+
 def test_squeeze_shape():
     assert librosa.display._squeeze_shape((3,)) == (3,)
     assert librosa.display._squeeze_shape((1, 3)) == (3,)
