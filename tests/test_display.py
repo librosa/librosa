@@ -1594,3 +1594,111 @@ def test_wavebars_transpose(y, sr):
 
     return fig
 
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_legend_for_axes_no_axes():
+    fig = plt.figure()
+    librosa.display.legend_for_axes(fig=fig)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_legend_for_axes_mismatched_figures():
+    fig1, ax1 = plt.subplots()
+    fig2, ax2 = plt.subplots()
+
+    librosa.display.legend_for_axes([ax1, ax2])
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_legend_for_axes_bad_loc():
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], label="a")
+
+    librosa.display.legend_for_axes([ax], loc="center")
+
+
+def test_legend_for_axes_explicit_bbox():
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], label="a")
+
+    leg = librosa.display.legend_for_axes(
+        [ax], loc="center", bbox_to_anchor=(0.5, 0.5, 0.2, 0.2)
+    )
+
+    assert leg is not None
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_right"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_right():
+    fig, axes = plt.subplots(nrows=3, figsize=(8, 6), sharex=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}")
+
+    fig.subplots_adjust(right=0.8)
+    librosa.display.legend_for_axes(axes=axes, loc="center left")
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_left"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_left():
+    fig, axes = plt.subplots(nrows=2, figsize=(8, 4), sharex=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}")
+
+    fig.subplots_adjust(left=0.25)
+    librosa.display.legend_for_axes(axes=axes, loc="center right")
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_above"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_above():
+    fig, axes = plt.subplots(ncols=3, figsize=(8, 4), sharey=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}")
+
+    fig.subplots_adjust(top=0.8)
+    librosa.display.legend_for_axes(axes=axes, loc="lower center", ncol=3)
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_below"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_below():
+    fig, axes = plt.subplots(ncols=3, figsize=(8, 4), sharey=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}")
+
+    fig.subplots_adjust(bottom=0.25)
+    librosa.display.legend_for_axes(axes=axes, loc="upper center", ncol=3)
+
+    return fig
