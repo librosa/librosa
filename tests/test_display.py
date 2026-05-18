@@ -1755,7 +1755,7 @@ def test_resolve_multiplot(func, dims, badprops):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_resolve_multiplot_bad():
-    librosa.display._resolve_multiplot("bogus")
+    librosa.display._resolve_multiplot("bogus")  # type: ignore
 
 
 @pytest.mark.parametrize(
@@ -1783,7 +1783,7 @@ def test_mp_get_layout(data, dims, orient, axshape, nrows, ncols, multi_input):
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_mp_get_layout_bad_orient():
-    librosa.display._mp_get_layout((np.zeros((3, 10)),), dims=1, orient="q")
+    librosa.display._mp_get_layout((np.zeros((3, 10)),), dims=1, orient="q")  # type: ignore
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
