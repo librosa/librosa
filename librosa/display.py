@@ -3186,7 +3186,7 @@ def _mp_setup_labels(
         axes.
     """
     if labels is None:
-        return np.empty(shape, dtype=object)
+        return np.full(shape, None, dtype=object)
 
     return np.asarray(labels, dtype=object).reshape(shape)
 
