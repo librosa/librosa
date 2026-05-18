@@ -2982,7 +2982,7 @@ def _squeeze_shape(shape: Tuple[int, ...]) -> Tuple[int, ...]:
 def _resolve_multiplot(
     func: Literal["wave", "bars", "img"],
 ) -> Tuple[Callable[..., Any], int, List[str]]:
-    """Resolver for multiplot function names.
+    """Resolve multiplot function names.
 
     Parameters
     ----------
@@ -3039,12 +3039,11 @@ def _mp_get_layout(
         If the input contains multiple separate arrays to plot,
         this flag is True.  Otherwise, False.
     """
-
     if orient not in ("h", "v"):
         raise ParameterError(f"Invalid value orient={orient}")
 
     multi_plot = False
-    if len(data) == 1:
+    if len(data) == 1 and isinstance(data[0], np.ndarray) and data[0].ndim > dims:
         data_stack = np.asarray(data[0])
 
         if data_stack.ndim <= dims:
@@ -3054,7 +3053,7 @@ def _mp_get_layout(
 
         axshape = data_stack.shape[:-dims]
 
-    elif len(data) > 1:
+    elif len(data) >= 1:
         multi_plot = True
         axshape = (len(data),)
     else:
@@ -3120,7 +3119,6 @@ def _mp_setup_axes(
     output_shape : tuple of int
         The shape of the output array of display objects, determined by the shape of the axes.
     """
-
     output_shape = axshape
 
     if axes is None:
@@ -3168,9 +3166,7 @@ def _mp_setup_axes(
         fig = axes.flat[0].get_figure()
 
     if _squeeze_shape(axes.shape) != _squeeze_shape(axshape):
-        raise ParameterError(
-            f"axes shape={axes.shape} is incompatible with data shape"
-        )
+        raise ParameterError(f"axes shape={axes.shape} is incompatible with data shape")
 
     return fig, axes, output_shape
 
@@ -3263,7 +3259,6 @@ def _mp_setup_properties(prop_group: np.ndarray, badprops: List[str]) -> np.ndar
     np.ndarray
         An array of property dictionaries for each subplot in the multiplot grid, with shape compatible with the axes.
     """
-
     properties = np.empty(prop_group.shape, dtype=object)
     properties.fill(None)
 
@@ -3452,7 +3447,9 @@ def multiplot(
 
 
 def legend_for_axes(
-    axes: Optional[Union[matplotlib.axes.Axes, np.ndarray, List[matplotlib.axes.Axes]]] = None,
+    axes: Optional[
+        Union[matplotlib.axes.Axes, np.ndarray, List[matplotlib.axes.Axes]]
+    ] = None,
     *,
     loc: Optional[str] = None,
     pad: float = 0.02,
