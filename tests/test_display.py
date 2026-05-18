@@ -2070,6 +2070,8 @@ def test_mp_setup_labels_none():
 
     assert labels.shape == (2, 2)
     assert labels.dtype == object
+    # Comparison to None here is vectorized, so == is correct, not `is`.
+    assert np.all(labels == None)
 
 
 def test_mp_setup_labels_values():
