@@ -3309,10 +3309,13 @@ def multiplot(
     func : str
         The name of the display function to use for the multiplot. Accepted values are 'wave', 'bars', and 'img'.
 
-    data : np.ndarray
-        The input data for the multiplot. The shape of this data will determine the layout of the grid. The last dimensions of the
-        data should correspond to the expected input shape of the display function (e.g., (n,) for 'wave' and 'bars', and (n, m)
+    data : np.ndarray or multiple ndarrays
+        The input data for the multiplot. 
+        The last dimensions of the data should correspond to the expected input shape of the display function (e.g., (n,) for 'wave' and 'bars', and (n, m)
         for 'img').
+        `data` can either be a single multi-dimensional array, or multiple separate arrays to plot.  If a single array is provided, the shape of the
+        array will determine the layout of the multiplot grid.  If multiple arrays are provided, they will be plotted in the order they are given, and the 
+        number of arrays will determine the layout of the multiplot grid.
 
     axes : matplotlib.axes.Axes, np.ndarray, or None
         The axes to use for the multiplot. If None, a new figure and axes will be created. If a single Axes object is provided, it
@@ -3376,8 +3379,7 @@ def multiplot(
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> yh, yp = librosa.effects.hpss(y)
-    >>> y_stack = librosa.to_multi(y, yh, yp)  # Stack signals into one (3,n) array
-    >>> librosa.display.multiplot('wave', y_stack, sr=sr, share_properties='row',
+    >>> librosa.display.multiplot('wave', y, yh, yp, sr=sr, share_properties='row',
     ...                           labels=['original', 'harmonic', 'percussive'],
     ...                           sharex=True, sharey=True,
     ...                           label_outer=True,
@@ -3389,6 +3391,7 @@ def multiplot(
     are compatible with the shape of the data.  The below example does this
     with a spectrogram display.
 
+    >>> y_stack = librosa.to_multi(y, yh, yp)
     >>> stft = librosa.stft(y=y_stack)
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True, figsize=(8, 8))
     >>> img = librosa.display.multiplot('img', stft, axes=ax,
