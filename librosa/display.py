@@ -3285,6 +3285,7 @@ def multiplot(
     sharey: bool = True,
     label_outer: bool = True,
     labels: Optional[Sequence[str]] = None,
+    titles: Optional[Sequence[str]] = None,
     **kwargs,
 ) -> np.ndarray:
     """Create multiple visualizations from a multi-channel input array.
@@ -3344,6 +3345,10 @@ def multiplot(
         The labels to apply to each subplot in the multiplot grid. If None, no labels
         will be applied. If a sequence is provided, it must be compatible with the shape of the axes.
 
+    titles : sequence of str or None
+        The titles to apply to each subplot in the multiplot grid. If None, no titles
+        will be applied. If a sequence is provided, it must be compatible with the shape of the axes.
+
     **kwargs
         Additional keyword arguments to pass to the display function for each subplot.
 
@@ -3369,7 +3374,7 @@ def multiplot(
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> yh, yp = librosa.effects.hpss(y)
     >>> librosa.display.multiplot('wave', y, yh, yp, sr=sr, share_properties='row',
-    ...                           labels=['original', 'harmonic', 'percussive'],
+    ...                           labels=['Original', 'Harmonic', 'Percussive'],
     ...                           sharex=True, sharey=True,
     ...                           label_outer=True,
     ...                           invert=True)
@@ -3385,6 +3390,7 @@ def multiplot(
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True, figsize=(8, 8))
     >>> img = librosa.display.multiplot('img', stft, axes=ax,
     ...                                 label_outer=True,
+    ...                                 titles=['Original', 'Harmonic', 'Percussive'],
     ...                                 x_axis='time', y_axis='log', vscale='dBFS')
     >>> librosa.display.colorbar_db(img[0], ax=ax, label='dBFS')
     >>> plt.show()
@@ -3410,6 +3416,7 @@ def multiplot(
 
     # Set up the labels and properties for each subplot in the multiplot grid
     labels: np.ndarray = _mp_setup_labels(labels, axes.shape)
+    titles: np.ndarray = _mp_setup_labels(titles, axes.shape)
     prop_group = _mp_setup_prop_group(share_properties, axes.shape)
     properties: np.ndarray = _mp_setup_properties(prop_group, badprops)
 
@@ -3432,7 +3439,8 @@ def multiplot(
             **properties.flat[flat_idx],
             **kwargs,
         )
-
+        if titles.flat[flat_idx] is not None:
+            axes.flat[flat_idx].set_title(titles.flat[flat_idx])
         if label_outer:
             axes.flat[flat_idx].label_outer()
 
