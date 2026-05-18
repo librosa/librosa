@@ -1639,7 +1639,7 @@ def test_legend_for_axes_right():
     fig, axes = plt.subplots(nrows=3, figsize=(8, 6), sharex=True)
 
     for i, ax in enumerate(np.ravel(axes)):
-        ax.plot([0, 1], [i, i + 1], label=f"line-{i}")
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
     fig.subplots_adjust(right=0.8)
     librosa.display.legend_for_axes(axes=axes, loc="center left")
@@ -1658,7 +1658,7 @@ def test_legend_for_axes_left():
     fig, axes = plt.subplots(nrows=2, figsize=(8, 4), sharex=True)
 
     for i, ax in enumerate(np.ravel(axes)):
-        ax.plot([0, 1], [i, i + 1], label=f"line-{i}")
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
     fig.subplots_adjust(left=0.25)
     librosa.display.legend_for_axes(axes=axes, loc="center right")
@@ -1677,7 +1677,7 @@ def test_legend_for_axes_above():
     fig, axes = plt.subplots(ncols=3, figsize=(8, 4), sharey=True)
 
     for i, ax in enumerate(np.ravel(axes)):
-        ax.plot([0, 1], [i, i + 1], label=f"line-{i}")
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
     fig.subplots_adjust(top=0.8)
     librosa.display.legend_for_axes(axes=axes, loc="lower center", ncol=3)
@@ -1696,7 +1696,7 @@ def test_legend_for_axes_below():
     fig, axes = plt.subplots(ncols=3, figsize=(8, 4), sharey=True)
 
     for i, ax in enumerate(np.ravel(axes)):
-        ax.plot([0, 1], [i, i + 1], label=f"line-{i}")
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
     fig.subplots_adjust(bottom=0.25)
     librosa.display.legend_for_axes(axes=axes, loc="upper center", ncol=3)
