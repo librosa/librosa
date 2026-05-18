@@ -3045,12 +3045,6 @@ def _mp_get_layout(
     multi_plot = False
     if len(data) == 1 and isinstance(data[0], np.ndarray) and data[0].ndim > dims:
         data_stack = np.asarray(data[0])
-
-        if data_stack.ndim <= dims:
-            raise ParameterError(
-                f"multiplot requires data of ndim={data_stack.ndim} > {dims} for mode"
-            )
-
         axshape = data_stack.shape[:-dims]
 
     elif len(data) >= 1:
@@ -3153,7 +3147,7 @@ def _mp_setup_axes(
                 axes = axes[np.newaxis, :]
 
     else:
-        if np.isscalar(axes):
+        if not isinstance(axes, np.ndarray):
             output_shape = tuple()
 
         axes = np.atleast_2d(np.asarray(axes))
