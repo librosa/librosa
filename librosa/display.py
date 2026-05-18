@@ -3012,9 +3012,9 @@ def _resolve_multiplot(
         raise ParameterError(f"Invalid display '{func}' for multiplot") from exc
 
 
-def _get_layout(
-    data: np.ndarray, dims: int, orient: Literal["h", "v"]
-) -> Tuple[np.ndarray, Tuple[int, ...], int, int]:
+def _mp_get_layout(
+    data: Tuple[np.ndarray, ...], dims: int, orient: Literal["h", "v"]
+) -> Tuple[Tuple[int, ...], int, int, bool]:
     """Determine the layout of a multiplot grid based on the data shape and orientation.
 
     Parameters
@@ -3028,8 +3028,6 @@ def _get_layout(
 
     Returns
     -------
-    data : np.ndarray
-        The input data converted to a NumPy array.
     axshape : tuple of int
         The shape of the grid of axes, determined by the shape of the input data and the
         specified orientation.
@@ -3037,19 +3035,30 @@ def _get_layout(
         The number of rows in the grid of axes.
     ncols : int
         The number of columns in the grid of axes.
+    multi_input : bool
+        If the input contains multiple separate arrays to plot,
+        this flag is True.  Otherwise, False.
     """
 
     if orient not in ("h", "v"):
         raise ParameterError(f"Invalid value orient={orient}")
 
-    data = np.asarray(data)
+    multi_plot = False
+    if len(data) == 1:
+        data_stack = np.asarray(data[0])
 
-    if data.ndim <= dims:
-        raise ParameterError(
-            f"multiplot requires data of ndim={data.ndim} > {dims} for mode"
-        )
+        if data_stack.ndim <= dims:
+            raise ParameterError(
+                f"multiplot requires data of ndim={data_stack.ndim} > {dims} for mode"
+            )
 
-    axshape = data.shape[:-dims]
+        axshape = data_stack.shape[:-dims]
+
+    elif len(data) > 1:
+        multi_plot = True
+        axshape = (len(data),)
+    else:
+        raise ParameterError("multiplot requires at least one data array to plot")
 
     if len(axshape) == 1:
         if orient == "v":
@@ -3061,10 +3070,10 @@ def _get_layout(
     else:
         raise ParameterError(f"Invalid axes shape={axshape}")
 
-    return data, axshape, nrows, ncols
+    return axshape, nrows, ncols, multi_plot
 
 
-def _setup_axes(
+def _mp_setup_axes(
     *,
     axes: Optional[Union[matplotlib.axes.Axes, np.ndarray]],
     fig: Optional[matplotlib.figure.FigureBase] = None,
@@ -3072,7 +3081,6 @@ def _setup_axes(
     nrows: int,
     ncols: int,
     axshape: Tuple[int, ...],
-    data_shape: Tuple[int, ...],
     orient: Literal["h", "v"],
     sharex: bool,
     sharey: bool,
@@ -3096,8 +3104,6 @@ def _setup_axes(
     axshape : tuple of int
         The shape of the grid of axes, determined by the shape of the input data and the
         specified orientation.
-    data_shape : tuple of int
-        The shape of the input data for the multiplot.
     orient : str
         The orientation of the multiplot grid. Accepted values are 'h' for horizontal and 'v' for vertical.
     sharex : bool
@@ -3163,13 +3169,13 @@ def _setup_axes(
 
     if _squeeze_shape(axes.shape) != _squeeze_shape(axshape):
         raise ParameterError(
-            f"axes shape={axes.shape} is incompatible with data shape={data_shape}"
+            f"axes shape={axes.shape} is incompatible with data shape"
         )
 
     return fig, axes, output_shape
 
 
-def _setup_labels(
+def _mp_setup_labels(
     labels: Optional[Sequence[str]], shape: Tuple[int, ...]
 ) -> np.ndarray:
     """Set up the labels for a multiplot grid.
@@ -3195,7 +3201,7 @@ def _setup_labels(
     return np.asarray(labels, dtype=object).reshape(shape)
 
 
-def _setup_prop_group(
+def _mp_setup_prop_group(
     share_properties: Optional[Union[bool, Literal["row", "col"], ArrayLike]],
     shape: Tuple[int, ...],
 ) -> np.ndarray:
@@ -3242,7 +3248,7 @@ def _setup_prop_group(
     return prop_group.reshape(shape)
 
 
-def _setup_properties(prop_group: np.ndarray, badprops: List[str]) -> np.ndarray:
+def _mp_setup_properties(prop_group: np.ndarray, badprops: List[str]) -> np.ndarray:
     """Set up the properties for each subplot in a multiplot grid based on the property groups.
 
     Parameters
@@ -3280,8 +3286,7 @@ def _setup_properties(prop_group: np.ndarray, badprops: List[str]) -> np.ndarray
 
 def multiplot(
     func: Literal["wave", "bars", "img"],
-    data: np.ndarray,
-    *,
+    *data: np.ndarray,
     axes: Optional[Union[matplotlib.axes.Axes, np.ndarray]] = None,
     fig: Optional[matplotlib.figure.FigureBase] = None,
     orient: Literal["v", "h"] = "v",
@@ -3396,26 +3401,25 @@ def multiplot(
     function, dims, badprops = _resolve_multiplot(func)
 
     # Determine the layout of the multiplot grid based on the data shape and orientation
-    data, axshape, nrows, ncols = _get_layout(data, dims, orient)
+    axshape, nrows, ncols, multi_input = _mp_get_layout(data, dims, orient)
 
     # Set up the figure and axes for the multiplot grid
-    fig, axes, output_shape = _setup_axes(
+    fig, axes, output_shape = _mp_setup_axes(
         axes=axes,
         fig=fig,
         fig_kw=fig_kw,
         nrows=nrows,
         ncols=ncols,
         axshape=axshape,
-        data_shape=data.shape,
         orient=orient,
         sharex=sharex,
         sharey=sharey,
     )
 
     # Set up the labels and properties for each subplot in the multiplot grid
-    labels: np.ndarray = _setup_labels(labels, axes.shape)
-    prop_group = _setup_prop_group(share_properties, axes.shape)
-    properties: np.ndarray = _setup_properties(prop_group, badprops)
+    labels: np.ndarray = _mp_setup_labels(labels, axes.shape)
+    prop_group = _mp_setup_prop_group(share_properties, axes.shape)
+    properties: np.ndarray = _mp_setup_properties(prop_group, badprops)
 
     # Allocate the output array
     output = np.empty_like(axes, dtype=object)
@@ -3423,8 +3427,14 @@ def multiplot(
     # Iterate over each subplot and call the display function with the appropriate data, axes, labels, and properties
     for idx in np.ndindex(axshape):
         flat_idx = np.ravel_multi_index(idx, axshape)
+        if multi_input:
+            # User provided variadic inputs, so use flat indexing
+            datum = data[flat_idx]
+        else:
+            # User already stacked the inputs into one array.
+            datum = data[0][idx]
         output.flat[flat_idx] = function(
-            data[idx],
+            datum,
             ax=axes.flat[flat_idx],
             label=labels.flat[flat_idx],
             **properties.flat[flat_idx],
