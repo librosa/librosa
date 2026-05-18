@@ -1702,3 +1702,263 @@ def test_legend_for_axes_below():
     librosa.display.legend_for_axes(axes=axes, loc="upper center", ncol=3)
 
     return fig
+
+
+def test_squeeze_shape():
+    assert librosa.display._squeeze_shape((3,)) == (3,)
+    assert librosa.display._squeeze_shape((1, 3)) == (3,)
+    assert librosa.display._squeeze_shape((3, 1)) == (3,)
+    assert librosa.display._squeeze_shape((1, 3, 1, 2, 1)) == (3, 2)
+    assert librosa.display._squeeze_shape((1, 1, 1)) == ()
+
+
+@pytest.mark.parametrize(
+    "func,dims,badprops",
+    [
+        ("wave", 1, []),
+        ("bars", 1, []),
+        ("img", 2, ["color"]),
+    ],
+)
+def test_resolve_multiplot(func, dims, badprops):
+    function, dims_out, badprops_out = librosa.display._resolve_multiplot(func)
+
+    assert callable(function)
+    assert dims_out == dims
+    assert badprops_out == badprops
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_resolve_multiplot_bad():
+    librosa.display._resolve_multiplot("bogus")
+
+
+@pytest.mark.parametrize(
+    "data,dims,orient,axshape,nrows,ncols,multi_input",
+    [
+        ((np.zeros((3, 10)),), 1, "v", (3,), 3, 1, False),
+        ((np.zeros((3, 10)),), 1, "h", (3,), 1, 3, False),
+        ((np.zeros((2, 3, 10)),), 1, "v", (2, 3), 2, 3, False),
+        ((np.zeros((2, 3, 4, 5)),), 2, "v", (2, 3), 2, 3, False),
+        ((np.zeros(10), np.zeros(10), np.zeros(10)), 1, "v", (3,), 3, 1, True),
+        ((np.zeros(10), np.zeros(10), np.zeros(10)), 1, "h", (3,), 1, 3, True),
+        ((np.zeros((4, 5)), np.zeros((4, 5))), 2, "v", (2,), 2, 1, True),
+    ],
+)
+def test_mp_get_layout(data, dims, orient, axshape, nrows, ncols, multi_input):
+    axshape_out, nrows_out, ncols_out, multi_input_out = librosa.display._mp_get_layout(
+        data, dims, orient
+    )
+
+    assert axshape_out == axshape
+    assert nrows_out == nrows
+    assert ncols_out == ncols
+    assert multi_input_out is multi_input
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mp_get_layout_bad_orient():
+    librosa.display._mp_get_layout((np.zeros((3, 10)),), dims=1, orient="q")
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mp_get_layout_no_data():
+    librosa.display._mp_get_layout(tuple(), dims=1, orient="v")
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mp_get_layout_bad_axshape():
+    librosa.display._mp_get_layout((np.zeros((2, 3, 4, 10)),), dims=1, orient="v")
+
+
+@pytest.mark.parametrize(
+    "shape,orient,output_shape,axes_shape",
+    [
+        ((3,), "v", (3,), (3, 1)),
+        ((3,), "h", (3,), (1, 3)),
+        ((2, 2), "v", (2, 2), (2, 2)),
+        ((2, 2), "h", (2, 2), (2, 2)),
+    ],
+)
+def test_mp_setup_axes_create(shape, orient, output_shape, axes_shape):
+    if len(shape) == 1:
+        if orient == "v":
+            nrows, ncols = (shape[0], 1)
+        elif orient == "h":
+            nrows, ncols = (1, shape[0])
+    else:
+        nrows, ncols = shape
+
+    fig, axes, out_shape = librosa.display._mp_setup_axes(
+        axes=None,
+        fig=None,
+        fig_kw={"figsize": (4, 4)},
+        nrows=nrows,
+        ncols=ncols,
+        axshape=shape,
+        orient=orient,
+        sharex=True,
+        sharey=True,
+    )
+
+    assert fig is not None
+    assert axes.shape == axes_shape
+    assert out_shape == output_shape
+
+
+def test_mp_setup_axes_with_fig():
+    fig = plt.figure()
+
+    fig_out, axes, out_shape = librosa.display._mp_setup_axes(
+        axes=None,
+        fig=fig,
+        fig_kw=None,
+        nrows=2,
+        ncols=1,
+        axshape=(2,),
+        orient="v",
+        sharex=True,
+        sharey=True,
+    )
+
+    assert fig_out is fig
+    assert axes.shape == (2, 1)
+    assert out_shape == (2,)
+
+
+@pytest.mark.parametrize(
+    "orient,axes_in_shape,axes_out_shape,output_shape",
+    [
+        ("v", (3,), (3, 1), (3,)),
+        ("h", (3,), (1, 3), (3,)),
+        ("v", (2, 2), (2, 2), (2, 2)),
+    ],
+)
+def test_mp_setup_axes_array_input(orient, axes_in_shape, axes_out_shape, output_shape):
+    fig, axes_in = plt.subplots(*axes_in_shape) if len(axes_in_shape) == 2 else plt.subplots(
+        axes_in_shape[0]
+    )
+
+    fig_out, axes_out, out_shape = librosa.display._mp_setup_axes(
+        axes=np.asarray(axes_in),
+        fig=None,
+        fig_kw=None,
+        nrows=axes_out_shape[0],
+        ncols=axes_out_shape[1],
+        axshape=output_shape,
+        orient=orient,
+        sharex=True,
+        sharey=True,
+    )
+
+    assert fig_out is fig
+    assert axes_out.shape == axes_out_shape
+    assert out_shape == output_shape
+
+
+def test_mp_setup_axes_scalar_input():
+    fig, ax = plt.subplots()
+
+    fig_out, axes_out, out_shape = librosa.display._mp_setup_axes(
+        axes=ax,
+        fig=None,
+        fig_kw=None,
+        nrows=1,
+        ncols=1,
+        axshape=tuple(),
+        orient="v",
+        sharex=True,
+        sharey=True,
+    )
+
+    assert fig_out is fig
+    assert axes_out.shape == (1, 1)
+    assert out_shape == tuple()
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mp_setup_axes_bad_shape():
+    fig, axes = plt.subplots(nrows=2)
+
+    librosa.display._mp_setup_axes(
+        axes=np.asarray(axes),
+        fig=None,
+        fig_kw=None,
+        nrows=3,
+        ncols=1,
+        axshape=(3,),
+        orient="v",
+        sharex=True,
+        sharey=True,
+    )
+
+
+def test_mp_setup_labels_none():
+    labels = librosa.display._mp_setup_labels(None, (2, 2))
+
+    assert labels.shape == (2, 2)
+    assert labels.dtype == object
+
+
+def test_mp_setup_labels_values():
+    labels = librosa.display._mp_setup_labels(["a", "b", "c"], (3,))
+
+    assert np.array_equal(labels, np.asarray(["a", "b", "c"], dtype=object))
+
+
+@pytest.mark.xfail(raises=ValueError)
+def test_mp_setup_labels_bad_shape():
+    librosa.display._mp_setup_labels(["a", "b"], (2, 2))
+
+
+def test_mp_setup_prop_group_none():
+    groups = librosa.display._mp_setup_prop_group(None, (2, 2))
+    assert np.array_equal(groups, np.array([[0, 1], [2, 3]]))
+
+
+def test_mp_setup_prop_group_false():
+    groups = librosa.display._mp_setup_prop_group(False, (2, 2))
+    assert np.array_equal(groups, np.array([[0, 1], [2, 3]]))
+
+
+def test_mp_setup_prop_group_true():
+    groups = librosa.display._mp_setup_prop_group(True, (2, 2))
+    assert np.array_equal(groups, np.ones((2, 2), dtype=int))
+
+
+def test_mp_setup_prop_group_row():
+    groups = librosa.display._mp_setup_prop_group("row", (2, 3))
+    assert np.array_equal(groups, np.array([[0, 0, 0], [1, 1, 1]]))
+
+
+def test_mp_setup_prop_group_col():
+    groups = librosa.display._mp_setup_prop_group("col", (2, 3))
+    assert np.array_equal(groups, np.array([[0, 1, 2], [0, 1, 2]]))
+
+
+def test_mp_setup_prop_group_custom():
+    groups = librosa.display._mp_setup_prop_group([0, 1, 0, 1], (2, 2))
+    assert np.array_equal(groups, np.array([[0, 1], [0, 1]]))
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mp_setup_prop_group_bad_shape():
+    librosa.display._mp_setup_prop_group([0, 1, 2], (2, 2))
+
+
+def test_mp_setup_properties_shared():
+    prop_group = np.array([[0, 1], [0, 1]])
+    properties = librosa.display._mp_setup_properties(prop_group, [])
+
+    assert properties.shape == prop_group.shape
+    assert properties[0, 0] == properties[1, 0]
+    assert properties[0, 1] == properties[1, 1]
+    assert properties[0, 0] is not properties[0, 1]
+
+
+def test_mp_setup_properties_badprops():
+    prop_group = np.array([[0, 1]])
+    properties = librosa.display._mp_setup_properties(prop_group, ["color"])
+
+    for prop in properties.flat:
+        assert "color" not in prop

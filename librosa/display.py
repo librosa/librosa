@@ -3019,7 +3019,7 @@ def _mp_get_layout(
 
     Parameters
     ----------
-    data : array-like
+    data : tuple of ndarray
         The input data for the multiplot. The shape of this data will determine the layout of the grid.
     dims : int
         The number of data dimensions that each call to the display function expects.
