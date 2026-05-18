@@ -2134,3 +2134,158 @@ def test_mp_setup_properties_badprops():
 
     for prop in properties.flat:
         assert "color" not in prop
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["multiplot_wave_constructed_axes_stacked"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_multiplot_wave_constructed_axes_stacked(y, sr):
+    y_stack = np.stack([y, y[::-1]])
+
+    librosa.display.multiplot(
+        "wave",
+        y_stack,
+        sr=sr,
+        sharex=True,
+        sharey=True,
+        share_properties="row",
+        labels=["forward", "backward"],
+    )
+
+    return plt.gcf()
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["multiplot_wave_constructed_axes_variadic"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_multiplot_wave_constructed_axes_variadic(y, sr):
+    librosa.display.multiplot(
+        "wave",
+        y,
+        y[::-1],
+        sr=sr,
+        sharex=True,
+        sharey=True,
+        share_properties="row",
+        labels=["forward", "backward"],
+    )
+
+    return plt.gcf()
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["multiplot_wave_existing_axes_stacked"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_multiplot_wave_existing_axes_stacked(y, sr):
+    y_stack = np.stack([y, y[::-1]])
+    fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 6))
+
+    out = librosa.display.multiplot(
+        "wave",
+        y_stack,
+        axes=ax,
+        sr=sr,
+        share_properties="row",
+        labels=["forward", "backward"],
+    )
+
+    assert out.shape == ax.shape
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["multiplot_img_existing_axes_variadic"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_multiplot_img_existing_axes_variadic(y, sr):
+    y_stack = np.stack([y, y[::-1]])
+    D = np.abs(librosa.stft(y_stack))
+    fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 6))
+
+    out = librosa.display.multiplot(
+        "img",
+        D[0],
+        D[1],
+        axes=ax,
+        x_axis="time",
+        y_axis="log",
+        share_properties=False,
+    )
+
+    assert out.shape == ax.shape
+    librosa.display.colorbar_db(out[0], ax=ax)
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["multiplot_axes_slices_mixed"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_multiplot_axes_slices_mixed(y, sr):
+    y_stack = np.stack([y, y[::-1]])
+    D = np.abs(librosa.stft(y_stack))
+
+    fig, ax = plt.subplots(nrows=3, ncols=2, sharex="row", figsize=(10, 8))
+
+    out_wave = librosa.display.multiplot(
+        "wave",
+        y_stack,
+        axes=ax[0],
+        sr=sr,
+        sharex=True,
+        sharey=True,
+        share_properties="row",
+        labels=["forward", "backward"],
+    )
+
+    out_bars = librosa.display.multiplot(
+        "bars",
+        y_stack,
+        axes=ax[1],
+        sr=sr,
+        sharex=True,
+        sharey=True,
+        share_properties="row",
+        labels=["forward", "backward"],
+    )
+
+    out_img = librosa.display.multiplot(
+        "img",
+        D,
+        axes=ax[2],
+        sr=sr,
+        x_axis="time",
+        y_axis="log",
+        sharex=True,
+        sharey=True,
+        share_properties=False,
+    )
+
+    assert out_wave.shape == ax[0].shape
+    assert out_bars.shape == ax[1].shape
+    assert out_img.shape == ax[2].shape
+
+    for row in ax:
+        for axi in np.ravel(row):
+            axi.label_outer()
+
+    return fig
