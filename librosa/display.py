@@ -3439,14 +3439,14 @@ def multiplot(
 
 
 def legend_for_axes(
-    axes: Optional[Union[matplotlib.axes.Axes, np.ndarray]] = None,
+    axes: Optional[Union[matplotlib.axes.Axes, np.ndarray, List[matplotlib.axes.Axes]]] = None,
     *,
     loc: Optional[str] = None,
     pad: float = 0.02,
     fraction: float = 0.2,
     width: Optional[float] = None,
     height: Optional[float] = None,
-    fig: Optional[matplotlib.figure.FigureBase] = None,
+    fig: Optional[matplotlib.figure.Figure] = None,
     **kwargs,
 ) -> matplotlib.legend.Legend:
     """Create a figure-level legend for a collection of axes.
@@ -3503,16 +3503,16 @@ def legend_for_axes(
             fig = plt.gcf()
         axes = fig.axes
 
-    axes = np.asarray(axes, dtype=object)
+    axes_array = np.asarray(axes, dtype=object)
 
-    if axes.ndim == 0:
-        axes = axes.reshape(1)
-    elif axes.ndim > 2:
+    if axes_array.ndim == 0:
+        axes_array = axes_array.reshape(1)
+    elif axes_array.ndim > 2:
         raise ParameterError(
-            f"Cannot infer legend placement for axes with ndim={axes.ndim}"
+            f"Cannot infer legend placement for axes with ndim={axes_array.ndim}"
         )
 
-    axes_list = axes.ravel().tolist()
+    axes_list = axes_array.ravel().tolist()
 
     if not axes_list:
         raise ParameterError("No axes provided for legend aggregation")
@@ -3533,11 +3533,11 @@ def legend_for_axes(
         labels.extend(llist)
 
     if loc is None:
-        if axes.ndim == 1:
+        if axes_array.ndim == 1:
             loc = "center left"
-        elif axes.shape[0] == 1 and axes.shape[1] > 1:
+        elif axes_array.shape[0] == 1 and axes_array.shape[1] > 1:
             loc = "lower center"
-        elif axes.shape[1] == 1 and axes.shape[0] > 1:
+        elif axes_array.shape[1] == 1 and axes_array.shape[0] > 1:
             loc = "center left"
         else:
             loc = "center left"
