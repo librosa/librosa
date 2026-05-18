@@ -1792,7 +1792,6 @@ def test_mp_setup_axes_create(shape, orient, output_shape, axes_shape):
     fig, axes, out_shape = librosa.display._mp_setup_axes(
         axes=None,
         fig=None,
-        fig_kw={"figsize": (4, 4)},
         nrows=nrows,
         ncols=ncols,
         axshape=shape,
@@ -1891,6 +1890,26 @@ def test_mp_setup_axes_bad_shape():
         sharex=True,
         sharey=True,
     )
+
+
+def test_mp_setup_axes_single():
+    fig, ax = plt.subplots()
+    
+    fig_out, axes_out, out_shape = librosa.display._mp_setup_axes(
+        axes=ax,
+        fig=None,
+        fig_kw=None,
+        nrows=1,
+        ncols=1,
+        axshape=tuple(),
+        orient="v",
+        sharex=True,
+        sharey=True,
+    )
+
+    assert fig_out is fig
+    assert axes_out.shape == (1, 1)
+    assert out_shape == tuple()
 
 
 def test_mp_setup_labels_none():
