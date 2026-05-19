@@ -3489,6 +3489,26 @@ def legend_for_axes(
         If `bbox_to_anchor` is not provided in `kwargs`, a legend box is
         synthesized relative to the union of the selected axes based on `loc`.
 
+        .. note::
+            The ``loc`` parameter follows Matplotlib's legend semantics and is passed
+            through to `matplotlib.figure.Figure.legend` unchanged.
+
+            When `legend_for_axes` is also inferring ``bbox_to_anchor`` automatically,
+            this can feel a little counterintuitive: ``loc`` controls how the legend is
+            anchored *within the synthesized legend box*, not which side of the selected
+            axes the box itself occupies.
+
+            In particular:
+
+            - ``loc='center left'`` places the legend box to the **right** of the selected axes
+              and anchors the legend on the left side of that box.
+            - ``loc='center right'`` places the legend box to the **left** of the selected axes.
+            - ``loc='lower center'`` places the legend box **above** the selected axes.
+            - ``loc='upper center'`` places the legend box **below** the selected axes.
+
+            To control the legend placement explicitly, provide ``bbox_to_anchor`` in
+            ``kwargs``.
+
     pad : float
         Padding, in figure-relative coordinates, between the selected
         axes region and the legend box.
