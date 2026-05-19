@@ -2228,6 +2228,7 @@ def test_multiplot_img_existing_axes_variadic(y, sr):
         x_axis="time",
         y_axis="log",
         share_properties=False,
+        titles=["forward", "backward"],
     )
 
     assert out.shape == ax.shape
@@ -2256,7 +2257,7 @@ def test_multiplot_axes_slices_mixed(y, sr):
         sharex=True,
         sharey=True,
         share_properties="row",
-        labels=["forward", "backward"],
+        labels=["forward", None],
     )
 
     out_bars = librosa.display.multiplot(
@@ -2267,7 +2268,7 @@ def test_multiplot_axes_slices_mixed(y, sr):
         sharex=True,
         sharey=True,
         share_properties="row",
-        labels=["forward", "backward"],
+        labels=[None, "backward"],
     )
 
     out_img = librosa.display.multiplot(
@@ -2280,6 +2281,7 @@ def test_multiplot_axes_slices_mixed(y, sr):
         sharex=True,
         sharey=True,
         share_properties=False,
+        titles=["forward", None],
     )
 
     assert out_wave.shape == ax[0].shape
