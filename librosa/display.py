@@ -3517,6 +3517,29 @@ def legend_for_axes(
     -------
     legend : matplotlib.legend.Legend
         The created legend.
+
+    Examples
+    --------
+    The typical use case is to aggregate legends across all subplots on the current figure:
+
+    >>> import matplotlib.pyplot as plt
+    >>> x = np.linspace(-10, 10, 100)
+    >>> fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True)
+    >>> ax[0].plot(x, label='Line', color='C0')
+    >>> ax[1].plot(x**2, label='Parabola', color='C1')
+    >>> librosa.display.legend_for_axes()
+    >>> plt.show()
+
+    You can also specify a subset of axes to aggregate, and control the legend placement:
+
+    >>> fig, ax = plt.subplots(nrows=2, ncols=2, constrained_layout=True, sharex=True)
+    >>> ax[0, 0].plot(x, label='Line', color='C0')
+    >>> ax[0, 1].plot(x**2, label='Parabola', color='C1')
+    >>> ax[1, 0].plot(x**3, label='Cubic', color='C2')
+    >>> ax[1, 1].plot(x**4, label='Quartic', color='C3')
+    >>> librosa.display.legend_for_axes(axes=ax[0], loc='lower center')
+    >>> librosa.display.legend_for_axes(axes=ax[1], loc='upper center')
+    >>> plt.show()
     """
     if axes is None:
         if fig is None:
