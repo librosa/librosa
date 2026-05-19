@@ -3171,7 +3171,7 @@ def _mp_setup_axes(
 
 
 def _mp_setup_labels(
-    labels: Optional[Sequence[str]], shape: Tuple[int, ...]
+    labels: Optional[Sequence[Optional[str]]], shape: Tuple[int, ...]
 ) -> np.ndarray:
     """Set up the labels for a multiplot grid.
 
@@ -3289,8 +3289,8 @@ def multiplot(
     sharex: bool = True,
     sharey: bool = True,
     label_outer: bool = True,
-    labels: Optional[Sequence[str]] = None,
-    titles: Optional[Sequence[str]] = None,
+    labels: Optional[Sequence[Optional[str]]] = None,
+    titles: Optional[Sequence[Optional[str]]] = None,
     **kwargs,
 ) -> np.ndarray:
     """Create multiple visualizations from a multi-channel input array.
