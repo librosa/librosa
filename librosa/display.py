@@ -3308,8 +3308,9 @@ def multiplot(
         number of arrays will determine the layout of the multiplot grid.
 
     axes : matplotlib.axes.Axes, np.ndarray, or None
-        The axes to use for the multiplot. If None, a new figure and axes will be created. If a single Axes object is provided, it
-        will be used for all subplots. If an array of Axes objects is provided, it must be compatible with the shape of the data.
+        The axes to use for the multiplot. If None, a new axes array will be created on `fig`. 
+        If an array of Axes objects is provided, it must be compatible with the shape of the data.
+        If a single axes object is provided, it will be interpreted as a 1x1 array (i.e. a single subplot).
 
     fig : matplotlib.figure.FigureBase or None
         The figure to use for the multiplot. If None, a new figure will be created if needed.
