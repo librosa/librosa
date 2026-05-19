@@ -2985,7 +2985,7 @@ def _squeeze_shape(shape: Tuple[int, ...]) -> Tuple[int, ...]:
 
 
 def _resolve_multiplot(
-    func: Literal["wave", "bars", "img"],
+    func: Literal["waveshow", "wavebars", "specshow"],
 ) -> Tuple[Callable[..., Any], int, List[str]]:
     """Resolve multiplot function names.
 
@@ -2993,7 +2993,7 @@ def _resolve_multiplot(
     ----------
     func : str
         The name of the display function to use for the multiplot.
-        Accepted values are 'wave', 'bars', and 'img'.
+        Accepted values are 'waveshow', 'wavebars', and 'specshow'.
 
     Returns
     -------
@@ -3006,9 +3006,9 @@ def _resolve_multiplot(
         be removed from the style cycle when sharing properties.
     """
     display_map: dict[str, tuple[Callable[..., Any], int, list[str]]] = {
-        "wave": (waveshow, 1, []),
-        "bars": (wavebars, 1, []),
-        "img": (specshow, 2, ["color"]),
+        "waveshow": (waveshow, 1, []),
+        "wavebars": (wavebars, 1, []),
+        "specshow": (specshow, 2, ["color"]),
     }
 
     try:
@@ -3279,7 +3279,7 @@ def _mp_setup_properties(prop_group: np.ndarray, badprops: List[str]) -> np.ndar
 
 
 def multiplot(
-    func: Literal["wave", "bars", "img"],
+    func: Literal["waveshow", "wavebars", "specshow"],
     *data: np.ndarray,
     axes: Optional[Union[matplotlib.axes.Axes, np.ndarray]] = None,
     fig: Optional[matplotlib.figure.FigureBase] = None,
@@ -3302,12 +3302,13 @@ def multiplot(
     Parameters
     ----------
     func : str
-        The name of the display function to use for the multiplot. Accepted values are 'wave', 'bars', and 'img'.
+        The name of the display function to use for the multiplot. Accepted values are 'waveshow',
+        'wavebars', and 'specshow'.
 
     *data : np.ndarray or multiple ndarrays
         The input data for the multiplot.
-        The last dimensions of the data should correspond to the expected input shape of the display function (e.g., (n,) for 'wave' and 'bars', and (n, m)
-        for 'img').
+        The last dimensions of the data should correspond to the expected input shape of the display function (e.g., (n,) for 'waveshow' and 'wavebars', and (n, m)
+        for 'specshow').
         `data` can either be a single multi-dimensional array, or multiple separate arrays to plot.  If a single array is provided, the shape of the
         array will determine the layout of the multiplot grid.  If multiple arrays are provided, they will be plotted in the order they are given, and the
         number of arrays will determine the layout of the multiplot grid.
@@ -3379,7 +3380,7 @@ def multiplot(
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> yh, yp = librosa.effects.hpss(y)
-    >>> librosa.display.multiplot('wave', y, yh, yp, sr=sr, share_properties='row',
+    >>> librosa.display.multiplot('waveshow', y, yh, yp, sr=sr, share_properties='row',
     ...                           labels=['Original', 'Harmonic', 'Percussive'],
     ...                           sharex=True, sharey=True,
     ...                           label_outer=True,
@@ -3394,7 +3395,7 @@ def multiplot(
     >>> y_stack = librosa.to_multi(y, yh, yp)
     >>> stft = librosa.stft(y=y_stack)
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True, figsize=(8, 8))
-    >>> img = librosa.display.multiplot('img', stft, axes=ax,
+    >>> img = librosa.display.multiplot('specshow', stft, axes=ax,
     ...                                 label_outer=True,
     ...                                 titles=['Original', 'Harmonic', 'Percussive'],
     ...                                 x_axis='time', y_axis='log', vscale='dBFS')

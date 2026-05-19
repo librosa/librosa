@@ -1866,9 +1866,9 @@ def test_squeeze_shape():
 @pytest.mark.parametrize(
     "func,dims,badprops",
     [
-        ("wave", 1, []),
-        ("bars", 1, []),
-        ("img", 2, ["color"]),
+        ("waveshow", 1, []),
+        ("wavebars", 1, []),
+        ("specshow", 2, ["color"]),
     ],
 )
 def test_resolve_multiplot(func, dims, badprops):
@@ -2149,7 +2149,7 @@ def test_multiplot_wave_constructed_axes_stacked(y, sr):
     y_stack = np.stack([y, y[::-1]])
 
     librosa.display.multiplot(
-        "wave",
+        "waveshow",
         y_stack,
         sr=sr,
         sharex=True,
@@ -2170,7 +2170,7 @@ def test_multiplot_wave_constructed_axes_stacked(y, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_multiplot_wave_constructed_axes_variadic(y, sr):
     librosa.display.multiplot(
-        "wave",
+        "waveshow",
         y,
         y[::-1],
         sr=sr,
@@ -2195,7 +2195,7 @@ def test_multiplot_wave_existing_axes_stacked(y, sr):
     fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 6))
 
     out = librosa.display.multiplot(
-        "wave",
+        "waveshow",
         y_stack,
         axes=ax,
         sr=sr,
@@ -2221,7 +2221,7 @@ def test_multiplot_img_existing_axes_variadic(y, sr):
     fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 6))
 
     out = librosa.display.multiplot(
-        "img",
+        "specshow",
         D[0],
         D[1],
         axes=ax,
@@ -2249,7 +2249,7 @@ def test_multiplot_axes_slices_mixed(y, sr):
     fig, ax = plt.subplots(nrows=3, ncols=2, sharex="row", figsize=(10, 8))
 
     out_wave = librosa.display.multiplot(
-        "wave",
+        "waveshow",
         y_stack,
         axes=ax[0],
         sr=sr,
@@ -2260,7 +2260,7 @@ def test_multiplot_axes_slices_mixed(y, sr):
     )
 
     out_bars = librosa.display.multiplot(
-        "bars",
+        "wavebars",
         y_stack,
         axes=ax[1],
         sr=sr,
@@ -2271,7 +2271,7 @@ def test_multiplot_axes_slices_mixed(y, sr):
     )
 
     out_img = librosa.display.multiplot(
-        "img",
+        "specshow",
         D,
         axes=ax[2],
         sr=sr,
