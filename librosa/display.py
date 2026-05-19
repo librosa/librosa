@@ -3532,7 +3532,7 @@ def legend_for_axes(
 
     You can also specify a subset of axes to aggregate, and control the legend placement:
 
-    >>> fig, ax = plt.subplots(nrows=2, ncols=2, constrained_layout=True, sharex=True)
+    >>> fig, ax = plt.subplots(nrows=2, ncols=2, sharex=True)
     >>> ax[0, 0].plot(x, label='Line', color='C0')
     >>> ax[0, 1].plot(x**2, label='Parabola', color='C1')
     >>> ax[1, 0].plot(x**3, label='Cubic', color='C2')
