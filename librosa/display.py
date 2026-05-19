@@ -2347,6 +2347,8 @@ def waveshow(
         If you want to visualize both channels at the sample level, it is recommended to
         plot each signal independently.
 
+        To visualize stereo waveforms as two separate signal displays, see `multiplot`.
+
     Parameters
     ----------
     y : np.ndarray [shape=(n,) or (2,n)]
@@ -2447,6 +2449,7 @@ def waveshow(
     --------
     wavebars
     AdaptiveWaveplot
+    multiplot
     matplotlib.pyplot.step
     matplotlib.pyplot.fill_between
     matplotlib.pyplot.fill_betweenx
@@ -2715,6 +2718,7 @@ def wavebars(
     >>> ax[2].legend()
     >>> ax[0].label_outer()
     >>> ax[1].label_outer()
+    >>> plt.show()
     """
     util.valid_audio(y)
 
@@ -2762,6 +2766,7 @@ def wavebars(
     proxy = mpatches.FancyBboxPatch(
         (np.nan, np.nan), 1, 1, boxstyle=boxstyle, label=label, **patch_kwargs
     )
+    proxy.set_in_layout(False)
     if label is not None:
         axes.add_patch(proxy)
 
