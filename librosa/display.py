@@ -3160,9 +3160,8 @@ def _mp_setup_axes(
     # Ensure that axes object is now encapsulated in numpy arrays
     axes = np.asarray(axes, dtype=object)
 
-    # Populate fig if we haven't already
-    if fig is None:
-        fig = axes.flat[0].get_figure()
+    # Populate fig with the figure from the axes object.
+    fig = axes.flat[0].get_figure()
 
     if _squeeze_shape(axes.shape) != _squeeze_shape(axshape):
         raise ParameterError(f"axes shape={axes.shape} is incompatible with data shape")
@@ -3201,6 +3200,9 @@ def _mp_setup_prop_group(
     shape: Tuple[int, ...],
 ) -> np.ndarray:
     """Set up the property groups for a multiplot grid.
+
+    This is used to determine how style properties (color, line style, etc.) are shared among
+    different subplots in the grid.
 
     Parameters
     ----------
@@ -3293,7 +3295,7 @@ def multiplot(
     titles: Optional[Sequence[Optional[str]]] = None,
     **kwargs,
 ) -> np.ndarray:
-    """Create multiple visualizations from a multi-channel input array.
+    """Visualize multiple related waveforms or spectrograms on an array of subplots.
 
     Example use cases include:
         - Displaying multiple waveforms from a multi-channel audio file.
@@ -3305,13 +3307,12 @@ def multiplot(
         The name of the display function to use for the multiplot. Accepted values are 'waveshow',
         'wavebars', and 'specshow'.
 
-    *data : np.ndarray or multiple ndarrays
+    *data : one or more `np.ndarray`s
         The input data for the multiplot.
-        The last dimensions of the data should correspond to the expected input shape of the display function (e.g., (n,) for 'waveshow' and 'wavebars', and (n, m)
-        for 'specshow').
-        `data` can either be a single multi-dimensional array, or multiple separate arrays to plot.  If a single array is provided, the shape of the
-        array will determine the layout of the multiplot grid.  If multiple arrays are provided, they will be plotted in the order they are given, and the
-        number of arrays will determine the layout of the multiplot grid.
+        If one array is provided, it is interpreted as a multi-channel array, where the leading
+        dimensions correspond to different channels or signals to plot.
+        If multiple arrays are provided, each array is treated as a single channel or input
+        signal, and visualized on its own subplot.
 
     axes : matplotlib.axes.Axes, np.ndarray, or None
         The axes to use for the multiplot. If None, a new axes array will be created on `fig`.
@@ -3320,6 +3321,8 @@ def multiplot(
 
     fig : matplotlib.figure.FigureBase or None
         The figure to use for the multiplot. If None, a new figure will be created if needed.
+        If `axes` is provided, the figure will be inferred from `axes` and the `fig` parameter
+        will be ignored.
 
     orient : str
         The orientation of the multiplot grid. Accepted values are 'h' for horizontal and 'v' for vertical. This determines how the
@@ -3380,10 +3383,12 @@ def multiplot(
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> yh, yp = librosa.effects.hpss(y)
-    >>> librosa.display.multiplot('waveshow', y, yh, yp, sr=sr, share_properties='row',
+    >>> librosa.display.multiplot('waveshow', y, yh, yp, share_properties='row',
     ...                           labels=['Original', 'Harmonic', 'Percussive'],
     ...                           sharex=True, sharey=True,
     ...                           label_outer=True,
+    ...                           # The remaining parameters are passed through to waveshow
+    ...                           sr=sr,
     ...                           invert=True)
     >>> librosa.display.legend_for_axes()  # Helper to create a single legend across subplots
     >>> plt.show()
