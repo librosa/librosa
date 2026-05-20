@@ -90,6 +90,7 @@ if TYPE_CHECKING:
     from matplotlib.markers import MarkerStyle
     from matplotlib.colors import Colormap
     import matplotlib.figure
+    import cycler
 
 
 __all__ = [
@@ -3245,7 +3246,9 @@ def _mp_setup_prop_group(
     return prop_group.reshape(shape)
 
 
-def _mp_setup_properties(prop_group: np.ndarray, badprops: List[str]) -> np.ndarray:
+def _mp_setup_properties(
+    prop_group: np.ndarray, badprops: List[str], prop_cycle: Optional[cycler.Cycler]
+) -> np.ndarray:
     """Set up the properties for each subplot in a multiplot grid based on the property groups.
 
     Parameters
@@ -3254,6 +3257,9 @@ def _mp_setup_properties(prop_group: np.ndarray, badprops: List[str]) -> np.ndar
         An array of group identifiers for each subplot in the multiplot grid, with shape compatible with the axes.
     badprops : list of str
         A list of property names that are not supported by the display function and should be removed from the style cycle when sharing properties.
+    prop_cycle : cycler.Cycler or None
+        The property cycle to use for assigning properties to the subplots. If None, the
+        default property cycle from `plt.rcParams["axes.prop_cycle"]` will be used.
 
     Returns
     -------
@@ -3263,14 +3269,17 @@ def _mp_setup_properties(prop_group: np.ndarray, badprops: List[str]) -> np.ndar
     properties = np.empty(prop_group.shape, dtype=object)
     properties.fill(None)
 
-    style_cycler = cycle(plt.rcParams["axes.prop_cycle"])
+    if prop_cycle is None:
+        prop_cycle = plt.rcParams["axes.prop_cycle"]
+
+    style_cycle = cycle(prop_cycle)
     style_map = {}
 
     for idx in np.ndindex(prop_group.shape):
         group = prop_group[idx]
 
         if group not in style_map:
-            style = copy.deepcopy(next(style_cycler))
+            style = copy.deepcopy(next(style_cycle))
             for prop in badprops:
                 style.pop(prop, None)
             style_map[group] = style
@@ -3293,6 +3302,7 @@ def multiplot(
     label_outer: bool = True,
     labels: Optional[Sequence[Optional[str]]] = None,
     titles: Optional[Sequence[Optional[str]]] = None,
+    prop_cycle: Optional[cycler.Cycler] = None,
     **kwargs,
 ) -> np.ndarray:
     """Visualize multiple related waveforms or spectrograms on an array of subplots.
@@ -3358,6 +3368,10 @@ def multiplot(
     titles : sequence of str or None
         The titles to apply to each subplot in the multiplot grid. If None, no titles
         will be applied. If a sequence is provided, it must be compatible with the shape of the axes.
+
+    prop_cycle : cycler.Cycler or None
+        The property cycle to use for assigning properties to the subplots. If None, the
+        default property cycle from `plt.rcParams["axes.prop_cycle"]` will be used.
 
     **kwargs
         Additional keyword arguments to pass to the display function for each subplot.
@@ -3430,7 +3444,7 @@ def multiplot(
     labels: np.ndarray = _mp_setup_labels(labels, axes.shape)
     titles: np.ndarray = _mp_setup_labels(titles, axes.shape)
     prop_group = _mp_setup_prop_group(share_properties, axes.shape)
-    properties: np.ndarray = _mp_setup_properties(prop_group, badprops)
+    properties: np.ndarray = _mp_setup_properties(prop_group, badprops, prop_cycle)
 
     # Allocate the output array
     output = np.empty_like(axes, dtype=object)
