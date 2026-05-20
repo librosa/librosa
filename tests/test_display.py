@@ -2122,7 +2122,7 @@ def test_mp_setup_prop_group_bad_shape():
 
 def test_mp_setup_properties_shared():
     prop_group = np.array([[0, 1], [0, 1]])
-    properties = librosa.display._mp_setup_properties(prop_group, [])
+    properties = librosa.display._mp_setup_properties(prop_group, [], None)
 
     assert properties.shape == prop_group.shape
     assert properties[0, 0] == properties[1, 0]
@@ -2132,7 +2132,7 @@ def test_mp_setup_properties_shared():
 
 def test_mp_setup_properties_badprops():
     prop_group = np.array([[0, 1]])
-    properties = librosa.display._mp_setup_properties(prop_group, ["color"])
+    properties = librosa.display._mp_setup_properties(prop_group, ["color"], None)
 
     for prop in properties.flat:
         assert "color" not in prop
