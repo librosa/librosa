@@ -3029,7 +3029,7 @@ def _mp_get_layout(
         The input data for the multiplot. The shape of this data will determine the layout of the grid.
     dims : int
         The number of data dimensions that each call to the display function expects.
-    orient : str
+    orient : str {'h', 'v'}
         The orientation of the multiplot grid. Accepted values are 'h' for horizontal and 'v' for vertical.
 
     Returns
