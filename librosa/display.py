@@ -3397,10 +3397,8 @@ def multiplot(
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> yh, yp = librosa.effects.hpss(y)
-    >>> librosa.display.multiplot('waveshow', y, yh, yp, share_properties='row',
+    >>> librosa.display.multiplot('waveshow', y, yh, yp,
     ...                           labels=['Original', 'Harmonic', 'Percussive'],
-    ...                           sharex=True, sharey=True,
-    ...                           label_outer=True,
     ...                           # The remaining parameters are passed through to waveshow
     ...                           sr=sr,
     ...                           invert=True)
@@ -3415,7 +3413,6 @@ def multiplot(
     >>> stft = librosa.stft(y=y_stack)
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True, figsize=(8, 8))
     >>> img = librosa.display.multiplot('specshow', stft, axes=ax,
-    ...                                 label_outer=True,
     ...                                 titles=['Original', 'Harmonic', 'Percussive'],
     ...                                 x_axis='time', y_axis='log', vscale='dBFS')
     >>> librosa.display.colorbar_db(img[0], ax=ax, label='dBFS')
