@@ -3103,7 +3103,7 @@ def _mp_setup_axes(
     axshape : tuple of int
         The shape of the grid of axes, determined by the shape of the input data and the
         specified orientation.
-    orient : str
+    orient : str {'h', 'v'}
         The orientation of the multiplot grid. Accepted values are 'h' for horizontal and 'v' for vertical.
     sharex : bool
         Whether to share the x-axis among subplots when creating a new figure.
@@ -3334,7 +3334,7 @@ def multiplot(
         If `axes` is provided, the figure will be inferred from `axes` and the `fig` parameter
         will be ignored.
 
-    orient : str
+    orient : str {'h', 'v'}
         The orientation of the multiplot grid. Accepted values are 'h' for horizontal and 'v' for vertical. This determines how the
         subplots are arranged when the input data has a single  non-singleton dimension (e.g., shape (n, k) with k > 1).
 
