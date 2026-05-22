@@ -12,9 +12,11 @@ Data visualization
     specshow
     waveshow
     wavebars
+    multiplot
 
     colorbar_db
     colorbar_phase
+    legend_for_axes
 
 Axis formatting
 ---------------
@@ -40,12 +42,14 @@ Miscellaneous
     AdaptiveWaveplot
 
 """
+
 from __future__ import annotations
-from itertools import product
+from itertools import product, cycle
 import re
 import warnings
 from fractions import Fraction
 import weakref
+import copy
 
 import numpy as np
 from matplotlib import colormaps as mcm
@@ -55,6 +59,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.patches as mpatches
 import matplotlib.collections as mcollections
+from matplotlib.transforms import Bbox
 
 from . import core
 from . import util
@@ -71,10 +76,11 @@ from typing import (
     Literal,
     Dict,
     Tuple,
+    List,
     Sequence,
-    cast
+    cast,
 )
-from ._typing import _FloatLike_co
+from ._typing import _FloatLike_co, ArrayLike
 
 if TYPE_CHECKING:
     import matplotlib
@@ -83,6 +89,8 @@ if TYPE_CHECKING:
     from matplotlib.path import Path as MplPath
     from matplotlib.markers import MarkerStyle
     from matplotlib.colors import Colormap
+    import matplotlib.figure
+    import cycler
 
 
 __all__ = [
@@ -103,9 +111,9 @@ __all__ = [
 # mypy: disable-error-code="attr-defined"
 
 # Keeps adaptors alive as long as their Axes exists, preventing GC
-_WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[
-    mplaxes.Axes, set["AdaptiveWaveplot"]
-] = weakref.WeakKeyDictionary()
+_WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[mplaxes.Axes, set["AdaptiveWaveplot"]] = (
+    weakref.WeakKeyDictionary()
+)
 
 # Nominal center frequencies for oct3 bands
 __OCT3_FREQUENCIES = np.array(
@@ -811,7 +819,6 @@ class AdaptiveWaveplot:
             self.label_patch_ = mpatches.Rectangle(
                 (np.nan, np.nan), 0, 0, facecolor=steps.get_color(), label=label
             )
-
 
     # Preserve the old attribute API by exposing properties with same names
     @property
@@ -1718,7 +1725,12 @@ def __decorate_axis(
         axis.set_major_formatter(ChromaFormatter(key=key, unicode=unicode))
         degrees = core.key_to_degrees(key)
         axis.set_major_locator(
-            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
+            mplticker.FixedLocator(
+                cast(
+                    Sequence[float],
+                    np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel(),
+                )
+            )
         )
         axis.set_label_text("Pitch class")
 
@@ -1734,7 +1746,12 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
+            mplticker.FixedLocator(
+                cast(
+                    Sequence[float],
+                    np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel(),
+                )
+            )
         )
         axis.set_label_text("Svara")
 
@@ -1748,7 +1765,12 @@ def __decorate_axis(
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
         axis.set_major_locator(
-            mplticker.FixedLocator(cast(Sequence[float], np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel()))
+            mplticker.FixedLocator(
+                cast(
+                    Sequence[float],
+                    np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel(),
+                )
+            )
         )
         axis.set_label_text("Svara")
 
@@ -1930,7 +1952,7 @@ def __decorate_axis(
                 base=2.0,
                 subs=core.interval_frequencies(
                     12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12
-                ), # type: ignore[arg-type]
+                ),  # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Note")
@@ -2326,6 +2348,8 @@ def waveshow(
         If you want to visualize both channels at the sample level, it is recommended to
         plot each signal independently.
 
+        To visualize stereo waveforms as two separate signal displays, see `multiplot`.
+
     Parameters
     ----------
     y : np.ndarray [shape=(n,) or (2,n)]
@@ -2426,6 +2450,7 @@ def waveshow(
     --------
     wavebars
     AdaptiveWaveplot
+    multiplot
     matplotlib.pyplot.step
     matplotlib.pyplot.fill_between
     matplotlib.pyplot.fill_betweenx
@@ -2694,6 +2719,7 @@ def wavebars(
     >>> ax[2].legend()
     >>> ax[0].label_outer()
     >>> ax[1].label_outer()
+    >>> plt.show()
     """
     util.valid_audio(y)
 
@@ -2741,6 +2767,7 @@ def wavebars(
     proxy = mpatches.FancyBboxPatch(
         (np.nan, np.nan), 1, 1, boxstyle=boxstyle, label=label, **patch_kwargs
     )
+    proxy.set_in_layout(False)
     if label is not None:
         axes.add_patch(proxy)
 
@@ -2951,3 +2978,695 @@ def colorbar_db(
     )
 
     return cbar
+
+
+def _squeeze_shape(shape: Tuple[int, ...]) -> Tuple[int, ...]:
+    """Check if two shape arrays are equivalent after squeezing out singleton dimensions."""
+    return tuple(dim for dim in shape if dim > 1)
+
+
+def _resolve_multiplot(
+    func: Literal["waveshow", "wavebars", "specshow"],
+) -> Tuple[Callable[..., Any], int, List[str]]:
+    """Resolve multiplot function names.
+
+    Parameters
+    ----------
+    func : str
+        The name of the display function to use for the multiplot.
+        Accepted values are 'waveshow', 'wavebars', and 'specshow'.
+
+    Returns
+    -------
+    function : callable
+        The display function corresponding to the given name.
+    dims : int
+        The number of data dimensions that each call to the display function expects.
+    badprops : list of str
+        A list of property names that are not supported by the display function and should
+        be removed from the style cycle when sharing properties.
+    """
+    display_map: dict[str, tuple[Callable[..., Any], int, list[str]]] = {
+        "waveshow": (waveshow, 1, []),
+        "wavebars": (wavebars, 1, []),
+        "specshow": (specshow, 2, ["color"]),
+    }
+
+    try:
+        return display_map[func]
+    except KeyError as exc:
+        raise ParameterError(f"Invalid display '{func}' for multiplot") from exc
+
+
+def _mp_get_layout(
+    data: Tuple[np.ndarray, ...], dims: int, orient: Literal["h", "v"]
+) -> Tuple[Tuple[int, ...], int, int, bool]:
+    """Determine the layout of a multiplot grid based on the data shape and orientation.
+
+    Parameters
+    ----------
+    data : tuple of ndarray
+        The input data for the multiplot. The shape of this data will determine the layout of the grid.
+    dims : int
+        The number of data dimensions that each call to the display function expects.
+    orient : str {'h', 'v'}
+        The orientation of the multiplot grid. Accepted values are 'h' for horizontal and 'v' for vertical.
+
+    Returns
+    -------
+    axshape : tuple of int
+        The shape of the grid of axes, determined by the shape of the input data and the
+        specified orientation.
+    nrows : int
+        The number of rows in the grid of axes.
+    ncols : int
+        The number of columns in the grid of axes.
+    multi_input : bool
+        If the input contains multiple separate arrays to plot,
+        this flag is True.  Otherwise, False.
+    """
+    if orient not in ("h", "v"):
+        raise ParameterError(f"Invalid value orient={orient}")
+
+    multi_plot = False
+    if len(data) == 1 and isinstance(data[0], np.ndarray) and data[0].ndim > dims:
+        data_stack = np.asarray(data[0])
+        axshape = data_stack.shape[:-dims]
+
+    elif len(data) >= 1:
+        multi_plot = True
+        axshape = (len(data),)
+    else:
+        raise ParameterError("multiplot requires at least one data array to plot")
+
+    if len(axshape) == 1:
+        if orient == "v":
+            nrows, ncols = axshape[0], 1
+        else:
+            nrows, ncols = 1, axshape[0]
+    elif len(axshape) == 2:
+        nrows, ncols = axshape
+    else:
+        raise ParameterError(f"Invalid axes shape={axshape}")
+
+    return axshape, nrows, ncols, multi_plot
+
+
+def _mp_setup_axes(
+    *,
+    axes: Optional[Union[matplotlib.axes.Axes, np.ndarray]],
+    fig: Optional[matplotlib.figure.FigureBase] = None,
+    fig_kw: Optional[dict] = None,
+    nrows: int,
+    ncols: int,
+    axshape: Tuple[int, ...],
+    orient: Literal["h", "v"],
+    sharex: bool,
+    sharey: bool,
+) -> Tuple[matplotlib.figure.FigureBase, np.ndarray, Tuple[int, ...]]:
+    """Set up the figure and axes for a multiplot grid.
+
+    Parameters
+    ----------
+    axes : matplotlib.axes.Axes, np.ndarray, or None
+        The axes to use for the multiplot. If None, a new figure and axes will be created.
+        If a single Axes object is provided, it will be used for all subplots.
+        If an array of Axes objects is provided, it must be compatible with the shape of the data.
+    fig : matplotlib.figure.FigureBase or None
+        The figure to use for the multiplot. If None, a new figure will be created if needed.
+    fig_kw : dict or None
+        Additional keyword arguments to pass to `plt.subplots` when creating a new figure.
+    nrows : int
+        The number of rows in the grid of axes.
+    ncols : int
+        The number of columns in the grid of axes.
+    axshape : tuple of int
+        The shape of the grid of axes, determined by the shape of the input data and the
+        specified orientation.
+    orient : str {'h', 'v'}
+        The orientation of the multiplot grid. Accepted values are 'h' for horizontal and 'v' for vertical.
+    sharex : bool
+        Whether to share the x-axis among subplots when creating a new figure.
+    sharey : bool
+        Whether to share the y-axis among subplots when creating a new figure.
+
+    Returns
+    -------
+    fig : matplotlib.figure.FigureBase
+        The figure object for the multiplot.
+    axes : np.ndarray
+        An array of Axes objects for the multiplot, with shape compatible with the input data.
+    output_shape : tuple of int
+        The shape of the output array of display objects, determined by the shape of the axes.
+    """
+    output_shape = axshape
+
+    if axes is None:
+        if fig is None:
+            if fig_kw is None:
+                fig_kw = {}
+
+            fig, axes = plt.subplots(
+                nrows=nrows,
+                ncols=ncols,
+                sharex=sharex,
+                sharey=sharey,
+                squeeze=False,
+                **fig_kw,
+            )
+        else:
+            axes = fig.subplots(
+                nrows=nrows,
+                ncols=ncols,
+                sharex=sharex,
+                sharey=sharey,
+                squeeze=False,
+            )
+
+    elif isinstance(axes, np.ndarray):
+        output_shape = axes.shape
+
+        if axes.ndim == 1:
+            if orient == "v":
+                axes = axes[:, np.newaxis]
+            else:
+                axes = axes[np.newaxis, :]
+
+    else:
+        if not isinstance(axes, np.ndarray):
+            output_shape = tuple()
+
+        axes = np.atleast_2d(np.asarray(axes))
+
+    # Ensure that axes object is now encapsulated in numpy arrays
+    axes = np.asarray(axes, dtype=object)
+
+    # Populate fig with the figure from the axes object.
+    fig = axes.flat[0].get_figure()
+
+    if _squeeze_shape(axes.shape) != _squeeze_shape(axshape):
+        raise ParameterError(f"axes shape={axes.shape} is incompatible with data shape")
+
+    return fig, axes, output_shape
+
+
+def _mp_setup_labels(
+    labels: Optional[Sequence[Optional[str]]], shape: Tuple[int, ...]
+) -> np.ndarray:
+    """Set up the labels for a multiplot grid.
+
+    Parameters
+    ----------
+    labels : sequence of str or None
+        The labels to apply to each subplot in the multiplot grid. If None, no labels
+        will be applied. If a sequence is provided, it must be compatible with the shape of the axes.
+    shape : tuple of int
+        The shape of the grid of axes, determined by the shape of the input data and the
+        specified orientation.
+
+    Returns
+    -------
+    np.ndarray
+        An array of labels for each subplot in the multiplot grid, with shape compatible with the
+        axes.
+    """
+    if labels is None:
+        return np.full(shape, None, dtype=object)
+
+    return np.asarray(labels, dtype=object).reshape(shape)
+
+
+def _mp_setup_prop_group(
+    share_properties: Optional[Union[bool, Literal["row", "col"], ArrayLike]],
+    shape: Tuple[int, ...],
+) -> np.ndarray:
+    """Set up the property groups for a multiplot grid.
+
+    This is used to determine how style properties (color, line style, etc.) are shared among
+    different subplots in the grid.
+
+    Parameters
+    ----------
+    share_properties : bool, str, sequence, or None
+        The property sharing scheme for the multiplot grid. Accepted values are:
+        - `None` or `False`: no properties are shared, and each subplot is treated as a unique group.
+        - `True`: all subplots share the same properties and belong to a single group.
+        - 'row': subplots in the same row share properties and belong to the same group.
+        - 'col': subplots in the same column share properties and belong to the same group.
+        - sequence: a sequence of group identifiers for each subplot. The length of the sequence must match the total number of subplots (i.e., the product of the shape of the axes).
+    shape : tuple of int
+        The shape of the grid of axes, determined by the shape of the input data and the
+        specified orientation.
+
+    Returns
+    -------
+    np.ndarray
+        An array of group identifiers for each subplot in the multiplot grid, with shape compatible with the axes.
+    """
+    if share_properties is None or share_properties is False:
+        return np.arange(np.prod(shape)).reshape(shape)
+
+    if share_properties is True:
+        return np.ones(shape, dtype=int)
+
+    if isinstance(share_properties, str) and share_properties == "row":
+        return np.asarray(np.indices(shape)[0])
+
+    if isinstance(share_properties, str) and share_properties == "col":
+        return np.asarray(np.indices(shape)[-1])
+
+    prop_group = np.asarray(share_properties)
+
+    if prop_group.size != np.prod(shape):
+        raise ParameterError(
+            f"Shape mismatch between axes={shape} "
+            f"and share_properties={prop_group.shape}"
+        )
+
+    return prop_group.reshape(shape)
+
+
+def _mp_setup_properties(
+    prop_group: np.ndarray, badprops: List[str], prop_cycle: Optional[cycler.Cycler]
+) -> np.ndarray:
+    """Set up the properties for each subplot in a multiplot grid based on the property groups.
+
+    Parameters
+    ----------
+    prop_group : np.ndarray
+        An array of group identifiers for each subplot in the multiplot grid, with shape compatible with the axes.
+    badprops : list of str
+        A list of property names that are not supported by the display function and should be removed from the style cycle when sharing properties.
+    prop_cycle : cycler.Cycler or None
+        The property cycle to use for assigning properties to the subplots. If None, the
+        default property cycle from `plt.rcParams["axes.prop_cycle"]` will be used.
+
+    Returns
+    -------
+    np.ndarray
+        An array of property dictionaries for each subplot in the multiplot grid, with shape compatible with the axes.
+    """
+    properties = np.empty(prop_group.shape, dtype=object)
+    properties.fill(None)
+
+    if prop_cycle is None:
+        prop_cycle = plt.rcParams["axes.prop_cycle"]
+
+    style_cycle = cycle(prop_cycle)
+    style_map = {}
+
+    for idx in np.ndindex(prop_group.shape):
+        group = prop_group[idx]
+
+        if group not in style_map:
+            style = copy.deepcopy(next(style_cycle))
+            for prop in badprops:
+                style.pop(prop, None)
+            style_map[group] = style
+
+        properties[idx] = style_map[group]
+
+    return properties
+
+
+def multiplot(
+    func: Literal["waveshow", "wavebars", "specshow"],
+    *data: np.ndarray,
+    axes: Optional[Union[matplotlib.axes.Axes, np.ndarray]] = None,
+    fig: Optional[matplotlib.figure.FigureBase] = None,
+    orient: Literal["v", "h"] = "v",
+    share_properties: Optional[Union[bool, Literal["row", "col"], np.ndarray]] = None,
+    fig_kw: Optional[dict] = None,
+    sharex: bool = True,
+    sharey: bool = True,
+    label_outer: bool = True,
+    labels: Optional[Sequence[Optional[str]]] = None,
+    titles: Optional[Sequence[Optional[str]]] = None,
+    prop_cycle: Optional[cycler.Cycler] = None,
+    **kwargs,
+) -> np.ndarray:
+    """Visualize multiple related waveforms or spectrograms on an array of subplots.
+
+    Example use cases include:
+        - Displaying multiple waveforms from a multi-channel audio file.
+        - Displaying multiple spectrograms from a multi-channel audio file.
+
+    Parameters
+    ----------
+    func : str
+        The name of the display function to use for the multiplot. Accepted values are 'waveshow',
+        'wavebars', and 'specshow'.
+
+    *data : one or more `np.ndarray`s
+        The input data for the multiplot.
+        If one array is provided, it is interpreted as a multi-channel array, where the leading
+        dimensions correspond to different channels or signals to plot.
+        If multiple arrays are provided, each array is treated as a single channel or input
+        signal, and visualized on its own subplot.
+
+    axes : matplotlib.axes.Axes, np.ndarray, or None
+        The axes to use for the multiplot. If None, a new axes array will be created on `fig`.
+        If an array of Axes objects is provided, it must be compatible with the shape of the data.
+        If a single axes object is provided, it will be interpreted as a 1x1 array (i.e. a single subplot).
+
+    fig : matplotlib.figure.FigureBase or None
+        The figure to use for the multiplot. If None, a new figure will be created if needed.
+        If `axes` is provided, the figure will be inferred from `axes` and the `fig` parameter
+        will be ignored.
+
+    orient : str {'h', 'v'}
+        The orientation of the multiplot grid. Accepted values are 'h' for horizontal and 'v' for vertical. This determines how the
+        subplots are arranged when the input data has a single  non-singleton dimension (e.g., shape (n, k) with k > 1).
+
+    share_properties : bool, str, np.ndarray, or None
+        The property sharing scheme for the multiplot grid. Accepted values are:
+
+        - `None` or `False`: no properties are shared, and each subplot is treated as a unique group.
+        - `True`: all subplots share the same properties and belong to a single group.
+        - 'row': subplots in the same row share properties and belong to the same group
+        - 'col': subplots in the same column share properties and belong to the same group.
+        - np.ndarray: a custom array of group identifiers for each subplot. The shape of the
+          array must match the shape of the axes grid.  Any two elements with the same value
+          are considered to be in the same group and will share properties.
+
+    fig_kw : dict or None
+        Additional keyword arguments to pass to `plt.subplots` when creating a new figure.
+
+    sharex : bool
+        Whether to share the x-axis among subplots when creating a new figure.
+
+    sharey : bool
+        Whether to share the y-axis among subplots when creating a new figure.
+
+    label_outer : bool
+        Whether to only show labels on the outer axes when using shared axes.
+
+    labels : sequence of str or None
+        The labels to apply to each subplot in the multiplot grid. If None, no labels
+        will be applied. If a sequence is provided, it must be compatible with the shape of the axes.
+
+    titles : sequence of str or None
+        The titles to apply to each subplot in the multiplot grid. If None, no titles
+        will be applied. If a sequence is provided, it must be compatible with the shape of the axes.
+
+    prop_cycle : cycler.Cycler or None
+        The property cycle to use for assigning properties to the subplots. If None, the
+        default property cycle from `plt.rcParams["axes.prop_cycle"]` will be used.
+
+    **kwargs
+        Additional keyword arguments to pass to the display function for each subplot.
+
+    Returns
+    -------
+    np.ndarray
+        An array of display objects returned by the display function for each subplot in the multiplot grid
+        The shape of this array will be compatible with the shape of the axes grid.
+
+    See Also
+    --------
+    waveshow
+    wavebars
+    specshow
+    legend_for_axes
+
+    Examples
+    --------
+    Display multiple synchronized signals stacked in an array.  We'll let multiplot create
+    the figure and axes objects for us.
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
+    >>> yh, yp = librosa.effects.hpss(y)
+    >>> librosa.display.multiplot('waveshow', y, yh, yp,
+    ...                           labels=['Original', 'Harmonic', 'Percussive'],
+    ...                           # The remaining parameters are passed through to waveshow
+    ...                           sr=sr,
+    ...                           invert=True)
+    >>> librosa.display.legend_for_axes()  # Helper to create a single legend across subplots
+    >>> plt.show()
+
+    Multiplot can also accept preconstructed axes as input, provided that they
+    are compatible with the shape of the data.  The below example does this
+    with a spectrogram display.
+
+    >>> y_stack = librosa.to_multi(y, yh, yp)
+    >>> stft = librosa.stft(y=y_stack)
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True, figsize=(8, 8))
+    >>> img = librosa.display.multiplot('specshow', stft, axes=ax,
+    ...                                 titles=['Original', 'Harmonic', 'Percussive'],
+    ...                                 x_axis='time', y_axis='log', vscale='dBFS')
+    >>> librosa.display.colorbar_db(img[0], ax=ax, label='dBFS')
+    >>> plt.show()
+    """
+    # Identify the display function and the expected data dimensions for each subplot
+    function, dims, badprops = _resolve_multiplot(func)
+
+    # Determine the layout of the multiplot grid based on the data shape and orientation
+    axshape, nrows, ncols, multi_input = _mp_get_layout(data, dims, orient)
+
+    # Set up the figure and axes for the multiplot grid
+    fig, axes, output_shape = _mp_setup_axes(
+        axes=axes,
+        fig=fig,
+        fig_kw=fig_kw,
+        nrows=nrows,
+        ncols=ncols,
+        axshape=axshape,
+        orient=orient,
+        sharex=sharex,
+        sharey=sharey,
+    )
+
+    # Set up the labels and properties for each subplot in the multiplot grid
+    labels: np.ndarray = _mp_setup_labels(labels, axes.shape)
+    titles: np.ndarray = _mp_setup_labels(titles, axes.shape)
+    prop_group = _mp_setup_prop_group(share_properties, axes.shape)
+    properties: np.ndarray = _mp_setup_properties(prop_group, badprops, prop_cycle)
+
+    # Allocate the output array
+    output = np.empty_like(axes, dtype=object)
+
+    # Iterate over each subplot and call the display function with the appropriate data, axes, labels, and properties
+    for idx in np.ndindex(axshape):
+        flat_idx = np.ravel_multi_index(idx, axshape)
+        if multi_input:
+            # User provided variadic inputs, so use flat indexing
+            datum = data[flat_idx]
+        else:
+            # User already stacked the inputs into one array.
+            datum = data[0][idx]
+        output.flat[flat_idx] = function(
+            datum,
+            ax=axes.flat[flat_idx],
+            label=labels.flat[flat_idx],
+            **properties.flat[flat_idx],
+            **kwargs,
+        )
+        if titles.flat[flat_idx] is not None:
+            axes.flat[flat_idx].set_title(titles.flat[flat_idx])
+        if label_outer:
+            axes.flat[flat_idx].label_outer()
+
+    # Reshape the output array to match the shape of the axes grid
+    return output.reshape(output_shape)
+
+
+def legend_for_axes(
+    axes: Optional[
+        Union[matplotlib.axes.Axes, np.ndarray, List[matplotlib.axes.Axes]]
+    ] = None,
+    *,
+    loc: Optional[str] = None,
+    pad: float = 0.02,
+    fraction: float = 0.2,
+    width: Optional[float] = None,
+    height: Optional[float] = None,
+    fig: Optional[matplotlib.figure.Figure] = None,
+    **kwargs,
+) -> matplotlib.legend.Legend:
+    """Create a figure-level legend for a collection of axes.
+
+    Parameters
+    ----------
+    axes : matplotlib.axes.Axes or array-like of Axes, optional
+        Axes to include in the legend aggregation.
+        If not provided, axes are taken from `fig.axes`, or from the
+        current figure if `fig` is not provided.
+
+    loc : str, optional
+        Legend location, passed through to `matplotlib.figure.Figure.legend`.
+        If not provided, a default is inferred from `axes` shape:
+
+        - 1D input -> ``"center left"``
+        - shape ``(n, 1)`` -> ``"center left"``
+        - shape ``(1, n)`` -> ``"lower center"``
+        - shape ``(m, n)`` with ``m > 1`` and ``n > 1`` -> ``"center left"``
+
+        If `bbox_to_anchor` is not provided in `kwargs`, a legend box is
+        synthesized relative to the union of the selected axes based on `loc`.
+
+        .. note::
+            The ``loc`` parameter follows Matplotlib's legend semantics and is passed
+            through to `matplotlib.figure.Figure.legend` unchanged.
+
+            When `legend_for_axes` is also inferring ``bbox_to_anchor`` automatically,
+            this can feel a little counterintuitive: ``loc`` controls how the legend is
+            anchored *within the synthesized legend box*, not which side of the selected
+            axes the box itself occupies.
+
+            In particular:
+
+            - ``loc='center left'`` places the legend box to the **right** of the selected axes
+              and anchors the legend on the left side of that box.
+            - ``loc='center right'`` places the legend box to the **left** of the selected axes.
+            - ``loc='lower center'`` places the legend box **above** the selected axes.
+            - ``loc='upper center'`` places the legend box **below** the selected axes.
+
+            To control the legend placement explicitly, provide ``bbox_to_anchor`` in
+            ``kwargs``.
+
+    pad : float
+        Padding, in figure-relative coordinates, between the selected
+        axes region and the legend box.
+
+    fraction : float
+        Fraction of the selected axes extent to use for the default legend-box
+        thickness when `width` or `height` is not provided.
+
+        For left/right placement, the default legend-box width is
+        `fraction * union.width`.
+
+        For above/below placement, the default legend-box height is
+        `fraction * union.height`.
+
+    width : float, optional
+        Width of the synthesized legend box in figure-relative coordinates.
+        Ignored if `bbox_to_anchor` is provided.
+
+    height : float, optional
+        Height of the synthesized legend box in figure-relative coordinates.
+        Ignored if `bbox_to_anchor` is provided.
+
+    fig : matplotlib.figure.Figure, optional
+        Figure on which to create the legend.
+        If not provided, it is inferred from `axes`, or from `plt.gcf()`
+        if `axes` is also not provided.
+
+    **kwargs
+        Additional keyword arguments passed to `matplotlib.figure.Figure.legend`.
+
+    Returns
+    -------
+    legend : matplotlib.legend.Legend
+        The created legend.
+
+    Examples
+    --------
+    The typical use case is to aggregate legends across all subplots on the current figure:
+
+    >>> import matplotlib.pyplot as plt
+    >>> x = np.linspace(-10, 10, 100)
+    >>> fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True)
+    >>> ax[0].plot(x, label='Line', color='C0')
+    >>> ax[1].plot(x**2, label='Parabola', color='C1')
+    >>> librosa.display.legend_for_axes()
+    >>> plt.show()
+
+    You can also specify a subset of axes to aggregate, and control the legend placement:
+
+    >>> fig, ax = plt.subplots(nrows=2, ncols=2, sharex=True)
+    >>> ax[0, 0].plot(x, label='Line', color='C0')
+    >>> ax[0, 1].plot(x**2, label='Parabola', color='C1')
+    >>> ax[1, 0].plot(x**3, label='Cubic', color='C2')
+    >>> ax[1, 1].plot(x**4, label='Quartic', color='C3')
+    >>> librosa.display.legend_for_axes(axes=ax[0], loc='lower center')
+    >>> librosa.display.legend_for_axes(axes=ax[1], loc='upper center')
+    >>> plt.show()
+    """
+    if axes is None:
+        if fig is None:
+            fig = plt.gcf()
+        axes = fig.axes
+
+    axes_array = np.asarray(axes, dtype=object)
+
+    if axes_array.ndim == 0:
+        axes_array = axes_array.reshape(1)
+    elif axes_array.ndim > 2:
+        raise ParameterError(
+            f"Cannot infer legend placement for axes with ndim={axes_array.ndim}"
+        )
+
+    axes_list = axes_array.ravel().tolist()
+
+    if not axes_list:
+        raise ParameterError("No axes provided for legend aggregation")
+
+    if fig is None:
+        fig = axes_list[0].figure
+
+    for ax in axes_list:
+        if ax.figure is not fig:
+            raise ParameterError("All axes must belong to the same figure")
+
+    handles = []
+    labels = []
+
+    for ax in axes_list:
+        hlist, llist = ax.get_legend_handles_labels()
+        handles.extend(hlist)
+        labels.extend(llist)
+
+    if loc is None:
+        if axes_array.ndim == 1:
+            loc = "center left"
+        elif axes_array.shape[0] == 1 and axes_array.shape[1] > 1:
+            loc = "lower center"
+        elif axes_array.shape[1] == 1 and axes_array.shape[0] > 1:
+            loc = "center left"
+        else:
+            loc = "center left"
+
+    if "bbox_to_anchor" not in kwargs:
+        union = Bbox.union([ax.get_position() for ax in axes_list])
+        uw = union.width
+        uh = union.height
+
+        if loc in ("upper left", "center left", "lower left"):
+            # Place legend box to the right of the selected axes
+            w = width if width is not None else fraction * uw
+            h = height if height is not None else uh
+            x0 = union.x1 + pad
+            y0 = union.y0
+
+        elif loc in ("upper right", "center right", "lower right"):
+            # Place legend box to the left of the selected axes
+            w = width if width is not None else fraction * uw
+            h = height if height is not None else uh
+            x0 = union.x0 - pad - w
+            y0 = union.y0
+
+        elif loc == "lower center":
+            # Place legend box above the selected axes
+            w = width if width is not None else uw
+            h = height if height is not None else fraction * uh
+            x0 = union.x0
+            y0 = union.y1 + pad
+
+        elif loc == "upper center":
+            # Place legend box below the selected axes
+            w = width if width is not None else uw
+            h = height if height is not None else fraction * uh
+            x0 = union.x0
+            y0 = union.y0 - pad - h
+
+        else:
+            raise ParameterError(
+                f"Automatic bbox placement is not defined for loc={loc!r}. "
+                "Please provide bbox_to_anchor explicitly."
+            )
+
+        kwargs["bbox_to_anchor"] = Bbox.from_extents(x0, y0, x0 + w, y0 + h)
+        kwargs["bbox_transform"] = fig.transFigure
+
+    return fig.legend(handles, labels, loc=loc, **kwargs)
