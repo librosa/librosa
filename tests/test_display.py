@@ -1652,8 +1652,8 @@ def test_wavebars_transpose(y, sr):
 def test_wavef0(y, sr):
     fig, ax = plt.subplots(nrows=2, figsize=(8, 6))
 
-    f0, _, _ = librosa.pyin(y, fmin=librosa.note_to_hz("C2"),
-                            fmax=librosa.note_to_hz("C7"), sr=sr)
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
+                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
     # Waveform with f0
     librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label='waveshow')
     ax[0].legend(loc='lower right')
@@ -1750,8 +1750,8 @@ def test_legend_for_axes_right():
 def test_wavef0_transpose(y, sr):
     fig, ax = plt.subplots(ncols=2, figsize=(6, 8))
 
-    f0, _, _ = librosa.pyin(y, fmin=librosa.note_to_hz("C2"),
-                            fmax=librosa.note_to_hz("C7"), sr=sr)
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
+                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
     # Waveform with f0
     librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label='waveshow',
                            transpose=True)
@@ -1786,8 +1786,8 @@ def test_legend_for_axes_left():
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_wavef0_bad_method(y, sr):
-    f0, _, _ = librosa.pyin(y, fmin=librosa.note_to_hz("C2"),
-                            fmax=librosa.note_to_hz("C7"), sr=sr)
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
+                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
     librosa.display.wavef0(y, f0=f0, sr=sr, method='bad_method')
 
 
