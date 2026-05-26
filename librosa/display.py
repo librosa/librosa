@@ -989,10 +989,10 @@ class Transformf0(mtransforms.Transform):
         self.offset = offset
         self.transpose = transpose
 
-        self.input_dims = 2
-        self.output_dims = 2
-        self.is_separable = False
-        self.is_inverted = is_inverted
+        self.input_dims: int = 2
+        self.output_dims: int = 2
+        self.is_separable: bool = False
+        self.is_inverted: bool = is_inverted
 
     def transform_non_affine(self, values: np.ndarray) -> np.ndarray:
         if self.transpose:
@@ -2398,7 +2398,7 @@ def waveshow(
     where: Literal["pre", "post", "mid"] = "post",
     label: Optional[str] = None,
     transpose: bool = False,
-    mask: Optional[np.ndarray] = None,
+    mask: Optional[Sequence[bool]] = None,
     ax: Optional[mplaxes.Axes] = None,
     invert: bool = False,
     invert_color: Union[str, tuple, None] = None,
@@ -3032,53 +3032,6 @@ def wavef0(
         transpose=transpose,
     )
 
-    if method == "waveshow":
-        times = offset + np.arange(y.shape[-1]) / sr
-        mask = np.isfinite(trans.f0_interp(times))
-        adaptor = waveshow(
-            y=y,
-            sr=sr,
-            axis=time_axis,
-            offset=offset,
-            mask=mask,
-            ax=axes,
-            transform=trans + axes.transData,
-            transpose=transpose,
-            **kwargs,
-        )
-
-        # Kludge the data limits because the fillbetween collections does not automatically
-        # update the data limits
-        xy = adaptor.envelope.get_datalim(trans + axes.transData).get_points()
-
-        f0min = np.nanmin(f0)
-        f0max = np.nanmax(f0)
-
-        if transpose:
-            handle = mlines.Line2D([xy[0, 0] + f0min, xy[1, 0] + f0max], xy[:, 1])
-        else:
-            handle = mlines.Line2D(xy[:, 0], [xy[0, 1] + f0min, xy[1, 1] + f0max])
-
-        axes.add_line(handle)
-        axes.autoscale_view()
-        handle.remove()
-        # end kludge
-
-        out = adaptor
-    elif method == "wavebars":
-        out = wavebars(
-            y=y,
-            sr=sr,
-            axis=time_axis,
-            offset=offset,
-            ax=axes,
-            transform=trans + axes.transData,
-            transpose=transpose,
-            **kwargs,
-        )
-    else:
-        raise ParameterError(f"Invalid display method={method}.")
-
     # and transposed mode here
     if transpose:
         __decorate_axis(
@@ -3101,7 +3054,54 @@ def wavef0(
             unicode=unicode,
         )
 
-    return out
+    if method == "waveshow":
+        times = offset + np.arange(y.shape[-1]) / sr
+        mask = np.isfinite(trans.f0_interp(times))
+
+        adaptor = waveshow(
+            y=y,
+            sr=sr,
+            axis=time_axis,
+            offset=offset,
+            mask=mask,
+            ax=axes,
+            transform=trans + axes.transData,
+            transpose=transpose,
+            **kwargs,
+        )
+
+        # Kludge the data limits because the fillbetween collections does not automatically
+        # update the data limits
+        assert adaptor.envelope is not None
+        xy = adaptor.envelope.get_datalim(trans + axes.transData).get_points()
+
+        f0min = np.nanmin(f0)
+        f0max = np.nanmax(f0)
+
+        if transpose:
+            handle = mlines.Line2D([xy[0, 0] + f0min, xy[1, 0] + f0max], xy[:, 1])
+        else:
+            handle = mlines.Line2D(xy[:, 0], [xy[0, 1] + f0min, xy[1, 1] + f0max])
+
+        axes.add_line(handle)
+        axes.autoscale_view()
+        handle.remove()
+        # end kludge
+        return adaptor
+
+    elif method == "wavebars":
+        return wavebars(
+            y=y,
+            sr=sr,
+            axis=time_axis,
+            offset=offset,
+            ax=axes,
+            transform=trans + axes.transData,
+            transpose=transpose,
+            **kwargs,
+        )
+    else:
+        raise ParameterError(f"Invalid display method={method}.")
 
 
 def __radian_formatter(x, pos):
