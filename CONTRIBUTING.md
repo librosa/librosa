@@ -28,7 +28,7 @@ GitHub:
 4. Create a new conda environment in order to install dependencies:
 
    ```shell
-   conda create -n librosa-dev python=3.14
+   conda create -n librosa-dev python=3.13
    conda env update -n librosa-dev --file .github/environment-ci.yml
    conda activate librosa-dev
    python -m pip install -e '.[tests]'
@@ -88,14 +88,23 @@ tools:
 
 -  Style adherence, check with:
 
-           $ conda install ruff
-           $ ruff check librosa
+    ```shell
+    conda install ruff
+    ruff check librosa
+    ```
 
 - Ensure that your docstrings are properly formatted, check with:
 
   ```shell
   python -m pip install velin
   python -m velin --check librosa
+  ```
+
+- Ensure that any new functionality has valid type annotations, check with:
+
+  ```shell
+  python -m pip install mypy
+  python -m mypy librosa
   ```
 
 Some tests in tests/test_display.py use baseline images for output comparison.
@@ -113,10 +122,6 @@ If existing images need to be updated or new ones should be added:
 
 Additionally, some functions require network access to test properly.
 If you are adding tests that require network access, please mark them with `@pytest.mark.network`.
-
-Finally, once your pull request has been created and reviewed, please update the file `docs/changelog.rst`
-to briefly summarize your contribution in the section for the next release.
-If you are a first-time contributor, please add yourself to `AUTHORS.md` as well.
 
 Filing bugs
 -----------
