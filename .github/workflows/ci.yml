@@ -25,7 +25,7 @@ jobs:
                     - os: ubuntu-latest
                       python-version: "3.12"
                       envfile: ".github/environment-minimal.yml"
-                      channel-priority: "flexible"
+                      channel-priority: "strict"
                       name: "Minimal dependencies"
 
                     - os: ubuntu-latest
