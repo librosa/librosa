@@ -15,42 +15,52 @@ GitHub:
 
 2. Clone this copy to your local disk:
 
-          $ git clone git@github.com:YourLogin/librosa.git
+   ```shell
+   git clone git@github.com:YourLogin/librosa.git
+   ```
 
 3. Set the upstream remote to the Librosa's repo:
 
-          $ git remote add upstream git@github.com:librosa/librosa.git 
+   ```shell
+   git remote add upstream git@github.com:librosa/librosa.git
+   ```
 
 4. Create a new conda environment in order to install dependencies:
 
-          $ conda create -n librosa-dev python=3.14
-
-          $ conda env update -n librosa-dev --file .github/environment-ci.yml
-
-          $ conda activate librosa-dev
-
-          $ python -m pip install -e '.[tests]'
+   ```shell
+   conda create -n librosa-dev python=3.14
+   conda env update -n librosa-dev --file .github/environment-ci.yml
+   conda activate librosa-dev
+   python -m pip install -e '.[tests]'
+   ```
 
 5. Create a branch to hold your changes:
 
-          $ git switch -c <NAME-NEW-BRANCH>
+   ```shell
+   git switch -c <NAME-NEW-BRANCH>
+   ```
 
    and start making changes. Never work in the ``main`` branch!
 
 6. Work on this copy on your computer using Git to do the version
    control. You can check your modified files using:
 
-          $ git status 
+   ```shell
+   git status
+   ```
 
 7. When you're done editing, do:
 
-          $ git add <PATH-TO-MODIFIED-FILES>
-
-          $ git commit -m "<COMMIT-MESSAGE>"
+   ```shell
+   git add <PATH-TO-MODIFIED-FILES>
+   git commit -m "<COMMIT-MESSAGE>"
+   ```
 
    to record your changes in Git, then push them to GitHub with:
 
-          $ git push --set-upstream origin <NAME-NEW-BRANCH>
+   ```shell
+   git push --set-upstream origin <NAME-NEW-BRANCH>
+   ```
 
 8. Go to the web page of your fork of the librosa repo,
    and click 'Pull request' to review your changes and add a description
@@ -65,14 +75,16 @@ maintainers for review. This will send an email to the committers.
 It is recommended to check that your contribution complies with the
 following rules before submitting a pull request:
 
--  All functions should have informative [docstrings](https://numpydoc.readthedocs.io/en/latest/format.html) with sample usage presented.
+- All functions should have informative [docstrings](https://numpydoc.readthedocs.io/en/latest/format.html) with sample usage presented.
 
 You can also check for common programming errors with the following
 tools:
 
--  Code with good test coverage, check with:
+- Code with good test coverage, check with:
 
-          $ pytest
+  ```shell
+  pytest
+  ```
 
 -  Style adherence, check with:
 
@@ -81,15 +93,20 @@ tools:
 
 - Ensure that your docstrings are properly formatted, check with:
 
-           $ python -m pip install velin
-           $ python -m velin --check librosa
+  ```shell
+  python -m pip install velin
+  python -m velin --check librosa
+  ```
 
 Some tests in tests/test_display.py use baseline images for output comparison.
 If existing images need to be updated or new ones should be added:
+
 1. Ensure that the environment is properly setup for testing (pytest with addons)
 2. Run:
 
-           $ pytest --mpl-generate-path=tmp tests/test_display.py [-k ANY_TESTS_THAT_CHANGED]
+   ```shell
+   pytest --mpl-generate-path=tmp tests/test_display.py [-k ANY_TESTS_THAT_CHANGED]
+   ```
 
 3. Inspect the new baseline images under tmp/
 4. If (3) looks good, copy into `tests/baseline_images/test_display/` and add to the PR.
@@ -109,17 +126,17 @@ open an issue if you have found a bug or wish to see a feature implemented.
 It is recommended to check that your issue complies with the
 following rules before submitting:
 
--  Verify that your issue is not being currently addressed by other
-   [issues](https://github.com/librosa/librosa/issues?q=)
-   or [pull requests](https://github.com/librosa/librosa/pulls?q=).
+- Verify that your issue is not being currently addressed by other
+  [issues](https://github.com/librosa/librosa/issues?q=)
+  or [pull requests](https://github.com/librosa/librosa/pulls?q=).
 
--  Please ensure all code snippets and error messages are formatted in
-   appropriate code blocks.
-   See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
+- Please ensure all code snippets and error messages are formatted in
+  appropriate code blocks.
+  See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
 
--  Please include your operating system type and version number, as well
-   as your Python, librosa, numpy, and scipy versions. This information
-   can be found by running the following code snippet:
+- Please include your operating system type and version number, as well
+  as your Python, librosa, numpy, and scipy versions. This information
+  can be found by running the following code snippet:
 
   ```python
   import platform; print(platform.platform())
@@ -140,8 +157,10 @@ in a web browser. For detailed instructions on building the documentation, see [
 For building the documentation, you will need some additional dependencies.
 These can be installed by executing the following command:
 
-    $ python -m pip install -e '.[docs]'
-    
+```shell
+python -m pip install -e '.[docs]'
+```
+
 Policy on Using AI Assistance (Copilot, Gemini, ChatGPT, etc.)
 --------------------------------------------------------------
 
@@ -149,25 +168,23 @@ We do not micromanage your development workspace, nor do we require you to track
 
 Instead of administrative tracking, we ask that you follow these principles in developing contributions:
 
-1. The Accountability and Explainability Standard
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-You are the author of your Pull Request, not the AI.
-If a maintainer asks why your code is the way it is, replying "that's just what the AI produced" is not acceptable. You must completely understand, be able to explain, and technically stand behind every line of code you submit. 
+### 1. The Accountability and Explainability Standard
 
-2. The Verification Imperative
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+You are the author of your Pull Request, not the AI.
+If a maintainer asks why your code is the way it is, replying "that's just what the AI produced" is not acceptable. You must completely understand, be able to explain, and technically stand behind every line of code you submit.
+
+### 2. The Verification Imperative
+
 If an AI assistant was used to generate code blocks, data parsers, regular expressions, or core signal processing logic, ensure that the solution falls into a category where correctness can be confidently and efficiently verified.
 
+### 3. No AI-Generated Repository Dialogue
 
-3. No AI-Generated Repository Dialogue
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 While AI is welcome in your private code-generation loop, it is not welcome in our community dialogue space.
 
 We (the maintainers) do reserve the right to use our own automation and AI tools in
 generating issues, pull requests, or comments.
 We **do not** invite external AI contributions of this form however, as they
 generate a significant amount of work for us maintainers to process.
-
 
 Note
 ----
