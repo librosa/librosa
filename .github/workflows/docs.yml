@@ -24,7 +24,7 @@ jobs:
             matrix:
                 include:
                     - os: ubuntu-latest
-                      python-version: "3.11"
+                      python-version: "3.12"
                       channel-priority: "flexible"
                       envfile: ".github/environment-docs.yml"
         steps:
