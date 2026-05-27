@@ -23,7 +23,7 @@ GitHub:
 
 4. Create a new conda environment in order to install dependencies:
 
-          $ conda create -n librosa-dev python=3.12
+          $ conda create -n librosa-dev python=3.14
 
           $ conda env update -n librosa-dev --file .github/environment-ci.yml
 
@@ -79,6 +79,10 @@ tools:
            $ conda install ruff
            $ ruff check librosa
 
+- Ensure that your docstrings are properly formatted, check with:
+
+           $ python -m pip install velin
+           $ python -m velin --check librosa
 
 Some tests in tests/test_display.py use baseline images for output comparison.
 If existing images need to be updated or new ones should be added:
@@ -138,6 +142,37 @@ These can be installed by executing the following command:
 
     $ python -m pip install -e '.[docs]'
     
+Policy on Using AI Assistance (Copilot, Gemini, ChatGPT, etc.)
+--------------------------------------------------------------
+
+We do not micromanage your development workspace, nor do we require you to track every prompt or model version used while brainstorming. If you use generative AI as an advanced search engine, a pair programmer, a rubber duck to debug tricky math, or a helper to build a boilerplate utility script, you are completely free to do so.
+
+Instead of administrative tracking, we ask that you follow these principles in developing contributions:
+
+1. The Accountability and Explainability Standard
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+You are the author of your Pull Request, not the AI.
+If a maintainer asks why your code is the way it is, replying "that's just what the AI produced" is not acceptable. You must completely understand, be able to explain, and technically stand behind every line of code you submit. 
+
+2. The Verification Imperative
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+If an AI assistant was used to generate code blocks, data parsers, regular expressions, or core signal processing logic, ensure that the solution falls into a category where correctness can be confidently and efficiently verified.
+
+
+3. No AI-Generated Repository Dialogue
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+While AI is welcome in your private code-generation loop, it is not welcome in our community dialogue space.
+
+We (the maintainers) do reserve the right to use our own automation and AI tools in
+generating issues, pull requests, or comments.
+We **do not** invite external AI contributions of this form however, as they
+generate a significant amount of work for us maintainers to process.
+
+
 Note
 ----
-This document was gleefully borrowed from [scikit-learn](http://scikit-learn.org/).
+This document was gleefully adapted from [scikit-learn](http://scikit-learn.org/).
+
+The AI policy was generated in part by Gemini 3.5 Flash as a synthesis of similar
+policies indexed by [@melissawm](https://github.com/melissawm/open-source-ai-contribution-policies).  
+Yes, we appreciate the irony in that, and the initial draft has been heavily revised and edited by human maintainers.
