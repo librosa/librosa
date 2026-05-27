@@ -29,6 +29,8 @@ dependencies:
   - lazy_loader>=0.1
   - typing_extensions>=4.1.1
   - ffmpeg
+  - standard-sunau
+  - standard-aifc
   - pip:
     - sphinx-multiversion==0.2.4
     - presets>=0.1.3
