@@ -23,7 +23,7 @@ GitHub:
 
 4. Create a new conda environment in order to install dependencies:
 
-          $ conda create -n librosa-dev python=3.9
+          $ conda create -n librosa-dev python=3.12
 
           $ conda env update -n librosa-dev --file .github/environment-ci.yml
 
