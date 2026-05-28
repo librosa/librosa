@@ -15,7 +15,7 @@ dependencies:
   - pooch>=1.7
   - packaging>=23.2
   - soxr-python>=1.0.0
-  - msgpack-python>=1.0.3
+  - msgpack-python>=1.0.5
   - lazy_loader>=0.3
   - typing_extensions>=4.7.1
 
@@ -26,7 +26,7 @@ dependencies:
   - pytest
   - coverage
   - ffmpeg
-  - resampy>=0.2.2
+  - resampy>=0.4.3
 
   - pip:
     - samplerate

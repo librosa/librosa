@@ -11,7 +11,7 @@ dependencies:
   - scikit-learn>=1.6.0
   - joblib>=1.2.0
   - decorator>=5.2.1
-  - resampy>=0.2.2
+  - resampy>=0.4.3
   - soxr-python>=1.0.0
   - numba>=0.51.0
   - numpydoc>=1.1.0
@@ -22,7 +22,7 @@ dependencies:
   - matplotlib>=3.10
   - sphinx>=5.1.0,<9.0
   - myst-parser>=2.0
-  - msgpack-python>=1.0.3
+  - msgpack-python>=1.0.5
   - sphinx-gallery>=0.10.1
   - sphinx_rtd_theme>=1.2.0
   - sphinx-copybutton>=0.5.2
