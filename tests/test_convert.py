@@ -625,10 +625,9 @@ def test_midi_to_svara_h(midi, Sa, abbr, octave, unicode):
     else:
         assert svara[Sa] == "Sa"
 
-    if sys.version >= "3.7":
-        if not unicode:
-            for s in svara:
-                assert s.isascii()
+    if not unicode:
+        for s in svara:
+            assert s.isascii()
 
     if not abbr:
         for s in svara:
@@ -702,10 +701,9 @@ def test_midi_to_svara_c(midi, Sa, mela, abbr, octave, unicode):
     else:
         assert svara[Sa] == "Sa"
 
-    if sys.version >= "3.7":
-        if not unicode:
-            for s in svara:
-                assert s.isascii()
+    if not unicode:
+        for s in svara:
+            assert s.isascii()
 
     if not abbr:
         for s in svara:
