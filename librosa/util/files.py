@@ -38,8 +38,8 @@ __GOODBOY = pooch.create(
 def _resource_file(package: str, resource: str):
     """Provide a context manager for accessing resources in a package.
 
-    This previously had been a shim wrapper to support python < 3.9,
-    but now it's just a convenience function to simplify path mangling.
+    This previously served as a shim wrapper to support Python < 3.9,
+    but now it's a convenience function to simplify path mangling.
     """
     with resources.as_file(resources.files(package).joinpath(resource)) as path:
         yield path
