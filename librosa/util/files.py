@@ -9,7 +9,6 @@ import glob
 import json
 import msgpack
 import contextlib
-import sys
 
 from importlib import resources
 
@@ -39,16 +38,11 @@ __GOODBOY = pooch.create(
 def _resource_file(package: str, resource: str):
     """Provide a context manager for accessing resources in a package.
 
-    It acts as a shim to provide a consistent interface for accessing resources
-    since the 3.9 series deprecated the "path" method in favor of the "files" method.
+    This previously had been a shim wrapper to support python < 3.9,
+    but now it's just a convenience function to simplify path mangling.
     """
-    if sys.version_info < (3, 9):
-        with resources.path(package, resource) as path:
-            yield path
-
-    else:
-        with resources.as_file(resources.files(package).joinpath(resource)) as path:
-            yield path
+    with resources.as_file(resources.files(package).joinpath(resource)) as path:
+        yield path
 
 
 with _resource_file("librosa.util.example_data", "registry.txt") as reg:
