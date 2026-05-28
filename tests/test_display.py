@@ -1791,6 +1791,37 @@ def test_wavef0_bad_method(y, sr):
     librosa.display.wavef0(y, f0=f0, sr=sr, method='bad_method')
 
 
+@pytest.mark.parametrize(
+    "transpose,values",
+    [
+        (
+            False,
+            np.array([[0.0, -12.0], [1.0, 0.0], [2.0, 7.0], [3.0, 12.0]], dtype=float),
+        ),
+        (
+            True,
+            np.array([[-12.0, 0.0], [0.0, 1.0], [7.0, 2.0], [12.0, 3.0]], dtype=float),
+        ),
+    ],
+)
+def test_transformf0_roundtrip(transpose, values):
+    f0 = np.array([100.0, 110.0, 120.0, 130.0], dtype=float)
+
+    trans = librosa.display.Transformf0(
+        f0=f0,
+        sr=1,
+        hop_length=1,
+        bins_per_octave=12,
+        norm=2.0,
+        transpose=transpose,
+    )
+
+    forward = trans.transform(values)
+    recovered = trans.inverted().transform(forward)
+
+    assert np.allclose(recovered, values, rtol=1e-12, atol=1e-12)
+
+
 @pytest.mark.mpl_image_compare(
     baseline_images=["legend_for_axes_above"],
     extensions=["png"],
