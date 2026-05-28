@@ -2511,6 +2511,10 @@ def waveshow(
         indicates that the sample should be displayed, and `False` indicates that it
         should be ignored.
 
+        .. note:: This mask is only used directly by the envelope display, and a raw sample
+            display will not be masked.  The `mask` parameter is intended to be used by the
+            `wavef0` function, and it is not recommended to be used directly by the user.
+
     invert : bool
         If `True`, invert the foreground and background of the display, so that the axes background
         is colored.
@@ -2641,17 +2645,17 @@ def waveshow(
         signal = "xlim_changed"
         dec_axis = axes.xaxis
 
-    (steps,) = axes.step(xdata, ydata, marker=marker, where=where, **kwargs)
-
-    # Pull color property from the steps object, if we don't already have it
-    if "color" not in kwargs:
-        kwargs.setdefault("color", steps.get_color())
-
     if mask is not None:
         mask = cast(
             Sequence[bool],
             np.asarray(mask, dtype=bool)[: len(y_top) * hop_length : hop_length]
         )
+
+    (steps,) = axes.step(xdata, ydata, marker=marker, where=where, **kwargs)
+
+    # Pull color property from the steps object, if we don't already have it
+    if "color" not in kwargs:
+        kwargs.setdefault("color", steps.get_color())
 
     envelope = filler(
         times[: len(y_top) * hop_length : hop_length],
@@ -3026,6 +3030,8 @@ def wavef0(
     # Create the adaptive drawing object
     axes = __check_axes(ax)
     norm = max(y.max(), -y.min())
+    if norm <= 0:
+        norm = util.tiny(y)
 
     trans = Transformf0(
         f0,
