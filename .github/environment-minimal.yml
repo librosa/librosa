@@ -7,12 +7,12 @@ dependencies:
   - pip
   - scipy==1.15.0
   - scikit-learn==1.6.0
-  - joblib==1.0.0
-  - decorator==4.3.0
+  - joblib==1.2.0
+  - decorator==5.2.1
   - numba==0.61.0
   - numpy==2.1.0
   - pysoundfile==0.12.1
-  - pooch==1.1.0
+  - pooch==1.7.0
   - packaging==23.2
   - soxr-python==1.0.0
   - msgpack-python==1.0.3
