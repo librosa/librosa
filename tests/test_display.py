@@ -1645,9 +1645,9 @@ def test_wavebars_transpose(y, sr):
 
 @pytest.mark.mpl_image_compare(
     baseline_images=["wavef0"],
-        extensions=["png"],
-        style=STYLE,
-    )
+    extensions=["png"],
+    style=STYLE,
+)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_wavef0(y, sr):
     fig, ax = plt.subplots(nrows=2, figsize=(8, 6))
@@ -1663,7 +1663,8 @@ def test_wavef0(y, sr):
                            color='C1', ax=ax[1], label='wavebars')
     ax[1].legend(loc='lower right')
     return fig
-    
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_legend_for_axes_no_axes():
     fig = plt.figure()
@@ -1743,9 +1744,9 @@ def test_legend_for_axes_right():
 
 @pytest.mark.mpl_image_compare(
     baseline_images=["wavef0_transpose"],
-        extensions=["png"],
-        style=STYLE,
-    )
+    extensions=["png"],
+    style=STYLE,
+)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_wavef0_transpose(y, sr):
     fig, ax = plt.subplots(ncols=2, figsize=(6, 8))
