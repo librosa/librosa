@@ -15,7 +15,7 @@ dependencies:
   - pooch==1.1.0
   - packaging==23.2
   - soxr-python==1.0.0
-  - msgpack-python==1.0.0
+  - msgpack-python==1.0.3
   - lazy_loader==0.1
   - typing_extensions==4.1.1
 
