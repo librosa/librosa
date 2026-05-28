@@ -2928,18 +2928,23 @@ def wavef0(
         and the right channel's amplitude envelope (negated) will be used for the
         bottom of the plot.
         If mono, the signal's envelope is mirrored across the axis.
+
     f0 : np.ndarray [shape=(n,)]
         Fundamental frequency (f0) estimates in Hz.
         This should be computed using a pitch estimation algorithm such as
         `librosa.pyin` or `librosa.yin`.
+
     sr : number > 0 [scalar]
         sampling rate of ``y`` (samples per second)
+
     hop_length : int > 0
         Hop length (in samples) between successive f0 estimates.
         This should match the hop length used to compute `f0`.
+
     bins_per_octave : int > 0
         Number of frequency bins per octave.
         This is used to determine the frequency axis for the f0 estimates.
+
     time_axis : str
         Display style of the time axis ticks and tick markers.
         Accepted values are:
@@ -2954,40 +2959,51 @@ def wavef0(
           - 'lag_s' : same as lag, but in seconds.
           - 'lag_ms' : same as lag, but in milliseconds.
           - `None`, 'none', or 'off': ticks and tick markers are hidden.
+
     freq_axis : str
         Display style of the frequency axis ticks and tick markers.
         Accepted values are:
           - 'cqt_note' : markers are shown as note names.
           - 'cqt_hz' : markers are shown as frequencies in Hz.
           - 'cqt_svara' : markers are shown as Indian classical music svara names.
+
     offset : float
         Offset (in seconds) to start the waveform plot.
+
     key : str
         Key signature for the frequency axis.
         This is used to determine the note names for the frequency axis when using
         `cqt_note` mode.
+
     Sa : float or None
         Sa (tonic) frequency in Hz for the frequency axis.
         Required for `cqt_svara` mode.
+
     mela : str or int or None
         Mela (scale) name or index for the frequency axis.
         This is used to determine the svara names for the frequency axis when using
         `cqt_svara` mode.
+
     thaat : str or None
         Thaat (scale) name for the frequency axis.
         This is used to determine the svara names for the frequency axis when using
         `cqt_svara` mode.
+
     unicode : bool
         If `True`, use Unicode characters for frequency axis labels.
+
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
+
     method : str
         Method to use for visualizing the waveform with f0 displacement.
         Accepted values are:
           - 'waveshow' : Use `librosa.display.waveshow` to visualize the waveform with an f0 displacement.
           - 'wavebars' : Use `librosa.display.wavebars` to visualize the waveform as bars with an f0 displacement.
+
     transpose : bool
         If `True`, display the wave vertically instead of horizontally.
+
     **kwargs : dict
         Additional keyword arguments forwarded to the plotting function selected
         by `method`.
