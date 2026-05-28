@@ -14,7 +14,7 @@ dependencies:
   - pysoundfile>=0.12.1
   - pooch>=1.1
   - packaging>=23.2
-  - soxr-python>=0.3.2
+  - soxr-python>=1.0.0
   - msgpack-python>=1.0
   - lazy_loader>=0.1
   - typing_extensions>=4.1.1
