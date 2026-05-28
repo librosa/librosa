@@ -15,7 +15,9 @@ concurrency:
 
 jobs:
     test:
-        name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
+        name: >-
+          Python ${{ matrix.python-version }} on ${{ matrix.os }}
+          ${{ matrix.variant && format(' - {0}', matrix.variant) || '' }}
         runs-on: ${{ matrix.os }}
 
         strategy:
@@ -26,7 +28,7 @@ jobs:
                       python-version: "3.12"
                       envfile: ".github/environment-minimal.yml"
                       channel-priority: "strict"
-                      name: "Minimal dependencies"
+                      variant: "minimal"
 
                     - os: ubuntu-latest
                       python-version: "3.12"
