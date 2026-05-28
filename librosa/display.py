@@ -2989,8 +2989,17 @@ def wavef0(
     transpose : bool
         If `True`, display the wave vertically instead of horizontally.
     **kwargs : dict
-        Additional keyword arguments to pass to `librosa.display.waveshow` or
-        `librosa.display.wavebars`, depending on the `method` parameter.
+        Additional keyword arguments forwarded to the plotting function selected
+        by `method`.
+
+        If `method='waveshow'`, these must be keyword arguments supported by
+        `librosa.display.waveshow` (for example, `max_points`).
+
+        If `method='wavebars'`, these must be keyword arguments supported by
+        `librosa.display.wavebars` (for example, `n_bars`, `gap_ratio`,
+        `rounding_ratio`, `invert`, `invert_color`, `marker`, and `where`).
+
+        Keyword arguments for one method are not valid when using the other.
 
     Returns
     -------
