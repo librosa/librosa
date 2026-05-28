@@ -994,7 +994,9 @@ class Transformf0(mtransforms.Transform):
         self.is_separable: bool = False
         self.is_inverted: bool = is_inverted
 
-    def transform_non_affine(self, values: np.ndarray) -> np.ndarray:
+    def transform_non_affine(self, values: ArrayLike) -> np.ndarray:
+        values = np.asarray(values)
+
         if self.transpose:
             idx = (1, 0)
         else:
@@ -2398,7 +2400,7 @@ def waveshow(
     where: Literal["pre", "post", "mid"] = "post",
     label: Optional[str] = None,
     transpose: bool = False,
-    mask: Optional[Sequence[bool]] = None,
+    mask: Optional[ArrayLike] = None,
     ax: Optional[mplaxes.Axes] = None,
     invert: bool = False,
     invert_color: Union[str, tuple, None] = None,
@@ -2646,7 +2648,10 @@ def waveshow(
         kwargs.setdefault("color", steps.get_color())
 
     if mask is not None:
-        mask = mask[: len(y_top) * hop_length : hop_length]
+        mask = cast(
+            Sequence[bool],
+            np.asarray(mask, dtype=bool)[: len(y_top) * hop_length : hop_length]
+        )
 
     envelope = filler(
         times[: len(y_top) * hop_length : hop_length],
