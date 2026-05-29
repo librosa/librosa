@@ -1006,6 +1006,21 @@ class Transformf0(mtransforms.Transform):
         self.is_inverted: bool = is_inverted
 
     def transform_non_affine(self, values: ArrayLike) -> np.ndarray:
+        """Apply the f0 displacement transformation to the given values.
+
+        Parameters
+        ----------
+        values : np.ndarray
+            An array of shape (..., 2) containing time and sample values to be
+            transformed.  The order of time and sample values is determined by
+            the `transpose` parameter of this class.
+
+        Returns
+        -------
+        output : np.ndarray
+            An array of the same shape as `values`, containing the transformed
+            time and sample values.
+        """
         values = np.asarray(values)
 
         if self.transpose:
@@ -1031,6 +1046,7 @@ class Transformf0(mtransforms.Transform):
         return output
 
     def inverted(self) -> Transformf0:
+        """Return the inverse of this transformation."""
         return Transformf0(
             f0=self.f0,
             sr=self.sr,
