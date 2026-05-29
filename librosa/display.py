@@ -977,11 +977,10 @@ class Transformf0(mtransforms.Transform):
         transpose: bool = False,
         is_inverted: bool = False,
     ):
-
         super().__init__(shorthand_name="Transformf0")
         
-        if np.nanmin(f0) <= 0:
-            raise ParameterError("f0 must be strictly positive (or NaN)")
+        if not np.any(np.isfinite(f0)) or np.nanmin(f0) <= 0:
+            raise ParameterError("f0 must be strictly positive (or NaN) and contain at least one finite value")
 
         times = offset + core.times_like(f0, sr=sr, hop_length=hop_length)
         self.f0_interp = scipy.interpolate.interp1d(
