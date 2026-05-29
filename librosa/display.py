@@ -972,6 +972,10 @@ class Transformf0(mtransforms.Transform):
     ):
 
         super().__init__(shorthand_name="Transformf0")
+        
+        if np.nanmin(f0) <= 0:
+            raise ParameterError("f0 must be strictly positive (or NaN)")
+
         times = offset + core.times_like(f0, sr=sr, hop_length=hop_length)
         self.f0_interp = scipy.interpolate.interp1d(
             times,
@@ -981,8 +985,6 @@ class Transformf0(mtransforms.Transform):
             bounds_error=False,
             assume_sorted=True,
         )
-        if np.nanmin(f0) <= 0:
-            raise ParameterError("f0 must be strictly positive (or NaN)")
 
         self.norm = norm
         self.bins_per_octave = bins_per_octave
@@ -2968,6 +2970,7 @@ def wavef0(
         Accepted values are:
           - 'cqt_note' : markers are shown as note names.
           - 'cqt_hz' : markers are shown as frequencies in Hz.
+          - 'cqt_oct3' : markers are shown in Hz using 1/3-octave intervals.
           - 'cqt_svara' : markers are shown as Indian classical music svara names.
 
     offset : float
