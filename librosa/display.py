@@ -3043,7 +3043,7 @@ def wavef0(
 
         If `method='wavebars'`, these must be keyword arguments supported by
         `librosa.display.wavebars` (for example, `n_bars`, `gap_ratio`,
-        `rounding_ratio`, `invert`, `invert_color`, `marker`, and `where`).
+        `rounding_ratio`, `invert`, and `invert_color`).
 
         Keyword arguments for one method are not valid when using the other.
 
