@@ -3057,9 +3057,9 @@ def wavef0(
     """
     # Create the adaptive drawing object
     axes = __check_axes(ax)
-    norm = max(y.max(), -y.min())
-    if norm <= 0:
-        norm = util.tiny(y)
+
+    # Force norm to be strictly positive
+    norm = max(y.max(), -y.min()) + util.tiny(y)
 
     trans = Transformf0(
         f0,
