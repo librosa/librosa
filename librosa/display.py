@@ -2948,7 +2948,9 @@ def wavef0(
 
     bins_per_octave : int > 0
         Number of frequency bins per octave.
-        This is used to determine the frequency axis for the f0 estimates.
+        This is used to determine the displacement scale for the waveform plot based on the
+        spacing of the f0 estimates, and it also determines the resolution of the frequency
+        axis.
 
     time_axis : str
         Display style of the time axis ticks and tick markers.
