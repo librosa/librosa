@@ -1823,6 +1823,13 @@ def test_transformf0_roundtrip(transpose, values):
     assert np.allclose(recovered, values, rtol=1e-12, atol=1e-12)
 
 
+@pytest.mark.parametrize('f0', [np.zeros(5), np.linspace(-10, -5, num=5), np.linspace(-10, 10,
+                                                                                      num=5)])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_transformf0_bad_f0(f0):
+    librosa.display.Transformf0(f0=f0, sr=1, hop_length=1)
+
+
 @pytest.mark.mpl_image_compare(
     baseline_images=["legend_for_axes_above"],
     extensions=["png"],

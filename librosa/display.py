@@ -981,6 +981,9 @@ class Transformf0(mtransforms.Transform):
             bounds_error=False,
             assume_sorted=True,
         )
+        if np.nanmin(f0) <= 0:
+            raise ParameterError("f0 must be strictly positive (or NaN)")
+
         self.norm = norm
         self.bins_per_octave = bins_per_octave
         self.f0 = f0
