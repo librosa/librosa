@@ -101,7 +101,13 @@ if TYPE_CHECKING:
 __all__ = [
     "specshow",
     "waveshow",
-    "cmap",
+    "wavebars",
+    "wavef0",
+    "multiplot",
+    "infer_cmap",
+    "colorbar_db",
+    "colorbar_phase",
+    "legend_for_axes",
     "TimeFormatter",
     "NoteFormatter",
     "FJSFormatter",
@@ -111,6 +117,7 @@ __all__ = [
     "ChromaFJSFormatter",
     "TonnetzFormatter",
     "AdaptiveWaveplot",
+    "Transformf0",
 ]
 
 # mypy: disable-error-code="attr-defined"
