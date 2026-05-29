@@ -2534,9 +2534,9 @@ def waveshow(
 
     mask : np.ndarray [shape=(n,)] or None
         If provided, this mask will be used to determine which samples to display.
-        The mask should be a boolean array of the same shape as `y`, where `True`
-        indicates that the sample should be displayed, and `False` indicates that it
-        should be ignored.
+        The mask should be a 1D boolean array of the same length as `y` (`y.shape[-1]`), 
+        where `True` indicates that the sample should be displayed, and `False` indicates
+        that it should be ignored.
 
         .. note:: This mask is only used directly by the envelope display, and a raw sample
             display will not be masked.  The `mask` parameter is intended to be used by the
