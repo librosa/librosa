@@ -2947,10 +2947,10 @@ def wavef0(
         This should match the hop length used to compute `f0`.
 
     bins_per_octave : int > 0
-        Number of frequency bins per octave.
-        This is used to determine the displacement scale for the waveform plot based on the
-        spacing of the f0 estimates, and it also determines the resolution of the frequency
-        axis.
+        Number of frequency bins per octave used to scale the waveform's
+        amplitude displacement around f0.  Combined with the waveform's peak
+        amplitude (used as the displacement norm), this controls how many bins
+        of vertical displacement correspond to one octave above or below f0.
 
     time_axis : str
         Display style of the time axis ticks and tick markers.
