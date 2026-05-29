@@ -3091,7 +3091,7 @@ def wavef0(
     # Force norm to be strictly positive and handle empty arrays
     norm = float(util.tiny(y))
     if y.size > 0:
-        norm += np.max(y.max(), -y.min())
+        norm += max(y.max(), -y.min())
 
     trans = Transformf0(
         f0,
