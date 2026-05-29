@@ -3114,7 +3114,7 @@ def wavef0(
             **kwargs,
         )
 
-        # Kludge the data limits because the fillbetween collections does not automatically
+        # Kludge the data limits because the fill_between collection does not automatically
         # update the data limits
         assert adaptor.envelope is not None
         xy = adaptor.envelope.get_datalim(trans + axes.transData).get_points()
