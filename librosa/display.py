@@ -2956,7 +2956,7 @@ def wavef0(
         bottom of the plot.
         If mono, the signal's envelope is mirrored across the axis.
 
-    f0 : np.ndarray [shape=(n,)]
+    f0 : np.ndarray [shape=(m,)]
         Fundamental frequency (f0) estimates in Hz.
         This should be computed using a pitch estimation algorithm such as
         `librosa.pyin` or `librosa.yin`.
@@ -3088,8 +3088,10 @@ def wavef0(
     if method not in ("waveshow", "wavebars"):
         raise ParameterError(f"Invalid display method={method}.")
 
-    # Force norm to be strictly positive
-    norm = max(y.max(), -y.min()) + util.tiny(y)
+    # Force norm to be strictly positive and handle empty arrays
+    norm = float(util.tiny(y))
+    if y.size > 0:
+        norm += np.max(y.max(), -y.min())
 
     trans = Transformf0(
         f0,
