@@ -3063,6 +3063,9 @@ def wavef0(
     # Create the adaptive drawing object
     axes = __check_axes(ax)
 
+    if method not in ("waveshow", "wavebars"):
+        raise ParameterError(f"Invalid display method={method}.")
+
     # Force norm to be strictly positive
     norm = max(y.max(), -y.min()) + util.tiny(y)
 
@@ -3144,8 +3147,6 @@ def wavef0(
             transpose=transpose,
             **kwargs,
         )
-    else:
-        raise ParameterError(f"Invalid display method={method}.")
 
 
 def __radian_formatter(x, pos):
