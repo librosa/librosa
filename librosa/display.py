@@ -3136,7 +3136,7 @@ def wavef0(
         # end kludge
         return adaptor
 
-    elif method == "wavebars":
+    else:
         return wavebars(
             y=y,
             sr=sr,
