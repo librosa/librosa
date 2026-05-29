@@ -3081,6 +3081,15 @@ def wavef0(
     >>> librosa.display.wavef0(y=y, f0=f0, sr=sr, ax=ax, n_bars=256,
     ...                        method='wavebars', freq_axis='cqt_hz')
     >>> ax.set(title='Waveform with f0 displacement (wavebars, cqt_hz)')
+    >>> plt.show()
+
+    Overlay a displaced waveform on a CQT plot via `specshow`.
+
+    >>> fig, ax = plt.subplots()
+    >>> C = librosa.cqt(y, sr=sr)
+    >>> librosa.display.specshow(C, ax=ax, sr=sr, x_axis='time', y_axis='cqt_note',
+    ...                          vscale='dBFS', cmap='gray_r')
+    >>> librosa.display.wavef0(y=y, f0=f0, sr=sr, ax=ax)
     """
     # Create the adaptive drawing object
     axes = __check_axes(ax)
