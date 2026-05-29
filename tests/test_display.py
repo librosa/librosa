@@ -1643,6 +1643,28 @@ def test_wavebars_transpose(y, sr):
     return fig
 
 
+@pytest.mark.mpl_image_compare(
+    baseline_images=["wavef0"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_wavef0(y, sr):
+    fig, ax = plt.subplots(nrows=2, figsize=(8, 6))
+
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
+                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
+    # Waveform with f0
+    librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label='waveshow')
+    ax[0].legend(loc='lower right')
+
+    # Waveform with f0 and pitch
+    librosa.display.wavef0(y, sr=sr, f0=f0, method='wavebars', freq_axis='cqt_hz',
+                           color='C1', ax=ax[1], label='wavebars')
+    ax[1].legend(loc='lower right')
+    return fig
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_legend_for_axes_no_axes():
     fig = plt.figure()
@@ -1721,6 +1743,30 @@ def test_legend_for_axes_right():
 
 
 @pytest.mark.mpl_image_compare(
+    baseline_images=["wavef0_transpose"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_wavef0_transpose(y, sr):
+    fig, ax = plt.subplots(ncols=2, figsize=(6, 8))
+
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
+                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
+    # Waveform with f0
+    librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label='waveshow',
+                           transpose=True)
+    ax[0].legend(loc='lower right')
+
+    # Waveform with f0 and pitch
+    librosa.display.wavef0(y, sr=sr, f0=f0, method='wavebars', freq_axis='cqt_hz',
+                           color='C1', ax=ax[1], label='wavebars',
+                           transpose=True)
+    ax[1].legend(loc='lower right')
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
     baseline_images=["legend_for_axes_left"],
     extensions=["png"],
     tolerance=6,
@@ -1737,6 +1783,51 @@ def test_legend_for_axes_left():
     librosa.display.legend_for_axes(axes=axes, loc="center right")
 
     return fig
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_wavef0_bad_method(y, sr):
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
+                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
+    librosa.display.wavef0(y, f0=f0, sr=sr, method='bad_method')
+
+
+@pytest.mark.parametrize(
+    "transpose,values",
+    [
+        (
+            False,
+            np.array([[0.0, -12.0], [1.0, 0.0], [2.0, 7.0], [3.0, 12.0]], dtype=float),
+        ),
+        (
+            True,
+            np.array([[-12.0, 0.0], [0.0, 1.0], [7.0, 2.0], [12.0, 3.0]], dtype=float),
+        ),
+    ],
+)
+def test_transformf0_roundtrip(transpose, values):
+    f0 = np.array([100.0, 110.0, 120.0, 130.0], dtype=float)
+
+    trans = librosa.display.Transformf0(
+        f0=f0,
+        sr=1,
+        hop_length=1,
+        bins_per_octave=12,
+        norm=2.0,
+        transpose=transpose,
+    )
+
+    forward = trans.transform(values)
+    recovered = trans.inverted().transform(forward)
+
+    assert np.allclose(recovered, values, rtol=1e-12, atol=1e-12)
+
+
+@pytest.mark.parametrize('f0', [np.zeros(5), np.linspace(-10, -5, num=5), np.linspace(-10, 10,
+                                                                                      num=5)])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_transformf0_bad_f0(f0):
+    librosa.display.Transformf0(f0=f0, sr=1, hop_length=1)
 
 
 @pytest.mark.mpl_image_compare(
