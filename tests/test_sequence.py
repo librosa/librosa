@@ -118,6 +118,39 @@ def test_viterbi_sparse(transition_min_prob):
     assert np.isclose(logp, reg_logp)
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
+def test_viterbi_negative_minprob():
+    p_init = np.asarray([0.6, 0.4])
+    transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])
+    emit_p = [
+        dict(normal=0.5, cold=0.4, dizzy=0.1),
+        dict(normal=0.1, cold=0.3, dizzy=0.6),
+    ]
+    obs = ["normal", "cold", "dizzy"]
+    prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
+    librosa.sequence.viterbi(
+        prob, transition, p_init=p_init, return_logp=True,
+        transition_min_prob=-1
+    )
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_viterbi_discriminative_negative_minprob():
+    transition = np.asarray([[0.75, 0.25], [0.25, 0.75]])
+    p_joint = np.asarray([[0.25, 0.25], [0.1, 0.4]])
+    p_obs_marginal = p_joint.sum(axis=0)
+    p_state_marginal = p_joint.sum(axis=1)
+    p_init = p_state_marginal
+    p_state_given_obs = (p_joint / p_obs_marginal).T
+    seq = np.asarray([1, 1, 0, 1, 1, 1, 0, 0])
+    prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
+
+    librosa.sequence.viterbi_discriminative(
+        prob_d, transition, p_state=p_state_marginal, p_init=p_init, return_logp=True,
+        transition_min_prob=-1
+    )
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_viterbi_sparse_fail():
     p_init = np.asarray([0.6, 0.4])
     transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])

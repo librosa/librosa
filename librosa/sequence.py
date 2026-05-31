@@ -1257,10 +1257,10 @@ def _viterbi(
         for t in range(1, n_steps):
             for j in range(n_states):
                 best_cost = -np.inf
-                for k in range(n_states):
-                    cost = value[t - 1, k] + log_trans[k, j]
+                for kj in range(n_states):
+                    cost = value[t - 1, kj] + log_trans[kj, j]
                     if cost > best_cost:
-                        ptr[t, j] = k
+                        ptr[t, j] = kj
                         best_cost = cost
                 value[t, j] = log_prob[t, j] + best_cost
 
@@ -1332,7 +1332,7 @@ def viterbi(
         If not provided, a uniform distribution is assumed.
     return_logp : bool
         If ``True``, return the log-likelihood of the state sequence.
-    transition_min_prob : float
+    transition_min_prob : float, >=0
         Optional: if provided, the minimum transition probability to consider
         during decoding.
 
@@ -1416,10 +1416,14 @@ def viterbi(
     log_prob = np.log(prob + epsilon)
     log_p_init = np.log(p_init + epsilon)
 
-    if transition_min_prob is not None:
+    if transition_min_prob is not None and transition_min_prob > 0:
         log_trans_threshold = np.log(transition_min_prob + epsilon)
-    else:
+    elif transition_min_prob is None or transition_min_prob == 0:
         log_trans_threshold = -np.inf
+    else:
+        raise ParameterError(
+            f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative."
+        )
 
     def _helper(lp):
         # Transpose input
@@ -1532,7 +1536,7 @@ def viterbi_discriminative(
         If not provided, it is assumed to be uniform.
     return_logp : bool
         If ``True``, return the log-likelihood of the state sequence.
-    transition_min_prob : float
+    transition_min_prob : float, >= 0
         Optional: if provided, the minimum transition probability to consider
         during decoding.
 
@@ -1671,10 +1675,14 @@ def viterbi_discriminative(
     log_trans = np.log(transition + epsilon)
     log_marginal = np.log(p_state + epsilon)
 
-    if transition_min_prob is not None:
+    if transition_min_prob is not None and transition_min_prob > 0:
         log_trans_threshold = np.log(transition_min_prob + epsilon)
-    else:
+    elif transition_min_prob is None or transition_min_prob == 0:
         log_trans_threshold = -np.inf
+    else:
+        raise ParameterError(
+            f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative."
+        )
 
     # reshape to broadcast against prob
     log_marginal = expand_to(log_marginal, ndim=prob.ndim, axes=-2)
@@ -1806,7 +1814,7 @@ def viterbi_binary(
     return_logp : bool
         If ``True``, return the (unnormalized) log-likelihood of the state sequences.
 
-    transition_min_prob : float
+    transition_min_prob : float, >= 0
         Optional: if provided, the minimum transition probability to consider
         during decoding.
 
