@@ -69,7 +69,6 @@ from matplotlib.transforms import Bbox
 from . import core
 from . import util
 from .util.decorators import moved
-from .util.deprecation import rename_kw, Deprecated
 from .util.exceptions import ParameterError
 from typing import (
     TYPE_CHECKING,

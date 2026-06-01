@@ -4,8 +4,6 @@
 from __future__ import annotations
 
 import os
-import pathlib
-import warnings
 
 import soundfile as sf
 import numpy as np
@@ -19,8 +17,6 @@ from .convert import frames_to_samples, time_to_samples
 from .._cache import cache
 from .. import util
 from ..util.exceptions import ParameterError
-from ..util.decorators import deprecated
-from ..util.deprecation import Deprecated, rename_kw
 from .._typing import _FloatLike_co, _IntLike_co, _SequenceLike, _ScalarOrSequence
 
 from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union

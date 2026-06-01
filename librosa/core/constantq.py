@@ -22,7 +22,6 @@ from .._typing import (
     _WindowSpec,
     _PadMode,
     _FloatLike_co,
-    _ensure_not_reachable,
     RNGLike,
     SeedLike,
 )

@@ -14,7 +14,6 @@ from . import audio
 from .._cache import cache
 from .. import util
 from .. import sequence
-from ..util import Deprecated
 from ..util.exceptions import ParameterError
 from numpy.typing import ArrayLike
 from typing import Any, Callable, Optional, Tuple, Union

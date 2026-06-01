@@ -28,7 +28,6 @@ from typing_extensions import Literal
 
 from .._cache import cache
 from .._typing import _ComplexLike_co, _FloatLike_co, _SequenceLike, _SparseArray, _SparseMatrix, _InterpKind
-from .deprecation import Deprecated
 from .exceptions import ParameterError
 
 # Constrain STFT block sizes to 256 KB
