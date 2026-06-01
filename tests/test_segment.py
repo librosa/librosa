@@ -18,9 +18,7 @@ import pytest
 from typing import cast
 
 import librosa
-
-if TYPE_CHECKING:
-    from librosa._typing import _SparseArray
+from librosa._typing import _SparseArray
 
 
 @pytest.mark.parametrize("n", [20, 250])
