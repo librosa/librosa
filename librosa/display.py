@@ -977,7 +977,7 @@ class Transformf0(mtransforms.Transform):
         is_inverted: bool = False,
     ):
         super().__init__(shorthand_name="Transformf0")
-        
+
         if not np.any(np.isfinite(f0)) or np.nanmin(f0) <= 0:
             raise ParameterError("f0 must be strictly positive (or NaN) and contain at least one finite value")
 
@@ -3729,7 +3729,7 @@ def multiplot(
         will be ignored.
 
     orient : str {'h', 'v'}
-        The orientation of the multiplot grid. Accepted values are 'h' for horizontal 
+        The orientation of the multiplot grid. Accepted values are 'h' for horizontal
         and 'v' for vertical. This determines how the subplots are arranged when the
         input data has a single non-singleton dimension (e.g., shape (n, k) with k > 1).
 

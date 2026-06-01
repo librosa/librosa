@@ -561,7 +561,7 @@ def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]],
 
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
-    
+
     letter = match.group('note').upper()
     accidental = match.group('accidental')
     counter = Counter(accidental)
@@ -576,14 +576,14 @@ def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]],
     if not unicode:
         translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb", "♮": "n"})
         simplified_note = simplified_note.translate(translations)
-    
+
     return simplified_note
-    
+
 def __mode_to_key(signature: str, unicode: bool = True) -> str:
     """Translate a mode (eg D:dorian) into its equivalent major key.
 
-    If unicode==True, return the accidentals as unicode symbols, regardless 
-    of nature of accidentals in signature. Otherwise, return accidentals as ASCII symbols.
+    If unicode==True, return the accidentals as unicode symbols, regardless of nature
+    of accidentals in signature. Otherwise, return accidentals as ASCII symbols.
 
     >>> librosa.__mode_to_key('Db:loc')
     'E𝄫:maj'
@@ -593,7 +593,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
 
     """
     match = KEY_RE.match(signature)
-    
+
     if not match:
         raise ParameterError("Improper format: {:s}".format(signature))
 
@@ -604,7 +604,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
                                      unicode=unicode) + (':'+match.group("scale") if
                                                          match.group("scale") else ''))
         return signature
-        
+
     # We have a mode, time to translate
     mode = match.group("mode").lower()[:3]
 
@@ -731,7 +731,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
 
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
-    
+
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 
     tonic = match.group("tonic").upper()
@@ -757,7 +757,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
         notes = [__simplify_note(note, additional_acc) for note in intermediate_notes]
         degrees = __note_to_degree(notes)
         notes = np.roll(notes, shift=-np.argwhere(degrees == 0)[0])
-        
+
         notes = list(notes)
 
         if not unicode:
@@ -765,7 +765,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
             notes = list(n.translate(translations) for n in notes)
 
         return notes
-            
+
 
     # Determine major or minor
     major = scale == "maj"
@@ -915,7 +915,7 @@ def key_to_degrees(key: str) -> np.ndarray:
 
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
-    
+
     if match.group('mode') or not match.group('scale'):
         equiv = __mode_to_key(key)
         offset = OFFSET_DICT[match.group('mode')[:3]]
@@ -979,7 +979,7 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
     """
     # Starting the circle of fifths at F makes accidentals easier to count
     COFMAP = "FCGDAEB"
-    
+
     acc_map = {
         "#": 1,
         "": 0,

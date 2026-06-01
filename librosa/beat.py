@@ -528,7 +528,7 @@ def __beat_local_score(onset_envelope, frames_per_beat, localscore):
 
 
     N = len(onset_envelope)
-    
+
     if len(frames_per_beat) == 1:
         # Static tempo mode
         # NOTE: when we can bump the minimum numba to 0.58, we can eliminate this branch and just use
@@ -543,7 +543,7 @@ def __beat_local_score(onset_envelope, frames_per_beat, localscore):
             # and i + K // 2 - k >= 0 ==>    k <= i + K // 2
             for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
                 localscore[i] += window[k] * onset_envelope[i + K//2 -k]
-                
+
     elif len(frames_per_beat) == len(onset_envelope):
         # Time-varying tempo estimates
         # This isn't exactly a convolution anymore, since the filter is time-varying, but it's pretty close
@@ -551,7 +551,7 @@ def __beat_local_score(onset_envelope, frames_per_beat, localscore):
             window = np.exp(-0.5 * (np.arange(-frames_per_beat[i],
                                               frames_per_beat[i] + 1) * 32.0 / frames_per_beat[i]) ** 2)
             K = 2 * int(frames_per_beat[i]) + 1
-            
+
             localscore[i] = 0.
             for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
                 localscore[i] += window[k] * onset_envelope[i + K // 2 - k]
