@@ -503,8 +503,7 @@ def __beat_tracker(
     __dp_backtrack(backlink, tail, beats)
 
     # Discard spurious trailing beats
-    beats: np.ndarray = __trim_beats(localscore, beats, trim)
-
+    beats = np.asarray(__trim_beats(localscore, beats, trim))
     return beats
 
 
@@ -650,7 +649,7 @@ def __last_beat(cumscore):
     # Use a masked array to support multidimensional statistics
     # We negate the mask here because of numpy masked array semantics
     mask = ~util.localmax(cumscore, axis=-1)
-    masked_scores = np.ma.masked_array(data=cumscore, mask=mask)  # type: ignore
+    masked_scores = np.ma.masked_array(data=cumscore, mask=mask)
     medians = np.ma.median(masked_scores, axis=-1)
     thresholds = 0.5 * np.ma.getdata(medians)
 
