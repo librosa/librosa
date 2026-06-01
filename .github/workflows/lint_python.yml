@@ -48,7 +48,7 @@ jobs:
 
     - name: Linting check
       shell: bash -l {0}
-      run: ruff check librosa
+      run: ruff check --output-format=github librosa
     
     - name: Docstring formatting check  
       shell: bash -l {0}
