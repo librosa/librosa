@@ -1763,7 +1763,7 @@ def chirp(
         phi = -np.pi * 0.5
 
     method = "linear" if linear else "logarithmic"
-    y: np.ndarray = scipy.signal.chirp(  # type: ignore[call-overload]
+    y: np.ndarray = scipy.signal.chirp(  # type: ignore[misc,call-overload]
         np.arange(int(duration * sr)) / sr,
         fmin,
         duration,
