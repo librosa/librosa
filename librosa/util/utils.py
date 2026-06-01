@@ -1661,7 +1661,8 @@ def index_to_slice(
     idx_fixed = fix_frames(idx, x_min=idx_min, x_max=idx_max, pad=pad)
 
     # Now convert the indices to slices
-    return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:])]
+    return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:],
+                                                            strict=False)]
 
 
 @cache(level=40)

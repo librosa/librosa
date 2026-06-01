@@ -687,7 +687,7 @@ def icqt(
     srs = [sr]
     hops = [hop_length]
 
-    for i in range(n_octaves - 1):
+    for _i in range(n_octaves - 1):
         if hops[0] % 2 == 0:
             # We can downsample:
             srs.insert(0, srs[0] * 0.5)
@@ -697,7 +697,7 @@ def icqt(
             srs.insert(0, srs[0])
             hops.insert(0, hops[0])
 
-    for i, (my_sr, my_hop) in enumerate(zip(srs, hops)):
+    for i, (my_sr, my_hop) in enumerate(zip(srs, hops, strict=True)):
         # How many filters are in this octave?
         n_filters = min(bins_per_octave, n_bins - bins_per_octave * i)
 

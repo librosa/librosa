@@ -9,7 +9,7 @@ build-backend = 'setuptools.build_meta'
 line-length = 119
 
 [tool.ruff.lint]
-select = ["E", "F", "S", "D", "W", "I", "PYI", "Q"]
+select = ["E", "F", "S", "D", "W", "I", "PYI", "Q", "B"]
 ignore = [
     "D107",
     "D203",
@@ -31,3 +31,6 @@ convention = "numpy"
 [tool.ruff.lint.per-file-ignores]
 "**/__init__.py" = ["F401"]
 "**/__init__.pyi" = ["F401"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["librosa.util.deprecation.Deprecated"]
