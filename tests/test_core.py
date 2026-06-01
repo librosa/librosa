@@ -2711,6 +2711,7 @@ def test_mu_expand(mu, quantize):
 
     z = librosa.mu_expand(y, mu=mu, quantize=quantize)
 
+    assert isinstance(z, np.ndarray)
     assert np.all(z <= 1) and np.all(z >= -1)
     assert np.all(np.sign(z) == np.sign(x))
 
