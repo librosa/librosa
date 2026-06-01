@@ -754,7 +754,7 @@ class TonnetzFormatter(mplticker.Formatter):
 
     def __call__(self, x: float, pos: Optional[int] = None) -> str:
         """Format for tonnetz positions"""
-        return [r"5$_x$", r"5$_y$", r"m3$_x$", r"m3$_y$", r"M3$_x$", r"M3$_y$"][int(x)]
+        return [r"5$_y$", r"5$_x$", r"m3$_y$", r"m3$_x$", r"M3$_y$", r"M3$_x$"][int(x)]
 
 
 class AdaptiveWaveplot:
