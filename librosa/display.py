@@ -3453,7 +3453,9 @@ def _mp_get_layout(
         else:
             nrows, ncols = 1, axshape[0]
     elif len(axshape) == 2:
-        nrows, ncols = axshape  # type: ignore[misc]
+        # Yes this is awkward, but it makes the type checker work.
+        # In a sane world it would just be nrows, ncols = axshape
+        nrows, ncols = axshape[0], axshape[-1]
     else:
         raise ParameterError(f"Invalid axes shape={axshape}")
 
