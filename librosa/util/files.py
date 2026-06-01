@@ -46,7 +46,7 @@ def _resource_file(package: str, resource: str):
 with _resource_file("librosa.util.example_data", "registry.txt") as reg:
     __GOODBOY.load_registry(str(reg))
     # We want to bypass version checks here to allow asynchronous updates for new releases
-    __GOODBOY.registry['version_index.msgpack'] = None
+    __GOODBOY.registry["version_index.msgpack"] = None
 
 with _resource_file("librosa.util.example_data", "index.json") as index:
     with index.open("r") as _fdesc:

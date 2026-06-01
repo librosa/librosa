@@ -9,7 +9,7 @@ build-backend = 'setuptools.build_meta'
 line-length = 119
 
 [tool.ruff.lint]
-select = ["E", "F", "S", "D", "W", "I", "PYI"]
+select = ["E", "F", "S", "D", "W", "I", "PYI", "Q"]
 ignore = [
     "D107",
     "D203",

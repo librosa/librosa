@@ -139,13 +139,13 @@ NOTE_RE = re.compile(
 # A dictionary converting the tonic name to the associated major key,
 # e.g. C Dorian uses the notes of the Bb major scale, hence MAJOR_DICT['dor']['C'] = 'B♭'
 MAJOR_DICT = {
-    'ion': {'C': 'C', 'D': 'D', 'E': 'E', 'F': 'F', 'G': 'G', 'A': 'A', 'B': 'B'},
-    'dor': {'C': 'B♭', 'D': 'C', 'E': 'D', 'F': 'E♭', 'G': 'F', 'A': 'G', 'B': 'A'},
-    'phr': {'C': 'A♭', 'D': 'B♭', 'E': 'C', 'F': 'D♭', 'G': 'E♭', 'A': 'F', 'B': 'G'},
-    'lyd': {'C': 'G', 'D': 'A', 'E': 'B', 'F': 'C', 'G': 'D', 'A': 'E', 'B': 'F♯'},
-    'mix': {'C': 'F', 'D': 'G', 'E': 'A', 'F': 'B♭', 'G': 'C', 'A': 'D', 'B': 'E'},
-    'aeo': {'C': 'E♭', 'D': 'F', 'E': 'G', 'F': 'A♭', 'G': 'B♭', 'A': 'C', 'B': 'D'},
-    'loc': {'C': 'D♭', 'D': 'E♭', 'E': 'F', 'F': 'G♭', 'G': 'A♭', 'A': 'B♭', 'B': 'C'}
+    "ion": {"C": "C", "D": "D", "E": "E", "F": "F", "G": "G", "A": "A", "B": "B"},
+    "dor": {"C": "B♭", "D": "C", "E": "D", "F": "E♭", "G": "F", "A": "G", "B": "A"},
+    "phr": {"C": "A♭", "D": "B♭", "E": "C", "F": "D♭", "G": "E♭", "A": "F", "B": "G"},
+    "lyd": {"C": "G", "D": "A", "E": "B", "F": "C", "G": "D", "A": "E", "B": "F♯"},
+    "mix": {"C": "F", "D": "G", "E": "A", "F": "B♭", "G": "C", "A": "D", "B": "E"},
+    "aeo": {"C": "E♭", "D": "F", "E": "G", "F": "A♭", "G": "B♭", "A": "C", "B": "D"},
+    "loc": {"C": "D♭", "D": "E♭", "E": "F", "F": "G♭", "G": "A♭", "A": "B♭", "B": "C"}
 }
 
 OFFSET_DICT = { "ion": 0, "dor": 1, "phr": 2, "lyd": 3, "mix": 4, "aeo": 5, "loc": 6 }
@@ -521,8 +521,8 @@ def __note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Unio
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
 
-    letter = match.group('note').upper()
-    accidental = match.group('accidental')
+    letter = match.group("note").upper()
+    accidental = match.group("accidental")
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
     counter = Counter(accidental)
     return (pitch_map[letter]+sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP]))%12
@@ -542,7 +542,7 @@ def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]],
     ...
 
 def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]],
-                    additional_acc: str='', unicode: bool = True) -> Union[str, np.ndarray]:
+                    additional_acc: str="", unicode: bool = True) -> Union[str, np.ndarray]:
     """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
     >>> librosa.__simplify_note('C♭♯')
@@ -563,8 +563,8 @@ def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]],
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
 
-    letter = match.group('note').upper()
-    accidental = match.group('accidental')
+    letter = match.group("note").upper()
+    accidental = match.group("accidental")
     counter = Counter(accidental)
     offset = sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP])
 
@@ -598,12 +598,12 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     if not match:
         raise ParameterError("Improper format: {:s}".format(signature))
 
-    if match.group('scale') or not match.group("mode"):
+    if match.group("scale") or not match.group("mode"):
         # We're already fine here, but let's pass the key through __simpify_note()
         # to ensure good formatting.
-        signature = (__simplify_note(match.group("tonic").upper()+match.group('accidental'),
-                                     unicode=unicode) + (':'+match.group("scale") if
-                                                         match.group("scale") else ''))
+        signature = (__simplify_note(match.group("tonic").upper()+match.group("accidental"),
+                                     unicode=unicode) + (":"+match.group("scale") if
+                                                         match.group("scale") else ""))
         return signature
 
     # We have a mode, time to translate
@@ -740,7 +740,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
 
     offset = sum([ACC_MAP[acc] for acc in accidental])
 
-    if match.group('mode') or not match.group('scale'):
+    if match.group("mode") or not match.group("scale"):
         equiv = __mode_to_key(key)
         return key_to_notes(equiv, unicode=unicode, natural = natural)
 
@@ -754,7 +754,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
     if multiple:
         sign_map = {+1: "♯", -1: "♭"}
         additional_acc = sign_map[np.sign(offset)]
-        intermediate_notes = key_to_notes(tonic+additional_acc*(abs(offset)-1)+':'+scale, natural = False)
+        intermediate_notes = key_to_notes(tonic+additional_acc*(abs(offset)-1)+":"+scale, natural = False)
         notes = [__simplify_note(note, additional_acc) for note in intermediate_notes]
         degrees = __note_to_degree(notes)
         notes = np.roll(notes, shift=-np.argwhere(degrees == 0)[0])
@@ -852,7 +852,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
             if __note_to_degree(note) in scale_notes:
                 continue
             if len(note)==1:
-                notes[place] = note+'♮'
+                notes[place] = note+"♮"
 
     # Finally, apply any unicode down-translation if necessary
     if not unicode:
@@ -917,9 +917,9 @@ def key_to_degrees(key: str) -> np.ndarray:
     if not match:
         raise ParameterError(f"Improper key format: {key:s}")
 
-    if match.group('mode') or not match.group('scale'):
+    if match.group("mode") or not match.group("scale"):
         equiv = __mode_to_key(key)
-        offset = OFFSET_DICT[match.group('mode')[:3]]
+        offset = OFFSET_DICT[match.group("mode")[:3]]
         return np.roll(key_to_degrees(equiv),-offset)
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
