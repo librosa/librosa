@@ -9,7 +9,7 @@ build-backend = 'setuptools.build_meta'
 line-length = 119
 
 [tool.ruff.lint]
-select = ["E", "F", "S", "D", "W", "I", "PYI", "Q", "B"]
+select = ["E", "F", "S", "D", "W", "I", "PYI", "Q", "B", "SIM"]
 ignore = [
     "D107",
     "D203",
@@ -23,6 +23,8 @@ ignore = [
     "D416",
     "D417",
     "S101",
+    "SIM108",  # Ternary operators are bad for readability
+    "SIM300"   # Yoda condition is different in numpy vectorized code
 ]
 
 [tool.ruff.lint.pydocstyle]

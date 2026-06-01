@@ -351,14 +351,14 @@ def hpss(
     else:
         phase = 1
 
-    if isinstance(kernel_size, tuple) or isinstance(kernel_size, list):
+    if isinstance(kernel_size, (tuple, list)):
         win_harm = kernel_size[0]
         win_perc = kernel_size[1]
     else:
         win_harm = kernel_size
         win_perc = kernel_size
 
-    if isinstance(margin, tuple) or isinstance(margin, list):
+    if isinstance(margin, (tuple, list)):
         margin_harm = margin[0]
         margin_perc = margin[1]
     else:

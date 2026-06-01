@@ -48,9 +48,8 @@ with _resource_file("librosa.util.example_data", "registry.txt") as reg:
     # We want to bypass version checks here to allow asynchronous updates for new releases
     __GOODBOY.registry["version_index.msgpack"] = None
 
-with _resource_file("librosa.util.example_data", "index.json") as index:
-    with index.open("r") as _fdesc:
-        __TRACKMAP = json.load(_fdesc)
+with _resource_file("librosa.util.example_data", "index.json") as index, index.open("r") as _fdesc:
+    __TRACKMAP = json.load(_fdesc)
 
 
 def example(key: str, *, hq: bool = False) -> str:

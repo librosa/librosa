@@ -13,10 +13,9 @@ from .._cache import cache
 from .._typing import _FloatLike_co
 from ..util.files import _resource_file
 
-with _resource_file("librosa.core", "intervals.msgpack") as imsgpack:
-    with imsgpack.open("rb") as _fdesc:
-        # We use floats for dictionary keys, so strict mapping is disabled
-        INTERVALS = msgpack.load(_fdesc, strict_map_key=False)
+with _resource_file("librosa.core", "intervals.msgpack") as imsgpack, imsgpack.open("rb") as _fdesc:
+    # We use floats for dictionary keys, so strict mapping is disabled
+    INTERVALS = msgpack.load(_fdesc, strict_map_key=False)
 
 
 @cache(level=10)
