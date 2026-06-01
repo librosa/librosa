@@ -1845,7 +1845,7 @@ def A_weighting(
             )
         return weights
     else:
-        weights = np.maximum(min_db, weights, out=weights)
+        weights = np.maximum(min_db, weights)
         return weights
 
 
@@ -1936,7 +1936,7 @@ def B_weighting(
             )
         return weights
     else:
-        weights = np.maximum(min_db, weights, out=weights)
+        weights = np.maximum(min_db, weights)
         return weights
 
 
@@ -2023,7 +2023,7 @@ def C_weighting(
             )
         return weights
     else:
-        weights = np.maximum(min_db, weights, out=weights)
+        weights = np.maximum(min_db, weights)
         return weights
 
 
@@ -2115,7 +2115,7 @@ def D_weighting(
             )
         return weights
     else:
-        weights = np.maximum(min_db, weights, out=weights)
+        weights = np.maximum(min_db, weights)
         return weights
 
 
@@ -2155,7 +2155,7 @@ def Z_weighting(
     if min_db is None:
         return weights
     else:
-        weights = np.maximum(min_db, weights, out=weights)
+        weights = np.maximum(min_db, weights)
         return weights
 
 
