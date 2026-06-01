@@ -1821,10 +1821,11 @@ def A_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997, 107.65265, 737.86223]) ** 2.0
+    weights: np.ndarray
     with np.errstate(divide="ignore"):
         # Temporarily ignore div-by-zero warnings since min_db might clean
         # them up later
-        weights: np.ndarray = 2.0 + 20.0 * (
+        weights = 2.0 + 20.0 * (
             np.log10(const[0])
             + 2 * np.log10(f_sq)
             - np.log10(f_sq + const[0])
@@ -1844,7 +1845,8 @@ def A_weighting(
             )
         return weights
     else:
-        return np.maximum(min_db, weights)
+        weights = np.maximum(min_db, weights, out=weights)
+        return weights
 
 
 @overload
@@ -1911,10 +1913,11 @@ def B_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997, 158.48932]) ** 2.0
+    weights: np.ndarray
     with np.errstate(divide="ignore"):
         # Temporarily ignore div-by-zero warnings since min_db might clean
         # them up later
-        weights: np.ndarray = 0.17 + 20.0 * (
+        weights = 0.17 + 20.0 * (
             np.log10(const[0])
             + 1.5 * np.log10(f_sq)
             - np.log10(f_sq + const[0])
@@ -1933,7 +1936,8 @@ def B_weighting(
             )
         return weights
     else:
-        return np.maximum(min_db, weights)
+        weights = np.maximum(min_db, weights, out=weights)
+        return weights
 
 
 @overload
@@ -1999,8 +2003,9 @@ def C_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([12194.217, 20.598997]) ** 2.0
+    weights: np.ndarray
     with np.errstate(divide="ignore"):
-        weights: np.ndarray = 0.062 + 20.0 * (
+        weights = 0.062 + 20.0 * (
             np.log10(const[0])
             + np.log10(f_sq)
             - np.log10(f_sq + const[0])
@@ -2018,7 +2023,8 @@ def C_weighting(
             )
         return weights
     else:
-        return np.maximum(min_db, weights)
+        weights = np.maximum(min_db, weights, out=weights)
+        return weights
 
 
 @overload
@@ -2084,8 +2090,9 @@ def D_weighting(
     f_sq = np.asanyarray(frequencies) ** 2.0
 
     const = np.array([8.3046305e-3, 1018.7, 1039.6, 3136.5, 3424, 282.7, 1160]) ** 2.0
+    weights: np.ndarray
     with np.errstate(divide="ignore"):
-        weights: np.ndarray = 20.0 * (
+        weights = 20.0 * (
             0.5 * np.log10(f_sq)
             - np.log10(const[0])
             + 0.5
@@ -2108,7 +2115,8 @@ def D_weighting(
             )
         return weights
     else:
-        return np.maximum(min_db, weights)
+        weights = np.maximum(min_db, weights, out=weights)
+        return weights
 
 
 def Z_weighting(
@@ -2143,11 +2151,12 @@ def Z_weighting(
     C_weighting
     D_weighting
     """
-    weights = np.zeros(len(frequencies))
+    weights: np.ndarray = np.zeros(len(frequencies))
     if min_db is None:
         return weights
     else:
-        return np.maximum(min_db, weights)
+        weights = np.maximum(min_db, weights, out=weights)
+        return weights
 
 
 WEIGHTING_FUNCTIONS: Dict[
