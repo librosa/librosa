@@ -146,7 +146,13 @@ def cross_similarity(
         as specified below.
 
     bandwidth : None, float > 0, ndarray, or str
-        str options include ``{'med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}``
+        str options include
+            - 'med_k_scalar'
+            - 'mean_k'
+            - 'gmean_k'
+            - 'mean_k_avg'
+            - 'gmean_k_avg'
+            - 'mean_k_avg_and_pair'
 
         If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
 
@@ -456,7 +462,13 @@ def recurrence_matrix(
         as specified below.
 
     bandwidth : None, float > 0, ndarray, or str
-        str options include ``{'med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}``
+        str options include:
+            - 'med_k_scalar'
+            - 'mean_k'
+            - 'gmean_k'
+            - 'mean_k_avg'
+            - 'gmean_k_avg'
+            - 'mean_k_avg_and_pair'
 
         If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
 

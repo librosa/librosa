@@ -2181,7 +2181,8 @@ def __shear_sparse(
 @overload
 def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 @overload
-def shear(X: Union[_SparseArray, _SparseMatrix], *, factor: int = ..., axis: int = ...) -> Union[_SparseArray, _SparseMatrix]: ...
+def shear(X: Union[_SparseArray, _SparseMatrix], *, 
+          factor: int = ..., axis: int = ...) -> Union[_SparseArray, _SparseMatrix]: ...
 def shear(
     X: Union[np.ndarray, _SparseArray, _SparseMatrix], *, factor: int = 1, axis: int = -1
 ) -> Union[np.ndarray, _SparseArray, _SparseMatrix]:

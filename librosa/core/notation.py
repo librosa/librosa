@@ -135,7 +135,8 @@ NOTE_RE = re.compile(
     r"(?P<octave>[+-]?\d+)?"
     r"(?P<cents>[+-]\d+)?$"
 )
-# A dictionary converting the tonic name to the associated major key, e.g. C Dorian uses the notes of the Bb major scale, hence MAJOR_DICT['dor']['C'] = 'B♭'
+# A dictionary converting the tonic name to the associated major key,
+# e.g. C Dorian uses the notes of the Bb major scale, hence MAJOR_DICT['dor']['C'] = 'B♭'
 MAJOR_DICT = {
     'ion': {'C': 'C', 'D': 'D', 'E': 'E', 'F': 'F', 'G': 'G', 'A': 'A', 'B': 'B'},
     'dor': {'C': 'B♭', 'D': 'C', 'E': 'D', 'F': 'E♭', 'G': 'F', 'A': 'G', 'B': 'A'},
@@ -530,14 +531,17 @@ def __simplify_note(key: str, additional_acc: str =..., unicode: bool= ...) -> s
     ...
 
 @overload
-def __simplify_note(key: _IterableLike[str], additional_acc: str=..., unicode: bool = ... ) -> np.ndarray:
+def __simplify_note(key: _IterableLike[str],
+                    additional_acc: str=..., unicode: bool = ... ) -> np.ndarray:
     ...
 
 @overload
-def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str =..., unicode: bool = ...) -> Union[str, np.ndarray]:
+def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]],
+                    additional_acc: str =..., unicode: bool = ...) -> Union[str, np.ndarray]:
     ...
 
-def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], additional_acc: str='', unicode: bool = True) -> Union[str, np.ndarray]:
+def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]],
+                    additional_acc: str='', unicode: bool = True) -> Union[str, np.ndarray]:
     """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
     >>> librosa.__simplify_note('C♭♯')
@@ -576,7 +580,10 @@ def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]], addition
     return simplified_note
     
 def __mode_to_key(signature: str, unicode: bool = True) -> str:
-    """Translate a mode (eg D:dorian) into its equivalent major key. If unicode==True, return the accidentals as unicode symbols, regardless of nature of accidentals in signature. Otherwise, return accidentals as ASCII symbols.
+    """Translate a mode (eg D:dorian) into its equivalent major key.
+
+    If unicode==True, return the accidentals as unicode symbols, regardless 
+    of nature of accidentals in signature. Otherwise, return accidentals as ASCII symbols.
 
     >>> librosa.__mode_to_key('Db:loc')
     'E𝄫:maj'
@@ -591,8 +598,11 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
         raise ParameterError("Improper format: {:s}".format(signature))
 
     if match.group('scale') or not match.group("mode"):
-        # We're already fine here, but let's pass the key through __simpify_note() to ensure good formatting.
-        signature = __simplify_note(match.group("tonic").upper()+match.group('accidental'), unicode=unicode)+(':'+match.group("scale") if match.group("scale") else '')
+        # We're already fine here, but let's pass the key through __simpify_note()
+        # to ensure good formatting.
+        signature = (__simplify_note(match.group("tonic").upper()+match.group('accidental'),
+                                     unicode=unicode) + (':'+match.group("scale") if
+                                                         match.group("scale") else ''))
         return signature
         
     # We have a mode, time to translate
@@ -602,6 +612,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     tonic = MAJOR_DICT[mode][match.group("tonic").upper()]
 
     return __simplify_note(tonic+match.group("accidental"), unicode = unicode)+":maj"
+
 
 @cache(level=10)
 def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> List[str]:
@@ -627,14 +638,16 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
     key : string
         Must be in the form TONIC:key.  Tonic must be upper case (``CDEFGAB``),
         key must be lower-case
-        (``major``, ``minor``, ``ionian``, ``dorian``, ``phrygian``, ``lydian``, ``mixolydian``, ``aeolian``, ``locrian``).
+        (``major``, ``minor``, ``ionian``, ``dorian``, ``phrygian``, ``lydian``,
+        ``mixolydian``, ``aeolian``, ``locrian``).
 
         The following abbreviations are supported for the modes: either the first three letters of the mode name
         (e.g. "mix") or the mode name without "ian" (e.g. "mixolyd").
 
         Both ``major`` and ``maj`` are supported as mode abbreviations.
 
-        Single and multiple accidentals (``b!♭`` for flat, ``#♯`` for sharp, ``𝄪𝄫`` for double-accidentals, or any combination thereof) are supported.
+        Single and multiple accidentals (``b!♭`` for flat, ``#♯`` for sharp,
+        ``𝄪𝄫`` for double-accidentals, or any combination thereof) are supported.
 
         Examples: ``C:maj, C:major, Dbb:min, A♭:min, D:aeo, E𝄪:phryg``.
 
@@ -734,7 +747,8 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> Lis
 
     multiple = abs(offset)>=2
 
-    #If multiple accidentals, we use recursion, then cycle through so that the enharmonic equivalent of C is at the beginning again.
+    # If multiple accidentals, we use recursion, then cycle through so that the
+    # enharmonic equivalent of C is at the beginning again.
 
     if multiple:
         sign_map = {+1: "♯", -1: "♭"}

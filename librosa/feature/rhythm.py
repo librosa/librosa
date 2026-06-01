@@ -534,7 +534,8 @@ def tempogram_ratio(
 
     .. [2] Prockup, Matthew, Andreas F. Ehmann, Fabien Gouyon, Erik M. Schmidt, and Youngmoo E. Kim.
         "Modeling musical rhythm at scale with the music genome project."
-        In 2015 IEEE workshop on applications of signal processing to audio and acoustics (WASPAA), pp. 1-5. IEEE, 2015.
+        In 2015 IEEE workshop on applications of signal processing to audio
+        and acoustics (WASPAA), pp. 1-5. IEEE, 2015.
 
     Parameters
     ----------

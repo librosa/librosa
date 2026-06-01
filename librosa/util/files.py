@@ -322,7 +322,8 @@ def cite(version: Optional[str]=None) -> str:
 
     if version not in version_index:
         if "dev" in version:
-            raise ParameterError(f"Version {version} is not yet released and therefore does not yet have a citable DOI.")
+            raise ParameterError(f"Version {version} is not yet released and "
+                                 "therefore does not yet have a citable DOI.")
         else:
             raise ParameterError(f"Version {version} not found in the citation index")
 
