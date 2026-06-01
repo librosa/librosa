@@ -446,8 +446,6 @@ def dtw(
     steps[:, 0] = 2
 
     # calculate accumulated cost matrix
-    D: np.ndarray
-    steps: np.ndarray
     D, steps = __dtw_calc_accu_cost(
         C, D, steps, step_sizes_sigma, weights_mul, weights_add, max_0, max_1
     )

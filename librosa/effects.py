@@ -761,7 +761,7 @@ def split(
     edges = np.minimum(edges, y.shape[-1])
 
     # Stack the results back as an ndarray
-    edges = edges.reshape((-1, 2))  # type: np.ndarray
+    edges = edges.reshape((-1, 2))
     return edges
 
 
