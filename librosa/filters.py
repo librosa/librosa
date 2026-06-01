@@ -1387,7 +1387,7 @@ def diagonal_filter(
     if angle is None:
         angle = np.arctan(slope)
 
-    win = np.diag(get_window(window, n, fftbins=False))
+    win: np.ndarray = np.diag(get_window(window, n, fftbins=False))
 
     if not np.isclose(angle, np.pi / 4):
         win = scipy.ndimage.rotate(

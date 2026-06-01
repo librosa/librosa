@@ -649,7 +649,7 @@ def __last_beat(cumscore):
     # Use a masked array to support multidimensional statistics
     # We negate the mask here because of numpy masked array semantics
     mask = ~util.localmax(cumscore, axis=-1)
-    masked_scores = np.ma.masked_array(data=cumscore, mask=mask)
+    masked_scores: np.ma.masked_array = np.ma.masked_array(data=cumscore, mask=mask)
     medians = np.ma.median(masked_scores, axis=-1)
     thresholds = 0.5 * np.ma.getdata(medians)
 

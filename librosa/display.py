@@ -3453,7 +3453,7 @@ def _mp_get_layout(
         else:
             nrows, ncols = 1, axshape[0]
     elif len(axshape) == 2:
-        nrows, ncols = axshape
+        nrows, ncols = axshape  # type: ignore[misc]
     else:
         raise ParameterError(f"Invalid axes shape={axshape}")
 
