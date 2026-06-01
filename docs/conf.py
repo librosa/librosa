@@ -73,7 +73,8 @@ extensions = [
     "sphinx_multiversion",  # historical builds
     "sphinx_rtd_theme",  # for proper jquery behavior
     "sphinxcontrib.googleanalytics",  # google analytics
-]
+    "myst_parser",  # markdown support for CONTRIBUTING.md inclusion
+]  
 
 # Generate plots for example sections
 if "LIBROSA_DOC_DEBUG" in os.environ:
@@ -145,6 +146,7 @@ plot_rcparams = {
     "figure.subplot.top": 0.85,
     "figure.subplot.wspace": 0.4,
     "text.usetex": False,
+    "savefig.bbox": "tight",
 }
 
 
@@ -415,4 +417,5 @@ smv_prefer_remote_refs = True
 
 
 linkcheck_allow_unauthorized = True
-linkcheck_ignore = ['https://www.ee.columbia.edu/~dpwe/resources/.*', 'https://htk.eng.cam.ac.uk/.*']
+linkcheck_ignore = ['https://www.ee.columbia.edu/~dpwe/resources/.*', 'https://htk.eng.cam.ac.uk/.*',
+                    'https://zenodo.org/.*']

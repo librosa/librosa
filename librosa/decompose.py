@@ -24,7 +24,7 @@ from . import segment
 from . import util
 from .util.exceptions import ParameterError
 from typing import Any, Callable, List, Optional, Tuple, Union
-from ._typing import _IntLike_co, _FloatLike_co, _SparseMatrix
+from ._typing import _IntLike_co, _FloatLike_co, _SparseArray
 
 __all__ = ["decompose", "hpss", "nn_filter"]
 
@@ -408,7 +408,7 @@ def hpss(
 def nn_filter(
     S: np.ndarray,
     *,
-    rec: Optional[Union[np.ndarray, _SparseMatrix]] = None,
+    rec: Optional[Union[np.ndarray, _SparseArray]] = None,
     aggregate: Optional[Callable] = None,
     axis: int = -1,
     **kwargs: Any,
@@ -440,8 +440,8 @@ def nn_filter(
     S : np.ndarray
         The input data (spectrogram) to filter. Multi-channel is supported.
 
-    rec : (optional) scipy.sparse.spmatrix or np.ndarray
-        Optionally, a pre-computed nearest-neighbor matrix
+    rec : (optional) scipy.sparse array or np.ndarray
+        Optionally, a pre-computed nearest-neighbor array
         as provided by `librosa.segment.recurrence_matrix`
 
     aggregate : function
@@ -531,9 +531,10 @@ def nn_filter(
         kwargs["sparse"] = True
         rec_s = segment.recurrence_matrix(S, axis=axis, **kwargs)
     elif not scipy.sparse.issparse(rec):
-        rec_s = scipy.sparse.csc_matrix(rec)
+        rec_s = scipy.sparse.csc_array(rec)
     else:
-        rec_s = rec
+        # Normalize any sparse input (matrix/array, any format) to csc_array
+        rec_s = scipy.sparse.csc_array(rec)
 
     if rec_s.shape[0] != S.shape[axis] or rec_s.shape[0] != rec_s.shape[1]:
         raise ParameterError(

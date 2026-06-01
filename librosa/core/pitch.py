@@ -642,6 +642,7 @@ def pyin(
     center: bool = True,
     pad_mode: _PadMode = "constant",
     parallel: bool = True,
+    transition_min_prob: Optional[float] = 1e-4,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 
@@ -709,6 +710,12 @@ def pyin(
         ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
+    transition_min_prob : None or float > 0
+        If `None`, then Viterbi decoding considers all possible predecessor states
+        for each time step, providing an exact inference.
+        Otherwise, only transitions with probability at least `transition_min_prob`
+        are considered.  This provides an approximate inference, but can
+        significantly reduce computation time.
 
     Returns
     -------
@@ -823,7 +830,8 @@ def pyin(
 
     p_init = np.ones(2 * n_pitch_bins) / (2 * n_pitch_bins)
 
-    states = sequence.viterbi(observation_probs, transition, p_init=p_init, parallel=parallel)
+    states = sequence.viterbi(observation_probs, transition, p_init=p_init,
+                              transition_min_prob=transition_min_prob, parallel=parallel)
 
     # Find f0 corresponding to each decoded pitch bin.
     freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))

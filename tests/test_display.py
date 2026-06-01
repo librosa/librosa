@@ -28,7 +28,6 @@ import librosa.display
 import numpy as np
 from typing import Any, Dict
 
-
 STYLE = "default"
 
 # Workaround for old freetype builds with our image fixtures
@@ -637,16 +636,20 @@ def test_waveshow_inverted(y, sr):
 
     fig, ax = plt.subplots(nrows=3, sharex=True)
     # Original waveshow
-    librosa.display.waveshow(y, sr=sr, ax=ax[0], invert=False, label='Regular')
-    ax[0].legend(loc='upper right')
+    librosa.display.waveshow(y, sr=sr, ax=ax[0], invert=False, label="Regular")
+    ax[0].legend(loc="upper right")
 
     # Inverted with default (axes face) color
-    librosa.display.waveshow(y, sr=sr, ax=ax[1], invert=True, invert_color=None, label='Inverted')
-    ax[1].legend(loc='upper right')
+    librosa.display.waveshow(
+        y, sr=sr, ax=ax[1], invert=True, invert_color=None, label="Inverted"
+    )
+    ax[1].legend(loc="upper right")
 
     # Inverted with custom color
-    librosa.display.waveshow(y, sr=sr, ax=ax[2], invert=True, invert_color="#2d2d2d", label='Inverted custom')
-    ax[2].legend(loc='upper right')
+    librosa.display.waveshow(
+        y, sr=sr, ax=ax[2], invert=True, invert_color="#2d2d2d", label="Inverted custom"
+    )
+    ax[2].legend(loc="upper right")
 
     for axi in ax.flat:
         axi.label_outer()
@@ -705,10 +708,18 @@ def test_waveshow_adaptor_survives_gc_single(y, sr):
     visible_data_lines = [l for l in ax.lines if l.get_visible()]
 
     # Envelope(s) are PolyCollections in ax.collections
-    polys = [c for c in ax.collections if isinstance(c, matplotlib.collections.PolyCollection)]
+    polys = [
+        c
+        for c in ax.collections
+        if isinstance(c, matplotlib.collections.PolyCollection)
+    ]
 
-    assert len(visible_data_lines) >= 1, "Sample/step artist should be visible after zoom"
-    assert all(not p.get_visible() for p in polys), "Envelope should be hidden after zoom"
+    assert (
+        len(visible_data_lines) >= 1
+    ), "Sample/step artist should be visible after zoom"
+    assert all(
+        not p.get_visible() for p in polys
+    ), "Envelope should be hidden after zoom"
 
     plt.close(fig)
 
@@ -718,7 +729,9 @@ def test_waveshow_adaptor_survives_gc_multi(y, sr):
     fig, ax = plt.subplots()
 
     librosa.display.waveshow(y, sr=sr, ax=ax, color="blue", max_points=sr // 2)
-    librosa.display.waveshow(y, sr=sr, ax=ax, color="red", alpha=0.5, zorder=-1, max_points=sr // 2)
+    librosa.display.waveshow(
+        y, sr=sr, ax=ax, color="red", alpha=0.5, zorder=-1, max_points=sr // 2
+    )
 
     gc.collect()
 
@@ -726,17 +739,25 @@ def test_waveshow_adaptor_survives_gc_multi(y, sr):
     fig.canvas.draw()
 
     visible_data_lines = [l for l in ax.lines if l.get_visible()]
-    polys = [c for c in ax.collections if isinstance(c, matplotlib.collections.PolyCollection)]
+    polys = [
+        c
+        for c in ax.collections
+        if isinstance(c, matplotlib.collections.PolyCollection)
+    ]
 
-    assert len(visible_data_lines) >= 2, "Both sample/step artists should be visible after zoom"
-    assert all(not p.get_visible() for p in polys), "All envelopes should be hidden after zoom"
+    assert (
+        len(visible_data_lines) >= 2
+    ), "Both sample/step artists should be visible after zoom"
+    assert all(
+        not p.get_visible() for p in polys
+    ), "All envelopes should be hidden after zoom"
 
     plt.close(fig)
 
 
 def test_waveshow_registry_cleanup_on_axes_gc():
     """Test that the adaptor registry uses WeakKeyDictionary correctly.
-    
+
     This verifies the fix for #1970: adaptors are stored in a WeakKeyDictionary
     keyed by Axes, so they will be cleaned up when the Axes is garbage collected.
     """
@@ -754,10 +775,10 @@ def test_waveshow_registry_cleanup_on_axes_gc():
     # Our Axes should be in the registry
     before_keys = set(map(id, librosa.display._WAVESHOW_ADAPTORS.keys()))
     assert ax_id in before_keys, "Axes should be in registry after waveshow"
-    
+
     # Verify the registry is a WeakKeyDictionary (semantics test)
     assert isinstance(librosa.display._WAVESHOW_ADAPTORS, weakref.WeakKeyDictionary)
-    
+
     # Verify an adaptor is registered for this axes
     assert ax in librosa.display._WAVESHOW_ADAPTORS
     assert len(librosa.display._WAVESHOW_ADAPTORS[ax]) >= 1
@@ -809,9 +830,13 @@ def test_infer_cmap_robust(data):
     cmap1 = librosa.display.infer_cmap(data, robust=False)
     cmap2 = librosa.display.infer_cmap(data, robust=True)
 
-    if isinstance(cmap1, matplotlib.colors.ListedColormap) and isinstance(cmap2, matplotlib.colors.ListedColormap):
+    if isinstance(cmap1, matplotlib.colors.ListedColormap) and isinstance(
+        cmap2, matplotlib.colors.ListedColormap
+    ):
         assert np.allclose(cmap1.colors, cmap2.colors)
-    elif isinstance(cmap1, matplotlib.colors.LinearSegmentedColormap) and isinstance(cmap2, matplotlib.colors.LinearSegmentedColormap):
+    elif isinstance(cmap1, matplotlib.colors.LinearSegmentedColormap) and isinstance(
+        cmap2, matplotlib.colors.LinearSegmentedColormap
+    ):
         assert cmap1.name == cmap2.name
     else:
         assert cmap1 == cmap2
@@ -1503,18 +1528,16 @@ def test_oct3(S_abs, C):
     # STFT, Mel
     # CQT, VQT
 
-    librosa.display.specshow(S_abs, vscale='dBFS', y_axis='log_oct3',
-                             ax=ax[0, 0])
+    librosa.display.specshow(S_abs, vscale="dBFS", y_axis="log_oct3", ax=ax[0, 0])
 
     M = librosa.feature.melspectrogram(S=S_abs**2)
-    librosa.display.specshow(M, vscale='dBFS[power]',
-                             y_axis='mel_oct3', ax=ax[0, 1])
+    librosa.display.specshow(M, vscale="dBFS[power]", y_axis="mel_oct3", ax=ax[0, 1])
 
-    librosa.display.specshow(C, vscale='dBFS', y_axis='cqt_oct3',
-                             ax=ax[1, 0])
+    librosa.display.specshow(C, vscale="dBFS", y_axis="cqt_oct3", ax=ax[1, 0])
 
-    librosa.display.specshow(C, vscale='dBFS', y_axis='vqt_oct3',
-                             ax=ax[1, 1], intervals='equal')
+    librosa.display.specshow(
+        C, vscale="dBFS", y_axis="vqt_oct3", ax=ax[1, 1], intervals="equal"
+    )
 
     # Put the ticks on the right just to reduce crowding
     ax[0, 1].yaxis.tick_right()
@@ -1532,24 +1555,30 @@ def test_oct3(S_abs, C):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_wavebars(y, sr):
 
-    fig, ax = plt.subplots(nrows=6, layout='tight', figsize=(8, 12))
+    fig, ax = plt.subplots(nrows=6, layout="tight", figsize=(8, 12))
 
-    librosa.display.wavebars(y, sr=sr, ax=ax[0], label='100')
-    librosa.display.wavebars(y, sr=sr, color='C1', n_bars=150, 
-                             rounding_ratio=0, 
-                             ax=ax[1], label='150 square')
-    librosa.display.wavebars(y, sr=sr, color='C2', n_bars=50,
-                             ax=ax[2], invert=True, label='50 inverted')
-    librosa.display.wavebars(y, sr=sr, color='C3', gap_ratio=0,
-                             ax=ax[3], label='no gap')
-    librosa.display.wavebars(y, sr=sr, color='C4', offset=30, 
-                             rounding_ratio=0.3, invert=True,
-                             invert_color='#2d2d2d',
-                             ax=ax[4],
-                             label='offset 30, invert dark')
-    librosa.display.wavebars(y, sr=sr, ax=ax[5], color='C5',
-                             axis='ms',
-                             label='time_ms')
+    librosa.display.wavebars(y, sr=sr, ax=ax[0], label="100")
+    librosa.display.wavebars(
+        y, sr=sr, color="C1", n_bars=150, rounding_ratio=0, ax=ax[1], label="150 square"
+    )
+    librosa.display.wavebars(
+        y, sr=sr, color="C2", n_bars=50, ax=ax[2], invert=True, label="50 inverted"
+    )
+    librosa.display.wavebars(
+        y, sr=sr, color="C3", gap_ratio=0, ax=ax[3], label="no gap"
+    )
+    librosa.display.wavebars(
+        y,
+        sr=sr,
+        color="C4",
+        offset=30,
+        rounding_ratio=0.3,
+        invert=True,
+        invert_color="#2d2d2d",
+        ax=ax[4],
+        label="offset 30, invert dark",
+    )
+    librosa.display.wavebars(y, sr=sr, ax=ax[5], color="C5", axis="ms", label="time_ms")
 
     for axi in ax.flat:
         axi.legend()
@@ -1566,31 +1595,792 @@ def test_wavebars(y, sr):
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_wavebars_transpose(y, sr):
 
-    fig, ax = plt.subplots(ncols=6, layout='tight', figsize=(12, 8))
+    fig, ax = plt.subplots(ncols=6, layout="tight", figsize=(12, 8))
 
-    librosa.display.wavebars(y, sr=sr, ax=ax[0], label='100',
-                             transpose=True)
-    librosa.display.wavebars(y, sr=sr, color='C1', n_bars=150, 
-                             rounding_ratio=0, transpose=True,
-                             ax=ax[1], label='150 square')
-    librosa.display.wavebars(y, sr=sr, color='C2', n_bars=50,
-                             transpose=True,
-                             ax=ax[2], invert=True, label='50 inverted')
-    librosa.display.wavebars(y, sr=sr, color='C3', gap_ratio=0,
-                             transpose=True,
-                             ax=ax[3], label='no gap')
-    librosa.display.wavebars(y, sr=sr, color='C4', offset=30,
-                             transpose=True,
-                             rounding_ratio=0.3, invert=True,
-                             invert_color='#2d2d2d',
-                             ax=ax[4],
-                             label='offset 30, invert dark')
-    librosa.display.wavebars(y, sr=sr, ax=ax[5], color='C5',
-                             axis='ms', transpose=True,
-                             label='time_ms')
+    librosa.display.wavebars(y, sr=sr, ax=ax[0], label="100", transpose=True)
+    librosa.display.wavebars(
+        y,
+        sr=sr,
+        color="C1",
+        n_bars=150,
+        rounding_ratio=0,
+        transpose=True,
+        ax=ax[1],
+        label="150 square",
+    )
+    librosa.display.wavebars(
+        y,
+        sr=sr,
+        color="C2",
+        n_bars=50,
+        transpose=True,
+        ax=ax[2],
+        invert=True,
+        label="50 inverted",
+    )
+    librosa.display.wavebars(
+        y, sr=sr, color="C3", gap_ratio=0, transpose=True, ax=ax[3], label="no gap"
+    )
+    librosa.display.wavebars(
+        y,
+        sr=sr,
+        color="C4",
+        offset=30,
+        transpose=True,
+        rounding_ratio=0.3,
+        invert=True,
+        invert_color="#2d2d2d",
+        ax=ax[4],
+        label="offset 30, invert dark",
+    )
+    librosa.display.wavebars(
+        y, sr=sr, ax=ax[5], color="C5", axis="ms", transpose=True, label="time_ms"
+    )
 
     for axi in ax.flat:
         axi.legend()
 
     return fig
 
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["wavef0"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_wavef0(y, sr):
+    fig, ax = plt.subplots(nrows=2, figsize=(8, 6))
+
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
+                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
+    # Waveform with f0
+    librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label='waveshow')
+    ax[0].legend(loc='lower right')
+
+    # Waveform with f0 and pitch
+    librosa.display.wavef0(y, sr=sr, f0=f0, method='wavebars', freq_axis='cqt_hz',
+                           color='C1', ax=ax[1], label='wavebars')
+    ax[1].legend(loc='lower right')
+    return fig
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_legend_for_axes_no_axes():
+    fig = plt.figure()
+    librosa.display.legend_for_axes(fig=fig)
+
+
+def test_legend_for_axes_current():
+    fig, ax = plt.subplots(nrows=2, ncols=2)
+    ax[0, 0].plot(np.arange(4), label="line")
+
+    leg = librosa.display.legend_for_axes()
+    assert leg is not None
+    assert leg.figure is fig
+
+
+def test_legend_for_axes_scalar():
+    fig, ax = plt.subplots()
+    ax.plot(np.arange(4), label="line")
+    leg = librosa.display.legend_for_axes(axes=ax)
+    assert leg is not None
+    assert leg.figure is fig
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_legend_for_axes_toomanydimensions():
+    fig, ax = plt.subplots(nrows=2, ncols=2)
+
+    ax_stack = np.stack([ax, ax], axis=0)
+    librosa.display.legend_for_axes(axes=ax_stack)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_legend_for_axes_mismatched_figures():
+    fig1, ax1 = plt.subplots()
+    fig2, ax2 = plt.subplots()
+
+    librosa.display.legend_for_axes([ax1, ax2])
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_legend_for_axes_bad_loc():
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], label="a")
+
+    librosa.display.legend_for_axes([ax], loc="center")
+
+
+def test_legend_for_axes_explicit_bbox():
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1], label="a")
+
+    leg = librosa.display.legend_for_axes(
+        [ax], loc="center", bbox_to_anchor=(0.5, 0.5, 0.2, 0.2)
+    )
+
+    assert leg is not None
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_right"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_right():
+    fig, axes = plt.subplots(nrows=3, figsize=(8, 6), sharex=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    fig.subplots_adjust(right=0.8)
+    librosa.display.legend_for_axes(axes=axes, loc="center left")
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["wavef0_transpose"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_wavef0_transpose(y, sr):
+    fig, ax = plt.subplots(ncols=2, figsize=(6, 8))
+
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
+                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
+    # Waveform with f0
+    librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label='waveshow',
+                           transpose=True)
+    ax[0].legend(loc='lower right')
+
+    # Waveform with f0 and pitch
+    librosa.display.wavef0(y, sr=sr, f0=f0, method='wavebars', freq_axis='cqt_hz',
+                           color='C1', ax=ax[1], label='wavebars',
+                           transpose=True)
+    ax[1].legend(loc='lower right')
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_left"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_left():
+    fig, axes = plt.subplots(nrows=2, figsize=(8, 4), sharex=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    fig.subplots_adjust(left=0.25)
+    librosa.display.legend_for_axes(axes=axes, loc="center right")
+
+    return fig
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_wavef0_bad_method(y, sr):
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
+                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
+    librosa.display.wavef0(y, f0=f0, sr=sr, method='bad_method')
+
+
+@pytest.mark.parametrize(
+    "transpose,values",
+    [
+        (
+            False,
+            np.array([[0.0, -12.0], [1.0, 0.0], [2.0, 7.0], [3.0, 12.0]], dtype=float),
+        ),
+        (
+            True,
+            np.array([[-12.0, 0.0], [0.0, 1.0], [7.0, 2.0], [12.0, 3.0]], dtype=float),
+        ),
+    ],
+)
+def test_transformf0_roundtrip(transpose, values):
+    f0 = np.array([100.0, 110.0, 120.0, 130.0], dtype=float)
+
+    trans = librosa.display.Transformf0(
+        f0=f0,
+        sr=1,
+        hop_length=1,
+        bins_per_octave=12,
+        norm=2.0,
+        transpose=transpose,
+    )
+
+    forward = trans.transform(values)
+    recovered = trans.inverted().transform(forward)
+
+    assert np.allclose(recovered, values, rtol=1e-12, atol=1e-12)
+
+
+@pytest.mark.parametrize('f0', [np.zeros(5), np.linspace(-10, -5, num=5), np.linspace(-10, 10,
+                                                                                      num=5)])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_transformf0_bad_f0(f0):
+    librosa.display.Transformf0(f0=f0, sr=1, hop_length=1)
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_above"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_above():
+    fig, axes = plt.subplots(ncols=3, figsize=(8, 4), sharey=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    fig.subplots_adjust(top=0.8)
+    librosa.display.legend_for_axes(axes=axes, loc="lower center", ncol=3)
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_below"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_below():
+    fig, axes = plt.subplots(ncols=3, figsize=(8, 4), sharey=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    fig.subplots_adjust(bottom=0.25)
+    librosa.display.legend_for_axes(axes=axes, loc="upper center", ncol=3)
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_default_1d"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_default_1d():
+    fig, axes = plt.subplots(nrows=3, figsize=(8, 6), sharex=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    fig.subplots_adjust(right=0.8)
+    librosa.display.legend_for_axes(axes=axes)
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_default_row"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_default_row():
+    fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(8, 4), sharey=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    axes = np.asarray(axes)[np.newaxis, :]
+    fig.subplots_adjust(top=0.8)
+    librosa.display.legend_for_axes(axes=axes)
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_default_col"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_default_col():
+    fig, axes = plt.subplots(nrows=3, ncols=1, figsize=(8, 6), sharex=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    axes = np.asarray(axes)[:, np.newaxis]
+    fig.subplots_adjust(right=0.8)
+    librosa.display.legend_for_axes(axes=axes)
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["legend_for_axes_default_grid"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_legend_for_axes_default_grid():
+    fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(8, 6), sharex=True, sharey=True)
+
+    for i, ax in enumerate(np.ravel(axes)):
+        ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
+
+    fig.subplots_adjust(right=0.8)
+    librosa.display.legend_for_axes(axes=axes)
+
+    return fig
+
+
+def test_squeeze_shape():
+    assert librosa.display._squeeze_shape((3,)) == (3,)
+    assert librosa.display._squeeze_shape((1, 3)) == (3,)
+    assert librosa.display._squeeze_shape((3, 1)) == (3,)
+    assert librosa.display._squeeze_shape((1, 3, 1, 2, 1)) == (3, 2)
+    assert librosa.display._squeeze_shape((1, 1, 1)) == ()
+
+
+@pytest.mark.parametrize(
+    "func,dims,badprops",
+    [
+        ("waveshow", 1, []),
+        ("wavebars", 1, []),
+        ("specshow", 2, ["color"]),
+    ],
+)
+def test_resolve_multiplot(func, dims, badprops):
+    function, dims_out, badprops_out = librosa.display._resolve_multiplot(func)
+
+    assert callable(function)
+    assert dims_out == dims
+    assert badprops_out == badprops
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_resolve_multiplot_bad():
+    librosa.display._resolve_multiplot("bogus")  # type: ignore
+
+
+@pytest.mark.parametrize(
+    "data,dims,orient,axshape,nrows,ncols,multi_input",
+    [
+        ((np.zeros((3, 10)),), 1, "v", (3,), 3, 1, False),
+        ((np.zeros((3, 10)),), 1, "h", (3,), 1, 3, False),
+        ((np.zeros((2, 3, 10)),), 1, "v", (2, 3), 2, 3, False),
+        ((np.zeros((2, 3, 4, 5)),), 2, "v", (2, 3), 2, 3, False),
+        ((np.zeros(10), np.zeros(10), np.zeros(10)), 1, "v", (3,), 3, 1, True),
+        ((np.zeros(10), np.zeros(10), np.zeros(10)), 1, "h", (3,), 1, 3, True),
+        ((np.zeros((4, 5)), np.zeros((4, 5))), 2, "v", (2,), 2, 1, True),
+    ],
+)
+def test_mp_get_layout(data, dims, orient, axshape, nrows, ncols, multi_input):
+    axshape_out, nrows_out, ncols_out, multi_input_out = librosa.display._mp_get_layout(
+        data, dims, orient
+    )
+
+    assert axshape_out == axshape
+    assert nrows_out == nrows
+    assert ncols_out == ncols
+    assert multi_input_out is multi_input
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mp_get_layout_bad_orient():
+    librosa.display._mp_get_layout((np.zeros((3, 10)),), dims=1, orient="q")  # type: ignore
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mp_get_layout_no_data():
+    librosa.display._mp_get_layout(tuple(), dims=1, orient="v")
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mp_get_layout_bad_axshape():
+    librosa.display._mp_get_layout((np.zeros((2, 3, 4, 10)),), dims=1, orient="v")
+
+
+@pytest.mark.parametrize(
+    "shape,orient,output_shape,axes_shape",
+    [
+        ((3,), "v", (3,), (3, 1)),
+        ((3,), "h", (3,), (1, 3)),
+        ((2, 2), "v", (2, 2), (2, 2)),
+        ((2, 2), "h", (2, 2), (2, 2)),
+    ],
+)
+def test_mp_setup_axes_create(shape, orient, output_shape, axes_shape):
+    if len(shape) == 1:
+        if orient == "v":
+            nrows, ncols = (shape[0], 1)
+        elif orient == "h":
+            nrows, ncols = (1, shape[0])
+    else:
+        nrows, ncols = shape
+
+    fig, axes, out_shape = librosa.display._mp_setup_axes(
+        axes=None,
+        fig=None,
+        nrows=nrows,
+        ncols=ncols,
+        axshape=shape,
+        orient=orient,
+        sharex=True,
+        sharey=True,
+    )
+
+    assert fig is not None
+    assert axes.shape == axes_shape
+    assert out_shape == output_shape
+
+
+def test_mp_setup_axes_with_fig():
+    fig = plt.figure()
+
+    fig_out, axes, out_shape = librosa.display._mp_setup_axes(
+        axes=None,
+        fig=fig,
+        fig_kw=None,
+        nrows=2,
+        ncols=1,
+        axshape=(2,),
+        orient="v",
+        sharex=True,
+        sharey=True,
+    )
+
+    assert fig_out is fig
+    assert axes.shape == (2, 1)
+    assert out_shape == (2,)
+
+
+@pytest.mark.parametrize(
+    "orient,axes_in_shape,axes_out_shape,output_shape",
+    [
+        ("v", (3,), (3, 1), (3,)),
+        ("h", (3,), (1, 3), (3,)),
+        ("v", (2, 2), (2, 2), (2, 2)),
+    ],
+)
+def test_mp_setup_axes_array_input(orient, axes_in_shape, axes_out_shape, output_shape):
+    fig, axes_in = (
+        plt.subplots(*axes_in_shape)
+        if len(axes_in_shape) == 2
+        else plt.subplots(axes_in_shape[0])
+    )
+
+    fig_out, axes_out, out_shape = librosa.display._mp_setup_axes(
+        axes=np.asarray(axes_in),
+        fig=None,
+        fig_kw=None,
+        nrows=axes_out_shape[0],
+        ncols=axes_out_shape[1],
+        axshape=output_shape,
+        orient=orient,
+        sharex=True,
+        sharey=True,
+    )
+
+    assert fig_out is fig
+    assert axes_out.shape == axes_out_shape
+    assert out_shape == output_shape
+
+
+def test_mp_setup_axes_scalar_input():
+    fig, ax = plt.subplots()
+
+    fig_out, axes_out, out_shape = librosa.display._mp_setup_axes(
+        axes=ax,
+        fig=None,
+        fig_kw=None,
+        nrows=1,
+        ncols=1,
+        axshape=tuple(),
+        orient="v",
+        sharex=True,
+        sharey=True,
+    )
+
+    assert fig_out is fig
+    assert axes_out.shape == (1, 1)
+    assert out_shape == tuple()
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mp_setup_axes_bad_shape():
+    fig, axes = plt.subplots(nrows=2)
+
+    librosa.display._mp_setup_axes(
+        axes=np.asarray(axes),
+        fig=None,
+        fig_kw=None,
+        nrows=3,
+        ncols=1,
+        axshape=(3,),
+        orient="v",
+        sharex=True,
+        sharey=True,
+    )
+
+
+def test_mp_setup_axes_single():
+    fig, ax = plt.subplots()
+
+    fig_out, axes_out, out_shape = librosa.display._mp_setup_axes(
+        axes=ax,
+        fig=None,
+        fig_kw=None,
+        nrows=1,
+        ncols=1,
+        axshape=tuple(),
+        orient="v",
+        sharex=True,
+        sharey=True,
+    )
+
+    assert fig_out is fig
+    assert axes_out.shape == (1, 1)
+    assert out_shape == tuple()
+
+
+def test_mp_setup_labels_none():
+    labels = librosa.display._mp_setup_labels(None, (2, 2))
+
+    assert labels.shape == (2, 2)
+    assert labels.dtype == object
+    # Comparison to None here is vectorized, so == is correct, not `is`.
+    assert np.all(labels == None)
+
+
+def test_mp_setup_labels_values():
+    labels = librosa.display._mp_setup_labels(["a", "b", "c"], (3,))
+
+    assert np.array_equal(labels, np.asarray(["a", "b", "c"], dtype=object))
+
+
+@pytest.mark.xfail(raises=ValueError)
+def test_mp_setup_labels_bad_shape():
+    librosa.display._mp_setup_labels(["a", "b"], (2, 2))
+
+
+def test_mp_setup_prop_group_none():
+    groups = librosa.display._mp_setup_prop_group(None, (2, 2))
+    assert np.array_equal(groups, np.array([[0, 1], [2, 3]]))
+
+
+def test_mp_setup_prop_group_false():
+    groups = librosa.display._mp_setup_prop_group(False, (2, 2))
+    assert np.array_equal(groups, np.array([[0, 1], [2, 3]]))
+
+
+def test_mp_setup_prop_group_true():
+    groups = librosa.display._mp_setup_prop_group(True, (2, 2))
+    assert np.array_equal(groups, np.ones((2, 2), dtype=int))
+
+
+def test_mp_setup_prop_group_row():
+    groups = librosa.display._mp_setup_prop_group("row", (2, 3))
+    assert np.array_equal(groups, np.array([[0, 0, 0], [1, 1, 1]]))
+
+
+def test_mp_setup_prop_group_col():
+    groups = librosa.display._mp_setup_prop_group("col", (2, 3))
+    assert np.array_equal(groups, np.array([[0, 1, 2], [0, 1, 2]]))
+
+
+def test_mp_setup_prop_group_custom():
+    groups = librosa.display._mp_setup_prop_group([0, 1, 0, 1], (2, 2))
+    assert np.array_equal(groups, np.array([[0, 1], [0, 1]]))
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_mp_setup_prop_group_bad_shape():
+    librosa.display._mp_setup_prop_group([0, 1, 2], (2, 2))
+
+
+def test_mp_setup_properties_shared():
+    prop_group = np.array([[0, 1], [0, 1]])
+    properties = librosa.display._mp_setup_properties(prop_group, [], None)
+
+    assert properties.shape == prop_group.shape
+    assert properties[0, 0] == properties[1, 0]
+    assert properties[0, 1] == properties[1, 1]
+    assert properties[0, 0] is not properties[0, 1]
+
+
+def test_mp_setup_properties_badprops():
+    prop_group = np.array([[0, 1]])
+    properties = librosa.display._mp_setup_properties(prop_group, ["color"], None)
+
+    for prop in properties.flat:
+        assert "color" not in prop
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["multiplot_wave_constructed_axes_stacked"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_multiplot_wave_constructed_axes_stacked(y, sr):
+    y_stack = np.stack([y, y[::-1]])
+
+    librosa.display.multiplot(
+        "waveshow",
+        y_stack,
+        sr=sr,
+        sharex=True,
+        sharey=True,
+        share_properties="row",
+        labels=["forward", "backward"],
+    )
+
+    return plt.gcf()
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["multiplot_wave_constructed_axes_variadic"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_multiplot_wave_constructed_axes_variadic(y, sr):
+    librosa.display.multiplot(
+        "waveshow",
+        y,
+        y[::-1],
+        sr=sr,
+        sharex=True,
+        sharey=True,
+        share_properties="row",
+        labels=["forward", "backward"],
+    )
+
+    return plt.gcf()
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["multiplot_wave_existing_axes_stacked"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_multiplot_wave_existing_axes_stacked(y, sr):
+    y_stack = np.stack([y, y[::-1]])
+    fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 6))
+
+    out = librosa.display.multiplot(
+        "waveshow",
+        y_stack,
+        axes=ax,
+        sr=sr,
+        share_properties="row",
+        labels=["forward", "backward"],
+    )
+
+    assert out.shape == ax.shape
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["multiplot_img_existing_axes_variadic"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_multiplot_img_existing_axes_variadic(y, sr):
+    y_stack = np.stack([y, y[::-1]])
+    D = np.abs(librosa.stft(y_stack))
+    fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 6))
+
+    out = librosa.display.multiplot(
+        "specshow",
+        D[0],
+        D[1],
+        axes=ax,
+        x_axis="time",
+        y_axis="log",
+        share_properties=False,
+        titles=["forward", "backward"],
+    )
+
+    assert out.shape == ax.shape
+    librosa.display.colorbar_db(out[0], ax=ax)
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["multiplot_axes_slices_mixed"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_multiplot_axes_slices_mixed(y, sr):
+    y_stack = np.stack([y, y[::-1]])
+    D = np.abs(librosa.stft(y_stack))
+
+    fig, ax = plt.subplots(nrows=3, ncols=2, sharex="row", figsize=(10, 8))
+
+    out_wave = librosa.display.multiplot(
+        "waveshow",
+        y_stack,
+        axes=ax[0],
+        sr=sr,
+        sharex=True,
+        sharey=True,
+        share_properties="row",
+        labels=["forward", None],
+    )
+
+    out_bars = librosa.display.multiplot(
+        "wavebars",
+        y_stack,
+        axes=ax[1],
+        sr=sr,
+        sharex=True,
+        sharey=True,
+        share_properties="row",
+        labels=[None, "backward"],
+    )
+
+    out_img = librosa.display.multiplot(
+        "specshow",
+        D,
+        axes=ax[2],
+        sr=sr,
+        x_axis="time",
+        y_axis="log",
+        sharex=True,
+        sharey=True,
+        share_properties=False,
+        titles=["forward", None],
+    )
+
+    assert out_wave.shape == ax[0].shape
+    assert out_bars.shape == ax[1].shape
+    assert out_img.shape == ax[2].shape
+
+    for row in ax:
+        for axi in np.ravel(row):
+            axi.label_outer()
+
+    return fig

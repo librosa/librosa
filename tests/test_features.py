@@ -4,11 +4,8 @@
 import warnings
 import numpy as np
 import scipy
-
 import pytest
-
 import librosa
-
 
 # Disable cache
 import os
@@ -1138,3 +1135,58 @@ def test_metrogram_aggregate(y_clicks, tg_ex):
     met1 = librosa.feature.metrogram(tg=tg_ex[1:], freqs=freqs, aggregate=None)
     met2 = librosa.feature.metrogram(tg=tg_ex[1:], freqs=freqs, aggregate=np.max)
     assert np.allclose(np.max(met1, axis=-2), met2)
+def test_hybrid_tempogram():
+    # Synthesize a short deterministic click track to avoid I/O flakiness
+    sr = 22050
+    duration = 2.0
+    n_samples = int(sr * duration)
+    y = np.zeros(n_samples, dtype=float)
+    click_positions = np.arange(0, n_samples, sr // 4)
+    y[click_positions] = 1.0
+    
+    hop_length = 512
+
+    # 1. Basic execution and shape verification
+    htg = librosa.feature.hybrid_tempogram(y=y, sr=sr, hop_length=hop_length)
+    
+    assert htg.ndim == 2, "Output should be a 2D array for mono audio"
+    assert htg.shape[0] > 0, "Frequency dimension should not be empty"
+    assert htg.shape[1] > 0, "Time frames dimension should not be empty"
+
+    # 2. Value constraints (Geometric mean ensures non-negative results)
+    assert np.all(htg >= 0), "All values in the hybrid tempogram must be non-negative"
+    assert np.all(np.isfinite(htg)), "Output must not contain NaNs or Infs"
+
+    # 3. Multi-channel (stereo) audio support
+    y_stereo = np.vstack([y, y])
+    htg_stereo = librosa.feature.hybrid_tempogram(y=y_stereo, sr=sr, hop_length=hop_length)
+    
+    assert htg_stereo.ndim == 3, "Output should be a 3D array for stereo audio"
+    assert htg_stereo.shape[-1] == htg.shape[-1], "Time frames must match between mono and stereo"
+    assert htg_stereo.shape[-2] == htg.shape[-2], "Frequency bins must match between mono and stereo"
+
+    # 4. Custom parameters (Ensures coverage for kwargs and specific win_length)
+    htg_custom = librosa.feature.hybrid_tempogram(
+        y=y, 
+        sr=sr, 
+        hop_length=hop_length, 
+        win_length=256,
+        kind='linear',
+        fill_value=0.0
+    )
+    assert htg_custom.ndim == 2
+    assert np.all(np.isfinite(htg_custom)), "Custom interpolation should not produce NaNs"
+
+    # 5. Test with silent audio (all zeros)
+    y_silent = np.zeros_like(y)
+    htg_silent = librosa.feature.hybrid_tempogram(y=y_silent, sr=sr, hop_length=hop_length)
+    assert np.all(htg_silent == 0), "Hybrid tempogram of silence should be all zeros"
+
+    # 6. Verify frequency grid alignment
+    freqs = librosa.fourier_tempo_frequencies(sr=sr, hop_length=hop_length, win_length=384)
+    assert htg.shape[-2] == len(freqs), "Frequency dimension must match Fourier tempo grid"
+
+    # 7. Test with arbitrary multi-channel shape (e.g., 5 channels)
+    y_multi = np.tile(y, (5, 1))
+    htg_multi = librosa.feature.hybrid_tempogram(y=y_multi, sr=sr, hop_length=hop_length)
+    assert htg_multi.shape == (5, len(freqs), htg.shape[-1]), "Multi-channel shape mismatch"

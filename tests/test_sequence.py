@@ -93,6 +93,80 @@ def test_viterbi_multichannel():
     assert np.allclose(logp2, logp[2])
 
 
+@pytest.mark.parametrize("transition_min_prob", [None, 0, 1e-10, 0.25])
+def test_viterbi_sparse(transition_min_prob):
+    
+    p_init = np.asarray([0.6, 0.4])
+    transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])
+    emit_p = [
+        dict(normal=0.5, cold=0.4, dizzy=0.1),
+        dict(normal=0.1, cold=0.3, dizzy=0.6),
+    ]
+    obs = ["normal", "cold", "dizzy"]
+    prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
+    path, logp = librosa.sequence.viterbi(
+        prob, transition, p_init=p_init, return_logp=True,
+        transition_min_prob=transition_min_prob
+    )
+
+    ref_path, reg_logp = librosa.sequence.viterbi(
+        prob, transition, p_init=p_init, return_logp=True,
+        transition_min_prob=None
+    )
+
+    assert np.array_equal(path, ref_path)
+    assert np.isclose(logp, reg_logp)
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_viterbi_negative_minprob():
+    p_init = np.asarray([0.6, 0.4])
+    transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])
+    emit_p = [
+        dict(normal=0.5, cold=0.4, dizzy=0.1),
+        dict(normal=0.1, cold=0.3, dizzy=0.6),
+    ]
+    obs = ["normal", "cold", "dizzy"]
+    prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
+    librosa.sequence.viterbi(
+        prob, transition, p_init=p_init, return_logp=True,
+        transition_min_prob=-1
+    )
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_viterbi_discriminative_negative_minprob():
+    transition = np.asarray([[0.75, 0.25], [0.25, 0.75]])
+    p_joint = np.asarray([[0.25, 0.25], [0.1, 0.4]])
+    p_obs_marginal = p_joint.sum(axis=0)
+    p_state_marginal = p_joint.sum(axis=1)
+    p_init = p_state_marginal
+    p_state_given_obs = (p_joint / p_obs_marginal).T
+    seq = np.asarray([1, 1, 0, 1, 1, 1, 0, 0])
+    prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
+
+    librosa.sequence.viterbi_discriminative(
+        prob_d, transition, p_state=p_state_marginal, p_init=p_init, return_logp=True,
+        transition_min_prob=-1
+    )
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_viterbi_sparse_fail():
+    p_init = np.asarray([0.6, 0.4])
+    transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])
+    emit_p = [
+        dict(normal=0.5, cold=0.4, dizzy=0.1),
+        dict(normal=0.1, cold=0.3, dizzy=0.6),
+    ]
+    obs = ["normal", "cold", "dizzy"]
+    prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
+    # This threshold is above all transition probabilities into state 1
+    # so the algorithm should raise an error about disconnected states
+    librosa.sequence.viterbi(
+        prob, transition, p_init=p_init, return_logp=True,
+        transition_min_prob=0.65
+    )
+
 def test_viterbi_init():
     # Example from https://en.wikipedia.org/wiki/Viterbi_algorithm#Example
 
@@ -167,7 +241,8 @@ def test_viterbi_bad_obs(trans, offset, rng):
 
 
 # Discriminative viterbi
-def test_viterbi_discriminative_example():
+@pytest.mark.parametrize("transition_min_prob", [None, 1e-3])
+def test_viterbi_discriminative_example(transition_min_prob):
     # A pre-baked example with coin tosses
 
     transition = np.asarray([[0.75, 0.25], [0.25, 0.75]])
@@ -191,7 +266,7 @@ def test_viterbi_discriminative_example():
     prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
 
     path, logp = librosa.sequence.viterbi_discriminative(
-        prob_d, transition, p_state=p_state_marginal, p_init=p_init, return_logp=True
+        prob_d, transition, p_state=p_state_marginal, p_init=p_init, return_logp=True, transition_min_prob=transition_min_prob
     )
 
     # Pre-computed optimal path, determined by brute-force search
@@ -199,7 +274,7 @@ def test_viterbi_discriminative_example():
 
     # And check the second code path
     path2 = librosa.sequence.viterbi_discriminative(
-        prob_d, transition, p_state=p_state_marginal, p_init=p_init, return_logp=False
+        prob_d, transition, p_state=p_state_marginal, p_init=p_init, return_logp=False, transition_min_prob=transition_min_prob
     )
     assert np.array_equal(path, path2)
 

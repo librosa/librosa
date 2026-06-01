@@ -64,6 +64,12 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
     recordings
 
 .. toctree::
+   :caption: Contributing
+   :maxdepth: 1
+
+   contributing
+
+.. toctree::
     :caption: Reference
     :maxdepth: 1
 

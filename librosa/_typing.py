@@ -90,8 +90,6 @@ def _ensure_not_reachable(__arg: Never):
     """
     ...
 
-
-# The possible subclasses of `scipy.sparse.spmatrix & scipy.sparse._base._spbase` (their intersection)
 _SparseMatrix = Union[
     sp.bsr_matrix,
     sp.coo_matrix,
@@ -100,6 +98,16 @@ _SparseMatrix = Union[
     sp.dia_matrix,
     sp.dok_matrix,
     sp.lil_matrix,
+]
+
+_SparseArray = Union[
+    sp.bsr_array,
+    sp.coo_array,
+    sp.csc_array,
+    sp.csr_array,
+    sp.dia_array,
+    sp.dok_array,
+    sp.lil_array,
 ]
 
 # matches the `interp` argument in `scipy.interpolate.interp1d` on all supported SciPy versions

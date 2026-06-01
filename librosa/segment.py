@@ -43,7 +43,7 @@ from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 from typing import Any, Callable, Optional, TypeVar, Union, overload
 from typing_extensions import Literal
-from ._typing import _FloatLike_co, _SparseMatrix, _WindowSpec
+from ._typing import _FloatLike_co, _SparseArray, _WindowSpec
 
 __all__ = [
     "cross_similarity",
@@ -79,11 +79,11 @@ def cross_similarity(
     *,
     k: Optional[int] = ...,
     metric: str = ...,
-    sparse: Literal[True] = ...,
+    sparse: Literal[True],
     mode: str = ...,
     bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
     full: bool = False,
-) -> scipy.sparse.csc_matrix:
+) -> scipy.sparse.csc_array:
     ...
 
 
@@ -98,7 +98,7 @@ def cross_similarity(
     mode: str = "connectivity",
     bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
     full: bool = False,
-) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
+) -> Union[np.ndarray, scipy.sparse.csc_array]:
     """Compute cross-similarity from one data sequence to a reference sequence.
 
     The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero
@@ -133,7 +133,7 @@ def cross_similarity(
 
     sparse : bool [scalar]
         if False, returns a dense type (ndarray)
-        if True, returns a sparse type (scipy.sparse.csc_matrix)
+        if True, returns a sparse type (scipy.sparse.csc_array)
 
     mode : str, {'connectivity', 'distance', 'affinity'}
         If 'connectivity', a binary connectivity matrix is produced.
@@ -199,7 +199,7 @@ def cross_similarity(
 
     Returns
     -------
-    xsim : np.ndarray or scipy.sparse.csc_matrix, [shape=(n_ref, n)]
+    xsim : np.ndarray or scipy.sparse.csc_array, [shape=(n_ref, n)]
         Cross-similarity matrix
 
     See Also
@@ -325,9 +325,13 @@ def cross_similarity(
             # Everything past the kth closest gets squashed
             xsim[i, idx[k:]] = 0
 
-    # Convert a compressed sparse row (CSR) format
-    xsim: scipy.sparse.csr_matrix = xsim.tocsr()
+
+    # Convert to CSR
+    xsim = xsim.tocsr()
     xsim.eliminate_zeros()
+
+    # sklearn gave us a sparse *matrix*; normalize to sparse *array*
+    xsim = scipy.sparse.csr_array(xsim)
 
     if mode == "connectivity":
         xsim = xsim.astype(bool)
@@ -335,8 +339,9 @@ def cross_similarity(
         aff_bandwidth = __affinity_bandwidth(xsim, bandwidth, bandwidth_k)
         xsim.data[:] = np.exp(xsim.data / (-1 * aff_bandwidth))
 
-    # Transpose to n_ref by n
-    xsim: scipy.sparse.csc_matrix = xsim.T
+
+    # Transpose to n_ref by n and guarantee sparse *array* return type
+    xsim = scipy.sparse.csc_array(xsim.T)
 
     if not sparse:
         return xsim.toarray()
@@ -358,7 +363,7 @@ def recurrence_matrix(
     self: bool = ...,
     axis: int = ...,
     full: bool = False,
-) -> scipy.sparse.csc_matrix: ...
+) -> scipy.sparse.csc_array: ...
 @overload
 def recurrence_matrix(
     data: np.ndarray,
@@ -388,7 +393,7 @@ def recurrence_matrix(
     self: bool = False,
     axis: int = -1,
     full: bool = False,
-) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
+) -> Union[np.ndarray, scipy.sparse.csc_array]:
     """Compute a recurrence matrix from a data matrix.
 
     ``rec[i, j]`` is non-zero if ``data[..., i]`` is a k-nearest neighbor
@@ -438,7 +443,7 @@ def recurrence_matrix(
 
     sparse : bool [scalar]
         if False, returns a dense type (ndarray)
-        if True, returns a sparse type (scipy.sparse.csc_matrix)
+        if True, returns a sparse type (scipy.sparse.csc_array)
 
     mode : str, {'connectivity', 'distance', 'affinity'}
         If 'connectivity', a binary connectivity matrix is produced.
@@ -514,7 +519,7 @@ def recurrence_matrix(
 
     Returns
     -------
-    rec : np.ndarray or scipy.sparse.csc_matrix, [shape=(t, t)]
+    rec : np.ndarray or scipy.sparse.csc_array, [shape=(t, t)]
         Recurrence matrix
 
     See Also
@@ -661,8 +666,10 @@ def recurrence_matrix(
         # This is why we have to do it after filling the diagonal in self-mode
         rec = rec.minimum(rec.T)
 
-    rec: scipy.sparse.csr_matrix = rec.tocsr()
+    # Convert to CSR (matrix), then normalize to sparse *array*
+    rec = rec.tocsr()
     rec.eliminate_zeros()
+    rec = scipy.sparse.csr_array(rec)
 
     if mode == "connectivity":
         rec = rec.astype(bool)
@@ -675,7 +682,7 @@ def recurrence_matrix(
         rec.data[:] = np.exp(rec.data / (-1 * aff_bandwidth))
 
     # Transpose to be column-major
-    rec: scipy.sparse.csc_matrix = rec.T
+    rec = scipy.sparse.csc_array(rec.T)
 
     if not sparse:
         return rec.toarray()
@@ -683,14 +690,14 @@ def recurrence_matrix(
     return rec
 
 
-_ArrayOrSparseMatrix = TypeVar(
-    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, _SparseMatrix]
+_ArrayOrSparseArray = TypeVar(
+    "_ArrayOrSparseArray", bound=Union[np.ndarray, _SparseArray]
 )
 
 
 def recurrence_to_lag(
-    rec: _ArrayOrSparseMatrix, *, pad: bool = True, axis: int = -1
-) -> _ArrayOrSparseMatrix:
+    rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int = -1
+) -> _ArrayOrSparseArray:
     """Convert a recurrence matrix into a lag matrix.
 
         ``lag[i, j] == rec[i+j, j]``
@@ -707,7 +714,7 @@ def recurrence_to_lag(
 
     Parameters
     ----------
-    rec : np.ndarray, or scipy.sparse.spmatrix [shape=(n, n)]
+    rec : np.ndarray, or scipy.sparse array [shape=(n, n)]
         A (binary) recurrence matrix, as returned by `recurrence_matrix`
 
     pad : bool
@@ -785,7 +792,7 @@ def recurrence_to_lag(
             # Suppress type check, mypy doesn't know that rec is an ndarray here
             rec = np.pad(rec, padding, mode="constant")  # type: ignore
 
-    lag: _ArrayOrSparseMatrix = util.shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
+    lag: _ArrayOrSparseArray = util.shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
 
     if sparse:
         # Suppress type check, mypy doesn't know
@@ -796,13 +803,13 @@ def recurrence_to_lag(
 
 
 def lag_to_recurrence(
-    lag: _ArrayOrSparseMatrix, *, axis: int = -1
-) -> _ArrayOrSparseMatrix:
+    lag: _ArrayOrSparseArray, *, axis: int = -1
+) -> _ArrayOrSparseArray:
     """Convert a lag matrix into a recurrence matrix.
 
     Parameters
     ----------
-    lag : np.ndarray or scipy.sparse.spmatrix
+    lag : np.ndarray or scipy.sparse array
         A lag matrix, as produced by ``recurrence_to_lag``
     axis : int
         The axis corresponding to the time dimension.
@@ -810,9 +817,9 @@ def lag_to_recurrence(
 
     Returns
     -------
-    rec : np.ndarray or scipy.sparse.spmatrix [shape=(n, n)]
+    rec : np.ndarray or scipy.sparse array [shape=(n, n)]
         A recurrence matrix in (time, time) coordinates
-        For sparse matrices, format will match that of ``lag``.
+        For sparse arrays, format will match that of ``lag``.
 
     Raises
     ------
@@ -869,7 +876,7 @@ def lag_to_recurrence(
 
     sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)
-    rec_slice: _ArrayOrSparseMatrix = rec[tuple(sub_slice)]  # type: ignore[assignment]
+    rec_slice: _ArrayOrSparseArray = rec[tuple(sub_slice)]  # type: ignore[assignment]
     return rec_slice
 
 
@@ -1305,11 +1312,11 @@ def path_enhance(
 
 
 def __affinity_bandwidth(
-    rec: scipy.sparse.csr_matrix,
+    rec: scipy.sparse.csr_array,
     bw_mode: Optional[Union[np.ndarray, _FloatLike_co, str]],
     k: int,
 ) -> Union[float, np.ndarray]:
-    # rec should be a csr_matrix
+    # rec should be a csr_array
 
     # the api allows users to specify a scalar bandwidth directly, besides the string based options.
     if isinstance(bw_mode, np.ndarray):
@@ -1354,21 +1361,17 @@ def __affinity_bandwidth(
     t = rec.shape[0]
     knn_dists = []
     for i in range(t):
-        # Get the links from point i
-        links = rec[i].nonzero()[1]
+        # Get the links from point i using CSR format
+        start, end = rec.indptr[i], rec.indptr[i + 1]
+        row_data = rec.data[start:end]
         # catch empty dists lists in knn_dists
-        if len(links) == 0:
+        if row_data.size == 0:
             # Disconnected vertices are only a problem for point-wise bandwidth estimation
             if bw_mode not in ["med_k_scalar"]:
                 raise ParameterError(f"The sample at time point {i} has no neighbors")
-            else:
-                # If we have no links, then there's no distance
-                # shove a nan in here
-                knn_dists.append(np.array([np.nan]))
+            knn_dists.append(np.array([np.nan]))
         else:
-            # Compute k nearest neighbors' distance and sort ascending
-            knn_dist_row = np.sort(rec[i, links].toarray()[0])[:k]
-            knn_dists.append(knn_dist_row)
+            knn_dists.append(np.sort(row_data)[:k])
 
     # take the last element of each list for the distance to kth neighbor
     dist_to_k = np.asarray([dists[-1] for dists in knn_dists])

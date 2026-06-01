@@ -19,7 +19,7 @@ import pytest
 import librosa
 
 if TYPE_CHECKING:
-    from librosa._typing import _SparseMatrix
+    from librosa._typing import _SparseArray
 
 
 @pytest.mark.parametrize("n", [20, 250])
@@ -48,8 +48,10 @@ def test_cross_similarity_sparse(rng):
     D_sparse = librosa.segment.cross_similarity(data, data_ref, sparse=True)
     D_dense = librosa.segment.cross_similarity(data, data_ref, sparse=False)
 
-    assert scipy.sparse.isspmatrix(D_sparse)
-    assert np.allclose(D_sparse.todense(), D_dense)
+    assert scipy.sparse.issparse(D_sparse)
+    assert isinstance(D_sparse, scipy.sparse.sparray)
+    assert not isinstance(D_sparse, scipy.sparse.spmatrix)
+    assert np.allclose(D_sparse.toarray(), D_dense)
 
 
 def test_cross_similarity_distance(rng):
@@ -61,6 +63,8 @@ def test_cross_similarity_distance(rng):
         data, data_ref, mode="distance", metric="sqeuclidean", sparse=True
     )
 
+    assert isinstance(rec, scipy.sparse.sparray)
+    assert not isinstance(rec, scipy.sparse.spmatrix)
     i, j, vals = scipy.sparse.find(rec)
     assert np.allclose(vals, distance[i, j])
 
@@ -76,6 +80,8 @@ def test_cross_similarity_affinity(metric, bandwidth, rng):
         data, data_ref, mode="affinity", metric=metric, sparse=True, bandwidth=bandwidth
     )
 
+    assert isinstance(rec, scipy.sparse.sparray)
+    assert not isinstance(rec, scipy.sparse.spmatrix)
     i, j, vals = scipy.sparse.find(rec)
     logvals = np.log(vals)
 
@@ -194,8 +200,10 @@ def test_recurrence_sparse(self, rng):
     D_sparse = librosa.segment.recurrence_matrix(data, sparse=True, self=self)
     D_dense = librosa.segment.recurrence_matrix(data, sparse=False, self=self)
 
-    assert scipy.sparse.isspmatrix(D_sparse)
-    assert np.allclose(D_sparse.todense(), D_dense)
+    assert scipy.sparse.issparse(D_sparse)
+    assert isinstance(D_sparse, scipy.sparse.sparray)
+    assert not isinstance(D_sparse, scipy.sparse.spmatrix)
+    assert np.allclose(D_sparse.toarray(), D_dense)
 
     if self:
         assert np.allclose(D_sparse.diagonal(), True)
@@ -212,6 +220,8 @@ def test_recurrence_distance(self, rng):
         data, mode="distance", metric="sqeuclidean", sparse=True, self=self
     )
 
+    assert isinstance(rec, scipy.sparse.sparray)
+    assert not isinstance(rec, scipy.sparse.spmatrix)
     i, j, vals = scipy.sparse.find(rec)
     assert np.allclose(vals, distance[i, j])
     assert np.allclose(rec.diagonal(), 0.0)
@@ -233,6 +243,8 @@ def test_recurrence_affinity(metric, bandwidth, self, rng):
         self=self,
     )
 
+    assert isinstance(rec, scipy.sparse.sparray)
+    assert not isinstance(rec, scipy.sparse.spmatrix)
     if self:
         assert np.allclose(rec.diagonal(), 1.0)
     else:
@@ -375,7 +387,9 @@ def test_recurrence_to_lag_sparse(pad, axis, rec, fmt):
 
     # NOTE: due to a bug in mypy, the `issparse` typeguard will _widen_ the type of `lag_sparse`
     assert scipy.sparse.issparse(lag_sparse)
-    lag_sparse: _SparseMatrix
+    assert isinstance(lag_sparse, scipy.sparse.sparray)
+    assert not isinstance(lag_sparse, scipy.sparse.spmatrix)
+    lag_sparse: _SparseArray
 
     assert rec.format == lag_sparse.format
     assert rec.dtype == lag_sparse.dtype
@@ -418,6 +432,8 @@ def test_lag_to_recurrence_sparse(axis, pad, rng):
     rec_dense = librosa.segment.lag_to_recurrence(lag_dense, axis=axis)
 
     assert scipy.sparse.issparse(rec_sparse)
+    assert isinstance(rec_sparse, scipy.sparse.sparray)
+    assert not isinstance(rec_sparse, scipy.sparse.spmatrix)
     assert rec_sparse.format == lag.format
     assert rec_sparse.dtype == lag.dtype
     assert np.allclose(rec_sparse.toarray(), rec_dense)

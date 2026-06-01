@@ -32,6 +32,7 @@ Transition matrices
     transition_cycle
     transition_local
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -1189,7 +1190,10 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
 
 #@jit(nopython=True, cache=False)  # type: ignore
 def _viterbi(
-    log_prob: np.ndarray, log_trans: np.ndarray, log_p_init: np.ndarray
+    log_prob: np.ndarray,
+    log_trans: np.ndarray,
+    log_p_init: np.ndarray,
+    log_trans_threshold: float,
 ) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
     """Core Viterbi algorithm.
 
@@ -1205,6 +1209,11 @@ def _viterbi(
         ``log_trans[i, j] = log P[State(t+1) = j | State(t) = i]``
     log_p_init : np.ndarray [shape=(m,)]
         log of the initial state distribution
+    log_trans_threshold : float
+        threshold above which transitions are considered feasible.
+        Use -np.inf to perform a full search (exact viterbi).
+        Otherwise, only transitions with (log) probability above the threshold
+        are considered in the loop.
 
     Returns
     -------
@@ -1220,26 +1229,42 @@ def _viterbi(
     # factor in initial state distribution
     value[0] = log_prob[0] + log_p_init
 
-    for t in range(1, n_steps):
-        # Want V[t, j] <- p[t, j] * max_k V[t-1, k] * A[k, j]
-        #    assume at time t-1 we were in state k
-        #    transition k -> j
-
-        # Broadcast over rows:
-        #    Tout[k, j] = V[t-1, k] * A[k, j]
-        #    then take the max over columns
-        # We'll do this in log-space for stability
-
-        trans_out = value[t - 1] + log_trans.T
-
-        # Unroll the max/argmax loop to enable numba support
+    if np.isfinite(log_trans_threshold):
+        pred_states = []
         for j in prange(n_states):
-            ptr[t, j] = np.argmax(trans_out[j])
-            # value[t, j] = log_prob[t, j] + np.max(trans_out[j])
-            value[t, j] = log_prob[t, j] + trans_out[j, ptr[t][j]]
+            possible_states = np.flatnonzero(log_trans[:, j] >= log_trans_threshold)
+            if len(possible_states) == 0:
+                raise ParameterError(
+                    f"Empty transition matrix detected for state {j} in Viterbi. "
+                    f"Try reducing your minimum transition probability threshold."
+                )
+            pred_states.append(possible_states)
+
+        for t in range(1, n_steps):
+            # Want V[t, j] <- p[t, j] * max_k V[t-1, k] * A[k, j]
+            #    assume at time t-1 we were in state k
+            #    transition k -> j
+            for j in prange(n_states):
+                best_cost = -np.inf
+                for k in pred_states[j]:
+                    cost = value[t - 1, k] + log_trans[k, j]
+                    if cost > best_cost:
+                        ptr[t, j] = k
+                        best_cost = cost
+                value[t, j] = log_prob[t, j] + best_cost
+    else:
+        # Same as above, but doing a full search over previous states
+        for t in range(1, n_steps):
+            for j in prange(n_states):
+                best_cost = -np.inf
+                for kj in range(n_states):
+                    cost = value[t - 1, kj] + log_trans[kj, j]
+                    if cost > best_cost:
+                        ptr[t, j] = kj
+                        best_cost = cost
+                value[t, j] = log_prob[t, j] + best_cost
 
     # Now roll backward
-
     # Get the last state
     state[-1] = np.argmax(value[-1])
 
@@ -1256,13 +1281,13 @@ _viterbi_parallel_core = jit(parallel=True, cache=False)(_viterbi)
 _viterbi_serial_core = jit(parallel=False, cache=False)(_viterbi)
 
 @jit(cache=True)
-def _viterbi_parallel(log_prob, log_trans, log_p_init):
-    return _viterbi_parallel_core(log_prob, log_trans, log_p_init)
+def _viterbi_parallel(log_prob, log_trans, log_p_init, log_trans_threshold):
+    return _viterbi_parallel_core(log_prob, log_trans, log_p_init, log_trans_threshold)
 
 
 @jit(cache=True)
-def _viterbi_serial(log_prob, log_trans, log_p_init):
-    return _viterbi_serial_core(log_prob, log_trans, log_p_init)
+def _viterbi_serial(log_prob, log_trans, log_p_init, log_trans_threshold):
+    return _viterbi_serial_core(log_prob, log_trans, log_p_init, log_trans_threshold)
 
 
 @overload
@@ -1273,6 +1298,7 @@ def viterbi(
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
     parallel: bool = ...,
+    transition_min_prob: Optional[float] = ...,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
@@ -1284,6 +1310,7 @@ def viterbi(
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
     parallel: bool = ...,
+    transition_min_prob: Optional[float] = ...,
 ) -> np.ndarray: ...
 
 
@@ -1294,6 +1321,7 @@ def viterbi(
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
     parallel: bool = True,
+    transition_min_prob: Optional[float] = None,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Viterbi decoding from observation likelihoods.
 
@@ -1327,6 +1355,9 @@ def viterbi(
         numbers of states, but may have some overhead for small state spaces.
         If ``False`` (default), use a serial implementation.
         There should be no difference in the output between the two implementations.
+    transition_min_prob : float, >=0
+        Optional: if provided, the minimum transition probability to consider
+        during decoding.
 
     Returns
     -------
@@ -1408,12 +1439,21 @@ def viterbi(
     log_prob = np.log(prob + epsilon)
     log_p_init = np.log(p_init + epsilon)
 
+    if transition_min_prob is not None and transition_min_prob > 0:
+        log_trans_threshold = np.log(transition_min_prob + epsilon)
+    elif transition_min_prob is None or transition_min_prob == 0:
+        log_trans_threshold = -np.inf
+    else:
+        raise ParameterError(
+            f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative."
+        )
+
     def _helper(lp):
         # Transpose input
         if parallel:
-            _state, logp = _viterbi_parallel(lp.T, log_trans, log_p_init)
+            _state, logp = _viterbi_parallel(lp.T, log_trans, log_p_init, log_trans_threshold)
         else:
-            _state, logp = _viterbi_serial(lp.T, log_trans, log_p_init)
+            _state, logp = _viterbi_serial(lp.T, log_trans, log_p_init, log_trans_threshold)
 
         # Transpose outputs for return
         return _state.T, logp
@@ -1449,6 +1489,7 @@ def viterbi_discriminative(
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
     parallel: bool = ...,
+    transition_min_prob: Optional[float] = ...,
 ) -> np.ndarray: ...
 
 
@@ -1461,6 +1502,7 @@ def viterbi_discriminative(
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
     parallel: bool = ...,
+    transition_min_prob: Optional[float] = ...,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
@@ -1473,6 +1515,7 @@ def viterbi_discriminative(
     p_init: Optional[np.ndarray] = ...,
     return_logp: bool,
     parallel: bool = ...,
+    transition_min_prob: Optional[float] = ...,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
@@ -1484,6 +1527,7 @@ def viterbi_discriminative(
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
     parallel: bool = True,
+    transition_min_prob: Optional[float] = None,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Viterbi decoding from discriminative state predictions.
 
@@ -1529,6 +1573,9 @@ def viterbi_discriminative(
         numbers of states, but may have some overhead for small state spaces.
         If ``False`` (default), use a serial implementation.
         There should be no difference in the output between the two implementations.
+    transition_min_prob : float, >= 0
+        Optional: if provided, the minimum transition probability to consider
+        during decoding.
 
     Returns
     -------
@@ -1665,6 +1712,15 @@ def viterbi_discriminative(
     log_trans = np.log(transition + epsilon)
     log_marginal = np.log(p_state + epsilon)
 
+    if transition_min_prob is not None and transition_min_prob > 0:
+        log_trans_threshold = np.log(transition_min_prob + epsilon)
+    elif transition_min_prob is None or transition_min_prob == 0:
+        log_trans_threshold = -np.inf
+    else:
+        raise ParameterError(
+            f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative."
+        )
+
     # reshape to broadcast against prob
     log_marginal = expand_to(log_marginal, ndim=prob.ndim, axes=-2)
 
@@ -1673,9 +1729,9 @@ def viterbi_discriminative(
     def _helper(lp):
         # Transpose input
         if parallel:
-            _state, logp = _viterbi_parallel(lp.T, log_trans, log_p_init)
+            _state, logp = _viterbi_parallel(lp.T, log_trans, log_p_init, log_trans_threshold)
         else:
-            _state, logp = _viterbi_serial(lp.T, log_trans, log_p_init)
+            _state, logp = _viterbi_serial(lp.T, log_trans, log_p_init, log_trans_threshold)
 
         # Transpose outputs for return
         return _state.T, logp
@@ -1710,6 +1766,7 @@ def viterbi_binary(
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[False] = ...,
     parallel: bool = ...,
+    transition_min_prob: Optional[float] = ...,
 ) -> np.ndarray: ...
 
 
@@ -1722,6 +1779,7 @@ def viterbi_binary(
     p_init: Optional[np.ndarray] = ...,
     return_logp: Literal[True],
     parallel: bool = ...,
+    transition_min_prob: Optional[float] = ...,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
@@ -1734,6 +1792,7 @@ def viterbi_binary(
     p_init: Optional[np.ndarray] = ...,
     return_logp: bool = ...,
     parallel: bool = ...,
+    transition_min_prob: Optional[float] = ...,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
 
 
@@ -1745,6 +1804,7 @@ def viterbi_binary(
     p_init: Optional[np.ndarray] = None,
     return_logp: bool = False,
     parallel: bool = True,
+    transition_min_prob: Optional[float] = None,
 ) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Viterbi decoding from binary (multi-label), discriminative state predictions.
 
@@ -1805,6 +1865,9 @@ def viterbi_binary(
         numbers of states, but may have some overhead for small state spaces.
         If ``False`` (default), use a serial implementation.
         There should be no difference in the output between the two implementations.
+    transition_min_prob : float, >= 0
+        Optional: if provided, the minimum transition probability to consider
+        during decoding.
 
     Returns
     -------
@@ -1908,6 +1971,7 @@ def viterbi_binary(
             p_init=p_init_binary,
             return_logp=True,
             parallel=parallel,
+            transition_min_prob=transition_min_prob,
         )
 
     if return_logp:
