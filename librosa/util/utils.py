@@ -1910,7 +1910,7 @@ def softmask(
     return mask
 
 
-def tiny(x: Union[float, np.ndarray]) -> _FloatLike_co:
+def tiny(x: Union[float, np.ndarray]) -> np.floating[Any]:
     """Compute the tiny-value corresponding to an input's data type.
 
     This is the smallest "usable" number representable in ``x.dtype``
@@ -1974,7 +1974,8 @@ def tiny(x: Union[float, np.ndarray]) -> _FloatLike_co:
     else:
         dtype = np.dtype(np.float32)
 
-    return np.finfo(dtype).tiny
+    tiny: np.floating[Any] = np.finfo(dtype).tiny
+    return tiny
 
 
 def fill_off_diagonal(x: np.ndarray, *, radius: float, value: float = 0) -> None:

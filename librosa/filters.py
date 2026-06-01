@@ -69,7 +69,7 @@ __all__ = [
 
 # Dictionary of window function bandwidths
 
-WINDOW_BANDWIDTHS = {
+WINDOW_BANDWIDTHS: dict[Any, float] = {
     "bart": 1.3334961334912805,
     "barthann": 1.4560255965133932,
     "bartlett": 1.3334961334912805,
