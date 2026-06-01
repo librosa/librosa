@@ -15,11 +15,10 @@ import numpy as np
 import scipy
 from scipy.spatial.distance import cdist, pdist, squareform
 import pytest
+from typing import cast
 
 import librosa
-
-if TYPE_CHECKING:
-    from librosa._typing import _SparseArray
+from librosa._typing import _SparseArray
 
 
 @pytest.mark.parametrize("n", [20, 250])
@@ -385,11 +384,11 @@ def test_recurrence_to_lag_sparse(pad, axis, rec, fmt):
     lag_sparse = librosa.segment.recurrence_to_lag(rec, pad=pad, axis=axis)
     lag_dense = librosa.segment.recurrence_to_lag(rec_dense, pad=pad, axis=axis)
 
-    # NOTE: due to a bug in mypy, the `issparse` typeguard will _widen_ the type of `lag_sparse`
     assert scipy.sparse.issparse(lag_sparse)
     assert isinstance(lag_sparse, scipy.sparse.sparray)
     assert not isinstance(lag_sparse, scipy.sparse.spmatrix)
-    lag_sparse: _SparseArray
+
+    lag_sparse = cast(_SparseArray, lag_sparse)
 
     assert rec.format == lag_sparse.format
     assert rec.dtype == lag_sparse.dtype

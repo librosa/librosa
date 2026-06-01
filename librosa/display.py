@@ -508,7 +508,7 @@ class FJSFormatter(mplticker.Formatter):
     def __init__(
         self,
         *,
-        fmin: int,
+        fmin: float,
         n_bins: int,
         bins_per_octave: int,
         intervals: Union[str, Collection[float]],
@@ -1992,7 +1992,7 @@ def __decorate_axis(
 
     elif ax_type == "vqt_fjs":
         if fmin is None:
-            fmin = core.note_to_hz("C1")
+            fmin = float(core.note_to_hz("C1"))
         axis.set_major_formatter(
             FJSFormatter(
                 intervals=intervals,
@@ -2668,7 +2668,7 @@ def waveshow(
         signal = "ylim_changed"
         dec_axis = axes.yaxis
     else:
-        filler = axes.fill_between  # type: ignore[assignment]
+        filler = axes.fill_between
         signal = "xlim_changed"
         dec_axis = axes.xaxis
 
@@ -3453,7 +3453,9 @@ def _mp_get_layout(
         else:
             nrows, ncols = 1, axshape[0]
     elif len(axshape) == 2:
-        nrows, ncols = axshape
+        # Yes this is awkward, but it makes the type checker work.
+        # In a sane world it would just be nrows, ncols = axshape
+        nrows, ncols = axshape[0], axshape[-1]
     else:
         raise ParameterError(f"Invalid axes shape={axshape}")
 
@@ -3826,8 +3828,8 @@ def multiplot(
     )
 
     # Set up the labels and properties for each subplot in the multiplot grid
-    labels: np.ndarray = _mp_setup_labels(labels, axes.shape)
-    titles: np.ndarray = _mp_setup_labels(titles, axes.shape)
+    labels = _mp_setup_labels(labels, axes.shape)
+    titles = _mp_setup_labels(titles, axes.shape)
     prop_group = _mp_setup_prop_group(share_properties, axes.shape)
     properties: np.ndarray = _mp_setup_properties(prop_group, badprops, prop_cycle)
 
