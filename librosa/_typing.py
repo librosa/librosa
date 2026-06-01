@@ -81,7 +81,7 @@ _PadMode = Union[_ModeKind, Callable[..., Any]]
 _PadModeSTFT = Union[_STFTPad, Callable[..., Any]]
 
 
-def _ensure_not_reachable(__arg: Never):
+def _ensure_not_reachable(*, __arg: Never):
     """
     Ensure that a code path is not reachable, like typing_extension.assert_never.
 
