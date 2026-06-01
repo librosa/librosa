@@ -25,25 +25,24 @@ Temporal clustering
     subsegment
 """
 
-from decorator import decorator
+from typing import Any, Callable, Optional, TypeVar, Union, overload
 
 import numpy as np
 import scipy
-import scipy.signal
 import scipy.ndimage
-
+import scipy.signal
 import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
 import sklearn.neighbors
+from decorator import decorator
+from typing_extensions import Literal
 
-from ._cache import cache
 from . import util
+from ._cache import cache
+from ._typing import _FloatLike_co, _SparseArray, _WindowSpec
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
-from typing import Any, Callable, Optional, TypeVar, Union, overload
-from typing_extensions import Literal
-from ._typing import _FloatLike_co, _SparseArray, _WindowSpec
 
 __all__ = [
     "cross_similarity",

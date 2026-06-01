@@ -35,16 +35,18 @@ Transition matrices
 
 from __future__ import annotations
 
+from typing import Any, Iterable, List, Optional, Tuple, Union, overload
+
 import numpy as np
 import scipy.interpolate
-from scipy.spatial.distance import cdist
 from numba import jit
-from .util import pad_center, fill_off_diagonal, is_positive_int, tiny, expand_to
-from .util.exceptions import ParameterError
-from .filters import get_window
-from typing import Any, Iterable, List, Optional, Tuple, Union, overload
+from scipy.spatial.distance import cdist
 from typing_extensions import Literal
+
 from ._typing import _WindowSpec
+from .filters import get_window
+from .util import expand_to, fill_off_diagonal, is_positive_int, pad_center, tiny
+from .util.exceptions import ParameterError
 
 __all__ = [
     "dtw",

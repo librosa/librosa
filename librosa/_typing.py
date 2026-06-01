@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any
-from typing_extensions import Literal, Never
-import numpy as np
-from numpy.typing import ArrayLike
-import scipy.sparse as sp
+from typing import Any, Callable, Generator, List, Tuple, TypeVar, Union
 
+import numpy as np
+import scipy.sparse as sp
+from numpy.typing import ArrayLike
+from typing_extensions import Literal, Never
 
 # RNG types
 SeedLike = Union[int, np.integer, Sequence[int], np.random.SeedSequence]

@@ -2,15 +2,16 @@
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
 
-from typing import Collection, Dict, List, Union, overload, Iterable
-from typing_extensions import Literal
+from typing import Collection, Dict, Iterable, List, Union, overload
+
 import msgpack
 import numpy as np
 from numpy.typing import ArrayLike
+from typing_extensions import Literal
+
 from .._cache import cache
 from .._typing import _FloatLike_co
 from ..util.files import _resource_file
-
 
 with _resource_file("librosa.core", "intervals.msgpack") as imsgpack:
     with imsgpack.open("rb") as _fdesc:

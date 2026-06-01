@@ -3,21 +3,19 @@
 """Pitch-tracking and tuning estimation"""
 
 import warnings
+from typing import Any, Callable, Optional, Tuple, Union
+
+import numba
 import numpy as np
 import scipy
-import numba
-
-
-from .spectrum import _spectrogram
-from . import convert
-from . import audio
-from .._cache import cache
-from .. import util
-from .. import sequence
-from ..util.exceptions import ParameterError
 from numpy.typing import ArrayLike
-from typing import Any, Callable, Optional, Tuple, Union
-from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
+
+from .. import sequence, util
+from .._cache import cache
+from .._typing import _PadMode, _PadModeSTFT, _WindowSpec
+from ..util.exceptions import ParameterError
+from . import audio, convert
+from .spectrum import _spectrogram
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 

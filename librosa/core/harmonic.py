@@ -3,15 +3,16 @@
 """Harmonic calculations for frequency representations"""
 
 import warnings
+from typing import Callable, Optional, Sequence
 
 import numpy as np
 import scipy.interpolate
 import scipy.signal
-from .._typing import _InterpKind
-from ..util.exceptions import ParameterError
-from ..util import is_unique
 from numpy.typing import ArrayLike
-from typing import Callable, Optional, Sequence
+
+from .._typing import _InterpKind
+from ..util import is_unique
+from ..util.exceptions import ParameterError
 
 __all__ = ["salience", "interp_harmonics", "f0_harmonics"]
 

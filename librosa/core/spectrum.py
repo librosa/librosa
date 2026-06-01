@@ -2,39 +2,38 @@
 # -*- coding: utf-8 -*-
 """Utilities for spectral processing"""
 from __future__ import annotations
+
 import warnings
+from typing import Any, Callable, List, Optional, Tuple, Union, overload
 
 import numpy as np
 import scipy
+import scipy.interpolate
 import scipy.ndimage
 import scipy.signal
-import scipy.interpolate
-
 from numba import jit
-
-from . import convert
-from .audio import resample
-from .._cache import cache
-from .. import util
-from ..util.exceptions import ParameterError
-from ..util.deprecation import Deprecated, rename_kw
-from ..filters import get_window, semitone_filterbank
-from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
-from typing import Any, Callable, Optional, Tuple, List, Union, overload
 from typing_extensions import Literal
+
+from .. import util
+from .._cache import cache
 from .._typing import (
-    _WindowSpec,
-    _PadMode,
-    _PadModeSTFT,
-    _InterpKind,
-    _SequenceLike,
-    _ScalarOrSequence,
+    RNGLike,
+    SeedLike,
     _ComplexLike_co,
     _FloatLike_co,
-    SeedLike,
-    RNGLike,
+    _InterpKind,
+    _PadMode,
+    _PadModeSTFT,
+    _ScalarOrSequence,
+    _SequenceLike,
+    _WindowSpec,
 )
+from ..filters import get_window, semitone_filterbank, window_sumsquare
+from ..util.deprecation import Deprecated, rename_kw
+from ..util.exceptions import ParameterError
+from . import convert
+from .audio import resample
 
 __all__ = [
     "stft",

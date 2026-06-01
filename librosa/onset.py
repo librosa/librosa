@@ -12,16 +12,15 @@ Onset detection
     onset_strength_multi
 """
 
+from typing import Any, Callable, Optional, Sequence, Union
+
 import numpy as np
 import scipy
 
+from . import core, util
 from ._cache import cache
-from . import core
-from . import util
-from .util.exceptions import ParameterError
-
 from .feature.spectral import melspectrogram
-from typing import Any, Callable, Optional, Union, Sequence
+from .util.exceptions import ParameterError
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 

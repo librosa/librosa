@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 """Matching functions"""
 
-import numpy as np
 import numba
+import numpy as np
 
+from .._typing import _SequenceLike
 from .exceptions import ParameterError
 from .utils import valid_intervals
-from .._typing import _SequenceLike
 
 __all__ = ["match_intervals", "match_events"]
 

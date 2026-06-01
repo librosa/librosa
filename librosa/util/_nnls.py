@@ -9,11 +9,12 @@
 # The vectorized solver uses the L-BFGS-B over blocks of
 # data to efficiently solve the constrained least-squares problem.
 
+from typing import Any, Optional, Sequence, Tuple
+
 import numpy as np
 import scipy.optimize
-from .utils import MAX_MEM_BLOCK
-from typing import Any, Optional, Tuple, Sequence
 
+from .utils import MAX_MEM_BLOCK
 
 __all__ = ["nnls"]
 

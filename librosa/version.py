@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """Version info"""
 
-import sys
 import importlib
+import sys
 
 short_version = "1.0.0dev"
 version = "1.0.0dev"

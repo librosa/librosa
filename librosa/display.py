@@ -46,55 +46,55 @@ Miscellaneous
 """
 
 from __future__ import annotations
-from itertools import product, cycle
+
+import copy
 import re
 import warnings
-from fractions import Fraction
 import weakref
-import copy
-
-import numpy as np
-import scipy.interpolate
-from matplotlib import colormaps as mcm
-import matplotlib.axes as mplaxes
-import matplotlib.ticker as mplticker
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib.patches as mpatches
-import matplotlib.collections as mcollections
-import matplotlib.transforms as mtransforms
-import matplotlib.lines as mlines
-from matplotlib.transforms import Bbox
-
-from . import core
-from . import util
-from .util.decorators import moved
-from .util.exceptions import ParameterError
+from fractions import Fraction
+from itertools import cycle, product
 from typing import (
     TYPE_CHECKING,
     Any,
-    Collection,
-    Optional,
-    Union,
     Callable,
-    Literal,
+    Collection,
     Dict,
-    Tuple,
     List,
+    Literal,
+    Optional,
     Sequence,
+    Tuple,
+    Union,
     cast,
 )
-from ._typing import _FloatLike_co, ArrayLike
+
+import matplotlib.axes as mplaxes
+import matplotlib.collections as mcollections
+import matplotlib.colors as colors
+import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mplticker
+import matplotlib.transforms as mtransforms
+import numpy as np
+import scipy.interpolate
+from matplotlib import colormaps as mcm
+from matplotlib.transforms import Bbox
+
+from . import core, util
+from ._typing import ArrayLike, _FloatLike_co
+from .util.decorators import moved
+from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    import matplotlib
-    from matplotlib.collections import QuadMesh, PolyCollection
-    from matplotlib.lines import Line2D
-    from matplotlib.path import Path as MplPath
-    from matplotlib.markers import MarkerStyle
-    from matplotlib.colors import Colormap
-    import matplotlib.figure
     import cycler
+    import matplotlib
+    import matplotlib.figure
+    from matplotlib.collections import PolyCollection, QuadMesh
+    from matplotlib.colors import Colormap
+    from matplotlib.lines import Line2D
+    from matplotlib.markers import MarkerStyle
+    from matplotlib.path import Path as MplPath
 
 
 __all__ = [

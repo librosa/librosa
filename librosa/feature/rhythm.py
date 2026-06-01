@@ -2,21 +2,21 @@
 # -*- coding: utf-8 -*-
 """Rhythmic feature extraction"""
 
+from typing import Any, Callable, Optional
+
 import numpy as np
 import scipy
+import scipy.interpolate
 
 from .. import util
-
 from .._cache import cache
-from ..core.audio import autocorrelate
-from ..core.spectrum import stft
-from ..core.convert import tempo_frequencies, time_to_frames, fourier_tempo_frequencies
-from ..core.harmonic import f0_harmonics, interp_harmonics
-from ..util.exceptions import ParameterError
-from ..filters import get_window
-from typing import Optional, Callable, Any
 from .._typing import _InterpKind, _WindowSpec
-import scipy.interpolate
+from ..core.audio import autocorrelate
+from ..core.convert import fourier_tempo_frequencies, tempo_frequencies, time_to_frames
+from ..core.harmonic import f0_harmonics, interp_harmonics
+from ..core.spectrum import stft
+from ..filters import get_window
+from ..util.exceptions import ParameterError
 
 __all__ = [
     "tempogram",

@@ -3,16 +3,17 @@
 """Music notation utilities"""
 
 import re
+from collections import Counter
+from typing import Dict, Iterable, List, Union, overload
+
 import numpy as np
 from numba import jit
-from collections import Counter
-from .intervals import INTERVALS
-from .._cache import cache
-from ..util.exceptions import ParameterError
-from typing import Dict, List, Iterable, Union, overload
-from ..util.decorators import vectorize
-from .._typing import _ScalarOrSequence, _FloatLike_co, _SequenceLike, _IterableLike
 
+from .._cache import cache
+from .._typing import _FloatLike_co, _IterableLike, _ScalarOrSequence, _SequenceLike
+from ..util.decorators import vectorize
+from ..util.exceptions import ParameterError
+from .intervals import INTERVALS
 
 __all__ = [
     "key_to_degrees",

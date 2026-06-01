@@ -33,23 +33,21 @@ Miscellaneous
     deemphasis
 """
 
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union, overload
+
 import numpy as np
 import scipy.signal
-
-from . import core
-from . import decompose
-from . import feature
-from . import util
-from .util.exceptions import ParameterError
-from typing import Any, Callable, Iterable, Optional, Tuple, List, Union, overload
-from typing_extensions import Literal
 from numpy.typing import ArrayLike
+from typing_extensions import Literal
+
+from . import core, decompose, feature, util
 from ._typing import (
-    _WindowSpec,
-    _PadModeSTFT,
-    _IntLike_co,
     _FloatLike_co,
+    _IntLike_co,
+    _PadModeSTFT,
+    _WindowSpec,
 )
+from .util.exceptions import ParameterError
 
 __all__ = [
     "hpss",

@@ -10,20 +10,19 @@ Beat and tempo
    plp
 """
 
+from typing import Optional, Tuple, Union
+
+import numba
 import numpy as np
 import scipy
 import scipy.stats
-import numba
 
-from . import core
-from . import onset
-from . import util
+from . import core, onset, util
+from ._typing import _FloatLike_co
 from .feature import fourier_tempogram
 from .feature import tempo as _tempo
-from .util.exceptions import ParameterError
 from .util.decorators import moved
-from typing import Optional, Tuple, Union
-from ._typing import _FloatLike_co
+from .util.exceptions import ParameterError
 
 __all__ = ["beat_track", "tempo", "plp"]
 

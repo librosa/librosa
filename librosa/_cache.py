@@ -4,8 +4,9 @@
 
 import os
 from typing import Any, Callable, TypeVar
-from joblib import Memory
+
 from decorator import FunctionMaker
+from joblib import Memory
 
 
 def _decorator_apply(dec, func):

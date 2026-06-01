@@ -4,23 +4,22 @@
 from __future__ import annotations
 
 import os
+from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
 
-import soundfile as sf
+import lazy_loader as lazy
 import numpy as np
 import scipy
 import scipy.signal
+import soundfile as sf
 import soxr
-import lazy_loader as lazy
-
-from numba import jit, stencil, guvectorize
-from .convert import frames_to_samples, time_to_samples
-from .._cache import cache
-from .. import util
-from ..util.exceptions import ParameterError
-from .._typing import _FloatLike_co, _IntLike_co, _SequenceLike, _ScalarOrSequence
-
-from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
+from numba import guvectorize, jit, stencil
 from numpy.typing import DTypeLike
+
+from .. import util
+from .._cache import cache
+from .._typing import _FloatLike_co, _IntLike_co, _ScalarOrSequence, _SequenceLike
+from ..util.exceptions import ParameterError
+from .convert import frames_to_samples, time_to_samples
 
 # Lazy-load optional dependencies
 samplerate = lazy.load("samplerate")

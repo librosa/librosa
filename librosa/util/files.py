@@ -2,21 +2,19 @@
 # -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
 from __future__ import annotations
-from typing import List, Optional, Union, Any, Set
 
-import os
+import contextlib
 import glob
 import json
-import msgpack
-import contextlib
-
+import os
 from importlib import resources
+from typing import Any, List, Optional, Set, Union
 
+import msgpack
 import pooch
 
-from .exceptions import ParameterError
 from ..version import version as librosa_version
-
+from .exceptions import ParameterError
 
 __all__ = [
     "find_files",

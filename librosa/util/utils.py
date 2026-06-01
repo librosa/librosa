@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -15,7 +16,6 @@ from typing import (
     TypeVar,
     Union,
     overload,
-    TYPE_CHECKING,
 )
 
 import numba
@@ -27,7 +27,7 @@ from numpy.typing import DTypeLike
 from typing_extensions import Literal
 
 from .._cache import cache
-from .._typing import _ComplexLike_co, _FloatLike_co, _SequenceLike, _SparseArray, _SparseMatrix, _InterpKind
+from .._typing import _ComplexLike_co, _FloatLike_co, _InterpKind, _SequenceLike, _SparseArray, _SparseMatrix
 from .exceptions import ParameterError
 
 # Constrain STFT block sizes to 256 KB

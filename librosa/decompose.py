@@ -11,20 +11,17 @@ Spectrogram decomposition
     nn_filter
 """
 
-import numpy as np
+from typing import Any, Callable, List, Optional, Tuple, Union
 
+import numpy as np
 import scipy.sparse
+import sklearn.decomposition
 from scipy.ndimage import median_filter
 
-import sklearn.decomposition
-
-from . import core
+from . import core, segment, util
 from ._cache import cache
-from . import segment
-from . import util
+from ._typing import _FloatLike_co, _IntLike_co, _SparseArray
 from .util.exceptions import ParameterError
-from typing import Any, Callable, List, Optional, Tuple, Union
-from ._typing import _IntLike_co, _FloatLike_co, _SparseArray
 
 __all__ = ["decompose", "hpss", "nn_filter"]
 
