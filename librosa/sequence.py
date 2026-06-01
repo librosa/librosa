@@ -558,9 +558,9 @@ def __dtw_calc_accu_cost(
     for cur_n in range(max_0, D.shape[0]):
         for cur_m in range(max_1, D.shape[1]):
             # accumulate costs
-            for cur_step_idx, cur_w_add, cur_w_mul in zip(
+            for cur_step_idx, cur_w_add, cur_w_mul in zip(  # noqa: B905
                 range(step_sizes_sigma.shape[0]), weights_add, weights_mul
-            ):
+                ):
                 cur_D = D[
                     cur_n - step_sizes_sigma[cur_step_idx, 0],
                     cur_m - step_sizes_sigma[cur_step_idx, 1],

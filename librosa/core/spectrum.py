@@ -265,7 +265,8 @@ def stft(
 
         if n_fft > y.shape[-1]:
             warnings.warn(
-                f"n_fft={n_fft} is too large for input signal of length={y.shape[-1]}"
+                f"n_fft={n_fft} is too large for input signal of length={y.shape[-1]}",
+                stacklevel=2
             )
 
         # Set up the padding array to be empty, and we'll fix the target dimension later
@@ -1661,7 +1662,9 @@ def iirt(
     bands_power = np.empty_like(y, shape=shape)
 
     slices: List[Union[int, slice]] = [slice(None) for _ in bands_power.shape]
-    for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates, filterbank_ct)):
+    for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates,
+                                                 filterbank_ct,
+                                                 strict=True)):
         slices[-2] = i
 
         # filter the signal

@@ -1057,7 +1057,8 @@ def subsegment(
     boundaries = []
     idx_slices = [slice(None)] * data.ndim
 
-    for seg_start, seg_end in zip(frames[:-1], frames[1:]):
+    for seg_start, seg_end in zip(frames[:-1], frames[1:],
+                                  strict=True):
         idx_slices[axis] = slice(seg_start, seg_end)
         boundaries.extend(
             seg_start

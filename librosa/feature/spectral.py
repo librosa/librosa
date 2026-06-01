@@ -493,7 +493,8 @@ def spectral_contrast(
     valley = np.zeros(shape)
     peak = np.zeros_like(valley)
 
-    for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:])):
+    for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:],
+                                            strict=True)):
         current_band = np.logical_and(freq >= f_low, freq <= f_high)
 
         idx = np.flatnonzero(current_band)

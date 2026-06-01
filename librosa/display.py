@@ -2869,7 +2869,7 @@ def wavebars(
 
     patches = []
     boxstyle = f"round,pad=0,rounding_size={rounding_size}"
-    for t, a0, a1 in zip(times, env_bottom, env_top):
+    for t, a0, a1 in zip(times, env_bottom, env_top, strict=True):
         base = min(-rounding_size, -a0)
         top = max(rounding_size, a1)
         if transpose:

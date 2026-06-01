@@ -700,7 +700,7 @@ def wavelet(
 
     # Build the filters
     filters = []
-    for ilen, freq in zip(lengths, freqs):
+    for ilen, freq in zip(lengths, freqs, strict=True):
         # Build the filter: note, length will be ceil(ilen)
         sig = util.phasor(
             np.arange(-ilen // 2, ilen // 2, dtype=float) * 2 * np.pi * freq / sr
@@ -1065,7 +1065,7 @@ def _multirate_fb(
     filterbank = []
 
     for cur_center_freq, cur_nyquist, cur_bw in zip(
-        center_freqs, nyquist, filter_bandwidths
+        center_freqs, nyquist, filter_bandwidths, strict=True
     ):
         passband_freqs = [
             cur_center_freq - 0.5 * cur_bw,

@@ -499,7 +499,9 @@ def plimit_intervals(
             if pow2[i] != 0:
                 v[2] = -pow2[i]
 
-            v.update({p: int(power) for p, power in zip(primes, pows[i]) if power != 0})
+            v.update({p: int(power) for p, power in zip(primes,
+                                                        pows[i],
+                                                        strict=False) if power != 0})
 
             factors.append(v)
         return factors
