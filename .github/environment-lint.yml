@@ -7,13 +7,12 @@ dependencies:
   - pip
   - bandit
   - codespell
-  - flake8
   - types-decorator
   - mypy
   - numpy==2.1.0
   - pytest
-  - pydocstyle
   - matplotlib>=3.10.0
+  - ruff
 
   # Dependencies for velin
   - numpydoc>=1.1.0

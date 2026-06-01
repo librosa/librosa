@@ -4,3 +4,25 @@ requires = [
     "wheel >= 0.29.0",
 ]
 build-backend = 'setuptools.build_meta'
+
+[tool.ruff]
+line-length = 119
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82", "D"]
+ignore = [
+    "D107",
+    "D203",
+    "D205",
+    "D212",
+    "D213",
+    "D400",
+    "D402",
+    "D413",
+    "D415",
+    "D416",
+    "D417",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
