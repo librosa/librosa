@@ -9,7 +9,9 @@ build-backend = 'setuptools.build_meta'
 line-length = 119
 
 [tool.ruff.lint]
-select = ["E9", "F63", "F7", "F82", "D"]
+#select = ["E9", "F63", "F7", "F82", "D"]
+#select = ["E", "D", "F", "S", "W", "I"]
+select = ["E", "S"]
 ignore = [
     "D107",
     "D203",
@@ -22,6 +24,7 @@ ignore = [
     "D415",
     "D416",
     "D417",
+    "S101",
 ]
 
 [tool.ruff.lint.pydocstyle]

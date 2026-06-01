@@ -5,7 +5,6 @@ channels:
 dependencies:
   # required
   - pip
-  - bandit
   - codespell
   - types-decorator
   - mypy

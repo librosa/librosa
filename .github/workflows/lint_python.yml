@@ -46,15 +46,11 @@ jobs:
       shell: bash -l {0}
       run: codespell --ignore-words-list="ba,trough,ue" --skip="*demo.ipynb,./AUTHORS.md,./docs/changelog.rst"
 
-    - name: Security check
-      shell: bash -l {0}
-      run: bandit --recursive --skip B101,B110 .
-
-    - name: Style check
+    - name: Linting check
       shell: bash -l {0}
       run: ruff check librosa
     
-    - name: Docstring check  
+    - name: Docstring formatting check  
       shell: bash -l {0}
       run: python -m velin --check librosa
     
