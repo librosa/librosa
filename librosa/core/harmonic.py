@@ -449,4 +449,5 @@ def f0_harmonics(
             f"freqs.shape={freqs.shape} is incompatible with input shape={x.shape}"
         )
 
-    return np.nan_to_num(result, copy=False, nan=fill_value)
+    result = np.nan_to_num(result, copy=False, nan=fill_value)
+    return result

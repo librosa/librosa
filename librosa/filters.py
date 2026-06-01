@@ -69,7 +69,7 @@ __all__ = [
 
 # Dictionary of window function bandwidths
 
-WINDOW_BANDWIDTHS = {
+WINDOW_BANDWIDTHS: dict[Any, float] = {
     "bart": 1.3334961334912805,
     "barthann": 1.4560255965133932,
     "bartlett": 1.3334961334912805,
@@ -1387,7 +1387,7 @@ def diagonal_filter(
     if angle is None:
         angle = np.arctan(slope)
 
-    win = np.diag(get_window(window, n, fftbins=False))
+    win: np.ndarray = np.diag(get_window(window, n, fftbins=False))
 
     if not np.isclose(angle, np.pi / 4):
         win = scipy.ndimage.rotate(

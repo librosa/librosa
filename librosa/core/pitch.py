@@ -406,10 +406,10 @@ def _cumulative_mean_normalized_difference(
 
     cumulative_mean = np.cumsum(yin_frames[..., k, :], axis=-2) / k_range
     yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
-    yin_frames: np.ndarray = yin_numerator / (
+    yin_frames = yin_numerator / (
         yin_denominator + util.tiny(yin_denominator)
     )
-    return yin_frames
+    return np.asarray(yin_frames)
 
 
 @numba.stencil  # type: ignore

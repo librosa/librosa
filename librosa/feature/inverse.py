@@ -103,7 +103,8 @@ def mel_to_stft(
     # the inverse exponent.
     # We'll do the exponentiation in-place.
     inverse = nnls(mel_basis, M)
-    return np.power(inverse, 1.0 / power, out=inverse)
+    np.power(inverse, 1.0 / power, out=inverse)
+    return inverse
 
 
 def mel_to_audio(

@@ -226,8 +226,6 @@ def pythagorean_intervals(
     # Using modf here to quickly get the fractional part of the log,
     # accounting for whatever power of 2 is necessary to get 3**k
     # within the octave.
-    log_ratios: np.ndarray
-    pow2: np.ndarray
     log_ratios, pow2 = np.modf(pow3 * np.log2(3))
 
     # If the fractional part is negative, add
@@ -252,7 +250,8 @@ def pythagorean_intervals(
     if return_factors:
         return list({2: -pow2[i], 3: pow3[i]} for i in idx)
 
-    return np.power(2, log_ratios)
+    ratios: np.ndarray = np.power(2, log_ratios)
+    return ratios
 
 
 def __harmonic_distance(logs, a, b):
@@ -471,8 +470,6 @@ def plimit_intervals(
 
     pows = np.array(list(intervals), dtype=float)
 
-    log_ratios: np.ndarray
-    pow2: np.ndarray
     log_ratios, pow2 = np.modf(pows.dot(logs))
 
     # If the fractional part is negative, add
@@ -507,4 +504,5 @@ def plimit_intervals(
         return factors
 
     # Otherwise, just return intervals as floats
-    return np.power(2, log_ratios)
+    ratios: np.ndarray = np.power(2, log_ratios)
+    return ratios

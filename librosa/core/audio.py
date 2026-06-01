@@ -21,7 +21,7 @@ from .. import util
 from ..util.exceptions import ParameterError
 from ..util.decorators import deprecated
 from ..util.deprecation import Deprecated, rename_kw
-from .._typing import _FloatLike_co, _IntLike_co, _SequenceLike
+from .._typing import _FloatLike_co, _IntLike_co, _SequenceLike, _ScalarOrSequence
 
 from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
 from numpy.typing import DTypeLike
@@ -1763,7 +1763,7 @@ def chirp(
         phi = -np.pi * 0.5
 
     method = "linear" if linear else "logarithmic"
-    y: np.ndarray = scipy.signal.chirp(  # type: ignore[call-overload]
+    y: np.ndarray = scipy.signal.chirp(  # type: ignore[misc,call-overload]
         np.arange(int(duration * sr)) / sr,
         fmin,
         duration,
@@ -1868,7 +1868,7 @@ def mu_compress(
 
 def mu_expand(
     x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255.0, quantize: bool = True
-) -> np.ndarray:
+) -> _ScalarOrSequence[_FloatLike_co]:
     """mu-law expansion
 
     This function is the inverse of ``mu_compress``. Given a mu-law compressed
@@ -1952,4 +1952,5 @@ def mu_expand(
             f"Inverse mu-law input x={x} must be in the range [-1, +1]."
         )
 
-    return np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)
+    y: _ScalarOrSequence[_FloatLike_co] = np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)
+    return y
