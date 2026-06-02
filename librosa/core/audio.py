@@ -3,8 +3,7 @@
 """Core IO, DSP and utility functions."""
 from __future__ import annotations
 
-import os
-from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import lazy_loader as lazy
 import numpy as np
@@ -13,13 +12,20 @@ import scipy.signal
 import soundfile as sf
 import soxr
 from numba import guvectorize, jit, stencil
-from numpy.typing import DTypeLike
 
 from .. import util
 from .._cache import cache
-from .._typing import _FloatLike_co, _IntLike_co, _ScalarOrSequence, _SequenceLike
 from ..util.exceptions import ParameterError
 from .convert import frames_to_samples, time_to_samples
+
+if TYPE_CHECKING:
+    import os
+    from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
+
+    from numpy.typing import DTypeLike
+
+    from .._typing import _FloatLike_co, _IntLike_co, _ScalarOrSequence, _SequenceLike
+
 
 # Lazy-load optional dependencies
 samplerate = lazy.load("samplerate")

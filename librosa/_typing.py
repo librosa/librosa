@@ -128,3 +128,8 @@ _InterpKind = Literal[
 # DCT normalization modes
 _DCTNorm = Literal["backward", "ortho", "forward"]
 _DCTType = Literal[1, 2, 3, 4]
+
+# More specialized number types
+_Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
+_Complex = Union[_Real, "np.complexfloating[Any, Any]"]
+_Number = Union[complex, "np.number[Any]"]

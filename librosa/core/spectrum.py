@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Callable, List, Optional, Tuple, Union, overload
+from typing import TYPE_CHECKING, overload
 
 import numpy as np
 import scipy
@@ -12,28 +12,33 @@ import scipy.interpolate
 import scipy.ndimage
 import scipy.signal
 from numba import jit
-from numpy.typing import DTypeLike
 from typing_extensions import Literal
 
 from .. import util
 from .._cache import cache
-from .._typing import (
-    RNGLike,
-    SeedLike,
-    _ComplexLike_co,
-    _FloatLike_co,
-    _InterpKind,
-    _PadMode,
-    _PadModeSTFT,
-    _ScalarOrSequence,
-    _SequenceLike,
-    _WindowSpec,
-)
 from ..filters import get_window, semitone_filterbank, window_sumsquare
 from ..util.deprecation import Deprecated, rename_kw
 from ..util.exceptions import ParameterError
 from . import convert
 from .audio import resample
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, List, Optional, Tuple, Union
+
+    from numpy.typing import DTypeLike
+
+    from .._typing import (
+        RNGLike,
+        SeedLike,
+        _ComplexLike_co,
+        _FloatLike_co,
+        _InterpKind,
+        _PadMode,
+        _PadModeSTFT,
+        _ScalarOrSequence,
+        _SequenceLike,
+        _WindowSpec,
+    )
 
 __all__ = [
     "stft",

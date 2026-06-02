@@ -82,7 +82,6 @@ from matplotlib import colormaps as mcm
 from matplotlib.transforms import Bbox
 
 from . import core, util
-from ._typing import ArrayLike, _FloatLike_co
 from .util.decorators import moved
 from .util.exceptions import ParameterError
 
@@ -95,6 +94,8 @@ if TYPE_CHECKING:
     from matplotlib.lines import Line2D
     from matplotlib.markers import MarkerStyle
     from matplotlib.path import Path as MplPath
+
+    from ._typing import ArrayLike, _FloatLike_co
 
 
 __all__ = [
@@ -1837,7 +1838,7 @@ def __decorate_axis(
         axis.set_major_locator(
             mplticker.FixedLocator(
                 cast(
-                    Sequence[float],
+                    "Sequence[float]",
                     np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel(),
                 )
             )
@@ -1858,7 +1859,7 @@ def __decorate_axis(
         axis.set_major_locator(
             mplticker.FixedLocator(
                 cast(
-                    Sequence[float],
+                    "Sequence[float]",
                     np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel(),
                 )
             )
@@ -1877,7 +1878,7 @@ def __decorate_axis(
         axis.set_major_locator(
             mplticker.FixedLocator(
                 cast(
-                    Sequence[float],
+                    "Sequence[float]",
                     np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel(),
                 )
             )
@@ -2675,7 +2676,7 @@ def waveshow(
 
     if mask is not None:
         mask = cast(
-            Sequence[bool],
+            "Sequence[bool]",
             np.asarray(mask, dtype=bool)[: len(y_top) * hop_length : hop_length]
         )
 
