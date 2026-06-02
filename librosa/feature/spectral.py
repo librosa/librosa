@@ -6,7 +6,6 @@ import itertools
 from typing import Any, Collection, Optional, Union
 
 import numpy as np
-import scipy
 from numpy.typing import DTypeLike
 from typing_extensions import Literal
 
@@ -1552,6 +1551,8 @@ def chroma_cens(
         # reshape for broadcasting
         win = util.expand_to(win, ndim=chroma_quant.ndim, axes=-1)
 
+        import scipy.ndimage
+
         cens = scipy.ndimage.convolve(chroma_quant, win, mode="constant")
     else:
         cens = chroma_quant
@@ -1989,6 +1990,8 @@ def mfcc(
     if S is None:
         # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, norm = mel_norm, **kwargs))
+
+    import scipy.fft
 
     M: np.ndarray = scipy.fft.dct(S, axis=-2, type=dct_type, norm=norm)[
         ..., :n_mfcc, :

@@ -1,22 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Rhythmic feature extraction"""
+from __future__ import annotations
 
-from typing import Any, Callable, Optional
+from typing import TYPE_CHECKING, Any, Callable, Optional
 
 import numpy as np
-import scipy
-import scipy.interpolate
 
 from .. import util
 from .._cache import cache
-from .._typing import _InterpKind, _WindowSpec
 from ..core.audio import autocorrelate
 from ..core.convert import fourier_tempo_frequencies, tempo_frequencies, time_to_frames
 from ..core.harmonic import f0_harmonics, interp_harmonics
 from ..core.spectrum import stft
 from ..filters import get_window
 from ..util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    import scipy
+
+    from .._typing import _InterpKind, _WindowSpec
+
 
 __all__ = [
     "tempogram",
@@ -799,6 +803,8 @@ def hybrid_tempogram(
     lags_finite = lags[1:]
 
     # 4. Hybrid Interpolation
+    import scipy.interpolate
+
     f_interp = scipy.interpolate.interp1d(
         lags_finite, tg_a_finite, **interp_kwargs_dict
     )

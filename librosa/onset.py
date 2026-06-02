@@ -11,11 +11,11 @@ Onset detection
     onset_strength
     onset_strength_multi
 """
+from __future__ import annotations
 
 from typing import Any, Callable, Optional, Sequence, Union
 
 import numpy as np
-import scipy
 
 from . import core, util
 from ._cache import cache
@@ -594,6 +594,7 @@ def onset_strength_multi(
         if max_size == 1:
             ref = S
         else:
+            import scipy.ndimage
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=-2)
     elif ref.shape != S.shape:
         raise ParameterError(

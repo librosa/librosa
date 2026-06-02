@@ -8,9 +8,6 @@ from typing import TYPE_CHECKING, overload
 
 import numpy as np
 import scipy
-import scipy.interpolate
-import scipy.ndimage
-import scipy.signal
 from numba import jit
 from typing_extensions import Literal
 
@@ -1506,6 +1503,8 @@ def phase_vocoder(
     np.cumsum(phase, axis=-1, out=phase)
 
     # Interpolate magnitudes
+    import scipy.interpolate
+
     mag_interp = scipy.interpolate.interp1d(
         np.arange(n_frames),
         np.abs(D),
@@ -1667,6 +1666,7 @@ def iirt(
     bands_power = np.empty_like(y, shape=shape)
 
     slices: List[Union[int, slice]] = [slice(None) for _ in bands_power.shape]
+    import scipy.signal
     for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates,
                                                  filterbank_ct,
                                                  strict=True)):
@@ -2309,6 +2309,8 @@ def fmt(
     x = np.linspace(0, 1, num=n, endpoint=False)
 
     # build the interpolator
+    import scipy.interpolate
+
     f_interp = scipy.interpolate.interp1d(x, y, kind=kind, axis=axis)
 
     # build the new sampling grid
@@ -2653,7 +2655,10 @@ def pcen(
                 # if axis = +- 1, max_axis = 0
                 max_axis = np.mod(1 - axis, 2)
 
+            import scipy.ndimage
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
+
+    import scipy.signal
 
     if zi is None:
         # Make sure zi matches dimension to input

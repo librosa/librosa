@@ -15,8 +15,6 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import scipy.sparse
-import sklearn.decomposition
-from scipy.ndimage import median_filter
 
 from . import core, segment, util
 from ._cache import cache
@@ -179,6 +177,8 @@ def decompose(
     if transformer is None:
         if fit is False:
             raise ParameterError("fit must be True if transformer is None")
+
+        import sklearn.decomposition
 
         transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
 
@@ -379,7 +379,10 @@ def hpss(
     perc_shape[-2] = int(win_perc)
 
     # Compute median filters. Pre-allocation here preserves memory layout.
+    from scipy.ndimage import median_filter
+
     harm = np.empty_like(S)
+
     harm[:] = median_filter(S, size=harm_shape, mode="reflect")
 
     perc = np.empty_like(S)

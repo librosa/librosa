@@ -2803,6 +2803,8 @@ def interp_broadcast(
             f"axis={axis} is out of range for minimum ndim={min_ndim}"
         )
 
+    import scipy.interpolate
+
     x1_interp = scipy.interpolate.interp1d(
         x1_pos,
         x1,

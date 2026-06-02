@@ -12,7 +12,6 @@
 from typing import Any, Optional, Sequence, Tuple
 
 import numpy as np
-import scipy.optimize
 
 from .utils import MAX_MEM_BLOCK
 
@@ -76,6 +75,8 @@ def _nnls_lbfgs_block(
     shape = x_init.shape
 
     # optimize
+    import scipy.optimize
+
     x, _obj_value, _diagnostics = scipy.optimize.fmin_l_bfgs_b(
         _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs
     )
@@ -139,6 +140,8 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
     >>> ax[1].label_outer()
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
+    import scipy.optimize
+
     # If B is a single vector, punt up to the scipy method
     if B.ndim == 1:
         return scipy.optimize.nnls(A, B)[0]

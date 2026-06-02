@@ -1,21 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Pitch-tracking and tuning estimation"""
+from __future__ import annotations
 
 import warnings
-from typing import Any, Callable, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
 
 import numba
 import numpy as np
-import scipy
-from numpy.typing import ArrayLike
 
 from .. import sequence, util
 from .._cache import cache
-from .._typing import _PadMode, _PadModeSTFT, _WindowSpec
 from ..util.exceptions import ParameterError
 from . import audio, convert
 from .spectrum import _spectrogram
+
+if TYPE_CHECKING:
+    from numpy.typing import ArrayLike
+
+    from .._typing import _PadMode, _PadModeSTFT, _WindowSpec
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
@@ -786,6 +789,8 @@ def pyin(
     # The implementation here follows the official pYIN software which
     # differs from the method described in the paper.
     # 1. Define the prior over the thresholds.
+    import scipy.stats
+
     thresholds = np.linspace(0, 1, n_thresholds + 1)
     beta_cdf = scipy.stats.beta.cdf(thresholds, beta_parameters[0], beta_parameters[1])
     beta_probs = np.diff(beta_cdf)
@@ -873,6 +878,8 @@ def __pyin_helper(
         # Smaller periods are weighted more.
         trough_positions = np.cumsum(trough_thresholds, axis=0) - 1
         n_troughs = np.count_nonzero(trough_thresholds, axis=0)
+
+        import scipy.stats
 
         trough_prior = scipy.stats.boltzmann.pmf(
             trough_positions, boltzmann_parameter, n_troughs

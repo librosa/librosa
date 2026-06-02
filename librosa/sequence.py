@@ -38,9 +38,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, overload
 
 import numpy as np
-import scipy.interpolate
 from numba import jit
-from scipy.spatial.distance import cdist
 
 from .filters import get_window
 from .util import expand_to, fill_off_diagonal, is_positive_int, pad_center, tiny
@@ -395,6 +393,7 @@ def dtw(
         Y = Y.reshape((Y.shape[0], -1), order="F")
 
         try:
+            from scipy.spatial.distance import cdist
             C = cdist(X, Y, metric=metric)  # type: ignore[call-overload]
         except ValueError as exc:
             raise ParameterError(
@@ -1185,6 +1184,7 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> np.ndarray:
     else:
         idx_from, idx_to = 0, 1
 
+    import scipy.interpolate
     step_interp = scipy.interpolate.interp1d(
         path[:, idx_to], path[:, idx_from], kind="linear"
     )

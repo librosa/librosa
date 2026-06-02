@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 import lazy_loader as lazy
 import numpy as np
 import scipy
-import scipy.signal
 import soundfile as sf
 import soxr
 from numba import guvectorize, jit, stencil
@@ -844,12 +843,16 @@ def resample(
     n_samples = int(np.ceil(y.shape[axis] * ratio))
 
     if res_type in ("scipy", "fft"):
+        import scipy.signal
+
         y_hat = scipy.signal.resample(y, n_samples, axis=axis)
     elif res_type == "polyphase":
         if int(orig_sr) != orig_sr or int(target_sr) != target_sr:
             raise ParameterError(
                 "polyphase resampling is only supported for integer-valued sampling rates."
             )
+
+        import scipy.signal
 
         # For polyphase resampling, we need up- and down-sampling ratios
         # We can get those from the greatest common divisor of the rates
@@ -1760,6 +1763,7 @@ def chirp(
         phi = -np.pi * 0.5
 
     method = "linear" if linear else "logarithmic"
+    import scipy.signal
     y: np.ndarray = scipy.signal.chirp(  # type: ignore[misc,call-overload]
         np.arange(int(duration * sr)) / sr,
         fmin,

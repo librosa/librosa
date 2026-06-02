@@ -33,22 +33,25 @@ Miscellaneous
     window_sumsquare
     diagonal_filter
 """
+from __future__ import annotations
+
 import warnings
-from typing import Any, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 import numpy as np
-import scipy
-import scipy.ndimage
-import scipy.signal
 from numba import jit
-from numpy.typing import ArrayLike, DTypeLike
 from typing_extensions import Literal
 
 from . import util
 from ._cache import cache
-from ._typing import _FloatLike_co, _WindowSpec
 from .core.convert import fft_frequencies, hz_to_midi, hz_to_octs, mel_frequencies, midi_to_hz, note_to_hz
 from .util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from numpy.typing import ArrayLike, DTypeLike
+
+    from ._typing import _FloatLike_co, _WindowSpec
+
 
 __all__ = [
     "mel",
@@ -850,6 +853,8 @@ def cq_to_chroma(
     cq_to_ch = np.roll(cq_to_ch, roll, axis=0).astype(dtype)
 
     if window is not None:
+        import scipy.signal
+
         cq_to_ch = scipy.signal.convolve(cq_to_ch, np.atleast_2d(window), mode="same")
 
     return cq_to_ch
@@ -958,6 +963,7 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
     elif isinstance(window, (str, tuple)) or np.isscalar(window):
         # TODO: if we add custom window functions in librosa, call them here
 
+        import scipy.signal
         win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins)  # type: ignore
         return win
 
@@ -1076,6 +1082,7 @@ def _multirate_fb(
             cur_center_freq + cur_bw,
         ] / cur_nyquist
 
+        import scipy.signal
         cur_filter = scipy.signal.iirdesign(
             passband_freqs,
             stopband_freqs,
@@ -1387,6 +1394,7 @@ def diagonal_filter(
     win: np.ndarray = np.diag(get_window(window, n, fftbins=False))
 
     if not np.isclose(angle, np.pi / 4):
+        import scipy.ndimage
         win = scipy.ndimage.rotate(
             win, 45 - angle * 180 / np.pi, order=5, prefilter=False
         )
