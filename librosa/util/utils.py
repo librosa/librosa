@@ -2531,7 +2531,7 @@ def is_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
 
 
 @numba.vectorize(
-    ["float32(complex64)", "float64(complex128)"], nopython=True, cache=True, identity=0
+    nopython=True, cache=True, identity=0
 )  # type: ignore
 def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
     """Efficiently compute abs2 on complex inputs"""
@@ -2583,7 +2583,7 @@ def abs2(x: _NumberOrArray, dtype: Optional[DTypeLike] = None) -> _NumberOrArray
 
 
 @numba.vectorize(
-    ["complex64(float32)", "complex128(float64)"], nopython=True, cache=True, identity=1
+    nopython=True, cache=True, identity=1
 )  # type: ignore
 def _phasor_angles(x) -> np.complexfloating[Any, Any]:
     return np.cos(x) + 1j * np.sin(x)  # type: ignore
@@ -2660,7 +2660,11 @@ def phasor(
     >>> librosa.util.phasor(np.array([0, np.pi/2]), mag=np.array([0.5, 1.5]))
     array([5.000e-01+0.j , 9.185e-17+1.5j])
     """
-    z = _phasor_angles(angles)
+    if np.isscalar(angles):
+        angles = np.asarray(angles)
+
+    z = np.empty_like(angles, dtype=dtype_r2c(angles.dtype))
+    _phasor_angles(angles, z)
 
     if mag is not None:
         z *= mag
