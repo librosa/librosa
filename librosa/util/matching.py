@@ -1,13 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Matching functions"""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numba
 import numpy as np
 
-from .._typing import _SequenceLike
 from .exceptions import ParameterError
 from .utils import valid_intervals
+
+if TYPE_CHECKING:
+    from .._typing import _SequenceLike
 
 __all__ = ["match_intervals", "match_events"]
 

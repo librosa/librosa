@@ -2,15 +2,18 @@
 # -*- encoding: utf-8 -*-
 # CREATED:2015-02-15 10:06:03 by Brian McFee <brian.mcfee@nyu.edu>
 """Helpful tools for deprecation"""
+from __future__ import annotations
 
 import functools
 import warnings
-from typing import Any, Callable, Iterable, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar, Union
 
 import numpy as np
 from decorator import decorator
-from numpy.typing import DTypeLike
 from typing_extensions import ParamSpec  # Install typing_extensions in Python 3.8
+
+if TYPE_CHECKING:
+    from numpy.typing import DTypeLike
 
 __all__ = ["moved", "deprecated", "vectorize"]
 

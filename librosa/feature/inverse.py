@@ -1,20 +1,24 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Feature inversion"""
+from __future__ import annotations
 
 import warnings
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 import numpy as np
 import scipy
-from numpy.typing import DTypeLike
 
 from .. import filters
-from .._typing import _DCTNorm, _DCTType, _PadModeSTFT, _WindowSpec
 from ..core.spectrum import db_to_power, griffinlim
 from ..util import expand_to, nnls
 from ..util.exceptions import ParameterError
 from ..util.utils import tiny
+
+if TYPE_CHECKING:
+    from numpy.typing import DTypeLike
+
+    from .._typing import _DCTNorm, _DCTType, _PadModeSTFT, _WindowSpec
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
 

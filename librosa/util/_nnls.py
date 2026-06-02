@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Non-negative least squares"""
-
 # The scipy library provides an nnls solver, but it does
 # not generalize efficiently to matrix-valued problems.
 # We therefore provide an alternate solver here.
 #
 # The vectorized solver uses the L-BFGS-B over blocks of
 # data to efficiently solve the constrained least-squares problem.
+
+from __future__ import annotations
 
 from typing import Any, Optional, Sequence, Tuple
 

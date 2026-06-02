@@ -1,22 +1,26 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Spectral feature extraction"""
+from __future__ import annotations
 
 import itertools
-from typing import Any, Collection, Optional, Union
+from typing import TYPE_CHECKING, Any, Collection, Optional, Union
 
 import numpy as np
-from numpy.typing import DTypeLike
 from typing_extensions import Literal
 
 from .. import filters, util
-from .._typing import _DCTNorm, _DCTType, _FloatLike_co, _PadMode, _PadModeSTFT, _WindowSpec
 from ..core.audio import zero_crossings
 from ..core.constantq import cqt, hybrid_cqt, vqt
 from ..core.convert import fft_frequencies
 from ..core.pitch import estimate_tuning
 from ..core.spectrum import _spectrogram, power_to_db
 from ..util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from numpy.typing import DTypeLike
+
+    from .._typing import _DCTNorm, _DCTType, _FloatLike_co, _PadMode, _PadModeSTFT, _WindowSpec
 
 __all__ = [
     "spectral_centroid",

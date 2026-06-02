@@ -1,19 +1,22 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Music notation utilities"""
+from __future__ import annotations
 
 import re
 from collections import Counter
-from typing import Dict, Iterable, List, Union, overload
+from typing import TYPE_CHECKING, Dict, Iterable, List, Union, overload
 
 import numpy as np
 from numba import jit
 
 from .._cache import cache
-from .._typing import _FloatLike_co, _IterableLike, _ScalarOrSequence, _SequenceLike
 from ..util.decorators import vectorize
 from ..util.exceptions import ParameterError
 from .intervals import INTERVALS
+
+if TYPE_CHECKING:
+    from .._typing import _FloatLike_co, _IterableLike, _ScalarOrSequence, _SequenceLike
 
 __all__ = [
     "key_to_degrees",

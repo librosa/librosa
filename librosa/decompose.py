@@ -10,16 +10,19 @@ Spectrogram decomposition
     hpss
     nn_filter
 """
+from __future__ import annotations
 
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import scipy.sparse
 
 from . import core, segment, util
 from ._cache import cache
-from ._typing import _FloatLike_co, _IntLike_co, _SparseArray
 from .util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from ._typing import _FloatLike_co, _IntLike_co, _SparseArray
 
 __all__ = ["decompose", "hpss", "nn_filter"]
 
