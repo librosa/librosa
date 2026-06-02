@@ -14,7 +14,6 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
-    TypeVar,
     Union,
     overload,
 )
@@ -1032,13 +1031,6 @@ def _localmin_sten(x):  # pragma: no cover
 
 
 @numba.guvectorize(
-    [
-        "void(int16[:], bool_[:])",
-        "void(int32[:], bool_[:])",
-        "void(int64[:], bool_[:])",
-        "void(float32[:], bool_[:])",
-        "void(float64[:], bool_[:])",
-    ],
     "(n)->(n)",
     cache=True,
     nopython=True,
@@ -1049,13 +1041,6 @@ def _localmax(x, y):  # pragma: no cover
 
 
 @numba.guvectorize(
-    [
-        "void(int16[:], bool_[:])",
-        "void(int32[:], bool_[:])",
-        "void(int64[:], bool_[:])",
-        "void(float32[:], bool_[:])",
-        "void(float64[:], bool_[:])",
-    ],
     "(n)->(n)",
     cache=True,
     nopython=True,
@@ -1189,12 +1174,6 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
 
 
 @numba.guvectorize(
-    [
-        "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(float64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(int32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-    ],
     "(n),(),(),(),(),(),()->(n)",
     nopython=True,
     cache=True,
@@ -1232,12 +1211,6 @@ def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, pea
 
 
 @numba.guvectorize(
-    [
-        "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
-        "void(float64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
-        "void(int32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
-        "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
-    ],
     "(n),(),(),(),(),(),(),()->(n)",
     nopython=True,
     cache=True,
@@ -2557,7 +2530,7 @@ def is_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
 
 
 @numba.vectorize(
-    ["float32(complex64)", "float64(complex128)"], nopython=True, cache=True, identity=0
+    nopython=True, cache=True, identity=0
 )  # type: ignore
 def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
     """Efficiently compute abs2 on complex inputs"""
@@ -2565,10 +2538,16 @@ def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
 
 
 _Number = Union[complex, "np.number[Any]"]
-_NumberOrArray = TypeVar("_NumberOrArray", bound=Union[_Number, np.ndarray])
 
+@overload
+def abs2(x: np.ndarray, dtype: Optional[DTypeLike] = ...) -> np.ndarray: ...
 
-def abs2(x: _NumberOrArray, dtype: Optional[DTypeLike] = None) -> _NumberOrArray:
+@overload
+def abs2(x: _Complex, dtype: Optional[DTypeLike] = ...) -> np.floating[Any]: ...
+
+def abs2(x: Union[np.ndarray, _Real, _Complex],
+         dtype: Optional[DTypeLike] = None
+) -> Union[np.ndarray, np.floating[Any]]:
     """Compute the squared magnitude of a real or complex array.
 
     This function is equivalent to calling `np.abs(x)**2` but it
@@ -2598,24 +2577,25 @@ def abs2(x: _NumberOrArray, dtype: Optional[DTypeLike] = None) -> _NumberOrArray
     """
     if np.iscomplexobj(x):
         # suppress type check, mypy doesn't like vectorization
-        y = _cabs2(x)
         if dtype is None:
-            return y  # type: ignore
-        else:
-            return y.astype(dtype)  # type: ignore
+            dtype = dtype_c2r(np.asarray(x).dtype)
+        y: np.ndarray = np.empty_like(x, dtype=dtype)
+        _cabs2(x, y)
+        return y
     else:
         # suppress type check, mypy doesn't know this is real
-        return np.square(x, dtype=dtype)  # type: ignore
+        return np.square(x, dtype=dtype)
 
 
 @numba.vectorize(
-    ["complex64(float32)", "complex128(float64)"], nopython=True, cache=True, identity=1
+    nopython=True, cache=True, identity=1
 )  # type: ignore
 def _phasor_angles(x) -> np.complexfloating[Any, Any]:
     return np.cos(x) + 1j * np.sin(x)  # type: ignore
 
 
 _Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
+_Complex = Union[_Real, "np.complexfloating[Any, Any]"]
 
 
 @overload
@@ -2686,12 +2666,13 @@ def phasor(
     >>> librosa.util.phasor(np.array([0, np.pi/2]), mag=np.array([0.5, 1.5]))
     array([5.000e-01+0.j , 9.185e-17+1.5j])
     """
-    z = _phasor_angles(angles)
+    z = np.empty_like(angles, dtype=dtype_r2c(np.asarray(angles).dtype))
+    _phasor_angles(angles, z)
 
     if mag is not None:
         z *= mag
 
-    return z  # type: ignore
+    return z
 
 
 @overload

@@ -492,7 +492,8 @@ def __beat_tracker(
     frames_per_beat = np.round(frame_rate * 60.0 / bpm)
 
     # localscore is a smoothed version of AGC'd onset envelope
-    localscore = __beat_local_score(__normalize_onsets(onset_envelope), frames_per_beat)
+    localscore = np.empty_like(onset_envelope)
+    __beat_local_score(__normalize_onsets(onset_envelope), frames_per_beat, localscore)
 
     # run the DP
     backlink, cumscore = __beat_track_dp(localscore, frames_per_beat, tightness)
@@ -503,8 +504,9 @@ def __beat_tracker(
     __dp_backtrack(backlink, tail, beats)
 
     # Discard spurious trailing beats
-    beats = np.asarray(__trim_beats(localscore, beats, trim))
-    return beats
+    beats_trimmed = np.empty_like(beats)
+    __trim_beats(localscore, beats, trim, beats_trimmed)
+    return beats_trimmed
 
 
 # -- Helper functions for beat tracking
@@ -515,10 +517,6 @@ def __normalize_onsets(onsets):
 
 
 @numba.guvectorize(
-        [
-            "void(float32[:], float32[:], float32[:])",
-            "void(float64[:], float64[:], float64[:])",
-        ],
         "(t),(n)->(t)",
         nopython=True, cache=False)
 def __beat_local_score(onset_envelope, frames_per_beat, localscore):
@@ -609,10 +607,6 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
 
 
 @numba.guvectorize(
-    [
-        "void(float32[:], bool_[:], bool_, bool_[:])",
-        "void(float64[:], bool_[:], bool_, bool_[:])"
-        ],
     "(t),(t),()->(t)",
     nopython=True, cache=True
     )
@@ -662,10 +656,6 @@ def __last_beat(cumscore):
 
 
 @numba.guvectorize(
-        [
-            "void(float32[:], bool_[:], float32, int64[:])",
-            "void(float64[:], bool_[:], float64, int64[:])",
-        ],
         "(t),(t),()->()",
         nopython=True, cache=True
         )
@@ -686,10 +676,6 @@ def __last_beat_selector(cumscore, mask, threshold, out):
 
 
 @numba.guvectorize(
-        [
-            "void(int32[:], int32, bool_[:])",
-            "void(int64[:], int64, bool_[:])"
-        ],
         "(t),()->(t)",
         nopython=True, cache=True
         )
