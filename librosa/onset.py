@@ -631,6 +631,8 @@ def onset_strength_multi(
 
     # remove the DC component
     if detrend:
+        import scipy.signal
+
         onset_env = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onset_env, axis=-1)
 
     # Trim to match the input duration
