@@ -13,7 +13,7 @@ Onset detection
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Optional, Sequence, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -21,6 +21,9 @@ from . import core, util
 from ._cache import cache
 from .feature.spectral import melspectrogram
 from .util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Optional, Sequence, Union
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 

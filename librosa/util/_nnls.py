@@ -10,11 +10,14 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional, Sequence, Tuple
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from .utils import MAX_MEM_BLOCK
+
+if TYPE_CHECKING:
+    from typing import Any, Optional, Sequence, Tuple
 
 __all__ = ["nnls"]
 

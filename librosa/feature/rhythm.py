@@ -3,7 +3,7 @@
 """Rhythmic feature extraction"""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -17,6 +17,8 @@ from ..filters import get_window
 from ..util.exceptions import ParameterError
 
 if TYPE_CHECKING:
+    from typing import Any, Callable, Optional
+
     import scipy
 
     from .._typing import _InterpKind, _WindowSpec

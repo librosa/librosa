@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter
-from typing import TYPE_CHECKING, Dict, Iterable, List, Union, overload
+from typing import TYPE_CHECKING, overload
 
 import numpy as np
 from numba import jit
@@ -16,6 +16,8 @@ from ..util.exceptions import ParameterError
 from .intervals import INTERVALS
 
 if TYPE_CHECKING:
+    from typing import Dict, Iterable, List, Union
+
     from .._typing import _FloatLike_co, _IterableLike, _ScalarOrSequence, _SequenceLike
 
 __all__ = [

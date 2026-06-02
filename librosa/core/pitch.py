@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numba
 import numpy as np
@@ -16,6 +16,8 @@ from . import audio, convert
 from .spectrum import _spectrogram
 
 if TYPE_CHECKING:
+    from typing import Any, Callable, Optional, Tuple, Union
+
     from numpy.typing import ArrayLike
 
     from .._typing import _PadMode, _PadModeSTFT, _WindowSpec

@@ -3,13 +3,16 @@
 """Feature manipulation utilities"""
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import TYPE_CHECKING
 
 import numpy as np
 from numba import jit
 
 from .._cache import cache
 from ..util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from typing import Any, Literal
 
 __all__ = ["delta", "stack_memory"]
 

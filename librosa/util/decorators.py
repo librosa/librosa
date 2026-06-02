@@ -6,12 +6,14 @@ from __future__ import annotations
 
 import functools
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, ParamSpec, TypeVar, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 from decorator import decorator
 
 if TYPE_CHECKING:
+    from typing import Any, Callable, Iterable, Optional, ParamSpec, TypeVar, Union
+
     from numpy.typing import DTypeLike
     P = ParamSpec("P")
     R = TypeVar("R")

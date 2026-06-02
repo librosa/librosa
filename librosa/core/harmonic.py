@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Callable, Optional, Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -13,6 +13,8 @@ from ..util import is_unique
 from ..util.exceptions import ParameterError
 
 if TYPE_CHECKING:
+    from typing import Callable, Optional, Sequence
+
     from numpy.typing import ArrayLike
 
     from .._typing import _InterpKind

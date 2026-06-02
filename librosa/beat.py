@@ -11,7 +11,7 @@ Beat and tempo
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numba
 import numpy as np
@@ -24,6 +24,8 @@ from .util.decorators import moved
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
+    from typing import Optional, Tuple, Union
+
     import scipy.stats
 
     from ._typing import _FloatLike_co

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy
@@ -16,6 +16,8 @@ from ..util.exceptions import ParameterError
 from ..util.utils import tiny
 
 if TYPE_CHECKING:
+    from typing import Any, Optional
+
     from numpy.typing import DTypeLike
 
     from .._typing import _DCTNorm, _DCTType, _PadModeSTFT, _WindowSpec

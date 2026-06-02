@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Collection, List, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy
@@ -21,6 +21,8 @@ from .pitch import estimate_tuning
 from .spectrum import istft, stft
 
 if TYPE_CHECKING:
+    from typing import Collection, List, Optional, Union
+
     from numpy.typing import DTypeLike
 
     from .._typing import (
