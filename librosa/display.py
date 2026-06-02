@@ -2352,7 +2352,7 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords, cmap_seq):
 
     else:
         # In some kind of dB mode
-        mode, scale_type, ref_ = __parse_vscale(vscale)
+        _mode, scale_type, ref_ = __parse_vscale(vscale)
         if ref_ == "max":
             ref = np.max(np.abs(data))
         elif ref_ is None:

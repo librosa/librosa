@@ -845,7 +845,7 @@ def metrogram(
 
     .. [1] Cozens, James, and Simon Godsill.
        "Dynamic Time Signature Recognition, Tempo Inference, and Beat Tracking Through the Metrogram Transform."
-       In IEEE Open Journal of Signal Processing, pp. 1–9, 2023.
+       In IEEE Open Journal of Signal Processing, pp. 1--9, 2023.
 
     .. [2] Abimbola, Jeremiah, Daniel Kostrzewa, and Paweł Kasprowski.
        "METER2800: A novel dataset for music time signature detection."

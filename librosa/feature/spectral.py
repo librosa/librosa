@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 """Spectral feature extraction"""
 
+import itertools
 from typing import Any, Collection, Optional, Union
 
 import numpy as np
 import scipy
-import scipy.signal
 from numpy.typing import DTypeLike
 from typing_extensions import Literal
 
@@ -493,8 +493,7 @@ def spectral_contrast(
     valley = np.zeros(shape)
     peak = np.zeros_like(valley)
 
-    for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:],
-                                            strict=True)):
+    for k, (f_low, f_high) in enumerate(itertools.pairwise(octa)):
         current_band = np.logical_and(freq >= f_low, freq <= f_high)
 
         idx = np.flatnonzero(current_band)

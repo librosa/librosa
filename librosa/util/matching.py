@@ -359,8 +359,8 @@ def __match_events_helper(
             right_diff = abs(sorted_to[right_ind] - sorted_from_num)
 
         if left_flag and (
-            not right
-            and (sorted_to[middle_ind] > sorted_from_num)
+            (not right
+            and (sorted_to[middle_ind] > sorted_from_num))
             or (not right_flag and left_diff < mid_diff)
             or (left_diff < right_diff and left_diff < mid_diff)
         ):

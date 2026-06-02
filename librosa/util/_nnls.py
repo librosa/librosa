@@ -76,10 +76,10 @@ def _nnls_lbfgs_block(
     shape = x_init.shape
 
     # optimize
-
-    x, obj_value, diagnostics = scipy.optimize.fmin_l_bfgs_b(
+    x, _obj_value, _diagnostics = scipy.optimize.fmin_l_bfgs_b(
         _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs
     )
+
     # reshape the solution
     return x.reshape(shape)
 

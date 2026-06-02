@@ -416,7 +416,7 @@ def istft(
 
     .. [#] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
-        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
+        IEEE Trans. ASSP, vol.32, no.2, pp.236--243, Apr. 1984.
 
     Parameters
     ----------
@@ -1681,7 +1681,7 @@ def iirt(
 
         factor = sr / cur_sr
         hop_length_STMSP = hop_length / factor
-        win_length_STMSP_round = int(round(win_length / factor))
+        win_length_STMSP_round = round(win_length / factor)
 
         # hop_length_STMSP is used here as a floating-point number.
         # The discretization happens at the end to avoid accumulated rounding errors.
@@ -2713,7 +2713,7 @@ def griffinlim(
 
     .. [#] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
-        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
+        IEEE Trans. ASSP, vol.32, no.2, pp.236--243, Apr. 1984.
 
     .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"

@@ -191,7 +191,7 @@ def decompose(
         activations = transformer.transform(S).T  # type: ignore
 
     components: np.ndarray = transformer.components_  # type: ignore
-    component_shape = orig_shape[:-1] + [-1]
+    component_shape = [*orig_shape[:-1], -1]
     # use order='F' here to preserve component ordering
     components = components.reshape(component_shape[::-1], order="F").T
 

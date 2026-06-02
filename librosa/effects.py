@@ -386,7 +386,7 @@ def time_stretch(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     )
 
     # Predict the length of y_stretch
-    len_stretch = int(round(y.shape[-1] / rate))
+    len_stretch = round(y.shape[-1] / rate)
 
     # Invert the STFT
     y_stretch = core.istft(stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
@@ -980,7 +980,7 @@ def deemphasis(
     zf: np.ndarray
     if zi is None:
         # initialize with all zeros
-        zi = np.zeros(list(y.shape[:-1]) + [1], dtype=y.dtype)
+        zi = np.zeros([*list(y.shape[:-1]), 1], dtype=y.dtype)
         y_out, zf = scipy.signal.lfilter(a, b, y, zi=zi)
 
         # factor in the linear extrapolation

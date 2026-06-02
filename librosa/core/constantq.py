@@ -668,7 +668,7 @@ def icqt(
     else:
         alpha = filters._relative_bandwidth(freqs=freqs)
 
-    lengths, f_cutoff = filters.wavelet_lengths(
+    lengths, _f_cutoff = filters.wavelet_lengths(
         freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
     )
 
@@ -1242,11 +1242,11 @@ def griffinlim_cqt(
 
     .. [#] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
-        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
+        IEEE Trans. ASSP, vol.32, no.2, pp.236--243, Apr. 1984.
 
     .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"
-        IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
+        IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1--4),
         Oct. 2013.
 
     Parameters

@@ -1382,7 +1382,7 @@ def viterbi(
     >>> print(logp, path)
     -4.19173690823075 [0 0 1]
     """
-    n_states, n_steps = prob.shape[-2:]
+    n_states, _n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
         raise ParameterError(
@@ -1619,7 +1619,7 @@ def viterbi_discriminative(
     >>> ax.legend()
     >>> plt.show()
     """
-    n_states, n_steps = prob.shape[-2:]
+    n_states, _n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
         raise ParameterError(
@@ -1896,10 +1896,10 @@ def viterbi_binary(
         raise ParameterError(f"Invalid initial state distributions: p_init={p_init}")
 
     shape_prefix = list(prob.shape[:-2])
-    states = np.empty(shape_prefix + [n_states, n_steps], dtype=np.uint16)
-    logp = np.empty(shape_prefix + [n_states])
+    states = np.empty([*shape_prefix, n_states, n_steps], dtype=np.uint16)
+    logp = np.empty([*shape_prefix, n_states])
 
-    prob_binary = np.empty(shape_prefix + [2, n_steps])
+    prob_binary = np.empty([*shape_prefix, 2, n_steps])
     p_state_binary = np.empty(2)
     p_init_binary = np.empty(2)
 

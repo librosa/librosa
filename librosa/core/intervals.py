@@ -263,7 +263,7 @@ def __harmonic_distance(logs, a, b):
     and the prime basis are provided in their log2 form.
 
     .. [#] Tenney, James.
-        "On ‘Crystal Growth’ in harmonic space (1993–1998)."
+        "On `Crystal Growth' in harmonic space (1993--1998)."
         Contemporary Music Review 27.1 (2008): 47-56.
     """
     a = np.array(a)
@@ -338,12 +338,12 @@ def plimit_intervals(
     of [#1]_ [#2]_.
 
     .. [#1] Tenney, James.
-        "On ‘Crystal Growth’ in harmonic space (1993–1998)."
-        Contemporary Music Review 27.1 (2008): 47-56.
+        "On `Crystal Growth' in harmonic space (1993--1998)."
+        Contemporary Music Review 27.1 (2008): 47--56.
 
     .. [#2] Sabat, Marc, and James Tenney.
         "Three crystal growth algorithms in 23-limit constrained harmonic space."
-        Contemporary Music Review 27, no. 1 (2008): 57-78.
+        Contemporary Music Review 27, no. 1 (2008): 57--78.
 
     Parameters
     ----------

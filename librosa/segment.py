@@ -25,12 +25,12 @@ Temporal clustering
     subsegment
 """
 
+import itertools
 from typing import Any, Callable, Optional, TypeVar, Union, overload
 
 import numpy as np
 import scipy
 import scipy.ndimage
-import scipy.signal
 import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
@@ -189,7 +189,7 @@ def cross_similarity(
             "Self-tuning spectral clustering." Advances in neural information processing systems 17.
 
         .. [#w] Wang, Bo, et al. (2014).
-            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333–337.
+            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333--337.
             https://doi.org/10.1038/nmeth.2810
 
     full : bool
@@ -505,7 +505,7 @@ def recurrence_matrix(
             "Self-tuning spectral clustering." Advances in neural information processing systems 17.
 
         .. [#w] Wang, Bo, et al. (2014).
-            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333–337.
+            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333--337.
             https://doi.org/10.1038/nmeth.2810
 
     self : bool
@@ -1057,8 +1057,7 @@ def subsegment(
     boundaries = []
     idx_slices = [slice(None)] * data.ndim
 
-    for seg_start, seg_end in zip(frames[:-1], frames[1:],
-                                  strict=True):
+    for seg_start, seg_end in itertools.pairwise(frames):
         idx_slices[axis] = slice(seg_start, seg_end)
         boundaries.extend(
             seg_start
