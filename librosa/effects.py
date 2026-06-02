@@ -32,22 +32,27 @@ Miscellaneous
     preemphasis
     deemphasis
 """
+from __future__ import annotations
 
-from typing import Any, Callable, Iterable, List, Optional, Tuple, Union, overload
+from typing import TYPE_CHECKING, overload
 
 import numpy as np
-import scipy.signal
-from numpy.typing import ArrayLike
-from typing_extensions import Literal
 
 from . import core, decompose, feature, util
-from ._typing import (
-    _FloatLike_co,
-    _IntLike_co,
-    _PadModeSTFT,
-    _WindowSpec,
-)
 from .util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Iterable, List, Literal, Optional, Tuple, Union
+
+    from numpy.typing import ArrayLike
+
+    from ._typing import (
+        _FloatLike_co,
+        _IntLike_co,
+        _PadModeSTFT,
+        _WindowSpec,
+    )
+
 
 __all__ = [
     "hpss",
@@ -881,6 +886,7 @@ def preemphasis(
     y_out: np.ndarray
     z_f: np.ndarray
 
+    import scipy.signal
     y_out, z_f = scipy.signal.lfilter(b, a, y, zi=np.asarray(zi, dtype=y.dtype))
 
     if return_zf:
@@ -978,6 +984,7 @@ def deemphasis(
 
     y_out: np.ndarray
     zf: np.ndarray
+    import scipy.signal
     if zi is None:
         # initialize with all zeros
         zi = np.zeros([*list(y.shape[:-1]), 1], dtype=y.dtype)

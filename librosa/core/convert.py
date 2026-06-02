@@ -4,20 +4,25 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Callable, Dict, Iterable, Optional, Sized, Union, overload
+from typing import TYPE_CHECKING, overload
 
 import numpy as np
 
-from .._typing import (
-    _FloatLike_co,
-    _IntLike_co,
-    _IterableLike,
-    _ScalarOrSequence,
-    _SequenceLike,
-)
 from ..util.decorators import vectorize
 from ..util.exceptions import ParameterError
 from . import notation
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Dict, Iterable, Optional, Sized, Union
+
+    from .._typing import (
+        _FloatLike_co,
+        _IntLike_co,
+        _IterableLike,
+        _ScalarOrSequence,
+        _SequenceLike,
+    )
+
 
 __all__ = [
     "frames_to_samples",

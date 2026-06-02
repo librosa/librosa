@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Feature manipulation utilities"""
+from __future__ import annotations
 
-from typing import Any, Literal
+from typing import TYPE_CHECKING
 
 import numpy as np
-import scipy.signal
 from numba import jit
 
 from .._cache import cache
 from ..util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from typing import Any, Literal
 
 __all__ = ["delta", "stack_memory"]
 
@@ -120,6 +123,8 @@ def delta(
 
     kwargs.pop("deriv", None)
     kwargs.setdefault("polyorder", order)
+    import scipy.signal
+
     result: np.ndarray = scipy.signal.savgol_filter(
         data, width, deriv=order, axis=axis, mode=mode, **kwargs
     )

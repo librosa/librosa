@@ -53,20 +53,7 @@ import warnings
 import weakref
 from fractions import Fraction
 from itertools import cycle, product
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Collection,
-    Dict,
-    List,
-    Literal,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    cast,
-)
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.axes as mplaxes
 import matplotlib.collections as mcollections
@@ -77,16 +64,16 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mplticker
 import matplotlib.transforms as mtransforms
 import numpy as np
-import scipy.interpolate
 from matplotlib import colormaps as mcm
 from matplotlib.transforms import Bbox
 
 from . import core, util
-from ._typing import ArrayLike, _FloatLike_co
 from .util.decorators import moved
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
+    from typing import Any, Callable, Collection, Dict, List, Literal, Optional, Sequence, Tuple, Union
+
     import cycler
     import matplotlib
     import matplotlib.figure
@@ -95,6 +82,8 @@ if TYPE_CHECKING:
     from matplotlib.lines import Line2D
     from matplotlib.markers import MarkerStyle
     from matplotlib.path import Path as MplPath
+
+    from ._typing import ArrayLike, _FloatLike_co
 
 
 __all__ = [
@@ -982,6 +971,8 @@ class Transformf0(mtransforms.Transform):
             raise ParameterError("f0 must be strictly positive (or NaN) and contain at least one finite value")
 
         times = offset + core.times_like(f0, sr=sr, hop_length=hop_length)
+        import scipy.interpolate
+
         self.f0_interp = scipy.interpolate.interp1d(
             times,
             f0,
@@ -1837,7 +1828,7 @@ def __decorate_axis(
         axis.set_major_locator(
             mplticker.FixedLocator(
                 cast(
-                    Sequence[float],
+                    "Sequence[float]",
                     np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel(),
                 )
             )
@@ -1858,7 +1849,7 @@ def __decorate_axis(
         axis.set_major_locator(
             mplticker.FixedLocator(
                 cast(
-                    Sequence[float],
+                    "Sequence[float]",
                     np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel(),
                 )
             )
@@ -1877,7 +1868,7 @@ def __decorate_axis(
         axis.set_major_locator(
             mplticker.FixedLocator(
                 cast(
-                    Sequence[float],
+                    "Sequence[float]",
                     np.add.outer(12 * np.arange(10), degrees, dtype=float).ravel(),
                 )
             )
@@ -2675,7 +2666,7 @@ def waveshow(
 
     if mask is not None:
         mask = cast(
-            Sequence[bool],
+            "Sequence[bool]",
             np.asarray(mask, dtype=bool)[: len(y_top) * hop_length : hop_length]
         )
 

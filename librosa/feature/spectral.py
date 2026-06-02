@@ -1,23 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Spectral feature extraction"""
+from __future__ import annotations
 
 import itertools
-from typing import Any, Collection, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
-import scipy
-from numpy.typing import DTypeLike
-from typing_extensions import Literal
 
 from .. import filters, util
-from .._typing import _DCTNorm, _DCTType, _FloatLike_co, _PadMode, _PadModeSTFT, _WindowSpec
 from ..core.audio import zero_crossings
 from ..core.constantq import cqt, hybrid_cqt, vqt
 from ..core.convert import fft_frequencies
 from ..core.pitch import estimate_tuning
 from ..core.spectrum import _spectrogram, power_to_db
 from ..util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from typing import Any, Collection, Literal, Optional, Union
+
+    from numpy.typing import DTypeLike
+
+    from .._typing import _DCTNorm, _DCTType, _FloatLike_co, _PadMode, _PadModeSTFT, _WindowSpec
 
 __all__ = [
     "spectral_centroid",
@@ -1552,6 +1556,8 @@ def chroma_cens(
         # reshape for broadcasting
         win = util.expand_to(win, ndim=chroma_quant.ndim, axes=-1)
 
+        import scipy.ndimage
+
         cens = scipy.ndimage.convolve(chroma_quant, win, mode="constant")
     else:
         cens = chroma_quant
@@ -1989,6 +1995,8 @@ def mfcc(
     if S is None:
         # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, norm = mel_norm, **kwargs))
+
+    import scipy.fft
 
     M: np.ndarray = scipy.fft.dct(S, axis=-2, type=dct_type, norm=norm)[
         ..., :n_mfcc, :

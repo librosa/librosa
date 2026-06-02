@@ -1,23 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Constant-Q transforms"""
+from __future__ import annotations
+
 import warnings
-from typing import Collection, List, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy
 from numba import jit
-from numpy.typing import DTypeLike
 
 from .. import filters, util
 from .._cache import cache
-from .._typing import (
-    RNGLike,
-    SeedLike,
-    _FloatLike_co,
-    _PadMode,
-    _WindowSpec,
-)
 from ..util.deprecation import Deprecated, rename_kw
 from ..util.exceptions import ParameterError
 from . import audio
@@ -25,6 +19,19 @@ from .convert import cqt_frequencies, note_to_hz
 from .intervals import interval_frequencies
 from .pitch import estimate_tuning
 from .spectrum import istft, stft
+
+if TYPE_CHECKING:
+    from typing import Collection, List, Optional, Union
+
+    from numpy.typing import DTypeLike
+
+    from .._typing import (
+        RNGLike,
+        SeedLike,
+        _FloatLike_co,
+        _PadMode,
+        _WindowSpec,
+    )
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 

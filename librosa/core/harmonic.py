@@ -2,17 +2,22 @@
 # -*- coding: utf-8 -*-
 """Harmonic calculations for frequency representations"""
 
+from __future__ import annotations
+
 import warnings
-from typing import Callable, Optional, Sequence
+from typing import TYPE_CHECKING
 
 import numpy as np
-import scipy.interpolate
-import scipy.signal
-from numpy.typing import ArrayLike
 
-from .._typing import _InterpKind
 from ..util import is_unique
 from ..util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from typing import Callable, Optional, Sequence
+
+    from numpy.typing import ArrayLike
+
+    from .._typing import _InterpKind
 
 __all__ = ["salience", "interp_harmonics", "f0_harmonics"]
 
@@ -126,6 +131,8 @@ def salience(
         S_sal = aggregate(S_harm, axis=axis - 1)
 
     if filter_peaks:
+        import scipy.signal
+
         S_peaks = scipy.signal.argrelmax(S, axis=axis)
         S_out = np.empty(S.shape)
         S_out.fill(fill_value)
@@ -233,6 +240,8 @@ def interp_harmonics(
     >>> librosa.display.colorbar_db(img, ax=ax)
     >>> plt.show()
     """
+    import scipy.interpolate
+
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
         # Build the 1-D interpolator.
         # All frames have a common domain, so we only need one interpolator here.
@@ -388,6 +397,8 @@ def f0_harmonics(
     >>> ax[1].set(ylabel='Harmonics')
     """
     result: np.ndarray
+    import scipy.interpolate
+
     if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
         if not is_unique(freqs, axis=0):
             warnings.warn(

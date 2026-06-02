@@ -5,29 +5,33 @@
 from __future__ import annotations
 
 import itertools
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    overload,
-)
+from typing import TYPE_CHECKING, overload
 
 import numba
 import numpy as np
 import scipy.sparse
 from numpy.lib.stride_tricks import as_strided
-from numpy.typing import DTypeLike
-from typing_extensions import Literal
 
 from .._cache import cache
-from .._typing import _ComplexLike_co, _FloatLike_co, _InterpKind, _SequenceLike, _SparseArray, _SparseMatrix
 from .exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, Union
+
+    from numpy.typing import DTypeLike
+
+    from .._typing import (
+        _Complex,
+        _ComplexLike_co,
+        _FloatLike_co,
+        _InterpKind,
+        _Number,
+        _Real,
+        _SequenceLike,
+        _SparseArray,
+        _SparseMatrix,
+    )
+
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -2537,8 +2541,6 @@ def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
     return x.real**2 + x.imag**2
 
 
-_Number = Union[complex, "np.number[Any]"]
-
 @overload
 def abs2(x: np.ndarray, dtype: Optional[DTypeLike] = ...) -> np.ndarray: ...
 
@@ -2593,9 +2595,6 @@ def abs2(x: Union[np.ndarray, _Real, _Complex],
 def _phasor_angles(x) -> np.complexfloating[Any, Any]:
     return np.cos(x) + 1j * np.sin(x)  # type: ignore
 
-
-_Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
-_Complex = Union[_Real, "np.complexfloating[Any, Any]"]
 
 
 @overload
@@ -2802,6 +2801,8 @@ def interp_broadcast(
         raise ParameterError(
             f"axis={axis} is out of range for minimum ndim={min_ndim}"
         )
+
+    import scipy.interpolate
 
     x1_interp = scipy.interpolate.interp1d(
         x1_pos,

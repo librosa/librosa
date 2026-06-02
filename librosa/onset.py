@@ -11,16 +11,19 @@ Onset detection
     onset_strength
     onset_strength_multi
 """
+from __future__ import annotations
 
-from typing import Any, Callable, Optional, Sequence, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
-import scipy
 
 from . import core, util
 from ._cache import cache
 from .feature.spectral import melspectrogram
 from .util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Optional, Sequence, Union
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 
@@ -594,6 +597,7 @@ def onset_strength_multi(
         if max_size == 1:
             ref = S
         else:
+            import scipy.ndimage
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=-2)
     elif ref.shape != S.shape:
         raise ParameterError(
@@ -630,6 +634,8 @@ def onset_strength_multi(
 
     # remove the DC component
     if detrend:
+        import scipy.signal
+
         onset_env = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onset_env, axis=-1)
 
     # Trim to match the input duration

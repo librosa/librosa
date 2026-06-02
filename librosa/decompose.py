@@ -10,18 +10,21 @@ Spectrogram decomposition
     hpss
     nn_filter
 """
+from __future__ import annotations
 
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy.sparse
-import sklearn.decomposition
-from scipy.ndimage import median_filter
 
 from . import core, segment, util
 from ._cache import cache
-from ._typing import _FloatLike_co, _IntLike_co, _SparseArray
 from .util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, List, Optional, Tuple, Union
+
+    from ._typing import _FloatLike_co, _IntLike_co, _SparseArray
 
 __all__ = ["decompose", "hpss", "nn_filter"]
 
@@ -179,6 +182,8 @@ def decompose(
     if transformer is None:
         if fit is False:
             raise ParameterError("fit must be True if transformer is None")
+
+        import sklearn.decomposition
 
         transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
 
@@ -379,7 +384,10 @@ def hpss(
     perc_shape[-2] = int(win_perc)
 
     # Compute median filters. Pre-allocation here preserves memory layout.
+    from scipy.ndimage import median_filter
+
     harm = np.empty_like(S)
+
     harm[:] = median_filter(S, size=harm_shape, mode="reflect")
 
     perc = np.empty_like(S)

@@ -4,36 +4,37 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Callable, List, Optional, Tuple, Union, overload
+from typing import TYPE_CHECKING, overload
 
 import numpy as np
 import scipy
-import scipy.interpolate
-import scipy.ndimage
-import scipy.signal
 from numba import jit
-from numpy.typing import DTypeLike
-from typing_extensions import Literal
 
 from .. import util
 from .._cache import cache
-from .._typing import (
-    RNGLike,
-    SeedLike,
-    _ComplexLike_co,
-    _FloatLike_co,
-    _InterpKind,
-    _PadMode,
-    _PadModeSTFT,
-    _ScalarOrSequence,
-    _SequenceLike,
-    _WindowSpec,
-)
 from ..filters import get_window, semitone_filterbank, window_sumsquare
 from ..util.deprecation import Deprecated, rename_kw
 from ..util.exceptions import ParameterError
 from . import convert
 from .audio import resample
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, List, Literal, Optional, Tuple, Union
+
+    from numpy.typing import DTypeLike
+
+    from .._typing import (
+        RNGLike,
+        SeedLike,
+        _ComplexLike_co,
+        _FloatLike_co,
+        _InterpKind,
+        _PadMode,
+        _PadModeSTFT,
+        _ScalarOrSequence,
+        _SequenceLike,
+        _WindowSpec,
+    )
 
 __all__ = [
     "stft",
@@ -1501,6 +1502,8 @@ def phase_vocoder(
     np.cumsum(phase, axis=-1, out=phase)
 
     # Interpolate magnitudes
+    import scipy.interpolate
+
     mag_interp = scipy.interpolate.interp1d(
         np.arange(n_frames),
         np.abs(D),
@@ -1662,6 +1665,7 @@ def iirt(
     bands_power = np.empty_like(y, shape=shape)
 
     slices: List[Union[int, slice]] = [slice(None) for _ in bands_power.shape]
+    import scipy.signal
     for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates,
                                                  filterbank_ct,
                                                  strict=True)):
@@ -2304,6 +2308,8 @@ def fmt(
     x = np.linspace(0, 1, num=n, endpoint=False)
 
     # build the interpolator
+    import scipy.interpolate
+
     f_interp = scipy.interpolate.interp1d(x, y, kind=kind, axis=axis)
 
     # build the new sampling grid
@@ -2648,7 +2654,10 @@ def pcen(
                 # if axis = +- 1, max_axis = 0
                 max_axis = np.mod(1 - axis, 2)
 
+            import scipy.ndimage
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
+
+    import scipy.signal
 
     if zi is None:
         # Make sure zi matches dimension to input

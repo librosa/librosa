@@ -1,17 +1,23 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
+from __future__ import annotations
 
-from typing import Collection, Dict, Iterable, List, Union, overload
+from typing import TYPE_CHECKING, overload
 
 import msgpack
 import numpy as np
-from numpy.typing import ArrayLike
-from typing_extensions import Literal
 
 from .._cache import cache
-from .._typing import _FloatLike_co
 from ..util.files import _resource_file
+
+if TYPE_CHECKING:
+    from typing import Collection, Dict, Iterable, List, Literal, Union
+
+    from numpy.typing import ArrayLike
+
+    from .._typing import _FloatLike_co
+
 
 with _resource_file("librosa.core", "intervals.msgpack") as imsgpack, imsgpack.open("rb") as _fdesc:
     # We use floats for dictionary keys, so strict mapping is disabled

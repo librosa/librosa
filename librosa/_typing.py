@@ -1,12 +1,11 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any, Callable, Generator, List, Tuple, TypeVar, Union
+from typing import Any, Callable, Generator, List, Literal, Never, Tuple, TypeVar, Union
 
 import numpy as np
 import scipy.sparse as sp
 from numpy.typing import ArrayLike
-from typing_extensions import Literal, Never
 
 # RNG types
 SeedLike = Union[int, np.integer, Sequence[int], np.random.SeedSequence]
@@ -128,3 +127,8 @@ _InterpKind = Literal[
 # DCT normalization modes
 _DCTNorm = Literal["backward", "ortho", "forward"]
 _DCTType = Literal[1, 2, 3, 4]
+
+# More specialized number types
+_Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
+_Complex = Union[_Real, "np.complexfloating[Any, Any]"]
+_Number = Union[complex, "np.number[Any]"]

@@ -24,25 +24,34 @@ Temporal clustering
     agglomerative
     subsegment
 """
+from __future__ import annotations
 
 import itertools
-from typing import Any, Callable, Optional, TypeVar, Union, overload
+from typing import TYPE_CHECKING, overload
 
 import numpy as np
 import scipy
-import scipy.ndimage
-import sklearn
-import sklearn.cluster
-import sklearn.feature_extraction
-import sklearn.neighbors
 from decorator import decorator
-from typing_extensions import Literal
 
 from . import util
 from ._cache import cache
-from ._typing import _FloatLike_co, _SparseArray, _WindowSpec
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Literal, Optional, TypeVar, Union
+
+    import sklearn.cluster
+
+    from ._typing import _FloatLike_co, _SparseArray, _WindowSpec
+
+    _F = TypeVar("_F", bound=Callable[..., Any])
+
+    _ArrayOrSparseArray = TypeVar(
+        "_ArrayOrSparseArray", bound=Union[np.ndarray, _SparseArray]
+    )
+
+
 
 __all__ = [
     "cross_similarity",
@@ -297,6 +306,8 @@ def cross_similarity(
     # Build the neighbor search object
     # `auto` mode does not work with some choices of metric.  Rather than special-case
     # those here, we instead use a fall-back to brute force if auto fails.
+    import sklearn.neighbors
+
     try:
         knn = sklearn.neighbors.NearestNeighbors(
             n_neighbors=min(n_ref, k), metric=metric, algorithm="auto"
@@ -623,6 +634,8 @@ def recurrence_matrix(
         k = t
 
     # Build the neighbor search object
+    import sklearn.neighbors
+
     try:
         knn = sklearn.neighbors.NearestNeighbors(
             n_neighbors=min(t - 1, k + 2 * width), metric=metric, algorithm="auto"
@@ -699,11 +712,6 @@ def recurrence_matrix(
         return rec.toarray()
 
     return rec
-
-
-_ArrayOrSparseArray = TypeVar(
-    "_ArrayOrSparseArray", bound=Union[np.ndarray, _SparseArray]
-)
 
 
 def recurrence_to_lag(
@@ -890,8 +898,6 @@ def lag_to_recurrence(
     rec_slice: _ArrayOrSparseArray = rec[tuple(sub_slice)]  # type: ignore[assignment]
     return rec_slice
 
-
-_F = TypeVar("_F", bound=Callable[..., Any])
 
 
 def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
@@ -1142,6 +1148,9 @@ def agglomerative(
     data = data.reshape((n, -1), order="F")
 
     if clusterer is None:
+        import sklearn.cluster
+        import sklearn.feature_extraction
+
         # Connect the temporal connectivity graph
         grid = sklearn.feature_extraction.image.grid_to_graph(n_x=n, n_y=1, n_z=1)
 
@@ -1306,6 +1315,8 @@ def path_enhance(
         shape = [1] * R.ndim
         shape[-2:] = kernel.shape
         kernel = np.reshape(kernel, shape)
+
+        import scipy.ndimage
 
         if R_smooth is None:
             R_smooth = scipy.ndimage.convolve(R, kernel, **kwargs)

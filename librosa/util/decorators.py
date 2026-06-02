@@ -2,20 +2,24 @@
 # -*- encoding: utf-8 -*-
 # CREATED:2015-02-15 10:06:03 by Brian McFee <brian.mcfee@nyu.edu>
 """Helpful tools for deprecation"""
+from __future__ import annotations
 
 import functools
 import warnings
-from typing import Any, Callable, Iterable, Optional, TypeVar, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 from decorator import decorator
-from numpy.typing import DTypeLike
-from typing_extensions import ParamSpec  # Install typing_extensions in Python 3.8
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Iterable, Optional, ParamSpec, TypeVar, Union
+
+    from numpy.typing import DTypeLike
+    P = ParamSpec("P")
+    R = TypeVar("R")
+    _F = TypeVar("_F", bound=Callable[..., Any])
 
 __all__ = ["moved", "deprecated", "vectorize"]
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 
 def moved(
@@ -65,8 +69,6 @@ def deprecated(
 
     return decorator(__wrapper)
 
-
-_F = TypeVar("_F", bound=Callable[..., Any])
 
 
 def vectorize(
