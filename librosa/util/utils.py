@@ -1032,13 +1032,6 @@ def _localmin_sten(x):  # pragma: no cover
 
 
 @numba.guvectorize(
-    [
-        "void(int16[:], bool_[:])",
-        "void(int32[:], bool_[:])",
-        "void(int64[:], bool_[:])",
-        "void(float32[:], bool_[:])",
-        "void(float64[:], bool_[:])",
-    ],
     "(n)->(n)",
     cache=True,
     nopython=True,
@@ -1049,13 +1042,6 @@ def _localmax(x, y):  # pragma: no cover
 
 
 @numba.guvectorize(
-    [
-        "void(int16[:], bool_[:])",
-        "void(int32[:], bool_[:])",
-        "void(int64[:], bool_[:])",
-        "void(float32[:], bool_[:])",
-        "void(float64[:], bool_[:])",
-    ],
     "(n)->(n)",
     cache=True,
     nopython=True,
@@ -1189,12 +1175,6 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
 
 
 @numba.guvectorize(
-    [
-        "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(float64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(int32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-    ],
     "(n),(),(),(),(),(),()->(n)",
     nopython=True,
     cache=True,
@@ -1232,12 +1212,6 @@ def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, pea
 
 
 @numba.guvectorize(
-    [
-        "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
-        "void(float64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
-        "void(int32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
-        "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_, bool_[:])",
-    ],
     "(n),(),(),(),(),(),(),()->(n)",
     nopython=True,
     cache=True,
