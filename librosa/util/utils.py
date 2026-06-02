@@ -2572,11 +2572,11 @@ def abs2(x: _NumberOrArray, dtype: Optional[DTypeLike] = None) -> _NumberOrArray
     """
     if np.iscomplexobj(x):
         # suppress type check, mypy doesn't like vectorization
-        y = _cabs2(x)
         if dtype is None:
-            return y  # type: ignore
-        else:
-            return y.astype(dtype)  # type: ignore
+            dtype = dtype_c2r(np.asarray(x).dtype)
+        y = np.empty_like(x, dtype=dtype)
+        _cabs2(x, y)
+        return y
     else:
         # suppress type check, mypy doesn't know this is real
         return np.square(x, dtype=dtype)  # type: ignore
@@ -2660,10 +2660,7 @@ def phasor(
     >>> librosa.util.phasor(np.array([0, np.pi/2]), mag=np.array([0.5, 1.5]))
     array([5.000e-01+0.j , 9.185e-17+1.5j])
     """
-    if np.isscalar(angles):
-        angles = np.asarray(angles)
-
-    z = np.empty_like(angles, dtype=dtype_r2c(angles.dtype))  # type: ignore
+    z = np.empty_like(angles, dtype=dtype_r2c(np.asarray(angles).dtype))  # type: ignore
     _phasor_angles(angles, z)
 
     if mag is not None:
