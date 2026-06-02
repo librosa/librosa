@@ -2663,13 +2663,13 @@ def phasor(
     if np.isscalar(angles):
         angles = np.asarray(angles)
 
-    z = np.empty_like(angles, dtype=dtype_r2c(angles.dtype))
+    z = np.empty_like(angles, dtype=dtype_r2c(angles.dtype))  # type: ignore
     _phasor_angles(angles, z)
 
     if mag is not None:
         z *= mag
 
-    return z  # type: ignore
+    return z
 
 
 @overload
