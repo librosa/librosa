@@ -1316,10 +1316,6 @@ def _zc_stencil(x: np.ndarray, threshold: float, zero_pos: bool) -> np.ndarray:
 
 
 @guvectorize(
-    [
-        "void(float32[:], float32, bool_, bool_[:])",
-        "void(float64[:], float64, bool_, bool_[:])",
-    ],
     "(n),(),()->(n)",
     cache=True,
     nopython=True,
