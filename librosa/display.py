@@ -2779,17 +2779,17 @@ def wavebars(
         rectangular bars.
     axis : str or None
         Display style of the axis ticks and tick markers. Accepted values are:
-        - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
-        - 'h' : markers are shown as hours, minutes, and seconds.
-        - 'm' : markers are shown as minutes and seconds.
-        - 's' : markers are shown as seconds.
-        - 'ms' : markers are shown as milliseconds.
-        - 'lag' : like time, but past the halfway point counts as negative values.
-        - 'lag_h' : same as lag, but in hours.
-        - 'lag_m' : same as lag, but in minutes.
-        - 'lag_s' : same as lag, but in seconds.
-        - 'lag_ms' : same as lag, but in milliseconds.
-        - `None`, 'none', or 'off': ticks and tick markers are hidden.
+            - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
+            - 'h' : markers are shown as hours, minutes, and seconds.
+            - 'm' : markers are shown as minutes and seconds.
+            - 's' : markers are shown as seconds.
+            - 'ms' : markers are shown as milliseconds.
+            - 'lag' : like time, but past the halfway point counts as negative values.
+            - 'lag_h' : same as lag, but in hours.
+            - 'lag_m' : same as lag, but in minutes.
+            - 'lag_s' : same as lag, but in seconds.
+            - 'lag_ms' : same as lag, but in milliseconds.
+            - `None`, 'none', or 'off': ticks and tick markers are hidden.
     offset : float
         Offset (in seconds) to start the waveform plot.
     invert : bool
