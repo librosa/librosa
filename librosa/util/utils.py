@@ -2539,6 +2539,12 @@ def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
 
 _Number = Union[complex, "np.number[Any]"]
 
+@overload
+def abs2(x: np.ndarray, dtype: Optional[DTypeLike] = ...) -> np.ndarray: ...
+
+@overload
+def abs2(x: _Complex, dtype: Optional[DTypeLike] = ...) -> np.floating[Any]: ...
+
 def abs2(x: Union[np.ndarray, _Real, _Complex],
          dtype: Optional[DTypeLike] = None
 ) -> Union[np.ndarray, np.floating[Any]]:
