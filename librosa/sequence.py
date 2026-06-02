@@ -35,16 +35,18 @@ Transition matrices
 
 from __future__ import annotations
 
+from typing import Any, Iterable, List, Optional, Tuple, Union, overload
+
 import numpy as np
 import scipy.interpolate
-from scipy.spatial.distance import cdist
 from numba import jit
-from .util import pad_center, fill_off_diagonal, is_positive_int, tiny, expand_to
-from .util.exceptions import ParameterError
-from .filters import get_window
-from typing import Any, Iterable, List, Optional, Tuple, Union, overload
+from scipy.spatial.distance import cdist
 from typing_extensions import Literal
+
 from ._typing import _WindowSpec
+from .filters import get_window
+from .util import expand_to, fill_off_diagonal, is_positive_int, pad_center, tiny
+from .util.exceptions import ParameterError
 
 __all__ = [
     "dtw",
@@ -556,9 +558,9 @@ def __dtw_calc_accu_cost(
     for cur_n in range(max_0, D.shape[0]):
         for cur_m in range(max_1, D.shape[1]):
             # accumulate costs
-            for cur_step_idx, cur_w_add, cur_w_mul in zip(
+            for cur_step_idx, cur_w_add, cur_w_mul in zip(  # noqa: B905
                 range(step_sizes_sigma.shape[0]), weights_add, weights_mul
-            ):
+                ):
                 cur_D = D[
                     cur_n - step_sizes_sigma[cur_step_idx, 0],
                     cur_m - step_sizes_sigma[cur_step_idx, 1],
@@ -1380,7 +1382,7 @@ def viterbi(
     >>> print(logp, path)
     -4.19173690823075 [0 0 1]
     """
-    n_states, n_steps = prob.shape[-2:]
+    n_states, _n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
         raise ParameterError(
@@ -1617,7 +1619,7 @@ def viterbi_discriminative(
     >>> ax.legend()
     >>> plt.show()
     """
-    n_states, n_steps = prob.shape[-2:]
+    n_states, _n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
         raise ParameterError(
@@ -1894,10 +1896,10 @@ def viterbi_binary(
         raise ParameterError(f"Invalid initial state distributions: p_init={p_init}")
 
     shape_prefix = list(prob.shape[:-2])
-    states = np.empty(shape_prefix + [n_states, n_steps], dtype=np.uint16)
-    logp = np.empty(shape_prefix + [n_states])
+    states = np.empty([*shape_prefix, n_states, n_steps], dtype=np.uint16)
+    logp = np.empty([*shape_prefix, n_states])
 
-    prob_binary = np.empty(shape_prefix + [2, n_steps])
+    prob_binary = np.empty([*shape_prefix, 2, n_steps])
     p_state_binary = np.empty(2)
     p_init_binary = np.empty(2)
 

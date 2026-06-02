@@ -2,20 +2,20 @@
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
 
-from typing import Collection, Dict, List, Union, overload, Iterable
-from typing_extensions import Literal
+from typing import Collection, Dict, Iterable, List, Union, overload
+
 import msgpack
 import numpy as np
 from numpy.typing import ArrayLike
+from typing_extensions import Literal
+
 from .._cache import cache
 from .._typing import _FloatLike_co
 from ..util.files import _resource_file
 
-
-with _resource_file("librosa.core", "intervals.msgpack") as imsgpack:
-    with imsgpack.open("rb") as _fdesc:
-        # We use floats for dictionary keys, so strict mapping is disabled
-        INTERVALS = msgpack.load(_fdesc, strict_map_key=False)
+with _resource_file("librosa.core", "intervals.msgpack") as imsgpack, imsgpack.open("rb") as _fdesc:
+    # We use floats for dictionary keys, so strict mapping is disabled
+    INTERVALS = msgpack.load(_fdesc, strict_map_key=False)
 
 
 @cache(level=10)
@@ -263,7 +263,7 @@ def __harmonic_distance(logs, a, b):
     and the prime basis are provided in their log2 form.
 
     .. [#] Tenney, James.
-        "On ‘Crystal Growth’ in harmonic space (1993–1998)."
+        "On `Crystal Growth' in harmonic space (1993--1998)."
         Contemporary Music Review 27.1 (2008): 47-56.
     """
     a = np.array(a)
@@ -338,12 +338,12 @@ def plimit_intervals(
     of [#1]_ [#2]_.
 
     .. [#1] Tenney, James.
-        "On ‘Crystal Growth’ in harmonic space (1993–1998)."
-        Contemporary Music Review 27.1 (2008): 47-56.
+        "On `Crystal Growth' in harmonic space (1993--1998)."
+        Contemporary Music Review 27.1 (2008): 47--56.
 
     .. [#2] Sabat, Marc, and James Tenney.
         "Three crystal growth algorithms in 23-limit constrained harmonic space."
-        Contemporary Music Review 27, no. 1 (2008): 57-78.
+        Contemporary Music Review 27, no. 1 (2008): 57--78.
 
     Parameters
     ----------
@@ -498,7 +498,9 @@ def plimit_intervals(
             if pow2[i] != 0:
                 v[2] = -pow2[i]
 
-            v.update({p: int(power) for p, power in zip(primes, pows[i]) if power != 0})
+            v.update({p: int(power) for p, power in zip(primes,
+                                                        pows[i],
+                                                        strict=False) if power != 0})
 
             factors.append(v)
         return factors

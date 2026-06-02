@@ -3,18 +3,18 @@
 """Feature inversion"""
 
 import warnings
+from typing import Any, Optional
+
 import numpy as np
 import scipy
-
-from ..util.exceptions import ParameterError
-from ..core.spectrum import griffinlim
-from ..core.spectrum import db_to_power
-from ..util.utils import tiny
-from .. import filters
-from ..util import nnls, expand_to
 from numpy.typing import DTypeLike
-from typing import Any, Optional
-from .._typing import _WindowSpec, _PadModeSTFT, _DCTNorm, _DCTType
+
+from .. import filters
+from .._typing import _DCTNorm, _DCTType, _PadModeSTFT, _WindowSpec
+from ..core.spectrum import db_to_power, griffinlim
+from ..util import expand_to, nnls
+from ..util.exceptions import ParameterError
+from ..util.utils import tiny
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
 

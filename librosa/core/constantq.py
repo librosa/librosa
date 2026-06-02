@@ -2,30 +2,29 @@
 # -*- coding: utf-8 -*-
 """Constant-Q transforms"""
 import warnings
+from typing import Collection, List, Optional, Union
+
 import numpy as np
 import scipy
 from numba import jit
-
-from . import audio
-from .intervals import interval_frequencies
-from .convert import cqt_frequencies, note_to_hz
-from .spectrum import stft, istft
-from .pitch import estimate_tuning
-from .._cache import cache
-from .. import filters
-from .. import util
-from ..util.exceptions import ParameterError
-from ..util.deprecation import rename_kw, Deprecated
 from numpy.typing import DTypeLike
-from typing import Optional, Union, Collection, List
+
+from .. import filters, util
+from .._cache import cache
 from .._typing import (
-    _WindowSpec,
-    _PadMode,
-    _FloatLike_co,
-    _ensure_not_reachable,
     RNGLike,
     SeedLike,
+    _FloatLike_co,
+    _PadMode,
+    _WindowSpec,
 )
+from ..util.deprecation import Deprecated, rename_kw
+from ..util.exceptions import ParameterError
+from . import audio
+from .convert import cqt_frequencies, note_to_hz
+from .intervals import interval_frequencies
+from .pitch import estimate_tuning
+from .spectrum import istft, stft
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 
@@ -669,7 +668,7 @@ def icqt(
     else:
         alpha = filters._relative_bandwidth(freqs=freqs)
 
-    lengths, f_cutoff = filters.wavelet_lengths(
+    lengths, _f_cutoff = filters.wavelet_lengths(
         freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
     )
 
@@ -688,7 +687,7 @@ def icqt(
     srs = [sr]
     hops = [hop_length]
 
-    for i in range(n_octaves - 1):
+    for _i in range(n_octaves - 1):
         if hops[0] % 2 == 0:
             # We can downsample:
             srs.insert(0, srs[0] * 0.5)
@@ -698,7 +697,7 @@ def icqt(
             srs.insert(0, srs[0])
             hops.insert(0, hops[0])
 
-    for i, (my_sr, my_hop) in enumerate(zip(srs, hops)):
+    for i, (my_sr, my_hop) in enumerate(zip(srs, hops, strict=True)):
         # How many filters are in this octave?
         n_filters = min(bins_per_octave, n_bins - bins_per_octave * i)
 
@@ -1243,11 +1242,11 @@ def griffinlim_cqt(
 
     .. [#] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
-        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
+        IEEE Trans. ASSP, vol.32, no.2, pp.236--243, Apr. 1984.
 
     .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"
-        IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
+        IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1--4),
         Oct. 2013.
 
     Parameters

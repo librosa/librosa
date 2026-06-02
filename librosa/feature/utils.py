@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 """Feature manipulation utilities"""
 
+from typing import Any, Literal
+
 import numpy as np
 import scipy.signal
 from numba import jit
 
 from .._cache import cache
 from ..util.exceptions import ParameterError
-from typing import Any, Literal
 
 __all__ = ["delta", "stack_memory"]
 

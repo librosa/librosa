@@ -25,25 +25,24 @@ Temporal clustering
     subsegment
 """
 
-from decorator import decorator
+import itertools
+from typing import Any, Callable, Optional, TypeVar, Union, overload
 
 import numpy as np
 import scipy
-import scipy.signal
 import scipy.ndimage
-
 import sklearn
 import sklearn.cluster
 import sklearn.feature_extraction
 import sklearn.neighbors
+from decorator import decorator
+from typing_extensions import Literal
 
-from ._cache import cache
 from . import util
+from ._cache import cache
+from ._typing import _FloatLike_co, _SparseArray, _WindowSpec
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
-from typing import Any, Callable, Optional, TypeVar, Union, overload
-from typing_extensions import Literal
-from ._typing import _FloatLike_co, _SparseArray, _WindowSpec
 
 __all__ = [
     "cross_similarity",
@@ -146,7 +145,13 @@ def cross_similarity(
         as specified below.
 
     bandwidth : None, float > 0, ndarray, or str
-        str options include ``{'med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}``
+        str options include
+            - 'med_k_scalar'
+            - 'mean_k'
+            - 'gmean_k'
+            - 'mean_k_avg'
+            - 'gmean_k_avg'
+            - 'mean_k_avg_and_pair'
 
         If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
 
@@ -184,7 +189,7 @@ def cross_similarity(
             "Self-tuning spectral clustering." Advances in neural information processing systems 17.
 
         .. [#w] Wang, Bo, et al. (2014).
-            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333–337.
+            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333--337.
             https://doi.org/10.1038/nmeth.2810
 
     full : bool
@@ -456,7 +461,13 @@ def recurrence_matrix(
         as specified below.
 
     bandwidth : None, float > 0, ndarray, or str
-        str options include ``{'med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}``
+        str options include:
+            - 'med_k_scalar'
+            - 'mean_k'
+            - 'gmean_k'
+            - 'mean_k_avg'
+            - 'gmean_k_avg'
+            - 'mean_k_avg_and_pair'
 
         If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
 
@@ -494,7 +505,7 @@ def recurrence_matrix(
             "Self-tuning spectral clustering." Advances in neural information processing systems 17.
 
         .. [#w] Wang, Bo, et al. (2014).
-            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333–337.
+            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333--337.
             https://doi.org/10.1038/nmeth.2810
 
     self : bool
@@ -1046,7 +1057,7 @@ def subsegment(
     boundaries = []
     idx_slices = [slice(None)] * data.ndim
 
-    for seg_start, seg_end in zip(frames[:-1], frames[1:]):
+    for seg_start, seg_end in itertools.pairwise(frames):
         idx_slices[axis] = slice(seg_start, seg_end)
         boundaries.extend(
             seg_start

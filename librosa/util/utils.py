@@ -4,7 +4,9 @@
 
 from __future__ import annotations
 
+import itertools
 from typing import (
+    TYPE_CHECKING,
     Any,
     Callable,
     Dict,
@@ -15,20 +17,17 @@ from typing import (
     TypeVar,
     Union,
     overload,
-    TYPE_CHECKING,
 )
 
 import numba
 import numpy as np
-import scipy.ndimage
 import scipy.sparse
 from numpy.lib.stride_tricks import as_strided
 from numpy.typing import DTypeLike
 from typing_extensions import Literal
 
 from .._cache import cache
-from .._typing import _ComplexLike_co, _FloatLike_co, _SequenceLike, _SparseArray, _SparseMatrix, _InterpKind
-from .deprecation import Deprecated
+from .._typing import _ComplexLike_co, _FloatLike_co, _InterpKind, _SequenceLike, _SparseArray, _SparseMatrix
 from .exceptions import ParameterError
 
 # Constrain STFT block sizes to 256 KB
@@ -993,7 +992,7 @@ def normalize(
             fill_norm = mag.shape[axis] ** (-1.0 / norm)
 
     else:
-        raise ParameterError(f"Unsupported norm: {repr(norm)}")
+        raise ParameterError(f"Unsupported norm: {norm!r}")
 
     # indices where norm is below the threshold
     small_idx = length < threshold
@@ -1662,7 +1661,7 @@ def index_to_slice(
     idx_fixed = fix_frames(idx, x_min=idx_min, x_max=idx_max, pad=pad)
 
     # Now convert the indices to slices
-    return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:])]
+    return [slice(start, end, step) for (start, end) in itertools.pairwise(idx_fixed)]
 
 
 @cache(level=40)
@@ -2181,7 +2180,8 @@ def __shear_sparse(
 @overload
 def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 @overload
-def shear(X: Union[_SparseArray, _SparseMatrix], *, factor: int = ..., axis: int = ...) -> Union[_SparseArray, _SparseMatrix]: ...
+def shear(X: Union[_SparseArray, _SparseMatrix], *,
+          factor: int = ..., axis: int = ...) -> Union[_SparseArray, _SparseMatrix]: ...
 def shear(
     X: Union[np.ndarray, _SparseArray, _SparseMatrix], *, factor: int = 1, axis: int = -1
 ) -> Union[np.ndarray, _SparseArray, _SparseMatrix]:
@@ -2324,7 +2324,7 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
         return np.stack(arrays, axis=axis)
     else:
         # If axis is 0, enforce F-ordering
-        shape = tuple([len(arrays)] + list(shape_in))
+        shape = tuple([len(arrays), *list(shape_in)])
 
         # Find the common dtype for all inputs
         dtype = np.result_type(*arrays)
@@ -2746,12 +2746,12 @@ def interp_broadcast(
        "Spectral and Temporal Periodicity Representations of Rhythm for the Automatic Classification
        of Music Audio Signal."
        In IEEE Transactions on Audio, Speech, and Language Processing, vol. 19, no. 5, pp.
-       1242–1252, July 2011.
+       1242--1252, July 2011.
 
     .. [2] Cozens, James, and Simon Godsill.
        "Dynamic Time Signature Recognition, Tempo Inference, and Beat Tracking Through the Metrogram
        Transform."
-       In IEEE Open Journal of Signal Processing, pp. 1–9, 2023.
+       In IEEE Open Journal of Signal Processing, pp. 1--9, 2023.
 
     Parameters
     ----------

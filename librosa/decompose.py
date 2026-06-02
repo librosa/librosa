@@ -11,20 +11,17 @@ Spectrogram decomposition
     nn_filter
 """
 
-import numpy as np
+from typing import Any, Callable, List, Optional, Tuple, Union
 
+import numpy as np
 import scipy.sparse
+import sklearn.decomposition
 from scipy.ndimage import median_filter
 
-import sklearn.decomposition
-
-from . import core
+from . import core, segment, util
 from ._cache import cache
-from . import segment
-from . import util
+from ._typing import _FloatLike_co, _IntLike_co, _SparseArray
 from .util.exceptions import ParameterError
-from typing import Any, Callable, List, Optional, Tuple, Union
-from ._typing import _IntLike_co, _FloatLike_co, _SparseArray
 
 __all__ = ["decompose", "hpss", "nn_filter"]
 
@@ -194,7 +191,7 @@ def decompose(
         activations = transformer.transform(S).T  # type: ignore
 
     components: np.ndarray = transformer.components_  # type: ignore
-    component_shape = orig_shape[:-1] + [-1]
+    component_shape = [*orig_shape[:-1], -1]
     # use order='F' here to preserve component ordering
     components = components.reshape(component_shape[::-1], order="F").T
 
@@ -354,14 +351,14 @@ def hpss(
     else:
         phase = 1
 
-    if isinstance(kernel_size, tuple) or isinstance(kernel_size, list):
+    if isinstance(kernel_size, (tuple, list)):
         win_harm = kernel_size[0]
         win_perc = kernel_size[1]
     else:
         win_harm = kernel_size
         win_perc = kernel_size
 
-    if isinstance(margin, tuple) or isinstance(margin, list):
+    if isinstance(margin, (tuple, list)):
         margin_harm = margin[0]
         margin_perc = margin[1]
     else:

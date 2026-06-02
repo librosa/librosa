@@ -2,21 +2,19 @@
 # -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
 from __future__ import annotations
-from typing import List, Optional, Union, Any, Set
 
-import os
+import contextlib
 import glob
 import json
-import msgpack
-import contextlib
-
+import os
 from importlib import resources
+from typing import Any, List, Optional, Set, Union
 
+import msgpack
 import pooch
 
-from .exceptions import ParameterError
 from ..version import version as librosa_version
-
+from .exceptions import ParameterError
 
 __all__ = [
     "find_files",
@@ -48,11 +46,10 @@ def _resource_file(package: str, resource: str):
 with _resource_file("librosa.util.example_data", "registry.txt") as reg:
     __GOODBOY.load_registry(str(reg))
     # We want to bypass version checks here to allow asynchronous updates for new releases
-    __GOODBOY.registry['version_index.msgpack'] = None
+    __GOODBOY.registry["version_index.msgpack"] = None
 
-with _resource_file("librosa.util.example_data", "index.json") as index:
-    with index.open("r") as _fdesc:
-        __TRACKMAP = json.load(_fdesc)
+with _resource_file("librosa.util.example_data", "index.json") as index, index.open("r") as _fdesc:
+    __TRACKMAP = json.load(_fdesc)
 
 
 def example(key: str, *, hq: bool = False) -> str:
@@ -322,7 +319,8 @@ def cite(version: Optional[str]=None) -> str:
 
     if version not in version_index:
         if "dev" in version:
-            raise ParameterError(f"Version {version} is not yet released and therefore does not yet have a citable DOI.")
+            raise ParameterError(f"Version {version} is not yet released and "
+                                 "therefore does not yet have a citable DOI.")
         else:
             raise ParameterError(f"Version {version} not found in the citation index")
 

@@ -2,21 +2,21 @@
 # -*- coding: utf-8 -*-
 """Rhythmic feature extraction"""
 
+from typing import Any, Callable, Optional
+
 import numpy as np
 import scipy
+import scipy.interpolate
 
 from .. import util
-
 from .._cache import cache
-from ..core.audio import autocorrelate
-from ..core.spectrum import stft
-from ..core.convert import tempo_frequencies, time_to_frames, fourier_tempo_frequencies
-from ..core.harmonic import f0_harmonics, interp_harmonics
-from ..util.exceptions import ParameterError
-from ..filters import get_window
-from typing import Optional, Callable, Any
 from .._typing import _InterpKind, _WindowSpec
-import scipy.interpolate
+from ..core.audio import autocorrelate
+from ..core.convert import fourier_tempo_frequencies, tempo_frequencies, time_to_frames
+from ..core.harmonic import f0_harmonics, interp_harmonics
+from ..core.spectrum import stft
+from ..filters import get_window
+from ..util.exceptions import ParameterError
 
 __all__ = [
     "tempogram",
@@ -534,7 +534,8 @@ def tempogram_ratio(
 
     .. [2] Prockup, Matthew, Andreas F. Ehmann, Fabien Gouyon, Erik M. Schmidt, and Youngmoo E. Kim.
         "Modeling musical rhythm at scale with the music genome project."
-        In 2015 IEEE workshop on applications of signal processing to audio and acoustics (WASPAA), pp. 1-5. IEEE, 2015.
+        In 2015 IEEE workshop on applications of signal processing to audio
+        and acoustics (WASPAA), pp. 1-5. IEEE, 2015.
 
     Parameters
     ----------
@@ -844,7 +845,7 @@ def metrogram(
 
     .. [1] Cozens, James, and Simon Godsill.
        "Dynamic Time Signature Recognition, Tempo Inference, and Beat Tracking Through the Metrogram Transform."
-       In IEEE Open Journal of Signal Processing, pp. 1–9, 2023.
+       In IEEE Open Journal of Signal Processing, pp. 1--9, 2023.
 
     .. [2] Abimbola, Jeremiah, Daniel Kostrzewa, and Paweł Kasprowski.
        "METER2800: A novel dataset for music time signature detection."

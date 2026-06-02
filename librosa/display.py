@@ -46,56 +46,55 @@ Miscellaneous
 """
 
 from __future__ import annotations
-from itertools import product, cycle
+
+import copy
 import re
 import warnings
-from fractions import Fraction
 import weakref
-import copy
-
-import numpy as np
-import scipy.interpolate
-from matplotlib import colormaps as mcm
-import matplotlib.axes as mplaxes
-import matplotlib.ticker as mplticker
-import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib.patches as mpatches
-import matplotlib.collections as mcollections
-import matplotlib.transforms as mtransforms
-import matplotlib.lines as mlines
-from matplotlib.transforms import Bbox
-
-from . import core
-from . import util
-from .util.decorators import moved
-from .util.deprecation import rename_kw, Deprecated
-from .util.exceptions import ParameterError
+from fractions import Fraction
+from itertools import cycle, product
 from typing import (
     TYPE_CHECKING,
     Any,
-    Collection,
-    Optional,
-    Union,
     Callable,
-    Literal,
+    Collection,
     Dict,
-    Tuple,
     List,
+    Literal,
+    Optional,
     Sequence,
+    Tuple,
+    Union,
     cast,
 )
-from ._typing import _FloatLike_co, ArrayLike
+
+import matplotlib.axes as mplaxes
+import matplotlib.collections as mcollections
+import matplotlib.colors as colors
+import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mplticker
+import matplotlib.transforms as mtransforms
+import numpy as np
+import scipy.interpolate
+from matplotlib import colormaps as mcm
+from matplotlib.transforms import Bbox
+
+from . import core, util
+from ._typing import ArrayLike, _FloatLike_co
+from .util.decorators import moved
+from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    import matplotlib
-    from matplotlib.collections import QuadMesh, PolyCollection
-    from matplotlib.lines import Line2D
-    from matplotlib.path import Path as MplPath
-    from matplotlib.markers import MarkerStyle
-    from matplotlib.colors import Colormap
-    import matplotlib.figure
     import cycler
+    import matplotlib
+    import matplotlib.figure
+    from matplotlib.collections import PolyCollection, QuadMesh
+    from matplotlib.colors import Colormap
+    from matplotlib.lines import Line2D
+    from matplotlib.markers import MarkerStyle
+    from matplotlib.path import Path as MplPath
 
 
 __all__ = [
@@ -978,7 +977,7 @@ class Transformf0(mtransforms.Transform):
         is_inverted: bool = False,
     ):
         super().__init__(shorthand_name="Transformf0")
-        
+
         if not np.any(np.isfinite(f0)) or np.nanmin(f0) <= 0:
             raise ParameterError("f0 must be strictly positive (or NaN) and contain at least one finite value")
 
@@ -1284,7 +1283,8 @@ def specshow(
         - 'linear', 'fft', 'hz' : frequency range is determined by
           the FFT window and sampling rate.
         - 'log' : the spectrum is displayed on a log scale.
-        - 'oct3' : the spectrum is displayed on a log scale with frequencies marked in scientific notation at 1/3-octave intervals
+        - 'oct3' : the spectrum is displayed on a log scale with frequencies marked
+          in scientific notation at 1/3-octave intervals
         - 'fft_note': the spectrum is displayed on a log scale with pitches marked.
         - 'fft_svara': the spectrum is displayed on a log scale with svara marked.
         - 'mel' : frequencies are determined by the mel scale.
@@ -1393,7 +1393,8 @@ def specshow(
           Values are in the range of `[-π, π]`.
 
         - 'dphase_t' : as above, but differences are computed along the vertical axis instead of horizontal.
-          This is intended for use with transposed spectrograms where the time axis is vertical and the frequency axis is horizontal.
+          This is intended for use with transposed spectrograms where the time axis is
+          vertical and the frequency axis is horizontal.
 
         .. note::
             When using phase difference modes (`dphase` or `dphase_t`), the x and y coordinates must be provided
@@ -2351,7 +2352,7 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords, cmap_seq):
 
     else:
         # In some kind of dB mode
-        mode, scale_type, ref_ = __parse_vscale(vscale)
+        _mode, scale_type, ref_ = __parse_vscale(vscale)
         if ref_ == "max":
             ref = np.max(np.abs(data))
         elif ref_ is None:
@@ -2778,17 +2779,17 @@ def wavebars(
         rectangular bars.
     axis : str or None
         Display style of the axis ticks and tick markers. Accepted values are:
-        - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
-        - 'h' : markers are shown as hours, minutes, and seconds.
-        - 'm' : markers are shown as minutes and seconds.
-        - 's' : markers are shown as seconds.
-        - 'ms' : markers are shown as milliseconds.
-        - 'lag' : like time, but past the halfway point counts as negative values.
-        - 'lag_h' : same as lag, but in hours.
-        - 'lag_m' : same as lag, but in minutes.
-        - 'lag_s' : same as lag, but in seconds.
-        - 'lag_ms' : same as lag, but in milliseconds.
-        - `None`, 'none', or 'off': ticks and tick markers are hidden.
+            - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
+            - 'h' : markers are shown as hours, minutes, and seconds.
+            - 'm' : markers are shown as minutes and seconds.
+            - 's' : markers are shown as seconds.
+            - 'ms' : markers are shown as milliseconds.
+            - 'lag' : like time, but past the halfway point counts as negative values.
+            - 'lag_h' : same as lag, but in hours.
+            - 'lag_m' : same as lag, but in minutes.
+            - 'lag_s' : same as lag, but in seconds.
+            - 'lag_ms' : same as lag, but in milliseconds.
+            - `None`, 'none', or 'off': ticks and tick markers are hidden.
     offset : float
         Offset (in seconds) to start the waveform plot.
     invert : bool
@@ -2868,7 +2869,7 @@ def wavebars(
 
     patches = []
     boxstyle = f"round,pad=0,rounding_size={rounding_size}"
-    for t, a0, a1 in zip(times, env_bottom, env_top):
+    for t, a0, a1 in zip(times, env_bottom, env_top, strict=True):
         base = min(-rounding_size, -a0)
         top = max(rounding_size, a1)
         if transpose:
@@ -3603,7 +3604,9 @@ def _mp_setup_prop_group(
         - `True`: all subplots share the same properties and belong to a single group.
         - 'row': subplots in the same row share properties and belong to the same group.
         - 'col': subplots in the same column share properties and belong to the same group.
-        - sequence: a sequence of group identifiers for each subplot. The length of the sequence must match the total number of subplots (i.e., the product of the shape of the axes).
+        - sequence: a sequence of group identifiers for each subplot. The length of the
+          sequence must match the total number of subplots (i.e., the product of the shape
+          of the axes).
     shape : tuple of int
         The shape of the grid of axes, determined by the shape of the input data and the
         specified orientation.
@@ -3646,7 +3649,8 @@ def _mp_setup_properties(
     prop_group : np.ndarray
         An array of group identifiers for each subplot in the multiplot grid, with shape compatible with the axes.
     badprops : list of str
-        A list of property names that are not supported by the display function and should be removed from the style cycle when sharing properties.
+        A list of property names that are not supported by the display function
+        and should be removed from the style cycle when sharing properties.
     prop_cycle : cycler.Cycler or None
         The property cycle to use for assigning properties to the subplots. If None, the
         default property cycle from `plt.rcParams["axes.prop_cycle"]` will be used.
@@ -3725,8 +3729,9 @@ def multiplot(
         will be ignored.
 
     orient : str {'h', 'v'}
-        The orientation of the multiplot grid. Accepted values are 'h' for horizontal and 'v' for vertical. This determines how the
-        subplots are arranged when the input data has a single  non-singleton dimension (e.g., shape (n, k) with k > 1).
+        The orientation of the multiplot grid. Accepted values are 'h' for horizontal
+        and 'v' for vertical. This determines how the subplots are arranged when the
+        input data has a single non-singleton dimension (e.g., shape (n, k) with k > 1).
 
     share_properties : bool, str, np.ndarray, or None
         The property sharing scheme for the multiplot grid. Accepted values are:

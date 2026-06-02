@@ -10,20 +10,19 @@ Beat and tempo
    plp
 """
 
+from typing import Optional, Tuple, Union
+
+import numba
 import numpy as np
 import scipy
 import scipy.stats
-import numba
 
-from . import core
-from . import onset
-from . import util
+from . import core, onset, util
+from ._typing import _FloatLike_co
 from .feature import fourier_tempogram
 from .feature import tempo as _tempo
-from .util.exceptions import ParameterError
 from .util.decorators import moved
-from typing import Optional, Tuple, Union
-from ._typing import _FloatLike_co
+from .util.exceptions import ParameterError
 
 __all__ = ["beat_track", "tempo", "plp"]
 
@@ -485,7 +484,8 @@ def __beat_tracker(
 
     # TODO: this might be better accomplished with a np.broadcast_shapes check
     if bpm.shape[-1] not in (1, onset_envelope.shape[-1]):
-        raise ParameterError(f"Invalid bpm shape={bpm.shape} does not match onset envelope shape={onset_envelope.shape}")
+        raise ParameterError(f"Invalid bpm shape={bpm.shape} does not match "
+                             f"onset envelope shape={onset_envelope.shape}")
 
     # convert bpm to frames per beat (rounded)
     # [frames / sec] * [60 sec / min] / [beat / min] = [frames / beat]
@@ -527,12 +527,13 @@ def __beat_local_score(onset_envelope, frames_per_beat, localscore):
 
 
     N = len(onset_envelope)
-    
+
     if len(frames_per_beat) == 1:
         # Static tempo mode
         # NOTE: when we can bump the minimum numba to 0.58, we can eliminate this branch and just use
         # np.convolve(..., mode='same') directly
-        window = np.exp(-0.5 * (np.arange(-frames_per_beat[0], frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2)
+        window = np.exp(-0.5 * (np.arange(-frames_per_beat[0],
+                                          frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2)
         K = len(window)
         # This is a vanilla same-mode convolution
         for i in range(len(onset_envelope)):
@@ -541,14 +542,15 @@ def __beat_local_score(onset_envelope, frames_per_beat, localscore):
             # and i + K // 2 - k >= 0 ==>    k <= i + K // 2
             for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
                 localscore[i] += window[k] * onset_envelope[i + K//2 -k]
-                
+
     elif len(frames_per_beat) == len(onset_envelope):
         # Time-varying tempo estimates
         # This isn't exactly a convolution anymore, since the filter is time-varying, but it's pretty close
         for i in range(len(onset_envelope)):
-            window = np.exp(-0.5 * (np.arange(-frames_per_beat[i], frames_per_beat[i] + 1) * 32.0 / frames_per_beat[i]) ** 2)
+            window = np.exp(-0.5 * (np.arange(-frames_per_beat[i],
+                                              frames_per_beat[i] + 1) * 32.0 / frames_per_beat[i]) ** 2)
             K = 2 * int(frames_per_beat[i]) + 1
-            
+
             localscore[i] = 0.
             for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
                 localscore[i] += window[k] * onset_envelope[i + K // 2 - k]

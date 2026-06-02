@@ -2,39 +2,38 @@
 # -*- coding: utf-8 -*-
 """Utilities for spectral processing"""
 from __future__ import annotations
+
 import warnings
+from typing import Any, Callable, List, Optional, Tuple, Union, overload
 
 import numpy as np
 import scipy
+import scipy.interpolate
 import scipy.ndimage
 import scipy.signal
-import scipy.interpolate
-
 from numba import jit
-
-from . import convert
-from .audio import resample
-from .._cache import cache
-from .. import util
-from ..util.exceptions import ParameterError
-from ..util.deprecation import Deprecated, rename_kw
-from ..filters import get_window, semitone_filterbank
-from ..filters import window_sumsquare
 from numpy.typing import DTypeLike
-from typing import Any, Callable, Optional, Tuple, List, Union, overload
 from typing_extensions import Literal
+
+from .. import util
+from .._cache import cache
 from .._typing import (
-    _WindowSpec,
-    _PadMode,
-    _PadModeSTFT,
-    _InterpKind,
-    _SequenceLike,
-    _ScalarOrSequence,
+    RNGLike,
+    SeedLike,
     _ComplexLike_co,
     _FloatLike_co,
-    SeedLike,
-    RNGLike,
+    _InterpKind,
+    _PadMode,
+    _PadModeSTFT,
+    _ScalarOrSequence,
+    _SequenceLike,
+    _WindowSpec,
 )
+from ..filters import get_window, semitone_filterbank, window_sumsquare
+from ..util.deprecation import Deprecated, rename_kw
+from ..util.exceptions import ParameterError
+from . import convert
+from .audio import resample
 
 __all__ = [
     "stft",
@@ -266,7 +265,8 @@ def stft(
 
         if n_fft > y.shape[-1]:
             warnings.warn(
-                f"n_fft={n_fft} is too large for input signal of length={y.shape[-1]}"
+                f"n_fft={n_fft} is too large for input signal of length={y.shape[-1]}",
+                stacklevel=2
             )
 
         # Set up the padding array to be empty, and we'll fix the target dimension later
@@ -416,7 +416,7 @@ def istft(
 
     .. [#] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
-        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
+        IEEE Trans. ASSP, vol.32, no.2, pp.236--243, Apr. 1984.
 
     Parameters
     ----------
@@ -1662,7 +1662,9 @@ def iirt(
     bands_power = np.empty_like(y, shape=shape)
 
     slices: List[Union[int, slice]] = [slice(None) for _ in bands_power.shape]
-    for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates, filterbank_ct)):
+    for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates,
+                                                 filterbank_ct,
+                                                 strict=True)):
         slices[-2] = i
 
         # filter the signal
@@ -1679,7 +1681,7 @@ def iirt(
 
         factor = sr / cur_sr
         hop_length_STMSP = hop_length / factor
-        win_length_STMSP_round = int(round(win_length / factor))
+        win_length_STMSP_round = round(win_length / factor)
 
         # hop_length_STMSP is used here as a floating-point number.
         # The discretization happens at the end to avoid accumulated rounding errors.
@@ -2711,7 +2713,7 @@ def griffinlim(
 
     .. [#] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
-        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
+        IEEE Trans. ASSP, vol.32, no.2, pp.236--243, Apr. 1984.
 
     .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"

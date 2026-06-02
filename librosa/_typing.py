@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Callable, Generator, List, TypeVar, Union, Tuple, Any
-from typing_extensions import Literal, Never
-import numpy as np
-from numpy.typing import ArrayLike
-import scipy.sparse as sp
+from typing import Any, Callable, Generator, List, Tuple, TypeVar, Union
 
+import numpy as np
+import scipy.sparse as sp
+from numpy.typing import ArrayLike
+from typing_extensions import Literal, Never
 
 # RNG types
 SeedLike = Union[int, np.integer, Sequence[int], np.random.SeedSequence]
@@ -81,7 +81,7 @@ _PadMode = Union[_ModeKind, Callable[..., Any]]
 _PadModeSTFT = Union[_STFTPad, Callable[..., Any]]
 
 
-def _ensure_not_reachable(__arg: Never):
+def _ensure_not_reachable(*, __arg: Never):
     """
     Ensure that a code path is not reachable, like typing_extension.assert_never.
 

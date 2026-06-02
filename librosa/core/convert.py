@@ -2,19 +2,22 @@
 # -*- coding: utf-8 -*-
 """Unit conversion utilities"""
 from __future__ import annotations
+
 import warnings
-import numpy as np
-from . import notation
-from ..util.exceptions import ParameterError
-from ..util.decorators import vectorize
 from typing import Any, Callable, Dict, Iterable, Optional, Sized, Union, overload
+
+import numpy as np
+
 from .._typing import (
-    _IterableLike,
     _FloatLike_co,
-    _SequenceLike,
-    _ScalarOrSequence,
     _IntLike_co,
+    _IterableLike,
+    _ScalarOrSequence,
+    _SequenceLike,
 )
+from ..util.decorators import vectorize
+from ..util.exceptions import ParameterError
+from . import notation
 
 __all__ = [
     "frames_to_samples",

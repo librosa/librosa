@@ -74,10 +74,10 @@ tools:
 
           $ pytest
 
--  No pyflakes warnings, check with:
+-  Style adherence, check with:
 
-           $ python -m pip install flake8
-           $ flake8 librosa
+           $ conda install ruff
+           $ ruff check librosa
 
 
 Some tests in tests/test_display.py use baseline images for output comparison.

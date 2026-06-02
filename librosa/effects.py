@@ -33,23 +33,21 @@ Miscellaneous
     deemphasis
 """
 
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union, overload
+
 import numpy as np
 import scipy.signal
-
-from . import core
-from . import decompose
-from . import feature
-from . import util
-from .util.exceptions import ParameterError
-from typing import Any, Callable, Iterable, Optional, Tuple, List, Union, overload
-from typing_extensions import Literal
 from numpy.typing import ArrayLike
+from typing_extensions import Literal
+
+from . import core, decompose, feature, util
 from ._typing import (
-    _WindowSpec,
-    _PadModeSTFT,
-    _IntLike_co,
     _FloatLike_co,
+    _IntLike_co,
+    _PadModeSTFT,
+    _WindowSpec,
 )
+from .util.exceptions import ParameterError
 
 __all__ = [
     "hpss",
@@ -383,12 +381,12 @@ def time_stretch(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     stft_stretch = core.phase_vocoder(
         stft,
         rate=rate,
-        hop_length=kwargs.get("hop_length", None),
-        n_fft=kwargs.get("n_fft", None),
+        hop_length=kwargs.get("hop_length"),
+        n_fft=kwargs.get("n_fft"),
     )
 
     # Predict the length of y_stretch
-    len_stretch = int(round(y.shape[-1] / rate))
+    len_stretch = round(y.shape[-1] / rate)
 
     # Invert the STFT
     y_stretch = core.istft(stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
@@ -982,7 +980,7 @@ def deemphasis(
     zf: np.ndarray
     if zi is None:
         # initialize with all zeros
-        zi = np.zeros(list(y.shape[:-1]) + [1], dtype=y.dtype)
+        zi = np.zeros([*list(y.shape[:-1]), 1], dtype=y.dtype)
         y_out, zf = scipy.signal.lfilter(a, b, y, zi=zi)
 
         # factor in the linear extrapolation

@@ -46,22 +46,14 @@ jobs:
       shell: bash -l {0}
       run: codespell --ignore-words-list="ba,trough,ue" --skip="*demo.ipynb,./AUTHORS.md,./docs/changelog.rst"
 
-    - name: Security check
+    - name: Linting check
       shell: bash -l {0}
-      run: bandit --recursive --skip B101,B110 .
-
-    - name: Style check
-      shell: bash -l {0}
-      run: python -m flake8 librosa
+      run: ruff check --output-format=github librosa
     
-    - name: Docstring check  
+    - name: Docstring formatting check  
       shell: bash -l {0}
       run: python -m velin --check librosa
     
-    - name: Docstring style check
-      shell: bash -l {0}
-      run: python -m pydocstyle librosa
-
     - name: Type check package
       shell: bash -l {0}
       run: python -m mypy --pretty librosa

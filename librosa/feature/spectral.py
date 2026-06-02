@@ -2,24 +2,22 @@
 # -*- coding: utf-8 -*-
 """Spectral feature extraction"""
 
+import itertools
+from typing import Any, Collection, Optional, Union
+
 import numpy as np
 import scipy
-import scipy.signal
-
-from .. import util
-from .. import filters
-from ..util.exceptions import ParameterError
-
-from ..core.convert import fft_frequencies
-from ..core.audio import zero_crossings
-from ..core.spectrum import power_to_db, _spectrogram
-from ..core.constantq import cqt, hybrid_cqt, vqt
-from ..core.pitch import estimate_tuning
-from typing import Any, Optional, Union, Collection
-from typing_extensions import Literal
 from numpy.typing import DTypeLike
-from .._typing import _FloatLike_co, _WindowSpec, _PadMode, _PadModeSTFT, _DCTType, _DCTNorm
+from typing_extensions import Literal
 
+from .. import filters, util
+from .._typing import _DCTNorm, _DCTType, _FloatLike_co, _PadMode, _PadModeSTFT, _WindowSpec
+from ..core.audio import zero_crossings
+from ..core.constantq import cqt, hybrid_cqt, vqt
+from ..core.convert import fft_frequencies
+from ..core.pitch import estimate_tuning
+from ..core.spectrum import _spectrogram, power_to_db
+from ..util.exceptions import ParameterError
 
 __all__ = [
     "spectral_centroid",
@@ -495,7 +493,7 @@ def spectral_contrast(
     valley = np.zeros(shape)
     peak = np.zeros_like(valley)
 
-    for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:])):
+    for k, (f_low, f_high) in enumerate(itertools.pairwise(octa)):
         current_band = np.logical_and(freq >= f_low, freq <= f_high)
 
         idx = np.flatnonzero(current_band)
