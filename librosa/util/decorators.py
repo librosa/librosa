@@ -6,19 +6,18 @@ from __future__ import annotations
 
 import functools
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Optional, ParamSpec, TypeVar, Union
 
 import numpy as np
 from decorator import decorator
-from typing_extensions import ParamSpec  # Install typing_extensions in Python 3.8
 
 if TYPE_CHECKING:
     from numpy.typing import DTypeLike
+    P = ParamSpec("P")
+    R = TypeVar("R")
+    _F = TypeVar("_F", bound=Callable[..., Any])
 
 __all__ = ["moved", "deprecated", "vectorize"]
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 
 def moved(
@@ -68,8 +67,6 @@ def deprecated(
 
     return decorator(__wrapper)
 
-
-_F = TypeVar("_F", bound=Callable[..., Any])
 
 
 def vectorize(

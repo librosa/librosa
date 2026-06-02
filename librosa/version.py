@@ -36,7 +36,6 @@ def show_versions() -> None:
         "soundfile",
         "pooch",
         "soxr",
-        "typing_extensions",
         "lazy_loader",
         "msgpack",
     ]

@@ -34,15 +34,16 @@ Miscellaneous
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Iterable, List, Optional, Tuple, Union, overload
+from typing import TYPE_CHECKING, overload
 
 import numpy as np
-from typing_extensions import Literal
 
 from . import core, decompose, feature, util
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
+    from typing import Any, Callable, Iterable, List, Literal, Optional, Tuple, Union
+
     from numpy.typing import ArrayLike
 
     from ._typing import (

@@ -27,7 +27,7 @@ dependencies:
   - sphinx_rtd_theme>=1.2.0
   - sphinx-copybutton>=0.5.2
   - lazy_loader>=0.3
-  - typing_extensions>=4.7.1
+  - typing_extensions>=4.7.1  # keeping for historical builds
   - ffmpeg
   - standard-sunau
   - standard-aifc

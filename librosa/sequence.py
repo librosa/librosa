@@ -45,9 +45,7 @@ from .util import expand_to, fill_off_diagonal, is_positive_int, pad_center, tin
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Iterable, List, Optional, Tuple, Union
-
-    from typing_extensions import Literal
+    from typing import Any, Iterable, List, Literal, Optional, Tuple, Union
 
     from ._typing import _WindowSpec
 

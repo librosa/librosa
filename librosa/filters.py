@@ -36,11 +36,10 @@ Miscellaneous
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 from numba import jit
-from typing_extensions import Literal
 
 from . import util
 from ._cache import cache
@@ -48,6 +47,8 @@ from .core.convert import fft_frequencies, hz_to_midi, hz_to_octs, mel_frequenci
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
+    from typing import Any, List, Literal, Optional, Tuple, Union
+
     from numpy.typing import ArrayLike, DTypeLike
 
     from ._typing import _FloatLike_co, _WindowSpec

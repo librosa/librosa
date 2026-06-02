@@ -16,10 +16,9 @@ from .._cache import cache
 from .exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+    from typing import Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, Union
 
     from numpy.typing import DTypeLike
-    from typing_extensions import Literal
 
     from .._typing import (
         _Complex,

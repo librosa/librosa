@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING, overload
 import numpy as np
 import scipy
 from numba import jit
-from typing_extensions import Literal
 
 from .. import util
 from .._cache import cache
@@ -20,7 +19,7 @@ from . import convert
 from .audio import resample
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, List, Optional, Tuple, Union
+    from typing import Any, Callable, List, Literal, Optional, Tuple, Union
 
     from numpy.typing import DTypeLike
 

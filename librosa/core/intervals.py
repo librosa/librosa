@@ -3,16 +3,17 @@
 """Functions for interval construction"""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Collection, Dict, Iterable, List, Union, overload
+from typing import TYPE_CHECKING, overload
 
 import msgpack
 import numpy as np
-from typing_extensions import Literal
 
 from .._cache import cache
 from ..util.files import _resource_file
 
 if TYPE_CHECKING:
+    from typing import Collection, Dict, Iterable, List, Literal, Union
+
     from numpy.typing import ArrayLike
 
     from .._typing import _FloatLike_co

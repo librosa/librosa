@@ -27,7 +27,7 @@ Temporal clustering
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, Any, Callable, Optional, TypeVar, Union, overload
+from typing import TYPE_CHECKING, overload
 
 import numpy as np
 import scipy
@@ -35,13 +35,23 @@ from decorator import decorator
 
 from . import util
 from ._cache import cache
-from ._typing import _FloatLike_co, _SparseArray, _WindowSpec
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
+    from typing import Any, Callable, Literal, Optional, TypeVar, Union
+
     import sklearn.cluster
-    from typing_extensions import Literal
+
+    from ._typing import _FloatLike_co, _SparseArray, _WindowSpec
+
+    _F = TypeVar("_F", bound=Callable[..., Any])
+
+    _ArrayOrSparseArray = TypeVar(
+        "_ArrayOrSparseArray", bound=Union[np.ndarray, _SparseArray]
+    )
+
+
 
 __all__ = [
     "cross_similarity",
@@ -704,11 +714,6 @@ def recurrence_matrix(
     return rec
 
 
-_ArrayOrSparseArray = TypeVar(
-    "_ArrayOrSparseArray", bound=Union[np.ndarray, _SparseArray]
-)
-
-
 def recurrence_to_lag(
     rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int = -1
 ) -> _ArrayOrSparseArray:
@@ -893,8 +898,6 @@ def lag_to_recurrence(
     rec_slice: _ArrayOrSparseArray = rec[tuple(sub_slice)]  # type: ignore[assignment]
     return rec_slice
 
-
-_F = TypeVar("_F", bound=Callable[..., Any])
 
 
 def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
