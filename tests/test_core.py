@@ -52,7 +52,7 @@ def test_load_negative_offset(offset, duration, fmt):
     # Load the entire recording
     y, sr = librosa.load(fname, sr=None, mono=False)
 
-    # Load the last second of the recording using a negative offset
+    # Load the last `offset` seconds of the recording using a negative offset
     y_end, sr = librosa.load(fname, sr=None, mono=False, offset=-offset, duration=duration)
 
     if duration is None or duration >= offset:

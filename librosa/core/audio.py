@@ -356,11 +356,10 @@ def stream(
 
     # Construct the stream
     # Seek the soundfile object to the starting frame
-    if offset != 0:
-        if offset >= 0:
-            sfo.seek(int(offset * sr))
-        else:
-            sfo.seek(-int(abs(offset) * sr), whence=sf.SEEK_END)
+    if offset >= 0:
+        sfo.seek(int(offset * sr))
+    else:
+        sfo.seek(-int(abs(offset) * sr), whence=sf.SEEK_END)
 
     if duration:
         frames = int(duration * sr)
