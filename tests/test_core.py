@@ -43,6 +43,26 @@ def test_load_soundfile():
     assert np.isclose(sr, sr2)
 
 
+@pytest.mark.parametrize("offset", [0.5, 0.7, 1.0, 1.1, 2.0])
+@pytest.mark.parametrize("duration", [None, 0.5, 1.0])
+@pytest.mark.parametrize("fmt", ["flac", pytest.param("ogg", marks=pytest.mark.xfail(reason="ogg vorbis has problems seeking sometimes",
+                                                                                     strict=False))])
+def test_load_negative_offset(offset, duration, fmt):
+    fname = os.path.join("tests", "test_audio." + fmt)
+    # Load the entire recording
+    y, sr = librosa.load(fname, sr=None, mono=False)
+
+    # Load the last `offset` seconds of the recording using a negative offset
+    y_end, sr = librosa.load(fname, sr=None, mono=False, offset=-offset, duration=duration)
+
+    if duration is None or duration >= offset:
+        assert y_end.shape[-1] == int(sr * offset)
+        assert np.allclose(y_end.T, y[..., -y_end.shape[-1]:].T)
+    else:
+        assert y_end.shape[-1] == int(sr * duration)
+        assert np.allclose(y_end, y[..., -int(abs(offset)*sr):-int(abs(offset)*sr)+int(sr*duration)])
+
+
 @pytest.mark.parametrize("res_type", ["soxr_qq", "soxr_hq", "scipy"])
 def test_load_resample(res_type):
 
@@ -2586,7 +2606,7 @@ def test_stream_badparam(path, block_length, frame_length, hop_length):
 @pytest.mark.parametrize("frame_length", [1024, np.int64(2048)])
 @pytest.mark.parametrize("hop_length", [512, np.int64(1024)])
 @pytest.mark.parametrize("mono", [False, True])
-@pytest.mark.parametrize("offset", [0.0, 2.0])
+@pytest.mark.parametrize("offset", [0.0, 2.0, -2.0])
 @pytest.mark.parametrize("duration", [None, 1.0])
 @pytest.mark.parametrize("fill_value", [None, 999.0])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
