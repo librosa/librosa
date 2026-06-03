@@ -38,7 +38,7 @@ import librosa
 
 ####################################################
 # We'll start by loading a speech example to analyze
-y, sr = librosa.load(librosa.ex('libri2'), duration=5)
+y, sr = librosa.loadx('libri2', duration=5)
 
 Audio(data=y, rate=sr)
 

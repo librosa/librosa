@@ -30,8 +30,7 @@ import librosa
 ######################################################
 # The method works fine for longer signals, but the
 # results are harder to visualize.
-y, sr = librosa.load(librosa.ex('trumpet', hq=True),
-                     sr=44100)
+y, sr = librosa.loadx('trumpet', sr=44100)
 
 
 ####################################################

@@ -50,7 +50,7 @@ Audio(data=y_sweep, rate=sr)
 # Of course, we can also play back real recorded sounds
 # in the same way.
 #
-y, sr = librosa.load(librosa.ex('trumpet'))
+y, sr = librosa.loadx('trumpet')
 
 Audio(data=y, rate=sr)
 
