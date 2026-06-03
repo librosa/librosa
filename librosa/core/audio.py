@@ -416,7 +416,6 @@ def loadx(key, *, hq: Optional[bool] = None, **kwargs):
     -------
     y : np.ndarray [shape=(n,) or (..., n)]
         audio time series. Multi-channel is supported.
-
     sr : number > 0 [scalar]
         sampling rate of ``y``
 
