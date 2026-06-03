@@ -15,6 +15,7 @@ from numba import guvectorize, jit, stencil
 from .. import util
 from .._cache import cache
 from ..util.exceptions import ParameterError
+from ..util.files import example
 from .convert import frames_to_samples, time_to_samples
 
 if TYPE_CHECKING:
@@ -32,6 +33,7 @@ resampy = lazy.load("resampy")
 
 __all__ = [
     "load",
+    "loadx",
     "stream",
     "to_mono",
     "to_stereo",
@@ -380,6 +382,67 @@ def stream(
             yield to_mono(block.T)
         else:
             yield block.T
+
+
+def loadx(key, *, hq: Optional[bool] = False, **kwargs):
+    """Load an example audio file by key.
+
+    This is a wrapper around `librosa.util.example` that provides the same
+    functionality as `load`, but with the convenience of loading from the
+    built-in examples.
+
+    Parameters
+    ----------
+    key : str
+        The identifier for the track to load
+
+    hq : bool, optional
+        If ``True``, return the high-quality version of the recording.
+        If ``False``, return the 22KHz mono version of the recording.
+
+        If not provided, `hq` is inferred based on additional parameters in `kwargs`:
+            - If `sr` is provided and greater than 22050, then `hq` is set to `True`.
+            - If `mono` is provided and set to `False`, then `hq` is set to `True`.
+            - Otherwise, `hq` is set to `False`.
+
+    **kwargs : additional keyword arguments
+        Additional keyword arguments to pass to `load`
+
+    Returns
+    -------
+    y : np.ndarray [shape=(n,) or (..., n)]
+        audio time series. Multi-channel is supported.
+
+    sr : number > 0 [scalar]
+        sampling rate of ``y``
+
+    See Also
+    --------
+    load
+    librosa.util.example
+    librosa.util.list_examples
+
+    Examples
+    --------
+    Load the default version of the 'trumpet' example
+
+    >>> y, sr = librosa.loadx('trumpet')
+
+    Load the stereo version of the 'trumpet' example
+
+    >>> y, sr = librosa.loadx('trumpet', mono=False)
+    >>> # This is equivalent to the following more verbose code:
+    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
+    """
+    if (("sr" in kwargs and (kwargs["sr"] is None or kwargs["sr"] > 22050)) or
+        ("mono" in kwargs and kwargs["mono"] is False)
+        ):
+        hq = True
+    else:
+        hq = False
+
+    path = example(key, hq=hq)
+    return load(path, **kwargs)
 
 
 @cache(level=20)

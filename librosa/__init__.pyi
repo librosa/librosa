@@ -148,6 +148,9 @@ from .core import (
     load as load,
 )
 from .core import (
+    loadx as loadx,
+)
+from .core import (
     lpc as lpc,
 )
 from .core import (
