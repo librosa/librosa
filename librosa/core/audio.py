@@ -391,6 +391,10 @@ def loadx(key, *, hq: Optional[bool] = None, **kwargs):
     functionality as `load`, but with the convenience of loading from the
     built-in examples.
 
+    .. note:: This function is primarily useful for demonstration purposes,
+      and to make documentation examples more concise.
+      For general-purpose loading of audio files, use `load` instead.
+
     Parameters
     ----------
     key : str
