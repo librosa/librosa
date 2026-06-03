@@ -233,8 +233,8 @@ def cross_similarity(
     Find nearest neighbors in CQT space between two sequences
 
     >>> hop_length = 1024
-    >>> y_ref, sr = librosa.load(librosa.ex('pistachio'))
-    >>> y_comp, sr = librosa.load(librosa.ex('pistachio'), offset=10)
+    >>> y_ref, sr = librosa.loadx('pistachio')
+    >>> y_comp, sr = librosa.loadx('pistachio', offset=10)
     >>> chroma_ref = librosa.feature.chroma_cqt(y=y_ref, sr=sr, hop_length=hop_length)
     >>> chroma_comp = librosa.feature.chroma_cqt(y=y_comp, sr=sr, hop_length=hop_length)
     >>> # Use time-delay embedding to get a cleaner recurrence matrix
@@ -559,7 +559,7 @@ def recurrence_matrix(
     --------
     Find nearest neighbors in CQT space
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y, sr = librosa.loadx('nutcracker')
     >>> hop_length = 1024
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> # Use time-delay embedding to get a cleaner recurrence matrix
@@ -765,7 +765,7 @@ def recurrence_to_lag(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y, sr = librosa.loadx('nutcracker')
     >>> hop_length = 1024
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
@@ -850,7 +850,7 @@ def lag_to_recurrence(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y, sr = librosa.loadx('nutcracker')
     >>> hop_length = 1024
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
@@ -935,7 +935,7 @@ def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
     With default, parameters, this corresponds to a time window of about
     0.72 seconds.
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
+    >>> y, sr = librosa.loadx('nutcracker', duration=30)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=3, delay=3)
     >>> rec = librosa.segment.recurrence_matrix(chroma_stack)
@@ -1028,7 +1028,7 @@ def subsegment(
     --------
     Load audio, detect beat frames, and subdivide in twos by CQT
 
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=6.5)
+    >>> y, sr = librosa.loadx('choice', duration=6.5)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
     >>> cqt = np.abs(librosa.cqt(y, sr=sr, bins_per_octave=36, n_bins=36*7, hop_length=512))
@@ -1114,7 +1114,7 @@ def agglomerative(
     --------
     Cluster by chroma similarity, break into 20 segments
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
+    >>> y, sr = librosa.loadx('nutcracker', duration=15)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> bounds = librosa.segment.agglomerative(chroma, 20)
     >>> bound_times = librosa.frames_to_time(bounds, sr=sr)
@@ -1270,7 +1270,7 @@ def path_enhance(
     --------
     Use a 51-frame diagonal smoothing filter to enhance paths in a recurrence matrix
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y, sr = librosa.loadx('nutcracker')
     >>> hop_length = 2048
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)

@@ -24,7 +24,7 @@ import librosa
 
 ########################
 # Load an example clip with harmonics and percussives
-y, sr = librosa.load(librosa.ex('fishin'), duration=5, offset=10)
+y, sr = librosa.loadx('fishin', duration=5, offset=10)
 
 Audio(data=y, rate=sr)
 

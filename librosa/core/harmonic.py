@@ -95,7 +95,7 @@ def salience(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
+    >>> y, sr = librosa.loadx('trumpet', duration=3)
     >>> S = np.abs(librosa.stft(y))
     >>> freqs = librosa.fft_frequencies(sr=sr)
     >>> harms = [1, 2, 3, 4]
@@ -198,7 +198,7 @@ def interp_harmonics(
     --------
     Estimate the harmonics of a time-averaged tempogram
 
-    >>> y, sr = librosa.load(librosa.ex('sweetwaltz'))
+    >>> y, sr = librosa.loadx('sweetwaltz')
     >>> # Compute the time-varying tempogram and average over time
     >>> tempi = np.mean(librosa.feature.tempogram(y=y, sr=sr), axis=1)
     >>> # We'll measure the first five harmonics
@@ -221,7 +221,7 @@ def interp_harmonics(
     We can also compute frequency harmonics for spectrograms.
     To calculate sub-harmonic energy, use values < 1.
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
+    >>> y, sr = librosa.loadx('trumpet', duration=3)
     >>> harmonics = [1./3, 1./2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
     >>> ref_value = np.max(S)  # Common reference for dB scaling
@@ -374,7 +374,7 @@ def f0_harmonics(
     This example estimates the fundamental (f0), and then extracts the first
     12 harmonics
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> f0, voicing, voicing_p = librosa.pyin(y=y, sr=sr, fmin=200, fmax=700)
     >>> S = np.abs(librosa.stft(y))
     >>> freqs = librosa.fft_frequencies(sr=sr)

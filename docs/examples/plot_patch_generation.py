@@ -23,7 +23,7 @@ import librosa
 
 ######################
 # Load an example clip
-y, sr = librosa.load(librosa.ex('libri1'))
+y, sr = librosa.loadx('libri1')
 
 
 ######################################

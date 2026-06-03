@@ -155,7 +155,7 @@ def frame(
     --------
     Extract 2048-sample frames from monophonic signal with a hop of 64 samples per frame
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
     >>> frames
     array([[-1.407e-03, -2.604e-02, ..., -1.795e-05, -8.108e-06],
@@ -178,7 +178,7 @@ def frame(
 
     Frame a stereo signal:
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
+    >>> y, sr = librosa.loadx('trumpet', mono=False)
     >>> y.shape
     (2, 117601)
     >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
@@ -186,7 +186,7 @@ def frame(
 
     Carve an STFT into fixed-length patches of 32 frames with 50% overlap
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = np.abs(librosa.stft(y))
     >>> S.shape
     (1025, 230)
@@ -704,7 +704,7 @@ def axis_sort(
     Visualize NMF output for a spectrogram S
 
     >>> # Sort the columns of W by peak frequency bin
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = np.abs(librosa.stft(y))
     >>> W, H = librosa.decompose.decompose(S, n_components=64)
     >>> W_sort = librosa.util.axis_sort(W)
@@ -1354,7 +1354,7 @@ def peak_pick(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          hop_length=512,
     ...                                          aggregate=np.median)
@@ -1696,7 +1696,7 @@ def sync(
     --------
     Beat-synchronous CQT spectra
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> beats = librosa.util.fix_frames(beats)

@@ -124,7 +124,7 @@ def spectral_centroid(
     --------
     From time-series input:
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> cent = librosa.feature.spectral_centroid(y=y, sr=sr)
     >>> cent
     array([[1768.888, 1921.774, ..., 5663.477, 5813.683]])
@@ -268,7 +268,7 @@ def spectral_bandwidth(
     --------
     From time-series input
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> spec_bw = librosa.feature.spectral_bandwidth(y=y, sr=sr)
     >>> spec_bw
     array([[1273.836, 1228.873, ..., 2952.357, 3013.68 ]])
@@ -438,7 +438,7 @@ def spectral_contrast(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = np.abs(librosa.stft(y))
     >>> contrast = librosa.feature.spectral_contrast(S=S, sr=sr)
 
@@ -599,7 +599,7 @@ def spectral_rolloff(
     --------
     From time-series input
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> # Approximate maximum frequencies with roll_percent=0.85 (default)
     >>> librosa.feature.spectral_rolloff(y=y, sr=sr)
     array([[2583.984, 3036.182, ..., 9173.145, 9248.511]])
@@ -748,7 +748,7 @@ def spectral_flatness(
     --------
     From time-series input
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> flatness = librosa.feature.spectral_flatness(y=y)
     >>> flatness
     array([[0.001, 0.   , ..., 0.218, 0.184]], dtype=float32)
@@ -844,7 +844,7 @@ def rms(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.feature.rms(y=y)
     array([[1.248e-01, 1.259e-01, ..., 1.845e-05, 1.796e-05]],
           dtype=float32)
@@ -980,7 +980,7 @@ def poly_features(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = np.abs(librosa.stft(y))
 
     Fit a degree-0 polynomial (constant) to each frame
@@ -1105,7 +1105,7 @@ def zero_crossing_rate(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.feature.zero_crossing_rate(y)
     array([[0.044, 0.074, ..., 0.488, 0.355]])
     """
@@ -1220,7 +1220,7 @@ def chroma_stft(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
+    >>> y, sr = librosa.loadx('nutcracker', duration=15)
     >>> librosa.feature.chroma_stft(y=y, sr=sr)
     array([[1.   , 0.962, ..., 0.143, 0.278],
            [0.688, 0.745, ..., 0.103, 0.162],
@@ -1354,7 +1354,7 @@ def chroma_cqt(
     --------
     Compare a long-window STFT chromagram to the CQT chromagram
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
+    >>> y, sr = librosa.loadx('nutcracker', duration=15)
     >>> chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr,
     ...                                           n_chroma=12, n_fft=4096)
     >>> chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr)
@@ -1500,7 +1500,7 @@ def chroma_cens(
     --------
     Compare standard cqt chroma to CENS.
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
+    >>> y, sr = librosa.loadx('nutcracker', duration=15)
     >>> chroma_cens = librosa.feature.chroma_cens(y=y, sr=sr)
     >>> chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr)
 
@@ -1638,7 +1638,7 @@ def chroma_vqt(
     Compare an equal-temperament CQT chromagram to a 5-limit just intonation
     chromagram.  Both use 36 bins per octave.
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> n_bins = 36
     >>> chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=n_bins)
     >>> chroma_vq = librosa.feature.chroma_vqt(y=y, sr=sr,
@@ -1778,7 +1778,7 @@ def tonnetz(
     --------
     Compute tonnetz features from the harmonic component of a song
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=10, offset=10)
+    >>> y, sr = librosa.loadx('nutcracker', duration=10, offset=10)
     >>> y = librosa.effects.harmonic(y)
     >>> tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
     >>> tonnetz
@@ -1931,7 +1931,7 @@ def mfcc(
     --------
     Generate mfccs from a time series
 
-    >>> y, sr = librosa.load(librosa.ex('libri1'))
+    >>> y, sr = librosa.loadx('libri1')
     >>> librosa.feature.mfcc(y=y, sr=sr)
     array([[-565.919, -564.288, ..., -426.484, -434.668],
            [  10.305,   12.509, ...,   88.43 ,   90.12 ],
@@ -2107,7 +2107,7 @@ def melspectrogram(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.feature.melspectrogram(y=y, sr=sr)
     array([[3.837e-06, 1.451e-06, ..., 8.352e-14, 1.296e-11],
            [2.213e-05, 7.866e-06, ..., 8.532e-14, 1.329e-11],

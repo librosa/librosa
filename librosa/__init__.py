@@ -10,6 +10,7 @@ Audio loading
     :toctree: generated/
 
     load
+    loadx
     stream
     resample
     to_mono

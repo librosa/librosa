@@ -1528,7 +1528,7 @@ def specshow(
     Visualize an STFT magnitude spectrum using default parameters
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=15)
+    >>> y, sr = librosa.loadx('choice', duration=15)
     >>> fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True)
     >>> D = librosa.stft(y)
     >>> img = librosa.display.specshow(D, y_axis='linear', x_axis='time',
@@ -2573,7 +2573,7 @@ def waveshow(
     Plot a monophonic waveform with an envelope view
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
+    >>> y, sr = librosa.loadx('choice', duration=10)
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
     >>> librosa.display.waveshow(y, sr=sr, ax=ax[0])
     >>> ax[0].set(title='Envelope view, mono')
@@ -2581,14 +2581,14 @@ def waveshow(
 
     Or a stereo waveform
 
-    >>> y, sr = librosa.load(librosa.ex('choice', hq=True), mono=False, duration=10)
+    >>> y, sr = librosa.loadx('choice', mono=False, duration=10)
     >>> librosa.display.waveshow(y, sr=sr, ax=ax[1])
     >>> ax[1].set(title='Envelope view, stereo')
     >>> ax[1].label_outer()
 
     Or harmonic and percussive components with transparency
 
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
+    >>> y, sr = librosa.loadx('choice', duration=10)
     >>> y_harm, y_perc = librosa.effects.hpss(y)
     >>> librosa.display.waveshow(y_harm, sr=sr, alpha=0.5, ax=ax[2], label='Harmonic')
     >>> librosa.display.waveshow(y_perc, sr=sr, color='r', alpha=0.5, ax=ax[2], label='Percussive')
@@ -2611,7 +2611,7 @@ def waveshow(
     Plotting a transposed wave along with a self-similarity matrix
 
     >>> fig, ax = plt.subplot_mosaic("hSSS;hSSS;hSSS;.vvv", layout='compressed')
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> sim = librosa.segment.recurrence_matrix(chroma, mode='affinity')
     >>> librosa.display.specshow(sim, ax=ax['S'], sr=sr,
@@ -2815,7 +2815,7 @@ def wavebars(
     Plot a waveform as bars, compared to the `waveshow` version of the plot
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('libri1'), duration=10)
+    >>> y, sr = librosa.loadx('libri1', duration=10)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> librosa.display.waveshow(y=y, sr=sr, ax=ax[0], label='waveshow()')
     >>> ax[0].legend()
@@ -3055,7 +3055,7 @@ def wavef0(
     Visualize a waveform with an f0 displacement using `waveshow`
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> f0, _, _ = librosa.pyin(y, fmin=librosa.note_to_hz('C2'),
     ...                         fmax=librosa.note_to_hz('C7'),
     ...                         sr=sr, hop_length=512)
@@ -3243,7 +3243,7 @@ def colorbar_phase(
 
     >>> import matplotlib.pyplot as plt
     >>> import librosa
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = librosa.stft(y)
     >>> fig, ax = plt.subplots()
     >>> im = librosa.display.specshow(S, ax=ax, y_axis='log', x_axis='time', vscale='phase')
@@ -3325,7 +3325,7 @@ def colorbar_db(
 
     >>> import matplotlib.pyplot as plt
     >>> import librosa
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = librosa.stft(y)
     >>> fig, ax = plt.subplots()
     >>> im = librosa.display.specshow(S, ax=ax, y_axis='log', x_axis='time', vscale='dB')
@@ -3781,7 +3781,7 @@ def multiplot(
     the figure and axes objects for us.
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
+    >>> y, sr = librosa.loadx('choice', duration=10)
     >>> yh, yp = librosa.effects.hpss(y)
     >>> librosa.display.multiplot('waveshow', y, yh, yp,
     ...                           labels=['Original', 'Harmonic', 'Percussive'],

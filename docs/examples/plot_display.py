@@ -25,7 +25,7 @@ import librosa
 # %%
 # First, we'll load in a demo track
 
-y, sr = librosa.load(librosa.ex('trumpet'))
+y, sr = librosa.loadx('trumpet')
 
 
 # %%
@@ -383,7 +383,7 @@ ax[0].set(xlim=[1, 3])  # Zoom to seconds 1-3
 # (or `y_coords`) array indicating the position of each sample, as demonstrated
 # below.
 
-y, sr = librosa.load(librosa.ex('nutcracker'))
+y, sr = librosa.loadx('nutcracker')
 chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
 tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
 

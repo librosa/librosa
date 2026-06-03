@@ -71,7 +71,7 @@ def estimate_tuning(
     --------
     With time-series input
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.estimate_tuning(y=y, sr=sr)
     -0.08000000000000002
 
@@ -143,7 +143,7 @@ def pitch_tuning(
     0.25
 
     >>> # Track frequencies from a real spectrogram
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> freqs, times, mags = librosa.reassigned_spectrogram(y, sr=sr,
     ...                                                     fill_nan=True)
     >>> # Select out pitches with high energy
@@ -289,7 +289,7 @@ def piptrack(
     --------
     Computing pitches from a waveform input
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
 
     Or from a spectrogram input
@@ -736,7 +736,7 @@ def pyin(
     --------
     Computing a fundamental frequency (F0) curve from an audio input
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> f0, voiced_flag, voiced_probs = librosa.pyin(y,
     ...                                              sr=sr,
     ...                                              fmin=librosa.note_to_hz('C2'),

@@ -17,6 +17,9 @@ from .audio import (
     load as load,
 )
 from .audio import (
+    loadx as loadx,
+)
+from .audio import (
     lpc as lpc,
 )
 from .audio import (

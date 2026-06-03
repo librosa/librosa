@@ -49,7 +49,7 @@ import librosa
 
 #############################################
 # Load an example with vocals.
-y, sr = librosa.load(librosa.ex('fishin'), duration=120)
+y, sr = librosa.loadx('fishin', duration=120)
 
 
 # And compute the spectrogram magnitude and phase

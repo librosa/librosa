@@ -852,6 +852,30 @@ def test_load_options(filename, offset, duration, mono, dtype):
     assert np.issubdtype(dtype, y.dtype)
 
 
+@pytest.mark.parametrize("key", ["trumpet"])
+@pytest.mark.parametrize("sr", [8000, 22050, 44100])
+@pytest.mark.parametrize("mono", [False, True])
+@pytest.mark.network
+def test_loadx(key, sr, mono):
+    y, sr_loaded = librosa.loadx(key, sr=sr, mono=mono)
+
+    if sr is not None:
+        assert sr_loaded == sr
+
+    if mono:
+        assert y.ndim == 1
+    else:
+        assert y.ndim == 2
+
+    # Load the same file using the old way
+    hq = True
+    if mono and (sr is not None and sr <= 22050):
+        hq = False
+    y_old, sr_old = librosa.load(librosa.ex(key, hq=hq), sr=sr, mono=mono)
+    assert sr_loaded == sr_old
+    assert np.allclose(y_old, y)
+
+
 @pytest.mark.parametrize("sr", [8000, 11025])
 @pytest.mark.parametrize("dur", [0.25, 1.0])
 def test_get_duration_buffer(sr, dur):
