@@ -282,6 +282,8 @@ def stream(
     offset : float
         Start reading after this time (in seconds)
 
+        If negative, it will be interpreted relative to the end of the file.
+
     duration : float
         Only load up to this much audio (in seconds)
 
@@ -353,18 +355,17 @@ def stream(
     sr = sfo.samplerate
 
     # Construct the stream
-    if offset:
-        start = int(offset * sr)
-    else:
-        start = 0
+    # Seek the soundfile object to the starting frame
+    if offset != 0:
+        if offset >= 0:
+            sfo.seek(int(offset * sr))
+        else:
+            sfo.seek(-int(abs(offset) * sr), whence=sf.SEEK_END)
 
     if duration:
         frames = int(duration * sr)
     else:
         frames = -1
-
-    # Seek the soundfile object to the starting frame
-    sfo.seek(start)
 
     blocks = sfo.blocks(
         blocksize=frame_length + (block_length - 1) * hop_length,

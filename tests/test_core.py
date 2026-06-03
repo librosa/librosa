@@ -2606,7 +2606,7 @@ def test_stream_badparam(path, block_length, frame_length, hop_length):
 @pytest.mark.parametrize("frame_length", [1024, np.int64(2048)])
 @pytest.mark.parametrize("hop_length", [512, np.int64(1024)])
 @pytest.mark.parametrize("mono", [False, True])
-@pytest.mark.parametrize("offset", [0.0, 2.0])
+@pytest.mark.parametrize("offset", [0.0, 2.0, -2.0])
 @pytest.mark.parametrize("duration", [None, 1.0])
 @pytest.mark.parametrize("fill_value", [None, 999.0])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
