@@ -151,7 +151,7 @@ def cqt(
     Generate and plot a constant-Q power spectrum
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> fig, ax = plt.subplots()
     >>> img = librosa.display.specshow(C, vscale='dBFS',
@@ -645,7 +645,7 @@ def icqt(
     --------
     Using default parameters
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> C = librosa.cqt(y=y, sr=sr)
     >>> y_hat = librosa.icqt(C=C, sr=sr)
 
@@ -913,7 +913,7 @@ def vqt(
     Generate and plot a variable-Q power spectrum
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
+    >>> y, sr = librosa.loadx('choice', duration=5)
     >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> V = np.abs(librosa.vqt(y, sr=sr))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
@@ -1372,9 +1372,9 @@ def griffinlim_cqt(
 
     Examples
     --------
-    A basis CQT inverse example
+    A basic CQT inverse example
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), sr=None)
+    >>> y, sr = librosa.loadx('trumpet', sr=None)
     >>> # Get the CQT magnitude, 7 octaves at 36 bins per octave
     >>> C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=36, n_bins=7*36))
     >>> # Invert using Griffin-Lim

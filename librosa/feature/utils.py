@@ -74,7 +74,7 @@ def delta(
     --------
     Compute MFCC deltas, delta-deltas
 
-    >>> y, sr = librosa.load(librosa.ex('libri1'), duration=5)
+    >>> y, sr = librosa.loadx('libri1', duration=5)
     >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
     >>> mfcc_delta = librosa.feature.delta(mfcc)
     >>> mfcc_delta
@@ -211,7 +211,7 @@ def stack_memory(
 
     Stack time-lagged beat-synchronous chroma edge padding
 
-    >>> y, sr = librosa.load(librosa.ex('sweetwaltz'), duration=10)
+    >>> y, sr = librosa.loadx('sweetwaltz', duration=10)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beats = librosa.util.fix_frames(beats, x_min=0)

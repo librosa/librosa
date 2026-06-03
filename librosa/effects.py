@@ -122,7 +122,7 @@ def hpss(
     Examples
     --------
     >>> # Extract harmonic and percussive components
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
     >>> y_harmonic, y_percussive = librosa.effects.hpss(y)
 
     >>> # Get a more isolated percussive component by widening its margin
@@ -217,7 +217,7 @@ def harmonic(
     Examples
     --------
     >>> # Extract harmonic component
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
     >>> y_harmonic = librosa.effects.harmonic(y)
 
     >>> # Use a margin > 1.0 for greater harmonic separation
@@ -303,7 +303,7 @@ def percussive(
     Examples
     --------
     >>> # Extract percussive component
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
     >>> y_percussive = librosa.effects.percussive(y)
 
     >>> # Use a margin > 1.0 for greater percussive separation
@@ -369,7 +369,7 @@ def time_stretch(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     --------
     Compress to be twice as fast
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
     >>> y_fast = librosa.effects.time_stretch(y, rate=2.0)
 
     Or half the original speed
@@ -457,7 +457,7 @@ def pitch_shift(
     --------
     Shift up by a major third (four steps if ``bins_per_octave`` is 12)
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
     >>> y_third = librosa.effects.pitch_shift(y, sr=sr, n_steps=4)
 
     Shift down by a tritone (six steps if ``bins_per_octave`` is 12)
@@ -516,7 +516,7 @@ def remix(
     --------
     Load in the example track and reverse the beats
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
 
     Compute beats
 
@@ -664,7 +664,7 @@ def trim(
     Examples
     --------
     >>> # Load some audio
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
     >>> # Trim the beginning and ending silence
     >>> yt, index = librosa.effects.trim(y)
     >>> # Print the durations
@@ -849,7 +849,7 @@ def preemphasis(
     Apply a standard pre-emphasis filter
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> y_filt = librosa.effects.preemphasis(y)
     >>> # and plot the results for comparison
     >>> S_orig = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max, top_db=None)
@@ -969,7 +969,7 @@ def deemphasis(
     --------
     Apply a standard pre-emphasis filter and invert it with de-emphasis
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> y_filt = librosa.effects.preemphasis(y)
     >>> y_deemph = librosa.effects.deemphasis(y_filt)
     >>> np.allclose(y, y_deemph)

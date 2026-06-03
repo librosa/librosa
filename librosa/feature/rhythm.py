@@ -109,7 +109,7 @@ def tempogram(
     Examples
     --------
     >>> # Compute local onset autocorrelation
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
+    >>> y, sr = librosa.loadx('nutcracker', duration=30)
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     >>> tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
@@ -250,7 +250,7 @@ def fourier_tempogram(
     Examples
     --------
     >>> # Compute local onset autocorrelation
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y, sr = librosa.loadx('nutcracker')
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     >>> tempogram = librosa.feature.fourier_tempogram(onset_envelope=oenv, sr=sr,
@@ -356,7 +356,7 @@ def tempo(
     Examples
     --------
     >>> # Estimate a static tempo
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
+    >>> y, sr = librosa.loadx('nutcracker', duration=30)
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> tempo = librosa.feature.tempo(onset_envelope=onset_env, sr=sr)
     >>> tempo
@@ -616,7 +616,7 @@ def tempogram_ratio(
     for a waltz (3/4 time)
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('sweetwaltz'))
+    >>> y, sr = librosa.loadx('sweetwaltz')
     >>> tempogram = librosa.feature.tempogram(y=y, sr=sr)
     >>> tgr = librosa.feature.tempogram_ratio(tg=tempogram, sr=sr)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
@@ -726,7 +726,7 @@ def hybrid_tempogram(
     --------
     Compute local onset autocorrelation
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y, sr = librosa.loadx('nutcracker')
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
 
@@ -893,7 +893,7 @@ def metrogram(
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
     >>> import librosa
-    >>> y, sr = librosa.load(librosa.ex("sweetwaltz"))
+    >>> y, sr = librosa.loadx("sweetwaltz")
     >>> # extend the window, to capture the slower downbeat pulses
     >>> win_length = 384 * 4
     >>> fourier_tempogram = librosa.feature.fourier_tempogram(y=y, win_length=win_length)

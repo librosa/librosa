@@ -200,7 +200,7 @@ def stft(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = np.abs(librosa.stft(y))
     >>> S
     array([[5.395e-03, 3.332e-03, ..., 9.862e-07, 1.201e-05],
@@ -484,7 +484,7 @@ def istft(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> D = librosa.stft(y)
     >>> y_hat = librosa.istft(D)
     >>> y_hat
@@ -740,7 +740,7 @@ def __reassign_frequencies(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> frequencies, S = librosa.core.spectrum.__reassign_frequencies(y, sr=sr)
     >>> frequencies
     array([[0.000e+00, 0.000e+00, ..., 0.000e+00, 0.000e+00],
@@ -903,7 +903,7 @@ def __reassign_times(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> times, S = librosa.core.spectrum.__reassign_times(y, sr=sr)
     >>> times
     array([[ 2.268e-05,  1.144e-02, ...,  5.332e+00,  5.333e+00],
@@ -1313,7 +1313,7 @@ def magphase(D: np.ndarray, *, power: float = 1) -> Tuple[np.ndarray, np.ndarray
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> D = librosa.stft(y)
     >>> magnitude, phase = librosa.magphase(D)
     >>> magnitude
@@ -1389,13 +1389,13 @@ def phase_vocoder(
     Examples
     --------
     >>> # Play at double speed
-    >>> y, sr   = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr   = librosa.loadx('trumpet')
     >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
     >>> D_fast  = librosa.phase_vocoder(D, rate=2.0, hop_length=512)
     >>> y_fast  = librosa.istft(D_fast, hop_length=512)
 
     >>> # Or play at 1/3 speed
-    >>> y, sr   = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr   = librosa.loadx('trumpet')
     >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
     >>> D_slow  = librosa.phase_vocoder(D, rate=1./3, hop_length=512)
     >>> y_slow  = librosa.istft(D_slow, hop_length=512)
@@ -1610,7 +1610,7 @@ def iirt(
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
+    >>> y, sr = librosa.loadx('trumpet', duration=3)
     >>> D = np.abs(librosa.iirt(y, sr=sr))
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
@@ -1797,7 +1797,7 @@ def power_to_db(
     --------
     Get a power spectrogram from a waveform ``y``
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = np.abs(librosa.stft(y))
     >>> librosa.power_to_db(S**2)
     array([[-41.809, -41.809, ..., -41.809, -41.809],
@@ -2114,7 +2114,7 @@ def perceptual_weighting(
     --------
     Re-weight a CQT power spectrum, using peak power as reference
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A1')))
     >>> freqs = librosa.cqt_frequencies(C.shape[0],
     ...                                 fmin=librosa.note_to_hz('A1'))
@@ -2257,7 +2257,7 @@ def fmt(
     >>> plt.show()
 
     >>> # Plot the scale transform of an onset strength autocorrelation
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
     >>> odf = librosa.onset.onset_strength(y=y, sr=sr)
     >>> # Auto-correlate with up to 10 seconds lag
     >>> odf_ac = librosa.autocorrelate(odf, max_size=10 * sr // 512)
@@ -2567,7 +2567,7 @@ def pcen(
     Compare PCEN to log amplitude (dB) scaling on Mel spectra
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('robin'))
+    >>> y, sr = librosa.loadx('robin')
 
     >>> # We recommend scaling y to the range [-2**31, 2**31[ before applying
     >>> # PCEN's default parameters. Furthermore, we use power=1 to get a
@@ -2817,7 +2817,7 @@ def griffinlim(
     --------
     A basic STFT inverse example
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> # Get the magnitude spectrogram
     >>> S = np.abs(librosa.stft(y))
     >>> # Invert using Griffin-Lim

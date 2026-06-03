@@ -384,7 +384,7 @@ def stream(
             yield block.T
 
 
-def loadx(key, *, hq: Optional[bool] = False, **kwargs):
+def loadx(key, *, hq: Optional[bool] = None, **kwargs):
     """Load an example audio file by key.
 
     This is a wrapper around `librosa.util.example` that provides the same
@@ -434,12 +434,13 @@ def loadx(key, *, hq: Optional[bool] = False, **kwargs):
     >>> # This is equivalent to the following more verbose code:
     >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
     """
-    if (("sr" in kwargs and (kwargs["sr"] is None or kwargs["sr"] > 22050)) or
-        ("mono" in kwargs and kwargs["mono"] is False)
-        ):
-        hq = True
-    else:
-        hq = False
+    if hq is None:
+        if (("sr" in kwargs and (kwargs["sr"] is None or kwargs["sr"] > 22050)) or
+            ("mono" in kwargs and kwargs["mono"] is False)
+            ):
+            hq = True
+        else:
+            hq = False
 
     path = example(key, hq=hq)
     return load(path, **kwargs)
@@ -499,7 +500,7 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
     --------
     Downmix a stereo input
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
+    >>> y, sr = librosa.loadx('trumpet', mono=False)
     >>> y.shape
     (2, 117601)
     >>> y_mono = librosa.to_mono(y)
@@ -896,7 +897,7 @@ def resample(
     --------
     Downsample from 22 KHz to 8 KHz
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'), sr=22050)
+    >>> y, sr = librosa.loadx('trumpet', sr=22050)
     >>> y_8k = librosa.resample(y, orig_sr=sr, target_sr=8000)
     >>> y.shape, y_8k.shape
     ((117601,), (42668,))
@@ -984,7 +985,7 @@ def get_duration(
     Examples
     --------
     >>> # Load an example audio file
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.get_duration(y=y, sr=sr)
     5.333378684807256
 
@@ -993,7 +994,7 @@ def get_duration(
     5.333378684807256
 
     >>> # Or compute duration from an STFT matrix
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = librosa.stft(y)
     >>> librosa.get_duration(S=S, sr=sr)
     5.317369614512471
@@ -1138,7 +1139,7 @@ def autocorrelate(
     --------
     Compute full autocorrelation of ``y``
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.autocorrelate(y)
     array([ 6.899e+02,  6.236e+02, ...,  3.710e-08, -1.796e-08])
 
@@ -1233,14 +1234,14 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     --------
     Compute LP coefficients of y at order 16 on entire series
 
-    >>> y, sr = librosa.load(librosa.ex('libri1'))
+    >>> y, sr = librosa.loadx('libri1')
     >>> librosa.lpc(y, order=16)
 
     Compute LP coefficients, and plot LP estimate of original series
 
     >>> import matplotlib.pyplot as plt
     >>> import scipy
-    >>> y, sr = librosa.load(librosa.ex('libri1'), duration=0.020)
+    >>> y, sr = librosa.loadx('libri1', duration=0.020)
     >>> a = librosa.lpc(y, order=2)
     >>> b = np.hstack([[0], -1 * a[1:]])
     >>> y_hat = scipy.signal.lfilter(b, [1], y)
@@ -1571,7 +1572,7 @@ def clicks(
     Examples
     --------
     >>> # Sonify detected beat events
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
+    >>> y, sr = librosa.loadx('choice', duration=10)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> y_beats = librosa.clicks(frames=beats, sr=sr)
 

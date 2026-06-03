@@ -785,7 +785,7 @@ def cq_to_chroma(
     --------
     Get a CQT, and wrap bins to chroma
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> CQT = np.abs(librosa.cqt(y, sr=sr))
     >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0])
     >>> chromagram = chroma_map.dot(CQT)

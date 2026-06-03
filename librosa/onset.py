@@ -129,7 +129,7 @@ def onset_detect(
     --------
     Get onset times from a signal
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.onset.onset_detect(y=y, sr=sr, units='time')
     array([0.07 , 0.232, 0.395, 0.604, 0.743, 0.929, 1.045, 1.115,
            1.416, 1.672, 1.881, 2.043, 2.206, 2.368, 2.554, 3.019])
@@ -312,7 +312,7 @@ def onset_strength(
     First, load some audio and plot the spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
+    >>> y, sr = librosa.loadx('trumpet', duration=3)
     >>> D = np.abs(librosa.stft(y))
     >>> times = librosa.times_like(D, sr=sr)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
@@ -398,7 +398,7 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
     --------
     Backtrack the events using the onset envelope
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
+    >>> y, sr = librosa.loadx('trumpet', duration=3)
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr)
     >>> times = librosa.times_like(oenv, sr=sr)
     >>> # Detect events without backtracking
@@ -547,7 +547,7 @@ def onset_strength_multi(
     First, load some audio and plot the spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
+    >>> y, sr = librosa.loadx('choice', duration=5)
     >>> D = np.abs(librosa.stft(y))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> img1 = librosa.display.specshow(D, vscale='dBFS',

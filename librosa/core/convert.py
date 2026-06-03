@@ -118,7 +118,7 @@ def frames_to_samples(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> beat_samples = librosa.frames_to_samples(beats, sr=sr)
     """
@@ -274,7 +274,7 @@ def frames_to_time(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> beat_times = librosa.frames_to_time(beats, sr=sr)
     """
@@ -2337,7 +2337,7 @@ def times_like(
     --------
     Provide a feature matrix input:
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> D = librosa.stft(y)
     >>> times = librosa.times_like(D, sr=sr)
     >>> times
@@ -2394,7 +2394,7 @@ def samples_like(
     --------
     Provide a feature matrix input:
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> X = librosa.stft(y)
     >>> samples = librosa.samples_like(X)
     >>> samples

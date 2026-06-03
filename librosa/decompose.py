@@ -124,7 +124,7 @@ def decompose(
     --------
     Decompose a magnitude spectrogram into 16 components with NMF
 
-    >>> y, sr = librosa.load(librosa.ex('pistachio'), duration=5)
+    >>> y, sr = librosa.loadx('pistachio', duration=5)
     >>> S = np.abs(librosa.stft(y))
     >>> comps, acts = librosa.decompose.decompose(S, n_components=16)
 
@@ -295,7 +295,7 @@ def hpss(
     --------
     Separate into harmonic and percussive
 
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
+    >>> y, sr = librosa.loadx('choice', duration=5)
     >>> D = librosa.stft(y)
     >>> H, P = librosa.decompose.hpss(D)
 
@@ -491,8 +491,7 @@ def nn_filter(
     By default this would use euclidean distance to select neighbors,
     but this can be overridden directly by setting the ``metric`` parameter.
 
-    >>> y, sr = librosa.load(librosa.ex('brahms'),
-    ...                      offset=30, duration=10)
+    >>> y, sr = librosa.loadx('brahms', offset=30, duration=10)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> chroma_med = librosa.decompose.nn_filter(chroma,
     ...                                          aggregate=np.median,

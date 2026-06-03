@@ -120,7 +120,7 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
     --------
     Approximate a magnitude spectrum from its mel spectrogram
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
+    >>> y, sr = librosa.loadx('trumpet', duration=3)
     >>> S = np.abs(librosa.stft(y, n_fft=2048))
     >>> M = librosa.feature.melspectrogram(S=S, sr=sr, power=1)
     >>> mel_basis = librosa.filters.mel(sr=sr, n_fft=2048, n_mels=M.shape[0])

@@ -154,7 +154,7 @@ def beat_track(
     --------
     Track beats using time series input
 
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
+    >>> y, sr = librosa.loadx('choice', duration=10)
 
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> tempo
@@ -345,7 +345,7 @@ def plp(
     Visualize the PLP compared to an onset strength envelope.
     Both are normalized here to make comparison easier.
 
-    >>> y, sr = librosa.load(librosa.ex('brahms'))
+    >>> y, sr = librosa.loadx('brahms')
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> pulse = librosa.beat.plp(onset_envelope=onset_env, sr=sr)
     >>> # Or compute pulse with an alternate prior, like log-normal
