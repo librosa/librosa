@@ -92,7 +92,9 @@ def load(
         convert signal to mono
 
     offset : float
-        start reading after this time (in seconds)
+        start reading after this time (in seconds).
+
+        If negative, it will be interpreted relative to the end of the file.
 
     duration : float
         only load up to this much audio (in seconds)
@@ -175,9 +177,13 @@ def __soundfile_load(path, offset, duration, dtype):
 
     with context as sf_desc:
         sr_native = sf_desc.samplerate
-        if offset:
-            # Seek to the start of the target read
-            sf_desc.seek(int(offset * sr_native))
+        if offset != 0:
+            if offset > 0:
+                # Seek to the start of the target read
+                sf_desc.seek(int(offset * sr_native))
+            else:
+                sf_desc.seek(-int(abs(offset) * sr_native), whence=sf.SEEK_END)
+
         if duration is not None:
             frame_duration = int(duration * sr_native)
         else:

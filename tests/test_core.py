@@ -43,6 +43,24 @@ def test_load_soundfile():
     assert np.isclose(sr, sr2)
 
 
+@pytest.mark.parametrize("offset", [0.5, 0.7, 1.0, 1.1, 2.0])
+@pytest.mark.parametrize("duration", [None, 0.5, 1.0])
+def test_load_negative_offset(offset, duration):
+    fname = os.path.join("tests", "test_audio.ogg")
+    # Load the entire recording
+    y, sr = librosa.load(fname, sr=None, mono=False)
+
+    # Load the last second of the recording using a negative offset
+    y_end, sr = librosa.load(fname, sr=None, mono=False, offset=-offset, duration=duration)
+
+    if duration is None or duration >= offset:
+        assert y_end.shape[-1] == int(sr * offset)
+        assert np.allclose(y_end.T, y[..., -y_end.shape[-1]:].T)
+    else:
+        assert y_end.shape[-1] == int(sr * duration)
+        assert np.allclose(y_end, y[..., -int(abs(offset)*sr):-int(abs(offset)*sr)+int(sr*duration)])
+
+
 @pytest.mark.parametrize("res_type", ["soxr_qq", "soxr_hq", "scipy"])
 def test_load_resample(res_type):
 
