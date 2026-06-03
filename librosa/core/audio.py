@@ -384,7 +384,7 @@ def stream(
             yield block.T
 
 
-def loadx(key, *, hq: Optional[bool] = None, **kwargs):
+def loadx(key: str, *, hq: Optional[bool] = None, **kwargs: Any) -> Tuple[np.ndarray, Union[int, float]]:
     """Load an example audio file by key.
 
     This is a wrapper around `librosa.util.example` that provides the same
@@ -405,7 +405,7 @@ def loadx(key, *, hq: Optional[bool] = None, **kwargs):
         If ``False``, return the 22KHz mono version of the recording.
 
         If not provided, `hq` is inferred based on additional parameters in `kwargs`:
-            - If `sr` is provided and greater than 22050, then `hq` is set to `True`.
+            - If `sr` is provided and greater than 22050 (or is `None`), then `hq` is set to `True`.
             - If `mono` is provided and set to `False`, then `hq` is set to `True`.
             - Otherwise, `hq` is set to `False`.
 
