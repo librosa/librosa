@@ -445,7 +445,12 @@ def loadx(key: str, *, hq: Optional[bool] = None, **kwargs: Any) -> Tuple[np.nda
         else:
             hq = False
 
-    path = example(key, hq=hq)
+    try:
+        path = example(key, hq=hq)
+    except ParameterError as exc:
+        raise ParameterError(f"Could not load example with key '{key}'.  "
+                             "Did you mean to use librosa.load instead of loadx?") from exc
+
     return load(path, **kwargs)
 
 
