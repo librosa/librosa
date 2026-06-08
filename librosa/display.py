@@ -4113,9 +4113,9 @@ def _get_ax_bright_highlight(
 
 def highlight(
     *,
-    artist: Optional[Artist] = None,
-    ax: Optional[mplaxes.Axes] = None,
-    color: Optional[ColorType] = None,
+    artist: Artist | None = None,
+    ax: mplaxes.Axes | None = None,
+    color: ColorType | None = None,
     bright_color: ColorType = "white",
     dark_color: ColorType = "black",
     luminance_threshold: float = 0.5,
