@@ -2384,3 +2384,78 @@ def test_multiplot_axes_slices_mixed(y, sr):
             axi.label_outer()
 
     return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["highlight_spectrum"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_highlight_spectrum(S_abs, y, sr):
+
+    fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
+                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
+    times = librosa.times_like(f0, sr=sr)
+    # Column 1: dark color spectrogram
+    # Column 2: light color spectrogram
+    # Row 1: auto highlight
+    # Row 2: auto highlight with specified colors
+    # Row 3: explicit highlight
+
+    for i in range(3):
+        librosa.display.specshow(S_abs, x_axis='time', y_axis='log', cmap='magma',
+                                 vscale='dBFS', ax=ax[i, 0])
+        librosa.display.specshow(S_abs, x_axis='time', y_axis='log', cmap='magma_r',
+                                 vscale='dBFS', ax=ax[i, 1])
+
+    for j in range(2):
+        hl1 = librosa.display.highlight(ax=ax[0, j], linewidth=5, alpha=1.0)
+        ax[0, j].plot(times, f0, path_effects=hl1)
+
+        hl2 = librosa.display.highlight(ax=ax[1, j], linewidth=5, alpha=1.0,
+                                        bright_color="green",
+                                        dark_color="pink")
+        ax[1, j].plot(times, f0, path_effects=hl2)
+
+        hl3 = librosa.display.highlight(ax=ax[2, j], linewidth=5, alpha=1.0,
+                                        color="yellow")
+        ax[2, j].plot(times, f0, path_effects=hl3)
+
+    for axi in ax.flat:
+        axi.label_outer()
+
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["highlight_axes"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_highlight_axescolor():
+
+    fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+
+    x = np.linspace(0, 5, num=100)
+    y = x * np.exp(-x**2)
+
+    # First axes has light face color, do nothing
+    # Second axes has a dark face color
+    ax[1].set_facecolor((0.1, 0.1, 0.1))
+
+    # Third axes has a dark but transparent facecolor
+    ax[2].set_facecolor((0, 0, 0, 0))
+
+    hl0 = librosa.display.highlight(ax=ax[0], linewidth=5)
+    ax[0].plot(x, y, path_effects=hl0)
+    hl1 = librosa.display.highlight(ax=ax[1], linewidth=5)
+    ax[1].plot(x, y, path_effects=hl1)
+    hl2 = librosa.display.highlight(ax=ax[2], linewidth=5)
+    ax[2].plot(x, y, path_effects=hl2)
+
+    return fig
