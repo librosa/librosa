@@ -4206,7 +4206,7 @@ def highlight(*,
     >>> ax[1, 0].set_title('Bright image, no highlight')
     >>> librosa.display.specshow(D, x_axis='time', y_axis='log_oct3', ax=ax[1, 1],
     ...                          vscale='dBFS', cmap='gray_r')
-    >>> # We can also cosntruct the highlight first and then supply it to the plot command
+    >>> # We can also construct the highlight first and then supply it to the plot command
     >>> hl = librosa.display.highlight(ax=ax[1, 1])
     >>> ax[1, 1].plot(times, f0, path_effects=hl)
     >>> ax[1, 1].set_title('Bright image, highlighted')
