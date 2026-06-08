@@ -2475,8 +2475,12 @@ def test_highlight_artist():
     y = x * np.exp(-x**2)
 
     hl = librosa.display.highlight(ax=ax, linewidth=5)
-    ax.plot(x, y, path_effects=hl)
+    ax.plot(x, y, path_effects=hl, label='path_effects=')
 
-    lines2 = ax.plot(x, 1 + y)[0]
+    lines2 = ax.plot(x, 1 + y, label='highlight(artist)')[0]
     librosa.display.highlight(artist=lines2, linewidth=5)
+
+    hl2 = librosa.display.highlight(linewidth=5)
+    ax.plot(x, 2 + y, path_effects=hl2, label='path_effects= + gca')
+    ax.legend(loc='upper right')
     return fig
