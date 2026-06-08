@@ -4066,8 +4066,8 @@ def legend_for_axes(
 
 
 def _get_ax_bright_highlight(
-    ax : mplaxes.Axes,
-    luminance_threshold: float = 0.5
+    ax: mplaxes.Axes,
+    luminance_threshold: float = 0.5,
 ) -> bool:
     """Determine whether the axes should produce a bright or dark
     highlight.
@@ -4118,8 +4118,8 @@ def highlight(
     color: Optional[ColorType] = None,
     bright_color: ColorType = "white",
     dark_color: ColorType = "black",
-    luminance_threshold: float =0.5,
-    **kwargs: Any
+    luminance_threshold: float = 0.5,
+    **kwargs: Any,
 ) -> List[mpe.AbstractPathEffect]:
     """Apply a contrasting highlight effect to a matplotlib artist.
 
