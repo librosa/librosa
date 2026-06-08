@@ -3089,7 +3089,8 @@ def wavef0(
     >>> C = librosa.cqt(y, sr=sr)
     >>> librosa.display.specshow(C, ax=ax, sr=sr, x_axis='time', y_axis='cqt_note',
     ...                          vscale='dBFS', cmap='gray_r')
-    >>> librosa.display.wavef0(y=y, f0=f0, sr=sr, ax=ax)
+    >>> hl = librosa.display.highlight(ax=ax)
+    >>> librosa.display.wavef0(y=y, f0=f0, sr=sr, ax=ax, path_effects=hl)
     """
     # Create the adaptive drawing object
     axes = __check_axes(ax)
