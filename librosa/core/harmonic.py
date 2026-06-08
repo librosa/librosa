@@ -13,7 +13,7 @@ from ..util import is_unique
 from ..util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Callable, Optional, Sequence
+    from typing import Callable, Sequence
 
     from numpy.typing import ArrayLike
 
@@ -27,8 +27,8 @@ def salience(
     *,
     freqs: np.ndarray,
     harmonics: Sequence[float],
-    weights: Optional[ArrayLike] = None,
-    aggregate: Optional[Callable] = None,
+    weights: ArrayLike | None = None,
+    aggregate: Callable | None = None,
     filter_peaks: bool = True,
     fill_value: float = np.nan,
     kind: _InterpKind = "linear",

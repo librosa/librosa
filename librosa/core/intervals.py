@@ -12,7 +12,7 @@ from .._cache import cache
 from ..util.files import _resource_file
 
 if TYPE_CHECKING:
-    from typing import Collection, Dict, Iterable, List, Literal, Union
+    from typing import Collection, Dict, Iterable, List, Literal
 
     from numpy.typing import ArrayLike
 
@@ -29,7 +29,7 @@ def interval_frequencies(
     n_bins: int,
     *,
     fmin: _FloatLike_co,
-    intervals: Union[str, Collection[float]],
+    intervals: str | Collection[float],
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     sort: bool = True
@@ -153,14 +153,14 @@ def pythagorean_intervals(
 @overload
 def pythagorean_intervals(
     *, bins_per_octave: int = ..., sort: bool = ..., return_factors: bool = ...
-) -> Union[np.ndarray, List[Dict[int, int]]]:
+) -> np.ndarray | List[Dict[int, int]]:
     ...
 
 
 @cache(level=10)
 def pythagorean_intervals(
     *, bins_per_octave: int = 12, sort: bool = True, return_factors: bool = False
-) -> Union[np.ndarray, List[Dict[int, int]]]:
+) -> np.ndarray | List[Dict[int, int]]:
     """Pythagorean intervals
 
     Intervals are constructed by stacking ratios of 3/2 (i.e.,
@@ -326,7 +326,7 @@ def plimit_intervals(
     bins_per_octave: int = ...,
     sort: bool = ...,
     return_factors: bool = ...
-) -> Union[np.ndarray, List[Dict[int, int]]]:
+) -> np.ndarray | List[Dict[int, int]]:
     ...
 
 
@@ -337,7 +337,7 @@ def plimit_intervals(
     bins_per_octave: int = 12,
     sort: bool = True,
     return_factors: bool = False
-) -> Union[np.ndarray, List[Dict[int, int]]]:
+) -> np.ndarray | List[Dict[int, int]]:
     """Construct p-limit intervals for a given set of prime factors.
 
     This function is based on the "harmonic crystal growth" algorithm

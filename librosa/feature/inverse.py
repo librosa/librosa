@@ -16,7 +16,7 @@ from ..util.exceptions import ParameterError
 from ..util.utils import tiny
 
 if TYPE_CHECKING:
-    from typing import Any, Optional
+    from typing import Any
 
     from numpy.typing import DTypeLike
 
@@ -118,14 +118,14 @@ def mel_to_audio(
     *,
     sr: float = 22050,
     n_fft: int = 2048,
-    hop_length: Optional[int] = None,
-    win_length: Optional[int] = None,
+    hop_length: int | None = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
     power: float = 2.0,
     n_iter: int = 32,
-    length: Optional[int] = None,
+    length: int | None = None,
     dtype: DTypeLike = np.float32,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -214,7 +214,7 @@ def mfcc_to_mel(
     *,
     n_mels: int = 128,
     dct_type: _DCTType = 2,
-    norm: Optional[_DCTNorm] = "ortho",
+    norm: _DCTNorm | None = "ortho",
     ref: float = 1.0,
     lifter: float = 0,
 ) -> np.ndarray:
@@ -291,7 +291,7 @@ def mfcc_to_audio(
     *,
     n_mels: int = 128,
     dct_type: _DCTType = 2,
-    norm: Optional[_DCTNorm] = "ortho",
+    norm: _DCTNorm | None = "ortho",
     ref: float = 1.0,
     lifter: float = 0,
     **kwargs: Any,

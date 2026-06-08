@@ -16,7 +16,7 @@ from ..util.exceptions import ParameterError
 from .intervals import INTERVALS
 
 if TYPE_CHECKING:
-    from typing import Dict, Iterable, List, Union
+    from typing import Dict, Iterable, List
 
     from .._typing import _FloatLike_co, _IterableLike, _ScalarOrSequence, _SequenceLike
 
@@ -189,7 +189,7 @@ def thaat_to_degrees(thaat: str) -> np.ndarray:
     return np.asarray(THAAT_MAP[thaat.lower()])
 
 
-def mela_to_degrees(mela: Union[str, int]) -> np.ndarray:
+def mela_to_degrees(mela: str | int) -> np.ndarray:
     """Construct the svara indices (degrees) for a given melakarta raga
 
     Parameters
@@ -289,7 +289,7 @@ def mela_to_degrees(mela: Union[str, int]) -> np.ndarray:
 
 @cache(level=10)
 def mela_to_svara(
-    mela: Union[str, int], *, abbr: bool = True, unicode: bool = True
+    mela: str | int, *, abbr: bool = True, unicode: bool = True
 ) -> List[str]:
     """Spell the Carnatic svara names for a given melakarta raga
 
@@ -502,9 +502,9 @@ def __note_to_degree(key: str) -> int:
 def __note_to_degree(key: _IterableLike[str]) -> np.ndarray:
     ...
 @overload
-def __note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int, np.ndarray]:
+def __note_to_degree(key: str | _IterableLike[str] | Iterable[str]) -> int | np.ndarray:
     ...
-def __note_to_degree(key: Union[str, _IterableLike[str], Iterable[str]]) -> Union[int,np.ndarray]:
+def __note_to_degree(key: str | _IterableLike[str] | Iterable[str]) -> int | np.ndarray:
     """Take a note name and return the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
 
     >>> librosa.__note_to_degree('B#')
@@ -542,12 +542,12 @@ def __simplify_note(key: _IterableLike[str],
     ...
 
 @overload
-def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]],
-                    additional_acc: str =..., unicode: bool = ...) -> Union[str, np.ndarray]:
+def __simplify_note(key: str | _IterableLike[str] | Iterable[str],
+                    additional_acc: str =..., unicode: bool = ...) -> str | np.ndarray:
     ...
 
-def __simplify_note(key: Union[str, _IterableLike[str], Iterable[str]],
-                    additional_acc: str="", unicode: bool = True) -> Union[str, np.ndarray]:
+def __simplify_note(key: str | _IterableLike[str] | Iterable[str],
+                    additional_acc: str="", unicode: bool = True) -> str | np.ndarray:
     """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
     >>> librosa.__simplify_note('C♭♯')
@@ -1110,7 +1110,7 @@ def interval_to_fjs(
     unison: str = ...,
     tolerance: float = ...,
     unicode: bool = ...,
-) -> Union[str, np.ndarray]:
+) -> str | np.ndarray:
     ...
 
 
@@ -1121,7 +1121,7 @@ def interval_to_fjs(
     unison: str = "C",
     tolerance: float = 65.0 / 63,
     unicode: bool = True,
-) -> Union[str, np.ndarray]:
+) -> str | np.ndarray:
     """Convert an interval to Functional Just System (FJS) notation.
 
     See https://misotanni.github.io/fjs/en/index.html for a thorough overview

@@ -24,7 +24,7 @@ from .util.decorators import moved
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Optional, Tuple, Union
+    from typing import Tuple
 
     import scipy.stats
 
@@ -40,18 +40,18 @@ tempo = moved(moved_from="librosa.beat.tempo", version="0.10.0", version_removed
 
 def beat_track(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
     hop_length: int = 512,
     start_bpm: float = 120.0,
     tightness: float = 100,
     trim: bool = True,
-    bpm: Optional[Union[_FloatLike_co, np.ndarray]] = None,
-    prior: Optional[scipy.stats.rv_continuous] = None,
+    bpm: _FloatLike_co | np.ndarray | None = None,
+    prior: scipy.stats.rv_continuous | None = None,
     units: str = "frames",
     sparse: bool = True
-) -> Tuple[Union[_FloatLike_co, np.ndarray], np.ndarray]:
+) -> Tuple[_FloatLike_co | np.ndarray, np.ndarray]:
     r"""Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [#]_:
@@ -271,14 +271,14 @@ def beat_track(
 
 def plp(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
     hop_length: int = 512,
     win_length: int = 384,
-    tempo_min: Optional[float] = 30,
-    tempo_max: Optional[float] = 300,
-    prior: Optional[scipy.stats.rv_continuous] = None,
+    tempo_min: float | None = 30,
+    tempo_max: float | None = 300,
+    prior: scipy.stats.rv_continuous | None = None,
 ) -> np.ndarray:
     """Predominant local pulse (PLP) estimation. [#]_
 

@@ -22,7 +22,7 @@ from ._cache import cache
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, List, Optional, Tuple, Union
+    from typing import Any, Callable, List, Tuple
 
     from ._typing import _FloatLike_co, _IntLike_co, _SparseArray
 
@@ -32,8 +32,8 @@ __all__ = ["decompose", "hpss", "nn_filter"]
 def decompose(
     S: np.ndarray,
     *,
-    n_components: Optional[int] = None,
-    transformer: Optional[object] = None,
+    n_components: int | None = None,
+    transformer: object | None = None,
     sort: bool = False,
     fit: bool = True,
     **kwargs: Any,
@@ -211,14 +211,10 @@ def decompose(
 def hpss(
     S: np.ndarray,
     *,
-    kernel_size: Union[
-        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
-    ] = 31,
+    kernel_size: _IntLike_co | Tuple[_IntLike_co, _IntLike_co] | List[_IntLike_co] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: Union[
-        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
-    ] = 1.0,
+    margin: _FloatLike_co | Tuple[_FloatLike_co, _FloatLike_co] | List[_FloatLike_co] = 1.0,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Median-filtering harmonic percussive source separation (HPSS).
 
@@ -349,7 +345,7 @@ def hpss(
 
     >>> H, P = librosa.decompose.hpss(D, margin=(1.0,5.0))
     """
-    phase: Union[float, np.ndarray]
+    phase: float | np.ndarray
 
     if np.iscomplexobj(S):
         S, phase = core.magphase(S)
@@ -413,8 +409,8 @@ def hpss(
 def nn_filter(
     S: np.ndarray,
     *,
-    rec: Optional[Union[np.ndarray, _SparseArray]] = None,
-    aggregate: Optional[Callable] = None,
+    rec: np.ndarray | _SparseArray | None = None,
+    aggregate: Callable | None = None,
     axis: int = -1,
     **kwargs: Any,
 ) -> np.ndarray:

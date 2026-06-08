@@ -8,7 +8,7 @@ import glob
 import json
 import os
 from importlib import resources
-from typing import Any, List, Optional, Set, Union
+from typing import Any, List, Set
 
 import msgpack
 import pooch
@@ -172,12 +172,12 @@ def example_info(key: str) -> None:
 
 
 def find_files(
-    directory: Union[str, os.PathLike[Any]],
+    directory: str | os.PathLike[Any],
     *,
-    ext: Optional[Union[str, List[str]]] = None,
+    ext: str | List[str] | None = None,
     recurse: bool = True,
     case_sensitive: bool = False,
-    limit: Optional[int] = None,
+    limit: int | None = None,
     offset: int = 0,
 ) -> List[str]:
     """Get a sorted list of (audio) files in a directory or directory sub-tree.
@@ -273,7 +273,7 @@ def find_files(
     return files
 
 
-def __get_files(dir_name: Union[str, os.PathLike[Any]], extensions: Set[str]):
+def __get_files(dir_name: str | os.PathLike[Any], extensions: Set[str]):
     """Get a list of files in a single directory"""
     # Expand out the directory
     dir_name = os.path.abspath(os.path.expanduser(dir_name))
@@ -287,7 +287,7 @@ def __get_files(dir_name: Union[str, os.PathLike[Any]], extensions: Set[str]):
     return myfiles
 
 
-def cite(version: Optional[str]=None) -> str:
+def cite(version: str | None=None) -> str:
     """Print the citation information for librosa.
 
     Parameters

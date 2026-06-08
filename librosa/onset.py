@@ -23,19 +23,19 @@ from .feature.spectral import melspectrogram
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Sequence, Union
+    from typing import Any, Callable, Sequence
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 
 
 def onset_detect(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
     hop_length: int = 512,
     backtrack: bool = False,
-    energy: Optional[np.ndarray] = None,
+    energy: np.ndarray | None = None,
     units: str = "frames",
     normalize: bool = True,
     sparse: bool = True,
@@ -216,16 +216,16 @@ def onset_detect(
 
 def onset_strength(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     lag: int = 1,
     max_size: int = 1,
-    ref: Optional[np.ndarray] = None,
+    ref: np.ndarray | None = None,
     detrend: bool = False,
     center: bool = True,
-    feature: Optional[Callable] = None,
-    aggregate: Optional[Union[Callable, bool]] = None,
+    feature: Callable | None = None,
+    aggregate: Callable | bool | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope.
@@ -445,19 +445,19 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
 @cache(level=30)
 def onset_strength_multi(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
     lag: int = 1,
     max_size: int = 1,
-    ref: Optional[np.ndarray] = None,
+    ref: np.ndarray | None = None,
     detrend: bool = False,
     center: bool = True,
-    feature: Optional[Callable] = None,
-    aggregate: Optional[Union[Callable, bool]] = None,
-    channels: Optional[Union[Sequence[int], Sequence[slice]]] = None,
+    feature: Callable | None = None,
+    aggregate: Callable | bool | None = None,
+    channels: Sequence[int] | Sequence[slice] | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope across multiple channels.

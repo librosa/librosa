@@ -20,7 +20,7 @@ from .convert import frames_to_samples, time_to_samples
 
 if TYPE_CHECKING:
     import os
-    from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
+    from typing import Any, BinaryIO, Callable, Generator, Tuple
 
     from numpy.typing import DTypeLike
 
@@ -56,15 +56,15 @@ __all__ = [
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
 def load(
-    path: Union[str, int, os.PathLike[Any], sf.SoundFile, BinaryIO],
+    path: str | int | os.PathLike[Any] | sf.SoundFile | BinaryIO,
     *,
-    sr: Optional[float] = 22050,
+    sr: float | None = 22050,
     mono: bool = True,
     offset: float = 0.0,
-    duration: Optional[float] = None,
+    duration: float | None = None,
     dtype: DTypeLike = np.float32,
     res_type: str = "soxr_hq",
-) -> Tuple[np.ndarray, Union[int, float]]:
+) -> Tuple[np.ndarray, int | float]:
     """Load an audio file as a floating point time series.
 
     Audio will be automatically resampled to the given rate
@@ -198,15 +198,15 @@ def __soundfile_load(path, offset, duration, dtype):
 
 
 def stream(
-    path: Union[str, int, sf.SoundFile, BinaryIO],
+    path: str | int | sf.SoundFile | BinaryIO,
     *,
     block_length: int,
     frame_length: int,
     hop_length: int,
     mono: bool = True,
     offset: float = 0.0,
-    duration: Optional[float] = None,
-    fill_value: Optional[float] = None,
+    duration: float | None = None,
+    fill_value: float | None = None,
     dtype: DTypeLike = np.float32,
 ) -> Generator[np.ndarray, None, None]:
     """Stream audio in fixed-length buffers.
@@ -384,7 +384,7 @@ def stream(
             yield block.T
 
 
-def loadx(key: str, *, hq: Optional[bool] = None, **kwargs: Any) -> Tuple[np.ndarray, Union[int, float]]:
+def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> Tuple[np.ndarray, int | float]:
     """Load an example audio file by key.
 
     This is a wrapper around `librosa.util.example` that provides the same
@@ -563,8 +563,8 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
 @cache(level=20)
 def to_stereo(
     *,
-    left: Optional[np.ndarray],
-    right: Optional[np.ndarray],
+    left: np.ndarray | None,
+    right: np.ndarray | None,
     downmix: bool = True,
     pad: bool = True,
     norm: bool = True,
@@ -979,13 +979,13 @@ def resample(
 
 def get_duration(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
     center: bool = True,
-    path: Optional[Union[str, os.PathLike[Any]]] = None,
+    path: str | os.PathLike[Any] | None = None,
 ) -> float:
     """Compute the duration (in seconds) of an audio time series,
     feature matrix, or filename.
@@ -1085,7 +1085,7 @@ def get_duration(
     return float(n_samples) / sr
 
 
-def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
+def get_samplerate(path: str | int | sf.SoundFile | BinaryIO) -> float:
     """Get the sampling rate for a given file.
 
     Parameters
@@ -1117,7 +1117,7 @@ def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
 
 @cache(level=20)
 def autocorrelate(
-    y: np.ndarray, *, max_size: Optional[int] = None, axis: int = -1
+    y: np.ndarray, *, max_size: int | None = None, axis: int = -1
 ) -> np.ndarray:
     """Bounded-lag auto-correlation
 
@@ -1422,7 +1422,7 @@ def zero_crossings(
     y: np.ndarray,
     *,
     threshold: float = 1e-10,
-    ref_magnitude: Optional[Union[float, Callable]] = None,
+    ref_magnitude: float | Callable | None = None,
     pad: bool = True,
     zero_pos: bool = True,
     axis: int = -1,
@@ -1531,14 +1531,14 @@ def zero_crossings(
 
 def clicks(
     *,
-    times: Optional[_SequenceLike[_FloatLike_co]] = None,
-    frames: Optional[_SequenceLike[_IntLike_co]] = None,
+    times: _SequenceLike[_FloatLike_co] | None = None,
+    frames: _SequenceLike[_IntLike_co] | None = None,
     sr: float = 22050,
     hop_length: int = 512,
     click_freq: float = 1000.0,
     click_duration: float = 0.1,
-    click: Optional[np.ndarray] = None,
-    length: Optional[int] = None,
+    click: np.ndarray | None = None,
+    length: int | None = None,
 ) -> np.ndarray:
     """Construct a "click track".
 
@@ -1670,9 +1670,9 @@ def tone(
     frequency: _FloatLike_co,
     *,
     sr: float = 22050,
-    length: Optional[int] = None,
-    duration: Optional[float] = None,
-    phi: Optional[float] = None,
+    length: int | None = None,
+    duration: float | None = None,
+    phi: float | None = None,
 ) -> np.ndarray:
     """Construct a pure tone (cosine) signal at a given frequency.
 
@@ -1743,10 +1743,10 @@ def chirp(
     fmin: _FloatLike_co,
     fmax: _FloatLike_co,
     sr: float = 22050,
-    length: Optional[int] = None,
-    duration: Optional[float] = None,
+    length: int | None = None,
+    duration: float | None = None,
     linear: bool = False,
-    phi: Optional[float] = None,
+    phi: float | None = None,
 ) -> np.ndarray:
     """Construct a "chirp" or "sine-sweep" signal.
 
@@ -1854,7 +1854,7 @@ def chirp(
 
 
 def mu_compress(
-    x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255, quantize: bool = True
+    x: np.ndarray | _FloatLike_co, *, mu: float = 255, quantize: bool = True
 ) -> np.ndarray:
     """mu-law compression
 
@@ -1946,7 +1946,7 @@ def mu_compress(
 
 
 def mu_expand(
-    x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255.0, quantize: bool = True
+    x: np.ndarray | _FloatLike_co, *, mu: float = 255.0, quantize: bool = True
 ) -> _ScalarOrSequence[_FloatLike_co]:
     """mu-law expansion
 
