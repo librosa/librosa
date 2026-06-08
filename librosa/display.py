@@ -17,6 +17,7 @@ Data visualization
 
     colorbar_db
     colorbar_phase
+    highlight
     legend_for_axes
 
 Axis formatting
@@ -47,6 +48,7 @@ Miscellaneous
 
 from __future__ import annotations
 
+import colorsys
 import copy
 import re
 import warnings
@@ -56,10 +58,12 @@ from itertools import cycle, product
 from typing import TYPE_CHECKING, cast
 
 import matplotlib.axes as mplaxes
+import matplotlib.cm as cm
 import matplotlib.collections as mcollections
 import matplotlib.colors as colors
 import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
+import matplotlib.patheffects as mpe
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mplticker
 import matplotlib.transforms as mtransforms
@@ -76,12 +80,15 @@ if TYPE_CHECKING:
 
     import cycler
     import matplotlib
+    import matplotlib.axes
     import matplotlib.figure
+    from matplotlib.artist import Artist
     from matplotlib.collections import PolyCollection, QuadMesh
     from matplotlib.colors import Colormap
     from matplotlib.lines import Line2D
     from matplotlib.markers import MarkerStyle
     from matplotlib.path import Path as MplPath
+    from matplotlib.typing import ColorType
 
     from ._typing import ArrayLike, _FloatLike_co
 
@@ -92,6 +99,7 @@ __all__ = [
     "wavebars",
     "wavef0",
     "multiplot",
+    "highlight",
     "infer_cmap",
     "colorbar_db",
     "colorbar_phase",
@@ -4054,3 +4062,184 @@ def legend_for_axes(
         kwargs["bbox_transform"] = fig.transFigure
 
     return fig.legend(handles, labels, loc=loc, **kwargs)
+
+
+def _get_ax_bright_highlight(ax : Optional[mplaxes.Axes],
+                             luminance_threshold: float) -> bool:
+    """Determine whether the axes should produce a bright or dark
+    highlight.
+
+    This is based on a few things:
+    - If the axes has mappable data, we take the median color of that
+      data.
+    - If the axes has no mappable data, we take the facecolor of the
+      axes.
+    - If the axes is transparent, we take the facecolor of the figure.
+
+    From the resulting color, we calculate the luminance by RGB->YIQ
+    conversion.  Luminance above 0.5 is considered light, and should
+    therefore produce a dark highlight.  Luminance below 0.5 is
+    considered dark, and should produce a bright highlight.
+    """
+    if ax is None:
+        return True  # Safe fallback
+
+    mappable = None
+
+    for child in ax.get_children():
+        if isinstance(child, cm.ScalarMappable) and child.get_array() is not None:
+            mappable = child
+            break
+
+    if mappable is not None:
+        data = mappable.get_array()
+        # Calculate median, ignoring NaNs
+        median_val = np.nanmedian(np.asarray(data))
+        # Map through the normalization and colormap
+        normed_val = mappable.norm(median_val)
+        rgba = mappable.get_cmap()(normed_val)
+    else:
+        # If there's no mappable data, get the axes facecolor
+        rgba = ax.get_facecolor()
+        # And if the axes is transparent, pull from the figure
+        if len(rgba) == 4 and rgba[3] == 0.0:
+            rgba = ax.figure.get_facecolor()
+
+    # Calculate relative luminance
+    luminance = colorsys.rgb_to_yiq(*rgba[:3])[0]
+
+    return luminance <= luminance_threshold
+
+
+def highlight(*,
+              artist: Optional[Artist] = None,
+              ax: Optional[mplaxes.Axes] = None,
+              color: Optional[ColorType] = None,
+              bright_color: ColorType = "white",
+              dark_color: ColorType = "black",
+              luminance_threshold: float =0.5,
+              **kwargs: Any) -> List[mpe.AbstractPathEffect]:
+    """Apply a contrasting highlight effect to a matplotlib artist.
+
+    This is primarily useful for providing contrast between an artist
+    (e.g., a line plot) and an underling image (e.g., a spectrogram or scatter plot).
+    For example, if the underlying image is predominantly dark (under the choice of colormap),
+    then a bright highlight (default "white") should be used.
+    If the underlying image is predominantly bright, then a dark highlight (default "black")
+    should be used.
+
+    This function is designed to automatically infer which kind of highlight should be applied
+    based on the contents of the `ax` axes object, if any.  If no color-mapped data can be
+    identified on `ax`, then the axes facecolor or figure facecolor will be used as fallbacks.
+
+    If an `artist` is provided, the highlight effect will be applied in-place, but this is
+    optional. (See examples below.)
+
+    The choices for bright and dark highlight colors, as well as the luminance threshold for
+    determining which to use, can be customized via the `bright_color`, `dark_color`, and
+    `luminance_threshold` parameters.
+
+    Alternatively, the user can bypass the automatic color inference and directly specify a
+    highlight color via the `color` parameter.
+
+
+    Parameters
+    ----------
+    artist : matplotlib.artist.Artist, optional
+        The artist to which the highlight effect should be applied.  If not provided, the
+        function will still return the appropriate path effect object(s) based on the contents
+        of `ax`, but will not apply them to any artist.
+    ax : matplotlib.axes.Axes, optional
+        The axes to inspect for color-mapped data to determine the appropriate highlight color.
+        If not provided, the function will attempt to infer an appropriate axes object from
+        `artist`, and if that fails, will default to the current axes (`plt.gca()`).
+    color : color specifier, optional
+        A color specification to use directly for the highlight, bypassing the automatic color
+        inference.  If not provided, the function will determine whether to use `bright_color`
+        or `dark_color` based on the contents of `ax` and the `luminance_threshold`.
+    bright_color : color specifier, default 'white'
+        The color to use for the highlight if the underlying axes is determined to be dark.
+    dark_color : color specifier, default 'black'
+        The color to use for the highlight if the underlying axes is determined to be bright.
+    luminance_threshold : float, default 0.5
+        The luminance threshold for determining whether the underlying axes is considered bright or dark.
+        Luminance is calculated by converting the relevant color to YIQ color space and taking
+        the Y (luminance) component.  If the luminance is above this threshold, the axes is
+        considered bright and `dark_color` will be used for the highlight.  If the luminance is
+        below this threshold, the axes is considered dark and `bright_color` will be used for
+        the highlight.
+    kwargs : dict
+        Additional keyword arguments to pass to `matplotlib.patheffects.withStroke` when
+        creating the highlight effect.  Common options include `linewidth` (default to 2) and
+        `alpha` (default to 1.0).
+
+    Returns
+    -------
+    effects : list of matplotlib.patheffects.AbstractPathEffect
+        A list of path effect objects that implement the highlight.  If `artist` was provided,
+        these effects will have been applied to the artist in-place.  If `artist` was not
+        provided, these effects can be applied to any artist via `artist.set_path_effects(effects)`.
+
+    Examples
+    --------
+    Plotting an f₀ contour with and without highlighting, in bright or dark colormaps
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> f0, _, _ = librosa.pyin(y, fmin=100, fmax=1000)
+    >>> times = librosa.times_like(f0)
+    >>> D = librosa.stft(y)
+    >>> fig, ax = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
+    >>> librosa.display.specshow(D, x_axis='time', y_axis='log_oct3', ax=ax[0, 0],
+    ...                          vscale='dBFS')
+    >>> ax[0, 0].plot(times, f0)
+    >>> ax[0, 0].set_title('Dark image, no highlight')
+    >>> librosa.display.specshow(D, x_axis='time', y_axis='log_oct3', ax=ax[0, 1],
+    ...                          vscale='dBFS')
+    >>> line = ax[0, 1].plot(times, f0)[0]  # 'plot' returns a list of artists
+    >>> librosa.display.highlight(artist=line)
+    >>> ax[0, 1].set_title('Dark image, highlighted')
+    >>> librosa.display.specshow(D, x_axis='time', y_axis='log_oct3', ax=ax[1, 0],
+    ...                          vscale='dBFS', cmap='gray_r')
+    >>> ax[1, 0].plot(times, f0)
+    >>> ax[1, 0].set_title('Bright image, no highlight')
+    >>> librosa.display.specshow(D, x_axis='time', y_axis='log_oct3', ax=ax[1, 1],
+    ...                          vscale='dBFS', cmap='gray_r')
+    >>> # We can also cosntruct the highlight first and then supply it to the plot command
+    >>> hl = librosa.display.highlight(ax=ax[1, 1])
+    >>> ax[1, 1].plot(times, f0, path_effects=hl)
+    >>> ax[1, 1].set_title('Bright image, highlighted')
+    >>> for a in ax.flat:
+    ...     a.label_outer()
+    >>> plt.show()
+    """
+    # 1. Resolve Axes
+    if ax is None:
+        if artist is not None and hasattr(artist, "axes") and artist.axes is not None:
+            ax = cast("mplaxes.Axes", artist.axes)
+        else:
+            ax = plt.gca()
+
+    # 2. Determine base colors
+    if color is None:
+        if _get_ax_bright_highlight(ax, luminance_threshold):
+            # Axes is dark, so we want a bright highlight
+            stroke_color = bright_color
+        else:
+            # Axes is bright, so we want a dark highlight
+            stroke_color = dark_color
+
+    else:
+        # Standard logic: deduce stroke based purely on the artist's existing color
+        stroke_color = color
+
+    kwargs.setdefault("linewidth", 2)
+    kwargs.setdefault("alpha", 1.0)
+
+    # 3. Create and apply the effect
+    effects: list[mpe.AbstractPathEffect] = [mpe.withStroke(foreground=stroke_color, **kwargs)]
+
+    if artist is not None:
+        artist.set_path_effects(effects)
+
+    return effects
