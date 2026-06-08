@@ -4065,8 +4065,10 @@ def legend_for_axes(
     return fig.legend(handles, labels, loc=loc, **kwargs)
 
 
-def _get_ax_bright_highlight(ax : Optional[mplaxes.Axes],
-                             luminance_threshold: float) -> bool:
+def _get_ax_bright_highlight(
+    ax : mplaxes.Axes,
+    luminance_threshold: float = 0.5
+) -> bool:
     """Determine whether the axes should produce a bright or dark
     highlight.
 
@@ -4078,13 +4080,10 @@ def _get_ax_bright_highlight(ax : Optional[mplaxes.Axes],
     - If the axes is transparent, we take the facecolor of the figure.
 
     From the resulting color, we calculate the luminance by RGB->YIQ
-    conversion.  Luminance above 0.5 is considered light, and should
-    therefore produce a dark highlight.  Luminance below 0.5 is
+    conversion.  Luminance above threshold is considered light, and should
+    therefore produce a dark highlight.  Luminance below threshold is
     considered dark, and should produce a bright highlight.
     """
-    if ax is None:
-        return True  # Safe fallback
-
     mappable = None
 
     for child in ax.get_children():
@@ -4112,18 +4111,20 @@ def _get_ax_bright_highlight(ax : Optional[mplaxes.Axes],
     return luminance <= luminance_threshold
 
 
-def highlight(*,
-              artist: Optional[Artist] = None,
-              ax: Optional[mplaxes.Axes] = None,
-              color: Optional[ColorType] = None,
-              bright_color: ColorType = "white",
-              dark_color: ColorType = "black",
-              luminance_threshold: float =0.5,
-              **kwargs: Any) -> List[mpe.AbstractPathEffect]:
+def highlight(
+    *,
+    artist: Optional[Artist] = None,
+    ax: Optional[mplaxes.Axes] = None,
+    color: Optional[ColorType] = None,
+    bright_color: ColorType = "white",
+    dark_color: ColorType = "black",
+    luminance_threshold: float =0.5,
+    **kwargs: Any
+) -> List[mpe.AbstractPathEffect]:
     """Apply a contrasting highlight effect to a matplotlib artist.
 
     This is primarily useful for providing contrast between an artist
-    (e.g., a line plot) and an underling image (e.g., a spectrogram or scatter plot).
+    (e.g., a line plot) and an underlying image (e.g., a spectrogram or scatter plot).
     For example, if the underlying image is predominantly dark (under the choice of colormap),
     then a bright highlight (default "white") should be used.
     If the underlying image is predominantly bright, then a dark highlight (default "black")
@@ -4230,7 +4231,7 @@ def highlight(*,
             stroke_color = dark_color
 
     else:
-        # Standard logic: deduce stroke based purely on the artist's existing color
+        # Use the user-specified highlight color
         stroke_color = color
 
     kwargs.setdefault("linewidth", 2)
