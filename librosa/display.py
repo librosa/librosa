@@ -72,7 +72,7 @@ from .util.decorators import moved
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Collection, Dict, List, Literal, Optional, Sequence, Tuple, Union
+    from typing import Any, Callable, Collection, Dict, List, Literal, Sequence, Tuple
 
     import cycler
     import matplotlib
@@ -231,7 +231,7 @@ class TimeFormatter(mplticker.Formatter):
     >>> plt.show()
     """
 
-    def __init__(self, lag: bool = False, unit: Optional[str] = None):
+    def __init__(self, lag: bool = False, unit: str | None = None):
         if unit not in ["h", "m", "s", "ms", None]:
             raise ParameterError(f"Unknown time unit: {unit}")
 
@@ -239,7 +239,7 @@ class TimeFormatter(mplticker.Formatter):
         self.unit = unit
         self.lag = lag
 
-    def __call__(self, x: float, pos: Optional[int] = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:
         """Return the time format as pos"""
         assert self.axis is not None
 
@@ -332,7 +332,7 @@ class NoteFormatter(mplticker.Formatter):
         self.key = key
         self.unicode = unicode
 
-    def __call__(self, x: float, pos: Optional[int] = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:
         """Apply the formatter to position"""
         if x <= 0:
             return ""
@@ -406,7 +406,7 @@ class SvaraFormatter(mplticker.Formatter):
         octave: bool = True,
         major: bool = True,
         abbr: bool = False,
-        mela: Optional[Union[str, int]] = None,
+        mela: str | int | None = None,
         unicode: bool = True,
     ):
         if Sa is None:
@@ -422,7 +422,7 @@ class SvaraFormatter(mplticker.Formatter):
         self.mela = mela
         self.unicode = unicode
 
-    def __call__(self, x: float, pos: Optional[int] = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:
         if x <= 0:
             return ""
 
@@ -499,9 +499,9 @@ class FJSFormatter(mplticker.Formatter):
         fmin: float,
         n_bins: int,
         bins_per_octave: int,
-        intervals: Union[str, Collection[float]],
+        intervals: str | Collection[float],
         major: bool = True,
-        unison: Optional[str] = None,
+        unison: str | None = None,
         unicode: bool = True,
     ):
         super().__init__()
@@ -516,7 +516,7 @@ class FJSFormatter(mplticker.Formatter):
             n_bins, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
         )
 
-    def __call__(self, x: float, pos: Optional[int] = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:
         """Apply the formatter to position"""
         if x <= 0:
             return ""
@@ -573,7 +573,7 @@ class LogHzFormatter(mplticker.Formatter):
         super().__init__()
         self.major = major
 
-    def __call__(self, x: float, pos: Optional[int] = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:
         """Apply the formatter to position"""
         if x <= 0:
             return ""
@@ -610,7 +610,7 @@ class ChromaFormatter(mplticker.Formatter):
         self.key = key
         self.unicode = unicode
 
-    def __call__(self, x: float, pos: Optional[int] = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:
         """Format for chroma positions"""
         return core.midi_to_note(
             int(x), octave=False, cents=False, key=self.key, unicode=self.unicode
@@ -634,8 +634,8 @@ class ChromaSvaraFormatter(mplticker.Formatter):
 
     def __init__(
         self,
-        Sa: Optional[float] = None,
-        mela: Optional[Union[int, str]] = None,
+        Sa: float | None = None,
+        mela: int | str | None = None,
         abbr: bool = True,
         unicode: bool = True,
     ):
@@ -647,7 +647,7 @@ class ChromaSvaraFormatter(mplticker.Formatter):
         self.abbr = abbr
         self.unicode = unicode
 
-    def __call__(self, x: float, pos: Optional[int] = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:
         """Format for chroma positions"""
         if self.mela is not None:
             return core.midi_to_svara_c(
@@ -684,10 +684,10 @@ class ChromaFJSFormatter(mplticker.Formatter):
     def __init__(
         self,
         *,
-        intervals: Union[str, Collection[float]],
+        intervals: str | Collection[float],
         unison: str = "C",
         unicode: bool = True,
-        bins_per_octave: Optional[int] = None,
+        bins_per_octave: int | None = None,
     ):
         super().__init__()
         self.unison = unison
@@ -713,7 +713,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
                 f"intervals={intervals} must be of type str or a collection of numbers between 1 and 2"
             ) from exc
 
-    def __call__(self, x: float, pos: Optional[int] = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:
         """Format for chroma positions"""
         lab: str = core.interval_to_fjs(
             self.intervals_[int(x) % self.bins_per_octave],
@@ -740,7 +740,7 @@ class TonnetzFormatter(mplticker.Formatter):
     >>> ax.set(ylabel='Tonnetz')
     """
 
-    def __call__(self, x: float, pos: Optional[int] = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:
         """Format for tonnetz positions"""
         return [r"5$_y$", r"5$_x$", r"m3$_y$", r"m3$_x$", r"M3$_y$", r"M3$_x$"][int(x)]
 
@@ -797,7 +797,7 @@ class AdaptiveWaveplot:
         sr: float = 22050,
         max_samples: int = 11025,
         transpose: bool = False,
-        label: Optional[str] = None,
+        label: str | None = None,
     ):
         self.times = times
         self.samples = y
@@ -806,8 +806,8 @@ class AdaptiveWaveplot:
         self.sr = sr
         self.max_samples = max_samples
         self.transpose = transpose
-        self.cid: Optional[int] = None
-        self._ax_ref: Optional[weakref.ref[mplaxes.Axes]] = None
+        self.cid: int | None = None
+        self._ax_ref: weakref.ref[mplaxes.Axes] | None = None
 
         # This creates an invisible patch to contain the label
         # Doing backflips here with redundant code to make mypy happy
@@ -822,17 +822,17 @@ class AdaptiveWaveplot:
 
     # Preserve the old attribute API by exposing properties with same names
     @property
-    def steps(self) -> Optional[Line2D]:
+    def steps(self) -> Line2D | None:
         """The step plot artist (Line2D), or None if garbage collected."""
         return self._steps_ref()
 
     @property
-    def envelope(self) -> Optional[PolyCollection]:
+    def envelope(self) -> PolyCollection | None:
         """The envelope artist (PolyCollection), or None if garbage collected."""
         return self._envelope_ref()
 
     @property
-    def ax(self) -> Optional[mplaxes.Axes]:
+    def ax(self) -> mplaxes.Axes | None:
         """The connected Axes, or None if not connected or garbage collected."""
         return None if self._ax_ref is None else self._ax_ref()
 
@@ -1053,9 +1053,9 @@ def infer_cmap(
     data: np.ndarray,
     *,
     robust: bool = True,
-    cmap_seq: Union[str, colors.Colormap] = "magma",
-    cmap_bool: Union[str, colors.Colormap] = "gray_r",
-    cmap_div: Union[str, colors.Colormap] = "coolwarm",
+    cmap_seq: str | colors.Colormap = "magma",
+    cmap_bool: str | colors.Colormap = "gray_r",
+    cmap_div: str | colors.Colormap = "coolwarm",
     div_thresh: float = 0.0,
 ) -> Colormap:
     """Get a default colormap from the given data.
@@ -1202,36 +1202,36 @@ _AXIS_COMPAT = set(
 def specshow(
     data: np.ndarray,
     *,
-    x_coords: Optional[np.ndarray] = None,
-    y_coords: Optional[np.ndarray] = None,
-    x_axis: Optional[str] = None,
-    y_axis: Optional[str] = None,
-    vscale: Optional[str] = None,
+    x_coords: np.ndarray | None = None,
+    y_coords: np.ndarray | None = None,
+    x_axis: str | None = None,
+    y_axis: str | None = None,
+    vscale: str | None = None,
     sr: float = 22050,
     hop_length: int = 512,
-    n_fft: Optional[int] = None,
-    win_length: Optional[int] = None,
-    fmin: Optional[float] = None,
-    fmax: Optional[float] = None,
-    tempo_min: Optional[float] = 16,
-    tempo_max: Optional[float] = 480,
+    n_fft: int | None = None,
+    win_length: int | None = None,
+    fmin: float | None = None,
+    fmax: float | None = None,
+    tempo_min: float | None = 16,
+    tempo_max: float | None = 480,
     tuning: float = 0.0,
     bins_per_octave: int = 12,
     key: str = "C:maj",
-    Sa: Optional[Union[float, int]] = None,
-    mela: Optional[Union[str, int]] = None,
-    thaat: Optional[str] = None,
+    Sa: float | None = None,
+    mela: str | int | None = None,
+    thaat: str | None = None,
     auto_aspect: bool = True,
     htk: bool = False,
     unicode: bool = True,
-    intervals: Optional[Union[str, np.ndarray]] = None,
-    unison: Optional[str] = None,
-    top_db: Optional[float] = 80.0,
-    cmap_seq: Union[str, colors.Colormap] = "magma",
-    cmap_bool: Union[str, colors.Colormap] = "gray_r",
-    cmap_div: Union[str, colors.Colormap] = "coolwarm",
+    intervals: str | np.ndarray | None = None,
+    unison: str | None = None,
+    top_db: float | None = 80.0,
+    cmap_seq: str | colors.Colormap = "magma",
+    cmap_bool: str | colors.Colormap = "gray_r",
+    cmap_div: str | colors.Colormap = "coolwarm",
     div_thresh: float = 0.0,
-    ax: Optional[mplaxes.Axes] = None,
+    ax: mplaxes.Axes | None = None,
     **kwargs: Any,
 ) -> QuadMesh:
     """Display a spectrogram/chromagram/cqt/etc.
@@ -1691,7 +1691,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
             )
         return coords
 
-    coord_map: Dict[Optional[str], Callable[..., np.ndarray]] = {
+    coord_map: Dict[str | None, Callable[..., np.ndarray]] = {
         "linear": __coord_fft_hz,
         "fft": __coord_fft_hz,
         "fft_note": __coord_fft_hz,
@@ -1738,7 +1738,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
     return coord_map[ax_type](n, **kwargs)
 
 
-def __check_axes(axes: Optional[mplaxes.Axes]) -> mplaxes.Axes:
+def __check_axes(axes: mplaxes.Axes | None) -> mplaxes.Axes:
     """Check if "axes" is an instance of an axis object. If not, use `gca`."""
     if axes is None:
         axes = plt.gca()
@@ -2141,7 +2141,7 @@ def __decorate_axis(
 
 
 def __coord_fft_hz(
-    n: int, sr: float = 22050, n_fft: Optional[int] = None, **_kwargs: Any
+    n: int, sr: float = 22050, n_fft: int | None = None, **_kwargs: Any
 ) -> np.ndarray:
     """Get the frequencies for FFT bins"""
     if n_fft is None:
@@ -2154,8 +2154,8 @@ def __coord_fft_hz(
 
 def __coord_mel_hz(
     n: int,
-    fmin: Optional[float] = 0.0,
-    fmax: Optional[float] = None,
+    fmin: float | None = 0.0,
+    fmax: float | None = None,
     sr: float = 22050,
     htk: bool = False,
     **_kwargs: Any,
@@ -2172,7 +2172,7 @@ def __coord_mel_hz(
 
 def __coord_cqt_hz(
     n: int,
-    fmin: Optional[_FloatLike_co] = None,
+    fmin: _FloatLike_co | None = None,
     bins_per_octave: int = 12,
     sr: float = 22050,
     **_kwargs: Any,
@@ -2203,11 +2203,11 @@ def __coord_cqt_hz(
 
 def __coord_vqt_hz(
     n: int,
-    fmin: Optional[_FloatLike_co] = None,
+    fmin: _FloatLike_co | None = None,
     bins_per_octave: int = 12,
     sr: float = 22050,
-    intervals: Optional[Union[str, Collection[float]]] = None,
-    unison: Optional[str] = None,
+    intervals: str | Collection[float] | None = None,
+    unison: str | None = None,
     **_kwargs: Any,
 ) -> np.ndarray:
     if fmin is None:
@@ -2247,7 +2247,7 @@ def __coord_fourier_tempo(
     n: int,
     sr: float = 22050,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     **_kwargs: Any,
 ) -> np.ndarray:
     """Fourier tempogram coordinates"""
@@ -2368,7 +2368,7 @@ VSCALE_PATTERN = re.compile(
 )
 
 
-def __parse_vscale(vscale: str) -> Tuple[str, str, Optional[Union[float, str]]]:
+def __parse_vscale(vscale: str) -> Tuple[str, str, float | str | None]:
     """Parse a vscale string into mode, scale_type, and reference value.
 
     Examples
@@ -2413,16 +2413,16 @@ def waveshow(
     *,
     sr: float = 22050,
     max_points: int = 11025,
-    axis: Optional[str] = "time",
+    axis: str | None = "time",
     offset: float = 0.0,
-    marker: Union[str, MplPath, MarkerStyle] = "",
+    marker: str | MplPath | MarkerStyle = "",
     where: Literal["pre", "post", "mid"] = "post",
-    label: Optional[str] = None,
+    label: str | None = None,
     transpose: bool = False,
-    mask: Optional[ArrayLike] = None,
-    ax: Optional[mplaxes.Axes] = None,
+    mask: ArrayLike | None = None,
+    ax: mplaxes.Axes | None = None,
     invert: bool = False,
-    invert_color: Union[str, tuple, None] = None,
+    invert_color: str | tuple | None = None,
     **kwargs: Any,
 ) -> AdaptiveWaveplot:
     """Visualize a waveform in the time domain.
@@ -2735,13 +2735,13 @@ def wavebars(
     n_bars: int = 100,
     gap_ratio: float = 0.4,
     rounding_ratio: float = 0.5,
-    axis: Optional[str] = "time",
+    axis: str | None = "time",
     offset: float = 0.0,
     invert: bool = False,
-    invert_color: Union[str, tuple, None] = None,
+    invert_color: str | tuple | None = None,
     transpose: bool = False,
-    label: Optional[str] = None,
-    ax: Optional[mplaxes.Axes] = None,
+    label: str | None = None,
+    ax: mplaxes.Axes | None = None,
     **patch_kwargs: Any,
 ) -> mcollections.PatchCollection:
     """Visualize a waveform as a series of bars representing the amplitude envelope.
@@ -2923,15 +2923,15 @@ def wavef0(
     freq_axis: str = "cqt_note",
     offset: float = 0.0,
     key: str = "C:maj",
-    Sa: Optional[float] = None,
-    mela: Optional[Union[str, int]] = None,
-    thaat: Optional[str] = None,
+    Sa: float | None = None,
+    mela: str | int | None = None,
+    thaat: str | None = None,
     unicode: bool = True,
-    ax: Optional[mplaxes.Axes] = None,
+    ax: mplaxes.Axes | None = None,
     method: str = "waveshow",
     transpose: bool = False,
     **kwargs: Any,
-) -> Union[AdaptiveWaveplot, mcollections.PatchCollection]:
+) -> AdaptiveWaveplot | mcollections.PatchCollection:
     """Visualize a waveform with an f0-displacement.
 
     This can be used to simultaneously visualize the fundamental frequency (f0)
@@ -3200,8 +3200,8 @@ def colorbar_phase(
     im: matplotlib.cm.ScalarMappable,
     *,
     numticks: int = 9,
-    ax: Optional[matplotlib.axes.Axes] = None,
-    fig: Optional[matplotlib.figure.FigureBase] = None,
+    ax: matplotlib.axes.Axes | None = None,
+    fig: matplotlib.figure.FigureBase | None = None,
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
     """Attach a colorbar to an image representing phase data in radians.
@@ -3282,9 +3282,9 @@ def colorbar_phase(
 def colorbar_db(
     im: matplotlib.cm.ScalarMappable,
     *,
-    ax: Optional[matplotlib.axes.Axes] = None,
-    fig: Optional[matplotlib.figure.FigureBase] = None,
-    format: Union[str, mplticker.Formatter] = "% -3.f",
+    ax: matplotlib.axes.Axes | None = None,
+    fig: matplotlib.figure.FigureBase | None = None,
+    format: str | mplticker.Formatter = "% -3.f",
     **kwargs: Any,
 ) -> matplotlib.colorbar.Colorbar:
     """Attach a colorbar to an image representing decibel-scaled data.
@@ -3456,9 +3456,9 @@ def _mp_get_layout(
 
 def _mp_setup_axes(
     *,
-    axes: Optional[Union[matplotlib.axes.Axes, np.ndarray]],
-    fig: Optional[matplotlib.figure.FigureBase] = None,
-    fig_kw: Optional[dict] = None,
+    axes: matplotlib.axes.Axes | np.ndarray | None,
+    fig: matplotlib.figure.FigureBase | None = None,
+    fig_kw: dict | None = None,
     nrows: int,
     ncols: int,
     axshape: Tuple[int, ...],
@@ -3553,7 +3553,7 @@ def _mp_setup_axes(
 
 
 def _mp_setup_labels(
-    labels: Optional[Sequence[Optional[str]]], shape: Tuple[int, ...]
+    labels: Sequence[str | None] | None, shape: Tuple[int, ...]
 ) -> np.ndarray:
     """Set up the labels for a multiplot grid.
 
@@ -3579,7 +3579,7 @@ def _mp_setup_labels(
 
 
 def _mp_setup_prop_group(
-    share_properties: Optional[Union[bool, Literal["row", "col"], ArrayLike]],
+    share_properties: bool | Literal["row", "col"] | ArrayLike | None,
     shape: Tuple[int, ...],
 ) -> np.ndarray:
     """Set up the property groups for a multiplot grid.
@@ -3631,7 +3631,7 @@ def _mp_setup_prop_group(
 
 
 def _mp_setup_properties(
-    prop_group: np.ndarray, badprops: List[str], prop_cycle: Optional[cycler.Cycler]
+    prop_group: np.ndarray, badprops: List[str], prop_cycle: cycler.Cycler | None
 ) -> np.ndarray:
     """Set up the properties for each subplot in a multiplot grid based on the property groups.
 
@@ -3677,17 +3677,17 @@ def _mp_setup_properties(
 def multiplot(
     func: Literal["waveshow", "wavebars", "specshow"],
     *data: np.ndarray,
-    axes: Optional[Union[matplotlib.axes.Axes, np.ndarray]] = None,
-    fig: Optional[matplotlib.figure.FigureBase] = None,
+    axes: matplotlib.axes.Axes | np.ndarray | None = None,
+    fig: matplotlib.figure.FigureBase | None = None,
     orient: Literal["v", "h"] = "v",
-    share_properties: Optional[Union[bool, Literal["row", "col"], np.ndarray]] = None,
-    fig_kw: Optional[dict] = None,
+    share_properties: bool | Literal["row", "col"] | np.ndarray | None = None,
+    fig_kw: dict | None = None,
     sharex: bool = True,
     sharey: bool = True,
     label_outer: bool = True,
-    labels: Optional[Sequence[Optional[str]]] = None,
-    titles: Optional[Sequence[Optional[str]]] = None,
-    prop_cycle: Optional[cycler.Cycler] = None,
+    labels: Sequence[str | None] | None = None,
+    titles: Sequence[str | None] | None = None,
+    prop_cycle: cycler.Cycler | None = None,
     **kwargs,
 ) -> np.ndarray:
     """Visualize multiple related waveforms or spectrograms on an array of subplots.
@@ -3858,16 +3858,14 @@ def multiplot(
 
 
 def legend_for_axes(
-    axes: Optional[
-        Union[matplotlib.axes.Axes, np.ndarray, List[matplotlib.axes.Axes]]
-    ] = None,
+    axes: matplotlib.axes.Axes | np.ndarray | List[matplotlib.axes.Axes] | None = None,
     *,
-    loc: Optional[str] = None,
+    loc: str | None = None,
     pad: float = 0.02,
     fraction: float = 0.2,
-    width: Optional[float] = None,
-    height: Optional[float] = None,
-    fig: Optional[matplotlib.figure.Figure] = None,
+    width: float | None = None,
+    height: float | None = None,
+    fig: matplotlib.figure.Figure | None = None,
     **kwargs,
 ) -> matplotlib.legend.Legend:
     """Create a figure-level legend for a collection of axes.

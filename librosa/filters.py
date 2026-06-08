@@ -47,7 +47,7 @@ from .core.convert import fft_frequencies, hz_to_midi, hz_to_octs, mel_frequenci
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, List, Literal, Optional, Tuple, Union
+    from typing import Any, List, Literal, Tuple
 
     from numpy.typing import ArrayLike, DTypeLike
 
@@ -120,9 +120,9 @@ def mel(
     n_fft: int,
     n_mels: int = 128,
     fmin: float = 0.0,
-    fmax: Optional[float] = None,
+    fmax: float | None = None,
     htk: bool = False,
-    norm: Optional[Union[Literal["slaney"], float]] = "slaney",
+    norm: Literal["slaney"] | float | None = "slaney",
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
     """Create a Mel filter-bank.
@@ -259,8 +259,8 @@ def chroma(
     n_chroma: int = 12,
     tuning: float = 0.0,
     ctroct: float = 5.0,
-    octwidth: Union[float, None] = 2,
-    norm: Optional[float] = 2,
+    octwidth: float | None = 2,
+    norm: float | None = 2,
     base_c: bool = True,
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
@@ -426,8 +426,8 @@ def wavelet_lengths(
     sr: float = 22050,
     window: _WindowSpec = "hann",
     filter_scale: float = 1,
-    gamma: Optional[float] = 0,
-    alpha: Optional[Union[float, np.ndarray]] = None,
+    gamma: float | None = 0,
+    alpha: float | np.ndarray | None = None,
 ) -> Tuple[np.ndarray, float]:
     """Return length of each filter in a wavelet basis.
 
@@ -533,7 +533,7 @@ def wavelet_lengths(
     else:
         alpha = np.asarray(alpha)
 
-    gamma_: Union[_FloatLike_co, np.ndarray]
+    gamma_: _FloatLike_co | np.ndarray
     if gamma is None:
         gamma_ = alpha * 24.7 / 0.108
     else:
@@ -592,10 +592,10 @@ def wavelet(
     window: _WindowSpec = "hann",
     filter_scale: float = 1,
     pad_fft: bool = True,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     dtype: DTypeLike = np.complex64,
     gamma: float = 0,
-    alpha: Optional[float] = None,
+    alpha: float | None = None,
     **kwargs: Any,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Construct a wavelet basis using windowed complex sinusoids.
@@ -738,8 +738,8 @@ def cq_to_chroma(
     *,
     bins_per_octave: int = 12,
     n_chroma: int = 12,
-    fmin: Optional[_FloatLike_co] = None,
-    window: Optional[np.ndarray] = None,
+    fmin: _FloatLike_co | None = None,
+    window: np.ndarray | None = None,
     base_c: bool = True,
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
@@ -979,8 +979,8 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
 
 @cache(level=10)
 def _multirate_fb(
-    center_freqs: Optional[np.ndarray] = None,
-    sample_rates: Optional[np.ndarray] = None,
+    center_freqs: np.ndarray | None = None,
+    sample_rates: np.ndarray | None = None,
     Q: float = 25.0,
     passband_ripple: float = 1,
     stopband_attenuation: float = 50,
@@ -1155,9 +1155,9 @@ def mr_frequencies(tuning: float) -> Tuple[np.ndarray, np.ndarray]:
 
 def semitone_filterbank(
     *,
-    center_freqs: Optional[np.ndarray] = None,
+    center_freqs: np.ndarray | None = None,
     tuning: float = 0.0,
-    sample_rates: Optional[np.ndarray] = None,
+    sample_rates: np.ndarray | None = None,
     flayout: Literal["ba", "sos"] = "ba",
     **kwargs: Any,
 ) -> Tuple[List[Any], np.ndarray]:
@@ -1271,10 +1271,10 @@ def window_sumsquare(
     window: _WindowSpec,
     n_frames: int,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     n_fft: int = 2048,
     dtype: DTypeLike = np.float32,
-    norm: Optional[float] = None,
+    norm: float | None = None,
 ) -> np.ndarray:
     """Compute the sum-square envelope of a window function at a given hop length.
 
@@ -1346,7 +1346,7 @@ def diagonal_filter(
     n: int,
     *,
     slope: float = 1.0,
-    angle: Optional[float] = None,
+    angle: float | None = None,
     zero_mean: bool = False,
 ) -> np.ndarray:
     """Build a two-dimensional diagonal filter.

@@ -19,7 +19,7 @@ from . import convert
 from .audio import resample
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, List, Literal, Optional, Tuple, Union
+    from typing import Any, Callable, List, Literal, Tuple
 
     from numpy.typing import DTypeLike
 
@@ -59,13 +59,13 @@ def stft(
     y: np.ndarray,
     *,
     n_fft: int = 2048,
-    hop_length: Optional[int] = None,
-    win_length: Optional[int] = None,
+    hop_length: int | None = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
     pad_mode: _PadModeSTFT = "constant",
-    out: Optional[np.ndarray] = None,
+    out: np.ndarray | None = None,
 ) -> np.ndarray:
     """Short-time Fourier transform (STFT).
 
@@ -395,14 +395,14 @@ def stft(
 def istft(
     stft_matrix: np.ndarray,
     *,
-    hop_length: Optional[int] = None,
-    win_length: Optional[int] = None,
-    n_fft: Optional[int] = None,
+    hop_length: int | None = None,
+    win_length: int | None = None,
+    n_fft: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    dtype: Optional[DTypeLike] = None,
-    length: Optional[int] = None,
-    out: Optional[np.ndarray] = None,
+    dtype: DTypeLike | None = None,
+    length: int | None = None,
+    out: np.ndarray | None = None,
 ) -> np.ndarray:
     """
     Inverse short-time Fourier transform (ISTFT).
@@ -645,13 +645,13 @@ def __overlap_add(y, ytmp, hop_length):
 def __reassign_frequencies(
     y: np.ndarray,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
-    hop_length: Optional[int] = None,
-    win_length: Optional[int] = None,
+    hop_length: int | None = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
     pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Instantaneous frequencies based on a spectrogram representation.
@@ -808,13 +808,13 @@ def __reassign_frequencies(
 def __reassign_times(
     y: np.ndarray,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
-    hop_length: Optional[int] = None,
-    win_length: Optional[int] = None,
+    hop_length: int | None = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
     pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Time reassignments based on a spectrogram representation.
@@ -990,18 +990,18 @@ def reassigned_spectrogram(
     y: np.ndarray,
     *,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
-    hop_length: Optional[int] = None,
-    win_length: Optional[int] = None,
+    hop_length: int | None = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     reassign_frequencies: bool = True,
     reassign_times: bool = True,
-    ref_power: Union[float, Callable] = 1e-6,
+    ref_power: float | Callable = 1e-6,
     fill_nan: bool = False,
     clip: bool = True,
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
     pad_mode: _PadModeSTFT = "constant",
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     r"""Time-frequency reassigned spectrogram.
@@ -1364,11 +1364,11 @@ def magphase(D: np.ndarray, *, power: float = 1) -> Tuple[np.ndarray, np.ndarray
 def phase_vocoder(
     D: np.ndarray,
     *,
-    rate: Optional[float] = None,
-    t_out: Optional[np.ndarray] = None,
+    rate: float | None = None,
+    t_out: np.ndarray | None = None,
     kind: _InterpKind = "linear",
-    hop_length: Optional[Union[int, Deprecated]] = Deprecated(),
-    n_fft: Optional[Union[int, Deprecated]] = Deprecated(),
+    hop_length: int | Deprecated | None = Deprecated(),
+    n_fft: int | Deprecated | None = Deprecated(),
 ) -> np.ndarray:
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
 
@@ -1524,7 +1524,7 @@ def iirt(
     *,
     sr: float = 22050,
     win_length: int = 2048,
-    hop_length: Optional[int] = None,
+    hop_length: int | None = None,
     center: bool = True,
     tuning: float = 0.0,
     pad_mode: _PadMode = "constant",
@@ -1664,7 +1664,7 @@ def iirt(
 
     bands_power = np.empty_like(y, shape=shape)
 
-    slices: List[Union[int, slice]] = [slice(None) for _ in bands_power.shape]
+    slices: List[int | slice] = [slice(None) for _ in bands_power.shape]
     import scipy.signal
     for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates,
                                                  filterbank_ct,
@@ -1717,9 +1717,9 @@ def iirt(
 def power_to_db(
     S: _ComplexLike_co,
     *,
-    ref: Union[float, Callable] = ...,
+    ref: float | Callable = ...,
     amin: float = ...,
-    top_db: Optional[float] = ...,
+    top_db: float | None = ...,
 ) -> np.floating[Any]: ...
 
 
@@ -1727,9 +1727,9 @@ def power_to_db(
 def power_to_db(
     S: _SequenceLike[_ComplexLike_co],
     *,
-    ref: Union[float, Callable] = ...,
+    ref: float | Callable = ...,
     amin: float = ...,
-    top_db: Optional[float] = ...,
+    top_db: float | None = ...,
 ) -> np.ndarray: ...
 
 
@@ -1737,20 +1737,20 @@ def power_to_db(
 def power_to_db(
     S: _ScalarOrSequence[_ComplexLike_co],
     *,
-    ref: Union[float, Callable] = ...,
+    ref: float | Callable = ...,
     amin: float = ...,
-    top_db: Optional[float] = ...,
-) -> Union[np.floating[Any], np.ndarray]: ...
+    top_db: float | None = ...,
+) -> np.floating[Any] | np.ndarray: ...
 
 
 @cache(level=30)
 def power_to_db(
     S: _ScalarOrSequence[_ComplexLike_co],
     *,
-    ref: Union[float, Callable] = 1.0,
+    ref: float | Callable = 1.0,
     amin: float = 1e-10,
-    top_db: Optional[float] = 80.0,
-) -> Union[np.floating[Any], np.ndarray]:
+    top_db: float | None = 80.0,
+) -> np.floating[Any] | np.ndarray:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
     This computes the scaling ``10 * log10(S / ref)`` in a numerically
@@ -1889,16 +1889,16 @@ def db_to_power(
 
 @overload
 def db_to_power(
-    S_db: Union[_FloatLike_co, np.ndarray],
+    S_db: _FloatLike_co | np.ndarray,
     *,
     ref: float = ...,
-) -> Union[np.floating[Any], np.ndarray]: ...
+) -> np.floating[Any] | np.ndarray: ...
 
 
 @cache(level=30)
 def db_to_power(
-    S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0
-) -> Union[np.floating[Any], np.ndarray]:
+    S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0
+) -> np.floating[Any] | np.ndarray:
     """Convert dB-scale values to a power values.
 
     This effectively inverts ``power_to_db``::
@@ -1928,9 +1928,9 @@ def db_to_power(
 def amplitude_to_db(
     S: _ComplexLike_co,
     *,
-    ref: Union[float, Callable] = ...,
+    ref: float | Callable = ...,
     amin: float = ...,
-    top_db: Optional[float] = ...,
+    top_db: float | None = ...,
 ) -> np.floating[Any]: ...
 
 
@@ -1938,9 +1938,9 @@ def amplitude_to_db(
 def amplitude_to_db(
     S: _SequenceLike[_ComplexLike_co],
     *,
-    ref: Union[float, Callable] = ...,
+    ref: float | Callable = ...,
     amin: float = ...,
-    top_db: Optional[float] = ...,
+    top_db: float | None = ...,
 ) -> np.ndarray: ...
 
 
@@ -1948,20 +1948,20 @@ def amplitude_to_db(
 def amplitude_to_db(
     S: _ScalarOrSequence[_ComplexLike_co],
     *,
-    ref: Union[float, Callable] = ...,
+    ref: float | Callable = ...,
     amin: float = ...,
-    top_db: Optional[float] = ...,
-) -> Union[np.floating[Any], np.ndarray]: ...
+    top_db: float | None = ...,
+) -> np.floating[Any] | np.ndarray: ...
 
 
 @cache(level=30)
 def amplitude_to_db(
     S: _ScalarOrSequence[_ComplexLike_co],
     *,
-    ref: Union[float, Callable] = 1.0,
+    ref: float | Callable = 1.0,
     amin: float = 1e-5,
-    top_db: Optional[float] = 80.0,
-) -> Union[np.floating[Any], np.ndarray]:
+    top_db: float | None = 80.0,
+) -> np.floating[Any] | np.ndarray:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
     This is equivalent to ``power_to_db(S**2, ref=ref**2, amin=amin**2, top_db=top_db)``,
@@ -2042,16 +2042,16 @@ def db_to_amplitude(
 
 @overload
 def db_to_amplitude(
-    S_db: Union[_FloatLike_co, np.ndarray],
+    S_db: _FloatLike_co | np.ndarray,
     *,
     ref: float = ...,
-) -> Union[np.floating[Any], np.ndarray]: ...
+) -> np.floating[Any] | np.ndarray: ...
 
 
 @cache(level=30)
 def db_to_amplitude(
-    S_db: Union[_FloatLike_co, np.ndarray], *, ref: float = 1.0
-) -> Union[np.floating[Any], np.ndarray]:
+    S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0
+) -> np.floating[Any] | np.ndarray:
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
@@ -2155,7 +2155,7 @@ def fmt(
     y: np.ndarray,
     *,
     t_min: float = 0.5,
-    n_fmt: Optional[int] = None,
+    n_fmt: int | None = None,
     kind: _InterpKind = "cubic",
     beta: float = 0.5,
     over_sample: float = 1,
@@ -2363,12 +2363,12 @@ def pcen(
     power: float = ...,
     time_constant: float = ...,
     eps: float = ...,
-    b: Optional[float] = ...,
+    b: float | None = ...,
     max_size: int = ...,
-    ref: Optional[np.ndarray] = ...,
+    ref: np.ndarray | None = ...,
     axis: int = ...,
-    max_axis: Optional[int] = ...,
-    zi: Optional[np.ndarray] = ...,
+    max_axis: int | None = ...,
+    zi: np.ndarray | None = ...,
     return_zf: Literal[False] = ...,
 ) -> np.ndarray: ...
 
@@ -2384,12 +2384,12 @@ def pcen(
     power: float = ...,
     time_constant: float = ...,
     eps: float = ...,
-    b: Optional[float] = ...,
+    b: float | None = ...,
     max_size: int = ...,
-    ref: Optional[np.ndarray] = ...,
+    ref: np.ndarray | None = ...,
     axis: int = ...,
-    max_axis: Optional[int] = ...,
-    zi: Optional[np.ndarray] = ...,
+    max_axis: int | None = ...,
+    zi: np.ndarray | None = ...,
     return_zf: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
@@ -2405,14 +2405,14 @@ def pcen(
     power: float = ...,
     time_constant: float = ...,
     eps: float = ...,
-    b: Optional[float] = ...,
+    b: float | None = ...,
     max_size: int = ...,
-    ref: Optional[np.ndarray] = ...,
+    ref: np.ndarray | None = ...,
     axis: int = ...,
-    max_axis: Optional[int] = ...,
-    zi: Optional[np.ndarray] = ...,
+    max_axis: int | None = ...,
+    zi: np.ndarray | None = ...,
     return_zf: bool = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]: ...
 
 
 @cache(level=30)
@@ -2426,14 +2426,14 @@ def pcen(
     power: float = 0.5,
     time_constant: float = 0.400,
     eps: float = 1e-6,
-    b: Optional[float] = None,
+    b: float | None = None,
     max_size: int = 1,
-    ref: Optional[np.ndarray] = None,
+    ref: np.ndarray | None = None,
     axis: int = -1,
-    max_axis: Optional[int] = None,
-    zi: Optional[np.ndarray] = None,
+    max_axis: int | None = None,
+    zi: np.ndarray | None = None,
     return_zf: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
     """Per-channel energy normalization (PCEN)
 
     This function normalizes a time-frequency representation ``S`` by
@@ -2693,20 +2693,18 @@ def griffinlim(
     S: np.ndarray,
     *,
     n_iter: int = 32,
-    hop_length: Optional[int] = None,
-    win_length: Optional[int] = None,
-    n_fft: Optional[int] = None,
+    hop_length: int | None = None,
+    win_length: int | None = None,
+    n_fft: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
-    dtype: Optional[DTypeLike] = None,
-    length: Optional[int] = None,
+    dtype: DTypeLike | None = None,
+    length: int | None = None,
     pad_mode: _PadModeSTFT = "constant",
     momentum: float = 0.99,
-    init: Optional[str] = "random",
-    rng: Optional[Union[RNGLike, SeedLike]] = None,
-    random_state: Optional[
-        Union[int, np.random.RandomState, np.random.Generator, Deprecated]
-    ] = Deprecated(),
+    init: str | None = "random",
+    rng: RNGLike | SeedLike | None = None,
+    random_state: int | np.random.RandomState | np.random.Generator | Deprecated | None = Deprecated(),
 ) -> np.ndarray:
     """Approximate magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
 
@@ -2944,12 +2942,12 @@ def griffinlim(
 
 def _spectrogram(
     *,
-    y: Optional[np.ndarray] = None,
-    S: Optional[np.ndarray] = None,
-    n_fft: Optional[int] = 2048,
-    hop_length: Optional[int] = 512,
+    y: np.ndarray | None = None,
+    S: np.ndarray | None = None,
+    n_fft: int | None = 2048,
+    hop_length: int | None = 512,
     power: float = 1,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",

@@ -39,7 +39,7 @@ from .filters import diagonal_filter
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal, Optional, TypeVar, Union
+    from typing import Any, Callable, Literal, TypeVar
 
     import sklearn.cluster
 
@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     _F = TypeVar("_F", bound=Callable[..., Any])
 
     _ArrayOrSparseArray = TypeVar(
-        "_ArrayOrSparseArray", bound=Union[np.ndarray, _SparseArray]
+        "_ArrayOrSparseArray", bound=np.ndarray | _SparseArray
     )
 
 
@@ -70,11 +70,11 @@ def cross_similarity(
     data: np.ndarray,
     data_ref: np.ndarray,
     *,
-    k: Optional[int] = ...,
+    k: int | None = ...,
     metric: str = ...,
     sparse: Literal[False] = ...,
     mode: str = ...,
-    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
+    bandwidth: np.ndarray | _FloatLike_co | str | None = None,
     full: bool = False,
 ) -> np.ndarray:
     ...
@@ -85,11 +85,11 @@ def cross_similarity(
     data: np.ndarray,
     data_ref: np.ndarray,
     *,
-    k: Optional[int] = ...,
+    k: int | None = ...,
     metric: str = ...,
     sparse: Literal[True],
     mode: str = ...,
-    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
+    bandwidth: np.ndarray | _FloatLike_co | str | None = None,
     full: bool = False,
 ) -> scipy.sparse.csc_array:
     ...
@@ -100,13 +100,13 @@ def cross_similarity(
     data: np.ndarray,
     data_ref: np.ndarray,
     *,
-    k: Optional[int] = None,
+    k: int | None = None,
     metric: str = "euclidean",
     sparse: bool = False,
     mode: str = "connectivity",
-    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
+    bandwidth: np.ndarray | _FloatLike_co | str | None = None,
     full: bool = False,
-) -> Union[np.ndarray, scipy.sparse.csc_array]:
+) -> np.ndarray | scipy.sparse.csc_array:
     """Compute cross-similarity from one data sequence to a reference sequence.
 
     The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero
@@ -369,13 +369,13 @@ def cross_similarity(
 def recurrence_matrix(
     data: np.ndarray,
     *,
-    k: Optional[int] = ...,
+    k: int | None = ...,
     width: int = ...,
     metric: str = ...,
     sym: bool = ...,
     sparse: Literal[True],
     mode: str = ...,
-    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = ...,
+    bandwidth: np.ndarray | _FloatLike_co | str | None = ...,
     self: bool = ...,
     axis: int = ...,
     full: bool = False,
@@ -384,13 +384,13 @@ def recurrence_matrix(
 def recurrence_matrix(
     data: np.ndarray,
     *,
-    k: Optional[int] = ...,
+    k: int | None = ...,
     width: int = ...,
     metric: str = ...,
     sym: bool = ...,
     sparse: Literal[False] = ...,
     mode: str = ...,
-    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = ...,
+    bandwidth: np.ndarray | _FloatLike_co | str | None = ...,
     self: bool = ...,
     axis: int = ...,
     full: bool = False,
@@ -399,17 +399,17 @@ def recurrence_matrix(
 def recurrence_matrix(
     data: np.ndarray,
     *,
-    k: Optional[int] = None,
+    k: int | None = None,
     width: int = 1,
     metric: str = "euclidean",
     sym: bool = False,
     sparse: bool = False,
     mode: str = "connectivity",
-    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
+    bandwidth: np.ndarray | _FloatLike_co | str | None = None,
     self: bool = False,
     axis: int = -1,
     full: bool = False,
-) -> Union[np.ndarray, scipy.sparse.csc_array]:
+) -> np.ndarray | scipy.sparse.csc_array:
     """Compute a recurrence matrix from a data matrix.
 
     ``rec[i, j]`` is non-zero if ``data[..., i]`` is a k-nearest neighbor
@@ -1079,7 +1079,7 @@ def agglomerative(
     data: np.ndarray,
     k: int,
     *,
-    clusterer: Optional[sklearn.cluster.AgglomerativeClustering] = None,
+    clusterer: sklearn.cluster.AgglomerativeClustering | None = None,
     axis: int = -1,
 ) -> np.ndarray:
     """Bottom-up temporal segmentation.
@@ -1174,7 +1174,7 @@ def path_enhance(
     *,
     window: _WindowSpec = "hann",
     max_ratio: float = 2.0,
-    min_ratio: Optional[float] = None,
+    min_ratio: float | None = None,
     n_filters: int = 7,
     zero_mean: bool = False,
     clip: bool = True,
@@ -1335,9 +1335,9 @@ def path_enhance(
 
 def __affinity_bandwidth(
     rec: scipy.sparse.csr_array,
-    bw_mode: Optional[Union[np.ndarray, _FloatLike_co, str]],
+    bw_mode: np.ndarray | _FloatLike_co | str | None,
     k: int,
-) -> Union[float, np.ndarray]:
+) -> float | np.ndarray:
     # rec should be a csr_array
 
     # the api allows users to specify a scalar bandwidth directly, besides the string based options.

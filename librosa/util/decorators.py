@@ -12,7 +12,7 @@ import numpy as np
 from decorator import decorator
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Iterable, Optional, ParamSpec, TypeVar, Union
+    from typing import Any, Callable, Iterable, ParamSpec, TypeVar
 
     from numpy.typing import DTypeLike
     P = ParamSpec("P")
@@ -73,11 +73,11 @@ def deprecated(
 
 def vectorize(
     *,
-    otypes: Optional[Union[str, Iterable[DTypeLike]]] = None,
-    doc: Optional[str] = None,
-    excluded: Optional[Iterable[Union[int, str]]] = None,
+    otypes: str | Iterable[DTypeLike] | None = None,
+    doc: str | None = None,
+    excluded: Iterable[int | str] | None = None,
     cache: bool = False,
-    signature: Optional[str] = None
+    signature: str | None = None
 ) -> Callable[[_F], _F]:
     """Wrap a function for use with np.vectorize.
 

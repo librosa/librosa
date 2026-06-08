@@ -21,7 +21,7 @@ from .pitch import estimate_tuning
 from .spectrum import istft, stft
 
 if TYPE_CHECKING:
-    from typing import Collection, List, Optional, Union
+    from typing import Collection, List
 
     from numpy.typing import DTypeLike
 
@@ -44,18 +44,18 @@ def cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
+    fmin: _FloatLike_co | None = None,
     n_bins: int = 84,
     bins_per_octave: int = 12,
-    tuning: Optional[float] = 0.0,
+    tuning: float | None = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
     res_type: str = "soxr_hq",
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the constant-Q transform of an audio signal.
 
@@ -209,18 +209,18 @@ def hybrid_cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
+    fmin: _FloatLike_co | None = None,
     n_bins: int = 84,
     bins_per_octave: int = 12,
-    tuning: Optional[float] = 0.0,
+    tuning: float | None = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
     res_type: str = "soxr_hq",
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the hybrid constant-Q transform of an audio signal.
 
@@ -393,17 +393,17 @@ def pseudo_cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
+    fmin: _FloatLike_co | None = None,
     n_bins: int = 84,
     bins_per_octave: int = 12,
-    tuning: Optional[float] = 0.0,
+    tuning: float | None = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the pseudo constant-Q transform of an audio signal.
 
@@ -550,17 +550,17 @@ def icqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
+    fmin: _FloatLike_co | None = None,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
-    length: Optional[int] = None,
+    length: int | None = None,
     res_type: str = "soxr_hq",
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the inverse constant-Q transform.
 
@@ -688,7 +688,7 @@ def icqt(
 
     # This shape array will be used for broadcasting the basis scale
     # we'll have to adapt this per octave within the loop
-    y: Optional[np.ndarray] = None
+    y: np.ndarray | None = None
 
     # Assume the top octave is at the full rate
     srs = [sr]
@@ -776,20 +776,20 @@ def vqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
+    fmin: _FloatLike_co | None = None,
     n_bins: int = 84,
-    intervals: Union[str, Collection[float]] = "equal",
-    gamma: Optional[float] = None,
+    intervals: str | Collection[float] = "equal",
+    gamma: float | None = None,
     bins_per_octave: int = 12,
-    tuning: Optional[float] = 0.0,
+    tuning: float | None = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
     res_type: str = "soxr_hq",
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the variable-Q transform of an audio signal.
 
@@ -1219,24 +1219,22 @@ def griffinlim_cqt(
     n_iter: int = 32,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
+    fmin: _FloatLike_co | None = None,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
     res_type: str = "soxr_hq",
-    dtype: Optional[DTypeLike] = None,
-    length: Optional[int] = None,
+    dtype: DTypeLike | None = None,
+    length: int | None = None,
     momentum: float = 0.99,
-    init: Optional[str] = "random",
-    rng: Optional[Union[RNGLike, SeedLike]] = None,
-    random_state: Optional[
-        Union[int, np.random.RandomState, np.random.Generator, Deprecated]
-    ] = Deprecated(),
+    init: str | None = "random",
+    rng: RNGLike | SeedLike | None = None,
+    random_state: int | np.random.RandomState | np.random.Generator | Deprecated | None = Deprecated(),
 ) -> np.ndarray:
     """Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
     algorithm.

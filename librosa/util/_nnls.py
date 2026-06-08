@@ -17,7 +17,7 @@ import numpy as np
 from .utils import MAX_MEM_BLOCK
 
 if TYPE_CHECKING:
-    from typing import Any, Optional, Sequence, Tuple
+    from typing import Any, Sequence, Tuple
 
 __all__ = ["nnls"]
 
@@ -44,7 +44,7 @@ def _nnls_obj(
 
 
 def _nnls_lbfgs_block(
-    A: np.ndarray, B: np.ndarray, x_init: Optional[np.ndarray] = None, **kwargs: Any
+    A: np.ndarray, B: np.ndarray, x_init: np.ndarray | None = None, **kwargs: Any
 ) -> np.ndarray:
     """Solve the constrained problem over a single block
 

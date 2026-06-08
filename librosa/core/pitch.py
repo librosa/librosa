@@ -16,7 +16,7 @@ from . import audio, convert
 from .spectrum import _spectrogram
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional, Tuple, Union
+    from typing import Any, Callable, Tuple
 
     from numpy.typing import ArrayLike
 
@@ -27,10 +27,10 @@ __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
 def estimate_tuning(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
-    n_fft: Optional[int] = 2048,
+    S: np.ndarray | None = None,
+    n_fft: int | None = 2048,
     resolution: float = 0.01,
     bins_per_octave: int = 12,
     **kwargs: Any,
@@ -182,19 +182,19 @@ def pitch_tuning(
 @cache(level=30)
 def piptrack(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
-    n_fft: Optional[int] = 2048,
-    hop_length: Optional[int] = None,
+    S: np.ndarray | None = None,
+    n_fft: int | None = 2048,
+    hop_length: int | None = None,
     fmin: float = 150.0,
     fmax: float = 4000.0,
     threshold: float = 0.1,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    ref: Optional[Union[float, Callable]] = None,
+    ref: float | Callable | None = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Pitch tracking on thresholded parabolically-interpolated STFT.
 
@@ -480,7 +480,7 @@ def yin(
     fmax: float,
     sr: float = 22050,
     frame_length: int = 2048,
-    hop_length: Optional[int] = None,
+    hop_length: int | None = None,
     trough_threshold: float = 0.1,
     center: bool = True,
     pad_mode: _PadMode = "constant",
@@ -631,7 +631,7 @@ def pyin(
     fmax: float,
     sr: float = 22050,
     frame_length: int = 2048,
-    hop_length: Optional[int] = None,
+    hop_length: int | None = None,
     n_thresholds: int = 100,
     beta_parameters: Tuple[float, float] = (2, 18),
     boltzmann_parameter: float = 2,
@@ -639,10 +639,10 @@ def pyin(
     max_transition_rate: float = 35.92,
     switch_prob: float = 0.01,
     no_trough_prob: float = 0.01,
-    fill_na: Optional[float] = np.nan,
+    fill_na: float | None = np.nan,
     center: bool = True,
     pad_mode: _PadMode = "constant",
-    transition_min_prob: Optional[float] = 1e-4,
+    transition_min_prob: float | None = 1e-4,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 

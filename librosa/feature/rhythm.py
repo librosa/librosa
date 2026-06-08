@@ -17,7 +17,7 @@ from ..filters import get_window
 from ..util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Optional
+    from typing import Any, Callable
 
     import scipy
 
@@ -37,14 +37,14 @@ __all__ = [
 # -- Rhythmic features -- #
 def tempogram(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
     hop_length: int = 512,
     win_length: int = 384,
     center: bool = True,
     window: _WindowSpec = "hann",
-    norm: Optional[float] = np.inf,
+    norm: float | None = np.inf,
 ) -> np.ndarray:
     """Compute the tempogram: local autocorrelation of the onset strength envelope. [#]_
 
@@ -192,9 +192,9 @@ def tempogram(
 
 def fourier_tempogram(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
     hop_length: int = 512,
     win_length: int = 384,
     center: bool = True,
@@ -294,17 +294,17 @@ def fourier_tempogram(
 @cache(level=30)
 def tempo(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
-    tg: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
+    tg: np.ndarray | None = None,
     hop_length: int = 512,
     start_bpm: float = 120,
     std_bpm: float = 1.0,
     ac_size: float = 8.0,
-    max_tempo: Optional[float] = 320.0,
-    aggregate: Optional[Callable[..., Any]] = np.mean,
-    prior: Optional[scipy.stats.rv_continuous] = None,
+    max_tempo: float | None = 320.0,
+    aggregate: Callable[..., Any] | None = np.mean,
+    prior: scipy.stats.rv_continuous | None = None,
 ) -> np.ndarray:
     """Estimate the tempo (beats per minute)
 
@@ -472,25 +472,25 @@ def tempo(
 @cache(level=40)
 def tempogram_ratio(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
-    tg: Optional[np.ndarray] = None,
-    bpm: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
+    tg: np.ndarray | None = None,
+    bpm: np.ndarray | None = None,
     hop_length: int = 512,
     win_length: int = 384,
     start_bpm: float = 120,
     std_bpm: float = 1.0,
-    max_tempo: Optional[float] = 320.0,
-    freqs: Optional[np.ndarray] = None,
-    factors: Optional[np.ndarray] = None,
-    aggregate: Optional[Callable[..., Any]] = None,
-    prior: Optional[scipy.stats.rv_continuous] = None,
+    max_tempo: float | None = 320.0,
+    freqs: np.ndarray | None = None,
+    factors: np.ndarray | None = None,
+    aggregate: Callable[..., Any] | None = None,
+    prior: scipy.stats.rv_continuous | None = None,
     center: bool = True,
     window: _WindowSpec = "hann",
     kind: _InterpKind = "linear",
     fill_value: float = 0,
-    norm: Optional[float] = np.inf,
+    norm: float | None = np.inf,
 ) -> np.ndarray:
     """Tempogram ratio features, also known as spectral rhythm patterns. [1]_
 
@@ -673,9 +673,9 @@ def tempogram_ratio(
 
 def hybrid_tempogram(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
     hop_length: int = 512,
     win_length: int = 384,
     center: bool = True,
@@ -826,8 +826,8 @@ def metrogram(
     *,
     tg: np.ndarray,
     freqs: np.ndarray,
-    factors: Optional[np.ndarray] = None,
-    aggregate: Optional[Callable[..., Any]] = np.sum,
+    factors: np.ndarray | None = None,
+    aggregate: Callable[..., Any] | None = np.sum,
     kind: _InterpKind = "linear",
     fill_value: float = 0,
 ) -> np.ndarray:

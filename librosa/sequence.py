@@ -45,7 +45,7 @@ from .util import expand_to, fill_off_diagonal, is_positive_int, pad_center, tin
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Iterable, List, Literal, Optional, Tuple, Union
+    from typing import Any, Iterable, List, Literal, Tuple
 
     from ._typing import _WindowSpec
 
@@ -70,9 +70,9 @@ def dtw(
     Y: np.ndarray,
     *,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[False],
     global_constraints: bool = ...,
@@ -86,9 +86,9 @@ def dtw(
     *,
     C: np.ndarray,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[False],
     global_constraints: bool = ...,
@@ -103,9 +103,9 @@ def dtw(
     Y: np.ndarray,
     *,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[False],
     global_constraints: bool = ...,
@@ -119,9 +119,9 @@ def dtw(
     *,
     C: np.ndarray,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[False],
     global_constraints: bool = ...,
@@ -136,9 +136,9 @@ def dtw(
     Y: np.ndarray,
     *,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[True] = ...,
     global_constraints: bool = ...,
@@ -152,9 +152,9 @@ def dtw(
     *,
     C: np.ndarray,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[True] = ...,
     global_constraints: bool = ...,
@@ -169,9 +169,9 @@ def dtw(
     Y: np.ndarray,
     *,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[True] = ...,
     global_constraints: bool = ...,
@@ -185,9 +185,9 @@ def dtw(
     *,
     C: np.ndarray,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[True] = ...,
     global_constraints: bool = ...,
@@ -197,22 +197,20 @@ def dtw(
 
 
 def dtw(
-    X: Optional[np.ndarray] = None,
-    Y: Optional[np.ndarray] = None,
+    X: np.ndarray | None = None,
+    Y: np.ndarray | None = None,
     *,
-    C: Optional[np.ndarray] = None,
+    C: np.ndarray | None = None,
     metric: str = "euclidean",
-    step_sizes_sigma: Optional[np.ndarray] = None,
-    weights_add: Optional[np.ndarray] = None,
-    weights_mul: Optional[np.ndarray] = None,
+    step_sizes_sigma: np.ndarray | None = None,
+    weights_add: np.ndarray | None = None,
+    weights_mul: np.ndarray | None = None,
     subseq: bool = False,
     backtrack: bool = True,
     global_constraints: bool = False,
     band_rad: float = 0.25,
     return_steps: bool = False,
-) -> Union[
-    np.ndarray, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]
-]:
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray] | Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Dynamic time warping (DTW).
 
     This function performs a DTW and path backtracking on two sequences.
@@ -587,7 +585,7 @@ def __dtw_backtracking(
     steps: np.ndarray,
     step_sizes_sigma: np.ndarray,
     subseq: bool,
-    start: Optional[int] = None,
+    start: int | None = None,
 ) -> List[Tuple[int, int]]:  # pragma: no cover
     """Backtrack optimal warping path.
 
@@ -654,9 +652,9 @@ def __dtw_backtracking(
 def dtw_backtracking(
     steps: np.ndarray,
     *,
-    step_sizes_sigma: Optional[np.ndarray] = None,
+    step_sizes_sigma: np.ndarray | None = None,
     subseq: bool = False,
-    start: Optional[Union[int, np.integer[Any]]] = None,
+    start: int | np.integer[Any] | None = None,
 ) -> np.ndarray:
     """Backtrack a warping path.
 
@@ -735,7 +733,7 @@ def rqa(
     gap_extend: float = ...,
     knight_moves: bool = ...,
     backtrack: bool = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]: ...
 
 
 def rqa(
@@ -745,7 +743,7 @@ def rqa(
     gap_extend: float = 1,
     knight_moves: bool = True,
     backtrack: bool = True,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
     """Recurrence quantification analysis (RQA)
 
     This function implements different forms of RQA as described by
@@ -1285,9 +1283,9 @@ def viterbi(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_init: Optional[np.ndarray] = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
-    transition_min_prob: Optional[float] = ...,
+    transition_min_prob: float | None = ...,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
@@ -1296,9 +1294,9 @@ def viterbi(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_init: Optional[np.ndarray] = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[False] = ...,
-    transition_min_prob: Optional[float] = ...,
+    transition_min_prob: float | None = ...,
 ) -> np.ndarray: ...
 
 
@@ -1306,10 +1304,10 @@ def viterbi(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_init: Optional[np.ndarray] = None,
+    p_init: np.ndarray | None = None,
     return_logp: bool = False,
-    transition_min_prob: Optional[float] = None,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    transition_min_prob: float | None = None,
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
     """Viterbi decoding from observation likelihoods.
 
     Given a sequence of observation likelihoods ``prob[s, t]``,
@@ -1462,10 +1460,10 @@ def viterbi_discriminative(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
+    p_state: np.ndarray | None = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[False] = ...,
-    transition_min_prob: Optional[float] = ...,
+    transition_min_prob: float | None = ...,
 ) -> np.ndarray: ...
 
 
@@ -1474,10 +1472,10 @@ def viterbi_discriminative(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
+    p_state: np.ndarray | None = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
-    transition_min_prob: Optional[float] = ...,
+    transition_min_prob: float | None = ...,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
@@ -1486,22 +1484,22 @@ def viterbi_discriminative(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
+    p_state: np.ndarray | None = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: bool,
-    transition_min_prob: Optional[float] = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
+    transition_min_prob: float | None = ...,
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]: ...
 
 
 def viterbi_discriminative(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = None,
-    p_init: Optional[np.ndarray] = None,
+    p_state: np.ndarray | None = None,
+    p_init: np.ndarray | None = None,
     return_logp: bool = False,
-    transition_min_prob: Optional[float] = None,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    transition_min_prob: float | None = None,
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
     """Viterbi decoding from discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,
@@ -1725,10 +1723,10 @@ def viterbi_binary(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
+    p_state: np.ndarray | None = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[False] = ...,
-    transition_min_prob: Optional[float] = ...,
+    transition_min_prob: float | None = ...,
 ) -> np.ndarray: ...
 
 
@@ -1737,10 +1735,10 @@ def viterbi_binary(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
+    p_state: np.ndarray | None = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
-    transition_min_prob: Optional[float] = ...,
+    transition_min_prob: float | None = ...,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
@@ -1749,22 +1747,22 @@ def viterbi_binary(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
+    p_state: np.ndarray | None = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: bool = ...,
-    transition_min_prob: Optional[float] = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
+    transition_min_prob: float | None = ...,
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]: ...
 
 
 def viterbi_binary(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = None,
-    p_init: Optional[np.ndarray] = None,
+    p_state: np.ndarray | None = None,
+    p_init: np.ndarray | None = None,
     return_logp: bool = False,
-    transition_min_prob: Optional[float] = None,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    transition_min_prob: float | None = None,
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
     """Viterbi decoding from binary (multi-label), discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,
@@ -1960,7 +1958,7 @@ def transition_uniform(n_states: int) -> np.ndarray:
     return transition
 
 
-def transition_loop(n_states: int, prob: Union[float, Iterable[float]]) -> np.ndarray:
+def transition_loop(n_states: int, prob: float | Iterable[float]) -> np.ndarray:
     """Construct a self-loop transition matrix over ``n_states``.
 
     The transition matrix will have the following properties:
@@ -2025,7 +2023,7 @@ def transition_loop(n_states: int, prob: Union[float, Iterable[float]]) -> np.nd
     return transition
 
 
-def transition_cycle(n_states: int, prob: Union[float, Iterable[float]]) -> np.ndarray:
+def transition_cycle(n_states: int, prob: float | Iterable[float]) -> np.ndarray:
     """Construct a cyclic transition matrix over ``n_states``.
 
     The transition matrix will have the following properties:
@@ -2091,7 +2089,7 @@ def transition_cycle(n_states: int, prob: Union[float, Iterable[float]]) -> np.n
 
 def transition_local(
     n_states: int,
-    width: Union[int, Iterable[int]],
+    width: int | Iterable[int],
     *,
     window: _WindowSpec = "triangle",
     wrap: bool = False,

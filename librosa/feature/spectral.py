@@ -17,7 +17,7 @@ from ..core.spectrum import _spectrogram, power_to_db
 from ..util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Collection, Literal, Optional, Union
+    from typing import Any, Collection, Literal
 
     from numpy.typing import DTypeLike
 
@@ -45,13 +45,13 @@ __all__ = [
 # -- Spectral features -- #
 def spectral_centroid(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    freq: Optional[np.ndarray] = None,
-    win_length: Optional[int] = None,
+    freq: np.ndarray | None = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
@@ -192,17 +192,17 @@ def spectral_centroid(
 
 def spectral_bandwidth(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    freq: Optional[np.ndarray] = None,
-    centroid: Optional[np.ndarray] = None,
+    freq: np.ndarray | None = None,
+    centroid: np.ndarray | None = None,
     norm: bool = True,
     p: float = 2,
 ) -> np.ndarray:
@@ -352,16 +352,16 @@ def spectral_bandwidth(
 
 def spectral_contrast(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    freq: Optional[np.ndarray] = None,
+    freq: np.ndarray | None = None,
     fmin: float = 200.0,
     n_bands: int = 6,
     quantile: float = 0.02,
@@ -532,16 +532,16 @@ def spectral_contrast(
 
 def spectral_rolloff(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    freq: Optional[np.ndarray] = None,
+    freq: np.ndarray | None = None,
     roll_percent: float = 0.85,
 ) -> np.ndarray:
     """Compute roll-off frequency.
@@ -680,11 +680,11 @@ def spectral_rolloff(
 
 def spectral_flatness(
     *,
-    y: Optional[np.ndarray] = None,
-    S: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
@@ -800,8 +800,8 @@ def spectral_flatness(
 
 def rms(
     *,
-    y: Optional[np.ndarray] = None,
-    S: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
+    S: np.ndarray | None = None,
     frame_length: int = 2048,
     hop_length: int = 512,
     center: bool = True,
@@ -913,17 +913,17 @@ def rms(
 
 def poly_features(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
     order: int = 1,
-    freq: Optional[np.ndarray] = None,
+    freq: np.ndarray | None = None,
 ) -> np.ndarray:
     """Get coefficients of fitting an nth-order polynomial to the columns
     of a spectrogram.
@@ -1131,17 +1131,17 @@ def zero_crossing_rate(
 # -- Chroma --#
 def chroma_stft(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
-    norm: Optional[float] = np.inf,
+    S: np.ndarray | None = None,
+    norm: float | None = np.inf,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    tuning: Optional[float] = None,
+    tuning: float | None = None,
     n_chroma: int = 12,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -1288,18 +1288,18 @@ def chroma_stft(
 
 def chroma_cqt(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    C: Optional[np.ndarray] = None,
+    C: np.ndarray | None = None,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
-    norm: Optional[Union[int, float]] = np.inf,
+    fmin: _FloatLike_co | None = None,
+    norm: float | None = np.inf,
     threshold: float = 0.0,
-    tuning: Optional[float] = None,
+    tuning: float | None = None,
     n_chroma: int = 12,
     n_octaves: int = 7,
-    window: Optional[np.ndarray] = None,
-    bins_per_octave: Optional[int] = 36,
+    window: np.ndarray | None = None,
+    bins_per_octave: int | None = 36,
     cqt_mode: str = "full",
 ) -> np.ndarray:
     r"""Constant-Q chromagram
@@ -1418,19 +1418,19 @@ def chroma_cqt(
 
 def chroma_cens(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    C: Optional[np.ndarray] = None,
+    C: np.ndarray | None = None,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
-    tuning: Optional[float] = None,
+    fmin: _FloatLike_co | None = None,
+    tuning: float | None = None,
     n_chroma: int = 12,
     n_octaves: int = 7,
     bins_per_octave: int = 36,
     cqt_mode: str = "full",
-    window: Optional[np.ndarray] = None,
-    norm: Optional[float] = 2,
-    win_len_smooth: Optional[int] = 41,
+    window: np.ndarray | None = None,
+    norm: float | None = 2,
+    win_len_smooth: int | None = 41,
     smoothing_window: _WindowSpec = "hann",
 ) -> np.ndarray:
     r"""Compute the chroma variant "Chroma Energy Normalized" (CENS)
@@ -1568,13 +1568,13 @@ def chroma_cens(
 
 def chroma_vqt(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    V: Optional[np.ndarray] = None,
+    V: np.ndarray | None = None,
     hop_length: int = 512,
-    fmin: Optional[float] = None,
-    intervals: Union[str, Collection[float]],
-    norm: Optional[float] = np.inf,
+    fmin: float | None = None,
+    intervals: str | Collection[float],
+    norm: float | None = np.inf,
     threshold: float = 0.0,
     n_octaves: int = 7,
     bins_per_octave: int = 12,
@@ -1701,9 +1701,9 @@ def chroma_vqt(
 
 def tonnetz(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    chroma: Optional[np.ndarray] = None,
+    chroma: np.ndarray | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute the tonal centroid features (tonnetz)
@@ -1835,14 +1835,14 @@ def tonnetz(
 # -- Mel spectrogram and MFCCs -- #
 def mfcc(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_mfcc: int = 20,
     dct_type: _DCTType = 2,
-    norm: Optional[_DCTNorm] = "ortho",
+    norm: _DCTNorm | None = "ortho",
     lifter: float = 0,
-    mel_norm: Optional[Union[Literal["slaney"], float]] = "slaney",
+    mel_norm: Literal["slaney"] | float | None = "slaney",
     **kwargs: Any,
 ) -> np.ndarray:
     """Mel-frequency cepstral coefficients (MFCCs)
@@ -2017,12 +2017,12 @@ def mfcc(
 
 def melspectrogram(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",

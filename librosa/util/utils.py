@@ -16,7 +16,7 @@ from .._cache import cache
 from .exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Literal, Optional, Sequence, Tuple, Union
+    from typing import Any, Callable, Dict, List, Literal, Sequence, Tuple
 
     from numpy.typing import DTypeLike
 
@@ -304,7 +304,7 @@ def valid_audio(y: np.ndarray) -> bool:
     return True
 
 
-def valid_int(x: float, *, cast: Optional[Callable[[float], float]] = None) -> int:
+def valid_int(x: float, *, cast: Callable[[float], float] | None = None) -> int:
     """Ensure that an input value is integer-typed.
     This is primarily useful for ensuring integrable-valued
     array indices.
@@ -452,7 +452,7 @@ def pad_center(
 
 
 def expand_to(
-    x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int], Sequence[slice]]
+    x: np.ndarray, *, ndim: int, axes: int | slice | Sequence[int] | Sequence[slice]
 ) -> np.ndarray:
     """Expand the dimensions of an input array with
 
@@ -584,8 +584,8 @@ def fix_length(
 def fix_frames(
     frames: _SequenceLike[int],
     *,
-    x_min: Optional[int] = 0,
-    x_max: Optional[int] = None,
+    x_min: int | None = 0,
+    x_max: int | None = None,
     pad: bool = True,
 ) -> np.ndarray:
     """Fix a list of frames to lie within [x_min, x_max]
@@ -676,7 +676,7 @@ def axis_sort(
     *,
     axis: int = ...,
     index: Literal[False] = ...,
-    value: Optional[Callable[..., Any]] = ...,
+    value: Callable[..., Any] | None = ...,
 ) -> np.ndarray: ...
 
 
@@ -686,7 +686,7 @@ def axis_sort(
     *,
     axis: int = ...,
     index: Literal[True],
-    value: Optional[Callable[..., Any]] = ...,
+    value: Callable[..., Any] | None = ...,
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
@@ -695,8 +695,8 @@ def axis_sort(
     *,
     axis: int = -1,
     index: bool = False,
-    value: Optional[Callable[..., Any]] = None,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    value: Callable[..., Any] | None = None,
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
     """Sort an array along its rows or columns.
 
     Examples
@@ -794,10 +794,10 @@ def axis_sort(
 def normalize(
     S: np.ndarray,
     *,
-    norm: Optional[float] = np.inf,
-    axis: Optional[int] = 0,
-    threshold: Optional[_FloatLike_co] = None,
-    fill: Optional[bool] = None,
+    norm: float | None = np.inf,
+    axis: int | None = 0,
+    threshold: _FloatLike_co | None = None,
+    fill: bool | None = None,
 ) -> np.ndarray:
     """Normalize an array along a chosen axis.
 
@@ -1453,7 +1453,7 @@ def peak_pick(
 
 @cache(level=40)
 def sparsify_rows(
-    x: np.ndarray, *, quantile: float = 0.01, dtype: Optional[DTypeLike] = None
+    x: np.ndarray, *, quantile: float = 0.01, dtype: DTypeLike | None = None
 ) -> scipy.sparse.csr_array:
     """Return a row-sparse array approximating the input
 
@@ -1586,9 +1586,9 @@ def buf_to_float(
 def index_to_slice(
     idx: _SequenceLike[int],
     *,
-    idx_min: Optional[int] = None,
-    idx_max: Optional[int] = None,
-    step: Optional[int] = None,
+    idx_min: int | None = None,
+    idx_max: int | None = None,
+    step: int | None = None,
     pad: bool = True,
 ) -> List[slice]:
     """Generate a slice array from an index array.
@@ -1644,9 +1644,9 @@ def index_to_slice(
 @cache(level=40)
 def sync(
     data: np.ndarray,
-    idx: Union[Sequence[int], Sequence[slice]],
+    idx: Sequence[int] | Sequence[slice],
     *,
-    aggregate: Optional[Callable[..., Any]] = None,
+    aggregate: Callable[..., Any] | None = None,
     pad: bool = True,
     axis: int = -1,
 ) -> np.ndarray:
@@ -1886,7 +1886,7 @@ def softmask(
     return mask
 
 
-def tiny(x: Union[float, np.ndarray]) -> np.floating[Any]:
+def tiny(x: complex | np.ndarray) -> np.floating[Any]:
     """Compute the tiny-value corresponding to an input's data type.
 
     This is the smallest "usable" number representable in ``x.dtype``
@@ -1897,7 +1897,7 @@ def tiny(x: Union[float, np.ndarray]) -> np.floating[Any]:
 
     Parameters
     ----------
-    x : number or np.ndarray
+    x : number (real or complex) or np.ndarray
         The array to compute the tiny-value for.
         All that matters here is ``x.dtype``
 
@@ -2105,15 +2105,15 @@ def __shear_dense(X: np.ndarray, *, factor: int = +1, axis: int = -1) -> np.ndar
     return X_shear
 
 if TYPE_CHECKING:
-    def _asformat_sparse(X: Union[_SparseArray, _SparseMatrix], fmt: str) -> Union[_SparseArray, _SparseMatrix]: ...
+    def _asformat_sparse(X: _SparseArray | _SparseMatrix, fmt: str) -> _SparseArray | _SparseMatrix: ...
 else:
     def _asformat_sparse(X, fmt):
         return X.asformat(fmt)
 
 
 def __shear_sparse(
-    X: Union[_SparseArray, _SparseMatrix], *, factor: int = +1, axis: int = -1
-) -> Union[_SparseArray, _SparseMatrix]:
+    X: _SparseArray | _SparseMatrix, *, factor: int = +1, axis: int = -1
+) -> _SparseArray | _SparseMatrix:
     """Fast shearing for sparse arrays/matrices
 
     Shearing is performed using CSC indices,
@@ -2130,7 +2130,7 @@ def __shear_sparse(
     X_in = X.T if axis == 0 else X
 
     # Now we're definitely rolling on the correct axis, and definitely CSC
-    X_shear: Union[scipy.sparse.csc_array, scipy.sparse.csc_matrix]
+    X_shear: scipy.sparse.csc_array | scipy.sparse.csc_matrix
     if is_matrix:
         X_shear = scipy.sparse.csc_matrix(X_in, copy=True)
     else:
@@ -2157,11 +2157,11 @@ def __shear_sparse(
 @overload
 def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 @overload
-def shear(X: Union[_SparseArray, _SparseMatrix], *,
-          factor: int = ..., axis: int = ...) -> Union[_SparseArray, _SparseMatrix]: ...
+def shear(X: _SparseArray | _SparseMatrix, *,
+          factor: int = ..., axis: int = ...) -> _SparseArray | _SparseMatrix: ...
 def shear(
-    X: Union[np.ndarray, _SparseArray, _SparseMatrix], *, factor: int = 1, axis: int = -1
-) -> Union[np.ndarray, _SparseArray, _SparseMatrix]:
+    X: np.ndarray | _SparseArray | _SparseMatrix, *, factor: int = 1, axis: int = -1
+) -> np.ndarray | _SparseArray | _SparseMatrix:
     """Shear an array (or matrix) by a given factor.
 
     The column ``X[:, n]`` will be displaced (rolled)
@@ -2315,7 +2315,7 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
         return result
 
 
-def dtype_r2c(d: DTypeLike, *, default: Optional[type] = np.complex64) -> DTypeLike:
+def dtype_r2c(d: DTypeLike, *, default: type | None = np.complex64) -> DTypeLike:
     """Find the complex numpy dtype corresponding to a real dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2371,7 +2371,7 @@ def dtype_r2c(d: DTypeLike, *, default: Optional[type] = np.complex64) -> DTypeL
     return np.dtype(mapping.get(dt, default))
 
 
-def dtype_c2r(d: DTypeLike, *, default: Optional[type] = np.float32) -> DTypeLike:
+def dtype_c2r(d: DTypeLike, *, default: type | None = np.float32) -> DTypeLike:
     """Find the real numpy dtype corresponding to a complex dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2542,14 +2542,14 @@ def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
 
 
 @overload
-def abs2(x: np.ndarray, dtype: Optional[DTypeLike] = ...) -> np.ndarray: ...
+def abs2(x: np.ndarray, dtype: DTypeLike | None = ...) -> np.ndarray: ...
 
 @overload
-def abs2(x: _Complex, dtype: Optional[DTypeLike] = ...) -> np.floating[Any]: ...
+def abs2(x: _Complex, dtype: DTypeLike | None = ...) -> np.floating[Any]: ...
 
-def abs2(x: Union[np.ndarray, _Real, _Complex],
-         dtype: Optional[DTypeLike] = None
-) -> Union[np.ndarray, np.floating[Any]]:
+def abs2(x: np.ndarray | _Real | _Complex,
+         dtype: DTypeLike | None = None
+) -> np.ndarray | np.floating[Any]:
     """Compute the squared magnitude of a real or complex array.
 
     This function is equivalent to calling `np.abs(x)**2` but it
@@ -2598,20 +2598,20 @@ def _phasor_angles(x) -> np.complexfloating[Any, Any]:
 
 
 @overload
-def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray: ...
+def phasor(angles: np.ndarray, *, mag: np.ndarray | None = ...) -> np.ndarray: ...
 
 
 @overload
 def phasor(
-    angles: _Real, *, mag: Optional[_Number] = ...
+    angles: _Real, *, mag: _Number | None = ...
 ) -> np.complexfloating[Any, Any]: ...
 
 
 def phasor(
-    angles: Union[np.ndarray, _Real],
+    angles: np.ndarray | _Real,
     *,
-    mag: Optional[Union[np.ndarray, _Number]] = None,
-) -> Union[np.ndarray, np.complexfloating[Any, Any]]:
+    mag: np.ndarray | _Number | None = None,
+) -> np.ndarray | np.complexfloating[Any, Any]:
     """Construct a complex phasor representation from angles.
 
     When `mag` is not provided, this is equivalent to:
@@ -2681,7 +2681,7 @@ def interp_broadcast(
     x1_pos: np.ndarray,
     x2: np.ndarray,
     x2_pos: np.ndarray,
-    interp_pos: Optional[np.ndarray] = None,
+    interp_pos: np.ndarray | None = None,
     op: None,
     kind: _InterpKind = "linear",
     fill_value: float = 0,
@@ -2696,7 +2696,7 @@ def interp_broadcast(
     x1_pos: np.ndarray,
     x2: np.ndarray,
     x2_pos: np.ndarray,
-    interp_pos: Optional[np.ndarray] = None,
+    interp_pos: np.ndarray | None = None,
     op: Callable[[np.ndarray, np.ndarray], np.ndarray] = np.multiply,
     kind: _InterpKind = "linear",
     fill_value: float = 0,
@@ -2710,12 +2710,12 @@ def interp_broadcast(
     x1_pos: np.ndarray,
     x2: np.ndarray,
     x2_pos: np.ndarray,
-    interp_pos: Optional[np.ndarray] = None,
-    op: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = np.multiply,
+    interp_pos: np.ndarray | None = None,
+    op: Callable[[np.ndarray, np.ndarray], np.ndarray] | None = np.multiply,
     kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
     """Broadcast two arrays using interpolation
 
     Interpolates two arrays along a given axis to a common grid, and performs a broadcast operation

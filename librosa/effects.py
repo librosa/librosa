@@ -42,7 +42,7 @@ from . import core, decompose, feature, util
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Iterable, List, Literal, Optional, Tuple, Union
+    from typing import Any, Callable, Iterable, List, Literal, Tuple
 
     from numpy.typing import ArrayLike
 
@@ -69,17 +69,13 @@ __all__ = [
 def hpss(
     y: np.ndarray,
     *,
-    kernel_size: Union[
-        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
-    ] = 31,
+    kernel_size: _IntLike_co | Tuple[_IntLike_co, _IntLike_co] | List[_IntLike_co] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: Union[
-        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
-    ] = 1.0,
+    margin: _FloatLike_co | Tuple[_FloatLike_co, _FloatLike_co] | List[_FloatLike_co] = 1.0,
     n_fft: int = 2048,
-    hop_length: Optional[int] = None,
-    win_length: Optional[int] = None,
+    hop_length: int | None = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
@@ -169,17 +165,13 @@ def hpss(
 def harmonic(
     y: np.ndarray,
     *,
-    kernel_size: Union[
-        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
-    ] = 31,
+    kernel_size: _IntLike_co | Tuple[_IntLike_co, _IntLike_co] | List[_IntLike_co] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: Union[
-        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
-    ] = 1.0,
+    margin: _FloatLike_co | Tuple[_FloatLike_co, _FloatLike_co] | List[_FloatLike_co] = 1.0,
     n_fft: int = 2048,
-    hop_length: Optional[int] = None,
-    win_length: Optional[int] = None,
+    hop_length: int | None = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
@@ -255,17 +247,13 @@ def harmonic(
 def percussive(
     y: np.ndarray,
     *,
-    kernel_size: Union[
-        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
-    ] = 31,
+    kernel_size: _IntLike_co | Tuple[_IntLike_co, _IntLike_co] | List[_IntLike_co] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: Union[
-        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
-    ] = 1.0,
+    margin: _FloatLike_co | Tuple[_FloatLike_co, _FloatLike_co] | List[_FloatLike_co] = 1.0,
     n_fft: int = 2048,
-    hop_length: Optional[int] = None,
-    win_length: Optional[int] = None,
+    hop_length: int | None = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
@@ -558,7 +546,7 @@ def _signal_to_frame_nonsilent(
     frame_length: int = 2048,
     hop_length: int = 512,
     top_db: float = 60,
-    ref: Union[Callable, float] = np.max,
+    ref: Callable | float = np.max,
     aggregate: Callable = np.max,
 ) -> np.ndarray:
     """Frame-wise non-silent indicator for audio input.
@@ -616,7 +604,7 @@ def trim(
     y: np.ndarray,
     *,
     top_db: float = 60,
-    ref: Union[float, Callable] = np.max,
+    ref: float | Callable = np.max,
     frame_length: int = 2048,
     hop_length: int = 512,
     aggregate: Callable = np.max,
@@ -702,7 +690,7 @@ def split(
     y: np.ndarray,
     *,
     top_db: float = 60,
-    ref: Union[float, Callable] = np.max,
+    ref: float | Callable = np.max,
     frame_length: int = 2048,
     hop_length: int = 512,
     aggregate: Callable = np.max,
@@ -773,7 +761,7 @@ def preemphasis(
     y: np.ndarray,
     *,
     coef: float = ...,
-    zi: Optional[ArrayLike] = ...,
+    zi: ArrayLike | None = ...,
     return_zf: Literal[False] = ...,
 ) -> np.ndarray: ...
 
@@ -783,7 +771,7 @@ def preemphasis(
     y: np.ndarray,
     *,
     coef: float = ...,
-    zi: Optional[ArrayLike] = ...,
+    zi: ArrayLike | None = ...,
     return_zf: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
@@ -793,18 +781,18 @@ def preemphasis(
     y: np.ndarray,
     *,
     coef: float = ...,
-    zi: Optional[ArrayLike] = ...,
+    zi: ArrayLike | None = ...,
     return_zf: bool,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]: ...
 
 
 def preemphasis(
     y: np.ndarray,
     *,
     coef: float = 0.97,
-    zi: Optional[ArrayLike] = None,
+    zi: ArrayLike | None = None,
     return_zf: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
     """Pre-emphasize an audio signal with a first-order differencing filter:
 
         y[n] -> y[n] - coef * y[n-1]
@@ -900,7 +888,7 @@ def deemphasis(
     y: np.ndarray,
     *,
     coef: float = ...,
-    zi: Optional[ArrayLike] = ...,
+    zi: ArrayLike | None = ...,
     return_zf: Literal[False] = ...,
 ) -> np.ndarray: ...
 
@@ -910,7 +898,7 @@ def deemphasis(
     y: np.ndarray,
     *,
     coef: float = ...,
-    zi: Optional[ArrayLike] = ...,
+    zi: ArrayLike | None = ...,
     return_zf: Literal[True],
 ) -> Tuple[np.ndarray, np.ndarray]: ...
 
@@ -919,9 +907,9 @@ def deemphasis(
     y: np.ndarray,
     *,
     coef: float = 0.97,
-    zi: Optional[ArrayLike] = None,
+    zi: ArrayLike | None = None,
     return_zf: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:
