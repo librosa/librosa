@@ -751,7 +751,7 @@ def pyin(
     >>> img = librosa.display.specshow(D, x_axis='time', y_axis='log', ax=ax)
     >>> ax.set(title='pYIN fundamental frequency estimation')
     >>> librosa.display.colorbar_db(img)
-    >>> ax.plot(times, f0, label='f0', color='cyan', linewidth=3)
+    >>> ax.plot(times, f0, label='f0', path_effects=librosa.display.highlight(ax=ax))
     >>> ax.legend(loc='upper right')
     """
     if fmin is None or fmax is None:

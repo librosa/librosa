@@ -386,8 +386,9 @@ def f0_harmonics(
     >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          x_axis='time', y_axis='log', ax=ax[0])
     >>> times = librosa.times_like(f0)
+    >>> highlight = librosa.display.highlight(ax=ax[0])
     >>> for h in harmonics:
-    ...     ax[0].plot(times, h * f0, label=f"{h}*f0")
+    ...     ax[0].plot(times, h * f0, label=f"{h}*f0", path_effects=highlight)
     >>> ax[0].legend(ncols=4, loc='lower right')
     >>> ax[0].label_outer()
     >>> librosa.display.specshow(f0_harm, vscale='dBFS',

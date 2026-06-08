@@ -71,7 +71,8 @@ times = librosa.times_like(S, sr=sr)
 fig, ax = plt.subplots()
 librosa.display.specshow(S, vscale='dBFS',
                          y_axis='log', x_axis='time', ax=ax)
-ax.plot(times, f0, linewidth=2, color='white', label='f0')
+hl = librosa.display.highlight(ax=ax, linewidth=3, alpha=0.75, color='k')
+ax.plot(times, f0, linewidth=2, color='white', label='f0', path_effects=hl)
 ax.legend()
 
 ##########################################################
