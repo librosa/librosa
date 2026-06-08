@@ -1886,7 +1886,7 @@ def softmask(
     return mask
 
 
-def tiny(x: float | np.ndarray) -> np.floating[Any]:
+def tiny(x: complex | np.ndarray) -> np.floating[Any]:
     """Compute the tiny-value corresponding to an input's data type.
 
     This is the smallest "usable" number representable in ``x.dtype``
@@ -1897,7 +1897,7 @@ def tiny(x: float | np.ndarray) -> np.floating[Any]:
 
     Parameters
     ----------
-    x : number or np.ndarray
+    x : number (real or complex) or np.ndarray
         The array to compute the tiny-value for.
         All that matters here is ``x.dtype``
 
