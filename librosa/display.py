@@ -4150,18 +4150,23 @@ def highlight(
         The artist to which the highlight effect should be applied.  If not provided, the
         function will still return the appropriate path effect object(s) based on the contents
         of `ax`, but will not apply them to any artist.
+
     ax : matplotlib.axes.Axes, optional
         The axes to inspect for color-mapped data to determine the appropriate highlight color.
         If not provided, the function will attempt to infer an appropriate axes object from
         `artist`, and if that fails, will default to the current axes (`plt.gca()`).
+
     color : color specifier, optional
         A color specification to use directly for the highlight, bypassing the automatic color
         inference.  If not provided, the function will determine whether to use `bright_color`
         or `dark_color` based on the contents of `ax` and the `luminance_threshold`.
+
     bright_color : color specifier, default 'white'
         The color to use for the highlight if the underlying axes is determined to be dark.
+
     dark_color : color specifier, default 'black'
         The color to use for the highlight if the underlying axes is determined to be bright.
+
     luminance_threshold : float, default 0.5
         The luminance threshold for determining whether the underlying axes is considered bright or dark.
         Luminance is calculated by converting the relevant color to YIQ color space and taking
@@ -4169,10 +4174,15 @@ def highlight(
         considered bright and `dark_color` will be used for the highlight.  If the luminance is
         below this threshold, the axes is considered dark and `bright_color` will be used for
         the highlight.
+
     **kwargs : dict
         Additional keyword arguments to pass to `matplotlib.patheffects.withStroke` when
         creating the highlight effect.  Common options include `linewidth` (default to 2) and
         `alpha` (default to 1.0).
+
+        .. note:: `foreground`, if provided, will override the `color` parameter and the
+          automatic color inference.  To avoid confusion, it's recommended to specify highlight
+          color via the `color` parameter and not to provide `foreground` in `kwargs`.
 
     Returns
     -------
@@ -4221,7 +4231,8 @@ def highlight(
         else:
             ax = plt.gca()
 
-    # 2. Determine base colors
+    # 2. Infer highlight color
+    color = kwargs.pop("foreground", color)
     if color is None:
         if _get_ax_bright_highlight(ax, luminance_threshold):
             # Axes is dark, so we want a bright highlight
