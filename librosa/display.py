@@ -4143,7 +4143,6 @@ def highlight(*,
     Alternatively, the user can bypass the automatic color inference and directly specify a
     highlight color via the `color` parameter.
 
-
     Parameters
     ----------
     artist : matplotlib.artist.Artist, optional
@@ -4169,7 +4168,7 @@ def highlight(*,
         considered bright and `dark_color` will be used for the highlight.  If the luminance is
         below this threshold, the axes is considered dark and `bright_color` will be used for
         the highlight.
-    kwargs : dict
+    **kwargs : dict
         Additional keyword arguments to pass to `matplotlib.patheffects.withStroke` when
         creating the highlight effect.  Common options include `linewidth` (default to 2) and
         `alpha` (default to 1.0).
