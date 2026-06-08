@@ -2459,3 +2459,24 @@ def test_highlight_axescolor():
     ax[2].plot(x, y, path_effects=hl2)
 
     return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["highlight_artist"],
+    extensions=["png"],
+    tolerance=6,
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_highlight_artist():
+
+    fig, ax = plt.subplots()
+    x = np.linspace(0, 5, num=100)
+    y = x * np.exp(-x**2)
+
+    hl = librosa.display.highlight(ax=ax, linewidth=5)
+    ax.plot(x, y, path_effects=hl)
+
+    lines2 = ax.plot(x, 1 + y)[0]
+    librosa.display.highlight(artist=lines2, linewidth=5)
+    return fig
