@@ -3,7 +3,7 @@
 """Functions for interval construction"""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Final, overload
 
 import msgpack
 import numpy as np
@@ -19,9 +19,9 @@ if TYPE_CHECKING:
     from .._typing import _FloatLike_co
 
 
-with _resource_file("librosa.core", "intervals.msgpack") as imsgpack, imsgpack.open("rb") as _fdesc:
+with _resource_file("librosa.core", "intervals.msgpack") as _imsgpack, _imsgpack.open("rb") as _fdesc:
     # We use floats for dictionary keys, so strict mapping is disabled
-    INTERVALS = msgpack.load(_fdesc, strict_map_key=False)
+    INTERVALS: Final[dict[float, dict[int, int]]] = msgpack.load(_fdesc, strict_map_key=False)
 
 
 @cache(level=10)
