@@ -4175,7 +4175,7 @@ def highlight(
     dark_color: ColorType = "black",
     luminance_threshold: float = 0.5,
     **kwargs: Any,
-) -> List[mpe.AbstractPathEffect]:
+) -> list[mpe.AbstractPathEffect]:
     """Apply a contrasting highlight effect to a matplotlib artist.
 
     This is primarily useful for providing contrast between an artist
