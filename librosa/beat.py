@@ -20,44 +20,14 @@ import scipy
 from . import core, onset, util
 from .feature import fourier_tempogram
 from .feature import tempo as _tempo
-from .util.decorators import moved
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-    from typing import Any
-
     import scipy.stats
-    from typing_extensions import deprecated
 
     from ._typing import _FloatLike_co
 
-__all__ = ["beat_track", "tempo", "plp"]
-
-
-if TYPE_CHECKING:
-    @deprecated(
-        "This function was moved to 'librosa.feature' in librosa version 0.10.0."
-        "This alias will be removed in librosa version 1.0."
-    )
-    def tempo(  # noqa: D103
-        *,
-        y: np.ndarray | None = None,
-        sr: float = 22050,
-        onset_envelope: np.ndarray | None = None,
-        tg: np.ndarray | None = None,
-        hop_length: int = 512,
-        start_bpm: float = 120,
-        std_bpm: float = 1.0,
-        ac_size: float = 8.0,
-        max_tempo: float | None = 320.0,
-        aggregate: Callable[..., Any] | None = np.mean,
-        prior: scipy.stats.rv_continuous | None = None,
-    ) -> np.ndarray: ...
-else:
-    tempo = moved(moved_from="librosa.beat.tempo", version="0.10.0", version_removed="1.0")(
-        _tempo
-    )
+__all__ = ["beat_track", "plp"]
 
 
 def beat_track(
