@@ -19,7 +19,7 @@ from . import convert
 from .audio import resample
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, List, Literal, Tuple
+    from typing import Any, Callable, Literal
 
     from numpy.typing import DTypeLike
 
@@ -653,7 +653,7 @@ def __reassign_frequencies(
     center: bool = True,
     dtype: DTypeLike | None = None,
     pad_mode: _PadModeSTFT = "constant",
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Instantaneous frequencies based on a spectrogram representation.
 
     The reassignment vector is calculated using equation 5.20 in Flandrin,
@@ -816,7 +816,7 @@ def __reassign_times(
     center: bool = True,
     dtype: DTypeLike | None = None,
     pad_mode: _PadModeSTFT = "constant",
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Time reassignments based on a spectrogram representation.
 
     The reassignment vector is calculated using equation 5.23 in Flandrin,
@@ -1003,7 +1003,7 @@ def reassigned_spectrogram(
     clip: bool = True,
     dtype: DTypeLike | None = None,
     pad_mode: _PadModeSTFT = "constant",
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     r"""Time-frequency reassigned spectrogram.
 
     The reassignment vectors are calculated using equations 5.20 and 5.23 in
@@ -1292,7 +1292,7 @@ def reassigned_spectrogram(
     return freqs, times, mags
 
 
-def magphase(D: np.ndarray, *, power: float = 1) -> Tuple[np.ndarray, np.ndarray]:
+def magphase(D: np.ndarray, *, power: float = 1) -> tuple[np.ndarray, np.ndarray]:
     """Separate a complex-valued spectrogram D into its magnitude (S)
     and phase (P) components, so that ``D = S * P``.
 
@@ -1664,7 +1664,7 @@ def iirt(
 
     bands_power = np.empty_like(y, shape=shape)
 
-    slices: List[int | slice] = [slice(None) for _ in bands_power.shape]
+    slices: list[int | slice] = [slice(None) for _ in bands_power.shape]
     import scipy.signal
     for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates,
                                                  filterbank_ct,
@@ -2391,7 +2391,7 @@ def pcen(
     max_axis: int | None = ...,
     zi: np.ndarray | None = ...,
     return_zf: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -2412,7 +2412,7 @@ def pcen(
     max_axis: int | None = ...,
     zi: np.ndarray | None = ...,
     return_zf: bool = ...,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]: ...
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]: ...
 
 
 @cache(level=30)
@@ -2433,7 +2433,7 @@ def pcen(
     max_axis: int | None = None,
     zi: np.ndarray | None = None,
     return_zf: bool = False,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Per-channel energy normalization (PCEN)
 
     This function normalizes a time-frequency representation ``S`` by
@@ -2951,7 +2951,7 @@ def _spectrogram(
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-) -> Tuple[np.ndarray, int]:
+) -> tuple[np.ndarray, int]:
     """Retrieve a magnitude spectrogram.
 
     This is primarily used in feature extraction functions that can operate on

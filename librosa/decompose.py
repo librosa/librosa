@@ -22,7 +22,7 @@ from ._cache import cache
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, List, Tuple
+    from typing import Any, Callable
 
     from ._typing import _FloatLike_co, _IntLike_co, _SparseArray
 
@@ -37,7 +37,7 @@ def decompose(
     sort: bool = False,
     fit: bool = True,
     **kwargs: Any,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Decompose a feature matrix.
 
     Given a spectrogram ``S``, produce a decomposition into ``components``
@@ -211,11 +211,11 @@ def decompose(
 def hpss(
     S: np.ndarray,
     *,
-    kernel_size: _IntLike_co | Tuple[_IntLike_co, _IntLike_co] | List[_IntLike_co] = 31,
+    kernel_size: _IntLike_co | tuple[_IntLike_co, _IntLike_co] | list[_IntLike_co] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: _FloatLike_co | Tuple[_FloatLike_co, _FloatLike_co] | List[_FloatLike_co] = 1.0,
-) -> Tuple[np.ndarray, np.ndarray]:
+    margin: _FloatLike_co | tuple[_FloatLike_co, _FloatLike_co] | list[_FloatLike_co] = 1.0,
+) -> tuple[np.ndarray, np.ndarray]:
     """Median-filtering harmonic percussive source separation (HPSS).
 
     If ``margin = 1.0``, decomposes an input spectrogram ``S = H + P``

@@ -72,7 +72,7 @@ from .util.decorators import moved
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Collection, Dict, List, Literal, Sequence, Tuple
+    from typing import Any, Callable, Collection, Literal, Sequence
 
     import cycler
     import matplotlib
@@ -1691,7 +1691,7 @@ def __mesh_coords(ax_type, coords, n, **kwargs):
             )
         return coords
 
-    coord_map: Dict[str | None, Callable[..., np.ndarray]] = {
+    coord_map: dict[str | None, Callable[..., np.ndarray]] = {
         "linear": __coord_fft_hz,
         "fft": __coord_fft_hz,
         "fft_note": __coord_fft_hz,
@@ -2368,7 +2368,7 @@ VSCALE_PATTERN = re.compile(
 )
 
 
-def __parse_vscale(vscale: str) -> Tuple[str, str, float | str | None]:
+def __parse_vscale(vscale: str) -> tuple[str, str, float | str | None]:
     """Parse a vscale string into mode, scale_type, and reference value.
 
     Examples
@@ -3360,14 +3360,14 @@ def colorbar_db(
     return cbar
 
 
-def _squeeze_shape(shape: Tuple[int, ...]) -> Tuple[int, ...]:
+def _squeeze_shape(shape: tuple[int, ...]) -> tuple[int, ...]:
     """Check if two shape arrays are equivalent after squeezing out singleton dimensions."""
     return tuple(dim for dim in shape if dim > 1)
 
 
 def _resolve_multiplot(
     func: Literal["waveshow", "wavebars", "specshow"],
-) -> Tuple[Callable[..., Any], int, List[str]]:
+) -> tuple[Callable[..., Any], int, list[str]]:
     """Resolve multiplot function names.
 
     Parameters
@@ -3399,8 +3399,8 @@ def _resolve_multiplot(
 
 
 def _mp_get_layout(
-    data: Tuple[np.ndarray, ...], dims: int, orient: Literal["h", "v"]
-) -> Tuple[Tuple[int, ...], int, int, bool]:
+    data: tuple[np.ndarray, ...], dims: int, orient: Literal["h", "v"]
+) -> tuple[tuple[int, ...], int, int, bool]:
     """Determine the layout of a multiplot grid based on the data shape and orientation.
 
     Parameters
@@ -3461,11 +3461,11 @@ def _mp_setup_axes(
     fig_kw: dict | None = None,
     nrows: int,
     ncols: int,
-    axshape: Tuple[int, ...],
+    axshape: tuple[int, ...],
     orient: Literal["h", "v"],
     sharex: bool,
     sharey: bool,
-) -> Tuple[matplotlib.figure.FigureBase, np.ndarray, Tuple[int, ...]]:
+) -> tuple[matplotlib.figure.FigureBase, np.ndarray, tuple[int, ...]]:
     """Set up the figure and axes for a multiplot grid.
 
     Parameters
@@ -3553,7 +3553,7 @@ def _mp_setup_axes(
 
 
 def _mp_setup_labels(
-    labels: Sequence[str | None] | None, shape: Tuple[int, ...]
+    labels: Sequence[str | None] | None, shape: tuple[int, ...]
 ) -> np.ndarray:
     """Set up the labels for a multiplot grid.
 
@@ -3580,7 +3580,7 @@ def _mp_setup_labels(
 
 def _mp_setup_prop_group(
     share_properties: bool | Literal["row", "col"] | ArrayLike | None,
-    shape: Tuple[int, ...],
+    shape: tuple[int, ...],
 ) -> np.ndarray:
     """Set up the property groups for a multiplot grid.
 
@@ -3631,7 +3631,7 @@ def _mp_setup_prop_group(
 
 
 def _mp_setup_properties(
-    prop_group: np.ndarray, badprops: List[str], prop_cycle: cycler.Cycler | None
+    prop_group: np.ndarray, badprops: list[str], prop_cycle: cycler.Cycler | None
 ) -> np.ndarray:
     """Set up the properties for each subplot in a multiplot grid based on the property groups.
 
@@ -3858,7 +3858,7 @@ def multiplot(
 
 
 def legend_for_axes(
-    axes: matplotlib.axes.Axes | np.ndarray | List[matplotlib.axes.Axes] | None = None,
+    axes: matplotlib.axes.Axes | np.ndarray | list[matplotlib.axes.Axes] | None = None,
     *,
     loc: str | None = None,
     pad: float = 0.02,

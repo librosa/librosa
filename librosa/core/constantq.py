@@ -21,7 +21,7 @@ from .pitch import estimate_tuning
 from .spectrum import istft, stft
 
 if TYPE_CHECKING:
-    from typing import Collection, List
+    from typing import Collection
 
     from numpy.typing import DTypeLike
 
@@ -1097,7 +1097,7 @@ def __vqt_filter_fft(
 
 
 def __trim_stack(
-    cqt_resp: List[np.ndarray], n_bins: int, dtype: DTypeLike
+    cqt_resp: list[np.ndarray], n_bins: int, dtype: DTypeLike
 ) -> np.ndarray:
     """Trim and stack a collection of CQT responses"""
     max_col = min(c_i.shape[-1] for c_i in cqt_resp)

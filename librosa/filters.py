@@ -47,7 +47,7 @@ from .core.convert import fft_frequencies, hz_to_midi, hz_to_octs, mel_frequenci
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, List, Literal, Tuple
+    from typing import Any, Literal
 
     from numpy.typing import ArrayLike, DTypeLike
 
@@ -428,7 +428,7 @@ def wavelet_lengths(
     filter_scale: float = 1,
     gamma: float | None = 0,
     alpha: float | np.ndarray | None = None,
-) -> Tuple[np.ndarray, float]:
+) -> tuple[np.ndarray, float]:
     """Return length of each filter in a wavelet basis.
 
     Parameters
@@ -597,7 +597,7 @@ def wavelet(
     gamma: float = 0,
     alpha: float | None = None,
     **kwargs: Any,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Construct a wavelet basis using windowed complex sinusoids.
 
     This function constructs a wavelet filterbank at a specified set of center
@@ -986,7 +986,7 @@ def _multirate_fb(
     stopband_attenuation: float = 50,
     ftype: Literal["butter", "cheby1", "cheby2", "ellip"] = "ellip",
     flayout: Literal["ba", "sos", "zpk"] = "sos",
-) -> Tuple[List[Any], np.ndarray]:
+) -> tuple[list[Any], np.ndarray]:
     r"""Construct a multirate filterbank.
 
      A filter bank consists of multiple band-pass filters which divide the input signal
@@ -1100,7 +1100,7 @@ def _multirate_fb(
 
 
 @cache(level=10)
-def mr_frequencies(tuning: float) -> Tuple[np.ndarray, np.ndarray]:
+def mr_frequencies(tuning: float) -> tuple[np.ndarray, np.ndarray]:
     r"""Generate center frequencies and sample rate pairs.
 
     This function will return center frequency and corresponding sample rates
@@ -1160,7 +1160,7 @@ def semitone_filterbank(
     sample_rates: np.ndarray | None = None,
     flayout: Literal["ba", "sos"] = "ba",
     **kwargs: Any,
-) -> Tuple[List[Any], np.ndarray]:
+) -> tuple[list[Any], np.ndarray]:
     r"""Construct a multi-rate bank of infinite-impulse response (IIR)
     band-pass filters at user-defined center frequencies and sample rates.
 

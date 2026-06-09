@@ -16,7 +16,7 @@ from .._cache import cache
 from .exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, List, Literal, Sequence, Tuple
+    from typing import Any, Callable, Literal, Sequence
 
     from numpy.typing import DTypeLike
 
@@ -499,7 +499,7 @@ def expand_to(
     (1, 3, 3, 1)
     """
     # Force axes into a tuple
-    axes_tup: Tuple[int]
+    axes_tup: tuple[int]
     try:
         axes_tup = tuple(axes)  # type: ignore
     except TypeError:
@@ -515,7 +515,7 @@ def expand_to(
             f"Cannot expand x.shape={x.shape} to fewer dimensions ndim={ndim}"
         )
 
-    shape: List[int] = [1] * ndim
+    shape: list[int] = [1] * ndim
     for i, axi in enumerate(axes_tup):
         shape[axi] = x.shape[i]
 
@@ -687,7 +687,7 @@ def axis_sort(
     axis: int = ...,
     index: Literal[True],
     value: Callable[..., Any] | None = ...,
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 def axis_sort(
@@ -696,7 +696,7 @@ def axis_sort(
     axis: int = -1,
     index: bool = False,
     value: Callable[..., Any] | None = None,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Sort an array along its rows or columns.
 
     Examples
@@ -1590,7 +1590,7 @@ def index_to_slice(
     idx_max: int | None = None,
     step: int | None = None,
     pad: bool = True,
-) -> List[slice]:
+) -> list[slice]:
     """Generate a slice array from an index array.
 
     Parameters
@@ -2213,7 +2213,7 @@ def shear(
         return __shear_dense(X, factor=factor, axis=axis)  # type: ignore
 
 
-def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
+def stack(arrays: list[np.ndarray], *, axis: int = 0) -> np.ndarray:
     """Stack one or more arrays along a target axis.
 
     This function is similar to `np.stack`, except that memory contiguity is
@@ -2355,7 +2355,7 @@ def dtype_r2c(d: DTypeLike, *, default: type | None = np.complex64) -> DTypeLike
     >>> librosa.util.dtype_r2c(np.complex128)
     dtype('complex128')
     """
-    mapping: Dict[DTypeLike, type] = {
+    mapping: dict[DTypeLike, type] = {
         np.dtype(np.float32): np.complex64,
         np.dtype(np.float64): np.complex128,
         np.dtype(float): np.dtype(complex).type,
@@ -2414,7 +2414,7 @@ def dtype_c2r(d: DTypeLike, *, default: type | None = np.float32) -> DTypeLike:
     >>> librosa.util.dtype_r2c(np.complex128)
     dtype('float64')
     """
-    mapping: Dict[DTypeLike, type] = {
+    mapping: dict[DTypeLike, type] = {
         np.dtype(np.complex64): np.float32,
         np.dtype(np.complex128): np.float64,
         np.dtype(complex): np.dtype(float).type,
@@ -2686,7 +2686,7 @@ def interp_broadcast(
     kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -2715,7 +2715,7 @@ def interp_broadcast(
     kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Broadcast two arrays using interpolation
 
     Interpolates two arrays along a given axis to a common grid, and performs a broadcast operation

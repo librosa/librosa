@@ -42,7 +42,7 @@ from . import core, decompose, feature, util
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Iterable, List, Literal, Tuple
+    from typing import Any, Callable, Iterable, Literal
 
     from numpy.typing import ArrayLike
 
@@ -69,17 +69,17 @@ __all__ = [
 def hpss(
     y: np.ndarray,
     *,
-    kernel_size: _IntLike_co | Tuple[_IntLike_co, _IntLike_co] | List[_IntLike_co] = 31,
+    kernel_size: _IntLike_co | tuple[_IntLike_co, _IntLike_co] | list[_IntLike_co] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: _FloatLike_co | Tuple[_FloatLike_co, _FloatLike_co] | List[_FloatLike_co] = 1.0,
+    margin: _FloatLike_co | tuple[_FloatLike_co, _FloatLike_co] | list[_FloatLike_co] = 1.0,
     n_fft: int = 2048,
     hop_length: int | None = None,
     win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Decompose an audio time series into harmonic and percussive components.
 
     This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
@@ -165,10 +165,10 @@ def hpss(
 def harmonic(
     y: np.ndarray,
     *,
-    kernel_size: _IntLike_co | Tuple[_IntLike_co, _IntLike_co] | List[_IntLike_co] = 31,
+    kernel_size: _IntLike_co | tuple[_IntLike_co, _IntLike_co] | list[_IntLike_co] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: _FloatLike_co | Tuple[_FloatLike_co, _FloatLike_co] | List[_FloatLike_co] = 1.0,
+    margin: _FloatLike_co | tuple[_FloatLike_co, _FloatLike_co] | list[_FloatLike_co] = 1.0,
     n_fft: int = 2048,
     hop_length: int | None = None,
     win_length: int | None = None,
@@ -247,10 +247,10 @@ def harmonic(
 def percussive(
     y: np.ndarray,
     *,
-    kernel_size: _IntLike_co | Tuple[_IntLike_co, _IntLike_co] | List[_IntLike_co] = 31,
+    kernel_size: _IntLike_co | tuple[_IntLike_co, _IntLike_co] | list[_IntLike_co] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: _FloatLike_co | Tuple[_FloatLike_co, _FloatLike_co] | List[_FloatLike_co] = 1.0,
+    margin: _FloatLike_co | tuple[_FloatLike_co, _FloatLike_co] | list[_FloatLike_co] = 1.0,
     n_fft: int = 2048,
     hop_length: int | None = None,
     win_length: int | None = None,
@@ -478,7 +478,7 @@ def pitch_shift(
 
 
 def remix(
-    y: np.ndarray, intervals: Iterable[Tuple[int, int]], *, align_zeros: bool = True
+    y: np.ndarray, intervals: Iterable[tuple[int, int]], *, align_zeros: bool = True
 ) -> np.ndarray:
     """Remix an audio signal by re-ordering time intervals.
 
@@ -608,7 +608,7 @@ def trim(
     frame_length: int = 2048,
     hop_length: int = 512,
     aggregate: Callable = np.max,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Trim leading and trailing silence from an audio signal.
 
     Silence is defined as segments of the audio signal that are `top_db`
@@ -773,7 +773,7 @@ def preemphasis(
     coef: float = ...,
     zi: ArrayLike | None = ...,
     return_zf: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -783,7 +783,7 @@ def preemphasis(
     coef: float = ...,
     zi: ArrayLike | None = ...,
     return_zf: bool,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]: ...
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]: ...
 
 
 def preemphasis(
@@ -792,7 +792,7 @@ def preemphasis(
     coef: float = 0.97,
     zi: ArrayLike | None = None,
     return_zf: bool = False,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Pre-emphasize an audio signal with a first-order differencing filter:
 
         y[n] -> y[n] - coef * y[n-1]
@@ -900,7 +900,7 @@ def deemphasis(
     coef: float = ...,
     zi: ArrayLike | None = ...,
     return_zf: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 def deemphasis(
@@ -909,7 +909,7 @@ def deemphasis(
     coef: float = 0.97,
     zi: ArrayLike | None = None,
     return_zf: bool = False,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:
