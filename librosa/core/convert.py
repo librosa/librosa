@@ -13,7 +13,7 @@ from ..util.exceptions import ParameterError
 from . import notation
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Dict, Iterable, Sized
+    from typing import Any, Callable, Iterable, Sized
 
     from .._typing import (
         _FloatLike_co,
@@ -796,7 +796,7 @@ def note_to_midi(
     if note == "":
         return np.nan
 
-    pitch_map: Dict[str, int] = {
+    pitch_map: dict[str, int] = {
         "C": 0,
         "D": 2,
         "E": 4,
@@ -805,7 +805,7 @@ def note_to_midi(
         "A": 9,
         "B": 11,
     }
-    acc_map: Dict[str, int] = {
+    acc_map: dict[str, int] = {
         "#": 1,
         "": 0,
         "b": -1,
@@ -2167,7 +2167,7 @@ def Z_weighting(
         return weights
 
 
-WEIGHTING_FUNCTIONS: Dict[
+WEIGHTING_FUNCTIONS: dict[
     str | None, Callable[..., np.floating[Any] | np.ndarray]
 ] = {
     "A": A_weighting,

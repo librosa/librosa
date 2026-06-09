@@ -20,22 +20,14 @@ import scipy
 from . import core, onset, util
 from .feature import fourier_tempogram
 from .feature import tempo as _tempo
-from .util.decorators import moved
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Tuple
-
     import scipy.stats
 
     from ._typing import _FloatLike_co
 
-__all__ = ["beat_track", "tempo", "plp"]
-
-
-tempo = moved(moved_from="librosa.beat.tempo", version="0.10.0", version_removed="1.0")(
-    _tempo
-)
+__all__ = ["beat_track", "plp"]
 
 
 def beat_track(
@@ -51,7 +43,7 @@ def beat_track(
     prior: scipy.stats.rv_continuous | None = None,
     units: str = "frames",
     sparse: bool = True
-) -> Tuple[_FloatLike_co | np.ndarray, np.ndarray]:
+) -> tuple[_FloatLike_co | np.ndarray, np.ndarray]:
     r"""Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [#]_:

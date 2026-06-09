@@ -16,7 +16,7 @@ from ..util.exceptions import ParameterError
 from .intervals import INTERVALS
 
 if TYPE_CHECKING:
-    from typing import Dict, Iterable, List
+    from typing import Iterable
 
     from .._typing import _FloatLike_co, _IterableLike, _ScalarOrSequence, _SequenceLike
 
@@ -290,7 +290,7 @@ def mela_to_degrees(mela: str | int) -> np.ndarray:
 @cache(level=10)
 def mela_to_svara(
     mela: str | int, *, abbr: bool = True, unicode: bool = True
-) -> List[str]:
+) -> list[str]:
     """Spell the Carnatic svara names for a given melakarta raga
 
     This function exists to resolve enharmonic equivalences between
@@ -433,7 +433,7 @@ def mela_to_svara(
     return list(svara_map)
 
 
-def list_mela() -> Dict[str, int]:
+def list_mela() -> dict[str, int]:
     """List melakarta ragas by name and index.
 
     Melakarta raga names are transcribed from [#]_, with the exception of #45
@@ -466,7 +466,7 @@ def list_mela() -> Dict[str, int]:
     return MELAKARTA_MAP.copy()
 
 
-def list_thaat() -> List[str]:
+def list_thaat() -> list[str]:
     """List supported thaats by name.
 
     Returns
@@ -621,7 +621,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
 
 
 @cache(level=10)
-def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> List[str]:
+def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> list[str]:
     """List all 12 note names in the chromatic scale, as spelled according to
     a given key (major or minor) or mode (see below for details and accepted abbreviations).
 

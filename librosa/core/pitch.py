@@ -16,7 +16,7 @@ from . import audio, convert
 from .spectrum import _spectrogram
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Tuple
+    from typing import Any, Callable
 
     from numpy.typing import ArrayLike
 
@@ -195,7 +195,7 @@ def piptrack(
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
     ref: float | Callable | None = None,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Pitch tracking on thresholded parabolically-interpolated STFT.
 
     This implementation uses the parabolic interpolation method described by [#]_.
@@ -633,7 +633,7 @@ def pyin(
     frame_length: int = 2048,
     hop_length: int | None = None,
     n_thresholds: int = 100,
-    beta_parameters: Tuple[float, float] = (2, 18),
+    beta_parameters: tuple[float, float] = (2, 18),
     boltzmann_parameter: float = 2,
     resolution: float = 0.1,
     max_transition_rate: float = 35.92,
@@ -643,7 +643,7 @@ def pyin(
     center: bool = True,
     pad_mode: _PadMode = "constant",
     transition_min_prob: float | None = 1e-4,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 
     pYIN [#]_ is a modificatin of the YIN algorithm [#]_ for fundamental frequency (F0) estimation.

@@ -8,7 +8,7 @@ import glob
 import json
 import os
 from importlib import resources
-from typing import Any, List, Set
+from typing import Any
 
 import msgpack
 import pooch
@@ -174,12 +174,12 @@ def example_info(key: str) -> None:
 def find_files(
     directory: str | os.PathLike[Any],
     *,
-    ext: str | List[str] | None = None,
+    ext: str | list[str] | None = None,
     recurse: bool = True,
     case_sensitive: bool = False,
     limit: int | None = None,
     offset: int = 0,
-) -> List[str]:
+) -> list[str]:
     """Get a sorted list of (audio) files in a directory or directory sub-tree.
 
     Examples
@@ -273,7 +273,7 @@ def find_files(
     return files
 
 
-def __get_files(dir_name: str | os.PathLike[Any], extensions: Set[str]):
+def __get_files(dir_name: str | os.PathLike[Any], extensions: set[str]):
     """Get a list of files in a single directory"""
     # Expand out the directory
     dir_name = os.path.abspath(os.path.expanduser(dir_name))

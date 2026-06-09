@@ -45,7 +45,7 @@ from .util import expand_to, fill_off_diagonal, is_positive_int, pad_center, tin
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Iterable, List, Literal, Tuple
+    from typing import Any, Iterable, Literal
 
     from ._typing import _WindowSpec
 
@@ -111,7 +111,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -127,7 +127,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -144,7 +144,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -160,7 +160,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -177,7 +177,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -193,7 +193,7 @@ def dtw(
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]: ...
 
 
 def dtw(
@@ -210,7 +210,7 @@ def dtw(
     global_constraints: bool = False,
     band_rad: float = 0.25,
     return_steps: bool = False,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray] | Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray] | tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Dynamic time warping (DTW).
 
     This function performs a DTW and path backtracking on two sequences.
@@ -458,7 +458,7 @@ def dtw(
     D = D[max_0:, max_1:]
     steps = steps[max_0:, max_1:]
 
-    return_values: List[np.ndarray]
+    return_values: list[np.ndarray]
     if backtrack:
         wp: np.ndarray
         if subseq:
@@ -518,7 +518,7 @@ def __dtw_calc_accu_cost(
     weights_add: np.ndarray,
     max_0: int,
     max_1: int,
-) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
+) -> tuple[np.ndarray, np.ndarray]:  # pragma: no cover
     """Calculate the accumulated cost matrix D.
 
     Use dynamic programming to calculate the accumulated costs.
@@ -587,7 +587,7 @@ def __dtw_backtracking(
     step_sizes_sigma: np.ndarray,
     subseq: bool,
     start: int | None = None,
-) -> List[Tuple[int, int]]:  # pragma: no cover
+) -> list[tuple[int, int]]:  # pragma: no cover
     """Backtrack optimal warping path.
 
     Uses the saved step sizes from the cost accumulation
@@ -723,7 +723,7 @@ def rqa(
     gap_extend: float = ...,
     knight_moves: bool = ...,
     backtrack: Literal[True] = ...,
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -734,7 +734,7 @@ def rqa(
     gap_extend: float = ...,
     knight_moves: bool = ...,
     backtrack: bool = ...,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]: ...
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]: ...
 
 
 def rqa(
@@ -744,7 +744,7 @@ def rqa(
     gap_extend: float = 1,
     knight_moves: bool = True,
     backtrack: bool = True,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Recurrence quantification analysis (RQA)
 
     This function implements different forms of RQA as described by
@@ -894,7 +894,7 @@ def rqa(
 @jit(nopython=True, cache=True)  # type: ignore
 def __rqa_dp(
     sim: np.ndarray, gap_onset: float, gap_extend: float, knight: bool
-) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
+) -> tuple[np.ndarray, np.ndarray]:  # pragma: no cover
     """RQA dynamic programming implementation"""
     # The output array
     score = np.zeros(sim.shape, dtype=sim.dtype)
@@ -1066,7 +1066,7 @@ def __rqa_backtrack(score, pointers):
     idx = list(np.unravel_index(np.argmax(score), score.shape))
 
     # Construct the path
-    path: List = []
+    path: list = []
     while True:
         bt_index = pointers[tuple(idx)]
 
@@ -1199,7 +1199,7 @@ def _viterbi(
     log_trans: np.ndarray,
     log_p_init: np.ndarray,
     log_trans_threshold: float,
-) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
+) -> tuple[np.ndarray, np.ndarray]:  # pragma: no cover
     """Core Viterbi algorithm.
 
     This is intended for internal use only.
@@ -1289,7 +1289,7 @@ def viterbi(
     p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
     transition_min_prob: float | None = ...,
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -1310,7 +1310,7 @@ def viterbi(
     p_init: np.ndarray | None = None,
     return_logp: bool = False,
     transition_min_prob: float | None = None,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Viterbi decoding from observation likelihoods.
 
     Given a sequence of observation likelihoods ``prob[s, t]``,
@@ -1479,7 +1479,7 @@ def viterbi_discriminative(
     p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
     transition_min_prob: float | None = ...,
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -1491,7 +1491,7 @@ def viterbi_discriminative(
     p_init: np.ndarray | None = ...,
     return_logp: bool,
     transition_min_prob: float | None = ...,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]: ...
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]: ...
 
 
 def viterbi_discriminative(
@@ -1502,7 +1502,7 @@ def viterbi_discriminative(
     p_init: np.ndarray | None = None,
     return_logp: bool = False,
     transition_min_prob: float | None = None,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Viterbi decoding from discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,
@@ -1743,7 +1743,7 @@ def viterbi_binary(
     p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
     transition_min_prob: float | None = ...,
-) -> Tuple[np.ndarray, np.ndarray]: ...
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 @overload
@@ -1755,7 +1755,7 @@ def viterbi_binary(
     p_init: np.ndarray | None = ...,
     return_logp: bool = ...,
     transition_min_prob: float | None = ...,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]: ...
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]: ...
 
 
 def viterbi_binary(
@@ -1766,7 +1766,7 @@ def viterbi_binary(
     p_init: np.ndarray | None = None,
     return_logp: bool = False,
     transition_min_prob: float | None = None,
-) -> np.ndarray | Tuple[np.ndarray, np.ndarray]:
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Viterbi decoding from binary (multi-label), discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,
