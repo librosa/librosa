@@ -7,7 +7,7 @@ import warnings
 from typing import Any
 
 
-class Deprecated(object):
+class Deprecated:
     """A placeholder class to catch usage of deprecated variable names"""
 
     def __repr__(self) -> str:

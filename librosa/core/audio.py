@@ -20,7 +20,7 @@ from .convert import frames_to_samples, time_to_samples
 
 if TYPE_CHECKING:
     import os
-    from typing import Any, BinaryIO, Callable, Generator, Tuple
+    from typing import Any, BinaryIO, Callable, Generator
 
     from numpy.typing import DTypeLike
 
@@ -64,7 +64,7 @@ def load(
     duration: float | None = None,
     dtype: DTypeLike = np.float32,
     res_type: str = "soxr_hq",
-) -> Tuple[np.ndarray, int | float]:
+) -> tuple[np.ndarray, int | float]:
     """Load an audio file as a floating point time series.
 
     Audio will be automatically resampled to the given rate
@@ -384,7 +384,7 @@ def stream(
             yield block.T
 
 
-def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> Tuple[np.ndarray, int | float]:
+def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarray, int | float]:
     """Load an example audio file by key.
 
     This is a wrapper around `librosa.util.example` that provides the same

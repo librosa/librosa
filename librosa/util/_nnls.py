@@ -17,14 +17,14 @@ import numpy as np
 from .utils import MAX_MEM_BLOCK
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence, Tuple
+    from typing import Any, Sequence
 
 __all__ = ["nnls"]
 
 
 def _nnls_obj(
     x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray
-) -> Tuple[float, np.ndarray]:
+) -> tuple[float, np.ndarray]:
     """Compute the objective and gradient for NNLS"""
     # Scipy's lbfgs flattens all arrays, so we first reshape
     # the iterate x

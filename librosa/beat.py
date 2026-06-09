@@ -24,7 +24,6 @@ from .util.decorators import moved
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Tuple
 
     import scipy.stats
 
@@ -51,7 +50,7 @@ def beat_track(
     prior: scipy.stats.rv_continuous | None = None,
     units: str = "frames",
     sparse: bool = True
-) -> Tuple[_FloatLike_co | np.ndarray, np.ndarray]:
+) -> tuple[_FloatLike_co | np.ndarray, np.ndarray]:
     r"""Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [#]_:
