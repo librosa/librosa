@@ -126,7 +126,7 @@ def frames_to_samples(
     if n_fft is not None:
         offset = int(n_fft // 2)
 
-    return (np.asanyarray(frames) * hop_length + offset).astype(int)
+    return (np.asanyarray(frames) * hop_length + offset).astype(int)[()]
 
 
 @overload
@@ -205,7 +205,7 @@ def samples_to_frames(
         offset = int(n_fft // 2)
 
     samples = np.asanyarray(samples)
-    return np.asarray(np.floor((samples - offset) // hop_length), dtype=int)
+    return np.asarray(np.floor((samples - offset) // hop_length), dtype=int)[()]
 
 
 @overload
@@ -409,7 +409,7 @@ def time_to_samples(
     array([    0,  2205,  4410,  6615,  8820, 11025, 13230, 15435,
            17640, 19845])
     """
-    return (np.asanyarray(times) * sr).astype(int)
+    return (np.asanyarray(times) * sr).astype(int)[()]
 
 
 @overload
@@ -463,7 +463,7 @@ def samples_to_time(
             0.813,  0.836,  0.859,  0.882,  0.906,  0.929,  0.952,
             0.975,  0.998])
     """
-    return np.asanyarray(samples) / float(sr)
+    return np.asanyarray(samples)[()] / float(sr)
 
 
 @overload
@@ -517,7 +517,7 @@ def blocks_to_frames(
     ...     n_frame = librosa.blocks_to_frames(n, block_length=16)
 
     """
-    return block_length * np.asanyarray(blocks)
+    return block_length * np.asanyarray(blocks)[()]
 
 
 @overload
@@ -1028,7 +1028,7 @@ def midi_to_hz(
     hz_to_midi
     note_to_hz
     """
-    return 440.0 * (2.0 ** ((np.asanyarray(notes) - 69.0) / 12.0))
+    return 440.0 * (2.0 ** ((np.asanyarray(notes)[()] - 69.0) / 12.0))
 
 
 @overload
@@ -1074,7 +1074,7 @@ def hz_to_midi(
     hz_to_note
     """
     midi: np.ndarray = 12 * (np.log2(np.asanyarray(frequencies)) - np.log2(440.0)) + 69
-    return midi
+    return midi[()]
 
 
 @overload
@@ -1183,10 +1183,10 @@ def hz_to_mel(
     --------
     mel_to_hz
     """
-    frequencies = np.asanyarray(frequencies)
+    frequencies = np.asanyarray(frequencies)[()]
 
     if htk:
-        mels: np.ndarray = 2595.0 * np.log10(1.0 + frequencies / 700.0)
+        mels: np.floating | np.ndarray = 2595.0 * np.log10(1.0 + frequencies / 700.0)
         return mels
 
     # Fill in the linear part
@@ -1255,7 +1255,7 @@ def mel_to_hz(
     --------
     hz_to_mel
     """
-    mels = np.asanyarray(mels)
+    mels = np.asanyarray(mels)[()]
 
     if htk:
         return 700.0 * (10.0 ** (mels / 2595.0) - 1.0)
@@ -1341,7 +1341,7 @@ def hz_to_octs(
     A440 = 440.0 * 2.0 ** (tuning / bins_per_octave)
 
     octs: np.ndarray = np.log2(np.asanyarray(frequencies) / (float(A440) / 16))
-    return octs
+    return octs[()]
 
 
 @overload
@@ -1405,7 +1405,7 @@ def octs_to_hz(
     """
     A440 = 440.0 * 2.0 ** (tuning / bins_per_octave)
 
-    return (float(A440) / 16) * (2.0 ** np.asanyarray(octs))
+    return (float(A440) / 16) * (2.0 ** np.asanyarray(octs)[()])
 
 
 @overload
@@ -1475,7 +1475,7 @@ def A4_to_tuning(
     tuning_to_A4
     """
     tuning: np.ndarray = bins_per_octave * (np.log2(np.asanyarray(A4)) - np.log2(440.0))
-    return tuning
+    return tuning[()]
 
 
 @overload
@@ -1545,7 +1545,7 @@ def tuning_to_A4(
     --------
     A4_to_tuning
     """
-    return 440.0 * 2.0 ** (np.asanyarray(tuning) / bins_per_octave)
+    return 440.0 * 2.0 ** (np.asanyarray(tuning)[()] / bins_per_octave)
 
 
 def fft_frequencies(*, sr: float = 22050, n_fft: int = 2048) -> np.ndarray:
@@ -1826,7 +1826,7 @@ def A_weighting(
     ...        ylabel='Weighting (log10)',
     ...        title='A-Weighting of CQT frequencies')
     """
-    f_sq = np.asanyarray(frequencies) ** 2.0
+    f_sq = np.asanyarray(frequencies)[()] ** 2.0
 
     const = np.array([12194.217, 20.598997, 107.65265, 737.86223]) ** 2.0
     weights: np.ndarray
@@ -1918,7 +1918,7 @@ def B_weighting(
     ...        ylabel='Weighting (log10)',
     ...        title='B-Weighting of CQT frequencies')
     """
-    f_sq = np.asanyarray(frequencies) ** 2.0
+    f_sq = np.asanyarray(frequencies)[()] ** 2.0
 
     const = np.array([12194.217, 20.598997, 158.48932]) ** 2.0
     weights: np.ndarray
@@ -2008,7 +2008,7 @@ def C_weighting(
     >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
     ...        title='C-Weighting of CQT frequencies')
     """
-    f_sq = np.asanyarray(frequencies) ** 2.0
+    f_sq = np.asanyarray(frequencies)[()] ** 2.0
 
     const = np.array([12194.217, 20.598997]) ** 2.0
     weights: np.ndarray
@@ -2095,7 +2095,7 @@ def D_weighting(
     >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
     ...        title='D-Weighting of CQT frequencies')
     """
-    f_sq = np.asanyarray(frequencies) ** 2.0
+    f_sq = np.asanyarray(frequencies)[()] ** 2.0
 
     const = np.array([8.3046305e-3, 1018.7, 1039.6, 3136.5, 3424, 282.7, 1160]) ** 2.0
     weights: np.ndarray
