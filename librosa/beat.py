@@ -20,21 +20,14 @@ import scipy
 from . import core, onset, util
 from .feature import fourier_tempogram
 from .feature import tempo as _tempo
-from .util.decorators import moved
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-
     import scipy.stats
 
     from ._typing import _FloatLike_co
 
-__all__ = ["beat_track", "tempo", "plp"]
-
-
-tempo = moved(moved_from="librosa.beat.tempo", version="0.10.0", version_removed="1.0")(
-    _tempo
-)
+__all__ = ["beat_track", "plp"]
 
 
 def beat_track(
