@@ -77,6 +77,7 @@ if TYPE_CHECKING:
     import cycler
     import matplotlib
     import matplotlib.figure
+    import scipy.interpolate
     from matplotlib.collections import PolyCollection, QuadMesh
     from matplotlib.colors import Colormap
     from matplotlib.lines import Line2D
@@ -231,6 +232,9 @@ class TimeFormatter(mplticker.Formatter):
     >>> plt.show()
     """
 
+    unit: str | None
+    lag: bool
+
     def __init__(self, lag: bool = False, unit: str | None = None):
         if unit not in ["h", "m", "s", "ms", None]:
             raise ParameterError(f"Unknown time unit: {unit}")
@@ -317,6 +321,11 @@ class NoteFormatter(mplticker.Formatter):
     >>> ax[1].yaxis.set_major_formatter(librosa.display.NoteFormatter())
     >>> ax[1].set(ylabel='Note')
     """
+
+    octave: bool
+    major: bool
+    key: str
+    unicode: bool
 
     def __init__(
         self,
@@ -493,6 +502,15 @@ class FJSFormatter(mplticker.Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
+    fmin: float
+    major: bool
+    unison: str | None
+    unicode: bool
+    intervals: str | Collection[float]
+    n_bins: int
+    bins_per_octave: int
+    frequencies_: np.ndarray[tuple[int], np.dtype[np.float64]]
+
     def __init__(
         self,
         *,
@@ -569,6 +587,8 @@ class LogHzFormatter(mplticker.Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
+    major: bool
+
     def __init__(self, major: bool = True):
         super().__init__()
         self.major = major
@@ -605,6 +625,9 @@ class ChromaFormatter(mplticker.Formatter):
     >>> ax.set(ylabel='Pitch class')
     """
 
+    key: str
+    unicode: bool
+
     def __init__(self, key: str = "C:maj", unicode: bool = True):
         super().__init__()
         self.key = key
@@ -631,6 +654,11 @@ class ChromaSvaraFormatter(mplticker.Formatter):
     ChromaFormatter
 
     """
+
+    Sa: float
+    mela: int | str | None
+    abbr: bool
+    unicode: bool
 
     def __init__(
         self,
@@ -681,6 +709,12 @@ class ChromaFJSFormatter(mplticker.Formatter):
     >>> ax.set(ylabel='Pitch class')
     """
 
+    unison: str
+    unicode: bool
+    intervals: str | Collection[float]
+    bins_per_octave: int
+    intervals_: np.ndarray[tuple[int], np.dtype[np.float64]]
+
     def __init__(
         self,
         *,
@@ -700,7 +734,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
                 raise ParameterError(
                     f"bins_per_octave={bins_per_octave} must be integer-valued"
                 )
-            self.bins_per_octave: int = bins_per_octave
+            self.bins_per_octave = bins_per_octave
             # Construct the explicit interval set
             self.intervals_ = core.interval_frequencies(
                 self.bins_per_octave,
@@ -788,6 +822,14 @@ class AdaptiveWaveplot:
     waveshow
     """
 
+    times: np.ndarray
+    samples: np.ndarray
+    sr: float
+    max_samples: int
+    transpose: bool
+    cid: int | None
+    label_patch_: mpatches.Rectangle
+
     def __init__(
         self,
         times: np.ndarray,
@@ -806,7 +848,7 @@ class AdaptiveWaveplot:
         self.sr = sr
         self.max_samples = max_samples
         self.transpose = transpose
-        self.cid: int | None = None
+        self.cid = None
         self._ax_ref: weakref.ref[mplaxes.Axes] | None = None
 
         # This creates an invisible patch to contain the label
@@ -953,6 +995,19 @@ class AdaptiveWaveplot:
 class Transformf0(mtransforms.Transform):
     """A utility class to handle f0-displacement for waveform visualizations."""
 
+    f0_interp: scipy.interpolate.interp1d
+    norm: float
+    bins_per_octave: int
+    f0: np.ndarray
+    sr: float
+    hop_length: int
+    offset: float
+    transpose: bool
+    input_dims: int
+    output_dims: int
+    is_separable: bool
+    is_inverted: bool
+
     def __init__(
         self,
         f0: np.ndarray,
@@ -990,10 +1045,10 @@ class Transformf0(mtransforms.Transform):
         self.offset = offset
         self.transpose = transpose
 
-        self.input_dims: int = 2
-        self.output_dims: int = 2
-        self.is_separable: bool = False
-        self.is_inverted: bool = is_inverted
+        self.input_dims = 2
+        self.output_dims = 2
+        self.is_separable = False
+        self.is_inverted = is_inverted
 
     def transform_non_affine(self, values: ArrayLike) -> np.ndarray:
         """Apply the f0 displacement transformation to the given values.
@@ -3688,7 +3743,7 @@ def multiplot(
     labels: Sequence[str | None] | None = None,
     titles: Sequence[str | None] | None = None,
     prop_cycle: cycler.Cycler | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> np.ndarray:
     """Visualize multiple related waveforms or spectrograms on an array of subplots.
 
@@ -3866,7 +3921,7 @@ def legend_for_axes(
     width: float | None = None,
     height: float | None = None,
     fig: matplotlib.figure.Figure | None = None,
-    **kwargs,
+    **kwargs: Any,
 ) -> matplotlib.legend.Legend:
     """Create a figure-level legend for a collection of axes.
 
