@@ -148,7 +148,8 @@ def spectral_centroid(
     >>> fig, ax = plt.subplots()
     >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax)
-    >>> ax.plot(times, cent.T, label='Spectral centroid', color='w')
+    >>> hl = librosa.display.highlight(ax=ax, color='k', linewidth=3, alpha=0.5)
+    >>> ax.plot(times, cent.T, label='Spectral centroid', color='w', path_effects=hl)
     >>> ax.legend(loc='upper right')
     >>> ax.set(title='log Power spectrogram')
     """
@@ -301,7 +302,8 @@ def spectral_bandwidth(
     >>> ax[1].fill_between(times, np.maximum(0, centroid[0] - spec_bw[0]),
     ...                 np.minimum(centroid[0] + spec_bw[0], sr/2),
     ...                 alpha=0.5, label='Centroid +- bandwidth')
-    >>> ax[1].plot(times, centroid[0], label='Spectral centroid', color='w')
+    >>> hl = librosa.display.highlight(ax=ax[1], color='k', linewidth=3, alpha=0.5)
+    >>> ax[1].plot(times, centroid[0], label='Spectral centroid', color='w', path_effects=hl)
     >>> ax[1].legend(loc='lower right')
     """
     S, n_fft = _spectrogram(
@@ -626,9 +628,13 @@ def spectral_rolloff(
     >>> fig, ax = plt.subplots()
     >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax)
-    >>> ax.plot(librosa.times_like(rolloff), rolloff[0], label='Roll-off frequency (0.99)')
-    >>> ax.plot(librosa.times_like(rolloff), rolloff_min[0], color='w',
+    >>> hl = librosa.display.highlight(ax=ax, linewidth=3, alpha=0.5)
+    >>> ax.plot(librosa.times_like(rolloff), rolloff_min[0],
+    ...         path_effects=hl,
     ...         label='Roll-off frequency (0.01)')
+    >>> ax.plot(librosa.times_like(rolloff), rolloff[0],
+    ...         path_effects=hl,
+    ...         label='Roll-off frequency (0.99)')
     >>> ax.legend(loc='lower right')
     >>> ax.set(title='log Power spectrogram')
     """

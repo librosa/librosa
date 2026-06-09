@@ -128,10 +128,11 @@ def tempogram(
     >>> ax[0].label_outer()
     >>> ax[0].legend(frameon=True)
     >>> librosa.display.specshow(tempogram, sr=sr, hop_length=hop_length,
-    >>>                          x_axis='time', y_axis='tempo', cmap='magma',
+    ...                          x_axis='time', y_axis='tempo', cmap='magma',
     ...                          ax=ax[1])
-    >>> ax[1].axhline(tempo, color='w', linestyle='--', alpha=1,
-    ...             label='Estimated tempo={:g}'.format(tempo))
+    >>> hl = librosa.display.highlight(ax=ax[1], linewidth=4, color='w', alpha=.75)
+    >>> ax[1].axhline(tempo, path_effects=hl, linewidth=2, color='k', linestyle='--',
+    ...               label='Estimated tempo={:g}'.format(tempo))
     >>> ax[1].legend(loc='upper right')
     >>> ax[1].set(title='Tempogram')
     >>> x = np.linspace(0, tempogram.shape[0] * float(hop_length) / sr,
@@ -142,11 +143,11 @@ def tempogram(
     >>> ax[2].legend(frameon=True)
     >>> freqs = librosa.tempo_frequencies(tempogram.shape[0], hop_length=hop_length, sr=sr)
     >>> ax[3].semilogx(freqs[1:], np.mean(tempogram[1:], axis=1),
-    ...              label='Mean local autocorrelation', base=2)
+    ...               label='Mean local autocorrelation', base=2)
     >>> ax[3].semilogx(freqs[1:], ac_global[1:], '--', alpha=0.75,
-    ...              label='Global autocorrelation', base=2)
+    ...               label='Global autocorrelation', base=2)
     >>> ax[3].axvline(tempo, color='black', linestyle='--', alpha=.8,
-    ...             label='Estimated tempo={:g}'.format(tempo))
+    ...               label='Estimated tempo={:g}'.format(tempo))
     >>> ax[3].legend(frameon=True)
     >>> ax[3].set(xlabel='BPM')
     >>> ax[3].grid(True)
@@ -413,11 +414,12 @@ def tempo(
     >>> tg = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr,
     ...                                hop_length=hop_length)
     >>> librosa.display.specshow(tg, x_axis='time', y_axis='tempo', cmap='magma', ax=ax)
-    >>> ax.plot(librosa.times_like(dtempo), dtempo,
-    ...          color='c', linewidth=1.5, label='Tempo estimate (default prior)')
-    >>> ax.plot(librosa.times_like(dtempo_lognorm), dtempo_lognorm,
-    ...          color='c', linewidth=1.5, linestyle='--',
-    ...          label='Tempo estimate (lognorm prior)')
+    >>> hl = librosa.display.highlight(ax=ax, alpha=.85, linewidth=3, color='k')
+    >>> ax.plot(librosa.times_like(dtempo), dtempo, linewidth=2,
+    ...         path_effects=hl, label='Tempo estimate (default prior)')
+    >>> ax.plot(librosa.times_like(dtempo_lognorm), dtempo_lognorm, color='C0',
+    ...         linestyle='--', linewidth=2,
+    ...         path_effects=hl, label='Tempo estimate (lognorm prior)')
     >>> ax.set(title='Dynamic tempo estimation')
     >>> ax.legend()
     >>> plt.show()

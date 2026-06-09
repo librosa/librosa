@@ -1040,19 +1040,20 @@ def subsegment(
     >>> fig, ax = plt.subplots()
     >>> librosa.display.specshow(cqt, vscale='dBFS', bins_per_octave=36,
     ...                          y_axis='cqt_hz', x_axis='time', ax=ax)
+    >>> hl = librosa.display.highlight(ax=ax, alpha=0.75, linewidth=2)
     >>> trans = mpt.blended_transform_factory(
     ...             ax.transData, ax.transAxes)
-    >>> ax.plot(beat_times, np.zeros_like(beat_times), '^', zorder=3,
+    >>> ax.plot(beat_times, np.zeros_like(beat_times), '^', zorder=4,
     ...         markerfacecolor='C0', color='C0', linestyle='', clip_on=False,
-    ...         markersize=10, label='Beats', transform=trans)
+    ...         markersize=10, label='Beats', transform=trans, path_effects=hl)
     >>> ax.vlines(beat_times, 0, 1, color='C0', linestyle='-', transform=trans,
-    ...            linewidth=2, alpha=0.9, zorder=3)
+    ...            linewidth=3, alpha=0.9, zorder=1.5, path_effects=hl)
     >>> ax.plot(subseg_t, np.zeros_like(subseg_t), '^', zorder=3,
     ...         markerfacecolor='C2', color='C2', linestyle='', clip_on=False,
-    ...         markersize=6, label='Sub-beats', transform=trans)
-    >>> ax.vlines(subseg_t, 0, 1, color='C2', linestyle=':', transform=trans,
-    ...            linewidth=1.5, alpha=0.9)
-    >>> ax.legend()
+    ...         markersize=6, label='Sub-beats', transform=trans, path_effects=hl)
+    >>> ax.vlines(subseg_t, 0, 1, color='C2', linestyle='--', transform=trans,
+    ...            linewidth=1, alpha=0.9, path_effects=hl)
+    >>> ax.legend(loc='upper right')
     >>> ax.set(title='CQT + Beat and sub-beat markers')
     """
     frames = util.fix_frames(frames, x_min=0, x_max=data.shape[axis], pad=True)
@@ -1115,7 +1116,7 @@ def agglomerative(
     Cluster by chroma similarity, break into 20 segments
 
     >>> y, sr = librosa.loadx('nutcracker', duration=15)
-    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, threshold=0.5)
     >>> bounds = librosa.segment.agglomerative(chroma, 20)
     >>> bound_times = librosa.frames_to_time(bounds, sr=sr)
     >>> bound_times
@@ -1131,8 +1132,9 @@ def agglomerative(
     >>> trans = mpt.blended_transform_factory(
     ...             ax.transData, ax.transAxes)
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax)
-    >>> ax.vlines(bound_times, 0, 1, color='linen', linestyle='--',
-    ...           linewidth=2, alpha=0.9, label='Segment boundaries',
+    >>> hl = librosa.display.highlight(ax=ax)
+    >>> ax.vlines(bound_times, 0, 1, linestyle='--', path_effects=hl,
+    ...           label='Segment boundaries',
     ...           transform=trans)
     >>> ax.legend()
     >>> ax.set(title='Power spectrogram')

@@ -304,8 +304,9 @@ def dtw(
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> img = librosa.display.specshow(D, x_axis='frames', y_axis='frames',
     ...                                ax=ax[0])
+    >>> hl = librosa.display.highlight(ax=ax[0])
     >>> ax[0].set(title='DTW cost', xlabel='Noisy sequence', ylabel='Target')
-    >>> ax[0].plot(wp[:, 1], wp[:, 0], label='Optimal path', color='y')
+    >>> ax[0].plot(wp[:, 1], wp[:, 0], label='Optimal path', path_effects=hl)
     >>> ax[0].legend()
     >>> fig.colorbar(img, ax=ax[0])
     >>> ax[1].plot(D[-1, :] / wp.shape[0])
@@ -853,8 +854,9 @@ def rqa(
     >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames', ax=ax[0])
     >>> ax[0].set(title='Recurrence matrix')
     >>> librosa.display.specshow(L_score, x_axis='frames', y_axis='frames', ax=ax[1])
+    >>> hl = librosa.display.highlight(ax=ax[1])
     >>> ax[1].set(title='Alignment score matrix')
-    >>> ax[1].plot(L_path[:, 1], L_path[:, 0], label='Optimal path', color='c')
+    >>> ax[1].plot(L_path[:, 1], L_path[:, 0], label='Optimal path', path_effects=hl)
     >>> ax[1].legend()
     >>> ax[1].label_outer()
     >>> plt.show()
@@ -868,7 +870,8 @@ def rqa(
     >>> ax[0].set(title='Recurrence matrix')
     >>> librosa.display.specshow(score, x_axis='frames', y_axis='frames', ax=ax[1])
     >>> ax[1].set(title='Alignment score matrix')
-    >>> ax[1].plot(path[:, 1], path[:, 0], label='Optimal path', color='c')
+    >>> hl = librosa.display.highlight(ax=ax[1])
+    >>> ax[1].plot(path[:, 1], path[:, 0], label='Optimal path', path_effects=hl)
     >>> ax[1].legend()
     >>> ax[1].label_outer()
     >>> plt.show()
@@ -1590,7 +1593,7 @@ def viterbi_discriminative(
     >>> y, sr = librosa.loadx('nutcracker', duration=15)
     >>> # Suppress percussive elements
     >>> y = librosa.effects.harmonic(y, margin=4)
-    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, threshold=0.25)
     >>> # Map chroma (observations) to class (state) likelihoods
     >>> probs = np.exp(weights.dot(chroma))  # P[class | chroma] ~= exp(template' chroma)
     >>> probs /= probs.sum(axis=0, keepdims=True)  # probabilities must sum to 1 in each column
@@ -1610,15 +1613,16 @@ def viterbi_discriminative(
     >>> # And plot the results
     >>> fig, ax = plt.subplots()
     >>> img = librosa.display.specshow(probs, x_axis='time', ax=ax, div_thresh=1./25)
+    >>> hl = librosa.display.highlight(ax=ax, alpha=0.1)
     >>> fig.colorbar(img, ax=ax, label='Frame-wise class probability')
     >>> times = librosa.times_like(chords_vit)
-    >>> ax.scatter(times, chords_ind + 0.25, color='k', alpha=0.5, marker='x',
-    ...            s=15, label='Independent')
-    >>> ax.scatter(times, chords_vit - 0.25, color='deeppink', alpha=0.5, marker='o',
-    ...            s=15, label='Viterbi')
+    >>> ax.scatter(times, chords_ind + 0.25, alpha=0.85, marker='x', color='k',
+    ...            s=15, label='Independent', path_effects=hl)
+    >>> ax.scatter(times, chords_vit - 0.25, alpha=0.85, marker='o', color='g',
+    ...            s=15, label='Viterbi', path_effects=hl)
     >>> ax.set(yticks=np.unique(chords_vit),
     ...        yticklabels=[labels[i] for i in np.unique(chords_vit)])
-    >>> ax.legend()
+    >>> ax.legend(loc='upper right', ncols=2)
     >>> plt.show()
     """
     n_states, _n_steps = prob.shape[-2:]
