@@ -836,7 +836,7 @@ class AdaptiveWaveplot:
     max_samples: int
     transpose: bool
     cid: int | None
-    label_patch_: mpatches.Rectangle
+    label_proxy_: mlines.Line2D
 
     def __init__(
         self,
@@ -861,14 +861,19 @@ class AdaptiveWaveplot:
 
         # This creates an invisible patch to contain the label
         # Doing backflips here with redundant code to make mypy happy
-        if label is None:
-            self.label_patch_ = mpatches.Rectangle(
-                (np.nan, np.nan), 0, 0, facecolor=steps.get_color()
-            )
-        else:
-            self.label_patch_ = mpatches.Rectangle(
-                (np.nan, np.nan), 0, 0, facecolor=steps.get_color(), label=label
-            )
+        #if label is None:
+        #    self.label_proxy_ = mpatches.Rectangle(
+        #        (np.nan, np.nan), 0, 0, facecolor=steps.get_color()
+        #    )
+        #else:
+        #    self.label_proxy_ = mpatches.Rectangle(
+        #        (np.nan, np.nan), 0, 0, facecolor=steps.get_color(), label=label
+        #    )
+        self.label_proxy_ = mlines.Line2D([], [])
+        self.label_proxy_.update_from(steps)
+        if label is not None:
+            self.label_proxy_.set_label(label)
+
 
     # Preserve the old attribute API by exposing properties with same names
     @property
@@ -917,7 +922,7 @@ class AdaptiveWaveplot:
 
         # Attach to axes and store the connection id
         self._ax_ref = weakref.ref(ax)
-        ax.add_patch(self.label_patch_)
+        ax.add_artist(self.label_proxy_)
         self.cid = ax.callbacks.connect(signal, self.update)
 
     def disconnect(self, *, strict: bool = False) -> None:
@@ -2789,7 +2794,8 @@ def waveshow(
 
         # Set the axes facecolor to our wave color
         axes.patch.set_facecolor(color)
-        adaptor.label_patch_.set_facecolor(color)
+        # FIXME: this is actually weird when inverted...
+        adaptor.label_proxy_.set_color(color)
         steps.set_color(invert_color)
         envelope.set_color(invert_color)
 
