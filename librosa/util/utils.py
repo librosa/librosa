@@ -2315,7 +2315,9 @@ def stack(arrays: list[np.ndarray], *, axis: int = 0) -> np.ndarray:
         return result
 
 
-def dtype_r2c(d: DTypeLike, *, default: type | None = np.complex64) -> DTypeLike:
+def dtype_r2c(
+    d: DTypeLike, *, default: type[np.complexfloating] = np.complex64
+) -> np.dtype[np.complexfloating]:
     """Find the complex numpy dtype corresponding to a real dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2355,14 +2357,13 @@ def dtype_r2c(d: DTypeLike, *, default: type | None = np.complex64) -> DTypeLike
     >>> librosa.util.dtype_r2c(np.complex128)
     dtype('complex128')
     """
-    mapping: dict[DTypeLike, type] = {
+    mapping: dict[np.dtype[np.floating], type[np.complexfloating]] = {
         np.dtype(np.float32): np.complex64,
         np.dtype(np.float64): np.complex128,
-        np.dtype(float): np.dtype(complex).type,
     }
 
     # If we're given a complex type already, return it
-    dt = np.dtype(d)
+    dt: np.dtype = np.dtype(d)
     if dt.kind == "c":
         return dt
 
@@ -2371,7 +2372,9 @@ def dtype_r2c(d: DTypeLike, *, default: type | None = np.complex64) -> DTypeLike
     return np.dtype(mapping.get(dt, default))
 
 
-def dtype_c2r(d: DTypeLike, *, default: type | None = np.float32) -> DTypeLike:
+def dtype_c2r(
+    d: DTypeLike, *, default: type[np.floating] | None = np.float32
+) -> np.dtype[np.floating]:
     """Find the real numpy dtype corresponding to a complex dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2414,14 +2417,13 @@ def dtype_c2r(d: DTypeLike, *, default: type | None = np.float32) -> DTypeLike:
     >>> librosa.util.dtype_r2c(np.complex128)
     dtype('float64')
     """
-    mapping: dict[DTypeLike, type] = {
+    mapping: dict[np.dtype[np.complexfloating], type[np.floating]] = {
         np.dtype(np.complex64): np.float32,
         np.dtype(np.complex128): np.float64,
-        np.dtype(complex): np.dtype(float).type,
     }
 
     # If we're given a real type already, return it
-    dt = np.dtype(d)
+    dt: np.dtype = np.dtype(d)
     if dt.kind == "f":
         return dt
 
