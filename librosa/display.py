@@ -1293,6 +1293,7 @@ def specshow(
     cmap_seq: str | colors.Colormap = "magma",
     cmap_bool: str | colors.Colormap = "gray_r",
     cmap_div: str | colors.Colormap = "coolwarm",
+    cmap_cyclic: str | colors.Colormap = "twilight_shifted",
     div_thresh: float = 0.0,
     ax: mplaxes.Axes | None = None,
     **kwargs: Any,
@@ -1546,6 +1547,10 @@ def specshow(
         The name of the diverging colormap to use for diverging data.
         Default is 'coolwarm'.
 
+    cmap_cyclic : str or matplotlib.colors.Colormap
+        The name of the cyclic colormap to use for phase data.
+        Default is 'twilight_shifted'.
+
     div_thresh : float
         The threshold for determining whether to use a diverging colormap.
         If the data has values both above and below this threshold, then
@@ -1638,6 +1643,7 @@ def specshow(
         x_coords=x_coords,
         y_coords=y_coords,
         cmap_seq=cmap_seq,
+        cmap_cyclic=cmap_cyclic,
     )
 
     if np.issubdtype(data.dtype, np.complexfloating):
@@ -2344,7 +2350,7 @@ def __same_axes(x_axis, y_axis, xlim, ylim):
     return axes_compatible_and_not_none and axes_same_lim
 
 
-def __scale_data(data, *, vscale, top_db, x_coords, y_coords, cmap_seq):
+def __scale_data(data, *, vscale, top_db, x_coords, y_coords, cmap_seq, cmap_cyclic):
     """Parse the vscale parameter and return the transformed data and colormap
     if necessary
 
@@ -2363,6 +2369,8 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords, cmap_seq):
         These should be constructed using the `__mesh_coords` function.
     cmap_seq : str or matplotlib.colors.Colormap
         Default sequential colormap to use for dB scales.
+    cmap_cyclic : str or matplotlib.colors.Colormap
+        Default cyclic colormap to use for phase scales.
 
     Returns
     -------
@@ -2378,7 +2386,7 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords, cmap_seq):
     # First check for the easy cases
     if vscale == "phase":
         # Phase should use a cyclic colormap
-        return np.angle(data), "twilight_shifted"
+        return np.angle(data), cmap_cyclic
 
     elif vscale == "dphase":
         # Compute the difference of unwrapped phase
@@ -2393,7 +2401,7 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords, cmap_seq):
         np.mod(diff, 2 * np.pi, out=diff)
         diff -= np.pi
         # Use a cyclic colormap for the phase difference
-        return diff, "twilight_shifted"
+        return diff, cmap_cyclic
 
     elif vscale == "dphase_t":
         # Same computation as above, but on the opposite axes
@@ -2402,7 +2410,7 @@ def __scale_data(data, *, vscale, top_db, x_coords, y_coords, cmap_seq):
         diff += np.pi
         np.mod(diff, 2 * np.pi, out=diff)
         diff -= np.pi
-        return diff, "twilight_shifted"
+        return diff, cmap_cyclic
 
     else:
         # In some kind of dB mode
