@@ -88,10 +88,10 @@ tools:
 
 -  Style adherence, check with:
 
-    ```shell
-    conda install ruff
-    ruff check librosa
-    ```
+  ```shell
+  conda install ruff
+  ruff check librosa
+  ```
 
 - Ensure that your docstrings are properly formatted, check with:
 
