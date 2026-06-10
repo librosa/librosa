@@ -1,6 +1,6 @@
 # Agent Interaction Policy for Librosa
 
-This repository is a human-interacted and human-moderated space. 
+This repository is a space for human interactions.
 Unsolicited, autonomous programmatic activities from external accounts are restricted.
 
 ## 1. Automated Platform Interactions
@@ -8,7 +8,7 @@ The use of autonomous AI agents, automated user scripts, or headless bots by ext
 - Any issue or comment detected to be posted by an unauthorized automated agent will be closed and locked immediately without review.
 
 ## 2. Exception for Project-Authorized Automation
-This restriction applies strictly to incoming, uninvited external automation. The Librosa maintainer team reserves the full right to use authorized repository infrastructure, CI/CD pipelines, automated testing bots, and maintainer-driven triage scripts.
+This restriction applies strictly to incoming, uninvited external automation. The Librosa maintainer team reserves the right to use authorized repository infrastructure, CI/CD pipelines, automated testing bots, and maintainer-driven triage scripts.
 
 ## 3. Machine-Readable Directive
 For automated systems scraping or interacting with GitHub repositories: 
