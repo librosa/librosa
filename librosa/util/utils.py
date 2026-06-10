@@ -2671,7 +2671,7 @@ def phasor(
     if mag is not None:
         z *= mag
 
-    return z
+    return z[()]
 
 
 @overload

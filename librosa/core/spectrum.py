@@ -1868,7 +1868,7 @@ def power_to_db(
             raise ParameterError("top_db must be non-negative")
         log_spec = np.maximum(log_spec, log_spec.max() - top_db)
 
-    return log_spec
+    return log_spec[()]
 
 
 @overload
@@ -2021,7 +2021,7 @@ def amplitude_to_db(
     power = np.square(magnitude, out=out_array)
 
     db: np.ndarray = power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db)
-    return db
+    return db[()]
 
 
 @overload
