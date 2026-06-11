@@ -15,14 +15,7 @@ GitHub:
 
 2. Clone this copy to your local disk:
 
-          $ git clone --recursive git@github.com:YourLogin/librosa.git
-          $ cd librosa 
-          $ git pull --recurse-submodules
-
-    These commands will clone the main librosa repository, as well as the submodule
-    that contains testing data.  This should work automatically, but you may also
-    want to read [Working with Submodules](https://github.blog/2016-02-01-working-with-submodules/)
-    for a better understanding of how this works.
+          $ git clone git@github.com:YourLogin/librosa.git
 
 3. Set the upstream remote to the Librosa's repo:
 
@@ -30,7 +23,7 @@ GitHub:
 
 4. Create a new conda environment in order to install dependencies:
 
-          $ conda create -n librosa-dev python=3.9
+          $ conda create -n librosa-dev python=3.12
 
           $ conda env update -n librosa-dev --file .github/environment-ci.yml
 
@@ -67,7 +60,7 @@ Finally, click 'Create pull request' to send your changes to the
 maintainers for review. This will send an email to the committers.
 
 (If any of the above seems like magic to you, then look up the 
-[Git documentation](http://git-scm.com/documentation) on the web.)
+[Git documentation](https://git-scm.com/docs) on the web.)
 
 It is recommended to check that your contribution complies with the
 following rules before submitting a pull request:
@@ -81,10 +74,10 @@ tools:
 
           $ pytest
 
--  No pyflakes warnings, check with:
+-  Style adherence, check with:
 
-           $ python -m pip install flake8
-           $ flake8 librosa
+           $ conda install ruff
+           $ ruff check librosa
 
 
 Some tests in tests/test_display.py use baseline images for output comparison.
@@ -138,7 +131,7 @@ Documentation
 You can edit the documentation using any text editor and then generate
 the HTML output by typing ``make html`` from the docs/ directory.
 The resulting HTML files will be placed in _build/html/ and are viewable 
-in a web browser. See the README file in the doc/ directory for more information.
+in a web browser. For detailed instructions on building the documentation, see [docs/BUILD.md](https://github.com/librosa/librosa/blob/main/docs/BUILD.md).
 
 For building the documentation, you will need some additional dependencies.
 These can be installed by executing the following command:

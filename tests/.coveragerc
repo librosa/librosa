@@ -1,8 +1,0 @@
-[report]
-omit =
-    */python?.?/*
-    */site-packages/nose/*
-exclude_lines =
-    @numba.jit
-    @jit
-    pragma: no cover

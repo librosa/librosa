@@ -4,8 +4,9 @@
 
 import os
 from typing import Any, Callable, TypeVar
-from joblib import Memory
+
 from decorator import FunctionMaker
+from joblib import Memory
 
 
 def _decorator_apply(dec, func):
@@ -20,7 +21,7 @@ def _decorator_apply(dec, func):
 _F = TypeVar("_F", bound=Callable[..., Any])
 
 
-class CacheManager(object):
+class CacheManager:
     """The librosa cache manager class wraps joblib.Memory
     with a __call__ attribute, so that it may act as a function.
 

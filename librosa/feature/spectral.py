@@ -1,26 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Spectral feature extraction"""
+from __future__ import annotations
+
+import itertools
+from typing import TYPE_CHECKING
 
 import numpy as np
-import scipy
-import scipy.signal
 
-from .. import util
-from .. import filters
+from .. import filters, util
+from ..core.audio import zero_crossings
+from ..core.constantq import cqt, hybrid_cqt, vqt
+from ..core.convert import fft_frequencies
+from ..core.pitch import estimate_tuning
+from ..core.spectrum import _spectrogram, power_to_db
 from ..util.exceptions import ParameterError
 
-from ..core.fft import get_fftlib
-from ..core.convert import fft_frequencies
-from ..core.audio import zero_crossings
-from ..core.spectrum import power_to_db, _spectrogram
-from ..core.constantq import cqt, hybrid_cqt, vqt
-from ..core.pitch import estimate_tuning
-from typing import Any, Optional, Union, Collection
-from typing_extensions import Literal
-from numpy.typing import DTypeLike
-from .._typing import _FloatLike_co, _WindowSpec, _PadMode, _PadModeSTFT
+if TYPE_CHECKING:
+    from typing import Any, Collection, Literal
 
+    from numpy.typing import DTypeLike
+
+    from .._typing import _DCTNorm, _DCTType, _FloatLike_co, _PadMode, _PadModeSTFT, _WindowSpec
 
 __all__ = [
     "spectral_centroid",
@@ -44,13 +45,13 @@ __all__ = [
 # -- Spectral features -- #
 def spectral_centroid(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    freq: Optional[np.ndarray] = None,
-    win_length: Optional[int] = None,
+    freq: np.ndarray | None = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
@@ -123,7 +124,7 @@ def spectral_centroid(
     --------
     From time-series input:
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> cent = librosa.feature.spectral_centroid(y=y, sr=sr)
     >>> cent
     array([[1768.888, 1921.774, ..., 5663.477, 5813.683]])
@@ -145,9 +146,10 @@ def spectral_centroid(
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(cent)
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax)
-    >>> ax.plot(times, cent.T, label='Spectral centroid', color='w')
+    >>> hl = librosa.display.highlight(ax=ax, color='k', linewidth=3, alpha=0.5)
+    >>> ax.plot(times, cent.T, label='Spectral centroid', color='w', path_effects=hl)
     >>> ax.legend(loc='upper right')
     >>> ax.set(title='log Power spectrogram')
     """
@@ -191,17 +193,17 @@ def spectral_centroid(
 
 def spectral_bandwidth(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    freq: Optional[np.ndarray] = None,
-    centroid: Optional[np.ndarray] = None,
+    freq: np.ndarray | None = None,
+    centroid: np.ndarray | None = None,
     norm: bool = True,
     p: float = 2,
 ) -> np.ndarray:
@@ -267,7 +269,7 @@ def spectral_bandwidth(
     --------
     From time-series input
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> spec_bw = librosa.feature.spectral_bandwidth(y=y, sr=sr)
     >>> spec_bw
     array([[1273.836, 1228.873, ..., 2952.357, 3013.68 ]])
@@ -294,13 +296,14 @@ def spectral_bandwidth(
     >>> ax[0].set(ylabel='Hz', xticks=[], xlim=[times.min(), times.max()])
     >>> ax[0].legend()
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='log Power spectrogram')
     >>> ax[1].fill_between(times, np.maximum(0, centroid[0] - spec_bw[0]),
     ...                 np.minimum(centroid[0] + spec_bw[0], sr/2),
     ...                 alpha=0.5, label='Centroid +- bandwidth')
-    >>> ax[1].plot(times, centroid[0], label='Spectral centroid', color='w')
+    >>> hl = librosa.display.highlight(ax=ax[1], color='k', linewidth=3, alpha=0.5)
+    >>> ax[1].plot(times, centroid[0], label='Spectral centroid', color='w', path_effects=hl)
     >>> ax[1].legend(loc='lower right')
     """
     S, n_fft = _spectrogram(
@@ -351,16 +354,16 @@ def spectral_bandwidth(
 
 def spectral_contrast(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    freq: Optional[np.ndarray] = None,
+    freq: np.ndarray | None = None,
     fmin: float = 200.0,
     n_bands: int = 6,
     quantile: float = 0.02,
@@ -437,16 +440,15 @@ def spectral_contrast(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = np.abs(librosa.stft(y))
     >>> contrast = librosa.feature.spectral_contrast(S=S, sr=sr)
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img1 = librosa.display.specshow(librosa.amplitude_to_db(S,
-    ...                                                  ref=np.max),
+    >>> img1 = librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0])
-    >>> fig.colorbar(img1, ax=[ax[0]], format='%+2.0f dB')
+    >>> librosa.display.colorbar_db(img1)
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
     >>> img2 = librosa.display.specshow(contrast, x_axis='time', ax=ax[1])
@@ -497,7 +499,7 @@ def spectral_contrast(
     valley = np.zeros(shape)
     peak = np.zeros_like(valley)
 
-    for k, (f_low, f_high) in enumerate(zip(octa[:-1], octa[1:])):
+    for k, (f_low, f_high) in enumerate(itertools.pairwise(octa)):
         current_band = np.logical_and(freq >= f_low, freq <= f_high)
 
         idx = np.flatnonzero(current_band)
@@ -532,16 +534,16 @@ def spectral_contrast(
 
 def spectral_rolloff(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    freq: Optional[np.ndarray] = None,
+    freq: np.ndarray | None = None,
     roll_percent: float = 0.85,
 ) -> np.ndarray:
     """Compute roll-off frequency.
@@ -599,7 +601,7 @@ def spectral_rolloff(
     --------
     From time-series input
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> # Approximate maximum frequencies with roll_percent=0.85 (default)
     >>> librosa.feature.spectral_rolloff(y=y, sr=sr)
     array([[2583.984, 3036.182, ..., 9173.145, 9248.511]])
@@ -624,11 +626,15 @@ def spectral_rolloff(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax)
-    >>> ax.plot(librosa.times_like(rolloff), rolloff[0], label='Roll-off frequency (0.99)')
-    >>> ax.plot(librosa.times_like(rolloff), rolloff_min[0], color='w',
+    >>> hl = librosa.display.highlight(ax=ax, linewidth=3, alpha=0.5)
+    >>> ax.plot(librosa.times_like(rolloff), rolloff_min[0],
+    ...         path_effects=hl,
     ...         label='Roll-off frequency (0.01)')
+    >>> ax.plot(librosa.times_like(rolloff), rolloff[0],
+    ...         path_effects=hl,
+    ...         label='Roll-off frequency (0.99)')
     >>> ax.legend(loc='lower right')
     >>> ax.set(title='log Power spectrogram')
     """
@@ -680,11 +686,11 @@ def spectral_rolloff(
 
 def spectral_flatness(
     *,
-    y: Optional[np.ndarray] = None,
-    S: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
@@ -748,7 +754,7 @@ def spectral_flatness(
     --------
     From time-series input
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> flatness = librosa.feature.spectral_flatness(y=y)
     >>> flatness
     array([[0.001, 0.   , ..., 0.218, 0.184]], dtype=float32)
@@ -800,8 +806,8 @@ def spectral_flatness(
 
 def rms(
     *,
-    y: Optional[np.ndarray] = None,
-    S: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
+    S: np.ndarray | None = None,
     frame_length: int = 2048,
     hop_length: int = 512,
     center: bool = True,
@@ -844,7 +850,7 @@ def rms(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.feature.rms(y=y)
     array([[1.248e-01, 1.259e-01, ..., 1.845e-05, 1.796e-05]],
           dtype=float32)
@@ -861,7 +867,7 @@ def rms(
     >>> ax[0].set(xticks=[])
     >>> ax[0].legend()
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='log Power spectrogram')
 
@@ -913,17 +919,17 @@ def rms(
 
 def poly_features(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
     order: int = 1,
-    freq: Optional[np.ndarray] = None,
+    freq: np.ndarray | None = None,
 ) -> np.ndarray:
     """Get coefficients of fitting an nth-order polynomial to the columns
     of a spectrogram.
@@ -980,7 +986,7 @@ def poly_features(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = np.abs(librosa.stft(y))
 
     Fit a degree-0 polynomial (constant) to each frame
@@ -1014,7 +1020,7 @@ def poly_features(
     >>> ax[2].plot(times, p2[0], label='order=2', alpha=0.8)
     >>> ax[2].set(ylabel='Quadratic term')
     >>> ax[2].legend()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[3])
     """
     S, n_fft = _spectrogram(
@@ -1105,7 +1111,7 @@ def zero_crossing_rate(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.feature.zero_crossing_rate(y)
     array([[0.044, 0.074, ..., 0.488, 0.355]])
     """
@@ -1131,17 +1137,17 @@ def zero_crossing_rate(
 # -- Chroma --#
 def chroma_stft(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
-    norm: Optional[float] = np.inf,
+    S: np.ndarray | None = None,
+    norm: float | None = np.inf,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    tuning: Optional[float] = None,
+    tuning: float | None = None,
     n_chroma: int = 12,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -1220,7 +1226,7 @@ def chroma_stft(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
+    >>> y, sr = librosa.loadx('nutcracker', duration=15)
     >>> librosa.feature.chroma_stft(y=y, sr=sr)
     array([[1.   , 0.962, ..., 0.143, 0.278],
            [0.688, 0.745, ..., 0.103, 0.162],
@@ -1252,9 +1258,9 @@ def chroma_stft(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> img = librosa.display.specshow(S, vscale='dBFS[power]',
     ...                                y_axis='log', x_axis='time', ax=ax[0])
-    >>> fig.colorbar(img, ax=[ax[0]])
+    >>> librosa.display.colorbar_db(img)
     >>> ax[0].label_outer()
     >>> img = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[1])
     >>> fig.colorbar(img, ax=[ax[1]])
@@ -1288,18 +1294,18 @@ def chroma_stft(
 
 def chroma_cqt(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    C: Optional[np.ndarray] = None,
+    C: np.ndarray | None = None,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
-    norm: Optional[Union[int, float]] = np.inf,
+    fmin: _FloatLike_co | None = None,
+    norm: float | None = np.inf,
     threshold: float = 0.0,
-    tuning: Optional[float] = None,
+    tuning: float | None = None,
     n_chroma: int = 12,
     n_octaves: int = 7,
-    window: Optional[np.ndarray] = None,
-    bins_per_octave: Optional[int] = 36,
+    window: np.ndarray | None = None,
+    bins_per_octave: int | None = 36,
     cqt_mode: str = "full",
 ) -> np.ndarray:
     r"""Constant-Q chromagram
@@ -1354,7 +1360,7 @@ def chroma_cqt(
     --------
     Compare a long-window STFT chromagram to the CQT chromagram
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
+    >>> y, sr = librosa.loadx('nutcracker', duration=15)
     >>> chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr,
     ...                                           n_chroma=12, n_fft=4096)
     >>> chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr)
@@ -1418,19 +1424,19 @@ def chroma_cqt(
 
 def chroma_cens(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    C: Optional[np.ndarray] = None,
+    C: np.ndarray | None = None,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
-    tuning: Optional[float] = None,
+    fmin: _FloatLike_co | None = None,
+    tuning: float | None = None,
     n_chroma: int = 12,
     n_octaves: int = 7,
     bins_per_octave: int = 36,
     cqt_mode: str = "full",
-    window: Optional[np.ndarray] = None,
-    norm: Optional[float] = 2,
-    win_len_smooth: Optional[int] = 41,
+    window: np.ndarray | None = None,
+    norm: float | None = 2,
+    win_len_smooth: int | None = 41,
     smoothing_window: _WindowSpec = "hann",
 ) -> np.ndarray:
     r"""Compute the chroma variant "Chroma Energy Normalized" (CENS)
@@ -1500,7 +1506,7 @@ def chroma_cens(
     --------
     Compare standard cqt chroma to CENS.
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
+    >>> y, sr = librosa.loadx('nutcracker', duration=15)
     >>> chroma_cens = librosa.feature.chroma_cens(y=y, sr=sr)
     >>> chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr)
 
@@ -1556,6 +1562,8 @@ def chroma_cens(
         # reshape for broadcasting
         win = util.expand_to(win, ndim=chroma_quant.ndim, axes=-1)
 
+        import scipy.ndimage
+
         cens = scipy.ndimage.convolve(chroma_quant, win, mode="constant")
     else:
         cens = chroma_quant
@@ -1566,13 +1574,13 @@ def chroma_cens(
 
 def chroma_vqt(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    V: Optional[np.ndarray] = None,
+    V: np.ndarray | None = None,
     hop_length: int = 512,
-    fmin: Optional[float] = None,
-    intervals: Union[str, Collection[float]],
-    norm: Optional[float] = np.inf,
+    fmin: float | None = None,
+    intervals: str | Collection[float],
+    norm: float | None = np.inf,
     threshold: float = 0.0,
     n_octaves: int = 7,
     bins_per_octave: int = 12,
@@ -1636,7 +1644,7 @@ def chroma_vqt(
     Compare an equal-temperament CQT chromagram to a 5-limit just intonation
     chromagram.  Both use 36 bins per octave.
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> n_bins = 36
     >>> chroma_cq = librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=n_bins)
     >>> chroma_vq = librosa.feature.chroma_vqt(y=y, sr=sr,
@@ -1699,9 +1707,9 @@ def chroma_vqt(
 
 def tonnetz(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    chroma: Optional[np.ndarray] = None,
+    chroma: np.ndarray | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute the tonal centroid features (tonnetz)
@@ -1776,7 +1784,7 @@ def tonnetz(
     --------
     Compute tonnetz features from the harmonic component of a song
 
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=10, offset=10)
+    >>> y, sr = librosa.loadx('nutcracker', duration=10, offset=10)
     >>> y = librosa.effects.harmonic(y)
     >>> tonnetz = librosa.feature.tonnetz(y=y, sr=sr)
     >>> tonnetz
@@ -1833,14 +1841,14 @@ def tonnetz(
 # -- Mel spectrogram and MFCCs -- #
 def mfcc(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_mfcc: int = 20,
-    dct_type: int = 2,
-    norm: Optional[str] = "ortho",
+    dct_type: _DCTType = 2,
+    norm: _DCTNorm | None = "ortho",
     lifter: float = 0,
-    mel_norm: Optional[Union[Literal["slaney"], float]] = "slaney",
+    mel_norm: Literal["slaney"] | float | None = "slaney",
     **kwargs: Any,
 ) -> np.ndarray:
     """Mel-frequency cepstral coefficients (MFCCs)
@@ -1929,7 +1937,7 @@ def mfcc(
     --------
     Generate mfccs from a time series
 
-    >>> y, sr = librosa.load(librosa.ex('libri1'))
+    >>> y, sr = librosa.loadx('libri1')
     >>> librosa.feature.mfcc(y=y, sr=sr)
     array([[-565.919, -564.288, ..., -426.484, -434.668],
            [  10.305,   12.509, ...,   88.43 ,   90.12 ],
@@ -1966,34 +1974,37 @@ def mfcc(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img = librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+    >>> img = librosa.display.specshow(S, vscale='dBFS[power]',
     ...                                x_axis='time', y_axis='mel', fmax=8000,
     ...                                ax=ax[0])
-    >>> fig.colorbar(img, ax=[ax[0]])
+    >>> librosa.display.colorbar_db(img)
     >>> ax[0].set(title='Mel spectrogram')
     >>> ax[0].label_outer()
     >>> img = librosa.display.specshow(mfccs, x_axis='time', ax=ax[1])
     >>> fig.colorbar(img, ax=[ax[1]])
     >>> ax[1].set(title='MFCC')
+    >>> plt.show()
 
     Compare different DCT bases
 
     >>> m_slaney = librosa.feature.mfcc(y=y, sr=sr, dct_type=2)
     >>> m_htk = librosa.feature.mfcc(y=y, sr=sr, dct_type=3)
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, layout='compressed')
     >>> img1 = librosa.display.specshow(m_slaney, x_axis='time', ax=ax[0])
     >>> ax[0].set(title='RASTAMAT / Auditory toolbox (dct_type=2)')
     >>> fig.colorbar(img, ax=[ax[0]])
     >>> img2 = librosa.display.specshow(m_htk, x_axis='time', ax=ax[1])
     >>> ax[1].set(title='HTK-style (dct_type=3)')
     >>> fig.colorbar(img2, ax=[ax[1]])
+    >>> plt.show()
     """
     if S is None:
         # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(melspectrogram(y=y, sr=sr, norm = mel_norm, **kwargs))
 
-    fft = get_fftlib()
-    M: np.ndarray = fft.dct(S, axis=-2, type=dct_type, norm=norm)[
+    import scipy.fft
+
+    M: np.ndarray = scipy.fft.dct(S, axis=-2, type=dct_type, norm=norm)[
         ..., :n_mfcc, :
     ]
 
@@ -2012,12 +2023,12 @@ def mfcc(
 
 def melspectrogram(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
-    win_length: Optional[int] = None,
+    win_length: int | None = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
@@ -2102,7 +2113,7 @@ def melspectrogram(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.feature.melspectrogram(y=y, sr=sr)
     array([[3.837e-06, 1.451e-06, ..., 8.352e-14, 1.296e-11],
            [2.213e-05, 7.866e-06, ..., 8.532e-14, 1.329e-11],
@@ -2129,7 +2140,7 @@ def melspectrogram(
     >>> img = librosa.display.specshow(S_dB, x_axis='time',
     ...                          y_axis='mel', sr=sr,
     ...                          fmax=8000, ax=ax)
-    >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
+    >>> librosa.display.colorbar_db(img)
     >>> ax.set(title='Mel-frequency spectrogram')
     """
     S, n_fft = _spectrogram(

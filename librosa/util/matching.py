@@ -1,13 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Matching functions"""
+from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING
+
 import numba
+import numpy as np
 
 from .exceptions import ParameterError
 from .utils import valid_intervals
-from .._typing import _SequenceLike
+
+if TYPE_CHECKING:
+    from .._typing import _SequenceLike
 
 __all__ = ["match_intervals", "match_events"]
 
@@ -359,8 +364,8 @@ def __match_events_helper(
             right_diff = abs(sorted_to[right_ind] - sorted_from_num)
 
         if left_flag and (
-            not right
-            and (sorted_to[middle_ind] > sorted_from_num)
+            (not right
+            and (sorted_to[middle_ind] > sorted_from_num))
             or (not right_flag and left_diff < mid_diff)
             or (left_diff < right_diff and left_diff < mid_diff)
         ):

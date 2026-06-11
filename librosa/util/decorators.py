@@ -2,19 +2,24 @@
 # -*- encoding: utf-8 -*-
 # CREATED:2015-02-15 10:06:03 by Brian McFee <brian.mcfee@nyu.edu>
 """Helpful tools for deprecation"""
+from __future__ import annotations
 
-from typing import Any, Callable, Iterable, Optional, TypeVar, Union
-import warnings
 import functools
-from decorator import decorator
+import warnings
+from typing import TYPE_CHECKING
+
 import numpy as np
-from numpy.typing import DTypeLike
-from typing_extensions import ParamSpec  # Install typing_extensions in Python 3.8
+from decorator import decorator
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Iterable, ParamSpec, TypeVar
+
+    from numpy.typing import DTypeLike
+    P = ParamSpec("P")
+    R = TypeVar("R")
+    _F = TypeVar("_F", bound=Callable[..., Any])
 
 __all__ = ["moved", "deprecated", "vectorize"]
-
-P = ParamSpec("P")
-R = TypeVar("R")
 
 
 def moved(
@@ -65,16 +70,14 @@ def deprecated(
     return decorator(__wrapper)
 
 
-_F = TypeVar("_F", bound=Callable[..., Any])
-
 
 def vectorize(
     *,
-    otypes: Optional[Union[str, Iterable[DTypeLike]]] = None,
-    doc: Optional[str] = None,
-    excluded: Optional[Iterable[Union[int, str]]] = None,
+    otypes: str | Iterable[DTypeLike] | None = None,
+    doc: str | None = None,
+    excluded: Iterable[int | str] | None = None,
     cache: bool = False,
-    signature: Optional[str] = None
+    signature: str | None = None
 ) -> Callable[[_F], _F]:
     """Wrap a function for use with np.vectorize.
 

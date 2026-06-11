@@ -4,3 +4,63 @@ requires = [
     "wheel >= 0.29.0",
 ]
 build-backend = 'setuptools.build_meta'
+
+[tool.ruff]
+line-length = 119
+
+[tool.ruff.lint]
+select = ["E", "F", "S", "D", "W", "I", "PYI", "Q", "B", "SIM", "RUF", "TC", "NPY"]
+ignore = [
+    "D107",  # This only affects inherited classes for us
+    "D203",  # Blank line before class docstring is silly
+    "D205",  # Blank line after summary is silly
+    "D212",  # Multi-line docstring summary is unnecessary
+    "D213",  # Multi-line docstring summary should end with a period, but we don't care
+    "D400",  # First line should end with a period, but we don't care
+    "D402",  # Docstring should not be a reST directive, but we don't care
+    "D413",  # Missing blank line after last section is actually more readable in our codebase
+    "D415",  # First line punctuation is not that important
+    "D416",  # Section name colon is not compatible with numpydoc
+    "D417",  # Missing argument descriptions are okay sometimes
+    "S101",  # Sometimes we need asserts for type checking to work
+    "SIM108",  # Ternary operators are bad for readability
+    "SIM300",  # Yoda condition is different in numpy vectorized code
+    "RUF022",  # We actually like having control over __all__ ordering
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]
+"**/__init__.pyi" = ["F401"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["librosa.util.deprecation.Deprecated"]
+
+[tool.numpydoc_validation]
+checks = [
+    "all",
+    "ES01", # No extended summary
+    "EX01", # No examples section
+    "SA01", # No See Also section
+    "SA02", # Punctuation in See Also section is not that important
+    "GL01", # Docstring starting on the same line as open quotes?
+    "PR08", # Capitalization of parameter descriptions is not that important
+    "PR09", # Punctuation of parameter descriptions is not that important
+    "RT02", # It's useful to include shape descriptions in return types
+    "SA04", # See Also descriptions are not that important
+    "RT04", # Capitalization in return descriptions is not that important
+    "RT05", # Punctuation in return descriptions is not that important
+    "SS03", # Punctuation in summary is not that important
+]
+exclude = [
+    # Exclude all private functions and classes (those beginning with _) in all
+    # submodules:
+    ".*/_.*",
+]
+exclude_files = [
+    '.*/__init__.py',
+    '.*/version.py',
+    '.*/_typing.py',
+]

@@ -3,30 +3,29 @@
 """Core IO, DSP and utility functions."""
 from __future__ import annotations
 
-import os
-import pathlib
-import warnings
+from typing import TYPE_CHECKING
 
-import soundfile as sf
-import audioread
+import lazy_loader as lazy
 import numpy as np
 import scipy
-import scipy.signal
+import soundfile as sf
 import soxr
-import lazy_loader as lazy
+from numba import guvectorize, jit, stencil
 
-from numba import jit, stencil, guvectorize
-from .fft import get_fftlib
-from .convert import frames_to_samples, time_to_samples
-from .._cache import cache
 from .. import util
+from .._cache import cache
 from ..util.exceptions import ParameterError
-from ..util.decorators import deprecated
-from ..util.deprecation import Deprecated, rename_kw
-from .._typing import _FloatLike_co, _IntLike_co, _SequenceLike
+from ..util.files import example
+from .convert import frames_to_samples, time_to_samples
 
-from typing import Any, BinaryIO, Callable, Generator, Optional, Tuple, Union
-from numpy.typing import DTypeLike
+if TYPE_CHECKING:
+    import os
+    from typing import Any, BinaryIO, Callable, Generator
+
+    from numpy.typing import DTypeLike
+
+    from .._typing import _FloatLike_co, _IntLike_co, _ScalarOrSequence, _SequenceLike
+
 
 # Lazy-load optional dependencies
 samplerate = lazy.load("samplerate")
@@ -34,8 +33,11 @@ resampy = lazy.load("resampy")
 
 __all__ = [
     "load",
+    "loadx",
     "stream",
     "to_mono",
+    "to_stereo",
+    "to_multi",
     "resample",
     "get_duration",
     "get_samplerate",
@@ -54,17 +56,15 @@ __all__ = [
 # Load should never be cached, since we cannot verify that the contents of
 # 'path' are unchanged across calls.
 def load(
-    path: Union[
-        str, int, os.PathLike[Any], sf.SoundFile, audioread.AudioFile, BinaryIO
-    ],
+    path: str | int | os.PathLike[Any] | sf.SoundFile | BinaryIO,
     *,
-    sr: Optional[float] = 22050,
+    sr: float | None = 22050,
     mono: bool = True,
     offset: float = 0.0,
-    duration: Optional[float] = None,
+    duration: float | None = None,
     dtype: DTypeLike = np.float32,
     res_type: str = "soxr_hq",
-) -> Tuple[np.ndarray, Union[int, float]]:
+) -> tuple[np.ndarray, int | float]:
     """Load an audio file as a floating point time series.
 
     Audio will be automatically resampled to the given rate
@@ -74,23 +74,16 @@ def load(
 
     Parameters
     ----------
-    path : string, int, pathlib.Path, soundfile.SoundFile, audioread object, or file-like object
+    path : string, int, pathlib.Path, soundfile.SoundFile, or file-like object
         path to the input file.
 
-        Any codec supported by `soundfile` or `audioread` will work.
+        Any codec supported by `soundfile` will work.
 
         Any string file paths, or any object implementing Python's
         file interface (e.g. `pathlib.Path`) are supported as `path`.
 
         If the codec is supported by `soundfile`, then `path` can also be
         an open file descriptor (int) or an existing `soundfile.SoundFile` object.
-
-        Pre-constructed audioread decoders are also supported here, see the example
-        below.  This can be used, for example, to force a specific decoder rather
-        than relying upon audioread to select one for you.
-
-        .. warning:: audioread support is deprecated as of version 0.10.0.
-            audioread support be removed in version 1.0.
 
     sr : number > 0 [scalar]
         target sampling rate
@@ -101,7 +94,9 @@ def load(
         convert signal to mono
 
     offset : float
-        start reading after this time (in seconds)
+        start reading after this time (in seconds).
+
+        If negative, it will be interpreted relative to the end of the file.
 
     duration : float
         only load up to this much audio (in seconds)
@@ -116,11 +111,6 @@ def load(
             By default, this uses `soxr`'s high-quality mode ('HQ').
 
             For alternative resampling modes, see `resample`
-
-        .. note::
-           `audioread` may truncate the precision of the audio data to 16 bits.
-
-           See :ref:`ioformats` for alternate loading methods.
 
     Returns
     -------
@@ -161,29 +151,8 @@ def load(
     >>> import soundfile
     >>> sfo = soundfile.SoundFile(librosa.ex('brahms'))
     >>> y, sr = librosa.load(sfo)
-
-    >>> # Load using an already open audioread object
-    >>> import audioread.ffdec  # Use ffmpeg decoder
-    >>> aro = audioread.ffdec.FFmpegAudioFile(librosa.ex('brahms'))
-    >>> y, sr = librosa.load(aro)
     """
-    if isinstance(path, tuple(audioread.available_backends())):
-        # Force the audioread loader if we have a reader object already
-        y, sr_native = __audioread_load(path, offset, duration, dtype)
-    else:
-        # Otherwise try soundfile first, and then fall back if necessary
-        try:
-            y, sr_native = __soundfile_load(path, offset, duration, dtype)
-
-        except sf.SoundFileRuntimeError as exc:
-            # If soundfile failed, try audioread instead
-            if isinstance(path, (str, pathlib.PurePath)):
-                warnings.warn(
-                    "PySoundFile failed. Trying audioread instead.", stacklevel=2
-                )
-                y, sr_native = __audioread_load(path, offset, duration, dtype)
-            else:
-                raise exc
+    y, sr_native = __soundfile_load(path, offset, duration, dtype)
 
     # Final cleanup for dtype and contiguity
     if mono:
@@ -210,9 +179,13 @@ def __soundfile_load(path, offset, duration, dtype):
 
     with context as sf_desc:
         sr_native = sf_desc.samplerate
-        if offset:
-            # Seek to the start of the target read
-            sf_desc.seek(int(offset * sr_native))
+        if offset != 0:
+            if offset > 0:
+                # Seek to the start of the target read
+                sf_desc.seek(int(offset * sr_native))
+            else:
+                sf_desc.seek(-int(abs(offset) * sr_native), whence=sf.SEEK_END)
+
         if duration is not None:
             frame_duration = int(duration * sr_native)
         else:
@@ -224,79 +197,16 @@ def __soundfile_load(path, offset, duration, dtype):
     return y, sr_native
 
 
-@deprecated(version="0.10.0", version_removed="1.0")
-def __audioread_load(path, offset, duration, dtype: DTypeLike):
-    """Load an audio buffer using audioread.
-
-    This loads one block at a time, and then concatenates the results.
-    """
-    buf = []
-
-    if isinstance(path, tuple(audioread.available_backends())):
-        # If we have an audioread object already, don't bother opening
-        reader = path
-    else:
-        # If the input was not an audioread object, try to open it
-        reader = audioread.audio_open(path)
-
-    with reader as input_file:
-        sr_native = input_file.samplerate
-        n_channels = input_file.channels
-
-        s_start = int(sr_native * offset) * n_channels
-
-        if duration is None:
-            s_end = np.inf
-        else:
-            s_end = s_start + (int(sr_native * duration) * n_channels)
-
-        n = 0
-
-        for frame in input_file:
-            frame = util.buf_to_float(frame, dtype=dtype)
-            n_prev = n
-            n = n + len(frame)
-
-            if n < s_start:
-                # offset is after the current frame
-                # keep reading
-                continue
-
-            if s_end < n_prev:
-                # we're off the end.  stop reading
-                break
-
-            if s_end < n:
-                # the end is in this frame.  crop.
-                frame = frame[: int(s_end - n_prev)]  # pragma: no cover
-
-            if n_prev <= s_start <= n:
-                # beginning is in this frame
-                frame = frame[(s_start - n_prev) :]
-
-            # tack on the current frame
-            buf.append(frame)
-
-    if buf:
-        y = np.concatenate(buf)
-        if n_channels > 1:
-            y = y.reshape((-1, n_channels)).T
-    else:
-        y = np.empty(0, dtype=dtype)
-
-    return y, sr_native
-
-
 def stream(
-    path: Union[str, int, sf.SoundFile, BinaryIO],
+    path: str | int | sf.SoundFile | BinaryIO,
     *,
     block_length: int,
     frame_length: int,
     hop_length: int,
     mono: bool = True,
     offset: float = 0.0,
-    duration: Optional[float] = None,
-    fill_value: Optional[float] = None,
+    duration: float | None = None,
+    fill_value: float | None = None,
     dtype: DTypeLike = np.float32,
 ) -> Generator[np.ndarray, None, None]:
     """Stream audio in fixed-length buffers.
@@ -374,6 +284,8 @@ def stream(
     offset : float
         Start reading after this time (in seconds)
 
+        If negative, it will be interpreted relative to the end of the file.
+
     duration : float
         Only load up to this much audio (in seconds)
 
@@ -445,18 +357,16 @@ def stream(
     sr = sfo.samplerate
 
     # Construct the stream
-    if offset:
-        start = int(offset * sr)
+    # Seek the soundfile object to the starting frame
+    if offset >= 0:
+        sfo.seek(int(offset * sr))
     else:
-        start = 0
+        sfo.seek(-int(abs(offset) * sr), whence=sf.SEEK_END)
 
     if duration:
         frames = int(duration * sr)
     else:
         frames = -1
-
-    # Seek the soundfile object to the starting frame
-    sfo.seek(start)
 
     blocks = sfo.blocks(
         blocksize=frame_length + (block_length - 1) * hop_length,
@@ -474,19 +384,356 @@ def stream(
             yield block.T
 
 
+def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarray, int | float]:
+    """Load an example audio file by key.
+
+    This is a wrapper around `librosa.util.example` that provides the same
+    functionality as `load`, but with the convenience of loading from the
+    built-in examples.
+
+    .. note:: This function is primarily useful for demonstration purposes,
+      and to make documentation examples more concise.
+      For general-purpose loading of audio files, use `load` instead.
+
+    Parameters
+    ----------
+    key : str
+        The identifier for the track to load
+
+    hq : bool, optional
+        If ``True``, return the high-quality version of the recording.
+        If ``False``, return the 22KHz mono version of the recording.
+
+        If not provided, `hq` is inferred based on additional parameters in `kwargs`:
+            - If `sr` is provided and greater than 22050 (or is `None`), then `hq` is set to `True`.
+            - If `mono` is provided and set to `False`, then `hq` is set to `True`.
+            - Otherwise, `hq` is set to `False`.
+
+    **kwargs : additional keyword arguments
+        Additional keyword arguments to pass to `load`
+
+    Returns
+    -------
+    y : np.ndarray [shape=(n,) or (..., n)]
+        audio time series. Multi-channel is supported.
+    sr : number > 0 [scalar]
+        sampling rate of ``y``
+
+    See Also
+    --------
+    load
+    librosa.util.example
+    librosa.util.list_examples
+
+    Examples
+    --------
+    Load the default version of the 'trumpet' example
+
+    >>> y, sr = librosa.loadx('trumpet')
+
+    Load the stereo version of the 'trumpet' example
+
+    >>> y, sr = librosa.loadx('trumpet', mono=False)
+    >>> # This is equivalent to the following more verbose code:
+    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
+    """
+    if hq is None:
+        if (("sr" in kwargs and (kwargs["sr"] is None or kwargs["sr"] > 22050)) or
+            ("mono" in kwargs and kwargs["mono"] is False)
+            ):
+            hq = True
+        else:
+            hq = False
+
+    try:
+        path = example(key, hq=hq)
+    except ParameterError as exc:
+        raise ParameterError(f"Could not load example with key '{key}'.  "
+                             "Did you mean to use librosa.load instead of loadx?") from exc
+
+    return load(path, **kwargs)
+
+
 @cache(level=20)
-def to_mono(y: np.ndarray) -> np.ndarray:
+def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.ndarray:
     """Convert an audio signal to mono by averaging samples across channels.
 
     Parameters
     ----------
-    y : np.ndarray [shape=(..., n)]
-        audio time series. Multi-channel is supported.
+    *signals : np.ndarray [shape=(..., n)]
+        One or more signals to convert to mono.
+        Each input signal can be mono or multi-channel, and they need not all have
+        identical lengths.
+
+    pad : bool
+        If `True`, pad the output to match the length of the longest input:
+        `n_out = max(y.shape[-1] for y in signals)`.
+
+        If `False`, trim the output to match the length of the shortest input:
+        `n_out = min(y.shape[-1] for y in signals)`.
+
+    norm : bool
+        If `True` (default), signals are combined by averaging.
+
+        If `False`, signals are combined by summing.
 
     Returns
     -------
-    y_mono : np.ndarray [shape=(n,)]
-        ``y`` as a monophonic time-series
+    y_mono : np.ndarray [shape=(n_out,)]
+        All signals combined together into a single mono signal.
+
+    Notes
+    -----
+    This function caches at level 20.
+
+    The dtype of the output signal will be the most general type that can
+    accommodate all input signals.  If the input signals have different
+    dtypes, the output will be promoted to the most general type.
+
+    .. warning:: Any input signal with more than one channel will be
+      downmixed to mono prior to being combined with other signals.
+      This means that the following are generally not equivalent
+      for multi-channel inputs `y1` and `y2` when `norm=True`:
+
+        >>> y_mono = librosa.to_mono(y1, y2)
+        >>> y_mono = librosa.to_mono(np.vstack((y1, y2)))
+
+    See Also
+    --------
+    to_stereo
+    to_multi
+    util.fix_length
+
+    Examples
+    --------
+    Downmix a stereo input
+
+    >>> y, sr = librosa.loadx('trumpet', mono=False)
+    >>> y.shape
+    (2, 117601)
+    >>> y_mono = librosa.to_mono(y)
+    >>> y_mono.shape
+    (117601,)
+
+    Mix three independent mono inputs with different lengths
+
+    >>> y_440 = librosa.tone(440.0, sr=22050, duration=1.0)
+    >>> y_550 = librosa.tone(550.0, sr=22050, duration=1.5)
+    >>> y_660 = librosa.tone(660.0, sr=22050, duration=2.0)
+    >>> y_mono = librosa.to_mono(y_440, y_550, y_660, pad=True)
+    >>> y_mono.shape
+    (44100,)
+    """
+    # Validate the buffer(s) and identify lengths, dtypes, etc
+    if not signals:
+        raise ParameterError("At least one signal must be provided to `to_mono`.")
+    n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
+    dtype = signals[0].dtype
+    for y in signals:
+        util.valid_audio(y)
+        n_min = min(n_min, y.shape[-1])
+        n_max = max(n_max, y.shape[-1])
+        dtype = np.promote_types(dtype, y.dtype)
+
+    # Allocate and initialize the output buffer
+    if pad:
+        size = n_max
+    else:
+        size = n_min
+
+    output = np.zeros((size,), dtype=dtype)
+
+    if norm:
+        combine = np.mean
+    else:
+        combine = np.sum
+
+    # Now, average the signals together
+    for y in signals:
+        output += util.fix_length(
+            combine(y, axis=tuple(range(y.ndim - 1))), size=output.shape[-1], axis=-1
+        )
+    if norm:
+        # Divide by the number of input signals given
+        output /= len(signals)
+
+    return output
+
+
+@cache(level=20)
+def to_stereo(
+    *,
+    left: np.ndarray | None,
+    right: np.ndarray | None,
+    downmix: bool = True,
+    pad: bool = True,
+    norm: bool = True,
+) -> np.ndarray:
+    """Combine two signals into a stereo signal.
+
+    Parameters
+    ----------
+    left : np.ndarray [shape=(..., n)] or None
+        Left channel signal. Multi-channel is supported.
+
+    right : np.ndarray [shape=(..., m)] or None
+        Right channel signal. Multi-channel is supported.
+
+    downmix : bool
+        If `True`, downmix the left and right channels to mono before combining.
+
+        If `False`, the left and right signals are additively combined.
+
+    pad : bool
+        If `True`, pad the shorter channel with zeros to match the length of the longer channel.
+        If `False`, the longer channel is trimmed to match the length of the shorter channel.
+
+    norm : bool
+        If `True` (default), signals are combined by averaging.
+
+        If `False`, signals are combined by summing.
+
+    Returns
+    -------
+    y_stereo : np.ndarray [shape=(2, n_out)]
+        Stereo signal with left channel in the first row and right channel in the second row.
+
+    See Also
+    --------
+    to_mono
+    to_multi
+    util.fix_length
+
+    Notes
+    -----
+    At least one of `left` or `right` must be provided.
+    This function caches at level 20.
+
+    Examples
+    --------
+    Combine two mono signals into a hard-panned stereo signal
+
+    >>> y1 = librosa.tone(440.0, sr=22050, duration=1.0)
+    >>> y2 = librosa.tone(550.0, sr=22050, duration=1.0)
+    >>> y_stereo = librosa.to_stereo(left=y1, right=y2)
+
+    Upmix a mono signal into the left or right channel in stereo
+
+    >>> y_left = librosa.to_stereo(left=y1, right=None)
+    >>> y_right = librosa.to_stereo(left=None, right=y2)
+
+    Downmix a stereo signal into the left channel, and mix a third
+    mono signal into the right channel
+
+    >>> y3 = librosa.tone(660.0, sr=22050, duration=1.0)
+    >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=True)
+
+    Keep the original stereo signal separated, but mix a third signal into the
+    right channel:
+
+    >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=False)
+    """
+    # This flag tracks whether we had only one signal to begin with
+    onesided = True
+    if left is None and right is None:
+        raise ParameterError("At least one of 'left' or 'right' must be provided")
+
+    elif left is None:
+        # These are somewhat inefficient ways to allocate a silent channel,
+        # but it makes the logic simple and clear below
+        left = np.zeros_like(right)
+    elif right is None:
+        right = np.zeros_like(left)
+    else:
+        onesided = False
+
+    # This assert tells mypy that both arrays now exist
+    assert left is not None and right is not None
+
+    # First, deal with padding
+    if pad:
+        size = max(left.shape[-1], right.shape[-1])
+    else:
+        size = min(left.shape[-1], right.shape[-1])
+
+    # This implements either padding or trimming
+    left = util.fix_length(left, size=size, axis=-1)
+    right = util.fix_length(right, size=size, axis=-1)
+
+    # Get a compatible dtype for both channels
+    dtype = np.promote_types(left.dtype, right.dtype)
+
+    # Create an empty stereo output buffer
+    output = np.zeros((2, size), dtype=dtype)
+    if downmix:
+        output[0] = to_mono(left, norm=norm)
+        output[1] = to_mono(right, norm=norm)
+    else:
+        if left.ndim == 1:
+            output[0] = left
+        elif left.ndim == 2 and left.shape[0] == 2:
+            output[:] = left
+        else:
+            raise ParameterError(
+                f"left input has unsupported shape {left.shape} for downmix=False"
+            )
+
+        if right.ndim == 1:
+            output[1] += right
+        elif right.ndim == 2 and right.shape[0] == 2:
+            output[:] += right
+        else:
+            raise ParameterError(
+                f"right input has unsupported shape {right.shape} for downmix=False"
+            )
+        if norm and not onesided:
+            # Only normalize here if we had both channels on input
+            output /= 2
+
+    return output
+
+
+@cache(level=20)
+def to_multi(
+    *signals: np.ndarray, downmix: bool = True, pad: bool = True, norm: bool = True
+) -> np.ndarray:
+    """Combine multiple signals into a multi-channel signal.
+
+    Parameters
+    ----------
+    *signals : np.ndarray [shape=(..., n)]
+        One or more signals to combine into a multi-channel signal.
+        Each input signal can be mono or multi-channel, and they need not all have
+        identical lengths.
+
+    downmix : bool
+        If `True`, downmix each input signal to mono before combining.
+
+        If `False`, the input signals are additively combined, and all must have
+        identical channel layouts (shape excluding the trailing length dimension).
+
+    pad : bool
+        If `True`, pad the output to match the length of the longest input signal.
+
+        If `False`, trim the output to match the length of the shortest input signal.
+
+    norm : bool
+        If `True` (default), signals are combined by averaging.
+
+        If `False`, signals are combined by summing.
+
+    Returns
+    -------
+    y_multi : np.ndarray [shape=(m, n_out) or shape=(..., n_out)]
+        Multi-channel combination of the input signals, where `m` corresponds
+        to the number of signals (if `downmix=True`), and `n_out` is the length
+        of the output signal determined by the padding mode.
+
+    See Also
+    --------
+    to_mono
+    to_stereo
+    util.fix_length
 
     Notes
     -----
@@ -494,20 +741,59 @@ def to_mono(y: np.ndarray) -> np.ndarray:
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
-    >>> y.shape
-    (2, 117601)
-    >>> y_mono = librosa.to_mono(y)
-    >>> y_mono.shape
-    (117601,)
+    Combine three mono signals of different lengths into a multi-channel signal
+
+    >>> y1 = librosa.tone(440.0, sr=22050, duration=1.0)
+    >>> y2 = librosa.tone(550.0, sr=22050, duration=1.0)
+    >>> y3 = librosa.tone(660.0, sr=22050, duration=2.0)
+    >>> y_multi = librosa.to_multi(y1, y2, y3, pad=True)
+    >>> y_multi.shape
+    (3, 44100)
     """
-    # Validate the buffer
-    util.valid_audio(y)
+    # Validate the buffer(s) and identify lengths, dtypes, etc
+    if not signals:
+        raise ParameterError("At least one signal must be provided.")
+    n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
+    dtype = signals[0].dtype
+    if downmix:
+        # If all channels are downmixed to mono,
+        # then the layout will be (n_signals, n_out)
+        channel_layout = tuple((len(signals),))
+    else:
+        # If we're not downmixing, then all have to have
+        # identical channel layout
+        channel_layout = tuple(signals[0].shape[:-1])
 
-    if y.ndim > 1:
-        y = np.mean(y, axis=tuple(range(y.ndim - 1)))
+    for y in signals:
+        util.valid_audio(y)
+        n_min = min(n_min, y.shape[-1])
+        n_max = max(n_max, y.shape[-1])
+        dtype = np.promote_types(dtype, y.dtype)
+        if not downmix and y.shape[:-1] != channel_layout:
+            raise ParameterError(
+                f"Cannot combine signals with different channel layouts {y.shape[:-1]} when downmix=False"
+            )
 
-    return y
+    # Allocate and initialize the output buffer
+    if pad:
+        size = n_max
+    else:
+        size = n_min
+
+    output = np.zeros((*channel_layout, size), dtype=dtype)
+    if downmix:
+        # Downmix each signal to mono and mix into the output
+        for i, y in enumerate(signals):
+            output[i] = util.fix_length(to_mono(y, norm=norm), size=size, axis=-1)
+    else:
+        # Truncate and mix into the output
+        for y in signals:
+            output += util.fix_length(y, size=size, axis=-1)
+        if norm:
+            # Divide by the number of input signals given
+            output /= len(signals)
+
+    return output
 
 
 @cache(level=20)
@@ -619,7 +905,7 @@ def resample(
     --------
     Downsample from 22 KHz to 8 KHz
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'), sr=22050)
+    >>> y, sr = librosa.loadx('trumpet', sr=22050)
     >>> y_8k = librosa.resample(y, orig_sr=sr, target_sr=8000)
     >>> y.shape, y_8k.shape
     ((117601,), (42668,))
@@ -635,12 +921,16 @@ def resample(
     n_samples = int(np.ceil(y.shape[axis] * ratio))
 
     if res_type in ("scipy", "fft"):
+        import scipy.signal
+
         y_hat = scipy.signal.resample(y, n_samples, axis=axis)
     elif res_type == "polyphase":
         if int(orig_sr) != orig_sr or int(target_sr) != target_sr:
             raise ParameterError(
                 "polyphase resampling is only supported for integer-valued sampling rates."
             )
+
+        import scipy.signal
 
         # For polyphase resampling, we need up- and down-sampling ratios
         # We can get those from the greatest common divisor of the rates
@@ -689,14 +979,13 @@ def resample(
 
 def get_duration(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
     center: bool = True,
-    path: Optional[Union[str, os.PathLike[Any]]] = None,
-    filename: Optional[Union[str, os.PathLike[Any], Deprecated]] = Deprecated(),
+    path: str | os.PathLike[Any] | None = None,
 ) -> float:
     """Compute the duration (in seconds) of an audio time series,
     feature matrix, or filename.
@@ -704,7 +993,7 @@ def get_duration(
     Examples
     --------
     >>> # Load an example audio file
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.get_duration(y=y, sr=sr)
     5.333378684807256
 
@@ -713,7 +1002,7 @@ def get_duration(
     5.333378684807256
 
     >>> # Or compute duration from an STFT matrix
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = librosa.stft(y)
     >>> librosa.get_duration(S=S, sr=sr)
     5.317369614512471
@@ -758,12 +1047,6 @@ def get_duration(
         As in ``load``, this can also be an integer or open file-handle
         that can be processed by ``soundfile``.
 
-    filename : Deprecated
-        Equivalent to ``path``
-
-        .. warning:: This parameter has been renamed to ``path`` in 0.10.
-            Support for ``filename=`` will be removed in 1.0.
-
     Returns
     -------
     d : float >= 0
@@ -782,28 +1065,8 @@ def get_duration(
     then ``path`` takes precedence over ``S``, and ``S`` takes precedence over
     ``(y, sr)``.
     """
-    path = rename_kw(
-        old_name="filename",
-        old_value=filename,
-        new_name="path",
-        new_value=path,
-        version_deprecated="0.10.0",
-        version_removed="1.0",
-    )
-
     if path is not None:
-        try:
-            return sf.info(path).duration  # type: ignore
-        except sf.SoundFileRuntimeError:
-            warnings.warn(
-                "PySoundFile failed. Trying audioread instead."
-                "\n\tAudioread support is deprecated in librosa 0.10.0"
-                " and will be removed in version 1.0.",
-                stacklevel=2,
-                category=FutureWarning,
-            )
-            with audioread.audio_open(path) as fdesc:
-                return fdesc.duration  # type: ignore
+        return sf.info(path).duration  # type: ignore
 
     if y is None:
         if S is None:
@@ -822,7 +1085,7 @@ def get_duration(
     return float(n_samples) / sr
 
 
-def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
+def get_samplerate(path: str | int | sf.SoundFile | BinaryIO) -> float:
     """Get the sampling rate for a given file.
 
     Parameters
@@ -846,26 +1109,15 @@ def get_samplerate(path: Union[str, int, sf.SoundFile, BinaryIO]) -> float:
     >>> librosa.get_samplerate(path)
     22050
     """
-    try:
-        if isinstance(path, sf.SoundFile):
-            return path.samplerate  # type: ignore
+    if isinstance(path, sf.SoundFile):
+        return path.samplerate  # type: ignore
 
-        return sf.info(path).samplerate  # type: ignore
-    except sf.SoundFileRuntimeError:
-        warnings.warn(
-            "PySoundFile failed. Trying audioread instead."
-            "\n\tAudioread support is deprecated in librosa 0.10.0"
-            " and will be removed in version 1.0.",
-            stacklevel=2,
-            category=FutureWarning,
-        )
-        with audioread.audio_open(path) as fdesc:
-            return fdesc.samplerate  # type: ignore
+    return sf.info(path).samplerate  # type: ignore
 
 
 @cache(level=20)
 def autocorrelate(
-    y: np.ndarray, *, max_size: Optional[int] = None, axis: int = -1
+    y: np.ndarray, *, max_size: int | None = None, axis: int = -1
 ) -> np.ndarray:
     """Bounded-lag auto-correlation
 
@@ -895,7 +1147,7 @@ def autocorrelate(
     --------
     Compute full autocorrelation of ``y``
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.autocorrelate(y)
     array([ 6.899e+02,  6.236e+02, ...,  3.710e-08, -1.796e-08])
 
@@ -913,25 +1165,24 @@ def autocorrelate(
 
     max_size = int(min(max_size, y.shape[axis]))
 
-    fft = get_fftlib()
-
     real = not np.iscomplexobj(y)
 
     # Pad out the signal to support full-length auto-correlation
     n_pad = scipy.fft.next_fast_len(2 * y.shape[axis] - 1, real=real)
 
+    autocorr: np.ndarray
     if real:
         # Compute the power spectrum along the chosen axis
-        powspec = util.abs2(fft.rfft(y, n=n_pad, axis=axis))
+        powspec = util.abs2(scipy.fft.rfft(y, n=n_pad, axis=axis))
 
         # Convert back to time domain
-        autocorr = fft.irfft(powspec, n=n_pad, axis=axis)
+        autocorr = scipy.fft.irfft(powspec, n=n_pad, axis=axis)
     else:
         # Compute the power spectrum along the chosen axis
-        powspec = util.abs2(fft.fft(y, n=n_pad, axis=axis))
+        powspec = util.abs2(scipy.fft.fft(y, n=n_pad, axis=axis))
 
         # Convert back to time domain
-        autocorr = fft.ifft(powspec, n=n_pad, axis=axis)
+        autocorr = scipy.fft.ifft(powspec, n=n_pad, axis=axis)
 
     # Slice down to max_size
     subslice = [slice(None)] * autocorr.ndim
@@ -991,14 +1242,14 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     --------
     Compute LP coefficients of y at order 16 on entire series
 
-    >>> y, sr = librosa.load(librosa.ex('libri1'))
+    >>> y, sr = librosa.loadx('libri1')
     >>> librosa.lpc(y, order=16)
 
     Compute LP coefficients, and plot LP estimate of original series
 
     >>> import matplotlib.pyplot as plt
     >>> import scipy
-    >>> y, sr = librosa.load(librosa.ex('libri1'), duration=0.020)
+    >>> y, sr = librosa.loadx('libri1', duration=0.020)
     >>> a = librosa.lpc(y, order=2)
     >>> b = np.hstack([[0], -1 * a[1:]])
     >>> y_hat = scipy.signal.lfilter(b, [1], y)
@@ -1152,10 +1403,6 @@ def _zc_stencil(x: np.ndarray, threshold: float, zero_pos: bool) -> np.ndarray:
 
 
 @guvectorize(
-    [
-        "void(float32[:], float32, bool_, bool_[:])",
-        "void(float64[:], float64, bool_, bool_[:])",
-    ],
     "(n),(),()->(n)",
     cache=True,
     nopython=True,
@@ -1175,7 +1422,7 @@ def zero_crossings(
     y: np.ndarray,
     *,
     threshold: float = 1e-10,
-    ref_magnitude: Optional[Union[float, Callable]] = None,
+    ref_magnitude: float | Callable | None = None,
     pad: bool = True,
     zero_pos: bool = True,
     axis: int = -1,
@@ -1284,14 +1531,14 @@ def zero_crossings(
 
 def clicks(
     *,
-    times: Optional[_SequenceLike[_FloatLike_co]] = None,
-    frames: Optional[_SequenceLike[_IntLike_co]] = None,
+    times: _SequenceLike[_FloatLike_co] | None = None,
+    frames: _SequenceLike[_IntLike_co] | None = None,
     sr: float = 22050,
     hop_length: int = 512,
     click_freq: float = 1000.0,
     click_duration: float = 0.1,
-    click: Optional[np.ndarray] = None,
-    length: Optional[int] = None,
+    click: np.ndarray | None = None,
+    length: int | None = None,
 ) -> np.ndarray:
     """Construct a "click track".
 
@@ -1333,7 +1580,7 @@ def clicks(
     Examples
     --------
     >>> # Sonify detected beat events
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
+    >>> y, sr = librosa.loadx('choice', duration=10)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> y_beats = librosa.clicks(frames=beats, sr=sr)
 
@@ -1353,7 +1600,7 @@ def clicks(
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
-    >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS[power]',
     ...                          x_axis='time', y_axis='mel', ax=ax[0])
     >>> librosa.display.waveshow(y_beat_times, sr=sr, label='Beat clicks',
     ...                          ax=ax[1])
@@ -1423,9 +1670,9 @@ def tone(
     frequency: _FloatLike_co,
     *,
     sr: float = 22050,
-    length: Optional[int] = None,
-    duration: Optional[float] = None,
-    phi: Optional[float] = None,
+    length: int | None = None,
+    duration: float | None = None,
+    phi: float | None = None,
 ) -> np.ndarray:
     """Construct a pure tone (cosine) signal at a given frequency.
 
@@ -1472,7 +1719,7 @@ def tone(
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> S = librosa.feature.melspectrogram(y=tone)
-    >>> librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS[power]',
     ...                          x_axis='time', y_axis='mel', ax=ax)
     """
     if frequency is None:
@@ -1496,10 +1743,10 @@ def chirp(
     fmin: _FloatLike_co,
     fmax: _FloatLike_co,
     sr: float = 22050,
-    length: Optional[int] = None,
-    duration: Optional[float] = None,
+    length: int | None = None,
+    duration: float | None = None,
     linear: bool = False,
-    phi: Optional[float] = None,
+    phi: float | None = None,
 ) -> np.ndarray:
     """Construct a "chirp" or "sine-sweep" signal.
 
@@ -1570,12 +1817,12 @@ def chirp(
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> S_exponential = np.abs(librosa.stft(y=exponential_chirp))
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S_exponential, ref=np.max),
+    >>> librosa.display.specshow(S_exponential, vscale='dBFS',
     ...                          x_axis='time', y_axis='linear', ax=ax[0])
     >>> ax[0].set(title='Exponential chirp', xlabel=None)
     >>> ax[0].label_outer()
     >>> S_linear = np.abs(librosa.stft(y=linear_chirp))
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S_linear, ref=np.max),
+    >>> librosa.display.specshow(S_linear, vscale='dBFS',
     ...                          x_axis='time', y_axis='linear', ax=ax[1])
     >>> ax[1].set(title='Linear chirp')
     """
@@ -1594,7 +1841,8 @@ def chirp(
         phi = -np.pi * 0.5
 
     method = "linear" if linear else "logarithmic"
-    y: np.ndarray = scipy.signal.chirp(
+    import scipy.signal
+    y: np.ndarray = scipy.signal.chirp(  # type: ignore[call-overload]
         np.arange(int(duration * sr)) / sr,
         fmin,
         duration,
@@ -1606,7 +1854,7 @@ def chirp(
 
 
 def mu_compress(
-    x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255, quantize: bool = True
+    x: np.ndarray | _FloatLike_co, *, mu: float = 255, quantize: bool = True
 ) -> np.ndarray:
     """mu-law compression
 
@@ -1698,8 +1946,8 @@ def mu_compress(
 
 
 def mu_expand(
-    x: Union[np.ndarray, _FloatLike_co], *, mu: float = 255.0, quantize: bool = True
-) -> np.ndarray:
+    x: np.ndarray | _FloatLike_co, *, mu: float = 255.0, quantize: bool = True
+) -> _ScalarOrSequence[_FloatLike_co]:
     """mu-law expansion
 
     This function is the inverse of ``mu_compress``. Given a mu-law compressed
@@ -1783,4 +2031,5 @@ def mu_expand(
             f"Inverse mu-law input x={x} must be in the range [-1, +1]."
         )
 
-    return np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)
+    y: _ScalarOrSequence[_FloatLike_co] = np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)
+    return y

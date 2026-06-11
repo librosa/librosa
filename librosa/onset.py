@@ -11,29 +11,31 @@ Onset detection
     onset_strength
     onset_strength_multi
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
-import scipy
 
+from . import core, util
 from ._cache import cache
-from . import core
-from . import util
+from .feature.spectral import melspectrogram
 from .util.exceptions import ParameterError
 
-from .feature.spectral import melspectrogram
-from typing import Any, Callable, Optional, Union, Sequence
+if TYPE_CHECKING:
+    from typing import Any, Callable, Sequence
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 
 
 def onset_detect(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
     hop_length: int = 512,
     backtrack: bool = False,
-    energy: Optional[np.ndarray] = None,
+    energy: np.ndarray | None = None,
     units: str = "frames",
     normalize: bool = True,
     sparse: bool = True,
@@ -127,7 +129,7 @@ def onset_detect(
     --------
     Get onset times from a signal
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> librosa.onset.onset_detect(y=y, sr=sr, units='time')
     array([0.07 , 0.232, 0.395, 0.604, 0.743, 0.929, 1.045, 1.115,
            1.416, 1.672, 1.881, 2.043, 2.206, 2.368, 2.554, 3.019])
@@ -141,7 +143,7 @@ def onset_detect(
     >>> import matplotlib.pyplot as plt
     >>> D = np.abs(librosa.stft(y))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> librosa.display.specshow(D, vscale='dBFS',
     ...                          x_axis='time', y_axis='log', ax=ax[0], sr=sr)
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
@@ -164,9 +166,8 @@ def onset_detect(
         # Normalization is performed over the trailing axis
         onset_envelope = onset_envelope - np.min(onset_envelope, keepdims=True, axis=-1)
 
-        # Mypy does not realize that oenv is not None by now
         # Max-scale with safe division
-        onset_envelope /= np.max(onset_envelope, keepdims=True, axis=-1) + util.tiny(onset_envelope)  # type: ignore
+        onset_envelope /= np.max(onset_envelope, keepdims=True, axis=-1) + util.tiny(onset_envelope)
 
     # help out mypy
     assert onset_envelope is not None
@@ -215,16 +216,16 @@ def onset_detect(
 
 def onset_strength(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     lag: int = 1,
     max_size: int = 1,
-    ref: Optional[np.ndarray] = None,
+    ref: np.ndarray | None = None,
     detrend: bool = False,
     center: bool = True,
-    feature: Optional[Callable] = None,
-    aggregate: Optional[Union[Callable, bool]] = None,
+    feature: Callable | None = None,
+    aggregate: Callable | bool | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope.
@@ -311,11 +312,11 @@ def onset_strength(
     First, load some audio and plot the spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
+    >>> y, sr = librosa.loadx('trumpet', duration=3)
     >>> D = np.abs(librosa.stft(y))
     >>> times = librosa.times_like(D, sr=sr)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> librosa.display.specshow(D, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0], sr=sr)
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
@@ -397,7 +398,7 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
     --------
     Backtrack the events using the onset envelope
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
+    >>> y, sr = librosa.loadx('trumpet', duration=3)
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr)
     >>> times = librosa.times_like(oenv, sr=sr)
     >>> # Detect events without backtracking
@@ -415,7 +416,7 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].label_outer()
     >>> ax[1].plot(times, oenv, label='Onset strength')
@@ -444,19 +445,19 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
 @cache(level=30)
 def onset_strength_multi(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    S: Optional[np.ndarray] = None,
+    S: np.ndarray | None = None,
     n_fft: int = 2048,
     hop_length: int = 512,
     lag: int = 1,
     max_size: int = 1,
-    ref: Optional[np.ndarray] = None,
+    ref: np.ndarray | None = None,
     detrend: bool = False,
     center: bool = True,
-    feature: Optional[Callable] = None,
-    aggregate: Optional[Union[Callable, bool]] = None,
-    channels: Optional[Union[Sequence[int], Sequence[slice]]] = None,
+    feature: Callable | None = None,
+    aggregate: Callable | bool | None = None,
+    channels: Sequence[int] | Sequence[slice] | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope across multiple channels.
@@ -546,14 +547,14 @@ def onset_strength_multi(
     First, load some audio and plot the spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
+    >>> y, sr = librosa.loadx('choice', duration=5)
     >>> D = np.abs(librosa.stft(y))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img1 = librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> img1 = librosa.display.specshow(D, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Power spectrogram')
     >>> ax[0].label_outer()
-    >>> fig.colorbar(img1, ax=[ax[0]], format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img1, ax=ax[0])
 
     Construct a standard onset function over four sub-bands
 
@@ -596,6 +597,7 @@ def onset_strength_multi(
         if max_size == 1:
             ref = S
         else:
+            import scipy.ndimage
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=-2)
     elif ref.shape != S.shape:
         raise ParameterError(
@@ -632,6 +634,8 @@ def onset_strength_multi(
 
     # remove the DC component
     if detrend:
+        import scipy.signal
+
         onset_env = scipy.signal.lfilter([1.0, -1.0], [1.0, -0.99], onset_env, axis=-1)
 
     # Trim to match the input duration

@@ -4,31 +4,34 @@
 
 from __future__ import annotations
 
-import scipy.ndimage
-import scipy.sparse
+import itertools
+from typing import TYPE_CHECKING, overload
 
-import numpy as np
 import numba
+import numpy as np
+import scipy.sparse
 from numpy.lib.stride_tricks import as_strided
 
 from .._cache import cache
 from .exceptions import ParameterError
-from .deprecation import Deprecated
-from numpy.typing import DTypeLike
-from typing import (
-    Any,
-    Callable,
-    List,
-    Dict,
-    Optional,
-    Sequence,
-    Tuple,
-    TypeVar,
-    Union,
-    overload,
-)
-from typing_extensions import Literal
-from .._typing import _SequenceLike, _FloatLike_co, _ComplexLike_co
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Literal, Sequence
+
+    from numpy.typing import DTypeLike
+
+    from .._typing import (
+        _Complex,
+        _ComplexLike_co,
+        _FloatLike_co,
+        _InterpKind,
+        _Number,
+        _Real,
+        _SequenceLike,
+        _SparseArray,
+        _SparseMatrix,
+    )
+
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -65,6 +68,7 @@ __all__ = [
     "is_unique",
     "abs2",
     "phasor",
+    "interp_broadcast"
 ]
 
 
@@ -151,7 +155,7 @@ def frame(
     --------
     Extract 2048-sample frames from monophonic signal with a hop of 64 samples per frame
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
     >>> frames
     array([[-1.407e-03, -2.604e-02, ..., -1.795e-05, -8.108e-06],
@@ -174,7 +178,7 @@ def frame(
 
     Frame a stereo signal:
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
+    >>> y, sr = librosa.loadx('trumpet', mono=False)
     >>> y.shape
     (2, 117601)
     >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
@@ -182,7 +186,7 @@ def frame(
 
     Carve an STFT into fixed-length patches of 32 frames with 50% overlap
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = np.abs(librosa.stft(y))
     >>> S.shape
     (1025, 230)
@@ -300,7 +304,7 @@ def valid_audio(y: np.ndarray) -> bool:
     return True
 
 
-def valid_int(x: float, *, cast: Optional[Callable[[float], float]] = None) -> int:
+def valid_int(x: float, *, cast: Callable[[float], float] | None = None) -> int:
     """Ensure that an input value is integer-typed.
     This is primarily useful for ensuring integrable-valued
     array indices.
@@ -448,7 +452,7 @@ def pad_center(
 
 
 def expand_to(
-    x: np.ndarray, *, ndim: int, axes: Union[int, slice, Sequence[int], Sequence[slice]]
+    x: np.ndarray, *, ndim: int, axes: int | slice | Sequence[int] | Sequence[slice]
 ) -> np.ndarray:
     """Expand the dimensions of an input array with
 
@@ -495,7 +499,7 @@ def expand_to(
     (1, 3, 3, 1)
     """
     # Force axes into a tuple
-    axes_tup: Tuple[int]
+    axes_tup: tuple[int]
     try:
         axes_tup = tuple(axes)  # type: ignore
     except TypeError:
@@ -511,7 +515,7 @@ def expand_to(
             f"Cannot expand x.shape={x.shape} to fewer dimensions ndim={ndim}"
         )
 
-    shape: List[int] = [1] * ndim
+    shape: list[int] = [1] * ndim
     for i, axi in enumerate(axes_tup):
         shape[axi] = x.shape[i]
 
@@ -580,8 +584,8 @@ def fix_length(
 def fix_frames(
     frames: _SequenceLike[int],
     *,
-    x_min: Optional[int] = 0,
-    x_max: Optional[int] = None,
+    x_min: int | None = 0,
+    x_max: int | None = None,
     pad: bool = True,
 ) -> np.ndarray:
     """Fix a list of frames to lie within [x_min, x_max]
@@ -672,9 +676,8 @@ def axis_sort(
     *,
     axis: int = ...,
     index: Literal[False] = ...,
-    value: Optional[Callable[..., Any]] = ...,
-) -> np.ndarray:
-    ...
+    value: Callable[..., Any] | None = ...,
+) -> np.ndarray: ...
 
 
 @overload
@@ -683,9 +686,8 @@ def axis_sort(
     *,
     axis: int = ...,
     index: Literal[True],
-    value: Optional[Callable[..., Any]] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
+    value: Callable[..., Any] | None = ...,
+) -> tuple[np.ndarray, np.ndarray]: ...
 
 
 def axis_sort(
@@ -693,8 +695,8 @@ def axis_sort(
     *,
     axis: int = -1,
     index: bool = False,
-    value: Optional[Callable[..., Any]] = None,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    value: Callable[..., Any] | None = None,
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Sort an array along its rows or columns.
 
     Examples
@@ -702,7 +704,7 @@ def axis_sort(
     Visualize NMF output for a spectrogram S
 
     >>> # Sort the columns of W by peak frequency bin
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> S = np.abs(librosa.stft(y))
     >>> W, H = librosa.decompose.decompose(S, n_components=64)
     >>> W_sort = librosa.util.axis_sort(W)
@@ -722,21 +724,21 @@ def axis_sort(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, ncols=2)
-    >>> img_w = librosa.display.specshow(librosa.amplitude_to_db(W, ref=np.max),
+    >>> img_w = librosa.display.specshow(W, vscale='dBFS',
     ...                                  y_axis='log', ax=ax[0, 0])
     >>> ax[0, 0].set(title='W')
     >>> ax[0, 0].label_outer()
     >>> img_act = librosa.display.specshow(H, x_axis='time', ax=ax[0, 1])
     >>> ax[0, 1].set(title='H')
     >>> ax[0, 1].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(W_sort,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(W_sort, vscale='dBFS',
     ...                          y_axis='log', ax=ax[1, 0])
     >>> ax[1, 0].set(title='W sorted')
     >>> librosa.display.specshow(H_sort, x_axis='time', ax=ax[1, 1])
     >>> ax[1, 1].set(title='H sorted')
     >>> ax[1, 1].label_outer()
-    >>> fig.colorbar(img_w, ax=ax[:, 0], orientation='horizontal')
+    >>> cbar = librosa.display.colorbar_db(img_w, ax=ax[:, 0], orientation='horizontal')
+    >>> cbar.ax.tick_params("x", rotation=45)
     >>> fig.colorbar(img_act, ax=ax[:, 1], orientation='horizontal')
 
     Parameters
@@ -792,10 +794,10 @@ def axis_sort(
 def normalize(
     S: np.ndarray,
     *,
-    norm: Optional[float] = np.inf,
-    axis: Optional[int] = 0,
-    threshold: Optional[_FloatLike_co] = None,
-    fill: Optional[bool] = None,
+    norm: float | None = np.inf,
+    axis: int | None = 0,
+    threshold: _FloatLike_co | None = None,
+    fill: bool | None = None,
 ) -> np.ndarray:
     """Normalize an array along a chosen axis.
 
@@ -993,7 +995,7 @@ def normalize(
             fill_norm = mag.shape[axis] ** (-1.0 / norm)
 
     else:
-        raise ParameterError(f"Unsupported norm: {repr(norm)}")
+        raise ParameterError(f"Unsupported norm: {norm!r}")
 
     # indices where norm is below the threshold
     small_idx = length < threshold
@@ -1033,13 +1035,6 @@ def _localmin_sten(x):  # pragma: no cover
 
 
 @numba.guvectorize(
-    [
-        "void(int16[:], bool_[:])",
-        "void(int32[:], bool_[:])",
-        "void(int64[:], bool_[:])",
-        "void(float32[:], bool_[:])",
-        "void(float64[:], bool_[:])",
-    ],
     "(n)->(n)",
     cache=True,
     nopython=True,
@@ -1050,13 +1045,6 @@ def _localmax(x, y):  # pragma: no cover
 
 
 @numba.guvectorize(
-    [
-        "void(int16[:], bool_[:])",
-        "void(int32[:], bool_[:])",
-        "void(int64[:], bool_[:])",
-        "void(float32[:], bool_[:])",
-        "void(float64[:], bool_[:])",
-    ],
     "(n)->(n)",
     cache=True,
     nopython=True,
@@ -1189,21 +1177,16 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
     return lmin
 
 
-
 @numba.guvectorize(
-    [
-        "void(float32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(float64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(int32[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-        "void(int64[:], uint32, uint32, uint32, uint32, float32, uint32, bool_[:])",
-    ],
     "(n),(),(),(),(),(),()->(n)",
-    nopython=True, cache=True)
-def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
-    """Vectorized wrapper for the peak-picker"""
+    nopython=True,
+    cache=True,
+)
+def __peak_pick_greedy(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
+    """Vectorized wrapper for the greedy peak-picker"""
     # Special case the first frame
-    peaks[0] = (x[0] >= np.max(x[:min(post_max, x.shape[0])]))
-    peaks[0] &= (x[0] >= np.mean(x[:min(post_avg, x.shape[0])]) + delta)
+    peaks[0] = x[0] >= np.max(x[: min(post_max, x.shape[0])])
+    peaks[0] &= x[0] >= np.mean(x[: min(post_avg, x.shape[0])]) + delta
 
     if peaks[0]:
         n = wait + 1
@@ -1211,17 +1194,17 @@ def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
         n = 1
 
     while n < x.shape[0]:
-        maxn = np.max( x[max(0, n-pre_max):min(n+post_max, x.shape[0])])
+        maxn = np.max(x[max(0, n - pre_max) : min(n + post_max, x.shape[0])])
 
         # Are we the local max and sufficiently above average?
-        peaks[n] = (x[n] == maxn) 
-        
+        peaks[n] = x[n] == maxn
+
         if not peaks[n]:
             n += 1
             continue
 
-        avgn = np.mean(x[max(0, n-pre_avg):min(n+post_avg, x.shape[0])])
-        peaks[n] &= (x[n] >= avgn + delta)
+        avgn = np.mean(x[max(0, n - pre_avg) : min(n + post_avg, x.shape[0])])
+        peaks[n] &= x[n] >= avgn + delta
 
         if not peaks[n]:
             n += 1
@@ -1229,6 +1212,70 @@ def __peak_pick(x, pre_max, post_max, pre_avg, post_avg, delta, wait, peaks):
 
         # Skip the next `wait` frames
         n += wait + 1
+
+
+@numba.guvectorize(
+    "(n),(),(),(),(),(),(),()->(n)",
+    nopython=True,
+    cache=True,
+)
+def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, count, peaks):
+    """Vectorized wrapper for optimal peak-picker by dynamic programming
+
+    All parameters are the same as for `peak_pick`, except for `count` and `peaks`.
+
+    `count` is a boolean that indicates whether to maximize the number of peaks or
+    the sum of their values.
+
+    `peaks` is the pre-allocated output array.
+    """
+    values = np.zeros(len(x) + 1)
+    pointers = np.zeros(len(x) + 1, dtype=np.int32)
+    taken = np.zeros(len(x) + 1, dtype=np.bool_)
+
+    # Use the integral image trick to accelerate partial sums for averages
+    cumulate = np.cumsum(x)
+
+    values[-1] = 0
+    pointers[-1] = -1
+    for n in range(len(x) - 1, -1, -1):
+        # Populate defaults in case we don't take this peak
+        values[n] = values[n + 1]
+        pointers[n] = n + 1
+
+        # Check if we're a local peak
+        maxn = np.max(x[max(0, n - pre_max) : min(n + post_max, x.shape[0])])
+
+        # if not a peak, move along
+        if x[n] < maxn:
+            continue
+
+        # Are we enough above average?
+        idx_prev = max(0, n - pre_avg)
+        idx_post = min(n + post_avg, x.shape[0])
+        if idx_prev == 0:
+            avgn = cumulate[idx_post - 1] / idx_post
+        else:
+            avgn = (cumulate[idx_post - 1] - cumulate[idx_prev - 1]) / (idx_post - idx_prev)
+
+        if count:
+            v = 1
+        else:
+            v = x[n]
+
+        next_ptr = min(len(x), n + wait + 1)
+
+        # Only take this peak if it's better than not taking it
+        if x[n] >= avgn + delta and values[next_ptr] + v > values[n + 1]:
+            values[n] = values[next_ptr] + v
+            pointers[n] = next_ptr
+            taken[n] = True
+
+    # Backtrack to find the selected peaks
+    n = 0
+    while pointers[n] >= 0:
+        peaks[n] = taken[n]
+        n = pointers[n]
 
 
 def peak_pick(
@@ -1241,7 +1288,8 @@ def peak_pick(
     delta: float,
     wait: int,
     sparse: bool = True,
-    axis: int = -1
+    method: Literal["greedy", "dp_count", "dp_value"] = "greedy",
+    axis: int = -1,
 ) -> np.ndarray:
     """Use a flexible heuristic to pick peaks in a signal.
 
@@ -1282,6 +1330,14 @@ def peak_pick(
         If `True`, the output are indices of detected peaks.
         If `False`, the output is a dense boolean array of the same
         shape as ``x``.
+    method : {'greedy', 'dp_count', 'dp_value'} [scalar]
+        The method used to pick peaks. The default is 'greedy', which implements
+        the method of Böck et al. (2012).  The greedy method selects the earliest
+        possible peaks (i.e. those with minimal index values) subject to the
+        constraints described above.
+        The 'dp_*' methods implement a dynamic programming method which seeks to
+        explicitly maximize either the number of selected peaks (`dp_count`) or
+        the sum of the values `x[p]` the selected peaks `p` (`dp_value`).
     axis : int [scalar]
         the axis over which to detect peaks.
 
@@ -1298,7 +1354,7 @@ def peak_pick(
 
     Examples
     --------
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
     ...                                          hop_length=512,
     ...                                          aggregate=np.median)
@@ -1315,7 +1371,7 @@ def peak_pick(
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=512)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> D = np.abs(librosa.stft(y))
-    >>> librosa.display.specshow(librosa.amplitude_to_db(D, ref=np.max),
+    >>> librosa.display.specshow(D, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[0].plot(times, onset_env, alpha=0.8, label='Onset strength')
     >>> ax[0].vlines(times[peaks], 0,
@@ -1337,9 +1393,11 @@ def peak_pick(
     if post_avg <= 0:
         raise ParameterError("post_avg must be positive")
     if sparse and x.ndim != 1:
-        raise ParameterError(f"sparse=True (default) does not support "
-                f"{x.ndim}-dimensional inputs. "
-                f"Either set sparse=False or process each dimension independently.")
+        raise ParameterError(
+            f"sparse=True (default) does not support "
+            f"{x.ndim}-dimensional inputs. "
+            f"Either set sparse=False or process each dimension independently."
+        )
 
     # Ensure valid index types
     pre_max = valid_int(pre_max, cast=np.ceil)
@@ -1349,7 +1407,43 @@ def peak_pick(
     wait = valid_int(wait, cast=np.ceil)
 
     peaks = np.zeros_like(x, dtype=bool)
-    __peak_pick(x.swapaxes(axis, -1), pre_max, post_max, pre_avg, post_avg, delta, wait, peaks.swapaxes(axis, -1))
+    if method == "greedy":
+        __peak_pick_greedy(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            peaks.swapaxes(axis, -1),
+        )
+    elif method == "dp_count":
+        __peak_pick_dp(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            True,
+            peaks.swapaxes(axis, -1),
+        )
+    elif method == "dp_value":
+        __peak_pick_dp(
+            x.swapaxes(axis, -1),
+            pre_max,
+            post_max,
+            pre_avg,
+            post_avg,
+            delta,
+            wait,
+            False,
+            peaks.swapaxes(axis, -1),
+        )
+    else:
+        raise ParameterError(f"Unknown method {method}")
 
     if sparse:
         return np.flatnonzero(peaks)
@@ -1359,14 +1453,14 @@ def peak_pick(
 
 @cache(level=40)
 def sparsify_rows(
-    x: np.ndarray, *, quantile: float = 0.01, dtype: Optional[DTypeLike] = None
-) -> scipy.sparse.csr_matrix:
-    """Return a row-sparse matrix approximating the input
+    x: np.ndarray, *, quantile: float = 0.01, dtype: DTypeLike | None = None
+) -> scipy.sparse.csr_array:
+    """Return a row-sparse array approximating the input
 
     Parameters
     ----------
     x : np.ndarray [ndim <= 2]
-        The input matrix to sparsify.
+        The input array to sparsify.
     quantile : float in [0, 1.0)
         Percentage of magnitude to discard in each row of ``x``
     dtype : np.dtype, optional
@@ -1375,7 +1469,7 @@ def sparsify_rows(
 
     Returns
     -------
-    x_sparse : ``scipy.sparse.csr_matrix`` [shape=x.shape]
+    x_sparse : ``scipy.sparse.csr_array`` [shape=x.shape]
         Row-sparsified approximation of ``x``
 
         If ``x.ndim == 1``, then ``x`` is interpreted as a row vector,
@@ -1405,25 +1499,25 @@ def sparsify_rows(
     >>> # Discard the bottom percentile
     >>> x_sparse = librosa.util.sparsify_rows(x, quantile=0.01)
     >>> x_sparse
-    <1x32 sparse matrix of type '<type 'numpy.float64'>'
+    <1x32 sparse array of type '<class 'numpy.float64'>'
         with 26 stored elements in Compressed Sparse Row format>
-    >>> x_sparse.todense()
-    matrix([[ 0.   ,  0.   ,  0.   ,  0.09 ,  0.156,  0.236,  0.326,
-              0.424,  0.525,  0.625,  0.72 ,  0.806,  0.879,  0.937,
-              0.977,  0.997,  0.997,  0.977,  0.937,  0.879,  0.806,
-              0.72 ,  0.625,  0.525,  0.424,  0.326,  0.236,  0.156,
-              0.09 ,  0.   ,  0.   ,  0.   ]])
+    >>> x_sparse.toarray()
+    array([[ 0.   ,  0.   ,  0.   ,  0.09 ,  0.156,  0.236,  0.326,
+             0.424,  0.525,  0.625,  0.72 ,  0.806,  0.879,  0.937,
+             0.977,  0.997,  0.997,  0.977,  0.937,  0.879,  0.806,
+             0.72 ,  0.625,  0.525,  0.424,  0.326,  0.236,  0.156,
+             0.09 ,  0.   ,  0.   ,  0.   ]])
     >>> # Discard up to the bottom 10th percentile
     >>> x_sparse = librosa.util.sparsify_rows(x, quantile=0.1)
     >>> x_sparse
-    <1x32 sparse matrix of type '<type 'numpy.float64'>'
+    <1x32 sparse array of type '<class 'numpy.float64'>'
         with 20 stored elements in Compressed Sparse Row format>
-    >>> x_sparse.todense()
-    matrix([[ 0.   ,  0.   ,  0.   ,  0.   ,  0.   ,  0.   ,  0.326,
-              0.424,  0.525,  0.625,  0.72 ,  0.806,  0.879,  0.937,
-              0.977,  0.997,  0.997,  0.977,  0.937,  0.879,  0.806,
-              0.72 ,  0.625,  0.525,  0.424,  0.326,  0.   ,  0.   ,
-              0.   ,  0.   ,  0.   ,  0.   ]])
+    >>> x_sparse.toarray()
+    array([[ 0.   ,  0.   ,  0.   ,  0.   ,  0.   ,  0.   ,  0.326,
+             0.424,  0.525,  0.625,  0.72 ,  0.806,  0.879,  0.937,
+             0.977,  0.997,  0.997,  0.977,  0.937,  0.879,  0.806,
+             0.72 ,  0.625,  0.525,  0.424,  0.326,  0.   ,  0.   ,
+             0.   ,  0.   ,  0.   ,  0.   ]])
     """
     if x.ndim == 1:
         x = x.reshape((1, -1))
@@ -1438,8 +1532,7 @@ def sparsify_rows(
 
     if dtype is None:
         dtype = x.dtype
-
-    x_sparse = scipy.sparse.lil_matrix(x.shape, dtype=dtype)
+    out_dtype = np.dtype(dtype)
 
     mags = np.abs(x)
     norms = np.sum(mags, axis=1, keepdims=True)
@@ -1449,11 +1542,14 @@ def sparsify_rows(
 
     threshold_idx = np.argmin(cumulative_mag < quantile, axis=1)
 
-    for i, j in enumerate(threshold_idx):
-        idx = np.where(mags[i] >= mag_sort[i, j])
-        x_sparse[i, idx] = x[i, idx]
+    # threshold value per row
+    thresh = mag_sort[np.arange(x.shape[0]), threshold_idx]  # (n_rows,)
 
-    return x_sparse.tocsr()
+    # mask-multiply
+    mask = mags >= thresh[:, np.newaxis]
+    out = (x * mask).astype(out_dtype, copy=False)
+
+    return scipy.sparse.csr_array(out)
 
 
 def buf_to_float(
@@ -1490,11 +1586,11 @@ def buf_to_float(
 def index_to_slice(
     idx: _SequenceLike[int],
     *,
-    idx_min: Optional[int] = None,
-    idx_max: Optional[int] = None,
-    step: Optional[int] = None,
+    idx_min: int | None = None,
+    idx_max: int | None = None,
+    step: int | None = None,
     pad: bool = True,
-) -> List[slice]:
+) -> list[slice]:
     """Generate a slice array from an index array.
 
     Parameters
@@ -1542,15 +1638,15 @@ def index_to_slice(
     idx_fixed = fix_frames(idx, x_min=idx_min, x_max=idx_max, pad=pad)
 
     # Now convert the indices to slices
-    return [slice(start, end, step) for (start, end) in zip(idx_fixed, idx_fixed[1:])]
+    return [slice(start, end, step) for (start, end) in itertools.pairwise(idx_fixed)]
 
 
 @cache(level=40)
 def sync(
     data: np.ndarray,
-    idx: Union[Sequence[int], Sequence[slice]],
+    idx: Sequence[int] | Sequence[slice],
     *,
-    aggregate: Optional[Callable[..., Any]] = None,
+    aggregate: Callable[..., Any] | None = None,
     pad: bool = True,
     axis: int = -1,
 ) -> np.ndarray:
@@ -1600,7 +1696,7 @@ def sync(
     --------
     Beat-synchronous CQT spectra
 
-    >>> y, sr = librosa.load(librosa.ex('choice'))
+    >>> y, sr = librosa.loadx('choice')
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> beats = librosa.util.fix_frames(beats)
@@ -1626,19 +1722,16 @@ def sync(
     >>> beat_t = librosa.frames_to_time(beats, sr=sr)
     >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(C, vscale='dBFS',
     ...                          x_axis='time', ax=ax[0])
     >>> ax[0].set(title='CQT power, shape={}'.format(C.shape))
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C_med,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(C_med, vscale='dBFS',
     ...                          x_coords=beat_t, x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Beat synchronous CQT power, '
     ...                 'shape={}'.format(C_med.shape))
     >>> ax[1].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C_med_sub,
-    ...                                                  ref=np.max),
+    >>> librosa.display.specshow(C_med_sub, vscale='dBFS',
     ...                          x_coords=subbeat_t, x_axis='time', ax=ax[2])
     >>> ax[2].set(title='Sub-beat synchronous CQT power, '
     ...                 'shape={}'.format(C_med_sub.shape))
@@ -1793,7 +1886,7 @@ def softmask(
     return mask
 
 
-def tiny(x: Union[float, np.ndarray]) -> _FloatLike_co:
+def tiny(x: complex | np.ndarray) -> np.floating[Any]:
     """Compute the tiny-value corresponding to an input's data type.
 
     This is the smallest "usable" number representable in ``x.dtype``
@@ -1804,7 +1897,7 @@ def tiny(x: Union[float, np.ndarray]) -> _FloatLike_co:
 
     Parameters
     ----------
-    x : number or np.ndarray
+    x : number (real or complex) or np.ndarray
         The array to compute the tiny-value for.
         All that matters here is ``x.dtype``
 
@@ -1857,7 +1950,8 @@ def tiny(x: Union[float, np.ndarray]) -> _FloatLike_co:
     else:
         dtype = np.dtype(np.float32)
 
-    return np.finfo(dtype).tiny
+    tiny: np.floating[Any] = np.finfo(dtype).tiny
+    return tiny
 
 
 def fill_off_diagonal(x: np.ndarray, *, radius: float, value: float = 0) -> None:
@@ -2010,22 +2104,37 @@ def __shear_dense(X: np.ndarray, *, factor: int = +1, axis: int = -1) -> np.ndar
 
     return X_shear
 
+if TYPE_CHECKING:
+    def _asformat_sparse(X: _SparseArray | _SparseMatrix, fmt: str) -> _SparseArray | _SparseMatrix: ...
+else:
+    def _asformat_sparse(X, fmt):
+        return X.asformat(fmt)
+
 
 def __shear_sparse(
-    X: scipy.sparse.spmatrix, *, factor: int = +1, axis: int = -1
-) -> scipy.sparse.spmatrix:
-    """Fast shearing for sparse matrices
+    X: _SparseArray | _SparseMatrix, *, factor: int = +1, axis: int = -1
+) -> _SparseArray | _SparseMatrix:
+    """Fast shearing for sparse arrays/matrices
 
-    Shearing is performed using CSC array indices,
+    Shearing is performed using CSC indices,
     and the result is converted back to whatever sparse format
     the data was originally provided in.
     """
-    fmt = X.format
-    if axis == 0:
-        X = X.T
+    if X.ndim != 2:
+        raise ParameterError(f"Input must be 2D. Provided shape={X.shape}.")
 
-    # Now we're definitely rolling on the correct axis
-    X_shear = X.tocsc(copy=True)
+    fmt = X.format
+    is_matrix = isinstance(X, scipy.sparse.spmatrix)
+
+    # If axis==0, operate on the transpose, but don't reassign X (avoids mypy ignore)
+    X_in = X.T if axis == 0 else X
+
+    # Now we're definitely rolling on the correct axis, and definitely CSC
+    X_shear: scipy.sparse.csc_array | scipy.sparse.csc_matrix
+    if is_matrix:
+        X_shear = scipy.sparse.csc_matrix(X_in, copy=True)
+    else:
+        X_shear = scipy.sparse.csc_array(X_in, copy=True)
 
     # The idea here is to repeat the shear amount (factor * range)
     # by the number of non-zeros for each column.
@@ -2036,33 +2145,24 @@ def __shear_sparse(
     np.mod(X_shear.indices + roll, X_shear.shape[0], out=X_shear.indices)
 
     if axis == 0:
-        X_shear = X_shear.T
+        # Undo the transpose; normalize back to CSC for consistent downstream typing
+        if is_matrix:
+            X_shear = scipy.sparse.csc_matrix(X_shear.T)
+        else:
+            X_shear = scipy.sparse.csc_array(X_shear.T)
 
     # And convert back to the input format
-    return X_shear.asformat(fmt)
-
-
-_ArrayOrSparseMatrix = TypeVar(
-    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, scipy.sparse.spmatrix]
-)
-
+    return _asformat_sparse(X_shear, fmt)
 
 @overload
-def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray:
-    ...
-
-
+def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 @overload
+def shear(X: _SparseArray | _SparseMatrix, *,
+          factor: int = ..., axis: int = ...) -> _SparseArray | _SparseMatrix: ...
 def shear(
-    X: scipy.sparse.spmatrix, *, factor: int = ..., axis: int = ...
-) -> scipy.sparse.spmatrix:
-    ...
-
-
-def shear(
-    X: _ArrayOrSparseMatrix, *, factor: int = 1, axis: int = -1
-) -> _ArrayOrSparseMatrix:
-    """Shear a matrix by a given factor.
+    X: np.ndarray | _SparseArray | _SparseMatrix, *, factor: int = 1, axis: int = -1
+) -> np.ndarray | _SparseArray | _SparseMatrix:
+    """Shear an array (or matrix) by a given factor.
 
     The column ``X[:, n]`` will be displaced (rolled)
     by ``factor * n``
@@ -2074,8 +2174,8 @@ def shear(
 
     Parameters
     ----------
-    X : np.ndarray [ndim=2] or scipy.sparse matrix
-        The array to be sheared
+    X : np.ndarray [ndim=2] or scipy.sparse array/matrix
+        The array/matrix to be sheared
     factor : integer
         The shear factor: ``X[:, n] -> np.roll(X[:, n], factor * n)``
     axis : integer
@@ -2084,7 +2184,7 @@ def shear(
     Returns
     -------
     X_shear : same type as ``X``
-        The sheared matrix
+        The sheared matrix or array
 
     Examples
     --------
@@ -2107,13 +2207,13 @@ def shear(
 
     # Suppress type checks because mypy doesn't like numba jitting
     # or scipy sparse conversion
-    if scipy.sparse.isspmatrix(X):
-        return __shear_sparse(X, factor=factor, axis=axis)  # type: ignore
+    if scipy.sparse.issparse(X):
+        return __shear_sparse(X, factor=factor, axis=axis)
     else:
         return __shear_dense(X, factor=factor, axis=axis)  # type: ignore
 
 
-def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
+def stack(arrays: list[np.ndarray], *, axis: int = 0) -> np.ndarray:
     """Stack one or more arrays along a target axis.
 
     This function is similar to `np.stack`, except that memory contiguity is
@@ -2201,10 +2301,10 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
         return np.stack(arrays, axis=axis)
     else:
         # If axis is 0, enforce F-ordering
-        shape = tuple([len(arrays)] + list(shape_in))
+        shape = tuple([len(arrays), *list(shape_in)])
 
         # Find the common dtype for all inputs
-        dtype = np.result_type(*arrays) 
+        dtype = np.result_type(*arrays)
 
         # Allocate an empty array of the right shape and type
         result = np.empty(shape, dtype=dtype, order="F")
@@ -2215,7 +2315,9 @@ def stack(arrays: List[np.ndarray], *, axis: int = 0) -> np.ndarray:
         return result
 
 
-def dtype_r2c(d: DTypeLike, *, default: Optional[type] = np.complex64) -> DTypeLike:
+def dtype_r2c(
+    d: DTypeLike, *, default: type[np.complexfloating] = np.complex64
+) -> np.dtype[np.complexfloating]:
     """Find the complex numpy dtype corresponding to a real dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2255,14 +2357,13 @@ def dtype_r2c(d: DTypeLike, *, default: Optional[type] = np.complex64) -> DTypeL
     >>> librosa.util.dtype_r2c(np.complex128)
     dtype('complex128')
     """
-    mapping: Dict[DTypeLike, type] = {
+    mapping: dict[np.dtype[np.floating], type[np.complexfloating]] = {
         np.dtype(np.float32): np.complex64,
         np.dtype(np.float64): np.complex128,
-        np.dtype(float): np.dtype(complex).type,
     }
 
     # If we're given a complex type already, return it
-    dt = np.dtype(d)
+    dt: np.dtype = np.dtype(d)
     if dt.kind == "c":
         return dt
 
@@ -2271,7 +2372,9 @@ def dtype_r2c(d: DTypeLike, *, default: Optional[type] = np.complex64) -> DTypeL
     return np.dtype(mapping.get(dt, default))
 
 
-def dtype_c2r(d: DTypeLike, *, default: Optional[type] = np.float32) -> DTypeLike:
+def dtype_c2r(
+    d: DTypeLike, *, default: type[np.floating] | None = np.float32
+) -> np.dtype[np.floating]:
     """Find the real numpy dtype corresponding to a complex dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2314,14 +2417,13 @@ def dtype_c2r(d: DTypeLike, *, default: Optional[type] = np.float32) -> DTypeLik
     >>> librosa.util.dtype_r2c(np.complex128)
     dtype('float64')
     """
-    mapping: Dict[DTypeLike, type] = {
+    mapping: dict[np.dtype[np.complexfloating], type[np.floating]] = {
         np.dtype(np.complex64): np.float32,
         np.dtype(np.complex128): np.float64,
-        np.dtype(complex): np.dtype(float).type,
     }
 
     # If we're given a real type already, return it
-    dt = np.dtype(d)
+    dt: np.dtype = np.dtype(d)
     if dt.kind == "f":
         return dt
 
@@ -2434,18 +2536,22 @@ def is_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
 
 
 @numba.vectorize(
-    ["float32(complex64)", "float64(complex128)"], nopython=True, cache=True, identity=0
+    nopython=True, cache=True, identity=0
 )  # type: ignore
 def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
     """Efficiently compute abs2 on complex inputs"""
     return x.real**2 + x.imag**2
 
 
-_Number = Union[complex, "np.number[Any]"]
-_NumberOrArray = TypeVar("_NumberOrArray", bound=Union[_Number, np.ndarray])
+@overload
+def abs2(x: np.ndarray, dtype: DTypeLike | None = ...) -> np.ndarray: ...
 
+@overload
+def abs2(x: _Complex, dtype: DTypeLike | None = ...) -> np.floating[Any]: ...
 
-def abs2(x: _NumberOrArray, dtype: Optional[DTypeLike] = None) -> _NumberOrArray:
+def abs2(x: np.ndarray | _Real | _Complex,
+         dtype: DTypeLike | None = None
+) -> np.ndarray | np.floating[Any]:
     """Compute the squared magnitude of a real or complex array.
 
     This function is equivalent to calling `np.abs(x)**2` but it
@@ -2475,41 +2581,39 @@ def abs2(x: _NumberOrArray, dtype: Optional[DTypeLike] = None) -> _NumberOrArray
     """
     if np.iscomplexobj(x):
         # suppress type check, mypy doesn't like vectorization
-        y = _cabs2(x)
         if dtype is None:
-            return y  # type: ignore
-        else:
-            return y.astype(dtype)  # type: ignore
+            dtype = dtype_c2r(np.asarray(x).dtype)
+        y: np.ndarray = np.empty_like(x, dtype=dtype)
+        _cabs2(x, y)
+        return y
     else:
         # suppress type check, mypy doesn't know this is real
-        return np.square(x, dtype=dtype)  # type: ignore
+        return np.square(x, dtype=dtype)
 
 
 @numba.vectorize(
-    ["complex64(float32)", "complex128(float64)"], nopython=True, cache=True, identity=1
+    nopython=True, cache=True, identity=1
 )  # type: ignore
 def _phasor_angles(x) -> np.complexfloating[Any, Any]:
     return np.cos(x) + 1j * np.sin(x)  # type: ignore
 
 
-_Real = Union[float, "np.integer[Any]", "np.floating[Any]"]
+
+@overload
+def phasor(angles: np.ndarray, *, mag: np.ndarray | None = ...) -> np.ndarray: ...
 
 
 @overload
-def phasor(angles: np.ndarray, *, mag: Optional[np.ndarray] = ...) -> np.ndarray:
-    ...
-
-
-@overload
-def phasor(angles: _Real, *, mag: Optional[_Number] = ...) -> np.complexfloating[Any, Any]:
-    ...
+def phasor(
+    angles: _Real, *, mag: _Number | None = ...
+) -> np.complexfloating[Any, Any]: ...
 
 
 def phasor(
-    angles: Union[np.ndarray, _Real],
+    angles: np.ndarray | _Real,
     *,
-    mag: Optional[Union[np.ndarray, _Number]] = None,
-) -> Union[np.ndarray, np.complexfloating[Any, Any]]:
+    mag: np.ndarray | _Number | None = None,
+) -> np.ndarray | np.complexfloating[Any, Any]:
     """Construct a complex phasor representation from angles.
 
     When `mag` is not provided, this is equivalent to:
@@ -2563,9 +2667,178 @@ def phasor(
     >>> librosa.util.phasor(np.array([0, np.pi/2]), mag=np.array([0.5, 1.5]))
     array([5.000e-01+0.j , 9.185e-17+1.5j])
     """
-    z = _phasor_angles(angles)
+    z = np.empty_like(angles, dtype=dtype_r2c(np.asarray(angles).dtype))
+    _phasor_angles(angles, z)
 
     if mag is not None:
         z *= mag
 
-    return z  # type: ignore
+    return z[()]
+
+
+@overload
+def interp_broadcast(
+    *,
+    x1: np.ndarray,
+    x1_pos: np.ndarray,
+    x2: np.ndarray,
+    x2_pos: np.ndarray,
+    interp_pos: np.ndarray | None = None,
+    op: None,
+    kind: _InterpKind = "linear",
+    fill_value: float = 0,
+    axis: int = -2,
+) -> tuple[np.ndarray, np.ndarray]: ...
+
+
+@overload
+def interp_broadcast(
+    *,
+    x1: np.ndarray,
+    x1_pos: np.ndarray,
+    x2: np.ndarray,
+    x2_pos: np.ndarray,
+    interp_pos: np.ndarray | None = None,
+    op: Callable[[np.ndarray, np.ndarray], np.ndarray] = np.multiply,
+    kind: _InterpKind = "linear",
+    fill_value: float = 0,
+    axis: int = -2,
+) -> np.ndarray: ...
+
+
+def interp_broadcast(
+    *,
+    x1: np.ndarray,
+    x1_pos: np.ndarray,
+    x2: np.ndarray,
+    x2_pos: np.ndarray,
+    interp_pos: np.ndarray | None = None,
+    op: Callable[[np.ndarray, np.ndarray], np.ndarray] | None = np.multiply,
+    kind: _InterpKind = "linear",
+    fill_value: float = 0,
+    axis: int = -2,
+) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+    """Broadcast two arrays using interpolation
+
+    Interpolates two arrays along a given axis to a common grid, and performs a broadcast operation
+    (eg. ``np.multiply``) to combine them. It is useful for retrieving the DFT / AC product [1]_ and
+    the Fundamental Tempogram [2]_.
+
+    .. [1] Peeters, G.
+       "Spectral and Temporal Periodicity Representations of Rhythm for the Automatic Classification
+       of Music Audio Signal."
+       In IEEE Transactions on Audio, Speech, and Language Processing, vol. 19, no. 5, pp.
+       1242--1252, July 2011.
+
+    .. [2] Cozens, James, and Simon Godsill.
+       "Dynamic Time Signature Recognition, Tempo Inference, and Beat Tracking Through the Metrogram
+       Transform."
+       In IEEE Open Journal of Signal Processing, pp. 1--9, 2023.
+
+    Parameters
+    ----------
+    x1 : np.ndarray
+        An array with broadcast compatible dimensions (except along the axis of interpolation) with
+        ``x2``.
+    x1_pos : np.ndarray
+        Positioning data along the axis of interpolation for ``x1``.
+    x2 : np.ndarray
+        An array with broadcast compatible dimensions (except along the axis of interpolation) with
+        ``x1``.
+    x2_pos : np.ndarray
+        Positioning data along the axis of interpolation for ``x2``.
+    interp_pos : np.ndarray
+        Positioning data for the interpolation grid.
+        Default: ``x1_pos``.
+    op : function [optional]
+        A broadcast operation performed on the two interpolated arrays.
+        Default: ``np.multiply``.
+    axis : int
+        The axis of interpolation.
+        Default: ``-2``
+    kind : str
+        Interpolation type.  See ``scipy.interpolate.interp1d``.
+        Default: ``"linear"``
+    fill_value : float
+        The value to fill when extrapolating beyond the observed range.
+        Default: ``0``
+
+    Returns
+    -------
+    result : np.ndarray or (np.ndarray, np.ndarray)
+        The result from combining both arrays after interpolation.
+        If ``op`` is set to ``None``, returns the interpolated arrays separately ``(y1, y2)``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>>
+    >>> # two arrays of different lengths and sampling positions
+    >>> x1 = np.array([1, 1, 1])
+    >>> x1_pos = np.array([0, 0.5, 1])
+    >>> x2 = np.array([5, 10])
+    >>> x2_pos = np.array([0, 1])
+    >>>
+    >>> # interpolate to x1_pos and broadcast multiply (the defaults)
+    >>> product = librosa.util.interp_broadcast(
+    ...     x1=x1,
+    ...     x1_pos=x1_pos,
+    ...     x2=x2,
+    ...     x2_pos=x2_pos,
+    ...     axis=0,
+    ... )
+    >>>
+    >>> product
+    array([ 5. ,  7.5, 10. ])
+
+    See Also
+    --------
+    librosa.feature.metrogram
+    """
+    if interp_pos is None:
+        interp_pos = x1_pos
+
+    min_ndim = min(x1.ndim, x2.ndim)
+    if axis < -min_ndim or axis >= min_ndim:
+        raise ParameterError(
+            f"axis={axis} is out of range for minimum ndim={min_ndim}"
+        )
+
+    import scipy.interpolate
+
+    x1_interp = scipy.interpolate.interp1d(
+        x1_pos,
+        x1,
+        axis=axis,
+        kind=kind,
+        copy=False,
+        bounds_error=False,
+        fill_value=fill_value
+    )
+
+    x2_interp = scipy.interpolate.interp1d(
+        x2_pos,
+        x2,
+        axis=axis,
+        kind=kind,
+        copy=False,
+        bounds_error=False,
+        fill_value=fill_value
+    )
+
+    y1 = x1_interp(interp_pos)
+    y2 = x2_interp(interp_pos)
+
+    if op is None:
+        return y1, y2
+
+    try:
+        np.broadcast_shapes(y1.shape, y2.shape)
+    except ValueError as exc:
+        raise ParameterError(
+            f"Interpolating x1.shape={x1.shape} and x2.shape={x2.shape} along "
+            f"axis={axis} leads to y1.shape={y1.shape} and y2.shape={y2.shape}, "
+            "which are not broadcast compatible."
+        ) from exc
+
+    return op(y1, y2)

@@ -2,22 +2,19 @@
 # -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
 from __future__ import annotations
-from typing import List, Optional, Union, Any, Set
 
-import os
+import contextlib
 import glob
 import json
-import msgpack
-import contextlib
-import sys
-
+import os
 from importlib import resources
+from typing import Any
 
+import msgpack
 import pooch
 
-from .exceptions import ParameterError
 from ..version import version as librosa_version
-
+from .exceptions import ParameterError
 
 __all__ = [
     "find_files",
@@ -39,26 +36,20 @@ __GOODBOY = pooch.create(
 def _resource_file(package: str, resource: str):
     """Provide a context manager for accessing resources in a package.
 
-    It acts as a shim to provide a consistent interface for accessing resources
-    since the 3.9 series deprecated the "path" method in favor of the "files" method.
+    This previously served as a shim wrapper to support Python < 3.9,
+    but now it's a convenience function to simplify path mangling.
     """
-    if sys.version_info < (3, 9):
-        with resources.path(package, resource) as path:
-            yield path
-
-    else:
-        with resources.as_file(resources.files(package).joinpath(resource)) as path:
-            yield path
+    with resources.as_file(resources.files(package).joinpath(resource)) as path:
+        yield path
 
 
 with _resource_file("librosa.util.example_data", "registry.txt") as reg:
     __GOODBOY.load_registry(str(reg))
     # We want to bypass version checks here to allow asynchronous updates for new releases
-    __GOODBOY.registry['version_index.msgpack'] = None
+    __GOODBOY.registry["version_index.msgpack"] = None
 
-with _resource_file("librosa.util.example_data", "index.json") as index:
-    with index.open("r") as _fdesc:
-        __TRACKMAP = json.load(_fdesc)
+with _resource_file("librosa.util.example_data", "index.json") as index, index.open("r") as _fdesc:
+    __TRACKMAP = json.load(_fdesc)
 
 
 def example(key: str, *, hq: bool = False) -> str:
@@ -181,14 +172,14 @@ def example_info(key: str) -> None:
 
 
 def find_files(
-    directory: Union[str, os.PathLike[Any]],
+    directory: str | os.PathLike[Any],
     *,
-    ext: Optional[Union[str, List[str]]] = None,
+    ext: str | list[str] | None = None,
     recurse: bool = True,
     case_sensitive: bool = False,
-    limit: Optional[int] = None,
+    limit: int | None = None,
     offset: int = 0,
-) -> List[str]:
+) -> list[str]:
     """Get a sorted list of (audio) files in a directory or directory sub-tree.
 
     Examples
@@ -282,7 +273,7 @@ def find_files(
     return files
 
 
-def __get_files(dir_name: Union[str, os.PathLike[Any]], extensions: Set[str]):
+def __get_files(dir_name: str | os.PathLike[Any], extensions: set[str]):
     """Get a list of files in a single directory"""
     # Expand out the directory
     dir_name = os.path.abspath(os.path.expanduser(dir_name))
@@ -296,7 +287,7 @@ def __get_files(dir_name: Union[str, os.PathLike[Any]], extensions: Set[str]):
     return myfiles
 
 
-def cite(version: Optional[str]=None) -> str:
+def cite(version: str | None=None) -> str:
     """Print the citation information for librosa.
 
     Parameters
@@ -328,7 +319,8 @@ def cite(version: Optional[str]=None) -> str:
 
     if version not in version_index:
         if "dev" in version:
-            raise ParameterError(f"Version {version} is not yet released and therefore does not yet have a citable DOI.")
+            raise ParameterError(f"Version {version} is not yet released and "
+                                 "therefore does not yet have a citable DOI.")
         else:
             raise ParameterError(f"Version {version} not found in the citation index")
 

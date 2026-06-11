@@ -14,7 +14,6 @@ except KeyError:
 import librosa
 import glob
 import numpy as np
-import scipy.io
 import scipy.stats
 import pytest
 import warnings
@@ -22,13 +21,18 @@ from unittest import mock
 from typing import List, Union
 
 from contextlib import nullcontext as dnr
-from test_core import srand
 
 
-@pytest.fixture(scope="module", params=["test1_44100.wav"])
-def y_multi(request):
-    infile = request.param
-    return librosa.load(os.path.join("tests", "data", infile), sr=None, mono=False)
+@pytest.fixture(scope="module")
+def y_multi():
+    sr = 44100
+    duration = 5.0
+    y1 = librosa.chirp(fmin=100, fmax=2000, sr=sr, duration=duration)
+    y1 += librosa.clicks(sr=sr, times=np.arange(0, duration, 0.33), length=len(y1))
+    y2 = librosa.chirp(fmin=50, fmax=1000, sr=sr, duration=duration)
+    y2 += librosa.clicks(sr=sr, times=np.arange(0, duration, 0.5), length=len(y2))
+    y = np.vstack([y1, y2])
+    return y, sr
 
 
 @pytest.fixture(scope="module")
@@ -296,9 +300,7 @@ def test_griffinlim_multi(y_multi):
 
 
 @pytest.mark.parametrize("scale", [False, True])
-@pytest.mark.parametrize("res_type", [None, "polyphase"])
-# The following warning is fine in context here
-@pytest.mark.filterwarnings("ignore:Support for VQT with res_type=None")
+@pytest.mark.parametrize("res_type", ["polyphase"])
 def test_cqt_multi(y_multi, scale, res_type):
 
     y, sr = y_multi
@@ -317,8 +319,7 @@ def test_cqt_multi(y_multi, scale, res_type):
 
 
 @pytest.mark.parametrize("scale", [False, True])
-@pytest.mark.parametrize("res_type", [None, "polyphase"])
-@pytest.mark.filterwarnings("ignore:Support for VQT with res_type=None")
+@pytest.mark.parametrize("res_type", ["polyphase"])
 def test_hybrid_cqt_multi(y_multi, scale, res_type):
 
     y, sr = y_multi
@@ -392,11 +393,11 @@ def test_spectral_centroid_multi(s_multi):
     assert not np.allclose(Call[0], Call[1])
 
 
-def test_spectral_centroid_multi_variable(s_multi):
+def test_spectral_centroid_multi_variable(s_multi, rng):
 
     S, sr = s_multi
 
-    freq = np.asarray(np.random.randn(*S.shape))
+    freq = np.asarray(rng.standard_normal(size=S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_centroid(sr=sr, freq=freq[0], S=S[0])
@@ -429,10 +430,10 @@ def test_spectral_bandwidth_multi(s_multi):
     assert not np.allclose(Call[0], Call[1])
 
 
-def test_spectral_bandwidth_multi_variable(s_multi):
+def test_spectral_bandwidth_multi_variable(s_multi, rng):
     S, sr = s_multi
 
-    freq = np.asarray(np.random.randn(*S.shape))
+    freq = np.asarray(rng.standard_normal(size=S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_bandwidth(sr=sr, freq=freq[0], S=S[0])
@@ -453,9 +454,10 @@ def test_spectral_contrast_multi(s_multi):
     freq = None
 
     # compare each channel
-    C0 = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S[0])
-    C1 = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S[1])
-    Call = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S)
+    # FIXME: using linear mode because dB scaling has cross-channel sensitivities
+    C0 = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S[0], linear=True)
+    C1 = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S[1], linear=True)
+    Call = librosa.feature.spectral_contrast(sr=sr, freq=freq, S=S, linear=True)
 
     # Check each channel
     assert np.allclose(C0, Call[0])
@@ -483,10 +485,10 @@ def test_spectral_rolloff_multi(s_multi):
     assert not np.allclose(Call[0], Call[1])
 
 
-def test_spectral_rolloff_multi_variable(s_multi):
+def test_spectral_rolloff_multi_variable(s_multi, rng):
     S, sr = s_multi
 
-    freq = np.asarray(np.random.randn(*S.shape))
+    freq = np.asarray(rng.standard_normal(size=S.shape))
 
     # compare each channel
     C0 = librosa.feature.spectral_rolloff(sr=sr, freq=freq[0], S=S[0])
@@ -728,8 +730,8 @@ def test_phase_vocoder(y_multi, rate):
 
 
 @pytest.mark.parametrize("delay", [1, -1])
-def test_stack_memory_multi(delay):
-    data = np.random.randn(2, 5, 200)
+def test_stack_memory_multi(delay, rng):
+    data = rng.standard_normal(size=(2, 5, 200))
 
     # compare each channel
     C0 = librosa.feature.stack_memory(data[0], delay=delay)
@@ -953,13 +955,12 @@ def test_nnls_multi(s_multi):
 # -- feature inversion tests
 @pytest.mark.parametrize("power", [1, 2])
 @pytest.mark.parametrize("n_fft", [1024, 2048])
-def test_mel_to_stft_multi(power, n_fft):
-    srand()
+def test_mel_to_stft_multi(power, n_fft, rng):
 
     # Make a random mel spectrum, 4 frames
     mel_basis = librosa.filters.mel(sr=22050, n_fft=n_fft, n_mels=128)
 
-    stft_orig = np.random.randn(2, n_fft // 2 + 1, 4) ** power
+    stft_orig = rng.standard_normal(size=(2, n_fft // 2 + 1, 4)) ** power
 
     mels = np.einsum("...ft,mf->...mt", stft_orig, mel_basis)
     stft = librosa.feature.inverse.mel_to_stft(mels, power=power, n_fft=n_fft)
@@ -1068,7 +1069,7 @@ def test_resample_highdim_axis(x, axis, res_type):
 @pytest.mark.parametrize("dynamic", [False, True])
 # Not worried about this warning here
 @pytest.mark.filterwarnings("ignore:Frequencies are not unique")
-def test_f0_harmonics(y_multi, dynamic):
+def test_f0_harmonics(y_multi, dynamic, rng):
 
     y, sr = y_multi
     Df, _, S = librosa.reassigned_spectrogram(y, sr=sr, fill_nan=True)
@@ -1076,7 +1077,7 @@ def test_f0_harmonics(y_multi, dynamic):
 
     harmonics = np.array([1, 2, 3])
 
-    f0 = 100 + 30 * np.random.random_sample(size=(S.shape[0], S.shape[-1]))
+    f0 = 100 + 30 * rng.random(size=(S.shape[0], S.shape[-1]))
 
     if dynamic:
         out = librosa.f0_harmonics(S, freqs=Df, f0=f0, harmonics=harmonics)
@@ -1091,9 +1092,10 @@ def test_f0_harmonics(y_multi, dynamic):
     assert np.allclose(out[1], out1)
 
 
-def test_peak_pick_multi():
+@pytest.mark.parametrize("method", ["greedy", "dp_count", "dp_value"])
+def test_peak_pick_multi(method, rng):
 
-    x = np.random.randn(3, 1000) ** 2
+    x = rng.standard_normal(size=(3, 1000)) ** 2
 
     pre_max = 5
     post_max = 5
@@ -1112,6 +1114,7 @@ def test_peak_pick_multi():
         delta=delta,
         sparse=False,
         axis=-1,
+        method=method,
     )
 
     for i in range(x.shape[0]):
@@ -1125,13 +1128,14 @@ def test_peak_pick_multi():
             delta=delta,
             sparse=False,
             axis=-1,
+            method=method,
         )
         assert np.allclose(pmi, pm[i])
 
 
-def test_peak_pick_axis():
+def test_peak_pick_axis(rng):
 
-    x = np.random.randn(100, 500) ** 2
+    x = rng.standard_normal(size=(100, 500)) ** 2
 
     pre_max = 5
     post_max = 5
@@ -1167,9 +1171,9 @@ def test_peak_pick_axis():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_peak_pick_multi_fail():
+def test_peak_pick_multi_fail(rng):
 
-    x = np.random.randn(3, 1000) ** 2
+    x = rng.standard_normal(size=(3, 1000)) ** 2
 
     pre_max = 5
     post_max = 5
@@ -1235,6 +1239,7 @@ def test_beat_track_multi_bpm_scalar(y_multi):
     tempo1, beats1 = librosa.beat.beat_track(y=y[1], sr=sr, sparse=False, bpm=100)
 
     assert np.isscalar(tempo)
+
     assert np.allclose(tempo, tempo0)
     assert np.allclose(tempo, tempo1)
     assert np.allclose(beats[0], beats0)

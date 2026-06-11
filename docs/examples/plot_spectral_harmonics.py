@@ -38,7 +38,7 @@ import librosa
 
 ####################################################
 # We'll start by loading a speech example to analyze
-y, sr = librosa.load(librosa.ex('libri2'), duration=5)
+y, sr = librosa.loadx('libri2', duration=5)
 
 Audio(data=y, rate=sr)
 
@@ -69,9 +69,10 @@ S = np.abs(librosa.stft(y))
 times = librosa.times_like(S, sr=sr)
 
 fig, ax = plt.subplots()
-librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+librosa.display.specshow(S, vscale='dBFS',
                          y_axis='log', x_axis='time', ax=ax)
-ax.plot(times, f0, linewidth=2, color='white', label='f0')
+hl = librosa.display.highlight(ax=ax, linewidth=3, alpha=0.75, color='k')
+ax.plot(times, f0, linewidth=2, color='white', label='f0', path_effects=hl)
 ax.legend()
 
 ##########################################################
@@ -101,9 +102,9 @@ harmonic_energy = librosa.f0_harmonics(S, f0=f0, harmonics=harmonics, freqs=freq
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
 
-librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+librosa.display.specshow(S, vscale='dBFS',
                          y_axis='log', x_axis='time', ax=ax[0])
-librosa.display.specshow(librosa.amplitude_to_db(harmonic_energy, ref=np.max),
+librosa.display.specshow(harmonic_energy, vscale='dBFS',
                          x_axis='time', ax=ax[1])
 ax[0].label_outer()
 ax[1].set(ylabel='Harmonics')
