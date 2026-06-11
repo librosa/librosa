@@ -37,3 +37,15 @@ convention = "numpy"
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["librosa.util.deprecation.Deprecated"]
+
+[tool.numpydoc_validation]
+checks = [
+    "all",
+    "ES01", # No extended summary
+    "EX01", # No examples section
+    "SA01", # No See Also section
+]
+exclude_files = [
+    '.*/__init__.py',
+    '.*/version.py',
+]

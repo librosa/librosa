@@ -60,28 +60,28 @@ def beat_track(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time series
+        Audio time series.
 
     sr : number > 0 [scalar]
-        sampling rate of ``y``
+        Sampling rate of ``y``.
 
     onset_envelope : np.ndarray [shape=(..., m)] or None
-        (optional) pre-computed onset strength envelope.
+        (Optional) pre-computed onset strength envelope.
 
     hop_length : int > 0 [scalar]
-        number of audio samples between successive ``onset_envelope`` values
+        Number of audio samples between successive ``onset_envelope`` values.
 
     start_bpm : float > 0 [scalar]
-        initial guess for the tempo estimator (in beats per minute)
+        Initial guess for the tempo estimator (in beats per minute).
 
     tightness : float [scalar]
-        tightness of beat distribution around tempo
+        Tightness of beat distribution around tempo.
 
     trim : bool [scalar]
-        trim leading/trailing beats with weak onsets
+        Trim leading/trailing beats with weak onsets.
 
     bpm : float [scalar] or np.ndarray [shape=(...)]
-        (optional) If provided, use ``bpm`` as the tempo instead of
+        (Optional) if provided, use ``bpm`` as the tempo instead of
         estimating it from ``onsets``.
 
         If multichannel, tempo estimates can be provided for all channels.
@@ -110,7 +110,7 @@ def beat_track(
     Returns
     -------
     tempo : float [scalar, non-negative] or np.ndarray
-        estimated global tempo (in beats per minute)
+        The estimated global tempo (in beats per minute).
 
         If multi-channel and ``bpm`` is not provided, a separate
         tempo will be returned for each channel.
@@ -120,7 +120,7 @@ def beat_track(
             In this case, the array will have a single element and be one-dimensional.
             This is to ensure consistent return types for multi-channel input.
     beats : np.ndarray
-        estimated beat event locations.
+        The estimated beat event locations.
 
         If `sparse=True` (default), beat locations are given in the specified units
         (default is frame indices).
@@ -292,19 +292,19 @@ def plp(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio time series. Multi-channel is supported.
+        Audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
-        sampling rate of ``y``
+        Sampling rate of ``y``.
 
     onset_envelope : np.ndarray [shape=(..., n)] or None
-        (optional) pre-computed onset strength envelope
+        (Optional) pre-computed onset strength envelope.
 
     hop_length : int > 0 [scalar]
-        number of audio samples between successive ``onset_envelope`` values
+        Number of audio samples between successive ``onset_envelope`` values.
 
     win_length : int > 0 [scalar]
-        number of frames to use for tempogram analysis.
+        Number of frames to use for tempogram analysis.
         By default, 384 frames (at ``sr=22050`` and ``hop_length=512``) corresponds
         to about 8.9 seconds.
 
