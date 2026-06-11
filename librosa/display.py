@@ -862,22 +862,7 @@ class AdaptiveWaveplot:
         self.cid = None
         self._ax_ref: weakref.ref[mplaxes.Axes] | None = None
 
-        # This creates an invisible patch to contain the label
-        # Doing backflips here with redundant code to make mypy happy
-        #if label is None:
-        #    self.label_proxy_ = mpatches.Rectangle(
-        #        (np.nan, np.nan), 0, 0, facecolor=steps.get_color()
-        #    )
-        #else:
-        #    self.label_proxy_ = mpatches.Rectangle(
-        #        (np.nan, np.nan), 0, 0, facecolor=steps.get_color(), label=label
-        #    )
-
-        # ---
-
-        #self.label_proxy_ = mlines.Line2D([], [])
-        #self.label_proxy_.update_from(steps)
-
+        # This creates an invisible proxy artist to contain the label
         self.label_proxy_ = WaveplotDecoy(self)
 
         if label is not None:
@@ -931,8 +916,6 @@ class AdaptiveWaveplot:
         # Attach to axes and store the connection id
         self._ax_ref = weakref.ref(ax)
         ax.add_artist(self.label_proxy_)
-        if WaveplotDecoy not in Legend.get_default_handler_map():
-            Legend.update_default_handler_map({WaveplotDecoy: AdaptiveWaveplotHandler()})
         self.cid = ax.callbacks.connect(signal, self.update)
 
     def disconnect(self, *, strict: bool = False) -> None:
@@ -1060,6 +1043,11 @@ class AdaptiveWaveplotHandler(HandlerBase):
         )
 
         return [*bg_artists, *line_artists]
+
+
+# Add our custom handler to the default legend handler map
+if WaveplotDecoy not in Legend.get_default_handler_map():
+    Legend.update_default_handler_map({WaveplotDecoy: AdaptiveWaveplotHandler()})
 
 
 class Transformf0(mtransforms.Transform):
