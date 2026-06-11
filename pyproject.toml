@@ -55,9 +55,12 @@ checks = [
     "SS03", # Punctuation in summary is not that important
 ]
 exclude = [
-    "_.*",  # Private functions and classes
+    # Exclude all private functions and classes (those beginning with _) in all
+    # submodules:
+    ".*/_.*",
 ]
 exclude_files = [
     '.*/__init__.py',
     '.*/version.py',
+    '.*/_typing.py',
 ]
