@@ -52,7 +52,7 @@ jobs:
     
     - name: Docstring formatting check  
       shell: bash -l {0}
-      run: python -m velin --check librosa
+      run: numpydoc lint librosa/**.py
     
     - name: Type check package
       shell: bash -l {0}
