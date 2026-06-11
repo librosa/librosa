@@ -89,18 +89,50 @@ def hpss(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-    kernel_size
-    power
-    mask
-    margin
-        See `librosa.decompose.hpss`
-    n_fft
-    hop_length
-    win_length
-    window
-    center
-    pad_mode
-        See `librosa.stft`
+
+    kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
+        Kernel size(s) for the median filters.
+
+        - If scalar, the same size is used for both harmonic and percussive.
+        - If tuple, the first value specifies the width of the harmonic filter,
+          and the second value specifies the width of the percussive filter.
+
+    power : float > 0 [scalar]
+        Exponent for the Wiener filter when constructing soft mask matrices.
+
+    mask : bool
+        Return the masking matrices instead of components.
+
+    margin : float or tuple (margin_harmonic, margin_percussive)
+        Margin size(s) for the masks.
+
+        - If scalar, the same size is used for both harmonic and percussive.
+        - If tuple, the first value specifies the margin of the harmonic mask,
+          and the second value specifies the margin of the percussive mask.
+
+    n_fft : int > 0 [scalar]
+        Length of the windowed signal after padding with zeros.
+        The number of rows in the STFT matrix is ``(1 + n_fft/2)``.
+
+    hop_length : int or None
+        Number of audio samples between adjacent STFT columns.
+        If unspecified, defaults to ``win_length // 4``.
+
+    win_length : int or None
+        Each frame of audio is windowed by ``window`` of length ``win_length``
+        and then padded with zeros to match ``n_fft``.
+        If unspecified, defaults to ``win_length = n_fft``.
+
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        Window specification. See `scipy.signal.get_window` for supported values.
+
+    center : bool
+        If ``True``, the signal is padded so that frame ``t`` is centered
+        at ``y[t * hop_length]``.
+
+    pad_mode : str
+        Padding mode used when ``center=True``.
+        See `numpy.pad` for available modes.
 
     Returns
     -------
@@ -182,18 +214,50 @@ def harmonic(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-    kernel_size
-    power
-    mask
-    margin
-        See `librosa.decompose.hpss`
-    n_fft
-    hop_length
-    win_length
-    window
-    center
-    pad_mode
-        See `librosa.stft`
+
+    kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
+        Kernel size(s) for the median filters.
+
+        - If scalar, the same size is used for both harmonic and percussive.
+        - If tuple, the first value specifies the width of the harmonic filter,
+          and the second value specifies the width of the percussive filter.
+
+    power : float > 0 [scalar]
+        Exponent for the Wiener filter when constructing soft mask matrices.
+
+    mask : bool
+        Return the masking matrices instead of components.
+
+    margin : float or tuple (margin_harmonic, margin_percussive)
+        Margin size(s) for the masks.
+
+        - If scalar, the same size is used for both harmonic and percussive.
+        - If tuple, the first value specifies the margin of the harmonic mask,
+          and the second value specifies the margin of the percussive mask.
+
+    n_fft : int > 0 [scalar]
+        Length of the windowed signal after padding with zeros.
+        The number of rows in the STFT matrix is ``(1 + n_fft/2)``.
+
+    hop_length : int or None
+        Number of audio samples between adjacent STFT columns.
+        If unspecified, defaults to ``win_length // 4``.
+
+    win_length : int or None
+        Each frame of audio is windowed by ``window`` of length ``win_length``
+        and then padded with zeros to match ``n_fft``.
+        If unspecified, defaults to ``win_length = n_fft``.
+
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        Window specification. See `scipy.signal.get_window` for supported values.
+
+    center : bool
+        If ``True``, the signal is padded so that frame ``t`` is centered
+        at ``y[t * hop_length]``.
+
+    pad_mode : str
+        Padding mode used when ``center=True``.
+        See `numpy.pad` for available modes.
 
     Returns
     -------
@@ -264,18 +328,50 @@ def percussive(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-    kernel_size
-    power
-    mask
-    margin
-        See `librosa.decompose.hpss`
-    n_fft
-    hop_length
-    win_length
-    window
-    center
-    pad_mode
-        See `librosa.stft`
+
+    kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
+        Kernel size(s) for the median filters.
+
+        - If scalar, the same size is used for both harmonic and percussive.
+        - If tuple, the first value specifies the width of the harmonic filter,
+          and the second value specifies the width of the percussive filter.
+
+    power : float > 0 [scalar]
+        Exponent for the Wiener filter when constructing soft mask matrices.
+
+    mask : bool
+        Return the masking matrices instead of components.
+
+    margin : float or tuple (margin_harmonic, margin_percussive)
+        Margin size(s) for the masks.
+
+        - If scalar, the same size is used for both harmonic and percussive.
+        - If tuple, the first value specifies the margin of the harmonic mask,
+          and the second value specifies the margin of the percussive mask.
+
+    n_fft : int > 0 [scalar]
+        Length of the windowed signal after padding with zeros.
+        The number of rows in the STFT matrix is ``(1 + n_fft/2)``.
+
+    hop_length : int or None
+        Number of audio samples between adjacent STFT columns.
+        If unspecified, defaults to ``win_length // 4``.
+
+    win_length : int or None
+        Each frame of audio is windowed by ``window`` of length ``win_length``
+        and then padded with zeros to match ``n_fft``.
+        If unspecified, defaults to ``win_length = n_fft``.
+
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        Window specification. See `scipy.signal.get_window` for supported values.
+
+    center : bool
+        If ``True``, the signal is padded so that frame ``t`` is centered
+        at ``y[t * hop_length]``.
+
+    pad_mode : str
+        Padding mode used when ``center=True``.
+        See `numpy.pad` for available modes.
 
     Returns
     -------
@@ -347,11 +443,11 @@ def time_stretch(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     See Also
     --------
     pitch_shift :
-        pitch shifting
+        Pitch shifting
     librosa.phase_vocoder :
-        spectrogram phase vocoder
+        Spectrogram phase vocoder
     pyrubberband.pyrb.time_stretch :
-        high-quality time stretching using RubberBand
+        High-quality time stretching using RubberBand
 
     Examples
     --------
@@ -415,7 +511,7 @@ def pitch_shift(
     bins_per_octave : int > 0 [scalar]
         how many steps per octave
 
-    res_type : string
+    res_type : str
         Resample type. By default, 'soxr_hq' is used.
 
         See `librosa.resample` for more information.
@@ -435,11 +531,11 @@ def pitch_shift(
     See Also
     --------
     time_stretch :
-        time stretching
+        Time stretching
     librosa.phase_vocoder :
-        spectrogram phase vocoder
+        Spectrogram phase vocoder
     pyrubberband.pyrb.pitch_shift :
-        high-quality pitch shifting using RubberBand
+        High-quality pitch shifting using RubberBand
 
     Examples
     --------
@@ -490,7 +586,7 @@ def remix(
         An iterable (list-like or generator) where the ``i``th item
         ``intervals[i]`` indicates the start and end (in samples)
         of a slice of ``y``.
-    align_zeros : boolean
+    align_zeros : bool
         If ``True``, interval boundaries are mapped to the closest
         zero-crossing in ``y``.  If ``y`` is stereo, zero-crossings
         are computed after converting to mono.
@@ -821,7 +917,7 @@ def preemphasis(
 
         By default ``zi`` is initialized as ``2*y[0] - y[1]``.
 
-    return_zf : boolean
+    return_zf : bool
         If ``True``, return the final filter state.
         If ``False``, only return the pre-emphasized signal.
 
@@ -942,7 +1038,7 @@ def deemphasis(
         value corresponds to the transformation of the default initialization of ``zi`` in ``preemphasis()``,
         ``2*x[0] - x[1]``.
 
-    return_zf : boolean
+    return_zf : bool
         If ``True``, return the final filter state.
         If ``False``, only return the pre-emphasized signal.
 

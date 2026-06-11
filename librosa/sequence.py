@@ -1547,7 +1547,6 @@ def viterbi_discriminative(
 
     Returns
     -------
-    Either ``states`` or ``(states, logp)``:
     states : np.ndarray [shape=(..., n_steps,)]
         The most likely state sequence.
         If ``prob`` contains multiple input channels,
@@ -1826,7 +1825,6 @@ def viterbi_binary(
 
     Returns
     -------
-    Either ``states`` or ``(states, logp)``:
     states : np.ndarray [shape=(..., n_states, n_steps)]
         The most likely state sequence.
     logp : np.ndarray [shape=(..., n_states,)]
