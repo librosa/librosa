@@ -74,7 +74,7 @@ def load(
 
     Parameters
     ----------
-    path : string, int, pathlib.Path, soundfile.SoundFile, or file-like object
+    path : str, int, pathlib.Path, soundfile.SoundFile, or file-like object
         path to the input file.
 
         Any codec supported by `soundfile` will work.
@@ -253,7 +253,7 @@ def stream(
 
     Parameters
     ----------
-    path : string, int, sf.SoundFile, or file-like object
+    path : str, int, sf.SoundFile, or file-like object
         path to the input file to stream.
 
         Any codec supported by `soundfile` is permitted here.
@@ -987,8 +987,7 @@ def get_duration(
     center: bool = True,
     path: str | os.PathLike[Any] | None = None,
 ) -> float:
-    """Compute the duration (in seconds) of an audio time series,
-    feature matrix, or filename.
+    """Compute the duration (in seconds) of an audio time series, feature matrix, or filename.
 
     Examples
     --------
@@ -1033,7 +1032,7 @@ def get_duration(
     hop_length : int > 0 [ scalar]
         number of audio samples between columns of ``S``
 
-    center : boolean
+    center : bool
         - If ``True``, ``S[:, t]`` is centered at ``y[t * hop_length]``
         - If ``False``, then ``S[:, t]`` begins at ``y[t * hop_length]``
 
@@ -1090,7 +1089,7 @@ def get_samplerate(path: str | int | sf.SoundFile | BinaryIO) -> float:
 
     Parameters
     ----------
-    path : string, int, soundfile.SoundFile, or file-like
+    path : str, int, soundfile.SoundFile, or file-like
         The path to the file to be loaded
         As in ``load``, this can also be an integer or open file-handle
         that can be processed by `soundfile`.
@@ -1258,7 +1257,6 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     >>> ax.plot(y_hat, linestyle='--')
     >>> ax.legend(['y', 'y_hat'])
     >>> ax.set_title('LP Model Forward Prediction')
-
     """
     if not util.is_positive_int(order):
         raise ParameterError(f"order={order} must be an integer > 0")
@@ -1427,8 +1425,7 @@ def zero_crossings(
     zero_pos: bool = True,
     axis: int = -1,
 ) -> np.ndarray:
-    """Find the zero-crossings of a signal ``y``: indices ``i`` such that
-    ``sign(y[i]) != sign(y[j])``.
+    """Find the zero-crossings of a signal ``y``: indices ``i`` such that ``sign(y[i]) != sign(y[j])``.
 
     If ``y`` is multi-dimensional, then zero-crossings are computed along
     the specified ``axis``.
@@ -1448,10 +1445,10 @@ def zero_crossings(
         If callable, the threshold is scaled relative to
         ``ref_magnitude(np.abs(y))``.
 
-    pad : boolean
+    pad : bool
         If ``True``, then ``y[0]`` is considered a valid zero-crossing.
 
-    zero_pos : boolean
+    zero_pos : bool
         If ``True`` then the value 0 is interpreted as having positive sign.
 
         If ``False``, then 0, -1, and +1 all have distinct signs.
@@ -1461,7 +1458,7 @@ def zero_crossings(
 
     Returns
     -------
-    zero_crossings : np.ndarray [shape=y.shape, dtype=boolean]
+    zero_crossings : np.ndarray [shape=y.shape, dtype=bool]
         Indicator array of zero-crossings in ``y`` along the selected axis.
 
     Notes
@@ -1773,7 +1770,7 @@ def chirp(
         When both ``duration`` and ``length`` are defined,
         ``length`` takes priority.
 
-    linear : boolean
+    linear : bool
         - If ``True``, use a linear sweep, i.e., frequency changes linearly with time
         - If ``False``, use a exponential sweep.
 
@@ -1856,7 +1853,7 @@ def chirp(
 def mu_compress(
     x: np.ndarray | _FloatLike_co, *, mu: float = 255, quantize: bool = True
 ) -> np.ndarray:
-    """mu-law compression
+    """Compression by μ-law
 
     Given an input signal ``-1 <= x <= 1``, the mu-law compression
     is calculated by::
@@ -1948,7 +1945,7 @@ def mu_compress(
 def mu_expand(
     x: np.ndarray | _FloatLike_co, *, mu: float = 255.0, quantize: bool = True
 ) -> _ScalarOrSequence[_FloatLike_co]:
-    """mu-law expansion
+    """Expansion by μ-law
 
     This function is the inverse of ``mu_compress``. Given a mu-law compressed
     signal ``-1 <= x <= 1``, the mu-law expansion is calculated by::
@@ -1963,7 +1960,7 @@ def mu_expand(
     mu : positive number
         The compression parameter.  Values of the form ``2**n - 1``
         (e.g., 15, 31, 63, etc.) are most common.
-    quantize : boolean
+    quantize : bool
         If ``True``, the input is assumed to be quantized to
         ``1 + mu`` distinct integer values.
 
