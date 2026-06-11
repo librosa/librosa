@@ -62,10 +62,6 @@ def onset_detect(
     hop_length : int > 0 [scalar]
         hop length (in samples)
 
-    units : {'frames', 'samples', 'time'}
-        The units to encode detected onset events in.
-        By default, 'frames' are used.
-
     backtrack : bool
         If ``True``, detected onset events are backtracked to the nearest
         preceding minimum of ``energy``.
@@ -77,6 +73,10 @@ def onset_detect(
     energy : np.ndarray [shape=(m,)] (optional)
         An energy function to use for backtracking detected onset events.
         If none is provided, then ``onset_envelope`` is used.
+
+    units : {'frames', 'samples', 'time'}
+        The units to encode detected onset events in.
+        By default, 'frames' are used.
 
     normalize : bool
         If ``True`` (default), normalize the onset envelope to have minimum of 0 and
@@ -121,9 +121,9 @@ def onset_detect(
 
     See Also
     --------
-    onset_strength : compute onset strength per-frame
-    onset_backtrack : backtracking onset events
-    librosa.util.peak_pick : pick peaks from a time series
+    onset_strength : Compute onset strength per-frame
+    onset_backtrack : Backtracking onset events
+    librosa.util.peak_pick : Pick peaks from a time series
 
     Examples
     --------
@@ -368,8 +368,7 @@ def onset_strength(
 
 
 def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
-    """Backtrack detected onset events to the nearest preceding local
-    minimum of an energy function.
+    """Backtrack detected onset events to the nearest preceding local minimum of an energy function.
 
     This function can be used to roll back the timing of detected onsets
     from a detected peak amplitude to the preceding minimum.

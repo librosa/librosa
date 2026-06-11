@@ -53,14 +53,18 @@ checks = [
     "RT04", # Capitalization in return descriptions is not that important
     "RT05", # Punctuation in return descriptions is not that important
     "SS03", # Punctuation in summary is not that important
+    "GL08", # @overload stubs and internal helpers do not need docstrings
+    "SS01", # Module-level docstrings use autosummary format, not numpydoc
 ]
 exclude = [
-    # Exclude all private functions and classes (those beginning with _) in all
-    # submodules:
-    ".*/_.*",
+    # Exclude module-level docstrings (autosummary format, not numpydoc):
+    "^[^.]+$",
+    # Exclude all private functions and classes (those beginning with _):
+    "\\._",
 ]
 exclude_files = [
     '.*/__init__.py',
     '.*/version.py',
     '.*/_typing.py',
+    '.*/_cache.py',
 ]
