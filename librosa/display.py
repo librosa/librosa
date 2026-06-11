@@ -842,7 +842,6 @@ class AdaptiveWaveplot:
 
     def __init__(
         self,
-
         times: np.ndarray,
         y: np.ndarray,
         steps: Line2D,
@@ -1000,22 +999,22 @@ class AdaptiveWaveplot:
 
 class WaveplotDecoy(mlines.Line2D):
     def __init__(self, parent_waveplot: AdaptiveWaveplot, *args: Any, **kwargs: Any):
-        # We'll never actually set the color on this decoy at construction time
+        #  We'll never actually set the color on this decoy at construction time
         kwargs["color"] = "none"
-        super().__init__([0], [0], *args, **kwargs)
+        super().__init__([], [], *args, **kwargs)
         self.waveplot = parent_waveplot # Store reference to the parent wrapper
 
 
 class AdaptiveWaveplotHandler(HandlerBase):
     def create_artists(self, legend: Legend,
-                       orig_handle: Artist,
-                       xdescent: float,
-                       ydescent: float,
-                       width: float,
-                       height: float,
-                       fontsize: float,
-                       trans: mtransforms.Transform
-        ) -> list[Artist]:
+        orig_handle: Artist,
+        xdescent: float,
+        ydescent: float,
+        width: float,
+        height: float,
+        fontsize: float,
+        trans: mtransforms.Transform
+    ) -> list[Artist]:
         """
         Matplotlib automatically passes the exact dimensions and coordinate
         transform (`trans`) needed to paint safely inside the legend key box.
@@ -1027,9 +1026,7 @@ class AdaptiveWaveplotHandler(HandlerBase):
             bgcolor = ax.get_facecolor()
         else:
             bgcolor = "none"
-        bg_rect = mpatches.Rectangle((0, 0), 1, 1,
-                                     facecolor=bgcolor,
-                                     edgecolor="none")
+        bg_rect = mpatches.Rectangle((0, 0), 1, 1, facecolor=bgcolor, edgecolor="none")
         bg_artists = HandlerPatch().create_artists(
             legend, bg_rect, xdescent, ydescent, width, height, fontsize, trans
         )
