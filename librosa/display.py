@@ -69,6 +69,8 @@ import matplotlib.ticker as mplticker
 import matplotlib.transforms as mtransforms
 import numpy as np
 from matplotlib import colormaps as mcm
+from matplotlib.legend import Legend
+from matplotlib.legend_handler import HandlerBase, HandlerLine2D, HandlerPatch
 from matplotlib.transforms import Bbox
 
 from . import core, util
@@ -836,10 +838,11 @@ class AdaptiveWaveplot:
     max_samples: int
     transpose: bool
     cid: int | None
-    label_proxy_: mlines.Line2D
+    label_proxy_: WaveplotDecoy
 
     def __init__(
         self,
+
         times: np.ndarray,
         y: np.ndarray,
         steps: Line2D,
@@ -869,11 +872,16 @@ class AdaptiveWaveplot:
         #    self.label_proxy_ = mpatches.Rectangle(
         #        (np.nan, np.nan), 0, 0, facecolor=steps.get_color(), label=label
         #    )
-        self.label_proxy_ = mlines.Line2D([], [])
-        self.label_proxy_.update_from(steps)
+
+        # ---
+
+        #self.label_proxy_ = mlines.Line2D([], [])
+        #self.label_proxy_.update_from(steps)
+
+        self.label_proxy_ = WaveplotDecoy(self)
+
         if label is not None:
             self.label_proxy_.set_label(label)
-
 
     # Preserve the old attribute API by exposing properties with same names
     @property
@@ -923,6 +931,8 @@ class AdaptiveWaveplot:
         # Attach to axes and store the connection id
         self._ax_ref = weakref.ref(ax)
         ax.add_artist(self.label_proxy_)
+        if WaveplotDecoy not in Legend.get_default_handler_map():
+            Legend.update_default_handler_map({WaveplotDecoy: AdaptiveWaveplotHandler()})
         self.cid = ax.callbacks.connect(signal, self.update)
 
     def disconnect(self, *, strict: bool = False) -> None:
@@ -1003,6 +1013,53 @@ class AdaptiveWaveplot:
             steps.set_visible(False)
 
         ax.figure.canvas.draw_idle()
+
+
+class WaveplotDecoy(mlines.Line2D):
+    def __init__(self, parent_waveplot: AdaptiveWaveplot, *args: Any, **kwargs: Any):
+        # We'll never actually set the color on this decoy at construction time
+        kwargs["color"] = "none"
+        super().__init__([0], [0], *args, **kwargs)
+        self.waveplot = parent_waveplot # Store reference to the parent wrapper
+
+
+class AdaptiveWaveplotHandler(HandlerBase):
+    def create_artists(self, legend: Legend,
+                       orig_handle: Artist,
+                       xdescent: float,
+                       ydescent: float,
+                       width: float,
+                       height: float,
+                       fontsize: float,
+                       trans: mtransforms.Transform
+        ) -> list[Artist]:
+        """
+        Matplotlib automatically passes the exact dimensions and coordinate
+        transform (`trans`) needed to paint safely inside the legend key box.
+        """
+        orig_handle = cast("WaveplotDecoy", orig_handle)
+        waveplot = orig_handle.waveplot
+        ax = waveplot.ax
+        if ax is not None:
+            bgcolor = ax.get_facecolor()
+        else:
+            bgcolor = "none"
+        bg_rect = mpatches.Rectangle((0, 0), 1, 1,
+                                     facecolor=bgcolor,
+                                     edgecolor="none")
+        bg_artists = HandlerPatch().create_artists(
+            legend, bg_rect, xdescent, ydescent, width, height, fontsize, trans
+        )
+
+        proxy_line = mlines.Line2D([], [])
+        if waveplot.steps is not None:
+            proxy_line.update_from(waveplot.steps)
+        proxy_line.set(visible=True)
+        line_artists = HandlerLine2D().create_artists(
+            legend, proxy_line, xdescent, ydescent, width, height,  fontsize, trans
+        )
+
+        return [*bg_artists, *line_artists]
 
 
 class Transformf0(mtransforms.Transform):
@@ -2794,8 +2851,6 @@ def waveshow(
 
         # Set the axes facecolor to our wave color
         axes.patch.set_facecolor(color)
-        # FIXME: this is actually weird when inverted...
-        adaptor.label_proxy_.set_color(color)
         steps.set_color(invert_color)
         envelope.set_color(invert_color)
 
