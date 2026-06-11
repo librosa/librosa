@@ -1343,12 +1343,12 @@ def viterbi(
 
     Returns
     -------
-    Either ``states`` or ``(states, logp)``:
     states : np.ndarray [shape=(..., n_steps,)]
         The most likely state sequence.
         If ``prob`` contains multiple channels of input, then each channel is
         decoded independently.
-    logp : scalar [float] or np.ndarray
+
+    logp : scalar [float] or np.ndarray, optional
         If ``return_logp=True``, the log probability of ``states`` given
         the observations.
 

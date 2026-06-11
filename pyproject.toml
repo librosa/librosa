@@ -44,16 +44,18 @@ checks = [
     "ES01", # No extended summary
     "EX01", # No examples section
     "SA01", # No See Also section
+    "SA02", # Punctuation in See Also section is not that important
     "GL01", # Docstring starting on the same line as open quotes?
     "PR08", # Capitalization of parameter descriptions is not that important
     "PR09", # Punctuation of parameter descriptions is not that important
     "RT02", # It's useful to include shape descriptions in return types
     "SA04", # See Also descriptions are not that important
+    "RT04", # Capitalization in return descriptions is not that important
     "RT05", # Punctuation in return descriptions is not that important
     "SS03", # Punctuation in summary is not that important
 ]
 exclude = [
-    "^_.*",  # Private functions and classes
+    "_.*",  # Private functions and classes
 ]
 exclude_files = [
     '.*/__init__.py',

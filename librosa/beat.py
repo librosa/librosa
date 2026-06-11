@@ -454,7 +454,7 @@ def plp(
 def __beat_tracker(
     onset_envelope: np.ndarray, bpm: np.ndarray, frame_rate: float, tightness: float, trim: bool
 ) -> np.ndarray:
-    """Tracks beats in an onset strength envelope.
+    """Track beats in an onset strength envelope.
 
     Parameters
     ----------
