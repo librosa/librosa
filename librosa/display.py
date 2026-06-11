@@ -863,6 +863,7 @@ class AdaptiveWaveplot:
 
         # This creates an invisible proxy artist to contain the label
         self.label_proxy_ = WaveplotDecoy(self)
+        self.label_proxy_.set_in_layout(False)
 
         if label is not None:
             self.label_proxy_.set_label(label)
@@ -998,11 +999,13 @@ class AdaptiveWaveplot:
 
 
 class WaveplotDecoy(mlines.Line2D):
+    waveplot: AdaptiveWaveplot
+
     def __init__(self, parent_waveplot: AdaptiveWaveplot, *args: Any, **kwargs: Any):
-        #  We'll never actually set the color on this decoy at construction time
+        # We'll never actually set the color on this decoy at construction time
         kwargs["color"] = "none"
         super().__init__([], [], *args, **kwargs)
-        self.waveplot = parent_waveplot # Store reference to the parent wrapper
+        self.waveplot = parent_waveplot  # Store reference to the parent wrapper
 
 
 class AdaptiveWaveplotHandler(HandlerBase):
@@ -1034,6 +1037,7 @@ class AdaptiveWaveplotHandler(HandlerBase):
         proxy_line = mlines.Line2D([], [])
         if waveplot.steps is not None:
             proxy_line.update_from(waveplot.steps)
+        proxy_line.set_data([], [])
         proxy_line.set(visible=True)
         line_artists = HandlerLine2D().create_artists(
             legend, proxy_line, xdescent, ydescent, width, height,  fontsize, trans
