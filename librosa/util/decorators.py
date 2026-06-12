@@ -28,6 +28,20 @@ def moved(
     """Mark functions as moved/renamed.
 
     Using the decorated (old) function will result in a warning.
+
+    Parameters
+    ----------
+    moved_from : str
+        The old location of the function
+    version : str
+        The version in which the function was moved
+    version_removed : str
+        The version in which the old alias will be removed
+
+    Returns
+    -------
+    decorator : Callable
+        A decorator that can be applied to the old function name
     """
 
     def __wrapper(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
@@ -53,6 +67,18 @@ def deprecated(
     """Mark a function as deprecated.
 
     Using the decorated (old) function will result in a warning.
+
+    Parameters
+    ----------
+    version : str
+        The version in which the function was deprecated
+    version_removed : str
+        The version in which the function will be removed
+
+    Returns
+    -------
+    decorator : Callable
+        A decorator that can be applied to the deprecated function
     """
 
     def __wrapper(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
@@ -83,6 +109,31 @@ def vectorize(
 
     This function is not quite a decorator, but is used as a wrapper
     to np.vectorize that preserves scalar behavior.
+
+    Parameters
+    ----------
+    otypes : str or list of dtype, optional
+        The output data type(s).  This is required if the function returns
+        a scalar.  If the function returns an array, this is optional.
+    doc : str, optional
+        The docstring for the vectorized function.  If None, the original
+        function's docstring will be used.
+    excluded : list of int or str, optional
+        List of argument indices or names to exclude from vectorization.
+    cache : bool, optional
+        If True, cache the results of the function calls.  This can speed up
+        repeated calls with the same arguments, but may consume more memory.
+    signature : str, optional
+        The signature of the function for generalized ufunc behavior.
+
+    Returns
+    -------
+    decorator : Callable
+        A decorator that can be applied to the function to vectorize it.
+
+    See Also
+    --------
+    np.vectorize : The underlying vectorization function from NumPy.
     """
 
     def __wrapper(function):

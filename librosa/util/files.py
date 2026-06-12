@@ -218,12 +218,12 @@ def find_files(
 
         Default: ``['aac', 'au', 'flac', 'm4a', 'mp3', 'ogg', 'wav']``
 
-    recurse : boolean
+    recurse : bool
         If ``True``, then all subfolders of ``directory`` will be searched.
 
         Otherwise, only ``directory`` will be searched.
 
-    case_sensitive : boolean
+    case_sensitive : bool
         If ``False``, files matching upper-case version of
         extensions will be included.
 

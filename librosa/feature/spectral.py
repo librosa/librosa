@@ -1911,7 +1911,8 @@ def mfcc(
     power : float > 0 [scalar]
         Exponent applied to the spectrum before calculating the melspectrogram when the input is a time signal,
         e.g. 1 for magnitude, 2 for power **(default)**, etc.
-    **kwargs : additional keyword arguments for Mel filter bank parameters
+    **kwargs
+        additional keyword arguments for Mel filter bank parameters
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
     fmin : float >= 0 [scalar]

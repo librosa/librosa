@@ -725,7 +725,8 @@ def pyin(
     voiced_prob : np.ndarray [shape=(..., n_frames)]
         time series containing the probability that a frame is voiced.
 
-    .. note:: If multi-channel input is provided, f0 and voicing are estimated separately for each channel.
+        .. note:: If multi-channel input is provided, f0 and voicing are estimated
+            separately for each channel.
 
     See Also
     --------

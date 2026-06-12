@@ -55,6 +55,7 @@ checks = [
     "SS03", # Punctuation in summary is not that important
     "GL08", # @overload stubs and internal helpers do not need docstrings
     "SS01", # Module-level docstrings use autosummary format, not numpydoc
+    "PR02", # We can have extra parameter names included, eg when using **kwargs
 ]
 exclude = [
     # Exclude module-level docstrings (autosummary format, not numpydoc):

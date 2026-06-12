@@ -351,7 +351,8 @@ def mfcc_to_audio(
         samples.
     dtype : np.dtype
         Real numeric type for the time-domain signal.  Default is 32-bit float.
-    **kwargs : additional keyword arguments for Mel filter bank parameters
+    **kwargs
+        additional keyword arguments for Mel filter bank parameters
     fmin : float >= 0 [scalar]
         lowest frequency (in Hz)
     fmax : float >= 0 [scalar]

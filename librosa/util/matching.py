@@ -254,6 +254,7 @@ def match_events(
         Array of events (eg, times, sample or frame indices) to
         match against.
     left : bool
+        See `right`
     right : bool
         If ``False``, then matched events cannot be to the left (or right)
         of source events.

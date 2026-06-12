@@ -306,6 +306,7 @@ def valid_audio(y: np.ndarray) -> bool:
 
 def valid_int(x: float, *, cast: Callable[[float], float] | None = None) -> int:
     """Ensure that an input value is integer-typed.
+
     This is primarily useful for ensuring integrable-valued
     array indices.
 
@@ -342,10 +343,12 @@ def is_positive_int(x: float) -> bool:
     Parameters
     ----------
     x : number
+        A scalar value to check
 
     Returns
     -------
     positive : bool
+        True if x is a positive integer, False otherwise
     """
     # Check type first to catch None values.
     return isinstance(x, (int, np.integer)) and (x > 0)
@@ -628,7 +631,7 @@ def fix_frames(
         Minimum allowed frame index
     x_max : int >= 0 or None
         Maximum allowed frame index
-    pad : boolean
+    pad : bool
         If ``True``, then ``frames`` is expanded to span the full range
         ``[x_min, x_max]``
 
@@ -752,7 +755,7 @@ def axis_sort(
         - ``axis=0`` to sort rows by peak column index
         - ``axis=1`` to sort columns by peak row index
 
-    index : boolean [scalar]
+    index : bool [scalar]
         If true, returns the index array as well as the permuted data.
 
     value : function
@@ -1556,6 +1559,7 @@ def buf_to_float(
     x: np.ndarray, *, n_bytes: int = 2, dtype: DTypeLike = np.float32
 ) -> np.ndarray:
     """Convert an integer buffer to floating point values.
+
     This is primarily useful when loading integer-valued wav data
     into numpy arrays.
 
@@ -1602,7 +1606,7 @@ def index_to_slice(
     step : None or int
         Step size for each slice.  If `None`, then the default
         step of 1 is used.
-    pad : boolean
+    pad : bool
         If `True`, pad ``idx`` to span the range ``idx_min:idx_max``.
 
     Returns
@@ -1668,7 +1672,7 @@ def sync(
         an iterable collection of slice objects.
     aggregate : function
         aggregation function (default: `np.mean`)
-    pad : boolean
+    pad : bool
         If `True`, ``idx`` is padded to span the full range ``[0, data.shape[axis]]``
     axis : int
         The axis along which to aggregate data
@@ -1955,8 +1959,7 @@ def tiny(x: complex | np.ndarray) -> np.floating[Any]:
 
 
 def fill_off_diagonal(x: np.ndarray, *, radius: float, value: float = 0) -> None:
-    """Set all cells of a matrix to a given ``value``
-    if they lie outside a constraint region.
+    """Set all array entries to ``value`` if they lie outside a constraint region.
 
     In this case, the constraint region is the
     Sakoe-Chiba band which runs with a fixed ``radius``
@@ -2025,8 +2028,7 @@ def fill_off_diagonal(x: np.ndarray, *, radius: float, value: float = 0) -> None
 def cyclic_gradient(
     data: np.ndarray, *, edge_order: Literal[1, 2] = 1, axis: int = -1
 ) -> np.ndarray:
-    """Estimate the gradient of a function over a uniformly sampled,
-    periodic domain.
+    """Estimate the gradient of a function over a uniformly sampled, periodic domain.
 
     This is essentially the same as `np.gradient`, except that edge effects
     are handled by wrapping the observations (i.e. assuming periodicity)
@@ -2176,9 +2178,9 @@ def shear(
     ----------
     X : np.ndarray [ndim=2] or scipy.sparse array/matrix
         The array/matrix to be sheared
-    factor : integer
+    factor : int
         The shear factor: ``X[:, n] -> np.roll(X[:, n], factor * n)``
-    axis : integer
+    axis : int
         The axis along which to shear
 
     Returns
@@ -2227,7 +2229,7 @@ def stack(arrays: list[np.ndarray], *, axis: int = 0) -> np.ndarray:
     ----------
     arrays : list
         one or more `np.ndarray`
-    axis : integer
+    axis : int
         The target axis along which to stack.  ``axis=0`` creates a new first axis,
         and ``axis=-1`` creates a new last axis.
 
@@ -2444,8 +2446,7 @@ def __count_unique(x):
 
 
 def count_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
-    """Count the number of unique values in a multi-dimensional array
-    along a given axis.
+    """Count the number of unique values along a given axis.
 
     Parameters
     ----------
@@ -2495,8 +2496,7 @@ def __is_unique(x):
 
 
 def is_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
-    """Determine if the input array consists of all unique values
-    along a given axis.
+    """Determine if the input consists of all unique values along a given axis.
 
     Parameters
     ----------
@@ -2753,15 +2753,15 @@ def interp_broadcast(
     op : function [optional]
         A broadcast operation performed on the two interpolated arrays.
         Default: ``np.multiply``.
-    axis : int
-        The axis of interpolation.
-        Default: ``-2``
     kind : str
         Interpolation type.  See ``scipy.interpolate.interp1d``.
         Default: ``"linear"``
     fill_value : float
         The value to fill when extrapolating beyond the observed range.
         Default: ``0``
+    axis : int
+        The axis of interpolation.
+        Default: ``-2``
 
     Returns
     -------
