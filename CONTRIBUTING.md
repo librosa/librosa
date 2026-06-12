@@ -96,8 +96,8 @@ tools:
 - Ensure that your docstrings are properly formatted, check with:
 
   ```shell
-  python -m pip install velin
-  python -m velin --check librosa
+  conda install numpydoc
+  numpydoc lint librosa/**.py
   ```
 
 - Ensure that any new functionality has valid type annotations, check with:
