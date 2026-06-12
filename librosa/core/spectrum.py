@@ -19,7 +19,7 @@ from . import convert
 from .audio import resample
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal
+    from typing import Any, Callable, Literal, Sequence
 
     from numpy.typing import DTypeLike
 
@@ -1719,6 +1719,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes : None | int | Sequence[int] = None,
 ) -> np.floating[Any]: ...
 
 
@@ -1729,6 +1730,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes : None | int | Sequence[int] = None,
 ) -> np.ndarray: ...
 
 
@@ -1739,6 +1741,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes : None | int | Sequence[int] = None,
 ) -> np.floating[Any] | np.ndarray: ...
 
 
@@ -1749,6 +1752,7 @@ def power_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-10,
     top_db: float | None = 80.0,
+    axes : None | int | Sequence[int] = None,
 ) -> np.floating[Any] | np.ndarray:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
@@ -1775,6 +1779,12 @@ def power_to_db(
     top_db : float >= 0 [scalar]
         threshold the output at ``top_db`` below the peak:
         ``max(10 * log10(S/ref)) - top_db``
+
+    axes : None, int, or list of int
+        Axis or axes along which to compute the reference value (if `ref` is callable).
+        If `None`, then axes will be inferred as the trailing dimensions of `S`:
+            - If `S` is 1D, then `axes=(-1,)`
+            - If `S` is >=2D, then `axes=(-2, -1)`
 
     Returns
     -------
@@ -1853,9 +1863,21 @@ def power_to_db(
     else:
         magnitude = S
 
+    if axes is None:
+        # Single-channel (1D/2D) vs Multichannel (3D+)
+        axes = (-2, -1) if magnitude.ndim > 1 else (-1,)
+
     if callable(ref):
         # User supplied a function to calculate reference power
-        ref_value = ref(magnitude)
+        try:
+            # Happy path: Array API standard compliant (np.max, np.mean, xp.max)
+            ref_value = ref(magnitude, axis=axes, keepdims=True)
+        except TypeError as e:
+            # Fallback: Catch built-in `max` or non-compliant custom functions
+            raise ParameterError(
+                "The provided reference function must support 'axis' and "
+                "'keepdims' arguments for proper multichannel processing. "
+            ) from e
     else:
         ref_value = np.abs(ref)
 
@@ -1930,6 +1952,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes : None | int | Sequence[int] = None,
 ) -> np.floating[Any]: ...
 
 
@@ -1940,6 +1963,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes : None | int | Sequence[int] = None,
 ) -> np.ndarray: ...
 
 
@@ -1950,6 +1974,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes : None | int | Sequence[int] = None,
 ) -> np.floating[Any] | np.ndarray: ...
 
 
@@ -1960,6 +1985,7 @@ def amplitude_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-5,
     top_db: float | None = 80.0,
+    axes : None | int | Sequence[int] = None,
 ) -> np.floating[Any] | np.ndarray:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
@@ -1984,6 +2010,12 @@ def amplitude_to_db(
     top_db : float >= 0 [scalar]
         threshold the output at ``top_db`` below the peak:
         ``max(20 * log10(S/ref)) - top_db``
+
+    axes : None, int, or list of int
+        Axis or axes along which to compute the reference value (if `ref` is callable).
+        If `None`, then axes will be inferred as the trailing dimensions of `S`:
+            - If `S` is 1D, then `axes=(-1,)`
+            - If `S` is >=2D, then `axes=(-2, -1)`
 
     Returns
     -------
@@ -2010,9 +2042,21 @@ def amplitude_to_db(
 
     magnitude = np.abs(S)
 
+    if axes is None:
+        # Single-channel (1D/2D) vs Multichannel (3D+)
+        axes = (-2, -1) if magnitude.ndim > 1 else (-1,)
+
     if callable(ref):
         # User supplied a function to calculate reference power
-        ref_value = ref(magnitude)
+        try:
+            # Happy path: Array API standard compliant (np.max, np.mean, xp.max)
+            ref_value = ref(magnitude, axis=axes, keepdims=True)
+        except TypeError as e:
+            # Fallback: Catch built-in `max` or non-compliant custom functions
+            raise ParameterError(
+                "The provided reference function must support 'axis' and "
+                "'keepdims' arguments for proper multichannel processing. "
+            ) from e
     else:
         ref_value = np.abs(ref)
 
