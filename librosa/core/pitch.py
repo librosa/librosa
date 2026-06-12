@@ -112,8 +112,7 @@ def estimate_tuning(
 def pitch_tuning(
     frequencies: ArrayLike, *, resolution: float = 0.01, bins_per_octave: int = 12
 ) -> float:
-    """Given a collection of pitches, estimate its tuning offset
-    (in fractions of a bin) relative to A440=440.0Hz.
+    """Given a collection of pitches, estimate its tuning offset relative to A440=440.0Hz.
 
     Parameters
     ----------
@@ -219,18 +218,18 @@ def piptrack(
     hop_length : int > 0 [scalar] or None
         number of samples to hop
 
+    fmin : float > 0 [scalar]
+        lower frequency cutoff.
+
+    fmax : float > 0 [scalar]
+        upper frequency cutoff.
+
     threshold : float in `(0, 1)`
         A bin in spectrum ``S`` is considered a pitch when it is greater than
         ``threshold * ref(S)``.
 
         By default, ``ref(S)`` is taken to be ``max(S, axis=0)`` (the maximum value in
         each column).
-
-    fmin : float > 0 [scalar]
-        lower frequency cutoff.
-
-    fmax : float > 0 [scalar]
-        upper frequency cutoff.
 
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by ``window``.
@@ -239,7 +238,7 @@ def piptrack(
 
         If unspecified, defaults to ``win_length = n_fft``.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
@@ -247,12 +246,12 @@ def piptrack(
 
         .. see also:: `filters.get_window`
 
-    center : boolean
+    center : bool
         - If ``True``, the signal ``y`` is padded so that frame
           ``t`` is centered at ``y[t * hop_length]``.
         - If ``False``, then frame ``t`` begins at ``y[t * hop_length]``
 
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero-padding.
 
@@ -521,13 +520,13 @@ def yin(
         If ``None``, defaults to ``frame_length // 4``.
     trough_threshold : number > 0 [scalar]
         absolute threshold for peak estimation.
-    center : boolean
+    center : bool
         If ``True``, the signal `y` is padded so that frame
         ``D[:, t]`` is centered at `y[t * hop_length]`.
         If ``False``, then ``D[:, t]`` begins at ``y[t * hop_length]``.
         Defaults to ``True``,  which simplifies the alignment of ``D`` onto a
         time grid by means of ``librosa.core.frames_to_samples``.
-    pad_mode : string or function
+    pad_mode : str or function
         If ``center=True``, this argument is passed to ``np.pad`` for padding
         the edges of the signal ``y``. By default (``pad_mode="constant"``),
         ``y`` is padded on both sides with zeros.
@@ -698,13 +697,13 @@ def pyin(
     fill_na : None, float, or ``np.nan``
         default value for unvoiced frames of ``f0``.
         If ``None``, the unvoiced frames will contain a best guess value.
-    center : boolean
+    center : bool
         If ``True``, the signal ``y`` is padded so that frame
         ``D[:, t]`` is centered at ``y[t * hop_length]``.
         If ``False``, then ``D[:, t]`` begins at ``y[t * hop_length]``.
         Defaults to ``True``,  which simplifies the alignment of ``D`` onto a
         time grid by means of ``librosa.core.frames_to_samples``.
-    pad_mode : string or function
+    pad_mode : str or function
         If ``center=True``, this argument is passed to ``np.pad`` for padding
         the edges of the signal ``y``. By default (``pad_mode="constant"``),
         ``y`` is padded on both sides with zeros.
@@ -719,12 +718,13 @@ def pyin(
 
     Returns
     -------
-    f0: np.ndarray [shape=(..., n_frames)]
+    f0 : np.ndarray [shape=(..., n_frames)]
         time series of fundamental frequencies in Hertz.
-    voiced_flag: np.ndarray [shape=(..., n_frames)]
+    voiced_flag : np.ndarray [shape=(..., n_frames)]
         time series containing boolean flags indicating whether a frame is voiced or not.
-    voiced_prob: np.ndarray [shape=(..., n_frames)]
+    voiced_prob : np.ndarray [shape=(..., n_frames)]
         time series containing the probability that a frame is voiced.
+
     .. note:: If multi-channel input is provided, f0 and voicing are estimated separately for each channel.
 
     See Also

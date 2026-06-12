@@ -123,10 +123,10 @@ def stft(
 
         If unspecified, defaults to ``win_length = n_fft``.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         Either:
 
-        - a window specification (string, tuple, or number);
+        - a window specification (str, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
@@ -136,7 +136,7 @@ def stft(
 
         .. see also:: `filters.get_window`
 
-    center : boolean
+    center : bool
         If ``True``, the signal ``y`` is padded so that frame
         ``D[:, t]`` is centered at ``y[t * hop_length]``.
 
@@ -153,7 +153,7 @@ def stft(
         Complex numeric type for ``D``.  Default is inferred to match the
         precision of the input signal.
 
-    pad_mode : string or function
+    pad_mode : str or function
         If ``center=True``, this argument is passed to `np.pad` for padding
         the edges of the signal ``y``. By default (``pad_mode="constant"``),
         ``y`` is padded on both sides with zeros.
@@ -441,15 +441,15 @@ def istft(
         However, if an odd frame length was used, you can specify the correct
         length by setting ``n_fft``.
 
-    window : string, tuple, number, function, np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number);
+    window : str, tuple, number, function, np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a user-specified window vector of length ``n_fft``
 
         .. see also:: `filters.get_window`
 
-    center : boolean
+    center : bool
         - If ``True``, ``D`` is assumed to have centered frames.
         - If ``False``, ``D`` is assumed to have left-aligned frames.
 
@@ -696,8 +696,8 @@ def __reassign_frequencies(
         Window length. Defaults to ``n_fft``.
         See ``stft`` for details.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a user-specified window vector of length ``n_fft``
@@ -706,7 +706,7 @@ def __reassign_frequencies(
 
         .. see also:: `filters.get_window`
 
-    center : boolean
+    center : bool
         - If ``True``, the signal ``y`` is padded so that frame
           ``S[:, t]`` is centered at ``y[t * hop_length]``.
         - If ``False``, then ``S[:, t]`` begins at ``y[t * hop_length]``.
@@ -715,7 +715,7 @@ def __reassign_frequencies(
         Complex numeric type for ``S``. Default is inferred to match
         the numerical precision of the input signal.
 
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
 
@@ -859,8 +859,8 @@ def __reassign_times(
         Window length. Defaults to ``n_fft``.
         See `stft` for details.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a user-specified window vector of length ``n_fft``
@@ -869,7 +869,7 @@ def __reassign_times(
 
         .. see also:: `filters.get_window`
 
-    center : boolean
+    center : bool
         - If ``True``, the signal ``y`` is padded so that frame
           ``S[:, t]`` is centered at ``y[t * hop_length]``.
         - If ``False``, then ``S[:, t]`` begins at ``y[t * hop_length]``.
@@ -878,7 +878,7 @@ def __reassign_times(
         Complex numeric type for ``S``. Default is inferred to match
         the precision of the input signal.
 
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
 
@@ -1061,8 +1061,8 @@ def reassigned_spectrogram(
         Window length. Defaults to ``n_fft``.
         See `stft` for details.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a user-specified window vector of length ``n_fft``
@@ -1071,19 +1071,19 @@ def reassigned_spectrogram(
 
         .. see also:: `filters.get_window`
 
-    center : boolean
+    center : bool
         - If ``True`` (default), the signal ``y`` is padded so that frame
           ``S[:, t]`` is centered at ``y[t * hop_length]``. See `Notes` for
           recommended usage in this function.
         - If ``False``, then ``S[:, t]`` begins at ``y[t * hop_length]``.
 
-    reassign_frequencies : boolean
+    reassign_frequencies : bool
         - If ``True`` (default), the returned frequencies will be instantaneous
           frequency estimates.
         - If ``False``, the returned frequencies will be a read-only view of the
           STFT bin frequencies for all frames.
 
-    reassign_times : boolean
+    reassign_times : bool
         - If ``True`` (default), the returned times will be corrected
           (reassigned) time estimates for each bin.
         - If ``False``, the returned times will be a read-only view of the STFT
@@ -1096,14 +1096,14 @@ def reassigned_spectrogram(
         is provided, then only bins with zero power will be returned as
         `np.nan` (unless ``fill_nan=True``).
 
-    fill_nan : boolean
+    fill_nan : bool
         - If ``False`` (default), the frequency and time reassignments for bins
           below the power threshold provided in ``ref_power`` will be returned as
           `np.nan`.
         - If ``True``, the frequency and time reassignments for these bins will
           be returned as the bin center frequencies and frame times.
 
-    clip : boolean
+    clip : bool
         - If ``True`` (default), estimated frequencies outside the range
           `[0, 0.5 * sr]` or times outside the range `[0, len(y) / sr]` will be
           clipped to those ranges.
@@ -1114,7 +1114,7 @@ def reassigned_spectrogram(
         Complex numeric type for STFT calculation. Default is inferred to match
         the precision of the input signal.
 
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
 
@@ -1293,8 +1293,7 @@ def reassigned_spectrogram(
 
 
 def magphase(D: np.ndarray, *, power: float = 1) -> tuple[np.ndarray, np.ndarray]:
-    """Separate a complex-valued spectrogram D into its magnitude (S)
-    and phase (P) components, so that ``D = S * P``.
+    """Separate a complex-valued spectrogram D into its magnitude (S) and phase (P) components, so that ``D = S * P``.
 
     Parameters
     ----------
@@ -1569,21 +1568,21 @@ def iirt(
     hop_length : int > 0 [scalar]
         Hop length, number samples between subsequent frames.
         If not supplied, defaults to ``win_length // 4``.
-    center : boolean
+    center : bool
         - If ``True``, the signal ``y`` is padded so that frame
           ``D[..., :, t]`` is centered at ``y[t * hop_length]``.
         - If ``False``, then `D[..., :, t]`` begins at ``y[t * hop_length]``
     tuning : float [scalar]
         Tuning deviation from A440 in fractions of a bin.
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, this function uses zero padding.
-    flayout : string
+    flayout : str
         - If `sos` (default), a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
         - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
-    res_type : string
+    res_type : str
         The resampling mode.  See `librosa.resample` for details.
     **kwargs : additional keyword arguments
         Additional arguments for `librosa.filters.semitone_filterbank`
@@ -2747,10 +2746,10 @@ def griffinlim(
         By default, this will be inferred from the shape of ``S`` as an even number.
         However, if an odd frame length was used, you can explicitly set ``n_fft``.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         A window specification as supported by `stft` or `istft`
 
-    center : boolean
+    center : bool
         If ``True``, the STFT is assumed to use centered frames.
         If ``False``, the STFT is assumed to use left-aligned frames.
 
@@ -2762,7 +2761,7 @@ def griffinlim(
         If provided, the output ``y`` is zero-padded or clipped to exactly ``length``
         samples.
 
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
 
@@ -2982,20 +2981,20 @@ def _spectrogram(
 
         If unspecified, defaults to ``win_length = n_fft``.
 
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
 
         .. see also:: `filters.get_window`
 
-    center : boolean
+    center : bool
         - If ``True``, the signal ``y`` is padded so that frame
           ``t`` is centered at ``y[t * hop_length]``.
         - If ``False``, then frame ``t`` begins at ``y[t * hop_length]``
 
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
 
