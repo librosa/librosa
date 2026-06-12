@@ -284,6 +284,7 @@ def chroma(
         Tuning deviation from A440 in fractions of a chroma bin.
 
     ctroct : float > 0 [scalar]
+        Center of the octave dominance window (in octaves, A0 = 27.5 Hz).
 
     octwidth : float > 0 or None [scalar]
         ``ctroct`` and ``octwidth`` specify a dominance window:
@@ -612,14 +613,14 @@ def wavelet(
     sr : number > 0 [scalar]
         Audio sampling rate
 
-    window : string, tuple, number, or function
+    window : str, tuple, number, or function
         Windowing function to apply to filters.
 
     filter_scale : float > 0 [scalar]
         Scale of filter windows.
         Small values (<1) use shorter windows for higher temporal resolution.
 
-    pad_fft : boolean
+    pad_fft : bool
         Center-pad all filters up to the nearest integral power of 2.
 
         By default, padding is done with zeros, but this can be overridden
@@ -629,12 +630,12 @@ def wavelet(
         Type of norm to use for basis function normalization.
         See librosa.util.normalize
 
-    gamma : number >= 0
-        Bandwidth offset for variable-Q transforms.
-
     dtype : np.dtype
         The data type of the output basis.
         By default, uses 64-bit (single precision) complex floating point.
+
+    gamma : number >= 0
+        Bandwidth offset for variable-Q transforms.
 
     alpha : number > 0 [optional]
         Optional pre-computed relative bandwidth parameter.
@@ -743,8 +744,7 @@ def cq_to_chroma(
     base_c: bool = True,
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
-    """Construct a linear transformation matrix to map Constant-Q bins
-    onto chroma bins (i.e., pitch classes).
+    """Construct a linear transformation matrix to map Constant-Q bins onto chroma bins.
 
     Parameters
     ----------
@@ -876,7 +876,7 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
 
     Parameters
     ----------
-    window : callable or string
+    window : callable or str
         A window function, or the name of a window function,
         e.g.: `scipy.signal.hann` or `'boxcar'`
     n : int > 0
@@ -920,7 +920,7 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
 
     Parameters
     ----------
-    window : string, tuple, number, callable, or list-like
+    window : str, tuple, number, callable, or list-like
         The window specification:
 
         - If string, it's the name of the window function (e.g., `'hann'`)
@@ -1020,7 +1020,7 @@ def _multirate_fb(
         The type of IIR filter to design
         See `scipy.signal.iirdesign` for details.
 
-    flayout : string
+    flayout : str
         Valid `output` argument for `scipy.signal.iirdesign`.
 
         - If `ba`, returns numerators/denominators of the transfer functions,
@@ -1161,8 +1161,7 @@ def semitone_filterbank(
     flayout: Literal["ba", "sos"] = "ba",
     **kwargs: Any,
 ) -> tuple[list[Any], np.ndarray]:
-    r"""Construct a multi-rate bank of infinite-impulse response (IIR)
-    band-pass filters at user-defined center frequencies and sample rates.
+    r"""Construct a multi-rate IIR band-pass filter bank at specified center frequencies and sample rates.
 
     By default, these center frequencies are set equal to the 88 fundamental
     frequencies of the grand piano keyboard, according to a pitch tuning standard
@@ -1191,7 +1190,7 @@ def semitone_filterbank(
         in equal temperament).
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Sample rates of each filter in the multirate filterbank.
-    flayout : string
+    flayout : str
         - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
         - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
@@ -1283,7 +1282,7 @@ def window_sumsquare(
 
     Parameters
     ----------
-    window : string, tuple, number, callable, or list-like
+    window : str, tuple, number, callable, or list-like
         Window specification, as in `get_window`
     n_frames : int > 0
         The number of analysis frames
@@ -1355,7 +1354,7 @@ def diagonal_filter(
 
     Parameters
     ----------
-    window : string, tuple, number, callable, or list-like
+    window : str, tuple, number, callable, or list-like
         The window function to use for the filter.
 
         See `get_window` for details.

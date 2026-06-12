@@ -119,12 +119,12 @@ def cqt(
         If ``False``, do not scale the CQT. This is analogous to
         ``norm=None`` in FFT.
 
-    pad_mode : string
+    pad_mode : str
         Padding mode for centered frame analysis.
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string
+    res_type : str
         The resampling mode for recursive downsampling.
 
     dtype : np.dtype
@@ -280,12 +280,12 @@ def hybrid_cqt(
         If ``False``, do not scale the CQT. This is analogous to
         ``norm=None`` in FFT.
 
-    pad_mode : string
+    pad_mode : str
         Padding mode for centered frame analysis.
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string
+    res_type : str
         Resampling mode.  See `librosa.cqt` for details.
 
     dtype : np.dtype, optional
@@ -465,7 +465,7 @@ def pseudo_cqt(
         If ``False``, do not scale the CQT. This is analogous to
         ``norm=None`` in FFT.
 
-    pad_mode : string
+    pad_mode : str
         Padding mode for centered frame analysis.
 
         See also: `librosa.stft` and `numpy.pad`.
@@ -619,7 +619,7 @@ def icqt(
         If provided, the output ``y`` is zero-padded or clipped to exactly
         ``length`` samples.
 
-    res_type : string
+    res_type : str
         Resampling mode.
         See `librosa.resample` for supported modes.
 
@@ -883,12 +883,12 @@ def vqt(
         If ``False``, do not scale the VQT. This is analogous to
         ``norm=None`` in FFT.
 
-    pad_mode : string
+    pad_mode : str
         Padding mode for centered frame analysis.
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string
+    res_type : str
         The resampling mode for recursive downsampling.
 
     dtype : np.dtype
@@ -1236,8 +1236,7 @@ def griffinlim_cqt(
     rng: RNGLike | SeedLike | None = None,
     random_state: int | np.random.RandomState | np.random.Generator | Deprecated | None = Deprecated(),
 ) -> np.ndarray:
-    """Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
-    algorithm.
+    """Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
 
     Given the magnitude of a constant-Q spectrogram (``C``), the algorithm randomly initializes
     phase estimates, and then alternates forward- and inverse-CQT operations. [#]_
@@ -1305,12 +1304,12 @@ def griffinlim_cqt(
         If ``False``, do not scale the CQT. This is analogous to ``norm=None``
         in FFT.
 
-    pad_mode : string
+    pad_mode : str
         Padding mode for centered frame analysis.
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string
+    res_type : str
         The resampling mode for recursive downsampling.
 
         See ``librosa.resample`` for a list of available options.

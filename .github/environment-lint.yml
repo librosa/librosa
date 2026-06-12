@@ -13,14 +13,8 @@ dependencies:
   - matplotlib>=3.10.0
   - ruff
 
-  # Dependencies for velin
-  - numpydoc>=1.1.0
+  - numpydoc>=1.8.0
   - sphinx>=5.1.0
-  - pygments
-  - black
 
   # Stubs
   - scipy-stubs
-
-  - pip:
-    - velin

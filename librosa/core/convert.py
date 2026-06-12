@@ -113,8 +113,8 @@ def frames_to_samples(
 
     See Also
     --------
-    frames_to_time : convert frame indices to time values
-    samples_to_frames : convert sample indices to frame indices
+    frames_to_time : Convert frame indices to time values
+    samples_to_frames : Convert sample indices to frame indices
 
     Examples
     --------
@@ -197,8 +197,8 @@ def samples_to_frames(
 
     See Also
     --------
-    samples_to_time : convert sample indices to time values
-    frames_to_samples : convert frame indices to sample indices
+    samples_to_time : Convert sample indices to time values
+    frames_to_samples : Convert frame indices to sample indices
     """
     offset = 0
     if n_fft is not None:
@@ -269,8 +269,8 @@ def frames_to_time(
 
     See Also
     --------
-    time_to_frames : convert time values to frame indices
-    frames_to_samples : convert frame indices to sample indices
+    time_to_frames : Convert time values to frame indices
+    frames_to_samples : Convert frame indices to sample indices
 
     Examples
     --------
@@ -349,8 +349,8 @@ def time_to_frames(
 
     See Also
     --------
-    frames_to_time : convert frame indices to time values
-    time_to_samples : convert time values to sample indices
+    frames_to_time : Convert frame indices to time values
+    time_to_samples : Convert time values to sample indices
 
     Examples
     --------
@@ -400,8 +400,8 @@ def time_to_samples(
 
     See Also
     --------
-    time_to_frames : convert time values to frame indices
-    samples_to_time : convert sample indices to time values
+    time_to_frames : Convert time values to frame indices
+    samples_to_time : Convert sample indices to time values
 
     Examples
     --------
@@ -447,8 +447,8 @@ def samples_to_time(
 
     See Also
     --------
-    samples_to_frames : convert sample indices to frame indices
-    time_to_samples : convert time values to sample indices
+    samples_to_frames : Convert sample indices to frame indices
+    time_to_samples : Convert time values to sample indices
 
     Examples
     --------
@@ -515,7 +515,6 @@ def blocks_to_frames(
     ...                         frame_length=2048, hop_length=512)
     >>> for n, y in enumerate(stream):
     ...     n_frame = librosa.blocks_to_frames(n, block_length=16)
-
     """
     return block_length * np.asanyarray(blocks)[()]
 
@@ -577,7 +576,6 @@ def blocks_to_samples(
     >>> for n, y in enumerate(stream):
     ...     n_sample = librosa.blocks_to_samples(n, block_length=16,
     ...                                          hop_length=512)
-
     """
     frames = blocks_to_frames(blocks, block_length=block_length)
     return frames_to_samples(frames, hop_length=hop_length)
@@ -650,7 +648,6 @@ def blocks_to_time(
     >>> for n, y in enumerate(stream):
     ...     n_time = librosa.blocks_to_time(n, block_length=16,
     ...                                     hop_length=512, sr=sr)
-
     """
     samples = blocks_to_samples(
         blocks, block_length=block_length, hop_length=hop_length
@@ -1134,7 +1131,6 @@ def hz_to_note(
     >>> librosa.hz_to_note(440.0 * (2.0 ** np.linspace(0, 1, 12)),
     ...                    octave=False)
     ['A', 'A#', 'B', 'C', 'C#', 'D', 'E', 'F', 'F#', 'G', 'G#', 'A']
-
     """
     return midi_to_note(hz_to_midi(frequencies), **kwargs)
 
@@ -1429,8 +1425,7 @@ def A4_to_tuning(
 def A4_to_tuning(
     A4: _ScalarOrSequence[_FloatLike_co], *, bins_per_octave: int = 12
 ) -> np.floating[Any] | np.ndarray:
-    """Convert a reference pitch frequency (e.g., ``A4=435``) to a tuning
-    estimation, in fractions of a bin per octave.
+    """Convert a reference pitch frequency (e.g., ``A4=435``) to a tuning estimation, in fractions of a bin per octave.
 
     This is useful for determining the tuning deviation relative to
     A440 of a given frequency, assuming equal temperament. By default,
@@ -1499,9 +1494,7 @@ def tuning_to_A4(
 def tuning_to_A4(
     tuning: _ScalarOrSequence[_FloatLike_co], *, bins_per_octave: int = 12
 ) -> np.floating[Any] | np.ndarray:
-    """Convert a tuning deviation (from 0) in fractions of a bin per
-    octave (e.g., ``tuning=-0.1``) to a reference pitch frequency
-    relative to A440.
+    """Convert a tuning deviation (from 0) to a reference pitch frequency relative to A440.
 
     This is useful if you are working in a non-A440 tuning system
     to determine the reference pitch frequency given a tuning
@@ -1682,7 +1675,6 @@ def mel_frequencies(
              4188.417,   4573.636,   4994.285,   5453.621,
              5955.205,   6502.92 ,   7101.009,   7754.107,
              8467.272,   9246.028,  10096.408,  11025.   ])
-
     """
     # 'Center freqs' of mel bands - uniformly spaced between limits
     min_mel = hz_to_mel(fmin, htk=htk)
@@ -1697,8 +1689,7 @@ def mel_frequencies(
 def tempo_frequencies(
     n_bins: int, *, hop_length: int = 512, sr: float = 22050
 ) -> np.ndarray:
-    """Compute the frequencies (in beats per minute) corresponding
-    to an onset auto-correlation or tempogram matrix.
+    """Compute the frequencies (in beats per minute) corresponding to an onset auto-correlation or tempogram matrix.
 
     Parameters
     ----------
@@ -1735,8 +1726,7 @@ def tempo_frequencies(
 def fourier_tempo_frequencies(
     *, sr: float = 22050, win_length: int = 384, hop_length: int = 512
 ) -> np.ndarray:
-    """Compute the frequencies (in beats per minute) corresponding
-    to a Fourier tempogram matrix.
+    """Compute the frequencies (in beats per minute) corresponding to a Fourier tempogram matrix.
 
     Parameters
     ----------
@@ -2259,7 +2249,8 @@ def multi_frequency_weighting(
         One or more frequencies (in Hz)
     kinds : list or tuple or str
         An iterable of weighting kinds. e.g. `('Z', 'B')`, `'ZAD'`, `'C'`
-    **kwargs : keywords to pass to the weighting function.
+    **kwargs
+        Additional arguments to pass to the weighting function.
 
     Returns
     -------
@@ -2935,7 +2926,7 @@ def hz_to_svara_c(
     Sa : positive number
         Frequency (in Hz) of the reference Sa.
 
-    mela : int [1, 72] or string
+    mela : int [1, 72] or str
         The melakarta raga to use.
 
     abbr : bool
@@ -3120,8 +3111,7 @@ def hz_to_fjs(
     unison: str | None = None,
     unicode: bool = False,
 ) -> str | np.ndarray:
-    """Convert one or more frequencies (in Hz) from a just intonation
-    scale to notes in FJS notation.
+    """Convert one or more frequencies (in Hz) from a just intonation scale to notes in FJS notation.
 
     Parameters
     ----------
@@ -3168,7 +3158,6 @@ def hz_to_fjs(
     array(['A', 'B♭₅', 'B', 'C₅', 'C♯⁵', 'D', 'D♯⁵', 'E', 'F₅', 'F♯⁵', 'G₅',
        'G♯⁵', 'A', 'B♭₅', 'B', 'C₅', 'C♯⁵', 'D', 'D♯⁵', 'E', 'F₅', 'F♯⁵',
        'G₅', 'G♯⁵'], dtype='<U3')
-
     """
     if fmin is None:
         # mypy doesn't know that min can handle scalars

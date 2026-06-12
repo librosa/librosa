@@ -202,11 +202,9 @@ class TimeFormatter(mplticker.Formatter):
         to `"h"` above 3600 seconds; to `"m"` between 60 and 3600 seconds; to
         `"s"` between 1 and 60 seconds; and to `"ms"` below 1 second.
 
-
     See Also
     --------
     matplotlib.ticker.Formatter
-
 
     Examples
     --------
@@ -376,6 +374,9 @@ class SvaraFormatter(mplticker.Formatter):
 
     Parameters
     ----------
+    Sa : number > 0
+        Frequency (in Hz) of Sa
+
     octave : bool
         If ``True``, display the octave number along with the note name.
 
@@ -386,8 +387,10 @@ class SvaraFormatter(mplticker.Formatter):
 
         If ``False``, ticks are only labeled if the span is less than 2 octaves
 
-    Sa : number > 0
-        Frequency (in Hz) of Sa
+    abbr : bool
+        If ``True``, use abbreviated svara names.
+
+        If ``False``, use full svara names.
 
     mela : str or int
         For Carnatic svara, the index or name of the melakarta raga in question
@@ -405,7 +408,6 @@ class SvaraFormatter(mplticker.Formatter):
     matplotlib.ticker.Formatter
     librosa.hz_to_svara_c
     librosa.hz_to_svara_h
-
 
     Examples
     --------
@@ -475,6 +477,12 @@ class FJSFormatter(mplticker.Formatter):
     ----------
     fmin : float
         The unison frequency for this axis
+
+    n_bins : int > 0
+        The number of frequency bins.
+
+    bins_per_octave : int > 0
+        The number of bins per octave.
 
     intervals : str or array of float in [1, 2)
         The interval specification for the frequency axis.
@@ -621,6 +629,17 @@ class LogHzFormatter(mplticker.Formatter):
 class ChromaFormatter(mplticker.Formatter):
     """A formatter for chroma axes
 
+    Parameters
+    ----------
+    key : str
+        The key in which to display pitch class labels.
+        See `core.midi_to_note` for supported values.
+
+    unicode : bool
+        If ``True``, use unicode symbols for accidentals.
+
+        If ``False``, use ASCII symbols for accidentals.
+
     See Also
     --------
     matplotlib.ticker.Formatter
@@ -654,15 +673,31 @@ class ChromaSvaraFormatter(mplticker.Formatter):
     """A formatter for chroma axes with svara instead of notes.
 
     If mela is given, Carnatic svara names will be used.
-
     Otherwise, Hindustani svara names will be used.
-
     If `Sa` is not given, it will default to 0 (equivalent to `C`).
+
+    Parameters
+    ----------
+    Sa : float or None
+        The MIDI note number corresponding to Sa. If ``None``, defaults to 0 (C).
+
+    mela : str, int, or None
+        For Carnatic svara, the index or name of the melakarta raga.
+        If ``None``, Hindustani svara names are used.
+
+    abbr : bool
+        If ``True``, use abbreviated svara names.
+
+        If ``False``, use full svara names.
+
+    unicode : bool
+        If ``True``, use unicode symbols for accidentals.
+
+        If ``False``, use ASCII symbols for accidentals.
 
     See Also
     --------
     ChromaFormatter
-
     """
 
     Sa: float
@@ -704,6 +739,23 @@ class ChromaSvaraFormatter(mplticker.Formatter):
 
 class ChromaFJSFormatter(mplticker.Formatter):
     """A formatter for chroma axes with functional just notation
+
+    Parameters
+    ----------
+    intervals : str or array of float in [1, 2)
+        The interval specification for the chroma axis.
+        See `core.interval_frequencies` for supported values.
+
+    unison : str
+        The unison (tonic) note name.
+
+    unicode : bool
+        If ``True``, use unicode symbols for accidentals.
+
+        If ``False``, use ASCII symbols for accidentals.
+
+    bins_per_octave : int or None
+        The number of bins per octave. If ``None``, inferred from ``intervals``.
 
     See Also
     --------
@@ -827,6 +879,9 @@ class AdaptiveWaveplot:
     transpose : bool
         If `True`, display the wave vertically instead of horizontally.
 
+    label : str or None
+        An optional label for the waveplot, used in legend entries.
+
     See Also
     --------
     waveshow
@@ -838,7 +893,7 @@ class AdaptiveWaveplot:
     max_samples: int
     transpose: bool
     cid: int | None
-    label_proxy_: WaveplotDecoy
+    label_proxy_: _WaveplotDecoy
 
     def __init__(
         self,
@@ -862,7 +917,7 @@ class AdaptiveWaveplot:
         self._ax_ref: weakref.ref[mplaxes.Axes] | None = None
 
         # This creates an invisible proxy artist to contain the label
-        self.label_proxy_ = WaveplotDecoy(self)
+        self.label_proxy_ = _WaveplotDecoy(self)
         self.label_proxy_.set_in_layout(False)
 
         if label is not None:
@@ -871,17 +926,35 @@ class AdaptiveWaveplot:
     # Preserve the old attribute API by exposing properties with same names
     @property
     def steps(self) -> Line2D | None:
-        """The step plot artist (Line2D), or None if garbage collected."""
+        """The step plot artist (Line2D), or None if garbage collected.
+
+        Returns
+        -------
+        Line2D or None
+            The step plot artist, or ``None`` if it has been garbage collected.
+        """
         return self._steps_ref()
 
     @property
     def envelope(self) -> PolyCollection | None:
-        """The envelope artist (PolyCollection), or None if garbage collected."""
+        """The envelope artist (PolyCollection), or None if garbage collected.
+
+        Returns
+        -------
+        PolyCollection or None
+            The envelope artist, or ``None`` if it has been garbage collected.
+        """
         return self._envelope_ref()
 
     @property
     def ax(self) -> mplaxes.Axes | None:
-        """The connected Axes, or None if not connected or garbage collected."""
+        """The connected Axes, or None if not connected or garbage collected.
+
+        Returns
+        -------
+        matplotlib.axes.Axes or None
+            The connected axes, or ``None`` if not connected or garbage collected.
+        """
         return None if self._ax_ref is None else self._ax_ref()
 
     def __del__(self) -> None:
@@ -998,7 +1071,7 @@ class AdaptiveWaveplot:
         ax.figure.canvas.draw_idle()
 
 
-class WaveplotDecoy(mlines.Line2D):
+class _WaveplotDecoy(mlines.Line2D):
     waveplot: AdaptiveWaveplot
 
     def __init__(self, parent_waveplot: AdaptiveWaveplot, *args: Any, **kwargs: Any):
@@ -1008,7 +1081,7 @@ class WaveplotDecoy(mlines.Line2D):
         self.waveplot = parent_waveplot  # Store reference to the parent wrapper
 
 
-class AdaptiveWaveplotHandler(HandlerBase):
+class _AdaptiveWaveplotHandler(HandlerBase):
     def create_artists(self, legend: Legend,
         orig_handle: Artist,
         xdescent: float,
@@ -1022,7 +1095,7 @@ class AdaptiveWaveplotHandler(HandlerBase):
         Matplotlib automatically passes the exact dimensions and coordinate
         transform (`trans`) needed to paint safely inside the legend key box.
         """
-        orig_handle = cast("WaveplotDecoy", orig_handle)
+        orig_handle = cast("_WaveplotDecoy", orig_handle)
         waveplot = orig_handle.waveplot
         ax = waveplot.ax
         if ax is not None:
@@ -1047,12 +1120,40 @@ class AdaptiveWaveplotHandler(HandlerBase):
 
 
 # Add our custom handler to the default legend handler map
-if WaveplotDecoy not in Legend.get_default_handler_map():
-    Legend.update_default_handler_map({WaveplotDecoy: AdaptiveWaveplotHandler()})
+if _WaveplotDecoy not in Legend.get_default_handler_map():
+    Legend.update_default_handler_map({_WaveplotDecoy: _AdaptiveWaveplotHandler()})
 
 
 class Transformf0(mtransforms.Transform):
-    """A utility class to handle f0-displacement for waveform visualizations."""
+    """A utility class to handle f0-displacement for waveform visualizations.
+
+    Parameters
+    ----------
+    f0 : np.ndarray
+        Array of fundamental frequency values (in Hz), one per frame.
+        Values may be NaN for unvoiced frames.
+
+    sr : number > 0
+        Audio sampling rate, used with ``hop_length`` to compute time stamps.
+
+    hop_length : int > 0
+        Number of audio samples between successive f0 frames.
+
+    bins_per_octave : int > 0
+        Number of bins per octave used for the pitch axis.
+
+    norm : float
+        Normalization factor applied to the pitch axis.
+
+    offset : float
+        Time offset (in seconds) applied to the frame time stamps.
+
+    transpose : bool
+        If ``True``, the time axis is the second dimension instead of the first.
+
+    is_inverted : bool
+        If ``True``, apply the inverse of the f0-displacement transformation.
+    """
 
     f0_interp: scipy.interpolate.interp1d
     norm: float
@@ -1150,7 +1251,13 @@ class Transformf0(mtransforms.Transform):
         return output
 
     def inverted(self) -> Transformf0:
-        """Return the inverse of this transformation."""
+        """Return the inverse of this transformation.
+
+        Returns
+        -------
+        Transformf0
+            A new ``Transformf0`` with ``is_inverted`` toggled.
+        """
         return Transformf0(
             f0=self.f0,
             sr=self.sr,
@@ -1358,24 +1465,13 @@ def specshow(
     data : np.ndarray [shape=(d, n)]
         Matrix to display (e.g., spectrogram)
 
-    sr : number > 0 [scalar]
-        Sample rate used to determine time scale in x-axis.
+    x_coords, y_coords : np.ndarray [shape=data.shape[0 or 1]]
+        Optional positioning coordinates of the input data.
+        These can be use to explicitly set the location of each
+        element ``data[i, j]``, e.g., for displaying beat-synchronous
+        features in natural time coordinates.
 
-    hop_length : int > 0 [scalar]
-        Hop length, also used to determine time scale in x-axis
-
-    n_fft : int > 0 or None
-        Number of samples per frame in STFT/spectrogram displays.
-        By default, this will be inferred from the shape of ``data``
-        as ``2 * (d - 1)``.
-        If ``data`` was generated using an odd frame length, the correct
-        value can be specified here.
-
-    win_length : int > 0 or None
-        The number of samples per window.
-        By default, this will be inferred to match ``n_fft``.
-        This is primarily useful for specifying odd window lengths in
-        Fourier tempogram displays.
+        If not provided, they are inferred from ``x_axis`` and ``y_axis``.
 
     x_axis, y_axis : None or str
         Range for the x- and y-axes.
@@ -1469,14 +1565,6 @@ def specshow(
             tempograms are calculated in the Frequency domain
             using `feature.fourier_tempogram`.
 
-    x_coords, y_coords : np.ndarray [shape=data.shape[0 or 1]]
-        Optional positioning coordinates of the input data.
-        These can be use to explicitly set the location of each
-        element ``data[i, j]``, e.g., for displaying beat-synchronous
-        features in natural time coordinates.
-
-        If not provided, they are inferred from ``x_axis`` and ``y_axis``.
-
     vscale : str
         Optional value transformation for `data`.  The following are supported:
 
@@ -1506,6 +1594,25 @@ def specshow(
             When using phase difference modes (`dphase` or `dphase_t`), the x and y coordinates must be provided
             via either the `x_axis` and `y_axis` parameters (e.g., `'time', 'fft'`), or explicitly by
             the `x_coords` and `y_coords` parameters.  All time-like and frequency-like axes are supported.
+
+    sr : number > 0 [scalar]
+        Sample rate used to determine time scale in x-axis.
+
+    hop_length : int > 0 [scalar]
+        Hop length, also used to determine time scale in x-axis
+
+    n_fft : int > 0 or None
+        Number of samples per frame in STFT/spectrogram displays.
+        By default, this will be inferred from the shape of ``data``
+        as ``2 * (d - 1)``.
+        If ``data`` was generated using an odd frame length, the correct
+        value can be specified here.
+
+    win_length : int > 0 or None
+        The number of samples per window.
+        By default, this will be inferred to match ``n_fft``.
+        This is primarily useful for specifying odd window lengths in
+        Fourier tempogram displays.
 
     fmin : float > 0 [scalar] or None
         Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
@@ -1550,16 +1657,6 @@ def specshow(
     thaat : str, optional
         If using `chroma_h` display mode, specify the parent thaat.
 
-    intervals : str or array of floats in [1, 2), optional
-        If using an FJS notation (`chroma_fjs`, `vqt_fjs`), the interval specification.
-
-        See `core.interval_frequencies` for a description of supported values.
-
-    unison : str, optional
-        If using an FJS notation (`chroma_fjs`, `vqt_fjs`), the pitch name of the unison
-        interval.  If not provided, it will be inferred from `fmin` (for VQT display) or
-        assumed as `'C'` (for chroma display).
-
     auto_aspect : bool
         Axes will have 'equal' aspect if the horizontal and vertical dimensions
         cover the same extent and their types match.
@@ -1581,6 +1678,16 @@ def specshow(
 
         Setting `unicode=False` will use ASCII glyphs.  This can be helpful
         if your font does not support musical notation symbols.
+
+    intervals : str or array of floats in [1, 2), optional
+        If using an FJS notation (`chroma_fjs`, `vqt_fjs`), the interval specification.
+
+        See `core.interval_frequencies` for a description of supported values.
+
+    unison : str, optional
+        If using an FJS notation (`chroma_fjs`, `vqt_fjs`), the pitch name of the unison
+        interval.  If not provided, it will be inferred from `fmin` (for VQT display) or
+        assumed as `'C'` (for chroma display).
 
     top_db : float
         If using a decibel scale, how many dB below the peak to allow
@@ -2585,7 +2692,7 @@ def waveshow(
     sr : number > 0 [scalar]
         sampling rate of ``y`` (samples per second)
 
-    max_points : positive integer
+    max_points : int > 0
         Maximum number of samples to draw.  When the plot covers a time extent
         smaller than ``max_points / sr`` (default: 1/2 second), samples are drawn.
 
@@ -2620,13 +2727,10 @@ def waveshow(
 
         - `None`, 'none', or 'off': ticks and tick markers are hidden.
 
-    ax : matplotlib.axes.Axes or None
-        Axes to plot on instead of the default `plt.gca()`.
-
     offset : float
         Offset (in seconds) to start the waveform plot
 
-    marker : string
+    marker : str
         Marker symbol to use for sample values. (default: no markers)
 
         See Also: `matplotlib.markers`.
@@ -2639,7 +2743,7 @@ def waveshow(
 
         Default: 'post'
 
-    label : string [optional]
+    label : str or None
         The label string applied to this plot.
         Note that the label
 
@@ -2655,6 +2759,9 @@ def waveshow(
         .. note:: This mask is only used directly by the envelope display, and a raw sample
             display will not be masked.  The `mask` parameter is intended to be used by the
             `wavef0` function, and it is not recommended to be used directly by the user.
+
+    ax : matplotlib.axes.Axes or None
+        Axes to plot on instead of the default `plt.gca()`.
 
     invert : bool
         If `True`, invert the foreground and background of the display, so that the axes background

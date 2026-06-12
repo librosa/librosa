@@ -321,7 +321,7 @@ def mela_to_svara(
 
     Returns
     -------
-    svara : list of strings
+    svara : list of str
 
         The svara names for each of the 12 pitch classes.
 
@@ -622,8 +622,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
 
 @cache(level=10)
 def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> list[str]:
-    """List all 12 note names in the chromatic scale, as spelled according to
-    a given key (major or minor) or mode (see below for details and accepted abbreviations).
+    """List all 12 chromatic note names, as spelled according to a given key or mode.
 
     This function exists to resolve enharmonic equivalences between different
     spellings for the same pitch (e.g. C♯ vs D♭), and is primarily useful when producing
@@ -641,7 +640,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> lis
 
     Parameters
     ----------
-    key : string
+    key : str
         Must be in the form TONIC:key.  Tonic must be upper case (``CDEFGAB``),
         key must be lower-case
         (``major``, ``minor``, ``ionian``, ``dorian``, ``phrygian``, ``lydian``,
@@ -911,7 +910,6 @@ def key_to_degrees(key: str) -> np.ndarray:
 
     >>> librosa.key_to_degrees('A:min')
     array([ 9, 11,  0,  2,  4,  5,  7])
-
     """
     notes = dict(
         maj=np.array([0, 2, 4, 5, 7, 9, 11]), min=np.array([0, 2, 3, 5, 7, 8, 10])
@@ -940,8 +938,7 @@ def key_to_degrees(key: str) -> np.ndarray:
 
 @cache(level=10)
 def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
-    """Calculate the note name for a given number of perfect fifths
-    from a specified unison.
+    """Calculate the note name for a given number of perfect fifths from a specified unison.
 
     This function is primarily intended as a utility routine for
     Functional Just System (FJS) notation conversions.
@@ -956,7 +953,7 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
         The name of the starting (unison) note, e.g., 'C' or 'Bb'.
         Unicode accidentals are supported.
 
-    fifths : integer
+    fifths : int
         The number of perfect fifths to deviate from unison.
 
     unicode : bool
@@ -981,7 +978,6 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
 
     >>> librosa.fifths_to_note(unison='Eb', fifths=11, unicode=False)
     'G#'
-
     """
     # Starting the circle of fifths at F makes accidentals easier to count
     COFMAP = "FCGDAEB"
@@ -1200,7 +1196,6 @@ def interval_to_fjs(
 
     >>> librosa.interval_to_fjs([3/2, 4/3, 5/3])
     array(['G', 'F', 'A⁵'], dtype='<U2')
-
     """
     # suppressing the type check here because mypy won't introspect through
     # numpy vectorization

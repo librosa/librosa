@@ -96,17 +96,17 @@ def spectral_centroid(
         The window will be of length ``win_length`` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
         .. see also:: `librosa.filters.get_window`
-    center : boolean
+    center : bool
         - If `True`, the signal ``y`` is padded so that frame
           `t` is centered at ``y[t * hop_length]``.
         - If `False`, then frame ``t`` begins at ``y[t * hop_length]``
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
 
@@ -234,17 +234,17 @@ def spectral_bandwidth(
         The window will be of length ``win_length`` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
         .. see also:: `librosa.filters.get_window`
-    center : boolean
+    center : bool
         - If `True`, the signal ``y`` is padded so that frame
           ``t`` is centered at ``y[t * hop_length]``.
         - If ``False``, then frame ``t`` begins at ``y[t * hop_length]``
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
     freq : None or np.ndarray [shape=(d,) or shape=(..., d, t)]
@@ -402,17 +402,17 @@ def spectral_contrast(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
         .. see also:: `librosa.filters.get_window`
-    center : boolean
+    center : bool
         - If `True`, the signal ``y`` is padded so that frame
           ``t`` is centered at ``y[t * hop_length]``.
         - If `False`, then frame ``t`` begins at ``y[t * hop_length]``
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
     freq : None or np.ndarray [shape=(d,)]
@@ -571,17 +571,17 @@ def spectral_rolloff(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
         .. see also:: `librosa.filters.get_window`
-    center : boolean
+    center : bool
         - If `True`, the signal ``y`` is padded so that frame
           ``t`` is centered at ``y[t * hop_length]``.
         - If `False`, then frame ``t`` begins at ``y[t * hop_length]``
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
     freq : None or np.ndarray [shape=(d,) or shape=(..., d, t)]
@@ -724,17 +724,17 @@ def spectral_flatness(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
         .. see also:: `librosa.filters.get_window`
-    center : boolean
+    center : bool
         - If `True`, the signal ``y`` is padded so that frame
           ``t`` is centered at ``y[t * hop_length]``.
         - If `False`, then frame `t` begins at ``y[t * hop_length]``
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
     amin : float > 0 [scalar]
@@ -771,7 +771,6 @@ def spectral_flatness(
     >>> S_power = S ** 2
     >>> librosa.feature.spectral_flatness(S=S_power, power=1.0)
     array([[0.001, 0.   , ..., 0.218, 0.184]], dtype=float32)
-
     """
     if amin <= 0:
         raise ParameterError("amin must be strictly positive")
@@ -814,9 +813,10 @@ def rms(
     pad_mode: _PadMode = "constant",
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
-    """Compute root-mean-square (RMS) value for each frame, either from the
-    audio samples ``y`` or from a spectrogram ``S``.
+    """Compute root-mean-square (RMS) value for each frame.
 
+    Input can be given either as a time series ``y`` or as a
+    spectrogram magnitude ``S``.
     Computing the RMS value from audio samples is faster as it doesn't require
     a STFT calculation. However, using a spectrogram will give a more accurate
     representation of energy over time because its frames can be windowed,
@@ -877,7 +877,6 @@ def rms(
     >>> S = librosa.magphase(librosa.stft(y, window=np.ones, center=False))[0]
     >>> librosa.feature.rms(S=S)
     >>> plt.show()
-
     """
     if y is not None:
         if center:
@@ -931,8 +930,7 @@ def poly_features(
     order: int = 1,
     freq: np.ndarray | None = None,
 ) -> np.ndarray:
-    """Get coefficients of fitting an nth-order polynomial to the columns
-    of a spectrogram.
+    """Get coefficients of fitting an nth-order polynomial to the columns of a spectrogram.
 
     Parameters
     ----------
@@ -951,17 +949,17 @@ def poly_features(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
         .. see also:: `librosa.filters.get_window`
-    center : boolean
+    center : bool
         - If `True`, the signal ``y`` is padded so that frame
           `t` is centered at ``y[t * hop_length]``.
         - If `False`, then frame ``t`` begins at ``y[t * hop_length]``
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
     order : int > 0
@@ -1083,7 +1081,8 @@ def zero_crossing_rate(
         If `True`, frames are centered by padding the edges of ``y``.
         This is similar to the padding in `librosa.stft`,
         but uses edge-value copies instead of zero-padding.
-    **kwargs : additional keyword arguments to pass to `librosa.zero_crossings`
+    **kwargs
+        additional keyword arguments to pass to `librosa.zero_crossings`
     threshold : float >= 0
         If specified, values where ``-threshold <= y <= threshold`` are
         clipped to 0.
@@ -1091,7 +1090,7 @@ def zero_crossing_rate(
         If numeric, the threshold is scaled relative to ``ref_magnitude``.
         If callable, the threshold is scaled relative to
         ``ref_magnitude(np.abs(y))``.
-    zero_pos : boolean
+    zero_pos : bool
         If ``True`` then the value 0 is interpreted as having positive sign.
         If ``False``, then 0, -1, and +1 all have distinct signs.
     axis : int
@@ -1180,26 +1179,28 @@ def chroma_stft(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
         .. see also:: `librosa.filters.get_window`
-    center : boolean
+    center : bool
         - If `True`, the signal ``y`` is padded so that frame
           ``t`` is centered at ``y[t * hop_length]``.
         - If `False`, then frame ``t`` begins at ``y[t * hop_length]``
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
-    tuning : float [scalar] or None.
+    tuning : float [scalar] or None
         Deviation from A440 tuning in fractional chroma bins.
         If `None`, it is automatically estimated.
     n_chroma : int > 0 [scalar]
         Number of chroma bins to produce (12 by default).
-    **kwargs : additional keyword arguments to parameterize chroma filters.
+    **kwargs
+        additional keyword arguments to parameterize chroma filters.
     ctroct : float > 0 [scalar]
+        See `octwidth`
     octwidth : float > 0 or None [scalar]
         ``ctroct`` and ``octwidth`` specify a dominance window:
         a Gaussian weighting centered on ``ctroct`` (in octs, A0 = 27.5Hz)
@@ -1328,7 +1329,7 @@ def chroma_cqt(
     threshold : float
         Pre-normalization energy threshold.  Values below the
         threshold are discarded, resulting in a sparse chromagram.
-    tuning : float [scalar] or None.
+    tuning : float [scalar] or None
         Deviation (in fractions of a CQT bin) from A440 tuning
     n_chroma : int > 0
         Number of chroma bins to produce
@@ -1336,11 +1337,11 @@ def chroma_cqt(
         Number of octaves to analyze above ``fmin``
     window : None or np.ndarray
         Optional window parameter to `filters.cq_to_chroma`
-    bins_per_octave : int > 0, optional
-        Number of bins per octave in the CQT.
         Must be an integer multiple of ``n_chroma``.
         Default: 36 (3 bins per semitone)
         If `None`, it will match ``n_chroma``.
+    bins_per_octave : int > 0, optional
+        Number of bins per octave in the CQT.
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
 
@@ -1469,21 +1470,21 @@ def chroma_cens(
     fmin : float > 0
         minimum frequency to analyze in the CQT.
         Default: `C1 ~= 32.7 Hz`
-    norm : int > 0, +-np.inf, or None
-        Column-wise normalization of the chromagram.
-    tuning : float [scalar] or None.
+    tuning : float [scalar] or None
         Deviation (in fractions of a CQT bin) from A440 tuning
     n_chroma : int > 0
         Number of chroma bins to produce
     n_octaves : int > 0
         Number of octaves to analyze above ``fmin``
-    window : None or np.ndarray
-        Optional window parameter to `filters.cq_to_chroma`
     bins_per_octave : int > 0
         Number of bins per octave in the CQT.
         Default: 36
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
+    window : None or np.ndarray
+        Optional window parameter to `filters.cq_to_chroma`
+    norm : int > 0, +-np.inf, or None
+        Column-wise normalization of the chromagram.
     win_len_smooth : int > 0 or None
         Length of temporal smoothing window. `None` disables temporal smoothing.
         Default: 41
@@ -1610,7 +1611,7 @@ def chroma_vqt(
         minimum frequency to analyze in the CQT.
         Default: `C1 ~= 32.7 Hz`
     intervals : str or array of floats in [1, 2)
-        Either a string specification for an interval set, e.g.,
+        Either a str specification for an interval set, e.g.,
         `'equal'`, `'pythagorean'`, `'ji3'`, etc. or an array of
         intervals expressed as numbers between 1 and 2.
         .. see also:: librosa.interval_frequencies
@@ -1746,7 +1747,7 @@ def tonnetz(
     threshold : float
         Pre-normalization energy threshold.  Values below the
         threshold are discarded, resulting in a sparse chromagram.
-    tuning : float [scalar] or None.
+    tuning : float [scalar] or None
         Deviation (in fractions of a CQT bin) from A440 tuning
     n_chroma : int > 0
         Number of chroma bins to produce
@@ -1880,9 +1881,10 @@ def mfcc(
             M[n, :] <- M[n, :] * (1 + sin(pi * (n + 1) / lifter) * lifter / 2)
         Setting ``lifter >= 2 * n_mfcc`` emphasizes the higher-order coefficients.
         As ``lifter`` increases, the coefficient weighting becomes approximately linear.
-    mel_norm : `norm` argument to `melspectrogram`
-    **kwargs : additional keyword arguments to `melspectrogram`
-        if operating on time series input
+    mel_norm : float, 'slaney', or None
+        `norm` argument to `melspectrogram`
+    **kwargs
+        additional keyword arguments to `melspectrogram` if operating on time series input
     n_fft : int > 0 [scalar]
         length of the FFT window
     hop_length : int > 0 [scalar]
@@ -1893,23 +1895,24 @@ def mfcc(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, or number);
         see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
         .. see also:: `librosa.filters.get_window`
-    center : boolean
+    center : bool
         - If `True`, the signal ``y`` is padded so that frame
         ``t`` is centered at ``y[t * hop_length]``.
         - If `False`, then frame ``t`` begins at ``y[t * hop_length]``
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
     power : float > 0 [scalar]
         Exponent applied to the spectrum before calculating the melspectrogram when the input is a time signal,
         e.g. 1 for magnitude, 2 for power **(default)**, etc.
-    **kwargs : additional keyword arguments for Mel filter bank parameters
+    **kwargs
+        additional keyword arguments for Mel filter bank parameters
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
     fmin : float >= 0 [scalar]
@@ -2064,23 +2067,24 @@ def melspectrogram(
         The window will be of length `win_length` and then padded
         with zeros to match ``n_fft``.
         If unspecified, defaults to ``win_length = n_fft``.
-    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        - a window specification (string, tuple, or number);
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        - a window specification (str, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
         .. see also:: `librosa.filters.get_window`
-    center : boolean
+    center : bool
         - If `True`, the signal ``y`` is padded so that frame
           ``t`` is centered at ``y[t * hop_length]``.
         - If `False`, then frame ``t`` begins at ``y[t * hop_length]``
-    pad_mode : string
+    pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
     power : float > 0 [scalar]
         Exponent for the magnitude melspectrogram.
         e.g., 1 for energy, 2 for power, etc.
-    **kwargs : additional keyword arguments for Mel filter bank parameters
+    **kwargs
+        additional keyword arguments for Mel filter bank parameters
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
     fmin : float >= 0 [scalar]
