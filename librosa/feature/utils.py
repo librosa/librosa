@@ -27,8 +27,7 @@ def delta(
     mode: Literal["interp", "nearest", "mirror", "constant", "wrap"] = "interp",
     **kwargs: Any,
 ) -> np.ndarray:
-    r"""Compute delta features: local estimate of the derivative
-    of the input data along the selected axis.
+    r"""Compute delta features: local estimate of the derivative of the input data along the selected axis.
 
     Delta features are computed Savitsky-Golay filtering.
 
@@ -135,8 +134,7 @@ def delta(
 def stack_memory(
     data: np.ndarray, *, n_steps: int = 2, delay: int = 1, **kwargs: Any
 ) -> np.ndarray:
-    """Short-term history embedding: vertically concatenate a data
-    vector or matrix with delayed copies of itself.
+    """Short-term history embedding: concatenate an array with delayed copies of itself.
 
     Each column ``data[:, i]`` is mapped to::
 

@@ -78,7 +78,7 @@ def tempogram(
         If `True`, onset autocorrelation windows are centered.
         If `False`, windows are left-aligned.
 
-    window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
+    window : str, function, number, tuple, or np.ndarray [shape=(win_length,)]
         A window specification as in `stft`.
 
     norm : {np.inf, -np.inf, 0, float > 0, None}
@@ -201,8 +201,7 @@ def fourier_tempogram(
     center: bool = True,
     window: _WindowSpec = "hann",
 ) -> np.ndarray:
-    """Compute the Fourier tempogram: the short-time Fourier transform of the
-    onset strength envelope. [#]_
+    """Compute the Fourier tempogram: the short-time Fourier transform of the onset strength envelope. [#]_
 
     .. [#] Grosche, Peter, Meinard Müller, and Frank Kurth.
         "Cyclic tempogram - A mid-level tempo representation for music signals."
@@ -226,7 +225,7 @@ def fourier_tempogram(
     center : bool
         If `True`, onset windows are centered.
         If `False`, windows are left-aligned.
-    window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
+    window : str, function, number, tuple, or np.ndarray [shape=(win_length,)]
         A window specification as in `stft`.
 
     Returns
@@ -576,6 +575,9 @@ def tempogram_ratio(
     factors : np.ndarray
         Multiples of the fundamental tempo (bpm) to estimate.
         If not provided, the factors are as specified above.
+    aggregate : callable [optional]
+        Aggregation function for estimating global tempogram ratio.
+        If `None`, then ratios are estimated independently for each frame.
     prior : scipy.stats.rv_continuous [optional]
         A prior distribution over tempo (in beats per minute).
         By default, a pseudo-log-normal prior is used.
@@ -583,10 +585,7 @@ def tempogram_ratio(
     center : bool
         If `True`, onset windows are centered.
         If `False`, windows are left-aligned.
-    aggregate : callable [optional]
-        Aggregation function for estimating global tempogram ratio.
-        If `None`, then ratios are estimated independently for each frame.
-    window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
+    window : str, function, number, tuple, or np.ndarray [shape=(win_length,)]
         A window specification as in `stft`.
     kind : str
         Interpolation mode for measuring tempogram ratios
@@ -708,7 +707,7 @@ def hybrid_tempogram(
         Window length for analysis
     center : bool
         Whether to center the frames
-    window : string, tuple, number, function, or np.ndarray [shape=(win_length,)]
+    window : str, tuple, number, function, or np.ndarray [shape=(win_length,)]
         A window specification as supported by `scipy.signal.get_window`
         and `librosa.filters.get_window`.
     **kwargs : additional keyword arguments
