@@ -1854,11 +1854,6 @@ def mfcc(
 ) -> np.ndarray:
     """Mel-frequency cepstral coefficients (MFCCs)
 
-    .. warning:: If multi-channel audio input ``y`` is provided, the MFCC
-        calculation will depend on the peak loudness (in decibels) across
-        all channels.  The result may differ from independent MFCC calculation
-        of each channel.
-
     Parameters
     ----------
     y : np.ndarray [shape=(..., n,)] or None

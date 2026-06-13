@@ -666,21 +666,21 @@ def test_mfcc_multi(s_multi):
     assert not np.allclose(Call[0], Call[1])
 
 
-@pytest.mark.skip(reason="power_to_db leaks information across channels")
+#@pytest.mark.skip(reason="power_to_db leaks information across channels")
 def test_mfcc_multi_time(y_multi):
     y, sr = y_multi
 
     # compare each channel
-    C0 = librosa.feature.mfcc(y=y[0])
-    C1 = librosa.feature.mfcc(y=y[1])
-    Call = librosa.feature.mfcc(y=y)
-
-    # Check each channel
-    assert np.allclose(C0, Call[0])
-    assert np.allclose(C1, Call[1])
+    C0 = librosa.feature.mfcc(y=y[0], sr=sr)
+    C1 = librosa.feature.mfcc(y=y[1], sr=sr)
+    Call = librosa.feature.mfcc(y=y, sr=sr)
 
     # Verify that they're not all the same
     assert not np.allclose(Call[0], Call[1])
+
+    # Check each channel
+    assert np.allclose(C0, Call[0]), np.max(np.abs(C0 - Call[0]))
+    assert np.allclose(C1, Call[1]), np.max(np.abs(C1 - Call[1]))
 
 
 def test_melspectrogram_multi(s_multi):

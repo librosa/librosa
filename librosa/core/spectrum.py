@@ -1887,7 +1887,7 @@ def power_to_db(
     if top_db is not None:
         if top_db < 0:
             raise ParameterError("top_db must be non-negative")
-        log_spec = np.maximum(log_spec, log_spec.max() - top_db)
+        log_spec = np.maximum(log_spec, log_spec.max(axis=axes, keepdims=True) - top_db)
 
     return log_spec[()]
 
