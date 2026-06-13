@@ -2046,7 +2046,7 @@ def amplitude_to_db(
 
     magnitude = np.abs(S)
 
-    if axes is None:
+    if axes == "auto":
         if magnitude.ndim >= 2:
             axes = (-2, -1)
         elif magnitude.ndim == 1:
