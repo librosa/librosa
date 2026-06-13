@@ -19,7 +19,7 @@ from . import convert
 from .audio import resample
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal, Sequence
+    from typing import Any, Callable, Literal
 
     from numpy.typing import DTypeLike
 
@@ -1719,7 +1719,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int] = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.floating[Any]: ...
 
 
@@ -1730,7 +1730,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int] = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.ndarray: ...
 
 
@@ -1741,7 +1741,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int] = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.floating[Any] | np.ndarray: ...
 
 
@@ -1752,7 +1752,7 @@ def power_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-10,
     top_db: float | None = 80.0,
-    axes: None | Literal["auto"] | int | tuple[int] = "auto",
+    axes: None | Literal["auto"] | int | tuple[int, ...] = "auto",
 ) -> np.floating[Any] | np.ndarray:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
@@ -1955,7 +1955,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int] = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.floating[Any]: ...
 
 
@@ -1966,7 +1966,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int] = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.ndarray: ...
 
 
@@ -1977,7 +1977,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int] = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.floating[Any] | np.ndarray: ...
 
 
@@ -1988,7 +1988,7 @@ def amplitude_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-5,
     top_db: float | None = 80.0,
-    axes: None | Literal["auto"] | int | tuple[int] = "auto",
+    axes: None | Literal["auto"] | int | tuple[int, ...] = "auto",
 ) -> np.floating[Any] | np.ndarray:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
@@ -2053,6 +2053,8 @@ def amplitude_to_db(
             axes = (-1,)
         else:
             axes = None
+    else:
+        axes = axes
 
     if callable(ref):
         try:
@@ -2069,7 +2071,9 @@ def amplitude_to_db(
     out_array = magnitude if isinstance(magnitude, np.ndarray) else None
     power = np.square(magnitude, out=out_array)
 
-    db: np.ndarray = power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db, axes=axes)
+    db: np.ndarray = power_to_db(power, ref=ref_value**2,
+                                 amin=amin**2, top_db=top_db,
+                                 axes=axes)
     return db[()]
 
 
