@@ -1737,7 +1737,7 @@ def test_power_to_db_scalar():
     assert np.isclose(librosa.power_to_db(2), 3.0103)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.raises(librosa.ParameterError)
 def test_power_to_db_bad_reducer():
     x = np.ones((10,10))
     def mymax(z, axis=None):
@@ -1747,7 +1747,7 @@ def test_power_to_db_bad_reducer():
     librosa.power_to_db(x, ref=mymax)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.raises(librosa.ParameterError)
 def test_amplitude_to_db_bad_reducer():
     x = np.ones((10,10))
     def mymax(z, axis=None):
