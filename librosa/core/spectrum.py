@@ -1779,6 +1779,8 @@ def power_to_db(
     top_db : float >= 0 [scalar]
         threshold the output at ``top_db`` below the peak:
         ``max(10 * log10(S/ref)) - top_db``
+        For multi-channel inputs, with `axes='auto'`, peaks
+        are calculated independently for each channel.
 
     axes: None, "auto", int, or tuple of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
@@ -1879,7 +1881,7 @@ def power_to_db(
         except TypeError as e:
             raise ParameterError(
                 "The provided reference function must support 'axis' and "
-                "'keepdims' arguments for proper multichannel processing. "
+                "'keepdims' arguments for proper multichannel processing."
             ) from e
     else:
         ref_value = np.abs(ref)
@@ -2013,6 +2015,8 @@ def amplitude_to_db(
     top_db : float >= 0 [scalar]
         threshold the output at ``top_db`` below the peak:
         ``max(20 * log10(S/ref)) - top_db``
+        For multi-channel inputs, with `axes='auto'`, peaks
+        are calculated independently for each channel.
 
     axes : None, "auto", int, or tuple of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
@@ -2053,8 +2057,6 @@ def amplitude_to_db(
             axes = (-1,)
         else:
             axes = None
-    else:
-        axes = axes
 
     if callable(ref):
         try:
@@ -2063,7 +2065,7 @@ def amplitude_to_db(
         except TypeError as e:
             raise ParameterError(
                 "The provided reference function must support 'axis' and "
-                "'keepdims' arguments for proper multichannel processing. "
+                "'keepdims' arguments for proper multichannel processing."
             ) from e
     else:
         ref_value = np.abs(ref)
