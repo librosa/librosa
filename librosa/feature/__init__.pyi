@@ -1,60 +1,24 @@
-from . import (
-    inverse as inverse,
-)
+from . import inverse as inverse
 from .rhythm import fourier_tempogram as fourier_tempogram
 from .rhythm import hybrid_tempogram as hybrid_tempogram
 from .rhythm import metrogram as metrogram
 from .rhythm import tempo as tempo
 from .rhythm import tempogram as tempogram
 from .rhythm import tempogram_ratio as tempogram_ratio
-from .spectral import (
-    chroma_cens as chroma_cens,
-)
-from .spectral import (
-    chroma_cqt as chroma_cqt,
-)
-from .spectral import (
-    chroma_stft as chroma_stft,
-)
-from .spectral import (
-    chroma_vqt as chroma_vqt,
-)
-from .spectral import (
-    melspectrogram as melspectrogram,
-)
-from .spectral import (
-    mfcc as mfcc,
-)
-from .spectral import (
-    poly_features as poly_features,
-)
-from .spectral import (
-    rms as rms,
-)
-from .spectral import (
-    spectral_bandwidth as spectral_bandwidth,
-)
-from .spectral import (
-    spectral_centroid as spectral_centroid,
-)
-from .spectral import (
-    spectral_contrast as spectral_contrast,
-)
-from .spectral import (
-    spectral_flatness as spectral_flatness,
-)
-from .spectral import (
-    spectral_rolloff as spectral_rolloff,
-)
-from .spectral import (
-    tonnetz as tonnetz,
-)
-from .spectral import (
-    zero_crossing_rate as zero_crossing_rate,
-)
-from .utils import (
-    delta as delta,
-)
-from .utils import (
-    stack_memory as stack_memory,
-)
+from .spectral import chroma_cens as chroma_cens
+from .spectral import chroma_cqt as chroma_cqt
+from .spectral import chroma_stft as chroma_stft
+from .spectral import chroma_vqt as chroma_vqt
+from .spectral import melspectrogram as melspectrogram
+from .spectral import mfcc as mfcc
+from .spectral import poly_features as poly_features
+from .spectral import rms as rms
+from .spectral import spectral_bandwidth as spectral_bandwidth
+from .spectral import spectral_centroid as spectral_centroid
+from .spectral import spectral_contrast as spectral_contrast
+from .spectral import spectral_flatness as spectral_flatness
+from .spectral import spectral_rolloff as spectral_rolloff
+from .spectral import tonnetz as tonnetz
+from .spectral import zero_crossing_rate as zero_crossing_rate
+from .utils import delta as delta
+from .utils import stack_memory as stack_memory
