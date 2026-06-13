@@ -1719,7 +1719,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | int | Sequence[int] = None,
+    axes : None | Literal["auto"] | int | Sequence[int] = None,
 ) -> np.floating[Any]: ...
 
 
@@ -1730,7 +1730,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | int | Sequence[int] = None,
+    axes : None | Literal["auto"] | int | Sequence[int] = None,
 ) -> np.ndarray: ...
 
 
@@ -1741,7 +1741,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | int | Sequence[int] = None,
+    axes : None | Literal["auto"] | int | Sequence[int] = None,
 ) -> np.floating[Any] | np.ndarray: ...
 
 
@@ -1752,7 +1752,7 @@ def power_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-10,
     top_db: float | None = 80.0,
-    axes : None | int | Sequence[int] = None,
+    axes : None | Literal["auto"] | int | Sequence[int] = "auto",
 ) -> np.floating[Any] | np.ndarray:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
@@ -1780,9 +1780,9 @@ def power_to_db(
         threshold the output at ``top_db`` below the peak:
         ``max(10 * log10(S/ref)) - top_db``
 
-    axes : None, int, or list of int
+    axes : None, "auto", int, or list of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
-        If `None`, then axes will be inferred as the trailing dimensions of `S`:
+        If `auto`, then axes will be inferred as the trailing dimensions of `S`:
             - If `S` is scalar, then `axes=None`
             - If `S` is 1D, then `axes=(-1,)`
             - If `S` is >=2D, then `axes=(-2, -1)`
@@ -1864,7 +1864,7 @@ def power_to_db(
     else:
         magnitude = S
 
-    if axes is None:
+    if axes == "auto":
         if magnitude.ndim >= 2:
             axes = (-2, -1)
         elif magnitude.ndim == 1:
@@ -1955,7 +1955,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | int | Sequence[int] = None,
+    axes : None | Literal["auto"] | int | Sequence[int] = None,
 ) -> np.floating[Any]: ...
 
 
@@ -1966,7 +1966,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | int | Sequence[int] = None,
+    axes : None | Literal["auto"] | int | Sequence[int] = None,
 ) -> np.ndarray: ...
 
 
@@ -1977,7 +1977,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | int | Sequence[int] = None,
+    axes : None | Literal["auto"] | int | Sequence[int] = None,
 ) -> np.floating[Any] | np.ndarray: ...
 
 
@@ -1988,7 +1988,7 @@ def amplitude_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-5,
     top_db: float | None = 80.0,
-    axes : None | int | Sequence[int] = None,
+    axes : None | Literal["auto"] | int | Sequence[int] = "auto",
 ) -> np.floating[Any] | np.ndarray:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
@@ -2014,9 +2014,10 @@ def amplitude_to_db(
         threshold the output at ``top_db`` below the peak:
         ``max(20 * log10(S/ref)) - top_db``
 
-    axes : None, int, or list of int
+    axes : None, "auto", int, or list of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
-        If `None`, then axes will be inferred as the trailing dimensions of `S`:
+        If `auto`, then axes will be inferred as the trailing dimensions of `S`:
+            - If `S` is scalar, then `axes=None`
             - If `S` is 1D, then `axes=(-1,)`
             - If `S` is >=2D, then `axes=(-2, -1)`
 
