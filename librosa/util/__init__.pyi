@@ -1,37 +1,15 @@
 from . import decorators, exceptions
-from ._nnls import (
-    nnls as nnls,
-)
-from .deprecation import (
-    Deprecated as Deprecated,
-)
-from .deprecation import (
-    rename_kw as rename_kw,
-)
-from .files import (
-    cite as cite,
-)
-from .files import (
-    ex as ex,
-)
-from .files import (
-    example as example,
-)
-from .files import (
-    example_info as example_info,
-)
-from .files import (
-    find_files as find_files,
-)
-from .files import (
-    list_examples as list_examples,
-)
-from .matching import (
-    match_events as match_events,
-)
-from .matching import (
-    match_intervals as match_intervals,
-)
+from ._nnls import nnls as nnls
+from .deprecation import Deprecated as Deprecated
+from .deprecation import rename_kw as rename_kw
+from .files import cite as cite
+from .files import ex as ex
+from .files import example as example
+from .files import example_info as example_info
+from .files import find_files as find_files
+from .files import list_examples as list_examples
+from .matching import match_events as match_events
+from .matching import match_intervals as match_intervals
 from .utils import MAX_MEM_BLOCK as MAX_MEM_BLOCK
 from .utils import abs2 as abs2
 from .utils import axis_sort as axis_sort
