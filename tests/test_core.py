@@ -1737,6 +1737,26 @@ def test_power_to_db_scalar():
     assert np.isclose(librosa.power_to_db(2), 3.0103)
 
 
+def test_power_to_db_bad_reducer():
+    x = np.ones((10,10))
+    def mymax(z, axis=None):
+        # A bad reducer that does not support keepdims
+        return np.max(z, axis=axis)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.power_to_db(x, ref=mymax)
+
+
+def test_amplitude_to_db_bad_reducer():
+    x = np.ones((10,10))
+    def mymax(z, axis=None):
+        # A bad reducer that does not support keepdims
+        return np.max(z, axis=axis)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.amplitude_to_db(x, ref=mymax)
+
+
 def test_db_to_amplitude_scalar():
     assert np.isclose(librosa.db_to_amplitude(0), 1)
     assert np.isclose(librosa.db_to_amplitude(6.0206), 2)

@@ -1719,6 +1719,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.floating[Any]: ...
 
 
@@ -1729,6 +1730,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.ndarray: ...
 
 
@@ -1739,6 +1741,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.floating[Any] | np.ndarray: ...
 
 
@@ -1749,6 +1752,7 @@ def power_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-10,
     top_db: float | None = 80.0,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = "auto",
 ) -> np.floating[Any] | np.ndarray:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
@@ -1767,7 +1771,7 @@ def power_to_db(
 
         Zeros in the output correspond to positions where ``S == ref``.
 
-        If callable, the reference value is computed as ``ref(S)``.
+        If callable, the reference value is computed as ``ref(S, axis=axes, keepdims=True)``.
 
     amin : float > 0 [scalar]
         minimum threshold for ``abs(S)`` and ``ref``
@@ -1775,6 +1779,15 @@ def power_to_db(
     top_db : float >= 0 [scalar]
         threshold the output at ``top_db`` below the peak:
         ``max(10 * log10(S/ref)) - top_db``
+        For multi-channel inputs, with `axes='auto'`, peaks
+        are calculated independently for each channel.
+
+    axes: None, "auto", int, or tuple of int
+        Axis or axes along which to compute the reference value (if `ref` is callable).
+        If `auto`, then axes will be inferred as the trailing dimensions of `S`:
+            - If `S` is scalar, then `axes=None`
+            - If `S` is 1D, then `axes=(-1,)`
+            - If `S` is >=2D, then `axes=(-2, -1)`
 
     Returns
     -------
@@ -1853,9 +1866,23 @@ def power_to_db(
     else:
         magnitude = S
 
+    if axes == "auto":
+        if magnitude.ndim >= 2:
+            axes = (-2, -1)
+        elif magnitude.ndim == 1:
+            axes = (-1,)
+        else:
+            axes = None
+
     if callable(ref):
-        # User supplied a function to calculate reference power
-        ref_value = ref(magnitude)
+        try:
+            # Compute the reference value along the specified axes, keeping dimensions for broadcasting
+            ref_value = ref(magnitude, axis=axes, keepdims=True)
+        except TypeError as e:
+            raise ParameterError(
+                "The provided reference function must support 'axis' and "
+                "'keepdims' arguments for proper multichannel processing."
+            ) from e
     else:
         ref_value = np.abs(ref)
 
@@ -1865,7 +1892,7 @@ def power_to_db(
     if top_db is not None:
         if top_db < 0:
             raise ParameterError("top_db must be non-negative")
-        log_spec = np.maximum(log_spec, log_spec.max() - top_db)
+        log_spec = np.maximum(log_spec, log_spec.max(axis=axes, keepdims=True) - top_db)
 
     return log_spec[()]
 
@@ -1930,6 +1957,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.floating[Any]: ...
 
 
@@ -1940,6 +1968,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.ndarray: ...
 
 
@@ -1950,6 +1979,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.floating[Any] | np.ndarray: ...
 
 
@@ -1960,6 +1990,7 @@ def amplitude_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-5,
     top_db: float | None = 80.0,
+    axes: None | Literal["auto"] | int | tuple[int, ...] = "auto",
 ) -> np.floating[Any] | np.ndarray:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
@@ -1976,7 +2007,7 @@ def amplitude_to_db(
         ``20 * log10(S / ref)``.
         Zeros in the output correspond to positions where ``S == ref``.
 
-        If callable, the reference value is computed as ``ref(S)``.
+        If callable, the reference value is computed as ``ref(S, axis=axes, keepdims=True)``.
 
     amin : float > 0 [scalar]
         minimum threshold for ``S`` and ``ref``
@@ -1984,6 +2015,15 @@ def amplitude_to_db(
     top_db : float >= 0 [scalar]
         threshold the output at ``top_db`` below the peak:
         ``max(20 * log10(S/ref)) - top_db``
+        For multi-channel inputs, with `axes='auto'`, peaks
+        are calculated independently for each channel.
+
+    axes : None, "auto", int, or tuple of int
+        Axis or axes along which to compute the reference value (if `ref` is callable).
+        If `auto`, then axes will be inferred as the trailing dimensions of `S`:
+            - If `S` is scalar, then `axes=None`
+            - If `S` is 1D, then `axes=(-1,)`
+            - If `S` is >=2D, then `axes=(-2, -1)`
 
     Returns
     -------
@@ -2010,16 +2050,32 @@ def amplitude_to_db(
 
     magnitude = np.abs(S)
 
+    if axes == "auto":
+        if magnitude.ndim >= 2:
+            axes = (-2, -1)
+        elif magnitude.ndim == 1:
+            axes = (-1,)
+        else:
+            axes = None
+
     if callable(ref):
-        # User supplied a function to calculate reference power
-        ref_value = ref(magnitude)
+        try:
+            # Compute the reference value along the specified axes, keeping dimensions for broadcasting
+            ref_value = ref(magnitude, axis=axes, keepdims=True)
+        except TypeError as e:
+            raise ParameterError(
+                "The provided reference function must support 'axis' and "
+                "'keepdims' arguments for proper multichannel processing."
+            ) from e
     else:
         ref_value = np.abs(ref)
 
     out_array = magnitude if isinstance(magnitude, np.ndarray) else None
     power = np.square(magnitude, out=out_array)
 
-    db: np.ndarray = power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db)
+    db: np.ndarray = power_to_db(power, ref=ref_value**2,
+                                 amin=amin**2, top_db=top_db,
+                                 axes=axes)
     return db[()]
 
 
