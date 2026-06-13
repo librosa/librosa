@@ -18,6 +18,8 @@ from .intervals import INTERVALS
 if TYPE_CHECKING:
     from typing import Iterable
 
+    import numpy.typing as npt
+
     from .._typing import _FloatLike_co, _IterableLike, _ScalarOrSequence, _SequenceLike
 
 __all__ = [
@@ -533,21 +535,18 @@ def __note_to_degree(key: str | _IterableLike[str] | Iterable[str]) -> int | np.
     return (pitch_map[letter]+sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP]))%12
 
 @overload
-def __simplify_note(key: str, additional_acc: str =..., unicode: bool= ...) -> str:
-    ...
-
+def __simplify_note(key: str, additional_acc: str =..., unicode: bool =  ...) -> str: ...
 @overload
-def __simplify_note(key: _IterableLike[str],
-                    additional_acc: str=..., unicode: bool = ... ) -> np.ndarray:
-    ...
-
+def __simplify_note(
+    key: _IterableLike[str], additional_acc: str = ..., unicode: bool = ...
+) -> npt.NDArray[np.str_]: ...
 @overload
-def __simplify_note(key: str | _IterableLike[str] | Iterable[str],
-                    additional_acc: str =..., unicode: bool = ...) -> str | np.ndarray:
-    ...
-
-def __simplify_note(key: str | _IterableLike[str] | Iterable[str],
-                    additional_acc: str="", unicode: bool = True) -> str | np.ndarray:
+def __simplify_note(
+    key: Iterable[str], additional_acc: str = ..., unicode: bool = ...
+) -> str | npt.NDArray[np.str_]: ...
+def __simplify_note(
+    key: str | _IterableLike[str] | Iterable[str], additional_acc: str = "", unicode: bool = True
+) -> str | npt.NDArray[np.str_]:
     """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
     >>> librosa.__simplify_note('C♭♯')
@@ -1084,10 +1083,7 @@ def interval_to_fjs(
     unison: str = ...,
     tolerance: float = ...,
     unicode: bool = ...,
-) -> str:
-    ...
-
-
+) -> str: ...
 @overload
 def interval_to_fjs(
     interval: _SequenceLike[_FloatLike_co],
@@ -1095,21 +1091,7 @@ def interval_to_fjs(
     unison: str = ...,
     tolerance: float = ...,
     unicode: bool = ...,
-) -> np.ndarray:
-    ...
-
-
-@overload
-def interval_to_fjs(
-    interval: _ScalarOrSequence[_FloatLike_co],
-    *,
-    unison: str = ...,
-    tolerance: float = ...,
-    unicode: bool = ...,
-) -> str | np.ndarray:
-    ...
-
-
+) -> npt.NDArray[np.str_]: ...
 @vectorize(otypes="U", excluded=set(["unison", "tolerance", "unicode"]))
 def interval_to_fjs(
     interval: _ScalarOrSequence[_FloatLike_co],
@@ -1117,7 +1099,7 @@ def interval_to_fjs(
     unison: str = "C",
     tolerance: float = 65.0 / 63,
     unicode: bool = True,
-) -> str | np.ndarray:
+) -> str | npt.NDArray[np.str_]:
     """Convert an interval to Functional Just System (FJS) notation.
 
     See https://misotanni.github.io/fjs/en/index.html for a thorough overview

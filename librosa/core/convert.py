@@ -15,6 +15,8 @@ from . import notation
 if TYPE_CHECKING:
     from typing import Any, Callable, Iterable, Sized
 
+    import numpy.typing as npt
+
     from .._typing import (
         _FloatLike_co,
         _IntLike_co,
@@ -851,8 +853,6 @@ def midi_to_note(
     key: str = ...,
     unicode: bool = ...,
 ) -> str: ...
-
-
 @overload
 def midi_to_note(
     midi: _SequenceLike[_FloatLike_co],
@@ -861,20 +861,7 @@ def midi_to_note(
     cents: bool = ...,
     key: str = ...,
     unicode: bool = ...,
-) -> np.ndarray: ...
-
-
-@overload
-def midi_to_note(
-    midi: _ScalarOrSequence[_FloatLike_co],
-    *,
-    octave: bool = ...,
-    cents: bool = ...,
-    key: str = ...,
-    unicode: bool = ...,
-) -> str | np.ndarray: ...
-
-
+) -> npt.NDArray[np.str_]: ...
 @vectorize(excluded=["octave", "cents", "key", "unicode"])
 def midi_to_note(
     midi: _ScalarOrSequence[_FloatLike_co],
@@ -883,7 +870,7 @@ def midi_to_note(
     cents: bool = False,
     key: str = "C:maj",
     unicode: bool = True,
-) -> str | np.ndarray:
+) -> str | npt.NDArray[np.str_]:
     """Convert one or more MIDI numbers to note strings.
 
     MIDI numbers will be rounded to the nearest integer.
@@ -1076,23 +1063,13 @@ def hz_to_midi(
 
 @overload
 def hz_to_note(frequencies: _FloatLike_co, **kwargs: Any) -> str: ...
-
-
 @overload
 def hz_to_note(
     frequencies: _SequenceLike[_FloatLike_co], **kwargs: Any
-) -> np.ndarray: ...
-
-
-@overload
+) -> npt.NDArray[np.str_]: ...
 def hz_to_note(
     frequencies: _ScalarOrSequence[_FloatLike_co], **kwargs: Any
-) -> str | np.ndarray: ...
-
-
-def hz_to_note(
-    frequencies: _ScalarOrSequence[_FloatLike_co], **kwargs: Any
-) -> str | np.ndarray:
+) -> str | npt.NDArray[np.str_]:
     """Convert one or more frequencies (in Hz) to the nearest note names.
 
     Parameters
@@ -2415,8 +2392,6 @@ def midi_to_svara_h(
     octave: bool = ...,
     unicode: bool = ...,
 ) -> str: ...
-
-
 @overload
 def midi_to_svara_h(
     midi: np.ndarray,
@@ -2425,20 +2400,7 @@ def midi_to_svara_h(
     abbr: bool = ...,
     octave: bool = ...,
     unicode: bool = ...,
-) -> np.ndarray: ...
-
-
-@overload
-def midi_to_svara_h(
-    midi: _FloatLike_co | np.ndarray,
-    *,
-    Sa: _FloatLike_co,
-    abbr: bool = ...,
-    octave: bool = ...,
-    unicode: bool = ...,
-) -> str | np.ndarray: ...
-
-
+) -> npt.NDArray[np.str_]: ...
 @vectorize(excluded=["Sa", "abbr", "octave", "unicode"])
 def midi_to_svara_h(
     midi: _FloatLike_co | np.ndarray,
@@ -2447,7 +2409,7 @@ def midi_to_svara_h(
     abbr: bool = True,
     octave: bool = True,
     unicode: bool = True,
-) -> str | np.ndarray:
+) -> str | npt.NDArray[np.str_]:
     """Convert MIDI numbers to Hindustani svara
 
     Non-finite midi numbers (e.g., NaN, inf) will return an empty string.
@@ -2568,8 +2530,6 @@ def hz_to_svara_h(
     octave: bool = ...,
     unicode: bool = ...,
 ) -> str: ...
-
-
 @overload
 def hz_to_svara_h(
     frequencies: _SequenceLike[_FloatLike_co],
@@ -2578,20 +2538,7 @@ def hz_to_svara_h(
     abbr: bool = ...,
     octave: bool = ...,
     unicode: bool = ...,
-) -> np.ndarray: ...
-
-
-@overload
-def hz_to_svara_h(
-    frequencies: _ScalarOrSequence[_FloatLike_co],
-    *,
-    Sa: _FloatLike_co,
-    abbr: bool = ...,
-    octave: bool = ...,
-    unicode: bool = ...,
-) -> str | np.ndarray: ...
-
-
+) -> npt.NDArray[np.str_]: ...
 def hz_to_svara_h(
     frequencies: _ScalarOrSequence[_FloatLike_co],
     *,
@@ -2599,7 +2546,7 @@ def hz_to_svara_h(
     abbr: bool = True,
     octave: bool = True,
     unicode: bool = True,
-) -> str | np.ndarray:
+) -> str | npt.NDArray[np.str_]:
     """Convert frequencies (in Hz) to Hindustani svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -2664,8 +2611,6 @@ def hz_to_svara_h(
 def note_to_svara_h(
     notes: str, *, Sa: str, abbr: bool = ..., octave: bool = ..., unicode: bool = ...
 ) -> str: ...
-
-
 @overload
 def note_to_svara_h(
     notes: _IterableLike[str],
@@ -2674,20 +2619,7 @@ def note_to_svara_h(
     abbr: bool = ...,
     octave: bool = ...,
     unicode: bool = ...,
-) -> np.ndarray: ...
-
-
-@overload
-def note_to_svara_h(
-    notes: str | _IterableLike[str],
-    *,
-    Sa: str,
-    abbr: bool = ...,
-    octave: bool = ...,
-    unicode: bool = ...,
-) -> str | np.ndarray: ...
-
-
+) -> npt.NDArray[np.str_]: ...
 def note_to_svara_h(
     notes: str | _IterableLike[str],
     *,
@@ -2695,7 +2627,7 @@ def note_to_svara_h(
     abbr: bool = True,
     octave: bool = True,
     unicode: bool = True,
-) -> str | np.ndarray:
+) -> str | npt.NDArray[np.str_]:
     """Convert western notes to Hindustani svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -2763,8 +2695,6 @@ def midi_to_svara_c(
     octave: bool = ...,
     unicode: bool = ...,
 ) -> str: ...
-
-
 @overload
 def midi_to_svara_c(
     midi: np.ndarray,
@@ -2774,21 +2704,7 @@ def midi_to_svara_c(
     abbr: bool = ...,
     octave: bool = ...,
     unicode: bool = ...,
-) -> np.ndarray: ...
-
-
-@overload
-def midi_to_svara_c(
-    midi: float | np.ndarray,
-    *,
-    Sa: _FloatLike_co,
-    mela: int | str,
-    abbr: bool = ...,
-    octave: bool = ...,
-    unicode: bool = ...,
-) -> str | np.ndarray: ...
-
-
+) -> npt.NDArray[np.str_]: ...
 @vectorize(excluded=["Sa", "mela", "abbr", "octave", "unicode"])  # type: ignore
 def midi_to_svara_c(
     midi: float | np.ndarray,
@@ -2798,7 +2714,7 @@ def midi_to_svara_c(
     abbr: bool = True,
     octave: bool = True,
     unicode: bool = True,
-) -> str | np.ndarray:
+) -> str | npt.NDArray[np.str_]:
     """Convert MIDI numbers to Carnatic svara within a given melakarta raga
 
     Non-finite midi numbers (e.g., NaN, inf) will return an empty string.
@@ -2879,8 +2795,6 @@ def hz_to_svara_c(
     octave: bool = ...,
     unicode: bool = ...,
 ) -> str: ...
-
-
 @overload
 def hz_to_svara_c(
     frequencies: np.ndarray,
@@ -2890,21 +2804,7 @@ def hz_to_svara_c(
     abbr: bool = ...,
     octave: bool = ...,
     unicode: bool = ...,
-) -> np.ndarray: ...
-
-
-@overload
-def hz_to_svara_c(
-    frequencies: float | np.ndarray,
-    *,
-    Sa: float,
-    mela: int | str,
-    abbr: bool = ...,
-    octave: bool = ...,
-    unicode: bool = ...,
-) -> str | np.ndarray: ...
-
-
+) -> npt.NDArray[np.str_]: ...
 def hz_to_svara_c(
     frequencies: float | np.ndarray,
     *,
@@ -2913,7 +2813,7 @@ def hz_to_svara_c(
     abbr: bool = True,
     octave: bool = True,
     unicode: bool = True,
-) -> str | np.ndarray:
+) -> str | npt.NDArray[np.str_]:
     """Convert frequencies (in Hz) to Carnatic svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -2988,8 +2888,6 @@ def note_to_svara_c(
     octave: bool = ...,
     unicode: bool = ...,
 ) -> str: ...
-
-
 @overload
 def note_to_svara_c(
     notes: _IterableLike[str],
@@ -2999,21 +2897,7 @@ def note_to_svara_c(
     abbr: bool = ...,
     octave: bool = ...,
     unicode: bool = ...,
-) -> np.ndarray: ...
-
-
-@overload
-def note_to_svara_c(
-    notes: str | _IterableLike[str],
-    *,
-    Sa: str,
-    mela: str | int,
-    abbr: bool = ...,
-    octave: bool = ...,
-    unicode: bool = ...,
-) -> str | np.ndarray: ...
-
-
+) -> npt.NDArray[np.str_]: ...
 def note_to_svara_c(
     notes: str | _IterableLike[str],
     *,
@@ -3022,7 +2906,7 @@ def note_to_svara_c(
     abbr: bool = True,
     octave: bool = True,
     unicode: bool = True,
-) -> str | np.ndarray:
+) -> str | npt.NDArray[np.str_]:
     """Convert western notes to Carnatic svara
 
     Note that this conversion assumes 12-tone equal temperament.
@@ -3092,8 +2976,6 @@ def hz_to_fjs(
     unison: str | None = ...,
     unicode: bool = ...,
 ) -> str: ...
-
-
 @overload
 def hz_to_fjs(
     frequencies: _SequenceLike[_FloatLike_co],
@@ -3101,16 +2983,14 @@ def hz_to_fjs(
     fmin: float | None = ...,
     unison: str | None = ...,
     unicode: bool = ...,
-) -> np.ndarray: ...
-
-
+) -> npt.NDArray[np.str_]: ...
 def hz_to_fjs(
     frequencies: _ScalarOrSequence[_FloatLike_co],
     *,
     fmin: float | None = None,
     unison: str | None = None,
     unicode: bool = False,
-) -> str | np.ndarray:
+) -> str | npt.NDArray[np.str_]:
     """Convert one or more frequencies (in Hz) from a just intonation scale to notes in FJS notation.
 
     Parameters
