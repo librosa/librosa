@@ -1719,7 +1719,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | Literal["auto"] | int | Sequence[int] = None,
+    axes: None | Literal["auto"] | int | tuple[int] = ...,
 ) -> np.floating[Any]: ...
 
 
@@ -1730,7 +1730,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | Literal["auto"] | int | Sequence[int] = None,
+    axes: None | Literal["auto"] | int | tuple[int] = ...,
 ) -> np.ndarray: ...
 
 
@@ -1741,7 +1741,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | Literal["auto"] | int | Sequence[int] = None,
+    axes: None | Literal["auto"] | int | tuple[int] = ...,
 ) -> np.floating[Any] | np.ndarray: ...
 
 
@@ -1752,7 +1752,7 @@ def power_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-10,
     top_db: float | None = 80.0,
-    axes : None | Literal["auto"] | int | Sequence[int] = "auto",
+    axes: None | Literal["auto"] | int | tuple[int] = "auto",
 ) -> np.floating[Any] | np.ndarray:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
@@ -1771,7 +1771,7 @@ def power_to_db(
 
         Zeros in the output correspond to positions where ``S == ref``.
 
-        If callable, the reference value is computed as ``ref(S)``.
+        If callable, the reference value is computed as ``ref(S, axis=axes, keepdims=True)``.
 
     amin : float > 0 [scalar]
         minimum threshold for ``abs(S)`` and ``ref``
@@ -1780,7 +1780,7 @@ def power_to_db(
         threshold the output at ``top_db`` below the peak:
         ``max(10 * log10(S/ref)) - top_db``
 
-    axes : None, "auto", int, or list of int
+    axes: None, "auto", int, or tuple of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
         If `auto`, then axes will be inferred as the trailing dimensions of `S`:
             - If `S` is scalar, then `axes=None`
@@ -1955,7 +1955,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | Literal["auto"] | int | Sequence[int] = None,
+    axes: None | Literal["auto"] | int | tuple[int] = ...,
 ) -> np.floating[Any]: ...
 
 
@@ -1966,7 +1966,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | Literal["auto"] | int | Sequence[int] = None,
+    axes: None | Literal["auto"] | int | tuple[int] = ...,
 ) -> np.ndarray: ...
 
 
@@ -1977,7 +1977,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes : None | Literal["auto"] | int | Sequence[int] = None,
+    axes: None | Literal["auto"] | int | tuple[int] = ...,
 ) -> np.floating[Any] | np.ndarray: ...
 
 
@@ -1988,7 +1988,7 @@ def amplitude_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-5,
     top_db: float | None = 80.0,
-    axes : None | Literal["auto"] | int | Sequence[int] = "auto",
+    axes: None | Literal["auto"] | int | tuple[int] = "auto",
 ) -> np.floating[Any] | np.ndarray:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
@@ -2005,7 +2005,7 @@ def amplitude_to_db(
         ``20 * log10(S / ref)``.
         Zeros in the output correspond to positions where ``S == ref``.
 
-        If callable, the reference value is computed as ``ref(S)``.
+        If callable, the reference value is computed as ``ref(S, axis=axes, keepdims=True)``.
 
     amin : float > 0 [scalar]
         minimum threshold for ``S`` and ``ref``
@@ -2014,7 +2014,7 @@ def amplitude_to_db(
         threshold the output at ``top_db`` below the peak:
         ``max(20 * log10(S/ref)) - top_db``
 
-    axes : None, "auto", int, or list of int
+    axes : None, "auto", int, or tuple of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
         If `auto`, then axes will be inferred as the trailing dimensions of `S`:
             - If `S` is scalar, then `axes=None`
