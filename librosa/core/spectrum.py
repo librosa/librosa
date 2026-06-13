@@ -1783,6 +1783,7 @@ def power_to_db(
     axes : None, int, or list of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
         If `None`, then axes will be inferred as the trailing dimensions of `S`:
+            - If `S` is scalar, then `axes=None`
             - If `S` is 1D, then `axes=(-1,)`
             - If `S` is >=2D, then `axes=(-2, -1)`
 
@@ -1864,16 +1865,18 @@ def power_to_db(
         magnitude = S
 
     if axes is None:
-        # Single-channel (1D/2D) vs Multichannel (3D+)
-        axes = (-2, -1) if magnitude.ndim > 1 else (-1,)
+        if magnitude.ndim >= 2:
+            axes = (-2, -1)
+        elif magnitude.ndim == 1:
+            axes = (-1,)
+        else:
+            axes = None
 
     if callable(ref):
-        # User supplied a function to calculate reference power
         try:
-            # Happy path: Array API standard compliant (np.max, np.mean, xp.max)
+            # Compute the reference value along the specified axes, keeping dimensions for broadcasting
             ref_value = ref(magnitude, axis=axes, keepdims=True)
         except TypeError as e:
-            # Fallback: Catch built-in `max` or non-compliant custom functions
             raise ParameterError(
                 "The provided reference function must support 'axis' and "
                 "'keepdims' arguments for proper multichannel processing. "
@@ -2043,16 +2046,18 @@ def amplitude_to_db(
     magnitude = np.abs(S)
 
     if axes is None:
-        # Single-channel (1D/2D) vs Multichannel (3D+)
-        axes = (-2, -1) if magnitude.ndim > 1 else (-1,)
+        if magnitude.ndim >= 2:
+            axes = (-2, -1)
+        elif magnitude.ndim == 1:
+            axes = (-1,)
+        else:
+            axes = None
 
     if callable(ref):
-        # User supplied a function to calculate reference power
         try:
-            # Happy path: Array API standard compliant (np.max, np.mean, xp.max)
+            # Compute the reference value along the specified axes, keeping dimensions for broadcasting
             ref_value = ref(magnitude, axis=axes, keepdims=True)
         except TypeError as e:
-            # Fallback: Catch built-in `max` or non-compliant custom functions
             raise ParameterError(
                 "The provided reference function must support 'axis' and "
                 "'keepdims' arguments for proper multichannel processing. "
