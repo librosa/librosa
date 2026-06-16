@@ -12,19 +12,19 @@ import numpy as np
 from decorator import decorator
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Iterable, ParamSpec, TypeVar
+    from collections.abc import Callable, Iterable
+    from typing import Protocol, type_check_only
 
     from numpy.typing import DTypeLike
-    P = ParamSpec("P")
-    R = TypeVar("R")
-    _F = TypeVar("_F", bound=Callable[..., Any])
+
+    @type_check_only
+    class _Decorator(Protocol):
+        def __call__[**P, R](self, fn: Callable[P, R], /) -> Callable[P, R]: ...
 
 __all__ = ["moved", "deprecated", "vectorize"]
 
 
-def moved(
-    *, moved_from: str, version: str, version_removed: str
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
+def moved(*, moved_from: str, version: str, version_removed: str) -> _Decorator:
     """Mark functions as moved/renamed.
 
     Using the decorated (old) function will result in a warning.
@@ -44,7 +44,7 @@ def moved(
         A decorator that can be applied to the old function name
     """
 
-    def __wrapper(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
+    def __wrapper[**P, R](func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
         """Warn the user, and then proceed."""
         warnings.warn(
             "{:s}\n\tThis function was moved to '{:s}.{:s}' in "
@@ -61,9 +61,7 @@ def moved(
     return decorator(__wrapper)
 
 
-def deprecated(
-    *, version: str, version_removed: str
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
+def deprecated(*, version: str, version_removed: str) -> _Decorator:
     """Mark a function as deprecated.
 
     Using the decorated (old) function will result in a warning.
@@ -81,7 +79,7 @@ def deprecated(
         A decorator that can be applied to the deprecated function
     """
 
-    def __wrapper(func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
+    def __wrapper[**P, R](func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
         """Warn the user, and then proceed."""
         warnings.warn(
             "{:s}.{:s}\n\tDeprecated as of librosa version {:s}."
@@ -103,8 +101,8 @@ def vectorize(
     doc: str | None = None,
     excluded: Iterable[int | str] | None = None,
     cache: bool = False,
-    signature: str | None = None
-) -> Callable[[_F], _F]:
+    signature: str | None = None,
+) -> _Decorator:
     """Wrap a function for use with np.vectorize.
 
     This function is not quite a decorator, but is used as a wrapper
