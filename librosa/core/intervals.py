@@ -14,9 +14,9 @@ from ..util.files import _resource_file
 if TYPE_CHECKING:
     from typing import Collection, Iterable, Literal
 
-    from numpy.typing import ArrayLike
+    from numpy.typing import ArrayLike, NDArray
 
-    from .._typing import _FloatLike_co
+    from .._typing import _Array1D, _FloatLike_co
 
 
 with _resource_file("librosa.core", "intervals.msgpack") as _imsgpack, _imsgpack.open("rb") as _fdesc:
@@ -33,7 +33,7 @@ def interval_frequencies(
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     sort: bool = True
-) -> np.ndarray:
+) -> _Array1D[np.float64]:
     """Construct a set of frequencies from an interval set
 
     Parameters
@@ -130,37 +130,22 @@ def interval_frequencies(
     if sort:
         all_ratios = np.sort(all_ratios)
 
-    return all_ratios * fmin
+    frequencies: np.ndarray = all_ratios * fmin
+    return frequencies
 
 
 @overload
 def pythagorean_intervals(
-    *,
-    bins_per_octave: int = ...,
-    sort: bool = ...,
-    return_factors: Literal[False] = ...
-) -> np.ndarray:
-    ...
-
-
+    *, bins_per_octave: int = ..., sort: bool = ..., return_factors: Literal[False] = ...
+) -> _Array1D[np.float64]: ...
 @overload
 def pythagorean_intervals(
     *, bins_per_octave: int = ..., sort: bool = ..., return_factors: Literal[True]
-) -> list[dict[int, int]]:
-    ...
-
-
-@overload
-def pythagorean_intervals(
-    *, bins_per_octave: int = ..., sort: bool = ..., return_factors: bool = ...
-) -> np.ndarray | list[dict[int, int]]:
-    ...
-
-
+) -> list[dict[int, int]]: ...
 @cache(level=10)
 def pythagorean_intervals(
     *, bins_per_octave: int = 12, sort: bool = True, return_factors: bool = False
-) -> np.ndarray | list[dict[int, int]]:
+) -> _Array1D[np.float64] | list[dict[int, int]]:
     """Pythagorean intervals
 
     Intervals are constructed by stacking ratios of 3/2 (i.e.,
@@ -303,41 +288,24 @@ def plimit_intervals(
     primes: ArrayLike,
     bins_per_octave: int = ...,
     sort: bool = ...,
-    return_factors: Literal[False] = ...
-) -> np.ndarray:
-    ...
-
-
+    return_factors: Literal[False] = ...,
+) -> NDArray[np.float64]: ...
 @overload
 def plimit_intervals(
     *,
     primes: ArrayLike,
     bins_per_octave: int = ...,
     sort: bool = ...,
-    return_factors: Literal[True]
-) -> list[dict[int, int]]:
-    ...
-
-
-@overload
-def plimit_intervals(
-    *,
-    primes: ArrayLike,
-    bins_per_octave: int = ...,
-    sort: bool = ...,
-    return_factors: bool = ...
-) -> np.ndarray | list[dict[int, int]]:
-    ...
-
-
+    return_factors: Literal[True],
+) -> list[dict[int, int]]: ...
 @cache(level=10)
 def plimit_intervals(
     *,
     primes: ArrayLike,
     bins_per_octave: int = 12,
     sort: bool = True,
-    return_factors: bool = False
-) -> np.ndarray | list[dict[int, int]]:
+    return_factors: bool = False,
+) -> NDArray[np.float64] | list[dict[int, int]]:
     """Construct p-limit intervals for a given set of prime factors.
 
     This function is based on the "harmonic crystal growth" algorithm

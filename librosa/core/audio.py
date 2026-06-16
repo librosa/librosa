@@ -3,7 +3,7 @@
 """Core IO, DSP and utility functions."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, overload
 
 import lazy_loader as lazy
 import numpy as np
@@ -22,9 +22,9 @@ if TYPE_CHECKING:
     import os
     from typing import Any, BinaryIO, Callable, Generator
 
-    from numpy.typing import DTypeLike
+    from numpy.typing import DTypeLike, NDArray
 
-    from .._typing import _FloatLike_co, _IntLike_co, _ScalarOrSequence, _SequenceLike
+    from .._typing import _Array1D, _FloatLike_co, _IntLike_co, _SequenceLike
 
 
 # Lazy-load optional dependencies
@@ -1384,7 +1384,7 @@ def __lpc(
 
 
 @stencil  # type: ignore
-def _zc_stencil(x: np.ndarray, threshold: float, zero_pos: bool) -> np.ndarray:
+def _zc_stencil(x: np.ndarray, threshold: float, zero_pos: bool) -> NDArray[np.bool]:
     """Stencil to compute zero crossings"""
     x0 = x[0]
     if -threshold <= x0 <= threshold:
@@ -1409,7 +1409,7 @@ def _zc_wrapper(
     x: np.ndarray,
     threshold: float,
     zero_pos: bool,
-    y: np.ndarray,
+    y: NDArray[np.bool],
 ) -> None:  # pragma: no cover
     """Vectorized wrapper for zero crossing stencil"""
     y[:] = _zc_stencil(x, threshold, zero_pos)
@@ -1424,7 +1424,7 @@ def zero_crossings(
     pad: bool = True,
     zero_pos: bool = True,
     axis: int = -1,
-) -> np.ndarray:
+) -> NDArray[np.bool]:
     """Find the zero-crossings of a signal ``y``: indices ``i`` such that ``sign(y[i]) != sign(y[j])``.
 
     If ``y`` is multi-dimensional, then zero-crossings are computed along
@@ -1536,7 +1536,7 @@ def clicks(
     click_duration: float = 0.1,
     click: np.ndarray | None = None,
     length: int | None = None,
-) -> np.ndarray:
+) -> NDArray[np.float32]:
     """Construct a "click track".
 
     This returns a signal with the signal ``click`` sound placed at
@@ -1670,7 +1670,7 @@ def tone(
     length: int | None = None,
     duration: float | None = None,
     phi: float | None = None,
-) -> np.ndarray:
+) -> _Array1D[np.float64]:
     """Construct a pure tone (cosine) signal at a given frequency.
 
     Parameters
@@ -1744,7 +1744,7 @@ def chirp(
     duration: float | None = None,
     linear: bool = False,
     phi: float | None = None,
-) -> np.ndarray:
+) -> _Array1D[np.float64]:
     """Construct a "chirp" or "sine-sweep" signal.
 
     The chirp sweeps from frequency ``fmin`` to ``fmax`` (in Hz).
@@ -1942,9 +1942,13 @@ def mu_compress(
     return x_comp
 
 
+@overload
+def mu_expand(x: _FloatLike_co, *, mu: float = 255.0, quantize: bool = True) -> np.floating: ...
+@overload
+def mu_expand(x: np.ndarray, *, mu: float = 255.0, quantize: bool = True) -> np.ndarray: ...
 def mu_expand(
     x: np.ndarray | _FloatLike_co, *, mu: float = 255.0, quantize: bool = True
-) -> _ScalarOrSequence[_FloatLike_co]:
+) -> np.ndarray | np.floating:
     """Expansion by μ-law
 
     This function is the inverse of ``mu_compress``. Given a mu-law compressed
@@ -2028,5 +2032,5 @@ def mu_expand(
             f"Inverse mu-law input x={x} must be in the range [-1, +1]."
         )
 
-    y: _ScalarOrSequence[_FloatLike_co] = np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)
+    y: np.ndarray | np.floating = np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)
     return y

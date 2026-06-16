@@ -27,7 +27,7 @@ Temporal clustering
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, cast, overload
 
 import numpy as np
 import scipy
@@ -43,9 +43,7 @@ if TYPE_CHECKING:
 
     import sklearn.cluster
 
-    from ._typing import _FloatLike_co, _SparseArray, _WindowSpec
-
-    _F = TypeVar("_F", bound=Callable[..., Any])
+    from ._typing import _Array1D, _FloatLike_co, _SparseArray, _WindowSpec
 
     _ArrayOrSparseArray = TypeVar(
         "_ArrayOrSparseArray", bound=np.ndarray | _SparseArray
@@ -76,10 +74,7 @@ def cross_similarity(
     mode: str = ...,
     bandwidth: np.ndarray | _FloatLike_co | str | None = None,
     full: bool = False,
-) -> np.ndarray:
-    ...
-
-
+) -> np.ndarray: ...
 @overload
 def cross_similarity(
     data: np.ndarray,
@@ -91,10 +86,7 @@ def cross_similarity(
     mode: str = ...,
     bandwidth: np.ndarray | _FloatLike_co | str | None = None,
     full: bool = False,
-) -> scipy.sparse.csc_array:
-    ...
-
-
+) -> scipy.sparse.csc_array: ...
 @cache(level=30)
 def cross_similarity(
     data: np.ndarray,
@@ -900,7 +892,7 @@ def lag_to_recurrence(
 
 
 
-def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
+def timelag_filter[F: Callable[..., Any]](function: F, pad: bool = True, index: int = 0) -> F:
     """Apply a filter in the time-lag domain.
 
     This is primarily useful for adapting image filters to operate on
@@ -983,7 +975,7 @@ def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
 @cache(level=30)
 def subsegment(
     data: np.ndarray, frames: np.ndarray, *, n_segments: int = 4, axis: int = -1
-) -> np.ndarray:
+) -> _Array1D[np.int_]:
     """Sub-divide a segmentation by feature clustering.
 
     Given a set of frame boundaries (``frames``), and a data matrix (``data``),
@@ -1061,7 +1053,7 @@ def subsegment(
     if n_segments < 1:
         raise ParameterError("n_segments must be a positive integer")
 
-    boundaries = []
+    boundaries: list = []
     idx_slices = [slice(None)] * data.ndim
 
     for seg_start, seg_end in itertools.pairwise(frames):
@@ -1069,7 +1061,9 @@ def subsegment(
         boundaries.extend(
             seg_start
             + agglomerative(
-                data[tuple(idx_slices)], min(seg_end - seg_start, n_segments), axis=axis
+                data[tuple(idx_slices)],
+                cast("np.integer", min(seg_end - seg_start, n_segments)),
+                axis=axis,
             )
         )
 
@@ -1078,11 +1072,11 @@ def subsegment(
 
 def agglomerative(
     data: np.ndarray,
-    k: int,
+    k: int | np.integer,
     *,
     clusterer: sklearn.cluster.AgglomerativeClustering | None = None,
     axis: int = -1,
-) -> np.ndarray:
+) -> _Array1D[np.int_]:
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
