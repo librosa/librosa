@@ -34,6 +34,8 @@ if TYPE_CHECKING:
         _SparseMatrix,
     )
 
+    type _PeakPickMethod = Literal["greedy", "dp_count", "dp_value"]
+
 
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
@@ -1279,6 +1281,34 @@ def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, count, 
         n = pointers[n]
 
 
+@overload
+def peak_pick(
+    x: np.ndarray,
+    *,
+    pre_max: int,
+    post_max: int,
+    pre_avg: int,
+    post_avg: int,
+    delta: float,
+    wait: int,
+    sparse: Literal[False],
+    method: _PeakPickMethod = "greedy",
+    axis: int = -1,
+) -> NDArray[np.bool]: ...
+@overload
+def peak_pick(
+    x: np.ndarray,
+    *,
+    pre_max: int,
+    post_max: int,
+    pre_avg: int,
+    post_avg: int,
+    delta: float,
+    wait: int,
+    sparse: Literal[True] = True,
+    method: _PeakPickMethod = "greedy",
+    axis: int = -1,
+) -> NDArray[np.int_]: ...
 def peak_pick(
     x: np.ndarray,
     *,
@@ -1289,7 +1319,7 @@ def peak_pick(
     delta: float,
     wait: int,
     sparse: bool = True,
-    method: Literal["greedy", "dp_count", "dp_value"] = "greedy",
+    method: _PeakPickMethod = "greedy",
     axis: int = -1,
 ) -> NDArray[np.bool | np.int_]:
     """Use a flexible heuristic to pick peaks in a signal.
@@ -1772,7 +1802,7 @@ def sync(
 
 def softmask(
     X: np.ndarray, X_ref: np.ndarray, *, power: float = 1, split_zeros: bool = False
-) -> NDArray[np.bool]:
+) -> np.ndarray:
     """Robustly compute a soft-mask operation.
 
         ``M = X**power / (X**power + X_ref**power)``
