@@ -49,7 +49,7 @@ from .util.exceptions import ParameterError
 if TYPE_CHECKING:
     from typing import Any, Literal
 
-    from numpy.typing import ArrayLike, DTypeLike
+    from numpy.typing import ArrayLike, DTypeLike, NDArray
 
     from ._typing import _FloatLike_co, _WindowSpec
 
@@ -429,7 +429,7 @@ def wavelet_lengths(
     filter_scale: float = 1,
     gamma: float | None = 0,
     alpha: float | np.ndarray | None = None,
-) -> tuple[np.ndarray, float]:
+) -> tuple[NDArray[np.float64], float]:
     """Return length of each filter in a wavelet basis.
 
     Parameters
