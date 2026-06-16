@@ -12,7 +12,7 @@ from .exceptions import ParameterError
 from .utils import valid_intervals
 
 if TYPE_CHECKING:
-    from .._typing import _SequenceLike
+    from .._typing import _Array1D, _SequenceLike
 
 __all__ = ["match_intervals", "match_events"]
 
@@ -65,7 +65,7 @@ def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no co
 @numba.jit(nopython=True, cache=True)  # type: ignore
 def __match_intervals(
     intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True
-) -> np.ndarray:  # pragma: no cover
+) -> _Array1D[np.uint32]:  # pragma: no cover
     """Numba-accelerated interval matching algorithm."""
     # sort index of the interval starts
     start_index = np.argsort(intervals_to[:, 0])
@@ -118,7 +118,7 @@ def __match_intervals(
 
 def match_intervals(
     intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True
-) -> np.ndarray:
+) -> _Array1D[np.uint32]:
     """Match one set of time intervals to another.
 
     This can be useful for tasks such as mapping beat timings

@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import itertools
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, cast, overload
 
 import numba
 import numpy as np
@@ -18,9 +18,11 @@ from .exceptions import ParameterError
 if TYPE_CHECKING:
     from typing import Any, Callable, Literal, Sequence
 
-    from numpy.typing import DTypeLike
+    from numpy.typing import DTypeLike, NDArray
 
     from .._typing import (
+        _Array1D,
+        _Array2D,
         _Complex,
         _ComplexLike_co,
         _FloatLike_co,
@@ -590,7 +592,7 @@ def fix_frames(
     x_min: int | None = 0,
     x_max: int | None = None,
     pad: bool = True,
-) -> np.ndarray:
+) -> _Array1D[np.int_]:
     """Fix a list of frames to lie within [x_min, x_max]
 
     Examples
@@ -680,9 +682,7 @@ def axis_sort(
     axis: int = ...,
     index: Literal[False] = ...,
     value: Callable[..., Any] | None = ...,
-) -> np.ndarray: ...
-
-
+) -> _Array2D[Any]: ...
 @overload
 def axis_sort(
     S: np.ndarray,
@@ -690,16 +690,14 @@ def axis_sort(
     axis: int = ...,
     index: Literal[True],
     value: Callable[..., Any] | None = ...,
-) -> tuple[np.ndarray, np.ndarray]: ...
-
-
+) -> tuple[_Array2D[Any], _Array1D[np.int_]]: ...
 def axis_sort(
     S: np.ndarray,
     *,
     axis: int = -1,
     index: bool = False,
     value: Callable[..., Any] | None = None,
-) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+) -> _Array2D[Any] | tuple[_Array2D[Any], _Array1D[np.int_]]:
     """Sort an array along its rows or columns.
 
     Examples
@@ -1057,7 +1055,7 @@ def _localmin(x, y):  # pragma: no cover
     y[:] = _localmin_sten(x)
 
 
-def localmax(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
+def localmax(x: np.ndarray, *, axis: int = 0) -> NDArray[np.bool]:
     """Find local maxima in an array
 
     An element ``x[i]`` is considered a local maximum if the following
@@ -1118,7 +1116,7 @@ def localmax(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
     return lmax
 
 
-def localmin(x: np.ndarray, *, axis: int = 0) -> np.ndarray:
+def localmin(x: np.ndarray, *, axis: int = 0) -> NDArray[np.bool]:
     """Find local minima in an array
 
     An element ``x[i]`` is considered a local minimum if the following
@@ -1293,7 +1291,7 @@ def peak_pick(
     sparse: bool = True,
     method: Literal["greedy", "dp_count", "dp_value"] = "greedy",
     axis: int = -1,
-) -> np.ndarray:
+) -> NDArray[np.bool | np.int_]:
     """Use a flexible heuristic to pick peaks in a signal.
 
     A sample n is selected as an peak if the corresponding ``x[n]``
@@ -1774,7 +1772,7 @@ def sync(
 
 def softmask(
     X: np.ndarray, X_ref: np.ndarray, *, power: float = 1, split_zeros: bool = False
-) -> np.ndarray:
+) -> NDArray[np.bool]:
     """Robustly compute a soft-mask operation.
 
         ``M = X**power / (X**power + X_ref**power)``
@@ -2445,7 +2443,7 @@ def __count_unique(x):
     return uniques.shape[0]
 
 
-def count_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
+def count_unique(data: np.ndarray, *, axis: int = -1) -> NDArray[np.int_]:
     """Count the number of unique values along a given axis.
 
     Parameters
@@ -2495,7 +2493,7 @@ def __is_unique(x):
     return uniques.shape[0] == x.size
 
 
-def is_unique(data: np.ndarray, *, axis: int = -1) -> np.ndarray:
+def is_unique(data: np.ndarray, *, axis: int = -1) -> NDArray[np.bool]:
     """Determine if the input consists of all unique values along a given axis.
 
     Parameters
@@ -2545,13 +2543,11 @@ def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
 
 @overload
 def abs2(x: np.ndarray, dtype: DTypeLike | None = ...) -> np.ndarray: ...
-
 @overload
-def abs2(x: _Complex, dtype: DTypeLike | None = ...) -> np.floating[Any]: ...
-
-def abs2(x: np.ndarray | _Real | _Complex,
-         dtype: DTypeLike | None = None
-) -> np.ndarray | np.floating[Any]:
+def abs2(x: _Complex, dtype: DTypeLike | None = ...) -> np.floating: ...
+def abs2(
+    x: np.ndarray | _Real | _Complex, dtype: DTypeLike | None = None
+) -> np.ndarray | np.floating:
     """Compute the squared magnitude of a real or complex array.
 
     This function is equivalent to calling `np.abs(x)**2` but it
@@ -2594,26 +2590,20 @@ def abs2(x: np.ndarray | _Real | _Complex,
 @numba.vectorize(
     nopython=True, cache=True, identity=1
 )  # type: ignore
-def _phasor_angles(x) -> np.complexfloating[Any, Any]:
+def _phasor_angles(x) -> np.complexfloating:
     return np.cos(x) + 1j * np.sin(x)  # type: ignore
 
 
 
 @overload
 def phasor(angles: np.ndarray, *, mag: np.ndarray | None = ...) -> np.ndarray: ...
-
-
 @overload
-def phasor(
-    angles: _Real, *, mag: _Number | None = ...
-) -> np.complexfloating[Any, Any]: ...
-
-
+def phasor(angles: _Real, *, mag: _Number | None = ...) -> np.complexfloating: ...
 def phasor(
     angles: np.ndarray | _Real,
     *,
     mag: np.ndarray | _Number | None = None,
-) -> np.ndarray | np.complexfloating[Any, Any]:
+) -> np.ndarray | np.complexfloating:
     """Construct a complex phasor representation from angles.
 
     When `mag` is not provided, this is equivalent to:
@@ -2688,9 +2678,7 @@ def interp_broadcast(
     kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
-) -> tuple[np.ndarray, np.ndarray]: ...
-
-
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]: ...
 @overload
 def interp_broadcast(
     *,
@@ -2703,9 +2691,7 @@ def interp_broadcast(
     kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
-) -> np.ndarray: ...
-
-
+) -> NDArray[np.float64]: ...
 def interp_broadcast(
     *,
     x1: np.ndarray,
@@ -2717,7 +2703,7 @@ def interp_broadcast(
     kind: _InterpKind = "linear",
     fill_value: float = 0,
     axis: int = -2,
-) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+) -> NDArray[np.float64] | tuple[NDArray[np.float64], NDArray[np.float64]]:
     """Broadcast two arrays using interpolation
 
     Interpolates two arrays along a given axis to a common grid, and performs a broadcast operation
@@ -2826,8 +2812,8 @@ def interp_broadcast(
         fill_value=fill_value
     )
 
-    y1 = x1_interp(interp_pos)
-    y2 = x2_interp(interp_pos)
+    y1 = cast("NDArray[np.float64]", x1_interp(interp_pos))
+    y2 = cast("NDArray[np.float64]", x2_interp(interp_pos))
 
     if op is None:
         return y1, y2
