@@ -47,6 +47,7 @@ if TYPE_CHECKING:
     from numpy.typing import ArrayLike
 
     from ._typing import (
+        _Array1D,
         _FloatLike_co,
         _IntLike_co,
         _PadModeSTFT,
@@ -644,7 +645,7 @@ def _signal_to_frame_nonsilent(
     top_db: float = 60,
     ref: Callable | float = np.max,
     aggregate: Callable = np.max,
-) -> np.ndarray:
+) -> _Array1D[np.bool]:
     """Frame-wise non-silent indicator for audio input.
 
     This is a helper function for `trim` and `split`.
@@ -704,7 +705,7 @@ def trim(
     frame_length: int = 2048,
     hop_length: int = 512,
     aggregate: Callable = np.max,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, _Array1D[np.int_]]:
     """Trim leading and trailing silence from an audio signal.
 
     Silence is defined as segments of the audio signal that are `top_db`
@@ -860,8 +861,6 @@ def preemphasis(
     zi: ArrayLike | None = ...,
     return_zf: Literal[False] = ...,
 ) -> np.ndarray: ...
-
-
 @overload
 def preemphasis(
     y: np.ndarray,
@@ -870,18 +869,6 @@ def preemphasis(
     zi: ArrayLike | None = ...,
     return_zf: Literal[True],
 ) -> tuple[np.ndarray, np.ndarray]: ...
-
-
-@overload
-def preemphasis(
-    y: np.ndarray,
-    *,
-    coef: float = ...,
-    zi: ArrayLike | None = ...,
-    return_zf: bool,
-) -> np.ndarray | tuple[np.ndarray, np.ndarray]: ...
-
-
 def preemphasis(
     y: np.ndarray,
     *,
@@ -987,8 +974,6 @@ def deemphasis(
     zi: ArrayLike | None = ...,
     return_zf: Literal[False] = ...,
 ) -> np.ndarray: ...
-
-
 @overload
 def deemphasis(
     y: np.ndarray,
@@ -997,8 +982,6 @@ def deemphasis(
     zi: ArrayLike | None = ...,
     return_zf: Literal[True],
 ) -> tuple[np.ndarray, np.ndarray]: ...
-
-
 def deemphasis(
     y: np.ndarray,
     *,
