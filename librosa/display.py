@@ -84,6 +84,7 @@ if TYPE_CHECKING:
     import matplotlib
     import matplotlib.axes
     import matplotlib.figure
+    import numpy.typing as npt
     import scipy.interpolate
     from matplotlib.artist import Artist
     from matplotlib.collections import PolyCollection, QuadMesh
@@ -93,7 +94,7 @@ if TYPE_CHECKING:
     from matplotlib.path import Path as MplPath
     from matplotlib.typing import ColorType
 
-    from ._typing import ArrayLike, _FloatLike_co
+    from ._typing import ArrayLike, _Array1D, _FloatLike_co
 
 
 __all__ = [
@@ -2369,7 +2370,7 @@ def __decorate_axis(
 
 def __coord_fft_hz(
     n: int, sr: float = 22050, n_fft: int | None = None, **_kwargs: Any
-) -> np.ndarray:
+) -> _Array1D[np.float64]:
     """Get the frequencies for FFT bins"""
     if n_fft is None:
         n_fft = 2 * (n - 1)
@@ -2386,7 +2387,7 @@ def __coord_mel_hz(
     sr: float = 22050,
     htk: bool = False,
     **_kwargs: Any,
-) -> np.ndarray:
+) -> _Array1D[np.float64]:
     """Get the frequencies for Mel bins"""
     if fmin is None:
         fmin = 0.0
@@ -2403,7 +2404,7 @@ def __coord_cqt_hz(
     bins_per_octave: int = 12,
     sr: float = 22050,
     **_kwargs: Any,
-) -> np.ndarray:
+) -> _Array1D[np.float64]:
     """Get CQT bin frequencies"""
     if fmin is None:
         fmin = core.note_to_hz("C1")
@@ -2436,7 +2437,7 @@ def __coord_vqt_hz(
     intervals: str | Collection[float] | None = None,
     unison: str | None = None,
     **_kwargs: Any,
-) -> np.ndarray:
+) -> _Array1D[np.float64]:
     if fmin is None:
         fmin = core.note_to_hz("C1")
 
@@ -3694,7 +3695,7 @@ def _mp_setup_axes(
     orient: Literal["h", "v"],
     sharex: bool,
     sharey: bool,
-) -> tuple[matplotlib.figure.FigureBase, np.ndarray, tuple[int, ...]]:
+) -> tuple[matplotlib.figure.FigureBase, npt.NDArray[np.object_], tuple[int, ...]]:
     """Set up the figure and axes for a multiplot grid.
 
     Parameters
@@ -3783,7 +3784,7 @@ def _mp_setup_axes(
 
 def _mp_setup_labels(
     labels: Sequence[str | None] | None, shape: tuple[int, ...]
-) -> np.ndarray:
+) -> npt.NDArray[np.object_]:
     """Set up the labels for a multiplot grid.
 
     Parameters
@@ -3861,7 +3862,7 @@ def _mp_setup_prop_group(
 
 def _mp_setup_properties(
     prop_group: np.ndarray, badprops: list[str], prop_cycle: cycler.Cycler | None
-) -> np.ndarray:
+) -> npt.NDArray[np.object_]:
     """Set up the properties for each subplot in a multiplot grid based on the property groups.
 
     Parameters
@@ -3918,7 +3919,7 @@ def multiplot(
     titles: Sequence[str | None] | None = None,
     prop_cycle: cycler.Cycler | None = None,
     **kwargs: Any,
-) -> np.ndarray:
+) -> npt.NDArray[np.object_]:
     """Visualize multiple related waveforms or spectrograms on an array of subplots.
 
     Example use cases include:
