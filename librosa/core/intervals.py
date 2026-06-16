@@ -130,7 +130,8 @@ def interval_frequencies(
     if sort:
         all_ratios = np.sort(all_ratios)
 
-    return all_ratios * fmin
+    frequencies: np.ndarray = all_ratios * fmin
+    return frequencies
 
 
 @overload

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, cast, overload
 
 import numpy as np
 
@@ -1388,7 +1388,7 @@ def fft_frequencies(*, sr: float = 22050, n_fft: int = 2048) -> _Array1D[np.floa
              5512.5  ,   6890.625,   8268.75 ,   9646.875,  11025.   ])
     """
     # the return dtype was unnecessarily broad in the numpy<2.5 dtype stubs
-    return np.fft.rfftfreq(n=n_fft, d=1.0 / sr)  # type:ignore[return-value]
+    return cast("_Array1D[np.float64]", np.fft.rfftfreq(n=n_fft, d=1.0 / sr))
 
 
 def cqt_frequencies(
