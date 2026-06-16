@@ -25,7 +25,7 @@ from .util.exceptions import ParameterError
 if TYPE_CHECKING:
     import scipy.stats
 
-    from ._typing import _FloatLike_co
+    from ._typing import _Array1D, _FloatLike_co
 
 __all__ = ["beat_track", "plp"]
 
@@ -453,7 +453,7 @@ def plp(
 
 def __beat_tracker(
     onset_envelope: np.ndarray, bpm: np.ndarray, frame_rate: float, tightness: float, trim: bool
-) -> np.ndarray:
+) -> _Array1D[np.bool]:
     """Track beats in an onset strength envelope.
 
     Parameters
