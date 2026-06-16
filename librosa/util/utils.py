@@ -1309,6 +1309,20 @@ def peak_pick(
     method: _PeakPickMethod = "greedy",
     axis: int = -1,
 ) -> NDArray[np.int_]: ...
+@overload  # this overload should not be needed, but mypy becomes confused without it
+def peak_pick(
+    x: np.ndarray,
+    *,
+    pre_max: int,
+    post_max: int,
+    pre_avg: int,
+    post_avg: int,
+    delta: float,
+    wait: int,
+    sparse: bool = True,
+    method: _PeakPickMethod = "greedy",
+    axis: int = -1,
+) -> NDArray[np.bool | np.int_]: ...
 def peak_pick(
     x: np.ndarray,
     *,
