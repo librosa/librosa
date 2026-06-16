@@ -20,7 +20,13 @@ if TYPE_CHECKING:
 
     import numpy.typing as npt
 
-    from .._typing import _FloatLike_co, _IterableLike, _ScalarOrSequence, _SequenceLike
+    from .._typing import (
+        _Array1D,
+        _FloatLike_co,
+        _IterableLike,
+        _ScalarOrSequence,
+        _SequenceLike,
+    )
 
 __all__ = [
     "key_to_degrees",
@@ -160,7 +166,7 @@ OFFSET_DICT = { "ion": 0, "dor": 1, "phr": 2, "lyd": 3, "mix": 4, "aeo": 5, "loc
 ACC_MAP = {"#": 1, "♮": 0, "": 0, "n": 0,  "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
 
 
-def thaat_to_degrees(thaat: str) -> np.ndarray:
+def thaat_to_degrees(thaat: str) -> _Array1D[np.int_]:
     """Construct the svara indices (degrees) for a given thaat
 
     Parameters
@@ -191,7 +197,7 @@ def thaat_to_degrees(thaat: str) -> np.ndarray:
     return np.asarray(THAAT_MAP[thaat.lower()])
 
 
-def mela_to_degrees(mela: str | int) -> np.ndarray:
+def mela_to_degrees(mela: str | int) -> _Array1D[np.int_]:
     """Construct the svara indices (degrees) for a given melakarta raga
 
     Parameters
@@ -498,15 +504,12 @@ def list_thaat() -> list[str]:
     return list(THAAT_MAP.keys())
 
 @overload
-def __note_to_degree(key: str) -> int:
-    ...
+def __note_to_degree(key: str) -> int: ...
 @overload
-def __note_to_degree(key: _IterableLike[str]) -> np.ndarray:
-    ...
+def __note_to_degree(key: _IterableLike[str]) -> _Array1D[np.int_]: ...
 @overload
-def __note_to_degree(key: str | _IterableLike[str] | Iterable[str]) -> int | np.ndarray:
-    ...
-def __note_to_degree(key: str | _IterableLike[str] | Iterable[str]) -> int | np.ndarray:
+def __note_to_degree(key: Iterable[str]) -> int | _Array1D[np.int_]: ...
+def __note_to_degree(key: str | _IterableLike[str] | Iterable[str]) -> int | _Array1D[np.int_]:
     """Take a note name and return the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
 
     >>> librosa.__note_to_degree('B#')

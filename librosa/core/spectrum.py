@@ -1720,9 +1720,7 @@ def power_to_db(
     amin: float = ...,
     top_db: float | None = ...,
     axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
-) -> np.floating[Any]: ...
-
-
+) -> np.floating: ...
 @overload
 def power_to_db(
     S: _SequenceLike[_ComplexLike_co],
@@ -1732,19 +1730,6 @@ def power_to_db(
     top_db: float | None = ...,
     axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.ndarray: ...
-
-
-@overload
-def power_to_db(
-    S: _ScalarOrSequence[_ComplexLike_co],
-    *,
-    ref: float | Callable = ...,
-    amin: float = ...,
-    top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
-) -> np.floating[Any] | np.ndarray: ...
-
-
 @cache(level=30)
 def power_to_db(
     S: _ScalarOrSequence[_ComplexLike_co],
@@ -1753,7 +1738,7 @@ def power_to_db(
     amin: float = 1e-10,
     top_db: float | None = 80.0,
     axes: None | Literal["auto"] | int | tuple[int, ...] = "auto",
-) -> np.floating[Any] | np.ndarray:
+) -> np.floating | np.ndarray:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
     This computes the scaling ``10 * log10(S / ref)`` in a numerically
@@ -1902,29 +1887,17 @@ def db_to_power(
     S_db: _FloatLike_co,
     *,
     ref: float = ...,
-) -> np.floating[Any]: ...
-
-
+) -> np.floating: ...
 @overload
 def db_to_power(
     S_db: np.ndarray,
     *,
     ref: float = ...,
 ) -> np.ndarray: ...
-
-
-@overload
-def db_to_power(
-    S_db: _FloatLike_co | np.ndarray,
-    *,
-    ref: float = ...,
-) -> np.floating[Any] | np.ndarray: ...
-
-
 @cache(level=30)
 def db_to_power(
     S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0
-) -> np.floating[Any] | np.ndarray:
+) -> np.floating | np.ndarray:
     """Convert dB-scale values to a power values.
 
     This effectively inverts ``power_to_db``::
@@ -1958,9 +1931,7 @@ def amplitude_to_db(
     amin: float = ...,
     top_db: float | None = ...,
     axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
-) -> np.floating[Any]: ...
-
-
+) -> np.floating: ...
 @overload
 def amplitude_to_db(
     S: _SequenceLike[_ComplexLike_co],
@@ -1970,19 +1941,6 @@ def amplitude_to_db(
     top_db: float | None = ...,
     axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
 ) -> np.ndarray: ...
-
-
-@overload
-def amplitude_to_db(
-    S: _ScalarOrSequence[_ComplexLike_co],
-    *,
-    ref: float | Callable = ...,
-    amin: float = ...,
-    top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
-) -> np.floating[Any] | np.ndarray: ...
-
-
 @cache(level=30)
 def amplitude_to_db(
     S: _ScalarOrSequence[_ComplexLike_co],
@@ -1991,7 +1949,7 @@ def amplitude_to_db(
     amin: float = 1e-5,
     top_db: float | None = 80.0,
     axes: None | Literal["auto"] | int | tuple[int, ...] = "auto",
-) -> np.floating[Any] | np.ndarray:
+) -> np.floating | np.ndarray:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
     This is equivalent to ``power_to_db(S**2, ref=ref**2, amin=amin**2, top_db=top_db)``,
@@ -2084,29 +2042,17 @@ def db_to_amplitude(
     S_db: _FloatLike_co,
     *,
     ref: float = ...,
-) -> np.floating[Any]: ...
-
-
+) -> np.floating: ...
 @overload
 def db_to_amplitude(
     S_db: np.ndarray,
     *,
     ref: float = ...,
 ) -> np.ndarray: ...
-
-
-@overload
-def db_to_amplitude(
-    S_db: _FloatLike_co | np.ndarray,
-    *,
-    ref: float = ...,
-) -> np.floating[Any] | np.ndarray: ...
-
-
 @cache(level=30)
 def db_to_amplitude(
     S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0
-) -> np.floating[Any] | np.ndarray:
+) -> np.floating | np.ndarray:
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
@@ -2426,8 +2372,6 @@ def pcen(
     zi: np.ndarray | None = ...,
     return_zf: Literal[False] = ...,
 ) -> np.ndarray: ...
-
-
 @overload
 def pcen(
     S: np.ndarray,
@@ -2447,29 +2391,6 @@ def pcen(
     zi: np.ndarray | None = ...,
     return_zf: Literal[True],
 ) -> tuple[np.ndarray, np.ndarray]: ...
-
-
-@overload
-def pcen(
-    S: np.ndarray,
-    *,
-    sr: float = ...,
-    hop_length: int = ...,
-    gain: float = ...,
-    bias: float = ...,
-    power: float = ...,
-    time_constant: float = ...,
-    eps: float = ...,
-    b: float | None = ...,
-    max_size: int = ...,
-    ref: np.ndarray | None = ...,
-    axis: int = ...,
-    max_axis: int | None = ...,
-    zi: np.ndarray | None = ...,
-    return_zf: bool = ...,
-) -> np.ndarray | tuple[np.ndarray, np.ndarray]: ...
-
-
 @cache(level=30)
 def pcen(
     S: np.ndarray,
