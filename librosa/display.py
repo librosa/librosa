@@ -4090,7 +4090,13 @@ def multiplot(
 def legend_for_axes(
     axes: matplotlib.axes.Axes | np.ndarray | list[matplotlib.axes.Axes] | None = None,
     *,
-    loc: str | None = None,
+    loc: Literal["upper right", "upper left", "lower left", "lower right", "right",
+                 "center left", "center right", "lower center", "upper center",
+                 "center", "best", "outside upper left", "outside upper center",
+                 "outside upper right", "outside right upper", "outside right center",
+                 "outside right lower", "outside lower right", "outside lower center",
+                 "outside lower left", "outside left lower", "outside left center",
+                 "outside left upper"] | None = None,
     pad: float = 0.02,
     fraction: float = 0.2,
     width: float | None = None,
@@ -4223,8 +4229,8 @@ def legend_for_axes(
         if ax.figure is not fig:
             raise ParameterError("All axes must belong to the same figure")
 
-    handles = []
-    labels = []
+    handles: list[Artist] = []
+    labels: list[str] = []
 
     for ax in axes_list:
         hlist, llist = ax.get_legend_handles_labels()

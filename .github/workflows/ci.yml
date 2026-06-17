@@ -132,13 +132,28 @@ jobs:
           shell: bash -l {0}
           run: pytest --mpl-results-path=mpl_image_results/
 
-        - name: Upload image comparison failures if any
+        - name: Prepare artifact directory structure
           if: failure() && hashFiles('mpl_image_results/**') != ''
-          uses: actions/upload-artifact@v4
+          id: prep_artifact
+          run: |
+            PR_NUM="${{ github.event.pull_request.number || github.run_id }}"
+            ART_NAME="mpl-test-results-${{ runner.os }}--${{ runner.arch }}--${{ matrix.python-version }}-PR${PR_NUM}"
+            
+            mkdir -p "_artifact_stage/$ART_NAME"
+            mv mpl_image_results/* "_artifact_stage/$ART_NAME/"
+          
+            echo "art_name=$ART_NAME" >> "$GITHUB_OUTPUT"
+
+        - name: Upload image comparison failures if any
+          if: failure() && steps.prep_artifact.outputs.art_name != ''
+          uses: actions/upload-artifact@v7
           with:
-            name: mpl-test-results-${{ runner.os }}--${{ runner.arch }}--${{ matrix.python-version }}
-            path: mpl_image_results/
+            name: ${{ steps.prep_artifact.outputs.art_name }}
+            path: _artifact_stage/
             retention-days: 7
+            compression-level: 0
+            overwrite: true
+
 
         - name: Upload coverage to Codecov
           uses: codecov/codecov-action@v7
