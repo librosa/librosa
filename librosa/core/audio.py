@@ -277,6 +277,10 @@ def stream(
 
         An existing `soundfile.SoundFile` object may also be provided.
 
+    sr : number > 0 [scalar]
+        target sampling rate.  If not provided, the original sampling rate of the file will be
+        used.
+
     block_length : int > 0
         The number of frames to include in each block.
 
