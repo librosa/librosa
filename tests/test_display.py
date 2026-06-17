@@ -22,6 +22,7 @@ import matplotlib
 
 import matplotlib.collections
 import matplotlib.pyplot as plt
+from matplotlib.testing.conftest import text_placeholders
 
 import librosa
 import librosa.display
@@ -34,6 +35,12 @@ STYLE = "default"
 FT_VERSION = version.parse(matplotlib.ft2font.__freetype_version__)
 OLD_FT = not (FT_VERSION >= version.parse("2.10"))
 
+# Matplotlib 3.11 changed font rendering enough that this causes some problems
+# We'll relax rms tolerance on older matplotlibs, and tighten otherwise
+if version.parse(matplotlib.__version__) < version.parse("3.11.0"):
+    TOLERANCE = 6.5
+else:
+    TOLERANCE = 2
 
 @pytest.fixture(scope="module")
 def audio():
@@ -112,9 +119,10 @@ def test_unknown_time_unit(y):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["complex"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["complex"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_complex_input(S):
     plt.figure()
     with pytest.warns(UserWarning, match="Trying to display complex"):
@@ -123,9 +131,10 @@ def test_complex_input(S):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["abs"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["abs"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_abs_input(S_abs):
     plt.figure()
     librosa.display.specshow(S_abs)
@@ -133,7 +142,7 @@ def test_abs_input(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["cqt_note"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["cqt_note"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_cqt_note(C):
@@ -143,7 +152,7 @@ def test_cqt_note(C):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["fft_note"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["fft_note"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_fft_note(S_abs):
@@ -153,7 +162,7 @@ def test_fft_note(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["cqt_hz"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["cqt_hz"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_cqt_hz(C):
@@ -163,7 +172,7 @@ def test_cqt_hz(C):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["tempo"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["tempo"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_tempo(y, sr):
@@ -175,7 +184,7 @@ def test_tempo(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["fourier_tempo"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["fourier_tempo"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 @pytest.mark.filterwarnings(
@@ -190,7 +199,7 @@ def test_fourier_tempo(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["tonnetz"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["tonnetz"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_tonnetz(C):
@@ -202,7 +211,7 @@ def test_tonnetz(C):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["chroma"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["chroma"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_chroma(S_abs, sr):
@@ -222,7 +231,7 @@ def test_chroma(S_abs, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["chroma_svara"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["chroma_svara"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_chroma_svara(C, sr):
@@ -251,7 +260,7 @@ def test_chroma_svara(C, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["double_chroma"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["double_chroma"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_double_chroma(S_abs, sr):
@@ -264,7 +273,7 @@ def test_double_chroma(S_abs, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["x_mel"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["x_mel"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_x_mel(S_abs):
@@ -276,7 +285,7 @@ def test_x_mel(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["y_mel"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["y_mel"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_y_mel(S_abs):
@@ -288,7 +297,7 @@ def test_y_mel(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["y_mel_bounded"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["y_mel_bounded"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_y_mel_bounded(S_abs):
@@ -301,7 +310,7 @@ def test_y_mel_bounded(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["x_none_y_linear"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["x_none_y_linear"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_linear(S_abs, S_signed):
@@ -316,9 +325,10 @@ def test_xaxis_none_yaxis_linear(S_abs, S_signed):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_ext_axes"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["specshow_ext_axes"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_specshow_ext_axes(S_abs):
     plt.figure()
     ax_left = plt.subplot(1, 2, 1)
@@ -331,7 +341,7 @@ def test_specshow_ext_axes(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["x_none_y_log"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["x_none_y_log"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_log(S_abs, S_signed):
@@ -347,7 +357,7 @@ def test_xaxis_none_yaxis_log(S_abs, S_signed):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["x_linear_y_none"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["x_linear_y_none"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_linear_yaxis_none(S_abs, S_signed):
@@ -363,7 +373,7 @@ def test_xaxis_linear_yaxis_none(S_abs, S_signed):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["x_log_y_none"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["x_log_y_none"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_log_yaxis_none(S_abs, S_signed):
@@ -380,7 +390,7 @@ def test_xaxis_log_yaxis_none(S_abs, S_signed):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["x_time_y_none"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["x_time_y_none"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_time_yaxis_none(S_abs):
@@ -391,7 +401,7 @@ def test_xaxis_time_yaxis_none(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["x_none_y_time"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["x_none_y_time"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_time(S_abs):
@@ -402,7 +412,7 @@ def test_xaxis_none_yaxis_time(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["x_frames_y_none"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["x_frames_y_none"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_frames_yaxis_none(S_abs):
@@ -413,7 +423,7 @@ def test_xaxis_frames_yaxis_none(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["x_none_y_frames"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["x_none_y_frames"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_frames(S_abs):
@@ -424,7 +434,7 @@ def test_xaxis_none_yaxis_frames(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["x_lag_y_none"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["x_lag_y_none"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_lag_yaxis_none(S_abs):
@@ -435,7 +445,7 @@ def test_xaxis_lag_yaxis_none(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["x_none_y_lag"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["x_none_y_lag"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_time_yaxis_lag(S_abs):
@@ -446,7 +456,7 @@ def test_xaxis_time_yaxis_lag(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["time_scales_auto"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["time_scales_auto"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_time_scales_auto(S_abs, sr):
@@ -475,7 +485,7 @@ def test_time_scales_auto(S_abs, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["time_unit"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["time_unit"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_time_unit(S_abs, sr):
@@ -508,7 +518,7 @@ def test_time_unit(S_abs, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["time_unit_lag"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["time_unit_lag"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_time_unit_lag(S_abs, sr):
@@ -539,9 +549,10 @@ def test_time_unit_lag(S_abs, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_mono"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["waveshow_mono"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_waveshow_mono(y, sr):
 
     fig, ax = plt.subplots()
@@ -552,10 +563,11 @@ def test_waveshow_mono(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_mono_trans"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_waveshow_mono_trans(y, sr):
 
     fig, ax = plt.subplots()
@@ -564,9 +576,10 @@ def test_waveshow_mono_trans(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_mono_zoom"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["waveshow_mono_zoom"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_waveshow_mono_zoom(y, sr):
 
     fig, ax = plt.subplots()
@@ -579,10 +592,11 @@ def test_waveshow_mono_zoom(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_mono_zoom_trans"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_waveshow_mono_zoom_trans(y, sr):
 
     fig, ax = plt.subplots()
@@ -595,10 +609,11 @@ def test_waveshow_mono_zoom_trans(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_mono_zoom_out"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_waveshow_mono_zoom_out(y, sr):
 
     fig, ax = plt.subplots()
@@ -611,9 +626,10 @@ def test_waveshow_mono_zoom_out(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_ext_axes"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["waveshow_ext_axes"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_waveshow_ext_axes(y):
     plt.figure()
     ax_left = plt.subplot(1, 2, 1)
@@ -628,7 +644,7 @@ def test_waveshow_ext_axes(y):
 @pytest.mark.mpl_image_compare(
     baseline_images=["waveshow_inverted"],
     extensions=["png"],
-    tolerance=3,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -658,9 +674,10 @@ def test_waveshow_inverted(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_stereo"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["waveshow_stereo"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_waveshow_stereo(y, sr):
 
     ys = librosa.util.stack([y, 2 * y])
@@ -844,7 +861,7 @@ def test_infer_cmap_robust(data):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["coords"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["coords"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_coords(Csync, beat_t):
@@ -862,7 +879,7 @@ def test_bad_coords(S_abs):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["sharex_specshow_ms"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["sharex_specshow_ms"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_sharex_specshow_ms(S_abs, y, sr):
@@ -881,7 +898,7 @@ def test_sharex_specshow_ms(S_abs, y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["sharex_waveplot_ms"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["sharex_waveplot_ms"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_sharex_waveplot_ms(y, sr, S_abs):
@@ -920,7 +937,7 @@ def test_axis_bound_warning(format_str):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["cqt_svara"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["cqt_svara"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_display_cqt_svara(C, sr):
@@ -947,7 +964,7 @@ def test_display_cqt_svara(C, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["fft_svara"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["fft_svara"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_display_fft_svara(S_abs, sr):
@@ -973,7 +990,7 @@ def test_display_fft_svara(S_abs, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["nfft_odd"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["nfft_odd"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 def test_display_fft_odd():
 
@@ -999,7 +1016,7 @@ def test_display_fft_odd():
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["nfft_odd_ftempo"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["nfft_odd_ftempo"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 def test_display_fourier_tempo_odd():
 
@@ -1076,7 +1093,7 @@ def test_auto_aspect():
 @pytest.mark.mpl_image_compare(
     baseline_images=["specshow_unicode_true"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1118,7 +1135,7 @@ def test_specshow_unicode_true(C, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["specshow_unicode_false"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1218,7 +1235,7 @@ def test_waveshow_deladaptor(y, sr):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_vqt"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["specshow_vqt"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_vqt(C):
@@ -1250,7 +1267,7 @@ def test_chromafjs_badbpo():
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["chroma_fjs"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["chroma_fjs"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_chromafjs(C, sr):
@@ -1305,7 +1322,7 @@ def test_parse_vscale(vscale, mode, scale_type, ref):
 
 
 @pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_vscale"], extensions=["png"], tolerance=6, style=STYLE
+    baseline_images=["specshow_vscale"], extensions=["png"], tolerance=TOLERANCE, style=STYLE
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_vscale(S):
@@ -1354,10 +1371,11 @@ def test_specshow_vscale(S):
 @pytest.mark.mpl_image_compare(
     baseline_images=["specshow_vscale_phase"],
     extensions=["png"],
-    tolerance=3,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_specshow_vscale_phase():
     # Create a chirp
     sr = 22050
@@ -1400,7 +1418,7 @@ def test_specshow_vscale_phase():
 @pytest.mark.mpl_image_compare(
     baseline_images=["colorbar_db"],
     extensions=["png"],
-    tolerance=3,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1418,7 +1436,7 @@ def test_colorbar_db(S):
 @pytest.mark.mpl_image_compare(
     baseline_images=["colorbar_phase"],
     extensions=["png"],
-    tolerance=3,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1440,7 +1458,7 @@ def test_colorbar_phase(S):
 @pytest.mark.mpl_image_compare(
     baseline_images=["diverging_slopes"],
     extensions=["png"],
-    tolerance=5,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1517,7 +1535,7 @@ def test_diverging_scales(S_signed):
 @pytest.mark.mpl_image_compare(
     baseline_images=["oct3"],
     extensions=["png"],
-    tolerance=5,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1549,7 +1567,7 @@ def test_oct3(S_abs, C):
 @pytest.mark.mpl_image_compare(
     baseline_images=["wavebars"],
     extensions=["png"],
-    tolerance=5,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1589,7 +1607,7 @@ def test_wavebars(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["wavebars_transpose"],
     extensions=["png"],
-    tolerance=5,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1726,7 +1744,7 @@ def test_legend_for_axes_explicit_bbox():
 @pytest.mark.mpl_image_compare(
     baseline_images=["legend_for_axes_right"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1769,7 +1787,7 @@ def test_wavef0_transpose(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["legend_for_axes_left"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1833,7 +1851,7 @@ def test_transformf0_bad_f0(f0):
 @pytest.mark.mpl_image_compare(
     baseline_images=["legend_for_axes_above"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1852,7 +1870,7 @@ def test_legend_for_axes_above():
 @pytest.mark.mpl_image_compare(
     baseline_images=["legend_for_axes_below"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1871,7 +1889,7 @@ def test_legend_for_axes_below():
 @pytest.mark.mpl_image_compare(
     baseline_images=["legend_for_axes_default_1d"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1890,7 +1908,7 @@ def test_legend_for_axes_default_1d():
 @pytest.mark.mpl_image_compare(
     baseline_images=["legend_for_axes_default_row"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1910,7 +1928,7 @@ def test_legend_for_axes_default_row():
 @pytest.mark.mpl_image_compare(
     baseline_images=["legend_for_axes_default_col"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -1930,7 +1948,7 @@ def test_legend_for_axes_default_col():
 @pytest.mark.mpl_image_compare(
     baseline_images=["legend_for_axes_default_grid"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
@@ -2232,10 +2250,11 @@ def test_mp_setup_properties_badprops():
 @pytest.mark.mpl_image_compare(
     baseline_images=["multiplot_wave_constructed_axes_stacked"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_multiplot_wave_constructed_axes_stacked(y, sr):
     y_stack = np.stack([y, y[::-1]])
 
@@ -2255,10 +2274,11 @@ def test_multiplot_wave_constructed_axes_stacked(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["multiplot_wave_constructed_axes_variadic"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_multiplot_wave_constructed_axes_variadic(y, sr):
     librosa.display.multiplot(
         "waveshow",
@@ -2277,10 +2297,11 @@ def test_multiplot_wave_constructed_axes_variadic(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["multiplot_wave_existing_axes_stacked"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_multiplot_wave_existing_axes_stacked(y, sr):
     y_stack = np.stack([y, y[::-1]])
     fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 6))
@@ -2302,10 +2323,11 @@ def test_multiplot_wave_existing_axes_stacked(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["multiplot_img_existing_axes_variadic"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_multiplot_img_existing_axes_variadic(y, sr):
     y_stack = np.stack([y, y[::-1]])
     D = np.abs(librosa.stft(y_stack))
@@ -2330,10 +2352,11 @@ def test_multiplot_img_existing_axes_variadic(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["multiplot_axes_slices_mixed"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_multiplot_axes_slices_mixed(y, sr):
     y_stack = np.stack([y, y[::-1]])
     D = np.abs(librosa.stft(y_stack))
@@ -2389,10 +2412,11 @@ def test_multiplot_axes_slices_mixed(y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["highlight_spectrum"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_highlight_spectrum(S_abs, y, sr):
 
     fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
@@ -2433,10 +2457,11 @@ def test_highlight_spectrum(S_abs, y, sr):
 @pytest.mark.mpl_image_compare(
     baseline_images=["highlight_axes"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+@pytest.mark.usefixtures('text_placeholders')
 def test_highlight_axescolor():
 
     fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
@@ -2464,7 +2489,7 @@ def test_highlight_axescolor():
 @pytest.mark.mpl_image_compare(
     baseline_images=["highlight_artist"],
     extensions=["png"],
-    tolerance=6,
+    tolerance=TOLERANCE,
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
