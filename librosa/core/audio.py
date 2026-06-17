@@ -70,7 +70,7 @@ def load(
     Audio will be automatically resampled to the given rate
     (default ``sr=22050``).
 
-    To preserve the native sampling rate of the file, use ``sr=None``.
+    To preserve the orig sampling rate of the file, use ``sr=None``.
 
     Parameters
     ----------
@@ -88,7 +88,7 @@ def load(
     sr : number > 0 [scalar]
         target sampling rate
 
-        'None' uses the native sampling rate
+        'None' uses the orig sampling rate
 
     mono : bool
         convert signal to mono
@@ -110,7 +110,7 @@ def load(
         .. note::
             By default, this uses `soxr`'s high-quality mode ('HQ').
 
-            For alternative resampling modes, see `resample`
+            For alterorig resampling modes, see `resample`
 
     Returns
     -------
@@ -152,17 +152,17 @@ def load(
     >>> sfo = soundfile.SoundFile(librosa.ex('brahms'))
     >>> y, sr = librosa.load(sfo)
     """
-    y, sr_native = __soundfile_load(path, offset, duration, dtype)
+    y, sr_orig = __soundfile_load(path, offset, duration, dtype)
 
     # Final cleanup for dtype and contiguity
     if mono:
         y = to_mono(y)
 
     if sr is not None:
-        y = resample(y, orig_sr=sr_native, target_sr=sr, res_type=res_type)
+        y = resample(y, orig_sr=sr_orig, target_sr=sr, res_type=res_type)
 
     else:
-        sr = sr_native
+        sr = sr_orig
 
     return y, sr
 
@@ -178,28 +178,45 @@ def __soundfile_load(path, offset, duration, dtype):
         context = sf.SoundFile(path)
 
     with context as sf_desc:
-        sr_native = sf_desc.samplerate
+        sr_orig = sf_desc.samplerate
         if offset != 0:
             if offset > 0:
                 # Seek to the start of the target read
-                sf_desc.seek(int(offset * sr_native))
+                sf_desc.seek(int(offset * sr_orig))
             else:
-                sf_desc.seek(-int(abs(offset) * sr_native), whence=sf.SEEK_END)
+                sf_desc.seek(-int(abs(offset) * sr_orig), whence=sf.SEEK_END)
 
         if duration is not None:
-            frame_duration = int(duration * sr_native)
+            frame_duration = int(duration * sr_orig)
         else:
             frame_duration = -1
 
         # Load the target number of frames, and transpose to match librosa form
         y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
 
-    return y, sr_native
+    return y, sr_orig
 
+
+def _align_step_size(target_step, target_sr, orig_sr):
+    """
+    When resampling a stream, we need to ensure that the target step size
+    remains integer-valued in the original sampling rate
+    """
+    if target_sr is None or target_sr == orig_sr:
+        return target_step
+
+    if (target_step * orig_sr) % target_sr != 0:
+        raise ParameterError(
+            f"Target block step of {target_step} samples at {target_sr} results in a "
+            f"fractional sample advance at original sampling rate {orig_sr}."
+        )
+
+    return int((target_step * orig_sr) / target_sr)
 
 def stream(
     path: str | int | sf.SoundFile | BinaryIO,
     *,
+    sr: float | None = None,
     block_length: int,
     frame_length: int,
     hop_length: int,
@@ -228,7 +245,7 @@ def stream(
            refers to a buffer of audio which spans a given number of
            (potentially overlapping) frames.
         2. Automatic sample-rate conversion is not supported.
-           Audio will be streamed in its native sample rate,
+           Audio will be streamed in its orig sample rate,
            so no default values are provided for ``frame_length``
            and ``hop_length``.  It is recommended that you first
            get the sampling rate for the file in question, using
@@ -354,34 +371,115 @@ def stream(
         sfo = sf.SoundFile(path)
 
     # Get the sample rate from the file info
-    sr = sfo.samplerate
+    orig_sr = sfo.samplerate
 
     # Construct the stream
     # Seek the soundfile object to the starting frame
+
+    target_yield_size = (block_length - 1) * hop_length + frame_length
+    target_advance = block_length * hop_length
+
+    # Determine internal channel state for buffer initialization
+    is_multichannel = sfo.channels > 1
+    process_channels = 1 if mono else sfo.channels
+
+    needs_resampling = (sr is not None) and (orig_sr != sr)
+    sr = sr or orig_sr
+
+    orig_read_size = _align_step_size(target_advance, sr, orig_sr)
+
+    read_frames = int(np.round(duration * orig_sr)) if duration is not None else -1
+
+    if needs_resampling:
+        resampler = soxr.ResampleStream(
+            in_rate=orig_sr,
+            out_rate=sr,
+            num_channels=process_channels,
+            dtype=dtype,
+            quality="HQ"
+        )
+
+    capacity = max(target_yield_size * 4, target_advance * 4)
+    buffer_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
+    buffer = np.zeros(buffer_shape, dtype=dtype)
+
+    write_idx = 0
+    read_idx = 0
+
     if offset >= 0:
-        sfo.seek(int(offset * sr))
+        sfo.seek(int(offset * orig_sr))
     else:
-        sfo.seek(-int(abs(offset) * sr), whence=sf.SEEK_END)
+        sfo.seek(-int(abs(offset) * orig_sr), whence=sf.SEEK_END)
 
-    if duration:
-        frames = int(duration * sr)
-    else:
-        frames = -1
+    for orig_chunk in sfo.blocks(blocksize=orig_read_size,
+                                 overlap=0,
+                                 dtype=dtype,
+                                 always_2d=False,
+                                 frames=read_frames):
 
-    blocks = sfo.blocks(
-        blocksize=frame_length + (block_length - 1) * hop_length,
-        overlap=frame_length - hop_length,
-        frames=frames,
-        dtype=dtype,
-        always_2d=False,
-        fill_value=fill_value,
-    )
+        if mono and is_multichannel:
+            # soundfile returns (samples, channels), to_mono expects (channels, samples)
+            orig_chunk = to_mono(orig_chunk.T)
 
-    for block in blocks:
-        if mono:
-            yield to_mono(block.T)
+        if needs_resampling:
+            target_chunk = resampler.resample_chunk(orig_chunk)
         else:
+            target_chunk = orig_chunk
+        n_incoming = target_chunk.shape[0]
+
+        if write_idx + n_incoming > capacity:
+            available = write_idx - read_idx
+            buffer[:available] = buffer[read_idx : write_idx]
+            read_idx = 0
+            write_idx = available
+
+            if write_idx + n_incoming > capacity:
+                capacity = write_idx + n_incoming + target_yield_size
+                new_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
+                new_buffer = np.zeros(new_shape, dtype=np.float32)
+                new_buffer[:write_idx] = buffer[:write_idx]
+                buffer = new_buffer
+
+        buffer[write_idx : write_idx + n_incoming] = target_chunk
+        write_idx += n_incoming
+
+        while write_idx - read_idx >= target_yield_size:
+            block = buffer[read_idx : read_idx + target_yield_size]
             yield block.T
+            read_idx += target_advance
+
+    if process_channels == 1:
+        empty = np.empty((0,), dtype=buffer.dtype)
+    else:
+        empty = np.empty((0, process_channels), dtype=buffer.dtype)
+
+    if needs_resampling:
+        tail_chunk = resampler.resample_chunk(empty, last=True)
+    else:
+        tail_chunk = None
+
+    available = write_idx - read_idx
+    final_data_list = [buffer[read_idx : write_idx]]
+    if tail_chunk is not None and tail_chunk.shape[0] > 0:
+        final_data_list.append(tail_chunk)
+
+    remainder = np.concatenate(final_data_list, axis=0) if final_data_list else np.array([])
+
+    rem_idx = 0
+    while rem_idx < remainder.shape[0]:
+        current_slice = remainder[rem_idx : rem_idx + target_yield_size]
+
+        if current_slice.shape[0] < target_yield_size:
+            pad_length = target_yield_size - current_slice.shape[0]
+            pad_width = (0, pad_length) if process_channels == 1 else ((0, pad_length), (0, 0))
+            if fill_value is not None:
+                current_slice = np.pad(current_slice,
+                                       pad_width,
+                                       mode="constant",
+                                       constant_values=fill_value)
+
+        yield current_slice.T
+        rem_idx += target_advance
 
 
 def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarray, int | float]:
