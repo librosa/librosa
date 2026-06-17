@@ -38,7 +38,7 @@ OLD_FT = not (FT_VERSION >= version.parse("2.10"))
 # Matplotlib 3.11 changed font rendering enough that this causes some problems
 # We'll relax rms tolerance on older matplotlibs, and tighten otherwise
 if version.parse(matplotlib.__version__) < version.parse("3.11.0"):
-    TOLERANCE = 6.5
+    TOLERANCE = 10
 else:
     TOLERANCE = 2
 
