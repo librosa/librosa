@@ -215,7 +215,7 @@ def _align_step_size(target_step, target_sr, orig_sr):
             f"fractional sample advance at original sampling rate {orig_sr}."
         )
 
-    return int((target_step * orig_sr) / target_sr)
+    return int(aligned_native_step)
 
 def stream(
     path: str | int | sf.SoundFile | BinaryIO,
@@ -250,10 +250,11 @@ def stream(
            refers to a buffer of audio which spans a given number of
            (potentially overlapping) frames.
         2. Automatic sample-rate conversion is supported,
-           but the hop length parameter, while interpreted
-           relative to the target (resampled) sampling rate,
-           must also be chosen to be an integer number of
-           samples in the native sampling rate of the file.
+           but not all combinations of ``block_length``, ``frame_length``, and
+           ``hop_length`` will be compatible with all sampling rates.
+           Specifically, ``(block_length * hop_length * native_sr) / sr``
+           must evaluate to an exact integer, where ``native_sr`` is the original
+           sampling rate of the stream prior to resampling.
         3. Many analyses require access to the entire signal
            to behave correctly, such as `resample`, `cqt`, or
            `beat_track`, so these methods will not be appropriate
@@ -406,7 +407,7 @@ def stream(
     try:
         orig_read_size = _align_step_size(target_advance, sr, orig_sr)
 
-        read_frames = int(np.round(duration * orig_sr)) if duration is not None else -1
+        read_frames = int(duration * orig_sr) if duration is not None else -1
 
         if needs_resampling:
             resampler = soxr.ResampleStream(
@@ -451,7 +452,9 @@ def stream(
                 read_idx = 0
                 write_idx = available
 
-                if write_idx + n_incoming > capacity:
+                # The following branch should never happen, but it's here
+                # just in case something goes wrong with the input stream
+                if write_idx + n_incoming > capacity:  # pragma: no cover
                     capacity = write_idx + n_incoming + target_yield_size
                     new_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
                     new_buffer = np.zeros(new_shape, dtype=dtype)
