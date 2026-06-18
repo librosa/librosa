@@ -2639,99 +2639,117 @@ def path(request):
     "block_length,frame_length,hop_length",
     [(0, 1024, 512), (10, 0, 512), (10, 1024, 0)],
 )
-@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_stream_badparam(path, block_length, frame_length, hop_length):
-    next(
-        librosa.stream(
-            path,
-            block_length=block_length,
-            frame_length=frame_length,
-            hop_length=hop_length,
+    with pytest.raises(librosa.ParameterError):
+        next(
+            librosa.stream(
+                path,
+                block_length=block_length,
+                frame_length=frame_length,
+                hop_length=hop_length,
+                sr=None,
+            )
         )
-    )
 
 
-@pytest.mark.parametrize("block_length", [10, np.int64(30)])
-@pytest.mark.parametrize("frame_length", [1024, np.int64(2048)])
-@pytest.mark.parametrize("hop_length", [512, np.int64(1024)])
-@pytest.mark.parametrize("mono", [False, True])
-@pytest.mark.parametrize("offset", [0.0, 2.0, -2.0])
-@pytest.mark.parametrize("duration", [None, 1.0])
-@pytest.mark.parametrize("fill_value", [None, 999.0])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_stream(
-    path,
-    block_length,
-    frame_length,
-    hop_length,
-    mono,
-    offset,
-    duration,
-    fill_value,
-    dtype,
+def test_stream_bad_sr(path):
+    with pytest.raises(librosa.ParameterError):
+        next(librosa.stream(path, block_length=10,
+                            frame_length=2048, hop_length=512,
+                            sr=-1))
+
+
+def test_stream_bad_res_type(path):
+    with pytest.raises(librosa.ParameterError):
+        next(librosa.stream(path, block_length=10,
+                            frame_length=2048, hop_length=512,
+                            sr=16000, res_type="foo"))
+
+
+def test_stream_bad_hop(path):
+    # Fail if our hop length would not be integer-valued at the native
+    # sampling rate
+    with pytest.raises(librosa.ParameterError):
+        next(librosa.stream(path, block_length=3,
+                            frame_length=2048, hop_length=513,
+                            sr=16000))
+
+
+def _verify_stream_parity(
+    path, block_length=10, frame_length=1024, hop_length=512,
+    mono=True, offset=0.0, duration=None, fill_value=None,
+    dtype=np.float32, sr=None, res_type="soxr_hq"
 ):
-
     stream = librosa.stream(
-        path,
-        block_length=block_length,
-        frame_length=frame_length,
-        hop_length=hop_length,
-        dtype=dtype,
-        mono=mono,
-        offset=offset,
-        duration=duration,
-        fill_value=fill_value,
+        path, sr=sr, block_length=block_length, frame_length=frame_length,
+        hop_length=hop_length, dtype=dtype, mono=mono, offset=offset,
+        duration=duration, fill_value=fill_value, res_type=res_type
     )
 
     y_frame_stream = []
     target_length = frame_length + (block_length - 1) * hop_length
 
     for y_block in stream:
-        # Check the dtype
         assert y_block.dtype == dtype
-
-        # Check for mono
         if mono:
             assert y_block.ndim == 1
         else:
             assert y_block.ndim == 2
             assert y_block.shape[0] == 2
 
-        # Check the length
         if fill_value is None:
             assert y_block.shape[-1] <= target_length
         else:
             assert y_block.shape[-1] == target_length
 
-        # frame this for easy checking
         y_b_mono = librosa.to_mono(y_block)
         if len(y_b_mono) >= frame_length:
-            y_b_frame = librosa.util.frame(
-                y_b_mono, frame_length=frame_length, hop_length=hop_length
-            )
+            y_b_frame = librosa.util.frame(y_b_mono, frame_length=frame_length, hop_length=hop_length)
             y_frame_stream.append(y_b_frame)
 
-    # Concatenate the framed blocks together
     y_frame_stream = np.concatenate(y_frame_stream, axis=1)
 
-    # Load the reference data.
-    # We'll cast to mono here to simplify checking
-
-    # File objects have to be reset before loading
     if hasattr(path, "seek"):
         path.seek(0)
 
-    y_full, sr = librosa.load(
-        path, sr=None, dtype=dtype, mono=True, offset=offset, duration=duration
-    )
-    # First, check the rate
-    y_frame = librosa.util.frame(
-        y_full, frame_length=frame_length, hop_length=hop_length
+    y_full, _ = librosa.load(
+        path, sr=sr, dtype=dtype, mono=True, offset=offset,
+        duration=duration, res_type=res_type
     )
 
-    # Raw audio will not be padded
+    y_frame = librosa.util.frame(y_full, frame_length=frame_length, hop_length=hop_length)
     n = y_frame.shape[1]
+
     assert np.allclose(y_frame[:, :n], y_frame_stream[:, :n])
+
+
+@pytest.mark.parametrize("block_length", [10, np.int64(30)])
+@pytest.mark.parametrize("frame_length", [1024, np.int64(2048)])
+@pytest.mark.parametrize("hop_length", [512, np.int64(1024)])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("mono", [False, True])
+def test_stream_geometry_and_types(path, block_length, frame_length, hop_length, dtype, mono):
+    _verify_stream_parity(
+        path, block_length=block_length, frame_length=frame_length,
+        hop_length=hop_length, dtype=dtype, mono=mono
+    )
+
+
+@pytest.mark.parametrize("sr", [None, 11025, 11025.0])
+@pytest.mark.parametrize("res_type", ["soxr_qq", "soxr_hq"])
+def test_stream_resampling(path, sr, res_type):
+    _verify_stream_parity(path, sr=sr, res_type=res_type)
+
+
+@pytest.mark.parametrize("offset", [0.0, 2.0, -2.0])
+@pytest.mark.parametrize("duration", [None, 1.0])
+def test_stream_time_bounds(path, offset, duration):
+    _verify_stream_parity(path, offset=offset, duration=duration)
+
+
+@pytest.mark.parametrize("fill_value", [0.0, 999.0])
+def test_stream_padding(path, fill_value):
+    _verify_stream_parity(path, fill_value=fill_value)
 
 
 @pytest.mark.parametrize("mu", [15, 31, 255])
