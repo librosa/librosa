@@ -403,100 +403,106 @@ def stream(
     if sr is None:
         sr = orig_sr
 
-    orig_read_size = _align_step_size(target_advance, sr, orig_sr)
+    try:
+        orig_read_size = _align_step_size(target_advance, sr, orig_sr)
 
-    read_frames = int(np.round(duration * orig_sr)) if duration is not None else -1
-
-    if needs_resampling:
-        resampler = soxr.ResampleStream(
-            in_rate=orig_sr,
-            out_rate=sr,
-            num_channels=process_channels,
-            dtype=dtype,
-            quality=res_type,
-        )
-
-    capacity = max(target_yield_size * 4, target_advance * 4)
-    buffer_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
-    buffer = np.zeros(buffer_shape, dtype=dtype)
-
-    write_idx = 0
-    read_idx = 0
-
-    if offset >= 0:
-        sfo.seek(int(offset * orig_sr))
-    else:
-        sfo.seek(-int(abs(offset) * orig_sr), whence=sf.SEEK_END)
-
-    for orig_chunk in sfo.blocks(blocksize=orig_read_size,
-                                 overlap=0,
-                                 dtype=dtype,
-                                 always_2d=False,
-                                 frames=read_frames):
-
-        if mono and is_multichannel:
-            # soundfile returns (samples, channels), to_mono expects (channels, samples)
-            orig_chunk = to_mono(orig_chunk.T)
+        read_frames = int(np.round(duration * orig_sr)) if duration is not None else -1
 
         if needs_resampling:
-            target_chunk = resampler.resample_chunk(orig_chunk)
-        else:
-            target_chunk = orig_chunk
-        n_incoming = target_chunk.shape[0]
+            resampler = soxr.ResampleStream(
+                in_rate=orig_sr,
+                out_rate=sr,
+                num_channels=process_channels,
+                dtype=dtype,
+                quality=res_type,
+            )
 
-        if write_idx + n_incoming > capacity:
-            available = write_idx - read_idx
-            buffer[:available] = buffer[read_idx : write_idx]
-            read_idx = 0
-            write_idx = available
+        capacity = max(target_yield_size * 4, target_advance * 4)
+        buffer_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
+        buffer = np.zeros(buffer_shape, dtype=dtype)
+
+        write_idx = 0
+        read_idx = 0
+
+        if offset >= 0:
+            sfo.seek(int(offset * orig_sr))
+        else:
+            sfo.seek(-int(abs(offset) * orig_sr), whence=sf.SEEK_END)
+
+        for orig_chunk in sfo.blocks(blocksize=orig_read_size,
+                                     overlap=0,
+                                     dtype=dtype,
+                                     always_2d=False,
+                                     frames=read_frames):
+
+            if mono and is_multichannel:
+                # soundfile returns (samples, channels), to_mono expects (channels, samples)
+                orig_chunk = to_mono(orig_chunk.T)
+
+            if needs_resampling:
+                target_chunk = resampler.resample_chunk(orig_chunk)
+            else:
+                target_chunk = orig_chunk
+            n_incoming = target_chunk.shape[0]
 
             if write_idx + n_incoming > capacity:
-                capacity = write_idx + n_incoming + target_yield_size
-                new_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
-                new_buffer = np.zeros(new_shape, dtype=dtype)
-                new_buffer[:write_idx] = buffer[:write_idx]
-                buffer = new_buffer
+                available = write_idx - read_idx
+                buffer[:available] = buffer[read_idx : write_idx]
+                read_idx = 0
+                write_idx = available
 
-        buffer[write_idx : write_idx + n_incoming] = target_chunk
-        write_idx += n_incoming
+                if write_idx + n_incoming > capacity:
+                    capacity = write_idx + n_incoming + target_yield_size
+                    new_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
+                    new_buffer = np.zeros(new_shape, dtype=dtype)
+                    new_buffer[:write_idx] = buffer[:write_idx]
+                    buffer = new_buffer
 
-        while write_idx - read_idx >= target_yield_size:
-            block = buffer[read_idx : read_idx + target_yield_size]
-            yield block.T
-            read_idx += target_advance
+            buffer[write_idx : write_idx + n_incoming] = target_chunk
+            write_idx += n_incoming
 
-    if process_channels == 1:
-        empty = np.empty((0,), dtype=buffer.dtype)
-    else:
-        empty = np.empty((0, process_channels), dtype=buffer.dtype)
+            while write_idx - read_idx >= target_yield_size:
+                block = buffer[read_idx : read_idx + target_yield_size]
+                yield block.T
+                read_idx += target_advance
 
-    if needs_resampling:
-        tail_chunk = resampler.resample_chunk(empty, last=True)
-    else:
-        tail_chunk = None
+        if process_channels == 1:
+            empty = np.empty((0,), dtype=buffer.dtype)
+        else:
+            empty = np.empty((0, process_channels), dtype=buffer.dtype)
 
-    available = write_idx - read_idx
-    final_data_list = [buffer[read_idx : write_idx]]
-    if tail_chunk is not None and tail_chunk.shape[0] > 0:
-        final_data_list.append(tail_chunk)
+        if needs_resampling:
+            tail_chunk = resampler.resample_chunk(empty, last=True)
+        else:
+            tail_chunk = None
 
-    remainder = np.concatenate(final_data_list, axis=0) if final_data_list else np.array([])
+        available = write_idx - read_idx
+        final_data_list = [buffer[read_idx : write_idx]]
+        if tail_chunk is not None and tail_chunk.shape[0] > 0:
+            final_data_list.append(tail_chunk)
 
-    rem_idx = 0
-    while rem_idx < remainder.shape[0]:
-        current_slice = remainder[rem_idx : rem_idx + target_yield_size]
+        remainder = np.concatenate(final_data_list, axis=0) if final_data_list else np.array([])
 
-        if current_slice.shape[0] < target_yield_size:
-            pad_length = target_yield_size - current_slice.shape[0]
-            pad_width = (0, pad_length) if process_channels == 1 else ((0, pad_length), (0, 0))
-            if fill_value is not None:
-                current_slice = np.pad(current_slice,
-                                       pad_width,
-                                       mode="constant",
-                                       constant_values=fill_value)
+        rem_idx = 0
+        while rem_idx < remainder.shape[0]:
+            current_slice = remainder[rem_idx : rem_idx + target_yield_size]
 
-        yield current_slice.T
-        rem_idx += target_advance
+            if current_slice.shape[0] < target_yield_size:
+                pad_length = target_yield_size - current_slice.shape[0]
+                pad_width = (0, pad_length) if process_channels == 1 else ((0, pad_length), (0, 0))
+                if fill_value is not None:
+                    current_slice = np.pad(current_slice,
+                                           pad_width,
+                                           mode="constant",
+                                           constant_values=fill_value)
+
+            yield current_slice.T
+            rem_idx += target_advance
+    finally:
+        # If we instantiated a new SoundFile object, we should close it.  If the
+        # user passed in an existing SoundFile object, we should leave it alone.
+        if not isinstance(path, sf.SoundFile):
+            sfo.close()
 
 
 def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarray, int | float]:
