@@ -389,6 +389,12 @@ def stream(
     if not util.is_positive_int(hop_length):
         raise ParameterError(f"hop_length={hop_length} must be a positive integer")
 
+    if sr is not None and not (np.isfinite(sr) and sr > 0):
+        raise ParameterError(f"sr={sr} must be a positive number")
+
+    if res_type not in {"soxr_vhq", "soxr_hq", "soxr_mq", "soxr_lq", "soxr_qq"}:
+        raise ParameterError(f"res_type={res_type} is not a valid soxr resampling mode for streaming")
+
     if isinstance(path, sf.SoundFile):
         sfo = path
     else:
@@ -485,7 +491,6 @@ def stream(
         else:
             tail_chunk = None
 
-        available = write_idx - read_idx
         final_data_list = [buffer[read_idx : write_idx]]
         if tail_chunk is not None and tail_chunk.shape[0] > 0:
             final_data_list.append(tail_chunk)

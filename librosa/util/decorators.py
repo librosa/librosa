@@ -187,8 +187,8 @@ def future_default(*, param_name: str, old_default: Any, new_default: Any, versi
             if param_name not in bound.arguments:
                 warnings.warn(
                     f"The default value of '{param_name}' will change from "
-                    f"{old_default} to {new_default} in librosa version {version}. "
-                    f"To suppress this warning, explicitly pass '{param_name}={old_default}'.",
+                    f"{old_default!r} to {new_default!r} in librosa version {version}. "
+                    f"To suppress this warning, explicitly pass '{param_name}={old_default!r}'.",
                     FutureWarning,
                     stacklevel=2
                 )

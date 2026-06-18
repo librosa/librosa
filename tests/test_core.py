@@ -2647,8 +2647,23 @@ def test_stream_badparam(path, block_length, frame_length, hop_length):
                 block_length=block_length,
                 frame_length=frame_length,
                 hop_length=hop_length,
+                sr=None,
             )
         )
+
+
+def test_stream_bad_sr(path):
+    with pytest.raises(librosa.ParameterError):
+        next(librosa.stream(path, block_length=10,
+                            frame_length=2048, hop_length=512,
+                            sr=-1))
+
+
+def test_stream_bad_res_type(path):
+    with pytest.raises(librosa.ParameterError):
+        next(librosa.stream(path, block_length=10,
+                            frame_length=2048, hop_length=512,
+                            sr=16000, res_type="foo"))
 
 
 def test_stream_bad_hop(path):
