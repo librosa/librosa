@@ -2651,7 +2651,9 @@ def test_stream_badparam(path, block_length, frame_length, hop_length):
         )
 
 
-def test_stream_bad_frame(path):
+def test_stream_bad_hop(path):
+    # Fail if our hop length would not be integer-valued at the native
+    # sampling rate
     with pytest.raises(librosa.ParameterError):
         next(librosa.stream(path, block_length=3,
                             frame_length=2048, hop_length=513,
@@ -2721,7 +2723,7 @@ def test_stream_geometry_and_types(path, block_length, frame_length, hop_length,
     )
 
 
-@pytest.mark.parametrize("sr", [None, 11025])
+@pytest.mark.parametrize("sr", [None, 11025, 11025.0])
 @pytest.mark.parametrize("res_type", ["soxr_qq", "soxr_hq"])
 def test_stream_resampling(path, sr, res_type):
     _verify_stream_parity(path, sr=sr, res_type=res_type)

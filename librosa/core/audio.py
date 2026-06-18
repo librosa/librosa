@@ -205,7 +205,11 @@ def _align_step_size(target_step, target_sr, orig_sr):
     if target_sr is None or target_sr == orig_sr:
         return target_step
 
-    if (target_step * orig_sr) % target_sr != 0:
+    exact_native_step = (target_step * orig_sr) / target_sr
+    aligned_native_step = np.round(exact_native_step)
+
+    # Tolerances (rtol=1e-7, atol=1e-5) safely absorb precision errors from float arithmetic
+    if not np.isclose(exact_native_step, aligned_native_step, rtol=1e-7, atol=1e-5):
         raise ParameterError(
             f"Target block step of {target_step} samples at {target_sr} results in a "
             f"fractional sample advance at original sampling rate {orig_sr}."
@@ -216,10 +220,10 @@ def _align_step_size(target_step, target_sr, orig_sr):
 def stream(
     path: str | int | sf.SoundFile | BinaryIO,
     *,
-    sr: float | None = None,
     block_length: int,
     frame_length: int,
     hop_length: int,
+    sr: float | None = None,
     mono: bool = True,
     offset: float = 0.0,
     duration: float | None = None,
@@ -246,7 +250,7 @@ def stream(
            refers to a buffer of audio which spans a given number of
            (potentially overlapping) frames.
         2. Automatic sample-rate conversion is supported,
-           but the frame length parameter, while interpreted
+           but the hop length parameter, while interpreted
            relative to the target (resampled) sampling rate,
            must also be chosen to be an integer number of
            samples in the native sampling rate of the file.
@@ -277,10 +281,6 @@ def stream(
 
         An existing `soundfile.SoundFile` object may also be provided.
 
-    sr : number > 0 [scalar]
-        target sampling rate.  If not provided, the original sampling rate of the file will be
-        used.
-
     block_length : int > 0
         The number of frames to include in each block.
 
@@ -298,6 +298,10 @@ def stream(
         Note that by when ``hop_length < frame_length``, neighboring frames
         will overlap.  Similarly, the last frame of one *block* will overlap
         with the first frame of the next *block*.
+
+    sr : number > 0 [scalar]
+        target sampling rate.  If not provided, the original sampling rate of the file will be
+        used.
 
     mono : bool
         Convert the signal to mono during streaming
@@ -396,7 +400,8 @@ def stream(
     process_channels = 1 if mono else sfo.channels
 
     needs_resampling = (sr is not None) and (orig_sr != sr)
-    sr = sr or orig_sr
+    if sr is None:
+        sr = orig_sr
 
     orig_read_size = _align_step_size(target_advance, sr, orig_sr)
 
