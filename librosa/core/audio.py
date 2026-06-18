@@ -70,7 +70,7 @@ def load(
     Audio will be automatically resampled to the given rate
     (default ``sr=22050``).
 
-    To preserve the orig sampling rate of the file, use ``sr=None``.
+    To preserve the native sampling rate of the file, use ``sr=None``.
 
     Parameters
     ----------
@@ -88,7 +88,7 @@ def load(
     sr : number > 0 [scalar]
         target sampling rate
 
-        'None' uses the orig sampling rate
+        'None' uses the native sampling rate
 
     mono : bool
         convert signal to mono
@@ -110,7 +110,7 @@ def load(
         .. note::
             By default, this uses `soxr`'s high-quality mode ('HQ').
 
-            For alterorig resampling modes, see `resample`
+            For alternative resampling modes, see `resample`
 
     Returns
     -------
@@ -152,17 +152,17 @@ def load(
     >>> sfo = soundfile.SoundFile(librosa.ex('brahms'))
     >>> y, sr = librosa.load(sfo)
     """
-    y, sr_orig = __soundfile_load(path, offset, duration, dtype)
+    y, sr_native = __soundfile_load(path, offset, duration, dtype)
 
     # Final cleanup for dtype and contiguity
     if mono:
         y = to_mono(y)
 
     if sr is not None:
-        y = resample(y, orig_sr=sr_orig, target_sr=sr, res_type=res_type)
+        y = resample(y, orig_sr=sr_native, target_sr=sr, res_type=res_type)
 
     else:
-        sr = sr_orig
+        sr = sr_native
 
     return y, sr
 
@@ -178,23 +178,23 @@ def __soundfile_load(path, offset, duration, dtype):
         context = sf.SoundFile(path)
 
     with context as sf_desc:
-        sr_orig = sf_desc.samplerate
+        sr_native = sf_desc.samplerate
         if offset != 0:
             if offset > 0:
                 # Seek to the start of the target read
-                sf_desc.seek(int(offset * sr_orig))
+                sf_desc.seek(int(offset * sr_native))
             else:
-                sf_desc.seek(-int(abs(offset) * sr_orig), whence=sf.SEEK_END)
+                sf_desc.seek(-int(abs(offset) * sr_native), whence=sf.SEEK_END)
 
         if duration is not None:
-            frame_duration = int(duration * sr_orig)
+            frame_duration = int(duration * sr_native)
         else:
             frame_duration = -1
 
         # Load the target number of frames, and transpose to match librosa form
         y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
 
-    return y, sr_orig
+    return y, sr_native
 
 
 def _align_step_size(target_step, target_sr, orig_sr):
@@ -244,12 +244,11 @@ def stream(
            to produce blocks of audio.  A *block*, in this context,
            refers to a buffer of audio which spans a given number of
            (potentially overlapping) frames.
-        2. Automatic sample-rate conversion is not supported.
-           Audio will be streamed in its orig sample rate,
-           so no default values are provided for ``frame_length``
-           and ``hop_length``.  It is recommended that you first
-           get the sampling rate for the file in question, using
-           `get_samplerate`, and set these parameters accordingly.
+        2. Automatic sample-rate conversion is supported,
+           but the frame length parameter, while interpreted
+           relative to the target (resampled) sampling rate,
+           must also be chosen to be an integer number of
+           samples in the native sampling rate of the file.
         3. Many analyses require access to the entire signal
            to behave correctly, such as `resample`, `cqt`, or
            `beat_track`, so these methods will not be appropriate
