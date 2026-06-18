@@ -224,6 +224,7 @@ def stream(
     offset: float = 0.0,
     duration: float | None = None,
     fill_value: float | None = None,
+    res_type: str = "soxr_hq",
     dtype: DTypeLike = np.float32,
 ) -> Generator[np.ndarray, None, None]:
     """Stream audio in fixed-length buffers.
@@ -316,6 +317,14 @@ def stream(
         In most cases, ``fill_value=0`` (silence) is expected, but
         you may specify any value here.
 
+    res_type : str
+        Resample type, must be one of the following:
+
+        'soxr_vhq', 'soxr_hq', 'soxr_mq' or 'soxr_lq'
+            `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
+            ``'soxr_hq'`` is the default setting of `soxr`.
+        'soxr_qq'
+            `soxr` Quick cubic interpolation (very fast, but not bandlimited)
     dtype : numeric type
         data type of audio buffers to be produced
 
@@ -399,7 +408,7 @@ def stream(
             out_rate=sr,
             num_channels=process_channels,
             dtype=dtype,
-            quality="HQ"
+            quality=res_type,
         )
 
     capacity = max(target_yield_size * 4, target_advance * 4)
@@ -439,7 +448,7 @@ def stream(
             if write_idx + n_incoming > capacity:
                 capacity = write_idx + n_incoming + target_yield_size
                 new_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
-                new_buffer = np.zeros(new_shape, dtype=np.float32)
+                new_buffer = np.zeros(new_shape, dtype=dtype)
                 new_buffer[:write_idx] = buffer[:write_idx]
                 buffer = new_buffer
 

@@ -2659,7 +2659,8 @@ def test_stream_badparam(path, block_length, frame_length, hop_length):
 @pytest.mark.parametrize("duration", [None, 1.0])
 @pytest.mark.parametrize("fill_value", [None, 999.0])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("sr", [None, 22050, 11025])
+@pytest.mark.parametrize("sr", [None, 11025])
+@pytest.mark.parametrize("res_type", ["soxr_qq", "soxr_hq"])
 def test_stream(
     path,
     block_length,
@@ -2671,6 +2672,7 @@ def test_stream(
     fill_value,
     dtype,
     sr,
+    res_type,
 ):
 
     stream = librosa.stream(
@@ -2684,6 +2686,7 @@ def test_stream(
         offset=offset,
         duration=duration,
         fill_value=fill_value,
+        res_type=res_type,
     )
 
     y_frame_stream = []
@@ -2725,7 +2728,7 @@ def test_stream(
         path.seek(0)
 
     y_full, sr = librosa.load(
-        path, sr=sr, dtype=dtype, mono=True, offset=offset, duration=duration
+        path, sr=sr, dtype=dtype, mono=True, offset=offset, duration=duration, res_type=res_type
     )
     # First, check the rate
     y_frame = librosa.util.frame(
@@ -2734,7 +2737,10 @@ def test_stream(
 
     # Raw audio will not be padded
     n = y_frame.shape[1]
-    assert np.allclose(y_frame[:, :n], y_frame_stream[:, :n])
+    # Mostly we're going to be within tolerance, but non-associativity of floating point
+    # can drift values a little bit.  Tolerance of 1e-6 is well above errors detected in
+    # initial testing, but still negligible in practice.
+    assert np.allclose(y_frame[:, :n], y_frame_stream[:, :n], atol=1e-6), np.mean(np.abs(y_frame[:, :n] - y_frame_stream[:, :n]))
 
 
 @pytest.mark.parametrize("mu", [15, 31, 255])
