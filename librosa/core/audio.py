@@ -270,6 +270,10 @@ def stream(
            when the signal is carved into blocks, because it would introduce
            padding in the middle of the signal.  To disable this feature,
            use ``center=False`` in all frame-based analyses.
+        6. If you break out of the generator loop early, the underlying audio
+           file handle and resampling buffers will remain open until the
+           generator object is garbage-collected. To explicitly release resources,
+           call the generator's ``.close()`` method.
 
     See the examples below for proper usage of this function.
 
@@ -418,10 +422,9 @@ def stream(
                 quality=res_type,
             )
 
-        capacity = max(target_yield_size * 4, target_advance * 4)
+        capacity = target_yield_size + (target_advance * 2)
         buffer_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
         buffer = np.zeros(buffer_shape, dtype=dtype)
-
         write_idx = 0
         read_idx = 0
 
@@ -466,7 +469,7 @@ def stream(
 
             while write_idx - read_idx >= target_yield_size:
                 block = buffer[read_idx : read_idx + target_yield_size]
-                yield block.T
+                yield block.T.copy()
                 read_idx += target_advance
 
         if process_channels == 1:
@@ -483,8 +486,9 @@ def stream(
         final_data_list = [buffer[read_idx : write_idx]]
         if tail_chunk is not None and tail_chunk.shape[0] > 0:
             final_data_list.append(tail_chunk)
-
-        remainder = np.concatenate(final_data_list, axis=0) if final_data_list else np.array([])
+            remainder = np.concatenate(final_data_list, axis=0) if final_data_list else np.array([])
+        else:
+            remainder = buffer[read_idx : write_idx]
 
         rem_idx = 0
         while rem_idx < remainder.shape[0]:
@@ -499,7 +503,7 @@ def stream(
                                            mode="constant",
                                            constant_values=fill_value)
 
-            yield current_slice.T
+            yield current_slice.T.copy()
             rem_idx += target_advance
     finally:
         # If we instantiated a new SoundFile object, we should close it.  If the
