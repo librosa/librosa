@@ -2659,6 +2659,7 @@ def test_stream_badparam(path, block_length, frame_length, hop_length):
 @pytest.mark.parametrize("duration", [None, 1.0])
 @pytest.mark.parametrize("fill_value", [None, 999.0])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("sr", [None, 22050, 11025])
 def test_stream(
     path,
     block_length,
@@ -2669,10 +2670,12 @@ def test_stream(
     duration,
     fill_value,
     dtype,
+    sr,
 ):
 
     stream = librosa.stream(
         path,
+        sr=sr,
         block_length=block_length,
         frame_length=frame_length,
         hop_length=hop_length,
@@ -2722,7 +2725,7 @@ def test_stream(
         path.seek(0)
 
     y_full, sr = librosa.load(
-        path, sr=None, dtype=dtype, mono=True, offset=offset, duration=duration
+        path, sr=sr, dtype=dtype, mono=True, offset=offset, duration=duration
     )
     # First, check the rate
     y_frame = librosa.util.frame(
