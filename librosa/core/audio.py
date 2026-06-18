@@ -219,7 +219,7 @@ def _align_step_size(target_step, target_sr, orig_sr):
     return int(aligned_native_step)
 
 
-@future_default(param_name="sr", old_default=None, new_default=22050, version="1.2.0")
+@future_default(param_name="sr", old_default=None, new_default=22050, version="1.1.0")
 def stream(
     path: str | int | sf.SoundFile | BinaryIO,
     *,
