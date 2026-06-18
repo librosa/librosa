@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import functools
+import inspect
 import warnings
 from typing import TYPE_CHECKING
 
@@ -13,7 +14,7 @@ from decorator import decorator
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Iterable
-    from typing import Protocol, type_check_only
+    from typing import Any, Protocol, type_check_only
 
     from numpy.typing import DTypeLike
 
@@ -94,7 +95,6 @@ def deprecated(*, version: str, version_removed: str) -> _Decorator:
     return decorator(__wrapper)
 
 
-
 def vectorize(
     *,
     otypes: str | Iterable[DTypeLike] | None = None,
@@ -155,3 +155,44 @@ def vectorize(
         return _vec
 
     return __wrapper
+
+
+def future_default(*, param_name: str, old_default: Any, new_default: Any, version: str) -> _Decorator:
+    """Mark a function parameter as having a future change to a default parameter value.
+
+    Parameters
+    ----------
+    param_name : str
+        The name of the parameter whose default value is changing.
+    old_default : Any
+        The current default value of the parameter.
+    new_default : Any
+        The future default value of the parameter.
+    version : str
+        The version in which the default value will change.
+
+    Returns
+    -------
+    decorator : Callable
+        A decorator that can be applied to the function to warn about the future change in default value
+    """
+    def decorator[**P, R](func: Callable[P, R]) -> Callable[P, R]:
+        sig = inspect.signature(func)
+
+        @functools.wraps(func)
+        def __wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+            # functools.wraps does not inject defaults into args/kwargs
+            bound = sig.bind(*args, **kwargs)
+
+            if param_name not in bound.arguments:
+                warnings.warn(
+                    f"The default value of '{param_name}' will change from "
+                    f"{old_default} to {new_default} in librosa version {version}. "
+                    f"To suppress this warning, explicitly pass '{param_name}={old_default}'.",
+                    FutureWarning,
+                    stacklevel=2
+                )
+
+            return func(*args, **kwargs)
+        return __wrapper
+    return decorator

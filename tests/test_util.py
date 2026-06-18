@@ -821,6 +821,30 @@ def test_warning_moved():
         assert "moved" in str(out[0].message).lower()
 
 
+def test_warning_future_default():
+    @librosa.util.decorators.future_default(param_name="foo", old_default=1, new_default=2, version="1.0")
+    def __placeholder(foo=1):
+        return foo**2
+
+    with warnings.catch_warnings(record=True) as out:
+        v1 = __placeholder()
+        v2 = __placeholder(foo=1)
+        v3 = __placeholder(foo=2)
+
+        assert v1 == 1
+        assert v2 == 1
+        assert v3 == 4
+
+        # And that the warning triggered for the default case
+        assert len(out) > 0
+
+        # And that the category is correct
+        assert out[0].category is FutureWarning
+
+        # And that it says the right thing (roughly)
+        assert "default" in str(out[0].message).lower()
+
+
 def test_warning_rename_kw_pass():
 
     ov = librosa.util.Deprecated()

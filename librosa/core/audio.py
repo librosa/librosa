@@ -14,6 +14,7 @@ from numba import guvectorize, jit, stencil
 
 from .. import util
 from .._cache import cache
+from ..util.decorators import future_default
 from ..util.exceptions import ParameterError
 from ..util.files import example
 from .convert import frames_to_samples, time_to_samples
@@ -217,6 +218,8 @@ def _align_step_size(target_step, target_sr, orig_sr):
 
     return int(aligned_native_step)
 
+
+@future_default("sr", old_default=None, new_default=22050, version="1.2.0")
 def stream(
     path: str | int | sf.SoundFile | BinaryIO,
     *,
