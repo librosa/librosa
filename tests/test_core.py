@@ -2639,16 +2639,23 @@ def path(request):
     "block_length,frame_length,hop_length",
     [(0, 1024, 512), (10, 0, 512), (10, 1024, 0)],
 )
-@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_stream_badparam(path, block_length, frame_length, hop_length):
-    next(
-        librosa.stream(
-            path,
-            block_length=block_length,
-            frame_length=frame_length,
-            hop_length=hop_length,
+    with pytest.raises(librosa.ParameterError):
+        next(
+            librosa.stream(
+                path,
+                block_length=block_length,
+                frame_length=frame_length,
+                hop_length=hop_length,
+            )
         )
-    )
+
+
+def test_stream_bad_frame(path):
+    with pytest.raises(librosa.ParameterError):
+        next(librosa.stream(path, block_length=3,
+                            frame_length=2048, hop_length=513,
+                            sr=16000))
 
 
 def _verify_stream_parity(
