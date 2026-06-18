@@ -2692,9 +2692,6 @@ def _verify_stream_parity(
             y_b_frame = librosa.util.frame(y_b_mono, frame_length=frame_length, hop_length=hop_length)
             y_frame_stream.append(y_b_frame)
 
-    if not y_frame_stream:
-        return
-
     y_frame_stream = np.concatenate(y_frame_stream, axis=1)
 
     if hasattr(path, "seek"):
