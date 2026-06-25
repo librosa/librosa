@@ -71,7 +71,6 @@ import numpy as np
 from matplotlib import colormaps as mcm
 from matplotlib.legend import Legend
 from matplotlib.legend_handler import HandlerBase, HandlerLine2D, HandlerPatch
-from matplotlib.transforms import Bbox
 
 from . import core, util
 from .util.decorators import moved
@@ -4090,21 +4089,14 @@ def multiplot(
 def legend_for_axes(
     axes: matplotlib.axes.Axes | np.ndarray | list[matplotlib.axes.Axes] | None = None,
     *,
-    loc: Literal["upper right", "upper left", "lower left", "lower right", "right",
-                 "center left", "center right", "lower center", "upper center",
-                 "center", "best", "outside upper left", "outside upper center",
-                 "outside upper right", "outside right upper", "outside right center",
-                 "outside right lower", "outside lower right", "outside lower center",
-                 "outside lower left", "outside left lower", "outside left center",
-                 "outside left upper"] | None = None,
-    pad: float = 0.02,
-    fraction: float = 0.2,
-    width: float | None = None,
-    height: float | None = None,
     fig: matplotlib.figure.Figure | None = None,
     **kwargs: Any,
 ) -> matplotlib.legend.Legend:
     """Create a figure-level legend for a collection of axes.
+
+    This is similar to `matplotlib.figure.Figure.legend`, but it limits
+    the handle collection to only those belonging to the specified axes.
+    This makes it easier to create different legends for subsets of a subplot array.
 
     Parameters
     ----------
@@ -4112,60 +4104,6 @@ def legend_for_axes(
         Axes to include in the legend aggregation.
         If not provided, axes are taken from `fig.axes`, or from the
         current figure if `fig` is not provided.
-
-    loc : str, optional
-        Legend location, passed through to `matplotlib.figure.Figure.legend`.
-        If not provided, a default is inferred from `axes` shape:
-
-        - 1D input -> ``"center left"``
-        - shape ``(n, 1)`` -> ``"center left"``
-        - shape ``(1, n)`` -> ``"lower center"``
-        - shape ``(m, n)`` with ``m > 1`` and ``n > 1`` -> ``"center left"``
-
-        If `bbox_to_anchor` is not provided in `kwargs`, a legend box is
-        synthesized relative to the union of the selected axes based on `loc`.
-
-        .. note::
-            The ``loc`` parameter follows Matplotlib's legend semantics and is passed
-            through to `matplotlib.figure.Figure.legend` unchanged.
-
-            When `legend_for_axes` is also inferring ``bbox_to_anchor`` automatically,
-            this can feel a little counterintuitive: ``loc`` controls how the legend is
-            anchored *within the synthesized legend box*, not which side of the selected
-            axes the box itself occupies.
-
-            In particular:
-
-            - ``loc='center left'`` places the legend box to the **right** of the selected axes
-              and anchors the legend on the left side of that box.
-            - ``loc='center right'`` places the legend box to the **left** of the selected axes.
-            - ``loc='lower center'`` places the legend box **above** the selected axes.
-            - ``loc='upper center'`` places the legend box **below** the selected axes.
-
-            To control the legend placement explicitly, provide ``bbox_to_anchor`` in
-            ``kwargs``.
-
-    pad : float
-        Padding, in figure-relative coordinates, between the selected
-        axes region and the legend box.
-
-    fraction : float
-        Fraction of the selected axes extent to use for the default legend-box
-        thickness when `width` or `height` is not provided.
-
-        For left/right placement, the default legend-box width is
-        `fraction * union.width`.
-
-        For above/below placement, the default legend-box height is
-        `fraction * union.height`.
-
-    width : float, optional
-        Width of the synthesized legend box in figure-relative coordinates.
-        Ignored if `bbox_to_anchor` is provided.
-
-    height : float, optional
-        Height of the synthesized legend box in figure-relative coordinates.
-        Ignored if `bbox_to_anchor` is provided.
 
     fig : matplotlib.figure.Figure, optional
         Figure on which to create the legend.
@@ -4182,7 +4120,7 @@ def legend_for_axes(
 
     Examples
     --------
-    The typical use case is to aggregate legends across all subplots on the current figure:
+    If no axes are provided, we aggregate legends across all subplots on the current figure:
 
     >>> import matplotlib.pyplot as plt
     >>> x = np.linspace(-10, 10, 100)
@@ -4199,8 +4137,8 @@ def legend_for_axes(
     >>> ax[0, 1].plot(x**2, label='Parabola', color='C1')
     >>> ax[1, 0].plot(x**3, label='Cubic', color='C2')
     >>> ax[1, 1].plot(x**4, label='Quartic', color='C3')
-    >>> librosa.display.legend_for_axes(axes=ax[0], loc='lower center')
-    >>> librosa.display.legend_for_axes(axes=ax[1], loc='upper center')
+    >>> librosa.display.legend_for_axes(axes=ax[0], loc='outside upper center')
+    >>> librosa.display.legend_for_axes(axes=ax[1], loc='outside lower center')
     >>> plt.show()
     """
     if axes is None:
@@ -4208,88 +4146,27 @@ def legend_for_axes(
             fig = plt.gcf()
         axes = fig.axes
 
-    axes_array = np.asarray(axes, dtype=object)
+    axes_array = np.atleast_1d(np.asarray(axes, dtype=object))
 
-    if axes_array.ndim == 0:
-        axes_array = axes_array.reshape(1)
-    elif axes_array.ndim > 2:
-        raise ParameterError(
-            f"Cannot infer legend placement for axes with ndim={axes_array.ndim}"
-        )
-
-    axes_list = axes_array.ravel().tolist()
-
-    if not axes_list:
+    if len(axes_array.flat) == 0:
         raise ParameterError("No axes provided for legend aggregation")
 
     if fig is None:
-        fig = axes_list[0].figure
+        fig = axes_array.flat[0].figure
 
-    for ax in axes_list:
+    for ax in axes_array.flat:
         if ax.figure is not fig:
             raise ParameterError("All axes must belong to the same figure")
 
     handles: list[Artist] = []
     labels: list[str] = []
 
-    for ax in axes_list:
+    for ax in axes_array.flat:
         hlist, llist = ax.get_legend_handles_labels()
         handles.extend(hlist)
         labels.extend(llist)
 
-    if loc is None:
-        if axes_array.ndim == 1:
-            loc = "center left"
-        elif axes_array.shape[0] == 1 and axes_array.shape[1] > 1:
-            loc = "lower center"
-        elif axes_array.shape[1] == 1 and axes_array.shape[0] > 1:
-            loc = "center left"
-        else:
-            loc = "center left"
-
-    if "bbox_to_anchor" not in kwargs:
-        union = Bbox.union([ax.get_position() for ax in axes_list])
-        uw = union.width
-        uh = union.height
-
-        if loc in ("upper left", "center left", "lower left"):
-            # Place legend box to the right of the selected axes
-            w = width if width is not None else fraction * uw
-            h = height if height is not None else uh
-            x0 = union.x1 + pad
-            y0 = union.y0
-
-        elif loc in ("upper right", "center right", "lower right"):
-            # Place legend box to the left of the selected axes
-            w = width if width is not None else fraction * uw
-            h = height if height is not None else uh
-            x0 = union.x0 - pad - w
-            y0 = union.y0
-
-        elif loc == "lower center":
-            # Place legend box above the selected axes
-            w = width if width is not None else uw
-            h = height if height is not None else fraction * uh
-            x0 = union.x0
-            y0 = union.y1 + pad
-
-        elif loc == "upper center":
-            # Place legend box below the selected axes
-            w = width if width is not None else uw
-            h = height if height is not None else fraction * uh
-            x0 = union.x0
-            y0 = union.y0 - pad - h
-
-        else:
-            raise ParameterError(
-                f"Automatic bbox placement is not defined for loc={loc!r}. "
-                "Please provide bbox_to_anchor explicitly."
-            )
-
-        kwargs["bbox_to_anchor"] = Bbox.from_extents(x0, y0, x0 + w, y0 + h)
-        kwargs["bbox_transform"] = fig.transFigure
-
-    return fig.legend(handles, labels, loc=loc, **kwargs)
+    return fig.legend(handles, labels, **kwargs)
 
 
 def _get_ax_bright_highlight(
