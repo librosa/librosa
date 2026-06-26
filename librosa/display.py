@@ -316,6 +316,8 @@ class AdaptiveFormatterBase(mplticker.Formatter):
 
         assert self.axis is not None
         vmin, vmax = self.axis.get_view_interval()
+        # Handle inverted axes
+        vmin, vmax = (vmin, vmax) if vmin <= vmax else (vmax, vmin)
 
         if not self.major and vmax > 4 * max(1, vmin):
             return ""
@@ -566,7 +568,7 @@ class FJSFormatter(AdaptiveFormatterBase):
             n_bins, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
         )
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
         """Apply the formatter to position"""
         # Map the given frequency to the nearest JI interval
         idx = util.match_events(np.atleast_1d(x), self.frequencies_)[0]
