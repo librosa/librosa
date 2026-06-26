@@ -292,7 +292,15 @@ class TimeFormatter(mplticker.Formatter):
 
 class AdaptiveFormatterBase(mplticker.Formatter):
     """Base formatter handling 2-octave span suppression.
+
     Subclasses must implement `_format_tick`.
+
+    Parameters
+    ----------
+    major : bool
+        If ``True``, ticks are always labeled.
+
+        If ``False``, ticks are only labeled if the span is less than 2 octaves.
     """
 
     major: bool
@@ -609,7 +617,18 @@ class LogHzFormatter(AdaptiveFormatterBase):
 
 
 class AdaptiveEngFormatter(AdaptiveFormatterBase):
-    """Engineering formatter wrapped with adaptive visibility."""
+    """Engineering formatter that limits tick labels to a 2-octave span.
+
+    Parameters
+    ----------
+    major : bool
+        If ``True``, ticks are always labeled.
+
+        If ``False``, ticks are only labeled if the span is less than 2 octaves
+
+    **kwargs : keyword arguments
+        Additional keyword arguments are passed to `matplotlib.ticker.EngFormatter`.
+    """
 
     def __init__(self, major: bool = True, **kwargs):
         super().__init__(major=major)
