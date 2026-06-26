@@ -304,10 +304,14 @@ class AdaptiveFormatterBase(mplticker.Formatter):
     """
 
     major: bool
+    vmin: float | None
+    vmax: float | None
 
     def __init__(self, major: bool = True):
         super().__init__()
         self.major = major
+        self.vmin = None
+        self.vmax = None
 
     def __call__(self, x: float, pos: int | None = None) -> str:
         """Apply the bounds check, then delegate to subclass formatting."""
@@ -316,10 +320,11 @@ class AdaptiveFormatterBase(mplticker.Formatter):
 
         assert self.axis is not None
         vmin, vmax = self.axis.get_view_interval()
-        # Handle inverted axes
-        vmin, vmax = (vmin, vmax) if vmin <= vmax else (vmax, vmin)
 
-        if not self.major and vmax > 4 * max(1, vmin):
+        # Handle inverted axes
+        self.vmin, self.vmax = (vmin, vmax) if vmin <= vmax else (vmax, vmin)
+
+        if not self.major and self.vmax > 4 * max(1, self.vmin):
             return ""
 
         return self._format_tick(x, pos)
@@ -389,10 +394,8 @@ class NoteFormatter(AdaptiveFormatterBase):
     def _format_tick(self, x: float, pos: int | None = None) -> str:
         """Apply the formatter to position"""
         # Only use cent precision if our vspan is less than an octave
-        assert self.axis is not None
-        vmin, vmax = self.axis.get_view_interval()
-
-        cents = vmax <= 2 * max(1, vmin)
+        assert self.vmax is not None and self.vmin is not None
+        cents = self.vmax <= 2 * max(1, self.vmin)
 
         return core.hz_to_note(
             x, octave=self.octave, cents=cents, key=self.key, unicode=self.unicode
