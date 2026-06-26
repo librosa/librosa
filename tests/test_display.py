@@ -1547,6 +1547,41 @@ def test_oct3(S_abs, C):
 
 
 @pytest.mark.mpl_image_compare(
+    baseline_images=["oct3_minor"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_oct3_minor(S_abs, C):
+
+    fig, ax = plt.subplots(nrows=2, ncols=2)
+
+    # STFT, Mel
+    # CQT, VQT
+
+    librosa.display.specshow(S_abs, vscale="dBFS", y_axis="log_oct3", ax=ax[0, 0])
+
+    M = librosa.feature.melspectrogram(S=S_abs**2)
+    librosa.display.specshow(M, vscale="dBFS[power]", y_axis="mel_oct3", ax=ax[0, 1])
+
+    librosa.display.specshow(C, vscale="dBFS", y_axis="cqt_oct3", ax=ax[1, 0])
+
+    librosa.display.specshow(
+        C, vscale="dBFS", y_axis="vqt_oct3", ax=ax[1, 1], intervals="equal"
+    )
+
+    # Put the ticks on the right just to reduce crowding
+    ax[0, 1].yaxis.tick_right()
+    ax[1, 1].yaxis.tick_right()
+
+    for axi in ax.flat:
+        axi.set_ylim([200, 600])
+
+    return fig
+
+
+
+@pytest.mark.mpl_image_compare(
     baseline_images=["wavebars"],
     extensions=["png"],
     style=STYLE,

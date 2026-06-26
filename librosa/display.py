@@ -290,7 +290,50 @@ class TimeFormatter(mplticker.Formatter):
         return f"{sign:s}{s:s}"
 
 
-class NoteFormatter(mplticker.Formatter):
+class AdaptiveFormatterBase(mplticker.Formatter):
+    """Base formatter handling 2-octave span suppression.
+
+    Subclasses must implement `_format_tick`.
+
+    Parameters
+    ----------
+    major : bool
+        If ``True``, ticks are always labeled.
+
+        If ``False``, ticks are only labeled if the span is less than 2 octaves.
+    """
+
+    major: bool
+    vmin: float | None
+    vmax: float | None
+
+    def __init__(self, major: bool = True):
+        super().__init__()
+        self.major = major
+        self.vmin = None
+        self.vmax = None
+
+    def __call__(self, x: float, pos: int | None = None) -> str:
+        """Apply the bounds check, then delegate to subclass formatting."""
+        if x <= 0:
+            return ""
+
+        assert self.axis is not None
+        vmin, vmax = self.axis.get_view_interval()
+
+        # Handle inverted axes
+        self.vmin, self.vmax = (vmin, vmax) if vmin <= vmax else (vmax, vmin)
+
+        if not self.major and self.vmax > 4 * max(1, self.vmin):
+            return ""
+
+        return self._format_tick(x, pos)
+
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
+        raise NotImplementedError
+
+
+class NoteFormatter(AdaptiveFormatterBase):
     """Ticker formatter for Notes
 
     Parameters
@@ -342,34 +385,24 @@ class NoteFormatter(mplticker.Formatter):
         key: str = "C:maj",
         unicode: bool = True,
     ):
-        super().__init__()
+        super().__init__(major=major)
 
         self.octave = octave
-        self.major = major
         self.key = key
         self.unicode = unicode
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
         """Apply the formatter to position"""
-        if x <= 0:
-            return ""
-
-        assert self.axis is not None
-
         # Only use cent precision if our vspan is less than an octave
-        vmin, vmax = self.axis.get_view_interval()
-
-        if not self.major and vmax > 4 * max(1, vmin):
-            return ""
-
-        cents = vmax <= 2 * max(1, vmin)
+        assert self.vmax is not None and self.vmin is not None
+        cents = self.vmax <= 2 * max(1, self.vmin)
 
         return core.hz_to_note(
             x, octave=self.octave, cents=cents, key=self.key, unicode=self.unicode
         )
 
 
-class SvaraFormatter(mplticker.Formatter):
+class SvaraFormatter(AdaptiveFormatterBase):
     """Ticker formatter for Svara
 
     Parameters
@@ -435,26 +468,14 @@ class SvaraFormatter(mplticker.Formatter):
                 "Sa frequency is required for svara display formatting"
             )
 
-        super().__init__()
+        super().__init__(major=major)
         self.Sa = Sa
         self.octave = octave
-        self.major = major
         self.abbr = abbr
         self.mela = mela
         self.unicode = unicode
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
-        if x <= 0:
-            return ""
-
-        assert self.axis is not None
-
-        # Only use cent precision if our vspan is less than an octave
-        vmin, vmax = self.axis.get_view_interval()
-
-        if not self.major and vmax > 4 * max(1, vmin):
-            return ""
-
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
         if self.mela is None:
             return core.hz_to_svara_h(
                 x, Sa=self.Sa, octave=self.octave, abbr=self.abbr, unicode=self.unicode
@@ -470,7 +491,7 @@ class SvaraFormatter(mplticker.Formatter):
             )
 
 
-class FJSFormatter(mplticker.Formatter):
+class FJSFormatter(AdaptiveFormatterBase):
     """Ticker formatter for Functional Just System (FJS) notation
 
     Parameters
@@ -521,7 +542,6 @@ class FJSFormatter(mplticker.Formatter):
     """
 
     fmin: float
-    major: bool
     unison: str | None
     unicode: bool
     intervals: str | Collection[float]
@@ -540,9 +560,8 @@ class FJSFormatter(mplticker.Formatter):
         unison: str | None = None,
         unicode: bool = True,
     ):
-        super().__init__()
+        super().__init__(major=major)
         self.fmin = fmin
-        self.major = major
         self.unison = unison
         self.unicode = unicode
         self.intervals = intervals
@@ -552,19 +571,8 @@ class FJSFormatter(mplticker.Formatter):
             n_bins, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
         )
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
         """Apply the formatter to position"""
-        if x <= 0:
-            return ""
-
-        assert self.axis is not None
-
-        # Only use cent precision if our vspan is less than an octave
-        vmin, vmax = self.axis.get_view_interval()
-
-        if not self.major and vmax > 4 * max(1, vmin):
-            return ""
-
         # Map the given frequency to the nearest JI interval
         idx = util.match_events(np.atleast_1d(x), self.frequencies_)[0]
 
@@ -577,7 +585,7 @@ class FJSFormatter(mplticker.Formatter):
         return label
 
 
-class LogHzFormatter(mplticker.Formatter):
+class LogHzFormatter(AdaptiveFormatterBase):
     """Ticker formatter for logarithmic frequency
 
     Parameters
@@ -605,25 +613,35 @@ class LogHzFormatter(mplticker.Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
-    major: bool
-
     def __init__(self, major: bool = True):
-        super().__init__()
-        self.major = major
+        super().__init__(major=major)
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
         """Apply the formatter to position"""
-        if x <= 0:
-            return ""
-
-        assert self.axis is not None
-
-        vmin, vmax = self.axis.get_view_interval()
-
-        if not self.major and vmax > 4 * max(1, vmin):
-            return ""
-
         return f"{x:g}"
+
+
+class AdaptiveEngFormatter(AdaptiveFormatterBase):
+    """Engineering formatter that limits tick labels to a 2-octave span.
+
+    Parameters
+    ----------
+    major : bool
+        If ``True``, ticks are always labeled.
+
+        If ``False``, ticks are only labeled if the span is less than 2 octaves
+
+    **kwargs : keyword arguments
+        Additional keyword arguments are passed to `matplotlib.ticker.EngFormatter`.
+    """
+
+    def __init__(self, major: bool = True, **kwargs):
+        super().__init__(major=major)
+        self._formatter = mplticker.EngFormatter(**kwargs)
+
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
+        # Delegate string conversion to the wrapped matplotlib formatter
+        return self._formatter(x, pos)
 
 
 class ChromaFormatter(mplticker.Formatter):
@@ -2348,13 +2366,11 @@ def __decorate_axis(
             axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[5::3]))  # type: ignore[arg-type]
         else:
             axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[::3]))  # type: ignore[arg-type]
-        axis.set_major_formatter(mplticker.EngFormatter(unit="Hz"))
+        axis.set_major_formatter(AdaptiveEngFormatter(major=True, unit="Hz"))
         axis.set_label_text("Frequency")
         # Minor ticks at the 1/3 octaves
         axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=None))  # type: ignore[arg-type]
-        # TODO: implement a 2-octave adaptive wrapper for minor tick labels
-        # axis.set_minor_formatter(mplticker.EngFormatter(unit='Hz'))
-        axis.set_minor_formatter(mplticker.NullFormatter())
+        axis.set_minor_formatter(AdaptiveEngFormatter(major=False, unit="Hz"))
 
     elif ax_type in ["frames"]:
         axis.set_label_text("Frames")
