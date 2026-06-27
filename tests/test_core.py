@@ -1034,6 +1034,28 @@ def test_to_mono_pad(pad):
         assert y_mono.shape == (5,)
 
 
+def test_to_mono_out(rng):
+    y1 = rng.standard_normal(size=(2, 10))
+    y2 = rng.standard_normal(size=5)
+    expected = librosa.to_mono(y1, y2, pad=True)
+    out = np.empty_like(expected)
+
+    y_mono = librosa.to_mono(y1, y2, pad=True, out=out)
+
+    assert y_mono is out
+    assert np.allclose(y_mono, expected)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_mono_out_bad_dimensions():
+    librosa.to_mono(np.ones(5), out=np.empty((2, 5)))
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_mono_out_bad_dtype():
+    librosa.to_mono(np.ones(5, dtype=np.float32), out=np.empty(5, dtype=np.int16))
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_to_stereo_fail():
     librosa.to_stereo(left=None, right=None)
@@ -1129,6 +1151,26 @@ def test_to_stereo_pad(pad):
         assert y_stereo.shape == (2, 5)
 
 
+@pytest.mark.parametrize("downmix", [False, True])
+def test_to_stereo_out(downmix, rng):
+    y1 = rng.standard_normal(size=(2, 10))
+    y2 = rng.standard_normal(size=5)
+    expected = librosa.to_stereo(left=y1, right=y2, downmix=downmix, pad=True)
+    out = np.empty_like(expected)
+
+    y_stereo = librosa.to_stereo(
+        left=y1, right=y2, downmix=downmix, pad=True, out=out
+    )
+
+    assert y_stereo is out
+    assert np.allclose(y_stereo, expected)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_stereo_out_bad_dimensions():
+    librosa.to_stereo(left=np.ones(5), right=np.ones(5), out=np.empty((3, 5)))
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_to_multi_noinput():
     librosa.to_multi()
@@ -1185,6 +1227,29 @@ def test_to_multi_layout(downmix, norm):
         else:
             # summed values: 1 + 2 + 3 = 6
             assert np.allclose(y_multi, 6)
+
+
+@pytest.mark.parametrize("downmix", [False, True])
+def test_to_multi_out(downmix, rng):
+    y1 = rng.standard_normal(size=(2, 10))
+    y2 = rng.standard_normal(size=(2, 5))
+    if downmix:
+        expected = librosa.to_multi(y1, y2, downmix=downmix, pad=True)
+    else:
+        expected = librosa.to_multi(y1, y2, downmix=downmix, pad=False)
+    out = np.empty_like(expected)
+
+    y_multi = librosa.to_multi(
+        y1, y2, downmix=downmix, pad=downmix, out=out
+    )
+
+    assert y_multi is out
+    assert np.allclose(y_multi, expected)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_to_multi_out_bad_dimensions():
+    librosa.to_multi(np.ones(5), np.ones(5), out=np.empty((3, 5)))
 
 
 @pytest.mark.parametrize("data", [np.cos(np.arange(32))])

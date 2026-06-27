@@ -376,8 +376,85 @@ def stream(
             yield block.T
 
 
+def __output_buffer(
+    dimensions: Tuple[int, ...], dtype: DTypeLike, out: Optional[np.ndarray]
+) -> np.ndarray:
+    if out is None:
+        return np.zeros(dimensions, dtype=dtype)
+
+    if out.shape != dimensions:
+        raise ParameterError(
+            f"Output buffer has dimensions {out.shape}; expected {dimensions}"
+        )
+
+    if not np.can_cast(dtype, out.dtype, casting="same_kind"):
+        raise ParameterError(f"Cannot store dtype={dtype} in output dtype={out.dtype}")
+
+    out.fill(0)
+    return out
+
+
+def __to_mono(
+    *signals: np.ndarray,
+    pad: bool = True,
+    norm: bool = True,
+    out: Optional[np.ndarray] = None,
+) -> np.ndarray:
+    # Validate the buffer(s) and identify lengths, dtypes, etc
+    if not signals:
+        raise ParameterError("At least one signal must be provided to `to_mono`.")
+    n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
+    dtype = signals[0].dtype
+    for y in signals:
+        util.valid_audio(y)
+        n_min = min(n_min, y.shape[-1])
+        n_max = max(n_max, y.shape[-1])
+        dtype = np.promote_types(dtype, y.dtype)
+
+    # Allocate and initialize the output buffer
+    if pad:
+        size = n_max
+    else:
+        size = n_min
+
+    output = __output_buffer((size,), dtype, out)
+
+    if norm:
+        combine = np.mean
+    else:
+        combine = np.sum
+
+    if len(signals) == 1:
+        y = signals[0]
+        n = min(y.shape[-1], output.shape[-1])
+        combine(y[..., :n], axis=tuple(range(y.ndim - 1)), out=output[:n])
+        return output
+
+    # Now, average the signals together
+    for y in signals:
+        output += util.fix_length(
+            combine(y, axis=tuple(range(y.ndim - 1))), size=output.shape[-1], axis=-1
+        )
+    if norm:
+        # Divide by the number of input signals given
+        output /= len(signals)
+
+    return output
+
+
 @cache(level=20)
-def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.ndarray:
+def __to_mono_cached(
+    signals: Tuple[np.ndarray, ...], pad: bool = True, norm: bool = True
+) -> np.ndarray:
+    return __to_mono(*signals, pad=pad, norm=norm)
+
+
+def to_mono(
+    *signals: np.ndarray,
+    pad: bool = True,
+    norm: bool = True,
+    out: Optional[np.ndarray] = None,
+) -> np.ndarray:
     """Convert an audio signal to mono by averaging samples across channels.
 
     Parameters
@@ -399,6 +476,10 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
 
         If `False`, signals are combined by summing.
 
+    out : np.ndarray or None
+        Optional buffer for the result. If provided, it must match the output
+        dimensions and use a compatible dtype.
+
     Returns
     -------
     y_mono : np.ndarray [shape=(n_out,)]
@@ -406,7 +487,7 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
 
     Notes
     -----
-    This function caches at level 20.
+    Calls without ``out`` cache at level 20.
 
     The dtype of the output signal will be the most general type that can
     accommodate all input signals.  If the input signals have different
@@ -446,115 +527,21 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
     >>> y_mono.shape
     (44100,)
     """
-    # Validate the buffer(s) and identify lengths, dtypes, etc
-    if not signals:
-        raise ParameterError("At least one signal must be provided to `to_mono`.")
-    n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
-    dtype = signals[0].dtype
-    for y in signals:
-        util.valid_audio(y)
-        n_min = min(n_min, y.shape[-1])
-        n_max = max(n_max, y.shape[-1])
-        dtype = np.promote_types(dtype, y.dtype)
-
-    # Allocate and initialize the output buffer
-    if pad:
-        size = n_max
+    if out is None:
+        return __to_mono_cached(signals, pad=pad, norm=norm)
     else:
-        size = n_min
-
-    output = np.zeros((size,), dtype=dtype)
-
-    if norm:
-        combine = np.mean
-    else:
-        combine = np.sum
-
-    # Now, average the signals together
-    for y in signals:
-        output += util.fix_length(
-            combine(y, axis=tuple(range(y.ndim - 1))), size=output.shape[-1], axis=-1
-        )
-    if norm:
-        # Divide by the number of input signals given
-        output /= len(signals)
-
-    return output
+        return __to_mono(*signals, pad=pad, norm=norm, out=out)
 
 
-@cache(level=20)
-def to_stereo(
+def __to_stereo(
     *,
     left: Optional[np.ndarray],
     right: Optional[np.ndarray],
     downmix: bool = True,
     pad: bool = True,
     norm: bool = True,
+    out: Optional[np.ndarray] = None,
 ) -> np.ndarray:
-    """Combine two signals into a stereo signal.
-
-    Parameters
-    ----------
-    left : np.ndarray [shape=(..., n)] or None
-        Left channel signal. Multi-channel is supported.
-
-    right : np.ndarray [shape=(..., m)] or None
-        Right channel signal. Multi-channel is supported.
-
-    downmix : bool
-        If `True`, downmix the left and right channels to mono before combining.
-
-        If `False`, the left and right signals are additively combined.
-
-    pad : bool
-        If `True`, pad the shorter channel with zeros to match the length of the longer channel.
-        If `False`, the longer channel is trimmed to match the length of the shorter channel.
-
-    norm : bool
-        If `True` (default), signals are combined by averaging.
-
-        If `False`, signals are combined by summing.
-
-    Returns
-    -------
-    y_stereo : np.ndarray [shape=(2, n_out)]
-        Stereo signal with left channel in the first row and right channel in the second row.
-
-    See Also
-    --------
-    to_mono
-    to_multi
-    util.fix_length
-
-    Notes
-    -----
-    At least one of `left` or `right` must be provided.
-    This function caches at level 20.
-
-    Examples
-    --------
-    Combine two mono signals into a hard-panned stereo signal
-
-    >>> y1 = librosa.tone(440.0, sr=22050, duration=1.0)
-    >>> y2 = librosa.tone(550.0, sr=22050, duration=1.0)
-    >>> y_stereo = librosa.to_stereo(left=y1, right=y2)
-
-    Upmix a mono signal into the left or right channel in stereo
-
-    >>> y_left = librosa.to_stereo(left=y1, right=None)
-    >>> y_right = librosa.to_stereo(left=None, right=y2)
-
-    Downmix a stereo signal into the left channel, and mix a third
-    mono signal into the right channel
-
-    >>> y3 = librosa.tone(660.0, sr=22050, duration=1.0)
-    >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=True)
-
-    Keep the original stereo signal separated, but mix a third signal into the
-    right channel:
-
-    >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=False)
-    """
     # This flag tracks whether we had only one signal to begin with
     onesided = True
     if left is None and right is None:
@@ -586,10 +573,10 @@ def to_stereo(
     dtype = np.promote_types(left.dtype, right.dtype)
 
     # Create an empty stereo output buffer
-    output = np.zeros((2, size), dtype=dtype)
+    output = __output_buffer((2, size), dtype, out)
     if downmix:
-        output[0] = to_mono(left, norm=norm)
-        output[1] = to_mono(right, norm=norm)
+        to_mono(left, norm=norm, out=output[0])
+        to_mono(right, norm=norm, out=output[1])
     else:
         if left.ndim == 1:
             output[0] = left
@@ -616,62 +603,111 @@ def to_stereo(
 
 
 @cache(level=20)
-def to_multi(
-    *signals: np.ndarray, downmix: bool = True, pad: bool = True, norm: bool = True
+def __to_stereo_cached(
+    *,
+    left: Optional[np.ndarray],
+    right: Optional[np.ndarray],
+    downmix: bool = True,
+    pad: bool = True,
+    norm: bool = True,
 ) -> np.ndarray:
-    """Combine multiple signals into a multi-channel signal.
+    return __to_stereo(left=left, right=right, downmix=downmix, pad=pad, norm=norm)
+
+
+def to_stereo(
+    *,
+    left: Optional[np.ndarray],
+    right: Optional[np.ndarray],
+    downmix: bool = True,
+    pad: bool = True,
+    norm: bool = True,
+    out: Optional[np.ndarray] = None,
+) -> np.ndarray:
+    """Combine two signals into a stereo signal.
 
     Parameters
     ----------
-    *signals : np.ndarray [shape=(..., n)]
-        One or more signals to combine into a multi-channel signal.
-        Each input signal can be mono or multi-channel, and they need not all have
-        identical lengths.
+    left : np.ndarray [shape=(..., n)] or None
+        Left channel signal. Multi-channel is supported.
+
+    right : np.ndarray [shape=(..., m)] or None
+        Right channel signal. Multi-channel is supported.
 
     downmix : bool
-        If `True`, downmix each input signal to mono before combining.
+        If `True`, downmix the left and right channels to mono before combining.
 
-        If `False`, the input signals are additively combined, and all must have
-        identical channel layouts (shape excluding the trailing length dimension).
+        If `False`, the left and right signals are additively combined.
 
     pad : bool
-        If `True`, pad the output to match the length of the longest input signal.
-
-        If `False`, trim the output to match the length of the shortest input signal.
+        If `True`, pad the shorter channel with zeros to match the length of the longer channel.
+        If `False`, the longer channel is trimmed to match the length of the shorter channel.
 
     norm : bool
         If `True` (default), signals are combined by averaging.
 
         If `False`, signals are combined by summing.
 
+    out : np.ndarray or None
+        Optional buffer for the result. If provided, it must match the output
+        dimensions and use a compatible dtype.
+
     Returns
     -------
-    y_multi : np.ndarray [shape=(m, n_out) or shape=(..., n_out)]
-        Multi-channel combination of the input signals, where `m` corresponds
-        to the number of signals (if `downmix=True`), and `n_out` is the length
-        of the output signal determined by the padding mode.
+    y_stereo : np.ndarray [shape=(2, n_out)]
+        Stereo signal with left channel in the first row and right channel in the second row.
 
     See Also
     --------
     to_mono
-    to_stereo
+    to_multi
     util.fix_length
 
     Notes
     -----
-    This function caches at level 20.
+    At least one of `left` or `right` must be provided.
+    Calls without ``out`` cache at level 20.
 
     Examples
     --------
-    Combine three mono signals of different lengths into a multi-channel signal
+    Combine two mono signals into a hard-panned stereo signal
 
     >>> y1 = librosa.tone(440.0, sr=22050, duration=1.0)
     >>> y2 = librosa.tone(550.0, sr=22050, duration=1.0)
-    >>> y3 = librosa.tone(660.0, sr=22050, duration=2.0)
-    >>> y_multi = librosa.to_multi(y1, y2, y3, pad=True)
-    >>> y_multi.shape
-    (3, 44100)
+    >>> y_stereo = librosa.to_stereo(left=y1, right=y2)
+
+    Upmix a mono signal into the left or right channel in stereo
+
+    >>> y_left = librosa.to_stereo(left=y1, right=None)
+    >>> y_right = librosa.to_stereo(left=None, right=y2)
+
+    Downmix a stereo signal into the left channel, and mix a third
+    mono signal into the right channel
+
+    >>> y3 = librosa.tone(660.0, sr=22050, duration=1.0)
+    >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=True)
+
+    Keep the original stereo signal separated, but mix a third signal into the
+    right channel:
+
+    >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=False)
     """
+    if out is None:
+        return __to_stereo_cached(
+            left=left, right=right, downmix=downmix, pad=pad, norm=norm
+        )
+    else:
+        return __to_stereo(
+            left=left, right=right, downmix=downmix, pad=pad, norm=norm, out=out
+        )
+
+
+def __to_multi(
+    *signals: np.ndarray,
+    downmix: bool = True,
+    pad: bool = True,
+    norm: bool = True,
+    out: Optional[np.ndarray] = None,
+) -> np.ndarray:
     # Validate the buffer(s) and identify lengths, dtypes, etc
     if not signals:
         raise ParameterError("At least one signal must be provided.")
@@ -702,11 +738,14 @@ def to_multi(
     else:
         size = n_min
 
-    output = np.zeros((*channel_layout, size), dtype=dtype)
+    output = __output_buffer((*channel_layout, size), dtype, out)
     if downmix:
         # Downmix each signal to mono and mix into the output
         for i, y in enumerate(signals):
-            output[i] = util.fix_length(to_mono(y, norm=norm), size=size, axis=-1)
+            if y.shape[-1] == size:
+                to_mono(y, norm=norm, out=output[i])
+            else:
+                output[i] = util.fix_length(to_mono(y, norm=norm), size=size, axis=-1)
     else:
         # Truncate and mix into the output
         for y in signals:
@@ -716,6 +755,86 @@ def to_multi(
             output /= len(signals)
 
     return output
+
+
+@cache(level=20)
+def __to_multi_cached(
+    signals: Tuple[np.ndarray, ...],
+    downmix: bool = True,
+    pad: bool = True,
+    norm: bool = True,
+) -> np.ndarray:
+    return __to_multi(*signals, downmix=downmix, pad=pad, norm=norm)
+
+
+def to_multi(
+    *signals: np.ndarray,
+    downmix: bool = True,
+    pad: bool = True,
+    norm: bool = True,
+    out: Optional[np.ndarray] = None,
+) -> np.ndarray:
+    """Combine multiple signals into a multi-channel signal.
+
+    Parameters
+    ----------
+    *signals : np.ndarray [shape=(..., n)]
+        One or more signals to combine into a multi-channel signal.
+        Each input signal can be mono or multi-channel, and they need not all have
+        identical lengths.
+
+    downmix : bool
+        If `True`, downmix each input signal to mono before combining.
+
+        If `False`, the input signals are additively combined, and all must have
+        identical channel layouts (shape excluding the trailing length dimension).
+
+    pad : bool
+        If `True`, pad the output to match the length of the longest input signal.
+
+        If `False`, trim the output to match the length of the shortest input signal.
+
+    norm : bool
+        If `True` (default), signals are combined by averaging.
+
+        If `False`, signals are combined by summing.
+
+    out : np.ndarray or None
+        Optional buffer for the result. If provided, it must match the output
+        dimensions and use a compatible dtype.
+
+    Returns
+    -------
+    y_multi : np.ndarray [shape=(m, n_out) or shape=(..., n_out)]
+        Multi-channel combination of the input signals, where `m` corresponds
+        to the number of signals (if `downmix=True`), and `n_out` is the length
+        of the output signal determined by the padding mode.
+
+    See Also
+    --------
+    to_mono
+    to_stereo
+    util.fix_length
+
+    Notes
+    -----
+    Calls without ``out`` cache at level 20.
+
+    Examples
+    --------
+    Combine three mono signals of different lengths into a multi-channel signal
+
+    >>> y1 = librosa.tone(440.0, sr=22050, duration=1.0)
+    >>> y2 = librosa.tone(550.0, sr=22050, duration=1.0)
+    >>> y3 = librosa.tone(660.0, sr=22050, duration=2.0)
+    >>> y_multi = librosa.to_multi(y1, y2, y3, pad=True)
+    >>> y_multi.shape
+    (3, 44100)
+    """
+    if out is None:
+        return __to_multi_cached(signals, downmix=downmix, pad=pad, norm=norm)
+    else:
+        return __to_multi(*signals, downmix=downmix, pad=pad, norm=norm, out=out)
 
 
 @cache(level=20)
