@@ -71,7 +71,6 @@ import numpy as np
 from matplotlib import colormaps as mcm
 from matplotlib.legend import Legend
 from matplotlib.legend_handler import HandlerBase, HandlerLine2D, HandlerPatch
-from matplotlib.transforms import Bbox
 
 from . import core, util
 from .util.decorators import moved
@@ -291,7 +290,50 @@ class TimeFormatter(mplticker.Formatter):
         return f"{sign:s}{s:s}"
 
 
-class NoteFormatter(mplticker.Formatter):
+class AdaptiveFormatterBase(mplticker.Formatter):
+    """Base formatter handling 2-octave span suppression.
+
+    Subclasses must implement `_format_tick`.
+
+    Parameters
+    ----------
+    major : bool
+        If ``True``, ticks are always labeled.
+
+        If ``False``, ticks are only labeled if the span is less than 2 octaves.
+    """
+
+    major: bool
+    vmin: float | None
+    vmax: float | None
+
+    def __init__(self, major: bool = True):
+        super().__init__()
+        self.major = major
+        self.vmin = None
+        self.vmax = None
+
+    def __call__(self, x: float, pos: int | None = None) -> str:
+        """Apply the bounds check, then delegate to subclass formatting."""
+        if x <= 0:
+            return ""
+
+        assert self.axis is not None
+        vmin, vmax = self.axis.get_view_interval()
+
+        # Handle inverted axes
+        self.vmin, self.vmax = (vmin, vmax) if vmin <= vmax else (vmax, vmin)
+
+        if not self.major and self.vmax > 4 * max(1, self.vmin):
+            return ""
+
+        return self._format_tick(x, pos)
+
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
+        raise NotImplementedError
+
+
+class NoteFormatter(AdaptiveFormatterBase):
     """Ticker formatter for Notes
 
     Parameters
@@ -343,34 +385,24 @@ class NoteFormatter(mplticker.Formatter):
         key: str = "C:maj",
         unicode: bool = True,
     ):
-        super().__init__()
+        super().__init__(major=major)
 
         self.octave = octave
-        self.major = major
         self.key = key
         self.unicode = unicode
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
         """Apply the formatter to position"""
-        if x <= 0:
-            return ""
-
-        assert self.axis is not None
-
         # Only use cent precision if our vspan is less than an octave
-        vmin, vmax = self.axis.get_view_interval()
-
-        if not self.major and vmax > 4 * max(1, vmin):
-            return ""
-
-        cents = vmax <= 2 * max(1, vmin)
+        assert self.vmax is not None and self.vmin is not None
+        cents = self.vmax <= 2 * max(1, self.vmin)
 
         return core.hz_to_note(
             x, octave=self.octave, cents=cents, key=self.key, unicode=self.unicode
         )
 
 
-class SvaraFormatter(mplticker.Formatter):
+class SvaraFormatter(AdaptiveFormatterBase):
     """Ticker formatter for Svara
 
     Parameters
@@ -436,26 +468,14 @@ class SvaraFormatter(mplticker.Formatter):
                 "Sa frequency is required for svara display formatting"
             )
 
-        super().__init__()
+        super().__init__(major=major)
         self.Sa = Sa
         self.octave = octave
-        self.major = major
         self.abbr = abbr
         self.mela = mela
         self.unicode = unicode
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
-        if x <= 0:
-            return ""
-
-        assert self.axis is not None
-
-        # Only use cent precision if our vspan is less than an octave
-        vmin, vmax = self.axis.get_view_interval()
-
-        if not self.major and vmax > 4 * max(1, vmin):
-            return ""
-
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
         if self.mela is None:
             return core.hz_to_svara_h(
                 x, Sa=self.Sa, octave=self.octave, abbr=self.abbr, unicode=self.unicode
@@ -471,7 +491,7 @@ class SvaraFormatter(mplticker.Formatter):
             )
 
 
-class FJSFormatter(mplticker.Formatter):
+class FJSFormatter(AdaptiveFormatterBase):
     """Ticker formatter for Functional Just System (FJS) notation
 
     Parameters
@@ -522,7 +542,6 @@ class FJSFormatter(mplticker.Formatter):
     """
 
     fmin: float
-    major: bool
     unison: str | None
     unicode: bool
     intervals: str | Collection[float]
@@ -541,9 +560,8 @@ class FJSFormatter(mplticker.Formatter):
         unison: str | None = None,
         unicode: bool = True,
     ):
-        super().__init__()
+        super().__init__(major=major)
         self.fmin = fmin
-        self.major = major
         self.unison = unison
         self.unicode = unicode
         self.intervals = intervals
@@ -553,19 +571,8 @@ class FJSFormatter(mplticker.Formatter):
             n_bins, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
         )
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
         """Apply the formatter to position"""
-        if x <= 0:
-            return ""
-
-        assert self.axis is not None
-
-        # Only use cent precision if our vspan is less than an octave
-        vmin, vmax = self.axis.get_view_interval()
-
-        if not self.major and vmax > 4 * max(1, vmin):
-            return ""
-
         # Map the given frequency to the nearest JI interval
         idx = util.match_events(np.atleast_1d(x), self.frequencies_)[0]
 
@@ -578,7 +585,7 @@ class FJSFormatter(mplticker.Formatter):
         return label
 
 
-class LogHzFormatter(mplticker.Formatter):
+class LogHzFormatter(AdaptiveFormatterBase):
     """Ticker formatter for logarithmic frequency
 
     Parameters
@@ -606,25 +613,35 @@ class LogHzFormatter(mplticker.Formatter):
     >>> ax[1].set(ylabel='Note')
     """
 
-    major: bool
-
     def __init__(self, major: bool = True):
-        super().__init__()
-        self.major = major
+        super().__init__(major=major)
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
         """Apply the formatter to position"""
-        if x <= 0:
-            return ""
-
-        assert self.axis is not None
-
-        vmin, vmax = self.axis.get_view_interval()
-
-        if not self.major and vmax > 4 * max(1, vmin):
-            return ""
-
         return f"{x:g}"
+
+
+class AdaptiveEngFormatter(AdaptiveFormatterBase):
+    """Engineering formatter that limits tick labels to a 2-octave span.
+
+    Parameters
+    ----------
+    major : bool
+        If ``True``, ticks are always labeled.
+
+        If ``False``, ticks are only labeled if the span is less than 2 octaves
+
+    **kwargs : keyword arguments
+        Additional keyword arguments are passed to `matplotlib.ticker.EngFormatter`.
+    """
+
+    def __init__(self, major: bool = True, **kwargs):
+        super().__init__(major=major)
+        self._formatter = mplticker.EngFormatter(**kwargs)
+
+    def _format_tick(self, x: float, pos: int | None = None) -> str:
+        # Delegate string conversion to the wrapped matplotlib formatter
+        return self._formatter(x, pos)
 
 
 class ChromaFormatter(mplticker.Formatter):
@@ -2349,13 +2366,11 @@ def __decorate_axis(
             axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[5::3]))  # type: ignore[arg-type]
         else:
             axis.set_major_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES[::3]))  # type: ignore[arg-type]
-        axis.set_major_formatter(mplticker.EngFormatter(unit="Hz"))
+        axis.set_major_formatter(AdaptiveEngFormatter(major=True, unit="Hz"))
         axis.set_label_text("Frequency")
         # Minor ticks at the 1/3 octaves
         axis.set_minor_locator(mplticker.FixedLocator(__OCT3_FREQUENCIES, nbins=None))  # type: ignore[arg-type]
-        # TODO: implement a 2-octave adaptive wrapper for minor tick labels
-        # axis.set_minor_formatter(mplticker.EngFormatter(unit='Hz'))
-        axis.set_minor_formatter(mplticker.NullFormatter())
+        axis.set_minor_formatter(AdaptiveEngFormatter(major=False, unit="Hz"))
 
     elif ax_type in ["frames"]:
         axis.set_label_text("Frames")
@@ -4090,21 +4105,14 @@ def multiplot(
 def legend_for_axes(
     axes: matplotlib.axes.Axes | np.ndarray | list[matplotlib.axes.Axes] | None = None,
     *,
-    loc: Literal["upper right", "upper left", "lower left", "lower right", "right",
-                 "center left", "center right", "lower center", "upper center",
-                 "center", "best", "outside upper left", "outside upper center",
-                 "outside upper right", "outside right upper", "outside right center",
-                 "outside right lower", "outside lower right", "outside lower center",
-                 "outside lower left", "outside left lower", "outside left center",
-                 "outside left upper"] | None = None,
-    pad: float = 0.02,
-    fraction: float = 0.2,
-    width: float | None = None,
-    height: float | None = None,
     fig: matplotlib.figure.Figure | None = None,
     **kwargs: Any,
 ) -> matplotlib.legend.Legend:
     """Create a figure-level legend for a collection of axes.
+
+    This is similar to `matplotlib.figure.Figure.legend`, but it limits
+    the handle collection to only those belonging to the specified axes.
+    This makes it easier to create different legends for subsets of a subplot array.
 
     Parameters
     ----------
@@ -4112,60 +4120,6 @@ def legend_for_axes(
         Axes to include in the legend aggregation.
         If not provided, axes are taken from `fig.axes`, or from the
         current figure if `fig` is not provided.
-
-    loc : str, optional
-        Legend location, passed through to `matplotlib.figure.Figure.legend`.
-        If not provided, a default is inferred from `axes` shape:
-
-        - 1D input -> ``"center left"``
-        - shape ``(n, 1)`` -> ``"center left"``
-        - shape ``(1, n)`` -> ``"lower center"``
-        - shape ``(m, n)`` with ``m > 1`` and ``n > 1`` -> ``"center left"``
-
-        If `bbox_to_anchor` is not provided in `kwargs`, a legend box is
-        synthesized relative to the union of the selected axes based on `loc`.
-
-        .. note::
-            The ``loc`` parameter follows Matplotlib's legend semantics and is passed
-            through to `matplotlib.figure.Figure.legend` unchanged.
-
-            When `legend_for_axes` is also inferring ``bbox_to_anchor`` automatically,
-            this can feel a little counterintuitive: ``loc`` controls how the legend is
-            anchored *within the synthesized legend box*, not which side of the selected
-            axes the box itself occupies.
-
-            In particular:
-
-            - ``loc='center left'`` places the legend box to the **right** of the selected axes
-              and anchors the legend on the left side of that box.
-            - ``loc='center right'`` places the legend box to the **left** of the selected axes.
-            - ``loc='lower center'`` places the legend box **above** the selected axes.
-            - ``loc='upper center'`` places the legend box **below** the selected axes.
-
-            To control the legend placement explicitly, provide ``bbox_to_anchor`` in
-            ``kwargs``.
-
-    pad : float
-        Padding, in figure-relative coordinates, between the selected
-        axes region and the legend box.
-
-    fraction : float
-        Fraction of the selected axes extent to use for the default legend-box
-        thickness when `width` or `height` is not provided.
-
-        For left/right placement, the default legend-box width is
-        `fraction * union.width`.
-
-        For above/below placement, the default legend-box height is
-        `fraction * union.height`.
-
-    width : float, optional
-        Width of the synthesized legend box in figure-relative coordinates.
-        Ignored if `bbox_to_anchor` is provided.
-
-    height : float, optional
-        Height of the synthesized legend box in figure-relative coordinates.
-        Ignored if `bbox_to_anchor` is provided.
 
     fig : matplotlib.figure.Figure, optional
         Figure on which to create the legend.
@@ -4182,7 +4136,7 @@ def legend_for_axes(
 
     Examples
     --------
-    The typical use case is to aggregate legends across all subplots on the current figure:
+    If no axes are provided, we aggregate legends across all subplots on the current figure:
 
     >>> import matplotlib.pyplot as plt
     >>> x = np.linspace(-10, 10, 100)
@@ -4199,8 +4153,8 @@ def legend_for_axes(
     >>> ax[0, 1].plot(x**2, label='Parabola', color='C1')
     >>> ax[1, 0].plot(x**3, label='Cubic', color='C2')
     >>> ax[1, 1].plot(x**4, label='Quartic', color='C3')
-    >>> librosa.display.legend_for_axes(axes=ax[0], loc='lower center')
-    >>> librosa.display.legend_for_axes(axes=ax[1], loc='upper center')
+    >>> librosa.display.legend_for_axes(axes=ax[0], loc='outside upper center')
+    >>> librosa.display.legend_for_axes(axes=ax[1], loc='outside lower center')
     >>> plt.show()
     """
     if axes is None:
@@ -4208,88 +4162,27 @@ def legend_for_axes(
             fig = plt.gcf()
         axes = fig.axes
 
-    axes_array = np.asarray(axes, dtype=object)
+    axes_array = np.atleast_1d(np.asarray(axes, dtype=object))
 
-    if axes_array.ndim == 0:
-        axes_array = axes_array.reshape(1)
-    elif axes_array.ndim > 2:
-        raise ParameterError(
-            f"Cannot infer legend placement for axes with ndim={axes_array.ndim}"
-        )
-
-    axes_list = axes_array.ravel().tolist()
-
-    if not axes_list:
+    if len(axes_array.flat) == 0:
         raise ParameterError("No axes provided for legend aggregation")
 
     if fig is None:
-        fig = axes_list[0].figure
+        fig = axes_array.flat[0].figure
 
-    for ax in axes_list:
+    for ax in axes_array.flat:
         if ax.figure is not fig:
             raise ParameterError("All axes must belong to the same figure")
 
     handles: list[Artist] = []
     labels: list[str] = []
 
-    for ax in axes_list:
+    for ax in axes_array.flat:
         hlist, llist = ax.get_legend_handles_labels()
         handles.extend(hlist)
         labels.extend(llist)
 
-    if loc is None:
-        if axes_array.ndim == 1:
-            loc = "center left"
-        elif axes_array.shape[0] == 1 and axes_array.shape[1] > 1:
-            loc = "lower center"
-        elif axes_array.shape[1] == 1 and axes_array.shape[0] > 1:
-            loc = "center left"
-        else:
-            loc = "center left"
-
-    if "bbox_to_anchor" not in kwargs:
-        union = Bbox.union([ax.get_position() for ax in axes_list])
-        uw = union.width
-        uh = union.height
-
-        if loc in ("upper left", "center left", "lower left"):
-            # Place legend box to the right of the selected axes
-            w = width if width is not None else fraction * uw
-            h = height if height is not None else uh
-            x0 = union.x1 + pad
-            y0 = union.y0
-
-        elif loc in ("upper right", "center right", "lower right"):
-            # Place legend box to the left of the selected axes
-            w = width if width is not None else fraction * uw
-            h = height if height is not None else uh
-            x0 = union.x0 - pad - w
-            y0 = union.y0
-
-        elif loc == "lower center":
-            # Place legend box above the selected axes
-            w = width if width is not None else uw
-            h = height if height is not None else fraction * uh
-            x0 = union.x0
-            y0 = union.y1 + pad
-
-        elif loc == "upper center":
-            # Place legend box below the selected axes
-            w = width if width is not None else uw
-            h = height if height is not None else fraction * uh
-            x0 = union.x0
-            y0 = union.y0 - pad - h
-
-        else:
-            raise ParameterError(
-                f"Automatic bbox placement is not defined for loc={loc!r}. "
-                "Please provide bbox_to_anchor explicitly."
-            )
-
-        kwargs["bbox_to_anchor"] = Bbox.from_extents(x0, y0, x0 + w, y0 + h)
-        kwargs["bbox_transform"] = fig.transFigure
-
-    return fig.legend(handles, labels, loc=loc, **kwargs)
+    return fig.legend(handles, labels, **kwargs)
 
 
 def _get_ax_bright_highlight(

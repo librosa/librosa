@@ -1547,6 +1547,41 @@ def test_oct3(S_abs, C):
 
 
 @pytest.mark.mpl_image_compare(
+    baseline_images=["oct3_minor"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
+def test_oct3_minor(S_abs, C):
+
+    fig, ax = plt.subplots(nrows=2, ncols=2)
+
+    # STFT, Mel
+    # CQT, VQT
+
+    librosa.display.specshow(S_abs, vscale="dBFS", y_axis="log_oct3", ax=ax[0, 0])
+
+    M = librosa.feature.melspectrogram(S=S_abs**2)
+    librosa.display.specshow(M, vscale="dBFS[power]", y_axis="mel_oct3", ax=ax[0, 1])
+
+    librosa.display.specshow(C, vscale="dBFS", y_axis="cqt_oct3", ax=ax[1, 0])
+
+    librosa.display.specshow(
+        C, vscale="dBFS", y_axis="vqt_oct3", ax=ax[1, 1], intervals="equal"
+    )
+
+    # Put the ticks on the right just to reduce crowding
+    ax[0, 1].yaxis.tick_right()
+    ax[1, 1].yaxis.tick_right()
+
+    for axi in ax.flat:
+        axi.set_ylim([200, 600])
+
+    return fig
+
+
+
+@pytest.mark.mpl_image_compare(
     baseline_images=["wavebars"],
     extensions=["png"],
     style=STYLE,
@@ -1687,27 +1722,11 @@ def test_legend_for_axes_scalar():
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_legend_for_axes_toomanydimensions():
-    fig, ax = plt.subplots(nrows=2, ncols=2)
-
-    ax_stack = np.stack([ax, ax], axis=0)
-    librosa.display.legend_for_axes(axes=ax_stack)
-
-
-@pytest.mark.xfail(raises=librosa.ParameterError)
 def test_legend_for_axes_mismatched_figures():
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
 
     librosa.display.legend_for_axes([ax1, ax2])
-
-
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_legend_for_axes_bad_loc():
-    fig, ax = plt.subplots()
-    ax.plot([0, 1], [0, 1], label="a")
-
-    librosa.display.legend_for_axes([ax], loc="center")
 
 
 def test_legend_for_axes_explicit_bbox():
@@ -1734,7 +1753,7 @@ def test_legend_for_axes_right():
         ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
     fig.subplots_adjust(right=0.8)
-    librosa.display.legend_for_axes(axes=axes, loc="center left")
+    librosa.display.legend_for_axes(axes=axes, loc="outside center right")
 
     return fig
 
@@ -1776,7 +1795,7 @@ def test_legend_for_axes_left():
         ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
     fig.subplots_adjust(left=0.25)
-    librosa.display.legend_for_axes(axes=axes, loc="center right")
+    librosa.display.legend_for_axes(axes=axes, loc="outside center left")
 
     return fig
 
@@ -1838,8 +1857,7 @@ def test_legend_for_axes_above():
     for i, ax in enumerate(np.ravel(axes)):
         ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
-    fig.subplots_adjust(top=0.8)
-    librosa.display.legend_for_axes(axes=axes, loc="lower center", ncol=3)
+    librosa.display.legend_for_axes(axes=axes, loc="outside upper center", ncol=3)
 
     return fig
 
@@ -1856,8 +1874,7 @@ def test_legend_for_axes_below():
     for i, ax in enumerate(np.ravel(axes)):
         ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
-    fig.subplots_adjust(bottom=0.25)
-    librosa.display.legend_for_axes(axes=axes, loc="upper center", ncol=3)
+    librosa.display.legend_for_axes(axes=axes, loc="outside lower center", ncol=3)
 
     return fig
 
@@ -1874,7 +1891,6 @@ def test_legend_for_axes_default_1d():
     for i, ax in enumerate(np.ravel(axes)):
         ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
-    fig.subplots_adjust(right=0.8)
     librosa.display.legend_for_axes(axes=axes)
 
     return fig
@@ -1893,7 +1909,6 @@ def test_legend_for_axes_default_row():
         ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
     axes = np.asarray(axes)[np.newaxis, :]
-    fig.subplots_adjust(top=0.8)
     librosa.display.legend_for_axes(axes=axes)
 
     return fig
@@ -1912,8 +1927,7 @@ def test_legend_for_axes_default_col():
         ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
     axes = np.asarray(axes)[:, np.newaxis]
-    fig.subplots_adjust(right=0.8)
-    librosa.display.legend_for_axes(axes=axes)
+    librosa.display.legend_for_axes(axes=axes, loc="outside center right")
 
     return fig
 
@@ -1930,7 +1944,6 @@ def test_legend_for_axes_default_grid():
     for i, ax in enumerate(np.ravel(axes)):
         ax.plot([0, 1], [i, i + 1], label=f"line-{i}", color=f"C{i}")
 
-    fig.subplots_adjust(right=0.8)
     librosa.display.legend_for_axes(axes=axes)
 
     return fig
