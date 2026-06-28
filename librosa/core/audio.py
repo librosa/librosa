@@ -609,7 +609,6 @@ def _init_output(
     return out
 
 
-@cache(level=20)
 def to_mono(
     *signals: np.ndarray,
     pad: bool = True,
@@ -651,8 +650,6 @@ def to_mono(
 
     Notes
     -----
-    This function caches at level 20.
-
     The dtype of the output signal will be the most general type that can
     accommodate all input signals.  If the input signals have different
     dtypes, the output will be promoted to the most general type.
@@ -727,7 +724,6 @@ def to_mono(
     return output
 
 
-@cache(level=20)
 def to_stereo(
     *,
     left: np.ndarray | None,
@@ -782,7 +778,6 @@ def to_stereo(
     Notes
     -----
     At least one of `left` or `right` must be provided.
-    This function caches at level 20.
 
     Examples
     --------
@@ -868,7 +863,6 @@ def to_stereo(
     return output
 
 
-@cache(level=20)
 def to_multi(
     *signals: np.ndarray,
     downmix: bool = True,
@@ -920,10 +914,6 @@ def to_multi(
     to_mono
     to_stereo
     util.fix_length
-
-    Notes
-    -----
-    This function caches at level 20.
 
     Examples
     --------
