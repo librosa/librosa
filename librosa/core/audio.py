@@ -590,8 +590,32 @@ def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarra
     return load(path, **kwargs)
 
 
+def _init_output(
+    out: np.ndarray | None, shape: tuple[int, ...], dtype: np.dtype
+) -> np.ndarray:
+    """Validate a caller-provided output buffer, or allocate a new one.
+
+    If ``out`` is ``None``, return a new zero-filled array of the given shape
+    and dtype.  Otherwise ``out`` must match ``shape`` and ``dtype`` exactly;
+    it is zeroed in place and returned.
+    """
+    if out is None:
+        return np.zeros(shape, dtype=dtype)
+    if out.shape != shape:
+        raise ParameterError(f"out has shape={out.shape}, but expected {shape}")
+    if out.dtype != dtype:
+        raise ParameterError(f"out has dtype={out.dtype}, but expected {dtype}")
+    out[...] = 0
+    return out
+
+
 @cache(level=20)
-def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.ndarray:
+def to_mono(
+    *signals: np.ndarray,
+    pad: bool = True,
+    norm: bool = True,
+    out: np.ndarray | None = None,
+) -> np.ndarray:
     """Convert an audio signal to mono by averaging samples across channels.
 
     Parameters
@@ -613,10 +637,17 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
 
         If `False`, signals are combined by summing.
 
+    out : np.ndarray [shape=(n_out,)] or None
+        A pre-allocated output buffer.  If provided, it must match the shape
+        ``(n_out,)`` and dtype of the result exactly; it is zeroed and filled
+        in place and returned, avoiding a new allocation.  If ``None``
+        (default), a new array is allocated.
+
     Returns
     -------
     y_mono : np.ndarray [shape=(n_out,)]
         All signals combined together into a single mono signal.
+        If ``out`` was provided, this is the same object as ``out``.
 
     Notes
     -----
@@ -677,7 +708,7 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
     else:
         size = n_min
 
-    output = np.zeros((size,), dtype=dtype)
+    output = _init_output(out, (size,), dtype)
 
     if norm:
         combine = np.mean
@@ -704,6 +735,7 @@ def to_stereo(
     downmix: bool = True,
     pad: bool = True,
     norm: bool = True,
+    out: np.ndarray | None = None,
 ) -> np.ndarray:
     """Combine two signals into a stereo signal.
 
@@ -729,10 +761,17 @@ def to_stereo(
 
         If `False`, signals are combined by summing.
 
+    out : np.ndarray [shape=(2, n_out)] or None
+        A pre-allocated output buffer.  If provided, it must match the shape
+        ``(2, n_out)`` and dtype of the result exactly; it is zeroed and filled
+        in place and returned, avoiding a new allocation.  If ``None``
+        (default), a new array is allocated.
+
     Returns
     -------
     y_stereo : np.ndarray [shape=(2, n_out)]
         Stereo signal with left channel in the first row and right channel in the second row.
+        If ``out`` was provided, this is the same object as ``out``.
 
     See Also
     --------
@@ -800,7 +839,7 @@ def to_stereo(
     dtype = np.promote_types(left.dtype, right.dtype)
 
     # Create an empty stereo output buffer
-    output = np.zeros((2, size), dtype=dtype)
+    output = _init_output(out, (2, size), dtype)
     if downmix:
         output[0] = to_mono(left, norm=norm)
         output[1] = to_mono(right, norm=norm)
@@ -831,7 +870,11 @@ def to_stereo(
 
 @cache(level=20)
 def to_multi(
-    *signals: np.ndarray, downmix: bool = True, pad: bool = True, norm: bool = True
+    *signals: np.ndarray,
+    downmix: bool = True,
+    pad: bool = True,
+    norm: bool = True,
+    out: np.ndarray | None = None,
 ) -> np.ndarray:
     """Combine multiple signals into a multi-channel signal.
 
@@ -858,12 +901,19 @@ def to_multi(
 
         If `False`, signals are combined by summing.
 
+    out : np.ndarray [shape=(m, n_out) or shape=(..., n_out)] or None
+        A pre-allocated output buffer.  If provided, it must match the shape
+        and dtype of the result exactly; it is zeroed and filled in place and
+        returned, avoiding a new allocation.  If ``None`` (default), a new
+        array is allocated.
+
     Returns
     -------
     y_multi : np.ndarray [shape=(m, n_out) or shape=(..., n_out)]
         Multi-channel combination of the input signals, where `m` corresponds
         to the number of signals (if `downmix=True`), and `n_out` is the length
         of the output signal determined by the padding mode.
+        If ``out`` was provided, this is the same object as ``out``.
 
     See Also
     --------
@@ -916,7 +966,7 @@ def to_multi(
     else:
         size = n_min
 
-    output = np.zeros((*channel_layout, size), dtype=dtype)
+    output = _init_output(out, (*channel_layout, size), dtype)
     if downmix:
         # Downmix each signal to mono and mix into the output
         for i, y in enumerate(signals):

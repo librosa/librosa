@@ -1236,6 +1236,60 @@ def test_to_multi_layout(downmix, norm):
             assert np.allclose(y_multi, 6)
 
 
+@pytest.mark.parametrize("norm", [False, True])
+@pytest.mark.parametrize(
+    "signals",
+    [(np.ones((2, 10)),), (np.arange(10.0),), (np.ones(10), np.zeros(10))],
+    ids=["multichannel", "mono", "two-signals"],
+)
+def test_to_mono_out(signals, norm):
+    expected = librosa.to_mono(*signals, norm=norm)
+
+    # np.empty (not zeros) verifies the buffer is zero-filled before accumulation
+    out = np.empty(expected.shape, dtype=expected.dtype)
+    y_mono = librosa.to_mono(*signals, norm=norm, out=out)
+
+    assert y_mono is out
+    assert np.allclose(y_mono, expected)
+
+
+@pytest.mark.parametrize("downmix", [False, True])
+def test_to_stereo_out(downmix):
+    left = np.ones((10,))
+    right = np.zeros((10,))
+    expected = librosa.to_stereo(left=left, right=right, downmix=downmix)
+
+    out = np.empty(expected.shape, dtype=expected.dtype)
+    y_stereo = librosa.to_stereo(left=left, right=right, downmix=downmix, out=out)
+
+    assert y_stereo is out
+    assert np.allclose(y_stereo, expected)
+
+
+@pytest.mark.parametrize("downmix", [False, True])
+def test_to_multi_out(downmix):
+    y = np.ones((2, 10))
+    expected = librosa.to_multi(y, 2 * y, downmix=downmix)
+
+    out = np.empty(expected.shape, dtype=expected.dtype)
+    y_multi = librosa.to_multi(y, 2 * y, downmix=downmix, out=out)
+
+    assert y_multi is out
+    assert np.allclose(y_multi, expected)
+
+
+@pytest.mark.parametrize(
+    "out",
+    [np.empty(11), np.empty((2, 10)), np.empty(10, dtype=np.float32)],
+    ids=["bad-length", "bad-ndim", "bad-dtype"],
+)
+def test_to_mono_out_invalid(out):
+    # y is float64 with length 10, so out must be shape (10,) and float64
+    y = np.ones((2, 10))
+    with pytest.raises(librosa.ParameterError):
+        librosa.to_mono(y, out=out)
+
+
 @pytest.mark.parametrize("data", [np.cos(np.arange(32))])
 @pytest.mark.parametrize("threshold", [0, 1e-10])
 @pytest.mark.parametrize("ref_magnitude", [None, 0.1, np.max])
