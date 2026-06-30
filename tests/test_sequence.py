@@ -717,6 +717,23 @@ def test_rqa_empty(gap_onset, gap_extend, knight):
     assert path.shape == (0, 2)
 
 
+@pytest.mark.parametrize("shape", [(1, 8), (8, 1)])
+@pytest.mark.parametrize("backtrack", [False, True])
+def test_rqa_single_axis(shape, backtrack: bool):
+    rec = np.arange(np.prod(shape), dtype=float).reshape(shape)
+
+    out = librosa.sequence.rqa(rec, backtrack=backtrack)
+
+    if backtrack:
+        score, path = out
+
+        assert score.shape == rec.shape
+        assert path.shape == (1, 2)
+        assert tuple(path[0]) == np.unravel_index(np.argmax(rec), rec.shape)
+    else:
+        assert out.shape == rec.shape
+
+
 @pytest.mark.parametrize("gap_onset", [1, np.inf])
 @pytest.mark.parametrize("gap_extend", [1, np.inf])
 @pytest.mark.parametrize("knight", [False, True])

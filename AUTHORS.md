@@ -113,6 +113,7 @@ Contributors
 * BenedictSt <https://github.com/BenedictSt>
 * Scott VanRavenswaay <https://github.com/scottvr>
 * David Südholt <https://github.com/dsuedholt>
+* Suhas Holla Karkada Chandrashekar <https://github.com/suhashollakc>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 
