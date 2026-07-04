@@ -442,6 +442,15 @@ def stream(
         else:
             sfo.seek(-int(abs(offset) * orig_sr), whence=sf.SEEK_END)
 
+        # Reusable buffer for the per-chunk mono downmix; the final short
+        # chunk writes into a truncated view of it, avoiding a fresh
+        # allocation on every block
+        mono_buffer = (
+            np.empty(orig_read_size, dtype=dtype)
+            if mono and is_multichannel
+            else None
+        )
+
         for orig_chunk in sfo.blocks(blocksize=orig_read_size,
                                      overlap=0,
                                      dtype=dtype,
@@ -450,7 +459,10 @@ def stream(
 
             if mono and is_multichannel:
                 # soundfile returns (samples, channels), to_mono expects (channels, samples)
-                orig_chunk = to_mono(orig_chunk.T)
+                assert mono_buffer is not None  # for mypy; set above under same condition
+                orig_chunk = to_mono(
+                    orig_chunk.T, out=mono_buffer[: orig_chunk.shape[0]]
+                )
 
             if needs_resampling:
                 target_chunk = resampler.resample_chunk(orig_chunk)
@@ -832,12 +844,15 @@ def to_stereo(
 
     # Get a compatible dtype for both channels
     dtype = np.promote_types(left.dtype, right.dtype)
+    left = left.astype(dtype, copy=False)
+    right = right.astype(dtype, copy=False)
 
     # Create an empty stereo output buffer
     output = _init_output(out, (2, size), dtype)
     if downmix:
-        output[0] = to_mono(left, norm=norm)
-        output[1] = to_mono(right, norm=norm)
+        # Downmix directly into the output rows to avoid a second allocation
+        to_mono(left, norm=norm, out=output[0])
+        to_mono(right, norm=norm, out=output[1])
     else:
         if left.ndim == 1:
             output[0] = left
@@ -960,7 +975,14 @@ def to_multi(
     if downmix:
         # Downmix each signal to mono and mix into the output
         for i, y in enumerate(signals):
-            output[i] = util.fix_length(to_mono(y, norm=norm), size=size, axis=-1)
+            y = y.astype(dtype, copy=False)
+            if y.shape[-1] == size:
+                # No length adjustment needed: downmix straight into the row
+                to_mono(y, norm=norm, out=output[i])
+            else:
+                # Length differs, so fix_length must allocate; a pass-through
+                # of out= is not possible here
+                output[i] = util.fix_length(to_mono(y, norm=norm), size=size, axis=-1)
     else:
         # Truncate and mix into the output
         for y in signals:

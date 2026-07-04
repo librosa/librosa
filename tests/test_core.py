@@ -1290,6 +1290,28 @@ def test_to_mono_out_invalid(out):
         librosa.to_mono(y, out=out)
 
 
+@pytest.mark.parametrize("combiner", ["stereo", "multi"])
+def test_to_downmix_out_mixed_dtype(combiner):
+    # Inputs with differing dtypes promote to a wider output dtype; the
+    # downmix pass-through must still fill an out= buffer of that dtype
+    # without a dtype mismatch (regression guard for the internal to_mono
+    # calls in to_stereo/to_multi).
+    a = np.ones(10, dtype=np.float32)
+    b = np.ones(10, dtype=np.float64)
+
+    if combiner == "stereo":
+        expected = librosa.to_stereo(left=a, right=b, downmix=True)
+        out = np.empty(expected.shape, dtype=expected.dtype)
+        result = librosa.to_stereo(left=a, right=b, downmix=True, out=out)
+    else:
+        expected = librosa.to_multi(a, b, downmix=True)
+        out = np.empty(expected.shape, dtype=expected.dtype)
+        result = librosa.to_multi(a, b, downmix=True, out=out)
+
+    assert result is out
+    assert np.allclose(result, expected)
+
+
 @pytest.mark.parametrize("data", [np.cos(np.arange(32))])
 @pytest.mark.parametrize("threshold", [0, 1e-10])
 @pytest.mark.parametrize("ref_magnitude", [None, 0.1, np.max])
