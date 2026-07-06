@@ -29,7 +29,7 @@ jobs:
         auto-update-conda: false
         python-version: ${{ matrix.python-version }}
         add-pip-as-python-dependency: true
-        auto-activate-base: false
+        auto-activate: false
         activate-environment: lint
         # mamba-version: "*"
         channel-priority: ${{ matrix.channel-priority }}
