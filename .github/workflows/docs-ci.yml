@@ -31,12 +31,12 @@ jobs:
                       channel-priority: "flexible"
                       envfile: ".github/environment-docs.yml"
         steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v7
           with:
             fetch-depth: 0
 
         - name: Setup Miniforge
-          uses: conda-incubator/setup-miniconda@v3
+          uses: conda-incubator/setup-miniconda@v4
           with:
             miniforge-version: latest
             activate-environment: docs
@@ -48,7 +48,7 @@ jobs:
           shell: bash
 
         - name: Cache Conda env
-          uses: actions/cache@v4
+          uses: actions/cache@v6
           with:
             path: ${{ env.CONDA }}/envs
             key:

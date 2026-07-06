@@ -61,7 +61,7 @@ jobs:
                       envfile: ".github/environment-ci.yml"
 
         steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v7
 
         - name: Create short temp directory (Windows only)
           if: runner.os == 'Windows'
@@ -89,7 +89,7 @@ jobs:
             esac
 
         - name: Setup Miniforge
-          uses: conda-incubator/setup-miniconda@v3
+          uses: conda-incubator/setup-miniconda@v4
           with:
             miniforge-version: latest
             activate-environment: test
@@ -101,7 +101,7 @@ jobs:
           shell: bash
 
         - name: Cache Conda env
-          uses: actions/cache@v4
+          uses: actions/cache@v6
           with:
             path: ${{ env.CONDA }}/envs
             key:
