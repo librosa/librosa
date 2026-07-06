@@ -40,6 +40,7 @@ jobs:
           with:
             miniforge-version: latest
             activate-environment: docs
+            conda-remove-defaults: true
             python-version: ${{ matrix.python-version }}
 
         - name: Get Date

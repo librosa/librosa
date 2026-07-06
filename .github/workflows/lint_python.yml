@@ -34,6 +34,7 @@ jobs:
         # mamba-version: "*"
         channel-priority: ${{ matrix.channel-priority }}
         environment-file: ${{ matrix.envfile }}
+        conda-remove-defaults: true
         use-only-tar-bz2: false 
 
     - name: Conda info
