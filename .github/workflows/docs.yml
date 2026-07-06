@@ -28,12 +28,12 @@ jobs:
                       channel-priority: "flexible"
                       envfile: ".github/environment-docs.yml"
         steps:
-        - uses: actions/checkout@v4
+        - uses: actions/checkout@v7
           with:
             fetch-depth: 0
 
         - name: Cache conda
-          uses: actions/cache@v4
+          uses: actions/cache@v6
           env:
             # Increase this value to reset cache if etc/example-environment.yml has not changed
             CACHE_NUMBER: 0
@@ -42,15 +42,16 @@ jobs:
             key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
 
         - name: Install Conda environment
-          uses: conda-incubator/setup-miniconda@v3
+          uses: conda-incubator/setup-miniconda@v4
           with:
             auto-update-conda: false
             python-version: ${{ matrix.python-version }}
             add-pip-as-python-dependency: true
-            auto-activate-base: false
+            auto-activate: false
             activate-environment: docs
             channel-priority: ${{ matrix.channel-priority }}
             environment-file: ${{ matrix.envfile }}
+            conda-remove-defaults: true
             use-only-tar-bz2: false # IMPORTANT: This needs to be set for caching to work properly!
 
         - name: Conda info
