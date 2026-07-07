@@ -23,7 +23,7 @@ from .spectrum import istft, stft
 if TYPE_CHECKING:
     from typing import Collection
 
-    from numpy.typing import DTypeLike
+    from numpy.typing import DTypeLike, NDArray
 
     from .._typing import (
         RNGLike,
@@ -80,7 +80,7 @@ def cqt(
     fmin : float > 0 [scalar]
         Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
 
-    n_bins : int > 0 [scalar]
+    n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``.
         If `None`, the number of bins will be inferred to reach up to `sr/2`.
 
@@ -817,7 +817,7 @@ def vqt(
     fmin : float > 0 [scalar]
         Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
 
-    n_bins : int > 0 [scalar]
+    n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
         If `None`, the number of bins will be inferred to reach up to `sr/2`.
 
@@ -1541,7 +1541,11 @@ def __et_relative_bw(bins_per_octave: int) -> np.ndarray:
     return np.atleast_1d((r**2 - 1) / (r**2 + 1))
 
 
-def __clip_freqs(freqs, window, filter_scale, gamma, sr):
+def __clip_freqs(freqs: NDArray,
+                 window: _WindowSpec,
+                 filter_scale: float,
+                 gamma: float | None,
+                 sr: float) -> NDArray[np.float64]:
     """Clip a frequency set to avoid exceeding the Nyquist frequency.
 
     Parameters
@@ -1556,8 +1560,9 @@ def __clip_freqs(freqs, window, filter_scale, gamma, sr):
         Filter scale factor. Small values (<1) use shorter windows
         for improved time resolution.
 
-    gamma : float > 0
+    gamma : float > 0 or None
         Bandwidth offset for determining filter lengths.
+        If `None`, use the default ERB-based calculation.
 
     sr : number > 0
         Audio sampling rate
@@ -1570,23 +1575,24 @@ def __clip_freqs(freqs, window, filter_scale, gamma, sr):
     logf = np.log2(freqs)
     window_bw = filters.window_bandwidth(window)
 
-    # Slide down the frequency set until we cross nyquist
-    # We need to calculate what truncated reflection alpha computation would do
-    i = len(freqs) - 1
-    for i in range(len(freqs) - 1, 0, -1):
-        # Effective bins-per-octave at this truncation point
-        bpo = 1 /(logf[i] - logf[i-1])
-        # Alpha at this point
-        alpha = (2.0**(2/bpo) - 1) / (2.0 ** (2/bpo) + 1)
+    # Use the reflection calculation for alpha, under the
+    # assumption that each frequency could be acting as the
+    # fmax.
+    bpo = 1 / np.diff(logf, prepend=0)
+    bpo[0] = 1 / (logf[1] - logf[0])
+    alpha = (2.0**(2/bpo) - 1) / (2.0 ** (2/bpo) + 1)
 
-        if gamma is None:
-            gamma_ = alpha * 24.7 / 0.108
-        else:
-            gamma_ = gamma
-        Q = float(filter_scale) / alpha
+    if gamma is None:
+        gamma_ = alpha * 24.7 / 0.108
+    else:
+        gamma_ = gamma
+    Q = float(filter_scale) / alpha
 
-        f_cutoff = freqs[i] * (1 + 0.5 * window_bw / Q) + 0.5 * gamma_
-        if f_cutoff <= sr * 0.5:
-            break
+    # Assuming non-monotonicity here: find the
+    # maximum cutoff frequency such that all frequencies
+    # below it land below the Nyquist frequency.
+    f_cutoff = np.maximum.accumulate(freqs * (1 + 0.5 * window_bw / Q) + 0.5 * gamma_)
 
-    return freqs[:i+1]
+    idx = np.searchsorted(f_cutoff, sr / 2.0, side="left")
+
+    return freqs[:idx]
