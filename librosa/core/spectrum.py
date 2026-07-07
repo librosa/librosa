@@ -428,7 +428,7 @@ def istft(
         Number of frames between STFT columns.
         If unspecified, defaults to ``win_length // 4``.
 
-    win_length : int <= n_fft = 2 * (stft_matrix.shape[0] - 1)
+    win_length : int <= n_fft = 2 * (stft_matrix.shape[-2] - 1)
         When reconstructing the time series, each frame is windowed
         and each sample is normalized by the sum of squared window
         according to the ``window`` function (see below).
@@ -437,9 +437,10 @@ def istft(
 
     n_fft : int > 0 or None
         The number of samples per frame in the input spectrogram.
-        By default, this will be inferred from the shape of ``stft_matrix``.
-        However, if an odd frame length was used, you can specify the correct
-        length by setting ``n_fft``.
+        By default, this is inferred as ``2 * (stft_matrix.shape[-2] - 1)``,
+        which assumes an even-length ``n_fft``. If the STFT was computed with
+        an odd ``n_fft``, that inference is off by one; pass the original
+        ``n_fft`` to recover the correct frame length.
 
     window : str, tuple, number, function, np.ndarray [shape=(n_fft,)]
         - a window specification (str, tuple, or number);
@@ -686,7 +687,7 @@ def __reassign_frequencies(
         to `__reassign_frequencies`
 
     n_fft : int > 0 [scalar]
-        FFT window size. Defaults to 2048.
+        length of the FFT window. Defaults to 2048.
 
     hop_length : int > 0 [scalar]
         hop length, number samples between subsequent frames.
@@ -849,7 +850,7 @@ def __reassign_times(
         to `__reassign_times`
 
     n_fft : int > 0 [scalar]
-        FFT window size. Defaults to 2048.
+        length of the FFT window. Defaults to 2048.
 
     hop_length : int > 0 [scalar]
         hop length, number samples between subsequent frames.
@@ -1051,7 +1052,7 @@ def reassigned_spectrogram(
         to ``reassigned_spectrogram``
 
     n_fft : int > 0 [scalar]
-        FFT window size. Defaults to 2048.
+        length of the FFT window. Defaults to 2048.
 
     hop_length : int > 0 [scalar]
         hop length, number samples between subsequent frames.
@@ -1421,7 +1422,7 @@ def phase_vocoder(
     hop_length : int > 0 [scalar] or None
         The number of samples between successive columns of ``D``.
 
-        If None, defaults to ``n_fft//4 = (D.shape[0]-1)//2``
+        If None, defaults to ``n_fft//4 = (D.shape[-2]-1)//2``
 
         .. warning:: This parameter is deprecated as of 1.0 and will
             be removed in 1.1.  It is unused in the current implementation.
@@ -2942,7 +2943,7 @@ def _spectrogram(
         Spectrogram input, optional
 
     n_fft : int > 0
-        STFT window size
+        length of the FFT window
 
     hop_length : int > 0
         STFT hop length

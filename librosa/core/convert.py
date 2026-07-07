@@ -1374,7 +1374,7 @@ def fft_frequencies(*, sr: float = 22050, n_fft: int = 2048) -> _Array1D[np.floa
     sr : number > 0 [scalar]
         Audio sampling rate
     n_fft : int > 0 [scalar]
-        FFT window size
+        length of the FFT window
 
     Returns
     -------

@@ -136,7 +136,7 @@ def mel(
         sampling rate of the incoming signal
 
     n_fft : int > 0 [scalar]
-        number of FFT components
+        length of the FFT window; the filter bank has ``1 + n_fft // 2`` frequency bins
 
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
@@ -275,7 +275,7 @@ def chroma(
         audio sampling rate
 
     n_fft : int > 0 [scalar]
-        number of FFT bins
+        length of the FFT window; the filter bank has ``1 + n_fft // 2`` frequency bins
 
     n_chroma : int > 0 [scalar]
         number of chroma bins
