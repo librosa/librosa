@@ -687,7 +687,7 @@ def __reassign_frequencies(
         to `__reassign_frequencies`
 
     n_fft : int > 0 [scalar]
-        length of the FFT window. Defaults to 2048.
+        length of the FFT frame. Defaults to 2048.
 
     hop_length : int > 0 [scalar]
         hop length, number samples between subsequent frames.
@@ -850,7 +850,7 @@ def __reassign_times(
         to `__reassign_times`
 
     n_fft : int > 0 [scalar]
-        length of the FFT window. Defaults to 2048.
+        length of the FFT frame. Defaults to 2048.
 
     hop_length : int > 0 [scalar]
         hop length, number samples between subsequent frames.
@@ -1052,7 +1052,7 @@ def reassigned_spectrogram(
         to ``reassigned_spectrogram``
 
     n_fft : int > 0 [scalar]
-        length of the FFT window. Defaults to 2048.
+        length of the FFT frame. Defaults to 2048.
 
     hop_length : int > 0 [scalar]
         hop length, number samples between subsequent frames.
@@ -2943,7 +2943,7 @@ def _spectrogram(
         Spectrogram input, optional
 
     n_fft : int > 0
-        length of the FFT window
+        length of the FFT frame
 
     hop_length : int > 0
         STFT hop length

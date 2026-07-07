@@ -46,7 +46,7 @@ def estimate_tuning(
     S : np.ndarray [shape=(..., d, t)] or None
         magnitude or power spectrogram
     n_fft : int > 0 [scalar] or None
-        length of the FFT window to use, if ``y`` is provided.
+        length of the FFT frame to use, if ``y`` is provided.
     resolution : float in `(0, 1)`
         Resolution of the tuning as a fraction of a bin.
         0.01 corresponds to measurements in cents.
@@ -213,7 +213,7 @@ def piptrack(
         magnitude or power spectrogram
 
     n_fft : int > 0 [scalar] or None
-        length of the FFT window to use, if ``y`` is provided.
+        length of the FFT frame to use, if ``y`` is provided.
 
     hop_length : int > 0 [scalar] or None
         number of samples to hop

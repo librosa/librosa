@@ -82,7 +82,7 @@ def spectral_centroid(
     S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
     n_fft : int > 0 [scalar]
-        length of the FFT window
+        length of the FFT frame
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.stft` for details.
     freq : None or np.ndarray [shape=(d,) or shape=(d, t)]
@@ -226,7 +226,7 @@ def spectral_bandwidth(
     S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
     n_fft : int > 0 [scalar]
-        length of the FFT window
+        length of the FFT frame
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.stft` for details.
     win_length : int <= n_fft [scalar]
@@ -394,7 +394,7 @@ def spectral_contrast(
     S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
     n_fft : int > 0 [scalar]
-        length of the FFT window
+        length of the FFT frame
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.stft` for details.
     win_length : int <= n_fft [scalar]
@@ -563,7 +563,7 @@ def spectral_rolloff(
     S : np.ndarray [shape=(d, t)] or None
         (optional) spectrogram magnitude
     n_fft : int > 0 [scalar]
-        length of the FFT window
+        length of the FFT frame
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.stft` for details.
     win_length : int <= n_fft [scalar]
@@ -716,7 +716,7 @@ def spectral_flatness(
     S : np.ndarray [shape=(..., d, t)] or None
         (optional) pre-computed spectrogram magnitude
     n_fft : int > 0 [scalar]
-        length of the FFT window
+        length of the FFT frame
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.stft` for details.
     win_length : int <= n_fft [scalar]
@@ -941,7 +941,7 @@ def poly_features(
     S : np.ndarray [shape=(..., d, t)] or None
         (optional) spectrogram magnitude
     n_fft : int > 0 [scalar]
-        length of the FFT window
+        length of the FFT frame
     hop_length : int > 0 [scalar]
         hop length for STFT. See `librosa.stft` for details.
     win_length : int <= n_fft [scalar]
@@ -1171,7 +1171,7 @@ def chroma_stft(
         See `librosa.util.normalize` for details.
         If `None`, no normalization is performed.
     n_fft : int  > 0 [scalar]
-        length of the FFT window, if ``y, sr`` are provided instead of ``S``
+        length of the FFT frame, if ``y, sr`` are provided instead of ``S``
     hop_length : int > 0 [scalar]
         hop length if provided ``y, sr`` instead of ``S``
     win_length : int <= n_fft [scalar]
@@ -1881,7 +1881,7 @@ def mfcc(
     **kwargs
         additional keyword arguments to `melspectrogram` if operating on time series input
     n_fft : int > 0 [scalar]
-        length of the FFT window
+        length of the FFT frame
     hop_length : int > 0 [scalar]
         number of samples between successive frames.
         See `librosa.stft`
@@ -2053,7 +2053,7 @@ def melspectrogram(
     S : np.ndarray [shape=(..., d, t)]
         spectrogram
     n_fft : int > 0 [scalar]
-        length of the FFT window
+        length of the FFT frame
     hop_length : int > 0 [scalar]
         number of samples between successive frames.
         See `librosa.stft`

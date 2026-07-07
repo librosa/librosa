@@ -100,7 +100,7 @@ def frames_to_samples(
     hop_length : int > 0 [scalar]
         number of samples between successive frames
     n_fft : None or int > 0 [scalar]
-        Optional: length of the FFT window.
+        Optional: length of the FFT frame.
         If given, time conversion will include an offset of ``n_fft // 2``
         to counteract windowing effects when using a non-centered STFT.
 
@@ -169,7 +169,7 @@ def samples_to_frames(
         number of samples between successive frames
 
     n_fft : None or int > 0 [scalar]
-        Optional: length of the FFT window.
+        Optional: length of the FFT frame.
         If given, time conversion will include an offset of ``- n_fft // 2``
         to counteract windowing effects in STFT.
 
@@ -229,7 +229,7 @@ def frames_to_time(
     hop_length : int > 0 [scalar]
         number of samples between successive frames
     n_fft : None or int > 0 [scalar]
-        Optional: length of the FFT window.
+        Optional: length of the FFT frame.
         If given, time conversion will include an offset of ``n_fft // 2``
         to counteract windowing effects when using a non-centered STFT.
 
@@ -293,7 +293,7 @@ def time_to_frames(
         number of samples between successive frames
 
     n_fft : None or int > 0 [scalar]
-        Optional: length of the FFT window.
+        Optional: length of the FFT frame.
         If given, time conversion will include an offset of ``- n_fft // 2``
         to counteract windowing effects in STFT.
 
@@ -1374,7 +1374,7 @@ def fft_frequencies(*, sr: float = 22050, n_fft: int = 2048) -> _Array1D[np.floa
     sr : number > 0 [scalar]
         Audio sampling rate
     n_fft : int > 0 [scalar]
-        length of the FFT window
+        length of the FFT frame
 
     Returns
     -------
@@ -2090,7 +2090,7 @@ def times_like(
     hop_length : int > 0 [scalar]
         number of samples between successive frames
     n_fft : None or int > 0 [scalar]
-        Optional: length of the FFT window.
+        Optional: length of the FFT frame.
         If given, time conversion will include an offset of ``n_fft // 2``
         to counteract windowing effects when using a non-centered STFT.
     axis : int [scalar]
@@ -2147,7 +2147,7 @@ def samples_like(
     hop_length : int > 0 [scalar]
         number of samples between successive frames
     n_fft : None or int > 0 [scalar]
-        Optional: length of the FFT window.
+        Optional: length of the FFT frame.
         If given, time conversion will include an offset of ``n_fft // 2``
         to counteract windowing effects when using a non-centered STFT.
     axis : int [scalar]

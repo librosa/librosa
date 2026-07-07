@@ -477,7 +477,7 @@ def onset_strength_multi(
         pre-computed (log-power) spectrogram
 
     n_fft : int > 0 [scalar]
-        length of the FFT window for use in ``feature()`` if ``S`` is not provided.
+        length of the FFT frame for use in ``feature()`` if ``S`` is not provided.
 
     hop_length : int > 0 [scalar]
         hop length for use in ``feature()`` if ``S`` is not provided.
