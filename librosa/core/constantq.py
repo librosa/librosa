@@ -948,8 +948,7 @@ def vqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     if fmin >= sr / 2:
-        raise ParameterError(f"fmin={fmin} is too high for sr={sr}")
-
+        raise ParameterError(f"fmin={fmin} must be less than sr/2={sr/2}")
     if n_bins is None:
         # If n_bins is None, we need to compute the number of bins to reach sr/2
         # Over-allocating by one octave buys us enough buffer to be safe.
