@@ -82,7 +82,8 @@ def cqt(
 
     n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``.
-        If `None`, the number of bins will be inferred to reach up to `sr/2`.
+        If `None`, the number of bins will be inferred as the maximum that will
+        fit below `sr/2`.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
@@ -819,7 +820,8 @@ def vqt(
 
     n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
-        If `None`, the number of bins will be inferred to reach up to `sr/2`.
+        If `None`, the number of bins will be inferred as the maximum that will
+        fit below `sr/2`.
 
     intervals : str or array of floats in [1, 2)
         Either a string specification for an interval set, e.g.,
@@ -944,6 +946,9 @@ def vqt(
 
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
+
+    if fmin >= sr / 2:
+        raise ParameterError(f"fmin={fmin} is too high for sr={sr}")
 
     if n_bins is None:
         # If n_bins is None, we need to compute the number of bins to reach sr/2
@@ -1541,17 +1546,20 @@ def __et_relative_bw(bins_per_octave: int) -> np.ndarray:
     return np.atleast_1d((r**2 - 1) / (r**2 + 1))
 
 
-def __clip_freqs(freqs: NDArray,
-                 window: _WindowSpec,
-                 filter_scale: float,
-                 gamma: float | None,
-                 sr: float) -> NDArray[np.float64]:
+def __clip_freqs(
+        freqs: NDArray,
+        window: _WindowSpec,
+        filter_scale: float,
+        gamma: float | None,
+        sr: float
+) -> NDArray[np.float64]:
     """Clip a frequency set to avoid exceeding the Nyquist frequency.
 
     Parameters
     ----------
     freqs : np.ndarray [shape=(n_bins,)]
-        Frequency set to clip
+        Frequency set to clip.  At least two frequencies are
+        needed.
 
     window : str, tuple, or function
         Window specification for the basis filters.
@@ -1594,5 +1602,8 @@ def __clip_freqs(freqs: NDArray,
     f_cutoff = np.maximum.accumulate(freqs * (1 + 0.5 * window_bw / Q) + 0.5 * gamma_)
 
     idx = np.searchsorted(f_cutoff, sr / 2.0, side="left")
+
+    if idx < 1:
+        raise ParameterError(f"Unable to construct wavelet basis for fmin={freqs[0]:.2f} Hz and sr={sr:.2f} Hz.")
 
     return freqs[:idx]
