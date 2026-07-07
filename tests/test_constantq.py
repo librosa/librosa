@@ -812,3 +812,54 @@ def test_vqt_provided_intervals(y_cqt, sr_cqt):
     V2 = librosa.vqt(y=y_cqt, sr=sr_cqt, n_bins=60, intervals=intervals)
 
     assert np.allclose(V1, V2)
+
+
+@pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
+def test_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave):
+    # Test that n_bins=None works
+    C = librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=None, bins_per_octave=bins_per_octave)
+    # We'll compare to explicitly setting n_bins to match
+    C2 = librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=C.shape[0], bins_per_octave=bins_per_octave)
+
+    assert np.allclose(C, C2)
+
+    # Now verify that going one step further would raise an error
+    with pytest.raises(librosa.ParameterError):
+        librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=C.shape[0] + 1, bins_per_octave=bins_per_octave)
+
+
+@pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
+@pytest.mark.parametrize("intervals", ["equal", "ji5", "ji7"])
+@pytest.mark.parametrize("gamma", [None, 0])
+def test_vqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, intervals, gamma):
+    # Test that n_bins=None works for VQT
+    V = librosa.vqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        n_bins=None,
+        bins_per_octave=bins_per_octave,
+        intervals=intervals,
+        gamma=gamma,
+    )
+    # We'll compare to explicitly setting n_bins to match
+    V2 = librosa.vqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        n_bins=V.shape[0],
+        bins_per_octave=bins_per_octave,
+        intervals=intervals,
+        gamma=gamma,
+    )
+
+    assert np.allclose(V, V2)
+
+    # Now verify that going one step further would raise an error
+    with pytest.raises(librosa.ParameterError):
+        librosa.vqt(
+            y=y_cqt,
+            sr=sr_cqt,
+            n_bins=V.shape[0] + 1,
+            bins_per_octave=bins_per_octave,
+            intervals=intervals,
+            gamma=gamma,
+        )
