@@ -873,3 +873,7 @@ def test_vqt_nbins_none_small(y_cqt):
     with pytest.raises(librosa.ParameterError):
         librosa.vqt(y=y_cqt, sr=2000, fmin=999,
                     n_bins=None, bins_per_octave=1)
+
+def test_vqt_fmin_over(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.vqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
