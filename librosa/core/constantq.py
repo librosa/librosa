@@ -45,7 +45,7 @@ def cqt(
     sr: float = 22050,
     hop_length: int = 512,
     fmin: _FloatLike_co | None = None,
-    n_bins: int = 84,
+    n_bins: int | None = 84,
     bins_per_octave: int = 12,
     tuning: float | None = 0.0,
     filter_scale: float = 1,
@@ -81,7 +81,8 @@ def cqt(
         Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
 
     n_bins : int > 0 [scalar]
-        Number of frequency bins, starting at ``fmin``
+        Number of frequency bins, starting at ``fmin``.
+        If `None`, the number of bins will be inferred to reach up to `sr/2`.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
@@ -587,7 +588,7 @@ def icqt(
     tuning : float [scalar]
         Tuning offset in fractions of a bin.
 
-        The minimum frequency of the CQT will be modified to
+The minimum frequency of the CQT will be modified to
         ``fmin * 2**(tuning / bins_per_octave)``.
 
     filter_scale : float > 0 [scalar]
@@ -777,7 +778,7 @@ def vqt(
     sr: float = 22050,
     hop_length: int = 512,
     fmin: _FloatLike_co | None = None,
-    n_bins: int = 84,
+    n_bins: int | None = 84,
     intervals: str | Collection[float] = "equal",
     gamma: float | None = None,
     bins_per_octave: int = 12,
@@ -818,6 +819,7 @@ def vqt(
 
     n_bins : int > 0 [scalar]
         Number of frequency bins, starting at ``fmin``
+        If `None`, the number of bins will be inferred to reach up to `sr/2`.
 
     intervals : str or array of floats in [1, 2)
         Either a string specification for an interval set, e.g.,
@@ -930,10 +932,6 @@ def vqt(
     if not isinstance(intervals, str):
         bins_per_octave = len(intervals)
 
-    # How many octaves are we dealing with?
-    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
-    n_filters = min(bins_per_octave, n_bins)
-
     if fmin is None:
         # C1 by default
         fmin = note_to_hz("C1")
@@ -947,7 +945,16 @@ def vqt(
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
-    # First thing, get the freqs of the top octave
+    if n_bins is None:
+        # If n_bins is None, we need to compute the number of bins to reach sr/2
+        # Over-allocating by one octave buys us enough buffer to be safe.
+        # We'll clip back down later as needed.
+        n_bins = int(np.ceil(bins_per_octave * (np.log2(sr) - np.log2(fmin))))
+        # Equivalently: bins_per_octave * (1 + log2(sr/2 / fmin))
+        auto_n_bins = True
+    else:
+        auto_n_bins = False
+
     freqs = interval_frequencies(
         n_bins=n_bins,
         fmin=fmin,
@@ -956,9 +963,10 @@ def vqt(
         sort=True,
     )
 
-    freqs_top = freqs[-bins_per_octave:]
+    if auto_n_bins:
+        freqs = __clip_freqs(freqs, window, filter_scale, gamma, sr)
+        n_bins = len(freqs)
 
-    fmax_t: float = np.max(freqs_top)
     if n_bins == 1:
         alpha = __et_relative_bw(bins_per_octave)
     else:
@@ -977,10 +985,16 @@ def vqt(
     nyquist = sr / 2.0
 
     if filter_cutoff > nyquist:
+        freqs_top = freqs[-bins_per_octave:]
+        fmax_t: float = np.max(freqs_top)
         raise ParameterError(
             f"Wavelet basis with max frequency={fmax_t} would exceed the Nyquist frequency={nyquist}. "
             "Try reducing the number of frequency bins."
         )
+
+    # How many octaves are we dealing with?
+    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
+    n_filters = min(bins_per_octave, n_bins)
 
     y, sr, hop_length = __early_downsample(
         y, sr, hop_length, res_type, n_octaves, nyquist, filter_cutoff, scale
@@ -1525,3 +1539,54 @@ def __et_relative_bw(bins_per_octave: int) -> np.ndarray:
     """
     r = 2 ** (1 / bins_per_octave)
     return np.atleast_1d((r**2 - 1) / (r**2 + 1))
+
+
+def __clip_freqs(freqs, window, filter_scale, gamma, sr):
+    """Clip a frequency set to avoid exceeding the Nyquist frequency.
+
+    Parameters
+    ----------
+    freqs : np.ndarray [shape=(n_bins,)]
+        Frequency set to clip
+
+    window : str, tuple, or function
+        Window specification for the basis filters.
+
+    filter_scale : float > 0
+        Filter scale factor. Small values (<1) use shorter windows
+        for improved time resolution.
+
+    gamma : float > 0
+        Bandwidth offset for determining filter lengths.
+
+    sr : number > 0
+        Audio sampling rate
+
+    Returns
+    -------
+    freqs : np.ndarray [shape=(n_bins,)]
+        Frequency set clipped to avoid exceeding the Nyquist frequency.
+    """
+    logf = np.log2(freqs)
+    window_bw = filters.window_bandwidth(window)
+
+    # Slide down the frequency set until we cross nyquist
+    # We need to calculate what truncated reflection alpha computation would do
+    i = len(freqs) - 1
+    for i in range(len(freqs) - 1, 0, -1):
+        # Effective bins-per-octave at this truncation point
+        bpo = 1 /(logf[i] - logf[i-1])
+        # Alpha at this point
+        alpha = (2.0**(2/bpo) - 1) / (2.0 ** (2/bpo) + 1)
+
+        if gamma is None:
+            gamma_ = alpha * 24.7 / 0.108
+        else:
+            gamma_ = gamma
+        Q = float(filter_scale) / alpha
+
+        f_cutoff = freqs[i] * (1 + 0.5 * window_bw / Q) + 0.5 * gamma_
+        if f_cutoff <= sr * 0.5:
+            break
+
+    return freqs[:i+1]
