@@ -588,7 +588,7 @@ def icqt(
     tuning : float [scalar]
         Tuning offset in fractions of a bin.
 
-The minimum frequency of the CQT will be modified to
+        The minimum frequency of the CQT will be modified to
         ``fmin * 2**(tuning / bins_per_octave)``.
 
     filter_scale : float > 0 [scalar]
