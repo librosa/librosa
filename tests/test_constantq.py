@@ -972,8 +972,6 @@ def test_pseudo_cqt_nbins_none_small(y_cqt):
         librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=999,
                     n_bins=None, bins_per_octave=1)
 
-def test_hybrid_cqt_fmin_over(y_cqt):
+def test_pseudo_cqt_fmin_over(y_cqt):
     with pytest.raises(librosa.ParameterError):
-        librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
-
-
+        librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
