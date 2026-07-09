@@ -42,7 +42,7 @@ def mel_to_stft(
     sr : number > 0 [scalar]
         sampling rate of the underlying signal
     n_fft : int > 0 [scalar]
-        number of FFT components in the resulting STFT
+        length of the FFT frame of the resulting STFT; the output has ``1 + n_fft // 2`` frequency bins
     power : float > 0 [scalar]
         Exponent for the magnitude melspectrogram
     **kwargs :
@@ -67,7 +67,7 @@ def mel_to_stft(
 
     Returns
     -------
-    S : np.ndarray [shape=(..., n_fft, t), non-negative]
+    S : np.ndarray [shape=(..., 1 + n_fft // 2, t), non-negative]
         An approximate linear magnitude spectrogram
 
     See Also
@@ -144,7 +144,7 @@ def mel_to_audio(
     sr : number > 0 [scalar]
         sampling rate of the underlying signal
     n_fft : int > 0 [scalar]
-        number of FFT components in the resulting STFT
+        length of the FFT frame for the intermediate STFT
     hop_length : None or int > 0
         The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
     win_length : None or int > 0
@@ -329,7 +329,7 @@ def mfcc_to_audio(
     sr : number > 0 [scalar]
         sampling rate of the underlying signal
     n_fft : int > 0 [scalar]
-        number of FFT components in the resulting STFT
+        length of the FFT frame for the intermediate STFT
     hop_length : None or int > 0
         The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
     win_length : None or int > 0
