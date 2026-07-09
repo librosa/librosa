@@ -1163,7 +1163,7 @@ def get_duration(
         it is better to use the audio time series directly.
 
     n_fft : int > 0 [scalar]
-        FFT window size for ``S``
+        length of the FFT frame used when computing ``S``
 
     hop_length : int > 0 [ scalar]
         number of audio samples between columns of ``S``
