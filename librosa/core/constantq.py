@@ -351,7 +351,8 @@ def hybrid_cqt(
 
     if filter_cutoff > sr / 2:
         raise ParameterError(
-            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. Try reducing the number of frequency bins."
+            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. "
+            "Try reducing the number of frequency bins."
         )
 
     # Determine which filters to use with Pseudo CQT
@@ -548,7 +549,8 @@ def pseudo_cqt(
 
     if filter_cutoff > sr / 2:
         raise ParameterError(
-            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. Try reducing the number of frequency bins."
+            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. "
+            "Try reducing the number of frequency bins."
         )
 
     fft_basis, n_fft, _ = __vqt_filter_fft(
