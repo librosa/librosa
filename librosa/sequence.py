@@ -11,6 +11,7 @@ Sequence alignment
 
     dtw
     rqa
+    path_to_steps
 
 Viterbi decoding
 ----------------
@@ -31,17 +32,25 @@ Transition matrices
     transition_cycle
     transition_local
 """
+
 from __future__ import annotations
 
+from typing import TYPE_CHECKING, cast, overload
+
 import numpy as np
-from scipy.spatial.distance import cdist
 from numba import jit
-from .util import pad_center, fill_off_diagonal, is_positive_int, tiny, expand_to
-from .util.exceptions import ParameterError
+
 from .filters import get_window
-from typing import Any, Iterable, List, Optional, Tuple, Union, overload
-from typing_extensions import Literal
-from ._typing import _WindowSpec
+from .util import expand_to, fill_off_diagonal, is_positive_int, pad_center, tiny
+from .util.exceptions import ParameterError
+
+if TYPE_CHECKING:
+    from typing import Any, Iterable, Literal
+
+    import numpy.typing as npt
+
+    from ._typing import _Array2D, _WindowSpec
+
 
 __all__ = [
     "dtw",
@@ -63,157 +72,135 @@ def dtw(
     Y: np.ndarray,
     *,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[False],
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> np.ndarray:
-    ...
-
-
+) -> _Array2D[np.float64]: ...
 @overload
 def dtw(
     *,
     C: np.ndarray,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[False],
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> np.ndarray:
-    ...
-
-
+) -> _Array2D[np.float64]: ...
 @overload
 def dtw(
     X: np.ndarray,
     Y: np.ndarray,
     *,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[False],
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
-
-
+) -> tuple[_Array2D[np.float64], _Array2D[np.int32]]: ...
 @overload
 def dtw(
     *,
     C: np.ndarray,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[False],
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
-
-
+) -> tuple[_Array2D[np.float64], _Array2D[np.int32]]: ...
 @overload
 def dtw(
     X: np.ndarray,
     Y: np.ndarray,
     *,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[True] = ...,
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
-
-
+) -> tuple[_Array2D[np.float64], _Array2D[np.int_]]: ...
 @overload
 def dtw(
     *,
     C: np.ndarray,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[True] = ...,
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[False] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
-
-
+) -> tuple[_Array2D[np.float64], _Array2D[np.int_]]: ...
 @overload
 def dtw(
     X: np.ndarray,
     Y: np.ndarray,
     *,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[True] = ...,
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    ...
-
-
+) -> tuple[_Array2D[np.float64], _Array2D[np.int_], _Array2D[np.int32]]: ...
 @overload
 def dtw(
     *,
     C: np.ndarray,
     metric: str = ...,
-    step_sizes_sigma: Optional[np.ndarray] = ...,
-    weights_add: Optional[np.ndarray] = ...,
-    weights_mul: Optional[np.ndarray] = ...,
+    step_sizes_sigma: np.ndarray | None = ...,
+    weights_add: np.ndarray | None = ...,
+    weights_mul: np.ndarray | None = ...,
     subseq: bool = ...,
     backtrack: Literal[True] = ...,
     global_constraints: bool = ...,
     band_rad: float = ...,
     return_steps: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-    ...
-
-
+) -> tuple[_Array2D[np.float64], _Array2D[np.int_], _Array2D[np.int32]]: ...
 def dtw(
-    X: Optional[np.ndarray] = None,
-    Y: Optional[np.ndarray] = None,
+    X: np.ndarray | None = None,
+    Y: np.ndarray | None = None,
     *,
-    C: Optional[np.ndarray] = None,
+    C: np.ndarray | None = None,
     metric: str = "euclidean",
-    step_sizes_sigma: Optional[np.ndarray] = None,
-    weights_add: Optional[np.ndarray] = None,
-    weights_mul: Optional[np.ndarray] = None,
+    step_sizes_sigma: np.ndarray | None = None,
+    weights_add: np.ndarray | None = None,
+    weights_mul: np.ndarray | None = None,
     subseq: bool = False,
     backtrack: bool = True,
     global_constraints: bool = False,
     band_rad: float = 0.25,
     return_steps: bool = False,
-) -> Union[
-    np.ndarray, Tuple[np.ndarray, np.ndarray], Tuple[np.ndarray, np.ndarray, np.ndarray]
-]:
+) -> (
+    _Array2D[np.float64]
+    | tuple[_Array2D[np.float64], _Array2D[np.int_] | _Array2D[np.int32]]
+    | tuple[_Array2D[np.float64], _Array2D[np.int_], _Array2D[np.int32]]
+):
     """Dynamic time warping (DTW).
 
     This function performs a DTW and path backtracking on two sequences.
@@ -299,7 +286,7 @@ def dtw(
     --------
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('brahms'), offset=10, duration=15)
+    >>> y, sr = librosa.loadx('brahms', offset=10, duration=15)
     >>> X = librosa.feature.chroma_cens(y=y, sr=sr)
     >>> noise = np.random.rand(X.shape[0], 200)
     >>> Y = np.concatenate((noise, noise, X, noise), axis=1)
@@ -307,8 +294,9 @@ def dtw(
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> img = librosa.display.specshow(D, x_axis='frames', y_axis='frames',
     ...                                ax=ax[0])
+    >>> hl = librosa.display.highlight(ax=ax[0])
     >>> ax[0].set(title='DTW cost', xlabel='Noisy sequence', ylabel='Target')
-    >>> ax[0].plot(wp[:, 1], wp[:, 0], label='Optimal path', color='y')
+    >>> ax[0].plot(wp[:, 1], wp[:, 0], label='Optimal path', path_effects=hl)
     >>> ax[0].legend()
     >>> fig.colorbar(img, ax=ax[0])
     >>> ax[1].plot(D[-1, :] / wp.shape[0])
@@ -383,8 +371,8 @@ def dtw(
         # Perform some shape-squashing here
         # Put the time axes around front
         # Suppress types because mypy doesn't know these are ndarrays
-        X = np.swapaxes(X, -1, 0)  # type: ignore
-        Y = np.swapaxes(Y, -1, 0)  # type: ignore
+        X = np.swapaxes(X, -1, 0)
+        Y = np.swapaxes(Y, -1, 0)
 
         # Flatten the remaining dimensions
         # Use F-ordering to preserve columns
@@ -392,7 +380,8 @@ def dtw(
         Y = Y.reshape((Y.shape[0], -1), order="F")
 
         try:
-            C = cdist(X, Y, metric=metric)
+            from scipy.spatial.distance import cdist
+            C = cdist(X, Y, metric=metric)  # type: ignore[call-overload]
         except ValueError as exc:
             raise ParameterError(
                 "scipy.spatial.distance.cdist returned an error.\n"
@@ -451,8 +440,6 @@ def dtw(
     steps[:, 0] = 2
 
     # calculate accumulated cost matrix
-    D: np.ndarray
-    steps: np.ndarray
     D, steps = __dtw_calc_accu_cost(
         C, D, steps, step_sizes_sigma, weights_mul, weights_add, max_0, max_1
     )
@@ -461,7 +448,7 @@ def dtw(
     D = D[max_0:, max_1:]
     steps = steps[max_0:, max_1:]
 
-    return_values: List[np.ndarray]
+    return_values: list[np.ndarray]
     if backtrack:
         wp: np.ndarray
         if subseq:
@@ -521,7 +508,7 @@ def __dtw_calc_accu_cost(
     weights_add: np.ndarray,
     max_0: int,
     max_1: int,
-) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
+) -> tuple[np.ndarray, np.ndarray]:  # pragma: no cover
     """Calculate the accumulated cost matrix D.
 
     Use dynamic programming to calculate the accumulated costs.
@@ -563,9 +550,9 @@ def __dtw_calc_accu_cost(
     for cur_n in range(max_0, D.shape[0]):
         for cur_m in range(max_1, D.shape[1]):
             # accumulate costs
-            for cur_step_idx, cur_w_add, cur_w_mul in zip(
+            for cur_step_idx, cur_w_add, cur_w_mul in zip(  # noqa: B905
                 range(step_sizes_sigma.shape[0]), weights_add, weights_mul
-            ):
+                ):
                 cur_D = D[
                     cur_n - step_sizes_sigma[cur_step_idx, 0],
                     cur_m - step_sizes_sigma[cur_step_idx, 1],
@@ -589,8 +576,8 @@ def __dtw_backtracking(
     steps: np.ndarray,
     step_sizes_sigma: np.ndarray,
     subseq: bool,
-    start: Optional[int] = None,
-) -> List[Tuple[int, int]]:  # pragma: no cover
+    start: int | None = None,
+) -> list[tuple[int, int]]:  # pragma: no cover
     """Backtrack optimal warping path.
 
     Uses the saved step sizes from the cost accumulation
@@ -656,10 +643,10 @@ def __dtw_backtracking(
 def dtw_backtracking(
     steps: np.ndarray,
     *,
-    step_sizes_sigma: Optional[np.ndarray] = None,
+    step_sizes_sigma: np.ndarray | None = None,
     subseq: bool = False,
-    start: Optional[Union[int, np.integer[Any]]] = None,
-) -> np.ndarray:
+    start: int | np.integer[Any] | None = None,
+) -> _Array2D[np.int_]:
     """Backtrack a warping path.
 
     Uses the saved step sizes from the cost accumulation
@@ -715,10 +702,7 @@ def rqa(
     gap_extend: float = ...,
     knight_moves: bool = ...,
     backtrack: Literal[False],
-) -> np.ndarray:
-    ...
-
-
+) -> _Array2D[Any]: ...
 @overload
 def rqa(
     sim: np.ndarray,
@@ -727,22 +711,7 @@ def rqa(
     gap_extend: float = ...,
     knight_moves: bool = ...,
     backtrack: Literal[True] = ...,
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
-
-
-@overload
-def rqa(
-    sim: np.ndarray,
-    *,
-    gap_onset: float = ...,
-    gap_extend: float = ...,
-    knight_moves: bool = ...,
-    backtrack: bool = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
-
-
+) -> tuple[_Array2D[Any], _Array2D[np.uint]]: ...
 def rqa(
     sim: np.ndarray,
     *,
@@ -750,7 +719,7 @@ def rqa(
     gap_extend: float = 1,
     knight_moves: bool = True,
     backtrack: bool = True,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+) -> _Array2D[Any] | tuple[_Array2D[Any], _Array2D[np.uint]]:
     """Recurrence quantification analysis (RQA)
 
     This function implements different forms of RQA as described by
@@ -843,7 +812,7 @@ def rqa(
 
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
+    >>> y, sr = librosa.loadx('nutcracker', duration=30)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> # Use time-delay embedding to reduce noise
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
@@ -860,10 +829,12 @@ def rqa(
     >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames', ax=ax[0])
     >>> ax[0].set(title='Recurrence matrix')
     >>> librosa.display.specshow(L_score, x_axis='frames', y_axis='frames', ax=ax[1])
+    >>> hl = librosa.display.highlight(ax=ax[1])
     >>> ax[1].set(title='Alignment score matrix')
-    >>> ax[1].plot(L_path[:, 1], L_path[:, 0], label='Optimal path', color='c')
+    >>> ax[1].plot(L_path[:, 1], L_path[:, 0], label='Optimal path', path_effects=hl)
     >>> ax[1].legend()
     >>> ax[1].label_outer()
+    >>> plt.show()
 
     Full alignment using gaps and knight moves
 
@@ -874,9 +845,11 @@ def rqa(
     >>> ax[0].set(title='Recurrence matrix')
     >>> librosa.display.specshow(score, x_axis='frames', y_axis='frames', ax=ax[1])
     >>> ax[1].set(title='Alignment score matrix')
-    >>> ax[1].plot(path[:, 1], path[:, 0], label='Optimal path', color='c')
+    >>> hl = librosa.display.highlight(ax=ax[1])
+    >>> ax[1].plot(path[:, 1], path[:, 0], label='Optimal path', path_effects=hl)
     >>> ax[1].legend()
     >>> ax[1].label_outer()
+    >>> plt.show()
     """
     if gap_onset < 0:
         raise ParameterError("gap_onset={} must be strictly positive")
@@ -896,7 +869,7 @@ def rqa(
 @jit(nopython=True, cache=True)  # type: ignore
 def __rqa_dp(
     sim: np.ndarray, gap_onset: float, gap_extend: float, knight: bool
-) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
+) -> tuple[np.ndarray, npt.NDArray[np.int8]]:  # pragma: no cover
     """RQA dynamic programming implementation"""
     # The output array
     score = np.zeros(sim.shape, dtype=sim.dtype)
@@ -1050,7 +1023,7 @@ def __rqa_dp(
     return score, backtrack
 
 
-def __rqa_backtrack(score, pointers):
+def __rqa_backtrack(score, pointers) -> _Array2D[np.uint]:
     """RQA path backtracking
 
     Given the score matrix and backtracking index array,
@@ -1071,7 +1044,7 @@ def __rqa_backtrack(score, pointers):
     idx = list(np.unravel_index(np.argmax(score), score.shape))
 
     # Construct the path
-    path: List = []
+    path: list = []
     while True:
         bt_index = pointers[tuple(idx)]
 
@@ -1101,10 +1074,110 @@ def __rqa_backtrack(score, pointers):
     return np.asarray(path, dtype=np.uint)
 
 
+def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> npt.NDArray[np.float64]:
+    """Convert a DTW warping path to an array of fractional steps.
+
+    The step sequence is computed by linear interpolation of the warping
+    path indices.
+
+    This function primarily exists as a helper to construct non-linear
+    time grids for aligning two signals via phase vocoding, as illustrated
+    in the example below.
+
+    Parameters
+    ----------
+    path : np.ndarray [shape=(k, 2)]
+        A path of index pairs, e.g., from `dtw`.
+        ``path[i] = [n, m]`` indicates that step ``n`` of the first
+        signal aligns to step ``m`` of the second signal.
+
+    inverse : bool
+        If ``False`` (default), the output is a time grid mapping the
+        first sequence (first column of ``path``) to the second sequence.
+
+        If ``True``, the output is a time grid mapping the second sequence
+        (second column of ``path``) to the first sequence.
+
+    Returns
+    -------
+    steps : np.ndarray [shape=(t,)]
+        An array of fractional steps, where ``steps[i]`` is the index
+        in the first sequence corresponding to the ``i``th step of the
+        second sequence.  The number of steps is determined by the range
+        of the target sequence indices.
+
+    See Also
+    --------
+    dtw
+    librosa.phase_vocoder
+
+    Examples
+    --------
+    This example generates a sine sweep over the same frequency range but at different speeds.
+    It then uses dynamic time warping to align the chroma features of the two signals.
+    Finally, the warping path is converted to a time grid that maps the second signal's frames
+    onto the first signal.  This can be used for variable-rate phase vocoding to align the two signals.
+
+    >>> # We'll plot these below
+    >>> import matplotlib.pyplot as plt
+    >>> # Generate the sweeps at different rates
+    >>> y1 = librosa.chirp(fmin=220, fmax=1760, duration=1.0, sr=22050)
+    >>> y2 = librosa.chirp(fmin=220, fmax=1760, duration=2.0, sr=22050)
+    >>> # Compute the chroma features
+    >>> C1 = librosa.feature.chroma_cqt(y=y1, sr=22050)
+    >>> C2 = librosa.feature.chroma_cqt(y=y2, sr=22050)
+    >>> # Compute the DTW path
+    >>> cost, path = librosa.sequence.dtw(C1, C2, subseq=False)
+    >>> path
+    array([[43, 86],
+           [42, 85],
+           [42, 84],
+           ...,
+           [ 0,  2],
+           [ 0,  1],
+           [ 0,  0]], shape=(87, 2))
+    >>> # Convert the path to a fractional step grid
+    >>> steps = librosa.sequence.path_to_steps(path)
+    >>> steps
+    array([ 0.,  0.,  0., ..., 42., 42., 43.], shape=(87,))
+    >>> # Compute STFT for the first signal
+    >>> D1 = librosa.stft(y1)
+    >>> # Phase vocode it to match the second signal using the time grid
+    >>> D1_vocoded = librosa.phase_vocoder(D1, t_out=steps)
+    >>> # Map back into the time domain.  Match duration of y2 exactly
+    >>> y1_vocoded = librosa.istft(D1_vocoded, length=len(y2))
+
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> librosa.display.specshow(C1, x_axis='time', y_axis='chroma', ax=ax[0])
+    >>> ax[0].set(title='Chroma 1: fast')
+    >>> librosa.display.specshow(C2, x_axis='time', y_axis='chroma', ax=ax[1])
+    >>> ax[1].set(title='Chroma 2: slow')
+    >>> C3 = librosa.feature.chroma_cqt(y=y1_vocoded, sr=22050)
+    >>> librosa.display.specshow(C3, x_axis='time', y_axis='chroma', ax=ax[2])
+    >>> ax[2].set(title='Chroma 1 vocoded to match Chroma 2')
+    """
+    if inverse:
+        idx_from, idx_to = 1, 0
+    else:
+        idx_from, idx_to = 0, 1
+
+    import scipy.interpolate
+    step_interp = scipy.interpolate.interp1d(
+        path[:, idx_to], path[:, idx_from], kind="linear"
+    )
+    frames_in = np.arange(path[:, idx_to].min(), path[:, idx_to].max() + 1)
+    steps = step_interp(frames_in)
+
+    return cast("npt.NDArray[np.float64]", steps)
+
+
 @jit(nopython=True, cache=True)  # type: ignore
 def _viterbi(
-    log_prob: np.ndarray, log_trans: np.ndarray, log_p_init: np.ndarray
-) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
+    log_prob: np.ndarray,
+    log_trans: np.ndarray,
+    log_p_init: np.ndarray,
+    log_trans_threshold: float,
+) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]:  # pragma: no cover
     """Core Viterbi algorithm.
 
     This is intended for internal use only.
@@ -1119,6 +1192,11 @@ def _viterbi(
         ``log_trans[i, j] = log P[State(t+1) = j | State(t) = i]``
     log_p_init : np.ndarray [shape=(m,)]
         log of the initial state distribution
+    log_trans_threshold : float
+        threshold above which transitions are considered feasible.
+        Use -np.inf to perform a full search (exact viterbi).
+        Otherwise, only transitions with (log) probability above the threshold
+        are considered in the loop.
 
     Returns
     -------
@@ -1134,26 +1212,42 @@ def _viterbi(
     # factor in initial state distribution
     value[0] = log_prob[0] + log_p_init
 
-    for t in range(1, n_steps):
-        # Want V[t, j] <- p[t, j] * max_k V[t-1, k] * A[k, j]
-        #    assume at time t-1 we were in state k
-        #    transition k -> j
-
-        # Broadcast over rows:
-        #    Tout[k, j] = V[t-1, k] * A[k, j]
-        #    then take the max over columns
-        # We'll do this in log-space for stability
-
-        trans_out = value[t - 1] + log_trans.T
-
-        # Unroll the max/argmax loop to enable numba support
+    if np.isfinite(log_trans_threshold):
+        pred_states = []
         for j in range(n_states):
-            ptr[t, j] = np.argmax(trans_out[j])
-            # value[t, j] = log_prob[t, j] + np.max(trans_out[j])
-            value[t, j] = log_prob[t, j] + trans_out[j, ptr[t][j]]
+            possible_states = np.flatnonzero(log_trans[:, j] >= log_trans_threshold)
+            if len(possible_states) == 0:
+                raise ParameterError(
+                    f"Empty transition matrix detected for state {j} in Viterbi. "
+                    f"Try reducing your minimum transition probability threshold."
+                )
+            pred_states.append(possible_states)
+
+        for t in range(1, n_steps):
+            # Want V[t, j] <- p[t, j] * max_k V[t-1, k] * A[k, j]
+            #    assume at time t-1 we were in state k
+            #    transition k -> j
+            for j in range(n_states):
+                best_cost = -np.inf
+                for k in pred_states[j]:
+                    cost = value[t - 1, k] + log_trans[k, j]
+                    if cost > best_cost:
+                        ptr[t, j] = k
+                        best_cost = cost
+                value[t, j] = log_prob[t, j] + best_cost
+    else:
+        # Same as above, but doing a full search over previous states
+        for t in range(1, n_steps):
+            for j in range(n_states):
+                best_cost = -np.inf
+                for kj in range(n_states):
+                    cost = value[t - 1, kj] + log_trans[kj, j]
+                    if cost > best_cost:
+                        ptr[t, j] = kj
+                        best_cost = cost
+                value[t, j] = log_prob[t, j] + best_cost
 
     # Now roll backward
-
     # Get the last state
     state[-1] = np.argmax(value[-1])
 
@@ -1170,30 +1264,27 @@ def viterbi(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_init: Optional[np.ndarray] = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
-
-
+    transition_min_prob: float | None = ...,
+) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]: ...
 @overload
 def viterbi(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_init: Optional[np.ndarray] = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[False] = ...,
-) -> np.ndarray:
-    ...
-
-
+    transition_min_prob: float | None = ...,
+) -> npt.NDArray[np.uint16]: ...
 def viterbi(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_init: Optional[np.ndarray] = None,
+    p_init: np.ndarray | None = None,
     return_logp: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    transition_min_prob: float | None = None,
+) -> npt.NDArray[np.uint16] | tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]:
     """Viterbi decoding from observation likelihoods.
 
     Given a sequence of observation likelihoods ``prob[s, t]``,
@@ -1220,15 +1311,18 @@ def viterbi(
         If not provided, a uniform distribution is assumed.
     return_logp : bool
         If ``True``, return the log-likelihood of the state sequence.
+    transition_min_prob : float, >=0
+        Optional: if provided, the minimum transition probability to consider
+        during decoding.
 
     Returns
     -------
-    Either ``states`` or ``(states, logp)``:
     states : np.ndarray [shape=(..., n_steps,)]
         The most likely state sequence.
         If ``prob`` contains multiple channels of input, then each channel is
         decoded independently.
-    logp : scalar [float] or np.ndarray
+
+    logp : scalar [float] or np.ndarray, optional
         If ``return_logp=True``, the log probability of ``states`` given
         the observations.
 
@@ -1267,7 +1361,7 @@ def viterbi(
     >>> print(logp, path)
     -4.19173690823075 [0 0 1]
     """
-    n_states, n_steps = prob.shape[-2:]
+    n_states, _n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
         raise ParameterError(
@@ -1301,9 +1395,18 @@ def viterbi(
     log_prob = np.log(prob + epsilon)
     log_p_init = np.log(p_init + epsilon)
 
-    def _helper(lp):
+    if transition_min_prob is not None and transition_min_prob > 0:
+        log_trans_threshold = np.log(transition_min_prob + epsilon)
+    elif transition_min_prob is None or transition_min_prob == 0:
+        log_trans_threshold = -np.inf
+    else:
+        raise ParameterError(
+            f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative."
+        )
+
+    def _helper(lp) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]:
         # Transpose input
-        _state, logp = _viterbi(lp.T, log_trans, log_p_init)
+        _state, logp = _viterbi(lp.T, log_trans, log_p_init, log_trans_threshold)
         # Transpose outputs for return
         return _state.T, logp
 
@@ -1334,45 +1437,30 @@ def viterbi_discriminative(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
+    p_state: np.ndarray | None = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[False] = ...,
-) -> np.ndarray:
-    ...
-
-
+    transition_min_prob: float | None = ...,
+) -> npt.NDArray[np.uint16]: ...
 @overload
 def viterbi_discriminative(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
+    p_state: np.ndarray | None = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
-
-
-@overload
+    transition_min_prob: float | None = ...,
+) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]: ...
 def viterbi_discriminative(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
-    return_logp: bool,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
-
-
-def viterbi_discriminative(
-    prob: np.ndarray,
-    transition: np.ndarray,
-    *,
-    p_state: Optional[np.ndarray] = None,
-    p_init: Optional[np.ndarray] = None,
+    p_state: np.ndarray | None = None,
+    p_init: np.ndarray | None = None,
     return_logp: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    transition_min_prob: float | None = None,
+) -> npt.NDArray[np.uint16] | tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]:
     """Viterbi decoding from discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,
@@ -1411,10 +1499,12 @@ def viterbi_discriminative(
         If not provided, it is assumed to be uniform.
     return_logp : bool
         If ``True``, return the log-likelihood of the state sequence.
+    transition_min_prob : float, >= 0
+        Optional: if provided, the minimum transition probability to consider
+        during decoding.
 
     Returns
     -------
-    Either ``states`` or ``(states, logp)``:
     states : np.ndarray [shape=(..., n_steps,)]
         The most likely state sequence.
         If ``prob`` contains multiple input channels,
@@ -1457,10 +1547,10 @@ def viterbi_discriminative(
     >>> trans = librosa.sequence.transition_loop(25, 0.9)
 
     >>> # Load in audio and make features
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
+    >>> y, sr = librosa.loadx('nutcracker', duration=15)
     >>> # Suppress percussive elements
     >>> y = librosa.effects.harmonic(y, margin=4)
-    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, threshold=0.25)
     >>> # Map chroma (observations) to class (state) likelihoods
     >>> probs = np.exp(weights.dot(chroma))  # P[class | chroma] ~= exp(template' chroma)
     >>> probs /= probs.sum(axis=0, keepdims=True)  # probabilities must sum to 1 in each column
@@ -1475,20 +1565,24 @@ def viterbi_discriminative(
     >>> librosa.display.specshow(chroma, x_axis='time', y_axis='chroma', ax=ax[0])
     >>> librosa.display.specshow(weights, x_axis='chroma', ax=ax[1])
     >>> ax[1].set(yticks=np.arange(25) + 0.5, yticklabels=labels, ylabel='Chord')
+    >>> plt.show()
 
     >>> # And plot the results
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(probs, x_axis='time', cmap='gray', ax=ax)
+    >>> img = librosa.display.specshow(probs, x_axis='time', ax=ax, div_thresh=1./25)
+    >>> hl = librosa.display.highlight(ax=ax, alpha=0.1)
+    >>> fig.colorbar(img, ax=ax, label='Frame-wise class probability')
     >>> times = librosa.times_like(chords_vit)
-    >>> ax.scatter(times, chords_ind + 0.25, color='lime', alpha=0.5, marker='+',
-    ...            s=15, label='Independent')
-    >>> ax.scatter(times, chords_vit - 0.25, color='deeppink', alpha=0.5, marker='o',
-    ...            s=15, label='Viterbi')
+    >>> ax.scatter(times, chords_ind + 0.25, alpha=0.85, marker='x', color='k',
+    ...            s=15, label='Independent', path_effects=hl)
+    >>> ax.scatter(times, chords_vit - 0.25, alpha=0.85, marker='o', color='g',
+    ...            s=15, label='Viterbi', path_effects=hl)
     >>> ax.set(yticks=np.unique(chords_vit),
     ...        yticklabels=[labels[i] for i in np.unique(chords_vit)])
-    >>> ax.legend()
+    >>> ax.legend(loc='upper right', ncols=2)
+    >>> plt.show()
     """
-    n_states, n_steps = prob.shape[-2:]
+    n_states, _n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
         raise ParameterError(
@@ -1544,6 +1638,15 @@ def viterbi_discriminative(
     log_trans = np.log(transition + epsilon)
     log_marginal = np.log(p_state + epsilon)
 
+    if transition_min_prob is not None and transition_min_prob > 0:
+        log_trans_threshold = np.log(transition_min_prob + epsilon)
+    elif transition_min_prob is None or transition_min_prob == 0:
+        log_trans_threshold = -np.inf
+    else:
+        raise ParameterError(
+            f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative."
+        )
+
     # reshape to broadcast against prob
     log_marginal = expand_to(log_marginal, ndim=prob.ndim, axes=-2)
 
@@ -1551,7 +1654,7 @@ def viterbi_discriminative(
 
     def _helper(lp):
         # Transpose input
-        _state, logp = _viterbi(lp.T, log_trans, log_p_init)
+        _state, logp = _viterbi(lp.T, log_trans, log_p_init, log_trans_threshold)
         # Transpose outputs for return
         return _state.T, logp
 
@@ -1581,45 +1684,30 @@ def viterbi_binary(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
+    p_state: np.ndarray | None = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[False] = ...,
-) -> np.ndarray:
-    ...
-
-
+    transition_min_prob: float | None = ...,
+) -> npt.NDArray[np.uint16]: ...
 @overload
 def viterbi_binary(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
+    p_state: np.ndarray | None = ...,
+    p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
-) -> Tuple[np.ndarray, np.ndarray]:
-    ...
-
-
-@overload
+    transition_min_prob: float | None = ...,
+) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]: ...
 def viterbi_binary(
     prob: np.ndarray,
     transition: np.ndarray,
     *,
-    p_state: Optional[np.ndarray] = ...,
-    p_init: Optional[np.ndarray] = ...,
-    return_logp: bool = ...,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
-    ...
-
-
-def viterbi_binary(
-    prob: np.ndarray,
-    transition: np.ndarray,
-    *,
-    p_state: Optional[np.ndarray] = None,
-    p_init: Optional[np.ndarray] = None,
+    p_state: np.ndarray | None = None,
+    p_init: np.ndarray | None = None,
     return_logp: bool = False,
-) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
+    transition_min_prob: float | None = None,
+) -> npt.NDArray[np.uint16] | tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]:
     """Viterbi decoding from binary (multi-label), discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,
@@ -1673,9 +1761,12 @@ def viterbi_binary(
     return_logp : bool
         If ``True``, return the (unnormalized) log-likelihood of the state sequences.
 
+    transition_min_prob : float, >= 0
+        Optional: if provided, the minimum transition probability to consider
+        during decoding.
+
     Returns
     -------
-    Either ``states`` or ``(states, logp)``:
     states : np.ndarray [shape=(..., n_states, n_steps)]
         The most likely state sequence.
     logp : np.ndarray [shape=(..., n_states,)]
@@ -1751,10 +1842,10 @@ def viterbi_binary(
         raise ParameterError(f"Invalid initial state distributions: p_init={p_init}")
 
     shape_prefix = list(prob.shape[:-2])
-    states = np.empty(shape_prefix + [n_states, n_steps], dtype=np.uint16)
-    logp = np.empty(shape_prefix + [n_states])
+    states = np.empty([*shape_prefix, n_states, n_steps], dtype=np.uint16)
+    logp = np.empty([*shape_prefix, n_states])
 
-    prob_binary = np.empty(shape_prefix + [2, n_steps])
+    prob_binary = np.empty([*shape_prefix, 2, n_steps])
     p_state_binary = np.empty(2)
     p_init_binary = np.empty(2)
 
@@ -1774,6 +1865,7 @@ def viterbi_binary(
             p_state=p_state_binary,
             p_init=p_init_binary,
             return_logp=True,
+            transition_min_prob=transition_min_prob,
         )
 
     if return_logp:
@@ -1782,7 +1874,7 @@ def viterbi_binary(
     return states
 
 
-def transition_uniform(n_states: int) -> np.ndarray:
+def transition_uniform(n_states: int) -> _Array2D[np.float64]:
     """Construct a uniform transition matrix over ``n_states``.
 
     Parameters
@@ -1810,7 +1902,7 @@ def transition_uniform(n_states: int) -> np.ndarray:
     return transition
 
 
-def transition_loop(n_states: int, prob: Union[float, Iterable[float]]) -> np.ndarray:
+def transition_loop(n_states: int, prob: float | Iterable[float]) -> _Array2D[np.float64]:
     """Construct a self-loop transition matrix over ``n_states``.
 
     The transition matrix will have the following properties:
@@ -1875,7 +1967,7 @@ def transition_loop(n_states: int, prob: Union[float, Iterable[float]]) -> np.nd
     return transition
 
 
-def transition_cycle(n_states: int, prob: Union[float, Iterable[float]]) -> np.ndarray:
+def transition_cycle(n_states: int, prob: float | Iterable[float]) -> _Array2D[np.float64]:
     """Construct a cyclic transition matrix over ``n_states``.
 
     The transition matrix will have the following properties:
@@ -1941,11 +2033,11 @@ def transition_cycle(n_states: int, prob: Union[float, Iterable[float]]) -> np.n
 
 def transition_local(
     n_states: int,
-    width: Union[int, Iterable[int]],
+    width: int | Iterable[int],
     *,
     window: _WindowSpec = "triangle",
     wrap: bool = False,
-) -> np.ndarray:
+) -> _Array2D[np.float64]:
     """Construct a localized transition matrix.
 
     The transition matrix will have the following properties:

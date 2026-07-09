@@ -252,6 +252,11 @@ def test_note_to_hz_badnote():
     librosa.note_to_hz("does not pass")
 
 
+def test_note_to_hz_default():
+    hz = librosa.note_to_hz("C2-30", round_midi=False)
+    assert np.isclose(hz, librosa.note_to_hz("C2-30"))
+
+
 @pytest.mark.parametrize(
     "midi_num,note,octave,cents",
     [
@@ -439,7 +444,7 @@ def test_Z_weighting(min_db):
     assert np.allclose(d_khz, 0, atol=1e-3)
 
 
-@pytest.mark.parametrize("kind", list(librosa.core.convert.WEIGHTING_FUNCTIONS))
+@pytest.mark.parametrize("kind", ["A", "B", "C", "D", "Z", None])
 def test_frequency_weighting(kind):
     freq = np.linspace(2e1, 2e4)
     assert np.allclose(
@@ -465,6 +470,29 @@ def test_multi_frequency_weighting(kinds):
         0,
         atol=1e-3,
     )
+
+
+def test_frequency_weighting_underflow_warning():
+
+    # Ensure that four warnings are issued for the following call
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        librosa.multi_frequency_weighting(
+            np.arange(3), kinds="ABCD", min_db=None
+        )
+        assert len(w) == 4
+        # Ensure that all warnings are about non-finite values
+        for warn in w:
+            assert issubclass(warn.category, UserWarning)
+            assert "non-finite" in str(warn.message)
+
+    # Now ensure that no warnings are issued when min_db is set
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        librosa.multi_frequency_weighting(
+            np.arange(3), kinds="ABCD", min_db=-100
+        )
+        assert len(w) == 0, "No warnings should be issued with min_db set"
 
 
 def test_samples_like():
@@ -597,10 +625,9 @@ def test_midi_to_svara_h(midi, Sa, abbr, octave, unicode):
     else:
         assert svara[Sa] == "Sa"
 
-    if sys.version >= "3.7":
-        if not unicode:
-            for s in svara:
-                assert s.isascii()
+    if not unicode:
+        for s in svara:
+            assert s.isascii()
 
     if not abbr:
         for s in svara:
@@ -674,10 +701,9 @@ def test_midi_to_svara_c(midi, Sa, mela, abbr, octave, unicode):
     else:
         assert svara[Sa] == "Sa"
 
-    if sys.version >= "3.7":
-        if not unicode:
-            for s in svara:
-                assert s.isascii()
+    if not unicode:
+        for s in svara:
+            assert s.isascii()
 
     if not abbr:
         for s in svara:
@@ -739,3 +765,22 @@ def test_note_to_svara_c(note, Sa, mela, abbr, octave, unicode, result):
         note, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode
     )
     assert s == result
+
+
+@pytest.mark.parametrize("value", [np.inf, -np.inf, np.nan])
+def test_midi_to_note_empty(value):
+    assert librosa.midi_to_note(value) == ""
+
+
+@pytest.mark.parametrize("value", [np.inf, -np.inf, np.nan])
+def test_midi_to_svara_h_empty(value):
+    assert librosa.midi_to_svara_h(value, Sa=60) == ""
+
+
+@pytest.mark.parametrize("value", [np.inf, -np.inf, np.nan])
+def test_midi_to_svara_c_empty(value):
+    assert librosa.midi_to_svara_c(value, Sa=60, mela=22) == ""
+
+
+def test_note_to_midi_empty():
+    assert np.isnan(librosa.note_to_midi(""))
