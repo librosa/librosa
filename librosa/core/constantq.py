@@ -212,7 +212,7 @@ def hybrid_cqt(
     sr: float = 22050,
     hop_length: int = 512,
     fmin: _FloatLike_co | None = None,
-    n_bins: int = 84,
+    n_bins: int | None = 84,
     bins_per_octave: int = 12,
     tuning: float | None = 0.0,
     filter_scale: float = 1,
@@ -246,6 +246,8 @@ def hybrid_cqt(
 
     n_bins : int > 0 [scalar]
         Number of frequency bins, starting at ``fmin``
+        If `None` the number of bins will be inferred as the maximum that will
+        fit below `sr/2`.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
@@ -319,8 +321,22 @@ def hybrid_cqt(
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
+    if fmin >= sr / 2:
+        raise ParameterError(f"fmin={fmin} must be less than sr/2={sr/2}")
+
+    if n_bins is None:
+        n_bins = int(np.ceil(bins_per_octave * (np.log2(sr) - np.log2(fmin))))
+        auto_n_bins = True
+    else:
+        auto_n_bins = False
+
     # Get all CQT frequencies
     freqs = cqt_frequencies(n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
+
+    if auto_n_bins:
+        # Calling with gamma=0 here since this is CQT
+        freqs = __clip_freqs(freqs, window, filter_scale, 0, sr)
+        n_bins = len(freqs)
 
     # Pre-compute alpha
     if n_bins == 1:
@@ -329,9 +345,14 @@ def hybrid_cqt(
         alpha = filters._relative_bandwidth(freqs=freqs)
 
     # Compute the length of each constant-Q basis function
-    lengths, _ = filters.wavelet_lengths(
+    lengths, filter_cutoff = filters.wavelet_lengths(
         freqs=freqs, sr=sr, filter_scale=filter_scale, window=window, alpha=alpha
     )
+
+    if filter_cutoff > sr / 2:
+        raise ParameterError(
+            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. Try reducing the number of frequency bins."
+        )
 
     # Determine which filters to use with Pseudo CQT
     # These are the ones that fit within 2 hop lengths after padding
@@ -396,7 +417,7 @@ def pseudo_cqt(
     sr: float = 22050,
     hop_length: int = 512,
     fmin: _FloatLike_co | None = None,
-    n_bins: int = 84,
+    n_bins: int | None = 84,
     bins_per_octave: int = 12,
     tuning: float | None = 0.0,
     filter_scale: float = 1,
@@ -431,6 +452,8 @@ def pseudo_cqt(
 
     n_bins : int > 0 [scalar]
         Number of frequency bins, starting at ``fmin``
+        If `None` the number of bins will be inferred as the maximum that will
+        fit below `sr/2`.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
@@ -498,16 +521,35 @@ def pseudo_cqt(
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
+    if fmin >= sr / 2:
+        raise ParameterError(f"fmin={fmin} must be less than sr/2={sr/2}")
+
+    if n_bins is None:
+        n_bins = int(np.ceil(bins_per_octave * (np.log2(sr) - np.log2(fmin))))
+        auto_n_bins = True
+    else:
+        auto_n_bins = False
+
     freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
+
+    if auto_n_bins:
+        # Calling with gamma=0 here since this is CQT
+        freqs = __clip_freqs(freqs, window, filter_scale, 0, sr)
+        n_bins = len(freqs)
 
     if n_bins == 1:
         alpha = __et_relative_bw(bins_per_octave)
     else:
         alpha = filters._relative_bandwidth(freqs=freqs)
 
-    lengths, _ = filters.wavelet_lengths(
+    lengths, filter_cutoff = filters.wavelet_lengths(
         freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
     )
+
+    if filter_cutoff > sr / 2:
+        raise ParameterError(
+            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. Try reducing the number of frequency bins."
+        )
 
     fft_basis, n_fft, _ = __vqt_filter_fft(
         sr,

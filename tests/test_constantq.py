@@ -831,11 +831,13 @@ def test_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave):
 @pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
 @pytest.mark.parametrize("intervals", ["equal", "ji5", "ji7"])
 @pytest.mark.parametrize("gamma", [None, 0])
-def test_vqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, intervals, gamma):
+@pytest.mark.parametrize("fmin", [32, 64, 128])
+def test_vqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, intervals, gamma, fmin):
     # Test that n_bins=None works for VQT
     V = librosa.vqt(
         y=y_cqt,
         sr=sr_cqt,
+        fmin=fmin,
         n_bins=None,
         bins_per_octave=bins_per_octave,
         intervals=intervals,
@@ -845,6 +847,7 @@ def test_vqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, intervals, gamma):
     V2 = librosa.vqt(
         y=y_cqt,
         sr=sr_cqt,
+        fmin=fmin,
         n_bins=V.shape[-2],
         bins_per_octave=bins_per_octave,
         intervals=intervals,
@@ -858,6 +861,7 @@ def test_vqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, intervals, gamma):
         librosa.vqt(
             y=y_cqt,
             sr=sr_cqt,
+            fmin=fmin,
             n_bins=V.shape[-2] + 1,
             bins_per_octave=bins_per_octave,
             intervals=intervals,
@@ -877,3 +881,99 @@ def test_vqt_nbins_none_small(y_cqt):
 def test_vqt_fmin_over(y_cqt):
     with pytest.raises(librosa.ParameterError):
         librosa.vqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
+
+
+@pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
+@pytest.mark.parametrize("fmin", [32, 64, 128])
+def test_hybrid_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
+    # Test that n_bins=None works for VQT
+    V = librosa.hybrid_cqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        fmin=fmin,
+        n_bins=None,
+        bins_per_octave=bins_per_octave,
+    )
+    # We'll compare to explicitly setting n_bins to match
+    V2 = librosa.hybrid_cqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        fmin=fmin,
+        n_bins=V.shape[-2],
+        bins_per_octave=bins_per_octave,
+    )
+
+    assert np.allclose(V, V2)
+
+    # Now verify that going one step further would raise an error
+    with pytest.raises(librosa.ParameterError):
+        librosa.hybrid_cqt(
+            y=y_cqt,
+            sr=sr_cqt,
+            fmin=fmin,
+            n_bins=V.shape[-2] + 1,
+            bins_per_octave=bins_per_octave,
+        )
+
+def test_hybrid_cqt_fmin_high(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=999,
+                    n_bins=2, bins_per_octave=1)
+
+def test_hybrid_cqt_nbins_none_small(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=999,
+                    n_bins=None, bins_per_octave=1)
+
+def test_hybrid_cqt_fmin_over(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
+
+
+@pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
+@pytest.mark.parametrize("fmin", [32, 64, 128])
+def test_pseudo_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
+    # Test that n_bins=None works for VQT
+    V = librosa.pseudo_cqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        fmin=fmin,
+        n_bins=None,
+        bins_per_octave=bins_per_octave,
+    )
+    # We'll compare to explicitly setting n_bins to match
+    V2 = librosa.pseudo_cqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        fmin=fmin,
+        n_bins=V.shape[-2],
+        bins_per_octave=bins_per_octave,
+    )
+
+    assert np.allclose(V, V2)
+
+    # Now verify that going one step further would raise an error
+    with pytest.raises(librosa.ParameterError):
+        librosa.pseudo_cqt(
+            y=y_cqt,
+            sr=sr_cqt,
+            fmin=fmin,
+            n_bins=V.shape[-2] + 1,
+            bins_per_octave=bins_per_octave,
+        )
+
+def test_pseudo_cqt_fmin_high(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=999,
+                    n_bins=2, bins_per_octave=1)
+
+def test_pseudo_cqt_nbins_none_small(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=999,
+                    n_bins=None, bins_per_octave=1)
+
+def test_hybrid_cqt_fmin_over(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
+
+
