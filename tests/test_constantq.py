@@ -537,11 +537,11 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, res_type):
     yinv = yinv[sr_icqt // 2 : -sr_icqt // 2]
 
     residual = np.abs(y_icqt - yinv)
-    # We'll tolerate 10% RMSE
+    # We'll tolerate 6% RMSE
     # error is lower on more recent numpy/scipy builds
 
     resnorm = np.sqrt(np.mean(residual**2))
-    assert resnorm <= 0.1, resnorm
+    assert resnorm <= 0.06, resnorm
 
 
 @pytest.mark.parametrize("hop_length", [384, 512])
@@ -574,7 +574,7 @@ def test_icqt_nolength(y_icqt, sr_icqt, hop_length):
 
     residual = np.abs(y_icqt - yinv)
     resnorm = np.sqrt(np.mean(residual**2))
-    assert resnorm <= 0.1, resnorm
+    assert resnorm <= 0.06, resnorm
 
 
 def test_icqt_dtype(y_icqt, sr_icqt):
