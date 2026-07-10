@@ -886,7 +886,7 @@ def test_vqt_fmin_over(y_cqt):
 @pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
 @pytest.mark.parametrize("fmin", [32, 64, 128])
 def test_hybrid_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
-    # Test that n_bins=None works for VQT
+    # Test that n_bins=None works for hybrid CQT
     V = librosa.hybrid_cqt(
         y=y_cqt,
         sr=sr_cqt,
@@ -933,7 +933,7 @@ def test_hybrid_cqt_fmin_over(y_cqt):
 @pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
 @pytest.mark.parametrize("fmin", [32, 64, 128])
 def test_pseudo_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
-    # Test that n_bins=None works for VQT
+    # Test that n_bins=None works for pseudo CQT
     V = librosa.pseudo_cqt(
         y=y_cqt,
         sr=sr_cqt,

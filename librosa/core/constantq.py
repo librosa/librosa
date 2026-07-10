@@ -244,7 +244,7 @@ def hybrid_cqt(
     fmin : float > 0 [scalar]
         Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
 
-    n_bins : int > 0 [scalar]
+    n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
         If `None` the number of bins will be inferred as the maximum that will
         fit below `sr/2`.
@@ -451,7 +451,7 @@ def pseudo_cqt(
     fmin : float > 0 [scalar]
         Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
 
-    n_bins : int > 0 [scalar]
+    n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
         If `None` the number of bins will be inferred as the maximum that will
         fit below `sr/2`.
@@ -1597,11 +1597,11 @@ def __et_relative_bw(bins_per_octave: int) -> np.ndarray:
 
 
 def __clip_freqs(
-        freqs: NDArray,
-        window: _WindowSpec,
-        filter_scale: float,
-        gamma: float | None,
-        sr: float
+    freqs: NDArray,
+    window: _WindowSpec,
+    filter_scale: float,
+    gamma: float | None,
+    sr: float
 ) -> NDArray[np.float64]:
     """Clip a frequency set to avoid exceeding the Nyquist frequency.
 
@@ -1618,7 +1618,7 @@ def __clip_freqs(
         Filter scale factor. Small values (<1) use shorter windows
         for improved time resolution.
 
-    gamma : float > 0 or None
+    gamma : float >= 0 or None
         Bandwidth offset for determining filter lengths.
         If `None`, use the default ERB-based calculation.
 
