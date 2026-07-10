@@ -1086,16 +1086,18 @@ def vqt(
 
         # We can downsample here if the hop length is even, and the highest frequency
         # in the next octave down is comfortably below the target Nyquist frequency.
-        # Instead of the next octave's max, we'll use the current octave's min as a proxy.
-        # There should be at least half an octave between the min and the target Nyquist,
-        # which we approximate by my_sr / 3 = my_sr / 2 * 2/3 (P4 below proposed Nyquist)
-        # We additionally don't want to downsample if we're at the last octave anyway.
-        if my_hop % 2 == 0 and i < n_octaves - 1 and np.min(freqs_oct) * 2 <= my_sr / 3:
-            my_hop //= 2
-            my_sr /= 2.0
-            my_y = audio.resample(
-                my_y, orig_sr=2, target_sr=1, res_type=res_type, scale=True
-            )
+        # We'll assume that rolloff from downsampling starts at ~80% Nyquist.
+        # This is equivalent to 40% of the target sampling rate, or 20% of the current sampling
+        # rate.
+        # Only downsample if we're not in the last octave.
+        if i < n_octaves - 1:
+            f_max_next = freqs[sl.start - 1]
+            if my_hop % 2 == 0 and f_max_next <= my_sr / 5:
+                my_hop //= 2
+                my_sr /= 2.0
+                my_y = audio.resample(
+                    my_y, orig_sr=2, target_sr=1, res_type=res_type, scale=True
+                )
 
     V = __trim_stack(vqt_resp, n_bins, dtype)
 
