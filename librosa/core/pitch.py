@@ -1,36 +1,34 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Pitch-tracking and tuning estimation"""
-from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING
-
-import numba
 import numpy as np
+import scipy
+import numba
 
-from .. import sequence, util
-from .._cache import cache
-from ..util.exceptions import ParameterError
-from . import audio, convert
+
 from .spectrum import _spectrogram
-
-if TYPE_CHECKING:
-    from typing import Any, Callable
-
-    from numpy.typing import ArrayLike
-
-    from .._typing import _PadMode, _PadModeSTFT, _WindowSpec
+from . import convert
+from . import audio
+from .._cache import cache
+from .. import util
+from .. import sequence
+from ..util import Deprecated
+from ..util.exceptions import ParameterError
+from numpy.typing import ArrayLike
+from typing import Any, Callable, Optional, Tuple, Union
+from .._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
 
 def estimate_tuning(
     *,
-    y: np.ndarray | None = None,
+    y: Optional[np.ndarray] = None,
     sr: float = 22050,
-    S: np.ndarray | None = None,
-    n_fft: int | None = 2048,
+    S: Optional[np.ndarray] = None,
+    n_fft: Optional[int] = 2048,
     resolution: float = 0.01,
     bins_per_octave: int = 12,
     **kwargs: Any,
@@ -40,13 +38,13 @@ def estimate_tuning(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        audio signal. Multi-channel is supported.
+        audio signal. Multi-channel is supported..
     sr : number > 0 [scalar]
         audio sampling rate of ``y``
     S : np.ndarray [shape=(..., d, t)] or None
         magnitude or power spectrogram
     n_fft : int > 0 [scalar] or None
-        length of the FFT frame to use, if ``y`` is provided.
+        number of FFT bins to use, if ``y`` is provided.
     resolution : float in `(0, 1)`
         Resolution of the tuning as a fraction of a bin.
         0.01 corresponds to measurements in cents.
@@ -71,7 +69,7 @@ def estimate_tuning(
     --------
     With time-series input
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> librosa.estimate_tuning(y=y, sr=sr)
     -0.08000000000000002
 
@@ -112,7 +110,8 @@ def estimate_tuning(
 def pitch_tuning(
     frequencies: ArrayLike, *, resolution: float = 0.01, bins_per_octave: int = 12
 ) -> float:
-    """Given a collection of pitches, estimate its tuning offset relative to A440=440.0Hz.
+    """Given a collection of pitches, estimate its tuning offset
+    (in fractions of a bin) relative to A440=440.0Hz.
 
     Parameters
     ----------
@@ -142,7 +141,7 @@ def pitch_tuning(
     0.25
 
     >>> # Track frequencies from a real spectrogram
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> freqs, times, mags = librosa.reassigned_spectrogram(y, sr=sr,
     ...                                                     fill_nan=True)
     >>> # Select out pitches with high energy
@@ -181,20 +180,20 @@ def pitch_tuning(
 @cache(level=30)
 def piptrack(
     *,
-    y: np.ndarray | None = None,
+    y: Optional[np.ndarray] = None,
     sr: float = 22050,
-    S: np.ndarray | None = None,
-    n_fft: int | None = 2048,
-    hop_length: int | None = None,
+    S: Optional[np.ndarray] = None,
+    n_fft: Optional[int] = 2048,
+    hop_length: Optional[int] = None,
     fmin: float = 150.0,
     fmax: float = 4000.0,
     threshold: float = 0.1,
-    win_length: int | None = None,
+    win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-    ref: float | Callable | None = None,
-) -> tuple[np.ndarray, np.ndarray]:
+    ref: Optional[Union[float, Callable]] = None,
+) -> Tuple[np.ndarray, np.ndarray]:
     """Pitch tracking on thresholded parabolically-interpolated STFT.
 
     This implementation uses the parabolic interpolation method described by [#]_.
@@ -213,16 +212,10 @@ def piptrack(
         magnitude or power spectrogram
 
     n_fft : int > 0 [scalar] or None
-        length of the FFT frame to use, if ``y`` is provided.
+        number of FFT bins to use, if ``y`` is provided.
 
     hop_length : int > 0 [scalar] or None
         number of samples to hop
-
-    fmin : float > 0 [scalar]
-        lower frequency cutoff.
-
-    fmax : float > 0 [scalar]
-        upper frequency cutoff.
 
     threshold : float in `(0, 1)`
         A bin in spectrum ``S`` is considered a pitch when it is greater than
@@ -231,6 +224,12 @@ def piptrack(
         By default, ``ref(S)`` is taken to be ``max(S, axis=0)`` (the maximum value in
         each column).
 
+    fmin : float > 0 [scalar]
+        lower frequency cutoff.
+
+    fmax : float > 0 [scalar]
+        upper frequency cutoff.
+
     win_length : int <= n_fft [scalar]
         Each frame of audio is windowed by ``window``.
         The window will be of length `win_length` and then padded
@@ -238,7 +237,7 @@ def piptrack(
 
         If unspecified, defaults to ``win_length = n_fft``.
 
-    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (string, tuple, or number);
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
@@ -246,12 +245,12 @@ def piptrack(
 
         .. see also:: `filters.get_window`
 
-    center : bool
+    center : boolean
         - If ``True``, the signal ``y`` is padded so that frame
           ``t`` is centered at ``y[t * hop_length]``.
         - If ``False``, then frame ``t`` begins at ``y[t * hop_length]``
 
-    pad_mode : str
+    pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero-padding.
 
@@ -288,7 +287,7 @@ def piptrack(
     --------
     Computing pitches from a waveform input
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
 
     Or from a spectrogram input
@@ -396,8 +395,7 @@ def _cumulative_mean_normalized_difference(
     k = slice(1, max_period + 1)
     yin_frames[..., 0, :] = 0
     yin_frames[..., k, :] = (
-        2 * (acf_frames[..., 0:1, :] - acf_frames[..., k, :])
-        - yin_frames[..., : k.stop - 1, :]
+        2 * (acf_frames[..., 0:1, :] - acf_frames[..., k, :]) - yin_frames[..., :k.stop-1, :]
     )
 
     # Cumulative mean normalized difference function.
@@ -405,12 +403,14 @@ def _cumulative_mean_normalized_difference(
     # broadcast this shape to have leading ones
     k_range = util.expand_to(np.r_[k], ndim=yin_frames.ndim, axes=-2)
 
-    cumulative_mean = np.cumsum(yin_frames[..., k, :], axis=-2) / k_range
+    cumulative_mean = (
+        np.cumsum(yin_frames[..., k, :], axis=-2) / k_range
+    )
     yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
-    yin_frames = yin_numerator / (
+    yin_frames: np.ndarray = yin_numerator / (
         yin_denominator + util.tiny(yin_denominator)
     )
-    return np.asarray(yin_frames)
+    return yin_frames
 
 
 @numba.stencil  # type: ignore
@@ -428,6 +428,7 @@ def _pi_stencil(x: np.ndarray) -> np.ndarray:
 
 
 @numba.guvectorize(
+    ["void(float32[:], float32[:])", "void(float64[:], float64[:])"],
     "(n)->(n)",
     cache=True,
     nopython=True,
@@ -479,7 +480,8 @@ def yin(
     fmax: float,
     sr: float = 22050,
     frame_length: int = 2048,
-    hop_length: int | None = None,
+    win_length: Optional[Union[int, Deprecated]] = Deprecated(),
+    hop_length: Optional[int] = None,
     trough_threshold: float = 0.1,
     center: bool = True,
     pad_mode: _PadMode = "constant",
@@ -501,37 +503,51 @@ def yin(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported..
+
     fmin : number > 0 [scalar]
         minimum frequency in Hertz.
         The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
+
     fmax : number > fmin, <= sr/2 [scalar]
         maximum frequency in Hertz.
         The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
+
     sr : number > 0 [scalar]
         sampling rate of ``y`` in Hertz.
+
     frame_length : int > 0 [scalar]
         length of the frames in samples.
         By default, ``frame_length=2048`` corresponds to a time scale of about 93 ms at
         a sampling rate of 22050 Hz.
+
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent YIN predictions.
         If ``None``, defaults to ``frame_length // 4``.
+
     trough_threshold : number > 0 [scalar]
         absolute threshold for peak estimation.
-    center : bool
+
+    center : boolean
         If ``True``, the signal `y` is padded so that frame
         ``D[:, t]`` is centered at `y[t * hop_length]`.
         If ``False``, then ``D[:, t]`` begins at ``y[t * hop_length]``.
         Defaults to ``True``,  which simplifies the alignment of ``D`` onto a
         time grid by means of ``librosa.core.frames_to_samples``.
-    pad_mode : str or function
+
+    pad_mode : string or function
         If ``center=True``, this argument is passed to ``np.pad`` for padding
         the edges of the signal ``y``. By default (``pad_mode="constant"``),
         ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
+
+    win_length : Deprecated
+        length of the window for calculating autocorrelation in samples.
+
+        .. warning:: This parameter is deprecated as of 0.11.0 and
+            will be removed in 1.0.
 
     Returns
     -------
@@ -557,7 +573,17 @@ def yin(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
-    __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length)
+    if not isinstance(win_length, Deprecated):
+        warnings.warn(
+            "The win_length parameter has been deprecated in version 0.11.0 "
+            "and has no effect. It will be removed in version 1.0.0.",
+            category=FutureWarning,
+            stacklevel=3,
+        )
+
+    __check_yin_params(
+        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length
+    )
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
@@ -630,19 +656,19 @@ def pyin(
     fmax: float,
     sr: float = 22050,
     frame_length: int = 2048,
-    hop_length: int | None = None,
+    win_length: Optional[Union[int, Deprecated]] = Deprecated(),
+    hop_length: Optional[int] = None,
     n_thresholds: int = 100,
-    beta_parameters: tuple[float, float] = (2, 18),
+    beta_parameters: Tuple[float, float] = (2, 18),
     boltzmann_parameter: float = 2,
     resolution: float = 0.1,
     max_transition_rate: float = 35.92,
     switch_prob: float = 0.01,
     no_trough_prob: float = 0.01,
-    fill_na: float | None = np.nan,
+    fill_na: Optional[float] = np.nan,
     center: bool = True,
     pad_mode: _PadMode = "constant",
-    transition_min_prob: float | None = 1e-4,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
 
     pYIN [#]_ is a modificatin of the YIN algorithm [#]_ for fundamental frequency (F0) estimation.
@@ -661,72 +687,85 @@ def pyin(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
+
     fmin : number > 0 [scalar]
         minimum frequency in Hertz.
         The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
         though lower values may be feasible.
+
     fmax : number > fmin, <= sr/2 [scalar]
         maximum frequency in Hertz.
         The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
         though higher values may be feasible.
+
     sr : number > 0 [scalar]
         sampling rate of ``y`` in Hertz.
+
     frame_length : int > 0 [scalar]
         length of the frames in samples.
         By default, ``frame_length=2048`` corresponds to a time scale of about 93 ms at
         a sampling rate of 22050 Hz.
+
     hop_length : None or int > 0 [scalar]
         number of audio samples between adjacent pYIN predictions.
         If ``None``, defaults to ``frame_length // 4``.
+
     n_thresholds : int > 0 [scalar]
         number of thresholds for peak estimation.
+
     beta_parameters : tuple
         shape parameters for the beta distribution prior over thresholds.
+
     boltzmann_parameter : number > 0 [scalar]
         shape parameter for the Boltzmann distribution prior over troughs.
         Larger values will assign more mass to smaller periods.
+
     resolution : float in `(0, 1)`
         Resolution of the pitch bins.
         0.01 corresponds to cents.
+
     max_transition_rate : float > 0
         maximum pitch transition rate in octaves per second.
+
     switch_prob : float in ``(0, 1)``
         probability of switching from voiced to unvoiced or vice versa.
+
     no_trough_prob : float in ``(0, 1)``
         maximum probability to add to global minimum if no trough is below threshold.
+
     fill_na : None, float, or ``np.nan``
         default value for unvoiced frames of ``f0``.
         If ``None``, the unvoiced frames will contain a best guess value.
-    center : bool
+
+    center : boolean
         If ``True``, the signal ``y`` is padded so that frame
         ``D[:, t]`` is centered at ``y[t * hop_length]``.
         If ``False``, then ``D[:, t]`` begins at ``y[t * hop_length]``.
         Defaults to ``True``,  which simplifies the alignment of ``D`` onto a
         time grid by means of ``librosa.core.frames_to_samples``.
-    pad_mode : str or function
+
+    pad_mode : string or function
         If ``center=True``, this argument is passed to ``np.pad`` for padding
         the edges of the signal ``y``. By default (``pad_mode="constant"``),
         ``y`` is padded on both sides with zeros.
         If ``center=False``,  this argument is ignored.
         .. see also:: `np.pad`
-    transition_min_prob : None or float > 0
-        If `None`, then Viterbi decoding considers all possible predecessor states
-        for each time step, providing an exact inference.
-        Otherwise, only transitions with probability at least `transition_min_prob`
-        are considered.  This provides an approximate inference, but can
-        significantly reduce computation time.
+
+    win_length : Deprecated
+        length of the window for calculating autocorrelation in samples.
+
+        .. warning:: This parameter is deprecated as of 0.11.0 and
+            will be removed in 1.0.
 
     Returns
     -------
-    f0 : np.ndarray [shape=(..., n_frames)]
+    f0: np.ndarray [shape=(..., n_frames)]
         time series of fundamental frequencies in Hertz.
-    voiced_flag : np.ndarray [shape=(..., n_frames)]
+    voiced_flag: np.ndarray [shape=(..., n_frames)]
         time series containing boolean flags indicating whether a frame is voiced or not.
-    voiced_prob : np.ndarray [shape=(..., n_frames)]
+    voiced_prob: np.ndarray [shape=(..., n_frames)]
         time series containing the probability that a frame is voiced.
-
-        .. note:: If multi-channel input is provided, f0 and voicing are estimated
-            separately for each channel.
+    .. note:: If multi-channel input is provided, f0 and voicing are estimated separately for each channel.
 
     See Also
     --------
@@ -737,7 +776,7 @@ def pyin(
     --------
     Computing a fundamental frequency (F0) curve from an audio input
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> f0, voiced_flag, voiced_probs = librosa.pyin(y,
     ...                                              sr=sr,
     ...                                              fmin=librosa.note_to_hz('C2'),
@@ -751,14 +790,24 @@ def pyin(
     >>> fig, ax = plt.subplots()
     >>> img = librosa.display.specshow(D, x_axis='time', y_axis='log', ax=ax)
     >>> ax.set(title='pYIN fundamental frequency estimation')
-    >>> librosa.display.colorbar_db(img)
-    >>> ax.plot(times, f0, label='f0', path_effects=librosa.display.highlight(ax=ax))
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
+    >>> ax.plot(times, f0, label='f0', color='cyan', linewidth=3)
     >>> ax.legend(loc='upper right')
     """
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
-    __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length)
+    if not isinstance(win_length, Deprecated):
+        warnings.warn(
+            "The win_length parameter has been deprecated in version 0.11.0 "
+            "and has no effect. It will be removed in version 1.0.0.",
+            category=FutureWarning,
+            stacklevel=3,
+        )
+
+    __check_yin_params(
+        sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length
+    )
 
     # Set the default hop if it is not already specified.
     if hop_length is None:
@@ -792,8 +841,6 @@ def pyin(
     # The implementation here follows the official pYIN software which
     # differs from the method described in the paper.
     # 1. Define the prior over the thresholds.
-    import scipy.stats
-
     thresholds = np.linspace(0, 1, n_thresholds + 1)
     beta_cdf = scipy.stats.beta.cdf(thresholds, beta_parameters[0], beta_parameters[1])
     beta_probs = np.diff(beta_cdf)
@@ -833,8 +880,7 @@ def pyin(
 
     p_init = np.ones(2 * n_pitch_bins) / (2 * n_pitch_bins)
 
-    states = sequence.viterbi(observation_probs, transition, p_init=p_init,
-                              transition_min_prob=transition_min_prob)
+    states = sequence.viterbi(observation_probs, transition, p_init=p_init)
 
     # Find f0 corresponding to each decoded pitch bin.
     freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))
@@ -882,8 +928,6 @@ def __pyin_helper(
         trough_positions = np.cumsum(trough_thresholds, axis=0) - 1
         n_troughs = np.count_nonzero(trough_thresholds, axis=0)
 
-        import scipy.stats
-
         trough_prior = scipy.stats.boltzmann.pmf(
             trough_positions, boltzmann_parameter, n_troughs
         )
@@ -926,7 +970,9 @@ def __pyin_helper(
     return observation_probs[np.newaxis], voiced_prob
 
 
-def __check_yin_params(*, sr: float, fmax: float, fmin: float, frame_length: int):
+def __check_yin_params(
+    *, sr: float, fmax: float, fmin: float, frame_length: int
+):
     """Check the feasibility of yin/pyin parameters against
     the following conditions:
 

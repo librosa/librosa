@@ -47,3 +47,14 @@ install with `pip install -e` to link to your actively developed source tree::
 Alternately, the latest development version can be installed via pip::
 
     pip install git+https://github.com/librosa/librosa
+
+
+ffmpeg
+~~~~~~
+
+To fuel `audioread` with more audio-decoding power, you can install *ffmpeg* which
+ships with many audio decoders.  Note that conda users on Linux and OSX will
+have this installed by default; Windows users must install ffmpeg separately.
+
+OSX users can use *homebrew* to install ffmpeg by calling
+`brew install ffmpeg` or get a binary version from their website https://www.ffmpeg.org.

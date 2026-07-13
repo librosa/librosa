@@ -32,28 +32,24 @@ Miscellaneous
     preemphasis
     deemphasis
 """
-from __future__ import annotations
-
-from typing import TYPE_CHECKING, overload
 
 import numpy as np
+import scipy.signal
 
-from . import core, decompose, feature, util
+from . import core
+from . import decompose
+from . import feature
+from . import util
 from .util.exceptions import ParameterError
-
-if TYPE_CHECKING:
-    from typing import Any, Callable, Iterable, Literal
-
-    from numpy.typing import ArrayLike
-
-    from ._typing import (
-        _Array1D,
-        _FloatLike_co,
-        _IntLike_co,
-        _PadModeSTFT,
-        _WindowSpec,
-    )
-
+from typing import Any, Callable, Iterable, Optional, Tuple, List, Union, overload
+from typing_extensions import Literal
+from numpy.typing import ArrayLike
+from ._typing import (
+    _WindowSpec,
+    _PadModeSTFT,
+    _IntLike_co,
+    _FloatLike_co,
+)
 
 __all__ = [
     "hpss",
@@ -70,17 +66,21 @@ __all__ = [
 def hpss(
     y: np.ndarray,
     *,
-    kernel_size: _IntLike_co | tuple[_IntLike_co, _IntLike_co] | list[_IntLike_co] = 31,
+    kernel_size: Union[
+        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
+    ] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: _FloatLike_co | tuple[_FloatLike_co, _FloatLike_co] | list[_FloatLike_co] = 1.0,
+    margin: Union[
+        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
+    ] = 1.0,
     n_fft: int = 2048,
-    hop_length: int | None = None,
-    win_length: int | None = None,
+    hop_length: Optional[int] = None,
+    win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
-) -> tuple[np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Decompose an audio time series into harmonic and percussive components.
 
     This function automates the STFT->HPSS->ISTFT pipeline, and ensures that
@@ -90,50 +90,18 @@ def hpss(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-
-    kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
-        Kernel size(s) for the median filters.
-
-        - If scalar, the same size is used for both harmonic and percussive.
-        - If tuple, the first value specifies the width of the harmonic filter,
-          and the second value specifies the width of the percussive filter.
-
-    power : float > 0 [scalar]
-        Exponent for the Wiener filter when constructing soft mask matrices.
-
-    mask : bool
-        Return the masking matrices instead of components.
-
-    margin : float or tuple (margin_harmonic, margin_percussive)
-        Margin size(s) for the masks.
-
-        - If scalar, the same size is used for both harmonic and percussive.
-        - If tuple, the first value specifies the margin of the harmonic mask,
-          and the second value specifies the margin of the percussive mask.
-
-    n_fft : int > 0 [scalar]
-        Length of the windowed signal after padding with zeros.
-        The number of rows in the STFT matrix is ``(1 + n_fft/2)``.
-
-    hop_length : int or None
-        Number of audio samples between adjacent STFT columns.
-        If unspecified, defaults to ``win_length // 4``.
-
-    win_length : int or None
-        Each frame of audio is windowed by ``window`` of length ``win_length``
-        and then padded with zeros to match ``n_fft``.
-        If unspecified, defaults to ``win_length = n_fft``.
-
-    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        Window specification. See `scipy.signal.get_window` for supported values.
-
-    center : bool
-        If ``True``, the signal is padded so that frame ``t`` is centered
-        at ``y[t * hop_length]``.
-
-    pad_mode : str
-        Padding mode used when ``center=True``.
-        See `numpy.pad` for available modes.
+    kernel_size
+    power
+    mask
+    margin
+        See `librosa.decompose.hpss`
+    n_fft
+    hop_length
+    win_length
+    window
+    center
+    pad_mode
+        See `librosa.stft`
 
     Returns
     -------
@@ -151,7 +119,7 @@ def hpss(
     Examples
     --------
     >>> # Extract harmonic and percussive components
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> y_harmonic, y_percussive = librosa.effects.hpss(y)
 
     >>> # Get a more isolated percussive component by widening its margin
@@ -198,13 +166,17 @@ def hpss(
 def harmonic(
     y: np.ndarray,
     *,
-    kernel_size: _IntLike_co | tuple[_IntLike_co, _IntLike_co] | list[_IntLike_co] = 31,
+    kernel_size: Union[
+        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
+    ] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: _FloatLike_co | tuple[_FloatLike_co, _FloatLike_co] | list[_FloatLike_co] = 1.0,
+    margin: Union[
+        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
+    ] = 1.0,
     n_fft: int = 2048,
-    hop_length: int | None = None,
-    win_length: int | None = None,
+    hop_length: Optional[int] = None,
+    win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
@@ -215,50 +187,18 @@ def harmonic(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-
-    kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
-        Kernel size(s) for the median filters.
-
-        - If scalar, the same size is used for both harmonic and percussive.
-        - If tuple, the first value specifies the width of the harmonic filter,
-          and the second value specifies the width of the percussive filter.
-
-    power : float > 0 [scalar]
-        Exponent for the Wiener filter when constructing soft mask matrices.
-
-    mask : bool
-        Return the masking matrices instead of components.
-
-    margin : float or tuple (margin_harmonic, margin_percussive)
-        Margin size(s) for the masks.
-
-        - If scalar, the same size is used for both harmonic and percussive.
-        - If tuple, the first value specifies the margin of the harmonic mask,
-          and the second value specifies the margin of the percussive mask.
-
-    n_fft : int > 0 [scalar]
-        Length of the windowed signal after padding with zeros.
-        The number of rows in the STFT matrix is ``(1 + n_fft/2)``.
-
-    hop_length : int or None
-        Number of audio samples between adjacent STFT columns.
-        If unspecified, defaults to ``win_length // 4``.
-
-    win_length : int or None
-        Each frame of audio is windowed by ``window`` of length ``win_length``
-        and then padded with zeros to match ``n_fft``.
-        If unspecified, defaults to ``win_length = n_fft``.
-
-    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        Window specification. See `scipy.signal.get_window` for supported values.
-
-    center : bool
-        If ``True``, the signal is padded so that frame ``t`` is centered
-        at ``y[t * hop_length]``.
-
-    pad_mode : str
-        Padding mode used when ``center=True``.
-        See `numpy.pad` for available modes.
+    kernel_size
+    power
+    mask
+    margin
+        See `librosa.decompose.hpss`
+    n_fft
+    hop_length
+    win_length
+    window
+    center
+    pad_mode
+        See `librosa.stft`
 
     Returns
     -------
@@ -274,7 +214,7 @@ def harmonic(
     Examples
     --------
     >>> # Extract harmonic component
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> y_harmonic = librosa.effects.harmonic(y)
 
     >>> # Use a margin > 1.0 for greater harmonic separation
@@ -312,13 +252,17 @@ def harmonic(
 def percussive(
     y: np.ndarray,
     *,
-    kernel_size: _IntLike_co | tuple[_IntLike_co, _IntLike_co] | list[_IntLike_co] = 31,
+    kernel_size: Union[
+        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
+    ] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: _FloatLike_co | tuple[_FloatLike_co, _FloatLike_co] | list[_FloatLike_co] = 1.0,
+    margin: Union[
+        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
+    ] = 1.0,
     n_fft: int = 2048,
-    hop_length: int | None = None,
-    win_length: int | None = None,
+    hop_length: Optional[int] = None,
+    win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
@@ -329,50 +273,18 @@ def percussive(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-
-    kernel_size : int or tuple (kernel_harmonic, kernel_percussive)
-        Kernel size(s) for the median filters.
-
-        - If scalar, the same size is used for both harmonic and percussive.
-        - If tuple, the first value specifies the width of the harmonic filter,
-          and the second value specifies the width of the percussive filter.
-
-    power : float > 0 [scalar]
-        Exponent for the Wiener filter when constructing soft mask matrices.
-
-    mask : bool
-        Return the masking matrices instead of components.
-
-    margin : float or tuple (margin_harmonic, margin_percussive)
-        Margin size(s) for the masks.
-
-        - If scalar, the same size is used for both harmonic and percussive.
-        - If tuple, the first value specifies the margin of the harmonic mask,
-          and the second value specifies the margin of the percussive mask.
-
-    n_fft : int > 0 [scalar]
-        Length of the windowed signal after padding with zeros.
-        The number of rows in the STFT matrix is ``(1 + n_fft/2)``.
-
-    hop_length : int or None
-        Number of audio samples between adjacent STFT columns.
-        If unspecified, defaults to ``win_length // 4``.
-
-    win_length : int or None
-        Each frame of audio is windowed by ``window`` of length ``win_length``
-        and then padded with zeros to match ``n_fft``.
-        If unspecified, defaults to ``win_length = n_fft``.
-
-    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
-        Window specification. See `scipy.signal.get_window` for supported values.
-
-    center : bool
-        If ``True``, the signal is padded so that frame ``t`` is centered
-        at ``y[t * hop_length]``.
-
-    pad_mode : str
-        Padding mode used when ``center=True``.
-        See `numpy.pad` for available modes.
+    kernel_size
+    power
+    mask
+    margin
+        See `librosa.decompose.hpss`
+    n_fft
+    hop_length
+    win_length
+    window
+    center
+    pad_mode
+        See `librosa.stft`
 
     Returns
     -------
@@ -388,7 +300,7 @@ def percussive(
     Examples
     --------
     >>> # Extract percussive component
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> y_percussive = librosa.effects.percussive(y)
 
     >>> # Use a margin > 1.0 for greater percussive separation
@@ -444,17 +356,17 @@ def time_stretch(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     See Also
     --------
     pitch_shift :
-        Pitch shifting
+        pitch shifting
     librosa.phase_vocoder :
-        Spectrogram phase vocoder
+        spectrogram phase vocoder
     pyrubberband.pyrb.time_stretch :
-        High-quality time stretching using RubberBand
+        high-quality time stretching using RubberBand
 
     Examples
     --------
     Compress to be twice as fast
 
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> y_fast = librosa.effects.time_stretch(y, rate=2.0)
 
     Or half the original speed
@@ -471,12 +383,12 @@ def time_stretch(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     stft_stretch = core.phase_vocoder(
         stft,
         rate=rate,
-        hop_length=kwargs.get("hop_length"),
-        n_fft=kwargs.get("n_fft"),
+        hop_length=kwargs.get("hop_length", None),
+        n_fft=kwargs.get("n_fft", None),
     )
 
     # Predict the length of y_stretch
-    len_stretch = round(y.shape[-1] / rate)
+    len_stretch = int(round(y.shape[-1] / rate))
 
     # Invert the STFT
     y_stretch = core.istft(stft_stretch, dtype=y.dtype, length=len_stretch, **kwargs)
@@ -512,7 +424,7 @@ def pitch_shift(
     bins_per_octave : int > 0 [scalar]
         how many steps per octave
 
-    res_type : str
+    res_type : string
         Resample type. By default, 'soxr_hq' is used.
 
         See `librosa.resample` for more information.
@@ -532,17 +444,17 @@ def pitch_shift(
     See Also
     --------
     time_stretch :
-        Time stretching
+        time stretching
     librosa.phase_vocoder :
-        Spectrogram phase vocoder
+        spectrogram phase vocoder
     pyrubberband.pyrb.pitch_shift :
-        High-quality pitch shifting using RubberBand
+        high-quality pitch shifting using RubberBand
 
     Examples
     --------
     Shift up by a major third (four steps if ``bins_per_octave`` is 12)
 
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> y_third = librosa.effects.pitch_shift(y, sr=sr, n_steps=4)
 
     Shift down by a tritone (six steps if ``bins_per_octave`` is 12)
@@ -575,7 +487,7 @@ def pitch_shift(
 
 
 def remix(
-    y: np.ndarray, intervals: Iterable[tuple[int, int]], *, align_zeros: bool = True
+    y: np.ndarray, intervals: Iterable[Tuple[int, int]], *, align_zeros: bool = True
 ) -> np.ndarray:
     """Remix an audio signal by re-ordering time intervals.
 
@@ -587,7 +499,7 @@ def remix(
         An iterable (list-like or generator) where the ``i``th item
         ``intervals[i]`` indicates the start and end (in samples)
         of a slice of ``y``.
-    align_zeros : bool
+    align_zeros : boolean
         If ``True``, interval boundaries are mapped to the closest
         zero-crossing in ``y``.  If ``y`` is stereo, zero-crossings
         are computed after converting to mono.
@@ -601,7 +513,7 @@ def remix(
     --------
     Load in the example track and reverse the beats
 
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.load(librosa.ex('choice'))
 
     Compute beats
 
@@ -643,9 +555,9 @@ def _signal_to_frame_nonsilent(
     frame_length: int = 2048,
     hop_length: int = 512,
     top_db: float = 60,
-    ref: Callable | float = np.max,
+    ref: Union[Callable, float] = np.max,
     aggregate: Callable = np.max,
-) -> _Array1D[np.bool]:
+) -> np.ndarray:
     """Frame-wise non-silent indicator for audio input.
 
     This is a helper function for `trim` and `split`.
@@ -701,11 +613,11 @@ def trim(
     y: np.ndarray,
     *,
     top_db: float = 60,
-    ref: float | Callable = np.max,
+    ref: Union[float, Callable] = np.max,
     frame_length: int = 2048,
     hop_length: int = 512,
     aggregate: Callable = np.max,
-) -> tuple[np.ndarray, _Array1D[np.int_]]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Trim leading and trailing silence from an audio signal.
 
     Silence is defined as segments of the audio signal that are `top_db`
@@ -749,7 +661,7 @@ def trim(
     Examples
     --------
     >>> # Load some audio
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.load(librosa.ex('choice'))
     >>> # Trim the beginning and ending silence
     >>> yt, index = librosa.effects.trim(y)
     >>> # Print the durations
@@ -787,7 +699,7 @@ def split(
     y: np.ndarray,
     *,
     top_db: float = 60,
-    ref: float | Callable = np.max,
+    ref: Union[float, Callable] = np.max,
     frame_length: int = 2048,
     hop_length: int = 512,
     aggregate: Callable = np.max,
@@ -846,11 +758,11 @@ def split(
     edges = core.frames_to_samples(np.concatenate(edges), hop_length=hop_length)
 
     # Clip to the signal duration
-    edges = np.minimum(edges, y.shape[-1], out=edges)
+    edges = np.minimum(edges, y.shape[-1])
 
     # Stack the results back as an ndarray
-    edge_out: np.ndarray = edges.reshape((-1, 2))
-    return edge_out
+    edges = edges.reshape((-1, 2))  # type: np.ndarray
+    return edges
 
 
 @overload
@@ -858,24 +770,38 @@ def preemphasis(
     y: np.ndarray,
     *,
     coef: float = ...,
-    zi: ArrayLike | None = ...,
+    zi: Optional[ArrayLike] = ...,
     return_zf: Literal[False] = ...,
 ) -> np.ndarray: ...
+
+
 @overload
 def preemphasis(
     y: np.ndarray,
     *,
     coef: float = ...,
-    zi: ArrayLike | None = ...,
+    zi: Optional[ArrayLike] = ...,
     return_zf: Literal[True],
-) -> tuple[np.ndarray, np.ndarray]: ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
+
+
+@overload
+def preemphasis(
+    y: np.ndarray,
+    *,
+    coef: float = ...,
+    zi: Optional[ArrayLike] = ...,
+    return_zf: bool,
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]: ...
+
+
 def preemphasis(
     y: np.ndarray,
     *,
     coef: float = 0.97,
-    zi: ArrayLike | None = None,
+    zi: Optional[ArrayLike] = None,
     return_zf: bool = False,
-) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """Pre-emphasize an audio signal with a first-order differencing filter:
 
         y[n] -> y[n] - coef * y[n-1]
@@ -904,7 +830,7 @@ def preemphasis(
 
         By default ``zi`` is initialized as ``2*y[0] - y[1]``.
 
-    return_zf : bool
+    return_zf : boolean
         If ``True``, return the final filter state.
         If ``False``, only return the pre-emphasized signal.
 
@@ -920,7 +846,7 @@ def preemphasis(
     Apply a standard pre-emphasis filter
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> y_filt = librosa.effects.preemphasis(y)
     >>> # and plot the results for comparison
     >>> S_orig = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max, top_db=None)
@@ -931,7 +857,7 @@ def preemphasis(
     >>> ax[0].label_outer()
     >>> img = librosa.display.specshow(S_preemph, y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Pre-emphasized signal')
-    >>> librosa.display.colorbar_db(img, ax=ax)
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
 
     Apply pre-emphasis in pieces for block streaming.  Note that the second block
     initializes ``zi`` with the final state ``zf`` returned by the first call.
@@ -957,7 +883,6 @@ def preemphasis(
     y_out: np.ndarray
     z_f: np.ndarray
 
-    import scipy.signal
     y_out, z_f = scipy.signal.lfilter(b, a, y, zi=np.asarray(zi, dtype=y.dtype))
 
     if return_zf:
@@ -971,24 +896,28 @@ def deemphasis(
     y: np.ndarray,
     *,
     coef: float = ...,
-    zi: ArrayLike | None = ...,
+    zi: Optional[ArrayLike] = ...,
     return_zf: Literal[False] = ...,
 ) -> np.ndarray: ...
+
+
 @overload
 def deemphasis(
     y: np.ndarray,
     *,
     coef: float = ...,
-    zi: ArrayLike | None = ...,
+    zi: Optional[ArrayLike] = ...,
     return_zf: Literal[True],
-) -> tuple[np.ndarray, np.ndarray]: ...
+) -> Tuple[np.ndarray, np.ndarray]: ...
+
+
 def deemphasis(
     y: np.ndarray,
     *,
     coef: float = 0.97,
-    zi: ArrayLike | None = None,
+    zi: Optional[ArrayLike] = None,
     return_zf: bool = False,
-) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
+) -> Union[np.ndarray, Tuple[np.ndarray, np.ndarray]]:
     """De-emphasize an audio signal with the inverse operation of preemphasis():
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:
@@ -1021,7 +950,7 @@ def deemphasis(
         value corresponds to the transformation of the default initialization of ``zi`` in ``preemphasis()``,
         ``2*x[0] - x[1]``.
 
-    return_zf : bool
+    return_zf : boolean
         If ``True``, return the final filter state.
         If ``False``, only return the pre-emphasized signal.
 
@@ -1036,7 +965,7 @@ def deemphasis(
     --------
     Apply a standard pre-emphasis filter and invert it with de-emphasis
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> y_filt = librosa.effects.preemphasis(y)
     >>> y_deemph = librosa.effects.deemphasis(y_filt)
     >>> np.allclose(y, y_deemph)
@@ -1051,10 +980,9 @@ def deemphasis(
 
     y_out: np.ndarray
     zf: np.ndarray
-    import scipy.signal
     if zi is None:
         # initialize with all zeros
-        zi = np.zeros([*list(y.shape[:-1]), 1], dtype=y.dtype)
+        zi = np.zeros(list(y.shape[:-1]) + [1], dtype=y.dtype)
         y_out, zf = scipy.signal.lfilter(a, b, y, zi=zi)
 
         # factor in the linear extrapolation

@@ -24,32 +24,26 @@ Temporal clustering
     agglomerative
     subsegment
 """
-from __future__ import annotations
 
-import itertools
-from typing import TYPE_CHECKING, cast, overload
+from decorator import decorator
 
 import numpy as np
 import scipy
-from decorator import decorator
+import scipy.signal
+import scipy.ndimage
 
-from . import util
+import sklearn
+import sklearn.cluster
+import sklearn.feature_extraction
+import sklearn.neighbors
+
 from ._cache import cache
+from . import util
 from .filters import diagonal_filter
 from .util.exceptions import ParameterError
-
-if TYPE_CHECKING:
-    from typing import Any, Callable, Literal, TypeVar
-
-    import sklearn.cluster
-
-    from ._typing import _Array1D, _FloatLike_co, _SparseArray, _WindowSpec
-
-    _ArrayOrSparseArray = TypeVar(
-        "_ArrayOrSparseArray", bound=np.ndarray | _SparseArray
-    )
-
-
+from typing import Any, Callable, Optional, TypeVar, Union, overload
+from typing_extensions import Literal
+from ._typing import _WindowSpec, _FloatLike_co
 
 __all__ = [
     "cross_similarity",
@@ -68,37 +62,43 @@ def cross_similarity(
     data: np.ndarray,
     data_ref: np.ndarray,
     *,
-    k: int | None = ...,
+    k: Optional[int] = ...,
     metric: str = ...,
     sparse: Literal[False] = ...,
     mode: str = ...,
-    bandwidth: np.ndarray | _FloatLike_co | str | None = None,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
     full: bool = False,
-) -> np.ndarray: ...
+) -> np.ndarray:
+    ...
+
+
 @overload
 def cross_similarity(
     data: np.ndarray,
     data_ref: np.ndarray,
     *,
-    k: int | None = ...,
+    k: Optional[int] = ...,
     metric: str = ...,
-    sparse: Literal[True],
+    sparse: Literal[True] = ...,
     mode: str = ...,
-    bandwidth: np.ndarray | _FloatLike_co | str | None = None,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
     full: bool = False,
-) -> scipy.sparse.csc_array: ...
+) -> scipy.sparse.csc_matrix:
+    ...
+
+
 @cache(level=30)
 def cross_similarity(
     data: np.ndarray,
     data_ref: np.ndarray,
     *,
-    k: int | None = None,
+    k: Optional[int] = None,
     metric: str = "euclidean",
     sparse: bool = False,
     mode: str = "connectivity",
-    bandwidth: np.ndarray | _FloatLike_co | str | None = None,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
     full: bool = False,
-) -> np.ndarray | scipy.sparse.csc_array:
+) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
     """Compute cross-similarity from one data sequence to a reference sequence.
 
     The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero
@@ -133,7 +133,7 @@ def cross_similarity(
 
     sparse : bool [scalar]
         if False, returns a dense type (ndarray)
-        if True, returns a sparse type (scipy.sparse.csc_array)
+        if True, returns a sparse type (scipy.sparse.csc_matrix)
 
     mode : str, {'connectivity', 'distance', 'affinity'}
         If 'connectivity', a binary connectivity matrix is produced.
@@ -146,13 +146,7 @@ def cross_similarity(
         as specified below.
 
     bandwidth : None, float > 0, ndarray, or str
-        str options include
-            - 'med_k_scalar'
-            - 'mean_k'
-            - 'gmean_k'
-            - 'mean_k_avg'
-            - 'gmean_k_avg'
-            - 'mean_k_avg_and_pair'
+        str options include ``{'med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}``
 
         If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
 
@@ -190,7 +184,7 @@ def cross_similarity(
             "Self-tuning spectral clustering." Advances in neural information processing systems 17.
 
         .. [#w] Wang, Bo, et al. (2014).
-            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333--337.
+            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333–337.
             https://doi.org/10.1038/nmeth.2810
 
     full : bool
@@ -205,7 +199,7 @@ def cross_similarity(
 
     Returns
     -------
-    xsim : np.ndarray or scipy.sparse.csc_array, [shape=(n_ref, n)]
+    xsim : np.ndarray or scipy.sparse.csc_matrix, [shape=(n_ref, n)]
         Cross-similarity matrix
 
     See Also
@@ -225,8 +219,8 @@ def cross_similarity(
     Find nearest neighbors in CQT space between two sequences
 
     >>> hop_length = 1024
-    >>> y_ref, sr = librosa.loadx('pistachio')
-    >>> y_comp, sr = librosa.loadx('pistachio', offset=10)
+    >>> y_ref, sr = librosa.load(librosa.ex('pistachio'))
+    >>> y_comp, sr = librosa.load(librosa.ex('pistachio'), offset=10)
     >>> chroma_ref = librosa.feature.chroma_cqt(y=y_ref, sr=sr, hop_length=hop_length)
     >>> chroma_comp = librosa.feature.chroma_cqt(y=y_comp, sr=sr, hop_length=hop_length)
     >>> # Use time-delay embedding to get a cleaner recurrence matrix
@@ -298,8 +292,6 @@ def cross_similarity(
     # Build the neighbor search object
     # `auto` mode does not work with some choices of metric.  Rather than special-case
     # those here, we instead use a fall-back to brute force if auto fails.
-    import sklearn.neighbors
-
     try:
         knn = sklearn.neighbors.NearestNeighbors(
             n_neighbors=min(n_ref, k), metric=metric, algorithm="auto"
@@ -333,13 +325,9 @@ def cross_similarity(
             # Everything past the kth closest gets squashed
             xsim[i, idx[k:]] = 0
 
-
-    # Convert to CSR
+    # Convert a compressed sparse row (CSR) format
     xsim = xsim.tocsr()
     xsim.eliminate_zeros()
-
-    # sklearn gave us a sparse *matrix*; normalize to sparse *array*
-    xsim = scipy.sparse.csr_array(xsim)
 
     if mode == "connectivity":
         xsim = xsim.astype(bool)
@@ -347,12 +335,11 @@ def cross_similarity(
         aff_bandwidth = __affinity_bandwidth(xsim, bandwidth, bandwidth_k)
         xsim.data[:] = np.exp(xsim.data / (-1 * aff_bandwidth))
 
-
-    # Transpose to n_ref by n and guarantee sparse *array* return type
-    xsim = scipy.sparse.csc_array(xsim.T)
+    # Transpose to n_ref by n
+    xsim = xsim.T
 
     if not sparse:
-        return xsim.toarray()
+        xsim = xsim.toarray()
 
     return xsim
 
@@ -361,47 +348,53 @@ def cross_similarity(
 def recurrence_matrix(
     data: np.ndarray,
     *,
-    k: int | None = ...,
+    k: Optional[int] = ...,
     width: int = ...,
     metric: str = ...,
     sym: bool = ...,
-    sparse: Literal[True],
+    sparse: Literal[True] = ...,
     mode: str = ...,
-    bandwidth: np.ndarray | _FloatLike_co | str | None = ...,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = ...,
     self: bool = ...,
     axis: int = ...,
     full: bool = False,
-) -> scipy.sparse.csc_array: ...
+) -> scipy.sparse.csc_matrix:
+    ...
+
+
 @overload
 def recurrence_matrix(
     data: np.ndarray,
     *,
-    k: int | None = ...,
+    k: Optional[int] = ...,
     width: int = ...,
     metric: str = ...,
     sym: bool = ...,
     sparse: Literal[False] = ...,
     mode: str = ...,
-    bandwidth: np.ndarray | _FloatLike_co | str | None = ...,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = ...,
     self: bool = ...,
     axis: int = ...,
     full: bool = False,
-) -> np.ndarray: ...
+) -> np.ndarray:
+    ...
+
+
 @cache(level=30)
 def recurrence_matrix(
     data: np.ndarray,
     *,
-    k: int | None = None,
+    k: Optional[int] = None,
     width: int = 1,
     metric: str = "euclidean",
     sym: bool = False,
     sparse: bool = False,
     mode: str = "connectivity",
-    bandwidth: np.ndarray | _FloatLike_co | str | None = None,
+    bandwidth: Optional[Union[np.ndarray, _FloatLike_co, str]] = None,
     self: bool = False,
     axis: int = -1,
     full: bool = False,
-) -> np.ndarray | scipy.sparse.csc_array:
+) -> Union[np.ndarray, scipy.sparse.csc_matrix]:
     """Compute a recurrence matrix from a data matrix.
 
     ``rec[i, j]`` is non-zero if ``data[..., i]`` is a k-nearest neighbor
@@ -451,7 +444,7 @@ def recurrence_matrix(
 
     sparse : bool [scalar]
         if False, returns a dense type (ndarray)
-        if True, returns a sparse type (scipy.sparse.csc_array)
+        if True, returns a sparse type (scipy.sparse.csc_matrix)
 
     mode : str, {'connectivity', 'distance', 'affinity'}
         If 'connectivity', a binary connectivity matrix is produced.
@@ -464,13 +457,7 @@ def recurrence_matrix(
         as specified below.
 
     bandwidth : None, float > 0, ndarray, or str
-        str options include:
-            - 'med_k_scalar'
-            - 'mean_k'
-            - 'gmean_k'
-            - 'mean_k_avg'
-            - 'gmean_k_avg'
-            - 'mean_k_avg_and_pair'
+        str options include ``{'med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair'}``
 
         If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
 
@@ -508,7 +495,7 @@ def recurrence_matrix(
             "Self-tuning spectral clustering." Advances in neural information processing systems 17.
 
         .. [#w] Wang, Bo, et al. (2014).
-            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333--337.
+            "Similarity network fusion for aggregating data types on a genomic scale." Nat Methods 11, 333–337.
             https://doi.org/10.1038/nmeth.2810
 
     self : bool
@@ -533,7 +520,7 @@ def recurrence_matrix(
 
     Returns
     -------
-    rec : np.ndarray or scipy.sparse.csc_array, [shape=(t, t)]
+    rec : np.ndarray or scipy.sparse.csc_matrix, [shape=(t, t)]
         Recurrence matrix
 
     See Also
@@ -551,7 +538,7 @@ def recurrence_matrix(
     --------
     Find nearest neighbors in CQT space
 
-    >>> y, sr = librosa.loadx('nutcracker')
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 1024
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> # Use time-delay embedding to get a cleaner recurrence matrix
@@ -626,8 +613,6 @@ def recurrence_matrix(
         k = t
 
     # Build the neighbor search object
-    import sklearn.neighbors
-
     try:
         knn = sklearn.neighbors.NearestNeighbors(
             n_neighbors=min(t - 1, k + 2 * width), metric=metric, algorithm="auto"
@@ -682,10 +667,8 @@ def recurrence_matrix(
         # This is why we have to do it after filling the diagonal in self-mode
         rec = rec.minimum(rec.T)
 
-    # Convert to CSR (matrix), then normalize to sparse *array*
     rec = rec.tocsr()
     rec.eliminate_zeros()
-    rec = scipy.sparse.csr_array(rec)
 
     if mode == "connectivity":
         rec = rec.astype(bool)
@@ -698,17 +681,22 @@ def recurrence_matrix(
         rec.data[:] = np.exp(rec.data / (-1 * aff_bandwidth))
 
     # Transpose to be column-major
-    rec = scipy.sparse.csc_array(rec.T)
+    rec = rec.T
 
     if not sparse:
-        return rec.toarray()
+        rec = rec.toarray()
 
     return rec
 
 
+_ArrayOrSparseMatrix = TypeVar(
+    "_ArrayOrSparseMatrix", bound=Union[np.ndarray, scipy.sparse.spmatrix]
+)
+
+
 def recurrence_to_lag(
-    rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int = -1
-) -> _ArrayOrSparseArray:
+    rec: _ArrayOrSparseMatrix, *, pad: bool = True, axis: int = -1
+) -> _ArrayOrSparseMatrix:
     """Convert a recurrence matrix into a lag matrix.
 
         ``lag[i, j] == rec[i+j, j]``
@@ -725,7 +713,7 @@ def recurrence_to_lag(
 
     Parameters
     ----------
-    rec : np.ndarray, or scipy.sparse array [shape=(n, n)]
+    rec : np.ndarray, or scipy.sparse.spmatrix [shape=(n, n)]
         A (binary) recurrence matrix, as returned by `recurrence_matrix`
 
     pad : bool
@@ -757,7 +745,7 @@ def recurrence_to_lag(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('nutcracker')
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 1024
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
@@ -791,19 +779,18 @@ def recurrence_to_lag(
     if pad:
         if sparse:
             padding = np.asarray([[1, 0]], dtype=rec.dtype).swapaxes(axis, 0)
-            rec_fmt: Literal["csr", "csc"]
             if axis == 0:
                 rec_fmt = "csr"
             else:
                 rec_fmt = "csc"
-            rec = scipy.sparse.kron(padding, rec, format=rec_fmt)  # type: ignore
+            rec = scipy.sparse.kron(padding, rec, format=rec_fmt)
         else:
             padding = np.array([(0, 0), (0, 0)])
             padding[(1 - axis), :] = [0, t]
             # Suppress type check, mypy doesn't know that rec is an ndarray here
             rec = np.pad(rec, padding, mode="constant")  # type: ignore
 
-    lag: _ArrayOrSparseArray = util.shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
+    lag: _ArrayOrSparseMatrix = util.shear(rec, factor=-1, axis=axis)
 
     if sparse:
         # Suppress type check, mypy doesn't know
@@ -814,13 +801,13 @@ def recurrence_to_lag(
 
 
 def lag_to_recurrence(
-    lag: _ArrayOrSparseArray, *, axis: int = -1
-) -> _ArrayOrSparseArray:
+    lag: _ArrayOrSparseMatrix, *, axis: int = -1
+) -> _ArrayOrSparseMatrix:
     """Convert a lag matrix into a recurrence matrix.
 
     Parameters
     ----------
-    lag : np.ndarray or scipy.sparse array
+    lag : np.ndarray or scipy.sparse.spmatrix
         A lag matrix, as produced by ``recurrence_to_lag``
     axis : int
         The axis corresponding to the time dimension.
@@ -828,9 +815,9 @@ def lag_to_recurrence(
 
     Returns
     -------
-    rec : np.ndarray or scipy.sparse array [shape=(n, n)]
+    rec : np.ndarray or scipy.sparse.spmatrix [shape=(n, n)]
         A recurrence matrix in (time, time) coordinates
-        For sparse arrays, format will match that of ``lag``.
+        For sparse matrices, format will match that of ``lag``.
 
     Raises
     ------
@@ -842,7 +829,7 @@ def lag_to_recurrence(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('nutcracker')
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 1024
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
@@ -883,16 +870,18 @@ def lag_to_recurrence(
     # Since lag must be 2-dimensional, abs(axis) = axis
     t = lag.shape[axis]
 
-    rec = util.shear(lag, factor=+1, axis=axis)  # type: ignore[arg-type]
+    rec = util.shear(lag, factor=+1, axis=axis)
 
     sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)
-    rec_slice: _ArrayOrSparseArray = rec[tuple(sub_slice)]  # type: ignore[assignment]
+    rec_slice: _ArrayOrSparseMatrix = rec[tuple(sub_slice)]
     return rec_slice
 
 
+_F = TypeVar("_F", bound=Callable[..., Any])
 
-def timelag_filter[F: Callable[..., Any]](function: F, pad: bool = True, index: int = 0) -> F:
+
+def timelag_filter(function: _F, pad: bool = True, index: int = 0) -> _F:
     """Apply a filter in the time-lag domain.
 
     This is primarily useful for adapting image filters to operate on
@@ -927,7 +916,7 @@ def timelag_filter[F: Callable[..., Any]](function: F, pad: bool = True, index: 
     With default, parameters, this corresponds to a time window of about
     0.72 seconds.
 
-    >>> y, sr = librosa.loadx('nutcracker', duration=30)
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=3, delay=3)
     >>> rec = librosa.segment.recurrence_matrix(chroma_stack)
@@ -975,7 +964,7 @@ def timelag_filter[F: Callable[..., Any]](function: F, pad: bool = True, index: 
 @cache(level=30)
 def subsegment(
     data: np.ndarray, frames: np.ndarray, *, n_segments: int = 4, axis: int = -1
-) -> _Array1D[np.int_]:
+) -> np.ndarray:
     """Sub-divide a segmentation by feature clustering.
 
     Given a set of frame boundaries (``frames``), and a data matrix (``data``),
@@ -1020,32 +1009,24 @@ def subsegment(
     --------
     Load audio, detect beat frames, and subdivide in twos by CQT
 
-    >>> y, sr = librosa.loadx('choice', duration=6.5)
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
-    >>> cqt = np.abs(librosa.cqt(y, sr=sr, bins_per_octave=36, n_bins=36*7, hop_length=512))
+    >>> cqt = np.abs(librosa.cqt(y, sr=sr, hop_length=512))
     >>> subseg = librosa.segment.subsegment(cqt, beats, n_segments=2)
     >>> subseg_t = librosa.frames_to_time(subseg, sr=sr, hop_length=512)
 
     >>> import matplotlib.pyplot as plt
-    >>> import matplotlib.transforms as mpt
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(cqt, vscale='dBFS', bins_per_octave=36,
+    >>> librosa.display.specshow(librosa.amplitude_to_db(cqt,
+    ...                                                  ref=np.max),
     ...                          y_axis='cqt_hz', x_axis='time', ax=ax)
-    >>> hl = librosa.display.highlight(ax=ax, alpha=0.75, linewidth=2)
-    >>> trans = mpt.blended_transform_factory(
-    ...             ax.transData, ax.transAxes)
-    >>> ax.plot(beat_times, np.zeros_like(beat_times), '^', zorder=4,
-    ...         markerfacecolor='C0', color='C0', linestyle='', clip_on=False,
-    ...         markersize=10, label='Beats', transform=trans, path_effects=hl)
-    >>> ax.vlines(beat_times, 0, 1, color='C0', linestyle='-', transform=trans,
-    ...            linewidth=3, alpha=0.9, zorder=1.5, path_effects=hl)
-    >>> ax.plot(subseg_t, np.zeros_like(subseg_t), '^', zorder=3,
-    ...         markerfacecolor='C2', color='C2', linestyle='', clip_on=False,
-    ...         markersize=6, label='Sub-beats', transform=trans, path_effects=hl)
-    >>> ax.vlines(subseg_t, 0, 1, color='C2', linestyle='--', transform=trans,
-    ...            linewidth=1, alpha=0.9, path_effects=hl)
-    >>> ax.legend(loc='upper right')
+    >>> lims = ax.get_ylim()
+    >>> ax.vlines(beat_times, lims[0], lims[1], color='lime', alpha=0.9,
+    ...            linewidth=2, label='Beats')
+    >>> ax.vlines(subseg_t, lims[0], lims[1], color='linen', linestyle='--',
+    ...            linewidth=1.5, alpha=0.5, label='Sub-beats')
+    >>> ax.legend()
     >>> ax.set(title='CQT + Beat and sub-beat markers')
     """
     frames = util.fix_frames(frames, x_min=0, x_max=data.shape[axis], pad=True)
@@ -1053,17 +1034,15 @@ def subsegment(
     if n_segments < 1:
         raise ParameterError("n_segments must be a positive integer")
 
-    boundaries: list = []
+    boundaries = []
     idx_slices = [slice(None)] * data.ndim
 
-    for seg_start, seg_end in itertools.pairwise(frames):
+    for seg_start, seg_end in zip(frames[:-1], frames[1:]):
         idx_slices[axis] = slice(seg_start, seg_end)
         boundaries.extend(
             seg_start
             + agglomerative(
-                data[tuple(idx_slices)],
-                cast("np.integer", min(seg_end - seg_start, n_segments)),
-                axis=axis,
+                data[tuple(idx_slices)], min(seg_end - seg_start, n_segments), axis=axis
             )
         )
 
@@ -1072,11 +1051,11 @@ def subsegment(
 
 def agglomerative(
     data: np.ndarray,
-    k: int | np.integer,
+    k: int,
     *,
-    clusterer: sklearn.cluster.AgglomerativeClustering | None = None,
+    clusterer: Optional[sklearn.cluster.AgglomerativeClustering] = None,
     axis: int = -1,
-) -> _Array1D[np.int_]:
+) -> np.ndarray:
     """Bottom-up temporal segmentation.
 
     Use a temporally-constrained agglomerative clustering routine to partition
@@ -1109,8 +1088,8 @@ def agglomerative(
     --------
     Cluster by chroma similarity, break into 20 segments
 
-    >>> y, sr = librosa.loadx('nutcracker', duration=15)
-    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, threshold=0.5)
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=15)
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> bounds = librosa.segment.agglomerative(chroma, 20)
     >>> bound_times = librosa.frames_to_time(bounds, sr=sr)
     >>> bound_times
@@ -1126,9 +1105,8 @@ def agglomerative(
     >>> trans = mpt.blended_transform_factory(
     ...             ax.transData, ax.transAxes)
     >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax)
-    >>> hl = librosa.display.highlight(ax=ax)
-    >>> ax.vlines(bound_times, 0, 1, linestyle='--', path_effects=hl,
-    ...           label='Segment boundaries',
+    >>> ax.vlines(bound_times, 0, 1, color='linen', linestyle='--',
+    ...           linewidth=2, alpha=0.9, label='Segment boundaries',
     ...           transform=trans)
     >>> ax.legend()
     >>> ax.set(title='Power spectrogram')
@@ -1144,9 +1122,6 @@ def agglomerative(
     data = data.reshape((n, -1), order="F")
 
     if clusterer is None:
-        import sklearn.cluster
-        import sklearn.feature_extraction
-
         # Connect the temporal connectivity graph
         grid = sklearn.feature_extraction.image.grid_to_graph(n_x=n, n_y=1, n_z=1)
 
@@ -1170,7 +1145,7 @@ def path_enhance(
     *,
     window: _WindowSpec = "hann",
     max_ratio: float = 2.0,
-    min_ratio: float | None = None,
+    min_ratio: Optional[float] = None,
     n_filters: int = 7,
     zero_mean: bool = False,
     clip: bool = True,
@@ -1266,7 +1241,7 @@ def path_enhance(
     --------
     Use a 51-frame diagonal smoothing filter to enhance paths in a recurrence matrix
 
-    >>> y, sr = librosa.loadx('nutcracker')
+    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
     >>> hop_length = 2048
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
@@ -1312,8 +1287,6 @@ def path_enhance(
         shape[-2:] = kernel.shape
         kernel = np.reshape(kernel, shape)
 
-        import scipy.ndimage
-
         if R_smooth is None:
             R_smooth = scipy.ndimage.convolve(R, kernel, **kwargs)
         else:
@@ -1330,11 +1303,11 @@ def path_enhance(
 
 
 def __affinity_bandwidth(
-    rec: scipy.sparse.csr_array,
-    bw_mode: np.ndarray | _FloatLike_co | str | None,
+    rec: scipy.sparse.csr_matrix,
+    bw_mode: Optional[Union[np.ndarray, _FloatLike_co, str]],
     k: int,
-) -> float | np.ndarray:
-    # rec should be a csr_array
+) -> Union[float, np.ndarray]:
+    # rec should be a csr_matrix
 
     # the api allows users to specify a scalar bandwidth directly, besides the string based options.
     if isinstance(bw_mode, np.ndarray):
@@ -1379,17 +1352,21 @@ def __affinity_bandwidth(
     t = rec.shape[0]
     knn_dists = []
     for i in range(t):
-        # Get the links from point i using CSR format
-        start, end = rec.indptr[i], rec.indptr[i + 1]
-        row_data = rec.data[start:end]
+        # Get the links from point i
+        links = rec[i].nonzero()[1]
         # catch empty dists lists in knn_dists
-        if row_data.size == 0:
+        if len(links) == 0:
             # Disconnected vertices are only a problem for point-wise bandwidth estimation
             if bw_mode not in ["med_k_scalar"]:
                 raise ParameterError(f"The sample at time point {i} has no neighbors")
-            knn_dists.append(np.array([np.nan]))
+            else:
+                # If we have no links, then there's no distance
+                # shove a nan in here
+                knn_dists.append(np.array([np.nan]))
         else:
-            knn_dists.append(np.sort(row_data)[:k])
+            # Compute k nearest neighbors' distance and sort ascending
+            knn_dist_row = np.sort(rec[i, links].toarray()[0])[:k]
+            knn_dists.append(knn_dist_row)
 
     # take the last element of each list for the distance to kth neighbor
     dist_to_k = np.asarray([dists[-1] for dists in knn_dists])

@@ -73,8 +73,7 @@ extensions = [
     "sphinx_multiversion",  # historical builds
     "sphinx_rtd_theme",  # for proper jquery behavior
     "sphinxcontrib.googleanalytics",  # google analytics
-    "myst_parser",  # markdown support for CONTRIBUTING.md inclusion
-]  
+]
 
 # Generate plots for example sections
 if "LIBROSA_DOC_DEBUG" in os.environ:
@@ -146,7 +145,6 @@ plot_rcparams = {
     "figure.subplot.top": 0.85,
     "figure.subplot.wspace": 0.4,
     "text.usetex": False,
-    "savefig.bbox": "tight",
 }
 
 
@@ -406,7 +404,7 @@ smv_branch_whitelist = (
     r"^main$"  # build main branch, and anything relating to documentation
 )
 smv_tag_whitelist = (
-    r"^((0\.10\.2)|(0\.11\.\d+)|(1\.0\.\d+))$"  # use this for final builds
+    r"^((0\.9\.2)|(0\.10\.2)|(0\.11\.\d+))$"  # use this for final builds
 )
 smv_released_pattern = r".*tags.*"
 smv_remote_whitelist = r"^origin$"
@@ -417,5 +415,4 @@ smv_prefer_remote_refs = True
 
 
 linkcheck_allow_unauthorized = True
-linkcheck_ignore = ['https://www.ee.columbia.edu/~dpwe/resources/.*', 'https://htk.eng.cam.ac.uk/.*',
-                    'https://zenodo.org/.*']
+linkcheck_ignore = ['https://www.ee.columbia.edu/~dpwe/resources/.*']

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Non-negative least squares"""
+
 # The scipy library provides an nnls solver, but it does
 # not generalize efficiently to matrix-valued problems.
 # We therefore provide an alternate solver here.
@@ -8,23 +9,18 @@
 # The vectorized solver uses the L-BFGS-B over blocks of
 # data to efficiently solve the constrained least-squares problem.
 
-from __future__ import annotations
-
-from typing import TYPE_CHECKING
-
 import numpy as np
-
+import scipy.optimize
 from .utils import MAX_MEM_BLOCK
+from typing import Any, Optional, Tuple, Sequence
 
-if TYPE_CHECKING:
-    from typing import Any, Sequence
 
 __all__ = ["nnls"]
 
 
 def _nnls_obj(
     x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray
-) -> tuple[float, np.ndarray]:
+) -> Tuple[float, np.ndarray]:
     """Compute the objective and gradient for NNLS"""
     # Scipy's lbfgs flattens all arrays, so we first reshape
     # the iterate x
@@ -44,7 +40,7 @@ def _nnls_obj(
 
 
 def _nnls_lbfgs_block(
-    A: np.ndarray, B: np.ndarray, x_init: np.ndarray | None = None, **kwargs: Any
+    A: np.ndarray, B: np.ndarray, x_init: Optional[np.ndarray] = None, **kwargs: Any
 ) -> np.ndarray:
     """Solve the constrained problem over a single block
 
@@ -79,12 +75,10 @@ def _nnls_lbfgs_block(
     shape = x_init.shape
 
     # optimize
-    import scipy.optimize
-
-    x, _obj_value, _diagnostics = scipy.optimize.fmin_l_bfgs_b(
+    x: np.ndarray
+    x, obj_value, diagnostics = scipy.optimize.fmin_l_bfgs_b(
         _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs
     )
-
     # reshape the solution
     return x.reshape(shape)
 
@@ -120,7 +114,7 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
     --------
     Approximate a magnitude spectrum from its mel spectrogram
 
-    >>> y, sr = librosa.loadx('trumpet', duration=3)
+    >>> y, sr = librosa.load(librosa.ex('trumpet'), duration=3)
     >>> S = np.abs(librosa.stft(y, n_fft=2048))
     >>> M = librosa.feature.melspectrogram(S=S, sr=sr, power=1)
     >>> mel_basis = librosa.filters.mel(sr=sr, n_fft=2048, n_mels=M.shape[0])
@@ -130,25 +124,23 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.specshow(S, vscale='dBFS',
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
     ...                          y_axis='log', x_axis='time', ax=ax[2])
     >>> ax[2].set(title='Original spectrogram (1025 bins)')
     >>> ax[2].label_outer()
-    >>> librosa.display.specshow(M, vscale='dBFS',
+    >>> librosa.display.specshow(librosa.amplitude_to_db(M, ref=np.max),
     ...                          y_axis='mel', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Mel spectrogram (128 bins)')
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(S_recover, vscale=f'dB[{S.max()}]',
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_recover, ref=np.max(S)),
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Reconstructed spectrogram (1025 bins)')
     >>> ax[1].label_outer()
-    >>> librosa.display.colorbar_db(img, ax=ax)
+    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     """
-    import scipy.optimize
-
     # If B is a single vector, punt up to the scipy method
     if B.ndim == 1:
-        return scipy.optimize.nnls(A, B)[0]
+        return scipy.optimize.nnls(A, B)[0]  # type: ignore
 
     n_columns = int(MAX_MEM_BLOCK // (np.prod(B.shape[:-1]) * A.itemsize))
     n_columns = max(n_columns, 1)

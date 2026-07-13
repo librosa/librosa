@@ -32,31 +32,42 @@ Miscellaneous
     mr_frequencies
     window_sumsquare
     diagonal_filter
-"""
-from __future__ import annotations
 
+Deprecated
+----------
+.. autosummary::
+    :toctree: generated/
+
+    constant_q
+    constant_q_lengths
+
+"""
 import warnings
-from typing import TYPE_CHECKING
 
 import numpy as np
+import scipy
+import scipy.signal
+import scipy.ndimage
+
 from numba import jit
 
-from . import util
 from ._cache import cache
-from .core.convert import fft_frequencies, hz_to_midi, hz_to_octs, mel_frequencies, midi_to_hz, note_to_hz
+from . import util
 from .util.exceptions import ParameterError
+from .util.decorators import deprecated
 
-if TYPE_CHECKING:
-    from typing import Any, Literal
-
-    from numpy.typing import ArrayLike, DTypeLike, NDArray
-
-    from ._typing import _FloatLike_co, _WindowSpec
-
+from .core.convert import note_to_hz, hz_to_midi, midi_to_hz, hz_to_octs
+from .core.convert import fft_frequencies, mel_frequencies
+from numpy.typing import ArrayLike, DTypeLike
+from typing import Any, List, Optional, Tuple, Union
+from typing_extensions import Literal
+from ._typing import _WindowSpec, _FloatLike_co
 
 __all__ = [
     "mel",
     "chroma",
+    "constant_q",
+    "constant_q_lengths",
     "cq_to_chroma",
     "window_bandwidth",
     "get_window",
@@ -70,7 +81,7 @@ __all__ = [
 
 # Dictionary of window function bandwidths
 
-WINDOW_BANDWIDTHS: dict[Any, float] = {
+WINDOW_BANDWIDTHS = {
     "bart": 1.3334961334912805,
     "barthann": 1.4560255965133932,
     "bartlett": 1.3334961334912805,
@@ -120,9 +131,9 @@ def mel(
     n_fft: int,
     n_mels: int = 128,
     fmin: float = 0.0,
-    fmax: float | None = None,
+    fmax: Optional[float] = None,
     htk: bool = False,
-    norm: Literal["slaney"] | float | None = "slaney",
+    norm: Optional[Union[Literal["slaney"], float]] = "slaney",
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
     """Create a Mel filter-bank.
@@ -136,7 +147,7 @@ def mel(
         sampling rate of the incoming signal
 
     n_fft : int > 0 [scalar]
-        length of the FFT frame; the filter bank has ``1 + n_fft // 2`` frequency bins
+        number of FFT components
 
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
@@ -259,8 +270,8 @@ def chroma(
     n_chroma: int = 12,
     tuning: float = 0.0,
     ctroct: float = 5.0,
-    octwidth: float | None = 2,
-    norm: float | None = 2,
+    octwidth: Union[float, None] = 2,
+    norm: Optional[float] = 2,
     base_c: bool = True,
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
@@ -275,7 +286,7 @@ def chroma(
         audio sampling rate
 
     n_fft : int > 0 [scalar]
-        length of the FFT frame; the filter bank has ``1 + n_fft // 2`` frequency bins
+        number of FFT bins
 
     n_chroma : int > 0 [scalar]
         number of chroma bins
@@ -284,7 +295,6 @@ def chroma(
         Tuning deviation from A440 in fractions of a chroma bin.
 
     ctroct : float > 0 [scalar]
-        Center of the octave dominance window (in octaves, A0 = 27.5 Hz).
 
     octwidth : float > 0 or None [scalar]
         ``ctroct`` and ``octwidth`` specify a dominance window:
@@ -385,7 +395,10 @@ def chroma(
 
     # Maybe apply scaling for fft bins
     if octwidth is not None:
-        wts *= np.exp(-0.5 * (((frqbins / n_chroma - ctroct) / octwidth) ** 2))[np.newaxis, :]
+        wts *= np.tile(
+            np.exp(-0.5 * (((frqbins / n_chroma - ctroct) / octwidth) ** 2)),
+            (n_chroma, 1),
+        )
 
     if base_c:
         wts = np.roll(wts, -3 * (n_chroma // 12), axis=0)
@@ -420,6 +433,251 @@ def __float_window(window_spec):
     return _wrap
 
 
+@deprecated(version="0.9.0", version_removed="1.0")
+def constant_q(
+    *,
+    sr: float,
+    fmin: Optional[_FloatLike_co] = None,
+    n_bins: int = 84,
+    bins_per_octave: int = 12,
+    window: _WindowSpec = "hann",
+    filter_scale: float = 1,
+    pad_fft: bool = True,
+    norm: Optional[float] = 1,
+    dtype: DTypeLike = np.complex64,
+    gamma: float = 0,
+    **kwargs: Any,
+) -> Tuple[np.ndarray, np.ndarray]:
+    r"""Construct a constant-Q basis.
+
+    This function constructs a filter bank similar to Morlet wavelets,
+    where complex exponentials are windowed to different lengths
+    such that the number of cycles remains fixed for all frequencies.
+
+    By default, a Hann window (rather than the Gaussian window of Morlet wavelets)
+    is used, but this can be controlled by the ``window`` parameter.
+
+    Frequencies are spaced geometrically, increasing by a factor of
+    ``(2**(1./bins_per_octave))`` at each successive band.
+
+    .. warning:: This function is deprecated as of v0.9 and will be removed in 1.0.
+        See `librosa.filters.wavelet`.
+
+    Parameters
+    ----------
+    sr : number > 0 [scalar]
+        Audio sampling rate
+
+    fmin : float > 0 [scalar]
+        Minimum frequency bin. Defaults to `C1 ~= 32.70`
+
+    n_bins : int > 0 [scalar]
+        Number of frequencies.  Defaults to 7 octaves (84 bins).
+
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave
+
+    window : string, tuple, number, or function
+        Windowing function to apply to filters.
+
+    filter_scale : float > 0 [scalar]
+        Scale of filter windows.
+        Small values (<1) use shorter windows for higher temporal resolution.
+
+    pad_fft : boolean
+        Center-pad all filters up to the nearest integral power of 2.
+
+        By default, padding is done with zeros, but this can be overridden
+        by setting the ``mode=`` field in *kwargs*.
+
+    norm : {inf, -inf, 0, float > 0}
+        Type of norm to use for basis function normalization.
+        See librosa.util.normalize
+
+    gamma : number >= 0
+        Bandwidth offset for variable-Q transforms.
+        ``gamma=0`` produces a constant-Q filterbank.
+
+    dtype : np.dtype
+        The data type of the output basis.
+        By default, uses 64-bit (single precision) complex floating point.
+
+    **kwargs : additional keyword arguments
+        Arguments to `np.pad()` when ``pad==True``.
+
+    Returns
+    -------
+    filters : np.ndarray, ``len(filters) == n_bins``
+        ``filters[i]`` is ``i``\ th time-domain CQT basis filter
+    lengths : np.ndarray, ``len(lengths) == n_bins``
+        The (fractional) length of each filter
+
+    Notes
+    -----
+    This function caches at level 10.
+
+    See Also
+    --------
+    wavelet
+    constant_q_lengths
+    librosa.cqt
+    librosa.vqt
+    librosa.util.normalize
+
+    Examples
+    --------
+    Use a shorter window for each filter
+
+    >>> basis, lengths = librosa.filters.constant_q(sr=22050, filter_scale=0.5)
+
+    Plot one octave of filters in time and frequency
+
+    >>> import matplotlib.pyplot as plt
+    >>> basis, lengths = librosa.filters.constant_q(sr=22050)
+    >>> fig, ax = plt.subplots(nrows=2, figsize=(10, 6))
+    >>> notes = librosa.midi_to_note(np.arange(24, 24 + len(basis)))
+    >>> for i, (f, n) in enumerate(zip(basis, notes[:12])):
+    ...     f_scale = librosa.util.normalize(f) / 2
+    ...     ax[0].plot(i + f_scale.real)
+    ...     ax[0].plot(i + f_scale.imag, linestyle=':')
+    >>> ax[0].set(yticks=np.arange(len(notes[:12])), yticklabels=notes[:12],
+    ...           ylabel='CQ filters',
+    ...           title='CQ filters (one octave, time domain)',
+    ...           xlabel='Time (samples at 22050 Hz)')
+    >>> ax[0].legend(['Real', 'Imaginary'])
+    >>> F = np.abs(np.fft.fftn(basis, axes=[-1]))
+    >>> # Keep only the positive frequencies
+    >>> F = F[:, :(1 + F.shape[1] // 2)]
+    >>> librosa.display.specshow(F, x_axis='linear', y_axis='cqt_note', ax=ax[1])
+    >>> ax[1].set(ylabel='CQ filters', title='CQ filter magnitudes (frequency domain)')
+    """
+    if fmin is None:
+        fmin = note_to_hz("C1")
+
+    # Pass-through parameters to get the filter lengths
+    lengths = constant_q_lengths(
+        sr=sr,
+        fmin=fmin,
+        n_bins=n_bins,
+        bins_per_octave=bins_per_octave,
+        window=window,
+        filter_scale=filter_scale,
+        gamma=gamma,
+    )
+
+    freqs = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
+
+    # Build the filters
+    filters = []
+    for ilen, freq in zip(lengths, freqs):
+        # Build the filter: note, length will be ceil(ilen)
+        sig = util.phasor(
+            np.arange(-ilen // 2, ilen // 2, dtype=float) * 2 * np.pi * freq / sr
+        )
+
+        # Apply the windowing function
+        sig = sig * __float_window(window)(len(sig))
+
+        # Normalize
+        sig = util.normalize(sig, norm=norm)
+
+        filters.append(sig)
+
+    # Pad and stack
+    max_len = max(lengths)
+    if pad_fft:
+        max_len = int(2.0 ** (np.ceil(np.log2(max_len))))
+    else:
+        max_len = int(np.ceil(max_len))
+
+    filters = np.asarray(
+        [util.pad_center(filt, size=max_len, **kwargs) for filt in filters], dtype=dtype
+    )
+
+    return filters, np.asarray(lengths)
+
+
+@deprecated(version="0.9.0", version_removed="1.0")
+@cache(level=10)
+def constant_q_lengths(
+    *,
+    sr: float,
+    fmin: _FloatLike_co,
+    n_bins: int = 84,
+    bins_per_octave: int = 12,
+    window: _WindowSpec = "hann",
+    filter_scale: float = 1,
+    gamma: float = 0,
+) -> np.ndarray:
+    r"""Return length of each filter in a constant-Q basis.
+
+    .. warning:: This function is deprecated as of v0.9 and will be removed in 1.0.
+        See `librosa.filters.wavelet_lengths`.
+
+    Parameters
+    ----------
+    sr : number > 0 [scalar]
+        Audio sampling rate
+    fmin : float > 0 [scalar]
+        Minimum frequency bin.
+    n_bins : int > 0 [scalar]
+        Number of frequencies.  Defaults to 7 octaves (84 bins).
+    bins_per_octave : int > 0 [scalar]
+        Number of bins per octave
+    window : str or callable
+        Window function to use on filters
+    filter_scale : float > 0 [scalar]
+        Resolution of filter windows. Larger values use longer windows.
+    gamma : number >= 0
+        Bandwidth offset for variable-Q transforms.
+        ``gamma=0`` produces a constant-Q filterbank.
+
+    Returns
+    -------
+    lengths : np.ndarray
+        The length of each filter.
+
+    Notes
+    -----
+    This function caches at level 10.
+
+    See Also
+    --------
+    wavelet_lengths
+    """
+    if fmin <= 0:
+        raise ParameterError("fmin must be strictly positive")
+
+    if bins_per_octave <= 0:
+        raise ParameterError("bins_per_octave must be positive")
+
+    if filter_scale <= 0:
+        raise ParameterError("filter_scale must be positive")
+
+    if n_bins <= 0 or not isinstance(n_bins, (int, np.integer)):
+        raise ParameterError("n_bins must be a positive integer")
+
+    # Compute the frequencies
+    freq = fmin * (2.0 ** (np.arange(n_bins, dtype=float) / bins_per_octave))
+
+    # Q should be capitalized here, so we suppress the name warning
+    # pylint: disable=invalid-name
+    #
+    # Balance filter bandwidths
+    alpha = (2.0 ** (2 / bins_per_octave) - 1) / (2.0 ** (2 / bins_per_octave) + 1)
+    Q = float(filter_scale) / alpha
+
+    if max(freq * (1 + 0.5 * window_bandwidth(window) / Q)) > sr / 2.0:
+        raise ParameterError(
+            f"Maximum filter frequency={max(freq):.2f} would exceed Nyquist={sr/2}"
+        )
+
+    # Convert frequencies to filter lengths
+    lengths: np.ndarray = Q * sr / (freq + gamma / alpha)
+
+    return lengths
+
+
 @cache(level=10)
 def wavelet_lengths(
     *,
@@ -427,9 +685,9 @@ def wavelet_lengths(
     sr: float = 22050,
     window: _WindowSpec = "hann",
     filter_scale: float = 1,
-    gamma: float | None = 0,
-    alpha: float | np.ndarray | None = None,
-) -> tuple[NDArray[np.float64], float]:
+    gamma: Optional[float] = 0,
+    alpha: Optional[Union[float, np.ndarray]] = None,
+) -> Tuple[np.ndarray, float]:
     """Return length of each filter in a wavelet basis.
 
     Parameters
@@ -534,7 +792,7 @@ def wavelet_lengths(
     else:
         alpha = np.asarray(alpha)
 
-    gamma_: _FloatLike_co | np.ndarray
+    gamma_: Union[_FloatLike_co, np.ndarray]
     if gamma is None:
         gamma_ = alpha * 24.7 / 0.108
     else:
@@ -593,12 +851,12 @@ def wavelet(
     window: _WindowSpec = "hann",
     filter_scale: float = 1,
     pad_fft: bool = True,
-    norm: float | None = 1,
+    norm: Optional[float] = 1,
     dtype: DTypeLike = np.complex64,
     gamma: float = 0,
-    alpha: float | None = None,
+    alpha: Optional[float] = None,
     **kwargs: Any,
-) -> tuple[np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Construct a wavelet basis using windowed complex sinusoids.
 
     This function constructs a wavelet filterbank at a specified set of center
@@ -613,14 +871,14 @@ def wavelet(
     sr : number > 0 [scalar]
         Audio sampling rate
 
-    window : str, tuple, number, or function
+    window : string, tuple, number, or function
         Windowing function to apply to filters.
 
     filter_scale : float > 0 [scalar]
         Scale of filter windows.
         Small values (<1) use shorter windows for higher temporal resolution.
 
-    pad_fft : bool
+    pad_fft : boolean
         Center-pad all filters up to the nearest integral power of 2.
 
         By default, padding is done with zeros, but this can be overridden
@@ -630,12 +888,12 @@ def wavelet(
         Type of norm to use for basis function normalization.
         See librosa.util.normalize
 
+    gamma : number >= 0
+        Bandwidth offset for variable-Q transforms.
+
     dtype : np.dtype
         The data type of the output basis.
         By default, uses 64-bit (single precision) complex floating point.
-
-    gamma : number >= 0
-        Bandwidth offset for variable-Q transforms.
 
     alpha : number > 0 [optional]
         Optional pre-computed relative bandwidth parameter.
@@ -705,7 +963,7 @@ def wavelet(
 
     # Build the filters
     filters = []
-    for ilen, freq in zip(lengths, freqs, strict=True):
+    for ilen, freq in zip(lengths, freqs):
         # Build the filter: note, length will be ceil(ilen)
         sig = util.phasor(
             np.arange(-ilen // 2, ilen // 2, dtype=float) * 2 * np.pi * freq / sr
@@ -739,12 +997,13 @@ def cq_to_chroma(
     *,
     bins_per_octave: int = 12,
     n_chroma: int = 12,
-    fmin: _FloatLike_co | None = None,
-    window: np.ndarray | None = None,
+    fmin: Optional[_FloatLike_co] = None,
+    window: Optional[np.ndarray] = None,
     base_c: bool = True,
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
-    """Construct a linear transformation matrix to map Constant-Q bins onto chroma bins.
+    """Construct a linear transformation matrix to map Constant-Q bins
+    onto chroma bins (i.e., pitch classes).
 
     Parameters
     ----------
@@ -785,7 +1044,7 @@ def cq_to_chroma(
     --------
     Get a CQT, and wrap bins to chroma
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> CQT = np.abs(librosa.cqt(y, sr=sr))
     >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0])
     >>> chromagram = chroma_map.dot(CQT)
@@ -794,10 +1053,11 @@ def cq_to_chroma(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> imgcq = librosa.display.specshow(CQT, vscale='dBFS',
+    >>> imgcq = librosa.display.specshow(librosa.amplitude_to_db(CQT,
+    ...                                                         ref=np.max),
     ...                                  y_axis='cqt_note', x_axis='time',
     ...                                  ax=ax[0])
-    >>> ax[0].set(title='CQT Magnitude')
+    >>> ax[0].set(title='CQT Power')
     >>> ax[0].label_outer()
     >>> librosa.display.specshow(chromagram, y_axis='chroma', x_axis='time',
     ...                          ax=ax[1])
@@ -854,8 +1114,6 @@ def cq_to_chroma(
     cq_to_ch = np.roll(cq_to_ch, roll, axis=0).astype(dtype)
 
     if window is not None:
-        import scipy.signal
-
         cq_to_ch = scipy.signal.convolve(cq_to_ch, np.atleast_2d(window), mode="same")
 
     return cq_to_ch
@@ -876,7 +1134,7 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
 
     Parameters
     ----------
-    window : callable or str
+    window : callable or string
         A window function, or the name of a window function,
         e.g.: `scipy.signal.hann` or `'boxcar'`
     n : int > 0
@@ -912,7 +1170,12 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
 
 
 @cache(level=10)
-def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndarray:
+def get_window(
+    window: _WindowSpec,
+    Nx: int,
+    *,
+    fftbins: Optional[bool] = True,
+) -> np.ndarray:
     """Compute a window function.
 
     This is a wrapper for `scipy.signal.get_window` that additionally
@@ -920,7 +1183,7 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
 
     Parameters
     ----------
-    window : str, tuple, number, callable, or list-like
+    window : string, tuple, number, callable, or list-like
         The window specification:
 
         - If string, it's the name of the window function (e.g., `'hann'`)
@@ -964,8 +1227,7 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
     elif isinstance(window, (str, tuple)) or np.isscalar(window):
         # TODO: if we add custom window functions in librosa, call them here
 
-        import scipy.signal
-        win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins)  # type: ignore
+        win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins)
         return win
 
     elif isinstance(window, (np.ndarray, list)):
@@ -979,14 +1241,14 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
 
 @cache(level=10)
 def _multirate_fb(
-    center_freqs: np.ndarray | None = None,
-    sample_rates: np.ndarray | None = None,
+    center_freqs: Optional[np.ndarray] = None,
+    sample_rates: Optional[np.ndarray] = None,
     Q: float = 25.0,
     passband_ripple: float = 1,
     stopband_attenuation: float = 50,
-    ftype: Literal["butter", "cheby1", "cheby2", "ellip"] = "ellip",
-    flayout: Literal["ba", "sos", "zpk"] = "sos",
-) -> tuple[list[Any], np.ndarray]:
+    ftype: str = "ellip",
+    flayout: str = "sos",
+) -> Tuple[List[Any], np.ndarray]:
     r"""Construct a multirate filterbank.
 
      A filter bank consists of multiple band-pass filters which divide the input signal
@@ -1020,7 +1282,7 @@ def _multirate_fb(
         The type of IIR filter to design
         See `scipy.signal.iirdesign` for details.
 
-    flayout : str
+    flayout : string
         Valid `output` argument for `scipy.signal.iirdesign`.
 
         - If `ba`, returns numerators/denominators of the transfer functions,
@@ -1072,7 +1334,7 @@ def _multirate_fb(
     filterbank = []
 
     for cur_center_freq, cur_nyquist, cur_bw in zip(
-        center_freqs, nyquist, filter_bandwidths, strict=True
+        center_freqs, nyquist, filter_bandwidths
     ):
         passband_freqs = [
             cur_center_freq - 0.5 * cur_bw,
@@ -1083,7 +1345,6 @@ def _multirate_fb(
             cur_center_freq + cur_bw,
         ] / cur_nyquist
 
-        import scipy.signal
         cur_filter = scipy.signal.iirdesign(
             passband_freqs,
             stopband_freqs,
@@ -1100,7 +1361,7 @@ def _multirate_fb(
 
 
 @cache(level=10)
-def mr_frequencies(tuning: float) -> tuple[np.ndarray, np.ndarray]:
+def mr_frequencies(tuning: float) -> Tuple[np.ndarray, np.ndarray]:
     r"""Generate center frequencies and sample rate pairs.
 
     This function will return center frequency and corresponding sample rates
@@ -1155,13 +1416,14 @@ def mr_frequencies(tuning: float) -> tuple[np.ndarray, np.ndarray]:
 
 def semitone_filterbank(
     *,
-    center_freqs: np.ndarray | None = None,
+    center_freqs: Optional[np.ndarray] = None,
     tuning: float = 0.0,
-    sample_rates: np.ndarray | None = None,
-    flayout: Literal["ba", "sos"] = "ba",
+    sample_rates: Optional[np.ndarray] = None,
+    flayout: str = "ba",
     **kwargs: Any,
-) -> tuple[list[Any], np.ndarray]:
-    r"""Construct a multi-rate IIR band-pass filter bank at specified center frequencies and sample rates.
+) -> Tuple[List[Any], np.ndarray]:
+    r"""Construct a multi-rate bank of infinite-impulse response (IIR)
+    band-pass filters at user-defined center frequencies and sample rates.
 
     By default, these center frequencies are set equal to the 88 fundamental
     frequencies of the grand piano keyboard, according to a pitch tuning standard
@@ -1190,7 +1452,7 @@ def semitone_filterbank(
         in equal temperament).
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Sample rates of each filter in the multirate filterbank.
-    flayout : str
+    flayout : string
         - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
         - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
@@ -1236,7 +1498,7 @@ def semitone_filterbank(
     ...     vmax=3,
     ...     ax=ax
     ...     )
-    >>> librosa.display.colorbar_db(img)
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB", label="Magnitude (dB)")
     >>> ax.set(
     ...     xlim=[200, 600],
     ...     yticks=librosa.midi_to_hz(np.arange(60, 72)),
@@ -1270,10 +1532,10 @@ def window_sumsquare(
     window: _WindowSpec,
     n_frames: int,
     hop_length: int = 512,
-    win_length: int | None = None,
+    win_length: Optional[int] = None,
     n_fft: int = 2048,
     dtype: DTypeLike = np.float32,
-    norm: float | None = None,
+    norm: Optional[float] = None,
 ) -> np.ndarray:
     """Compute the sum-square envelope of a window function at a given hop length.
 
@@ -1282,7 +1544,7 @@ def window_sumsquare(
 
     Parameters
     ----------
-    window : str, tuple, number, callable, or list-like
+    window : string, tuple, number, callable, or list-like
         Window specification, as in `get_window`
     n_frames : int > 0
         The number of analysis frames
@@ -1345,7 +1607,7 @@ def diagonal_filter(
     n: int,
     *,
     slope: float = 1.0,
-    angle: float | None = None,
+    angle: Optional[float] = None,
     zero_mean: bool = False,
 ) -> np.ndarray:
     """Build a two-dimensional diagonal filter.
@@ -1354,7 +1616,7 @@ def diagonal_filter(
 
     Parameters
     ----------
-    window : str, tuple, number, callable, or list-like
+    window : string, tuple, number, callable, or list-like
         The window function to use for the filter.
 
         See `get_window` for details.
@@ -1391,10 +1653,9 @@ def diagonal_filter(
     if angle is None:
         angle = np.arctan(slope)
 
-    win: np.ndarray = np.diag(get_window(window, n, fftbins=False))
+    win = np.diag(get_window(window, n, fftbins=False))
 
     if not np.isclose(angle, np.pi / 4):
-        import scipy.ndimage
         win = scipy.ndimage.rotate(
             win, 45 - angle * 180 / np.pi, order=5, prefilter=False
         )

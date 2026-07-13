@@ -49,7 +49,7 @@ import librosa
 
 #############################################
 # Load an example with vocals.
-y, sr = librosa.loadx('fishin', duration=120)
+y, sr = librosa.load(librosa.ex('fishin'), duration=120)
 
 
 # And compute the spectrogram magnitude and phase
@@ -62,9 +62,9 @@ Audio(data=y[10*sr:15*sr], rate=sr)
 # Plot a 5-second slice of the spectrum
 idx = slice(*librosa.time_to_frames([10, 15], sr=sr))
 fig, ax = plt.subplots()
-img = librosa.display.specshow(S_full[:, idx], vscale='dBFS',
+img = librosa.display.specshow(librosa.amplitude_to_db(S_full[:, idx], ref=np.max),
                          y_axis='log', x_axis='time', sr=sr, ax=ax)
-librosa.display.colorbar_db(img)
+fig.colorbar(img, ax=ax)
 
 ###########################################################
 # The wiggly lines above are due to the vocal component.
@@ -122,20 +122,20 @@ S_background = mask_i * S_full
 # sphinx_gallery_thumbnail_number = 2
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-img = librosa.display.specshow(S_full[:, idx], vscale='dBFS',
+img = librosa.display.specshow(librosa.amplitude_to_db(S_full[:, idx], ref=np.max),
                          y_axis='log', x_axis='time', sr=sr, ax=ax[0])
 ax[0].set(title='Full spectrum')
 ax[0].label_outer()
 
-librosa.display.specshow(S_background[:, idx], vscale='dBFS',
+librosa.display.specshow(librosa.amplitude_to_db(S_background[:, idx], ref=np.max),
                          y_axis='log', x_axis='time', sr=sr, ax=ax[1])
 ax[1].set(title='Background')
 ax[1].label_outer()
 
-librosa.display.specshow(S_foreground[:, idx], vscale='dBFS',
+librosa.display.specshow(librosa.amplitude_to_db(S_foreground[:, idx], ref=np.max),
                          y_axis='log', x_axis='time', sr=sr, ax=ax[2])
 ax[2].set(title='Foreground')
-librosa.display.colorbar_db(img, ax=ax)
+fig.colorbar(img, ax=ax)
 
 
 ###########################################

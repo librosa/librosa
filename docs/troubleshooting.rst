@@ -34,6 +34,23 @@ to the beginning of your program.
 **NOTE**: this is no longer a problem since librosa 0.10, but it won't hurt to include
 the explicit import statement.
 
+PySoundFile failed
+^^^^^^^^^^^^^^^^^^
+
+If you're loading an audio file, and see the following message::
+
+    UserWarning: PySoundFile failed. Trying audioread instead.
+
+
+Do not worry.  This is a warning, not an error.  Odds are that your code is working
+just fine.
+
+This warning is most often triggered by loading files encoded with `mp3` format,
+which are not supported by `libsndfile` prior to version 1.1.
+When this situation is detected, librosa falls back to use the slower, but more
+flexible `audioread`-based file loader.
+
+
 `import librosa` hangs indefinitely
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
