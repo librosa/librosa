@@ -6,7 +6,6 @@ import numpy as np
 from scipy.spatial.distance import cdist
 
 import pytest
-from test_core import srand
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -208,15 +207,14 @@ def test_dtw_global_diagonal():
     assert np.array_equal(np.asarray(gt_wp), np.asarray(mut_wp))
 
 
-def test_dtw_subseq():
-    srand()
+def test_dtw_subseq(rng):
 
     # query is a linear ramp
     X = np.linspace(0, 1, 100)
 
     # database is query surrounded by noise
     noise_len = 200
-    noise = np.random.rand(noise_len)
+    noise = rng.random(noise_len)
     Y = np.concatenate((noise, noise, X, noise))
 
     _, mut_wp = librosa.sequence.dtw(X, Y, subseq=True)
@@ -310,11 +308,10 @@ def test_dtw_negative_steps(steps):
     librosa.sequence.dtw(C=C, step_sizes_sigma=steps)
 
 
-def test_dtw_multi():
+def test_dtw_multi(rng):
 
-    srand()
-    X = np.random.randn(2, 5, 10)
-    Y = np.random.randn(2, 5, 20)
+    X = rng.standard_normal(size=(2, 5, 10))
+    Y = rng.standard_normal(size=(2, 5, 20))
 
     D, wp, steps = librosa.sequence.dtw(X=X, Y=Y, backtrack=True, return_steps=True)
 
@@ -328,3 +325,33 @@ def test_dtw_multi():
     assert np.allclose(D, Df)
     assert np.allclose(wp, wpf)
     assert np.allclose(steps, stepsf)
+
+
+@pytest.mark.parametrize("subseq", [True, False])
+def test_path_to_steps_inv(subseq):
+    '''Verify that path_to_steps with inverse does the right thing.'''
+    x1 = np.arange(10)
+    x2 = np.arange(3, 6)
+
+    cost, path = librosa.sequence.dtw(x1, x2, subseq=subseq)
+
+    steps1 = librosa.sequence.path_to_steps(path, inverse=False)
+    steps2 = librosa.sequence.path_to_steps(path[:, ::-1], inverse=True)
+
+    assert np.array_equal(steps1, steps2)
+
+
+@pytest.mark.parametrize("subseq", [True, False])
+def test_path_to_steps(subseq):
+    # Some simple test cases to check path_to_steps
+    # We toggle subseq here to ensure that bounds are handled correctly
+    x1 = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
+    x2 = np.array([1, 4, 7])
+
+    cost, path = librosa.sequence.dtw(x1, x2, subseq=subseq)
+
+    steps = librosa.sequence.path_to_steps(path, inverse=False)
+    if subseq:
+        assert np.array_equal(steps, [3, 4, 5])
+    else:
+        assert np.array_equal(steps, [0, 3, 6])

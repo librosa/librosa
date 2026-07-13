@@ -1,40 +1,25 @@
+# Compilation files
 *.py[co]
 __pycache__
 
-__pycache__
-
 # Packages
+dist/
+build/
+parts/
+bin/
+var/
+sdist/
+eggs/
+develop-eggs/
 *.egg
 *.egg-info
-dist
-build
-eggs
-parts
-bin
-var
-sdist
-develop-eggs
 .installed.cfg
-
-# Installer logs
-pip-log.txt
-
-# Unit test / coverage reports
-.coverage
-.tox
-tests/result_images/
-
-#Translations
-*.mo
-
-#Mr Developer
-.mr.developer.cfg
 
 # Data files
 */data/*
 *.mat
 
-# Mac OS X cruft
+# OS-generated files
 .DS_Store
 .DS_Store?
 ._*
@@ -43,19 +28,26 @@ tests/result_images/
 ehthumbs.db
 Thumbs.db
 
-# Sphinx stuff
+# Sphinx documentation
 docs/generated/
 docs/_build/
 docs/auto_examples/
 
-# Vim
+# IDEs / editors
 *.swp
+.idea/
+.vscode/
 
 # Testing and checkpoints
 .ipynb_checkpoints
+tests/result_images/
+.coverage
 .coverage.*
 coverage.xml
+.tox
+tmp/
 
-#IDE
-.idea/
-.vscode
+# Miscellaneous
+pip-log.txt # Installer logs
+*.mo #Translations
+.mr.developer.cfg #Mr Developer

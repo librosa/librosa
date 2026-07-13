@@ -1,13 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Matching functions"""
+from __future__ import annotations
 
-import numpy as np
+from typing import TYPE_CHECKING
+
 import numba
+import numpy as np
 
 from .exceptions import ParameterError
 from .utils import valid_intervals
-from .._typing import _SequenceLike
+
+if TYPE_CHECKING:
+    from .._typing import _Array1D, _SequenceLike
 
 __all__ = ["match_intervals", "match_events"]
 
@@ -60,7 +65,7 @@ def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no co
 @numba.jit(nopython=True, cache=True)  # type: ignore
 def __match_intervals(
     intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True
-) -> np.ndarray:  # pragma: no cover
+) -> _Array1D[np.uint32]:  # pragma: no cover
     """Numba-accelerated interval matching algorithm."""
     # sort index of the interval starts
     start_index = np.argsort(intervals_to[:, 0])
@@ -113,7 +118,7 @@ def __match_intervals(
 
 def match_intervals(
     intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True
-) -> np.ndarray:
+) -> _Array1D[np.uint32]:
     """Match one set of time intervals to another.
 
     This can be useful for tasks such as mapping beat timings
@@ -249,6 +254,7 @@ def match_events(
         Array of events (eg, times, sample or frame indices) to
         match against.
     left : bool
+        See `right`
     right : bool
         If ``False``, then matched events cannot be to the left (or right)
         of source events.
@@ -359,8 +365,8 @@ def __match_events_helper(
             right_diff = abs(sorted_to[right_ind] - sorted_from_num)
 
         if left_flag and (
-            not right
-            and (sorted_to[middle_ind] > sorted_from_num)
+            (not right
+            and (sorted_to[middle_ind] > sorted_from_num))
             or (not right_flag and left_diff < mid_diff)
             or (left_diff < right_diff and left_diff < mid_diff)
         ):

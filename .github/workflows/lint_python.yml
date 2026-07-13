@@ -9,31 +9,32 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            python-version: "3.11"
+            python-version: "3.12"
             channel-priority: "flexible"
             envfile: ".github/environment-lint.yml"
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         fetch-depth: 0
     - name: Cache conda
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       env:
         CACHE_NUMBER: 0
       with:
         path: ~/conda_pkgs_dir
         key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
     - name: Install conda environmnent
-      uses: conda-incubator/setup-miniconda@v3
+      uses: conda-incubator/setup-miniconda@v4
       with: 
         auto-update-conda: false
         python-version: ${{ matrix.python-version }}
         add-pip-as-python-dependency: true
-        auto-activate-base: false
+        auto-activate: false
         activate-environment: lint
         # mamba-version: "*"
         channel-priority: ${{ matrix.channel-priority }}
         environment-file: ${{ matrix.envfile }}
+        conda-remove-defaults: true
         use-only-tar-bz2: false 
 
     - name: Conda info
@@ -46,22 +47,14 @@ jobs:
       shell: bash -l {0}
       run: codespell --ignore-words-list="ba,trough,ue" --skip="*demo.ipynb,./AUTHORS.md,./docs/changelog.rst"
 
-    - name: Security check
+    - name: Linting check
       shell: bash -l {0}
-      run: bandit --recursive --skip B101,B110 .
-
-    - name: Style check
-      shell: bash -l {0}
-      run: python -m flake8 librosa
+      run: ruff check --output-format=github librosa
     
-    - name: Docstring check  
+    - name: Docstring formatting check  
       shell: bash -l {0}
-      run: python -m velin --check librosa
+      run: numpydoc lint librosa/**.py
     
-    - name: Docstring style check
-      shell: bash -l {0}
-      run: python -m pydocstyle librosa
-
     - name: Type check package
       shell: bash -l {0}
       run: python -m mypy --pretty librosa

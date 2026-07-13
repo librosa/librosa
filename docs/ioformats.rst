@@ -9,11 +9,8 @@ functionality currently provided by *librosa*.
 Read specific formats
 ---------------------
 
-*librosa* uses `soundfile <https://github.com/bastibe/PySoundFile>`_ and `audioread <https://github.com/beetbox/audioread>`_ for reading audio.
-As of v0.7, librosa uses `soundfile` by default, and falls back on `audioread` only when dealing with codecs unsupported by `soundfile`.
-For a list of codecs supported by `soundfile`, see the *libsndfile* `documentation <http://www.mega-nerd.com/libsndfile/>`_.
-
-.. warning:: audioread support is deprecated as of librosa 0.10.0, and will be removed completely in version 1.0.
+*librosa* uses `soundfile <https://github.com/bastibe/PySoundFile>`_ for reading audio.
+For a list of codecs supported by `soundfile`, see the *libsndfile* `documentation <https://libsndfile.github.io/libsndfile/>`_.
 
 .. note:: See installation instruction for PySoundFile `here <https://python-soundfile.readthedocs.io/en/latest/>`_.
 

@@ -1,36 +1,50 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Rhythmic feature extraction"""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
-import scipy
 
 from .. import util
-
 from .._cache import cache
 from ..core.audio import autocorrelate
+from ..core.convert import fourier_tempo_frequencies, tempo_frequencies, time_to_frames
+from ..core.harmonic import f0_harmonics, interp_harmonics
 from ..core.spectrum import stft
-from ..core.convert import tempo_frequencies, time_to_frames
-from ..core.harmonic import f0_harmonics
-from ..util.exceptions import ParameterError
 from ..filters import get_window
-from typing import Optional, Callable, Any
-from .._typing import _WindowSpec
+from ..util.exceptions import ParameterError
 
-__all__ = ["tempogram", "fourier_tempogram", "tempo", "tempogram_ratio"]
+if TYPE_CHECKING:
+    from typing import Any, Callable
+
+    import scipy
+
+    from .._typing import _InterpKind, _WindowSpec
+
+
+__all__ = [
+    "tempogram",
+    "fourier_tempogram",
+    "tempo",
+    "tempogram_ratio",
+    "metrogram",
+    "hybrid_tempogram",
+]
 
 
 # -- Rhythmic features -- #
 def tempogram(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
     hop_length: int = 512,
     win_length: int = 384,
     center: bool = True,
     window: _WindowSpec = "hann",
-    norm: Optional[float] = np.inf,
+    norm: float | None = np.inf,
 ) -> np.ndarray:
     """Compute the tempogram: local autocorrelation of the onset strength envelope. [#]_
 
@@ -64,7 +78,7 @@ def tempogram(
         If `True`, onset autocorrelation windows are centered.
         If `False`, windows are left-aligned.
 
-    window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
+    window : str, function, number, tuple, or np.ndarray [shape=(win_length,)]
         A window specification as in `stft`.
 
     norm : {np.inf, -np.inf, 0, float > 0, None}
@@ -95,7 +109,7 @@ def tempogram(
     Examples
     --------
     >>> # Compute local onset autocorrelation
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
+    >>> y, sr = librosa.loadx('nutcracker', duration=30)
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     >>> tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
@@ -114,10 +128,11 @@ def tempogram(
     >>> ax[0].label_outer()
     >>> ax[0].legend(frameon=True)
     >>> librosa.display.specshow(tempogram, sr=sr, hop_length=hop_length,
-    >>>                          x_axis='time', y_axis='tempo', cmap='magma',
+    ...                          x_axis='time', y_axis='tempo', cmap='magma',
     ...                          ax=ax[1])
-    >>> ax[1].axhline(tempo, color='w', linestyle='--', alpha=1,
-    ...             label='Estimated tempo={:g}'.format(tempo))
+    >>> hl = librosa.display.highlight(ax=ax[1], linewidth=4, color='w', alpha=.75)
+    >>> ax[1].axhline(tempo, path_effects=hl, linewidth=2, color='k', linestyle='--',
+    ...               label='Estimated tempo={:g}'.format(tempo))
     >>> ax[1].legend(loc='upper right')
     >>> ax[1].set(title='Tempogram')
     >>> x = np.linspace(0, tempogram.shape[0] * float(hop_length) / sr,
@@ -128,11 +143,11 @@ def tempogram(
     >>> ax[2].legend(frameon=True)
     >>> freqs = librosa.tempo_frequencies(tempogram.shape[0], hop_length=hop_length, sr=sr)
     >>> ax[3].semilogx(freqs[1:], np.mean(tempogram[1:], axis=1),
-    ...              label='Mean local autocorrelation', base=2)
+    ...               label='Mean local autocorrelation', base=2)
     >>> ax[3].semilogx(freqs[1:], ac_global[1:], '--', alpha=0.75,
-    ...              label='Global autocorrelation', base=2)
+    ...               label='Global autocorrelation', base=2)
     >>> ax[3].axvline(tempo, color='black', linestyle='--', alpha=.8,
-    ...             label='Estimated tempo={:g}'.format(tempo))
+    ...               label='Estimated tempo={:g}'.format(tempo))
     >>> ax[3].legend(frameon=True)
     >>> ax[3].set(xlabel='BPM')
     >>> ax[3].grid(True)
@@ -178,16 +193,15 @@ def tempogram(
 
 def fourier_tempogram(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
     hop_length: int = 512,
     win_length: int = 384,
     center: bool = True,
     window: _WindowSpec = "hann",
 ) -> np.ndarray:
-    """Compute the Fourier tempogram: the short-time Fourier transform of the
-    onset strength envelope. [#]_
+    """Compute the Fourier tempogram: the short-time Fourier transform of the onset strength envelope. [#]_
 
     .. [#] Grosche, Peter, Meinard Müller, and Frank Kurth.
         "Cyclic tempogram - A mid-level tempo representation for music signals."
@@ -211,7 +225,7 @@ def fourier_tempogram(
     center : bool
         If `True`, onset windows are centered.
         If `False`, windows are left-aligned.
-    window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
+    window : str, function, number, tuple, or np.ndarray [shape=(win_length,)]
         A window specification as in `stft`.
 
     Returns
@@ -236,7 +250,7 @@ def fourier_tempogram(
     Examples
     --------
     >>> # Compute local onset autocorrelation
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'))
+    >>> y, sr = librosa.loadx('nutcracker')
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
     >>> tempogram = librosa.feature.fourier_tempogram(onset_envelope=oenv, sr=sr,
@@ -280,17 +294,17 @@ def fourier_tempogram(
 @cache(level=30)
 def tempo(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
-    tg: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
+    tg: np.ndarray | None = None,
     hop_length: int = 512,
     start_bpm: float = 120,
     std_bpm: float = 1.0,
     ac_size: float = 8.0,
-    max_tempo: Optional[float] = 320.0,
-    aggregate: Optional[Callable[..., Any]] = np.mean,
-    prior: Optional[scipy.stats.rv_continuous] = None,
+    max_tempo: float | None = 320.0,
+    aggregate: Callable[..., Any] | None = np.mean,
+    prior: scipy.stats.rv_continuous | None = None,
 ) -> np.ndarray:
     """Estimate the tempo (beats per minute)
 
@@ -342,7 +356,7 @@ def tempo(
     Examples
     --------
     >>> # Estimate a static tempo
-    >>> y, sr = librosa.load(librosa.ex('nutcracker'), duration=30)
+    >>> y, sr = librosa.loadx('nutcracker', duration=30)
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> tempo = librosa.feature.tempo(onset_envelope=onset_env, sr=sr)
     >>> tempo
@@ -391,6 +405,7 @@ def tempo(
     >>> ax.set(xlabel='Tempo (BPM)', title='Static tempo estimation')
     >>> ax.grid(True)
     >>> ax.legend()
+    >>> plt.show()
 
     Plot dynamic tempo estimates over a tempogram
 
@@ -398,13 +413,15 @@ def tempo(
     >>> tg = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr,
     ...                                hop_length=hop_length)
     >>> librosa.display.specshow(tg, x_axis='time', y_axis='tempo', cmap='magma', ax=ax)
-    >>> ax.plot(librosa.times_like(dtempo), dtempo,
-    ...          color='c', linewidth=1.5, label='Tempo estimate (default prior)')
-    >>> ax.plot(librosa.times_like(dtempo_lognorm), dtempo_lognorm,
-    ...          color='c', linewidth=1.5, linestyle='--',
-    ...          label='Tempo estimate (lognorm prior)')
+    >>> hl = librosa.display.highlight(ax=ax, alpha=.85, linewidth=3, color='k')
+    >>> ax.plot(librosa.times_like(dtempo), dtempo, linewidth=2,
+    ...         path_effects=hl, label='Tempo estimate (default prior)')
+    >>> ax.plot(librosa.times_like(dtempo_lognorm), dtempo_lognorm, color='C0',
+    ...         linestyle='--', linewidth=2,
+    ...         path_effects=hl, label='Tempo estimate (lognorm prior)')
     >>> ax.set(title='Dynamic tempo estimation')
     >>> ax.legend()
+    >>> plt.show()
     """
     if start_bpm <= 0:
         raise ParameterError("start_bpm must be strictly positive")
@@ -456,25 +473,25 @@ def tempo(
 @cache(level=40)
 def tempogram_ratio(
     *,
-    y: Optional[np.ndarray] = None,
+    y: np.ndarray | None = None,
     sr: float = 22050,
-    onset_envelope: Optional[np.ndarray] = None,
-    tg: Optional[np.ndarray] = None,
-    bpm: Optional[np.ndarray] = None,
+    onset_envelope: np.ndarray | None = None,
+    tg: np.ndarray | None = None,
+    bpm: np.ndarray | None = None,
     hop_length: int = 512,
     win_length: int = 384,
     start_bpm: float = 120,
     std_bpm: float = 1.0,
-    max_tempo: Optional[float] = 320.0,
-    freqs: Optional[np.ndarray] = None,
-    factors: Optional[np.ndarray] = None,
-    aggregate: Optional[Callable[..., Any]] = None,
-    prior: Optional[scipy.stats.rv_continuous] = None,
+    max_tempo: float | None = 320.0,
+    freqs: np.ndarray | None = None,
+    factors: np.ndarray | None = None,
+    aggregate: Callable[..., Any] | None = None,
+    prior: scipy.stats.rv_continuous | None = None,
     center: bool = True,
     window: _WindowSpec = "hann",
-    kind: str = "linear",
+    kind: _InterpKind = "linear",
     fill_value: float = 0,
-    norm: Optional[float] = np.inf,
+    norm: float | None = np.inf,
 ) -> np.ndarray:
     """Tempogram ratio features, also known as spectral rhythm patterns. [1]_
 
@@ -524,7 +541,8 @@ def tempogram_ratio(
 
     .. [2] Prockup, Matthew, Andreas F. Ehmann, Fabien Gouyon, Erik M. Schmidt, and Youngmoo E. Kim.
         "Modeling musical rhythm at scale with the music genome project."
-        In 2015 IEEE workshop on applications of signal processing to audio and acoustics (WASPAA), pp. 1-5. IEEE, 2015.
+        In 2015 IEEE workshop on applications of signal processing to audio
+        and acoustics (WASPAA), pp. 1-5. IEEE, 2015.
 
     Parameters
     ----------
@@ -557,6 +575,9 @@ def tempogram_ratio(
     factors : np.ndarray
         Multiples of the fundamental tempo (bpm) to estimate.
         If not provided, the factors are as specified above.
+    aggregate : callable [optional]
+        Aggregation function for estimating global tempogram ratio.
+        If `None`, then ratios are estimated independently for each frame.
     prior : scipy.stats.rv_continuous [optional]
         A prior distribution over tempo (in beats per minute).
         By default, a pseudo-log-normal prior is used.
@@ -564,10 +585,7 @@ def tempogram_ratio(
     center : bool
         If `True`, onset windows are centered.
         If `False`, windows are left-aligned.
-    aggregate : callable [optional]
-        Aggregation function for estimating global tempogram ratio.
-        If `None`, then ratios are estimated independently for each frame.
-    window : string, function, number, tuple, or np.ndarray [shape=(win_length,)]
+    window : str, function, number, tuple, or np.ndarray [shape=(win_length,)]
         A window specification as in `stft`.
     kind : str
         Interpolation mode for measuring tempogram ratios
@@ -599,7 +617,7 @@ def tempogram_ratio(
     for a waltz (3/4 time)
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('sweetwaltz'))
+    >>> y, sr = librosa.loadx('sweetwaltz')
     >>> tempogram = librosa.feature.tempogram(y=y, sr=sr)
     >>> tgr = librosa.feature.tempogram_ratio(tg=tempogram, sr=sr)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
@@ -653,3 +671,262 @@ def tempogram_ratio(
         return aggregate(tgr, axis=-1)  # type: ignore
 
     return tgr
+
+def hybrid_tempogram(
+    *,
+    y: np.ndarray | None = None,
+    sr: float = 22050,
+    onset_envelope: np.ndarray | None = None,
+    hop_length: int = 512,
+    win_length: int = 384,
+    center: bool = True,
+    window: _WindowSpec = "hann",
+    **kwargs: Any,
+) -> np.ndarray:
+    """Compute a hybrid tempogram.
+
+    This function computes a hybrid representation by combining the
+    Fourier tempogram and autocorrelation tempogram. The tempograms are
+    aligned onto a common frequency grid and merged using the geometric mean [1]_.
+
+    .. [1] Peeters, Geoffroy. "Rhythm Classification Using Periodicities and the
+           Beat-Histogram." Proceedings of the 6th International Conference on Music
+           Information Retrieval (ISMIR). 2005.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)] or None
+        Audio time series. Multi-channel is supported.
+    sr : float > 0
+        Sampling rate
+    onset_envelope : np.ndarray [shape=(..., n)] or None
+        Optional pre-computed onset strength envelope
+    hop_length : int > 0
+        Number of samples between frames
+    win_length : int > 0
+        Window length for analysis
+    center : bool
+        Whether to center the frames
+    window : str, tuple, number, function, or np.ndarray [shape=(win_length,)]
+        A window specification as supported by `scipy.signal.get_window`
+        and `librosa.filters.get_window`.
+    **kwargs : additional keyword arguments
+        Additional keyword arguments passed to `scipy.interpolate.interp1d`
+
+    Returns
+    -------
+    hybrid : np.ndarray
+        The hybrid tempogram combining both representations
+
+    See Also
+    --------
+    tempogram
+    fourier_tempogram
+
+    Examples
+    --------
+    Compute local onset autocorrelation
+
+    >>> y, sr = librosa.loadx('nutcracker')
+    >>> hop_length = 512
+    >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+
+    Compute the autocorrelation, Fourier, and hybrid tempograms
+
+    >>> tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
+    ...                                       hop_length=hop_length)
+    >>> fourier_tempogram = librosa.feature.fourier_tempogram(onset_envelope=oenv, sr=sr,
+    ...                                                       hop_length=hop_length)
+    >>> hybrid_tempogram = librosa.feature.hybrid_tempogram(onset_envelope=oenv, sr=sr,
+    ...                                                     hop_length=hop_length)
+
+    Plot the results
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True)
+    >>> librosa.display.specshow(tempogram, x_axis='time', y_axis='tempo',
+    ...                          hop_length=hop_length, ax=ax[0])
+    >>> ax[0].set(title='Autocorrelation Tempogram')
+    >>> ax[0].label_outer()
+    >>> librosa.display.specshow(np.abs(fourier_tempogram), x_axis='time',
+    ...                          y_axis='fourier_tempo', hop_length=hop_length, ax=ax[1])
+    >>> ax[1].set(title='Fourier Tempogram')
+    >>> ax[1].label_outer()
+    >>> img = librosa.display.specshow(hybrid_tempogram, x_axis='time',
+    ...                                y_axis='fourier_tempo', hop_length=hop_length,
+    ...                                ax=ax[2])
+    >>> ax[2].set(title='Hybrid Tempogram')
+    >>> fig.colorbar(img, ax=ax)
+    """
+    interp_kwargs_dict: dict[str, Any] = kwargs if kwargs else {}
+    interp_kwargs_dict.setdefault("bounds_error", False)
+    interp_kwargs_dict.setdefault("fill_value", 0.0)
+    interp_kwargs_dict.setdefault("copy", False)
+    interp_kwargs_dict.setdefault("axis", -2)
+
+    # Calculate onset envelope once to avoid redundant STFT computations
+    if onset_envelope is None:
+        if y is None:
+            raise ParameterError("Either y or onset_envelope must be provided")
+        from ..onset import onset_strength
+        onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
+
+    # 1. Compute Fourier tempogram
+    tg_f = fourier_tempogram(
+        y=y,
+        sr=sr,
+        onset_envelope=onset_envelope,
+        hop_length=hop_length,
+        win_length=win_length,
+        center=center,
+        window=window,
+    )
+
+    # Get Fourier tempogram frequencies
+    freqs = fourier_tempo_frequencies(
+        sr=sr, hop_length=hop_length, win_length=win_length
+    )
+
+    # 2. Compute Autocorrelation tempogram
+    tg_a = tempogram(
+        y=y,
+        sr=sr,
+        onset_envelope=onset_envelope,
+        hop_length=hop_length,
+        win_length=win_length,
+        center=center,
+        window=window,
+    )
+
+    # Get autocorrelation tempogram frequencies (lags)
+    lags = tempo_frequencies(tg_a.shape[-2], sr=sr, hop_length=hop_length)
+
+    # 3. Restrict to finite frequencies (drop 0-lag / infinite BPM)
+    tg_a_finite = tg_a[..., 1:, :]
+    lags_finite = lags[1:]
+
+    # 4. Hybrid Interpolation
+    import scipy.interpolate
+
+    f_interp = scipy.interpolate.interp1d(
+        lags_finite, tg_a_finite, **interp_kwargs_dict
+    )
+    tg_a_resampled = f_interp(freqs)
+
+    # 5. Shape Matching - align time frames
+    n_frames_min = min(tg_f.shape[-1], tg_a_resampled.shape[-1])
+
+    # 6. Merging (Geometric Mean)
+    product = np.abs(tg_f[..., :n_frames_min]) * np.abs(tg_a_resampled[..., :n_frames_min])
+    hybrid = np.sqrt(np.maximum(0, product))
+
+    return np.asarray(hybrid)
+
+@cache(level=40)
+def metrogram(
+    *,
+    tg: np.ndarray,
+    freqs: np.ndarray,
+    factors: np.ndarray | None = None,
+    aggregate: Callable[..., Any] | None = np.sum,
+    kind: _InterpKind = "linear",
+    fill_value: float = 0,
+) -> np.ndarray:
+    """Metrogram Transform. [1]_
+
+    This function summarizes the presence of rhythmic ratios in a tempogram. For example, a tempogram with two
+    simultaneous energy peaks at 90BPM and 30BPM would have a strong presence of the 1/3 ratio. This makes it possible
+    to perform meter estimation by finding the ratio between the beat's and downbeat's frequency.
+
+    By default, the factors used here are as specified by [2]_.
+
+    +-------+--------+----------------+
+    | Index | Factor | Time Signature |
+    +=======+========+================+
+    |     0 |   1/3  | 3/4            |
+    +-------+--------+----------------+
+    |     1 |   1/4  | 4/4            |
+    +-------+--------+----------------+
+    |     2 |   1/5  | 5/4            |
+    +-------+--------+----------------+
+    |     3 |   1/7  | 7/4            |
+    +-------+--------+----------------+
+
+    .. [1] Cozens, James, and Simon Godsill.
+       "Dynamic Time Signature Recognition, Tempo Inference, and Beat Tracking Through the Metrogram Transform."
+       In IEEE Open Journal of Signal Processing, pp. 1--9, 2023.
+
+    .. [2] Abimbola, Jeremiah, Daniel Kostrzewa, and Paweł Kasprowski.
+       "METER2800: A novel dataset for music time signature detection."
+       In Data in Brief, vol. 51, 109736, 2023.
+
+    See Also
+    --------
+    tempogram
+    tempogram_ratio
+
+    Parameters
+    ----------
+    tg : np.ndarray
+        Pre-computed tempogram.
+    freqs : np.ndarray
+        Frequencies (in BPM) of the tempogram axis.
+    factors : np.ndarray
+        Metric ratios to estimate.
+        If not provided, the default factors are 1/3, 1/4, 1/5, and 1/7.
+    aggregate : callable [optional]
+        Aggregation function to collapse the tempo axis for each ratio
+        at each point in time. Defaults to ``np.sum``.
+    kind : str
+        Interpolation method used on the tempo axis.
+    fill_value : float
+        The value to fill when extrapolating beyond the observed
+        tempo range.
+
+    Returns
+    -------
+    metrogram : np.ndarray
+        The metrogram transform for the specified factors.
+        If ``aggregate`` is set to ``None``, the ratios for all individual tempo bins are returned.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> import librosa
+    >>> y, sr = librosa.loadx("sweetwaltz")
+    >>> # extend the window, to capture the slower downbeat pulses
+    >>> win_length = 384 * 4
+    >>> fourier_tempogram = librosa.feature.fourier_tempogram(y=y, win_length=win_length)
+    >>> fourier_freqs = librosa.fourier_tempo_frequencies(win_length=win_length)
+    >>> ac_tempogram = librosa.feature.tempogram(y=y, win_length=win_length)
+    >>> ac_freqs = librosa.tempo_frequencies(ac_tempogram.shape[-2])
+    >>> # combine Fourier and AC tempo grid (alternatively, you may use either one)
+    >>> # we remove np.inf from ac_freqs to avoid nan results
+    >>> funt_freqs = np.union1d(fourier_freqs, ac_freqs[1:])
+    >>> fundamental_tempogram = librosa.util.interp_broadcast(
+    ...     x1=ac_tempogram,
+    ...     x1_pos=ac_freqs,
+    ...     x2=fourier_tempogram[..., :-1],  # both tempograms must be of equal length along time
+    ...     x2_pos=fourier_freqs,
+    ...     interp_pos=funt_freqs,
+    ... )
+    >>> metrogram = librosa.feature.metrogram(tg=fundamental_tempogram, freqs=funt_freqs)
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.specshow(np.abs(metrogram), x_axis="time", ax=ax)
+    >>> ax.set(title="Metrogram")
+    """
+    if factors is None:
+        factors = np.array([1 / 3, 1 / 4, 1 / 5, 1 / 7])
+
+    tg_interp = interp_harmonics(
+        tg, freqs=freqs, harmonics=factors, kind=kind, fill_value=fill_value, axis=-2
+    )
+
+    product: np.ndarray = tg_interp * np.expand_dims(tg, axis=-3)
+
+    if aggregate is not None:
+        product_agg: np.ndarray = aggregate(product, axis=-2)
+        return product_agg
+
+    return product

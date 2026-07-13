@@ -67,13 +67,13 @@ M_highres = librosa.feature.melspectrogram(y=y, hop_length=512)
 # And plot the results
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 
-librosa.display.specshow(librosa.power_to_db(M, ref=np.max),
+librosa.display.specshow(M, vscale='dBFS[power]',
                          y_axis='mel', x_axis='time', ax=ax[0])
 
 ax[0].set(title='44100/1024/4096')
 ax[0].label_outer()
 
-librosa.display.specshow(librosa.power_to_db(M_highres, ref=np.max),
+librosa.display.specshow(M_highres, vscale='dBFS[power]',
                          hop_length=512,
                          y_axis='mel', x_axis='time', ax=ax[1])
 ax[1].set(title='44100/512/4096')
@@ -86,7 +86,7 @@ librosa['sr'] = 11025
 y2, sr2 = librosa.load(filename, duration=5, offset=35)
 M2 = librosa.feature.melspectrogram(y=y2, sr=sr2)
 
-librosa.display.specshow(librosa.power_to_db(M2, ref=np.max),
+librosa.display.specshow(M2, vscale='dBFS[power]',
                          y_axis='mel', x_axis='time', ax=ax[2])
 
 ax[2].set(title='11025/1024/4096')

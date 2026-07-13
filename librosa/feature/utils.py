@@ -1,14 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Feature manipulation utilities"""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
-import scipy.signal
 from numba import jit
 
 from .._cache import cache
 from ..util.exceptions import ParameterError
-from typing import Any
+
+if TYPE_CHECKING:
+    from typing import Any, Literal
 
 __all__ = ["delta", "stack_memory"]
 
@@ -20,11 +24,10 @@ def delta(
     width: int = 9,
     order: int = 1,
     axis: int = -1,
-    mode: str = "interp",
+    mode: Literal["interp", "nearest", "mirror", "constant", "wrap"] = "interp",
     **kwargs: Any,
 ) -> np.ndarray:
-    r"""Compute delta features: local estimate of the derivative
-    of the input data along the selected axis.
+    r"""Compute delta features: local estimate of the derivative of the input data along the selected axis.
 
     Delta features are computed Savitsky-Golay filtering.
 
@@ -70,7 +73,7 @@ def delta(
     --------
     Compute MFCC deltas, delta-deltas
 
-    >>> y, sr = librosa.load(librosa.ex('libri1'), duration=5)
+    >>> y, sr = librosa.loadx('libri1', duration=5)
     >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
     >>> mfcc_delta = librosa.feature.delta(mfcc)
     >>> mfcc_delta
@@ -119,6 +122,8 @@ def delta(
 
     kwargs.pop("deriv", None)
     kwargs.setdefault("polyorder", order)
+    import scipy.signal
+
     result: np.ndarray = scipy.signal.savgol_filter(
         data, width, deriv=order, axis=axis, mode=mode, **kwargs
     )
@@ -129,8 +134,7 @@ def delta(
 def stack_memory(
     data: np.ndarray, *, n_steps: int = 2, delay: int = 1, **kwargs: Any
 ) -> np.ndarray:
-    """Short-term history embedding: vertically concatenate a data
-    vector or matrix with delayed copies of itself.
+    """Short-term history embedding: concatenate an array with delayed copies of itself.
 
     Each column ``data[:, i]`` is mapped to::
 
@@ -205,7 +209,7 @@ def stack_memory(
 
     Stack time-lagged beat-synchronous chroma edge padding
 
-    >>> y, sr = librosa.load(librosa.ex('sweetwaltz'), duration=10)
+    >>> y, sr = librosa.loadx('sweetwaltz', duration=10)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beats = librosa.util.fix_frames(beats, x_min=0)

@@ -50,7 +50,7 @@ Audio(data=y_sweep, rate=sr)
 # Of course, we can also play back real recorded sounds
 # in the same way.
 #
-y, sr = librosa.load(librosa.ex('trumpet'))
+y, sr = librosa.loadx('trumpet')
 
 Audio(data=y, rate=sr)
 
@@ -115,8 +115,15 @@ onset_times = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, units=
 # Sonify onset times as clicks
 y_clicks = librosa.clicks(times=onset_times, length=len(y), sr=sr)
 
+# %%
+# We can play back the original signal mixed with the click track by adding them together.
 Audio(data=y+y_clicks, rate=sr)
 
+# %%
+# Sometimes it's helpful to keep the original signal and the click track separate.
+# This can be done using a stereo output as follows:
+
+Audio(data=librosa.to_stereo(left=y, right=y_clicks), rate=sr)
 
 # %%
 # Caveats

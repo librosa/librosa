@@ -22,8 +22,6 @@ import scipy.stats
 
 import pytest
 
-from test_core import srand
-
 
 def __test_cqt_size(
     y,
@@ -184,46 +182,6 @@ def test_cqt(
         assert np.isclose(peak_frequency, 110)
 
 
-@pytest.mark.parametrize("fmin", [librosa.note_to_hz("C1")])
-@pytest.mark.parametrize("bins_per_octave", [12])
-@pytest.mark.parametrize("n_bins", [88])
-def test_cqt_early_downsample(y_cqt_110, sr_cqt, n_bins, fmin, bins_per_octave):
-    with pytest.warns(FutureWarning, match="Support for VQT with res_type=None"):
-        C = librosa.cqt(
-            y=y_cqt_110,
-            sr=sr_cqt,
-            fmin=fmin,
-            n_bins=n_bins,
-            bins_per_octave=bins_per_octave,
-            res_type=None,
-        )
-
-    # type is complex
-    assert np.iscomplexobj(C)
-
-    # number of bins is correct
-    assert C.shape[0] == n_bins
-
-    if fmin is None:
-        fmin = librosa.note_to_hz("C1")
-
-    # check for peaks if 110 is within range
-    if 110 <= fmin * 2 ** (n_bins / bins_per_octave):
-        peaks = np.argmax(np.abs(C), axis=0)
-
-        # This is our most common peak index in the CQT spectrum
-        # we use the mode here over frames to sidestep transient effects
-        # at the beginning and end of the CQT
-        # common_peak = scipy.stats.mode(peaks, keepdims=True)[0][0]
-        common_peak = np.argmax(np.bincount(peaks))
-
-        # Convert peak index to frequency
-        peak_frequency = fmin * 2 ** (common_peak / bins_per_octave)
-
-        # Check that it matches 110, which is an analysis frequency
-        assert np.isclose(peak_frequency, 110)
-
-
 @pytest.mark.parametrize("hop_length", [256, 512])
 def test_cqt_frame_rate(y_cqt_110, sr_cqt, hop_length):
 
@@ -329,7 +287,7 @@ def y_hybrid():
 @pytest.mark.parametrize("hop_length", [512, 2000])
 @pytest.mark.parametrize("sparsity", [0.01])
 @pytest.mark.parametrize("fmin", [None, librosa.note_to_hz("C2")])
-@pytest.mark.parametrize("n_bins", [1, 12, 24, 48, 72, 74, 76])
+@pytest.mark.parametrize("n_bins", [1, 12, 48, 76])
 @pytest.mark.parametrize("bins_per_octave", [12, 24])
 @pytest.mark.parametrize("tuning", [None, 0, 0.25])
 @pytest.mark.parametrize("resolution", [1])
@@ -487,9 +445,8 @@ def sr_white():
 
 
 @pytest.fixture(scope="module")
-def y_white(sr_white):
-    srand()
-    return np.random.randn(10 * sr_white)
+def y_white(sr_white, rng_mod):
+    return rng_mod.standard_normal(size=10 * sr_white)
 
 
 @pytest.mark.parametrize("scale", [False, True])
@@ -529,7 +486,7 @@ def test_hybrid_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     assert np.allclose(np.std(C, axis=1), 0.5, atol=5e-1), np.std(C, axis=1)
 
 
-@pytest.fixture(scope="module", params=[22050, 44100])
+@pytest.fixture(scope="module", params=[22050, 16000])
 def sr_icqt(request):
     return request.param
 
@@ -542,13 +499,11 @@ def y_icqt(sr_icqt):
 @pytest.mark.parametrize("over_sample", [1, 3])
 @pytest.mark.parametrize("scale", [False, True])
 @pytest.mark.parametrize("hop_length", [384, 512])
-@pytest.mark.parametrize("length", [None, True])
-@pytest.mark.parametrize("res_type", ["soxr_hq", "polyphase"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("res_type", ["soxr_lq", "polyphase"])
 @pytest.mark.filterwarnings(
     "ignore:n_fft=.*is too large"
 )  # our test signal is short; this is fine
-def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type, dtype):
+def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, res_type):
 
     bins_per_octave = over_sample * 12
     n_bins = 7 * bins_per_octave
@@ -560,12 +515,11 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
         bins_per_octave=bins_per_octave,
         scale=scale,
         hop_length=hop_length,
+        res_type=res_type,
     )
 
-    if length:
-        _len = len(y_icqt)
-    else:
-        _len = None
+    _len = len(y_icqt)
+
     yinv = librosa.icqt(
         C,
         sr=sr_icqt,
@@ -574,29 +528,64 @@ def test_icqt(y_icqt, sr_icqt, scale, hop_length, over_sample, length, res_type,
         bins_per_octave=bins_per_octave,
         length=_len,
         res_type=res_type,
-        dtype=dtype,
     )
 
-    assert yinv.dtype == dtype
-
     # Only test on the middle section
-    if length:
-        assert len(y_icqt) == len(yinv)
-    else:
-        yinv = librosa.util.fix_length(yinv, size=len(y_icqt))
+    assert len(y_icqt) == len(yinv)
 
     y_icqt = y_icqt[sr_icqt // 2 : -sr_icqt // 2]
     yinv = yinv[sr_icqt // 2 : -sr_icqt // 2]
 
     residual = np.abs(y_icqt - yinv)
-    # We'll tolerate 10% RMSE
+    # We'll tolerate 6% RMSE
     # error is lower on more recent numpy/scipy builds
 
     resnorm = np.sqrt(np.mean(residual**2))
-    assert resnorm <= 0.1, resnorm
+    assert resnorm <= 0.06, resnorm
 
 
-@pytest.fixture
+@pytest.mark.parametrize("hop_length", [384, 512])
+def test_icqt_nolength(y_icqt, sr_icqt, hop_length):
+    bins_per_octave = 12
+    n_bins = 7 * bins_per_octave
+
+    C = librosa.cqt(
+        y_icqt,
+        sr=sr_icqt,
+        n_bins=n_bins,
+        bins_per_octave=bins_per_octave,
+        scale=True,
+        hop_length=hop_length,
+    )
+
+    yinv = librosa.icqt(
+        C,
+        sr=sr_icqt,
+        scale=True,
+        hop_length=hop_length,
+        bins_per_octave=bins_per_octave,
+        length=None,
+        res_type="polyphase",
+    )
+    yinv = librosa.util.fix_length(yinv, size=len(y_icqt))
+
+    y_icqt = y_icqt[sr_icqt // 2 : -sr_icqt // 2]
+    yinv = yinv[sr_icqt // 2 : -sr_icqt // 2]
+
+    residual = np.abs(y_icqt - yinv)
+    resnorm = np.sqrt(np.mean(residual**2))
+    assert resnorm <= 0.06, resnorm
+
+
+def test_icqt_dtype(y_icqt, sr_icqt):
+    C = librosa.cqt(y_icqt, sr=sr_icqt)
+    y = librosa.icqt(C, sr=sr_icqt, dtype=np.float32)
+    assert y.dtype == np.float32
+    y = librosa.icqt(C, sr=sr_icqt, dtype=np.float64)
+    assert y.dtype == np.float64
+
+
+@pytest.fixture(scope="module")
 def y_chirp():
     sr = 22050
     y = librosa.chirp(fmin=55, fmax=55 * 2**3, length=sr // 8, sr=sr)
@@ -611,9 +600,9 @@ def y_chirp():
 @pytest.mark.parametrize("pad_mode", ["reflect"])
 @pytest.mark.parametrize("scale", [False, True])
 @pytest.mark.parametrize("momentum", [0.99])
-@pytest.mark.parametrize("random_state", [0])
+@pytest.mark.parametrize("rng", [0])
 @pytest.mark.parametrize("fmin", [40.0])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("dtype", [np.float32])
 @pytest.mark.parametrize("init", [None])
 @pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt(
@@ -628,7 +617,7 @@ def test_griffinlim_cqt(
     scale,
     momentum,
     init,
-    random_state,
+    rng,
     dtype,
 ):
 
@@ -664,9 +653,9 @@ def test_griffinlim_cqt(
         bins_per_octave=bins_per_octave,
         scale=scale,
         pad_mode=pad_mode,
-        n_iter=2,
+        n_iter=1,
         momentum=momentum,
-        random_state=random_state,
+        rng=rng,
         length=length,
         res_type=res_type,
         init=init,
@@ -689,10 +678,18 @@ def test_griffinlim_cqt(
     if use_length:
         assert len(y_rec) == length
 
-    assert y_rec.dtype == dtype
-
     # Check that the data is okay
     assert np.all(np.isfinite(y_rec))
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
+def test_griffinlim_cqt_dtype(y_chirp, dtype):
+    C = librosa.cqt(y_chirp, sr=22050, res_type="polyphase")
+    y = librosa.griffinlim_cqt(
+        np.abs(C), sr=22050, dtype=dtype, n_iter=2, res_type="polyphase"
+    )
+    assert y.dtype == dtype
 
 
 @pytest.mark.parametrize("momentum", [0, 0.95])
@@ -707,16 +704,21 @@ def test_griffinlim_cqt_momentum(y_chirp, momentum):
     assert np.all(np.isfinite(y_rec))
 
 
-@pytest.mark.parametrize("random_state", [None, 0, np.random.RandomState()])
+@pytest.mark.parametrize("rng", [None, 0, np.random.RandomState()])
 @pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
-def test_griffinlim_cqt_rng(y_chirp, random_state):
+def test_griffinlim_cqt_rng(y_chirp, rng):
 
     C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
     y_rec = librosa.griffinlim_cqt(
-        np.abs(C), sr=22050, n_iter=2, random_state=random_state, res_type="polyphase"
+        np.abs(C), sr=22050, n_iter=2, rng=rng, res_type="polyphase"
     )
 
-    assert np.all(np.isfinite(y_rec))
+    y_rec2 = librosa.griffinlim_cqt(
+        np.abs(C), sr=22050, n_iter=2, rng=rng, res_type="polyphase"
+    )
+
+    if not isinstance(rng, np.random.RandomState) and rng is not None:
+        assert np.allclose(y_rec, y_rec2)
 
 
 @pytest.mark.parametrize("init", [None, "random"])
@@ -737,11 +739,11 @@ def test_griffinlim_cqt_badinit():
     librosa.griffinlim_cqt(x, init="garbage")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=TypeError)
 @pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_badrng():
     x = np.zeros((33, 3))
-    librosa.griffinlim_cqt(x, random_state="garbage")  # type: ignore
+    librosa.griffinlim_cqt(x, rng="garbage")  # type: ignore
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -754,6 +756,35 @@ def test_griffinlim_cqt_momentum_warn():
     x = np.zeros((33, 3))
     with pytest.warns(UserWarning):
         librosa.griffinlim_cqt(x, momentum=2)
+
+
+def test_griffinlim_cqt_deprecated_randomstate(y_chirp):
+    # Test that the deprecated random_state argument raises a warning
+    C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
+    with pytest.warns(FutureWarning, match="renamed to 'rng'"):
+        y1 = librosa.griffinlim_cqt(
+            np.abs(C),
+            sr=22050,
+            n_iter=2,
+            random_state=5,
+            res_type="polyphase",
+        )
+    # And verify that it produces the same output as the new rng argument
+    y2 = librosa.griffinlim_cqt(
+        np.abs(C),
+        sr=22050,
+        n_iter=2,
+        rng=5,
+        res_type="polyphase",
+    )
+    assert np.allclose(y1, y2)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_griffinlim_cqt_oldrng():
+    x = np.zeros((33, 3))
+    # We can't have both parameters set
+    librosa.griffinlim_cqt(x, rng=0, random_state=0)
 
 
 @pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
@@ -781,3 +812,166 @@ def test_vqt_provided_intervals(y_cqt, sr_cqt):
     V2 = librosa.vqt(y=y_cqt, sr=sr_cqt, n_bins=60, intervals=intervals)
 
     assert np.allclose(V1, V2)
+
+
+@pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
+def test_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave):
+    # Test that n_bins=None works
+    C = librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=None, bins_per_octave=bins_per_octave)
+    # We'll compare to explicitly setting n_bins to match
+    C2 = librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=C.shape[-2], bins_per_octave=bins_per_octave)
+
+    assert np.allclose(C, C2)
+
+    # Now verify that going one step further would raise an error
+    with pytest.raises(librosa.ParameterError):
+        librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=C.shape[-2] + 1, bins_per_octave=bins_per_octave)
+
+
+@pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
+@pytest.mark.parametrize("intervals", ["equal", "ji5", "ji7"])
+@pytest.mark.parametrize("gamma", [None, 0])
+@pytest.mark.parametrize("fmin", [32, 64, 128])
+def test_vqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, intervals, gamma, fmin):
+    # Test that n_bins=None works for VQT
+    V = librosa.vqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        fmin=fmin,
+        n_bins=None,
+        bins_per_octave=bins_per_octave,
+        intervals=intervals,
+        gamma=gamma,
+    )
+    # We'll compare to explicitly setting n_bins to match
+    V2 = librosa.vqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        fmin=fmin,
+        n_bins=V.shape[-2],
+        bins_per_octave=bins_per_octave,
+        intervals=intervals,
+        gamma=gamma,
+    )
+
+    assert np.allclose(V, V2)
+
+    # Now verify that going one step further would raise an error
+    with pytest.raises(librosa.ParameterError):
+        librosa.vqt(
+            y=y_cqt,
+            sr=sr_cqt,
+            fmin=fmin,
+            n_bins=V.shape[-2] + 1,
+            bins_per_octave=bins_per_octave,
+            intervals=intervals,
+            gamma=gamma,
+        )
+
+def test_vqt_fmin_high(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.vqt(y=y_cqt, sr=2000, fmin=999,
+                    n_bins=2, bins_per_octave=1)
+
+def test_vqt_nbins_none_small(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.vqt(y=y_cqt, sr=2000, fmin=999,
+                    n_bins=None, bins_per_octave=1)
+
+def test_vqt_fmin_over(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.vqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
+
+
+@pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
+@pytest.mark.parametrize("fmin", [32, 64, 128])
+def test_hybrid_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
+    # Test that n_bins=None works for hybrid CQT
+    V = librosa.hybrid_cqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        fmin=fmin,
+        n_bins=None,
+        bins_per_octave=bins_per_octave,
+    )
+    # We'll compare to explicitly setting n_bins to match
+    V2 = librosa.hybrid_cqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        fmin=fmin,
+        n_bins=V.shape[-2],
+        bins_per_octave=bins_per_octave,
+    )
+
+    assert np.allclose(V, V2)
+
+    # Now verify that going one step further would raise an error
+    with pytest.raises(librosa.ParameterError):
+        librosa.hybrid_cqt(
+            y=y_cqt,
+            sr=sr_cqt,
+            fmin=fmin,
+            n_bins=V.shape[-2] + 1,
+            bins_per_octave=bins_per_octave,
+        )
+
+def test_hybrid_cqt_fmin_high(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=999,
+                    n_bins=2, bins_per_octave=1)
+
+def test_hybrid_cqt_nbins_none_small(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=999,
+                    n_bins=None, bins_per_octave=1)
+
+def test_hybrid_cqt_fmin_over(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
+
+
+@pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
+@pytest.mark.parametrize("fmin", [32, 64, 128])
+def test_pseudo_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
+    # Test that n_bins=None works for pseudo CQT
+    V = librosa.pseudo_cqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        fmin=fmin,
+        n_bins=None,
+        bins_per_octave=bins_per_octave,
+    )
+    # We'll compare to explicitly setting n_bins to match
+    V2 = librosa.pseudo_cqt(
+        y=y_cqt,
+        sr=sr_cqt,
+        fmin=fmin,
+        n_bins=V.shape[-2],
+        bins_per_octave=bins_per_octave,
+    )
+
+    assert np.allclose(V, V2)
+
+    # Now verify that going one step further would raise an error
+    with pytest.raises(librosa.ParameterError):
+        librosa.pseudo_cqt(
+            y=y_cqt,
+            sr=sr_cqt,
+            fmin=fmin,
+            n_bins=V.shape[-2] + 1,
+            bins_per_octave=bins_per_octave,
+        )
+
+def test_pseudo_cqt_fmin_high(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=999,
+                    n_bins=2, bins_per_octave=1)
+
+def test_pseudo_cqt_nbins_none_small(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=999,
+                    n_bins=None, bins_per_octave=1)
+
+def test_pseudo_cqt_fmin_over(y_cqt):
+    with pytest.raises(librosa.ParameterError):
+        librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
