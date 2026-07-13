@@ -925,6 +925,9 @@ def __rqa_dp(
         else:
             backtrack[0, j] = -1
 
+    if sim.shape[0] == 1 or sim.shape[1] == 1:
+        return score, backtrack
+
     # Initialize the 1-1 case using only the diagonal
     if sim[1, 1] > 0:
         score[1, 1] = score[0, 0] + sim[1, 1]
