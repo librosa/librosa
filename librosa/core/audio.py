@@ -442,6 +442,15 @@ def stream(
         else:
             sfo.seek(-int(abs(offset) * orig_sr), whence=sf.SEEK_END)
 
+        # Reusable buffer for the per-chunk mono downmix; the final short
+        # chunk writes into a truncated view of it, avoiding a fresh
+        # allocation on every block
+        mono_buffer = (
+            np.empty(orig_read_size, dtype=dtype)
+            if mono and is_multichannel
+            else None
+        )
+
         for orig_chunk in sfo.blocks(blocksize=orig_read_size,
                                      overlap=0,
                                      dtype=dtype,
@@ -450,7 +459,10 @@ def stream(
 
             if mono and is_multichannel:
                 # soundfile returns (samples, channels), to_mono expects (channels, samples)
-                orig_chunk = to_mono(orig_chunk.T)
+                assert mono_buffer is not None  # for mypy; set above under same condition
+                orig_chunk = to_mono(
+                    orig_chunk.T, out=mono_buffer[: orig_chunk.shape[0]]
+                )
 
             if needs_resampling:
                 target_chunk = resampler.resample_chunk(orig_chunk)
@@ -590,8 +602,35 @@ def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarra
     return load(path, **kwargs)
 
 
-@cache(level=20)
-def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.ndarray:
+def _init_output(
+    out: np.ndarray | None, shape: tuple[int, ...], dtype: np.dtype
+) -> np.ndarray:
+    """Validate a caller-provided output buffer, or allocate a new one.
+
+    If ``out`` is ``None``, return a new zero-filled array of the given shape
+    and dtype.  Otherwise ``out`` must match ``shape`` exactly, and its dtype
+    must be able to hold ``dtype`` without loss of precision (i.e. at least as
+    precise as ``dtype``); it is zeroed in place and returned.  A caller that
+    explicitly allocates a higher-precision buffer keeps that precision.
+    """
+    if out is None:
+        return np.zeros(shape, dtype=dtype)
+    if out.shape != shape:
+        raise ParameterError(f"out has shape={out.shape}, but expected {shape}")
+    if np.promote_types(out.dtype, dtype) != out.dtype:
+        raise ParameterError(
+            f"out has dtype={out.dtype}, which cannot hold the result dtype {dtype}"
+        )
+    out[...] = 0
+    return out
+
+
+def to_mono(
+    *signals: np.ndarray,
+    pad: bool = True,
+    norm: bool = True,
+    out: np.ndarray | None = None,
+) -> np.ndarray:
     """Convert an audio signal to mono by averaging samples across channels.
 
     Parameters
@@ -613,15 +652,20 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
 
         If `False`, signals are combined by summing.
 
+    out : np.ndarray [shape=(n_out,)] or None
+        A pre-allocated output buffer.  If provided, it must match the shape
+        ``(n_out,)``, and its dtype must be at least as precise as the result
+        dtype; it is zeroed and filled in place and returned, avoiding a new
+        allocation.  If ``None`` (default), a new array is allocated.
+
     Returns
     -------
     y_mono : np.ndarray [shape=(n_out,)]
         All signals combined together into a single mono signal.
+        If ``out`` was provided, this is the same object as ``out``.
 
     Notes
     -----
-    This function caches at level 20.
-
     The dtype of the output signal will be the most general type that can
     accommodate all input signals.  If the input signals have different
     dtypes, the output will be promoted to the most general type.
@@ -677,7 +721,7 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
     else:
         size = n_min
 
-    output = np.zeros((size,), dtype=dtype)
+    output = _init_output(out, (size,), dtype)
 
     if norm:
         combine = np.mean
@@ -696,7 +740,6 @@ def to_mono(*signals: np.ndarray, pad: bool = True, norm: bool = True) -> np.nda
     return output
 
 
-@cache(level=20)
 def to_stereo(
     *,
     left: np.ndarray | None,
@@ -704,6 +747,7 @@ def to_stereo(
     downmix: bool = True,
     pad: bool = True,
     norm: bool = True,
+    out: np.ndarray | None = None,
 ) -> np.ndarray:
     """Combine two signals into a stereo signal.
 
@@ -729,10 +773,17 @@ def to_stereo(
 
         If `False`, signals are combined by summing.
 
+    out : np.ndarray [shape=(2, n_out)] or None
+        A pre-allocated output buffer.  If provided, it must match the shape
+        ``(2, n_out)``, and its dtype must be at least as precise as the result
+        dtype; it is zeroed and filled in place and returned, avoiding a new
+        allocation.  If ``None`` (default), a new array is allocated.
+
     Returns
     -------
     y_stereo : np.ndarray [shape=(2, n_out)]
         Stereo signal with left channel in the first row and right channel in the second row.
+        If ``out`` was provided, this is the same object as ``out``.
 
     See Also
     --------
@@ -743,7 +794,6 @@ def to_stereo(
     Notes
     -----
     At least one of `left` or `right` must be provided.
-    This function caches at level 20.
 
     Examples
     --------
@@ -798,12 +848,15 @@ def to_stereo(
 
     # Get a compatible dtype for both channels
     dtype = np.promote_types(left.dtype, right.dtype)
+    left = left.astype(dtype, copy=False)
+    right = right.astype(dtype, copy=False)
 
     # Create an empty stereo output buffer
-    output = np.zeros((2, size), dtype=dtype)
+    output = _init_output(out, (2, size), dtype)
     if downmix:
-        output[0] = to_mono(left, norm=norm)
-        output[1] = to_mono(right, norm=norm)
+        # Downmix directly into the output rows to avoid a second allocation
+        to_mono(left, norm=norm, out=output[0])
+        to_mono(right, norm=norm, out=output[1])
     else:
         if left.ndim == 1:
             output[0] = left
@@ -829,9 +882,12 @@ def to_stereo(
     return output
 
 
-@cache(level=20)
 def to_multi(
-    *signals: np.ndarray, downmix: bool = True, pad: bool = True, norm: bool = True
+    *signals: np.ndarray,
+    downmix: bool = True,
+    pad: bool = True,
+    norm: bool = True,
+    out: np.ndarray | None = None,
 ) -> np.ndarray:
     """Combine multiple signals into a multi-channel signal.
 
@@ -858,22 +914,25 @@ def to_multi(
 
         If `False`, signals are combined by summing.
 
+    out : np.ndarray [shape=(m, n_out) or shape=(..., n_out)] or None
+        A pre-allocated output buffer.  If provided, it must match the result
+        shape, and its dtype must be at least as precise as the result dtype;
+        it is zeroed and filled in place and returned, avoiding a new
+        allocation.  If ``None`` (default), a new array is allocated.
+
     Returns
     -------
     y_multi : np.ndarray [shape=(m, n_out) or shape=(..., n_out)]
         Multi-channel combination of the input signals, where `m` corresponds
         to the number of signals (if `downmix=True`), and `n_out` is the length
         of the output signal determined by the padding mode.
+        If ``out`` was provided, this is the same object as ``out``.
 
     See Also
     --------
     to_mono
     to_stereo
     util.fix_length
-
-    Notes
-    -----
-    This function caches at level 20.
 
     Examples
     --------
@@ -916,11 +975,18 @@ def to_multi(
     else:
         size = n_min
 
-    output = np.zeros((*channel_layout, size), dtype=dtype)
+    output = _init_output(out, (*channel_layout, size), dtype)
     if downmix:
         # Downmix each signal to mono and mix into the output
         for i, y in enumerate(signals):
-            output[i] = util.fix_length(to_mono(y, norm=norm), size=size, axis=-1)
+            y = y.astype(dtype, copy=False)
+            if y.shape[-1] == size:
+                # No length adjustment needed: downmix straight into the row
+                to_mono(y, norm=norm, out=output[i])
+            else:
+                # Length differs, so fix_length must allocate; a pass-through
+                # of out= is not possible here
+                output[i] = util.fix_length(to_mono(y, norm=norm), size=size, axis=-1)
     else:
         # Truncate and mix into the output
         for y in signals:
