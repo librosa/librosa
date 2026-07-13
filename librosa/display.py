@@ -1824,7 +1824,7 @@ def specshow(
 
     if np.issubdtype(data.dtype, np.complexfloating):
         warnings.warn(
-            "Trying to display complex-valued input. " "Showing magnitude instead.",
+            "Trying to display complex-valued input. Showing magnitude instead.",
             stacklevel=2,
         )
         data = np.abs(data)
@@ -1849,6 +1849,9 @@ def specshow(
             is_boolean_cmap = kwargs["cmap"] == cmap_bool
         else:
             is_boolean_cmap = kwargs["cmap"] == mcm.get(cmap_bool, None)
+        # Harden this check to ensure that it only hits when
+        # data is really boolean
+        is_boolean_cmap &= (data.dtype.kind == "b")
 
         if is_diverging_cmap:
             # If we have an inferred diverging colormap,
