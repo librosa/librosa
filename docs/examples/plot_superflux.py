@@ -30,8 +30,7 @@ import librosa
 ######################################################
 # The method works fine for longer signals, but the
 # results are harder to visualize.
-y, sr = librosa.load(librosa.ex('trumpet', hq=True),
-                     sr=44100)
+y, sr = librosa.loadx('trumpet', sr=44100)
 
 
 ####################################################
@@ -56,7 +55,7 @@ S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=n_fft,
 
 
 fig, ax = plt.subplots()
-librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+librosa.display.specshow(S, vscale='dBFS[power]',
                          y_axis='mel', x_axis='time', sr=sr,
                          hop_length=hop_length, fmin=fmin, fmax=fmax, ax=ax)
 
@@ -98,7 +97,7 @@ frame_time = librosa.frames_to_time(np.arange(len(odf_default)),
                                     sr=sr,
                                     hop_length=hop_length)
 
-librosa.display.specshow(librosa.power_to_db(S, ref=np.max),
+librosa.display.specshow(S, vscale='dBFS[power]',
                          y_axis='mel', x_axis='time', sr=sr,
                          hop_length=hop_length, fmin=fmin, fmax=fmax, ax=ax[2])
 ax[2].set(xlim=[0, 5.0])

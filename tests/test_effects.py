@@ -17,18 +17,20 @@ import pytest
 
 import librosa
 
-__EXAMPLE_FILE = os.path.join("tests", "data", "test1_22050.wav")
 
-
-@pytest.fixture(scope="module", params=["test1_44100.wav"])
-def y_multi(request):
-    infile = request.param
-    return librosa.load(os.path.join("tests", "data", infile), sr=None, mono=False)
+@pytest.fixture(scope="module")
+def y_multi():
+    sr = 44100
+    y = librosa.chirp(fmin=100, fmax=2000, sr=sr, duration=5.0)
+    y = np.vstack([y, y[::-1]])
+    return y, sr
 
 
 @pytest.fixture(scope="module", params=[22050, 44100])
 def ysr(request):
-    return librosa.load(__EXAMPLE_FILE, sr=request.param)
+    sr = request.param
+    y = librosa.chirp(fmin=100, fmax=2000, sr=sr, duration=5.0)
+    return y, sr
 
 
 @pytest.mark.parametrize(

@@ -1,23 +1,37 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Constant-Q transforms"""
+from __future__ import annotations
+
 import warnings
+from typing import TYPE_CHECKING
+
 import numpy as np
+import scipy
 from numba import jit
 
-from . import audio
-from .intervals import interval_frequencies
-from .fft import get_fftlib
-from .convert import cqt_frequencies, note_to_hz
-from .spectrum import stft, istft
-from .pitch import estimate_tuning
+from .. import filters, util
 from .._cache import cache
-from .. import filters
-from .. import util
+from ..util.deprecation import Deprecated, rename_kw
 from ..util.exceptions import ParameterError
-from numpy.typing import DTypeLike
-from typing import Optional, Union, Collection, List
-from .._typing import _WindowSpec, _PadMode, _FloatLike_co, _ensure_not_reachable
+from . import audio
+from .convert import cqt_frequencies, note_to_hz
+from .intervals import interval_frequencies
+from .pitch import estimate_tuning
+from .spectrum import istft, stft
+
+if TYPE_CHECKING:
+    from typing import Collection
+
+    from numpy.typing import DTypeLike, NDArray
+
+    from .._typing import (
+        RNGLike,
+        SeedLike,
+        _FloatLike_co,
+        _PadMode,
+        _WindowSpec,
+    )
 
 __all__ = ["cqt", "hybrid_cqt", "pseudo_cqt", "icqt", "griffinlim_cqt", "vqt"]
 
@@ -30,18 +44,18 @@ def cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
-    n_bins: int = 84,
+    fmin: _FloatLike_co | None = None,
+    n_bins: int | None = 84,
     bins_per_octave: int = 12,
-    tuning: Optional[float] = 0.0,
+    tuning: float | None = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    res_type: Optional[str] = "soxr_hq",
-    dtype: Optional[DTypeLike] = None,
+    res_type: str = "soxr_hq",
+    dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the constant-Q transform of an audio signal.
 
@@ -66,8 +80,10 @@ def cqt(
     fmin : float > 0 [scalar]
         Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
 
-    n_bins : int > 0 [scalar]
-        Number of frequency bins, starting at ``fmin``
+    n_bins : int > 0 or None [scalar]
+        Number of frequency bins, starting at ``fmin``.
+        If `None`, the number of bins will be inferred as the maximum that will
+        fit below `sr/2`.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
@@ -105,12 +121,12 @@ def cqt(
         If ``False``, do not scale the CQT. This is analogous to
         ``norm=None`` in FFT.
 
-    pad_mode : string
+    pad_mode : str
         Padding mode for centered frame analysis.
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string
+    res_type : str
         The resampling mode for recursive downsampling.
 
     dtype : np.dtype
@@ -137,13 +153,13 @@ def cqt(
     Generate and plot a constant-Q power spectrum
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
+    >>> img = librosa.display.specshow(C, vscale='dBFS',
     ...                                sr=sr, x_axis='time', y_axis='cqt_note', ax=ax)
     >>> ax.set_title('Constant-Q power spectrum')
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img)
 
     Limit the frequency range
 
@@ -195,18 +211,18 @@ def hybrid_cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
-    n_bins: int = 84,
+    fmin: _FloatLike_co | None = None,
+    n_bins: int | None = 84,
     bins_per_octave: int = 12,
-    tuning: Optional[float] = 0.0,
+    tuning: float | None = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
     res_type: str = "soxr_hq",
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the hybrid constant-Q transform of an audio signal.
 
@@ -228,8 +244,10 @@ def hybrid_cqt(
     fmin : float > 0 [scalar]
         Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
 
-    n_bins : int > 0 [scalar]
+    n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
+        If `None` the number of bins will be inferred as the maximum that will
+        fit below `sr/2`.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
@@ -266,12 +284,12 @@ def hybrid_cqt(
         If ``False``, do not scale the CQT. This is analogous to
         ``norm=None`` in FFT.
 
-    pad_mode : string
+    pad_mode : str
         Padding mode for centered frame analysis.
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string
+    res_type : str
         Resampling mode.  See `librosa.cqt` for details.
 
     dtype : np.dtype, optional
@@ -303,8 +321,22 @@ def hybrid_cqt(
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
+    if fmin >= sr / 2:
+        raise ParameterError(f"fmin={fmin} must be less than sr/2={sr/2}")
+
+    if n_bins is None:
+        n_bins = int(np.ceil(bins_per_octave * (np.log2(sr) - np.log2(fmin))))
+        auto_n_bins = True
+    else:
+        auto_n_bins = False
+
     # Get all CQT frequencies
     freqs = cqt_frequencies(n_bins, fmin=fmin, bins_per_octave=bins_per_octave)
+
+    if auto_n_bins:
+        # Calling with gamma=0 here since this is CQT
+        freqs = __clip_freqs(freqs, window, filter_scale, 0, sr)
+        n_bins = len(freqs)
 
     # Pre-compute alpha
     if n_bins == 1:
@@ -313,9 +345,15 @@ def hybrid_cqt(
         alpha = filters._relative_bandwidth(freqs=freqs)
 
     # Compute the length of each constant-Q basis function
-    lengths, _ = filters.wavelet_lengths(
+    lengths, filter_cutoff = filters.wavelet_lengths(
         freqs=freqs, sr=sr, filter_scale=filter_scale, window=window, alpha=alpha
     )
+
+    if filter_cutoff > sr / 2:
+        raise ParameterError(
+            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. "
+            "Try reducing the number of frequency bins."
+        )
 
     # Determine which filters to use with Pseudo CQT
     # These are the ones that fit within 2 hop lengths after padding
@@ -379,17 +417,17 @@ def pseudo_cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
-    n_bins: int = 84,
+    fmin: _FloatLike_co | None = None,
+    n_bins: int | None = 84,
     bins_per_octave: int = 12,
-    tuning: Optional[float] = 0.0,
+    tuning: float | None = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the pseudo constant-Q transform of an audio signal.
 
@@ -413,8 +451,10 @@ def pseudo_cqt(
     fmin : float > 0 [scalar]
         Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
 
-    n_bins : int > 0 [scalar]
+    n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
+        If `None` the number of bins will be inferred as the maximum that will
+        fit below `sr/2`.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
@@ -451,7 +491,7 @@ def pseudo_cqt(
         If ``False``, do not scale the CQT. This is analogous to
         ``norm=None`` in FFT.
 
-    pad_mode : string
+    pad_mode : str
         Padding mode for centered frame analysis.
 
         See also: `librosa.stft` and `numpy.pad`.
@@ -482,16 +522,36 @@ def pseudo_cqt(
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
+    if fmin >= sr / 2:
+        raise ParameterError(f"fmin={fmin} must be less than sr/2={sr/2}")
+
+    if n_bins is None:
+        n_bins = int(np.ceil(bins_per_octave * (np.log2(sr) - np.log2(fmin))))
+        auto_n_bins = True
+    else:
+        auto_n_bins = False
+
     freqs = cqt_frequencies(fmin=fmin, n_bins=n_bins, bins_per_octave=bins_per_octave)
+
+    if auto_n_bins:
+        # Calling with gamma=0 here since this is CQT
+        freqs = __clip_freqs(freqs, window, filter_scale, 0, sr)
+        n_bins = len(freqs)
 
     if n_bins == 1:
         alpha = __et_relative_bw(bins_per_octave)
     else:
         alpha = filters._relative_bandwidth(freqs=freqs)
 
-    lengths, _ = filters.wavelet_lengths(
+    lengths, filter_cutoff = filters.wavelet_lengths(
         freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
     )
+
+    if filter_cutoff > sr / 2:
+        raise ParameterError(
+            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. "
+            "Try reducing the number of frequency bins."
+        )
 
     fft_basis, n_fft, _ = __vqt_filter_fft(
         sr,
@@ -536,17 +596,17 @@ def icqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
+    fmin: _FloatLike_co | None = None,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
-    length: Optional[int] = None,
+    length: int | None = None,
     res_type: str = "soxr_hq",
-    dtype: Optional[DTypeLike] = None,
+    dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the inverse constant-Q transform.
 
@@ -605,7 +665,7 @@ def icqt(
         If provided, the output ``y`` is zero-padded or clipped to exactly
         ``length`` samples.
 
-    res_type : string
+    res_type : str
         Resampling mode.
         See `librosa.resample` for supported modes.
 
@@ -631,7 +691,7 @@ def icqt(
     --------
     Using default parameters
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet'))
+    >>> y, sr = librosa.loadx('trumpet')
     >>> C = librosa.cqt(y=y, sr=sr)
     >>> y_hat = librosa.icqt(C=C, sr=sr)
 
@@ -661,7 +721,7 @@ def icqt(
     else:
         alpha = filters._relative_bandwidth(freqs=freqs)
 
-    lengths, f_cutoff = filters.wavelet_lengths(
+    lengths, _f_cutoff = filters.wavelet_lengths(
         freqs=freqs, sr=sr, window=window, filter_scale=filter_scale, alpha=alpha
     )
 
@@ -674,13 +734,13 @@ def icqt(
 
     # This shape array will be used for broadcasting the basis scale
     # we'll have to adapt this per octave within the loop
-    y: Optional[np.ndarray] = None
+    y: np.ndarray | None = None
 
     # Assume the top octave is at the full rate
     srs = [sr]
     hops = [hop_length]
 
-    for i in range(n_octaves - 1):
+    for _i in range(n_octaves - 1):
         if hops[0] % 2 == 0:
             # We can downsample:
             srs.insert(0, srs[0] * 0.5)
@@ -690,7 +750,7 @@ def icqt(
             srs.insert(0, srs[0])
             hops.insert(0, hops[0])
 
-    for i, (my_sr, my_hop) in enumerate(zip(srs, hops)):
+    for i, (my_sr, my_hop) in enumerate(zip(srs, hops, strict=True)):
         # How many filters are in this octave?
         n_filters = min(bins_per_octave, n_bins - bins_per_octave * i)
 
@@ -708,10 +768,10 @@ def icqt(
         )
 
         # Transpose the basis
-        inv_basis = fft_basis.conjugate().T.todense()
+        inv_basis = fft_basis.conjugate().T.toarray()
 
         # Compute each filter's frequency-domain power
-        freq_power = 1 / np.sum(util.abs2(np.asarray(inv_basis)), axis=0)
+        freq_power = 1 / np.sum(util.abs2(inv_basis), axis=0)
 
         # Compensate for length normalization in the forward transform
         freq_power *= n_fft / lengths[sl]
@@ -762,20 +822,20 @@ def vqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
-    n_bins: int = 84,
-    intervals: Union[str, Collection[float]] = "equal",
-    gamma: Optional[float] = None,
+    fmin: _FloatLike_co | None = None,
+    n_bins: int | None = 84,
+    intervals: str | Collection[float] = "equal",
+    gamma: float | None = None,
     bins_per_octave: int = 12,
-    tuning: Optional[float] = 0.0,
+    tuning: float | None = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
-    res_type: Optional[str] = "soxr_hq",
-    dtype: Optional[DTypeLike] = None,
+    res_type: str = "soxr_hq",
+    dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the variable-Q transform of an audio signal.
 
@@ -802,8 +862,10 @@ def vqt(
     fmin : float > 0 [scalar]
         Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
 
-    n_bins : int > 0 [scalar]
+    n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
+        If `None`, the number of bins will be inferred as the maximum that will
+        fit below `sr/2`.
 
     intervals : str or array of floats in [1, 2)
         Either a string specification for an interval set, e.g.,
@@ -869,12 +931,12 @@ def vqt(
         If ``False``, do not scale the VQT. This is analogous to
         ``norm=None`` in FFT.
 
-    pad_mode : string
+    pad_mode : str
         Padding mode for centered frame analysis.
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string
+    res_type : str
         The resampling mode for recursive downsampling.
 
     dtype : np.dtype
@@ -899,26 +961,22 @@ def vqt(
     Generate and plot a variable-Q power spectrum
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
+    >>> y, sr = librosa.loadx('choice', duration=5)
     >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> V = np.abs(librosa.vqt(y, sr=sr))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max),
+    >>> librosa.display.specshow(C, vscale='dBFS',
     ...                          sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[0])
     >>> ax[0].set(title='Constant-Q power spectrum', xlabel=None)
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(V, ref=np.max),
+    >>> img = librosa.display.specshow(V, vscale='dBFS',
     ...                                sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[1])
     >>> ax[1].set_title('Variable-Q power spectrum')
-    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
+    >>> librosa.display.colorbar_db(img, ax=ax)
     """
     # If intervals are provided as an array, override BPO
     if not isinstance(intervals, str):
         bins_per_octave = len(intervals)
-
-    # How many octaves are we dealing with?
-    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
-    n_filters = min(bins_per_octave, n_bins)
 
     if fmin is None:
         # C1 by default
@@ -933,7 +991,18 @@ def vqt(
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
-    # First thing, get the freqs of the top octave
+    if fmin >= sr / 2:
+        raise ParameterError(f"fmin={fmin} must be less than sr/2={sr/2}")
+    if n_bins is None:
+        # If n_bins is None, we need to compute the number of bins to reach sr/2
+        # Over-allocating by one octave buys us enough buffer to be safe.
+        # We'll clip back down later as needed.
+        n_bins = int(np.ceil(bins_per_octave * (np.log2(sr) - np.log2(fmin))))
+        # Equivalently: bins_per_octave * (1 + log2(sr/2 / fmin))
+        auto_n_bins = True
+    else:
+        auto_n_bins = False
+
     freqs = interval_frequencies(
         n_bins=n_bins,
         fmin=fmin,
@@ -942,9 +1011,10 @@ def vqt(
         sort=True,
     )
 
-    freqs_top = freqs[-bins_per_octave:]
+    if auto_n_bins:
+        freqs = __clip_freqs(freqs, window, filter_scale, gamma, sr)
+        n_bins = len(freqs)
 
-    fmax_t: float = np.max(freqs_top)
     if n_bins == 1:
         alpha = __et_relative_bw(bins_per_octave)
     else:
@@ -963,19 +1033,16 @@ def vqt(
     nyquist = sr / 2.0
 
     if filter_cutoff > nyquist:
+        freqs_top = freqs[-bins_per_octave:]
+        fmax_t: float = np.max(freqs_top)
         raise ParameterError(
             f"Wavelet basis with max frequency={fmax_t} would exceed the Nyquist frequency={nyquist}. "
             "Try reducing the number of frequency bins."
         )
 
-    if res_type is None:
-        warnings.warn(
-            "Support for VQT with res_type=None is deprecated in librosa 0.10\n"
-            "and will be removed in version 1.0.",
-            category=FutureWarning,
-            stacklevel=2,
-        )
-        res_type = "soxr_hq"
+    # How many octaves are we dealing with?
+    n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
+    n_filters = min(bins_per_octave, n_bins)
 
     y, sr, hop_length = __early_downsample(
         y, sr, hop_length, res_type, n_octaves, nyquist, filter_cutoff, scale
@@ -1017,12 +1084,20 @@ def vqt(
             __cqt_response(my_y, n_fft, my_hop, fft_basis, pad_mode, dtype=dtype)
         )
 
-        if my_hop % 2 == 0:
-            my_hop //= 2
-            my_sr /= 2.0
-            my_y = audio.resample(
-                my_y, orig_sr=2, target_sr=1, res_type=res_type, scale=True
-            )
+        # We can downsample here if the hop length is even, and the highest frequency
+        # in the next octave down is comfortably below the target Nyquist frequency.
+        # We'll assume that rolloff from downsampling starts at ~80% Nyquist.
+        # This is equivalent to 40% of the target sampling rate, or 20% of the current sampling
+        # rate.
+        # Only downsample if we're not in the last octave.
+        if i < n_octaves - 1:
+            f_max_next = freqs[sl.start - 1]
+            if my_hop % 2 == 0 and f_max_next <= my_sr / 5:
+                my_hop //= 2
+                my_sr /= 2.0
+                my_y = audio.resample(
+                    my_y, orig_sr=2, target_sr=1, res_type=res_type, scale=True
+                )
 
     V = __trim_stack(vqt_resp, n_bins, dtype)
 
@@ -1080,8 +1155,10 @@ def __vqt_filter_fft(
     basis *= lengths[:, np.newaxis] / float(n_fft)
 
     # FFT and retain only the non-negative frequencies
-    fft = get_fftlib()
-    fft_basis = fft.fft(basis, n=n_fft, axis=1)[:, : (n_fft // 2) + 1]
+    # Note: in principle we could use an rfft here, but scipy.fft only allows
+    # real inputs, so we'd have to call twice.  That negates the speed advantage
+    # of using rfft in the first place.
+    fft_basis = scipy.fft.fft(basis, n=n_fft, axis=1)[:, : (n_fft // 2) + 1]
 
     # sparsify the basis
     fft_basis = util.sparsify_rows(fft_basis, quantile=sparsity, dtype=dtype)
@@ -1090,7 +1167,7 @@ def __vqt_filter_fft(
 
 
 def __trim_stack(
-    cqt_resp: List[np.ndarray], n_bins: int, dtype: DTypeLike
+    cqt_resp: list[np.ndarray], n_bins: int, dtype: DTypeLike
 ) -> np.ndarray:
     """Trim and stack a collection of CQT responses"""
     max_col = min(c_i.shape[-1] for c_i in cqt_resp)
@@ -1152,7 +1229,6 @@ def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
 
     num_twos = __num_two_factors(hop_length)
     downsample_count2 = max(0, num_twos - n_octaves + 1)
-
     return min(downsample_count1, downsample_count2)
 
 
@@ -1212,26 +1288,24 @@ def griffinlim_cqt(
     n_iter: int = 32,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: Optional[_FloatLike_co] = None,
+    fmin: _FloatLike_co | None = None,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     filter_scale: float = 1,
-    norm: Optional[float] = 1,
+    norm: float | None = 1,
     sparsity: float = 0.01,
     window: _WindowSpec = "hann",
     scale: bool = True,
     pad_mode: _PadMode = "constant",
     res_type: str = "soxr_hq",
-    dtype: Optional[DTypeLike] = None,
-    length: Optional[int] = None,
+    dtype: DTypeLike | None = None,
+    length: int | None = None,
     momentum: float = 0.99,
-    init: Optional[str] = "random",
-    random_state: Optional[
-        Union[int, np.random.RandomState, np.random.Generator]
-    ] = None,
+    init: str | None = "random",
+    rng: RNGLike | SeedLike | None = None,
+    random_state: int | np.random.RandomState | np.random.Generator | Deprecated | None = Deprecated(),
 ) -> np.ndarray:
-    """Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim
-    algorithm.
+    """Approximate constant-Q magnitude spectrogram inversion using the "fast" Griffin-Lim algorithm.
 
     Given the magnitude of a constant-Q spectrogram (``C``), the algorithm randomly initializes
     phase estimates, and then alternates forward- and inverse-CQT operations. [#]_
@@ -1241,11 +1315,11 @@ def griffinlim_cqt(
 
     .. [#] D. W. Griffin and J. S. Lim,
         "Signal estimation from modified short-time Fourier transform,"
-        IEEE Trans. ASSP, vol.32, no.2, pp.236–243, Apr. 1984.
+        IEEE Trans. ASSP, vol.32, no.2, pp.236--243, Apr. 1984.
 
     .. [#] Perraudin, N., Balazs, P., & Søndergaard, P. L.
         "A fast Griffin-Lim algorithm,"
-        IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1-4),
+        IEEE Workshop on Applications of Signal Processing to Audio and Acoustics (pp. 1--4),
         Oct. 2013.
 
     Parameters
@@ -1299,12 +1373,12 @@ def griffinlim_cqt(
         If ``False``, do not scale the CQT. This is analogous to ``norm=None``
         in FFT.
 
-    pad_mode : string
+    pad_mode : str
         Padding mode for centered frame analysis.
 
         See also: `librosa.stft` and `numpy.pad`.
 
-    res_type : string
+    res_type : str
         The resampling mode for recursive downsampling.
 
         See ``librosa.resample`` for a list of available options.
@@ -1331,13 +1405,23 @@ def griffinlim_cqt(
         an initial guess for phase can be provided, or when you want to resume
         Griffin-Lim from a previous output.
 
+    rng : None, int, sequence of int, np.random.Generator, or np.random.RandomState
+        Pseudorandom number generator state. When `rng` is None, a new
+        `numpy.random.Generator` is created using entropy from the
+        operating system. Types other than `numpy.random.Generator` are
+        passed to `numpy.random.default_rng` to instantiate a ``Generator``.
+
     random_state : None, int, np.random.RandomState, or np.random.Generator
+        .. warning:: This parameter is deprecated in 1.0.0 and will be removed in 1.2.0.
+
         If int, random_state is the seed used by the random number generator
         for phase initialization.
 
         If `np.random.RandomState` or `np.random.Generator` instance, the random number generator itself.
 
         If ``None``, defaults to the `np.random.default_rng()` object.
+
+        An exception is raised if both `rng` and `random_state` are provided.
 
     Returns
     -------
@@ -1354,9 +1438,9 @@ def griffinlim_cqt(
 
     Examples
     --------
-    A basis CQT inverse example
+    A basic CQT inverse example
 
-    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), sr=None)
+    >>> y, sr = librosa.loadx('trumpet', sr=None)
     >>> # Get the CQT magnitude, 7 octaves at 36 bins per octave
     >>> C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=36, n_bins=7*36))
     >>> # Invert using Griffin-Lim
@@ -1368,27 +1452,39 @@ def griffinlim_cqt(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.waveshow(y, sr=sr, color='b', ax=ax[0])
+    >>> librosa.display.waveshow(y, sr=sr, color='C0', ax=ax[0])
     >>> ax[0].set(title='Original', xlabel=None)
     >>> ax[0].label_outer()
-    >>> librosa.display.waveshow(y_inv, sr=sr, color='g', ax=ax[1])
+    >>> librosa.display.waveshow(y_inv, sr=sr, color='C1', ax=ax[1])
     >>> ax[1].set(title='Griffin-Lim reconstruction', xlabel=None)
     >>> ax[1].label_outer()
-    >>> librosa.display.waveshow(y_icqt, sr=sr, color='r', ax=ax[2])
+    >>> librosa.display.waveshow(y_icqt, sr=sr, color='C2', ax=ax[2])
     >>> ax[2].set(title='Magnitude-only icqt reconstruction')
     """
     if fmin is None:
         fmin = note_to_hz("C1")
 
-    if random_state is None:
-        rng = np.random.default_rng()
-    elif isinstance(random_state, int):
-        rng = np.random.RandomState(seed=random_state)  # type: ignore
-    elif isinstance(random_state, (np.random.RandomState, np.random.Generator)):
-        rng = random_state  # type: ignore
-    else:
-        _ensure_not_reachable(random_state)
-        raise ParameterError(f"Unsupported random_state={random_state!r}")
+    if not isinstance(random_state, Deprecated):
+        if rng is not None:
+            raise ParameterError(
+                f"Both random_state={random_state!r} and rng={rng!r} were provided. "
+                "Please use only the rng parameter."
+            )
+
+        # Otherwise transfer the state object and throw a deprecation warning
+        rng = rename_kw(
+            old_name="random_state",
+            old_value=random_state,
+            new_name="rng",
+            new_value=rng,
+            version_deprecated="1.0.0",
+            version_removed="1.2.0",
+        )
+
+    # Coerce the various input types to a proper Generator
+    # This branch is necessary until we bump to numpy 2.2
+    if not isinstance(rng, np.random.RandomState):
+        rng = np.random.default_rng(rng)
 
     if momentum > 1:
         warnings.warn(
@@ -1498,3 +1594,66 @@ def __et_relative_bw(bins_per_octave: int) -> np.ndarray:
     """
     r = 2 ** (1 / bins_per_octave)
     return np.atleast_1d((r**2 - 1) / (r**2 + 1))
+
+
+def __clip_freqs(
+    freqs: NDArray,
+    window: _WindowSpec,
+    filter_scale: float,
+    gamma: float | None,
+    sr: float
+) -> NDArray[np.float64]:
+    """Clip a frequency set to avoid exceeding the Nyquist frequency.
+
+    Parameters
+    ----------
+    freqs : np.ndarray [shape=(n_bins,)]
+        Frequency set to clip.  At least two frequencies are
+        needed.
+
+    window : str, tuple, or function
+        Window specification for the basis filters.
+
+    filter_scale : float > 0
+        Filter scale factor. Small values (<1) use shorter windows
+        for improved time resolution.
+
+    gamma : float >= 0 or None
+        Bandwidth offset for determining filter lengths.
+        If `None`, use the default ERB-based calculation.
+
+    sr : number > 0
+        Audio sampling rate
+
+    Returns
+    -------
+    freqs : np.ndarray [shape=(n_bins,)]
+        Frequency set clipped to avoid exceeding the Nyquist frequency.
+    """
+    logf = np.log2(freqs)
+    window_bw = filters.window_bandwidth(window)
+
+    # Use the reflection calculation for alpha, under the
+    # assumption that each frequency could be acting as the
+    # fmax.
+    bpo = 1 / np.diff(logf, prepend=0)
+    bpo[0] = 1 / (logf[1] - logf[0])
+    alpha = (2.0**(2/bpo) - 1) / (2.0 ** (2/bpo) + 1)
+
+    if gamma is None:
+        gamma_ = alpha * 24.7 / 0.108
+    else:
+        gamma_ = gamma
+    Q = float(filter_scale) / alpha
+
+    # Assuming non-monotonicity here: find the
+    # maximum cutoff frequency such that all frequencies
+    # below it land below the Nyquist frequency.
+    f_cutoff = np.maximum.accumulate(freqs * (1 + 0.5 * window_bw / Q) + 0.5 * gamma_)
+
+    idx = np.searchsorted(f_cutoff, sr / 2.0, side="left")
+
+    if idx < 1:
+        raise ParameterError(f"Unable to construct wavelet basis for fmin={freqs[0]:.2f} Hz and sr={sr:.2f} Hz.")
+
+    return freqs[:idx]
