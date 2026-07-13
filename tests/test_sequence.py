@@ -798,16 +798,15 @@ def test_rqa_empty(gap_onset, gap_extend, knight):
 def test_rqa_single_axis(shape, backtrack: bool):
     rec = np.arange(np.prod(shape), dtype=float).reshape(shape)
 
-    out = librosa.sequence.rqa(rec, backtrack=backtrack)
-
     if backtrack:
-        score, path = out
+        score, path = librosa.sequence.rqa(rec, backtrack=backtrack)
 
         assert score.shape == rec.shape
         assert path.shape == (1, 2)
         assert tuple(path[0]) == np.unravel_index(np.argmax(rec), rec.shape)
     else:
-        assert out.shape == rec.shape
+        score = librosa.sequence.rqa(rec, backtrack=backtrack)
+        assert score.shape == rec.shape
 
 
 @pytest.mark.parametrize("gap_onset", [1, np.inf])
