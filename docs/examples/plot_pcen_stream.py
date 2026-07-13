@@ -51,6 +51,7 @@ stream = librosa.stream(filename, block_length=16,
                         frame_length=n_fft,
                         hop_length=hop_length,
                         mono=True,
+                        sr=sr,
                         fill_value=0)
 #######################################################################
 # For this example, we'll compute PCEN on each block, find the maximum

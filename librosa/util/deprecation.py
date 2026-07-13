@@ -7,7 +7,7 @@ import warnings
 from typing import Any
 
 
-class Deprecated(object):
+class Deprecated:
     """A placeholder class to catch usage of deprecated variable names"""
 
     def __repr__(self) -> str:
@@ -29,11 +29,13 @@ def rename_kw(
     Parameters
     ----------
     old_name : str
-    old_value
-        The name and value of the old argument
+        The name of the old argument
+    old_value : Any
+        The value of the old argument
     new_name : str
-    new_value
-        The name and value of the new argument
+        The name of the new argument
+    new_value : Any
+        The value of the new argument
     version_deprecated : str
         The version at which the old name became deprecated
     version_removed : str
@@ -41,14 +43,13 @@ def rename_kw(
 
     Returns
     -------
-    value
+    value : Any
         - ``new_value`` if ``old_value`` of type `Deprecated`
         - ``old_value`` otherwise
 
     Warnings
     --------
     if ``old_value`` is not of type `Deprecated`
-
     """
     if isinstance(old_value, Deprecated):
         return new_value

@@ -10,21 +10,21 @@ Spectrogram decomposition
     hpss
     nn_filter
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
-
 import scipy.sparse
-from scipy.ndimage import median_filter
 
-import sklearn.decomposition
-
-from . import core
+from . import core, segment, util
 from ._cache import cache
-from . import segment
-from . import util
 from .util.exceptions import ParameterError
-from typing import Any, Callable, List, Optional, Tuple, Union
-from ._typing import _IntLike_co, _FloatLike_co
+
+if TYPE_CHECKING:
+    from typing import Any, Callable
+
+    from ._typing import _FloatLike_co, _IntLike_co, _SparseArray
 
 __all__ = ["decompose", "hpss", "nn_filter"]
 
@@ -32,12 +32,12 @@ __all__ = ["decompose", "hpss", "nn_filter"]
 def decompose(
     S: np.ndarray,
     *,
-    n_components: Optional[int] = None,
-    transformer: Optional[object] = None,
+    n_components: int | None = None,
+    transformer: object | None = None,
     sort: bool = False,
     fit: bool = True,
     **kwargs: Any,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """Decompose a feature matrix.
 
     Given a spectrogram ``S``, produce a decomposition into ``components``
@@ -124,7 +124,7 @@ def decompose(
     --------
     Decompose a magnitude spectrogram into 16 components with NMF
 
-    >>> y, sr = librosa.load(librosa.ex('pistachio'), duration=5)
+    >>> y, sr = librosa.loadx('pistachio', duration=5)
     >>> S = np.abs(librosa.stft(y))
     >>> comps, acts = librosa.decompose.decompose(S, n_components=16)
 
@@ -142,13 +142,12 @@ def decompose(
     >>> import matplotlib.pyplot as plt
     >>> layout = [list(".AAAA"), list("BCCCC"), list(".DDDD")]
     >>> fig, ax = plt.subplot_mosaic(layout, constrained_layout=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max),
+    >>> librosa.display.specshow(S, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax['A'])
     >>> ax['A'].set(title='Input spectrogram')
     >>> ax['A'].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(comps,
-    >>>                                                  ref=np.max),
-    >>>                          y_axis='log', ax=ax['B'])
+    >>> librosa.display.specshow(comps, vscale='dBFS',
+    ...                          y_axis='log', ax=ax['B'])
     >>> ax['B'].set(title='Components')
     >>> ax['B'].label_outer()
     >>> ax['B'].sharey(ax['A'])
@@ -157,14 +156,13 @@ def decompose(
     >>> ax['C'].sharex(ax['A'])
     >>> ax['C'].label_outer()
     >>> S_approx = comps.dot(acts)
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S_approx,
-    >>>                                                        ref=np.max),
-    >>>                                y_axis='log', x_axis='time', ax=ax['D'])
+    >>> img = librosa.display.specshow(S_approx, vscale='dBFS',
+    ...                                y_axis='log', x_axis='time', ax=ax['D'])
     >>> ax['D'].set(title='Reconstructed spectrogram')
     >>> ax['D'].sharex(ax['A'])
     >>> ax['D'].sharey(ax['A'])
     >>> ax['D'].label_outer()
-    >>> fig.colorbar(img, ax=list(ax.values()), format="%+2.f dB")
+    >>> librosa.display.colorbar_db(img, ax=list(ax.values()))
     """
     # Do a swapaxes and unroll
     orig_shape = list(S.shape)
@@ -185,6 +183,8 @@ def decompose(
         if fit is False:
             raise ParameterError("fit must be True if transformer is None")
 
+        import sklearn.decomposition
+
         transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
 
     # Suppressing type errors here because we don't want to overly restrict
@@ -196,7 +196,7 @@ def decompose(
         activations = transformer.transform(S).T  # type: ignore
 
     components: np.ndarray = transformer.components_  # type: ignore
-    component_shape = orig_shape[:-1] + [-1]
+    component_shape = [*orig_shape[:-1], -1]
     # use order='F' here to preserve component ordering
     components = components.reshape(component_shape[::-1], order="F").T
 
@@ -211,15 +211,11 @@ def decompose(
 def hpss(
     S: np.ndarray,
     *,
-    kernel_size: Union[
-        _IntLike_co, Tuple[_IntLike_co, _IntLike_co], List[_IntLike_co]
-    ] = 31,
+    kernel_size: _IntLike_co | tuple[_IntLike_co, _IntLike_co] | list[_IntLike_co] = 31,
     power: float = 2.0,
     mask: bool = False,
-    margin: Union[
-        _FloatLike_co, Tuple[_FloatLike_co, _FloatLike_co], List[_FloatLike_co]
-    ] = 1.0,
-) -> Tuple[np.ndarray, np.ndarray]:
+    margin: _FloatLike_co | tuple[_FloatLike_co, _FloatLike_co] | list[_FloatLike_co] = 1.0,
+) -> tuple[np.ndarray, np.ndarray]:
     """Median-filtering harmonic percussive source separation (HPSS).
 
     If ``margin = 1.0``, decomposes an input spectrogram ``S = H + P``
@@ -295,27 +291,25 @@ def hpss(
     --------
     Separate into harmonic and percussive
 
-    >>> y, sr = librosa.load(librosa.ex('choice'), duration=5)
+    >>> y, sr = librosa.loadx('choice', duration=5)
     >>> D = librosa.stft(y)
     >>> H, P = librosa.decompose.hpss(D)
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(np.abs(D),
-    ...                                                        ref=np.max),
-    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    >>> img = librosa.display.specshow(D, vscale='dBFS',
+    ...                                y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Full power spectrogram')
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(H),
-    ...                                                  ref=np.max(np.abs(D))),
+    >>> ref = np.max(np.abs(D))  # reference for dBFS scaling comes from full mix
+    >>> librosa.display.specshow(H, vscale=f'dB[{ref}]',
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Harmonic power spectrogram')
     >>> ax[1].label_outer()
-    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(P),
-    ...                                                  ref=np.max(np.abs(D))),
+    >>> librosa.display.specshow(P, vscale=f'dB[{ref}]',
     ...                          y_axis='log', x_axis='time', ax=ax[2])
     >>> ax[2].set(title='Percussive power spectrogram')
-    >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
+    >>> librosa.display.colorbar_db(img, ax=ax)
 
     Or with a narrower horizontal filter
 
@@ -351,21 +345,21 @@ def hpss(
 
     >>> H, P = librosa.decompose.hpss(D, margin=(1.0,5.0))
     """
-    phase: Union[float, np.ndarray]
+    phase: float | np.ndarray
 
     if np.iscomplexobj(S):
         S, phase = core.magphase(S)
     else:
         phase = 1
 
-    if isinstance(kernel_size, tuple) or isinstance(kernel_size, list):
+    if isinstance(kernel_size, (tuple, list)):
         win_harm = kernel_size[0]
         win_perc = kernel_size[1]
     else:
         win_harm = kernel_size
         win_perc = kernel_size
 
-    if isinstance(margin, tuple) or isinstance(margin, list):
+    if isinstance(margin, (tuple, list)):
         margin_harm = margin[0]
         margin_perc = margin[1]
     else:
@@ -379,14 +373,17 @@ def hpss(
         )
 
     # shape for kernels
-    harm_shape: List[_IntLike_co] = [1] * S.ndim
-    harm_shape[-1] = win_harm
+    harm_shape = [1] * S.ndim
+    harm_shape[-1] = int(win_harm)
 
-    perc_shape: List[_IntLike_co] = [1] * S.ndim
-    perc_shape[-2] = win_perc
+    perc_shape = [1] * S.ndim
+    perc_shape[-2] = int(win_perc)
 
     # Compute median filters. Pre-allocation here preserves memory layout.
+    from scipy.ndimage import median_filter
+
     harm = np.empty_like(S)
+
     harm[:] = median_filter(S, size=harm_shape, mode="reflect")
 
     perc = np.empty_like(S)
@@ -412,8 +409,8 @@ def hpss(
 def nn_filter(
     S: np.ndarray,
     *,
-    rec: Optional[Union[scipy.sparse.spmatrix, np.ndarray]] = None,
-    aggregate: Optional[Callable] = None,
+    rec: np.ndarray | _SparseArray | None = None,
+    aggregate: Callable | None = None,
     axis: int = -1,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -444,8 +441,8 @@ def nn_filter(
     S : np.ndarray
         The input data (spectrogram) to filter. Multi-channel is supported.
 
-    rec : (optional) scipy.sparse.spmatrix or np.ndarray
-        Optionally, a pre-computed nearest-neighbor matrix
+    rec : (optional) scipy.sparse array or np.ndarray
+        Optionally, a pre-computed nearest-neighbor array
         as provided by `librosa.segment.recurrence_matrix`
 
     aggregate : function
@@ -490,8 +487,7 @@ def nn_filter(
     By default this would use euclidean distance to select neighbors,
     but this can be overridden directly by setting the ``metric`` parameter.
 
-    >>> y, sr = librosa.load(librosa.ex('brahms'),
-    ...                      offset=30, duration=10)
+    >>> y, sr = librosa.loadx('brahms', offset=30, duration=10)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> chroma_med = librosa.decompose.nn_filter(chroma,
     ...                                          aggregate=np.median,
@@ -530,16 +526,15 @@ def nn_filter(
     if aggregate is None:
         aggregate = np.mean
 
-    rec_s: scipy.sparse.spmatrix
-
     if rec is None:
         kwargs = dict(kwargs)
         kwargs["sparse"] = True
         rec_s = segment.recurrence_matrix(S, axis=axis, **kwargs)
     elif not scipy.sparse.issparse(rec):
-        rec_s = scipy.sparse.csc_matrix(rec)
+        rec_s = scipy.sparse.csc_array(rec)
     else:
-        rec_s = rec
+        # Normalize any sparse input (matrix/array, any format) to csc_array
+        rec_s = scipy.sparse.csc_array(rec)
 
     if rec_s.shape[0] != S.shape[axis] or rec_s.shape[0] != rec_s.shape[1]:
         raise ParameterError(

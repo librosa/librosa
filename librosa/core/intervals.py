@@ -1,21 +1,27 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
+from __future__ import annotations
 
-from typing import Collection, Dict, List, Union, overload, Iterable
-from typing_extensions import Literal
+from typing import TYPE_CHECKING, Final, overload
+
 import msgpack
 import numpy as np
-from numpy.typing import ArrayLike
+
 from .._cache import cache
-from .._typing import _FloatLike_co
 from ..util.files import _resource_file
 
+if TYPE_CHECKING:
+    from typing import Collection, Iterable, Literal
 
-with _resource_file("librosa.core", "intervals.msgpack") as imsgpack:
-    with imsgpack.open("rb") as _fdesc:
-        # We use floats for dictionary keys, so strict mapping is disabled
-        INTERVALS = msgpack.load(_fdesc, strict_map_key=False)
+    from numpy.typing import ArrayLike, NDArray
+
+    from .._typing import _Array1D, _FloatLike_co
+
+
+with _resource_file("librosa.core", "intervals.msgpack") as _imsgpack, _imsgpack.open("rb") as _fdesc:
+    # We use floats for dictionary keys, so strict mapping is disabled
+    INTERVALS: Final[dict[float, dict[int, int]]] = msgpack.load(_fdesc, strict_map_key=False)
 
 
 @cache(level=10)
@@ -23,11 +29,11 @@ def interval_frequencies(
     n_bins: int,
     *,
     fmin: _FloatLike_co,
-    intervals: Union[str, Collection[float]],
+    intervals: str | Collection[float],
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     sort: bool = True
-) -> np.ndarray:
+) -> _Array1D[np.float64]:
     """Construct a set of frequencies from an interval set
 
     Parameters
@@ -124,37 +130,22 @@ def interval_frequencies(
     if sort:
         all_ratios = np.sort(all_ratios)
 
-    return all_ratios * fmin
+    frequencies: np.ndarray = all_ratios * fmin
+    return frequencies
 
 
 @overload
 def pythagorean_intervals(
-    *,
-    bins_per_octave: int = ...,
-    sort: bool = ...,
-    return_factors: Literal[False] = ...
-) -> np.ndarray:
-    ...
-
-
+    *, bins_per_octave: int = ..., sort: bool = ..., return_factors: Literal[False] = ...
+) -> _Array1D[np.float64]: ...
 @overload
 def pythagorean_intervals(
     *, bins_per_octave: int = ..., sort: bool = ..., return_factors: Literal[True]
-) -> List[Dict[int, int]]:
-    ...
-
-
-@overload
-def pythagorean_intervals(
-    *, bins_per_octave: int = ..., sort: bool = ..., return_factors: bool = ...
-) -> Union[np.ndarray, List[Dict[int, int]]]:
-    ...
-
-
+) -> list[dict[int, int]]: ...
 @cache(level=10)
 def pythagorean_intervals(
     *, bins_per_octave: int = 12, sort: bool = True, return_factors: bool = False
-) -> Union[np.ndarray, List[Dict[int, int]]]:
+) -> _Array1D[np.float64] | list[dict[int, int]]:
     """Pythagorean intervals
 
     Intervals are constructed by stacking ratios of 3/2 (i.e.,
@@ -226,8 +217,6 @@ def pythagorean_intervals(
     # Using modf here to quickly get the fractional part of the log,
     # accounting for whatever power of 2 is necessary to get 3**k
     # within the octave.
-    log_ratios: np.ndarray
-    pow2: np.ndarray
     log_ratios, pow2 = np.modf(pow3 * np.log2(3))
 
     # If the fractional part is negative, add
@@ -252,7 +241,8 @@ def pythagorean_intervals(
     if return_factors:
         return list({2: -pow2[i], 3: pow3[i]} for i in idx)
 
-    return np.power(2, log_ratios)
+    ratios: np.ndarray = np.power(2, log_ratios)
+    return ratios
 
 
 def __harmonic_distance(logs, a, b):
@@ -264,7 +254,7 @@ def __harmonic_distance(logs, a, b):
     and the prime basis are provided in their log2 form.
 
     .. [#] Tenney, James.
-        "On ‘Crystal Growth’ in harmonic space (1993–1998)."
+        "On `Crystal Growth' in harmonic space (1993--1998)."
         Contemporary Music Review 27.1 (2008): 47-56.
     """
     a = np.array(a)
@@ -298,53 +288,36 @@ def plimit_intervals(
     primes: ArrayLike,
     bins_per_octave: int = ...,
     sort: bool = ...,
-    return_factors: Literal[False] = ...
-) -> np.ndarray:
-    ...
-
-
+    return_factors: Literal[False] = ...,
+) -> NDArray[np.float64]: ...
 @overload
 def plimit_intervals(
     *,
     primes: ArrayLike,
     bins_per_octave: int = ...,
     sort: bool = ...,
-    return_factors: Literal[True]
-) -> List[Dict[int, int]]:
-    ...
-
-
-@overload
-def plimit_intervals(
-    *,
-    primes: ArrayLike,
-    bins_per_octave: int = ...,
-    sort: bool = ...,
-    return_factors: bool = ...
-) -> Union[np.ndarray, List[Dict[int, int]]]:
-    ...
-
-
+    return_factors: Literal[True],
+) -> list[dict[int, int]]: ...
 @cache(level=10)
 def plimit_intervals(
     *,
     primes: ArrayLike,
     bins_per_octave: int = 12,
     sort: bool = True,
-    return_factors: bool = False
-) -> Union[np.ndarray, List[Dict[int, int]]]:
+    return_factors: bool = False,
+) -> NDArray[np.float64] | list[dict[int, int]]:
     """Construct p-limit intervals for a given set of prime factors.
 
     This function is based on the "harmonic crystal growth" algorithm
     of [#1]_ [#2]_.
 
     .. [#1] Tenney, James.
-        "On ‘Crystal Growth’ in harmonic space (1993–1998)."
-        Contemporary Music Review 27.1 (2008): 47-56.
+        "On `Crystal Growth' in harmonic space (1993--1998)."
+        Contemporary Music Review 27.1 (2008): 47--56.
 
     .. [#2] Sabat, Marc, and James Tenney.
         "Three crystal growth algorithms in 23-limit constrained harmonic space."
-        Contemporary Music Review 27, no. 1 (2008): 57-78.
+        Contemporary Music Review 27, no. 1 (2008): 57--78.
 
     Parameters
     ----------
@@ -471,8 +444,6 @@ def plimit_intervals(
 
     pows = np.array(list(intervals), dtype=float)
 
-    log_ratios: np.ndarray
-    pow2: np.ndarray
     log_ratios, pow2 = np.modf(pows.dot(logs))
 
     # If the fractional part is negative, add
@@ -501,10 +472,13 @@ def plimit_intervals(
             if pow2[i] != 0:
                 v[2] = -pow2[i]
 
-            v.update({p: int(power) for p, power in zip(primes, pows[i]) if power != 0})
+            v.update({p: int(power) for p, power in zip(primes,
+                                                        pows[i],
+                                                        strict=False) if power != 0})
 
             factors.append(v)
         return factors
 
     # Otherwise, just return intervals as floats
-    return np.power(2, log_ratios)
+    ratios: np.ndarray = np.power(2, log_ratios)
+    return ratios

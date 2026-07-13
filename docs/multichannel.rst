@@ -149,7 +149,7 @@ or timestamps.
 
 
 **Self- and cross-similarity matrices**, as computed by `librosa.segment.recurrence_matrix` have limited multi-channel support.
-This is because the output objects may be sparse data structures (such as `scipy.sparse.csr_matrix`) which do not generalize to more than two dimensions.
+This is because the output objects may be sparse data structures (such as `scipy.sparse.csr_array`) which do not generalize to more than two dimensions.
 These functions still accept multi-channel input, but flatten the leading dimensions
 (channels) when comparing features between different time-steps.
 If independent similarity matrices are desired, it is recommended to process each

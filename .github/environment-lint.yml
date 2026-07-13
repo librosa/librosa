@@ -5,20 +5,16 @@ channels:
 dependencies:
   # required
   - pip
-  - bandit
   - codespell
-  - flake8
   - types-decorator
   - mypy
-  - numpy==1.23.4
+  - numpy==2.1.0
   - pytest
-  - pydocstyle
+  - matplotlib>=3.10.0
+  - ruff
 
-  # Dependencies for velin
-  - numpydoc>=1.1.0
+  - numpydoc>=1.8.0
   - sphinx>=5.1.0
-  - pygments
-  - black
 
-  - pip:
-    - velin
+  # Stubs
+  - scipy-stubs

@@ -35,6 +35,8 @@ Rhythm features
     tempogram
     fourier_tempogram
     tempogram_ratio
+    hybrid_tempogram
+    metrogram
 
 Feature manipulation
 --------------------
