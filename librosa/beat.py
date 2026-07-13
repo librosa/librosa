@@ -11,7 +11,7 @@ Beat and tempo
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Literal, overload
 
 import numba
 import numpy as np
@@ -23,13 +23,69 @@ from .feature import tempo as _tempo
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
+    import numpy.typing as npt
     import scipy.stats
+    from typing_extensions import TypeVar
 
-    from ._typing import _Array1D, _FloatLike_co
+    from ._typing import _Array1D
+
+    type _BpmLike = (
+        float | np.floating[Any] | np.integer[Any] | npt.NDArray[np.floating[Any]]
+    )
+
+    # `typing_extensions.TypeVar` is only needed until Python 3.13, which adds support
+    # for type parameter defaults (PEP 696).
+    _SparseBpmT = TypeVar("_SparseBpmT", bound=_BpmLike, default=float | npt.NDArray[np.float64])
+    _DenseBpmT = TypeVar("_DenseBpmT", bound=_BpmLike, default=npt.NDArray[np.float64])
 
 __all__ = ["beat_track", "plp"]
 
 
+@overload  # units="frames" | "samples", sparse=True (default)
+def beat_track(
+    *,
+    y: npt.NDArray[np.floating[Any]] | None = None,
+    sr: float = 22050,
+    onset_envelope: npt.NDArray[np.floating[Any]] | None = None,
+    hop_length: int = 512,
+    start_bpm: float = 120.0,
+    tightness: float = 100,
+    trim: bool = True,
+    bpm: _SparseBpmT | None = None,
+    prior: scipy.stats.rv_continuous | None = None,
+    units: Literal["frames", "samples"] = "frames",
+    sparse: Literal[True] = True,
+) -> tuple[_SparseBpmT, npt.NDArray[np.int_]]: ...
+@overload  # units="time", sparse=True (default)
+def beat_track(
+    *,
+    y: npt.NDArray[np.floating[Any]] | None = None,
+    sr: float = 22050,
+    onset_envelope: npt.NDArray[np.floating[Any]] | None = None,
+    hop_length: int = 512,
+    start_bpm: float = 120.0,
+    tightness: float = 100,
+    trim: bool = True,
+    bpm: _SparseBpmT | None = None,
+    prior: scipy.stats.rv_continuous | None = None,
+    units: Literal["time"],
+    sparse: Literal[True] = True,
+) -> tuple[_SparseBpmT, npt.NDArray[np.float64]]: ...
+@overload  # sparse=False
+def beat_track(
+    *,
+    y: npt.NDArray[np.floating[Any]] | None = None,
+    sr: float = 22050,
+    onset_envelope: npt.NDArray[np.floating[Any]] | None = None,
+    hop_length: int = 512,
+    start_bpm: float = 120.0,
+    tightness: float = 100,
+    trim: bool = True,
+    bpm: _DenseBpmT | None = None,
+    prior: scipy.stats.rv_continuous | None = None,
+    units: Literal["frames", "samples", "time"] = "frames",
+    sparse: Literal[False],
+) -> tuple[_DenseBpmT, npt.NDArray[np.bool]]: ...
 def beat_track(
     *,
     y: np.ndarray | None = None,
@@ -39,11 +95,11 @@ def beat_track(
     start_bpm: float = 120.0,
     tightness: float = 100,
     trim: bool = True,
-    bpm: _FloatLike_co | np.ndarray | None = None,
+    bpm: _BpmLike | None = None,
     prior: scipy.stats.rv_continuous | None = None,
     units: str = "frames",
     sparse: bool = True
-) -> tuple[_FloatLike_co | np.ndarray, np.ndarray]:
+) -> tuple[float | np.floating[Any] | np.integer[Any] | np.ndarray, np.ndarray]:
     r"""Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [#]_:
@@ -261,17 +317,17 @@ def beat_track(
     return (bpm, beats)
 
 
-def plp(
+def plp[FloatT: np.floating[Any]](
     *,
-    y: np.ndarray | None = None,
+    y: npt.NDArray[FloatT] | None = None,
     sr: float = 22050,
-    onset_envelope: np.ndarray | None = None,
+    onset_envelope: npt.NDArray[FloatT] | None = None,
     hop_length: int = 512,
     win_length: int = 384,
     tempo_min: float | None = 30,
     tempo_max: float | None = 300,
     prior: scipy.stats.rv_continuous | None = None,
-) -> np.ndarray:
+) -> npt.NDArray[FloatT]:
     """Predominant local pulse (PLP) estimation. [#]_
 
     The PLP method analyzes the onset strength envelope in the frequency domain
