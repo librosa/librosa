@@ -608,15 +608,19 @@ def _init_output(
     """Validate a caller-provided output buffer, or allocate a new one.
 
     If ``out`` is ``None``, return a new zero-filled array of the given shape
-    and dtype.  Otherwise ``out`` must match ``shape`` and ``dtype`` exactly;
-    it is zeroed in place and returned.
+    and dtype.  Otherwise ``out`` must match ``shape`` exactly, and its dtype
+    must be able to hold ``dtype`` without loss of precision (i.e. at least as
+    precise as ``dtype``); it is zeroed in place and returned.  A caller that
+    explicitly allocates a higher-precision buffer keeps that precision.
     """
     if out is None:
         return np.zeros(shape, dtype=dtype)
     if out.shape != shape:
         raise ParameterError(f"out has shape={out.shape}, but expected {shape}")
-    if out.dtype != dtype:
-        raise ParameterError(f"out has dtype={out.dtype}, but expected {dtype}")
+    if np.promote_types(out.dtype, dtype) != out.dtype:
+        raise ParameterError(
+            f"out has dtype={out.dtype}, which cannot hold the result dtype {dtype}"
+        )
     out[...] = 0
     return out
 
@@ -650,9 +654,9 @@ def to_mono(
 
     out : np.ndarray [shape=(n_out,)] or None
         A pre-allocated output buffer.  If provided, it must match the shape
-        ``(n_out,)`` and dtype of the result exactly; it is zeroed and filled
-        in place and returned, avoiding a new allocation.  If ``None``
-        (default), a new array is allocated.
+        ``(n_out,)``, and its dtype must be at least as precise as the result
+        dtype; it is zeroed and filled in place and returned, avoiding a new
+        allocation.  If ``None`` (default), a new array is allocated.
 
     Returns
     -------
@@ -771,9 +775,9 @@ def to_stereo(
 
     out : np.ndarray [shape=(2, n_out)] or None
         A pre-allocated output buffer.  If provided, it must match the shape
-        ``(2, n_out)`` and dtype of the result exactly; it is zeroed and filled
-        in place and returned, avoiding a new allocation.  If ``None``
-        (default), a new array is allocated.
+        ``(2, n_out)``, and its dtype must be at least as precise as the result
+        dtype; it is zeroed and filled in place and returned, avoiding a new
+        allocation.  If ``None`` (default), a new array is allocated.
 
     Returns
     -------
@@ -911,10 +915,10 @@ def to_multi(
         If `False`, signals are combined by summing.
 
     out : np.ndarray [shape=(m, n_out) or shape=(..., n_out)] or None
-        A pre-allocated output buffer.  If provided, it must match the shape
-        and dtype of the result exactly; it is zeroed and filled in place and
-        returned, avoiding a new allocation.  If ``None`` (default), a new
-        array is allocated.
+        A pre-allocated output buffer.  If provided, it must match the result
+        shape, and its dtype must be at least as precise as the result dtype;
+        it is zeroed and filled in place and returned, avoiding a new
+        allocation.  If ``None`` (default), a new array is allocated.
 
     Returns
     -------

@@ -1284,10 +1284,24 @@ def test_to_multi_out(downmix):
     ids=["bad-length", "bad-ndim", "bad-dtype"],
 )
 def test_to_mono_out_invalid(out):
-    # y is float64 with length 10, so out must be shape (10,) and float64
+    # y is float64 with length 10, so out must be shape (10,) and at least
+    # as precise as float64 (float32 is too narrow and is rejected)
     y = np.ones((2, 10))
     with pytest.raises(librosa.ParameterError):
         librosa.to_mono(y, out=out)
+
+
+def test_to_mono_out_wider_dtype():
+    # A higher-precision out= buffer is accepted: the caller's explicit
+    # precision takes precedence over the dtype inferred from the input
+    y = np.ones(10, dtype=np.float32)
+    out = np.empty(10, dtype=np.float64)
+
+    result = librosa.to_mono(y, out=out)
+
+    assert result is out
+    assert result.dtype == np.float64
+    assert np.allclose(result, 1.0)
 
 
 @pytest.mark.parametrize("combiner", ["stereo", "multi"])
