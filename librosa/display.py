@@ -1824,7 +1824,7 @@ def specshow(
 
     if np.issubdtype(data.dtype, np.complexfloating):
         warnings.warn(
-            "Trying to display complex-valued input. " "Showing magnitude instead.",
+            "Trying to display complex-valued input. Showing magnitude instead.",
             stacklevel=2,
         )
         data = np.abs(data)
@@ -1845,6 +1845,14 @@ def specshow(
         else:
             is_diverging_cmap = kwargs["cmap"] == mcm.get(cmap_div, None)
 
+        if isinstance(cmap_bool, colors.Colormap):
+            is_boolean_cmap = kwargs["cmap"] == cmap_bool
+        else:
+            is_boolean_cmap = kwargs["cmap"] == mcm.get(cmap_bool, None)
+        # Harden this check to ensure that it only hits when
+        # data is really boolean
+        is_boolean_cmap &= (data.dtype.kind == "b")
+
         if is_diverging_cmap:
             # If we have an inferred diverging colormap,
             # use a twoslope normalizer around the divergence threshold.
@@ -1856,6 +1864,15 @@ def specshow(
                     vcenter=div_thresh,
                     vmin=kwargs.pop("vmin", None),
                     vmax=kwargs.pop("vmax", None),
+                ),
+            )
+        elif is_boolean_cmap:
+            # If we have an inferred boolean colormap, use a boundary norm
+            # But only if the user didn't also set their own normalizer
+            kwargs.setdefault(
+                "norm",
+                colors.BoundaryNorm(
+                    boundaries=[0, 0.5, 1], ncolors=kwargs["cmap"].N
                 ),
             )
 

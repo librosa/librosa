@@ -23,6 +23,7 @@ import matplotlib
 import matplotlib.collections
 import matplotlib.pyplot as plt
 from matplotlib.testing.conftest import text_placeholders
+from matplotlib import colormaps as mcm
 
 import librosa
 import librosa.display
@@ -2485,4 +2486,63 @@ def test_highlight_artist():
     hl2 = librosa.display.highlight(linewidth=5)
     ax.plot(x, 2 + y, path_effects=hl2, label='path_effects= + gca')
     ax.legend(loc='upper right')
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["boolean_norm"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.usefixtures('text_placeholders')
+def test_specshow_boolean_norm(S_abs):
+
+    fig, ax = plt.subplots(nrows=4, sharex=True, sharey=True)
+
+    # First draw a sequential image with the same colormap as
+    # the boolean default.
+    # This case hits norm_cmap is None (vscale=None)
+    # and cmap is not provided, so we have to infer
+    i1 = librosa.display.specshow(
+        librosa.amplitude_to_db(S_abs),
+        y_axis="log_oct3", x_axis='time',
+        ax=ax[0],
+        cmap_seq='gray_r',
+        cmap_bool='gray_r',
+    )
+    fig.colorbar(i1)
+
+    # Now do the same thing, but explicitly using the same
+    # colormap objects for seq and bool
+    cmap = mcm['Reds']
+    i2 = librosa.display.specshow(
+        librosa.amplitude_to_db(S_abs),
+        y_axis="log_oct3", x_axis='time',
+        ax=ax[1],
+        cmap_seq=cmap,
+        cmap_bool=cmap,
+    )
+    fig.colorbar(i2)
+
+    # Now use binary data for input
+    i3 = librosa.display.specshow(
+        S_abs > 0.5,
+        y_axis="log_oct3", x_axis='time',
+        ax=ax[2],
+    )
+    fig.colorbar(i3)
+
+    # And finally test the override case
+    i4 = librosa.display.specshow(
+        S_abs > 0.5,
+        y_axis="log_oct3", x_axis='time',
+        ax=ax[3],
+        cmap=None,
+        cmap_seq='gray_r',
+        cmap_bool='gray_r',
+    )
+    fig.colorbar(i4)
+
+    for axi in ax.flat:
+        axi.label_outer()
     return fig
