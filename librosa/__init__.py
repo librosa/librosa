@@ -10,14 +10,12 @@ Audio loading
     :toctree: generated/
 
     load
-    loadx
     stream
-    resample
     to_mono
-    to_stereo
-    to_multi
+    resample
     get_duration
     get_samplerate
+
 
 Time-domain processing
 ----------------------
@@ -30,6 +28,7 @@ Time-domain processing
     mu_compress
     mu_expand
 
+
 Signal generation
 -----------------
 .. autosummary::
@@ -38,6 +37,7 @@ Signal generation
     clicks
     tone
     chirp
+
 
 Spectral representations
 ------------------------
@@ -61,6 +61,7 @@ Spectral representations
 
     magphase
 
+
 Phase recovery
 --------------
 .. autosummary::
@@ -68,6 +69,7 @@ Phase recovery
 
     griffinlim
     griffinlim_cqt
+
 
 Harmonics
 ---------
@@ -79,6 +81,7 @@ Harmonics
     f0_harmonics
 
     phase_vocoder
+
 
 Magnitude scaling
 -----------------
@@ -100,6 +103,7 @@ Magnitude scaling
 
     pcen
 
+
 Time unit conversion
 --------------------
 .. autosummary::
@@ -115,6 +119,7 @@ Time unit conversion
     blocks_to_frames
     blocks_to_samples
     blocks_to_time
+
 
 Frequency unit conversion
 -------------------------
@@ -143,6 +148,7 @@ Frequency unit conversion
     A4_to_tuning
     tuning_to_A4
 
+
 Music notation
 --------------
 .. autosummary::
@@ -165,6 +171,7 @@ Music notation
     pythagorean_intervals
     plimit_intervals
 
+
 Frequency range generation
 --------------------------
 .. autosummary::
@@ -175,6 +182,7 @@ Frequency range generation
     mel_frequencies
     tempo_frequencies
     fourier_tempo_frequencies
+
 
 Pitch and tuning
 ----------------
@@ -188,6 +196,7 @@ Pitch and tuning
     pitch_tuning
     piptrack
 
+
 Miscellaneous
 -------------
 .. autosummary::
@@ -195,10 +204,12 @@ Miscellaneous
 
     samples_like
     times_like
+
+    get_fftlib
+    set_fftlib
 """
 
 import lazy_loader as lazy
-
 from .version import version as __version__
 
 __getattr__, __dir__, __all__ = lazy.attach_stub(__name__, __file__)

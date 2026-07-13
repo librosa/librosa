@@ -36,7 +36,7 @@ import librosa
 #######################################################################
 # We'll use a track that has harmonic, melodic, and percussive elements
 #  Karissa Hobbs - Let's Go Fishin'
-y, sr = librosa.loadx('fishin')
+y, sr = librosa.load(librosa.ex('fishin'))
 
 
 #######################################
@@ -51,10 +51,10 @@ C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=12*3, n_bins=7*12*3))
 
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
-img1 = librosa.display.specshow(C[idx], vscale='dBFS',
+img1 = librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max)[idx],
                                 y_axis='cqt_note', x_axis='time', bins_per_octave=12*3,
                                 ax=ax[0])
-librosa.display.colorbar_db(img1, ax=ax[0])
+fig.colorbar(img1, ax=[ax[0]], format="%+2.f dB")
 ax[0].label_outer()
 
 img2 = librosa.display.specshow(chroma_orig[idx], y_axis='chroma', x_axis='time', ax=ax[1])
@@ -116,7 +116,7 @@ ax[1].set(ylabel='Median-filtered')
 # A final comparison between the CQT, original chromagram
 # and the result of our filtering.
 fig, ax = plt.subplots(nrows=3, sharex=True)
-librosa.display.specshow(C[idx], vscale='dBFS',
+librosa.display.specshow(librosa.amplitude_to_db(C, ref=np.max)[idx],
                          y_axis='cqt_note', x_axis='time',
                          bins_per_octave=12*3, ax=ax[0])
 ax[0].set(ylabel='CQT')

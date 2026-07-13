@@ -1,0 +1,3 @@
+[submodule "tests/data"]
+	path = tests/data
+	url = https://github.com/librosa/librosa-test-data.git

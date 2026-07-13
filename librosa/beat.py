@@ -9,97 +9,44 @@ Beat and tempo
    beat_track
    plp
 """
-from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal, overload
-
-import numba
 import numpy as np
 import scipy
+import scipy.stats
+import numba
 
-from . import core, onset, util
+from . import core
+from . import onset
+from . import util
 from .feature import fourier_tempogram
 from .feature import tempo as _tempo
 from .util.exceptions import ParameterError
+from .util.decorators import moved
+from typing import Optional, Tuple, Union
+from ._typing import _FloatLike_co
 
-if TYPE_CHECKING:
-    import numpy.typing as npt
-    import scipy.stats
-    from typing_extensions import TypeVar
-
-    from ._typing import _Array1D
-
-    type _BpmLike = (
-        float | np.floating[Any] | np.integer[Any] | npt.NDArray[np.floating[Any]]
-    )
-
-    # `typing_extensions.TypeVar` is only needed until Python 3.13, which adds support
-    # for type parameter defaults (PEP 696).
-    _SparseBpmT = TypeVar("_SparseBpmT", bound=_BpmLike, default=float | npt.NDArray[np.float64])
-    _DenseBpmT = TypeVar("_DenseBpmT", bound=_BpmLike, default=npt.NDArray[np.float64])
-
-__all__ = ["beat_track", "plp"]
+__all__ = ["beat_track", "tempo", "plp"]
 
 
-@overload  # units="frames" | "samples", sparse=True (default)
+tempo = moved(moved_from="librosa.beat.tempo", version="0.10.0", version_removed="1.0")(
+    _tempo
+)
+
+
 def beat_track(
     *,
-    y: npt.NDArray[np.floating[Any]] | None = None,
+    y: Optional[np.ndarray] = None,
     sr: float = 22050,
-    onset_envelope: npt.NDArray[np.floating[Any]] | None = None,
+    onset_envelope: Optional[np.ndarray] = None,
     hop_length: int = 512,
     start_bpm: float = 120.0,
     tightness: float = 100,
     trim: bool = True,
-    bpm: _SparseBpmT | None = None,
-    prior: scipy.stats.rv_continuous | None = None,
-    units: Literal["frames", "samples"] = "frames",
-    sparse: Literal[True] = True,
-) -> tuple[_SparseBpmT, npt.NDArray[np.int_]]: ...
-@overload  # units="time", sparse=True (default)
-def beat_track(
-    *,
-    y: npt.NDArray[np.floating[Any]] | None = None,
-    sr: float = 22050,
-    onset_envelope: npt.NDArray[np.floating[Any]] | None = None,
-    hop_length: int = 512,
-    start_bpm: float = 120.0,
-    tightness: float = 100,
-    trim: bool = True,
-    bpm: _SparseBpmT | None = None,
-    prior: scipy.stats.rv_continuous | None = None,
-    units: Literal["time"],
-    sparse: Literal[True] = True,
-) -> tuple[_SparseBpmT, npt.NDArray[np.float64]]: ...
-@overload  # sparse=False
-def beat_track(
-    *,
-    y: npt.NDArray[np.floating[Any]] | None = None,
-    sr: float = 22050,
-    onset_envelope: npt.NDArray[np.floating[Any]] | None = None,
-    hop_length: int = 512,
-    start_bpm: float = 120.0,
-    tightness: float = 100,
-    trim: bool = True,
-    bpm: _DenseBpmT | None = None,
-    prior: scipy.stats.rv_continuous | None = None,
-    units: Literal["frames", "samples", "time"] = "frames",
-    sparse: Literal[False],
-) -> tuple[_DenseBpmT, npt.NDArray[np.bool]]: ...
-def beat_track(
-    *,
-    y: np.ndarray | None = None,
-    sr: float = 22050,
-    onset_envelope: np.ndarray | None = None,
-    hop_length: int = 512,
-    start_bpm: float = 120.0,
-    tightness: float = 100,
-    trim: bool = True,
-    bpm: _BpmLike | None = None,
-    prior: scipy.stats.rv_continuous | None = None,
+    bpm: Optional[Union[_FloatLike_co, np.ndarray]] = None,
+    prior: Optional[scipy.stats.rv_continuous] = None,
     units: str = "frames",
     sparse: bool = True
-) -> tuple[float | np.floating[Any] | np.integer[Any] | np.ndarray, np.ndarray]:
+) -> Tuple[Union[_FloatLike_co, np.ndarray], np.ndarray]:
     r"""Dynamic programming beat tracker.
 
     Beats are detected in three stages, following the method of [#]_:
@@ -116,28 +63,28 @@ def beat_track(
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        Audio time series.
+        audio time series
 
     sr : number > 0 [scalar]
-        Sampling rate of ``y``.
+        sampling rate of ``y``
 
     onset_envelope : np.ndarray [shape=(..., m)] or None
-        (Optional) pre-computed onset strength envelope.
+        (optional) pre-computed onset strength envelope.
 
     hop_length : int > 0 [scalar]
-        Number of audio samples between successive ``onset_envelope`` values.
+        number of audio samples between successive ``onset_envelope`` values
 
     start_bpm : float > 0 [scalar]
-        Initial guess for the tempo estimator (in beats per minute).
+        initial guess for the tempo estimator (in beats per minute)
 
     tightness : float [scalar]
-        Tightness of beat distribution around tempo.
+        tightness of beat distribution around tempo
 
     trim : bool [scalar]
-        Trim leading/trailing beats with weak onsets.
+        trim leading/trailing beats with weak onsets
 
     bpm : float [scalar] or np.ndarray [shape=(...)]
-        (Optional) if provided, use ``bpm`` as the tempo instead of
+        (optional) If provided, use ``bpm`` as the tempo instead of
         estimating it from ``onsets``.
 
         If multichannel, tempo estimates can be provided for all channels.
@@ -166,7 +113,7 @@ def beat_track(
     Returns
     -------
     tempo : float [scalar, non-negative] or np.ndarray
-        The estimated global tempo (in beats per minute).
+        estimated global tempo (in beats per minute)
 
         If multi-channel and ``bpm`` is not provided, a separate
         tempo will be returned for each channel.
@@ -176,7 +123,7 @@ def beat_track(
             In this case, the array will have a single element and be one-dimensional.
             This is to ensure consistent return types for multi-channel input.
     beats : np.ndarray
-        The estimated beat event locations.
+        estimated beat event locations.
 
         If `sparse=True` (default), beat locations are given in the specified units
         (default is frame indices).
@@ -202,7 +149,7 @@ def beat_track(
     --------
     Track beats using time series input
 
-    >>> y, sr = librosa.loadx('choice', duration=10)
+    >>> y, sr = librosa.load(librosa.ex('choice'), duration=10)
 
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> tempo
@@ -251,7 +198,7 @@ def beat_track(
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=hop_length)
     >>> M = librosa.feature.melspectrogram(y=y, sr=sr, hop_length=hop_length)
-    >>> librosa.display.specshow(M, vscale='dBFS[power]',
+    >>> librosa.display.specshow(librosa.power_to_db(M, ref=np.max),
     ...                          y_axis='mel', x_axis='time', hop_length=hop_length,
     ...                          ax=ax[0])
     >>> ax[0].label_outer()
@@ -317,17 +264,17 @@ def beat_track(
     return (bpm, beats)
 
 
-def plp[FloatT: np.floating[Any]](
+def plp(
     *,
-    y: npt.NDArray[FloatT] | None = None,
+    y: Optional[np.ndarray] = None,
     sr: float = 22050,
-    onset_envelope: npt.NDArray[FloatT] | None = None,
+    onset_envelope: Optional[np.ndarray] = None,
     hop_length: int = 512,
     win_length: int = 384,
-    tempo_min: float | None = 30,
-    tempo_max: float | None = 300,
-    prior: scipy.stats.rv_continuous | None = None,
-) -> npt.NDArray[FloatT]:
+    tempo_min: Optional[float] = 30,
+    tempo_max: Optional[float] = 300,
+    prior: Optional[scipy.stats.rv_continuous] = None,
+) -> np.ndarray:
     """Predominant local pulse (PLP) estimation. [#]_
 
     The PLP method analyzes the onset strength envelope in the frequency domain
@@ -348,19 +295,19 @@ def plp[FloatT: np.floating[Any]](
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
-        Audio time series. Multi-channel is supported.
+        audio time series. Multi-channel is supported.
 
     sr : number > 0 [scalar]
-        Sampling rate of ``y``.
+        sampling rate of ``y``
 
     onset_envelope : np.ndarray [shape=(..., n)] or None
-        (Optional) pre-computed onset strength envelope.
+        (optional) pre-computed onset strength envelope
 
     hop_length : int > 0 [scalar]
-        Number of audio samples between successive ``onset_envelope`` values.
+        number of audio samples between successive ``onset_envelope`` values
 
     win_length : int > 0 [scalar]
-        Number of frames to use for tempogram analysis.
+        number of frames to use for tempogram analysis.
         By default, 384 frames (at ``sr=22050`` and ``hop_length=512``) corresponds
         to about 8.9 seconds.
 
@@ -393,7 +340,7 @@ def plp[FloatT: np.floating[Any]](
     Visualize the PLP compared to an onset strength envelope.
     Both are normalized here to make comparison easier.
 
-    >>> y, sr = librosa.loadx('brahms')
+    >>> y, sr = librosa.load(librosa.ex('brahms'))
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> pulse = librosa.beat.plp(onset_envelope=onset_env, sr=sr)
     >>> # Or compute pulse with an alternate prior, like log-normal
@@ -405,7 +352,8 @@ def plp[FloatT: np.floating[Any]](
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> librosa.display.specshow(melspec, vscale='dBFS[power]',
+    >>> librosa.display.specshow(librosa.power_to_db(melspec,
+    ...                                              ref=np.max),
     ...                          x_axis='time', y_axis='mel', ax=ax[0])
     >>> ax[0].set(title='Mel spectrogram')
     >>> ax[0].label_outer()
@@ -425,7 +373,6 @@ def plp[FloatT: np.floating[Any]](
     ...          label='Predominant local pulse (PLP)')
     >>> ax[2].set(title='Log-normal tempo prior, mean=120', xlim=[5, 20])
     >>> ax[2].legend()
-    >>> plt.show()
 
     PLP local maxima can be used as estimates of beat positions.
 
@@ -450,7 +397,6 @@ def plp[FloatT: np.floating[Any]](
     >>> ax[1].legend()
     >>> ax[1].set(title='librosa.beat.plp', xlim=[5, 20])
     >>> ax[1].xaxis.set_major_formatter(librosa.display.TimeFormatter())
-    >>> plt.show()
     """
     # Step 1: get the onset envelope
     if onset_envelope is None:
@@ -509,8 +455,8 @@ def plp[FloatT: np.floating[Any]](
 
 def __beat_tracker(
     onset_envelope: np.ndarray, bpm: np.ndarray, frame_rate: float, tightness: float, trim: bool
-) -> _Array1D[np.bool]:
-    """Track beats in an onset strength envelope.
+) -> np.ndarray:
+    """Tracks beats in an onset strength envelope.
 
     Parameters
     ----------
@@ -538,16 +484,14 @@ def __beat_tracker(
 
     # TODO: this might be better accomplished with a np.broadcast_shapes check
     if bpm.shape[-1] not in (1, onset_envelope.shape[-1]):
-        raise ParameterError(f"Invalid bpm shape={bpm.shape} does not match "
-                             f"onset envelope shape={onset_envelope.shape}")
+        raise ParameterError(f"Invalid bpm shape={bpm.shape} does not match onset envelope shape={onset_envelope.shape}")
 
     # convert bpm to frames per beat (rounded)
     # [frames / sec] * [60 sec / min] / [beat / min] = [frames / beat]
     frames_per_beat = np.round(frame_rate * 60.0 / bpm)
 
     # localscore is a smoothed version of AGC'd onset envelope
-    localscore = np.empty_like(onset_envelope)
-    __beat_local_score(__normalize_onsets(onset_envelope), frames_per_beat, localscore)
+    localscore = __beat_local_score(__normalize_onsets(onset_envelope), frames_per_beat)
 
     # run the DP
     backlink, cumscore = __beat_track_dp(localscore, frames_per_beat, tightness)
@@ -558,9 +502,9 @@ def __beat_tracker(
     __dp_backtrack(backlink, tail, beats)
 
     # Discard spurious trailing beats
-    beats_trimmed = np.empty_like(beats)
-    __trim_beats(localscore, beats, trim, beats_trimmed)
-    return beats_trimmed
+    beats: np.ndarray = __trim_beats(localscore, beats, trim)
+
+    return beats
 
 
 # -- Helper functions for beat tracking
@@ -571,6 +515,10 @@ def __normalize_onsets(onsets):
 
 
 @numba.guvectorize(
+        [
+            "void(float32[:], float32[:], float32[:])",
+            "void(float64[:], float64[:], float64[:])",
+        ],
         "(t),(n)->(t)",
         nopython=True, cache=False)
 def __beat_local_score(onset_envelope, frames_per_beat, localscore):
@@ -579,13 +527,12 @@ def __beat_local_score(onset_envelope, frames_per_beat, localscore):
 
 
     N = len(onset_envelope)
-
+    
     if len(frames_per_beat) == 1:
         # Static tempo mode
         # NOTE: when we can bump the minimum numba to 0.58, we can eliminate this branch and just use
         # np.convolve(..., mode='same') directly
-        window = np.exp(-0.5 * (np.arange(-frames_per_beat[0],
-                                          frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2)
+        window = np.exp(-0.5 * (np.arange(-frames_per_beat[0], frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2)
         K = len(window)
         # This is a vanilla same-mode convolution
         for i in range(len(onset_envelope)):
@@ -594,15 +541,14 @@ def __beat_local_score(onset_envelope, frames_per_beat, localscore):
             # and i + K // 2 - k >= 0 ==>    k <= i + K // 2
             for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
                 localscore[i] += window[k] * onset_envelope[i + K//2 -k]
-
+                
     elif len(frames_per_beat) == len(onset_envelope):
         # Time-varying tempo estimates
         # This isn't exactly a convolution anymore, since the filter is time-varying, but it's pretty close
         for i in range(len(onset_envelope)):
-            window = np.exp(-0.5 * (np.arange(-frames_per_beat[i],
-                                              frames_per_beat[i] + 1) * 32.0 / frames_per_beat[i]) ** 2)
+            window = np.exp(-0.5 * (np.arange(-frames_per_beat[i], frames_per_beat[i] + 1) * 32.0 / frames_per_beat[i]) ** 2)
             K = 2 * int(frames_per_beat[i]) + 1
-
+            
             localscore[i] = 0.
             for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
                 localscore[i] += window[k] * onset_envelope[i + K // 2 - k]
@@ -636,7 +582,7 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
         # Search over all possible predecessors to find the best preceding beat
         # NOTE: to provide time-varying tempo estimates, we replace
         # frames_per_beat[0] by frames_per_beat[i] in this loop body.
-        for loc in range(i - round(frames_per_beat[tv * i] / 2), int(i - 2 * frames_per_beat[tv * i] - 1), - 1):
+        for loc in range(i - np.round(frames_per_beat[tv * i] / 2), i - 2 * frames_per_beat[tv * i] - 1, - 1):
             # Once we're searching past the start, break out
             if loc < 0:
                 break
@@ -661,6 +607,10 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
 
 
 @numba.guvectorize(
+    [
+        "void(float32[:], bool_[:], bool_, bool_[:])",
+        "void(float64[:], bool_[:], bool_, bool_[:])"
+        ],
     "(t),(t),()->(t)",
     nopython=True, cache=True
     )
@@ -699,7 +649,7 @@ def __last_beat(cumscore):
     # Use a masked array to support multidimensional statistics
     # We negate the mask here because of numpy masked array semantics
     mask = ~util.localmax(cumscore, axis=-1)
-    masked_scores: np.ma.masked_array = np.ma.masked_array(data=cumscore, mask=mask)
+    masked_scores = np.ma.masked_array(data=cumscore, mask=mask)  # type: ignore
     medians = np.ma.median(masked_scores, axis=-1)
     thresholds = 0.5 * np.ma.getdata(medians)
 
@@ -710,6 +660,10 @@ def __last_beat(cumscore):
 
 
 @numba.guvectorize(
+        [
+            "void(float32[:], bool_[:], float32, int64[:])",
+            "void(float64[:], bool_[:], float64, int64[:])",
+        ],
         "(t),(t),()->()",
         nopython=True, cache=True
         )
@@ -730,6 +684,10 @@ def __last_beat_selector(cumscore, mask, threshold, out):
 
 
 @numba.guvectorize(
+        [
+            "void(int32[:], int32, bool_[:])",
+            "void(int64[:], int64, bool_[:])"
+        ],
         "(t),()->(t)",
         nopython=True, cache=True
         )

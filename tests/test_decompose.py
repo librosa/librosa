@@ -17,7 +17,8 @@ import librosa
 import sklearn.decomposition
 
 import pytest
-from typing import Union
+
+from test_core import srand
 
 
 def test_default_decompose():
@@ -40,7 +41,9 @@ def test_given_decompose():
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
 
-def test_decompose_fit(rng):
+def test_decompose_fit():
+
+    srand()
 
     D = sklearn.decomposition.NMF(random_state=0)
 
@@ -50,7 +53,7 @@ def test_decompose_fit(rng):
     (W, H) = librosa.decompose.decompose(X, transformer=D, fit=True)
 
     # Make random data and decompose with the same basis
-    X = np.asarray(rng.standard_normal(size=X.shape) ** 2)
+    X = np.asarray(np.random.randn(*X.shape) ** 2)
     (W2, H2) = librosa.decompose.decompose(X, transformer=D, fit=False)
 
     # Make sure the basis hasn't changed
@@ -63,8 +66,9 @@ def test_decompose_multi_sort():
 
 
 @pytest.mark.filterwarnings("ignore:Maximum number of iterations")
-def test_decompose_multi(rng):
-    X = rng.random(size=(2, 20, 100))
+def test_decompose_multi():
+    srand()
+    X = np.random.random_sample(size=(2, 20, 100))
 
     # Fit with multichannel data
     components, activations = librosa.decompose.decompose(
@@ -96,28 +100,24 @@ def test_sorted_decompose():
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def y22050():
-    sr = 22050
-    y = librosa.chirp(fmin=55, fmax=880, sr=sr, duration=5.0)
-    y += librosa.clicks(
-        times=np.arange(0, 5, 0.5), sr=sr, length=len(y), click_duration=0.25
-    )
+    y, _ = librosa.load(os.path.join("tests", "data", "test1_22050.wav"))
     return y
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def D22050(y22050):
     return librosa.stft(y22050)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def S22050(D22050):
     return np.abs(D22050)
 
 
 @pytest.mark.parametrize("window", [31, (5, 5)])
-@pytest.mark.parametrize("power", [1, 2])
+@pytest.mark.parametrize("power", [1, 2, 10])
 @pytest.mark.parametrize("mask", [False, True])
 @pytest.mark.parametrize("margin", [1.0, 3.0, (1.0, 1.0), (9.0, 10.0)])
 def test_real_hpss(S22050, window, power, mask, margin):
@@ -147,9 +147,10 @@ def test_complex_hpss(D22050):
     assert np.allclose(H + P, D22050)
 
 
-def test_nn_filter_mean(rng):
+def test_nn_filter_mean():
 
-    X = rng.standard_normal(size=(10, 100))
+    srand()
+    X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
     rec = librosa.segment.recurrence_matrix(X)
@@ -162,9 +163,10 @@ def test_nn_filter_mean(rng):
     assert np.allclose(X_filtered, X.dot(rec))
 
 
-def test_nn_filter_mean_rec(rng):
+def test_nn_filter_mean_rec():
 
-    X = rng.standard_normal(size=(10, 100))
+    srand()
+    X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
     rec = librosa.segment.recurrence_matrix(X)
@@ -182,9 +184,10 @@ def test_nn_filter_mean_rec(rng):
     assert np.allclose(X_filtered[:, 3:], (X.dot(rec))[:, 3:])
 
 
-def test_nn_filter_mean_rec_sparse(rng):
+def test_nn_filter_mean_rec_sparse():
 
-    X = rng.standard_normal(size=(10, 100))
+    srand()
+    X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
     rec = librosa.segment.recurrence_matrix(X, sparse=True)
@@ -198,8 +201,9 @@ def test_nn_filter_mean_rec_sparse(rng):
 
 @pytest.fixture(scope="module")
 def s_multi():
-    y = librosa.chirp(fmin=55, fmax=880, duration=5.0)
-    y = np.vstack([y, y[::-1]])
+    y, sr = librosa.load(
+        os.path.join("tests", "data", "test1_44100.wav"), sr=None, mono=False
+    )
     return np.abs(librosa.stft(y))
 
 
@@ -224,9 +228,10 @@ def test_nn_filter_multi(s_multi, useR, sparse):
     assert not np.allclose(s_filt0, s_filt1)
 
 
-def test_nn_filter_avg(rng):
+def test_nn_filter_avg():
 
-    X = rng.standard_normal(size=(10, 100))
+    srand()
+    X = np.random.randn(10, 100)
 
     # Build a recurrence matrix, just for testing purposes
     rec = librosa.segment.recurrence_matrix(X, mode="affinity")
@@ -245,11 +250,12 @@ def test_nn_filter_avg(rng):
 )
 @pytest.mark.parametrize("sparse", [False, True])
 @pytest.mark.parametrize("data", [np.zeros((10, 100))])
-def test_nn_filter_badselfsim(data, x, y, sparse, rng):
+def test_nn_filter_badselfsim(data, x, y, sparse):
 
+    srand()
     # Build a recurrence matrix, just for testing purposes
-    rec: Union[np.ndarray, scipy.sparse.csr_array] = rng.standard_normal(size=(x, y))
+    rec = np.random.randn(x, y)
     if sparse:
-        rec = scipy.sparse.csr_array(rec)
+        rec = scipy.sparse.csr_matrix(rec)
 
     librosa.decompose.nn_filter(data, rec=rec)

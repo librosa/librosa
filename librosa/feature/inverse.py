@@ -1,26 +1,20 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Feature inversion"""
-from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING
-
 import numpy as np
-import scipy
 
-from .. import filters
-from ..core.spectrum import db_to_power, griffinlim
-from ..util import expand_to, nnls
+from ..core.fft import get_fftlib
 from ..util.exceptions import ParameterError
+from ..core.spectrum import griffinlim
+from ..core.spectrum import db_to_power
 from ..util.utils import tiny
-
-if TYPE_CHECKING:
-    from typing import Any
-
-    from numpy.typing import DTypeLike
-
-    from .._typing import _DCTNorm, _DCTType, _PadModeSTFT, _WindowSpec
+from .. import filters
+from ..util import nnls, expand_to
+from numpy.typing import DTypeLike
+from typing import Any, Optional
+from .._typing import _WindowSpec, _PadModeSTFT
 
 __all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
 
@@ -42,11 +36,10 @@ def mel_to_stft(
     sr : number > 0 [scalar]
         sampling rate of the underlying signal
     n_fft : int > 0 [scalar]
-        length of the FFT frame of the resulting STFT; the output has ``1 + n_fft // 2`` frequency bins
+        number of FFT components in the resulting STFT
     power : float > 0 [scalar]
         Exponent for the magnitude melspectrogram
-    **kwargs :
-        additional keyword arguments for Mel filter bank parameters
+    **kwargs : additional keyword arguments for Mel filter bank parameters
     fmin : float >= 0 [scalar]
         lowest frequency (in Hz)
     fmax : float >= 0 [scalar]
@@ -67,7 +60,7 @@ def mel_to_stft(
 
     Returns
     -------
-    S : np.ndarray [shape=(..., 1 + n_fft // 2, t), non-negative]
+    S : np.ndarray [shape=(..., n_fft, t), non-negative]
         An approximate linear magnitude spectrogram
 
     See Also
@@ -79,7 +72,7 @@ def mel_to_stft(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.load(librosa.ex('trumpet'))
     >>> S = librosa.util.abs2(librosa.stft(y))
     >>> mel_spec = librosa.feature.melspectrogram(S=S, sr=sr)
     >>> S_inv = librosa.feature.inverse.mel_to_stft(mel_spec, sr=sr)
@@ -88,18 +81,19 @@ def mel_to_stft(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(S, vscale='dBFS[power]', top_db=None,
+    >>> img = librosa.display.specshow(librosa.amplitude_to_db(S, ref=np.max, top_db=None),
     ...                          y_axis='log', x_axis='time', ax=ax[0])
     >>> ax[0].set(title='Original STFT')
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(S_inv, vscale='dBFS[power]', top_db=None,
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S_inv, ref=np.max, top_db=None),
     ...                          y_axis='log', x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Reconstructed STFT')
     >>> ax[1].label_outer()
-    >>> librosa.display.specshow(S_inv - S, vscale=f'dB[power,{S.max()}]', top_db=None,
-    ...                          vmax=0, y_axis='log', x_axis='time', ax=ax[2])
+    >>> librosa.display.specshow(librosa.amplitude_to_db(np.abs(S_inv - S),
+    ...                                                  ref=S.max(), top_db=None),
+    ...                          vmax=0, y_axis='log', x_axis='time', cmap='magma', ax=ax[2])
     >>> ax[2].set(title='Residual error (dB)')
-    >>> librosa.display.colorbar_db(img, ax=ax)
+    >>> fig.colorbar(img, ax=ax, format="%+2.f dB")
     """
     # Construct a mel basis with dtype matching the input data
     mel_basis = filters.mel(
@@ -110,8 +104,7 @@ def mel_to_stft(
     # the inverse exponent.
     # We'll do the exponentiation in-place.
     inverse = nnls(mel_basis, M)
-    np.power(inverse, 1.0 / power, out=inverse)
-    return inverse
+    return np.power(inverse, 1.0 / power, out=inverse)
 
 
 def mel_to_audio(
@@ -119,14 +112,14 @@ def mel_to_audio(
     *,
     sr: float = 22050,
     n_fft: int = 2048,
-    hop_length: int | None = None,
-    win_length: int | None = None,
+    hop_length: Optional[int] = None,
+    win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
     power: float = 2.0,
     n_iter: int = 32,
-    length: int | None = None,
+    length: Optional[int] = None,
     dtype: DTypeLike = np.float32,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -144,17 +137,17 @@ def mel_to_audio(
     sr : number > 0 [scalar]
         sampling rate of the underlying signal
     n_fft : int > 0 [scalar]
-        length of the FFT frame for the intermediate STFT
+        number of FFT components in the resulting STFT
     hop_length : None or int > 0
         The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
     win_length : None or int > 0
         The window length of the STFT.  By default, it will equal ``n_fft``
-    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         A window specification as supported by `stft` or `istft`
-    center : bool
+    center : boolean
         If `True`, the STFT is assumed to use centered frames.
         If `False`, the STFT is assumed to use left-aligned frames.
-    pad_mode : str
+    pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
     power : float > 0 [scalar]
@@ -166,8 +159,7 @@ def mel_to_audio(
         samples.
     dtype : np.dtype
         Real numeric type for the time-domain signal.  Default is 32-bit float.
-    **kwargs :
-        additional keyword arguments for Mel filter bank parameters
+    **kwargs : additional keyword arguments for Mel filter bank parameters
     fmin : float >= 0 [scalar]
         lowest frequency (in Hz)
     fmax : float >= 0 [scalar]
@@ -215,12 +207,13 @@ def mfcc_to_mel(
     mfcc: np.ndarray,
     *,
     n_mels: int = 128,
-    dct_type: _DCTType = 2,
-    norm: _DCTNorm | None = "ortho",
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
     ref: float = 1.0,
     lifter: float = 0,
 ) -> np.ndarray:
-    """Invert Mel-frequency cepstral coefficients to approximate a Mel power spectrogram.
+    """Invert Mel-frequency cepstral coefficients to approximate a Mel power
+    spectrogram.
 
     This inversion proceeds in two steps:
 
@@ -282,7 +275,8 @@ def mfcc_to_mel(
     elif lifter != 0:
         raise ParameterError("MFCC to mel lifter must be a non-negative number.")
 
-    logmel = scipy.fft.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
+    fft = get_fftlib()
+    logmel = fft.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
     melspec: np.ndarray = db_to_power(logmel, ref=ref)
     return melspec
 
@@ -291,8 +285,8 @@ def mfcc_to_audio(
     mfcc: np.ndarray,
     *,
     n_mels: int = 128,
-    dct_type: _DCTType = 2,
-    norm: _DCTNorm | None = "ortho",
+    dct_type: int = 2,
+    norm: Optional[str] = "ortho",
     ref: float = 1.0,
     lifter: float = 0,
     **kwargs: Any,
@@ -322,24 +316,23 @@ def mfcc_to_audio(
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
             M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2
-    **kwargs
-        additional keyword arguments to pass through to `mel_to_audio`
+    **kwargs : additional keyword arguments to pass through to `mel_to_audio`
     M : np.ndarray [shape=(..., n_mels, n), non-negative]
         The spectrogram as produced by `feature.melspectrogram`
     sr : number > 0 [scalar]
         sampling rate of the underlying signal
     n_fft : int > 0 [scalar]
-        length of the FFT frame for the intermediate STFT
+        number of FFT components in the resulting STFT
     hop_length : None or int > 0
         The hop length of the STFT.  If not provided, it will default to ``n_fft // 4``
     win_length : None or int > 0
         The window length of the STFT.  By default, it will equal ``n_fft``
-    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+    window : string, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         A window specification as supported by `stft` or `istft`
-    center : bool
+    center : boolean
         If `True`, the STFT is assumed to use centered frames.
         If `False`, the STFT is assumed to use left-aligned frames.
-    pad_mode : str
+    pad_mode : string
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
     power : float > 0 [scalar]
@@ -351,8 +344,7 @@ def mfcc_to_audio(
         samples.
     dtype : np.dtype
         Real numeric type for the time-domain signal.  Default is 32-bit float.
-    **kwargs
-        additional keyword arguments for Mel filter bank parameters
+    **kwargs : additional keyword arguments for Mel filter bank parameters
     fmin : float >= 0 [scalar]
         lowest frequency (in Hz)
     fmax : float >= 0 [scalar]

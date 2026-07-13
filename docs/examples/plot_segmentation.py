@@ -33,7 +33,7 @@ import librosa
 
 #############################
 # First, we'll load in a song
-y, sr = librosa.loadx('fishin')
+y, sr = librosa.load(librosa.ex('fishin'))
 
 
 ##############################################

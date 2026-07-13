@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Skip pydocstyle checks that erroneously trigger on "example"
+# noqa: D405,D214,D407
 """
 Utilities
 =========
@@ -20,7 +21,6 @@ Array operations
     softmask
     stack
     sync
-    interp_broadcast
 
     axis_sort
     normalize

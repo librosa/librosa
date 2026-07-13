@@ -390,10 +390,11 @@ def test_mela_to_svara(mela, svara, abbr, unicode):
         for s in svara_est:
             assert 0 < len(s) < 5
 
-    if not unicode:
-        # If we're in non-unicode mode, this shouldn't raise an exception
-        for s in svara_est:
-            assert s.isascii()
+    if sys.version >= "3.7":
+        if not unicode:
+            # If we're in non-unicode mode, this shouldn't raise an exception
+            for s in svara_est:
+                assert s.isascii()
 
 
 @pytest.mark.xfail(raises=KeyError)
