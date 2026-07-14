@@ -34,7 +34,6 @@ jobs:
           activate-environment: docs
           channel-priority: flexible
           environment-file: .github/environment-docs.yml
-          cache-environment: true
           cache-downloads: true
 
       - name: Conda info
