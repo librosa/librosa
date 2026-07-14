@@ -79,20 +79,28 @@ jobs:
             ref: main
             token: ${{ secrets.DOC_PUBLISH_TOKEN }}
             path: doc-repo
+            fetch-depth: 0
 
         - name: Sync built docs into doc repo
           run: |
             rsync -a --delete build/html/ doc-repo/
 
-        - name: Commit and push docs
+        - name: Commit docs in doc repo
+          working-directory: doc-repo
           run: |
-            cd doc-repo
             git config user.name "librosa-docs-bot"
             git config user.email "brian.mcfee@nyu.edu"
-            if [[ -n "$(git status --porcelain)" ]]; then
-              git add -A
+            git add -A
+            if ! git diff --cached --quiet; then
               git commit -m "Update docs from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
-              git push origin main
             else
-              echo "No docs changes to publish."
+              echo "No docs changes to commit."
+            fi
+
+        - name: Push docs repo
+          if: github.ref == 'refs/heads/main'
+          working-directory: doc-repo
+          run: |
+            if git rev-parse --verify HEAD >/dev/null 2>&1; then
+              git push origin main
             fi
