@@ -3,104 +3,64 @@ name: Docs
 on:
   release:
     types: 
-    - created
-    - published
+      - created
+      - published
   push:
     branches:
-    - main
+      - main
 
-  
 concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: True
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-    doc:
-        name: "Documentation build"
-        runs-on: ${{ matrix.os }}
+  doc:
+    name: "Documentation build"
+    runs-on: ubuntu-latest
 
-        strategy:
-            fail-fast: true
-            matrix:
-                include:
-                    - os: ubuntu-latest
-                      python-version: "3.12"
-                      channel-priority: "flexible"
-                      envfile: ".github/environment-docs.yml"
-        steps:
-        - uses: actions/checkout@v7
-          with:
-            fetch-depth: 0
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-        - name: Cache conda
-          uses: actions/cache@v6
-          env:
-            # Increase this value to reset cache if etc/example-environment.yml has not changed
-            CACHE_NUMBER: 0
-          with:
-            path: ~/conda_pkgs_dir
-            key: ${{ runner.os }}-${{ matrix.python-version }}-conda-${{ env.CACHE_NUMBER }}-${{ hashFiles( matrix.envfile ) }}
+      - name: Install Conda environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: false
+          python-version: "3.12"
+          add-pip-as-python-dependency: true
+          auto-activate-base: false
+          activate-environment: docs
+          channel-priority: flexible
+          environment-file: .github/environment-docs.yml
+          cache-environment: true
+          cache-downloads: true
 
-        - name: Install Conda environment
-          uses: conda-incubator/setup-miniconda@v4
-          with:
-            auto-update-conda: false
-            python-version: ${{ matrix.python-version }}
-            add-pip-as-python-dependency: true
-            auto-activate: false
-            activate-environment: docs
-            channel-priority: ${{ matrix.channel-priority }}
-            environment-file: ${{ matrix.envfile }}
-            conda-remove-defaults: true
-            use-only-tar-bz2: false # IMPORTANT: This needs to be set for caching to work properly!
+      - name: Conda info
+        shell: bash -el {0}
+        run: |
+          conda info -a
+          conda list
 
-        - name: Conda info
-          shell: bash -l {0}
-          run: |
-            conda info -a
-            conda list
+      - name: Install librosa
+        shell: bash -el {0}
+        run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
 
-        - name: Install librosa
-          shell: bash -l {0}
-          run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
+      - name: Build documentations
+        shell: bash -el {0}
+        run: |
+          sphinx-multiversion -D smv_latest_version=$(./scripts/get_latest_release.sh) docs build/html
+          touch build/html/.nojekyll
+          cp docs/docsite-index-redirect.html build/html/index.html
+          ln -srf build/html/$(./scripts/get_latest_release.sh) build/html/latest
 
-        - name: Build documentations
-          shell: bash -l {0}
-          run: |
-            sphinx-multiversion -D smv_latest_version=$(./scripts/get_latest_release.sh) docs build/html
-            touch build/html/.nojekyll
-            cp docs/docsite-index-redirect.html build/html/index.html
-            ln -srf build/html/$(./scripts/get_latest_release.sh) build/html/latest  # auto-link the latest tag
-
-        #- name: Checkout doc repo
-        #  uses: actions/checkout@v7
-        #  with:
-        #    repository: librosa/doc
-        #    ref: main
-        #    token: ${{ secrets.DOC_PUBLISH_TOKEN }}
-        #    path: doc-repo
-        #    fetch-depth: 0
-
-        #- name: Sync built docs into doc repo
-        #  run: |
-        #    rsync -a --delete build/html/ doc-repo/
-
-        #- name: Commit docs in doc repo
-        #  working-directory: doc-repo
-        #  run: |
-        #    git config user.name "librosa-docs-bot"
-        #    git config user.email "brian.mcfee@nyu.edu"
-        #    git add -A
-        #    if ! git diff --cached --quiet; then
-        #      git commit -m "Update docs from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
-        #    else
-        #      echo "No docs changes to commit."
-        #    fi
-
-        #- name: Push docs repo
-        #  if: github.ref == 'refs/heads/main'
-        #  working-directory: doc-repo
-        #  run: |
-        #    if git rev-parse --verify HEAD >/dev/null 2>&1; then
-        #      git push origin main
-        #    fi
+      - name: Push to web
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          deploy_key: ${{ secrets.DOCS_DEPLOY_KEY }}
+          external_repository: librosa/doc
+          publish_branch: main
+          publish_dir: build/html
+          user_name: librosa
+          user_email: brian.mcfee@nyu.edu
