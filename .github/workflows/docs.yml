@@ -72,35 +72,35 @@ jobs:
             cp docs/docsite-index-redirect.html build/html/index.html
             ln -srf build/html/$(./scripts/get_latest_release.sh) build/html/latest  # auto-link the latest tag
 
-        - name: Checkout doc repo
-          uses: actions/checkout@v7
-          with:
-            repository: librosa/doc
-            ref: main
-            token: ${{ secrets.DOC_PUBLISH_TOKEN }}
-            path: doc-repo
-            fetch-depth: 0
+        #- name: Checkout doc repo
+        #  uses: actions/checkout@v7
+        #  with:
+        #    repository: librosa/doc
+        #    ref: main
+        #    token: ${{ secrets.DOC_PUBLISH_TOKEN }}
+        #    path: doc-repo
+        #    fetch-depth: 0
 
-        - name: Sync built docs into doc repo
-          run: |
-            rsync -a --delete build/html/ doc-repo/
+        #- name: Sync built docs into doc repo
+        #  run: |
+        #    rsync -a --delete build/html/ doc-repo/
 
-        - name: Commit docs in doc repo
-          working-directory: doc-repo
-          run: |
-            git config user.name "librosa-docs-bot"
-            git config user.email "brian.mcfee@nyu.edu"
-            git add -A
-            if ! git diff --cached --quiet; then
-              git commit -m "Update docs from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
-            else
-              echo "No docs changes to commit."
-            fi
+        #- name: Commit docs in doc repo
+        #  working-directory: doc-repo
+        #  run: |
+        #    git config user.name "librosa-docs-bot"
+        #    git config user.email "brian.mcfee@nyu.edu"
+        #    git add -A
+        #    if ! git diff --cached --quiet; then
+        #      git commit -m "Update docs from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
+        #    else
+        #      echo "No docs changes to commit."
+        #    fi
 
-        - name: Push docs repo
-          if: github.ref == 'refs/heads/main'
-          working-directory: doc-repo
-          run: |
-            if git rev-parse --verify HEAD >/dev/null 2>&1; then
-              git push origin main
-            fi
+        #- name: Push docs repo
+        #  if: github.ref == 'refs/heads/main'
+        #  working-directory: doc-repo
+        #  run: |
+        #    if git rev-parse --verify HEAD >/dev/null 2>&1; then
+        #      git push origin main
+        #    fi
