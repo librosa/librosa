@@ -72,13 +72,27 @@ jobs:
             cp docs/docsite-index-redirect.html build/html/index.html
             ln -srf build/html/$(./scripts/get_latest_release.sh) build/html/latest  # auto-link the latest tag
 
-        - name: Push to web
-          uses: tagus/git-deploy@v0.5.0
+        - name: Checkout doc repo
+          uses: actions/checkout@v7
           with:
-            changes: build/html
-            branch: main
-            repository: git@github.com:librosa/doc.git
-            ssh_key: ${{ secrets.DOCS_DEPLOY_KEY }}
-            name: librosa
-            email: brian.mcfee@nyu.edu
-            clean_repo: true
+            repository: librosa/doc
+            ref: main
+            token: ${{ secrets.DOC_PUBLISH_TOKEN }}
+            path: doc-repo
+
+        - name: Sync built docs into doc repo
+          run: |
+            rsync -a --delete build/html/ doc-repo/
+
+        - name: Commit and push docs
+          run: |
+            cd doc-repo
+            git config user.name "librosa-docs-bot"
+            git config user.email "brian.mcfee@nyu.edu"
+            if [[ -n "$(git status --porcelain)" ]]; then
+              git add -A
+              git commit -m "Update docs from ${GITHUB_REPOSITORY}@${GITHUB_SHA}"
+              git push origin main
+            else
+              echo "No docs changes to publish."
+            fi
