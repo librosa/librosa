@@ -56,7 +56,7 @@ jobs:
       - name: Push to web
         uses: peaceiris/actions-gh-pages@v4
         with:
-          deploy_key: ${{ secrets.DOC_PUBLISH_TOKEN }}
+          personal_token: ${{ secrets.DOC_PUBLISH_TOKEN }}
           external_repository: librosa/doc
           publish_branch: main
           publish_dir: build/html
