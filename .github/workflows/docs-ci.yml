@@ -86,7 +86,6 @@ jobs:
           run: |
             sphinx-build -b html docs build/html
             touch build/html/.nojekyll
-            cp docs/docsite-index-redirect.html build/html/index.html
 
         - name: Upload compiled documentation site
           if: github.event_name == 'pull_request'
