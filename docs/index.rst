@@ -1,9 +1,7 @@
 *******
 librosa
 *******
-`librosa` is a python package for music and audio analysis.  It provides the building blocks necessary to create music information retrieval systems.
-
-For a quick introduction to using librosa, please refer to the :doc:`tutorial`.
+`librosa` is a Python library for audio and music signal processing. It provides the foundational algorithms and tools required for building music information retrieval (MIR) systems.
 
 Installing librosa
 ==================
@@ -16,11 +14,11 @@ Citing librosa
 
 If you want to cite librosa in a scholarly work, there are two ways to do it.
 
-- If you are using the library for your work, for the sake of reproducibility, please cite the version you used by retrieving the appropriate DOI and citation information from Zenodo:
+- If you are using the library for your work, for the sake of reproducibility, please cite the version you used by retrieving the appropriate DOI and citation information from Zenodo |zenodo_badge|.
 
-.. image:: https://zenodo.org/badge/6309729.svg
-   :target: https://zenodo.org/badge/latestdoi/6309729
-
+.. |zenodo_badge| image:: https://zenodo.org/badge/6309729.svg
+    :target: https://zenodo.org/badge/latestdoi/6309729
+    :alt: DOI badge
 
 You can also find the DOI for your currently installed
 version by running the following command in Python:
