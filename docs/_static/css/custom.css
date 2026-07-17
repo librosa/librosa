@@ -1,16 +1,28 @@
-div.wy-side-nav-search .version {
-    color: #404040;
-    font-weight: bold;
+/*
+ * PyData Sphinx Theme custom overrides
+ * Migrated from sphinx_rtd_theme
+ */
+
+/* 1. Top Navigation Bar Background (Replaces nav.wy-nav-top) */
+.bd-header {
+    background-color: #AA2396;
 }
 
-nav.wy-nav-top {
-    background: #AA2396;
+/* Ensure header text/icons/links are readable against your custom background */
+.bd-header .navbar-nav li a.nav-link,
+.bd-header .navbar-icon-links button,
+.bd-header .navbar-icon-links a,
+.bd-header .navbar-brand {
+    color: #ffffff;
 }
 
-div.wy-nav-content {
-    max-width: 1000px;
+.bd-header .navbar-nav li a.nav-link:hover {
+    color: #f0f0f0;
 }
 
-span.caption-text {
+/* 3. Sidebar and TOC Caption Text (Replaces span.caption-text) */
+p.caption,
+p.caption span.caption-text,
+.bd-sidenav .caption-text {
     color: #cc4878;
 }

@@ -1,49 +1,35 @@
-Installation instructions
-^^^^^^^^^^^^^^^^^^^^^^^^^
 
-pypi
-~~~~
-The simplest way to install *librosa* is through the Python Package Index (PyPI).
-This will ensure that all required dependencies are fulfilled.
-This can be achieved by executing the following command::
+.. tab-set::
+    .. tab-item:: pip
 
-    pip install librosa
+        The simplest way to install *librosa* is through the Python Package Index (PyPI).
+        This will ensure that all required dependencies are fulfilled.
+        This can be achieved by executing the following command::
 
-or::
+            pip install librosa
 
-    sudo pip install librosa
+    .. tab-item:: conda
 
-to install system-wide, or::
+        If you use conda/Anaconda environments, librosa can be installed from the `conda-forge` channel::
 
-    pip install -u librosa
+            conda install -c conda-forge librosa
 
-to install just for your own user.
+    .. tab-item:: source
 
-conda
-~~~~~
-If you use conda/Anaconda environments, librosa can be installed from the 
-`conda-forge` channel::
+        If you've downloaded the archive manually from the `releases
+        <https://github.com/librosa/librosa/releases/>`_ page, you can install using the `setuptools` script::
 
-    conda install -c conda-forge librosa
+            tar xzf librosa-VERSION.tar.gz
+            cd librosa-VERSION/
+            python setup.py install
 
-Source
-~~~~~~
+        If you intend to develop librosa or make changes to the source code, you can
+        install with `pip install -e` to link to your actively developed source tree::
 
-If you've downloaded the archive manually from the `releases
-<https://github.com/librosa/librosa/releases/>`_ page, you can install using the
-`setuptools` script::
+            tar xzf librosa-VERSION.tar.gz
+            cd librosa-VERSION/
+            pip install -e .
 
-    tar xzf librosa-VERSION.tar.gz
-    cd librosa-VERSION/
-    python setup.py install
+        Alternately, the latest development version can be installed via pip::
 
-If you intend to develop librosa or make changes to the source code, you can
-install with `pip install -e` to link to your actively developed source tree::
-
-    tar xzf librosa-VERSION.tar.gz
-    cd librosa-VERSION/
-    pip install -e .
-
-Alternately, the latest development version can be installed via pip::
-
-    pip install git+https://github.com/librosa/librosa
+            pip install git+https://github.com/librosa/librosa
