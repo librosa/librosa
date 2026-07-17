@@ -1,26 +1,35 @@
 *******
 librosa
 *******
-`librosa` is a python package for music and audio analysis.  It provides the building
-blocks necessary to create music information retrieval systems.
+`librosa` is a Python library for audio and music signal processing. It provides the foundational algorithms and tools required for building music information retrieval (MIR) systems.
 
-For a quick introduction to using librosa, please refer to the :doc:`tutorial`.
-For a more advanced introduction which describes the package design principles, please refer to the
-`librosa paper <https://doi.org/10.25080/Majora-7b98e3ed-003>`_ at
-`SciPy 2015 <https://scipy2015.scipy.org>`_.
+Installing librosa
+==================
+
+.. include:: install.rst
+
 
 Citing librosa
 ==============
 
 If you want to cite librosa in a scholarly work, there are two ways to do it.
 
-- If you are using the library for your work, for the sake of reproducibility, please cite the version you used by retrieving the appropriate DOI and citation information from Zenodo:
+- If you are using the library for your work, for the sake of reproducibility, please cite the version you used by retrieving the appropriate DOI and citation information from Zenodo |zenodo_badge|.
 
-.. image:: https://zenodo.org/badge/6309729.svg
-   :target: https://zenodo.org/badge/latestdoi/6309729
+.. |zenodo_badge| image:: https://zenodo.org/badge/6309729.svg
+    :target: https://zenodo.org/badge/latestdoi/6309729
+    :alt: DOI badge
 
-- If you wish to cite librosa for its design, motivation etc., please cite the paper
-  published at SciPy 2015. [#]_
+You can also find the DOI for your currently installed
+version by running the following command in Python:
+
+.. code-block:: python
+
+    import librosa
+    print(librosa.cite())
+
+
+- If you wish to cite librosa for its design, motivation etc., please cite the `librosa paper <https://doi.org/10.25080/Majora-7b98e3ed-003>`_ published at `SciPy 2015 <https://scipy2015.scipy.org>`_. [#]_
 
 .. [#] McFee, Brian, Colin Raffel, Dawen Liang, Daniel PW Ellis, Matt McVicar, Eric Battenberg, and Oriol Nieto.
     "librosa: Audio and music signal analysis in python."
@@ -28,51 +37,12 @@ If you want to cite librosa in a scholarly work, there are two ways to do it.
 
 
 .. toctree::
-    :caption: Getting started
-    :maxdepth: 1
-
-    install
-    tutorial
-    troubleshooting
-
-
-.. toctree::
-    :caption: API documentation
-    :maxdepth: 1
-
-    core
-    display
-    feature
-    onset
-    beat
-    decompose
-    effects
-    segment
-    sequence
-    util
-
-
-.. toctree::
-    :caption: Advanced topics
     :maxdepth: 2
+    :hidden:
 
-    multichannel
-    filters
-    cache
-    ioformats
-    advanced
-    recordings
-
-.. toctree::
-   :caption: Contributing
-   :maxdepth: 1
-
-   contributing
-
-.. toctree::
-    :caption: Reference
-    :maxdepth: 1
-
+    tutorial
+    api/index
+    advanced/index
     changelog
-    genindex
-    glossary
+    contributing
+    reference/index
