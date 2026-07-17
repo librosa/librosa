@@ -45,19 +45,25 @@ jobs:
         shell: bash -el {0}
         run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
 
+      #- name: Build documentations
+      #  shell: bash -el {0}
+      #  run: |
+      #    sphinx-multiversion -D smv_latest_version=$(./scripts/get_latest_release.sh) docs build/html
+      #    touch build/html/.nojekyll
+      #    cp docs/docsite-index-redirect.html build/html/index.html
+      #    ln -srf build/html/$(./scripts/get_latest_release.sh) build/html/latest
       - name: Build documentations
         shell: bash -el {0}
         run: |
-          sphinx-multiversion -D smv_latest_version=$(./scripts/get_latest_release.sh) docs build/html
+          sphinx-build -b html docs build/html
           touch build/html/.nojekyll
           cp docs/docsite-index-redirect.html build/html/index.html
-          ln -srf build/html/$(./scripts/get_latest_release.sh) build/html/latest
 
       - name: Push to web
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.DOC_PUBLISH_TOKEN }}
-          external_repository: librosa/doc
+          external_repository: librosa/web-staging
           publish_branch: main
           publish_dir: build/html
           user_name: librosa
