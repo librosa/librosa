@@ -16,7 +16,7 @@ Citing librosa
 
 
 .. toctree::
-    :maxdepth: 3
+    :maxdepth: 4
     :hidden:
     
     auto_tutorials/index

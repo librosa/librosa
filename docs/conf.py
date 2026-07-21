@@ -324,14 +324,19 @@ html_theme_options = {
         "json_url": "https://librosa.org/en/stable/_static/switcher.json",
         "version_match": version,
     },
-    "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
+    "navbar_end": ["version-switcher", "navbar-icon-links"],
     "navbar_align": "left",
+    "show_nav_level": 1,
 }
 html_static_path = ["_static"]
 html_css_files = [
     "css/custom.css",
 ]
 html_show_sourcelink = False
+
+html_context = {
+    "default_mode": "light"
+}
 
 # -- Options for analytics ----------------------------------------------------
 googleanalytics_id = "UA-171031946-1"
@@ -431,7 +436,8 @@ autodoc_member_order = "bysource"
 autodoc_typehints = "none"
 
 linkcheck_allow_unauthorized = True
-linkcheck_ignore = ["https://www.ee.columbia.edu/~dpwe/resources/.*", "https://htk.eng.cam.ac.uk/.*",
+linkcheck_ignore = ["https://www.ee.columbia.edu/~dpwe/resources/.*",
+                    "https://htk.eng.cam.ac.uk/.*",
                     "https://zenodo.org/.*"]
 
 def skip_matplotlib_inherited(app, what, name, obj, skip, options):
