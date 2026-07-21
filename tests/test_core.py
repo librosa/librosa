@@ -1655,6 +1655,29 @@ def test_piptrack(freq, n_fft):
     assert np.all(np.abs(np.log2(recovered_pitches) - np.log2(freq)) <= 1e-2)
 
 
+@pytest.mark.parametrize("n_fft", [1024, 2048])
+def test_piptrack_magnitude_equivalence(n_fft):
+    # piptrack rectifies its input to magnitudes internally. That rectification
+    # is skipped for a real, non-negative spectrogram (to avoid a redundant
+    # full-size copy), so a non-negative magnitude spectrogram, its complex
+    # counterpart, and its sign-flipped version must all yield identical output.
+    y = librosa.tone(440, sr=22050, duration=0.2)
+    D = librosa.stft(y, n_fft=n_fft, center=False)
+    S = np.abs(D)
+
+    # Non-negative real input: the copy-skipping fast path.
+    pitches_mag, mags_mag = librosa.piptrack(S=S, fmin=100)
+    # Complex input: must be converted to magnitude.
+    pitches_cplx, mags_cplx = librosa.piptrack(S=D, fmin=100)
+    # Negative real input: must be rectified.
+    pitches_neg, mags_neg = librosa.piptrack(S=-S, fmin=100)
+
+    assert np.allclose(pitches_mag, pitches_cplx)
+    assert np.allclose(mags_mag, mags_cplx)
+    assert np.allclose(pitches_mag, pitches_neg)
+    assert np.allclose(mags_mag, mags_neg)
+
+
 @pytest.mark.parametrize("center_note", [69, 84, 108])
 @pytest.mark.parametrize("tuning", np.linspace(-0.5, 0.5, 5, endpoint=False))
 @pytest.mark.parametrize("bins_per_octave", [12])
