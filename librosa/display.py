@@ -997,7 +997,7 @@ class AdaptiveWaveplot:
             # we have to squash mypy errors on operand compatibility
             # here because the type annotations from matplotlib are too
             # loose.
-            if start <= data[0] or end >= data[-1]:  # type: ignore[operator,index]
+            if start <= data[0] or end >= data[-1]:  # type: ignore[index]
                 # Viewport expands beyond current data in steps; update
                 # we want to cover a window of self.max_samples centered on the current viewport
                 midpoint_time = (start + end) / 2
