@@ -411,7 +411,7 @@ def cite(version: str | None=None, *, bib: bool = False) -> str:
 
     version_data = __GOODBOY.fetch("version_index.msgpack")
     with open(version_data, "rb") as fdesc:
-        version_index: dict = msgpack.load(fdesc)
+        version_index: dict[str, str] = msgpack.load(fdesc)
 
     if version not in version_index:
         if "dev" in version:
@@ -423,7 +423,7 @@ def cite(version: str | None=None, *, bib: bool = False) -> str:
     if bib:
         bib_data = __GOODBOY.fetch("bib_index.msgpack")
         with open(bib_data, "rb") as fdesc:
-            bib_index: dict = msgpack.load(fdesc)
+            bib_index: dict[str, str] = msgpack.load(fdesc)
 
         return bib_index[version]
     return f"https://doi.org/{version_index[version]}"
