@@ -337,7 +337,6 @@ html_show_sourcelink = False
 html_context = {
     "default_mode": "light"
 }
-
 # -- Options for analytics ----------------------------------------------------
 googleanalytics_id = "UA-171031946-1"
 
