@@ -8,6 +8,14 @@
     background-color: #AA2396;
 }
 
+div.sphx-glr-download-link-note {
+    display: none;
+}
+
+nav.wy-nav-top {
+    background: #AA2396;
+}
+
 /* Ensure header text/icons/links are readable against your custom background */
 .bd-header .navbar-nav li a.nav-link,
 .bd-header .navbar-icon-links button,
@@ -26,3 +34,39 @@ p.caption span.caption-text,
 .bd-sidenav .caption-text {
     color: #cc4878;
 }
+
+/* Disable hover-text on sphinx-gallery */
+.sphx-glr-thumbcontainer[tooltip]:hover::before,
+.sphx-glr-thumbcontainer[tooltip]:hover::after {
+    display: none;
+}
+
+.librosa-example-info pre {
+  background: #fff;
+  padding: .5em;
+  overflow-x: auto;          /* still allow horizontal scroll if really needed */
+  border-radius: 3px;
+  margin: 0;
+
+  /* NEW: wrap long lines instead of overflowing */
+  white-space: pre-wrap;     /* preserve whitespace but allow wrapping */
+  overflow-wrap: break-word; /* break long “words” if they exceed width */
+  box-sizing: border-box;    /* include padding in width calculations */
+  max-width: 100%;           /* never exceed the parent’s width */
+  text-align: left;
+}
+
+.librosa-example-info {
+  border: 1px solid #ccc;
+  background: #f9f9f9;
+  padding: 1em;
+  margin: 1em 0;
+  border-radius: 4px;
+    text-align: right;
+}
+
+.librosa-example-info p {
+  margin: 0 0 .5em;
+    text-align: left;
+}
+

@@ -15,11 +15,6 @@ Data visualization
     wavef0
     multiplot
 
-    colorbar_db
-    colorbar_phase
-    highlight
-    legend_for_axes
-
 Axis formatting
 ---------------
 .. autosummary::
@@ -41,6 +36,10 @@ Miscellaneous
     :toctree: generated/
 
     infer_cmap
+    colorbar_db
+    colorbar_phase
+    highlight
+    legend_for_axes
     AdaptiveWaveplot
     Transformf0
 
@@ -360,17 +359,6 @@ class NoteFormatter(AdaptiveFormatterBase):
     --------
     LogHzFormatter
     matplotlib.ticker.Formatter
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> values = librosa.midi_to_hz(np.arange(48, 72))
-    >>> fig, ax = plt.subplots(nrows=2)
-    >>> ax[0].bar(np.arange(len(values)), values)
-    >>> ax[0].set(ylabel='Hz')
-    >>> ax[1].bar(np.arange(len(values)), values)
-    >>> ax[1].yaxis.set_major_formatter(librosa.display.NoteFormatter())
-    >>> ax[1].set(ylabel='Note')
     """
 
     octave: bool
@@ -441,17 +429,6 @@ class SvaraFormatter(AdaptiveFormatterBase):
     matplotlib.ticker.Formatter
     librosa.hz_to_svara_c
     librosa.hz_to_svara_h
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> values = librosa.midi_to_hz(np.arange(48, 72))
-    >>> fig, ax = plt.subplots(nrows=2)
-    >>> ax[0].bar(np.arange(len(values)), values)
-    >>> ax[0].set(ylabel='Hz')
-    >>> ax[1].bar(np.arange(len(values)), values)
-    >>> ax[1].yaxis.set_major_formatter(librosa.display.SvaraFormatter(261))
-    >>> ax[1].set(ylabel='Note')
     """
 
     def __init__(
@@ -528,17 +505,6 @@ class FJSFormatter(AdaptiveFormatterBase):
     NoteFormatter
     hz_to_fjs
     matplotlib.ticker.Formatter
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> values = librosa.midi_to_hz(np.arange(48, 72))
-    >>> fig, ax = plt.subplots(nrows=2)
-    >>> ax[0].bar(np.arange(len(values)), values)
-    >>> ax[0].set(ylabel='Hz')
-    >>> ax[1].bar(np.arange(len(values)), values)
-    >>> ax[1].yaxis.set_major_formatter(librosa.display.NoteFormatter())
-    >>> ax[1].set(ylabel='Note')
     """
 
     fmin: float
@@ -599,18 +565,6 @@ class LogHzFormatter(AdaptiveFormatterBase):
     --------
     NoteFormatter
     matplotlib.ticker.Formatter
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> values = librosa.midi_to_hz(np.arange(48, 72))
-    >>> fig, ax = plt.subplots(nrows=2)
-    >>> ax[0].bar(np.arange(len(values)), values)
-    >>> ax[0].yaxis.set_major_formatter(librosa.display.LogHzFormatter())
-    >>> ax[0].set(ylabel='Hz')
-    >>> ax[1].bar(np.arange(len(values)), values)
-    >>> ax[1].yaxis.set_major_formatter(librosa.display.NoteFormatter())
-    >>> ax[1].set(ylabel='Note')
     """
 
     def __init__(self, major: bool = True):
@@ -661,15 +615,6 @@ class ChromaFormatter(mplticker.Formatter):
     See Also
     --------
     matplotlib.ticker.Formatter
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> values = np.arange(12)
-    >>> fig, ax = plt.subplots()
-    >>> ax.plot(values)
-    >>> ax.yaxis.set_major_formatter(librosa.display.ChromaFormatter())
-    >>> ax.set(ylabel='Pitch class')
     """
 
     key: str
@@ -778,15 +723,6 @@ class ChromaFJSFormatter(mplticker.Formatter):
     See Also
     --------
     matplotlib.ticker.Formatter
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> values = np.arange(12)
-    >>> fig, ax = plt.subplots()
-    >>> ax.plot(values)
-    >>> ax.yaxis.set_major_formatter(librosa.display.ChromaFJSFormatter(intervals="ji5", bins_per_octave=12))
-    >>> ax.set(ylabel='Pitch class')
     """
 
     unison: str
@@ -843,15 +779,6 @@ class TonnetzFormatter(mplticker.Formatter):
     See Also
     --------
     matplotlib.ticker.Formatter
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> values = np.arange(6)
-    >>> fig, ax = plt.subplots()
-    >>> ax.plot(values)
-    >>> ax.yaxis.set_major_formatter(librosa.display.TonnetzFormatter())
-    >>> ax.set(ylabel='Tonnetz')
     """
 
     def __call__(self, x: float, pos: int | None = None) -> str:
@@ -1476,7 +1403,8 @@ def specshow(
 ) -> QuadMesh:
     """Display a spectrogram/chromagram/cqt/etc.
 
-    For a detailed overview of this function, see :ref:`sphx_glr_auto_examples_plot_display.py`
+    For a detailed overview of display functionality, see the
+    :ref:`Display and visualization tutorial <tutorial-display-index>`.
 
     Parameters
     ----------
@@ -2852,8 +2780,8 @@ def waveshow(
 
     >>> y, sr = librosa.loadx('choice', duration=10)
     >>> y_harm, y_perc = librosa.effects.hpss(y)
-    >>> librosa.display.waveshow(y_harm, sr=sr, alpha=0.5, ax=ax[2], label='Harmonic')
-    >>> librosa.display.waveshow(y_perc, sr=sr, color='r', alpha=0.5, ax=ax[2], label='Percussive')
+    >>> librosa.display.waveshow(y_harm, sr=sr, color='C1', alpha=0.75, ax=ax[2], label='Harmonic')
+    >>> librosa.display.waveshow(y_perc, sr=sr, color='C2', alpha=0.75, ax=ax[2], label='Percussive')
     >>> ax[2].set(title='Multiple waveforms')
     >>> ax[2].legend()
     >>> plt.show()
@@ -2861,13 +2789,13 @@ def waveshow(
     Zooming in on a plot to show raw sample values
 
     >>> fig, (ax, ax2) = plt.subplots(nrows=2, sharex=True)
-    >>> ax.set(xlim=[6.0, 6.01], title='Sample view', ylim=[-0.2, 0.2])
-    >>> librosa.display.waveshow(y, sr=sr, ax=ax, marker='.', label='Full signal')
-    >>> librosa.display.waveshow(y_harm, sr=sr, alpha=0.5, ax=ax2, label='Harmonic')
-    >>> librosa.display.waveshow(y_perc, sr=sr, color='r', alpha=0.5, ax=ax2, label='Percussive')
+    >>> ax.set(xlim=[6.1, 6.25], title='Sample view')
+    >>> librosa.display.waveshow(y, sr=sr, ax=ax, label='Full signal')
+    >>> librosa.display.waveshow(y_harm, sr=sr, color='C1', alpha=0.75, ax=ax2, label='Harmonic')
+    >>> librosa.display.waveshow(y_perc, sr=sr, color='C2', alpha=0.75, ax=ax2, label='Percussive')
     >>> ax.label_outer()
     >>> ax.legend()
-    >>> ax2.legend()
+    >>> ax2.legend(ncols=2)
     >>> plt.show()
 
     Plotting a transposed wave along with a self-similarity matrix
@@ -3230,6 +3158,7 @@ def wavef0(
     time_axis : str
         Display style of the time axis ticks and tick markers.
         Accepted values are:
+
           - 'time' : markers are shown as milliseconds, seconds, minutes, or hours.
           - 'h' : markers are shown as hours, minutes, and seconds.
           - 'm' : markers are shown as minutes and seconds.
@@ -3245,6 +3174,7 @@ def wavef0(
     freq_axis : str
         Display style of the frequency axis ticks and tick markers.
         Accepted values are:
+
           - 'cqt_note' : markers are shown as note names.
           - 'cqt_hz' : markers are shown as frequencies in Hz.
           - 'cqt_oct3' : markers are shown in Hz using 1/3-octave intervals.
@@ -3281,6 +3211,7 @@ def wavef0(
     method : str
         Method to use for visualizing the waveform with f0 displacement.
         Accepted values are:
+
           - 'waveshow' : Use `librosa.display.waveshow` to visualize the waveform with an f0 displacement.
           - 'wavebars' : Use `librosa.display.wavebars` to visualize the waveform as bars with an f0 displacement.
 
@@ -3955,6 +3886,7 @@ def multiplot(
     """Visualize multiple related waveforms or spectrograms on an array of subplots.
 
     Example use cases include:
+
         - Displaying multiple waveforms from a multi-channel audio file.
         - Displaying multiple spectrograms from a multi-channel audio file.
 
@@ -3964,7 +3896,7 @@ def multiplot(
         The name of the display function to use for the multiplot. Accepted values are 'waveshow',
         'wavebars', and 'specshow'.
 
-    *data : one or more `np.ndarray`s
+    *data : one or more `np.ndarray`
         The input data for the multiplot.
         If one array is provided, it is interpreted as a multi-channel array, where the leading
         dimensions correspond to different channels or signals to plot.
@@ -4050,7 +3982,7 @@ def multiplot(
     ...                           # The remaining parameters are passed through to waveshow
     ...                           sr=sr,
     ...                           invert=True)
-    >>> librosa.display.legend_for_axes()  # Helper to create a single legend across subplots
+    >>> plt.gcf().legend()
     >>> plt.show()
 
     Multiplot can also accept preconstructed axes as input, provided that they

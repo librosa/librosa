@@ -24,7 +24,6 @@ dependencies:
   - myst-parser>=2.0
   - msgpack-python>=1.0.5
   - sphinx-gallery>=0.10.1
-  - sphinx_rtd_theme>=1.2.0
   - sphinx-copybutton>=0.5.2
   - pydata-sphinx-theme>=0.18.0
   - sphinx-design>=0.7.0
@@ -32,6 +31,8 @@ dependencies:
   - ffmpeg
   - standard-sunau
   - standard-aifc
+  - umap-learn>=0.5.3
+  - pandas>=2.0.0
   - pip:
     - presets>=0.1.3
     - mir-eval>=0.6

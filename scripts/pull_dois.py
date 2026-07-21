@@ -1,93 +1,92 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Script to pull all versions of our Zenodo record and save them as a msgpack file.
-Modified to use urllib (instead of requests) for Python 3.13.
-Added URL scheme validation and pagination to retrieve all versions.
+Updated script to fetch DOIs and bibtex entries from zenodo.org and DataCite, with improved error handling and compliance with API rate limits.
+
+Revised 2026-07-21, coauthored by gemini 3.1 pro.
 """
-
+import json
+import time
+import urllib.error
+import urllib.parse
 import urllib.request
-import urllib.error  # For handling HTTP and URL errors
-import urllib.parse  # For parsing URLs to validate the scheme
-import json  # For JSON parsing
-import msgpack  # For saving data in msgpack format
-import pyzenodo3  # Zenodo API wrapper
+
+import msgpack
 
 
-def validate_url(url):
-    """
-    Validate the URL scheme to only allow http and https.
-    This prevents unintended schemes (e.g., file://) from being used.
-    """
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme not in ("http", "https"):
-        raise ValueError(f"Invalid URL scheme: {parsed.scheme}")
-    return url
+def get_zenodo_record_versions(concept_doi: str) -> dict:
+    if not concept_doi.startswith("10.5281/zenodo."):
+        raise ValueError("Invalid Zenodo DOI format. Expected '10.5281/zenodo.<id>'")
 
+    concept_id = concept_doi.split(".")[-1]
 
-def safe_urlopen(req, timeout=30):
-    """
-    Wrapper around urllib.request.urlopen that validates the URL scheme before opening.
-    The "# nosec" comment tells Bandit that this call is safe.
-    """
-    validate_url(req.full_url)
-    return urllib.request.urlopen(req, timeout=timeout)  # nosec
+    base_url = "https://zenodo.org/api/records"
+    params = {
+        "q": f"conceptrecid:{concept_id}",
+        "all_versions": "true",
+        "size": 25
+    }
 
-
-def get_zenodo_record_versions(doi):
-    """
-    Retrieve all versions of a Zenodo record given its DOI.
-
-    This function first finds the main record using pyzenodo3, then uses the
-    URL provided in main_record.data['links']['versions'] to retrieve version records.
-    Pagination is handled by checking for a "next" link in the JSON response.
-
-    Returns a mapping of version numbers to DOIs.
-    """
-    zen = pyzenodo3.Zenodo()
-    main_record = zen.find_record_by_doi(doi)
-
-    # URL for the versions of the record.
-    base_url = main_record.data["links"]["versions"]
-
-    all_matches = []  # List to accumulate all version records.
-    next_url = base_url  # Start with the base URL.
+    next_url = f"{base_url}?{urllib.parse.urlencode(params)}"
+    headers = {"User-Agent": "Librosa-Zenodo-Indexer/1.4 (Python/urllib)"}
+    doi_map = {}
 
     while next_url:
-        # Validate the URL scheme before making the request.
-        validate_url(next_url)
-        # Create a Request object with a User-Agent header.
-        req = urllib.request.Request(next_url, headers={"User-Agent": "Mozilla/5.0"})
-        # Open the URL safely.
-        with safe_urlopen(req, timeout=30) as response:
-            data = response.read().decode("utf-8")
-            version_data = json.loads(data)
+        parsed = urllib.parse.urlparse(next_url)
+        if parsed.scheme != "https":
+            raise ValueError(f"Invalid URL scheme: {parsed.scheme}")
 
-        # Extract the list of version records from the JSON.
-        hits = version_data.get("hits", {}).get("hits", [])
-        all_matches.extend(hits)
+        req = urllib.request.Request(next_url, headers=headers)
 
-        # Check if there's a "next" page link in the JSON's "links" section.
-        # If present, update next_url; otherwise, exit the loop.
-        next_url = version_data.get("links", {}).get("next")
+        try:
+            with urllib.request.urlopen(req, timeout=30) as response:  # nosec
+                page_data = json.loads(response.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode("utf-8")
+            raise RuntimeError(f"API request failed: {e.code} {e.reason} - {error_body}") from e
 
-    # Build a mapping of version numbers to DOIs.
-    doi_map = {m["metadata"]["version"]: m["doi"] for m in all_matches}
+        hits = page_data.get("hits", {}).get("hits", [])
+        for hit in hits:
+            version = hit.get("metadata", {}).get("version")
+            hit_doi = hit.get("doi") or hit.get("pids", {}).get("doi", {}).get("identifier")
+
+            if version and hit_doi:
+                doi_map[version] = hit_doi
+
+        next_url = page_data.get("links", {}).get("next")
+
     return doi_map
 
+def get_bibtex_index(doi_map: dict) -> dict:
+    bib_map = {}
+    headers = {"User-Agent": "Librosa-Zenodo-Indexer/1.4 (Python/urllib)"}
 
-def save_as_msgpack(data, filename="version_index.msgpack"):
-    """
-    Save the given data in msgpack format to the specified filename.
-    """
+    for version, hit_doi in doi_map.items():
+        # Query DataCite directly to bypass urllib redirect header truncation
+        url = f"https://api.datacite.org/application/x-bibtex/{hit_doi}"
+        req = urllib.request.Request(url, headers=headers)
+
+        try:
+            with urllib.request.urlopen(req, timeout=30) as response:  # nosec
+                bib_map[version] = response.read().decode("utf-8").strip()
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f"Failed to fetch BibTeX for {hit_doi}: {e.code} {e.reason}") from e
+
+        # Enforce 0.6s delay to respect DataCite's ~100 req/min limit
+        time.sleep(0.6)
+
+    return bib_map
+
+def save_as_msgpack(data: dict, filename: str):
     with open(filename, "wb") as f:
         msgpack.dump(data, f)
     print(f"Data saved to {filename}")
 
-
-# Example usage
 if __name__ == "__main__":
-    # Main concept DOI for all librosa versions
     doi = "10.5281/zenodo.591533"
+
     version_index = get_zenodo_record_versions(doi)
-    save_as_msgpack(version_index)
+    save_as_msgpack(version_index, "version_index.msgpack")
+
+    bib_index = get_bibtex_index(version_index)
+    save_as_msgpack(bib_index, "bib_index.msgpack")

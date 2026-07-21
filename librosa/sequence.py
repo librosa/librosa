@@ -1102,7 +1102,7 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> npt.NDArray[np.
     -------
     steps : np.ndarray [shape=(t,)]
         An array of fractional steps, where ``steps[i]`` is the index
-        in the first sequence corresponding to the ``i``th step of the
+        in the first sequence corresponding to the ``i`` th step of the
         second sequence.  The number of steps is determined by the range
         of the target sequence indices.
 

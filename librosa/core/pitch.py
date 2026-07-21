@@ -314,13 +314,8 @@ def piptrack(
         pad_mode=pad_mode,
     )
 
-    # Make sure we're dealing with magnitudes.
-    # ``np.abs(S)`` forces a full-size copy of ``S`` on every call.  For a
-    # real, non-negative spectrogram (the common case, e.g. a magnitude or
-    # power spectrogram) that copy is redundant, so only rectify when the
-    # input is complex or actually contains negative values.
-    if np.iscomplexobj(S) or S.min() < 0:
-        S = np.abs(S)
+    # Make sure we're dealing with magnitudes
+    S = np.abs(S)
 
     # Truncate to feasible region
     fmin = np.maximum(fmin, 0)
