@@ -11,10 +11,10 @@ default parameters for librosa.
 # Code source: Brian McFee
 # License: ISC
 
-##################################################
-# We'll need numpy and matplotlib for this example
+########################################
+# We'll need matplotlib for this example
 import matplotlib.pyplot as plt
-
+from IPython.display import HTML  # for rendering example metadata
 # Import the Preset class
 from presets import Preset
 
@@ -53,16 +53,19 @@ librosa["n_fft"] = 4096
 filename = librosa.ex("fishin")
 
 y, sr = librosa.load(filename, duration=5, offset=35)
+HTML(librosa.util.example_info("fishin", html=True))
 
+# %%
 # Generate a Mel spectrogram:
 
 M = librosa.feature.melspectrogram(y=y)
 
+# %%
 # Of course, you can still override the new default manually, e.g.:
 
 M_highres = librosa.feature.melspectrogram(y=y, hop_length=512)
 
-
+# %%
 # And plot the results
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 

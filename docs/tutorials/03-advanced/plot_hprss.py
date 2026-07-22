@@ -18,13 +18,17 @@ and its margin-based extension due to `Dreidger, Mueller and Disch, 2014
 import numpy as np
 import matplotlib.pyplot as plt
 
-from IPython.display import Audio
+from IPython.display import Audio, HTML
 
 import librosa
 
 ########################
 # Load an example clip with harmonics and percussives
 y, sr = librosa.loadx("fishin", duration=5, offset=10)
+HTML(librosa.util.example_info("fishin", html=True))
+
+# %%
+#
 
 Audio(data=y, rate=sr)
 

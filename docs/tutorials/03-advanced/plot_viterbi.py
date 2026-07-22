@@ -13,29 +13,30 @@ Our working example will be the problem of silence/non-silence detection.
 # Code source: Brian McFee
 # License: ISC
 
-##################
 # Standard imports
 import numpy as np
 import matplotlib.pyplot as plt
 import librosa
+from IPython.display import HTML
 
 #############################################
 # Load an example signal
 y, sr = librosa.loadx("trumpet")
+HTML(librosa.util.example_info("trumpet", html=True))
 
-
+# %%
 # And compute the spectrogram magnitude and phase
 S_full, phase = librosa.magphase(librosa.stft(y))
 
 
-###################
+# %%
 # Plot the spectrum
 fig, ax = plt.subplots()
 img = librosa.display.specshow(S_full, vscale="dBFS",
                                y_axis="log", x_axis="time", sr=sr, ax=ax)
 librosa.display.colorbar_db(img)
 
-###########################################################
+# %%
 # As you can see, there are periods of silence and
 # non-silence throughout this recording.
 #
@@ -50,13 +51,12 @@ ax.plot(times, rms)
 ax.axhline(0.02, color="r", alpha=0.5)
 ax.set(xlabel="Time", ylabel="RMS")
 
-##############################################################################
+# %%
 # The red line at 0.02 indicates a reasonable threshold for silence detection.
 # However, the RMS curve occasionally dips below the threshold momentarily,
 # and we would prefer the detector to not count these brief dips as silence.
 # This is where the Viterbi algorithm comes in handy!
-
-#####################################################
+#
 # As a first step, we will convert the raw RMS score
 # into a likelihood (probability) by logistic mapping
 #

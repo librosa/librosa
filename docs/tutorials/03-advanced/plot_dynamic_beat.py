@@ -29,7 +29,7 @@ demonstrated below.
 import numpy as np
 import librosa
 import matplotlib.pyplot as plt
-from IPython.display import Audio
+from IPython.display import Audio, HTML
 
 #######################################
 # ------------------------------
@@ -39,6 +39,7 @@ from IPython.display import Audio
 # gradually increases in tempo from 30 BPM to 240 BPM over a 30-second time interval.
 
 y, sr = librosa.loadx("snare")
+HTML(librosa.util.example_info("snare", html=True))
 
 # %%
 # We can visualize the spectrogram of this recording and listen to it.

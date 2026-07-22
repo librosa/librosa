@@ -19,7 +19,7 @@ to play audio signals through your web browser.
 import librosa
 
 # We'll need IPython.display's Audio widget
-from IPython.display import Audio
+from IPython.display import Audio, HTML
 
 # We'll also use `mir_eval` to synthesize a signal for us
 import mir_eval.sonify
@@ -51,6 +51,10 @@ Audio(data=y_sweep, rate=sr)
 y, sr = librosa.loadx("trumpet")
 
 Audio(data=y, rate=sr)
+
+# %%
+#
+HTML(librosa.util.example_info("trumpet", html=True))
 
 # %%
 # If you're playing back packaged examples, you can also use the `url` argument to construct

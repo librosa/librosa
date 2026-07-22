@@ -21,7 +21,7 @@ in memory usage when processing audio streams.
 # We'll need numpy and matplotlib for this example
 import numpy as np
 import matplotlib.pyplot as plt
-
+from IPython.display import HTML
 
 import librosa
 
@@ -29,6 +29,7 @@ import librosa
 ######################################################################
 # First, we'll start with an audio file that we want to stream
 filename = librosa.ex("humpback")
+HTML(librosa.util.example_info("humpback", html=True))
 
 #####################################################################
 # Next, we'll set up the block reader to work on short segments of

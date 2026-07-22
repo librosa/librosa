@@ -22,10 +22,12 @@ helpful to read along.
 #   - scipy for graph Laplacian
 #   - matplotlib for visualization
 #   - sklearn.cluster for K-Means
-#
+#   - IPython.display for metadata rendering
+
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
+from IPython.display import HTML
 
 import sklearn.cluster
 
@@ -34,7 +36,7 @@ import librosa
 #############################
 # First, we'll load in a song
 y, sr = librosa.loadx("fishin")
-
+HTML(librosa.util.example_info("fishin", html=True))
 
 ##############################################
 # Next, we'll compute and plot a log-power CQT

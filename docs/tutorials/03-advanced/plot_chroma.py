@@ -31,15 +31,19 @@ also, introduces chroma variants implemented in librosa.
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
+from IPython.display import Audio, HTML
 
 import librosa
 
 
 #######################################################################
 # We'll use a track that has harmonic, melodic, and percussive elements
-#  Karissa Hobbs - Let's Go Fishin'
 y, sr = librosa.loadx("fishin")
+HTML(librosa.util.example_info("fishin", html=True))
 
+# %%
+#
+Audio(url=librosa.example("fishin", url=True))
 
 #######################################
 # First, let's plot the original chroma

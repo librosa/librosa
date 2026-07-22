@@ -20,11 +20,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 import librosa
+from IPython.display import HTML, Audio
 
 ######################
 # Load an example clip
 y, sr = librosa.loadx("libri1")
+HTML(librosa.util.example_info("libri1", html=True))
 
+# %%
+#
+Audio(url=librosa.example("libri1", url=True))
 
 ######################################
 # Compute a log-scaled Mel spectrogram

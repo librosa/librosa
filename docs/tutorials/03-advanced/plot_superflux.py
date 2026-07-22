@@ -24,14 +24,18 @@ This algorithm improves onset detection accuracy in the presence of vibrato.
 # We'll need numpy and matplotlib for this example
 import numpy as np
 import matplotlib.pyplot as plt
-
+from IPython.display import Audio, HTML
 import librosa
 
 ######################################################
 # The method works fine for longer signals, but the
 # results are harder to visualize.
 y, sr = librosa.loadx("trumpet", sr=44100)
+HTML(librosa.util.example_info("trumpet", html=True))
 
+# %%
+#
+Audio(url=librosa.example("trumpet", url=True))
 
 ####################################################
 # These parameters are taken directly from the paper
