@@ -54,7 +54,7 @@ drese2    	Adam Drese - Jesu geh voran                  Alternate recording of "
 fishin      Karissa Hobbs - Let's Go Fishin'             A folk/pop song with verse/chorus/verse structure and vocals.
 humpback    Humpback whale song                          Glacier Bay 60-second clip of humpback whale song.
 libri1      Ashiel Mystery, A Detective Story, Ch. 2     LibriSpeech example, book narration by Garth Comira.
-libri2      The Age of Chivalry, Ch. 18: Perceval        LibriSpeech example, book narration by Anders Lankford.
+libri2      The Age of Chivalry, chapter IX              LibriSpeech example, book narration by Anders Lankford.
 libri3      Sense and Sensibility, Ch. 18                LibriSpeech example, book narration by Heather Barnett.
 nutcracker  Tchaikovsky - Dance of the Sugar Plum Fairy  Orchestral piece included to demonstrate tempo and harmony features.
 pistachio   The Piano Lady - Pistachio Ice Cream Ragtime Solo piano ragtime piece.
