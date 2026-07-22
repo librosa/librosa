@@ -2,6 +2,7 @@ Spectral representations
 ------------------------
 .. autosummary::
     :toctree: generated/
+    :nosignatures:
 
     librosa.stft
     librosa.istft

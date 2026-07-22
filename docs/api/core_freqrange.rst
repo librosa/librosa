@@ -3,6 +3,7 @@ Frequency range generation
 --------------------------
 .. autosummary::
     :toctree: generated/
+    :nosignatures:
 
     librosa.fft_frequencies
     librosa.cqt_frequencies

@@ -2,6 +2,7 @@ Harmonics
 ---------
 .. autosummary::
     :toctree: generated/
+    :nosignatures:
 
     librosa.interp_harmonics
     librosa.salience

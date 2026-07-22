@@ -2,6 +2,7 @@ Magnitude scaling
 -----------------
 .. autosummary::
     :toctree: generated/
+    :nosignatures:
 
     librosa.amplitude_to_db
     librosa.db_to_amplitude

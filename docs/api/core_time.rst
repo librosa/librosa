@@ -2,6 +2,7 @@ Time-domain processing
 ----------------------
 .. autosummary::
     :toctree: generated
+    :nosignatures:
 
     librosa.autocorrelate
     librosa.lpc

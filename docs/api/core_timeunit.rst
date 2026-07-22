@@ -2,6 +2,7 @@ Time unit conversion
 --------------------
 .. autosummary::
     :toctree: generated/
+    :nosignatures:
 
     librosa.frames_to_samples
     librosa.frames_to_time

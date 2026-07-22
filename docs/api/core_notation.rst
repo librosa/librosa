@@ -2,6 +2,7 @@ Music notation
 --------------
 .. autosummary::
     :toctree: generated/
+    :nosignatures:
 
     librosa.key_to_notes
     librosa.key_to_degrees

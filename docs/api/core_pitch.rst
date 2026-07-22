@@ -2,6 +2,7 @@ Pitch and tuning
 ----------------
 .. autosummary::
     :toctree: generated/
+    :nosignatures:
 
     librosa.pyin
     librosa.yin

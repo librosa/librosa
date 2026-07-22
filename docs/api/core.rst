@@ -1,9 +1,9 @@
 .. _core:
 
-Core IO and DSP
-===============
+Core functionality
+==================
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     core_audio
     core_time

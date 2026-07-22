@@ -1,49 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Display
-=======
-
-Data visualization
-------------------
-.. autosummary::
-    :toctree: generated/
-
-    specshow
-    waveshow
-    wavebars
-    wavef0
-    multiplot
-
-Axis formatting
----------------
-.. autosummary::
-    :toctree: generated/
-
-    TimeFormatter
-    NoteFormatter
-    SvaraFormatter
-    FJSFormatter
-    LogHzFormatter
-    ChromaFormatter
-    ChromaSvaraFormatter
-    ChromaFJSFormatter
-    TonnetzFormatter
-
-Miscellaneous
--------------
-.. autosummary::
-    :toctree: generated/
-
-    infer_cmap
-    colorbar_db
-    colorbar_phase
-    highlight
-    legend_for_axes
-    AdaptiveWaveplot
-    Transformf0
-
-"""
+"""Display"""
 
 from __future__ import annotations
 

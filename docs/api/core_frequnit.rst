@@ -2,6 +2,7 @@ Frequency unit conversion
 -------------------------
 .. autosummary::
     :toctree: generated/
+    :nosignatures:
 
     librosa.hz_to_note
     librosa.hz_to_midi
