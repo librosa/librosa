@@ -459,5 +459,5 @@ knn_eval(mfcc_fit, mfcc_test)
 # It is also worth noting that there are many extensions that could be implemented on top of
 # this basic MFCC pipeline: for example, we could eliminate the 0th coefficient to remove
 # sensitivity to overall amplitude, concatenate first- and second-order time differences to
-# capture temporal dynamics (see ``feature.delta``), use more powerful classification methods,
+# capture temporal dynamics (see ``librosa.feature.delta``), use more powerful classification methods,
 # and so on.
