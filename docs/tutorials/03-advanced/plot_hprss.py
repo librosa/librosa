@@ -8,11 +8,16 @@ This notebook illustrates how to separate an audio signal into
 its harmonic and percussive components.
 
 We'll compare the original median-filtering based approach of
-`Fitzgerald, 2010 <https://arrow.tudublin.ie/cgi/viewcontent.cgi?article=1078&context=argcon>`_
-and its margin-based extension due to `Dreidger, Mueller and Disch, 2014
-<https://zenodo.org/record/1415226>`_.
+`Fitzgerald, 2010 <https://arrow.tudublin.ie/cgi/viewcontent.cgi?article=1078&context=argcon>`_ [1]_
+and its margin-based extension due to `Driedger, Müller and Disch, 2014 <https://zenodo.org/record/1415226>`_ [2]_.
 
+.. [1] Fitzgerald, D. (2010)
+    Harmonic/Percussive Separation using Median Filtering.
+    13th International Conference on Digital Audio Effects (DAFX10), Graz, Austria, 2010.
 
+.. [2] Jonathan Driedger, Meinard Müller & Sascha Disch. (2014).
+    Extending Harmonic-Percussive Separation of Audio Signals.
+    Proceedings of the 15th International Society for Music Information Retrieval Conference, 611--616. https://doi.org/10.5281/zenodo.1415226
 """
 
 import numpy as np

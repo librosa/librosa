@@ -21,9 +21,14 @@ also, introduces chroma variants implemented in librosa.
 #    1. Harmonic-percussive-residual source separation to eliminate transients.
 #    2. Nearest-neighbor smoothing to eliminate passing tones and sparse noise.  This is inspired by the
 #       recurrence-based smoothing technique of
-#       `Cho and Bello, 2011 <https://zenodo.org/record/1417557>`_.
+#       `Cho and Bello, 2011 <https://zenodo.org/record/1417557>`_ [1]_.
 #    3. Local median filtering to suppress remaining discontinuities.
-
+#
+# .. [1] Taemin Cho & Juan Pablo Bello. (2011).
+#        A Feature Smoothing Method for Chord Recognition Using Recurrence Plots.
+#        Proceedings of the 12th International Society for Music Information Retrieval Conference, 651--656.  https://doi.org/10.5281/zenodo.1417557
+#
+#
 # Code source: Brian McFee
 # License: ISC
 # sphinx_gallery_thumbnail_number = 5
@@ -157,7 +162,7 @@ ax[1].set(ylabel="CQT")
 
 ###################################################################################################
 # CENS features (`chroma_cens`) are variants of chroma features introduced in
-# `Müller and Ewart, 2011 <https://zenodo.org/record/1416032>`_, in which
+# `Müller and Ewart, 2011 <https://zenodo.org/record/1416032>`_ [2]_, in which
 # additional post processing steps are performed on the constant-Q chromagram to obtain features
 # that are invariant to dynamics and timbre.
 #
@@ -168,6 +173,11 @@ ax[1].set(ylabel="CQT")
 #   2. Quantization of the amplitudes based on "log-like" amplitude thresholds
 #   3. Smoothing with sliding window (optional parameter)
 #   4. Downsampling (not implemented)
+#
+# .. [2] Meinard Müller & Sebastian Ewert. (2011).
+#        Chroma Toolbox: Matlab Implementations for Extracting Variants of Chroma-Based Audio Features.
+#        Proceedings of the 12th International Society for Music Information Retrieval Conference, 215--220.
+#        https://doi.org/10.5281/zenodo.1416032
 #
 # A comparison between the original constant-Q chromagram and the CENS features.
 chromagram_cens = librosa.feature.chroma_cens(y=y, sr=sr)

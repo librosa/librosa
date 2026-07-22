@@ -5,11 +5,15 @@ Laplacian segmentation
 ======================
 
 This notebook implements the laplacian segmentation method of
-`McFee and Ellis, 2014 <https://zenodo.org/record/1415778>`_,
+`McFee and Ellis, 2014 <https://zenodo.org/record/1415778>`_ [1]_,
 with a couple of minor stability improvements.
 
 Throughout the example, we will refer to equations in the paper by number, so it will be
 helpful to read along.
+
+.. [1] Brian McFee & Dan Ellis. (2014).
+       Analyzing Song Structure with Spectral Clustering.
+       Proceedings of the 15th International Society for Music Information Retrieval Conference, 405--410. https://doi.org/10.5281/zenodo.1415778
 """
 
 # Code source: Brian McFee
