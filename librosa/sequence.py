@@ -2,7 +2,7 @@
 # -*- encoding: utf-8 -*-
 """
 librosa.sequence provides functions for sequential processing, such as
-dynamic time warpin (DTW), recurrence quantification analysis (RQA), and
+dynamic time warping (DTW), recurrence quantification analysis (RQA), and
 various forms of Viterbi decoding.
 
 Helper utilities are also provided for constructing transition matrices
