@@ -1,9 +1,10 @@
 Phase recovery
 --------------
+.. currentmodule:: librosa
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.griffinlim
-    librosa.griffinlim_cqt
+    griffinlim
+    griffinlim_cqt
 

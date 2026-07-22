@@ -1,24 +1,25 @@
 Magnitude scaling
 -----------------
+.. currentmodule:: librosa
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.magphase
+    magphase
 
-    librosa.amplitude_to_db
-    librosa.db_to_amplitude
-    librosa.power_to_db
-    librosa.db_to_power
+    amplitude_to_db
+    db_to_amplitude
+    power_to_db
+    db_to_power
 
-    librosa.perceptual_weighting
-    librosa.frequency_weighting
-    librosa.multi_frequency_weighting
-    librosa.A_weighting
-    librosa.B_weighting
-    librosa.C_weighting
-    librosa.D_weighting
+    perceptual_weighting
+    frequency_weighting
+    multi_frequency_weighting
+    A_weighting
+    B_weighting
+    C_weighting
+    D_weighting
 
-    librosa.pcen
-    librosa.mu_compress
-    librosa.mu_expand
+    pcen
+    mu_compress
+    mu_expand

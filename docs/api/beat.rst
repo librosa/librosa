@@ -5,9 +5,10 @@ Beat tracking
 .. automodule:: librosa.beat
     :no-members:
 
+.. currentmodule:: librosa.beat
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.beat.beat_track
-    librosa.beat.plp
+    beat_track
+    plp

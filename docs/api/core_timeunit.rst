@@ -1,19 +1,20 @@
 Time unit conversion
 --------------------
+.. currentmodule:: librosa
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.frames_to_samples
-    librosa.frames_to_time
-    librosa.samples_to_frames
-    librosa.samples_to_time
-    librosa.time_to_frames
-    librosa.time_to_samples
+    frames_to_samples
+    frames_to_time
+    samples_to_frames
+    samples_to_time
+    time_to_frames
+    time_to_samples
 
-    librosa.blocks_to_frames
-    librosa.blocks_to_samples
-    librosa.blocks_to_time
+    blocks_to_frames
+    blocks_to_samples
+    blocks_to_time
 
-    librosa.samples_like
-    librosa.times_like
+    samples_like
+    times_like

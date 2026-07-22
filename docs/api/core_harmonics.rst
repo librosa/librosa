@@ -1,12 +1,13 @@
 Harmonics
 ---------
+.. currentmodule:: librosa
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.interp_harmonics
-    librosa.salience
-    librosa.f0_harmonics
+    interp_harmonics
+    salience
+    f0_harmonics
 
-    librosa.phase_vocoder
+    phase_vocoder
 

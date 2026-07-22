@@ -1,8 +1,9 @@
 Matching
 --------
+.. currentmodule:: librosa.util
 .. autosummary::
     :toctree: generated
     :nosignatures:
 
-    librosa.util.match_intervals
-    librosa.util.match_events
+    match_intervals
+    match_events

@@ -1,11 +1,12 @@
 Data visualization
 ------------------
+.. currentmodule:: librosa.display
 .. autosummary::
     :toctree: generated
     :nosignatures:
 
-    librosa.display.specshow
-    librosa.display.waveshow
-    librosa.display.wavebars
-    librosa.display.wavef0
-    librosa.display.multiplot
+    specshow
+    waveshow
+    wavebars
+    wavef0
+    multiplot

@@ -1,10 +1,11 @@
 Feature inversion
 -----------------
+.. currentmodule:: librosa.feature.inverse
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.feature.inverse.mel_to_stft
-    librosa.feature.inverse.mel_to_audio
-    librosa.feature.inverse.mfcc_to_mel
-    librosa.feature.inverse.mfcc_to_audio
+    mel_to_stft
+    mel_to_audio
+    mfcc_to_mel
+    mfcc_to_audio

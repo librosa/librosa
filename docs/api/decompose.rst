@@ -5,10 +5,11 @@ Spectrogram decomposition
 .. automodule:: librosa.decompose
     :no-members:
 
+.. currentmodule:: librosa.decompose
 .. autosummary::
     :toctree: generated
     :nosignatures:
 
-    librosa.decompose.hpss
-    librosa.decompose.nn_filter
-    librosa.decompose.decompose
+    hpss
+    nn_filter
+    decompose

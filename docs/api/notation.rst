@@ -1,23 +1,24 @@
 Music notation
 ==============
+.. currentmodule:: librosa
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.key_to_notes
-    librosa.key_to_degrees
+    key_to_notes
+    key_to_degrees
 
-    librosa.mela_to_svara
-    librosa.mela_to_degrees
+    mela_to_svara
+    mela_to_degrees
 
-    librosa.thaat_to_degrees
+    thaat_to_degrees
 
-    librosa.list_mela
-    librosa.list_thaat
+    list_mela
+    list_thaat
 
-    librosa.fifths_to_note
-    librosa.interval_to_fjs
-    librosa.interval_frequencies
-    librosa.pythagorean_intervals
-    librosa.plimit_intervals
+    fifths_to_note
+    interval_to_fjs
+    interval_frequencies
+    pythagorean_intervals
+    plimit_intervals
 

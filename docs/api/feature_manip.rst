@@ -1,8 +1,9 @@
 Feature manipulation
 --------------------
+.. currentmodule:: librosa.feature
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.feature.delta
-    librosa.feature.stack_memory
+    delta
+    stack_memory

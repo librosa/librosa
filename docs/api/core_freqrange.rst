@@ -1,12 +1,13 @@
 
 Frequency range generation
 --------------------------
+.. currentmodule:: librosa
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.fft_frequencies
-    librosa.cqt_frequencies
-    librosa.mel_frequencies
-    librosa.tempo_frequencies
-    librosa.fourier_tempo_frequencies
+    fft_frequencies
+    cqt_frequencies
+    mel_frequencies
+    tempo_frequencies
+    fourier_tempo_frequencies

@@ -8,7 +8,7 @@ Utilities
 .. toctree::
     :maxdepth: 2
 
-    util_misc
+    util_numeric
     util_array
     util_matching
     util_validation

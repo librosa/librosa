@@ -1,11 +1,12 @@
 Display utilities
 -----------------
+.. currentmodule:: librosa.display
 .. autosummary::
     :toctree: generated
     :nosignatures:
     
-    librosa.display.colorbar_db
-    librosa.display.colorbar_phase
-    librosa.display.highlight
-    librosa.display.infer_cmap
-    librosa.display.legend_for_axes
+    colorbar_db
+    colorbar_phase
+    highlight
+    infer_cmap
+    legend_for_axes

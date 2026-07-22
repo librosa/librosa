@@ -1,13 +1,14 @@
 Pitch and tuning
 ================
+.. currentmodule:: librosa
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.pyin
-    librosa.yin
+    pyin
+    yin
 
-    librosa.estimate_tuning
-    librosa.pitch_tuning
-    librosa.piptrack
+    estimate_tuning
+    pitch_tuning
+    piptrack
 

@@ -5,17 +5,18 @@ Sequential modeling
 .. automodule:: librosa.sequence
     :no-members:
 
+.. currentmodule:: librosa.sequence
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.sequence.dtw
-    librosa.sequence.rqa
-    librosa.sequence.path_to_steps
-    librosa.sequence.viterbi
-    librosa.sequence.viterbi_discriminative
-    librosa.sequence.viterbi_binary
-    librosa.sequence.transition_uniform
-    librosa.sequence.transition_loop
-    librosa.sequence.transition_cycle
-    librosa.sequence.transition_local
+    dtw
+    rqa
+    path_to_steps
+    viterbi
+    viterbi_discriminative
+    viterbi_binary
+    transition_uniform
+    transition_loop
+    transition_cycle
+    transition_local

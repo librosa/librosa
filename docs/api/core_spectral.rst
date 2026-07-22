@@ -1,23 +1,24 @@
 Time and frequency representations
 ----------------------------------
+.. currentmodule:: librosa
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.stft
-    librosa.istft
-    librosa.reassigned_spectrogram
+    stft
+    istft
+    reassigned_spectrogram
 
-    librosa.cqt
-    librosa.icqt
-    librosa.hybrid_cqt
-    librosa.pseudo_cqt
+    cqt
+    icqt
+    hybrid_cqt
+    pseudo_cqt
 
-    librosa.vqt
+    vqt
 
-    librosa.iirt
+    iirt
 
-    librosa.fmt
+    fmt
 
-    librosa.lpc
+    lpc
 

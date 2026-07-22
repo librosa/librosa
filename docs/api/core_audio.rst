@@ -1,23 +1,24 @@
 Audio signals
 -------------
+.. currentmodule:: librosa
 .. autosummary::
     :toctree: generated
     :nosignatures:
 
-    librosa.load
-    librosa.loadx
-    librosa.stream
-    librosa.resample
-    librosa.get_duration
-    librosa.get_samplerate
+    load
+    loadx
+    stream
+    resample
+    get_duration
+    get_samplerate
 
-    librosa.to_mono
-    librosa.to_stereo
-    librosa.to_multi
+    to_mono
+    to_stereo
+    to_multi
 
-    librosa.clicks
-    librosa.tone
-    librosa.chirp
+    clicks
+    tone
+    chirp
 
-    librosa.autocorrelate
-    librosa.zero_crossings
+    autocorrelate
+    zero_crossings

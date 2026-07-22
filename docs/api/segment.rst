@@ -5,15 +5,16 @@ Structure and segmentation
 .. automodule:: librosa.segment
     :no-members:
 
+.. currentmodule:: librosa.segment
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.segment.cross_similarity
-    librosa.segment.recurrence_matrix
-    librosa.segment.recurrence_to_lag
-    librosa.segment.lag_to_recurrence
-    librosa.segment.timelag_filter
-    librosa.segment.path_enhance
-    librosa.segment.agglomerative
-    librosa.segment.subsegment
+    cross_similarity
+    recurrence_matrix
+    recurrence_to_lag
+    lag_to_recurrence
+    timelag_filter
+    path_enhance
+    agglomerative
+    subsegment

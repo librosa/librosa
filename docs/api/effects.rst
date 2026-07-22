@@ -5,20 +5,21 @@ Effects
 .. automodule:: librosa.effects
     :no-members:
 
+.. currentmodule:: librosa.effects
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.effects.hpss
-    librosa.effects.harmonic
-    librosa.effects.percussive
+    hpss
+    harmonic
+    percussive
 
-    librosa.effects.time_stretch
-    librosa.effects.pitch_shift
+    time_stretch
+    pitch_shift
 
-    librosa.effects.remix
-    librosa.effects.trim
-    librosa.effects.split
-    librosa.effects.preemphasis
-    librosa.effects.deemphasis
+    remix
+    trim
+    split
+    preemphasis
+    deemphasis
 

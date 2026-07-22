@@ -1,11 +1,12 @@
 Files and data
 --------------
+.. currentmodule:: librosa.util
 .. autosummary::
     :toctree: generated
     :nosignatures:
 
-    librosa.util.example
-    librosa.util.example_info
-    librosa.util.list_examples
-    librosa.util.find_files
-    librosa.util.cite
+    example
+    example_info
+    list_examples
+    find_files
+    cite

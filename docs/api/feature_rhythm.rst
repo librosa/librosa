@@ -1,12 +1,13 @@
 Rhythm features
 ---------------
+.. currentmodule:: librosa.feature
 .. autosummary::
     :toctree: generated/
     :nosignatures:
 
-    librosa.feature.tempo
-    librosa.feature.tempogram
-    librosa.feature.fourier_tempogram
-    librosa.feature.hybrid_tempogram
-    librosa.feature.tempogram_ratio
-    librosa.feature.metrogram
+    tempo
+    tempogram
+    fourier_tempogram
+    hybrid_tempogram
+    tempogram_ratio
+    metrogram

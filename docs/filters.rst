@@ -5,21 +5,22 @@ Filters and windows
 .. automodule:: librosa.filters
     :no-members:
 
+.. currentmodule:: librosa.filters
 .. autosummary::
     :toctree: api/generated/
     :nosignatures:
 
-    librosa.filters.mel
-    librosa.filters.chroma
-    librosa.filters.wavelet
-    librosa.filters.semitone_filterbank
+    mel
+    chroma
+    wavelet
+    semitone_filterbank
 
-    librosa.filters.window_bandwidth
-    librosa.filters.get_window
+    window_bandwidth
+    get_window
 
-    librosa.filters.wavelet_lengths
-    librosa.filters.cq_to_chroma
-    librosa.filters.mr_frequencies
-    librosa.filters.window_sumsquare
-    librosa.filters.diagonal_filter
+    wavelet_lengths
+    cq_to_chroma
+    mr_frequencies
+    window_sumsquare
+    diagonal_filter
 

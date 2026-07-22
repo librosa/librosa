@@ -5,11 +5,12 @@ Onset detection
 .. automodule:: librosa.onset
     :no-members:
 
+.. currentmodule:: librosa.onset
 .. autosummary::
     :toctree: generated
     :nosignatures:
 
-    librosa.onset.onset_detect
-    librosa.onset.onset_strength
-    librosa.onset.onset_strength_multi
-    librosa.onset.onset_backtrack
+    onset_detect
+    onset_strength
+    onset_strength_multi
+    onset_backtrack
