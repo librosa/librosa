@@ -2,13 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Spectrogram decomposition
-=========================
-.. autosummary::
-    :toctree: generated/
-
-    decompose
-    hpss
-    nn_filter
 """
 from __future__ import annotations
 

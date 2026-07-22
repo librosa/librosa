@@ -1,38 +1,6 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-"""
-Sequential modeling
-===================
-
-Sequence alignment
-------------------
-.. autosummary::
-    :toctree: generated/
-
-    dtw
-    rqa
-    path_to_steps
-
-Viterbi decoding
-----------------
-.. autosummary::
-    :toctree: generated/
-
-    viterbi
-    viterbi_discriminative
-    viterbi_binary
-
-Transition matrices
--------------------
-.. autosummary::
-    :toctree: generated/
-
-    transition_uniform
-    transition_loop
-    transition_cycle
-    transition_local
-"""
-
+""" Sequential modeling """
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast, overload

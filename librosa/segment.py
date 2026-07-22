@@ -2,27 +2,6 @@
 # -*- coding: utf-8 -*-
 """
 Temporal segmentation
-=====================
-
-Recurrence and self-similarity
-------------------------------
-.. autosummary::
-    :toctree: generated/
-
-    cross_similarity
-    recurrence_matrix
-    recurrence_to_lag
-    lag_to_recurrence
-    timelag_filter
-    path_enhance
-
-Temporal clustering
--------------------
-.. autosummary::
-    :toctree: generated/
-
-    agglomerative
-    subsegment
 """
 from __future__ import annotations
 

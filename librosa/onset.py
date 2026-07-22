@@ -1,16 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Onset detection
-===============
-.. autosummary::
-    :toctree: generated/
-
-    onset_detect
-    onset_backtrack
-    onset_strength
-    onset_strength_multi
-"""
+""" Onset detection """
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

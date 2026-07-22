@@ -1,13 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Beat and tempo
-==============
-.. autosummary::
-   :toctree: generated/
-
-   beat_track
-   plp
+Beat tracking
 """
 from __future__ import annotations
 
