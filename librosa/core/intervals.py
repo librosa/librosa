@@ -327,10 +327,12 @@ def plimit_intervals(
         The number of intervals to construct
     sort : bool
         If `True` then intervals are returned in ascending order.
+
         If `False` then intervals are returned in crystal growth order.
     return_factors : bool
         If `True` then return a list of dictionaries encoding the prime factorization
         of each interval as `{2: p2, 3: p3, ...}` (meaning `3**p3 * 2**p2`).
+
         If `False` (default), return intervals as an array of floating point numbers.
 
     Returns
