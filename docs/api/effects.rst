@@ -2,6 +2,9 @@
 
 Effects
 =======
+.. automodule:: librosa.effects
+    :no-members:
+
 .. autosummary::
     :toctree: generated/
     :nosignatures:

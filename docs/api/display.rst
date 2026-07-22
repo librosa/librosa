@@ -2,6 +2,9 @@
 
 Display
 =======
+.. automodule:: librosa.display
+    :no-members:
+
 .. toctree::
     :maxdepth: 2
 

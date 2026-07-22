@@ -1,36 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Effects
-=======
+librosa.effects provides wrapper functions for time-series manipulation,
+harmonic-percussive source separation, and standard audio effects.
 
-Harmonic-percussive source separation
--------------------------------------
-.. autosummary::
-    :toctree: generated/
-
-    hpss
-    harmonic
-    percussive
-
-Time and frequency
-------------------
-.. autosummary::
-    :toctree: generated/
-
-    time_stretch
-    pitch_shift
-
-Miscellaneous
--------------
-.. autosummary::
-    :toctree: generated/
-
-    remix
-    trim
-    split
-    preemphasis
-    deemphasis
+It also provides some basic functions for trimming, splitting, or
+splicing signals.
 """
 from __future__ import annotations
 
@@ -64,6 +39,8 @@ __all__ = [
     "remix",
     "trim",
     "split",
+    "preemphasis",
+    "deemphasis",
 ]
 
 

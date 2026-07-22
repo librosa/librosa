@@ -2,11 +2,14 @@
 
 Utilities
 =========
-.. toctree::
-    :maxdepth: 1
+.. automodule:: librosa.util
+    :no-members:
 
-    util_array
+.. toctree::
+    :maxdepth: 2
+
     util_misc
+    util_array
     util_matching
     util_validation
     util_files

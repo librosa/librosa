@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-""" Sequential modeling """
+"""
+librosa.sequence provides functions for sequential processing, such as
+dynamic time warpin (DTW), recurrence quantification analysis (RQA), and
+various forms of Viterbi decoding.
+
+Helper utilities are also provided for constructing transition matrices
+or post-processing alignment paths.
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast, overload
@@ -23,6 +30,7 @@ if TYPE_CHECKING:
 __all__ = [
     "dtw",
     "dtw_backtracking",
+    "path_to_steps",
     "rqa",
     "viterbi",
     "viterbi_discriminative",

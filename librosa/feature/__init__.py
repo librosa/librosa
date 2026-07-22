@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Feature extraction """
+"""librosa.feature contains routines for computing spectral, tonal,
+rhythmic features from audio signals.
+
+Utility functions for manipulating and inverting features are also provided.
+"""
 
 import lazy_loader as lazy
 

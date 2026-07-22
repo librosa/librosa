@@ -2,8 +2,11 @@
 
 Feature extraction
 ==================
+.. automodule:: librosa.feature
+    :no-members:
+
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     feature_spectral
     feature_rhythm

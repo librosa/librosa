@@ -2,6 +2,9 @@
 
 Structure and segmentation
 ==========================
+.. automodule:: librosa.segment
+    :no-members:
+
 .. autosummary::
     :toctree: generated/
     :nosignatures:

@@ -2,6 +2,9 @@
 
 Spectrogram decomposition
 =========================
+.. automodule:: librosa.decompose
+    :no-members:
+
 .. autosummary::
     :toctree: generated
     :nosignatures:

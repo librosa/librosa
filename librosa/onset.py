@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" Onset detection """
+"""
+librosa.onset contains functions for computing onset strength envelopes
+and estimating onset events from audio signals.
+"""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING

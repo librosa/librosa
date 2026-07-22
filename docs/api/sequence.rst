@@ -2,6 +2,9 @@
 
 Sequential modeling
 ===================
+.. automodule:: librosa.sequence
+    :no-members:
+
 .. autosummary::
     :toctree: generated/
     :nosignatures:

@@ -2,6 +2,9 @@
 
 Onset detection
 ---------------
+.. automodule:: librosa.onset
+    :no-members:
+
 .. autosummary::
     :toctree: generated
     :nosignatures:

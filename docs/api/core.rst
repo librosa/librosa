@@ -2,8 +2,11 @@
 
 Core functionality
 ==================
+.. automodule:: librosa
+    :no-members:
+
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     core_audio
     core_time
