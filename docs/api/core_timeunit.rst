@@ -15,4 +15,5 @@ Time unit conversion
     librosa.blocks_to_samples
     librosa.blocks_to_time
 
-
+    librosa.samples_like
+    librosa.times_like

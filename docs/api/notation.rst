@@ -1,5 +1,5 @@
 Music notation
---------------
+==============
 .. autosummary::
     :toctree: generated/
     :nosignatures:

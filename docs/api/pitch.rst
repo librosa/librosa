@@ -1,5 +1,5 @@
 Pitch and tuning
-----------------
+================
 .. autosummary::
     :toctree: generated/
     :nosignatures:

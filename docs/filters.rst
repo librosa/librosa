@@ -6,7 +6,7 @@ Filters and windows
     :no-members:
 
 .. autosummary::
-    :toctree: generated/
+    :toctree: api/generated/
     :nosignatures:
 
     librosa.filters.mel

@@ -4,6 +4,8 @@ Magnitude scaling
     :toctree: generated/
     :nosignatures:
 
+    librosa.magphase
+
     librosa.amplitude_to_db
     librosa.db_to_amplitude
     librosa.power_to_db
@@ -18,5 +20,5 @@ Magnitude scaling
     librosa.D_weighting
 
     librosa.pcen
-
-
+    librosa.mu_compress
+    librosa.mu_expand

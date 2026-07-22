@@ -1,5 +1,5 @@
-Spectral representations
-------------------------
+Time and frequency representations
+----------------------------------
 .. autosummary::
     :toctree: generated/
     :nosignatures:
@@ -19,5 +19,5 @@ Spectral representations
 
     librosa.fmt
 
-    librosa.magphase
+    librosa.lpc
 
