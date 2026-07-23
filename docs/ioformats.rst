@@ -9,7 +9,7 @@ functionality currently provided by *librosa*.
 Read specific formats
 ---------------------
 
-*librosa* uses `soundfile <https://github.com/bastibe/PySoundFile>`_ for reading audio.
+*librosa* uses `soundfile <https://python-soundfile.readthedocs.io/en/latest/>`_ for reading audio.
 For a list of codecs supported by `soundfile`, see the *libsndfile* `documentation <https://libsndfile.github.io/libsndfile/>`_.
 
 .. note:: See installation instruction for soundfile `here <https://python-soundfile.readthedocs.io/en/latest/>`_.
@@ -116,7 +116,7 @@ Download and read from URL:
 
 Write out audio files
 ---------------------
-`soundfile <https://python-soundfile.readthedocs.io/en/latest/>`_ provides output functionality that can be used directly with numpy array audio buffers:
+`soundfile`_ provides output functionality that can be used directly with numpy array audio buffers:
 
 .. code-block:: python
     :linenos:

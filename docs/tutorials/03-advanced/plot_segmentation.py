@@ -30,6 +30,7 @@ helpful to read along.
 
 import numpy as np
 import scipy
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from IPython.display import HTML
 
@@ -180,26 +181,29 @@ seg_ids = KM.fit_predict(X)
 
 
 # and plot the results
-fig, ax = plt.subplots(ncols=3, sharey=True, figsize=(10, 4))
-colors = plt.get_cmap("Paired", k)
+fig, ax = plt.subplots(ncols=3, sharey=True, figsize=(10, 4),
+                       gridspec_kw=dict(width_ratios=(4, 2, 1)))
+# Convert to a ListedColormap
+colors = mpl.rcParams['axes.prop_cycle'].by_key()['color']
+cmap = mpl.colors.ListedColormap(colors[:k])
 
-librosa.display.specshow(Rf, cmap="inferno_r", y_axis="time",
-                         y_coords=beat_times, ax=ax[1])
-ax[1].set(title="Recurrence matrix")
-ax[1].label_outer()
+librosa.display.specshow(Rf, cmap="inferno_r", y_axis="time", x_axis='time',
+                         y_coords=beat_times, x_coords=beat_times, ax=ax[0])
+ax[0].set(title="Recurrence matrix")
 
 librosa.display.specshow(X,
                          y_axis="time",
-                         y_coords=beat_times, ax=ax[0])
-ax[0].set(title="Structure components")
+                         y_coords=beat_times, ax=ax[1])
+ax[1].set(title="Structure components")
+ax[1].label_outer()
 
-img = librosa.display.specshow(np.atleast_2d(seg_ids).T, cmap=colors,
+img = librosa.display.specshow(np.atleast_2d(seg_ids).T, cmap=cmap,
                          y_axis="time",
                          x_coords=[0, 1], y_coords=[*list(beat_times), beat_times[-1]],
                          ax=ax[2])
 ax[2].set(title="Estimated labels")
-
 ax[2].label_outer()
+
 fig.colorbar(img, ax=[ax[2]], ticks=range(k))
 
 
@@ -246,3 +250,4 @@ ax[0].label_outer()
 intervals = np.asarray(list(itertools.pairwise(bound_times)))
 mir_eval.display.segments(intervals, bound_segs, ax=ax[1])
 ax[1].set(yticks=[])
+fig.legend(loc="outside lower center", title="Segment label", ncols=k)
