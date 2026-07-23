@@ -184,10 +184,10 @@ seg_ids = KM.fit_predict(X)
 fig, ax = plt.subplots(ncols=3, sharey=True, figsize=(10, 4),
                        gridspec_kw=dict(width_ratios=(4, 2, 1)))
 # Convert to a ListedColormap
-colors = mpl.rcParams['axes.prop_cycle'].by_key()['color']
+colors = mpl.rcParams["axes.prop_cycle"].by_key()["color"]
 cmap = mpl.colors.ListedColormap(colors[:k])
 
-librosa.display.specshow(Rf, cmap="inferno_r", y_axis="time", x_axis='time',
+librosa.display.specshow(Rf, cmap="inferno_r", y_axis="time", x_axis="time",
                          y_coords=beat_times, x_coords=beat_times, ax=ax[0])
 ax[0].set(title="Recurrence matrix")
 

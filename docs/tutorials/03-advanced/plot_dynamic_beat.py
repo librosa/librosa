@@ -96,7 +96,7 @@ ax[0].axhline(tempo, label="Static tempo estimate", color="r")
 ax[0].legend()
 ax[0].set(xlabel="Time (s)", ylabel="Tempo (BPM)")
 tg = librosa.feature.fourier_tempogram(y=y, sr=sr)
-librosa.display.specshow(tg, sr=sr, x_axis="time", y_axis="fourier_tempo", vscale='dBFS', top_db=20, ax=ax[1])
+librosa.display.specshow(tg, sr=sr, x_axis="time", y_axis="fourier_tempo", vscale="dBFS", top_db=20, ax=ax[1])
 ax[1].set(title="Fourier tempogram")
 ax[1].label_outer()
 
