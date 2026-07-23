@@ -121,15 +121,15 @@ A = mu * Rf + (1 - mu) * R_path
 ###########################################################
 # Plot the resulting graphs (Figure 1, left and center)
 fig, ax = plt.subplots(ncols=3, sharex=True, sharey=True, figsize=(10, 4))
-librosa.display.specshow(Rf, cmap="inferno_r", y_axis="time", x_axis="s",
+librosa.display.specshow(Rf, cmap="gray_r", y_axis="time", x_axis="s",
                          y_coords=beat_times, x_coords=beat_times, ax=ax[0])
 ax[0].set(title="Recurrence similarity")
 ax[0].label_outer()
-librosa.display.specshow(R_path, cmap="inferno_r", y_axis="time", x_axis="s",
+librosa.display.specshow(R_path, cmap="gray_r", y_axis="time", x_axis="s",
                          y_coords=beat_times, x_coords=beat_times, ax=ax[1])
 ax[1].set(title="Path similarity")
 ax[1].label_outer()
-librosa.display.specshow(A, cmap="inferno_r", y_axis="time", x_axis="s",
+librosa.display.specshow(A, cmap="gray_r", y_axis="time", x_axis="s",
                          y_coords=beat_times, x_coords=beat_times, ax=ax[2])
 ax[2].set(title="Combined graph")
 ax[2].label_outer()
@@ -162,55 +162,31 @@ X = evecs[:, :k] / Cnorm[:, k-1:k]
 
 # Plot the resulting representation (Figure 1, center and right)
 
-fig, ax = plt.subplots(ncols=2, sharey=True, figsize=(10, 5))
-librosa.display.specshow(Rf, cmap="inferno_r", y_axis="time", x_axis="time",
+fig, ax = plt.subplots(nrows=2, sharex=True, figsize=(6, 8),
+                       layout="compressed",
+                       gridspec_kw={"height_ratios": [1, 4]})
+librosa.display.specshow(Rf, cmap="gray_r", y_axis="time", x_axis="time",
                          y_coords=beat_times, x_coords=beat_times, ax=ax[1])
-ax[1].set(title="Recurrence similarity")
-ax[1].label_outer()
+ax[1].set(ylabel="Recurrence similarity")
 
-librosa.display.specshow(X,
-                         y_axis="time",
-                         y_coords=beat_times, ax=ax[0])
+librosa.display.specshow(X.T,
+                         x_axis="time",
+                         x_coords=beat_times, ax=ax[0])
 ax[0].set(title="Structure components")
+ax[0].label_outer()
 
 
 #############################################################
 # Let's use these k components to cluster beats into segments
 # (Algorithm 1)
-KM = sklearn.cluster.KMeans(n_clusters=k, n_init="auto")
+KM = sklearn.cluster.KMeans(n_clusters=k, n_init="auto", random_state=0)
 
 seg_ids = KM.fit_predict(X)
 
 
-# and plot the results
-fig, ax = plt.subplots(ncols=3, sharey=True, figsize=(10, 4),
-                       gridspec_kw=dict(width_ratios=(4, 2, 1)))
-# Convert to a ListedColormap
-colors = mpl.rcParams["axes.prop_cycle"].by_key()["color"]
-cmap = mpl.colors.ListedColormap(colors[:k])
-
-librosa.display.specshow(Rf, cmap="inferno_r", y_axis="time", x_axis="time",
-                         y_coords=beat_times, x_coords=beat_times, ax=ax[0])
-ax[0].set(title="Recurrence matrix")
-
-librosa.display.specshow(X,
-                         y_axis="time",
-                         y_coords=beat_times, ax=ax[1])
-ax[1].set(title="Structure components")
-ax[1].label_outer()
-
-img = librosa.display.specshow(np.atleast_2d(seg_ids).T, cmap=cmap,
-                         y_axis="time",
-                         x_coords=[0, 1], y_coords=[*list(beat_times), beat_times[-1]],
-                         ax=ax[2])
-ax[2].set(title="Estimated labels")
-ax[2].label_outer()
-
-fig.colorbar(img, ax=[ax[2]], ticks=range(k))
-
-
 ###############################################################
-# Locate segment boundaries from the label sequence
+# Now that we have the segment id for each beat, we can
+# identify the boundaries by where the segment id changes.
 bound_beats = 1 + np.flatnonzero(seg_ids[:-1] != seg_ids[1:])
 
 # Count beat 0 as a boundary
@@ -228,9 +204,10 @@ bound_frames = librosa.util.fix_frames(bound_frames,
                                        x_max=C.shape[1]-1)
 
 ###################################################
-# And plot the final segmentation alongside the CQT.
+# And plot the final segmentation alongside the CQT and the structure components.
 # We can use mir_eval's annotation display to generate the patches for us.
-
+# We'll draw the spectrogram in grayscale so that the color-coding for each section
+# is clearly visible.
 
 # sphinx_gallery_thumbnail_number = 5
 
@@ -242,15 +219,29 @@ freqs = librosa.cqt_frequencies(n_bins=C.shape[0],
                                 fmin=librosa.note_to_hz("C1"),
                                 bins_per_octave=BINS_PER_OCTAVE)
 
-# Make a 9:1 ratio subplot
-fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw=dict(wspace=0, hspace=0, height_ratios=(0.9, 0.1)))
+fig, ax = plt.subplots(figsize=(8, 5), nrows=2, gridspec_kw={"height_ratios": [1, 4]},
+                       layout="compressed")
+librosa.display.specshow(X.T, x_axis="time", x_coords=beat_times, ax=ax[0])
+ax[0].set(title="Structure components")
+ax[0].label_outer()
 librosa.display.specshow(C, y_axis="cqt_hz", sr=sr,
                          bins_per_octave=BINS_PER_OCTAVE,
-                         x_axis="time", ax=ax[0])
-mir_eval.display.events(bound_times, ax=ax[0], color="w", linewidth=0.75)
-ax[0].label_outer()
+                         cmap="gray_r",
+                         x_axis="time", ax=ax[1])
+
 # Convert boundary times to a set of intervals
 intervals = np.asarray(list(itertools.pairwise(bound_times)))
-mir_eval.display.segments(intervals, bound_segs, ax=ax[1])
-ax[1].set(yticks=[])
-fig.legend(loc="outside lower center", title="Segment label", ncols=k)
+mir_eval.display.segments(intervals, bound_segs, ax=ax[1], alpha=0.5)
+fig.legend(loc="outside lower center", title="Segment ID", ncols=k)
+
+# %%
+# Summary
+# -------
+# In the final plot above, we can see that each colored region corresponds to
+# a distinct pattern that repeats throughout the song.
+# Note that the segment id values (0, 1, 2, ...) correspond to K-Means cluster identifiers,
+# and are essentially arbitrary with no relationship to the temporal order in which segments
+# actually occur.
+# Still, the pattern of repetition and grouping of regions is clear and can be used to quickly
+# understand the structure of the song.
+
