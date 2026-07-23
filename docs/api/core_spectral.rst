@@ -22,3 +22,5 @@ Time and frequency representations
 
     lpc
 
+    phase_vocoder
+

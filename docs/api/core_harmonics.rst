@@ -9,5 +9,3 @@ Harmonics
     salience
     f0_harmonics
 
-    phase_vocoder
-
