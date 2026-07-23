@@ -32,7 +32,6 @@ helpful to read along.
 
 import numpy as np
 import scipy
-import matplotlib as mpl
 import matplotlib.pyplot as plt
 from IPython.display import HTML
 
@@ -159,8 +158,9 @@ k = 5
 
 X = evecs[:, :k] / Cnorm[:, k-1:k]
 
-
-# Plot the resulting representation (Figure 1, center and right)
+#################
+# We can now plot the resulting representation along with the recurrence matrix to
+# see how the structural components align with repeating patterns.
 
 fig, ax = plt.subplots(nrows=2, sharex=True, figsize=(6, 8),
                        layout="compressed",
@@ -239,6 +239,8 @@ fig.legend(loc="outside lower center", title="Segment ID", ncols=k)
 # -------
 # In the final plot above, we can see that each colored region corresponds to
 # a distinct pattern that repeats throughout the song.
+# It should be clear that the segmentation boundaries (changes in color over time) correspond
+# to changes in the structural components (top panel).
 # Note that the segment id values (0, 1, 2, ...) correspond to K-Means cluster identifiers,
 # and are essentially arbitrary with no relationship to the temporal order in which segments
 # actually occur.
