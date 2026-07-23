@@ -315,7 +315,7 @@ html_theme_options = {
     "logo": {
         "alt_text": "librosa",
         "image_light": "img/librosa_logo_text.svg",
-        "image_dark": "img/librosa_logo_text.svg",
+        "image_dark": "img/librosa_logo_dark.svg",
     },
     "analytics": {
         "google_analytics_id": "UA-171031946-1",
