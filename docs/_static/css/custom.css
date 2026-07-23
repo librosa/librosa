@@ -16,17 +16,6 @@ nav.wy-nav-top {
     background: #AA2396;
 }
 
-/* Ensure header text/icons/links are readable against your custom background */
-.bd-header .navbar-nav li a.nav-link,
-.bd-header .navbar-icon-links button,
-.bd-header .navbar-icon-links a,
-.bd-header .navbar-brand {
-    color: #ffffff;
-}
-
-.bd-header .navbar-nav li a.nav-link:hover {
-    color: #f0f0f0;
-}
 
 /* 3. Sidebar and TOC Caption Text (Replaces span.caption-text) */
 p.caption,

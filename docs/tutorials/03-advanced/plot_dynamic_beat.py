@@ -14,7 +14,7 @@ individual beats may not be exactly spaced accordingly.
 It is not well suited for songs that have radical shifts in tempo, e.g., entire sections
 that speed up or slow down, or gradual accelerations over long periods of time.
 
-The implementation in librosa (``librosa.beat.beat_track``) extends this algorithm
+The implementation in librosa (`librosa.beat.beat_track`) extends this algorithm
 to support different tempo estimates at each time point in the signal, as
 demonstrated below.
 
@@ -87,18 +87,20 @@ tempo_dynamic = librosa.feature.tempo(y=y, sr=sr, aggregate=None, std_bpm=4)
 # This is to account for the broad range of tempo drift in this
 # particular recording (30 BPM to 240 BPM).
 # We can plot the dynamic and static tempo estimates to see how they differ.
-# Alongside, we'll plot the Fourier tempogram to visualize the underlying
+# We'll also plot the Fourier tempogram to visualize the underlying
 # rhythmic structure of the signal.
-fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-times = librosa.times_like(tempo_dynamic, sr=sr)
-ax[0].plot(times, tempo_dynamic, label="Dynamic tempo estimate")
-ax[0].axhline(tempo, label="Static tempo estimate", color="r")
-ax[0].legend()
-ax[0].set(xlabel="Time (s)", ylabel="Tempo (BPM)")
+fig, ax = plt.subplots()
 tg = librosa.feature.fourier_tempogram(y=y, sr=sr)
-librosa.display.specshow(tg, sr=sr, x_axis="time", y_axis="fourier_tempo", vscale="dBFS", top_db=20, ax=ax[1])
-ax[1].set(title="Fourier tempogram")
-ax[1].label_outer()
+librosa.display.specshow(tg, sr=sr,
+                         x_axis="time", y_axis="fourier_tempo",
+                         vscale="dBFS", top_db=20, ax=ax)
+hl = librosa.display.highlight(ax=ax, linewidth=5, alpha=.8)
+times = librosa.times_like(tempo_dynamic, sr=sr)
+ax.plot(times, tempo_dynamic, label="Dynamic tempo estimate", path_effects=hl)
+ax.axhline(tempo, label="Static tempo estimate", color="r", path_effects=hl)
+ax.set(title="Fourier tempogram")
+ax.legend()
+ax.set(xlabel="Time (s)", ylabel="Tempo (BPM)")
 
 # %%
 # `librosa.feature.tempo` estimates tempo over a sliding window whose duration
@@ -118,9 +120,10 @@ click_dynamic = librosa.clicks(times=beats_dynamic, sr=sr, click_freq=660,
 Audio(data=librosa.to_stereo(left=y, right=click_dynamic), rate=sr)
 
 # %%
-# (Note that since we're providing the tempo estimates as input to the beat tracker,
-# we can ignore the first return value (`tempo`) which will simply be a copy of the
-# input (`tempo_dynamic`).)
+# .. note:: 
+#    Since we're providing the tempo estimates as input to the beat tracker,
+#    we can ignore the first return value (`tempo`) which will simply be a copy of the
+#    input (`tempo_dynamic`).
 #
 # We can visualize the difference in estimated beat timings as follows:
 

@@ -324,7 +324,27 @@ html_theme_options = {
         "json_url": "https://librosa.org/en/stable/_static/switcher.json",
         "version_match": version,
     },
-    "navbar_end": ["version-switcher", "navbar-icon-links"],
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/librosa/librosa",
+            "icon": "fa-brands fa-square-github",
+            "type": "fontawesome",
+        },
+        {
+            "name": "GitHub Issues",
+            "url": "https://github.com/librosa/librosa/issues",
+            "icon": "fa-classic fa-bug",
+            "type": "fontawesome",
+        },
+        {
+            "name": "Discussion",
+            "url": "https://groups.google.com/forum/#!forum/librosa",
+            "icon": "fa-classic fa-comments",
+            "type": "fontawesome",
+        },
+    ],
+    "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
     "navbar_align": "left",
     "show_nav_level": 1,
 }
