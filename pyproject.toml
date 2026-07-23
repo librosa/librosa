@@ -7,6 +7,10 @@ build-backend = 'setuptools.build_meta'
 
 [tool.ruff]
 line-length = 119
+extend-exclude = [
+    "docs/_build",
+    "docs/auto_*",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "S", "D", "W", "I", "PYI", "Q", "B", "SIM", "RUF", "TC", "NPY"]
@@ -68,4 +72,13 @@ exclude_files = [
     '.*/version.py',
     '.*/_typing.py',
     '.*/_cache.py',
+]
+
+[tool.ruff.lint.extend-per-file-ignores]
+"docs/**/*.py" = [
+    "E402",  # Allow imports in the middle of the file
+    "E501",  # Ignore line length
+    "I",     # Disable isort to maintain your custom pedagogical import ordering
+    "B018",  # Allow "useless expressions" (necessary for Sphinx-Gallery to render repr outputs)
+    "D",     # Disable strict pydocstyle checks for tutorial scripts
 ]

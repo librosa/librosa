@@ -114,6 +114,23 @@ Contributors
 * Scott VanRavenswaay <https://github.com/scottvr>
 * David Südholt <https://github.com/dsuedholt>
 * Suhas Holla Karkada Chandrashekar <https://github.com/suhashollakc>
+* Gopesh Pandey <https://github.com/Gopesh111>
+* Daniel Fernandes <https://github.com/danferns>
+* Ethan Cajetan Menezes <https://github.com/ethan89009>
+* Valerian Coelho <https://github.com/ValerianCoelho>
+* Imrul Hada <https://github.com/imrulhada>
+* ejwong <https://github.com/ejwong24>
+* AD <https://github.com/AsymptotaX>
+* Daniel Haas B <https://github.com/Daniel-Haas-B>
+* Joren Hammudoglu <https://github.com/jorenham>
+* Cameron Brooks <https://github.com/brookcs3>
+* Petra Kuhnle <https://github.com/petrakuhnle>
+* cookesan <https://github.com/cookesan>
+* Haydn Lam <https://github.com/haydnllh>
+* Fadel Akram <https://github.com/afadel151>
+* emilazy <https://github.com/emilazy>
+* Ale Lloveras <https://github.com/MLsound>
+
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

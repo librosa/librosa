@@ -1771,6 +1771,7 @@ def power_to_db(
     axes: None, "auto", int, or tuple of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
         If `auto`, then axes will be inferred as the trailing dimensions of `S`:
+
             - If `S` is scalar, then `axes=None`
             - If `S` is 1D, then `axes=(-1,)`
             - If `S` is >=2D, then `axes=(-2, -1)`
@@ -1980,6 +1981,7 @@ def amplitude_to_db(
     axes : None, "auto", int, or tuple of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
         If `auto`, then axes will be inferred as the trailing dimensions of `S`:
+
             - If `S` is scalar, then `axes=None`
             - If `S` is 1D, then `axes=(-1,)`
             - If `S` is >=2D, then `axes=(-2, -1)`
@@ -2166,7 +2168,7 @@ def fmt(
     """Fast Mellin transform (FMT)
 
     The Mellin of a signal `y` is performed by interpolating `y` on an exponential time
-    axis, applying a polynomial window, and then taking the discrete Fourier transform.
+    axis, applying a polynomial window, and then taking the discrete Fourier transform. [#]_
 
     When the Mellin parameter (beta) is 1/2, it is also known as the scale transform. [#]_
     The scale transform can be useful for audio analysis because its magnitude is invariant

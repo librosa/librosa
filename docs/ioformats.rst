@@ -9,10 +9,10 @@ functionality currently provided by *librosa*.
 Read specific formats
 ---------------------
 
-*librosa* uses `soundfile <https://github.com/bastibe/PySoundFile>`_ for reading audio.
+*librosa* uses `soundfile <https://python-soundfile.readthedocs.io/en/latest/>`_ for reading audio.
 For a list of codecs supported by `soundfile`, see the *libsndfile* `documentation <https://libsndfile.github.io/libsndfile/>`_.
 
-.. note:: See installation instruction for PySoundFile `here <https://python-soundfile.readthedocs.io/en/latest/>`_.
+.. note:: See installation instruction for soundfile `here <https://python-soundfile.readthedocs.io/en/latest/>`_.
 
 Librosa's load function is meant for the common case where you want to load an entire (fragment of a) recording into memory, but some applications require more flexibility.
 In these cases, we recommend using `soundfile` directly.
@@ -109,14 +109,14 @@ Download and read from URL:
 
     from six.moves.urllib.request import urlopen
 
-    url = "https://raw.githubusercontent.com/librosa/librosa/master/tests/data/test1_44100.wav"
+    url = "https://librosa.org/data/audio/snare-accelerate.ogg"
 
     data, samplerate = sf.read(io.BytesIO(urlopen(url).read()))
 
 
 Write out audio files
 ---------------------
-`PySoundFile <https://python-soundfile.readthedocs.io/en/latest/>`_ provides output functionality that can be used directly with numpy array audio buffers:
+`soundfile`_ provides output functionality that can be used directly with numpy array audio buffers:
 
 .. code-block:: python
     :linenos:

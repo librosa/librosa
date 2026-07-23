@@ -2,6 +2,192 @@
 Changelog
 *********
 
+v1.0
+====
+
+v1.0.0
+------
+2026-xx-xx
+
+New features
+    - `#2059`_ `librosa.display.legend_for_axes` for generating legends for collections of 
+      axes. *Brian McFee*
+    - `#2034`_ `librosa.display.highlight` for generating path effects. *Brian McFee*
+    - `#2031`_ and `#2032`_ `librosa.loadx` shortcut for loading example files. *Brian McFee*
+    - `#2012`_ `librosa.display.multiplot` for multichannel visualization. *Brian McFee*
+    - `#2004`_ `librosa.feature.hybrid_tempogram`. *Gopesh Pandey*
+    - `#1986`_ `librosa.feature.metrogram`. *Daniel Fernandes*, *Ethan Cajetan Menezes*, *Valerian Coelho*.
+    - `#1976`_ `librosa.display.wavef0` for f0-displaced waveforms. *Brian McFee*
+    - `#1973`_ `librosa.display.wavebars` for simplified bar plots. *Brian McFee*
+    - `#1971`_ Inverted-mode display for `librosa.display.waveshow`. *Brian McFee*
+    - `#1967`_ `oct3` display modes in `librosa.display.specshow`. *Brian McFee*
+    - `#1964`_ Signal mixing helpers `librosa.to_mono` (improved), `librosa.to_stereo`, `librosa.to_multi`. *Brian McFee*
+    - `#1958`_ `librosa.sequence.path_to_steps` to convert DTW paths to a step grid. *Brian McFee*
+    - `#1952`_ `librosa.display.colorbar_db` and `colorbar_phase` for creating colorbars. *Brian McFee*
+    - `#1936`_ `librosa.display.specshow` parameter `vscale` for value scaling. *Brian McFee*
+    - `#1927`_ Peak picking by dynamic programming. *Brian McFee*
+    
+
+Enhancements
+    - `#2080`_ Skip redundant `abs` computation in `piptrack`. *Imrul Hada*
+    - `#2072`_ `librosa.display.specshow` now uses a discrete `BoundedNorm` when visualizing
+      boolean data. *Brian McFee*
+    - `#2066`_ `librosa.cqt` and `librosa.vqt` can infer the maximum number of bins
+      automatically by setting `n_bins=None`. *Brian McFee*
+    - `#2058`_ Signal mixing helpers can operate on a pre-allocated `out=` array. *ejwong*
+    - `#2055`_ `librosa.stream` now supports in-place sample rate conversion. *Brian McFee*
+    - `#2051`_ decibel converts (`librosa.amplitude_to_db`, `librosa.power_to_db`) now support
+      `axes` target parameter and support multichannel. *Brian McFee*
+    - `#2044`_ Improved handling of styling and legend entries for `librosa.display.waveshow`.  *Brian McFee*
+    - `#2041`_ `librosa.display.specshow` now supports `cmap_cyclic`. *Brian McFee*
+    - `#2030`_ `librosa.load` and `librosa.stream` now support negative `offset` values. *Brian McFee*
+    - `#2028`_ and `#2029`_ reduced import time. *Brian McFee*
+    - `#2007`_ Improved efficiency for Viterbi decoding. *Brian McFee* and *AD*
+    - `#1994`_ Migrate from sparse matrix to sparse array. *Daniel Haas B*
+    - `#1960`_ All `rng=` parameters are now `SPEC07 <https://scientific-python.org/specs/spec-0007/>`_ compliant. *Brian McFee*
+    - `#1955`_ Warn on underflow in perceptual weighting calculation. *Brian McFee*
+    - `#1954`_ Diverging colormaps in `specshow` now use two-slope norms. *Brian McFee*
+    - `#1948`_ Frequency conversions now support NaN values. *Brian McFee*
+    - `#1931`_ Variable-rate phase vocoding. *Brian McFee*
+
+Bug fixes
+    - `#2063`_ Fixed array bounds error on `librosa.sequence.rqa` with single-axis inputs.  *Suhas Holla Karkada Chandrashekar*
+    - `#2039`_ Avoid promoting scalars to 0-d arrays. *Joren Hammudoglu*
+    - `#2026`_ Fixed error in label ordering for Tonnetz displays. *Brian McFee*
+    - `#1992`_ Fixed garbage collection error in `librosa.display.waveshow`. *Daniel Haas B*
+    - `#1947`_ Removed default quantization in `note_to_hz`. *Brian McFee*
+
+Documentation
+    - `#1968`_ Significantly expanded and restructured the documentation site. *Brian McFee*
+    - `#2068`_ Standardized docstring conventions for `n_fft`. *Cameron Brooks*
+    - `#2017`_ Improved contributing guidelines and AI agents policy. *Brian McFee*
+    - `#2009`_ Improved documentation for contributing guidelines. *Petra Kuhnle*
+    - `#2006`_ Improved documentation for frequency axis scaling in specshow. *cookesan*
+    - `#1979`_ Fixed figure layout in API examples. *Haydn Lam*
+    - `#1959`_ Fixed error in `librosa.segment.subsegment` example. *Brian McFee*
+    - `#1932`_ Fixed typo in `mel_frequencies` documentation. *Fadel Akram*
+
+Maintenance
+    - `#2075`_ Updated documentation deployment action. *Brian McFee*
+    - `#2069`_ Precice dtype annotations in `librosa.beat`. *Joren Hammudoglu*
+    - `#2065`_ Updated GitHub actions. *Brian McFee*
+    - `#2060`_ Refactored frequency formatters in `librosa.display`. *Brian McFee*
+    - `#2054`_ Support `matplotlib 3.11` in tests. *Brian McFee*
+    - `#2053`_ Fixed type annotations for decorators. *Joren Hammudoglu*
+    - `#2052`_ Improved return type annotations involving `ndarray`. *Joren Hammudoglu*
+    - `#2050`_ Include `str` dtype in `ndarray` type annotations. *Joren Hammudoglu*
+    - `#2049`_ Reformatted `__init__.pyi` exports. *Joren Hammudoglu*
+    - `#2047`_ Improved checking of documentation builds with ruff and numpydoc. *Brian McFee*
+    - `#2043`_ Improved typing for dtype converters. *Joren Hammudoglu*
+    - `#2037`_ Added missing type annotations. *Joren Hammudoglu*
+    - `#2036`_ and `#2038`_ Modernized type annotations. *Brian McFee*
+    - `#2035`_ Modernized type annotation definitions. *Joren Hammudoglu*
+    - `#2027`_ Modernized linting. *Brian McFee*
+    - `#2025`_ Updated type annotation testing. *Brian McFee*
+    - `#2018`_ Adopted `SPEC0 <https://scientific-python.org/specs/spec-0000/>`_. *Brian McFee*
+    - `#1999`_ Support for Python 3.14. *Brian McFee*
+    - `#1980`_ Updated type annotations. *Brian McFee*
+    - `#1977`_ Fixed type annotations in beat tracking. *emilazy*
+    - `#1969`_ Refined `.gitignore`. *Ale Lloveras*
+    - `#1962`_ Documentation builds in CI now store build artifacts. *Brian McFee*
+    - `#1946`_ Use `scipy-stubs` in tests. *Joren Hammudoglu*
+    - `#1936`_ Improved environment cache in tests. *Brian McFee*
+    - `#1925`_ Overhaul of test framework. *Brian McFee*
+
+Expired deprecations
+    - `#1963`_ expires the following deprecated features:
+        - `audioread` backend
+        - `filename` argument in `librosa.stream`
+        - `res_type=None` in `librosa.vqt`
+        - `librosa.set_fftlib` and `librosa.get_fftlib`
+        - `win_length` parameter in `yin` and `pyin`
+        - `x_axis` parameter in `librosa.display.waveshow`
+        - `librosa.filters.constant_q` and `librosa.filters.constant_q_lengths`
+
+New deprecations
+    - `librosa.display.cmap` has been renamed to `librosa.display.infer_cmap`.  The old name
+      will be removed in version 1.1.
+    - `librosa.phase_vocoder` no longer requires `hop_length` or `n_fft` parameters.  These
+      parameters are now ignored and will be removed in version 1.1.
+    - `librosa.griffinlim` and `griffinlim_cqt` now accept `rng=` instead of `random_state=`.
+      The old parameter name will be removed in version 1.2.
+
+
+.. _#1925: https://github.com/librosa/librosa/pull/1925
+.. _#1927: https://github.com/librosa/librosa/pull/1927
+.. _#1931: https://github.com/librosa/librosa/pull/1931
+.. _#1932: https://github.com/librosa/librosa/pull/1932
+.. _#1936: https://github.com/librosa/librosa/pull/1936
+.. _#1946: https://github.com/librosa/librosa/pull/1946
+.. _#1947: https://github.com/librosa/librosa/pull/1947
+.. _#1948: https://github.com/librosa/librosa/pull/1948
+.. _#1952: https://github.com/librosa/librosa/pull/1952
+.. _#1954: https://github.com/librosa/librosa/pull/1954
+.. _#1955: https://github.com/librosa/librosa/pull/1955
+.. _#1958: https://github.com/librosa/librosa/pull/1958
+.. _#1959: https://github.com/librosa/librosa/pull/1959
+.. _#1960: https://github.com/librosa/librosa/pull/1960
+.. _#1962: https://github.com/librosa/librosa/pull/1962
+.. _#1963: https://github.com/librosa/librosa/pull/1963
+.. _#1964: https://github.com/librosa/librosa/pull/1964
+.. _#1967: https://github.com/librosa/librosa/pull/1967
+.. _#1968: https://github.com/librosa/librosa/pull/1968
+.. _#1969: https://github.com/librosa/librosa/pull/1969
+.. _#1971: https://github.com/librosa/librosa/pull/1971
+.. _#1973: https://github.com/librosa/librosa/pull/1973
+.. _#1976: https://github.com/librosa/librosa/pull/1976
+.. _#1977: https://github.com/librosa/librosa/pull/1977
+.. _#1979: https://github.com/librosa/librosa/pull/1979
+.. _#1980: https://github.com/librosa/librosa/pull/1980
+.. _#1986: https://github.com/librosa/librosa/pull/1986
+.. _#1992: https://github.com/librosa/librosa/pull/1992
+.. _#1994: https://github.com/librosa/librosa/pull/1994
+.. _#1999: https://github.com/librosa/librosa/pull/1999
+.. _#2004: https://github.com/librosa/librosa/pull/2004
+.. _#2006: https://github.com/librosa/librosa/pull/2006
+.. _#2007: https://github.com/librosa/librosa/pull/2007
+.. _#2009: https://github.com/librosa/librosa/pull/2009
+.. _#2012: https://github.com/librosa/librosa/pull/2012
+.. _#2017: https://github.com/librosa/librosa/pull/2017
+.. _#2018: https://github.com/librosa/librosa/pull/2018
+.. _#2025: https://github.com/librosa/librosa/pull/2025
+.. _#2026: https://github.com/librosa/librosa/pull/2026
+.. _#2027: https://github.com/librosa/librosa/pull/2027
+.. _#2028: https://github.com/librosa/librosa/pull/2028
+.. _#2029: https://github.com/librosa/librosa/pull/2029
+.. _#2030: https://github.com/librosa/librosa/pull/2030
+.. _#2031: https://github.com/librosa/librosa/pull/2031
+.. _#2032: https://github.com/librosa/librosa/pull/2032
+.. _#2034: https://github.com/librosa/librosa/pull/2034
+.. _#2035: https://github.com/librosa/librosa/pull/2035
+.. _#2036: https://github.com/librosa/librosa/pull/2036
+.. _#2037: https://github.com/librosa/librosa/pull/2037
+.. _#2038: https://github.com/librosa/librosa/pull/2038
+.. _#2039: https://github.com/librosa/librosa/pull/2039
+.. _#2041: https://github.com/librosa/librosa/pull/2041
+.. _#2043: https://github.com/librosa/librosa/pull/2043
+.. _#2044: https://github.com/librosa/librosa/pull/2044
+.. _#2047: https://github.com/librosa/librosa/pull/2047
+.. _#2049: https://github.com/librosa/librosa/pull/2049
+.. _#2050: https://github.com/librosa/librosa/pull/2050
+.. _#2051: https://github.com/librosa/librosa/pull/2051
+.. _#2052: https://github.com/librosa/librosa/pull/2052
+.. _#2053: https://github.com/librosa/librosa/pull/2053
+.. _#2054: https://github.com/librosa/librosa/pull/2054
+.. _#2055: https://github.com/librosa/librosa/pull/2055
+.. _#2058: https://github.com/librosa/librosa/pull/2058
+.. _#2059: https://github.com/librosa/librosa/pull/2059
+.. _#2060: https://github.com/librosa/librosa/pull/2060
+.. _#2063: https://github.com/librosa/librosa/pull/2063
+.. _#2065: https://github.com/librosa/librosa/pull/2065
+.. _#2066: https://github.com/librosa/librosa/pull/2066
+.. _#2068: https://github.com/librosa/librosa/pull/2068
+.. _#2069: https://github.com/librosa/librosa/pull/2069
+.. _#2072: https://github.com/librosa/librosa/pull/2072
+.. _#2075: https://github.com/librosa/librosa/pull/2075
+.. _#2080: https://github.com/librosa/librosa/pull/2080
+
+
 v0.11
 =====
 

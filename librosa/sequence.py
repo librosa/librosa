@@ -1,38 +1,13 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 """
-Sequential modeling
-===================
+librosa.sequence provides functions for sequential processing, such as
+dynamic time warping (DTW), recurrence quantification analysis (RQA), and
+various forms of Viterbi decoding.
 
-Sequence alignment
-------------------
-.. autosummary::
-    :toctree: generated/
-
-    dtw
-    rqa
-    path_to_steps
-
-Viterbi decoding
-----------------
-.. autosummary::
-    :toctree: generated/
-
-    viterbi
-    viterbi_discriminative
-    viterbi_binary
-
-Transition matrices
--------------------
-.. autosummary::
-    :toctree: generated/
-
-    transition_uniform
-    transition_loop
-    transition_cycle
-    transition_local
+Helper utilities are also provided for constructing transition matrices
+or post-processing alignment paths.
 """
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast, overload
@@ -55,6 +30,7 @@ if TYPE_CHECKING:
 __all__ = [
     "dtw",
     "dtw_backtracking",
+    "path_to_steps",
     "rqa",
     "viterbi",
     "viterbi_discriminative",
@@ -1102,7 +1078,7 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> npt.NDArray[np.
     -------
     steps : np.ndarray [shape=(t,)]
         An array of fractional steps, where ``steps[i]`` is the index
-        in the first sequence corresponding to the ``i``th step of the
+        in the first sequence corresponding to the ``i`` th step of the
         second sequence.  The number of steps is determined by the range
         of the target sequence indices.
 

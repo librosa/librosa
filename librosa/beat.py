@@ -1,14 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""
-Beat and tempo
-==============
-.. autosummary::
-   :toctree: generated/
-
-   beat_track
-   plp
-"""
+"""The librosa.beat module provides two functions for estimating beat locations from an audio signal."""
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal, overload

@@ -1,15 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Onset detection
-===============
-.. autosummary::
-    :toctree: generated/
-
-    onset_detect
-    onset_backtrack
-    onset_strength
-    onset_strength_multi
+librosa.onset contains functions for computing onset strength envelopes
+and estimating onset events from audio signals.
 """
 from __future__ import annotations
 

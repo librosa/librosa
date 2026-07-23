@@ -1,9 +1,6 @@
 
-Contributing code
-=================
-
-How to contribute
------------------
+Contributing
+============
 
 The preferred way to contribute to librosa is to fork the 
 [main repository](http://github.com/librosa/librosa/) on

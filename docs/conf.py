@@ -79,7 +79,8 @@ extensions = [
 if "LIBROSA_DOC_DEBUG" in os.environ:
     numpydoc_use_plots = False
 else:
-    extensions.extend([
+    extensions.extend(
+        [
             "numpydoc",  # docstring examples
             "matplotlib.sphinxext.plot_directive",  # docstring examples
         ]
@@ -107,7 +108,7 @@ numpydoc_show_class_members = False
 # ----------------------------------
 # Copybutton configs
 # ----------------------------------
-copybutton_exclude = '.linenos, .gp'
+copybutton_exclude = ".linenos, .gp"
 
 # ------------------------------------------------------------------------------
 # Plot
@@ -116,36 +117,50 @@ plot_pre_code = (
     doctest_global_setup
     + """
 import matplotlib
+import matplotlib.style
 import librosa
-matplotlib.rcParams['figure.constrained_layout.use'] = True
 """
 )
 plot_include_source = True
 plot_html_show_source_link = False
-plot_formats = [("png", 100), ("pdf", 100)]
+plot_formats = [("png", 150), ("pdf", 150)]
 plot_html_show_formats = False
 
-font_size = 12  # 13*72/96.0  # 13 px
+from cycler import cycler
 
+# Read the style sheet into a dictionary and assign it globally to the directive
+# This guarantees it overrides the factory defaults applied during each snippet reset
 plot_rcparams = {
-    "font.size": font_size,
+    "axes.prop_cycle": cycler("color", ["#3f90da", "#ffa90e", "#bd1f01", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#717581", "#92dadd"]),
+    "font.size": 10,
     "legend.loc": "upper right",
     "legend.frameon": True,
     "legend.framealpha": 0.95,
-    "axes.xmargin": 0,
-    "axes.ymargin": 0,
-    "axes.titlesize": font_size,
-    "axes.labelsize": font_size,
-    "xtick.labelsize": font_size,
-    "ytick.labelsize": font_size,
-    "legend.fontsize": font_size,
+    "legend.fontsize": 9,
+    "axes.titlesize": 12,
+    "axes.labelsize": 10,
+    "axes.spines.left": True,
+    "axes.spines.bottom": True,
+    "axes.spines.top": False,
+    "axes.spines.right": False,
+    "xtick.labelsize": 9,
+    "ytick.labelsize": 9,
+    "xtick.major.size": 4.0,
+    "xtick.minor.size": 2.0,
+    "xtick.major.width": 0.8,
+    "ytick.major.width": 0.8,
+    "xtick.color": "0.15",
+    "ytick.color": "0.15",
+    "figure.autolayout": False,
+    "figure.constrained_layout.use": True,
     "figure.subplot.bottom": 0.2,
     "figure.subplot.left": 0.2,
     "figure.subplot.right": 0.9,
     "figure.subplot.top": 0.85,
-    "figure.subplot.wspace": 0.4,
+    #"figure.subplot.wspace": 0.4,
     "text.usetex": False,
-    "savefig.bbox": "tight",
+    "lines.linewidth": 1.5,
+    "lines.antialiased": True,
 }
 
 
@@ -154,28 +169,34 @@ def reset_mpl(gallery_conf, fname):
 
     import matplotlib
     import matplotlib.pyplot as plt
-    import librosa
 
     matplotlib.rcParams.update(**plot_rcparams)
-
-    # Only use constrained layout in 0.8 and above
-    matplotlib.rcParams["figure.constrained_layout.use"] = True
     plt.close("all")
 
+def reset_numpy_printoptions(gallery_conf, fname):
+    import numpy as np
+    np.set_printoptions(precision=3, suppress=True)
+    reset_mpl(gallery_conf, fname)
 
 # Gallery
 sphinx_gallery_conf = {
-    "examples_dirs": "examples/",
-    "gallery_dirs": "auto_examples",
+    "filename_pattern": r"/.*",
+    "examples_dirs": ["tutorials/"],
+    "gallery_dirs": ["auto_tutorials"],
     "backreferences_dir": None,
     "matplotlib_animations": True,
     "reference_url": {
         "librosa": None,
     },
-    "reset_modules": (reset_mpl,),
+    "reset_modules": (reset_numpy_printoptions,),
     "capture_repr": ("_repr_html_",),
+    "within_subsection_order": "FileNameSortKey",
+    "download_all_examples": False,
+    "remove_config_comments": True,
+    "show_memory": False,
+    "write_computation_times": False,
+    "notebook_extensions": [],
 }
-
 
 
 intersphinx_mapping = {
@@ -294,7 +315,7 @@ html_theme_options = {
     "logo": {
         "alt_text": "librosa",
         "image_light": "img/librosa_logo_text.svg",
-        "image_dark": "img/librosa_logo_text.svg",
+        "image_dark": "img/librosa_logo_dark.svg",
     },
     "analytics": {
         "google_analytics_id": "UA-171031946-1",
@@ -303,8 +324,29 @@ html_theme_options = {
         "json_url": "https://librosa.org/en/stable/_static/switcher.json",
         "version_match": version,
     },
+    "icon_links": [
+        {
+            "name": "GitHub",
+            "url": "https://github.com/librosa/librosa",
+            "icon": "fa-brands fa-square-github",
+            "type": "fontawesome",
+        },
+        {
+            "name": "GitHub Issues",
+            "url": "https://github.com/librosa/librosa/issues",
+            "icon": "fa-classic fa-bug",
+            "type": "fontawesome",
+        },
+        {
+            "name": "Discussion",
+            "url": "https://groups.google.com/forum/#!forum/librosa",
+            "icon": "fa-classic fa-comments",
+            "type": "fontawesome",
+        },
+    ],
     "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
     "navbar_align": "left",
+    "show_nav_level": 1,
 }
 html_static_path = ["_static"]
 html_css_files = [
@@ -312,6 +354,9 @@ html_css_files = [
 ]
 html_show_sourcelink = False
 
+html_context = {
+    "default_mode": "light"
+}
 # -- Options for analytics ----------------------------------------------------
 googleanalytics_id = "UA-171031946-1"
 
@@ -410,5 +455,17 @@ autodoc_member_order = "bysource"
 autodoc_typehints = "none"
 
 linkcheck_allow_unauthorized = True
-linkcheck_ignore = ['https://www.ee.columbia.edu/~dpwe/resources/.*', 'https://htk.eng.cam.ac.uk/.*',
-                    'https://zenodo.org/.*']
+linkcheck_ignore = ["https://www.ee.columbia.edu/~dpwe/resources/.*",
+                    "https://htk.eng.cam.ac.uk/.*",
+                    "https://zenodo.org/.*"]
+
+def skip_matplotlib_inherited(app, what, name, obj, skip, options):
+    """Filter out inherited matplotlib methods from autodoc."""
+    mod = getattr(obj, "__module__", "")
+    if mod and mod.startswith("matplotlib"):
+        return True
+    return skip
+
+def setup(app):
+    # Ensure you append to the existing setup function if you already have one
+    app.connect("autodoc-skip-member", skip_matplotlib_inherited)
