@@ -16,6 +16,21 @@ content of audio signals.
 # Earlier sections focused on pitch, harmony, and rhythm.
 # Here we turn to timbre: the aspects of sound that make two instruments
 # playing the same notes sound different.
+# Compared to the earlier topics we've examined, timbre is harder to pin down conceptually with
+# a clean definition.
+# As a result, the analysis in this section will be a bit more exploratory and data-driven than
+# purely computational.
+# By the end of this section, you should have a better understanding of how basic signal
+# representations (e.g. the STFT) capture both pitch and timbre, and why disentangling these
+# concepts takes a bit of extra work.
+#
+# .. warning::
+#    If you're not previously familiar with concepts like nearest neighbors and dimensionality
+#    reduction, you might want to read up on those topics before continuing with this tutorial
+#    section.
+#    The scikit-learn documentation is a good place to start:
+#       - `Nearest neighbors <https://scikit-learn.org/stable/modules/neighbors.html>`_
+#       - `Dimensionality reduction <https://scikit-learn.org/stable/modules/manifold.html>`_
 #
 # To study timbre, we want examples where pitch and timing are held roughly constant while the
 # instrument changes. For that, we use an excerpt from the `ChoraleBricks
