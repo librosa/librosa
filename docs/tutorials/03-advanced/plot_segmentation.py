@@ -21,6 +21,8 @@ helpful to read along.
 
 
 ###################################
+# .. _tutorial-segmentation-laplacian:
+#
 # Imports
 #   - numpy for basic functionality
 #   - scipy for graph Laplacian
