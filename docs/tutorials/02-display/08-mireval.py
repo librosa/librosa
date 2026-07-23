@@ -188,7 +188,7 @@ fig.legend(loc="outside center right")
 # Librosa and `mir_eval` can be used together to visualize annotations and signal content
 # together.
 # The examples above illustrate only the simplest and most common uses, but there are many more
-# things that you can do with `mir_eval.display`, including visualizing multiple f0 estimates, 
+# things that you can do with `mir_eval.display`, including visualizing multiple f0 estimates,
 # piano roll displays, or comparison of different annotations.
 # Here we have focused on just the functionality that most clearly integrates with waveform or
 # spectrogram displays.

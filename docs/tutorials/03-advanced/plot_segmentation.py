@@ -247,7 +247,7 @@ fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw=dict(wspace=0, hspace=0
 librosa.display.specshow(C, y_axis="cqt_hz", sr=sr,
                          bins_per_octave=BINS_PER_OCTAVE,
                          x_axis="time", ax=ax[0])
-mir_eval.display.events(bound_times, ax=ax[0], color='w', linewidth=0.75)
+mir_eval.display.events(bound_times, ax=ax[0], color="w", linewidth=0.75)
 ax[0].label_outer()
 # Convert boundary times to a set of intervals
 intervals = np.asarray(list(itertools.pairwise(bound_times)))

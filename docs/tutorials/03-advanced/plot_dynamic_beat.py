@@ -120,7 +120,7 @@ click_dynamic = librosa.clicks(times=beats_dynamic, sr=sr, click_freq=660,
 Audio(data=librosa.to_stereo(left=y, right=click_dynamic), rate=sr)
 
 # %%
-# .. note:: 
+# .. note::
 #    Since we're providing the tempo estimates as input to the beat tracker,
 #    we can ignore the first return value (`tempo`) which will simply be a copy of the
 #    input (`tempo_dynamic`).
