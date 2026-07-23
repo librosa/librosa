@@ -402,9 +402,12 @@ def cite(version: str | None=None, *, bib: bool = False) -> str:
     >>> librosa.cite("0.10.1")
     "https://doi.org/10.5281/zenodo.8252662"
 
-    >>> librosa.cite("0.11.0", bib=True)
-    "@misc{https://doi.org/10.5281/zenodo.15006942,\n  doi = {10.5281/ZENODO.15006942},\n  url
-     = {https://zenodo.org/doi/10.5281/zenodo.15006942},\n  author = ..."
+    >>> bib = librosa.cite("0.11.0", bib=True)
+    >>> print(bib[:140], "...")
+    @misc{https://doi.org/10.5281/zenodo.15006942,
+      doi = {10.5281/ZENODO.15006942},
+      url = {https://zenodo.org/doi/10.5281/zenodo.15006942},
+     ...
     """
     if version is None:
         version = librosa_version
