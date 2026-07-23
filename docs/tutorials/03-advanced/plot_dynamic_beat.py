@@ -87,13 +87,18 @@ tempo_dynamic = librosa.feature.tempo(y=y, sr=sr, aggregate=None, std_bpm=4)
 # This is to account for the broad range of tempo drift in this
 # particular recording (30 BPM to 240 BPM).
 # We can plot the dynamic and static tempo estimates to see how they differ.
-
-fig, ax = plt.subplots()
+# Alongside, we'll plot the Fourier tempogram to visualize the underlying
+# rhythmic structure of the signal.
+fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
 times = librosa.times_like(tempo_dynamic, sr=sr)
-ax.plot(times, tempo_dynamic, label="Dynamic tempo estimate")
-ax.axhline(tempo, label="Static tempo estimate", color="r")
-ax.legend()
-ax.set(xlabel="Time (s)", ylabel="Tempo (BPM)")
+ax[0].plot(times, tempo_dynamic, label="Dynamic tempo estimate")
+ax[0].axhline(tempo, label="Static tempo estimate", color="r")
+ax[0].legend()
+ax[0].set(xlabel="Time (s)", ylabel="Tempo (BPM)")
+tg = librosa.feature.fourier_tempogram(y=y, sr=sr)
+librosa.display.specshow(tg, sr=sr, x_axis="time", y_axis="fourier_tempo", vscale='dBFS', top_db=20, ax=ax[1])
+ax[1].set(title="Fourier tempogram")
+ax[1].label_outer()
 
 # %%
 # `librosa.feature.tempo` estimates tempo over a sliding window whose duration
