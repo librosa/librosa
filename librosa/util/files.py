@@ -428,5 +428,9 @@ def cite(version: str | None=None, *, bib: bool = False) -> str:
         with open(bib_data, "rb") as fdesc:
             bib_index: dict[str, str] = msgpack.load(fdesc)
 
-        return bib_index[version]
+        try:
+            return bib_index[version]
+        except KeyError as exc:
+            raise ParameterError(f"No BibTeX entry found for version {version}.") from exc
+
     return f"https://doi.org/{version_index[version]}"
