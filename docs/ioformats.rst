@@ -104,14 +104,14 @@ Download and read from URL:
 .. code-block:: python
     :linenos:
 
-    import soundfile as sf
     import io
-
-    from six.moves.urllib.request import urlopen
+    import urllib.request
+    import soundfile as sf
 
     url = "https://librosa.org/data/audio/snare-accelerate.ogg"
 
-    data, samplerate = sf.read(io.BytesIO(urlopen(url).read()))
+    with urllib.request.urlopen(url) as response:
+        data, samplerate = sf.read(io.BytesIO(response.read()))
 
 
 Write out audio files

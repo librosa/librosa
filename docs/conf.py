@@ -347,6 +347,7 @@ html_theme_options = {
     "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
     "navbar_align": "left",
     "show_nav_level": 1,
+    "show_version_warning_banner": True,
 }
 html_static_path = ["_static"]
 html_css_files = [
