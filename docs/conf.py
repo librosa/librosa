@@ -456,6 +456,8 @@ autodoc_member_order = "bysource"
 autodoc_typehints = "none"
 
 linkcheck_allow_unauthorized = True
+linkcheck_retries = 5
+linkcheck_workers = 20
 linkcheck_ignore = ["https://www.ee.columbia.edu/~dpwe/resources/.*",
                     "https://htk.eng.cam.ac.uk/.*",
                     "https://zenodo.org/.*"]
