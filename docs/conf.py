@@ -458,6 +458,7 @@ autodoc_typehints = "none"
 linkcheck_allow_unauthorized = True
 linkcheck_retries = 5
 linkcheck_workers = 20
+linkcheck_report_timeouts_as_broken = False
 linkcheck_ignore = ["https://www.ee.columbia.edu/~dpwe/resources/.*",
                     "https://htk.eng.cam.ac.uk/.*",
                     "https://zenodo.org/.*"]
