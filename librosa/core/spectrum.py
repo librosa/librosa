@@ -1720,7 +1720,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
+    axes: Literal["auto"] | int | tuple[int, ...] | None = ...,
 ) -> np.floating: ...
 @overload
 def power_to_db(
@@ -1729,7 +1729,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
+    axes: Literal["auto"] | int | tuple[int, ...] | None = ...,
 ) -> np.ndarray: ...
 @cache(level=30)
 def power_to_db(
@@ -1738,7 +1738,7 @@ def power_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-10,
     top_db: float | None = 80.0,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = "auto",
+    axes: Literal["auto"] | int | tuple[int, ...] | None = "auto",
 ) -> np.floating | np.ndarray:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
@@ -1932,7 +1932,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
+    axes: Literal["auto"] | int | tuple[int, ...] | None = ...,
 ) -> np.floating: ...
 @overload
 def amplitude_to_db(
@@ -1941,7 +1941,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
+    axes: Literal["auto"] | int | tuple[int, ...] | None = ...,
 ) -> np.ndarray: ...
 @cache(level=30)
 def amplitude_to_db(
@@ -1950,7 +1950,7 @@ def amplitude_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-5,
     top_db: float | None = 80.0,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = "auto",
+    axes: Literal["auto"] | int | tuple[int, ...] | None = "auto",
 ) -> np.floating | np.ndarray:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
