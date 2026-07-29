@@ -70,7 +70,6 @@ extensions = [
     "sphinx_copybutton",  # code example copy button
     "numpydoc",  # docstring examples
     "sphinxcontrib.inkscapeconverter",  # used for badge / logo conversion in tex
-    "sphinx_multiversion",  # historical builds
     "sphinx_rtd_theme",  # for proper jquery behavior
     "sphinxcontrib.googleanalytics",  # google analytics
 ]
@@ -302,6 +301,15 @@ html_static_path = ["_static"]
 html_css_files = [
     "css/custom.css",
 ]
+def setup(app):
+    """Inject the version switcher script natively during the Sphinx build."""
+    import sphinx
+    
+    # Sphinx 1.8.0 deprecated add_javascript in favor of add_js_file
+    if sphinx.version_info >= (1, 8):
+        app.add_js_file('rtd-version-switcher.js')
+    else:
+        app.add_javascript('rtd-version-switcher.js')
 
 # -- Options for analytics ----------------------------------------------------
 googleanalytics_id = "UA-171031946-1"
