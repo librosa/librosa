@@ -47,7 +47,7 @@ conda install -c conda-forge librosa
 For optional dependencies and advanced setup, see the guide in the documentation.
 
 
---
+---
 
 ## Citing
 
@@ -60,7 +60,7 @@ We additionally encourage you to cite the original publications describing the m
 
 If you are citing for use in your own work, please cite the version you used by retrieving the appropriate DOI and citation information from Zenodo.
 
-    [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.591533.svg)](https://doi.org/10.5281/zenodo.591533)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.591533.svg)](https://doi.org/10.5281/zenodo.591533)
 
 This ensures that all contributing authors are credited for the work you are building on.
 
@@ -80,16 +80,16 @@ print(librosa.cite(bib=True))
 ### Citing for design 
 
 If you wish to cite librosa for its design, motivation, etc., please cite the paper
-  published at SciPy 2015:
+published at SciPy 2015:
 
     McFee, Brian, Colin Raffel, Dawen Liang, Daniel PW Ellis, Matt McVicar, Eric Battenberg, and Oriol Nieto. "librosa: Audio and music signal analysis in python." In Proceedings of the 14th python in science conference, pp. 18-25. 2015.
 
 
 As a rule of thumb:
 
-    - Use a versioned librosa citation to document the software implementation used in your experiments.
-    - Cite the original methodological papers for the algorithms that are central to your work.
-    - Cite the SciPy paper when discussing librosa itself, its design, or its contribution as a software library.
+- Use a versioned librosa citation to document the software implementation used in your experiments.
+- Cite the original methodological papers for the algorithms that are central to your work.
+- Cite the SciPy paper when discussing librosa itself, its design, or its contribution as a software library.
 
 
 ## Discussion
