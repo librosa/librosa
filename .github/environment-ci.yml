@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   # required
-  - pip
+  - defaults::pip
   - numpy>=2.1.0
   - scipy>=1.15.0
   - scikit-learn>=1.6.0
