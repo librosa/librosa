@@ -82,17 +82,12 @@ print(librosa.cite(bib=True))
 If you wish to cite librosa for its design, motivation, etc., please cite the paper
 published at SciPy 2015:
 
-    McFee, Brian, Colin Raffel, Dawen Liang, Daniel PW Ellis, Matt McVicar, Eric Battenberg, and Oriol Nieto. "librosa: Audio and music signal analysis in python." In Proceedings of the 14th python in science conference, pp. 18-25. 2015.
-
+    McFee, Brian, Colin Raffel, Dawen Liang, Daniel PW Ellis, Matt McVicar, Eric Battenberg, and Oriol Nieto.
+    "librosa: Audio and music signal analysis in python."
+    In Proceedings of the 14th python in science conference, pp. 18-25. 2015.
 
 As a rule of thumb:
 
 - Use a versioned librosa citation to document the software implementation used in your experiments.
 - Cite the original methodological papers for the algorithms that are central to your work.
 - Cite the SciPy paper when discussing librosa itself, its design, or its contribution as a software library.
-
-
-## Discussion
-
-Please direct non-development questions and discussion topics to our web forum at
-https://groups.google.com/forum/#!forum/librosa
