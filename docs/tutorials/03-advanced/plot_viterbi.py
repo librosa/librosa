@@ -85,8 +85,6 @@ ax.legend()
 # shifted to 0.5.  A simple silence detector would classify each frame
 # independently of its neighbors, which would result in the following plot:
 
-
-plt.figure(figsize=(12, 6))
 fig, ax = plt.subplots(nrows=2, sharex=True)
 librosa.display.specshow(S_full, vscale="dBFS",
                          y_axis="log", x_axis="time", sr=sr, ax=ax[0])

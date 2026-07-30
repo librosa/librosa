@@ -120,19 +120,12 @@ A = mu * Rf + (1 - mu) * R_path
 ###########################################################
 # Plot the resulting graphs (Figure 1, left and center)
 fig, ax = plt.subplots(ncols=3, sharex=True, sharey=True, figsize=(10, 4))
-librosa.display.specshow(Rf, cmap="gray_r", y_axis="time", x_axis="s",
-                         y_coords=beat_times, x_coords=beat_times, ax=ax[0])
-ax[0].set(title="Recurrence similarity")
-ax[0].label_outer()
-librosa.display.specshow(R_path, cmap="gray_r", y_axis="time", x_axis="s",
-                         y_coords=beat_times, x_coords=beat_times, ax=ax[1])
-ax[1].set(title="Path similarity")
-ax[1].label_outer()
-librosa.display.specshow(A, cmap="gray_r", y_axis="time", x_axis="s",
-                         y_coords=beat_times, x_coords=beat_times, ax=ax[2])
-ax[2].set(title="Combined graph")
-ax[2].label_outer()
-
+librosa.display.multiplot("specshow", Rf, R_path, A,
+                          titles=["Recurrence similarity", "Path similarity", "Combined graph"],
+                          cmap="gray_r",
+                          y_axis="time", x_axis="s",
+                          y_coords=beat_times, x_coords=beat_times,
+                          axes=ax)
 
 #####################################################
 # Now let's compute the normalized Laplacian (Eq. 10)
@@ -158,9 +151,13 @@ k = 5
 
 X = evecs[:, :k] / Cnorm[:, k-1:k]
 
-#################
+##################################################################################
 # We can now plot the resulting representation along with the recurrence matrix to
 # see how the structural components align with repeating patterns.
+#
+# Each structural component is an normalized eigenvector with dimension equal to
+# the number of beats.  The collection of structural components can be used as
+# features to describe each beat, which can then be clustered to identify segments.
 
 fig, ax = plt.subplots(nrows=2, sharex=True, figsize=(6, 8),
                        layout="compressed",
@@ -172,6 +169,7 @@ ax[1].set(ylabel="Recurrence similarity")
 librosa.display.specshow(X.T,
                          x_axis="time",
                          x_coords=beat_times, ax=ax[0])
+ax[0].set(yticks=np.arange(k), yticklabels=[f"Component {i+1}" for i in range(k)])
 ax[0].set(title="Structure components")
 ax[0].label_outer()
 
@@ -222,6 +220,7 @@ freqs = librosa.cqt_frequencies(n_bins=C.shape[0],
 fig, ax = plt.subplots(figsize=(8, 5), nrows=2, gridspec_kw={"height_ratios": [1, 4]},
                        layout="compressed")
 librosa.display.specshow(X.T, x_axis="time", x_coords=beat_times, ax=ax[0])
+ax[0].set(yticks=np.arange(k), yticklabels=[f"#{i+1}" for i in range(k)])
 ax[0].set(title="Structure components")
 ax[0].label_outer()
 librosa.display.specshow(C, y_axis="cqt_hz", sr=sr,

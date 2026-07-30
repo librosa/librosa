@@ -11,11 +11,6 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-#
-# To build multi-versions, run the following at the base directory
-#   $ sphinx-multiversion docs/ build/html/
-#
-
 import os
 import sys
 from pathlib import Path
@@ -321,7 +316,7 @@ html_theme_options = {
         "google_analytics_id": "UA-171031946-1",
     },
     "switcher": {
-        "json_url": "https://librosa.org/en/stable/_static/switcher.json",
+        "json_url": "https://librosa.org/web-staging/versions.json",
         "version_match": version,
     },
     "icon_links": [
@@ -348,6 +343,7 @@ html_theme_options = {
     "navbar_align": "left",
     "show_nav_level": 1,
     "show_version_warning_banner": True,
+    "sticky_banners": True,
 }
 html_static_path = ["_static"]
 html_css_files = [
