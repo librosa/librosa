@@ -1,317 +1,465 @@
 {
+    "title": "librosa",
+    "description": "Python library for audio and music analysis",
+    "upload_type": "software",
     "license": "ISC",
     "creators": [
         {
+            "name": "Brian McFee",
             "orcid": "0000-0001-6261-9747",
-            "affiliation": "New York University",
-            "name": "McFee, Brian"
+            "affiliation": "New York University"
         },
         {
-            "name":"Matt McVicar"
+            "name": "Matt McVicar",
+            "affiliation": "Researcher"
         },
         {
-            "name":"Daniel Faronbi"
+            "name": "Matan Gover"
         },
         {
-            "orcid": "0000-0003-3781-7244",
-            "name":"Iran Roman"
+            "name": "Joren Hammudoglu"
         },
         {
-            "name":"Matan Gover"
+            "name": "Stefan Balke",
+            "orcid": "0000-0003-1306-3548"
         },
         {
-            "orcid": "0000-0003-1306-3548",
-            "name":"Stefan Balke"
+            "name": "Scott Seyfarth"
         },
         {
-            "name":"Scott Seyfarth"
-        },
-        {
-            "orcid": "0000-0002-9008-7562",
-            "name":"Ayoub Malek"
-        },
-        {
-            "orcid": "0000-0002-5009-8048",
-            "name":"Colin Raffel"
-        },
-        {
+            "name": "Vincent Lostanlen",
             "orcid": "0000-0003-0580-1651",
-            "name":"Vincent Lostanlen"
+            "affiliation": "CNRS"
         },
         {
-            "name":"Benjamin van Niekirk"
+            "name": "Ayoub Malek",
+            "orcid": "0000-0002-9008-7562",
+            "affiliation": "@Huawei"
         },
         {
-            "name":"Dana Lee"
+            "name": "Colin Raffel",
+            "orcid": "0000-0002-5009-8048",
+            "affiliation": "University of Toronto"
         },
         {
-            "name":"Frank Cwitkowitz"
+            "name": "Benjamin van Niekirk",
+            "affiliation": "Concordia University and Mila Quebec AI Institute"
         },
         {
-            "orcid": "0000-0003-1383-4541",
-            "name":"Frank Zalkow"
+            "name": "Dana Lee",
+            "affiliation": "Ableton"
         },
         {
+            "name": "Daniel Haas B"
+        },
+        {
+            "name": "Frank Cwitkowitz",
+            "affiliation": "University of Rochester"
+        },
+        {
+            "name": "Frank Zalkow",
+            "orcid": "0000-0003-1383-4541"
+        },
+        {
+            "name": "Dan Ellis",
+            "affiliation": "Google"
+        },
+        {
+            "name": "Oriol Nieto",
             "orcid": "0000-0001-6459-7609",
-            "name":"Oriol Nieto"
+            "affiliation": "@adobe"
         },
         {
-            "name":"Dan Ellis"
+            "name": "Daniel Fernandes"
         },
         {
-            "name":"Jack Mason"
+            "name": "Jack Mason"
         },
         {
-            "name":"Kyungyun Lee"
+            "name": "Eugene Rabinovich"
         },
         {
-            "name":"Bea Steers"
+            "name": "Kyungyun Lee",
+            "affiliation": "Aalto University"
         },
         {
-            "name":"Emily Halvachs"
+            "name": "Bea Steers",
+            "affiliation": "New York University"
         },
         {
-            "orcid": "0000-0002-8225-5191",
-            "name":"Carl Thomé"
+            "name": "Tom Xi",
+            "affiliation": "NYU"
         },
         {
+            "name": "Carl Thomé",
+            "orcid": "0000-0002-8225-5191"
+        },
+        {
+            "name": "Fabian Robert-Stöter",
             "orcid": "0000-0002-2534-1165",
-            "name":"Fabian Robert-Stöter"
+            "affiliation": "Audioshake"
         },
         {
-            "name":"Rachel Bittner"
+            "name": "Rachel Bittner"
         },
         {
-            "name":"Ziyao Wei"
+            "name": "Ziyao Wei"
         },
         {
-            "name":"Adam Weiss"
+            "name": "Adam Weiss"
         },
         {
-            "name":"Eric Battenberg"
+            "name": "Eric Battenberg",
+            "affiliation": "Google"
         },
         {
-            "name":"Keunwoo Choi"
+            "name": "Gopesh Pandey"
         },
         {
+            "name": "ejwong"
+        },
+        {
+            "name": "Keunwoo Choi",
+            "affiliation": "Upstage"
+        },
+        {
+            "name": "Ryuichi Yamamoto",
             "orcid": "0000-0002-0720-0967",
-            "name":"Ryuichi Yamamoto"
+            "affiliation": "@line"
         },
         {
-            "name":"CJ Carr"
+            "name": "CJ Carr",
+            "affiliation": "Dadabots"
         },
         {
-            "name":"Alex Metsai"
+            "name": "Alex Metsai"
         },
         {
-            "name":"Stefan Sullivan"
+            "name": "Stefan Sullivan"
         },
         {
-            "name":"Pius Friesch"
+            "name": "Pius Friesch",
+            "affiliation": "KTH Royal Institute of Technology"
         },
         {
-            "name":"Asmitha Krishnakumar"
-        },
-        {
+            "name": "Shunsuke Hidaka",
             "orcid": "0000-0003-1001-4564",
-            "name":"Shunsuke Hidaka"
+            "affiliation": "Hitachi, Ltd."
         },
         {
-            "name":"Steve Kowalik"
+            "name": "Steve Kowalik",
+            "affiliation": "SUSE"
         },
         {
-            "name":"Fabian Keller"
+            "name": "Fabian Keller",
+            "affiliation": "NVIDIA"
         },
         {
-            "name":"Dan Mazur"
+            "name": "Curtis Hawthorne",
+            "affiliation": "Amazon AGI"
         },
         {
-            "orcid": "0000-0001-6609-6023",
-            "name":"Alexandre Chabot-Leclerc"
+            "name": "Chandrashekhar Ramaprasad",
+            "affiliation": "ODeX Global"
         },
         {
-            "name":"Curtis Hawthorne"
+            "name": "Cameron Brooks",
+            "affiliation": "Oregon State University"
         },
         {
-            "name":"Chandrashekhar Ramaprasad"
+            "name": "Ale Lloveras",
+            "affiliation": "SIMAI AgTech"
         },
         {
-            "name":"Myungchul Keum"
+            "name": "Viktor Andreevitch Morozov"
         },
         {
-            "name":"Juanita Gomez"
+            "name": "Kian Eliasi",
+            "affiliation": "@cafebazaar"
         },
         {
-            "name":"Will Monroe"
+            "name": "nullmightybofo"
         },
         {
-            "name":"Viktor Andreevitch Morozov"
+            "name": "Haydn Lam"
         },
         {
-            "name":"Kian Eliasi"
-        },
-        {
-            "name":"nullmightybofo"
-        },
-        {
-            "name":"Paul Biberstein"
-        },
-        {
-            "name":"N. Dorukhan Sergin"
-        },
-        {
-            "orcid": "0000-0001-8158-5562",
-            "name":"Romain Hennequin"
-        },
-        {
-            "name":"Rimvydas Naktinis"
-        },
-        {
-            "name":"beantowel"
-        },
-        {
-            "orcid": "0000-0003-2892-0194",
-            "name":"Taewoon Kim"
-        },
-        {
-            "name":"Jon Petter \u00c5sen"
-        },
-        {
-            "name":"Joon Lim"
-        },
-        {
-            "name":"Alex Malins"
-        },
-        {
-            "name":"Dar\u00edo Here\u00f1\u00fa"
-        },
-        {
-            "name":"Stef van der Struijk"
-        },
-        {
-            "name":"Lorenz Nickel"
-        },
-        {
-            "name":"Jackie Wu"
-        },
-        {
-            "name":"Zhen Wang"
-        },
-        {
-            "name":"Tim Gates"
-        },
-        {
-            "name":"Matt Vollrath"
-        },
-        {
-            "orcid": "0000-0001-9813-221X",
-            "name":"Andy Sarroff"
-        },
-        {
-            "name":"Xiao-Ming"
-        },
-        {
-            "orcid": "0000-0001-8259-6028",
-            "name":"Alastair Porter"
-        },
-        {
-            "name":"Seth Kranzler"
-        },
-        {
-            "name":"Voodoohop"
-        },
-        {
-            "orcid": "0000-0003-4491-0025",
-            "name":"Mattia Di Gangi"
-        },
-        {
-            "name":"Helmi Jinoz"
-        },
-        {
-            "name":"Connor Guerrero"
-        },
-        {
-            "name":"Abduttayyeb Mazhar"
-        },
-        {
-            "name":"toddrme2178"
-        },
-        {
-            "orcid": "0000-0001-7159-1387",
-            "name":"Zvi Baratz"
-        },
-        {
-            "name":"Anton Kostin"
-        },
-        {
-            "name":"Xinlu Zhuang"
-        },
-        {
-            "name":"Cash TingHin Lo"
-        },
-        {
-            "name":"Pavel Campr"
-        },
-        {
-            "name":"Eric Semeniuc"
-        },
-        {
-            "orcid": "0000-0002-9590-7179",
-            "name":"Monsij Biswal"
-        },
-        {
-            "name":"Shayenne Moura"
-        },
-        {
-            "name":"Paul Brossier"
-        },
-        {
-            "name":"Hojin Lee"
-        },
-        {
-            "orcid": "0000-0001-9916-2285",
-            "name":"Waldir Pimenta"
-        },
-        {
-            "name":"Jon Petter Åsen"
-        },
-        {
-            "name":"Shin Hyun"
-        },
-        {
-            "name":"Iliya S"
-        },
-        {
-            "name":"Eugene Rabinovich"
-        },
-        {
-            "name":"Geo Lei"
-        },
-        {
-            "name":"Jize Guo"
-        },
-        {
-            "name":"Phillip S.M. Skelton"
-        },
-        {
-            "name":"Matt Pitkin",
+            "name": "Matt Pitkin",
             "orcid":"https://orcid.org/0000-0003-4548-526X"
         },
         {
-            "name":"Anmol Mishra"
+            "name": "Romain Hennequin",
+            "orcid": "0000-0001-8158-5562"
         },
         {
-            "name":"Slava Chaunin"
+            "name": "Rimvydas Naktinis"
         },
         {
-            "name":"BenedictSt"
+            "name": "beantowel",
+            "affiliation": "BUAA"
         },
         {
-            "name":"Scott VanRavenswaay"
+            "name": "Jize Guo"
         },
         {
-            "name":"David Südholt",
+            "name": "Petra Kuhnle"
+        },
+        {
+            "name": "Suhas Holla Karkada Chandrashekar"
+        },
+        {
+            "name": "Taewoon Kim",
+            "orcid": "0000-0003-2892-0194",
+            "affiliation": "HumemAI"
+        },
+        {
+            "name": "Jon Petter Åsen"
+        },
+        {
+            "name": "Alex Malins",
+            "affiliation": "Kraken Technologies"
+        },
+        {
+            "name": "Darío Hereñú"
+        },
+        {
+            "name": "Stef van der Struijk"
+        },
+        {
+            "name": "Lorenz Nickel"
+        },
+        {
+            "name": "Zhen Wang"
+        },
+        {
+            "name": "Shin Hyun"
+        },
+        {
+            "name": "Matt Vollrath",
+            "affiliation": "@EndPointCorp"
+        },
+        {
+            "name": "Phillip S.M. Skelton"
+        },
+        {
+            "name": "Andy Sarroff",
+            "orcid": "0000-0001-9813-221X",
+            "affiliation": "iZotope, Inc."
+        },
+        {
+            "name": "Alastair Porter",
+            "orcid": "0000-0001-8259-6028",
+            "affiliation": "Universitat Pompeu Fabra"
+        },
+        {
+            "name": "Anmol Mishra"
+        },
+        {
+            "name": "Seth Kranzler"
+        },
+        {
+            "name": "Scott VanRavenswaay",
+            "affiliation": "https://www.paperclipmaximizer.ai"
+        },
+        {
+            "name": "cookesan"
+        },
+        {
+            "name": "Slava Chaunin"
+        },
+        {
+            "name": "Voodoohop",
+            "affiliation": "Voodoohop"
+        },
+        {
+            "name": "Gao Lei"
+        },
+        {
+            "name": "BenedictSt"
+        },
+        {
+            "name": "Helmi Jinoz"
+        },
+        {
+            "name": "Mattia Di Gangi",
+            "orcid": "0000-0003-4491-0025"
+        },
+        {
+            "name": "toddrme2178"
+        },
+        {
+            "name": "Fadel Akram"
+        },
+        {
+            "name": "emilazy"
+        },
+        {
+            "name": "Eric Semeniuc"
+        },
+        {
+            "name": "Monsij Biswal",
+            "orcid": "0000-0002-9590-7179"
+        },
+        {
+            "name": "Pavel Campr",
+            "affiliation": "pex.com"
+        },
+        {
+            "name": "Iliya S"
+        },
+        {
+            "name": "Zvi Baratz",
+            "orcid": "0000-0001-7159-1387"
+        },
+        {
+            "name": "Shayenne Moura"
+        },
+        {
+            "name": "Paul Brossier",
+            "affiliation": "@aubio"
+        },
+        {
+            "name": "Paul Biberstein"
+        },
+        {
+            "name": "N. Dorukhan Sergin",
+            "affiliation": "Meta"
+        },
+        {
+            "name": "Xinlu Zhuang"
+        },
+        {
+            "name": "Hojin Lee"
+        },
+        {
+            "name": "Myungchul Keum"
+        },
+        {
+            "name": "Xiao-Ming"
+        },
+        {
+            "name": "Will Monroe",
+            "affiliation": "Stanford University"
+        },
+        {
+            "name": "Waldir Pimenta",
+            "orcid": "0000-0001-9916-2285",
+            "affiliation": "@feedzai "
+        },
+        {
+            "name": "Tim Gates",
+            "affiliation": "IRESS"
+        },
+        {
+            "name": "Connor Guerrero"
+        },
+        {
+            "name": "Cash TingHin Lo"
+        },
+        {
+            "name": "Anton Kostin",
+            "affiliation": "INTEMA.AI"
+        },
+        {
+            "name": "Alexandre Chabot-Leclerc",
+            "orcid": "0000-0001-6609-6023"
+        },
+        {
+            "name": "Abduttayyeb Mazhar",
+            "affiliation": "Software Engineer - Data @ Quantiphi Inc."
+        },
+        {
+            "name": "Juanita Gomez",
+            "affiliation": "UC, Santa Cruz"
+        },
+        {
+            "name": "Joon Lim"
+        },
+        {
+            "name": "Jackie Wu"
+        },
+        {
+            "name": "Emily Halvachs"
+        },
+        {
+            "name": "Dan Mazur"
+        },
+        {
+            "name": "Dawen Liang"
+        },
+        {
+            "name": "Douglas Repetto"
+        },
+        {
+            "name": "Bryce Walburn"
+        },
+        {
+            "name": "Eric Humphrey",
+            "affiliation": "Peppy Health, Ltd"
+        },
+        {
+            "name": "Erik Peterson",
+            "affiliation": "En Ser"
+        },
+        {
+            "name": "Siddhartha Kumar"
+        },
+        {
+            "name": "Julia Wilkins"
+        },
+        {
+            "name": "Steve Tjoa"
+        },
+        {
+            "name": "Jan Schlüter",
+            "affiliation": "Johannes Kepler University Linz"
+        },
+        {
+            "name": "Thor Whalen",
+            "affiliation": "Figiri"
+        },
+        {
+            "name": "Kaushik Sripathi Hatti"
+        },
+        {
+            "name": "Kaustuv Kanti Ganguli",
+            "affiliation": "Indian Institute of Technology Bombay"
+        },
+        {
+            "name": "Daniel Faronbi",
+            "affiliation": "New York University"
+        },
+        {
+            "name": "Iran Roman",
+            "orcid": "0000-0003-3781-7244"
+        },
+        {
+            "name": "philstem"
+        },
+        {
+            "name": "i-aky-y"
+        },
+        {
+            "name": "Asmitha Krishnakumar"
+        },
+        {
+            "name": "BdeGraff"
+        },
+        {
+            "name": "David Südholt",
             "orcid":"https://orcid.org/0000-0002-6793-1227"
+        },
+        {
+            "name": "Ethan Cajetan Menezes"
+        },
+        {
+            "name": "Valerian Coelho"
+        },
+        {
+            "name": "Imrul Huda"
+        },
+        {
+            "name": "AD"
         }
     ]
 }

@@ -118,7 +118,7 @@ Contributors
 * Daniel Fernandes <https://github.com/danferns>
 * Ethan Cajetan Menezes <https://github.com/ethan89009>
 * Valerian Coelho <https://github.com/ValerianCoelho>
-* Imrul Hada <https://github.com/imrulhada>
+* Imrul Huda <https://github.com/imrulhuda>
 * ejwong <https://github.com/ejwong24>
 * AD <https://github.com/AsymptotaX>
 * Daniel Haas B <https://github.com/Daniel-Haas-B>
