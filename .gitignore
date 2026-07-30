@@ -30,6 +30,7 @@ Thumbs.db
 
 # Sphinx documentation
 docs/generated/
+docs/api/generated/
 docs/_build/
 docs/auto_examples/
 docs/auto_tutorials/
