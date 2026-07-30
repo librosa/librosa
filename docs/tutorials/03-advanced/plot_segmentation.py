@@ -71,7 +71,7 @@ beat_times = librosa.frames_to_time(librosa.util.fix_frames(beats,
                                     sr=sr)
 
 fig, ax = plt.subplots()
-librosa.display.specshow(Csync, bins_per_octave=12*3,
+librosa.display.specshow(Csync, bins_per_octave=BINS_PER_OCTAVE, sr=sr,
                          y_axis="cqt_hz", x_axis="time",
                          x_coords=beat_times, ax=ax)
 
@@ -81,7 +81,11 @@ librosa.display.specshow(Csync, bins_per_octave=12*3,
 # (Equation 1)
 # width=3 prevents links within the same bar
 # mode='affinity' here implements S_rep (after Eq. 8)
-R = librosa.segment.recurrence_matrix(Csync, width=3, mode="affinity",
+#
+# We'll also use some time-delay embedding to reduce false links.
+
+Csync_stack = librosa.feature.stack_memory(Csync, n_steps=3, delay=1)
+R = librosa.segment.recurrence_matrix(Csync_stack, width=3, mode="affinity",
                                       sym=True)
 
 # Enhance diagonals with a median filter (Equation 2)
@@ -95,11 +99,11 @@ Rf = df(R, size=(1, 7))
 #   :math:`R_\text{path}[i, i\pm 1] = \exp(-\|C_i - C_{i\pm 1}\|^2 / \sigma^2)`
 #
 # Here, we take :math:`\sigma` to be the median distance between successive beats.
-#
+# We'll use ``librosa.feature.delta`` to compute the distance between successive beats.
 mfcc = librosa.feature.mfcc(y=y, sr=sr)
 Msync = librosa.util.sync(mfcc, beats)
 
-path_distance = np.sum(np.diff(Msync, axis=1)**2, axis=0)
+path_distance = np.sum(librosa.feature.delta(Msync, axis=1)**2, axis=0)[1:]
 sigma = np.median(path_distance)
 path_sim = np.exp(-path_distance / sigma)
 
