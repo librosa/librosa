@@ -7,7 +7,7 @@ document.addEventListener("DOMContentLoaded", function() {
             
             // 1. Evaluate State
             const isDev = currentPath.includes('/dev/');
-            const isPreferred = preferred && currentPath.includes(`/${preferred.version}/`);
+            const isPreferred = preferred && (currentPath.includes(`/${preferred.version}/`) || currentPath.includes(`/latest/`));
             
             // 2. Inject Warning Banner
             if (preferred && !isDev && !isPreferred) {
