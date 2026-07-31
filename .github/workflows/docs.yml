@@ -53,6 +53,8 @@ jobs:
 
       - name : Pull historical documentation assets
         shell: bash -el {0}
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           VERSIONS=$(gh release list -O asc --exclude-drafts --exclude-pre-releases --json tagName --jq '.[].tagName')
 

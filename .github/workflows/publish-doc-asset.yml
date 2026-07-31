@@ -38,7 +38,7 @@ jobs:
       - name: Zip and Upload Release Asset
         shell: bash -el {0}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           cd build/html
           zip -q -r ../../librosa-docs.zip .
