@@ -1,0 +1,46 @@
+name: Build Release Asset
+
+on:
+  release:
+    types: 
+      - published
+
+jobs:
+  build-asset:
+    name: "Build and attach docs zip"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Conda environment
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          auto-update-conda: false
+          python-version: "3.12"
+          add-pip-as-python-dependency: true
+          auto-activate-base: false
+          activate-environment: docs
+          channel-priority: flexible
+          environment-file: .github/environment-docs.yml
+
+      - name: Install librosa
+        shell: bash -el {0}
+        run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
+
+      - name: Build documentations
+        shell: bash -el {0}
+        run: sphinx-build -b html docs build/html
+
+      - name: Zip and Upload Release Asset
+        shell: bash -el {0}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          cd build/html
+          zip -q -r ../../librosa-docs.zip .
+          cd ../../
+          gh release upload ${{ github.event.release.tag_name }} librosa-docs.zip --clobber

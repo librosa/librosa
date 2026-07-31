@@ -1,13 +1,13 @@
 name: Docs
 
 on:
-  release:
-    types: 
-      - created
-      - published
   push:
     branches:
       - main
+  workflow_run:
+    workflows: ["Build Release Asset"]
+    types:
+      - completed
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -60,7 +60,7 @@ jobs:
           for ver in $VERSIONS; do
             echo "Fetching docs for $ver"
             mkdir -p "build/html/$ver"
-            if gh release download "$ver" --patern "librosa-docs.zip" --dir "temp_dl"; then
+            if gh release download "$ver" --pattern "librosa-docs.zip" --dir "temp_dl"; then
               unzip -q "temp_dl/librosa-docs.zip" -d "build/html/$ver"
               rm -rf temp_dl
               LATEST=$ver
