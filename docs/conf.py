@@ -316,7 +316,7 @@ html_theme_options = {
         "google_analytics_id": "UA-171031946-1",
     },
     "switcher": {
-        "json_url": "https://librosa.org/web-staging/versions.json",
+        "json_url": "https://librosa.org/doc/versions.json",
         "version_match": version,
     },
     "icon_links": [

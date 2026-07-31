@@ -19,7 +19,7 @@ def parse_args():
     )
     parser.add_argument(
         "--doc-root",
-        default="https://librosa.org/web-staging",
+        default="https://librosa.org/doc/",
         help="Base URL root for documentation.",
     )
     parser.add_argument(
