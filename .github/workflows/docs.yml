@@ -48,7 +48,7 @@ jobs:
       - name: Build documentations
         shell: bash -el {0}
         run: |
-          sphinx-build -b html docs build/html/main
+          sphinx-build -b html docs build/html/dev
           cp docs/docsite-index-redirect.html build/html/index.html
 
       - name : Pull historical documentation assets
@@ -71,7 +71,8 @@ jobs:
             fi
           done
           ln -srf build/html/$LATEST build/html/latest
-          python docs/create_version_index.py --preferred $LATEST main $PUSHED_VERSIONS
+          ln -srf build/html/dev build/html/main
+          python docs/create_version_index.py --preferred $LATEST dev $PUSHED_VERSIONS
 
       - name: Push to web
         uses: peaceiris/actions-gh-pages@v4
