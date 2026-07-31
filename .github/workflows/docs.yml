@@ -45,12 +45,6 @@ jobs:
         shell: bash -el {0}
         run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
 
-      - name: Build documentations
-        shell: bash -el {0}
-        run: |
-          sphinx-build -b html docs build/html/dev
-          cp docs/docsite-index-redirect.html build/html/index.html
-
       - name : Pull historical documentation assets
         shell: bash -el {0}
         env:
@@ -74,7 +68,14 @@ jobs:
           done
           ln -srf build/html/$LATEST build/html/latest
           ln -srf build/html/dev build/html/main
-          python docs/create_version_index.py --preferred $LATEST dev $PUSHED_VERSIONS
+          python docs/create_version_json.py --preferred $LATEST dev $PUSHED_VERSIONS
+
+      - name: Build documentations
+        shell: bash -el {0}
+        run: |
+          sphinx-build -b html docs build/html/dev
+          cp docs/docsite-index-redirect.html build/html/index.html
+
 
       - name: Push to web
         uses: peaceiris/actions-gh-pages@v4
