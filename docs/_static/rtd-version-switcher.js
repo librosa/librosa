@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function() {
-    fetch('https://librosa.org/web-staging/versions.json')
+    fetch('https://librosa.org/doc/versions.json')
         .then(response => response.json())
         .then(data => {
             const currentPath = window.location.pathname;
