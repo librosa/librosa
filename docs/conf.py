@@ -70,6 +70,7 @@ extensions = [
     "sphinx_copybutton",  # code example copy button
     "numpydoc",  # docstring examples
     "sphinxcontrib.inkscapeconverter",  # used for badge / logo conversion in tex
+    "sphinxcontrib.googleanalytics",  # for analytics
     "sphinx_rtd_theme",  # for proper jquery behavior
 ]
 
@@ -178,7 +179,6 @@ sphinx_gallery_conf = {
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
-    "np": ("https://numpy.org/doc/stable/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
     "matplotlib": ("https://matplotlib.org/stable/", None),
     "sklearn": ("https://scikit-learn.org/stable/", None),
@@ -188,7 +188,7 @@ intersphinx_mapping = {
     "pyrubberband": ("https://pyrubberband.readthedocs.io/en/stable/", None),
     "pooch": ("https://www.fatiando.org/pooch/latest/", None),
     "soxr": ("https://python-soxr.readthedocs.io/en/latest/", None),
-    "mir_eval": ("https://craffel.github.io/mir_eval/", None),
+    "mir_eval": ("https://mir-eval.readthedocs.io/latest/", None),
     "joblib": ("https://joblib.readthedocs.io/en/stable/", None),
     "IPython": ("https://ipython.readthedocs.io/en/stable/", None),
 }
@@ -254,7 +254,7 @@ pygments_style = "sphinx"
 import sphinx_rtd_theme
 
 html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+# html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
@@ -295,12 +295,13 @@ html_logo = "img/librosa_logo_text.svg"
 html_theme_options = {
     "logo_only": True,
     "style_nav_header_background": "white",
-    "analytics_id": "UA-171031946-1",
 }
 html_static_path = ["_static"]
 html_css_files = [
     "css/custom.css",
 ]
+
+googleanalytics_id = "UA-171031946-1"
 
 def setup(app):
     """Inject the version switcher script natively during the Sphinx build."""
