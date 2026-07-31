@@ -81,7 +81,7 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.DOC_PUBLISH_TOKEN }}
-          external_repository: librosa/web-staging
+          external_repository: librosa/doc
           enable_jekyll: false
           publish_branch: main
           publish_dir: build/html

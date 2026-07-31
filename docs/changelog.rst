@@ -29,7 +29,7 @@ New features
     
 
 Enhancements
-    - `#2080`_ Skip redundant `abs` computation in `piptrack`. *Imrul Hada*
+    - `#2080`_ Skip redundant `abs` computation in `piptrack`. *Imrul Huda*
     - `#2072`_ `librosa.display.specshow` now uses a discrete `BoundedNorm` when visualizing
       boolean data. *Brian McFee*
     - `#2066`_ `librosa.cqt` and `librosa.vqt` can infer the maximum number of bins
