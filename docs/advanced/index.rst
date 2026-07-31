@@ -8,5 +8,4 @@ Advanced topics
     ../filters
     ../cache
     ../ioformats
-    ../advanced
     ../recordings

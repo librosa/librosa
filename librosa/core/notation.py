@@ -661,13 +661,11 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> lis
     unicode : bool
         If ``True`` (default), use Unicode symbols (♯𝄪♭𝄫)for accidentals.
 
-        If ``False``, Unicode symbols will be mapped to low-order ASCII representations::
-
+        If ``False`` Unicode symbols will be mapped to low-order ASCII representations::
             ♯ -> #, 𝄪 -> ##, ♭ -> b, 𝄫 -> bb, ♮ -> n
 
     natural : bool
-        If ``True'', mark natural accidentals with a natural symbol (♮).
-
+        If ``True'' mark natural accidentals with a natural symbol (♮).
         If ``False`` (default), do not print natural symbols.
 
         For example, `note_to_degrees('D:maj')[0]` is `C` if `natural=False` (default) and `C♮` if `natural=True`.

@@ -5,8 +5,8 @@
 import importlib
 import sys
 
-short_version = "1.0.0dev"
-version = "1.0.0dev"
+short_version = "1.0.0rc0"
+version = "1.0.0rc0"
 
 
 def __get_mod_version(modname):
@@ -43,10 +43,15 @@ def show_versions() -> None:
     extra_deps = [
         "numpydoc",
         "sphinx",
-        "sphinx_rtd_theme",
+        "pydata-sphinx-theme",
         "matplotlib",
-        "sphinx_multiversion",
         "sphinx_gallery",
+        "sphinx-design",
+        "sphinxcontrib-googleanalytics",
+        "sphinx-copybutton",
+        "umap-learn",
+        "pandas",
+        "myst-parser",
         "mir_eval",
         "ipython",
         "sphinxcontrib.rsvgconverter",
@@ -57,6 +62,8 @@ def show_versions() -> None:
         "resampy",
         "presets",
         "packaging",
+        "scipy-stubs",
+        "types-decorator",
     ]
 
     print("INSTALLED VERSIONS")

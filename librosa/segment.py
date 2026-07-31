@@ -1,28 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Temporal segmentation
-=====================
+librosa.segment provides functions for structural analysis and
+segmentation of audio.
 
-Recurrence and self-similarity
-------------------------------
-.. autosummary::
-    :toctree: generated/
-
-    cross_similarity
-    recurrence_matrix
-    recurrence_to_lag
-    lag_to_recurrence
-    timelag_filter
-    path_enhance
-
-Temporal clustering
--------------------
-.. autosummary::
-    :toctree: generated/
-
-    agglomerative
-    subsegment
+This includes recurrence (self-similarity) and cross-similarity matrix
+computation, filtering and transformations of similarity matrices, and
+temporal segmentation by clustering.
 """
 from __future__ import annotations
 

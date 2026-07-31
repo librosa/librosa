@@ -188,15 +188,3 @@ leading dimensions, corresponding first to track and then to channel within the
 track.
 In theory, any number of leading dimensions can be used, though caution should be
 exercised to minimize memory consumption.
-
-
-Note that although many functions preserve channel independence, this is not
-guaranteed in general.
-For example, decibel scaling by `librosa.amplitude_to_db` will compare each channel
-to a reference value which may be derived from *all channels simultaneously*.
-This can lead to differences in behavior when processing channels independently or
-simultaneously as a multi-channel input.
-Functions which guarantee channel-wise independence are documented accordingly.
-
-
-

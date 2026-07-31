@@ -1,15 +1,12 @@
 
-Contributing code
-=================
-
-How to contribute
------------------
+Contributing
+============
 
 The preferred way to contribute to librosa is to fork the 
-[main repository](http://github.com/librosa/librosa/) on
+[main repository](https://github.com/librosa/librosa/) on
 GitHub:
 
-1. Fork the [project repository](http://github.com/librosa/librosa):
+1. Fork the [project repository](https://github.com/librosa/librosa):
    click on the 'Fork' button near the top of the page. This creates
    a copy of the code under your account on the GitHub server.
 
@@ -193,7 +190,7 @@ generate a significant amount of work for us maintainers to process.
 
 Note
 ----
-This document was gleefully adapted from [scikit-learn](http://scikit-learn.org/).
+This document was gleefully adapted from [scikit-learn](https://scikit-learn.org/).
 
 The AI policy was generated in part by Gemini 3.5 Flash as a synthesis of similar
 policies indexed by [@melissawm](https://github.com/melissawm/open-source-ai-contribution-policies).  

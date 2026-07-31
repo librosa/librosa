@@ -312,7 +312,7 @@ def plimit_intervals(
     of [#1]_ [#2]_.
 
     .. [#1] Tenney, James.
-        "On `Crystal Growth' in harmonic space (1993--1998)."
+        "On 'Crystal Growth' in harmonic space (1993--1998)."
         Contemporary Music Review 27.1 (2008): 47--56.
 
     .. [#2] Sabat, Marc, and James Tenney.
@@ -327,10 +327,12 @@ def plimit_intervals(
         The number of intervals to construct
     sort : bool
         If `True` then intervals are returned in ascending order.
-        If `False`, then intervals are returned in crystal growth order.
+
+        If `False` then intervals are returned in crystal growth order.
     return_factors : bool
         If `True` then return a list of dictionaries encoding the prime factorization
         of each interval as `{2: p2, 3: p3, ...}` (meaning `3**p3 * 2**p2`).
+
         If `False` (default), return intervals as an array of floating point numbers.
 
     Returns

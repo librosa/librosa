@@ -1,37 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Filters
-=======
-
-Filter bank construction
-------------------------
-.. autosummary::
-    :toctree: generated/
-
-    mel
-    chroma
-    wavelet
-    semitone_filterbank
-
-Window functions
-----------------
-.. autosummary::
-    :toctree: generated/
-
-    window_bandwidth
-    get_window
-
-Miscellaneous
--------------
-.. autosummary::
-    :toctree: generated/
-
-    wavelet_lengths
-    cq_to_chroma
-    mr_frequencies
-    window_sumsquare
-    diagonal_filter
+librosa.filters provides functionality for filter bank construction, window
+function processing, and related utilities.
 """
 from __future__ import annotations
 

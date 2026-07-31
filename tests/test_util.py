@@ -1327,12 +1327,15 @@ def test_stack_consistent(axis, rng):
         "brahms",
         "nutcracker",
         "choice",
+        "drese",
+        "drese2",
         "humpback",
         "libri1",
         "libri2",
         "libri3",
         "pistachio",
         "robin",
+        "snare",
         "sweetwaltz",
         "fishin",
         "vibeace",
@@ -1343,6 +1346,11 @@ def test_example(key, hq):
 
     fn = librosa.example(key, hq=hq)
     assert os.path.exists(fn)
+
+
+def test_example_url():
+    url = librosa.example("trumpet", url=True)
+    assert url.startswith("https://") or url.startswith("http://")
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -1358,12 +1366,15 @@ def test_example_fail():
         "brahms",
         "nutcracker",
         "choice",
+        "drese",
+        "drese2",
         "humpback",
         "libri1",
         "libri2",
         "libri3",
         "pistachio",
         "robin",
+        "snare",
         "sweetwaltz",
         "fishin",
         "vibeace",
@@ -1546,12 +1557,19 @@ def test_phasor(dtype, angles, mag):
 
 
 @pytest.mark.network
-def test_cite_released():
+@pytest.mark.parametrize("bib", [False, True])
+def test_cite_released(bib):
     version = "0.10.1"
     doi = "https://doi.org/10.5281/zenodo.8252662"
-    assert doi == librosa.cite(version=version)
+    result = librosa.cite(version=version, bib=bib)
+    if bib:
+        assert "@misc{" == result[:6]
+        assert doi in result
+    else:
+        assert doi == result
 
 
+@pytest.mark.network
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_cite_badversion():
     librosa.cite(version="-1.5")
@@ -1559,8 +1577,9 @@ def test_cite_badversion():
 
 @pytest.mark.network
 @pytest.mark.xfail(raises=librosa.ParameterError)
-def test_cite_unreleased():
-    librosa.cite("0.10.0.dev0")
+@pytest.mark.parametrize("bib", [False, True])
+def test_cite_unreleased(bib):
+    librosa.cite("0.10.0.dev0", bib=bib)
 
 
 @pytest.mark.parametrize("n_bytes", [1, 2, 4])

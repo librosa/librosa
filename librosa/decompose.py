@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-Spectrogram decomposition
-=========================
-.. autosummary::
-    :toctree: generated/
+librosa.decompose provides functions to decompose a feature matrix or spectrogram
+into components.
 
-    decompose
-    hpss
-    nn_filter
+This includes harmonic-percussive source separation (HPSS), nearest-neighbor filtering, and
+general matrix decomposition (e.g. NMF).
 """
 from __future__ import annotations
 

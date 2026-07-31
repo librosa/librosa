@@ -2,8 +2,7 @@
 
 # librosa
 
-
-A python package for music and audio analysis.  
+`librosa` is a Python library for audio and music signal processing. It provides the foundational algorithms and tools required for building music information retrieval (MIR) systems.
 
 [![PyPI](https://img.shields.io/pypi/v/librosa.svg)](https://pypi.python.org/pypi/librosa)
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/librosa/badges/version.svg)](https://anaconda.org/conda-forge/librosa)
@@ -14,136 +13,81 @@ A python package for music and audio analysis.
 [![codecov](https://codecov.io/gh/librosa/librosa/branch/main/graph/badge.svg?token=ULWnUHaIJC)](https://codecov.io/gh/librosa/librosa)
 [![Docs](https://github.com/librosa/librosa/actions/workflows/docs.yml/badge.svg)](https://librosa.org/doc/latest/index.html)
 [![Scientific Python Ecosystem Coordination](https://img.shields.io/badge/SPEC-0,1,7-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/)
-#  Table of Contents
-
-- [Documentation](#Documentation)
-- [Installation](#Installation)
-  - [Using PyPI](#using-pypi)
-  - [Using Anaconda](#using-anaconda)
-  - [Building From Source](#building-from-source)
-  - [Hints for Installation](#hints-for-the-installation)
-    - [`soundfile`](#soundfile)
-- [Discussion](#discussion)
-- [Citing](#citing)
-
----
 
 ## Documentation
 
+Full documentation is available at:
 
-See https://librosa.org/doc/ for a complete reference manual and introductory tutorials.
+* https://librosa.org/doc/
 
-The [advanced example gallery](https://librosa.org/doc/latest/advanced.html) should give you a quick sense of the kinds
-of things that librosa can do.
+If you're new to librosa, we recommend starting with the
+[tutorials](https://librosa.org/doc/latest/auto_tutorials).
 
----
+If you're looking for API details, head directly to the [API reference](https://librosa.org/doc/latest/api).
 
-[Back To Top ↥](#librosa)
-
+To see what's new, check out the [change log](https://librosa.org/doc/latest/changelog.html).
 
 ## Installation
 
 
 ### Using PyPI
 
-The latest stable release is available on PyPI, and you can install it by saying
+The latest stable release is available on PyPI, and you can install it by the command
 ```
-python -m pip install librosa
+pip install librosa
 ```
 
-### Using Anaconda
+### Using conda
 
-Anaconda users can install using ```conda-forge```:
+Anaconda users can install using `conda-forge`:
 ```
 conda install -c conda-forge librosa
 ```
 
-### Building from source
+For optional dependencies and advanced setup, see the guide in the documentation.
 
-To build librosa from source, say 
-```
-python setup.py build
-```
-Then, to install librosa, say 
-```
-python setup.py install
-```
-If all went well, you should be able to execute the following commands from a python console:
-```
-import librosa
-librosa.show_versions()
-```
-This should print out a description of your software environment, along with the installed versions of other packages used by librosa.
-
-📝 OS X users should follow the installation guide given below.
-
-Alternatively, you can download or clone the repository and use `pip` to handle dependencies:
-
-```
-unzip librosa.zip
-python -m pip install -e librosa
-```
-or
-
-```
-git clone https://github.com/librosa/librosa.git
-python -m pip install -e librosa
-```
-
-By calling `pip list` you should see `librosa` now as an installed package:
-```
-librosa (0.x.x, /path/to/librosa)
-```
 
 ---
-
-[Back To Top ↥](#librosa)
-
-### Hints for the Installation
-
-`librosa` uses `soundfile` to load audio files.
-
-📝 Note that older releases of `soundfile` (prior to 0.11) do not support MP3, which will cause librosa to fall back on the `audioread` library.
-
-### `soundfile`
-
-If you're using `conda` to install librosa, then audio encoding dependencies will be handled automatically.
-
-If you're using `pip` on a Linux environment, you may need to install `libsndfile`
-manually.  Please refer to the [SoundFile installation documentation](https://python-soundfile.readthedocs.io/#installation) for details.
-
----
-
-[Back To Top ↥](#librosa)
-
-## Discussion
-
-
-Please direct non-development questions and discussion topics to our web forum at
-https://groups.google.com/forum/#!forum/librosa
-
----
-
-[Back To Top ↥](#librosa)
 
 ## Citing
 
+There are two ways to cite librosa in scholarly work, depending on whether you are citing it for its use in your work
+or for its design and motivation.
 
-If you want to cite librosa in a scholarly work, there are two ways to do it.
+We additionally encourage you to cite the original publications describing the methods implemented in librosa, in addition to citing librosa itself.  References can often be found within function documentation.
 
-- If you are using the library for your work, for the sake of reproducibility, please cite
-  the version you used as indexed at Zenodo:
+### Citing for use
 
-    [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.591533.svg)](https://doi.org/10.5281/zenodo.591533)
+If you are citing for use in your own work, please cite the version you used by retrieving the appropriate DOI and citation information from Zenodo.
 
-  From librosa version 0.10.2 or later, you can also use `librosa.cite()`
-  to get the DOI link for any version of librosa.
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.591533.svg)](https://doi.org/10.5281/zenodo.591533)
 
-- If you wish to cite librosa for its design, motivation, etc., please cite the paper
-  published at SciPy 2015:
+This ensures that all contributing authors are credited for the work you are building on.
 
-    McFee, Brian, Colin Raffel, Dawen Liang, Daniel PW Ellis, Matt McVicar, Eric Battenberg, and Oriol Nieto. "librosa: Audio and music signal analysis in python." In Proceedings of the 14th python in science conference, pp. 18-25. 2015.
+From librosa version 0.10.2 or later, you can also use `librosa.cite()` to get the DOI link for any version of librosa:
 
----
+```python
+import librosa
+librosa.cite()
+```
 
-[Back To Top ↥](#librosa)
+And from 1.0 onward, you can directly retrieve the BibTeX entry for the version you are using:
+
+```python
+print(librosa.cite(bib=True))
+```
+
+### Citing for design 
+
+If you wish to cite librosa for its design, motivation, etc., please cite the paper
+published at SciPy 2015:
+
+    McFee, Brian, Colin Raffel, Dawen Liang, Daniel PW Ellis, Matt McVicar, Eric Battenberg, and Oriol Nieto.
+    "librosa: Audio and music signal analysis in python."
+    In Proceedings of the 14th python in science conference, pp. 18-25. 2015.
+
+As a rule of thumb:
+
+- Use a versioned librosa citation to document the software implementation used in your experiments.
+- Cite the original methodological papers for the algorithms that are central to your work.
+- Cite the SciPy paper when discussing librosa itself, its design, or its contribution as a software library.

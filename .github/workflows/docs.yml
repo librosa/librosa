@@ -1,13 +1,13 @@
 name: Docs
 
 on:
-  release:
-    types: 
-      - created
-      - published
   push:
     branches:
       - main
+  workflow_run:
+    workflows: ["Build Release Asset"]
+    types:
+      - completed
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -45,25 +45,43 @@ jobs:
         shell: bash -el {0}
         run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
 
-      #- name: Build documentations
-      #  shell: bash -el {0}
-      #  run: |
-      #    sphinx-multiversion -D smv_latest_version=$(./scripts/get_latest_release.sh) docs build/html
-      #    touch build/html/.nojekyll
-      #    cp docs/docsite-index-redirect.html build/html/index.html
-      #    ln -srf build/html/$(./scripts/get_latest_release.sh) build/html/latest
       - name: Build documentations
         shell: bash -el {0}
         run: |
-          sphinx-build -b html docs build/html
-          touch build/html/.nojekyll
+          sphinx-build -b html docs build/html/dev
+          cp docs/docsite-index-redirect.html build/html/index.html
+
+      - name : Pull historical documentation assets
+        shell: bash -el {0}
+        run: |
+          VERSIONS=$(gh release list -O asc --exclude-drafts --exclude-pre-releases --json tagName --jq '.[].tagName')
+
+          PUSHED_VERSIONS=""
+          for ver in $VERSIONS; do
+            echo "Fetching docs for $ver"
+            mkdir -p "build/html/$ver"
+            if gh release download "$ver" --pattern "librosa-docs.zip" --dir "temp_dl"; then
+              unzip -q "temp_dl/librosa-docs.zip" -d "build/html/$ver"
+              rm -rf temp_dl
+              LATEST=$ver
+              PUSHED_VERSIONS="$ver $PUSHED_VERSIONS"
+            else
+              echo "No docs found for $ver; skipping."
+              rmdir "build/html/$ver"
+            fi
+          done
+          ln -srf build/html/$LATEST build/html/latest
+          ln -srf build/html/dev build/html/main
+          python docs/create_version_index.py --preferred $LATEST dev $PUSHED_VERSIONS
 
       - name: Push to web
         uses: peaceiris/actions-gh-pages@v4
         with:
           personal_token: ${{ secrets.DOC_PUBLISH_TOKEN }}
           external_repository: librosa/web-staging
+          enable_jekyll: false
           publish_branch: main
           publish_dir: build/html
           user_name: librosa
           user_email: brian.mcfee@nyu.edu
+          force_orphan: true

@@ -2,6 +2,192 @@
 Changelog
 *********
 
+v1.0
+====
+
+v1.0.0
+------
+2026-xx-xx
+
+New features
+    - `#2059`_ `librosa.display.legend_for_axes` for generating legends for collections of 
+      axes. *Brian McFee*
+    - `#2034`_ `librosa.display.highlight` for generating path effects. *Brian McFee*
+    - `#2031`_ and `#2032`_ `librosa.loadx` shortcut for loading example files. *Brian McFee*
+    - `#2012`_ `librosa.display.multiplot` for multichannel visualization. *Brian McFee*
+    - `#2004`_ `librosa.feature.hybrid_tempogram`. *Gopesh Pandey*
+    - `#1986`_ `librosa.feature.metrogram`. *Daniel Fernandes*, *Ethan Cajetan Menezes*, *Valerian Coelho*.
+    - `#1976`_ `librosa.display.wavef0` for f0-displaced waveforms. *Brian McFee*
+    - `#1973`_ `librosa.display.wavebars` for simplified bar plots. *Brian McFee*
+    - `#1971`_ Inverted-mode display for `librosa.display.waveshow`. *Brian McFee*
+    - `#1967`_ `oct3` display modes in `librosa.display.specshow`. *Brian McFee*
+    - `#1964`_ Signal mixing helpers `librosa.to_mono` (improved), `librosa.to_stereo`, `librosa.to_multi`. *Brian McFee*
+    - `#1958`_ `librosa.sequence.path_to_steps` to convert DTW paths to a step grid. *Brian McFee*
+    - `#1952`_ `librosa.display.colorbar_db` and `colorbar_phase` for creating colorbars. *Brian McFee*
+    - `#1936`_ `librosa.display.specshow` parameter `vscale` for value scaling. *Brian McFee*
+    - `#1927`_ Peak picking by dynamic programming. *Brian McFee*
+    
+
+Enhancements
+    - `#2080`_ Skip redundant `abs` computation in `piptrack`. *Imrul Hada*
+    - `#2072`_ `librosa.display.specshow` now uses a discrete `BoundedNorm` when visualizing
+      boolean data. *Brian McFee*
+    - `#2066`_ `librosa.cqt` and `librosa.vqt` can infer the maximum number of bins
+      automatically by setting `n_bins=None`. *Brian McFee*
+    - `#2058`_ Signal mixing helpers can operate on a pre-allocated `out=` array. *ejwong*
+    - `#2055`_ `librosa.stream` now supports in-place sample rate conversion. *Brian McFee*
+    - `#2051`_ decibel converts (`librosa.amplitude_to_db`, `librosa.power_to_db`) now support
+      `axes` target parameter and support multichannel. *Brian McFee*
+    - `#2044`_ Improved handling of styling and legend entries for `librosa.display.waveshow`.  *Brian McFee*
+    - `#2041`_ `librosa.display.specshow` now supports `cmap_cyclic`. *Brian McFee*
+    - `#2030`_ `librosa.load` and `librosa.stream` now support negative `offset` values. *Brian McFee*
+    - `#2028`_ and `#2029`_ reduced import time. *Brian McFee*
+    - `#2007`_ Improved efficiency for Viterbi decoding. *Brian McFee* and *AD*
+    - `#1994`_ Migrate from sparse matrix to sparse array. *Daniel Haas B*
+    - `#1960`_ All `rng=` parameters are now `SPEC07 <https://scientific-python.org/specs/spec-0007/>`_ compliant. *Brian McFee*
+    - `#1955`_ Warn on underflow in perceptual weighting calculation. *Brian McFee*
+    - `#1954`_ Diverging colormaps in `specshow` now use two-slope norms. *Brian McFee*
+    - `#1948`_ Frequency conversions now support NaN values. *Brian McFee*
+    - `#1931`_ Variable-rate phase vocoding. *Brian McFee*
+
+Bug fixes
+    - `#2063`_ Fixed array bounds error on `librosa.sequence.rqa` with single-axis inputs.  *Suhas Holla Karkada Chandrashekar*
+    - `#2039`_ Avoid promoting scalars to 0-d arrays. *Joren Hammudoglu*
+    - `#2026`_ Fixed error in label ordering for Tonnetz displays. *Brian McFee*
+    - `#1992`_ Fixed garbage collection error in `librosa.display.waveshow`. *Daniel Haas B*
+    - `#1947`_ Removed default quantization in `note_to_hz`. *Brian McFee*
+
+Documentation
+    - `#1968`_ Significantly expanded and restructured the documentation site. *Brian McFee*
+    - `#2068`_ Standardized docstring conventions for `n_fft`. *Cameron Brooks*
+    - `#2017`_ Improved contributing guidelines and AI agents policy. *Brian McFee*
+    - `#2009`_ Improved documentation for contributing guidelines. *Petra Kuhnle*
+    - `#2006`_ Improved documentation for frequency axis scaling in specshow. *cookesan*
+    - `#1979`_ Fixed figure layout in API examples. *Haydn Lam*
+    - `#1959`_ Fixed error in `librosa.segment.subsegment` example. *Brian McFee*
+    - `#1932`_ Fixed typo in `mel_frequencies` documentation. *Fadel Akram*
+
+Maintenance
+    - `#2075`_ Updated documentation deployment action. *Brian McFee*
+    - `#2069`_ Precice dtype annotations in `librosa.beat`. *Joren Hammudoglu*
+    - `#2065`_ Updated GitHub actions. *Brian McFee*
+    - `#2060`_ Refactored frequency formatters in `librosa.display`. *Brian McFee*
+    - `#2054`_ Support `matplotlib 3.11` in tests. *Brian McFee*
+    - `#2053`_ Fixed type annotations for decorators. *Joren Hammudoglu*
+    - `#2052`_ Improved return type annotations involving `ndarray`. *Joren Hammudoglu*
+    - `#2050`_ Include `str` dtype in `ndarray` type annotations. *Joren Hammudoglu*
+    - `#2049`_ Reformatted `__init__.pyi` exports. *Joren Hammudoglu*
+    - `#2047`_ Improved checking of documentation builds with ruff and numpydoc. *Brian McFee*
+    - `#2043`_ Improved typing for dtype converters. *Joren Hammudoglu*
+    - `#2037`_ Added missing type annotations. *Joren Hammudoglu*
+    - `#2036`_ and `#2038`_ Modernized type annotations. *Brian McFee*
+    - `#2035`_ Modernized type annotation definitions. *Joren Hammudoglu*
+    - `#2027`_ Modernized linting. *Brian McFee*
+    - `#2025`_ Updated type annotation testing. *Brian McFee*
+    - `#2018`_ Adopted `SPEC0 <https://scientific-python.org/specs/spec-0000/>`_. *Brian McFee*
+    - `#1999`_ Support for Python 3.14. *Brian McFee*
+    - `#1980`_ Updated type annotations. *Brian McFee*
+    - `#1977`_ Fixed type annotations in beat tracking. *emilazy*
+    - `#1969`_ Refined `.gitignore`. *Ale Lloveras*
+    - `#1962`_ Documentation builds in CI now store build artifacts. *Brian McFee*
+    - `#1946`_ Use `scipy-stubs` in tests. *Joren Hammudoglu*
+    - `#1936`_ Improved environment cache in tests. *Brian McFee*
+    - `#1925`_ Overhaul of test framework. *Brian McFee*
+
+Expired deprecations
+    - `#1963`_ expires the following deprecated features:
+        - `audioread` backend
+        - `filename` argument in `librosa.stream`
+        - `res_type=None` in `librosa.vqt`
+        - `librosa.set_fftlib` and `librosa.get_fftlib`
+        - `win_length` parameter in `yin` and `pyin`
+        - `x_axis` parameter in `librosa.display.waveshow`
+        - `librosa.filters.constant_q` and `librosa.filters.constant_q_lengths`
+
+New deprecations
+    - `librosa.display.cmap` has been renamed to `librosa.display.infer_cmap`.  The old name
+      will be removed in version 1.1.
+    - `librosa.phase_vocoder` no longer requires `hop_length` or `n_fft` parameters.  These
+      parameters are now ignored and will be removed in version 1.1.
+    - `librosa.griffinlim` and `griffinlim_cqt` now accept `rng=` instead of `random_state=`.
+      The old parameter name will be removed in version 1.2.
+
+
+.. _#1925: https://github.com/librosa/librosa/pull/1925
+.. _#1927: https://github.com/librosa/librosa/pull/1927
+.. _#1931: https://github.com/librosa/librosa/pull/1931
+.. _#1932: https://github.com/librosa/librosa/pull/1932
+.. _#1936: https://github.com/librosa/librosa/pull/1936
+.. _#1946: https://github.com/librosa/librosa/pull/1946
+.. _#1947: https://github.com/librosa/librosa/pull/1947
+.. _#1948: https://github.com/librosa/librosa/pull/1948
+.. _#1952: https://github.com/librosa/librosa/pull/1952
+.. _#1954: https://github.com/librosa/librosa/pull/1954
+.. _#1955: https://github.com/librosa/librosa/pull/1955
+.. _#1958: https://github.com/librosa/librosa/pull/1958
+.. _#1959: https://github.com/librosa/librosa/pull/1959
+.. _#1960: https://github.com/librosa/librosa/pull/1960
+.. _#1962: https://github.com/librosa/librosa/pull/1962
+.. _#1963: https://github.com/librosa/librosa/pull/1963
+.. _#1964: https://github.com/librosa/librosa/pull/1964
+.. _#1967: https://github.com/librosa/librosa/pull/1967
+.. _#1968: https://github.com/librosa/librosa/pull/1968
+.. _#1969: https://github.com/librosa/librosa/pull/1969
+.. _#1971: https://github.com/librosa/librosa/pull/1971
+.. _#1973: https://github.com/librosa/librosa/pull/1973
+.. _#1976: https://github.com/librosa/librosa/pull/1976
+.. _#1977: https://github.com/librosa/librosa/pull/1977
+.. _#1979: https://github.com/librosa/librosa/pull/1979
+.. _#1980: https://github.com/librosa/librosa/pull/1980
+.. _#1986: https://github.com/librosa/librosa/pull/1986
+.. _#1992: https://github.com/librosa/librosa/pull/1992
+.. _#1994: https://github.com/librosa/librosa/pull/1994
+.. _#1999: https://github.com/librosa/librosa/pull/1999
+.. _#2004: https://github.com/librosa/librosa/pull/2004
+.. _#2006: https://github.com/librosa/librosa/pull/2006
+.. _#2007: https://github.com/librosa/librosa/pull/2007
+.. _#2009: https://github.com/librosa/librosa/pull/2009
+.. _#2012: https://github.com/librosa/librosa/pull/2012
+.. _#2017: https://github.com/librosa/librosa/pull/2017
+.. _#2018: https://github.com/librosa/librosa/pull/2018
+.. _#2025: https://github.com/librosa/librosa/pull/2025
+.. _#2026: https://github.com/librosa/librosa/pull/2026
+.. _#2027: https://github.com/librosa/librosa/pull/2027
+.. _#2028: https://github.com/librosa/librosa/pull/2028
+.. _#2029: https://github.com/librosa/librosa/pull/2029
+.. _#2030: https://github.com/librosa/librosa/pull/2030
+.. _#2031: https://github.com/librosa/librosa/pull/2031
+.. _#2032: https://github.com/librosa/librosa/pull/2032
+.. _#2034: https://github.com/librosa/librosa/pull/2034
+.. _#2035: https://github.com/librosa/librosa/pull/2035
+.. _#2036: https://github.com/librosa/librosa/pull/2036
+.. _#2037: https://github.com/librosa/librosa/pull/2037
+.. _#2038: https://github.com/librosa/librosa/pull/2038
+.. _#2039: https://github.com/librosa/librosa/pull/2039
+.. _#2041: https://github.com/librosa/librosa/pull/2041
+.. _#2043: https://github.com/librosa/librosa/pull/2043
+.. _#2044: https://github.com/librosa/librosa/pull/2044
+.. _#2047: https://github.com/librosa/librosa/pull/2047
+.. _#2049: https://github.com/librosa/librosa/pull/2049
+.. _#2050: https://github.com/librosa/librosa/pull/2050
+.. _#2051: https://github.com/librosa/librosa/pull/2051
+.. _#2052: https://github.com/librosa/librosa/pull/2052
+.. _#2053: https://github.com/librosa/librosa/pull/2053
+.. _#2054: https://github.com/librosa/librosa/pull/2054
+.. _#2055: https://github.com/librosa/librosa/pull/2055
+.. _#2058: https://github.com/librosa/librosa/pull/2058
+.. _#2059: https://github.com/librosa/librosa/pull/2059
+.. _#2060: https://github.com/librosa/librosa/pull/2060
+.. _#2063: https://github.com/librosa/librosa/pull/2063
+.. _#2065: https://github.com/librosa/librosa/pull/2065
+.. _#2066: https://github.com/librosa/librosa/pull/2066
+.. _#2068: https://github.com/librosa/librosa/pull/2068
+.. _#2069: https://github.com/librosa/librosa/pull/2069
+.. _#2072: https://github.com/librosa/librosa/pull/2072
+.. _#2075: https://github.com/librosa/librosa/pull/2075
+.. _#2080: https://github.com/librosa/librosa/pull/2080
+
+
 v0.11
 =====
 
@@ -42,7 +228,7 @@ Deprecations
 
 .. _#1921: https://github.com/librosa/librosa/pull/1921
 .. _#1916: https://github.com/librosa/librosa/pull/1916
-.. _#1831: https://github.com/librosa/librosa/pull/1831
+.. _#1831: https://github.com/librosa/librosa/issues/1831
 .. _#1898: https://github.com/librosa/librosa/pull/1898
 .. _#1860: https://github.com/librosa/librosa/pull/1860
 .. _#1864: https://github.com/librosa/librosa/pull/1864
@@ -107,30 +293,30 @@ Other changes and maintenance
     - `#1782`_ Modernized usage of matplotlib colormaps. *Phillip S.M. Skelton*
     - `#1765`_ Modernized usage of importlib and package resources. *Matt Pitkin*
 
-.. _#1829: https://github.com/librosa/librosa/issues/1829
-.. _#1766: https://github.com/librosa/librosa/issues/1766
-.. _#1739: https://github.com/librosa/librosa/issues/1739
-.. _#1756: https://github.com/librosa/librosa/issues/1756
-.. _#1762: https://github.com/librosa/librosa/issues/1762
-.. _#1770: https://github.com/librosa/librosa/issues/1770
-.. _#1814: https://github.com/librosa/librosa/issues/1814
-.. _#1784: https://github.com/librosa/librosa/issues/1784
+.. _#1829: https://github.com/librosa/librosa/pull/1829
+.. _#1766: https://github.com/librosa/librosa/pull/1766
+.. _#1739: https://github.com/librosa/librosa/pull/1739
+.. _#1756: https://github.com/librosa/librosa/pull/1756
+.. _#1762: https://github.com/librosa/librosa/pull/1762
+.. _#1770: https://github.com/librosa/librosa/pull/1770
+.. _#1814: https://github.com/librosa/librosa/pull/1814
+.. _#1784: https://github.com/librosa/librosa/pull/1784
 .. _#1733: https://github.com/librosa/librosa/issues/1733
-.. _#1755: https://github.com/librosa/librosa/issues/1755
-.. _#1827: https://github.com/librosa/librosa/issues/1827
-.. _#1821: https://github.com/librosa/librosa/issues/1821
-.. _#1789: https://github.com/librosa/librosa/issues/1789
-.. _#1780: https://github.com/librosa/librosa/issues/1780
-.. _#1783: https://github.com/librosa/librosa/issues/1783
-.. _#1826: https://github.com/librosa/librosa/issues/1826
-.. _#1822: https://github.com/librosa/librosa/issues/1822
-.. _#1820: https://github.com/librosa/librosa/issues/1820
-.. _#1813: https://github.com/librosa/librosa/issues/1813
-.. _#1808: https://github.com/librosa/librosa/issues/1808
-.. _#1769: https://github.com/librosa/librosa/issues/1769
-.. _#1790: https://github.com/librosa/librosa/issues/1790
-.. _#1782: https://github.com/librosa/librosa/issues/1782
-.. _#1765: https://github.com/librosa/librosa/issues/1765
+.. _#1755: https://github.com/librosa/librosa/pull/1755
+.. _#1827: https://github.com/librosa/librosa/pull/1827
+.. _#1821: https://github.com/librosa/librosa/pull/1821
+.. _#1789: https://github.com/librosa/librosa/pull/1789
+.. _#1780: https://github.com/librosa/librosa/pull/1780
+.. _#1783: https://github.com/librosa/librosa/pull/1783
+.. _#1826: https://github.com/librosa/librosa/pull/1826
+.. _#1822: https://github.com/librosa/librosa/pull/1822
+.. _#1820: https://github.com/librosa/librosa/pull/1820
+.. _#1813: https://github.com/librosa/librosa/pull/1813
+.. _#1808: https://github.com/librosa/librosa/pull/1808
+.. _#1769: https://github.com/librosa/librosa/pull/1769
+.. _#1790: https://github.com/librosa/librosa/pull/1790
+.. _#1782: https://github.com/librosa/librosa/pull/1782
+.. _#1765: https://github.com/librosa/librosa/pull/1765
 
 
 v0.10.1
@@ -161,19 +347,19 @@ Other changes
     - `#1727`_ Support `pooch>=1.7.0`. *Brian McFee*
     - `#1731`_ Update test suite to support `scipy>=1.11`. *Brian McFee*
 
-.. _#1677: https://github.com/librosa/librosa/issues/1677
-.. _#1693: https://github.com/librosa/librosa/issues/1693
-.. _#1726: https://github.com/librosa/librosa/issues/1726
-.. _#1699: https://github.com/librosa/librosa/issues/1699
-.. _#1703: https://github.com/librosa/librosa/issues/1703
-.. _#1706: https://github.com/librosa/librosa/issues/1706
-.. _#1713: https://github.com/librosa/librosa/issues/1713
-.. _#1718: https://github.com/librosa/librosa/issues/1718
-.. _#1719: https://github.com/librosa/librosa/issues/1719
-.. _#1704: https://github.com/librosa/librosa/issues/1704
-.. _#1722: https://github.com/librosa/librosa/issues/1722
-.. _#1727: https://github.com/librosa/librosa/issues/1727
-.. _#1731: https://github.com/librosa/librosa/issues/1731
+.. _#1677: https://github.com/librosa/librosa/pull/1677
+.. _#1693: https://github.com/librosa/librosa/pull/1693
+.. _#1726: https://github.com/librosa/librosa/pull/1726
+.. _#1699: https://github.com/librosa/librosa/pull/1699
+.. _#1703: https://github.com/librosa/librosa/pull/1703
+.. _#1706: https://github.com/librosa/librosa/pull/1706
+.. _#1713: https://github.com/librosa/librosa/pull/1713
+.. _#1718: https://github.com/librosa/librosa/pull/1718
+.. _#1719: https://github.com/librosa/librosa/pull/1719
+.. _#1704: https://github.com/librosa/librosa/pull/1704
+.. _#1722: https://github.com/librosa/librosa/pull/1722
+.. _#1727: https://github.com/librosa/librosa/pull/1727
+.. _#1731: https://github.com/librosa/librosa/pull/1731
 
 
 v0.10.0.post2
@@ -261,50 +447,50 @@ Other changes
 
 
 
-.. _#1485: https://github.com/librosa/librosa/issues/1485
-.. _#1495: https://github.com/librosa/librosa/issues/1495
-.. _#1529: https://github.com/librosa/librosa/issues/1529
-.. _#1514: https://github.com/librosa/librosa/issues/1514
-.. _#1533: https://github.com/librosa/librosa/issues/1533
-.. _#1552: https://github.com/librosa/librosa/issues/1552
-.. _#1579: https://github.com/librosa/librosa/issues/1579
-.. _#1637: https://github.com/librosa/librosa/issues/1637
-.. _#1632: https://github.com/librosa/librosa/issues/1632
-.. _#1587: https://github.com/librosa/librosa/issues/1587
-.. _#1647: https://github.com/librosa/librosa/issues/1647
-.. _#1560: https://github.com/librosa/librosa/issues/1560
-.. _#1571: https://github.com/librosa/librosa/issues/1571
-.. _#1594: https://github.com/librosa/librosa/issues/1594
-.. _#1561: https://github.com/librosa/librosa/issues/1561
-.. _#1572: https://github.com/librosa/librosa/issues/1572
-.. _#1520: https://github.com/librosa/librosa/issues/1520
-.. _#1531: https://github.com/librosa/librosa/issues/1531
-.. _#1536: https://github.com/librosa/librosa/issues/1536
-.. _#1537: https://github.com/librosa/librosa/issues/1537
-.. _#1545: https://github.com/librosa/librosa/issues/1545
-.. _#1563: https://github.com/librosa/librosa/issues/1563
-.. _#1586: https://github.com/librosa/librosa/issues/1586
-.. _#1592: https://github.com/librosa/librosa/issues/1592
-.. _#1596: https://github.com/librosa/librosa/issues/1596
-.. _#1521: https://github.com/librosa/librosa/issues/1521
-.. _#1577: https://github.com/librosa/librosa/issues/1577
-.. _#1501: https://github.com/librosa/librosa/issues/1501
-.. _#1535: https://github.com/librosa/librosa/issues/1535
-.. _#1539: https://github.com/librosa/librosa/issues/1539
-.. _#1548: https://github.com/librosa/librosa/issues/1548
-.. _#1551: https://github.com/librosa/librosa/issues/1551
-.. _#1565: https://github.com/librosa/librosa/issues/1565
-.. _#1566: https://github.com/librosa/librosa/issues/1566
-.. _#1581: https://github.com/librosa/librosa/issues/1581
-.. _#1625: https://github.com/librosa/librosa/issues/1625
-.. _#1643: https://github.com/librosa/librosa/issues/1643
+.. _#1485: https://github.com/librosa/librosa/pull/1485
+.. _#1495: https://github.com/librosa/librosa/pull/1495
+.. _#1529: https://github.com/librosa/librosa/pull/1529
+.. _#1514: https://github.com/librosa/librosa/pull/1514
+.. _#1533: https://github.com/librosa/librosa/pull/1533
+.. _#1552: https://github.com/librosa/librosa/pull/1552
+.. _#1579: https://github.com/librosa/librosa/pull/1579
+.. _#1637: https://github.com/librosa/librosa/pull/1637
+.. _#1632: https://github.com/librosa/librosa/pull/1632
+.. _#1587: https://github.com/librosa/librosa/pull/1587
+.. _#1647: https://github.com/librosa/librosa/pull/1647
+.. _#1560: https://github.com/librosa/librosa/pull/1560
+.. _#1571: https://github.com/librosa/librosa/pull/1571
+.. _#1594: https://github.com/librosa/librosa/pull/1594
+.. _#1561: https://github.com/librosa/librosa/pull/1561
+.. _#1572: https://github.com/librosa/librosa/pull/1572
+.. _#1520: https://github.com/librosa/librosa/pull/1520
+.. _#1531: https://github.com/librosa/librosa/pull/1531
+.. _#1536: https://github.com/librosa/librosa/pull/1536
+.. _#1537: https://github.com/librosa/librosa/pull/1537
+.. _#1545: https://github.com/librosa/librosa/pull/1545
+.. _#1563: https://github.com/librosa/librosa/pull/1563
+.. _#1586: https://github.com/librosa/librosa/pull/1586
+.. _#1592: https://github.com/librosa/librosa/pull/1592
+.. _#1596: https://github.com/librosa/librosa/pull/1596
+.. _#1521: https://github.com/librosa/librosa/pull/1521
+.. _#1577: https://github.com/librosa/librosa/pull/1577
+.. _#1501: https://github.com/librosa/librosa/pull/1501
+.. _#1535: https://github.com/librosa/librosa/pull/1535
+.. _#1539: https://github.com/librosa/librosa/pull/1539
+.. _#1548: https://github.com/librosa/librosa/pull/1548
+.. _#1551: https://github.com/librosa/librosa/pull/1551
+.. _#1565: https://github.com/librosa/librosa/pull/1565
+.. _#1566: https://github.com/librosa/librosa/pull/1566
+.. _#1581: https://github.com/librosa/librosa/pull/1581
+.. _#1625: https://github.com/librosa/librosa/pull/1625
+.. _#1643: https://github.com/librosa/librosa/pull/1643
 .. _#1573: https://github.com/librosa/librosa/issues/1573
-.. _#1614: https://github.com/librosa/librosa/issues/1614
-.. _#1617: https://github.com/librosa/librosa/issues/1617
-.. _#1640: https://github.com/librosa/librosa/issues/1640
-.. _#1643: https://github.com/librosa/librosa/issues/1643
-.. _#1646: https://github.com/librosa/librosa/issues/1646
-.. _#1665: https://github.com/librosa/librosa/issues/1665
+.. _#1614: https://github.com/librosa/librosa/pull/1614
+.. _#1617: https://github.com/librosa/librosa/pull/1617
+.. _#1640: https://github.com/librosa/librosa/pull/1640
+.. _#1643: https://github.com/librosa/librosa/pull/1643
+.. _#1646: https://github.com/librosa/librosa/pull/1646
+.. _#1665: https://github.com/librosa/librosa/pull/1665
 
 
 
@@ -337,22 +523,22 @@ Other changes
     - `#1504`_ Accelerate `librosa.magphase`. *Will Monroe*
     - `#1507`_, `#1508`_, `#1509`_ Various spelling corrections in documentation, comments, and warnings. *Lorenz Nickel*
 
-.. _#1457: https://github.com/librosa/librosa/issues/1457
-.. _#1493: https://github.com/librosa/librosa/issues/1493
-.. _#1447: https://github.com/librosa/librosa/issues/1447
-.. _#1469: https://github.com/librosa/librosa/issues/1469
-.. _#1473: https://github.com/librosa/librosa/issues/1473
-.. _#1475: https://github.com/librosa/librosa/issues/1475
+.. _#1457: https://github.com/librosa/librosa/pull/1457
+.. _#1493: https://github.com/librosa/librosa/pull/1493
+.. _#1447: https://github.com/librosa/librosa/pull/1447
+.. _#1469: https://github.com/librosa/librosa/pull/1469
+.. _#1473: https://github.com/librosa/librosa/pull/1473
+.. _#1475: https://github.com/librosa/librosa/pull/1475
 .. _#1487: https://github.com/librosa/librosa/issues/1487
-.. _#1491: https://github.com/librosa/librosa/issues/1491
-.. _#1511: https://github.com/librosa/librosa/issues/1511
-.. _#1513: https://github.com/librosa/librosa/issues/1513
-.. _#1453: https://github.com/librosa/librosa/issues/1453
-.. _#1479: https://github.com/librosa/librosa/issues/1479
-.. _#1504: https://github.com/librosa/librosa/issues/1504
-.. _#1507: https://github.com/librosa/librosa/issues/1507
-.. _#1508: https://github.com/librosa/librosa/issues/1508
-.. _#1509: https://github.com/librosa/librosa/issues/1509
+.. _#1491: https://github.com/librosa/librosa/pull/1491
+.. _#1511: https://github.com/librosa/librosa/pull/1511
+.. _#1513: https://github.com/librosa/librosa/pull/1513
+.. _#1453: https://github.com/librosa/librosa/pull/1453
+.. _#1479: https://github.com/librosa/librosa/pull/1479
+.. _#1504: https://github.com/librosa/librosa/pull/1504
+.. _#1507: https://github.com/librosa/librosa/pull/1507
+.. _#1508: https://github.com/librosa/librosa/pull/1508
+.. _#1509: https://github.com/librosa/librosa/pull/1509
 
 
 v0.9.1
@@ -427,7 +613,7 @@ Deprecations
 .. _#1114: https://github.com/librosa/librosa/issues/1114
 .. _#1130: https://github.com/librosa/librosa/issues/1130
 .. _#1273: https://github.com/librosa/librosa/issues/1273
-.. _#1324: https://github.com/librosa/librosa/issues/1324
+.. _#1324: https://github.com/librosa/librosa/pull/1324
 .. _#1325: https://github.com/librosa/librosa/issues/1325
 .. _#1328: https://github.com/librosa/librosa/issues/1328
 .. _#1331: https://github.com/librosa/librosa/issues/1331
@@ -436,23 +622,23 @@ Deprecations
 .. _#1361: https://github.com/librosa/librosa/issues/1361
 .. _#1362: https://github.com/librosa/librosa/issues/1362
 .. _#1375: https://github.com/librosa/librosa/issues/1375
-.. _#1382: https://github.com/librosa/librosa/issues/1382
-.. _#1384: https://github.com/librosa/librosa/issues/1384
-.. _#1387: https://github.com/librosa/librosa/issues/1387
-.. _#1389: https://github.com/librosa/librosa/issues/1389
+.. _#1382: https://github.com/librosa/librosa/pull/1382
+.. _#1384: https://github.com/librosa/librosa/pull/1384
+.. _#1387: https://github.com/librosa/librosa/pull/1387
+.. _#1389: https://github.com/librosa/librosa/pull/1389
 .. _#1398: https://github.com/librosa/librosa/issues/1398
-.. _#1404: https://github.com/librosa/librosa/issues/1404
-.. _#1405: https://github.com/librosa/librosa/issues/1405
-.. _#1406: https://github.com/librosa/librosa/issues/1406
-.. _#1407: https://github.com/librosa/librosa/issues/1407
-.. _#1414: https://github.com/librosa/librosa/issues/1414
+.. _#1404: https://github.com/librosa/librosa/pull/1404
+.. _#1405: https://github.com/librosa/librosa/pull/1405
+.. _#1406: https://github.com/librosa/librosa/pull/1406
+.. _#1407: https://github.com/librosa/librosa/pull/1407
+.. _#1414: https://github.com/librosa/librosa/pull/1414
 .. _#1416: https://github.com/librosa/librosa/issues/1416
-.. _#1418: https://github.com/librosa/librosa/issues/1418
+.. _#1418: https://github.com/librosa/librosa/pull/1418
 .. _#1425: https://github.com/librosa/librosa/issues/1425
-.. _#1427: https://github.com/librosa/librosa/issues/1427
-.. _#1430: https://github.com/librosa/librosa/issues/1430
+.. _#1427: https://github.com/librosa/librosa/pull/1427
+.. _#1430: https://github.com/librosa/librosa/pull/1430
 .. _#1432: https://github.com/librosa/librosa/issues/1432
-.. _#1441: https://github.com/librosa/librosa/issues/1441
+.. _#1441: https://github.com/librosa/librosa/pull/1441
 
 v0.8
 ====
@@ -501,32 +687,32 @@ Other changes
 Deprecations to be removed in 0.9
     - `librosa.display.waveplot` is now deprecated in favor of `librosa.display.waveshow`.
 
-.. _#1293: https://github.com/librosa/librosa/issues/1293
+.. _#1293: https://github.com/librosa/librosa/pull/1293
 .. _#1207: https://github.com/librosa/librosa/issues/1207
-.. _#1290: https://github.com/librosa/librosa/issues/1290
+.. _#1290: https://github.com/librosa/librosa/pull/1290
 .. _#1240: https://github.com/librosa/librosa/issues/1240
-.. _#1311: https://github.com/librosa/librosa/issues/1311
-.. _#1322: https://github.com/librosa/librosa/issues/1322
-.. _#1211: https://github.com/librosa/librosa/issues/1211
-.. _#1218: https://github.com/librosa/librosa/issues/1218
-.. _#1237: https://github.com/librosa/librosa/issues/1237
-.. _#1284: https://github.com/librosa/librosa/issues/1284
-.. _#1287: https://github.com/librosa/librosa/issues/1287
-.. _#1298: https://github.com/librosa/librosa/issues/1298
-.. _#1321: https://github.com/librosa/librosa/issues/1321
-.. _#1333: https://github.com/librosa/librosa/issues/1333
+.. _#1311: https://github.com/librosa/librosa/pull/1311
+.. _#1322: https://github.com/librosa/librosa/pull/1322
+.. _#1211: https://github.com/librosa/librosa/pull/1211
+.. _#1218: https://github.com/librosa/librosa/pull/1218
+.. _#1237: https://github.com/librosa/librosa/pull/1237
+.. _#1284: https://github.com/librosa/librosa/pull/1284
+.. _#1287: https://github.com/librosa/librosa/pull/1287
+.. _#1298: https://github.com/librosa/librosa/pull/1298
+.. _#1321: https://github.com/librosa/librosa/pull/1321
+.. _#1333: https://github.com/librosa/librosa/pull/1333
 
-.. _#1312: https://github.com/librosa/librosa/issues/1312
-.. _#1323: https://github.com/librosa/librosa/issues/1323
-.. _#1317: https://github.com/librosa/librosa/issues/1317
-.. _#1308: https://github.com/librosa/librosa/issues/1308
-.. _#1324: https://github.com/librosa/librosa/issues/1324
-.. _#1334: https://github.com/librosa/librosa/issues/1334
-.. _#1335: https://github.com/librosa/librosa/issues/1335
-.. _#1336: https://github.com/librosa/librosa/issues/1336
-.. _#1340: https://github.com/librosa/librosa/issues/1340
-.. _#1341: https://github.com/librosa/librosa/issues/1341
-.. _#1338: https://github.com/librosa/librosa/issues/1338
+.. _#1312: https://github.com/librosa/librosa/pull/1312
+.. _#1323: https://github.com/librosa/librosa/pull/1323
+.. _#1317: https://github.com/librosa/librosa/pull/1317
+.. _#1308: https://github.com/librosa/librosa/pull/1308
+.. _#1324: https://github.com/librosa/librosa/pull/1324
+.. _#1334: https://github.com/librosa/librosa/pull/1334
+.. _#1335: https://github.com/librosa/librosa/pull/1335
+.. _#1336: https://github.com/librosa/librosa/pull/1336
+.. _#1340: https://github.com/librosa/librosa/pull/1340
+.. _#1341: https://github.com/librosa/librosa/pull/1341
+.. _#1338: https://github.com/librosa/librosa/pull/1338
 
 v0.8.0
 ------
@@ -596,38 +782,38 @@ Other changes
     - `#1183`_ `librosa.feature.tonnetz` can now pass-through arguments to `librosa.feature.chroma_cqt`. *Brian McFee*
     - `#1186`_ `librosa.display.cmap` now returns binary colormaps for boolean data. *Brian McFee*
 
-.. _#1203: https://github.com/librosa/librosa/issues/1203
-.. _#1018: https://github.com/librosa/librosa/issues/1018
-.. _#1059: https://github.com/librosa/librosa/issues/1059
-.. _#1134: https://github.com/librosa/librosa/issues/1134
-.. _#1149: https://github.com/librosa/librosa/issues/1149
-.. _#1150: https://github.com/librosa/librosa/issues/1150
-.. _#1166: https://github.com/librosa/librosa/issues/1166
-.. _#1171: https://github.com/librosa/librosa/issues/1171
-.. _#1062: https://github.com/librosa/librosa/issues/1062
-.. _#1050: https://github.com/librosa/librosa/issues/1050
-.. _#1165: https://github.com/librosa/librosa/issues/1165
-.. _#1078: https://github.com/librosa/librosa/issues/1078
-.. _#1091: https://github.com/librosa/librosa/issues/1091
-.. _#1094: https://github.com/librosa/librosa/issues/1094
-.. _#1157: https://github.com/librosa/librosa/issues/1157
-.. _#1159: https://github.com/librosa/librosa/issues/1159
-.. _#1179: https://github.com/librosa/librosa/issues/1179
-.. _#1068: https://github.com/librosa/librosa/issues/1068
-.. _#1064: https://github.com/librosa/librosa/issues/1064
-.. _#1112: https://github.com/librosa/librosa/issues/1112
-.. _#1120: https://github.com/librosa/librosa/issues/1120
-.. _#1123: https://github.com/librosa/librosa/issues/1123
-.. _#1125: https://github.com/librosa/librosa/issues/1125
-.. _#1131: https://github.com/librosa/librosa/issues/1131
-.. _#1140: https://github.com/librosa/librosa/issues/1140
-.. _#1147: https://github.com/librosa/librosa/issues/1147
-.. _#1182: https://github.com/librosa/librosa/issues/1182
-.. _#1183: https://github.com/librosa/librosa/issues/1183
-.. _#1186: https://github.com/librosa/librosa/issues/1186
-.. _#1196: https://github.com/librosa/librosa/issues/1196
-.. _#1198: https://github.com/librosa/librosa/issues/1198
-.. _#1063: https://github.com/librosa/librosa/issues/1063
+.. _#1203: https://github.com/librosa/librosa/pull/1203
+.. _#1018: https://github.com/librosa/librosa/pull/1018
+.. _#1059: https://github.com/librosa/librosa/pull/1059
+.. _#1134: https://github.com/librosa/librosa/pull/1134
+.. _#1149: https://github.com/librosa/librosa/pull/1149
+.. _#1150: https://github.com/librosa/librosa/pull/1150
+.. _#1166: https://github.com/librosa/librosa/pull/1166
+.. _#1171: https://github.com/librosa/librosa/pull/1171
+.. _#1062: https://github.com/librosa/librosa/pull/1062
+.. _#1050: https://github.com/librosa/librosa/pull/1050
+.. _#1165: https://github.com/librosa/librosa/pull/1165
+.. _#1078: https://github.com/librosa/librosa/pull/1078
+.. _#1091: https://github.com/librosa/librosa/pull/1091
+.. _#1094: https://github.com/librosa/librosa/pull/1094
+.. _#1157: https://github.com/librosa/librosa/pull/1157
+.. _#1159: https://github.com/librosa/librosa/pull/1159
+.. _#1179: https://github.com/librosa/librosa/pull/1179
+.. _#1068: https://github.com/librosa/librosa/pull/1068
+.. _#1064: https://github.com/librosa/librosa/pull/1064
+.. _#1112: https://github.com/librosa/librosa/pull/1112
+.. _#1120: https://github.com/librosa/librosa/pull/1120
+.. _#1123: https://github.com/librosa/librosa/pull/1123
+.. _#1125: https://github.com/librosa/librosa/pull/1125
+.. _#1131: https://github.com/librosa/librosa/pull/1131
+.. _#1140: https://github.com/librosa/librosa/pull/1140
+.. _#1147: https://github.com/librosa/librosa/pull/1147
+.. _#1182: https://github.com/librosa/librosa/pull/1182
+.. _#1183: https://github.com/librosa/librosa/pull/1183
+.. _#1186: https://github.com/librosa/librosa/pull/1186
+.. _#1196: https://github.com/librosa/librosa/pull/1196
+.. _#1198: https://github.com/librosa/librosa/pull/1198
+.. _#1063: https://github.com/librosa/librosa/pull/1063
 
 
 
@@ -662,17 +848,17 @@ Documentation
 Other changes
    - `#1050`_ expanded normalization modes in Mel basis construction. *Brian McFee*
 
-.. _#1008: https://github.com/librosa/librosa/issues/1008
-.. _#1021: https://github.com/librosa/librosa/issues/1021
-.. _#1022: https://github.com/librosa/librosa/issues/1022
-.. _#1031: https://github.com/librosa/librosa/issues/1031
-.. _#1041: https://github.com/librosa/librosa/issues/1041
-.. _#1054: https://github.com/librosa/librosa/issues/1054
-.. _#1038: https://github.com/librosa/librosa/issues/1038
-.. _#1042: https://github.com/librosa/librosa/issues/1042
-.. _#1043: https://github.com/librosa/librosa/issues/1043
-.. _#1055: https://github.com/librosa/librosa/issues/1055
-.. _#1050: https://github.com/librosa/librosa/issues/1050
+.. _#1008: https://github.com/librosa/librosa/pull/1008
+.. _#1021: https://github.com/librosa/librosa/pull/1021
+.. _#1022: https://github.com/librosa/librosa/pull/1022
+.. _#1031: https://github.com/librosa/librosa/pull/1031
+.. _#1041: https://github.com/librosa/librosa/pull/1041
+.. _#1054: https://github.com/librosa/librosa/pull/1054
+.. _#1038: https://github.com/librosa/librosa/pull/1038
+.. _#1042: https://github.com/librosa/librosa/pull/1042
+.. _#1043: https://github.com/librosa/librosa/pull/1043
+.. _#1055: https://github.com/librosa/librosa/pull/1055
+.. _#1050: https://github.com/librosa/librosa/pull/1050
 
 
 v0.7.1
@@ -718,30 +904,30 @@ Other changes
    - `#949`_ Accelerated `librosa.segment.lag_to_recurrence` and `librosa.segment.recurrence_to_lag`. Deprecated `librosa.util.roll_sparse`. *Brian McFee*
    - `#930`_ `A440=` parameter has been deprecated across the library in favor of a standardized `tuning=` parameter.  *Brian McFee*
 
-.. _#966: https://github.com/librosa/librosa/issues/966
-.. _#934: https://github.com/librosa/librosa/issues/934
-.. _#940: https://github.com/librosa/librosa/issues/940
-.. _#949: https://github.com/librosa/librosa/issues/949
-.. _#926: https://github.com/librosa/librosa/issues/926
-.. _#983: https://github.com/librosa/librosa/issues/983
+.. _#966: https://github.com/librosa/librosa/pull/966
+.. _#934: https://github.com/librosa/librosa/pull/934
+.. _#940: https://github.com/librosa/librosa/pull/940
+.. _#949: https://github.com/librosa/librosa/pull/949
+.. _#926: https://github.com/librosa/librosa/pull/926
+.. _#983: https://github.com/librosa/librosa/pull/983
 .. _#978: https://github.com/librosa/librosa/issues/978
-.. _#930: https://github.com/librosa/librosa/issues/930
-.. _#942: https://github.com/librosa/librosa/issues/942
-.. _#920: https://github.com/librosa/librosa/issues/920
-.. _#976: https://github.com/librosa/librosa/issues/976
-.. _#958: https://github.com/librosa/librosa/issues/958
-.. _#943: https://github.com/librosa/librosa/issues/943
-.. _#939: https://github.com/librosa/librosa/issues/939
-.. _#1004: https://github.com/librosa/librosa/issues/1004
-.. _#1003: https://github.com/librosa/librosa/issues/1003
-.. _#1000: https://github.com/librosa/librosa/issues/1000
-.. _#971: https://github.com/librosa/librosa/issues/971
-.. _#968: https://github.com/librosa/librosa/issues/968
-.. _#963: https://github.com/librosa/librosa/issues/963
-.. _#960: https://github.com/librosa/librosa/issues/960
-.. _#957: https://github.com/librosa/librosa/issues/957
-.. _#953: https://github.com/librosa/librosa/issues/953
-.. _#950: https://github.com/librosa/librosa/issues/950
+.. _#930: https://github.com/librosa/librosa/pull/930
+.. _#942: https://github.com/librosa/librosa/pull/942
+.. _#920: https://github.com/librosa/librosa/pull/920
+.. _#976: https://github.com/librosa/librosa/pull/976
+.. _#958: https://github.com/librosa/librosa/pull/958
+.. _#943: https://github.com/librosa/librosa/pull/943
+.. _#939: https://github.com/librosa/librosa/pull/939
+.. _#1004: https://github.com/librosa/librosa/pull/1004
+.. _#1003: https://github.com/librosa/librosa/pull/1003
+.. _#1000: https://github.com/librosa/librosa/pull/1000
+.. _#971: https://github.com/librosa/librosa/pull/971
+.. _#968: https://github.com/librosa/librosa/pull/968
+.. _#963: https://github.com/librosa/librosa/pull/963
+.. _#960: https://github.com/librosa/librosa/pull/960
+.. _#957: https://github.com/librosa/librosa/pull/957
+.. _#953: https://github.com/librosa/librosa/pull/953
+.. _#950: https://github.com/librosa/librosa/pull/950
 
 
 v0.7.0
@@ -816,12 +1002,12 @@ Other changes
 .. _#845: https://github.com/librosa/librosa/issues/845
 .. _#907: https://github.com/librosa/librosa/issues/907
 .. _#739: https://github.com/librosa/librosa/issues/739
-.. _#894: https://github.com/librosa/librosa/issues/894
+.. _#894: https://github.com/librosa/librosa/pull/894
 .. _#891: https://github.com/librosa/librosa/issues/891
-.. _#863: https://github.com/librosa/librosa/issues/863
+.. _#863: https://github.com/librosa/librosa/pull/863
 .. _#857: https://github.com/librosa/librosa/issues/857
 .. _#843: https://github.com/librosa/librosa/issues/843
-.. _#842: https://github.com/librosa/librosa/issues/842
+.. _#842: https://github.com/librosa/librosa/pull/842
 .. _#840: https://github.com/librosa/librosa/issues/840
 .. _#776: https://github.com/librosa/librosa/issues/776
 .. _#770: https://github.com/librosa/librosa/issues/770
@@ -833,23 +1019,23 @@ Other changes
 .. _#888: https://github.com/librosa/librosa/issues/888
 .. _#869: https://github.com/librosa/librosa/issues/869
 .. _#851: https://github.com/librosa/librosa/issues/851
-.. _#833: https://github.com/librosa/librosa/issues/833
+.. _#833: https://github.com/librosa/librosa/pull/833
 .. _#825: https://github.com/librosa/librosa/issues/825
 .. _#802: https://github.com/librosa/librosa/issues/802
-.. _#884: https://github.com/librosa/librosa/issues/884
-.. _#882: https://github.com/librosa/librosa/issues/882
+.. _#884: https://github.com/librosa/librosa/pull/884
+.. _#882: https://github.com/librosa/librosa/pull/882
 .. _#874: https://github.com/librosa/librosa/issues/874
 .. _#804: https://github.com/librosa/librosa/issues/804
-.. _#849: https://github.com/librosa/librosa/issues/849
+.. _#849: https://github.com/librosa/librosa/pull/849
 .. _#827: https://github.com/librosa/librosa/issues/827
 .. _#813: https://github.com/librosa/librosa/issues/813
-.. _#878: https://github.com/librosa/librosa/issues/878
+.. _#878: https://github.com/librosa/librosa/pull/878
 .. _#857: https://github.com/librosa/librosa/issues/857
 .. _#854: https://github.com/librosa/librosa/issues/854
 .. _#846: https://github.com/librosa/librosa/issues/846
-.. _#841: https://github.com/librosa/librosa/issues/841
-.. _#834: https://github.com/librosa/librosa/issues/834
-.. _#829: https://github.com/librosa/librosa/issues/829
+.. _#841: https://github.com/librosa/librosa/pull/841
+.. _#834: https://github.com/librosa/librosa/pull/834
+.. _#829: https://github.com/librosa/librosa/pull/829
 .. _#818: https://github.com/librosa/librosa/issues/818
 .. _#917: https://github.com/librosa/librosa/issues/917
 
@@ -884,18 +1070,18 @@ Other changes
 .. _#813: https://github.com/librosa/librosa/issues/813
 .. _#806: https://github.com/librosa/librosa/issues/806
 .. _#805: https://github.com/librosa/librosa/issues/805
-.. _#801: https://github.com/librosa/librosa/issues/801
-.. _#799: https://github.com/librosa/librosa/issues/799
-.. _#793: https://github.com/librosa/librosa/issues/793
-.. _#791: https://github.com/librosa/librosa/issues/791
-.. _#790: https://github.com/librosa/librosa/issues/790
-.. _#787: https://github.com/librosa/librosa/issues/787
-.. _#785: https://github.com/librosa/librosa/issues/785
+.. _#801: https://github.com/librosa/librosa/pull/801
+.. _#799: https://github.com/librosa/librosa/pull/799
+.. _#793: https://github.com/librosa/librosa/pull/793
+.. _#791: https://github.com/librosa/librosa/pull/791
+.. _#790: https://github.com/librosa/librosa/pull/790
+.. _#787: https://github.com/librosa/librosa/pull/787
+.. _#785: https://github.com/librosa/librosa/pull/785
 .. _#783: https://github.com/librosa/librosa/issues/783
-.. _#777: https://github.com/librosa/librosa/issues/777
-.. _#769: https://github.com/librosa/librosa/issues/769
-.. _#766: https://github.com/librosa/librosa/issues/766
-.. _#760: https://github.com/librosa/librosa/issues/760
+.. _#777: https://github.com/librosa/librosa/pull/777
+.. _#769: https://github.com/librosa/librosa/pull/769
+.. _#766: https://github.com/librosa/librosa/pull/766
+.. _#760: https://github.com/librosa/librosa/pull/760
 
 v0.6.2
 ------
@@ -1039,7 +1225,7 @@ API changes and compatibility
 .. _#630: https://github.com/librosa/librosa/pull/630
 .. _#619: https://github.com/librosa/librosa/pull/619
 .. _#616: https://github.com/librosa/librosa/pull/616
-.. _#600: https://github.com/librosa/librosa/pull/600
+.. _#600: https://github.com/librosa/librosa/issues/600
 .. _#597: https://github.com/librosa/librosa/pull/597
 .. _#594: https://github.com/librosa/librosa/pull/594
 .. _#593: https://github.com/librosa/librosa/pull/593
@@ -1050,7 +1236,7 @@ API changes and compatibility
 .. _#435: https://github.com/librosa/librosa/pull/435
 .. _#666: https://github.com/librosa/librosa/pull/666
 .. _#656: https://github.com/librosa/librosa/pull/656
-.. _#642: https://github.com/librosa/librosa/pull/642
+.. _#642: https://github.com/librosa/librosa/issues/642
 .. _#637: https://github.com/librosa/librosa/pull/637
 .. _#636: https://github.com/librosa/librosa/pull/636
 .. _#632: https://github.com/librosa/librosa/pull/632
@@ -1102,7 +1288,7 @@ Other changes
 .. _#559: https://github.com/librosa/librosa/pull/559
 .. _#563: https://github.com/librosa/librosa/pull/563
 .. _#565: https://github.com/librosa/librosa/pull/565
-.. _#539: https://github.com/librosa/librosa/pull/539
+.. _#539: https://github.com/librosa/librosa/issues/539
 .. _#553: https://github.com/librosa/librosa/pull/553
 .. _#554: https://github.com/librosa/librosa/pull/554
 .. _#555: https://github.com/librosa/librosa/pull/555
@@ -1276,13 +1462,13 @@ Other changes
     matrices.
   - `librosa.decompose.hpss` no longer supports `power=0`.
 
-.. _#315: https://github.com/librosa/librosa/pull/315
-.. _#332: https://github.com/librosa/librosa/pull/332
-.. _#341: https://github.com/librosa/librosa/pull/341
-.. _#348: https://github.com/librosa/librosa/pull/348
-.. _#312: https://github.com/librosa/librosa/pull/312
-.. _#337: https://github.com/librosa/librosa/pull/337
-.. _#311: https://github.com/librosa/librosa/pull/311
+.. _#315: https://github.com/librosa/librosa/issues/315
+.. _#332: https://github.com/librosa/librosa/issues/332
+.. _#341: https://github.com/librosa/librosa/issues/341
+.. _#348: https://github.com/librosa/librosa/issues/348
+.. _#312: https://github.com/librosa/librosa/issues/312
+.. _#337: https://github.com/librosa/librosa/issues/337
+.. _#311: https://github.com/librosa/librosa/issues/311
 .. _#320: https://github.com/librosa/librosa/pull/320
 .. _#354: https://github.com/librosa/librosa/pull/354
 .. _#355: https://github.com/librosa/librosa/pull/355

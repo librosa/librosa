@@ -101,6 +101,7 @@ def spectral_centroid(
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
+
         .. see also:: `librosa.filters.get_window`
     center : bool
         - If `True`, the signal ``y`` is padded so that frame
@@ -239,6 +240,7 @@ def spectral_bandwidth(
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
+
         .. see also:: `librosa.filters.get_window`
     center : bool
         - If `True`, the signal ``y`` is padded so that frame
@@ -407,6 +409,7 @@ def spectral_contrast(
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
+
         .. see also:: `librosa.filters.get_window`
     center : bool
         - If `True`, the signal ``y`` is padded so that frame
@@ -576,6 +579,7 @@ def spectral_rolloff(
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
+
         .. see also:: `librosa.filters.get_window`
     center : bool
         - If `True`, the signal ``y`` is padded so that frame
@@ -729,6 +733,7 @@ def spectral_flatness(
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
+
         .. see also:: `librosa.filters.get_window`
     center : bool
         - If `True`, the signal ``y`` is padded so that frame
@@ -954,6 +959,7 @@ def poly_features(
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
+
         .. see also:: `librosa.filters.get_window`
     center : bool
         - If `True`, the signal ``y`` is padded so that frame
@@ -1184,6 +1190,7 @@ def chroma_stft(
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
+
         .. see also:: `librosa.filters.get_window`
     center : bool
         - If `True`, the signal ``y`` is padded so that frame
@@ -1874,6 +1881,7 @@ def mfcc(
     lifter : number >= 0
         If ``lifter>0``, apply *liftering* (cepstral filtering) to the MFCCs::
             M[n, :] <- M[n, :] * (1 + sin(pi * (n + 1) / lifter) * lifter / 2)
+
         Setting ``lifter >= 2 * n_mfcc`` emphasizes the higher-order coefficients.
         As ``lifter`` increases, the coefficient weighting becomes approximately linear.
     mel_norm : float, 'slaney', or None
@@ -1892,13 +1900,14 @@ def mfcc(
         If unspecified, defaults to ``win_length = n_fft``.
     window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         - a window specification (str, tuple, or number);
-        see `scipy.signal.get_window`
+          see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
+
         .. see also:: `librosa.filters.get_window`
     center : bool
         - If `True`, the signal ``y`` is padded so that frame
-        ``t`` is centered at ``y[t * hop_length]``.
+          ``t`` is centered at ``y[t * hop_length]``.
         - If `False`, then frame ``t`` begins at ``y[t * hop_length]``
     pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
@@ -2067,6 +2076,7 @@ def melspectrogram(
           see `scipy.signal.get_window`
         - a window function, such as `scipy.signal.windows.hann`
         - a vector or array of length ``n_fft``
+
         .. see also:: `librosa.filters.get_window`
     center : bool
         - If `True`, the signal ``y`` is padded so that frame

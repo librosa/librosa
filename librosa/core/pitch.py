@@ -314,7 +314,7 @@ def piptrack(
         pad_mode=pad_mode,
     )
 
-    # Make sure we're dealing with magnitudes.
+    # Make sure we're dealing with magnitudes
     # ``np.abs(S)`` forces a full-size copy of ``S`` on every call.  For a
     # real, non-negative spectrogram (the common case, e.g. a magnitude or
     # power spectrogram) that copy is redundant, so only rectify when the

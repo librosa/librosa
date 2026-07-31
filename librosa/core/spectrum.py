@@ -1720,7 +1720,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
+    axes: Literal["auto"] | int | tuple[int, ...] | None = ...,
 ) -> np.floating: ...
 @overload
 def power_to_db(
@@ -1729,7 +1729,7 @@ def power_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
+    axes: Literal["auto"] | int | tuple[int, ...] | None = ...,
 ) -> np.ndarray: ...
 @cache(level=30)
 def power_to_db(
@@ -1738,7 +1738,7 @@ def power_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-10,
     top_db: float | None = 80.0,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = "auto",
+    axes: Literal["auto"] | int | tuple[int, ...] | None = "auto",
 ) -> np.floating | np.ndarray:
     """Convert a power spectrogram (amplitude squared) to decibel (dB) units
 
@@ -1771,6 +1771,7 @@ def power_to_db(
     axes: None, "auto", int, or tuple of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
         If `auto`, then axes will be inferred as the trailing dimensions of `S`:
+
             - If `S` is scalar, then `axes=None`
             - If `S` is 1D, then `axes=(-1,)`
             - If `S` is >=2D, then `axes=(-2, -1)`
@@ -1931,7 +1932,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
+    axes: Literal["auto"] | int | tuple[int, ...] | None = ...,
 ) -> np.floating: ...
 @overload
 def amplitude_to_db(
@@ -1940,7 +1941,7 @@ def amplitude_to_db(
     ref: float | Callable = ...,
     amin: float = ...,
     top_db: float | None = ...,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = ...,
+    axes: Literal["auto"] | int | tuple[int, ...] | None = ...,
 ) -> np.ndarray: ...
 @cache(level=30)
 def amplitude_to_db(
@@ -1949,7 +1950,7 @@ def amplitude_to_db(
     ref: float | Callable = 1.0,
     amin: float = 1e-5,
     top_db: float | None = 80.0,
-    axes: None | Literal["auto"] | int | tuple[int, ...] = "auto",
+    axes: Literal["auto"] | int | tuple[int, ...] | None = "auto",
 ) -> np.floating | np.ndarray:
     """Convert an amplitude spectrogram to dB-scaled spectrogram.
 
@@ -1980,6 +1981,7 @@ def amplitude_to_db(
     axes : None, "auto", int, or tuple of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
         If `auto`, then axes will be inferred as the trailing dimensions of `S`:
+
             - If `S` is scalar, then `axes=None`
             - If `S` is 1D, then `axes=(-1,)`
             - If `S` is >=2D, then `axes=(-2, -1)`
@@ -2166,7 +2168,7 @@ def fmt(
     """Fast Mellin transform (FMT)
 
     The Mellin of a signal `y` is performed by interpolating `y` on an exponential time
-    axis, applying a polynomial window, and then taking the discrete Fourier transform.
+    axis, applying a polynomial window, and then taking the discrete Fourier transform. [#]_
 
     When the Mellin parameter (beta) is 1/2, it is also known as the scale transform. [#]_
     The scale transform can be useful for audio analysis because its magnitude is invariant

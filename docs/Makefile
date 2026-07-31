@@ -41,8 +41,9 @@ help:
 
 clean:
 	-rm -rf $(BUILDDIR)/*
-	-rm -rf auto_examples/
 	-rm -rf generated/*
+	-rm -rf api/generated/*
+	-rm -rf auto_tutorials/
 
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
