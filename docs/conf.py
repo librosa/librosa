@@ -338,6 +338,12 @@ html_theme_options = {
             "icon": "fa-classic fa-comments",
             "type": "fontawesome",
         },
+        {
+            "name": "Blog",
+            "url": "https://librosa.org/blog/",
+            "icon": "fa-solid fa-pen-nib",
+            "type": "fontawesome",
+        },
     ],
     "navbar_end": ["version-switcher", "theme-switcher", "navbar-icon-links"],
     "navbar_align": "left",

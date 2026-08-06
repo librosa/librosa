@@ -7,7 +7,7 @@ v1.0
 
 v1.0.0
 ------
-2026-xx-xx
+2026-08-10
 
 New features
     - `#2059`_ `librosa.display.legend_for_axes` for generating legends for collections of 
