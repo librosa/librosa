@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   # required
-  - defaults::pip<26.2
+  - pip
   - codespell
   - types-decorator
   - mypy
