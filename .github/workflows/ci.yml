@@ -104,6 +104,11 @@ jobs:
             mamba env update -n test -f ${{ matrix.envfile }} 
           if: steps.cache.outputs.cache-hit != 'true'
 
+        - name: Ensure pip is consistent for cached env
+          if: steps.cache.outputs.cache-hit == 'true'
+          shell: bash -l {0}
+          run: mamba install -n test --yes --force-reinstall "defaults::pip<26.2"
+
         - name: Conda info
           shell: bash -l {0}
           run: |
