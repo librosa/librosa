@@ -101,7 +101,7 @@ jobs:
 
         - name: Update environment
           run:
-            mamba env update -n test -f ${{ matrix.envfile }} 
+            conda env update -n test -f ${{ matrix.envfile }} 
           if: steps.cache.outputs.cache-hit != 'true'
 
         - name: Conda info
