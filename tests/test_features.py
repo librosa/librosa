@@ -412,6 +412,26 @@ def test_rms_badshape():
     librosa.feature.rms(S=S, frame_length=100)
 
 
+@pytest.mark.parametrize("bad", [np.nan, np.inf, -np.inf])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_rms_nonfinite(bad):
+    # A single non-finite sample used to propagate silently: NaN compares
+    # False against every threshold, so effects.trim and effects.split
+    # concluded the whole signal was silence and returned nothing.
+    y = np.zeros(4096, dtype=np.float32)
+    y[2048] = bad
+    librosa.feature.rms(y=y)
+
+
+@pytest.mark.parametrize("effect", [librosa.effects.trim, librosa.effects.split])
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_effects_nonfinite(effect):
+    # These route through rms, so they inherited the missing check.
+    y = np.zeros(4096, dtype=np.float32)
+    y[2048] = np.nan
+    effect(y)
+
+
 @pytest.fixture(params=[32, 16, 8, 4, 2], scope="module")
 def y_zcr(request):
     sr = 16384
