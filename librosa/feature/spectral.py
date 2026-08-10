@@ -884,6 +884,8 @@ def rms(
     >>> plt.show()
     """
     if y is not None:
+        util.valid_audio(y)
+
         if center:
             padding = [(0, 0) for _ in range(y.ndim)]
             padding[-1] = (int(frame_length // 2), int(frame_length // 2))
