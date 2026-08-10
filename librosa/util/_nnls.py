@@ -21,6 +21,7 @@ if TYPE_CHECKING:
 
 __all__ = ["nnls"]
 
+COND = 1e-15  # Condition number cutoff for least squares solver initialization
 
 def _nnls_obj(
     x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray
@@ -66,9 +67,11 @@ def _nnls_lbfgs_block(
     """
     # If we don't have an initial point, start at the projected
     # least squares solution
+    import scipy.linalg
+    import scipy.optimize
     if x_init is None:
         # Suppress type checks because mypy can't find pinv
-        x_init = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)
+        x_init = scipy.linalg.lstsq(A, B, cond=COND)[0]
         np.clip(x_init, 0, None, out=x_init)
 
     # Adapt the hessian approximation to the dimension of the problem
@@ -79,8 +82,6 @@ def _nnls_lbfgs_block(
     shape = x_init.shape
 
     # optimize
-    import scipy.optimize
-
     x, _obj_value, _diagnostics = scipy.optimize.fmin_l_bfgs_b(
         _nnls_obj, x_init, args=(shape, A, B), bounds=bounds, **kwargs
     )
@@ -158,7 +159,7 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
         return _nnls_lbfgs_block(A, B, **kwargs).astype(A.dtype)
 
     x: np.ndarray
-    x = np.einsum("fm,...mt->...ft", np.linalg.pinv(A), B, optimize=True)
+    x = scipy.linalg.lstsq(A, B, cond=COND)[0]
     np.clip(x, 0, None, out=x)
     x_init = x
 
