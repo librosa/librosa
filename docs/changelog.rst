@@ -58,6 +58,7 @@ Enhancements
     - `#1931`_ Variable-rate phase vocoding. *Brian McFee*
 
 Bug fixes
+    - `#2085`_ Fixed an incompatibility in `librosa.util.nnls` initialization by moving from `np.linalg.pinv` to `scipy.linalg.pinv`. *Brian McFee*
     - `#2063`_ Fixed array bounds error on `librosa.sequence.rqa` with single-axis inputs.  *Suhas Holla Karkada Chandrashekar*
     - `#2039`_ Avoid promoting scalars to 0-d arrays. *Joren Hammudoglu*
     - `#2026`_ Fixed error in label ordering for Tonnetz displays. *Brian McFee*
