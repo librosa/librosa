@@ -130,7 +130,7 @@ Contributors
 * Fadel Akram <https://github.com/afadel151>
 * emilazy <https://github.com/emilazy>
 * Ale Lloveras <https://github.com/MLsound>
-
+* Kayvan Zahiri <https://github.com/Kayvan-Zahiri>
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

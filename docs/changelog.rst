@@ -58,6 +58,7 @@ Enhancements
     - `#1931`_ Variable-rate phase vocoding. *Brian McFee*
 
 Bug fixes
+    - `#2087`_ Added a check for valid audio buffers in `feature.rms`. *Kayvan Zaihiri*
     - `#2085`_ Fixed an incompatibility in `librosa.util.nnls` initialization by moving from `np.linalg.pinv` to `scipy.linalg.pinv`. *Brian McFee*
     - `#2063`_ Fixed array bounds error on `librosa.sequence.rqa` with single-axis inputs.  *Suhas Holla Karkada Chandrashekar*
     - `#2039`_ Avoid promoting scalars to 0-d arrays. *Joren Hammudoglu*
@@ -121,6 +122,8 @@ New deprecations
       The old parameter name will be removed in version 1.2.
 
 
+.. _#2085: https://github.com/librosa/librosa/pull/2087
+.. _#2087: https://github.com/librosa/librosa/pull/2085
 .. _#1925: https://github.com/librosa/librosa/pull/1925
 .. _#1927: https://github.com/librosa/librosa/pull/1927
 .. _#1931: https://github.com/librosa/librosa/pull/1931
