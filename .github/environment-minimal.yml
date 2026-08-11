@@ -24,7 +24,6 @@ dependencies:
   - pytest-cov
   - pytest
   - coverage
-  - ffmpeg
   - resampy==0.4.3
 
   - pip:

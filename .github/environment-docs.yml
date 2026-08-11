@@ -28,9 +28,6 @@ dependencies:
   - pydata-sphinx-theme>=0.18.0
   - sphinx-design>=0.7.0
   - lazy_loader>=0.3
-  - ffmpeg
-  - standard-sunau
-  - standard-aifc
   - umap-learn>=0.5.3
   - pandas>=2.0.0
   - pip:
