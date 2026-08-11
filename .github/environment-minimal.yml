@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   # required
-  - defaults::pip<26.2
+  - pip
   - scipy==1.15.0
   - scikit-learn==1.6.0
   - joblib==1.2.0
@@ -19,12 +19,11 @@ dependencies:
   - lazy_loader==0.3
 
   # optional, but required for testing
-  - matplotlib~=3.10.0
+  - matplotlib-base~=3.10.0
   - pytest-mpl
   - pytest-cov
   - pytest
   - coverage
-  - ffmpeg
   - resampy==0.4.3
 
   - pip:

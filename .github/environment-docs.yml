@@ -4,7 +4,7 @@ channels:
   - defaults
 dependencies:
   # required
-  - defaults::pip<26.2
+  - pip
   - audioread>=2.1.9
   - numpy>=2.1.0
   - scipy>=1.15.0
@@ -19,7 +19,7 @@ dependencies:
   - pysoundfile>=0.12.1
   - pooch>=1.7.0
   - packaging>=23.2
-  - matplotlib>=3.10
+  - matplotlib-base>=3.10
   - sphinx>=8.1.0
   - myst-parser>=2.0
   - msgpack-python>=1.0.5
@@ -28,9 +28,6 @@ dependencies:
   - pydata-sphinx-theme>=0.18.0
   - sphinx-design>=0.7.0
   - lazy_loader>=0.3
-  - ffmpeg
-  - standard-sunau
-  - standard-aifc
   - umap-learn>=0.5.3
   - pandas>=2.0.0
   - pip:

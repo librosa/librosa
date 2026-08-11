@@ -5,9 +5,16 @@ Changelog
 v1.0
 ====
 
+This release marks the first "stable" version of librosa, and is intended to standardize the API developed
+over the 0.x series.
+With 1.0, we are formally adopting [Intended Effort Versioning (EffVer)](https://jacobtomlinson.dev/effver/),
+which will make it easier for users to understand the meaning behind subsequent major and minor releases.
+
+For an overview of what's new in the 1.0 release, see our [blog post](https://librosa.org/blog/posts/1.0/).
+
 v1.0.0
 ------
-2026-xx-xx
+2026-08-11
 
 New features
     - `#2059`_ `librosa.display.legend_for_axes` for generating legends for collections of 
@@ -51,6 +58,8 @@ Enhancements
     - `#1931`_ Variable-rate phase vocoding. *Brian McFee*
 
 Bug fixes
+    - `#2087`_ Added a check for valid audio buffers in `feature.rms`. *Kayvan Zaihiri*
+    - `#2085`_ Fixed an incompatibility in `librosa.util.nnls` initialization by moving from `np.linalg.pinv` to `scipy.linalg.pinv`. *Brian McFee*
     - `#2063`_ Fixed array bounds error on `librosa.sequence.rqa` with single-axis inputs.  *Suhas Holla Karkada Chandrashekar*
     - `#2039`_ Avoid promoting scalars to 0-d arrays. *Joren Hammudoglu*
     - `#2026`_ Fixed error in label ordering for Tonnetz displays. *Brian McFee*
@@ -113,6 +122,8 @@ New deprecations
       The old parameter name will be removed in version 1.2.
 
 
+.. _#2085: https://github.com/librosa/librosa/pull/2087
+.. _#2087: https://github.com/librosa/librosa/pull/2085
 .. _#1925: https://github.com/librosa/librosa/pull/1925
 .. _#1927: https://github.com/librosa/librosa/pull/1927
 .. _#1931: https://github.com/librosa/librosa/pull/1931

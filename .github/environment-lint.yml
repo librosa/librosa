@@ -4,13 +4,13 @@ channels:
   - defaults
 dependencies:
   # required
-  - defaults::pip<26.2
+  - pip
   - codespell
   - types-decorator
   - mypy
   - numpy==2.1.0
   - pytest
-  - matplotlib>=3.10.0
+  - matplotlib-base>=3.10.0
   - ruff
 
   - numpydoc>=1.8.0
