@@ -19,7 +19,7 @@ dependencies:
   - lazy_loader>=0.3
 
   # optional, but required for testing
-  - matplotlib>=3.10.0
+  - matplotlib-base>=3.10.0
   - pytest-mpl
   - pytest-cov
   - pytest

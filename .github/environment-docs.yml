@@ -19,7 +19,7 @@ dependencies:
   - pysoundfile>=0.12.1
   - pooch>=1.7.0
   - packaging>=23.2
-  - matplotlib>=3.10
+  - matplotlib-base>=3.10
   - sphinx>=8.1.0
   - myst-parser>=2.0
   - msgpack-python>=1.0.5
