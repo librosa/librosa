@@ -20,12 +20,11 @@ dependencies:
 
   # optional, but required for testing
   - matplotlib-base>=3.10.0
+  - pytest-mpl
   - pytest-cov
   - pytest
   - coverage
-  - ffmpeg
   - resampy>=0.4.3
 
   - pip:
-    - pytest-mpl
     - samplerate
