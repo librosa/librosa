@@ -14,7 +14,7 @@ For an overview of what's new in the 1.0 release, see our [blog post](https://li
 
 v1.0.0
 ------
-2026-08-10
+2026-08-11
 
 New features
     - `#2059`_ `librosa.display.legend_for_axes` for generating legends for collections of 
