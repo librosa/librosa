@@ -50,7 +50,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSIONS=$(gh release list -O asc --exclude-drafts --exclude-pre-releases --json tagName --jq '.[].tagName')
+          VERSIONS=$(gh release list -L 100 -O asc --exclude-drafts --exclude-pre-releases --json tagName --jq '.[].tagName')
 
           PUSHED_VERSIONS=""
           for ver in $VERSIONS; do
