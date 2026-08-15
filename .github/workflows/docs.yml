@@ -73,7 +73,7 @@ jobs:
       - name: Build documentations
         shell: bash -el {0}
         run: |
-          sphinx-build -b html docs build/html/dev
+          sphinx-build -b html -d build/doctrees docs build/html/dev
           cp docs/docsite-index-redirect.html build/html/index.html
 
 

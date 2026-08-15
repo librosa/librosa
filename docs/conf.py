@@ -357,6 +357,10 @@ html_css_files = [
 ]
 html_show_sourcelink = False
 
+# Sourcelinks are disabled above, so nothing references the reST sources and
+# there is no reason to ship them.
+html_copy_source = False
+
 html_context = {
     "default_mode": "light"
 }
