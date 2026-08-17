@@ -118,7 +118,7 @@ import librosa
 )
 plot_include_source = True
 plot_html_show_source_link = False
-plot_formats = [("png", 150), ("pdf", 150)]
+plot_formats = [("png", 150)]
 plot_html_show_formats = False
 
 from cycler import cycler
