@@ -77,7 +77,7 @@ jobs:
         - name: Build documentation site
           shell: bash -l {0}
           run: |
-            sphinx-build -b html docs build/html
+            sphinx-build -b html -d build/doctrees docs build/html
             touch build/html/.nojekyll
 
         - name: Upload compiled documentation site

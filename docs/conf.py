@@ -118,7 +118,7 @@ import librosa
 )
 plot_include_source = True
 plot_html_show_source_link = False
-plot_formats = [("png", 150), ("pdf", 150)]
+plot_formats = [("png", 150)]
 plot_html_show_formats = False
 
 from cycler import cycler
@@ -356,6 +356,10 @@ html_css_files = [
     "css/custom.css",
 ]
 html_show_sourcelink = False
+
+# Sourcelinks are disabled above, so nothing references the reST sources and
+# there is no reason to ship them.
+html_copy_source = False
 
 html_context = {
     "default_mode": "light"
