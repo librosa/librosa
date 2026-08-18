@@ -45,7 +45,7 @@ jobs:
 
     - name: Spell check
       shell: bash -l {0}
-      run: codespell --ignore-words-list="ba,trough,ue" --skip="*demo.ipynb,./AUTHORS.md,./docs/changelog.rst"
+      run: codespell --ignore-words-list="ba,trough,ue,Shepard" --skip="*demo.ipynb,./AUTHORS.md,./docs/changelog.rst"
 
     - name: Linting check
       shell: bash -l {0}
