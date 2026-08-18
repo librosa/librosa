@@ -21,7 +21,7 @@ from .convert import frames_to_samples, time_to_samples
 
 if TYPE_CHECKING:
     import os
-    from typing import Any, BinaryIO, Callable, Generator, Collection
+    from typing import Any, BinaryIO, Callable, Collection, Generator
 
     from numpy.typing import DTypeLike, NDArray
 
