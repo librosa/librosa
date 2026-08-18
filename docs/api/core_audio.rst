@@ -19,6 +19,9 @@ Audio signals
     clicks
     tone
     chirp
+    shepard_tone
+    shepard_scale
+    shepard_risset_glissando
 
     autocorrelate
     zero_crossings
