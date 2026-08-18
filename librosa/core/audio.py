@@ -2257,8 +2257,9 @@ def shepard_risset_glissando(
     duration : float > 0 or None
         Desired duration in seconds.
         When both ``duration`` and ``length`` are defined, ``length`` takes priority.
-    num_octaves : int > 0
-        Number of octave-spaced sine waves to generate.
+    num_octaves : int
+        Number of octave-spaced sine waves to generate. If negative, the sweep
+        direction is reversed to produce a descending glissando.
     center_freq : float > 0
         Center frequency of the Gaussian amplitude envelope in Hz.
     sigma : float > 0
@@ -2271,6 +2272,10 @@ def shepard_risset_glissando(
     """
     if fmin is None or fmax is None or fmin <= 0 or fmax <= 0:
         raise ParameterError('"fmin" and "fmax" must be positive numbers')
+
+    if num_octaves < 0:
+        fmin, fmax = fmax, fmin
+        num_octaves = abs(num_octaves)
 
     octave_shifts = np.arange(-num_octaves // 2, num_octaves // 2 + (num_octaves % 2))
 
