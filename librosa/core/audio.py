@@ -2137,6 +2137,7 @@ def shepard_scale(
     center_freq: float = 1000.0,
     sigma: float = 1.0,
     intervals: str | Collection[float] = "equal",
+    n_steps: int = 12,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
 ) -> _Array1D[np.float64]:
@@ -2170,6 +2171,8 @@ def shepard_scale(
         it must be one supported by `interval_frequencies` (e.g. ``'equal'``,
         ``'pythagorean'``, ``'ji3'``, ``'ji5'``, ``'ji7'``).
         Default is ``'equal'``.
+    n_steps : int > 0
+        The number of discrete pitch steps to generate over the duration.
     bins_per_octave : int > 0
         Number of steps per octave when ``intervals`` is specified as a string.
     tuning : float
@@ -2191,21 +2194,17 @@ def shepard_scale(
             raise ParameterError('either "length" or "duration" must be provided')
         length = int(duration * sr)
 
-    # Determine the number of steps (bins) to cover from fmin to fmax
     if isinstance(intervals, str):
-        n_bins = int(np.round(bins_per_octave * np.log2(float(fmax) / float(fmin)))) + 1
         freqs = interval_frequencies(
-            n_bins,
+            n_steps,
             fmin=fmin,
             intervals=intervals,
             bins_per_octave=bins_per_octave,
             tuning=tuning,
         )
     else:
-        # If explicit intervals are provided, map them to the range
         ratios = np.asarray(intervals, dtype=np.float64)
-        n_bins = len(ratios)
-        freqs = float(fmin) * ratios
+        freqs = float(fmin) * ratios[:n_steps]
 
     # Divide the total length into equal-length steps
     boundaries = np.round(np.linspace(0, length, len(freqs) + 1)).astype(int)
@@ -2215,7 +2214,8 @@ def shepard_scale(
         step_len = boundaries[i + 1] - boundaries[i]
         if step_len <= 0:
             continue
-        y[boundaries[i] : boundaries[i + 1]] = shepard_tone(
+
+        tone_step = shepard_tone(
             freq,
             sr=sr,
             length=step_len,
@@ -2223,6 +2223,15 @@ def shepard_scale(
             center_freq=center_freq,
             sigma=sigma,
         )
+
+        # Taper the edges of each step to eliminate transient clicks
+        fade_len = min(int(step_len * 0.1), 1000)
+        if fade_len > 0:
+            window = np.sin(np.linspace(0, np.pi / 2, fade_len))
+            tone_step[:fade_len] *= window
+            tone_step[-fade_len:] *= window[::-1]
+
+        y[boundaries[i] : boundaries[i + 1]] = tone_step
 
     return y
 
