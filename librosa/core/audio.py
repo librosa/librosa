@@ -2239,11 +2239,11 @@ def shepard_scale(
 def shepard_risset_glissando(
     *,
     fmin: _FloatLike_co,
-    fmax: _FloatLike_co,
+    n_octaves: float = 1.0,
     sr: float = 22050,
     length: int | None = None,
     duration: float | None = None,
-    num_octaves: int = 10,
+    num_components: int = 10,
     center_freq: float = 1000.0,
     sigma: float = 1.0,
 ) -> _Array1D[np.float64]:
@@ -2256,8 +2256,9 @@ def shepard_risset_glissando(
     ----------
     fmin : float > 0
         Starting frequency of the base tone (in Hz).
-    fmax : float > 0
-        Ending frequency of the base tone (in Hz).
+    n_octaves : float
+        Number of octaves to sweep over. Can be fractional or negative (for a
+        descending glissando).
     sr : number > 0
         Desired sampling rate of the output signal.
     length : int > 0 or None
@@ -2266,9 +2267,8 @@ def shepard_risset_glissando(
     duration : float > 0 or None
         Desired duration in seconds.
         When both ``duration`` and ``length`` are defined, ``length`` takes priority.
-    num_octaves : int
-        Number of octave-spaced sine waves to generate. If negative, the sweep
-        direction is reversed to produce a descending glissando.
+    num_components : int > 0
+        Number of octave-spaced sine waves to generate.
     center_freq : float > 0
         Center frequency of the Gaussian amplitude envelope in Hz.
     sigma : float > 0
@@ -2279,14 +2279,10 @@ def shepard_risset_glissando(
     glissando_signal : np.ndarray [shape=(length,), dtype=float64]
         Synthesized Shepard-Risset glissando signal.
     """
-    if fmin is None or fmax is None or fmin <= 0 or fmax <= 0:
-        raise ParameterError('"fmin" and "fmax" must be positive numbers')
+    if fmin is None or fmin <= 0:
+        raise ParameterError('"fmin" must be a positive number')
 
-    if num_octaves < 0:
-        fmin, fmax = fmax, fmin
-        num_octaves = abs(num_octaves)
-
-    octave_shifts = np.arange(-num_octaves // 2, num_octaves // 2 + (num_octaves % 2))
+    octave_shifts = np.arange(-num_components // 2, num_components // 2 + (num_components % 2))
 
     y: _Array1D[np.float64] | None = None
     t: np.ndarray | None = None
@@ -2294,7 +2290,7 @@ def shepard_risset_glissando(
     for shift in octave_shifts:
         scale = 2.0 ** shift
         fmin_k = float(fmin) * scale
-        fmax_k = float(fmax) * scale
+        fmax_k = float(fmin) * (2.0 ** n_octaves) * scale
 
         if fmin_k >= sr / 2.0 and fmax_k >= sr / 2.0:
             continue
@@ -2306,13 +2302,14 @@ def shepard_risset_glissando(
         if t is None:
             t = np.arange(len(chirp_component)) / float(sr)
             dur_calc = len(chirp_component) / float(sr)
-            ratio = float(fmax) / float(fmin)
+            ratio = 2.0 ** n_octaves
 
         freq_base_t = float(fmin) * np.power(ratio, t / dur_calc)
         freq_k_t = freq_base_t * scale
 
         amp_k = np.exp(-0.5 * (np.log2(freq_k_t / center_freq) / sigma) ** 2)
         amp_k[freq_k_t >= sr / 2.0] = 0.0
+        amp_k[freq_k_t <= 0.0] = 0.0
 
         if y is None:
             y = amp_k * chirp_component
