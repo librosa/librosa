@@ -2127,8 +2127,8 @@ def shepard_tone(
 
 
 def shepard_scale(
+    f: _FloatLike_co,
     *,
-    fmin: _FloatLike_co,
     sr: float = 22050,
     length: int | None = None,
     duration: float | None = None,
@@ -2143,11 +2143,11 @@ def shepard_scale(
     """Construct a discrete Shepard scale signal.
 
     A Shepard scale is a sequence of discrete Shepard tones starting from
-    ``fmin`` over the allotted duration.
+    ``f`` over the allotted duration.
 
     Parameters
     ----------
-    fmin : float > 0
+    f : float > 0
         Starting frequency of the scale (in Hz).
     sr : number > 0
         Desired sampling rate of the output signal.
@@ -2168,8 +2168,9 @@ def shepard_scale(
         it must be one supported by `interval_frequencies` (e.g. ``'equal'``,
         ``'pythagorean'``, ``'ji3'``, ``'ji5'``, ``'ji7'``).
         Default is ``'equal'``.
-    n_steps : int > 0
+    n_steps : int
         The number of discrete pitch steps to generate over the duration.
+        If negative, the scale is generated in descending order.
     bins_per_octave : int > 0
         Number of steps per octave when ``intervals`` is specified as a string.
     tuning : float
@@ -2183,18 +2184,21 @@ def shepard_scale(
     """
     from .intervals import interval_frequencies
 
-    if fmin is None or fmin <= 0:
-        raise ParameterError('"fmin" must be a positive number')
+    if f is None or f <= 0:
+        raise ParameterError('"f" must be a positive number')
 
     if length is None:
         if duration is None:
             raise ParameterError('either "length" or "duration" must be provided')
         length = int(duration * sr)
 
+    reverse_signal = n_steps < 0
+    n_steps_abs = abs(n_steps)
+
     if isinstance(intervals, str):
         freqs = interval_frequencies(
-            n_steps,
-            fmin=fmin,
+            n_steps_abs,
+            fmin=f,
             intervals=intervals,
             bins_per_octave=bins_per_octave,
             tuning=tuning,
@@ -2202,9 +2206,9 @@ def shepard_scale(
     else:
         ratios = np.asarray(intervals, dtype=np.float64)
         b_oct = len(ratios)
-        n_oct = int(np.ceil(n_steps / b_oct))
-        all_ratios = np.multiply.outer(2.0 ** np.arange(n_oct), ratios).flatten()[:n_steps]
-        freqs = float(fmin) * all_ratios
+        n_oct = int(np.ceil(n_steps_abs / b_oct))
+        all_ratios = np.multiply.outer(2.0 ** np.arange(n_oct), ratios).flatten()[:n_steps_abs]
+        freqs = float(f) * all_ratios
 
     # Divide the total length into equal-length steps
     boundaries = np.round(np.linspace(0, length, len(freqs) + 1)).astype(int)
@@ -2233,12 +2237,15 @@ def shepard_scale(
 
         y[boundaries[i] : boundaries[i + 1]] = tone_step
 
+    if reverse_signal:
+        y = y[::-1]
+
     return y
 
 
 def shepard_risset_glissando(
+    f: _FloatLike_co,
     *,
-    fmin: _FloatLike_co,
     n_octaves: float = 1.0,
     sr: float = 22050,
     length: int | None = None,
@@ -2254,7 +2261,7 @@ def shepard_risset_glissando(
 
     Parameters
     ----------
-    fmin : float > 0
+    f : float > 0
         Starting frequency of the base tone (in Hz).
     n_octaves : float
         Number of octaves to sweep over. Can be fractional or negative (for a
@@ -2279,8 +2286,8 @@ def shepard_risset_glissando(
     glissando_signal : np.ndarray [shape=(length,), dtype=float64]
         Synthesized Shepard-Risset glissando signal.
     """
-    if fmin is None or fmin <= 0:
-        raise ParameterError('"fmin" must be a positive number')
+    if f is None or f <= 0:
+        raise ParameterError('"f" must be a positive number')
 
     # If n_octaves is negative, we generate an ascending glissando of the same
     # magnitude and reverse the final signal in time.
@@ -2294,8 +2301,8 @@ def shepard_risset_glissando(
 
     for shift in octave_shifts:
         scale = 2.0 ** shift
-        fmin_k = float(fmin) * scale
-        fmax_k = float(fmin) * (2.0 ** n_octaves_abs) * scale
+        fmin_k = float(f) * scale
+        fmax_k = float(f) * (2.0 ** n_octaves_abs) * scale
 
         if fmin_k >= sr / 2.0 and fmax_k >= sr / 2.0:
             continue
@@ -2309,7 +2316,7 @@ def shepard_risset_glissando(
             dur_calc = len(chirp_component) / float(sr)
             ratio = 2.0 ** n_octaves_abs
 
-        freq_base_t = float(fmin) * np.power(ratio, t / dur_calc)
+        freq_base_t = float(f) * np.power(ratio, t / dur_calc)
         freq_k_t = freq_base_t * scale
 
         amp_k = np.exp(-0.5 * (np.log2(freq_k_t / center_freq) / sigma) ** 2)
