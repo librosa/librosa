@@ -84,6 +84,9 @@ from .core import salience as salience
 from .core import samples_like as samples_like
 from .core import samples_to_frames as samples_to_frames
 from .core import samples_to_time as samples_to_time
+from .core import shepard_risset_glissando as shepard_risset_glissando
+from .core import shepard_scale as shepard_scale
+from .core import shepard_tone as shepard_tone
 from .core import stft as stft
 from .core import stream as stream
 from .core import tempo_frequencies as tempo_frequencies
