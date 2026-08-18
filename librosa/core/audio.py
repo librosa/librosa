@@ -2129,7 +2129,6 @@ def shepard_tone(
 def shepard_scale(
     *,
     fmin: _FloatLike_co,
-    fmax: _FloatLike_co,
     sr: float = 22050,
     length: int | None = None,
     duration: float | None = None,
@@ -2143,15 +2142,13 @@ def shepard_scale(
 ) -> _Array1D[np.float64]:
     """Construct a discrete Shepard scale signal.
 
-    A Shepard scale is a sequence of discrete Shepard tones spanning from
-    ``fmin`` to ``fmax`` over the allotted duration.
+    A Shepard scale is a sequence of discrete Shepard tones starting from
+    ``fmin`` over the allotted duration.
 
     Parameters
     ----------
     fmin : float > 0
         Starting frequency of the scale (in Hz).
-    fmax : float > 0
-        Ending frequency of the scale (in Hz).
     sr : number > 0
         Desired sampling rate of the output signal.
     length : int > 0 or None
@@ -2186,8 +2183,8 @@ def shepard_scale(
     """
     from .intervals import interval_frequencies
 
-    if fmin is None or fmax is None or fmin <= 0 or fmax <= 0:
-        raise ParameterError('"fmin" and "fmax" must be positive numbers')
+    if fmin is None or fmin <= 0:
+        raise ParameterError('"fmin" must be a positive number')
 
     if length is None:
         if duration is None:
@@ -2204,7 +2201,10 @@ def shepard_scale(
         )
     else:
         ratios = np.asarray(intervals, dtype=np.float64)
-        freqs = float(fmin) * ratios[:n_steps]
+        b_oct = len(ratios)
+        n_oct = int(np.ceil(n_steps / b_oct))
+        all_ratios = np.multiply.outer(2.0 ** np.arange(n_oct), ratios).flatten()[:n_steps]
+        freqs = float(fmin) * all_ratios
 
     # Divide the total length into equal-length steps
     boundaries = np.round(np.linspace(0, length, len(freqs) + 1)).astype(int)
@@ -2282,6 +2282,11 @@ def shepard_risset_glissando(
     if fmin is None or fmin <= 0:
         raise ParameterError('"fmin" must be a positive number')
 
+    # If n_octaves is negative, we generate an ascending glissando of the same
+    # magnitude and reverse the final signal in time.
+    reverse_signal = n_octaves < 0
+    n_octaves_abs = abs(n_octaves)
+
     octave_shifts = np.arange(-num_components // 2, num_components // 2 + (num_components % 2))
 
     y: _Array1D[np.float64] | None = None
@@ -2290,7 +2295,7 @@ def shepard_risset_glissando(
     for shift in octave_shifts:
         scale = 2.0 ** shift
         fmin_k = float(fmin) * scale
-        fmax_k = float(fmin) * (2.0 ** n_octaves) * scale
+        fmax_k = float(fmin) * (2.0 ** n_octaves_abs) * scale
 
         if fmin_k >= sr / 2.0 and fmax_k >= sr / 2.0:
             continue
@@ -2302,7 +2307,7 @@ def shepard_risset_glissando(
         if t is None:
             t = np.arange(len(chirp_component)) / float(sr)
             dur_calc = len(chirp_component) / float(sr)
-            ratio = 2.0 ** n_octaves
+            ratio = 2.0 ** n_octaves_abs
 
         freq_base_t = float(fmin) * np.power(ratio, t / dur_calc)
         freq_k_t = freq_base_t * scale
@@ -2319,6 +2324,9 @@ def shepard_risset_glissando(
     if y is None:
         target_len = length if length is not None else int((duration or 0) * sr)
         y = np.zeros(target_len, dtype=np.float64)
+
+    if reverse_signal:
+        y = y[::-1]
 
     return y
 
