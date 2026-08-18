@@ -9,6 +9,9 @@ from .audio import lpc as lpc
 from .audio import mu_compress as mu_compress
 from .audio import mu_expand as mu_expand
 from .audio import resample as resample
+from .audio import shepard_risset_glissando as shepard_risset_glissando
+from .audio import shepard_scale as shepard_scale
+from .audio import shepard_tone as shepard_tone
 from .audio import stream as stream
 from .audio import to_mono as to_mono
 from .audio import to_multi as to_multi
