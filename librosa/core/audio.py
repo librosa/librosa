@@ -2101,21 +2101,13 @@ def shepard_tone(
     if frequency is None or frequency <= 0:
         raise ParameterError('"frequency" must be a positive number')
 
-    if length is None:
-        if duration is None:
-            raise ParameterError('either "length" or "duration" must be provided')
-        length = int(duration * sr)
-
     if intervals is None:
         intervals = 2.0 ** (np.arange(12) / 12.0)
 
     interval_factors = np.asarray(intervals, dtype=np.float64)
-
-    t = np.arange(length) / float(sr)
-
     octave_shifts = np.arange(-num_octaves // 2, num_octaves // 2 + (num_octaves % 2))
 
-    y = np.zeros(length, dtype=np.float64)
+    y: _Array1D[np.float64] | None = None
 
     for factor in interval_factors:
         base_f = float(frequency) * factor
@@ -2125,10 +2117,20 @@ def shepard_tone(
             if freq_k >= sr / 2.0 or freq_k <= 0:
                 continue
 
-            log_ratio = np.log2(freq_k / center_freq)
-            amp = np.exp(-0.5 * (log_ratio / sigma) ** 2)
+            amp = np.exp(-0.5 * (np.log2(freq_k / center_freq) / sigma) ** 2)
+            tone_component = amp * tone(
+                freq_k, sr=sr, length=length, duration=duration
+            )
 
-            y += amp * np.cos(2 * np.pi * freq_k * t)
+            if y is None:
+                y = tone_component
+            else:
+                y += tone_component
+
+    if y is None:
+        # Fallback if all frequencies fell outside Nyquist boundary
+        target_len = length if length is not None else int((duration or 0) * sr)
+        y = np.zeros(target_len, dtype=np.float64)
 
     return y
 
@@ -2178,42 +2180,42 @@ def shepard_risset_glissando(
     if fmin is None or fmax is None or fmin <= 0 or fmax <= 0:
         raise ParameterError('"fmin" and "fmax" must be positive numbers')
 
-    period = 1.0 / sr
-    if length is None:
-        if duration is None:
-            raise ParameterError('either "length" or "duration" must be provided')
-    else:
-        duration = period * length
-
-    length_int = int(duration * sr)
-    t = np.arange(length_int) / float(sr)
-
-    ratio = float(fmax) / float(fmin)
-    log_ratio = np.log(ratio)
-
-    if np.isclose(log_ratio, 0):
-        phase_base = 2 * np.pi * float(fmin) * t
-    else:
-        phase_base = 2 * np.pi * float(fmin) * duration / log_ratio * (np.power(ratio, t / duration) - 1.0)
-
-    freq_base = float(fmin) * np.power(ratio, t / duration)
-
     octave_shifts = np.arange(-num_octaves // 2, num_octaves // 2 + (num_octaves % 2))
 
-    y = np.zeros(length_int, dtype=np.float64)
+    y: _Array1D[np.float64] | None = None
+    t: np.ndarray | None = None
 
     for shift in octave_shifts:
         scale = 2.0 ** shift
-        freq_k = freq_base * scale
-        phase_k = phase_base * scale
+        fmin_k = float(fmin) * scale
+        fmax_k = float(fmax) * scale
 
-        log2_ratio_k = np.log2(freq_k / center_freq)
-        amp_k = np.exp(-0.5 * (log2_ratio_k / sigma) ** 2)
+        if fmin_k >= sr / 2.0 and fmax_k >= sr / 2.0:
+            continue
 
-        valid = (freq_k < sr / 2.0) & (freq_k > 0)
-        amp_k[~valid] = 0.0
+        chirp_component = chirp(
+            fmin=fmin_k, fmax=fmax_k, sr=sr, length=length, duration=duration
+        )
 
-        y += amp_k * np.cos(phase_k)
+        if t is None:
+            t = np.arange(len(chirp_component)) / float(sr)
+            dur_calc = len(chirp_component) / float(sr)
+            ratio = float(fmax) / float(fmin)
+
+        freq_base_t = float(fmin) * np.power(ratio, t / dur_calc)
+        freq_k_t = freq_base_t * scale
+
+        amp_k = np.exp(-0.5 * (np.log2(freq_k_t / center_freq) / sigma) ** 2)
+        amp_k[freq_k_t >= sr / 2.0] = 0.0
+
+        if y is None:
+            y = amp_k * chirp_component
+        else:
+            y += amp_k * chirp_component
+
+    if y is None:
+        target_len = length if length is not None else int((duration or 0) * sr)
+        y = np.zeros(target_len, dtype=np.float64)
 
     return y
 
