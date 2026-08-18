@@ -2063,6 +2063,7 @@ def shepard_tone(
     num_octaves: int = 10,
     center_freq: float = 1000.0,
     sigma: float = 1.0,
+    intervals: _SequenceLike[_FloatLike_co] | None = None,
 ) -> _Array1D[np.float64]:
     """Construct a Shepard tone signal.
 
@@ -2088,6 +2089,9 @@ def shepard_tone(
         Center frequency of the Gaussian amplitude envelope in Hz.
     sigma : float > 0
         Standard deviation (width) of the Gaussian envelope in octaves.
+    intervals : np.ndarray or sequence or None
+        Frequency multiplier ratios for pitch steps. If ``None``, defaults to
+        12-tone equal temperament steps (``2**(np.arange(12) / 12)``).
 
     Returns
     -------
@@ -2102,22 +2106,29 @@ def shepard_tone(
             raise ParameterError('either "length" or "duration" must be provided')
         length = int(duration * sr)
 
+    if intervals is None:
+        intervals = 2.0 ** (np.arange(12) / 12.0)
+
+    interval_factors = np.asarray(intervals, dtype=np.float64)
+
     t = np.arange(length) / float(sr)
 
     octave_shifts = np.arange(-num_octaves // 2, num_octaves // 2 + (num_octaves % 2))
 
     y = np.zeros(length, dtype=np.float64)
 
-    for shift in octave_shifts:
-        freq_k = float(frequency) * (2.0 ** shift)
+    for factor in interval_factors:
+        base_f = float(frequency) * factor
+        for shift in octave_shifts:
+            freq_k = base_f * (2.0 ** shift)
 
-        if freq_k >= sr / 2.0 or freq_k <= 0:
-            continue
+            if freq_k >= sr / 2.0 or freq_k <= 0:
+                continue
 
-        log_ratio = np.log2(freq_k / center_freq)
-        amp = np.exp(-0.5 * (log_ratio / sigma) ** 2)
+            log_ratio = np.log2(freq_k / center_freq)
+            amp = np.exp(-0.5 * (log_ratio / sigma) ** 2)
 
-        y += amp * np.cos(2 * np.pi * freq_k * t)
+            y += amp * np.cos(2 * np.pi * freq_k * t)
 
     return y
 
