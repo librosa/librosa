@@ -335,7 +335,7 @@ def stream(
     res_type : str
         Resample type, must be one of the following:
 
-        'soxr_vhq', 'soxr_hq', 'soxr_mq' or 'soxr_lq'
+        'soxr_vhq', 'soxr_hq', 'soxr_mq', 'soxr_lq' or 'soxr_qq'
             `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
             ``'soxr_hq'`` is the default setting of `soxr`.
         'soxr_qq'
@@ -2094,6 +2094,18 @@ def shepard_tone(
     -------
     shepard_signal : np.ndarray [shape=(length,), dtype=float64]
         Synthesized Shepard tone signal.
+
+    See Also
+    --------
+    tone
+    shepard_scale
+    shepard_risset_glissando
+
+    Examples
+    --------
+    Generate a single Shepard tone at 440 Hz:
+
+    >>> y = librosa.shepard_tone(440.0, duration=1.0, sr=22050)
     """
     if frequency is None or frequency <= 0:
         raise ParameterError('"frequency" must be a positive number')
@@ -2181,6 +2193,22 @@ def shepard_scale(
     -------
     scale_signal : np.ndarray [shape=(length,), dtype=float64]
         Synthesized discrete Shepard scale signal.
+
+    See Also
+    --------
+    shepard_tone
+    shepard_risset_glissando
+    interval_frequencies
+
+    Examples
+    --------
+    Generate a 12-step ascending Shepard scale starting at 110 Hz:
+
+    >>> y = librosa.shepard_scale(110.0, duration=2.0, n_steps=12)
+
+    Generate a 12-step descending Shepard scale starting at 110 Hz:
+
+    >>> y_desc = librosa.shepard_scale(110.0, duration=2.0, n_steps=-12)
     """
     from .intervals import interval_frequencies
 
@@ -2285,6 +2313,22 @@ def shepard_risset_glissando(
     -------
     glissando_signal : np.ndarray [shape=(length,), dtype=float64]
         Synthesized Shepard-Risset glissando signal.
+
+    See Also
+    --------
+    chirp
+    shepard_tone
+    shepard_scale
+
+    Examples
+    --------
+    Generate an ascending Shepard-Risset glissando sweeping over 2 octaves:
+
+    >>> y = librosa.shepard_risset_glissando(110.0, duration=3.0, n_octaves=2.0)
+
+    Generate a descending Shepard-Risset glissando sweeping over 2 octaves:
+
+    >>> y_desc = librosa.shepard_risset_glissando(110.0, duration=3.0, n_octaves=-2.0)
     """
     if f is None or f <= 0:
         raise ParameterError('"f" must be a positive number')
