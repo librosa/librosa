@@ -48,6 +48,8 @@ __all__ = [
     "clicks",
     "tone",
     "chirp",
+    "shepard_tone",
+    "shepard_risset_glissando",
     "mu_compress",
     "mu_expand",
 ]
@@ -2049,6 +2051,159 @@ def chirp(
         method=method,
         phi=phi / np.pi * 180,  # scipy.signal.chirp uses degrees for phase offset
     )
+    return y
+
+
+def shepard_tone(
+    frequency: _FloatLike_co,
+    *,
+    sr: float = 22050,
+    length: int | None = None,
+    duration: float | None = None,
+    num_octaves: int = 10,
+    center_freq: float = 1000.0,
+    sigma: float = 1.0,
+) -> _Array1D[np.float64]:
+    """Construct a Shepard tone signal.
+
+    A Shepard tone is a sound consisting of a superposition of sine waves
+    separated by octaves, with amplitudes shaped by a spectral envelope
+    (typically Gaussian in log-frequency space).
+
+    Parameters
+    ----------
+    frequency : float > 0
+        Base frequency of the tone (in Hz).
+    sr : number > 0
+        Desired sampling rate of the output signal.
+    length : int > 0 or None
+        Desired number of samples in the output signal.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    duration : float > 0 or None
+        Desired duration in seconds.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    num_octaves : int > 0
+        Number of octave-spaced sine waves to generate.
+    center_freq : float > 0
+        Center frequency of the Gaussian amplitude envelope in Hz.
+    sigma : float > 0
+        Standard deviation (width) of the Gaussian envelope in octaves.
+
+    Returns
+    -------
+    shepard_signal : np.ndarray [shape=(length,), dtype=float64]
+        Synthesized Shepard tone signal.
+    """
+    if frequency is None or frequency <= 0:
+        raise ParameterError('"frequency" must be a positive number')
+
+    if length is None:
+        if duration is None:
+            raise ParameterError('either "length" or "duration" must be provided')
+        length = int(duration * sr)
+
+    t = np.arange(length) / float(sr)
+
+    octave_shifts = np.arange(-num_octaves // 2, num_octaves // 2 + (num_octaves % 2))
+
+    y = np.zeros(length, dtype=np.float64)
+
+    for shift in octave_shifts:
+        freq_k = float(frequency) * (2.0 ** shift)
+
+        if freq_k >= sr / 2.0 or freq_k <= 0:
+            continue
+
+        log_ratio = np.log2(freq_k / center_freq)
+        amp = np.exp(-0.5 * (log_ratio / sigma) ** 2)
+
+        y += amp * np.cos(2 * np.pi * freq_k * t)
+
+    return y
+
+
+def shepard_risset_glissando(
+    *,
+    fmin: _FloatLike_co,
+    fmax: _FloatLike_co,
+    sr: float = 22050,
+    length: int | None = None,
+    duration: float | None = None,
+    num_octaves: int = 10,
+    center_freq: float = 1000.0,
+    sigma: float = 1.0,
+) -> _Array1D[np.float64]:
+    """Construct a Shepard-Risset glissando signal.
+
+    A Shepard-Risset glissando is a continuous tone sweep that creates the
+    auditory illusion of a pitch endlessly ascending or descending.
+
+    Parameters
+    ----------
+    fmin : float > 0
+        Starting frequency of the base tone (in Hz).
+    fmax : float > 0
+        Ending frequency of the base tone (in Hz).
+    sr : number > 0
+        Desired sampling rate of the output signal.
+    length : int > 0 or None
+        Desired number of samples in the output signal.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    duration : float > 0 or None
+        Desired duration in seconds.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    num_octaves : int > 0
+        Number of octave-spaced sine waves to generate.
+    center_freq : float > 0
+        Center frequency of the Gaussian amplitude envelope in Hz.
+    sigma : float > 0
+        Standard deviation (width) of the Gaussian envelope in octaves.
+
+    Returns
+    -------
+    glissando_signal : np.ndarray [shape=(length,), dtype=float64]
+        Synthesized Shepard-Risset glissando signal.
+    """
+    if fmin is None or fmax is None or fmin <= 0 or fmax <= 0:
+        raise ParameterError('"fmin" and "fmax" must be positive numbers')
+
+    period = 1.0 / sr
+    if length is None:
+        if duration is None:
+            raise ParameterError('either "length" or "duration" must be provided')
+    else:
+        duration = period * length
+
+    length_int = int(duration * sr)
+    t = np.arange(length_int) / float(sr)
+
+    ratio = float(fmax) / float(fmin)
+    log_ratio = np.log(ratio)
+
+    if np.isclose(log_ratio, 0):
+        phase_base = 2 * np.pi * float(fmin) * t
+    else:
+        phase_base = 2 * np.pi * float(fmin) * duration / log_ratio * (np.power(ratio, t / duration) - 1.0)
+
+    freq_base = float(fmin) * np.power(ratio, t / duration)
+
+    octave_shifts = np.arange(-num_octaves // 2, num_octaves // 2 + (num_octaves % 2))
+
+    y = np.zeros(length_int, dtype=np.float64)
+
+    for shift in octave_shifts:
+        scale = 2.0 ** shift
+        freq_k = freq_base * scale
+        phase_k = phase_base * scale
+
+        log2_ratio_k = np.log2(freq_k / center_freq)
+        amp_k = np.exp(-0.5 * (log2_ratio_k / sigma) ** 2)
+
+        valid = (freq_k < sr / 2.0) & (freq_k > 0)
+        amp_k[~valid] = 0.0
+
+        y += amp_k * np.cos(phase_k)
+
     return y
 
 
