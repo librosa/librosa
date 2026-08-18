@@ -21,7 +21,7 @@ from .convert import frames_to_samples, time_to_samples
 
 if TYPE_CHECKING:
     import os
-    from typing import Any, BinaryIO, Callable, Generator
+    from typing import Any, BinaryIO, Callable, Generator, Collection
 
     from numpy.typing import DTypeLike, NDArray
 
@@ -49,6 +49,7 @@ __all__ = [
     "tone",
     "chirp",
     "shepard_tone",
+    "shepard_scale",
     "shepard_risset_glissando",
     "mu_compress",
     "mu_expand",
@@ -2063,9 +2064,8 @@ def shepard_tone(
     num_octaves: int = 10,
     center_freq: float = 1000.0,
     sigma: float = 1.0,
-    intervals: _SequenceLike[_FloatLike_co] | None = None,
 ) -> _Array1D[np.float64]:
-    """Construct a Shepard tone signal.
+    """Construct a single Shepard tone signal.
 
     A Shepard tone is a sound consisting of a superposition of sine waves
     separated by octaves, with amplitudes shaped by a spectral envelope
@@ -2089,9 +2089,6 @@ def shepard_tone(
         Center frequency of the Gaussian amplitude envelope in Hz.
     sigma : float > 0
         Standard deviation (width) of the Gaussian envelope in octaves.
-    intervals : np.ndarray or sequence or None
-        Frequency multiplier ratios for pitch steps. If ``None``, defaults to
-        12-tone equal temperament steps (``2**(np.arange(12) / 12)``).
 
     Returns
     -------
@@ -2101,36 +2098,131 @@ def shepard_tone(
     if frequency is None or frequency <= 0:
         raise ParameterError('"frequency" must be a positive number')
 
-    if intervals is None:
-        intervals = 2.0 ** (np.arange(12) / 12.0)
-
-    interval_factors = np.asarray(intervals, dtype=np.float64)
     octave_shifts = np.arange(-num_octaves // 2, num_octaves // 2 + (num_octaves % 2))
 
     y: _Array1D[np.float64] | None = None
 
-    for factor in interval_factors:
-        base_f = float(frequency) * factor
-        for shift in octave_shifts:
-            freq_k = base_f * (2.0 ** shift)
+    for shift in octave_shifts:
+        freq_k = float(frequency) * (2.0 ** shift)
 
-            if freq_k >= sr / 2.0 or freq_k <= 0:
-                continue
+        if freq_k >= sr / 2.0 or freq_k <= 0:
+            continue
 
-            amp = np.exp(-0.5 * (np.log2(freq_k / center_freq) / sigma) ** 2)
-            tone_component = amp * tone(
-                freq_k, sr=sr, length=length, duration=duration
-            )
+        amp = np.exp(-0.5 * (np.log2(freq_k / center_freq) / sigma) ** 2)
+        tone_component = amp * tone(
+            freq_k, sr=sr, length=length, duration=duration
+        )
 
-            if y is None:
-                y = tone_component
-            else:
-                y += tone_component
+        if y is None:
+            y = tone_component
+        else:
+            y += tone_component
 
     if y is None:
         # Fallback if all frequencies fell outside Nyquist boundary
         target_len = length if length is not None else int((duration or 0) * sr)
         y = np.zeros(target_len, dtype=np.float64)
+
+    return y
+
+
+def shepard_scale(
+    *,
+    fmin: _FloatLike_co,
+    fmax: _FloatLike_co,
+    sr: float = 22050,
+    length: int | None = None,
+    duration: float | None = None,
+    num_octaves: int = 10,
+    center_freq: float = 1000.0,
+    sigma: float = 1.0,
+    intervals: str | Collection[float] = "equal",
+    bins_per_octave: int = 12,
+    tuning: float = 0.0,
+) -> _Array1D[np.float64]:
+    """Construct a discrete Shepard scale signal.
+
+    A Shepard scale is a sequence of discrete Shepard tones spanning from
+    ``fmin`` to ``fmax`` over the allotted duration.
+
+    Parameters
+    ----------
+    fmin : float > 0
+        Starting frequency of the scale (in Hz).
+    fmax : float > 0
+        Ending frequency of the scale (in Hz).
+    sr : number > 0
+        Desired sampling rate of the output signal.
+    length : int > 0 or None
+        Desired number of samples in the output signal.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    duration : float > 0 or None
+        Desired duration in seconds.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    num_octaves : int > 0
+        Number of octave-spaced sine waves to generate.
+    center_freq : float > 0
+        Center frequency of the Gaussian amplitude envelope in Hz.
+    sigma : float > 0
+        Standard deviation (width) of the Gaussian envelope in octaves.
+    intervals : str or collection of floats
+        Interval specification or explicit ratio set. If a string is provided,
+        it must be one supported by `interval_frequencies` (e.g. ``'equal'``,
+        ``'pythagorean'``, ``'ji3'``, ``'ji5'``, ``'ji7'``).
+        Default is ``'equal'``.
+    bins_per_octave : int > 0
+        Number of steps per octave when ``intervals`` is specified as a string.
+    tuning : float
+        Deviation from A440 tuning in fractional bins.
+        Only used when ``intervals='equal'``.
+
+    Returns
+    -------
+    scale_signal : np.ndarray [shape=(length,), dtype=float64]
+        Synthesized discrete Shepard scale signal.
+    """
+    from .intervals import interval_frequencies
+
+    if fmin is None or fmax is None or fmin <= 0 or fmax <= 0:
+        raise ParameterError('"fmin" and "fmax" must be positive numbers')
+
+    if length is None:
+        if duration is None:
+            raise ParameterError('either "length" or "duration" must be provided')
+        length = int(duration * sr)
+
+    # Determine the number of steps (bins) to cover from fmin to fmax
+    if isinstance(intervals, str):
+        n_bins = int(np.round(bins_per_octave * np.log2(float(fmax) / float(fmin)))) + 1
+        freqs = interval_frequencies(
+            n_bins,
+            fmin=fmin,
+            intervals=intervals,
+            bins_per_octave=bins_per_octave,
+            tuning=tuning,
+        )
+    else:
+        # If explicit intervals are provided, map them to the range
+        ratios = np.asarray(intervals, dtype=np.float64)
+        n_bins = len(ratios)
+        freqs = float(fmin) * ratios
+
+    # Divide the total length into equal-length steps
+    boundaries = np.round(np.linspace(0, length, len(freqs) + 1)).astype(int)
+
+    y = np.zeros(length, dtype=np.float64)
+    for i, freq in enumerate(freqs):
+        step_len = boundaries[i + 1] - boundaries[i]
+        if step_len <= 0:
+            continue
+        y[boundaries[i] : boundaries[i + 1]] = shepard_tone(
+            freq,
+            sr=sr,
+            length=step_len,
+            num_octaves=num_octaves,
+            center_freq=center_freq,
+            sigma=sigma,
+        )
 
     return y
 
