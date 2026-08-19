@@ -445,12 +445,7 @@ def time_stretch(y: np.ndarray, *, rate: float, **kwargs: Any) -> np.ndarray:
     stft = core.stft(y, **kwargs)
 
     # Stretch by phase vocoding
-    stft_stretch = core.phase_vocoder(
-        stft,
-        rate=rate,
-        hop_length=kwargs.get("hop_length"),
-        n_fft=kwargs.get("n_fft"),
-    )
+    stft_stretch = core.phase_vocoder(stft, rate=rate)
 
     # Predict the length of y_stretch
     len_stretch = round(y.shape[-1] / rate)
