@@ -2360,11 +2360,6 @@ def shepard_risset_glissando(
     if f is None or f <= 0:
         raise ParameterError('"f" must be a positive number')
 
-    # If n_octaves is negative, we generate an ascending glissando of the same
-    # magnitude and reverse the final signal in time.
-    reverse_signal = n_octaves < 0
-    n_octaves_abs = abs(n_octaves)
-
     octave_shifts = np.arange(-num_components // 2, num_components // 2 + (num_components % 2))
 
     y: _Array1D[np.float64] | None = None
@@ -2373,7 +2368,7 @@ def shepard_risset_glissando(
     for shift in octave_shifts:
         scale = 2.0 ** shift
         fmin_k = float(f) * scale
-        fmax_k = float(f) * (2.0 ** n_octaves_abs) * scale
+        fmax_k = float(f) * (2.0 ** n_octaves) * scale
 
         if fmin_k >= sr / 2.0 and fmax_k >= sr / 2.0:
             continue
@@ -2385,7 +2380,7 @@ def shepard_risset_glissando(
         if t is None:
             t = np.arange(len(chirp_component)) / float(sr)
             dur_calc = len(chirp_component) / float(sr)
-            ratio = 2.0 ** n_octaves_abs
+            ratio = 2.0 ** n_octaves
 
         freq_base_t = float(f) * np.power(ratio, t / dur_calc)
         freq_k_t = freq_base_t * scale
@@ -2402,9 +2397,6 @@ def shepard_risset_glissando(
     if y is None:
         target_len = length if length is not None else int((duration or 0) * sr)
         y = np.zeros(target_len, dtype=np.float64)
-
-    if reverse_signal:
-        y = y[::-1]
 
     return y
 
