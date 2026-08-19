@@ -2224,19 +2224,41 @@ def shepard_scale(
     n_steps_abs = abs(n_steps)
 
     if isinstance(intervals, str):
-        freqs = interval_frequencies(
-            n_steps_abs,
-            fmin=f,
-            intervals=intervals,
-            bins_per_octave=bins_per_octave,
-            tuning=tuning,
-        )
+        if reverse_signal:
+            # To start at f and descend, we find the fmin that makes the highest note f
+            ratios = interval_frequencies(
+                n_steps_abs,
+                fmin=1.0,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+                tuning=tuning,
+            )
+            fmin_calc = float(f) / ratios[-1]
+            freqs = interval_frequencies(
+                n_steps_abs,
+                fmin=fmin_calc,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+                tuning=tuning,
+            )[::-1]
+        else:
+            freqs = interval_frequencies(
+                n_steps_abs,
+                fmin=f,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+                tuning=tuning,
+            )
     else:
         ratios = np.asarray(intervals, dtype=np.float64)
         b_oct = len(ratios)
         n_oct = int(np.ceil(n_steps_abs / b_oct))
         all_ratios = np.multiply.outer(2.0 ** np.arange(n_oct), ratios).flatten()[:n_steps_abs]
-        freqs = float(f) * all_ratios
+        if reverse_signal:
+            freqs = (float(f) / all_ratios[-1]) * all_ratios
+            freqs = freqs[::-1]
+        else:
+            freqs = float(f) * all_ratios
 
     # Divide the total length into equal-length steps
     boundaries = np.round(np.linspace(0, length, len(freqs) + 1)).astype(int)
@@ -2264,9 +2286,6 @@ def shepard_scale(
             tone_step[-fade_len:] *= window[::-1]
 
         y[boundaries[i] : boundaries[i + 1]] = tone_step
-
-    if reverse_signal:
-        y = y[::-1]
 
     return y
 
