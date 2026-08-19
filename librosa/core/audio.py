@@ -17,7 +17,7 @@ from .._cache import cache
 from ..util.decorators import future_default
 from ..util.exceptions import ParameterError
 from ..util.files import example
-from .convert import frames_to_samples, time_to_samples, frequency_weighting
+from .convert import frames_to_samples, frequency_weighting, time_to_samples
 
 if TYPE_CHECKING:
     import os
