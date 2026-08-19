@@ -1367,8 +1367,6 @@ def phase_vocoder(
     rate: float | None = None,
     t_out: np.ndarray | None = None,
     kind: _InterpKind = "linear",
-    hop_length: int | Deprecated | None = Deprecated(),
-    n_fft: int | Deprecated | None = Deprecated(),
 ) -> np.ndarray:
     """Phase vocoder.  Given an STFT matrix D, speed up by a factor of ``rate``
 
@@ -1419,23 +1417,6 @@ def phase_vocoder(
         Interpolation kind for magnitude interpolation, e.g., 'linear' or 'nearest'.
         See `scipy.interpolate.interp1d` for a full list of supported options.
 
-    hop_length : int > 0 [scalar] or None
-        The number of samples between successive columns of ``D``.
-
-        If None, defaults to ``n_fft//4 = (D.shape[-2]-1)//2``
-
-        .. warning:: This parameter is deprecated as of 1.0 and will
-            be removed in 1.1.  It is unused in the current implementation.
-
-    n_fft : int > 0 or None
-        The number of samples per frame in D.
-        By default (None), this will be inferred from the shape of D.
-        However, if D was constructed using an odd-length window, the correct
-        frame length can be specified here.
-
-        .. warning:: This parameter is deprecated as of 1.0 and will
-            be removed in 1.1.  It is unused in the current implementation.
-
     Returns
     -------
     D_stretched : np.ndarray [shape=(..., n_bins, t / rate), dtype=complex]
@@ -1447,22 +1428,6 @@ def phase_vocoder(
     pyrubberband
     """
     n_frames = D.shape[-1]
-
-    if not isinstance(hop_length, Deprecated):
-        warnings.warn(
-            "The `hop_length` parameter is deprecated as of 1.0 and will be removed in 1.1. "
-            "It is unused in the current implementation.",
-            FutureWarning,
-            stacklevel=2,
-        )
-
-    if not isinstance(n_fft, Deprecated):
-        warnings.warn(
-            "The `n_fft` parameter is deprecated as of 1.0 and will be removed in 1.1. "
-            "It is unused in the current implementation.",
-            FutureWarning,
-            stacklevel=2,
-        )
 
     if (rate is None) == (t_out is None):
         raise ParameterError("Must specify exactly one of `rate` or `t_out`")
