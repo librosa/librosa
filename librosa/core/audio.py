@@ -2373,7 +2373,6 @@ def shepard_risset_glissando(
     octave_shifts = np.arange(k_min, k_max + 1)
 
     y: _Array1D[np.float64] | None = None
-    t: np.ndarray | None = None
 
     for shift in octave_shifts:
         scale = 2.0 ** shift
@@ -2383,30 +2382,14 @@ def shepard_risset_glissando(
         if fmin_k >= sr / 2.0 and fmax_k >= sr / 2.0:
             continue
 
-        if weighting is not None:
-            chirp_component = chirp(
-                fmin=fmin_k,
-                fmax=fmax_k,
-                sr=sr,
-                length=length,
-                duration=duration,
-                weighting=weighting,
-            )
-        else:
-            chirp_component = chirp(
-                fmin=fmin_k, fmax=fmax_k, sr=sr, length=length, duration=duration
-            )
-            if t is None:
-                t = np.arange(len(chirp_component)) / float(sr)
-                dur_calc = len(chirp_component) / float(sr)
-                ratio = 2.0 ** n_octaves
-
-            freq_base_t = float(f) * np.power(ratio, t / dur_calc)
-            freq_k_t = freq_base_t * scale
-            amp_k = np.ones_like(freq_k_t)
-            amp_k[freq_k_t >= sr / 2.0] = 0.0
-            amp_k[freq_k_t < 30.0] = 0.0
-            chirp_component *= amp_k
+        chirp_component = chirp(
+            fmin=fmin_k,
+            fmax=fmax_k,
+            sr=sr,
+            length=length,
+            duration=duration,
+            weighting=weighting,
+        )
 
         if y is None:
             y = chirp_component
