@@ -14,7 +14,7 @@ from . import notation
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import Any, Callable, Iterable, Sized
+    from typing import Any, Callable, Iterable
 
     import numpy.typing as npt
 
