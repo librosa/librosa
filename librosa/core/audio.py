@@ -1962,6 +1962,7 @@ def chirp(
     duration: float | None = None,
     linear: bool = False,
     phi: float | None = None,
+    weighting: str | None = None,
 ) -> _Array1D[np.float64]:
     """Construct a "chirp" or "sine-sweep" signal.
 
@@ -2065,6 +2066,20 @@ def chirp(
         method=method,
         phi=phi / np.pi * 180,  # scipy.signal.chirp uses degrees for phase offset
     )
+
+    if weighting is not None:
+        t = np.arange(len(y)) / sr
+        if linear:
+            freqs = float(fmin) + (float(fmax) - float(fmin)) * (t / duration)
+        else:
+            freqs = float(fmin) * np.power(float(fmax) / float(fmin), t / duration)
+
+        weight_db = frequency_weighting(freqs, kind=weighting)
+        amp = 10.0 ** (weight_db / 20.0)
+        amp[freqs >= sr / 2.0] = 0.0
+        amp[freqs < 30.0] = 0.0
+        y *= amp
+
     return y
 
 
@@ -2368,31 +2383,35 @@ def shepard_risset_glissando(
         if fmin_k >= sr / 2.0 and fmax_k >= sr / 2.0:
             continue
 
-        chirp_component = chirp(
-            fmin=fmin_k, fmax=fmax_k, sr=sr, length=length, duration=duration
-        )
-
-        if t is None:
-            t = np.arange(len(chirp_component)) / float(sr)
-            dur_calc = len(chirp_component) / float(sr)
-            ratio = 2.0 ** n_octaves
-
-        freq_base_t = float(f) * np.power(ratio, t / dur_calc)
-        freq_k_t = freq_base_t * scale
-
         if weighting is not None:
-            weight_db = frequency_weighting(freq_k_t, kind=weighting)
-            amp_k = 10.0 ** (weight_db / 20.0)
+            chirp_component = chirp(
+                fmin=fmin_k,
+                fmax=fmax_k,
+                sr=sr,
+                length=length,
+                duration=duration,
+                weighting=weighting,
+            )
         else:
-            amp_k = np.ones_like(freq_k_t)
+            chirp_component = chirp(
+                fmin=fmin_k, fmax=fmax_k, sr=sr, length=length, duration=duration
+            )
+            if t is None:
+                t = np.arange(len(chirp_component)) / float(sr)
+                dur_calc = len(chirp_component) / float(sr)
+                ratio = 2.0 ** n_octaves
 
-        amp_k[freq_k_t >= sr / 2.0] = 0.0
-        amp_k[freq_k_t < 30.0] = 0.0
+            freq_base_t = float(f) * np.power(ratio, t / dur_calc)
+            freq_k_t = freq_base_t * scale
+            amp_k = np.ones_like(freq_k_t)
+            amp_k[freq_k_t >= sr / 2.0] = 0.0
+            amp_k[freq_k_t < 30.0] = 0.0
+            chirp_component *= amp_k
 
         if y is None:
-            y = amp_k * chirp_component
+            y = chirp_component
         else:
-            y += amp_k * chirp_component
+            y += chirp_component
 
     if y is None:
         target_len = length if length is not None else int((duration or 0) * sr)
