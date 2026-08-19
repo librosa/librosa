@@ -876,6 +876,11 @@ def test_loadx(key, sr, mono):
     assert np.allclose(y_old, y)
 
 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_loadx_fail():
+    librosa.loadx("not an example.ogg")
+
+
 @pytest.mark.parametrize("sr", [8000, 11025])
 @pytest.mark.parametrize("dur", [0.25, 1.0])
 def test_get_duration_buffer(sr, dur):
