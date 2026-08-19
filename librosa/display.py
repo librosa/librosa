@@ -1252,12 +1252,6 @@ def infer_cmap(
     return cmap_div
 
 
-# Deprecation rename of cmap -> infer_cmap for 1.0
-cmap = moved(moved_from="librosa.display.cmap", version="1.0", version_removed="1.1")(
-    infer_cmap
-)
-
-
 def __envelope(x, hop):
     """Compute the max-envelope of non-overlapping frames of x at length hop
 
