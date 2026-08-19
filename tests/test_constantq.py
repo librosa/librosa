@@ -930,6 +930,16 @@ def test_hybrid_cqt_fmin_over(y_cqt):
         librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
 
 
+def test_pseudo_cqt_deprecated(y_cqt, sr_cqt):
+    with pytest.warns(FutureWarning, match=r"pseudo_cqt\n\tDeprecated"):
+        librosa.pseudo_cqt(y=y_cqt, sr=sr_cqt)
+
+
+def test_hybrid_cqt_deprecated(y_cqt, sr_cqt):
+    with pytest.warns(FutureWarning, match=r"hybrid_cqt\n\tDeprecated"):
+        librosa.hybrid_cqt(y=y_cqt, sr=sr_cqt)
+
+
 @pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
 @pytest.mark.parametrize("fmin", [32, 64, 128])
 def test_pseudo_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
