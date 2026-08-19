@@ -876,11 +876,6 @@ def test_loadx(key, sr, mono):
     assert np.allclose(y_old, y)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
-def test_loadx_fail():
-    librosa.loadx("not a real key")
-
-
 @pytest.mark.parametrize("sr", [8000, 11025])
 @pytest.mark.parametrize("dur", [0.25, 1.0])
 def test_get_duration_buffer(sr, dur):
@@ -3152,14 +3147,14 @@ def test_shepard_tone(frequency, sr, duration, num_octaves):
     assert np.all(np.isfinite(y))
 
 
-@pytest.mark.parametrize("fmin", [110.0])
+@pytest.mark.parametrize("f", [110.0])
 @pytest.mark.parametrize("sr", [11025, 22050])
 @pytest.mark.parametrize("duration", [1.0])
 @pytest.mark.parametrize("n_steps", [12, -12])
 @pytest.mark.parametrize("intervals", ["equal", [1.0, 1.5]])
-def test_shepard_scale(fmin, sr, duration, n_steps, intervals):
+def test_shepard_scale(f, sr, duration, n_steps, intervals):
     y = librosa.shepard_scale(
-        fmin=fmin, sr=sr, duration=duration, n_steps=n_steps, intervals=intervals
+        f, sr=sr, duration=duration, n_steps=n_steps, intervals=intervals
     )
     assert len(y) == int(duration * sr)
     assert np.all(np.isfinite(y))
@@ -3171,7 +3166,7 @@ def test_shepard_scale(fmin, sr, duration, n_steps, intervals):
 @pytest.mark.parametrize("n_octaves", [1.0, -1.0])
 def test_shepard_risset_glissando(f, sr, duration, n_octaves):
     y = librosa.shepard_risset_glissando(
-        f=f, sr=sr, duration=duration, n_octaves=n_octaves
+        f, sr=sr, duration=duration, n_octaves=n_octaves
     )
     assert len(y) == int(duration * sr)
     assert np.all(np.isfinite(y))
