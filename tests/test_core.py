@@ -291,7 +291,7 @@ def test_stft(y_22050, n_fft, window, hop_length, center):
 
     assert np.allclose(D_direct, D)
 
- 
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_stft_toolong_left():
     y = np.zeros((128,))
