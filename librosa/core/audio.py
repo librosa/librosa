@@ -17,7 +17,7 @@ from .._cache import cache
 from ..util.decorators import future_default
 from ..util.exceptions import ParameterError
 from ..util.files import example
-from .convert import frames_to_samples, time_to_samples
+from .convert import frames_to_samples, time_to_samples, frequency_weighting
 
 if TYPE_CHECKING:
     import os
@@ -1875,6 +1875,7 @@ def tone(
     length: int | None = None,
     duration: float | None = None,
     phi: float | None = None,
+    taper: bool = False,
 ) -> _Array1D[np.float64]:
     """Construct a pure tone (cosine) signal at a given frequency.
 
@@ -1894,6 +1895,9 @@ def tone(
         ``length`` takes priority.
     phi : float or None
         phase offset, in radians. If unspecified, defaults to ``-np.pi * 0.5``.
+    taper : bool
+        If ``True``, taper the edges of the signal with a cosine fade-in and
+        fade-out of one period duration.
 
     Returns
     -------
@@ -1937,6 +1941,15 @@ def tone(
         phi = -np.pi * 0.5
 
     y: np.ndarray = np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
+
+    if taper:
+        fade_len = int(np.round(sr / float(frequency)))
+        fade_len = min(fade_len, length // 2)
+        if fade_len > 0:
+            window = np.sin(np.linspace(0, np.pi / 2, fade_len))
+            y[:fade_len] *= window
+            y[-fade_len:] *= window[::-1]
+
     return y
 
 
@@ -2061,15 +2074,13 @@ def shepard_tone(
     sr: float = 22050,
     length: int | None = None,
     duration: float | None = None,
-    num_octaves: int = 10,
-    center_freq: float = 1000.0,
-    sigma: float = 1.0,
+    weighting: str | None = "A",
+    taper: bool = False,
 ) -> _Array1D[np.float64]:
     """Construct a single Shepard tone signal.
 
     A Shepard tone is a sound consisting of a superposition of sine waves
-    separated by octaves, with amplitudes shaped by a spectral envelope
-    (typically Gaussian in log-frequency space).
+    separated by octaves, covering the audible range (30 Hz to Nyquist).
 
     Parameters
     ----------
@@ -2083,12 +2094,11 @@ def shepard_tone(
     duration : float > 0 or None
         Desired duration in seconds.
         When both ``duration`` and ``length`` are defined, ``length`` takes priority.
-    num_octaves : int > 0
-        Number of octave-spaced sine waves to generate.
-    center_freq : float > 0
-        Center frequency of the Gaussian amplitude envelope in Hz.
-    sigma : float > 0
-        Standard deviation (width) of the Gaussian envelope in octaves.
+    weighting : str or None
+        Type of perceptual weighting to apply (e.g., ``'A'``, ``'B'``, ``'C'``, ``'D'``, ``'Z'``).
+        If ``None``, no weighting is applied.
+    taper : bool
+        If ``True``, taper the edges of the individual tone components.
 
     Returns
     -------
@@ -2110,19 +2120,26 @@ def shepard_tone(
     if frequency is None or frequency <= 0:
         raise ParameterError('"frequency" must be a positive number')
 
-    octave_shifts = np.arange(-num_octaves // 2, num_octaves // 2 + (num_octaves % 2))
+    k_min = int(np.ceil(np.log2(30.0 / float(frequency))))
+    k_max = int(np.floor(np.log2((sr / 2.0) / float(frequency))))
+    octave_shifts = np.arange(k_min, k_max + 1)
 
     y: _Array1D[np.float64] | None = None
 
     for shift in octave_shifts:
         freq_k = float(frequency) * (2.0 ** shift)
 
-        if freq_k >= sr / 2.0 or freq_k <= 0:
+        if freq_k >= sr / 2.0 or freq_k < 30.0:
             continue
 
-        amp = np.exp(-0.5 * (np.log2(freq_k / center_freq) / sigma) ** 2)
+        if weighting is not None:
+            weight_db = frequency_weighting(freq_k, kind=weighting)
+            amp = 10.0 ** (weight_db / 20.0)
+        else:
+            amp = 1.0
+
         tone_component = amp * tone(
-            freq_k, sr=sr, length=length, duration=duration
+            freq_k, sr=sr, length=length, duration=duration, taper=taper
         )
 
         if y is None:
@@ -2144,13 +2161,11 @@ def shepard_scale(
     sr: float = 22050,
     length: int | None = None,
     duration: float | None = None,
-    num_octaves: int = 10,
-    center_freq: float = 1000.0,
-    sigma: float = 1.0,
     intervals: str | Collection[float] = "equal",
     n_steps: int = 12,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
+    weighting: str | None = "A",
 ) -> _Array1D[np.float64]:
     """Construct a discrete Shepard scale signal.
 
@@ -2169,12 +2184,6 @@ def shepard_scale(
     duration : float > 0 or None
         Desired duration in seconds.
         When both ``duration`` and ``length`` are defined, ``length`` takes priority.
-    num_octaves : int > 0
-        Number of octave-spaced sine waves to generate.
-    center_freq : float > 0
-        Center frequency of the Gaussian amplitude envelope in Hz.
-    sigma : float > 0
-        Standard deviation (width) of the Gaussian envelope in octaves.
     intervals : str or collection of floats
         Interval specification or explicit ratio set. If a string is provided,
         it must be one supported by `interval_frequencies` (e.g. ``'equal'``,
@@ -2188,6 +2197,9 @@ def shepard_scale(
     tuning : float
         Deviation from A440 tuning in fractional bins.
         Only used when ``intervals='equal'``.
+    weighting : str or None
+        Type of perceptual weighting to apply (e.g., ``'A'``, ``'B'``, ``'C'``, ``'D'``, ``'Z'``).
+        If ``None``, no weighting is applied.
 
     Returns
     -------
@@ -2273,17 +2285,9 @@ def shepard_scale(
             freq,
             sr=sr,
             length=step_len,
-            num_octaves=num_octaves,
-            center_freq=center_freq,
-            sigma=sigma,
+            weighting=weighting,
+            taper=True,
         )
-
-        # Taper the edges of each step to eliminate transient clicks
-        fade_len = min(int(step_len * 0.1), 1000)
-        if fade_len > 0:
-            window = np.sin(np.linspace(0, np.pi / 2, fade_len))
-            tone_step[:fade_len] *= window
-            tone_step[-fade_len:] *= window[::-1]
 
         y[boundaries[i] : boundaries[i + 1]] = tone_step
 
@@ -2297,9 +2301,7 @@ def shepard_risset_glissando(
     sr: float = 22050,
     length: int | None = None,
     duration: float | None = None,
-    num_components: int = 10,
-    center_freq: float = 1000.0,
-    sigma: float = 1.0,
+    weighting: str | None = "A",
 ) -> _Array1D[np.float64]:
     """Construct a Shepard-Risset glissando signal.
 
@@ -2321,12 +2323,9 @@ def shepard_risset_glissando(
     duration : float > 0 or None
         Desired duration in seconds.
         When both ``duration`` and ``length`` are defined, ``length`` takes priority.
-    num_components : int > 0
-        Number of octave-spaced sine waves to generate.
-    center_freq : float > 0
-        Center frequency of the Gaussian amplitude envelope in Hz.
-    sigma : float > 0
-        Standard deviation (width) of the Gaussian envelope in octaves.
+    weighting : str or None
+        Type of perceptual weighting to apply (e.g., ``'A'``, ``'B'``, ``'C'``, ``'D'``, ``'Z'``).
+        If ``None``, no weighting is applied.
 
     Returns
     -------
@@ -2352,7 +2351,11 @@ def shepard_risset_glissando(
     if f is None or f <= 0:
         raise ParameterError('"f" must be a positive number')
 
-    octave_shifts = np.arange(-num_components // 2, num_components // 2 + (num_components % 2))
+    f_min_sweep = min(float(f), float(f) * (2.0 ** n_octaves))
+    f_max_sweep = max(float(f), float(f) * (2.0 ** n_octaves))
+    k_min = int(np.ceil(np.log2(30.0 / f_max_sweep)))
+    k_max = int(np.floor(np.log2((sr / 2.0) / f_min_sweep)))
+    octave_shifts = np.arange(k_min, k_max + 1)
 
     y: _Array1D[np.float64] | None = None
     t: np.ndarray | None = None
@@ -2377,9 +2380,14 @@ def shepard_risset_glissando(
         freq_base_t = float(f) * np.power(ratio, t / dur_calc)
         freq_k_t = freq_base_t * scale
 
-        amp_k = np.exp(-0.5 * (np.log2(freq_k_t / center_freq) / sigma) ** 2)
+        if weighting is not None:
+            weight_db = frequency_weighting(freq_k_t, kind=weighting)
+            amp_k = 10.0 ** (weight_db / 20.0)
+        else:
+            amp_k = np.ones_like(freq_k_t)
+
         amp_k[freq_k_t >= sr / 2.0] = 0.0
-        amp_k[freq_k_t <= 0.0] = 0.0
+        amp_k[freq_k_t < 30.0] = 0.0
 
         if y is None:
             y = amp_k * chirp_component
