@@ -1975,16 +1975,20 @@ def test_clicks_fail(times, click_freq, click_duration, click, length):
     "length,duration", [(None, 0.5), (1740, None), (22050, None), (1740, 0.5)]
 )
 @pytest.mark.parametrize("phi", [None, np.pi])
-def test_tone(frequency, sr, length, duration, phi):
+@pytest.mark.parametrize("taper", [False, True])
+def test_tone(frequency, sr, length, duration, phi, taper):
 
     y = librosa.tone(
-        frequency=frequency, sr=sr, length=length, duration=duration, phi=phi
+        frequency=frequency, sr=sr, length=length, duration=duration, phi=phi, taper=taper
     )
 
-    if length is not None:
-        assert len(y) == length
-    else:
-        assert len(y) == int(duration * sr)
+    expected_len = length if length is not None else int(duration * sr)
+    assert len(y) == expected_len
+
+    if taper and expected_len > 0:
+        # Tapered signal should start and end at 0 (or very close to 0)
+        assert np.allclose(y[0], 0.0, atol=1e-5)
+        assert np.allclose(y[-1], 0.0, atol=1e-5)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -2259,6 +2263,46 @@ def test_iirt(y_22050, flayout, center, hop_length):
     assert np.all(T >= 0)
 
     # TODO: further verify this one?  I guess?
+
+
+@pytest.mark.parametrize("frequency", [440.0])
+@pytest.mark.parametrize("sr", [11025, 22050])
+@pytest.mark.parametrize("duration", [0.5])
+@pytest.mark.parametrize("weighting", ["A", "B", "C", "D", "Z", None])
+@pytest.mark.parametrize("taper", [False, True])
+def test_shepard_tone(frequency, sr, duration, weighting, taper):
+    y = librosa.shepard_tone(
+        frequency, sr=sr, duration=duration, weighting=weighting, taper=taper
+    )
+    assert len(y) == int(duration * sr)
+    assert np.all(np.isfinite(y))
+
+
+@pytest.mark.parametrize("f", [110.0])
+@pytest.mark.parametrize("sr", [11025, 22050])
+@pytest.mark.parametrize("duration", [1.0])
+@pytest.mark.parametrize("n_steps", [12, -12])
+@pytest.mark.parametrize("intervals", ["equal", [1.0, 1.5]])
+@pytest.mark.parametrize("weighting", ["A", None])
+def test_shepard_scale(f, sr, duration, n_steps, intervals, weighting):
+    y = librosa.shepard_scale(
+        f, sr=sr, duration=duration, n_steps=n_steps, intervals=intervals, weighting=weighting
+    )
+    assert len(y) == int(duration * sr)
+    assert np.all(np.isfinite(y))
+
+
+@pytest.mark.parametrize("f", [220.0])
+@pytest.mark.parametrize("sr", [11025, 22050])
+@pytest.mark.parametrize("duration", [1.0])
+@pytest.mark.parametrize("n_octaves", [1.0, -1.0])
+@pytest.mark.parametrize("weighting", ["A", None])
+def test_shepard_risset_glissando(f, sr, duration, n_octaves, weighting):
+    y = librosa.shepard_risset_glissando(
+        f, sr=sr, duration=duration, n_octaves=n_octaves, weighting=weighting
+    )
+    assert len(y) == int(duration * sr)
+    assert np.all(np.isfinite(y))
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
@@ -3116,40 +3160,3 @@ def test_phase_vocoder_negative_rate(rate):
 
     D = np.zeros((3, 2), dtype=np.complex64)
     librosa.phase_vocoder(D, rate=rate)
-
-
-@pytest.mark.parametrize("frequency", [440.0])
-@pytest.mark.parametrize("sr", [11025, 22050])
-@pytest.mark.parametrize("duration", [0.5])
-@pytest.mark.parametrize("weighting", ["A", None])
-def test_shepard_tone(frequency, sr, duration, weighting):
-    y = librosa.shepard_tone(
-        frequency, sr=sr, duration=duration, weighting=weighting
-    )
-    assert len(y) == int(duration * sr)
-    assert np.all(np.isfinite(y))
-
-
-@pytest.mark.parametrize("f", [110.0])
-@pytest.mark.parametrize("sr", [11025, 22050])
-@pytest.mark.parametrize("duration", [1.0])
-@pytest.mark.parametrize("n_steps", [12, -12])
-@pytest.mark.parametrize("intervals", ["equal", [1.0, 1.5]])
-def test_shepard_scale(f, sr, duration, n_steps, intervals):
-    y = librosa.shepard_scale(
-        f, sr=sr, duration=duration, n_steps=n_steps, intervals=intervals
-    )
-    assert len(y) == int(duration * sr)
-    assert np.all(np.isfinite(y))
-
-
-@pytest.mark.parametrize("f", [220.0])
-@pytest.mark.parametrize("sr", [11025, 22050])
-@pytest.mark.parametrize("duration", [1.0])
-@pytest.mark.parametrize("n_octaves", [1.0, -1.0])
-def test_shepard_risset_glissando(f, sr, duration, n_octaves):
-    y = librosa.shepard_risset_glissando(
-        f, sr=sr, duration=duration, n_octaves=n_octaves
-    )
-    assert len(y) == int(duration * sr)
-    assert np.all(np.isfinite(y))
