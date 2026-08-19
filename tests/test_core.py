@@ -291,6 +291,28 @@ def test_stft(y_22050, n_fft, window, hop_length, center):
 
     assert np.allclose(D_direct, D)
 
+ 
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_stft_toolong_left():
+    y = np.zeros((128,))
+    librosa.stft(y, n_fft=2048, center=False)
+
+
+def test_stft_toolong_center():
+    y = np.zeros((128,))
+    with pytest.warns(UserWarning):
+        librosa.stft(y, n_fft=2048, center=True)
+
+
+def test_stft_winsizes():
+    # Test for issue #1095
+    x = np.zeros(1000000)
+
+    for power in range(12, 17):
+        N = 2**power
+        H = N // 2
+        librosa.stft(x, n_fft=N, hop_length=H, win_length=N)
+
 
 @pytest.mark.parametrize("center", [False, True])
 @pytest.mark.parametrize(
@@ -782,7 +804,7 @@ def test_magphase_real():
     )
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", params=[22050, 44100])
 def y_chirp_istft(request):
     sr = request.param
     return (librosa.chirp(fmin=32, fmax=8192, sr=sr, duration=2.0), sr)
