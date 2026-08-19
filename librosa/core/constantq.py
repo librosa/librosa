@@ -12,7 +12,8 @@ from numba import jit
 
 from .. import filters, util
 from .._cache import cache
-from ..util.deprecation import Deprecated, rename_kw, deprecated
+from ..util.decorators import deprecated
+from ..util.deprecation import Deprecated, rename_kw
 from ..util.exceptions import ParameterError
 from . import audio
 from .convert import cqt_frequencies, note_to_hz
