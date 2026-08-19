@@ -35,7 +35,6 @@ from matplotlib.legend import Legend
 from matplotlib.legend_handler import HandlerBase, HandlerLine2D, HandlerPatch
 
 from . import core, util
-from .util.decorators import moved
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
