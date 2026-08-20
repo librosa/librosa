@@ -41,6 +41,8 @@ __all__ = [
     "split",
     "preemphasis",
     "deemphasis",
+    "vibrato",
+    "tremolo",
 ]
 
 
@@ -1044,3 +1046,121 @@ def deemphasis(
         return y_out, zf
     else:
         return y_out
+
+
+def tremolo(
+    y: np.ndarray,
+    *,
+    sr: float,
+    rate: float = 5.0,
+    depth: float = 0.5,
+    mode: Literal["sine", "triangle", "square"] = "sine",
+    phase: float = 0.0,
+) -> np.ndarray:
+    """Apply tremolo (amplitude modulation) to an audio signal.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)]
+        Audio time series. Multi-channel is supported.
+
+    sr : number > 0 [scalar]
+        Audio sampling rate of ``y``.
+
+    rate : float > 0 [scalar]
+        Modulation frequency in Hertz (Hz).
+        Defaults to 5.0 Hz.
+
+    depth : float in [0.0, 1.0]
+        Modulation depth controlling the severity of amplitude variation.
+        At 0.0, no modulation occurs. At 1.0, maximum amplitude drops to zero.
+
+    mode : {'sine', 'triangle', 'square'}
+        The LFO waveform type used for modulation:
+        - 'sine' : Sinusoidal modulation
+        - 'triangle' : Triangular modulation
+        - 'square' : Square / pulse wave modulation
+
+    phase : float
+        Initial phase offset of the LFO in radians.
+
+    Returns
+    -------
+    y_tremolo : np.ndarray [shape=(..., n)]
+        The amplitude-modulated audio time series.
+
+    See Also
+    --------
+    vibrato
+
+    Examples
+    --------
+    Apply a 6 Hz sinusoidal tremolo to an audio signal
+
+    >>> y, sr = librosa.loadx('choice')
+    >>> y_trem = librosa.effects.tremolo(y, sr=sr, rate=6.0, depth=0.7)
+
+    Apply a square-wave tremolo for a stutter effect
+
+    >>> y_stutter = librosa.effects.tremolo(y, sr=sr, rate=8.0, depth=1.0, mode='square')
+    """
+    pass
+
+
+def vibrato(
+    y: np.ndarray,
+    *,
+    sr: float,
+    rate: float = 5.0,
+    depth: float = 0.5,
+    mode: Literal["sine", "triangle"] = "sine",
+    phase: float = 0.0,
+    **kwargs: Any,
+) -> np.ndarray:
+    """Apply vibrato (pitch modulation) to an audio signal.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)]
+        Audio time series. Multi-channel is supported.
+
+    sr : number > 0 [scalar]
+        Audio sampling rate of ``y``.
+
+    rate : float > 0 [scalar]
+        Modulation frequency in Hertz (Hz).
+        Defaults to 5.0 Hz.
+
+    depth : float > 0 [scalar]
+        Modulation depth in semitones (e.g. 0.5 corresponds to +-0.5 semitones deviation).
+
+    mode : {'sine', 'triangle'}
+        The LFO waveform shape used for frequency modulation:
+        - 'sine' : Sinusoidal modulation
+        - 'triangle' : Triangular modulation
+
+    phase : float
+        Initial phase offset of the LFO in radians.
+
+    **kwargs : additional keyword arguments.
+        See `librosa.stft` for details.
+
+    Returns
+    -------
+    y_vibrato : np.ndarray [shape=(..., n)]
+        The pitch-modulated audio time series.
+
+    See Also
+    --------
+    tremolo
+    pitch_shift
+    librosa.phase_vocoder
+
+    Examples
+    --------
+    Apply a 5 Hz vibrato with 0.5 semitone depth
+
+    >>> y, sr = librosa.loadx('choice')
+    >>> y_vib = librosa.effects.vibrato(y, sr=sr, rate=5.0, depth=0.5)
+    """
+    pass
