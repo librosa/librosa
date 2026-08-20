@@ -1214,11 +1214,11 @@ def vibrato(
 
     # Phase-vocoder stretch along the frame sequence
     time_steps_accumulated = np.cumsum(time_steps) - time_steps[0]
-    time_steps_normalized = (
+    t_out = (
         time_steps_accumulated / time_steps_accumulated[-1] * (n_frames - 1)
     )
 
-    stft_vib = core.phase_vocoder(stft, time_steps=time_steps_normalized)
+    stft_vib = core.phase_vocoder(stft, t_out=t_out)
 
     y_vib = core.istft(stft_vib, dtype=y.dtype, length=y.shape[-1], **kwargs)
     return y_vib
