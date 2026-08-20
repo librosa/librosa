@@ -2148,11 +2148,12 @@ def shepard_tone(
             f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
+    target_len = length if length is not None else int((duration or 0) * sr)
+    y: _Array1D[np.float64] = np.zeros(target_len, dtype=np.float64)
+
     k_min = int(np.ceil(np.log2(30.0 / float(frequency))))
     k_max = int(np.floor(np.log2(np.nextafter(nyquist, 0) / float(frequency))))
     octave_shifts = np.arange(k_min, k_max + 1)
-
-    y: _Array1D[np.float64] | None = None
 
     for shift in octave_shifts:
         freq_k = float(frequency) * (2.0 ** shift)
@@ -2166,19 +2167,9 @@ def shepard_tone(
         else:
             amp = 1.0
 
-        tone_component = amp * tone(
+        y += amp * tone(
             freq_k, sr=sr, length=length, duration=duration, taper=taper
         )
-
-        if y is None:
-            y = tone_component
-        else:
-            y += tone_component
-
-    if y is None:
-        # Fallback if all frequencies fell outside Nyquist boundary
-        target_len = length if length is not None else int((duration or 0) * sr)
-        y = np.zeros(target_len, dtype=np.float64)
 
     return y
 
@@ -2391,13 +2382,14 @@ def shepard_risset_glissando(
             f"f={f} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
+    target_len = length if length is not None else int((duration or 0) * sr)
+    y: _Array1D[np.float64] = np.zeros(target_len, dtype=np.float64)
+
     f_min_sweep = min(float(f), float(f) * (2.0 ** n_octaves))
     f_max_sweep = max(float(f), float(f) * (2.0 ** n_octaves))
     k_min = int(np.ceil(np.log2(30.0 / f_max_sweep)))
     k_max = int(np.floor(np.log2(np.nextafter(nyquist, 0) / f_min_sweep)))
     octave_shifts = np.arange(k_min, k_max + 1)
-
-    y: _Array1D[np.float64] | None = None
 
     for shift in octave_shifts:
         scale = 2.0 ** shift
@@ -2407,7 +2399,7 @@ def shepard_risset_glissando(
         if fmin_k >= nyquist or fmax_k >= nyquist:
             continue
 
-        chirp_component = chirp(
+        y += chirp(
             fmin=fmin_k,
             fmax=fmax_k,
             sr=sr,
@@ -2415,15 +2407,6 @@ def shepard_risset_glissando(
             duration=duration,
             weighting=weighting,
         )
-
-        if y is None:
-            y = chirp_component
-        else:
-            y += chirp_component
-
-    if y is None:
-        target_len = length if length is not None else int((duration or 0) * sr)
-        y = np.zeros(target_len, dtype=np.float64)
 
     return y
 
