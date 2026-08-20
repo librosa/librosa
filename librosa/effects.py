@@ -1095,14 +1095,17 @@ def tremolo(
 
     Examples
     --------
-    Apply a 6 Hz sinusoidal tremolo to an audio signal
+    Apply tremolo to a pure tone and plot the waveforms before and after.
 
-    >>> y, sr = librosa.loadx('choice')
-    >>> y_trem = librosa.effects.tremolo(y, sr=sr, rate=6.0, depth=0.7)
-
-    Apply a square-wave tremolo for a stutter effect
-
-    >>> y_stutter = librosa.effects.tremolo(y, sr=sr, rate=8.0, depth=1.0, mode='square')
+    >>> import matplotlib.pyplot as plt
+    >>> sr = 22050
+    >>> y = librosa.tone(440, sr=sr, duration=1.0)
+    >>> y_trem = librosa.effects.tremolo(y, sr=sr, rate=5.0, depth=0.7)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> librosa.display.waveshow(y, sr=sr, ax=ax[0])
+    >>> ax[0].set(title="Original tone")
+    >>> librosa.display.waveshow(y_trem, sr=sr, ax=ax[1])
+    >>> ax[1].set(title="Tremolo tone")
     """
     if sr <= 0:
         raise ParameterError("sr must be a positive number")
@@ -1137,6 +1140,7 @@ def vibrato(
     depth: float = 0.5,
     mode: Literal["sine", "triangle"] = "sine",
     phase: float = 0.0,
+    kind: Any = "linear",
     **kwargs: Any,
 ) -> np.ndarray:
     """Apply vibrato (pitch modulation) to an audio signal.
@@ -1164,6 +1168,10 @@ def vibrato(
     phase : float
         Initial phase offset of the LFO in radians.
 
+    kind : str or int
+        Specifies the type of interpolation used when re-aligning time warping.
+        Passed to `scipy.interpolate.interp1d`. Defaults to "linear".
+
     **kwargs : additional keyword arguments.
         See `librosa.stft` for details.
 
@@ -1180,10 +1188,19 @@ def vibrato(
 
     Examples
     --------
-    Apply a 5 Hz vibrato with 0.5 semitone depth
+    Apply vibrato to a pure tone and plot the spectrograms before and after.
 
-    >>> y, sr = librosa.loadx('choice')
-    >>> y_vib = librosa.effects.vibrato(y, sr=sr, rate=5.0, depth=0.5)
+    >>> import matplotlib.pyplot as plt
+    >>> sr = 22050
+    >>> y = librosa.tone(440, sr=sr, duration=2.0)
+    >>> y_vib = librosa.effects.vibrato(y, sr=sr, rate=5.0, depth=1.0)
+    >>> S_orig = np.abs(librosa.stft(y))
+    >>> S_vib = np.abs(librosa.stft(y_vib))
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S_orig, ref=np.max), sr=sr, x_axis='time', y_axis='log', ax=ax[0])
+    >>> ax[0].set(title="Original tone spectrogram")
+    >>> librosa.display.specshow(librosa.amplitude_to_db(S_vib, ref=np.max), sr=sr, x_axis='time', y_axis='log', ax=ax[1])
+    >>> ax[1].set(title="Vibrato tone spectrogram")
     """
     if sr <= 0:
         raise ParameterError("sr must be a positive number")
@@ -1227,9 +1244,9 @@ def vibrato(
     import scipy.interpolate
     t_original = np.linspace(0, 1, y.shape[-1])
     t_warped = np.interp(t_original, np.linspace(0, 1, len(t_out)), t_out / (n_frames - 1))
-    
+
     interpolator = scipy.interpolate.interp1d(
-        t_original, y_vib, axis=-1, kind="linear", fill_value="extrapolate"
+        t_original, y_vib, axis=-1, kind=kind, fill_value="extrapolate"
     )
     y_vib = interpolator(t_warped)
 

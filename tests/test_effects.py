@@ -421,9 +421,10 @@ def test_deemphasis(coef, zi, return_zf, dtype):
 
 @pytest.mark.parametrize("mode", ["sine", "triangle", "square"])
 @pytest.mark.parametrize("depth", [0.0, 0.5, 1.0])
-def test_tremolo(ysr, mode, depth):
+@pytest.mark.parametrize("phase", [0.0, np.pi / 2])
+def test_tremolo(ysr, mode, depth, phase):
     y, sr = ysr
-    yt = librosa.effects.tremolo(y, sr=sr, rate=5.0, depth=depth, mode=mode)
+    yt = librosa.effects.tremolo(y, sr=sr, rate=5.0, depth=depth, mode=mode, phase=phase)
 
     assert yt.shape == y.shape
     assert yt.dtype == y.dtype
@@ -456,9 +457,11 @@ def test_tremolo_errors():
 
 @pytest.mark.parametrize("mode", ["sine", "triangle"])
 @pytest.mark.parametrize("depth", [0.0, 0.5])
-def test_vibrato(ysr, mode, depth):
+@pytest.mark.parametrize("kind", ["linear", "cubic"])
+@pytest.mark.parametrize("phase", [0.0, np.pi / 2])
+def test_vibrato(ysr, mode, depth, kind, phase):
     y, sr = ysr
-    yv = librosa.effects.vibrato(y, sr=sr, rate=5.0, depth=depth, mode=mode)
+    yv = librosa.effects.vibrato(y, sr=sr, rate=5.0, depth=depth, mode=mode, kind=kind, phase=phase)
 
     assert yv.shape == y.shape
     assert yv.dtype == y.dtype
