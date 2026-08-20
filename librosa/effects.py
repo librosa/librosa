@@ -1197,10 +1197,11 @@ def vibrato(
     >>> S_orig = np.abs(librosa.stft(y))
     >>> S_vib = np.abs(librosa.stft(y_vib))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S_orig, ref=np.max), sr=sr, x_axis='time', y_axis='log', ax=ax[0])
+    >>> librosa.display.specshow(S_org, sr=sr, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[0])
     >>> ax[0].set(title="Original tone spectrogram")
-    >>> librosa.display.specshow(librosa.amplitude_to_db(S_vib, ref=np.max), sr=sr, x_axis='time', y_axis='log', ax=ax[1])
+    >>> librosa.display.specshow(S_vib, sr=sr, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[1])
     >>> ax[1].set(title="Vibrato tone spectrogram")
+    >>> plt.show()
     """
     if sr <= 0:
         raise ParameterError("sr must be a positive number")
