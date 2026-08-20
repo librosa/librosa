@@ -1099,8 +1099,8 @@ def tremolo(
 
     >>> import matplotlib.pyplot as plt
     >>> sr = 22050
-    >>> y = librosa.tone(440, sr=sr, duration=1.0)
-    >>> y_trem = librosa.effects.tremolo(y, sr=sr, rate=5.0, depth=0.7)
+    >>> y = librosa.tone(80, sr=sr, duration=0.25)
+    >>> y_trem = librosa.effects.tremolo(y, sr=sr, rate=8.0, depth=0.7)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> librosa.display.waveshow(y, sr=sr, ax=ax[0])
     >>> ax[0].set(title="Original tone")
@@ -1128,7 +1128,7 @@ def tremolo(
     else:
         raise ParameterError(f"Invalid mode='{mode}'. Must be 'sine', 'triangle', or 'square'.")
 
-    modulation = 1.0 - depth * (1.0 - lfo)
+    modulation: np.ndarray = 1.0 - depth * (1.0 - lfo)
     return y * modulation
 
 
@@ -1194,10 +1194,10 @@ def vibrato(
     >>> sr = 22050
     >>> y = librosa.tone(440, sr=sr, duration=2.0)
     >>> y_vib = librosa.effects.vibrato(y, sr=sr, rate=5.0, depth=1.0)
-    >>> S_orig = np.abs(librosa.stft(y))
-    >>> S_vib = np.abs(librosa.stft(y_vib))
+    >>> S_orig = librosa.stft(y)
+    >>> S_vib = librosa.stft(y_vib)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(S_org, sr=sr, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[0])
+    >>> librosa.display.specshow(S_orig, sr=sr, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[0])
     >>> ax[0].set(title="Original tone spectrogram")
     >>> librosa.display.specshow(S_vib, sr=sr, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[1])
     >>> ax[1].set(title="Vibrato tone spectrogram")
