@@ -2013,6 +2013,7 @@ def chirp(
     ------
     ParameterError
         - If either ``fmin`` or ``fmax`` are not provided.
+        - If ``fmin`` or ``fmax`` meet or exceed Nyquist frequency (sr / 2).
         - If neither ``length`` nor ``duration`` are provided.
 
     See Also
@@ -2052,6 +2053,12 @@ def chirp(
 
     fmin = util._ensure_hz(fmin)
     fmax = util._ensure_hz(fmax)
+
+    nyquist = sr / 2.0
+    if fmin >= nyquist or fmax >= nyquist:
+        raise ParameterError(
+            f"Frequencies fmin={fmin} and fmax={fmax} must be strictly less than Nyquist (sr/2={nyquist})"
+        )
 
     # Compute signal duration
     period = 1.0 / sr
@@ -2143,8 +2150,14 @@ def shepard_tone(
     if frequency is None or frequency <= 0:
         raise ParameterError('"frequency" must be a positive number')
 
+    nyquist = sr / 2.0
+    if float(frequency) >= nyquist:
+        raise ParameterError(
+            f'frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})'
+        )
+
     k_min = int(np.ceil(np.log2(30.0 / float(frequency))))
-    k_max = int(np.floor(np.log2((sr / 2.0) / float(frequency))))
+    k_max = int(np.floor(np.log2(np.nextafter(nyquist, 0) / float(frequency))))
     octave_shifts = np.arange(k_min, k_max + 1)
 
     y: _Array1D[np.float64] | None = None
@@ -2152,7 +2165,7 @@ def shepard_tone(
     for shift in octave_shifts:
         freq_k = float(frequency) * (2.0 ** shift)
 
-        if freq_k >= sr / 2.0 or freq_k < 30.0:
+        if freq_k >= nyquist or freq_k < 30.0:
             continue
 
         if weighting is not None:
@@ -2249,6 +2262,12 @@ def shepard_scale(
 
     if f is None or f <= 0:
         raise ParameterError('"f" must be a positive number')
+
+    nyquist = sr / 2.0
+    if float(f) >= nyquist:
+        raise ParameterError(
+            f'f={f} must be strictly less than Nyquist (sr/2={nyquist})'
+        )
 
     if length is None:
         if duration is None:
@@ -2374,10 +2393,16 @@ def shepard_risset_glissando(
     if f is None or f <= 0:
         raise ParameterError('"f" must be a positive number')
 
+    nyquist = sr / 2.0
+    if float(f) >= nyquist:
+        raise ParameterError(
+            f'f={f} must be strictly less than Nyquist (sr/2={nyquist})'
+        )
+
     f_min_sweep = min(float(f), float(f) * (2.0 ** n_octaves))
     f_max_sweep = max(float(f), float(f) * (2.0 ** n_octaves))
     k_min = int(np.ceil(np.log2(30.0 / f_max_sweep)))
-    k_max = int(np.floor(np.log2((sr / 2.0) / f_min_sweep)))
+    k_max = int(np.floor(np.log2(np.nextafter(nyquist, 0) / f_min_sweep)))
     octave_shifts = np.arange(k_min, k_max + 1)
 
     y: _Array1D[np.float64] | None = None
@@ -2387,7 +2412,7 @@ def shepard_risset_glissando(
         fmin_k = float(f) * scale
         fmax_k = float(f) * (2.0 ** n_octaves) * scale
 
-        if fmin_k >= sr / 2.0 and fmax_k >= sr / 2.0:
+        if fmin_k >= nyquist or fmax_k >= nyquist:
             continue
 
         chirp_component = chirp(
