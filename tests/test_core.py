@@ -2026,7 +2026,8 @@ def test_tone_fail(frequency, length, duration):
 @pytest.mark.parametrize("length,duration", [(None, 0.5), (11025, None), (11025, 0.5)])
 @pytest.mark.parametrize("phi", [None, np.pi / 2])
 @pytest.mark.parametrize("linear", [False, True])
-def test_chirp(fmin, fmax, sr, length, duration, linear, phi):
+@pytest.mark.parametrize("weighting", [None, "A"])
+def test_chirp(fmin, fmax, sr, length, duration, linear, phi, weighting):
 
     y = librosa.chirp(
         fmin=fmin,
@@ -2036,6 +2037,7 @@ def test_chirp(fmin, fmax, sr, length, duration, linear, phi):
         duration=duration,
         linear=linear,
         phi=phi,
+        weighting=weighting,
     )
 
     if length is not None:
@@ -2307,9 +2309,9 @@ def test_shepard_tone(frequency, sr, duration, weighting, taper):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize(
     "frequency",
-    [11025, 12000],
+    [None, 0, -100, 11025, 12000],
 )
-def test_shepard_tone_nyquist_fail(frequency):
+def test_shepard_tone_frequency_bounds_fail(frequency):
     librosa.shepard_tone(frequency, sr=22050, duration=0.5)
 
 
@@ -2330,9 +2332,9 @@ def test_shepard_scale(f, sr, duration, n_steps, intervals, weighting):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize(
     "f",
-    [11025, 12000],
+    [None, 0, -100, 11025, 12000],
 )
-def test_shepard_scale_nyquist_fail(f):
+def test_shepard_scale_frequency_bounds_fail(f):
     librosa.shepard_scale(f, sr=22050, duration=0.5)
 
 
@@ -2352,9 +2354,9 @@ def test_shepard_risset_glissando(f, sr, duration, n_octaves, weighting):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize(
     "f",
-    [11025, 12000],
+    [None, 0, -100, 11025, 12000],
 )
-def test_shepard_risset_glissando_nyquist_fail(f):
+def test_shepard_risset_glissando_frequency_bounds_fail(f):
     librosa.shepard_risset_glissando(f, sr=22050, duration=0.5)
 
 
