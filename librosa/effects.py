@@ -1221,4 +1221,16 @@ def vibrato(
     stft_vib = core.phase_vocoder(stft, t_out=t_out)
 
     y_vib = core.istft(stft_vib, dtype=y.dtype, length=y.shape[-1], **kwargs)
+
+    # Resample to compensate for the time-warping introduced by the phase vocoder
+    # This restores the original timing while preserving the pitch modulation
+    import scipy.interpolate
+    t_original = np.linspace(0, 1, y.shape[-1])
+    t_warped = np.interp(t_original, np.linspace(0, 1, len(t_out)), t_out / (n_frames - 1))
+    
+    interpolator = scipy.interpolate.interp1d(
+        t_original, y_vib, axis=-1, kind="linear", fill_value="extrapolate"
+    )
+    y_vib = interpolator(t_warped)
+
     return y_vib
