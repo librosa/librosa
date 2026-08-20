@@ -452,7 +452,7 @@ def test_tremolo_errors():
     with pytest.raises(librosa.ParameterError):
         librosa.effects.tremolo(y, sr=22050, depth=1.5)
     with pytest.raises(librosa.ParameterError):
-        librosa.effects.tremolo(y, sr=22050, mode="invalid")
+        librosa.effects.tremolo(y, sr=22050, mode="invalid")  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize("mode", ["sine", "triangle"])
@@ -486,4 +486,4 @@ def test_vibrato_errors():
     with pytest.raises(librosa.ParameterError):
         librosa.effects.vibrato(y, sr=22050, depth=-0.1)
     with pytest.raises(librosa.ParameterError):
-        librosa.effects.vibrato(y, sr=22050, mode="square")
+        librosa.effects.vibrato(y, sr=22050, mode="square")  # type: ignore[arg-type]
