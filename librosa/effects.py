@@ -1114,9 +1114,10 @@ def tremolo(
     if not 0.0 <= depth <= 1.0:
         raise ParameterError("depth must be between 0.0 and 1.0")
 
-    t = np.arange(y.shape[-1], dtype=np.float64) / float(sr)
+    t = np.arange(y.shape[-1], dtype=y.dtype) / float(sr)
     angle = 2.0 * np.pi * rate * t + phase
 
+    lfo: np.ndarray
     if mode == "sine":
         lfo = 0.5 * (1.0 + np.sin(angle))
     elif mode == "triangle":
@@ -1129,7 +1130,9 @@ def tremolo(
         raise ParameterError(f"Invalid mode='{mode}'. Must be 'sine', 'triangle', or 'square'.")
 
     modulation: np.ndarray = 1.0 - depth * (1.0 - lfo)
-    return y * modulation
+    y_out = np.empty_like(y)
+    y_out[:] = y * modulation
+    return y_out
 
 
 def vibrato(
