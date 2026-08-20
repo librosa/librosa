@@ -1104,7 +1104,29 @@ def tremolo(
 
     >>> y_stutter = librosa.effects.tremolo(y, sr=sr, rate=8.0, depth=1.0, mode='square')
     """
-    pass
+    if sr <= 0:
+        raise ParameterError("sr must be a positive number")
+    if rate <= 0:
+        raise ParameterError("rate must be a positive number")
+    if not 0.0 <= depth <= 1.0:
+        raise ParameterError("depth must be between 0.0 and 1.0")
+
+    t = np.arange(y.shape[-1], dtype=np.float64) / float(sr)
+    angle = 2.0 * np.pi * rate * t + phase
+
+    if mode == "sine":
+        lfo = 0.5 * (1.0 + np.sin(angle))
+    elif mode == "triangle":
+        import scipy.signal
+        lfo = 0.5 * (1.0 + scipy.signal.sawtooth(angle, width=0.5))
+    elif mode == "square":
+        import scipy.signal
+        lfo = 0.5 * (1.0 + scipy.signal.square(angle))
+    else:
+        raise ParameterError(f"Invalid mode='{mode}'. Must be 'sine', 'triangle', or 'square'.")
+
+    modulation = 1.0 - depth * (1.0 - lfo)
+    return y * modulation
 
 
 def vibrato(
@@ -1163,4 +1185,40 @@ def vibrato(
     >>> y, sr = librosa.loadx('choice')
     >>> y_vib = librosa.effects.vibrato(y, sr=sr, rate=5.0, depth=0.5)
     """
-    pass
+    if sr <= 0:
+        raise ParameterError("sr must be a positive number")
+    if rate <= 0:
+        raise ParameterError("rate must be a positive number")
+    if depth < 0:
+        raise ParameterError("depth must be non-negative")
+
+    # STFT frame-level modulation time-steps
+    stft = core.stft(y, **kwargs)
+    n_frames = stft.shape[-1]
+    hop_length = kwargs.get("hop_length", 512)
+
+    t_frames = np.arange(n_frames, dtype=np.float64) * hop_length / float(sr)
+    angle = 2.0 * np.pi * rate * t_frames + phase
+
+    if mode == "sine":
+        lfo = np.sin(angle)
+    elif mode == "triangle":
+        import scipy.signal
+        lfo = scipy.signal.sawtooth(angle, width=0.5)
+    else:
+        raise ParameterError(f"Invalid mode='{mode}'. Must be 'sine' or 'triangle'.")
+
+    # Pitch factor alpha = 2^(semitones / 12)
+    # Instantaneous time step size for phase vocoder is the pitch scaling factor
+    time_steps = 2.0 ** (depth * lfo / 12.0)
+
+    # Phase-vocoder stretch along the frame sequence
+    time_steps_accumulated = np.cumsum(time_steps) - time_steps[0]
+    time_steps_normalized = (
+        time_steps_accumulated / time_steps_accumulated[-1] * (n_frames - 1)
+    )
+
+    stft_vib = core.phase_vocoder(stft, time_steps=time_steps_normalized)
+
+    y_vib = core.istft(stft_vib, dtype=y.dtype, length=y.shape[-1], **kwargs)
+    return y_vib
