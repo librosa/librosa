@@ -2145,7 +2145,7 @@ def shepard_tone(
     nyquist = sr / 2.0
     if float(frequency) >= nyquist:
         raise ParameterError(
-            f'frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})'
+            f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
     k_min = int(np.ceil(np.log2(30.0 / float(frequency))))
@@ -2258,7 +2258,7 @@ def shepard_scale(
     nyquist = sr / 2.0
     if float(f) >= nyquist:
         raise ParameterError(
-            f'f={f} must be strictly less than Nyquist (sr/2={nyquist})'
+            f"f={f} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
     if length is None:
@@ -2388,7 +2388,7 @@ def shepard_risset_glissando(
     nyquist = sr / 2.0
     if float(f) >= nyquist:
         raise ParameterError(
-            f'f={f} must be strictly less than Nyquist (sr/2={nyquist})'
+            f"f={f} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
     f_min_sweep = min(float(f), float(f) * (2.0 ** n_octaves))
