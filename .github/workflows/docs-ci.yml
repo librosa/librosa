@@ -95,8 +95,40 @@ jobs:
           shell: bash -l {0}
           working-directory: docs
           run: make linkcheck
+          continue-on-error: true
 
-        - name: Check for broken links
+        - name: Format failure preamble
+          if: github.event_name == 'pull_request' && steps.linkcheck.outcome == 'failure'
+          run: |
+            echo "### ⚠️ Sphinx Linkcheck Failed" > linkcheck-comment.md
+            echo "The following URLs reported errors or timeouts. Inspect to determine if these are transient network failures:" >> linkcheck-comment.md
+            echo '```text' >> linkcheck-comment.md
+            cat docs/_build/linkcheck/output.txt >> linkcheck-comment.md
+            echo '```' >> linkcheck-comment.md
+
+        - name: Post or update PR comment (Failure)
+          if: github.event_name == 'pull_request' && steps.linkcheck.outcome == 'failure'
+          uses: marocchino/sticky-pull-request-comment@v3
+          with:
+            header: linkcheck-failure-log
+            path: linkcheck-comment.md
+
+        - name: Update PR comment (Success)
+          if: github.event_name == 'pull_request' && steps.linkcheck.outcome == 'success'
+          uses: marocchino/sticky-pull-request-comment@v3
+          with:
+            header: linkcheck-failure-log
+            message: |
+              ### ✅ Sphinx Linkcheck Passed
+              All target links are resolving successfully.
+
+        - name: Warn on linkcheck failure
+          if: steps.linkcheck.outcome == 'failure'
+          run: |
+            OUTPUT=$(cat docs/_build/linkcheck/output.txt)
+            echo "::warning Linkcheck failed: $OUTPUT"
+
+        - name: Check for broken symbolic links
           shell: bash -l {0}
           run: |
             if [[ -n "$(find build/html/ -type l ! -exec test -e {} \; -print -quit)" ]]; then false; fi
