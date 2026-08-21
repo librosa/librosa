@@ -1210,3 +1210,79 @@ def test_hybrid_tempogram():
     y_multi = np.tile(y, (5, 1))
     htg_multi = librosa.feature.hybrid_tempogram(y=y_multi, sr=sr, hop_length=hop_length)
     assert htg_multi.shape == (5, len(freqs), htg.shape[-1]), "Multi-channel shape mismatch"
+
+# -- top_db passthrough (see #2094) -------------------------------------------
+#
+# power_to_db reduces the peak over the whole array, time axis included, so a
+# numeric top_db makes every frame depend on every other frame present.  These
+# check that the threshold can now be reached, that disabling it makes the
+# computation frame-local, and that the default is unchanged.
+
+@pytest.fixture(scope="module")
+def top_db_signals():
+    """A quiet passage, and the same passage followed by a loud burst.
+
+    center=False with a length that is an exact multiple of hop_length means
+    the compared frames are byte-identical between the two inputs; only what
+    follows them differs.
+    """
+    sr, hop, n_fft = 22050, 512, 2048
+    rng = np.random.default_rng(0)
+    quiet = 0.001 * rng.standard_normal(hop * 40 + n_fft)
+    loud = np.concatenate([quiet, 50.0 * rng.standard_normal(hop * 20)])
+    n_common = 1 + (quiet.size - n_fft) // hop
+    return sr, hop, n_fft, quiet, loud, n_common
+
+
+@pytest.mark.parametrize("func", [librosa.feature.mfcc,
+                                  librosa.onset.onset_strength,
+                                  librosa.onset.onset_strength_multi])
+def test_top_db_none_is_frame_local(top_db_signals, func):
+    sr, hop, n_fft, quiet, loud, n = top_db_signals
+    kw = dict(sr=sr, hop_length=hop, n_fft=n_fft, center=False)
+    a = np.atleast_2d(func(y=quiet, top_db=None, **kw))[..., :n]
+    b = np.atleast_2d(func(y=loud, top_db=None, **kw))[..., :n]
+    # Not bitwise: stft blocks long inputs (MAX_MEM_BLOCK), so accumulation
+    # order differs between the two signal lengths.  That residual is float64
+    # rounding, measured at 8.9e-15 here against a 283 difference when the
+    # threshold is active, so the tolerance is thirteen orders of magnitude
+    # below the effect under test.
+    assert np.allclose(a, b, atol=1e-10, rtol=1e-10)
+
+
+@pytest.mark.parametrize("func", [librosa.feature.mfcc,
+                                  librosa.onset.onset_strength])
+def test_top_db_default_is_not_frame_local(top_db_signals, func):
+    """Documents the existing behaviour that top_db=None opts out of."""
+    sr, hop, n_fft, quiet, loud, n = top_db_signals
+    kw = dict(sr=sr, hop_length=hop, n_fft=n_fft, center=False)
+    a = np.atleast_2d(func(y=quiet, **kw))[..., :n]
+    b = np.atleast_2d(func(y=loud, **kw))[..., :n]
+    assert not np.allclose(a, b)
+
+
+@pytest.mark.parametrize("func", [librosa.feature.mfcc,
+                                  librosa.feature.spectral_contrast,
+                                  librosa.onset.onset_strength,
+                                  librosa.onset.onset_strength_multi])
+def test_top_db_default_unchanged(top_db_signals, func):
+    """Passing the default explicitly must reproduce omitting it, exactly."""
+    sr, hop, n_fft, quiet, loud, n = top_db_signals
+    kw = dict(sr=sr, hop_length=hop, n_fft=n_fft, center=False)
+    assert np.array_equal(func(y=loud, **kw), func(y=loud, top_db=80.0, **kw))
+
+
+def test_spectral_contrast_top_db(top_db_signals):
+    """spectral_contrast clamps peak and valley independently, so the two
+    thresholds must both be honoured for the difference to be meaningful."""
+    sr, hop, n_fft, quiet, loud, n = top_db_signals
+    kw = dict(y=loud, sr=sr, hop_length=hop, n_fft=n_fft, center=False)
+    clamped = librosa.feature.spectral_contrast(top_db=1.0, **kw)
+    unclamped = librosa.feature.spectral_contrast(top_db=None, **kw)
+    assert not np.allclose(clamped, unclamped)
+
+
+def test_top_db_negative_rejected():
+    y = np.zeros(4096)
+    with pytest.raises(librosa.ParameterError):
+        librosa.feature.mfcc(y=y, sr=22050, top_db=-1)

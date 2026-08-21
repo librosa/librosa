@@ -369,6 +369,7 @@ def spectral_contrast(
     fmin: float = 200.0,
     n_bands: int = 6,
     quantile: float = 0.02,
+    top_db: float | None = 80.0,
     linear: bool = False,
 ) -> np.ndarray:
     """Compute spectral contrast
@@ -429,6 +430,12 @@ def spectral_contrast(
         number of frequency bands
     quantile : float in (0, 1)
         quantile for determining peaks and valleys
+    top_db : float or None
+        Threshold the output at ``top_db`` below the peak, as in
+        `power_to_db`.  The peak is computed over the entire array,
+        including the time axis, so a numeric value here makes each frame's
+        output depend on every other frame present.  Pass ``None`` to
+        disable the threshold and make the computation frame-local.
     linear : bool
         If `True`, return the linear difference of magnitudes:
         ``peaks - valleys``.
@@ -531,7 +538,9 @@ def spectral_contrast(
     if linear:
         contrast = peak - valley
     else:
-        contrast = power_to_db(peak) - power_to_db(valley)
+        contrast = power_to_db(peak, top_db=top_db) - power_to_db(
+            valley, top_db=top_db
+        )
     return contrast
 
 
@@ -1859,6 +1868,7 @@ def mfcc(
     norm: _DCTNorm | None = "ortho",
     lifter: float = 0,
     mel_norm: Literal["slaney"] | float | None = "slaney",
+    top_db: float | None = 80.0,
     **kwargs: Any,
 ) -> np.ndarray:
     """Mel-frequency cepstral coefficients (MFCCs)
@@ -1888,6 +1898,12 @@ def mfcc(
         As ``lifter`` increases, the coefficient weighting becomes approximately linear.
     mel_norm : float, 'slaney', or None
         `norm` argument to `melspectrogram`
+    top_db : float or None
+        Threshold the output at ``top_db`` below the peak, as in
+        `power_to_db`.  The peak is computed over the entire array,
+        including the time axis, so a numeric value here makes each frame's
+        output depend on every other frame present.  Pass ``None`` to
+        disable the threshold and make the computation frame-local.
     **kwargs
         additional keyword arguments to `melspectrogram` if operating on time series input
     n_fft : int > 0 [scalar]
@@ -2009,7 +2025,9 @@ def mfcc(
     """
     if S is None:
         # multichannel behavior may be different due to relative noise floor differences between channels
-        S = power_to_db(melspectrogram(y=y, sr=sr, norm = mel_norm, **kwargs))
+        S = power_to_db(
+            melspectrogram(y=y, sr=sr, norm=mel_norm, **kwargs), top_db=top_db
+        )
 
     import scipy.fft
 
