@@ -99,18 +99,16 @@ jobs:
 
         - name: Warn on linkcheck failure
           if: steps.linkcheck.outcome == 'failure'
-          working-directory: docs
           run: |
-            OUTPUT=$(cat _build/linkcheck/output.txt)
+            OUTPUT=$(cat docs/_build/linkcheck/output.txt)
             echo "::warning Linkcheck failed: $OUTPUT"
 
         - name: Post or update PR comment
           if: github.event_name == 'pull_request' && steps.linkcheck.outcome == 'failure'
           uses: marocchino/sticky-pull-request-comment@v3
-          working-directory: docs
           with:
             header: linkcheck-failure-log # Unique key used to find and update the comment
-            path: _build/linkcheck/output.txt
+            path: docs/_build/linkcheck/output.txt
 
         - name: Check for broken symbolic links
           shell: bash -l {0}
