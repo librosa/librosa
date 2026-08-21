@@ -2047,9 +2047,9 @@ def chirp(
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
     nyquist = sr / 2.0
-    if fmin >= nyquist or fmax >= nyquist:
+    if fmin >= nyquist:
         raise ParameterError(
-            f"Frequencies fmin={fmin} and fmax={fmax} must be strictly less than Nyquist (sr/2={nyquist})"
+            f"Starting frequency fmin={fmin} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
     # Compute signal duration
@@ -2074,15 +2074,19 @@ def chirp(
         phi=phi / np.pi * 180,  # scipy.signal.chirp uses degrees for phase offset
     )
 
-    if weighting is not None:
+    if weighting is not None or fmax >= nyquist:
         t = np.arange(len(y)) / sr
         if linear:
             freqs = float(fmin) + (float(fmax) - float(fmin)) * (t / duration)
         else:
             freqs = float(fmin) * np.power(float(fmax) / float(fmin), t / duration)
 
-        weight_db = frequency_weighting(freqs, kind=weighting)
-        amp = 10.0 ** (weight_db / 20.0)
+        if weighting is not None:
+            weight_db = frequency_weighting(freqs, kind=weighting)
+            amp = 10.0 ** (weight_db / 20.0)
+        else:
+            amp = np.ones_like(freqs)
+
         amp[freqs >= sr / 2.0] = 0.0
         amp[freqs < 30.0] = 0.0
         y *= amp
@@ -2396,7 +2400,7 @@ def shepard_risset_glissando(
         fmin_k = float(f) * scale
         fmax_k = float(f) * (2.0 ** n_octaves) * scale
 
-        if fmin_k >= nyquist or fmax_k >= nyquist:
+        if fmin_k >= nyquist:
             continue
 
         y += chirp(
