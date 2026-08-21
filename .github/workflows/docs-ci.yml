@@ -108,7 +108,7 @@ jobs:
 
         - name: Post or update PR comment (Failure)
           if: github.event_name == 'pull_request' && steps.linkcheck.outcome == 'failure'
-          uses: marocchino/sticky-pull-request-comment@v4
+          uses: marocchino/sticky-pull-request-comment@v3
           with:
             header: linkcheck-failure-log
             path: linkcheck-comment.md
