@@ -219,6 +219,7 @@ def onset_strength(
     center: bool = True,
     feature: Callable | None = None,
     aggregate: Callable | bool | None = None,
+    top_db: float | None = 80.0,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope.
@@ -279,6 +280,12 @@ def onset_strength(
 
         Default: `np.mean`
 
+    top_db : float or None
+        Threshold the output at ``top_db`` below the peak, as in
+        `power_to_db`.  The peak is computed over the entire array,
+        including the time axis, so a numeric value here makes each frame's
+        output depend on every other frame present.  Pass ``None`` to
+        disable the threshold and make the computation frame-local.
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
@@ -354,6 +361,7 @@ def onset_strength(
         feature=feature,
         aggregate=aggregate,
         channels=None,
+        top_db=top_db,
         **kwargs,
     )
 
@@ -450,6 +458,7 @@ def onset_strength_multi(
     feature: Callable | None = None,
     aggregate: Callable | bool | None = None,
     channels: Sequence[int] | Sequence[slice] | None = None,
+    top_db: float | None = 80.0,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope across multiple channels.
@@ -513,6 +522,12 @@ def onset_strength_multi(
         Array of channel boundaries or slice objects.
         If `None`, then a single channel is generated to span all bands.
 
+    top_db : float or None
+        Threshold the output at ``top_db`` below the peak, as in
+        `power_to_db`.  The peak is computed over the entire array,
+        including the time axis, so a numeric value here makes each frame's
+        output depend on every other frame present.  Pass ``None`` to
+        disable the threshold and make the computation frame-local.
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
@@ -574,7 +589,7 @@ def onset_strength_multi(
         S = np.abs(feature(y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, **kwargs))
 
         # Convert to dBs
-        S = core.power_to_db(S)
+        S = core.power_to_db(S, top_db=top_db)
 
     # Assertion to make type checking happy
     assert S is not None
