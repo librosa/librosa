@@ -2054,10 +2054,9 @@ def test_chirp(fmin, fmax, sr, length, duration, linear, phi, weighting):
         (440, None, 22050, 1),
         (None, 880, 22050, 1),
         (440, 880, None, None),
-        (11025, 440, 22050, 1),
-        (440, 11025, 22050, 1),
-        (12000, 440, 22050, 1),
-        (440, 12000, 22050, 1),
+        (11025, 12000, 22050, 1),
+        (12000, 11025, 22050, 1),
+        (12000, 15000, 22050, 1),
     ],
 )
 def test_chirp_fail(fmin, fmax, length, duration):
@@ -2358,6 +2357,38 @@ def test_shepard_risset_glissando(f, sr, duration, n_octaves, weighting):
 )
 def test_shepard_risset_glissando_frequency_bounds_fail(f):
     librosa.shepard_risset_glissando(f, sr=22050, duration=0.5)
+
+
+@pytest.mark.parametrize("fmin,fmax", [(5000, 15000), (15000, 5000)])
+def test_chirp_cross_nyquist(fmin, fmax):
+    sr = 22050
+    duration = 1.0
+    y = librosa.chirp(fmin=fmin, fmax=fmax, sr=sr, duration=duration, linear=True)
+    assert len(y) == int(sr * duration)
+    assert np.all(np.isfinite(y))
+
+    # Calculate where instantaneous frequency exceeds Nyquist
+    t = np.arange(len(y)) / sr
+    freqs = fmin + (fmax - fmin) * (t / duration)
+    above_nyq = freqs >= (sr / 2.0)
+
+    # Samples above Nyquist must be zeroed out
+    assert np.all(y[above_nyq] == 0.0)
+    # At least some samples below Nyquist must be non-zero
+    assert np.any(y[~above_nyq] != 0.0)
+
+
+@pytest.mark.parametrize("n_octaves", [-2.0, 2.0])
+def test_shepard_risset_glissando_cross_nyquist(n_octaves):
+    sr = 22050
+    duration = 1.0
+    # Starting frequency near Nyquist: 8000 Hz
+    y = librosa.shepard_risset_glissando(
+        8000.0, sr=sr, duration=duration, n_octaves=n_octaves
+    )
+    assert len(y) == int(sr * duration)
+    assert np.all(np.isfinite(y))
+    assert np.any(y != 0.0)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
