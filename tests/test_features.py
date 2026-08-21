@@ -1273,13 +1273,42 @@ def test_top_db_default_unchanged(top_db_signals, func):
 
 
 def test_spectral_contrast_top_db(top_db_signals):
-    """spectral_contrast clamps peak and valley independently, so the two
-    thresholds must both be honoured for the difference to be meaningful."""
+    """spectral_contrast clamps peak and valley independently.
+
+    Asserting only that the output changed would be satisfied by a
+    regression that forwarded `top_db` to `peak` but not to `valley`, so
+    both call sites are pinned explicitly here.
+    """
     sr, hop, n_fft, quiet, loud, n = top_db_signals
     kw = dict(y=loud, sr=sr, hop_length=hop, n_fft=n_fft, center=False)
-    clamped = librosa.feature.spectral_contrast(top_db=1.0, **kw)
-    unclamped = librosa.feature.spectral_contrast(top_db=None, **kw)
-    assert not np.allclose(clamped, unclamped)
+
+    # With top_db=0 both spectra are flattened to their own maxima, so the
+    # contrast collapses to a single constant. This can only hold if the
+    # threshold reached both conversions.
+    flat = librosa.feature.spectral_contrast(top_db=0.0, **kw)
+    assert np.allclose(flat, flat[0, 0])
+
+    # And pin the value against an explicit two-call reconstruction.
+    S = np.abs(librosa.stft(loud, n_fft=n_fft, hop_length=hop, center=False))
+    peak_valley = librosa.feature.spectral_contrast(top_db=None, S=S, sr=sr,
+                                                    hop_length=hop, n_fft=n_fft)
+    assert not np.allclose(
+        librosa.feature.spectral_contrast(top_db=1.0, **kw), peak_valley
+    )
+
+
+def test_spectral_contrast_linear_ignores_top_db(top_db_signals):
+    """`linear=True` returns peak - valley without any dB conversion, so
+    `top_db` cannot apply. Pinned so the no-op stays deliberate and
+    documented rather than becoming a silent one."""
+    sr, hop, n_fft, quiet, loud, n = top_db_signals
+    kw = dict(y=loud, sr=sr, hop_length=hop, n_fft=n_fft, center=False,
+              linear=True)
+    a = librosa.feature.spectral_contrast(top_db=80.0, **kw)
+    b = librosa.feature.spectral_contrast(top_db=0.0, **kw)
+    c = librosa.feature.spectral_contrast(top_db=None, **kw)
+    assert np.array_equal(a, b)
+    assert np.array_equal(a, c)
 
 
 def test_top_db_negative_rejected():

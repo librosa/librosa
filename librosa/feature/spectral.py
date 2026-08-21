@@ -431,11 +431,13 @@ def spectral_contrast(
     quantile : float in (0, 1)
         quantile for determining peaks and valleys
     top_db : float or None
-        Threshold the output at ``top_db`` below the peak, as in
-        `power_to_db`.  The peak is computed over the entire array,
-        including the time axis, so a numeric value here makes each frame's
-        output depend on every other frame present.  Pass ``None`` to
-        disable the threshold and make the computation frame-local.
+        Threshold each of the peak and valley spectra at ``top_db`` below
+        its own peak, as in `power_to_db`.  The peak is computed over the
+        frequency and time axes, independently for each leading channel.
+        Pass ``None`` to disable the threshold.
+
+        This has no effect when ``linear=True``, which returns the linear
+        difference of magnitudes and never calls `power_to_db`.
     linear : bool
         If `True`, return the linear difference of magnitudes:
         ``peaks - valleys``.
@@ -1899,11 +1901,12 @@ def mfcc(
     mel_norm : float, 'slaney', or None
         `norm` argument to `melspectrogram`
     top_db : float or None
-        Threshold the output at ``top_db`` below the peak, as in
-        `power_to_db`.  The peak is computed over the entire array,
-        including the time axis, so a numeric value here makes each frame's
-        output depend on every other frame present.  Pass ``None`` to
-        disable the threshold and make the computation frame-local.
+        Threshold the mel spectrogram at ``top_db`` below its peak before
+        the log conversion, as in `power_to_db`.  The peak is computed over
+        the frequency and time axes, independently for each leading channel,
+        so a numeric value makes each frame's output depend on every other
+        frame in the same channel.  Pass ``None`` to disable the threshold
+        and make the result depend only on the frame itself.
     **kwargs
         additional keyword arguments to `melspectrogram` if operating on time series input
     n_fft : int > 0 [scalar]

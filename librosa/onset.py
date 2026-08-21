@@ -281,11 +281,16 @@ def onset_strength(
         Default: `np.mean`
 
     top_db : float or None
-        Threshold the output at ``top_db`` below the peak, as in
-        `power_to_db`.  The peak is computed over the entire array,
-        including the time axis, so a numeric value here makes each frame's
-        output depend on every other frame present.  Pass ``None`` to
-        disable the threshold and make the computation frame-local.
+        Threshold the spectrogram at ``top_db`` below its peak before the
+        dB conversion, as in `power_to_db`.  The peak is computed over the
+        frequency and time axes, independently for each leading channel, so
+        a numeric value couples every frame in a channel to the loudest one.
+        Pass ``None`` to disable that coupling.
+
+        Note that this does not make the result depend on a single frame:
+        onset strength is a spectral flux, so it compares each frame with
+        the one ``lag`` frames earlier, and ``detrend`` adds a further
+        dependence on neighbouring frames when enabled.
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
@@ -523,11 +528,16 @@ def onset_strength_multi(
         If `None`, then a single channel is generated to span all bands.
 
     top_db : float or None
-        Threshold the output at ``top_db`` below the peak, as in
-        `power_to_db`.  The peak is computed over the entire array,
-        including the time axis, so a numeric value here makes each frame's
-        output depend on every other frame present.  Pass ``None`` to
-        disable the threshold and make the computation frame-local.
+        Threshold the spectrogram at ``top_db`` below its peak before the
+        dB conversion, as in `power_to_db`.  The peak is computed over the
+        frequency and time axes, independently for each leading channel, so
+        a numeric value couples every frame in a channel to the loudest one.
+        Pass ``None`` to disable that coupling.
+
+        Note that this does not make the result depend on a single frame:
+        onset strength is a spectral flux, so it compares each frame with
+        the one ``lag`` frames earlier, and ``detrend`` adds a further
+        dependence on neighbouring frames when enabled.
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
