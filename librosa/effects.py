@@ -140,6 +140,7 @@ def hpss(
         n_fft=n_fft,
         hop_length=hop_length,
         win_length=win_length,
+        window=window,
         center=center,
         pad_mode=pad_mode,
     )
@@ -156,6 +157,7 @@ def hpss(
         n_fft=n_fft,
         hop_length=hop_length,
         win_length=win_length,
+        window=window,
         center=center,
         length=y.shape[-1],
     )
@@ -165,6 +167,7 @@ def hpss(
         n_fft=n_fft,
         hop_length=hop_length,
         win_length=win_length,
+        window=window,
         center=center,
         length=y.shape[-1],
     )
@@ -263,6 +266,7 @@ def harmonic(
         n_fft=n_fft,
         hop_length=hop_length,
         win_length=win_length,
+        window=window,
         center=center,
         pad_mode=pad_mode,
     )
@@ -279,6 +283,7 @@ def harmonic(
         n_fft=n_fft,
         hop_length=hop_length,
         win_length=win_length,
+        window=window,
         center=center,
         length=y.shape[-1],
     )
@@ -377,6 +382,7 @@ def percussive(
         n_fft=n_fft,
         hop_length=hop_length,
         win_length=win_length,
+        window=window,
         center=center,
         pad_mode=pad_mode,
     )
@@ -393,6 +399,7 @@ def percussive(
         n_fft=n_fft,
         hop_length=hop_length,
         win_length=win_length,
+        window=window,
         center=center,
         length=y.shape[-1],
     )
