@@ -2008,7 +2008,7 @@ def chirp(
     ------
     ParameterError
         - If either ``fmin`` or ``fmax`` are not provided.
-        - If ``fmin`` or ``fmax`` meet or exceed Nyquist frequency (sr / 2).
+        - If ``min(fmin, fmax)`` meets or exceeds Nyquist frequency (sr / 2).
         - If neither ``length`` nor ``duration`` are provided.
 
     See Also
@@ -2152,7 +2152,12 @@ def shepard_tone(
             f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
-    target_len = length if length is not None else int((duration or 0) * sr)
+    if length is None:
+        if duration is None:
+            raise ParameterError('either "length" or "duration" must be provided')
+        target_len = int(duration * sr)
+    else:
+        target_len = length
     y: _Array1D[np.float64] = np.zeros(target_len, dtype=np.float64)
 
     k_min = int(np.ceil(np.log2(30.0 / float(frequency))))
