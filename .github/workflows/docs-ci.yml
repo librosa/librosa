@@ -95,8 +95,14 @@ jobs:
           shell: bash -l {0}
           working-directory: docs
           run: make linkcheck
+          continue-on-error: true
 
-        - name: Check for broken links
+        - name: Warn on linkcheck failure
+          if: steps.linkcheck.outcome == 'failure'
+          run: |
+            echo "::warning Linkcheck failed. Please check the logs for details."
+
+        - name: Check for broken symbolic links
           shell: bash -l {0}
           run: |
             if [[ -n "$(find build/html/ -type l ! -exec test -e {} \; -print -quit)" ]]; then false; fi

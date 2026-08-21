@@ -467,7 +467,7 @@ linkcheck_timeout = 10
 linkcheck_workers = 10
 linkcheck_report_timeouts_as_broken = False
 linkcheck_ignore = ["https://www.ee.columbia.edu/~dpwe/resources/.*",
-                    "https://htk.eng.cam.ac.uk/.*",
+                    #"https://htk.eng.cam.ac.uk/.*",
                     # Ignore broken links to publishers, as they throttle scrapers
                     "https://zenodo.org/.*",
                     "https://transactions.ismir.net/.*"]
