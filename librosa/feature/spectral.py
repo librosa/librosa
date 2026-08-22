@@ -17,7 +17,7 @@ from ..core.spectrum import _spectrogram, power_to_db
 from ..util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Collection, Literal
+    from typing import Any, Callable, Collection, Literal
 
     from numpy.typing import DTypeLike
 
@@ -369,6 +369,7 @@ def spectral_contrast(
     fmin: float = 200.0,
     n_bands: int = 6,
     quantile: float = 0.02,
+    ref: float | Callable = 1.0,
     top_db: float | None = 80.0,
     linear: bool = False,
 ) -> np.ndarray:
@@ -430,6 +431,15 @@ def spectral_contrast(
         number of frequency bands
     quantile : float in (0, 1)
         quantile for determining peaks and valleys
+    ref : float or callable
+        Reference value for the dB conversion of each of the peak and valley
+        spectra, as in `power_to_db`.  A scalar leaves each frame independent
+        of the others.  A callable such as `np.max` is evaluated over the
+        frequency and time axes of each leading channel, which makes every
+        frame's output depend on the rest of that channel.
+
+        This has no effect when ``linear=True``, which returns the linear
+        difference of magnitudes and never calls `power_to_db`.
     top_db : float or None
         Threshold each of the peak and valley spectra at ``top_db`` below
         its own peak, as in `power_to_db`.  The peak is computed over the
@@ -540,8 +550,8 @@ def spectral_contrast(
     if linear:
         contrast = peak - valley
     else:
-        contrast = power_to_db(peak, top_db=top_db) - power_to_db(
-            valley, top_db=top_db
+        contrast = power_to_db(peak, ref=ref, top_db=top_db) - power_to_db(
+            valley, ref=ref, top_db=top_db
         )
     return contrast
 
@@ -1870,6 +1880,7 @@ def mfcc(
     norm: _DCTNorm | None = "ortho",
     lifter: float = 0,
     mel_norm: Literal["slaney"] | float | None = "slaney",
+    ref: float | Callable = 1.0,
     top_db: float | None = 80.0,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -1900,6 +1911,15 @@ def mfcc(
         As ``lifter`` increases, the coefficient weighting becomes approximately linear.
     mel_norm : float, 'slaney', or None
         `norm` argument to `melspectrogram`
+    ref : float or callable
+        Reference value for the log conversion, as in `power_to_db`.
+        A scalar leaves each frame independent of the others.  A callable
+        such as `np.max` is evaluated over the frequency and time axes of
+        each leading channel, which makes every frame's output depend on
+        every other frame in that channel.
+
+        This applies only when computing from ``y``; if ``S`` is supplied it
+        is assumed to already be in dB.
     top_db : float or None
         Threshold the mel spectrogram at ``top_db`` below its peak before
         the log conversion, as in `power_to_db`.  The peak is computed over
@@ -2029,7 +2049,9 @@ def mfcc(
     if S is None:
         # multichannel behavior may be different due to relative noise floor differences between channels
         S = power_to_db(
-            melspectrogram(y=y, sr=sr, norm=mel_norm, **kwargs), top_db=top_db
+            melspectrogram(y=y, sr=sr, norm=mel_norm, **kwargs),
+            ref=ref,
+            top_db=top_db,
         )
 
     import scipy.fft
