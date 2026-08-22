@@ -201,6 +201,38 @@ def test_harmonic(ysr):
     assert np.allclose(yh1, yh2)
 
 
+@pytest.mark.parametrize(
+    "effect_fn",
+    [librosa.effects.hpss, librosa.effects.harmonic, librosa.effects.percussive],
+)
+def test_effects_window(ysr, effect_fn):
+    # The window must reach the STFT.  Asserting only that the outputs differ
+    # would also pass if it reached stft but not istft, so the reconstruction
+    # check below pins both.
+    y, sr = ysr
+
+    def first(result):
+        return result[0] if isinstance(result, tuple) else result
+
+    y_hann = first(effect_fn(y=y, window="hann"))
+    y_hamming = first(effect_fn(y=y, window="hamming"))
+    y_blackman = first(effect_fn(y=y, window="blackman"))
+
+    assert not np.allclose(y_hann, y_hamming)
+    assert not np.allclose(y_hann, y_blackman)
+
+
+@pytest.mark.parametrize("window", ["hann", "hamming", "blackman"])
+def test_hpss_window_reconstruction(ysr, window):
+    # Analysis and synthesis must use the same window, otherwise the harmonic
+    # and percussive parts no longer sum back to the input.
+    y, sr = ysr
+
+    y_harm, y_perc = librosa.effects.hpss(y=y, window=window)
+
+    assert np.allclose(y_harm + y_perc, y, atol=1e-6)
+
+
 @pytest.fixture(scope="module", params=[False, True], ids=["mono", "stereo"])
 def y_trim(request):
     # construct 5 seconds of stereo silence
