@@ -1315,3 +1315,73 @@ def test_top_db_negative_rejected():
     y = np.zeros(4096)
     with pytest.raises(librosa.ParameterError):
         librosa.feature.mfcc(y=y, sr=22050, top_db=-1)
+
+
+# -- ref passthrough (see #2094) ----------------------------------------------
+#
+# power_to_db reduces over the same axes twice: once for a callable `ref`, and
+# once for `top_db`.  `ref` defaults to the scalar 1.0, so `top_db` is the one
+# that binds by default; these pin that a callable `ref` is the other way to
+# make a frame depend on its context, and that a scalar one is inert.
+
+
+def test_ref_default_unchanged(top_db_signals):
+    """Passing the default explicitly must reproduce omitting it, exactly."""
+    sr, hop, n_fft, quiet, loud, n = top_db_signals
+    kw = dict(y=loud, sr=sr, hop_length=hop, n_fft=n_fft, center=False)
+    for func in (librosa.feature.mfcc, librosa.feature.spectral_contrast):
+        assert np.array_equal(func(**kw), func(ref=1.0, **kw))
+
+
+@pytest.mark.parametrize("func", [librosa.feature.mfcc,
+                                  librosa.feature.spectral_contrast])
+def test_ref_callable_is_not_frame_local(top_db_signals, func):
+    """A callable `ref` reduces over frequency and time, so it reintroduces
+    the context dependence even with the threshold switched off."""
+    sr, hop, n_fft, quiet, loud, n = top_db_signals
+    kw = dict(sr=sr, hop_length=hop, n_fft=n_fft, center=False,
+              top_db=None, ref=np.max)
+    a = np.atleast_2d(func(y=quiet, **kw))[..., :n]
+    b = np.atleast_2d(func(y=loud, **kw))[..., :n]
+    assert not np.allclose(a, b)
+
+
+def test_mfcc_scalar_ref_shifts_only_dc(top_db_signals):
+    """A scalar `ref` offsets the log-mel spectrogram by a constant, and the
+    DCT of a constant lands entirely in coefficient 0.  Pinned because it
+    fixes where the effect is allowed to appear, not merely that there is one.
+    """
+    sr, hop, n_fft, quiet, loud, n = top_db_signals
+    kw = dict(y=loud, sr=sr, hop_length=hop, n_fft=n_fft, center=False,
+              top_db=None)
+    base = librosa.feature.mfcc(**kw)
+    shifted = librosa.feature.mfcc(ref=100.0, **kw)
+    assert np.allclose(base[1:], shifted[1:], atol=1e-10, rtol=1e-10)
+    assert not np.allclose(base[0], shifted[0])
+
+
+def test_spectral_contrast_scalar_ref_cancels(top_db_signals):
+    """spectral_contrast is a difference of two dB conversions, so a scalar
+    `ref` cancels exactly.  This can only hold if `ref` reached both calls: a
+    regression forwarding it to `peak` alone would shift the output by
+    ``-10 log10(ref)``.
+    """
+    sr, hop, n_fft, quiet, loud, n = top_db_signals
+    kw = dict(y=loud, sr=sr, hop_length=hop, n_fft=n_fft, center=False)
+    base = librosa.feature.spectral_contrast(**kw)
+    for value in (100.0, 0.01):
+        assert np.allclose(
+            base, librosa.feature.spectral_contrast(ref=value, **kw),
+            atol=1e-10, rtol=1e-10,
+        )
+
+
+def test_spectral_contrast_linear_ignores_ref(top_db_signals):
+    """`linear=True` never calls power_to_db, so `ref` is inert there for the
+    same reason `top_db` is."""
+    sr, hop, n_fft, quiet, loud, n = top_db_signals
+    kw = dict(y=loud, sr=sr, hop_length=hop, n_fft=n_fft, center=False,
+              linear=True)
+    a = librosa.feature.spectral_contrast(**kw)
+    assert np.array_equal(a, librosa.feature.spectral_contrast(ref=100.0, **kw))
+    assert np.array_equal(a, librosa.feature.spectral_contrast(ref=np.max, **kw))
