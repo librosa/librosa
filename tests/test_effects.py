@@ -417,3 +417,73 @@ def test_deemphasis(coef, zi, return_zf, dtype):
 
     assert np.allclose(x, y_deemph)
     assert x.dtype == y_deemph.dtype
+
+
+@pytest.mark.parametrize("mode", ["sine", "triangle", "square"])
+@pytest.mark.parametrize("depth", [0.0, 0.5, 1.0])
+@pytest.mark.parametrize("phase", [0.0, np.pi / 2])
+def test_tremolo(ysr, mode, depth, phase):
+    y, sr = ysr
+    yt = librosa.effects.tremolo(y, sr=sr, rate=5.0, depth=depth, mode=mode, phase=phase)
+
+    assert yt.shape == y.shape
+    assert yt.dtype == y.dtype
+
+    if depth == 0.0:
+        assert np.allclose(y, yt)
+
+
+def test_tremolo_multi(y_multi):
+    y, sr = y_multi
+    C0 = librosa.effects.tremolo(y[0], sr=sr, rate=5.0)
+    C1 = librosa.effects.tremolo(y[1], sr=sr, rate=5.0)
+    Call = librosa.effects.tremolo(y, sr=sr, rate=5.0)
+
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+
+def test_tremolo_errors():
+    y = np.ones(100)
+    with pytest.raises(librosa.ParameterError):
+        librosa.effects.tremolo(y, sr=0)
+    with pytest.raises(librosa.ParameterError):
+        librosa.effects.tremolo(y, sr=22050, rate=-1)
+    with pytest.raises(librosa.ParameterError):
+        librosa.effects.tremolo(y, sr=22050, depth=1.5)
+    with pytest.raises(librosa.ParameterError):
+        librosa.effects.tremolo(y, sr=22050, mode="invalid")  # type: ignore[arg-type]
+
+
+@pytest.mark.parametrize("mode", ["sine", "triangle"])
+@pytest.mark.parametrize("depth", [0.0, 0.5])
+@pytest.mark.parametrize("kind", ["linear", "cubic"])
+@pytest.mark.parametrize("phase", [0.0, np.pi / 2])
+def test_vibrato(ysr, mode, depth, kind, phase):
+    y, sr = ysr
+    yv = librosa.effects.vibrato(y, sr=sr, rate=5.0, depth=depth, mode=mode, kind=kind, phase=phase)
+
+    assert yv.shape == y.shape
+    assert yv.dtype == y.dtype
+
+
+def test_vibrato_multi(y_multi):
+    y, sr = y_multi
+    C0 = librosa.effects.vibrato(y[0], sr=sr, rate=5.0)
+    C1 = librosa.effects.vibrato(y[1], sr=sr, rate=5.0)
+    Call = librosa.effects.vibrato(y, sr=sr, rate=5.0)
+
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+
+
+def test_vibrato_errors():
+    y = np.ones(100)
+    with pytest.raises(librosa.ParameterError):
+        librosa.effects.vibrato(y, sr=-1)
+    with pytest.raises(librosa.ParameterError):
+        librosa.effects.vibrato(y, sr=22050, rate=0)
+    with pytest.raises(librosa.ParameterError):
+        librosa.effects.vibrato(y, sr=22050, depth=-0.1)
+    with pytest.raises(librosa.ParameterError):
+        librosa.effects.vibrato(y, sr=22050, mode="square")  # type: ignore[arg-type]

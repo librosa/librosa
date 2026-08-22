@@ -17,11 +17,11 @@ from .._cache import cache
 from ..util.decorators import future_default
 from ..util.exceptions import ParameterError
 from ..util.files import example
-from .convert import frames_to_samples, time_to_samples
+from .convert import frames_to_samples, frequency_weighting, time_to_samples
 
 if TYPE_CHECKING:
     import os
-    from typing import Any, BinaryIO, Callable, Generator
+    from typing import Any, BinaryIO, Callable, Collection, Generator
 
     from numpy.typing import DTypeLike, NDArray
 
@@ -48,6 +48,9 @@ __all__ = [
     "clicks",
     "tone",
     "chirp",
+    "shepard_tone",
+    "shepard_scale",
+    "shepard_risset_glissando",
     "mu_compress",
     "mu_expand",
 ]
@@ -332,7 +335,7 @@ def stream(
     res_type : str
         Resample type, must be one of the following:
 
-        'soxr_vhq', 'soxr_hq', 'soxr_mq' or 'soxr_lq'
+        'soxr_vhq', 'soxr_hq', 'soxr_mq', 'soxr_lq' or 'soxr_qq'
             `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
             ``'soxr_hq'`` is the default setting of `soxr`.
         'soxr_qq'
@@ -1872,6 +1875,7 @@ def tone(
     length: int | None = None,
     duration: float | None = None,
     phi: float | None = None,
+    taper: bool = False,
 ) -> _Array1D[np.float64]:
     """Construct a pure tone (cosine) signal at a given frequency.
 
@@ -1891,6 +1895,9 @@ def tone(
         ``length`` takes priority.
     phi : float or None
         phase offset, in radians. If unspecified, defaults to ``-np.pi * 0.5``.
+    taper : bool
+        If ``True``, taper the edges of the signal with a cosine fade-in and
+        fade-out of one period duration.
 
     Returns
     -------
@@ -1934,6 +1941,15 @@ def tone(
         phi = -np.pi * 0.5
 
     y: np.ndarray = np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
+
+    if taper:
+        fade_len = int(np.round(sr / float(frequency)))
+        fade_len = min(fade_len, length // 2)
+        if fade_len > 0:
+            window = np.sin(np.linspace(0, np.pi / 2, fade_len))
+            y[:fade_len] *= window
+            y[-fade_len:] *= window[::-1]
+
     return y
 
 
@@ -1946,6 +1962,7 @@ def chirp(
     duration: float | None = None,
     linear: bool = False,
     phi: float | None = None,
+    weighting: str | None = None,
 ) -> _Array1D[np.float64]:
     """Construct a "chirp" or "sine-sweep" signal.
 
@@ -1991,6 +2008,7 @@ def chirp(
     ------
     ParameterError
         - If either ``fmin`` or ``fmax`` are not provided.
+        - If ``min(fmin, fmax)`` meets or exceeds Nyquist frequency (sr / 2).
         - If neither ``length`` nor ``duration`` are provided.
 
     See Also
@@ -2028,6 +2046,12 @@ def chirp(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
+    nyquist = sr / 2.0
+    if min(fmin, fmax) >= nyquist:
+        raise ParameterError(
+            f"Frequencies min(fmin, fmax)={min(fmin, fmax)} must be strictly less than Nyquist (sr/2={nyquist})"
+        )
+
     # Compute signal duration
     period = 1.0 / sr
     if length is None:
@@ -2049,6 +2073,350 @@ def chirp(
         method=method,
         phi=phi / np.pi * 180,  # scipy.signal.chirp uses degrees for phase offset
     )
+
+    if weighting is not None or max(fmin, fmax) >= nyquist:
+        t = np.arange(len(y)) / sr
+        if linear:
+            freqs = float(fmin) + (float(fmax) - float(fmin)) * (t / duration)
+        else:
+            freqs = float(fmin) * np.power(float(fmax) / float(fmin), t / duration)
+
+        if weighting is not None:
+            weight_db = frequency_weighting(freqs, kind=weighting)
+            amp = 10.0 ** (weight_db / 20.0)
+        else:
+            amp = np.ones_like(freqs)
+
+        amp[freqs >= sr / 2.0] = 0.0
+        amp[freqs < 30.0] = 0.0
+        y *= amp
+
+    return y
+
+
+def shepard_tone(
+    frequency: _FloatLike_co,
+    *,
+    sr: float = 22050,
+    length: int | None = None,
+    duration: float | None = None,
+    weighting: str | None = "A",
+    taper: bool = False,
+) -> _Array1D[np.float64]:
+    """Construct a single Shepard tone signal.
+
+    A Shepard tone is a sound consisting of a superposition of sine waves
+    separated by octaves, covering the audible range (30 Hz to Nyquist).
+
+    Parameters
+    ----------
+    frequency : float > 0
+        Base frequency of the tone (in Hz).
+    sr : number > 0
+        Desired sampling rate of the output signal.
+    length : int > 0 or None
+        Desired number of samples in the output signal.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    duration : float > 0 or None
+        Desired duration in seconds.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    weighting : str or None
+        Type of perceptual weighting to apply (e.g., ``'A'``, ``'B'``, ``'C'``, ``'D'``, ``'Z'``).
+        If ``None``, no weighting is applied.
+    taper : bool
+        If ``True``, taper the edges of the individual tone components.
+
+    Returns
+    -------
+    shepard_signal : np.ndarray [shape=(length,), dtype=float64]
+        Synthesized Shepard tone signal.
+
+    See Also
+    --------
+    tone
+    shepard_scale
+    shepard_risset_glissando
+
+    Examples
+    --------
+    Generate a single Shepard tone at 440 Hz:
+
+    >>> y = librosa.shepard_tone(440.0, duration=1.0, sr=22050)
+    """
+    if frequency is None or frequency <= 0:
+        raise ParameterError('"frequency" must be a positive number')
+
+    nyquist = sr / 2.0
+    if float(frequency) >= nyquist:
+        raise ParameterError(
+            f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
+        )
+
+    if length is None:
+        if duration is None:
+            raise ParameterError('either "length" or "duration" must be provided')
+        target_len = int(duration * sr)
+    else:
+        target_len = length
+    y: _Array1D[np.float64] = np.zeros(target_len, dtype=np.float64)
+
+    k_min = int(np.ceil(np.log2(30.0 / float(frequency))))
+    k_max = int(np.floor(np.log2(np.nextafter(nyquist, 0) / float(frequency))))
+    octave_shifts = np.arange(k_min, k_max + 1)
+
+    for shift in octave_shifts:
+        freq_k = float(frequency) * (2.0 ** shift)
+
+        if freq_k >= nyquist or freq_k < 30.0:
+            continue
+
+        if weighting is not None:
+            weight_db = frequency_weighting(freq_k, kind=weighting)
+            amp = 10.0 ** (weight_db / 20.0)
+        else:
+            amp = 1.0
+
+        y += amp * tone(
+            freq_k, sr=sr, length=length, duration=duration, taper=taper
+        )
+
+    return y
+
+
+def shepard_scale(
+    f: _FloatLike_co,
+    *,
+    sr: float = 22050,
+    length: int | None = None,
+    duration: float | None = None,
+    intervals: str | Collection[float] = "equal",
+    n_steps: int = 12,
+    bins_per_octave: int = 12,
+    tuning: float = 0.0,
+    weighting: str | None = "A",
+) -> _Array1D[np.float64]:
+    """Construct a discrete Shepard scale signal.
+
+    A Shepard scale is a sequence of discrete Shepard tones starting from
+    ``f`` over the allotted duration.
+
+    Parameters
+    ----------
+    f : float > 0
+        Starting frequency of the scale (in Hz).
+    sr : number > 0
+        Desired sampling rate of the output signal.
+    length : int > 0 or None
+        Desired number of samples in the output signal.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    duration : float > 0 or None
+        Desired duration in seconds.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    intervals : str or collection of floats
+        Interval specification or explicit ratio set. If a string is provided,
+        it must be one supported by `interval_frequencies` (e.g. ``'equal'``,
+        ``'pythagorean'``, ``'ji3'``, ``'ji5'``, ``'ji7'``).
+        Default is ``'equal'``.
+    n_steps : int
+        The number of discrete pitch steps to generate over the duration.
+        If negative, the scale is generated in descending order.
+    bins_per_octave : int > 0
+        Number of steps per octave when ``intervals`` is specified as a string.
+    tuning : float
+        Deviation from A440 tuning in fractional bins.
+        Only used when ``intervals='equal'``.
+    weighting : str or None
+        Type of perceptual weighting to apply (e.g., ``'A'``, ``'B'``, ``'C'``, ``'D'``, ``'Z'``).
+        If ``None``, no weighting is applied.
+
+    Returns
+    -------
+    scale_signal : np.ndarray [shape=(length,), dtype=float64]
+        Synthesized discrete Shepard scale signal.
+
+    See Also
+    --------
+    shepard_tone
+    shepard_risset_glissando
+    interval_frequencies
+
+    Examples
+    --------
+    Generate a 12-step ascending Shepard scale starting at 110 Hz:
+
+    >>> y = librosa.shepard_scale(110.0, duration=2.0, n_steps=12)
+
+    Generate a 12-step descending Shepard scale starting at 110 Hz:
+
+    >>> y_desc = librosa.shepard_scale(110.0, duration=2.0, n_steps=-12)
+    """
+    from .intervals import interval_frequencies
+
+    if f is None or f <= 0:
+        raise ParameterError('"f" must be a positive number')
+
+    nyquist = sr / 2.0
+    if float(f) >= nyquist:
+        raise ParameterError(
+            f"f={f} must be strictly less than Nyquist (sr/2={nyquist})"
+        )
+
+    if length is None:
+        if duration is None:
+            raise ParameterError('either "length" or "duration" must be provided')
+        length = int(duration * sr)
+
+    reverse_signal = n_steps < 0
+    n_steps_abs = abs(n_steps)
+
+    if isinstance(intervals, str):
+        if reverse_signal:
+            # To start at f and descend, we find the fmin that makes the highest note f
+            ratios = interval_frequencies(
+                n_steps_abs,
+                fmin=1.0,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+                tuning=tuning,
+            )
+            fmin_calc = float(f) / ratios[-1]
+            freqs = interval_frequencies(
+                n_steps_abs,
+                fmin=fmin_calc,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+                tuning=tuning,
+            )[::-1]
+        else:
+            freqs = interval_frequencies(
+                n_steps_abs,
+                fmin=f,
+                intervals=intervals,
+                bins_per_octave=bins_per_octave,
+                tuning=tuning,
+            )
+    else:
+        ratios = np.asarray(intervals, dtype=np.float64)
+        b_oct = len(ratios)
+        n_oct = int(np.ceil(n_steps_abs / b_oct))
+        all_ratios = np.multiply.outer(2.0 ** np.arange(n_oct), ratios).flatten()[:n_steps_abs]
+        if reverse_signal:
+            freqs = (float(f) / all_ratios[-1]) * all_ratios
+            freqs = freqs[::-1]
+        else:
+            freqs = float(f) * all_ratios
+
+    # Divide the total length into equal-length steps
+    boundaries = np.round(np.linspace(0, length, len(freqs) + 1)).astype(int)
+
+    y = np.zeros(length, dtype=np.float64)
+    for i, freq in enumerate(freqs):
+        step_len = boundaries[i + 1] - boundaries[i]
+        if step_len <= 0:
+            continue
+
+        tone_step = shepard_tone(
+            freq,
+            sr=sr,
+            length=step_len,
+            weighting=weighting,
+            taper=True,
+        )
+
+        y[boundaries[i] : boundaries[i + 1]] = tone_step
+
+    return y
+
+
+def shepard_risset_glissando(
+    f: _FloatLike_co,
+    *,
+    n_octaves: float = 1.0,
+    sr: float = 22050,
+    length: int | None = None,
+    duration: float | None = None,
+    weighting: str | None = "A",
+) -> _Array1D[np.float64]:
+    """Construct a Shepard-Risset glissando signal.
+
+    A Shepard-Risset glissando is a continuous tone sweep that creates the
+    auditory illusion of a pitch endlessly ascending or descending.
+
+    Parameters
+    ----------
+    f : float > 0
+        Starting frequency of the base tone (in Hz).
+    n_octaves : float
+        Number of octaves to sweep over. Can be fractional or negative (for a
+        descending glissando).
+    sr : number > 0
+        Desired sampling rate of the output signal.
+    length : int > 0 or None
+        Desired number of samples in the output signal.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    duration : float > 0 or None
+        Desired duration in seconds.
+        When both ``duration`` and ``length`` are defined, ``length`` takes priority.
+    weighting : str or None
+        Type of perceptual weighting to apply (e.g., ``'A'``, ``'B'``, ``'C'``, ``'D'``, ``'Z'``).
+        If ``None``, no weighting is applied.
+
+    Returns
+    -------
+    glissando_signal : np.ndarray [shape=(length,), dtype=float64]
+        Synthesized Shepard-Risset glissando signal.
+
+    See Also
+    --------
+    chirp
+    shepard_tone
+    shepard_scale
+
+    Examples
+    --------
+    Generate an ascending Shepard-Risset glissando sweeping over 2 octaves:
+
+    >>> y = librosa.shepard_risset_glissando(110.0, duration=3.0, n_octaves=2.0)
+
+    Generate a descending Shepard-Risset glissando sweeping over 2 octaves:
+
+    >>> y_desc = librosa.shepard_risset_glissando(110.0, duration=3.0, n_octaves=-2.0)
+    """
+    if f is None or f <= 0:
+        raise ParameterError('"f" must be a positive number')
+
+    nyquist = sr / 2.0
+    if float(f) >= nyquist:
+        raise ParameterError(
+            f"f={f} must be strictly less than Nyquist (sr/2={nyquist})"
+        )
+
+    target_len = length if length is not None else int((duration or 0) * sr)
+    y: _Array1D[np.float64] = np.zeros(target_len, dtype=np.float64)
+
+    f_min_sweep = min(float(f), float(f) * (2.0 ** n_octaves))
+    f_max_sweep = max(float(f), float(f) * (2.0 ** n_octaves))
+    k_min = int(np.ceil(np.log2(30.0 / f_max_sweep)))
+    k_max = int(np.floor(np.log2(np.nextafter(nyquist, 0) / f_min_sweep)))
+    octave_shifts = np.arange(k_min, k_max + 1)
+
+    for shift in octave_shifts:
+        scale = 2.0 ** shift
+        fmin_k = float(f) * scale
+        fmax_k = float(f) * (2.0 ** n_octaves) * scale
+
+        if min(fmin_k, fmax_k) >= nyquist:
+            continue
+
+        y += chirp(
+            fmin=fmin_k,
+            fmax=fmax_k,
+            sr=sr,
+            length=length,
+            duration=duration,
+            weighting=weighting,
+        )
+
     return y
 
 
