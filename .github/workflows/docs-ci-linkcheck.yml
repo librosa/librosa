@@ -1,0 +1,47 @@
+name: Post Linkcheck Comment
+on:
+  workflow_run:
+    workflows: ["CI Docs"]
+    types: [completed]
+
+jobs:
+  comment:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: linkcheck-results
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Parse status
+        id: status
+        run: echo "outcome=$(cat status.txt)" >> $GITHUB_OUTPUT
+
+      - name: Format failure preamble
+        if: github.event_name == 'pull_request' && steps.linkcheck.outcome == 'failure'
+        run: |
+          echo "### ⚠️ Sphinx Linkcheck Failed" > linkcheck-comment.md
+          echo "The following URLs reported errors or timeouts. Inspect to determine if these are transient network failures:" >> linkcheck-comment.md
+          echo '```text' >> linkcheck-comment.md
+          cat docs/_build/linkcheck/output.txt >> linkcheck-comment.md
+          echo '```' >> linkcheck-comment.md
+
+      - name: Post or update PR comment (Failure)
+        if: github.event_name == 'pull_request' && steps.linkcheck.outcome == 'failure'
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          header: linkcheck-failure-log
+          path: linkcheck-comment.md
+
+      - name: Update PR comment (Success)
+        if: github.event_name == 'pull_request' && steps.linkcheck.outcome == 'success'
+        uses: marocchino/sticky-pull-request-comment@v3
+        with:
+          header: linkcheck-failure-log
+          message: |
+            ### ✅ Sphinx Linkcheck Passed
+            All target links are resolving successfully.
