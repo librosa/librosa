@@ -219,6 +219,7 @@ def onset_strength(
     center: bool = True,
     feature: Callable | None = None,
     aggregate: Callable | bool | None = None,
+    top_db: float | None = 80.0,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope.
@@ -279,6 +280,17 @@ def onset_strength(
 
         Default: `np.mean`
 
+    top_db : float or None
+        Threshold the spectrogram at ``top_db`` below its peak before the
+        dB conversion, as in `power_to_db`.  The peak is computed over the
+        frequency and time axes, independently for each leading channel, so
+        a numeric value couples every frame in a channel to the loudest one.
+        Pass ``None`` to disable that coupling.
+
+        Note that this does not make the result depend on a single frame:
+        onset strength is a spectral flux, so it compares each frame with
+        the one ``lag`` frames earlier, and ``detrend`` adds a further
+        dependence on neighbouring frames when enabled.
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
@@ -354,6 +366,7 @@ def onset_strength(
         feature=feature,
         aggregate=aggregate,
         channels=None,
+        top_db=top_db,
         **kwargs,
     )
 
@@ -450,6 +463,7 @@ def onset_strength_multi(
     feature: Callable | None = None,
     aggregate: Callable | bool | None = None,
     channels: Sequence[int] | Sequence[slice] | None = None,
+    top_db: float | None = 80.0,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope across multiple channels.
@@ -513,6 +527,17 @@ def onset_strength_multi(
         Array of channel boundaries or slice objects.
         If `None`, then a single channel is generated to span all bands.
 
+    top_db : float or None
+        Threshold the spectrogram at ``top_db`` below its peak before the
+        dB conversion, as in `power_to_db`.  The peak is computed over the
+        frequency and time axes, independently for each leading channel, so
+        a numeric value couples every frame in a channel to the loudest one.
+        Pass ``None`` to disable that coupling.
+
+        Note that this does not make the result depend on a single frame:
+        onset strength is a spectral flux, so it compares each frame with
+        the one ``lag`` frames earlier, and ``detrend`` adds a further
+        dependence on neighbouring frames when enabled.
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
@@ -574,7 +599,7 @@ def onset_strength_multi(
         S = np.abs(feature(y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, **kwargs))
 
         # Convert to dBs
-        S = core.power_to_db(S)
+        S = core.power_to_db(S, top_db=top_db)
 
     # Assertion to make type checking happy
     assert S is not None
