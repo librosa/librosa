@@ -103,12 +103,17 @@ jobs:
         - name: Save linkcheck output
           run: cp docs/_build/linkcheck/output.txt output.txt || touch output.txt
 
+        - name: Save PR number
+          if: github.event_name == 'pull_request'
+          run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
+
         - uses: actions/upload-artifact@v4
           with:
             name: linkcheck-results
             path: |
               status.txt
               output.txt
+              pr_number.txt
 
         - name: Warn on linkcheck failure
           if: steps.linkcheck.outcome == 'failure'

@@ -17,30 +17,42 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - name: Parse status
-        id: status
-        run: echo "outcome=$(cat status.txt)" >> $GITHUB_OUTPUT
+      - name: Parse artifact data
+        id: data
+        run: |
+          echo "outcome=$(cat status.txt)" >> $GITHUB_OUTPUT
+          echo "pr_number=$(cat pr_number.txt)" >> $GITHUB_OUTPUT
+
+      - name: Find existing failure comment
+        uses: peter-evans/find-comment@v3
+        id: find_comment
+        with:
+          issue-number: ${{ steps.data.outputs.pr_number }}
+          comment-author: 'github-actions[bot]'
+          body-includes: linkcheck-failure-log
 
       - name: Format failure preamble
-        if: github.event_name == 'pull_request' && steps.status.outputs.outcome == 'failure'
+        if: steps.data.outputs.outcome == 'failure'
         run: |
           echo "### ⚠️ Sphinx Linkcheck Failed" > linkcheck-comment.md
           echo "The following URLs reported errors or timeouts. Inspect to determine if these are transient network failures:" >> linkcheck-comment.md
           echo '```text' >> linkcheck-comment.md
-          cat docs/_build/linkcheck/output.txt >> linkcheck-comment.md
+          cat output.txt >> linkcheck-comment.md
           echo '```' >> linkcheck-comment.md
 
       - name: Post or update PR comment (Failure)
-        if: github.event_name == 'pull_request' && steps.status.outputs.outcome == 'failure'
+        if: steps.data.outputs.outcome == 'failure'
         uses: marocchino/sticky-pull-request-comment@v3
         with:
+          number: ${{ steps.data.outputs.pr_number }}
           header: linkcheck-failure-log
           path: linkcheck-comment.md
 
       - name: Update PR comment (Success)
-        if: github.event_name == 'pull_request' && steps.status.outputs.outcome == 'success'
+        if: steps.data.outputs.outcome == 'success' && steps.find_comment.outputs.comment-id != ''
         uses: marocchino/sticky-pull-request-comment@v3
         with:
+          number: ${{ steps.data.outputs.pr_number }}
           header: linkcheck-failure-log
           message: |
             ### ✅ Sphinx Linkcheck Passed
