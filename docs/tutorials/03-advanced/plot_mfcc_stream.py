@@ -6,19 +6,29 @@ MFCC Streaming
 ===============
 
 This notebook demonstrates how to compute MFCCs incrementally on a stream of
-audio, and why the ``top_db`` parameter matters when you do.
+audio, and why the ``ref`` and ``top_db`` parameters matter when you do.
 
 `librosa.feature.mfcc` converts the mel spectrogram to decibels with
-`librosa.power_to_db`, which by default thresholds the result at ``top_db``
-below its peak.  That peak is taken over the entire array it is given,
-including the time axis.  When you process a whole file at once, the peak is
-the loudest moment in the file.  When you process the same audio block by
-block, each block gets its own peak.
+`librosa.power_to_db`.  That conversion has two places where a value can be
+reduced over the input, and each one couples a frame to the rest of the array
+it arrived in:
+
+- ``ref``, when it is a callable such as `np.max`, is evaluated over the
+  frequency and time axes.
+- ``top_db``, when it is not ``None``, thresholds the output at ``top_db``
+  below the maximum over those same axes.
+
+`librosa.feature.mfcc` defaults to ``ref=1.0``, a fixed scalar, so in the
+default configuration ``top_db`` is the one that binds.  When you process a
+whole file at once the threshold is set by the loudest moment in the file;
+when you process the same audio block by block, each block is thresholded
+against its own loudest moment.
 
 The consequence is that MFCCs computed on a stream do not match MFCCs computed
 on the whole file, and neither is a function of the individual frame.  Passing
-``top_db=None`` disables the threshold and makes the computation frame-local,
+``top_db=None`` removes that coupling and makes the computation frame-local,
 which is what you want when the features must not depend on their context.
+Passing a callable ``ref`` puts the coupling back, deliberately.
 """
 
 ##################################################
@@ -45,7 +55,7 @@ n_fft = 2048
 hop_length = 512
 n_mfcc = 13
 
-sr = librosa.get_samplerate(filename)
+sr = 22050
 
 
 def streamed_mfcc(**kwargs):
@@ -55,6 +65,7 @@ def streamed_mfcc(**kwargs):
         block_length=16,
         frame_length=n_fft,
         hop_length=hop_length,
+        sr=sr,
         mono=True,
         fill_value=0,
     )
@@ -105,6 +116,27 @@ none_error = np.max(np.abs(whole_none[:, :n] - stream_none[:, :n]))
 print(f"top_db=None:       max difference = {none_error:.4g}")
 
 #####################################################################
+# ``top_db`` is not the only way to couple a frame to its context.  The
+# reference value is the other one.  ``ref`` defaults to the scalar ``1.0``,
+# which is why disabling ``top_db`` above was sufficient; passing a callable
+# such as `np.max` reduces over the same axes and reintroduces exactly the
+# same disagreement, with the threshold still switched off.
+whole_refmax = librosa.feature.mfcc(
+    y=y, sr=sr, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length,
+    center=False, top_db=None, ref=np.max,
+)
+stream_refmax = streamed_mfcc(top_db=None, ref=np.max)
+
+n = min(whole_refmax.shape[1], stream_refmax.shape[1])
+refmax_error = np.max(np.abs(whole_refmax[:, :n] - stream_refmax[:, :n]))
+print(f"top_db=None, ref=np.max: max difference = {refmax_error:.4g}")
+
+#####################################################################
+# So the two parameters have to be considered together.  A frame-local
+# computation needs a scalar ``ref`` *and* ``top_db=None``; setting either
+# one alone leaves the other free to reintroduce the dependence.
+
+#####################################################################
 # Plotting the difference makes the structure visible.  The error is not
 # spread evenly: it appears wherever a block's own peak differs from the
 # peak of the whole file, so it shows up as sharp bands at the block
@@ -143,10 +175,11 @@ fig.colorbar(img, ax=ax[2])
 # with a loud event appended.
 #
 # If you are building a feature pipeline whose outputs must be
-# comparable across those situations, pass ``top_db=None`` and, if you
-# need a floor, apply one you control with `librosa.power_to_db` and an
-# explicit ``ref``.
+# comparable across those situations, pass ``top_db=None`` and leave
+# ``ref`` as a scalar.  If you need a floor, apply one you control after
+# the fact rather than one that depends on what else was in the buffer.
 #
-# The same parameter is available on `librosa.feature.spectral_contrast`,
-# `librosa.onset.onset_strength` and `librosa.onset.onset_strength_multi`,
-# which route through `librosa.power_to_db` in the same way.
+# Both parameters are available on `librosa.feature.spectral_contrast`, and
+# ``top_db`` on `librosa.onset.onset_strength` and
+# `librosa.onset.onset_strength_multi`, which route through
+# `librosa.power_to_db` in the same way.
