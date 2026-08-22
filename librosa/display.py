@@ -35,7 +35,6 @@ from matplotlib.legend import Legend
 from matplotlib.legend_handler import HandlerBase, HandlerLine2D, HandlerPatch
 
 from . import core, util
-from .util.decorators import moved
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
@@ -1250,12 +1249,6 @@ def infer_cmap(
         return cmap_seq
 
     return cmap_div
-
-
-# Deprecation rename of cmap -> infer_cmap for 1.0
-cmap = moved(moved_from="librosa.display.cmap", version="1.0", version_removed="1.1")(
-    infer_cmap
-)
 
 
 def __envelope(x, hop):
