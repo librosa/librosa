@@ -1842,7 +1842,7 @@ def test_amplitude_to_db_complex(rng):
 
 def test_amplitude_to_db_scalar():
     assert np.isclose(librosa.amplitude_to_db(1), 0)
-    assert np.isclose(librosa.amplitude_to_db(2), 6.0206)
+    assert np.isclose(librosa.amplitude_to_db(6.0206), 2)
 
 
 def test_power_to_db_scalar():
@@ -2305,6 +2305,14 @@ def test_shepard_tone(frequency, sr, duration, weighting, taper):
     assert np.all(np.isfinite(y))
 
 
+def test_shepard_tone_bounds_filtering():
+    # Test frequency bounds filtering (freq_k >= nyquist or freq_k < 30)
+    # Using low and high base frequencies relative to sr
+    y_low = librosa.shepard_tone(20.0, sr=1000.0, length=100, weighting=None)
+    assert len(y_low) == 100
+    assert np.all(np.isfinite(y_low))
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize(
     "frequency",
@@ -2312,6 +2320,11 @@ def test_shepard_tone(frequency, sr, duration, weighting, taper):
 )
 def test_shepard_tone_frequency_bounds_fail(frequency):
     librosa.shepard_tone(frequency, sr=22050, duration=0.5)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_shepard_tone_no_length_or_duration():
+    librosa.shepard_tone(440.0, sr=22050, length=None, duration=None)
 
 
 @pytest.mark.parametrize("f", [110.0])
@@ -2328,6 +2341,13 @@ def test_shepard_scale(f, sr, duration, n_steps, intervals, weighting):
     assert np.all(np.isfinite(y))
 
 
+def test_shepard_scale_zero_step_len():
+    # Test step_len <= 0 branch in shepard_scale loop by requesting more steps than output samples
+    y = librosa.shepard_scale(110.0, sr=22050, length=5, n_steps=10)
+    assert len(y) == 5
+    assert np.all(np.isfinite(y))
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize(
     "f",
@@ -2335,6 +2355,11 @@ def test_shepard_scale(f, sr, duration, n_steps, intervals, weighting):
 )
 def test_shepard_scale_frequency_bounds_fail(f):
     librosa.shepard_scale(f, sr=22050, duration=0.5)
+
+
+@pytest.mark.xfail(raises=librosa.ParameterError)
+def test_shepard_scale_no_length_or_duration():
+    librosa.shepard_scale(110.0, sr=22050, length=None, duration=None)
 
 
 @pytest.mark.parametrize("f", [220.0])
@@ -2389,6 +2414,17 @@ def test_shepard_risset_glissando_cross_nyquist(n_octaves):
     assert len(y) == int(sr * duration)
     assert np.all(np.isfinite(y))
     assert np.any(y != 0.0)
+
+
+def test_shepard_risset_glissando_nyquist_skip():
+    # Test min(fmin_k, fmax_k) >= nyquist skip branch in shepard_risset_glissando
+    sr = 22050
+    # f is below Nyquist (valid input parameter) but high octave shift components exceed Nyquist
+    y = librosa.shepard_risset_glissando(
+        10000.0, sr=sr, duration=0.5, n_octaves=2.0
+    )
+    assert len(y) == int(0.5 * sr)
+    assert np.all(np.isfinite(y))
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
