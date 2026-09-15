@@ -179,24 +179,26 @@ def test_hpss_multi(y_multi):
     assert not np.allclose(CPall[0], CPall[1])
 
 
-def test_percussive(ysr):
+@pytest.mark.parametrize("window", ["hann", "hamming", "blackman"])
+def test_percussive(ysr, window):
 
     y, sr = ysr
 
-    yh1, yp1 = librosa.effects.hpss(y)
+    yh1, yp1 = librosa.effects.hpss(y, window=window)
 
-    yp2 = librosa.effects.percussive(y)
+    yp2 = librosa.effects.percussive(y, window=window)
 
     assert np.allclose(yp1, yp2)
 
 
-def test_harmonic(ysr):
+@pytest.mark.parametrize("window", ["hann", "hamming", "blackman"])
+def test_harmonic(ysr, window):
 
     y, sr = ysr
 
-    yh1, yp1 = librosa.effects.hpss(y)
+    yh1, yp1 = librosa.effects.hpss(y, window=window)
 
-    yh2 = librosa.effects.harmonic(y)
+    yh2 = librosa.effects.harmonic(y, window=window)
 
     assert np.allclose(yh1, yh2)
 
@@ -208,7 +210,7 @@ def test_harmonic(ysr):
 def test_effects_window(ysr, effect_fn):
     # The window must reach the STFT.  Asserting only that the outputs differ
     # would also pass if it reached stft but not istft, so the reconstruction
-    # check below pins both.
+    # check below and component equivalence tests above pin synthesis as well.
     y, sr = ysr
 
     def first(result):
