@@ -1842,7 +1842,7 @@ def test_amplitude_to_db_complex(rng):
 
 def test_amplitude_to_db_scalar():
     assert np.isclose(librosa.amplitude_to_db(1), 0)
-    assert np.isclose(librosa.amplitude_to_db(6.0206), 2)
+    assert np.isclose(librosa.amplitude_to_db(2), 6.0206)
 
 
 def test_power_to_db_scalar():
