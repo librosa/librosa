@@ -45,6 +45,7 @@ __all__ = [
     "autocorrelate",
     "lpc",
     "zero_crossings",
+    "envelope",
     "clicks",
     "tone",
     "chirp",
@@ -1729,6 +1730,108 @@ def zero_crossings(
     zi[..., 0] = pad
 
     return z
+
+
+def envelope(
+    y: np.ndarray,
+    *,
+    frame_length: int = 2048,
+    hop_length: int = 512,
+    kind: str = "max",
+    mode: str = "reflect",
+    center: bool = True,
+    percentile: float = 100.0,
+    axis: int = -1,
+) -> np.ndarray:
+    """
+    Compute a time-domain amplitude envelope using 1D filtering operations.
+
+    Parameters
+    ----------
+    y : np.ndarray
+        Audio time series. Multi-channel is supported.
+
+    frame_length : int > 0
+        The size of the filtering window in samples.
+
+    hop_length : int > 0
+        The number of samples to advance between decimated output samples.
+
+    kind : str
+        The type of filtering operation:
+        - ``'max'`` : maximum filter
+        - ``'min'`` : minimum filter
+        - ``'median'`` : median filter
+        - ``'percentile'`` : percentile filter (using ``percentile`` argument)
+
+    mode : str
+        Padding mode passed to `scipy.ndimage` filter functions (e.g. ``'reflect'``,
+        ``'constant'``, ``'nearest'``, ``'mirror'``, ``'wrap'``).
+
+    percentile : float
+        Percentile value (between 0 and 100) used when ``kind='percentile'``.
+
+    axis : int
+        Axis along which to compute the envelope.
+
+    Returns
+    -------
+    y_env : np.ndarray
+        Decimated amplitude envelope computed along ``axis``.
+
+    Raises
+    ------
+    ParameterError
+        - If ``y`` is not valid audio.
+        - If ``frame_length`` or ``hop_length`` are not positive integers.
+        - If ``kind`` is unrecognized.
+
+    Examples
+    --------
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> env = librosa.envelope(y, frame_length=2048, hop_length=512, kind='max')
+    >>> env.shape
+    (230,)
+    """
+    import scipy.ndimage
+
+    util.valid_audio(y)
+
+    # scipy.ndimage bounds `origin` between -(size // 2) and (size - 1) // 2.
+    # 0 maps directly to center=True. -(frame_length // 2) maps directly to center=False (left-aligned).
+    origin_val = 0 if center else -(frame_length // 2)
+
+    if kind in ("max", "min"):
+        kwargs = {"size": frame_length,
+                  "mode": mode,
+                  "origin": origin_val,
+                  "axis": axis}
+        if kind == "max":
+            env = scipy.ndimage.maximum_filter1d(y, **kwargs)
+        else:
+            env = scipy.ndimage.minimum_filter1d(y, **kwargs)
+    elif kind in ("percentile", "median"):
+        # scipy.ndimage lacks 1D variants for median/percentile.
+        # We enforce 1D operation across the target axis by passing tuple shapes.
+        size_tuple = [1] * y.ndim
+        size_tuple[axis] = frame_length
+
+        origin_tuple = [0] * y.ndim
+        origin_tuple[axis] = origin_val
+
+        kwargs = {"size": tuple(size_tuple), "mode": mode, "origin": tuple(origin_tuple)}
+
+        if kind == "percentile":
+            env = scipy.ndimage.percentile_filter(y, percentile=percentile, **kwargs)
+        else:
+            env = scipy.ndimage.median_filter(y, **kwargs)
+    else:
+        raise ParameterError(f"Unsupported envelope kind: {kind}")
+
+    # Decimate output along the specified axis
+    slices = [slice(None)] * y.ndim
+    slices[axis] = slice(None, None, hop_length)
+    return env[tuple(slices)]
 
 
 def clicks(
