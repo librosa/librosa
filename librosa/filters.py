@@ -375,11 +375,11 @@ def __float_window(window_spec):
 
     For integer-valued ``x``, there should be no change in behavior.
     """
-    def _wrap(n, *args, **kwargs):
+    def _wrap(n, **kwargs):
         """Wrap the window"""
         n_min, n_max = int(np.floor(n)), int(np.ceil(n))
 
-        window = get_window(window_spec, n_min)
+        window = get_window(window_spec, n_min, **kwargs)
 
         if len(window) < n_max:
             window = np.pad(window, [(0, n_max - len(window))], mode="constant")
