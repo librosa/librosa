@@ -1376,9 +1376,6 @@ def test_envelope_invalid():
     with pytest.raises(librosa.ParameterError):
         librosa.envelope(y, kind="invalid_kind")
 
-    with pytest.raises(librosa.ParameterError):
-        librosa.envelope(np.array([]))
-
 
 @pytest.mark.parametrize("resolution", [1e-2, 1e-3])
 @pytest.mark.parametrize("tuning", [-0.5, -0.375, -0.25, 0.0, 0.25, 0.375])

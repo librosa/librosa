@@ -1,6 +1,7 @@
 from .audio import autocorrelate as autocorrelate
 from .audio import chirp as chirp
 from .audio import clicks as clicks
+from .audio import envelope as envelope
 from .audio import get_duration as get_duration
 from .audio import get_samplerate as get_samplerate
 from .audio import load as load
