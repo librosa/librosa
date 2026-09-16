@@ -375,7 +375,7 @@ def __float_window(window_spec):
 
     For integer-valued ``x``, there should be no change in behavior.
     """
-    def _wrap(n, *args, **kwargs):
+    def _wrap(n):
         """Wrap the window"""
         n_min, n_max = int(np.floor(n)), int(np.ceil(n))
 
