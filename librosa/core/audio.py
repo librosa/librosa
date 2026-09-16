@@ -3,7 +3,7 @@
 """Core IO, DSP and utility functions."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Literal, overload
 
 import lazy_loader as lazy
 import numpy as np
@@ -1737,8 +1737,8 @@ def envelope(
     *,
     frame_length: int = 2048,
     hop_length: int = 512,
-    kind: str = "max",
-    mode: str = "reflect",
+    kind: Literal["max", "min", "median", "percentile"] = "max",
+    mode: Literal["reflect", "constant", "nearest", "mirror", "wrap"] = "reflect",
     center: bool = True,
     percentile: float = 100.0,
     axis: int = -1,
