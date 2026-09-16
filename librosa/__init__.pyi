@@ -17,6 +17,7 @@ from .core import cqt as cqt
 from .core import cqt_frequencies as cqt_frequencies
 from .core import db_to_amplitude as db_to_amplitude
 from .core import db_to_power as db_to_power
+from .core import envelope as envelope
 from .core import estimate_tuning as estimate_tuning
 from .core import f0_harmonics as f0_harmonics
 from .core import fft_frequencies as fft_frequencies

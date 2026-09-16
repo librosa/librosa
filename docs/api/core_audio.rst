@@ -24,4 +24,5 @@ Audio signals
     shepard_risset_glissando
 
     autocorrelate
+    envelope
     zero_crossings
