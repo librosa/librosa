@@ -1490,11 +1490,11 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
 
     # Call the helper, and swap the results back to the target axis position
     return np.swapaxes(
-        __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon), 0, axis
+        __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, float(epsilon)), 0, axis
     )
 
 
-@jit(nopython=True, cache=True)  # type: ignore
+@jit(nopython=True, cache=True)
 def __lpc(
     y: np.ndarray,
     order: int,
@@ -1802,14 +1802,18 @@ def envelope(
     origin_val = 0 if center else -(frame_length // 2)
 
     if kind in ("max", "min"):
-        kwargs = {"size": frame_length,
-                  "mode": mode,
-                  "origin": origin_val,
-                  "axis": axis}
         if kind == "max":
-            env = scipy.ndimage.maximum_filter1d(y, **kwargs)
+            env = scipy.ndimage.maximum_filter1d(y,
+                                                 size=frame_length,
+                                                 mode=mode,
+                                                 origin=origin_val,
+                                                 axis=axis)
         else:
-            env = scipy.ndimage.minimum_filter1d(y, **kwargs)
+            env = scipy.ndimage.minimum_filter1d(y,
+                                                 size=frame_length,
+                                                 mode=mode,
+                                                 origin=origin_val,
+                                                 axis=axis)
     elif kind in ("percentile", "median"):
         # scipy.ndimage lacks 1D variants for median/percentile.
         # We enforce 1D operation across the target axis by passing tuple shapes.
@@ -1819,12 +1823,16 @@ def envelope(
         origin_tuple = [0] * y.ndim
         origin_tuple[axis] = origin_val
 
-        kwargs = {"size": tuple(size_tuple), "mode": mode, "origin": tuple(origin_tuple)}
-
         if kind == "percentile":
-            env = scipy.ndimage.percentile_filter(y, percentile=percentile, **kwargs)
+            env = scipy.ndimage.percentile_filter(y, percentile=percentile,
+                                                  size=tuple(size_tuple),
+                                                  mode=mode,
+                                                  origin=tuple(origin_tuple))
         else:
-            env = scipy.ndimage.median_filter(y, **kwargs)
+            env = scipy.ndimage.median_filter(y,
+                                              size=tuple(size_tuple),
+                                              mode=mode,
+                                              origin=tuple(origin_tuple))
     else:
         raise ParameterError(f"Unsupported envelope kind: {kind}")
 
