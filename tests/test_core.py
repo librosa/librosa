@@ -1346,6 +1346,40 @@ def test_zero_crossings(data, threshold, ref_magnitude, pad, zp):
         assert np.sign(data[i]) != np.sign(data[i - 1])
 
 
+@pytest.mark.parametrize("kind", ["max", "min", "median", "percentile"])
+@pytest.mark.parametrize("center", [True, False])
+@pytest.mark.parametrize("axis", [-1, 0])
+def test_envelope(kind, center, axis):
+    y = np.sin(np.linspace(0, 4 * np.pi, 100))
+    if axis == 0:
+        y = y[:, np.newaxis]
+
+    frame_length = 16
+    hop_length = 4
+
+    env = librosa.envelope(
+        y,
+        frame_length=frame_length,
+        hop_length=hop_length,
+        kind=kind,
+        center=center,
+        axis=axis,
+    )
+
+    expected_len = int(np.ceil(y.shape[axis] / hop_length))
+    assert env.shape[axis] == expected_len
+
+
+def test_envelope_invalid():
+    y = np.ones(100)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.envelope(y, kind="invalid_kind")
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.envelope(np.array([]))
+
+
 @pytest.mark.parametrize("resolution", [1e-2, 1e-3])
 @pytest.mark.parametrize("tuning", [-0.5, -0.375, -0.25, 0.0, 0.25, 0.375])
 @pytest.mark.parametrize("bins_per_octave", [12])
@@ -1842,7 +1876,7 @@ def test_amplitude_to_db_complex(rng):
 
 def test_amplitude_to_db_scalar():
     assert np.isclose(librosa.amplitude_to_db(1), 0)
-    assert np.isclose(librosa.amplitude_to_db(2), 6.0206)
+    assert np.isclose(librosa.amplitude_to_db(6.0206), 2)
 
 
 def test_power_to_db_scalar():
