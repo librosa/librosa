@@ -1494,7 +1494,7 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     )
 
 
-@jit(nopython=True, cache=True)
+@jit(nopython=True, cache=True)  # type: ignore
 def __lpc(
     y: np.ndarray,
     order: int,
