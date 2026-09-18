@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Visualizing spectral data and 2D matrices."""
+"""
+Image and spectral visualization
+================================
+
+This module provides functionalities for visualizing 2D spectral data
+and matrices as images. It forms the core of `specshow`, handling the
+coordinate grids, color mapping, and rendering of spectrograms and
+chromagrams.
+"""
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations

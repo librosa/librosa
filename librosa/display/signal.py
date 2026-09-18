@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Visualizing time-domain signals and waveforms."""
+"""
+Time-domain signal visualization
+================================
+
+This module contains tools for visualizing time-domain audio signals,
+waveforms, and their overlays. It includes functions like `waveshow`,
+`wavebars`, and `wavef0` which handle adaptive plotting based on
+zoom levels and sequence lengths.
+"""
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations

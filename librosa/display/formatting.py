@@ -1,6 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Tick formatters and axis decoration for musical and time/frequency axes."""
+"""
+Tick formatters and axis decoration
+===================================
+
+This module provides specialized Matplotlib formatters and tick locators for
+musical and time/frequency axes. It includes utilities for formatting time,
+frequencies (linear and log), musical notes, chords, and chromatic scales.
+"""
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations

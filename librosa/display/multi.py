@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Multi-plot orchestration and plot highlighting."""
+"""
+Multi-plot orchestration
+========================
+
+This module offers utilities for orchestrating multiple synchronized
+plots and highlighting specific data regions. It supports creating
+complex visualizations with shared axes and unified legends, integrating
+with tools like `multiplot` and `highlight`.
+"""
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
