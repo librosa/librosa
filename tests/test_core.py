@@ -1346,7 +1346,7 @@ def test_zero_crossings(data, threshold, ref_magnitude, pad, zp):
         assert np.sign(data[i]) != np.sign(data[i - 1])
 
 
-@pytest.mark.parametrize("kind", ["max", "min", "median", "percentile"])
+@pytest.mark.parametrize("kind", ["max", "min", "max_abs", "median", "percentile"])
 @pytest.mark.parametrize("center", [True, False])
 @pytest.mark.parametrize("axis", [-1, 0])
 def test_envelope(kind, center, axis):

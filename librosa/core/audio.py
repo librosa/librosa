@@ -1760,6 +1760,7 @@ def envelope(
     kind : str
         The type of filtering operation:
         - ``'max'`` : maximum filter
+        - ``'max_abs'``: maximum of absolute value
         - ``'min'`` : minimum filter
         - ``'median'`` : median filter
         - ``'percentile'`` : percentile filter (using ``percentile`` argument)
@@ -1801,9 +1802,15 @@ def envelope(
     # 0 maps directly to center=True. -(frame_length // 2) maps directly to center=False (left-aligned).
     origin_val = 0 if center else -(frame_length // 2)
 
-    if kind in ("max", "min"):
+    if kind in ("max", "min", "max_abs"):
         if kind == "max":
             env = scipy.ndimage.maximum_filter1d(y,
+                                                 size=frame_length,
+                                                 mode=mode,
+                                                 origin=origin_val,
+                                                 axis=axis)
+        elif kind == "max_abs":
+            env = scipy.ndimage.maximum_filter1d(np.abs(y),
                                                  size=frame_length,
                                                  mode=mode,
                                                  origin=origin_val,
