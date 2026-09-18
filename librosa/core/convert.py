@@ -2183,7 +2183,7 @@ def samples_like(
     """
     # suppress type checks because mypy does not understand isscalar
     if np.isscalar(X):
-        frames = np.arange(X)  # type: ignore
+        frames = np.arange(X)
     else:
         frames = np.arange(X.shape[axis])  # type: ignore
     return frames_to_samples(frames, hop_length=hop_length, n_fft=n_fft)

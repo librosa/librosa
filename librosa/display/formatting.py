@@ -8,6 +8,7 @@ This module provides specialized Matplotlib formatters and tick locators for
 musical and time/frequency axes. It includes utilities for formatting time,
 frequencies (linear and log), musical notes, chords, and chromatic scales.
 """
+# mypy: disable-error-code="attr-defined"
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
@@ -51,8 +52,6 @@ if TYPE_CHECKING:
 
     from .._typing import ArrayLike, _Array1D, _FloatLike_co
 
-
-# mypy: disable-error-code="attr-defined"
 
 # Keeps adaptors alive as long as their Axes exists, preventing GC
 _WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[mplaxes.Axes, set["AdaptiveWaveplot"]] = (

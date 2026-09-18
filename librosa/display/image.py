@@ -9,6 +9,7 @@ and matrices as images. It forms the core of `specshow`, handling the
 coordinate grids, color mapping, and rendering of spectrograms and
 chromagrams.
 """
+# mypy: disable-error-code="attr-defined"
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations

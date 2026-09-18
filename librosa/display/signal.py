@@ -9,6 +9,7 @@ waveforms, and their overlays. It includes functions like `waveshow`,
 `wavebars`, and `wavef0` which handle adaptive plotting based on
 zoom levels and sequence lengths.
 """
+# mypy: disable-error-code="attr-defined"
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations

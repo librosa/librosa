@@ -9,6 +9,7 @@ plots and highlighting specific data regions. It supports creating
 complex visualizations with shared axes and unified legends, integrating
 with tools like `multiplot` and `highlight`.
 """
+# mypy: disable-error-code="attr-defined"
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
