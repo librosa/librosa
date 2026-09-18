@@ -1042,7 +1042,7 @@ def test_display_fourier_tempo_odd():
     ],
 )
 def test_same_axes(x_axis, y_axis, xlim, ylim, out):
-    assert librosa.display.__same_axes(x_axis, y_axis, xlim, ylim) == out
+    assert librosa.display._same_axes(x_axis, y_axis, xlim, ylim) == out
 
 
 def test_auto_aspect():
@@ -1283,13 +1283,13 @@ def test_vqt_hz_nointervals(C, sr):
 def test_parse_vscale_dbfs_ref(vscale):
     # This should raise an error because a reference value is
     # not allowed with dBFS
-    librosa.display.__parse_vscale(vscale)
+    librosa.display._parse_vscale(vscale)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("vscale", ["bad string", "dB[gibberish]", "dBFS[gibberish]"])
 def test_parse_vscale_fail(vscale):
-    librosa.display.__parse_vscale(vscale)
+    librosa.display._parse_vscale(vscale)
 
 
 @pytest.mark.parametrize(
@@ -1306,7 +1306,7 @@ def test_parse_vscale_fail(vscale):
     ],
 )
 def test_parse_vscale(vscale, mode, scale_type, ref):
-    assert librosa.display.__parse_vscale(vscale) == (mode, scale_type, ref)
+    assert librosa.display._parse_vscale(vscale) == (mode, scale_type, ref)
 
 
 @pytest.mark.mpl_image_compare(
