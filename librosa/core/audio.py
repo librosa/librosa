@@ -1737,7 +1737,7 @@ def envelope(
     *,
     frame_length: int = 2048,
     hop_length: int = 512,
-    kind: Literal["max", "min", "median", "percentile"] = "max",
+    kind: Literal["max", "min", "max_abs", "median", "percentile"] = "max",
     mode: Literal["reflect", "constant", "nearest", "mirror", "wrap"] = "reflect",
     center: bool = True,
     percentile: float = 100.0,
