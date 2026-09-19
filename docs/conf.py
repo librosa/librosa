@@ -159,19 +159,18 @@ plot_rcparams = {
 }
 
 
-def reset_mpl(gallery_conf, fname):
-    global plot_rcparams
-
+def reset_mpl():
     import matplotlib
     import matplotlib.pyplot as plt
 
     matplotlib.rcParams.update(**plot_rcparams)
     plt.close("all")
 
-def reset_numpy_printoptions(gallery_conf, fname):
+def reset_numpy_printoptions(gallery_conf, fname):  # noqa: ARG001
+    # gallery_conf and fname are required by sphinx-gallery's reset_modules interface and are unused in this method
     import numpy as np
     np.set_printoptions(precision=3, suppress=True)
-    reset_mpl(gallery_conf, fname)
+    reset_mpl()
 
 # Gallery
 sphinx_gallery_conf = {
@@ -472,7 +471,8 @@ linkcheck_ignore = ["https://www.ee.columbia.edu/~dpwe/resources/.*",
                     "https://zenodo.org/.*",
                     "https://transactions.ismir.net/.*"]
 
-def skip_matplotlib_inherited(app, what, name, obj, skip, options):
+def skip_matplotlib_inherited(app, what, name, obj, skip, options):  # noqa: ARG001
+    # app, what, name, and options are required by Sphinx's autodoc-skip-member interface and are unused in this method
     """Filter out inherited matplotlib methods from autodoc."""
     mod = getattr(obj, "__module__", "")
     if mod and mod.startswith("matplotlib"):
