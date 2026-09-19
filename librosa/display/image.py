@@ -13,24 +13,26 @@ chromagrams.
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
-from typing import TYPE_CHECKING
+
 import re
 import warnings
+from typing import TYPE_CHECKING
 
 # Third-party imports for plotting and numerical operations
 import matplotlib.axes as mplaxes
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
-from matplotlib import colormaps as mcm
 import numpy as np
+from matplotlib import colormaps as mcm
 
 # Core and utility imports for audio processing
 from .. import core
 from ..util.exceptions import ParameterError
- 
+
 # Image visualization utilities for spectral and 2D matrix displays
 if TYPE_CHECKING:
     from typing import Any, Callable
+
     from matplotlib.collections import QuadMesh
 
 # Module imports for image formatting and coordinate handling
@@ -49,7 +51,6 @@ from .formatting import (
     _same_axes,
     _scale_axes,
     infer_cmap,
-    cmap
 )
 
 

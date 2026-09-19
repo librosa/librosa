@@ -12,13 +12,14 @@ frequencies (linear and log), musical notes, chords, and chromatic scales.
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
-from typing import TYPE_CHECKING, cast
+
 import warnings
 import weakref
 
 # Third-party imports for plotting and numerical operations
 from fractions import Fraction
 from itertools import product
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.axes as mplaxes
 import matplotlib.colors as colors
@@ -27,10 +28,10 @@ import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mplticker
 import matplotlib.transforms as mtransforms
+import numpy as np
 from matplotlib import colormaps as mcm
 from matplotlib.legend import Legend
 from matplotlib.legend_handler import HandlerBase, HandlerLine2D, HandlerPatch
-import numpy as np
 
 # Core and utility imports for audio processing
 from .. import core, util
@@ -41,10 +42,10 @@ from ..util.exceptions import ParameterError
 if TYPE_CHECKING:
     from typing import Any, Collection, Sequence
 
-    import scipy.interpolate
     import matplotlib
     import matplotlib.axes
     import matplotlib.figure
+    import scipy.interpolate
     from matplotlib.artist import Artist
     from matplotlib.collections import PolyCollection
     from matplotlib.colors import Colormap

@@ -13,6 +13,7 @@ zoom levels and sequence lengths.
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
+
 from typing import TYPE_CHECKING, cast
 
 # Third-party imports for plotting and numerical operations
@@ -33,16 +34,16 @@ if TYPE_CHECKING:
     import matplotlib
     from matplotlib.markers import MarkerStyle
     from matplotlib.path import Path as MplPath
-    
+
     from .._typing import ArrayLike
 
 # Module imports for waveform formatting and adaptive plotting
 from .formatting import (
+    _WAVESHOW_ADAPTORS,
     AdaptiveWaveplot,
     Transformf0,
     _check_axes,
     _decorate_axis,
-    _WAVESHOW_ADAPTORS,
 )
 
 

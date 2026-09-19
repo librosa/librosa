@@ -13,12 +13,12 @@ with tools like `multiplot` and `highlight`.
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
-from typing import TYPE_CHECKING, cast
 
 # Third-party imports for plotting and numerical operations
 import colorsys
 import copy
 from itertools import cycle
+from typing import TYPE_CHECKING, cast
 
 import matplotlib.axes as mplaxes
 import matplotlib.cm as cm
@@ -32,7 +32,7 @@ from ..util.exceptions import ParameterError
 # Type checking imports for development and static analysis
 if TYPE_CHECKING:
     from typing import Any, Callable, Literal, Sequence
-    
+
     import cycler
     import matplotlib
     import matplotlib.figure
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
 # Module imports for image and signal display functions
 from .image import specshow
-from .signal import waveshow, wavebars
+from .signal import wavebars, waveshow
 
 
 def _squeeze_shape(shape: tuple[int, ...]) -> tuple[int, ...]:

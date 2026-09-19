@@ -13,6 +13,7 @@ from __future__ import annotations
 
 # Module imports for formatting and utility functions
 from .formatting import (
+    _WAVESHOW_ADAPTORS,
     AdaptiveWaveplot,
     ChromaFJSFormatter,
     ChromaFormatter,
@@ -23,29 +24,28 @@ from .formatting import (
     TimeFormatter,
     TonnetzFormatter,
     Transformf0,
+    _same_axes,
     cmap,
-    infer_cmap,
     colorbar_db,
     colorbar_phase,
-    _same_axes,
-    _WAVESHOW_ADAPTORS
+    infer_cmap,
 )
 
 # Module imports for image and signal display functions
-from .image import specshow, _parse_vscale
-from .signal import waveshow, wavebars, wavef0
+from .image import _parse_vscale, specshow
 from .multi import (
-    multiplot,
-    highlight,
-    legend_for_axes,
-    _squeeze_shape,
-    _resolve_multiplot,
     _mp_get_layout,
     _mp_setup_axes,
     _mp_setup_labels,
     _mp_setup_prop_group,
     _mp_setup_properties,
+    _resolve_multiplot,
+    _squeeze_shape,
+    highlight,
+    legend_for_axes,
+    multiplot,
 )
+from .signal import wavebars, wavef0, waveshow
 
 # Public API for the display module
 __all__ = [
