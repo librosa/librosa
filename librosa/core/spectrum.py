@@ -1386,20 +1386,6 @@ def phase_vocoder(
 
     .. [#] https://breakfastquay.com/rubberband/
 
-    Examples
-    --------
-    >>> # Play at double speed
-    >>> y, sr   = librosa.loadx('trumpet')
-    >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
-    >>> D_fast  = librosa.phase_vocoder(D, rate=2.0, hop_length=512)
-    >>> y_fast  = librosa.istft(D_fast, hop_length=512)
-
-    >>> # Or play at 1/3 speed
-    >>> y, sr   = librosa.loadx('trumpet')
-    >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
-    >>> D_slow  = librosa.phase_vocoder(D, rate=1./3, hop_length=512)
-    >>> y_slow  = librosa.istft(D_slow, hop_length=512)
-
     Parameters
     ----------
     D : np.ndarray [shape=(..., n_bins, n_frames), dtype=complex]
@@ -1445,6 +1431,20 @@ def phase_vocoder(
     See Also
     --------
     pyrubberband
+
+    Examples
+    --------
+    >>> # Play at double speed
+    >>> y, sr   = librosa.loadx('trumpet')
+    >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
+    >>> D_fast  = librosa.phase_vocoder(D, rate=2.0, hop_length=512)
+    >>> y_fast  = librosa.istft(D_fast, hop_length=512)
+
+    >>> # Or play at 1/3 speed
+    >>> y, sr   = librosa.loadx('trumpet')
+    >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
+    >>> D_slow  = librosa.phase_vocoder(D, rate=1./3, hop_length=512)
+    >>> y_slow  = librosa.istft(D_slow, hop_length=512)
     """
     n_frames = D.shape[-1]
 
@@ -1768,7 +1768,7 @@ def power_to_db(
         For multi-channel inputs, with `axes='auto'`, peaks
         are calculated independently for each channel.
 
-    axes: None, "auto", int, or tuple of int
+    axes : None, "auto", int, or tuple of int
         Axis or axes along which to compute the reference value (if `ref` is callable).
         If `auto`, then axes will be inferred as the trailing dimensions of `S`:
 

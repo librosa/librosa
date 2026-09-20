@@ -899,6 +899,10 @@ def preemphasis(
     zf : number
         if ``return_zf=True``, the final filter state is also returned
 
+    See Also
+    --------
+    deemphasis
+
     Examples
     --------
     Apply a standard pre-emphasis filter
@@ -924,10 +928,6 @@ def preemphasis(
     >>> y_filt_2, zf = librosa.effects.preemphasis(y[1000:], zi=zf, return_zf=True)
     >>> np.allclose(y_filt, np.concatenate([y_filt_1, y_filt_2]))
     True
-
-    See Also
-    --------
-    deemphasis
     """
     b = np.asarray([1.0, -coef], dtype=y.dtype)
     a = np.asarray([1.0], dtype=y.dtype)
@@ -1016,6 +1016,10 @@ def deemphasis(
     zf : number
         if ``return_zf=True``, the final filter state is also returned
 
+    See Also
+    --------
+    preemphasis
+
     Examples
     --------
     Apply a standard pre-emphasis filter and invert it with de-emphasis
@@ -1025,10 +1029,6 @@ def deemphasis(
     >>> y_deemph = librosa.effects.deemphasis(y_filt)
     >>> np.allclose(y, y_deemph)
     True
-
-    See Also
-    --------
-    preemphasis
     """
     b = np.array([1.0, -coef], dtype=y.dtype)
     a = np.array([1.0], dtype=y.dtype)

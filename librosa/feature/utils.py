@@ -61,13 +61,13 @@ def delta(
     delta_data : np.ndarray [shape=(..., t)]
         delta matrix of ``data`` at specified order
 
-    Notes
-    -----
-    This function caches at level 40.
-
     See Also
     --------
     scipy.signal.savgol_filter
+
+    Notes
+    -----
+    This function caches at level 40.
 
     Examples
     --------

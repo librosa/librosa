@@ -1644,17 +1644,6 @@ def specshow(
             - ``shading='auto'``
             - ``edgecolors='None'``
 
-    Notes
-    -----
-    The ``cmap`` option if not provided via `kwargs`, is inferred from data automatically.
-    If `vscale` is specified, the colormap will be sequential for decibels, and cyclic for phase
-    and phase differences.
-
-    If a diverging colormap is inferred, the color scale is normalized so that the center
-    value (``div_thresh=0`` by default) is at the center of the colormap.
-
-    To use matplotlib's default colormap, explicitly set ``cmap=None``.
-
     Returns
     -------
     colormesh : `matplotlib.collections.QuadMesh`
@@ -1666,6 +1655,17 @@ def specshow(
     colorbar_phase
     infer_cmap : Automatic colormap detection
     matplotlib.pyplot.pcolormesh
+
+    Notes
+    -----
+    The ``cmap`` option if not provided via `kwargs`, is inferred from data automatically.
+    If `vscale` is specified, the colormap will be sequential for decibels, and cyclic for phase
+    and phase differences.
+
+    If a diverging colormap is inferred, the color scale is normalized so that the center
+    value (``div_thresh=0`` by default) is at the center of the colormap.
+
+    To use matplotlib's default colormap, explicitly set ``cmap=None``.
 
     Examples
     --------
@@ -2532,14 +2532,6 @@ VSCALE_PATTERN = re.compile(
 def __parse_vscale(vscale: str) -> tuple[str, str, float | str | None]:
     """Parse a vscale string into mode, scale_type, and reference value.
 
-    Examples
-    --------
-    - 'dBFS' -> ('dBFS', 'amplitude', 'max')
-    - 'dBFS[power]' -> ('dBFS', 'power', 'max')
-    - 'dB[power,0.1]' -> ('dB', 'power', 0.1)
-    - 'dB[0.1]' -> ('dB', 'amplitude', 0.1)
-    - 'dB' -> ('dB', 'amplitude', None)
-
     Parameters
     ----------
     vscale : str
@@ -2549,6 +2541,14 @@ def __parse_vscale(vscale: str) -> tuple[str, str, float | str | None]:
     mode is one of 'dBFS' or 'dB'
     scale_type is one of 'power' or 'amplitude'
     ref is a float, None, or 'max'
+
+    Examples
+    --------
+    - 'dBFS' -> ('dBFS', 'amplitude', 'max')
+    - 'dBFS[power]' -> ('dBFS', 'power', 'max')
+    - 'dB[power,0.1]' -> ('dB', 'power', 0.1)
+    - 'dB[0.1]' -> ('dB', 'amplitude', 0.1)
+    - 'dB' -> ('dB', 'amplitude', None)
     """
     match = VSCALE_PATTERN.fullmatch(vscale)
     if not match:

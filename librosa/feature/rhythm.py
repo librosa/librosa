@@ -860,11 +860,6 @@ def metrogram(
        "METER2800: A novel dataset for music time signature detection."
        In Data in Brief, vol. 51, 109736, 2023.
 
-    See Also
-    --------
-    tempogram
-    tempogram_ratio
-
     Parameters
     ----------
     tg : np.ndarray
@@ -888,6 +883,11 @@ def metrogram(
     metrogram : np.ndarray
         The metrogram transform for the specified factors.
         If ``aggregate`` is set to ``None``, the ratios for all individual tempo bins are returned.
+
+    See Also
+    --------
+    tempogram
+    tempogram_ratio
 
     Examples
     --------
