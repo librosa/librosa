@@ -12,6 +12,7 @@ from numba import jit
 
 from .. import filters, util
 from .._cache import cache
+from ..util.decorators import deprecated
 from ..util.deprecation import Deprecated, rename_kw
 from ..util.exceptions import ParameterError
 from . import audio
@@ -205,6 +206,7 @@ def cqt(
     )
 
 
+@deprecated(version="1.1.0", version_removed="2.0")
 @cache(level=20)
 def hybrid_cqt(
     y: np.ndarray,
@@ -411,6 +413,7 @@ def hybrid_cqt(
     return __trim_stack(cqt_resp, n_bins, cqt_resp[-1].dtype)
 
 
+@deprecated(version="1.1.0", version_removed="2.0")
 @cache(level=20)
 def pseudo_cqt(
     y: np.ndarray,
