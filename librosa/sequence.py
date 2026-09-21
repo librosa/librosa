@@ -2049,14 +2049,14 @@ def transition_local(
         If ``True``, then state locality ``|i - j|`` is computed modulo ``n_states``.
         If ``False`` (default), then locality is absolute.
 
-    See Also
-    --------
-    librosa.filters.get_window
-
     Returns
     -------
     transition : np.ndarray [shape=(n_states, n_states)]
         The transition matrix
+
+    See Also
+    --------
+    librosa.filters.get_window
 
     Examples
     --------

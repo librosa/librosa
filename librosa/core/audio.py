@@ -664,6 +664,12 @@ def to_mono(
         All signals combined together into a single mono signal.
         If ``out`` was provided, this is the same object as ``out``.
 
+    See Also
+    --------
+    to_stereo
+    to_multi
+    util.fix_length
+
     Notes
     -----
     The dtype of the output signal will be the most general type that can
@@ -677,12 +683,6 @@ def to_mono(
 
         >>> y_mono = librosa.to_mono(y1, y2)
         >>> y_mono = librosa.to_mono(np.vstack((y1, y2)))
-
-    See Also
-    --------
-    to_stereo
-    to_multi
-    util.fix_length
 
     Examples
     --------
@@ -1191,28 +1191,6 @@ def get_duration(
 ) -> float:
     """Compute the duration (in seconds) of an audio time series, feature matrix, or filename.
 
-    Examples
-    --------
-    >>> # Load an example audio file
-    >>> y, sr = librosa.loadx('trumpet')
-    >>> librosa.get_duration(y=y, sr=sr)
-    5.333378684807256
-
-    >>> # Or directly from an audio file
-    >>> librosa.get_duration(filename=librosa.ex('trumpet'))
-    5.333378684807256
-
-    >>> # Or compute duration from an STFT matrix
-    >>> y, sr = librosa.loadx('trumpet')
-    >>> S = librosa.stft(y)
-    >>> librosa.get_duration(S=S, sr=sr)
-    5.317369614512471
-
-    >>> # Or a non-centered STFT matrix
-    >>> S_left = librosa.stft(y, center=False)
-    >>> librosa.get_duration(S=S_left, sr=sr)
-    5.224489795918367
-
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)] or None
@@ -1265,6 +1243,28 @@ def get_duration(
     provided.  If you do provide multiple options (e.g., ``path`` and ``S``),
     then ``path`` takes precedence over ``S``, and ``S`` takes precedence over
     ``(y, sr)``.
+
+    Examples
+    --------
+    >>> # Load an example audio file
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> librosa.get_duration(y=y, sr=sr)
+    5.333378684807256
+
+    >>> # Or directly from an audio file
+    >>> librosa.get_duration(filename=librosa.ex('trumpet'))
+    5.333378684807256
+
+    >>> # Or compute duration from an STFT matrix
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> S = librosa.stft(y)
+    >>> librosa.get_duration(S=S, sr=sr)
+    5.317369614512471
+
+    >>> # Or a non-centered STFT matrix
+    >>> S_left = librosa.stft(y, center=False)
+    >>> librosa.get_duration(S=S_left, sr=sr)
+    5.224489795918367
     """
     if path is not None:
         return sf.info(path).duration  # type: ignore

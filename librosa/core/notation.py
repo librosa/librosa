@@ -456,6 +456,12 @@ def list_mela() -> dict[str, int]:
     mela_map : dict
         A dictionary mapping melakarta raga names to indices (1, 2, ..., 72)
 
+    See Also
+    --------
+    mela_to_degrees
+    mela_to_svara
+    list_thaat
+
     Examples
     --------
     >>> librosa.list_mela()
@@ -464,12 +470,6 @@ def list_mela() -> dict[str, int]:
      'ganamurthi': 3,
      'vanaspathi': 4,
      ...}
-
-    See Also
-    --------
-    mela_to_degrees
-    mela_to_svara
-    list_thaat
     """
     return MELAKARTA_MAP.copy()
 
@@ -481,6 +481,11 @@ def list_thaat() -> list[str]:
     -------
     thaats : list
         A list of supported thaats
+
+    See Also
+    --------
+    list_mela
+    thaat_to_degrees
 
     Examples
     --------
@@ -495,11 +500,6 @@ def list_thaat() -> list[str]:
      'poorvi',
      'todi',
      'bhairav']
-
-    See Also
-    --------
-    list_mela
-    thaat_to_degrees
     """
     return list(THAAT_MAP.keys())
 
@@ -1134,6 +1134,11 @@ def interval_to_fjs(
         Otonal and utonal accidentals will be denoted by `^##` and `_##`
         respectively (see examples below).
 
+    Returns
+    -------
+    note_fjs : str or np.ndarray(dtype=str)
+        The interval(s) relative to the given unison in FJS notation.
+
     Raises
     ------
     ParameterError
@@ -1141,11 +1146,6 @@ def interval_to_fjs(
 
         If the provided interval cannot be identified with a
         just intonation prime factorization.
-
-    Returns
-    -------
-    note_fjs : str or np.ndarray(dtype=str)
-        The interval(s) relative to the given unison in FJS notation.
 
     Examples
     --------

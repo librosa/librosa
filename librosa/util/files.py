@@ -88,6 +88,11 @@ def example(key: str, *, hq: bool = False, url: bool = False) -> str:
     path : str
         The path or remote URL to the requested example file
 
+    See Also
+    --------
+    librosa.util.list_examples
+    pooch.os_cache
+
     Examples
     --------
     Load "Hungarian Dance #5" by Johannes Brahms
@@ -98,11 +103,6 @@ def example(key: str, *, hq: bool = False, url: bool = False) -> str:
     in high-quality mode
 
     >>> y, sr = librosa.load(librosa.example('vibeace', hq=True))
-
-    See Also
-    --------
-    librosa.util.list_examples
-    pooch.os_cache
     """
     if key not in __TRACKMAP:
         raise ParameterError(f"Unknown example key: {key}")
@@ -270,32 +270,6 @@ def find_files(
 ) -> list[str]:
     """Get a sorted list of (audio) files in a directory or directory sub-tree.
 
-    Examples
-    --------
-    >>> # Get all audio files in a directory sub-tree
-    >>> files = librosa.util.find_files('~/Music')
-
-    >>> # Look only within a specific directory, not the sub-tree
-    >>> files = librosa.util.find_files('~/Music', recurse=False)
-
-    >>> # Only look for mp3 files
-    >>> files = librosa.util.find_files('~/Music', ext='mp3')
-
-    >>> # Or just mp3 and ogg
-    >>> files = librosa.util.find_files('~/Music', ext=['mp3', 'ogg'])
-
-    >>> # Only get the first 10 files
-    >>> files = librosa.util.find_files('~/Music', limit=10)
-
-    >>> # Or last 10 files
-    >>> files = librosa.util.find_files('~/Music', offset=-10)
-
-    >>> # Avoid including search patterns in the path string
-    >>> import glob
-    >>> directory = '~/[202206] Music'
-    >>> directory = glob.escape(directory)  # Escape the special characters
-    >>> files = librosa.util.find_files(directory)
-
     Parameters
     ----------
     directory : str
@@ -327,6 +301,32 @@ def find_files(
     -------
     files : list of str
         The list of audio files.
+
+    Examples
+    --------
+    >>> # Get all audio files in a directory sub-tree
+    >>> files = librosa.util.find_files('~/Music')
+
+    >>> # Look only within a specific directory, not the sub-tree
+    >>> files = librosa.util.find_files('~/Music', recurse=False)
+
+    >>> # Only look for mp3 files
+    >>> files = librosa.util.find_files('~/Music', ext='mp3')
+
+    >>> # Or just mp3 and ogg
+    >>> files = librosa.util.find_files('~/Music', ext=['mp3', 'ogg'])
+
+    >>> # Only get the first 10 files
+    >>> files = librosa.util.find_files('~/Music', limit=10)
+
+    >>> # Or last 10 files
+    >>> files = librosa.util.find_files('~/Music', offset=-10)
+
+    >>> # Avoid including search patterns in the path string
+    >>> import glob
+    >>> directory = '~/[202206] Music'
+    >>> directory = glob.escape(directory)  # Escape the special characters
+    >>> files = librosa.util.find_files(directory)
     """
     if ext is None:
         ext = ["aac", "au", "flac", "m4a", "mp3", "ogg", "wav"]

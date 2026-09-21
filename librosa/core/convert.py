@@ -148,18 +148,6 @@ def samples_to_frames(
 ) -> np.int_ | npt.NDArray[np.int_]:
     """Convert sample indices into STFT frames.
 
-    Examples
-    --------
-    >>> # Get the frame numbers for every 256 samples
-    >>> librosa.samples_to_frames(np.arange(0, 22050, 256))
-    array([ 0,  0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6,
-            7,  7,  8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 13,
-           14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 20, 20,
-           21, 21, 22, 22, 23, 23, 24, 24, 25, 25, 26, 26, 27, 27,
-           28, 28, 29, 29, 30, 30, 31, 31, 32, 32, 33, 33, 34, 34,
-           35, 35, 36, 36, 37, 37, 38, 38, 39, 39, 40, 40, 41, 41,
-           42, 42, 43])
-
     Parameters
     ----------
     samples : int or np.ndarray [shape=(n,)]
@@ -186,6 +174,18 @@ def samples_to_frames(
     --------
     samples_to_time : Convert sample indices to time values
     frames_to_samples : Convert frame indices to sample indices
+
+    Examples
+    --------
+    >>> # Get the frame numbers for every 256 samples
+    >>> librosa.samples_to_frames(np.arange(0, 22050, 256))
+    array([ 0,  0,  1,  1,  2,  2,  3,  3,  4,  4,  5,  5,  6,  6,
+            7,  7,  8,  8,  9,  9, 10, 10, 11, 11, 12, 12, 13, 13,
+           14, 14, 15, 15, 16, 16, 17, 17, 18, 18, 19, 19, 20, 20,
+           21, 21, 22, 22, 23, 23, 24, 24, 25, 25, 26, 26, 27, 27,
+           28, 28, 29, 29, 30, 30, 31, 31, 32, 32, 33, 33, 34, 34,
+           35, 35, 36, 36, 37, 37, 38, 38, 39, 39, 40, 40, 41, 41,
+           42, 42, 43])
     """
     offset = 0
     if n_fft is not None:
@@ -575,21 +575,6 @@ def note_to_hz(
 ) -> np.float64 | _Array1D[np.float64]:
     """Convert one or more note names to frequency (Hz)
 
-    Examples
-    --------
-    >>> # Get the frequency of a note
-    >>> librosa.note_to_hz('C')
-    array([ 16.352])
-    >>> # Or multiple notes
-    >>> librosa.note_to_hz(['A3', 'A4', 'A5'])
-    array([ 220.,  440.,  880.])
-    >>> # Notes with tuning deviations
-    >>> librosa.note_to_hz(['C2-32', 'C2'])
-    array([ 64.209,  65.406])
-    >>> # Or discarding tuning deviations
-    >>> librosa.note_to_hz(['C2-32', 'C2'], round_midi=True)
-    array([ 65.406,  65.406])
-
     Parameters
     ----------
     note : str or iterable of str
@@ -608,6 +593,21 @@ def note_to_hz(
     midi_to_hz
     note_to_midi
     hz_to_note
+
+    Examples
+    --------
+    >>> # Get the frequency of a note
+    >>> librosa.note_to_hz('C')
+    array([ 16.352])
+    >>> # Or multiple notes
+    >>> librosa.note_to_hz(['A3', 'A4', 'A5'])
+    array([ 220.,  440.,  880.])
+    >>> # Notes with tuning deviations
+    >>> librosa.note_to_hz(['C2-32', 'C2'])
+    array([ 64.209,  65.406])
+    >>> # Or discarding tuning deviations
+    >>> librosa.note_to_hz(['C2-32', 'C2'], round_midi=True)
+    array([ 65.406,  65.406])
     """
     return midi_to_hz(note_to_midi(note, round_midi=round_midi))
 
@@ -774,36 +774,6 @@ def midi_to_note(
 
     Notes will be of the format 'C0', 'C♯0', 'D0', ...
 
-    Examples
-    --------
-    >>> librosa.midi_to_note(0)
-    'C-1'
-
-    >>> librosa.midi_to_note(37)
-    'C♯2'
-
-    >>> librosa.midi_to_note(37, unicode=False)
-    'C#2'
-
-    >>> librosa.midi_to_note(-2)
-    'A♯-2'
-
-    >>> librosa.midi_to_note(104.7)
-    'A7'
-
-    >>> librosa.midi_to_note(104.7, cents=True)
-    'A7-30'
-
-    >>> librosa.midi_to_note(np.arange(12, 24)))
-    array(['C0', 'C♯0', 'D0', 'D♯0', 'E0', 'F0', 'F♯0', 'G0', 'G♯0', 'A0',
-           'A♯0', 'B0'], dtype='<U3')
-
-    Use a key signature to resolve enharmonic equivalences
-
-    >>> librosa.midi_to_note(range(12, 24), key='F:min')
-    array(['C0', 'D♭0', 'D0', 'E♭0', 'E0', 'F0', 'G♭0', 'G0', 'A♭0', 'A0',
-           'B♭0', 'B0'], dtype='<U3')
-
     Parameters
     ----------
     midi : int or iterable of int
@@ -840,6 +810,36 @@ def midi_to_note(
     note_to_midi
     hz_to_note
     key_to_notes
+
+    Examples
+    --------
+    >>> librosa.midi_to_note(0)
+    'C-1'
+
+    >>> librosa.midi_to_note(37)
+    'C♯2'
+
+    >>> librosa.midi_to_note(37, unicode=False)
+    'C#2'
+
+    >>> librosa.midi_to_note(-2)
+    'A♯-2'
+
+    >>> librosa.midi_to_note(104.7)
+    'A7'
+
+    >>> librosa.midi_to_note(104.7, cents=True)
+    'A7-30'
+
+    >>> librosa.midi_to_note(np.arange(12, 24)))
+    array(['C0', 'C♯0', 'D0', 'D♯0', 'E0', 'F0', 'F♯0', 'G0', 'G♯0', 'A0',
+           'A♯0', 'B0'], dtype='<U3')
+
+    Use a key signature to resolve enharmonic equivalences
+
+    >>> librosa.midi_to_note(range(12, 24), key='F:min')
+    array(['C0', 'D♭0', 'D0', 'E♭0', 'E0', 'F0', 'G♭0', 'G0', 'A♭0', 'A0',
+           'B♭0', 'B0'], dtype='<U3')
     """
     if cents and not octave:
         raise ParameterError("Cannot encode cents without octave information.")
@@ -874,16 +874,6 @@ def midi_to_hz(notes: _SequenceLike[_FloatLike_co]) -> np.ndarray: ...
 def midi_to_hz(notes: _ScalarOrSequence[_FloatLike_co]) -> np.floating | np.ndarray:
     """Get the frequency (Hz) of MIDI note(s)
 
-    Examples
-    --------
-    >>> librosa.midi_to_hz(36)
-    65.406
-
-    >>> librosa.midi_to_hz(np.arange(36, 48))
-    array([  65.406,   69.296,   73.416,   77.782,   82.407,
-             87.307,   92.499,   97.999,  103.826,  110.   ,
-            116.541,  123.471])
-
     Parameters
     ----------
     notes : int or np.ndarray [shape=(n,), dtype=int]
@@ -898,6 +888,16 @@ def midi_to_hz(notes: _ScalarOrSequence[_FloatLike_co]) -> np.floating | np.ndar
     --------
     hz_to_midi
     note_to_hz
+
+    Examples
+    --------
+    >>> librosa.midi_to_hz(36)
+    65.406
+
+    >>> librosa.midi_to_hz(np.arange(36, 48))
+    array([  65.406,   69.296,   73.416,   77.782,   82.407,
+             87.307,   92.499,   97.999,  103.826,  110.   ,
+            116.541,  123.471])
     """
     return 440.0 * (2.0 ** ((np.asanyarray(notes)[()] - 69.0) / 12.0))
 
@@ -912,13 +912,6 @@ def hz_to_midi(frequencies: Sequence[float]) -> _Array1D[np.float64]: ...
 def hz_to_midi(frequencies: _SequenceLike[_FloatLike_co]) -> np.ndarray: ...
 def hz_to_midi(frequencies: _ScalarOrSequence[_FloatLike_co]) -> np.floating | np.ndarray:
     """Get MIDI note number(s) for given frequencies
-
-    Examples
-    --------
-    >>> librosa.hz_to_midi(60)
-    34.506
-    >>> librosa.hz_to_midi([110, 220, 440])
-    array([ 45.,  57.,  69.])
 
     Parameters
     ----------
@@ -935,6 +928,13 @@ def hz_to_midi(frequencies: _ScalarOrSequence[_FloatLike_co]) -> np.floating | n
     midi_to_hz
     note_to_midi
     hz_to_note
+
+    Examples
+    --------
+    >>> librosa.hz_to_midi(60)
+    34.506
+    >>> librosa.hz_to_midi([110, 220, 440])
+    array([ 45.,  57.,  69.])
     """
     midi: np.ndarray = 12 * (np.log2(np.asanyarray(frequencies)) - np.log2(440.0)) + 69
     return midi[()]
@@ -1006,13 +1006,6 @@ def hz_to_mel(
 ) -> np.floating | np.ndarray:
     """Convert Hz to Mels
 
-    Examples
-    --------
-    >>> librosa.hz_to_mel(60)
-    0.9
-    >>> librosa.hz_to_mel([110, 220, 440])
-    array([ 1.65,  3.3 ,  6.6 ])
-
     Parameters
     ----------
     frequencies : number or np.ndarray [shape=(n,)] , float
@@ -1028,6 +1021,13 @@ def hz_to_mel(
     See Also
     --------
     mel_to_hz
+
+    Examples
+    --------
+    >>> librosa.hz_to_mel(60)
+    0.9
+    >>> librosa.hz_to_mel([110, 220, 440])
+    array([ 1.65,  3.3 ,  6.6 ])
     """
     frequencies = np.asanyarray(frequencies)[()]
 
@@ -1071,14 +1071,6 @@ def mel_to_hz(
 ) -> np.floating | np.ndarray:
     """Convert mel bin numbers to frequencies
 
-    Examples
-    --------
-    >>> librosa.mel_to_hz(3)
-    200.
-
-    >>> librosa.mel_to_hz([1,2,3,4,5])
-    array([  66.667,  133.333,  200.   ,  266.667,  333.333])
-
     Parameters
     ----------
     mels : np.ndarray [shape=(n,)], float
@@ -1094,6 +1086,14 @@ def mel_to_hz(
     See Also
     --------
     hz_to_mel
+
+    Examples
+    --------
+    >>> librosa.mel_to_hz(3)
+    200.
+
+    >>> librosa.mel_to_hz([1,2,3,4,5])
+    array([  66.667,  133.333,  200.   ,  266.667,  333.333])
     """
     mels = np.asanyarray(mels)[()]
 
@@ -1151,13 +1151,6 @@ def hz_to_octs(
 ) -> np.floating | np.ndarray:
     """Convert frequencies (Hz) to (fractional) octave numbers.
 
-    Examples
-    --------
-    >>> librosa.hz_to_octs(440.0)
-    4.
-    >>> librosa.hz_to_octs([32, 64, 128, 256])
-    array([ 0.219,  1.219,  2.219,  3.219])
-
     Parameters
     ----------
     frequencies : number >0 or np.ndarray [shape=(n,)] or float
@@ -1175,6 +1168,13 @@ def hz_to_octs(
     See Also
     --------
     octs_to_hz
+
+    Examples
+    --------
+    >>> librosa.hz_to_octs(440.0)
+    4.
+    >>> librosa.hz_to_octs([32, 64, 128, 256])
+    array([ 0.219,  1.219,  2.219,  3.219])
     """
     A440 = 440.0 * 2.0 ** (tuning / bins_per_octave)
 
@@ -1211,13 +1211,6 @@ def octs_to_hz(
 
     Octaves are counted relative to A.
 
-    Examples
-    --------
-    >>> librosa.octs_to_hz(1)
-    55.
-    >>> librosa.octs_to_hz([-2, -1, 0, 1, 2])
-    array([   6.875,   13.75 ,   27.5  ,   55.   ,  110.   ])
-
     Parameters
     ----------
     octs : np.ndarray [shape=(n,)] or float
@@ -1235,6 +1228,13 @@ def octs_to_hz(
     See Also
     --------
     hz_to_octs
+
+    Examples
+    --------
+    >>> librosa.octs_to_hz(1)
+    55.
+    >>> librosa.octs_to_hz([-2, -1, 0, 1, 2])
+    array([   6.875,   13.75 ,   27.5  ,   55.   ,  110.   ])
     """
     A440 = 440.0 * 2.0 ** (tuning / bins_per_octave)
 
@@ -1264,6 +1264,22 @@ def A4_to_tuning(
 
     This method is the inverse of `tuning_to_A4`.
 
+    Parameters
+    ----------
+    A4 : float or np.ndarray [shape=(n,), dtype=float]
+        Reference frequency(s) corresponding to A4.
+    bins_per_octave : int > 0
+        Number of bins per octave.
+
+    Returns
+    -------
+    tuning : float or np.ndarray [shape=(n,), dtype=float]
+        Tuning deviation from A440 in (fractional) bins per octave.
+
+    See Also
+    --------
+    tuning_to_A4
+
     Examples
     --------
     The base case of this method in which A440 yields 0 tuning offset
@@ -1283,22 +1299,6 @@ def A4_to_tuning(
 
     >>> librosa.A4_to_tuning([440.0, 444.0], bins_per_octave=24)
     array([   0.,   0.313   ])
-
-    Parameters
-    ----------
-    A4 : float or np.ndarray [shape=(n,), dtype=float]
-        Reference frequency(s) corresponding to A4.
-    bins_per_octave : int > 0
-        Number of bins per octave.
-
-    Returns
-    -------
-    tuning : float or np.ndarray [shape=(n,), dtype=float]
-        Tuning deviation from A440 in (fractional) bins per octave.
-
-    See Also
-    --------
-    tuning_to_A4
     """
     tuning: np.ndarray = bins_per_octave * (np.log2(np.asanyarray(A4)) - np.log2(440.0))
     return tuning[()]
@@ -1328,6 +1328,22 @@ def tuning_to_A4(
 
     This method is the inverse of  `A4_to_tuning`.
 
+    Parameters
+    ----------
+    tuning : float or np.ndarray [shape=(n,), dtype=float]
+        Tuning deviation from A440 in fractional bins per octave.
+    bins_per_octave : int > 0
+        Number of bins per octave.
+
+    Returns
+    -------
+    A4 : float or np.ndarray [shape=(n,), dtype=float]
+        Reference frequency corresponding to A4.
+
+    See Also
+    --------
+    A4_to_tuning
+
     Examples
     --------
     The base case of this method in which a tuning deviation of 0
@@ -1346,22 +1362,6 @@ def tuning_to_A4(
 
     >>> librosa.tuning_to_A4([0.1, 0.2, -0.1], bins_per_octave=36)
     array([   440.848,    441.698   439.154])
-
-    Parameters
-    ----------
-    tuning : float or np.ndarray [shape=(n,), dtype=float]
-        Tuning deviation from A440 in fractional bins per octave.
-    bins_per_octave : int > 0
-        Number of bins per octave.
-
-    Returns
-    -------
-    A4 : float or np.ndarray [shape=(n,), dtype=float]
-        Reference frequency corresponding to A4.
-
-    See Also
-    --------
-    A4_to_tuning
     """
     return 440.0 * 2.0 ** (np.asanyarray(tuning)[()] / bins_per_octave)
 
@@ -1396,15 +1396,6 @@ def cqt_frequencies(
 ) -> _Array1D[np.float64]:
     """Compute the center frequencies of Constant-Q bins.
 
-    Examples
-    --------
-    >>> # Get the CQT frequencies for 24 notes, starting at C2
-    >>> librosa.cqt_frequencies(24, fmin=librosa.note_to_hz('C2'))
-    array([  65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
-             92.499,   97.999,  103.826,  110.   ,  116.541,  123.471,
-            130.813,  138.591,  146.832,  155.563,  164.814,  174.614,
-            184.997,  195.998,  207.652,  220.   ,  233.082,  246.942])
-
     Parameters
     ----------
     n_bins : int > 0 [scalar]
@@ -1420,6 +1411,15 @@ def cqt_frequencies(
     -------
     frequencies : np.ndarray [shape=(n_bins,)]
         Center frequency for each CQT bin
+
+    Examples
+    --------
+    >>> # Get the CQT frequencies for 24 notes, starting at C2
+    >>> librosa.cqt_frequencies(24, fmin=librosa.note_to_hz('C2'))
+    array([  65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
+             92.499,   97.999,  103.826,  110.   ,  116.541,  123.471,
+            130.813,  138.591,  146.832,  155.563,  164.814,  174.614,
+            184.997,  195.998,  207.652,  220.   ,  233.082,  246.942])
     """
     correction: float = 2.0 ** (float(tuning) / bins_per_octave)
     frequencies: np.ndarray = 2.0 ** (
@@ -1463,13 +1463,6 @@ def mel_frequencies(
         Moore, G., Odell, J., Ollason, D., Povey, D., Valtchev, V., & Woodland, P.
         The HTK book, version 3.4. Cambridge University, March 2009.
 
-    See Also
-    --------
-    hz_to_mel
-    mel_to_hz
-    librosa.feature.melspectrogram
-    librosa.feature.mfcc
-
     Parameters
     ----------
     n_mels : int > 0 [scalar]
@@ -1487,6 +1480,13 @@ def mel_frequencies(
     bin_frequencies : ndarray [shape=(n_mels,)]
         Vector of ``n_mels`` frequencies in Hz which are uniformly spaced on the Mel
         axis.
+
+    See Also
+    --------
+    hz_to_mel
+    mel_to_hz
+    librosa.feature.melspectrogram
+    librosa.feature.mfcc
 
     Examples
     --------
