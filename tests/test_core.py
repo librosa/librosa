@@ -45,22 +45,40 @@ def test_load_soundfile():
 
 @pytest.mark.parametrize("offset", [0.5, 0.7, 1.0, 1.1, 2.0])
 @pytest.mark.parametrize("duration", [None, 0.5, 1.0])
-@pytest.mark.parametrize("fmt", ["flac", pytest.param("ogg", marks=pytest.mark.xfail(reason="ogg vorbis has problems seeking sometimes",
-                                                                                     strict=False))])
+@pytest.mark.parametrize(
+    "fmt",
+    [
+        "flac",
+        pytest.param(
+            "ogg",
+            marks=pytest.mark.xfail(
+                reason="ogg vorbis has problems seeking sometimes", strict=False
+            ),
+        ),
+    ],
+)
 def test_load_negative_offset(offset, duration, fmt):
     fname = os.path.join("tests", "test_audio." + fmt)
     # Load the entire recording
     y, sr = librosa.load(fname, sr=None, mono=False)
 
     # Load the last `offset` seconds of the recording using a negative offset
-    y_end, sr = librosa.load(fname, sr=None, mono=False, offset=-offset, duration=duration)
+    y_end, sr = librosa.load(
+        fname, sr=None, mono=False, offset=-offset, duration=duration
+    )
 
     if duration is None or duration >= offset:
         assert y_end.shape[-1] == int(sr * offset)
-        assert np.allclose(y_end.T, y[..., -y_end.shape[-1]:].T)
+        assert np.allclose(y_end.T, y[..., -y_end.shape[-1] :].T)
     else:
         assert y_end.shape[-1] == int(sr * duration)
-        assert np.allclose(y_end, y[..., -int(abs(offset)*sr):-int(abs(offset)*sr)+int(sr*duration)])
+        assert np.allclose(
+            y_end,
+            y[
+                ...,
+                -int(abs(offset) * sr) : -int(abs(offset) * sr) + int(sr * duration),
+            ],
+        )
 
 
 @pytest.mark.parametrize("res_type", ["soxr_qq", "soxr_hq", "scipy"])
@@ -101,6 +119,51 @@ def test_segment_load():
 
     y2, sr = librosa.load(test_file, sr=None, mono=False)
     assert np.allclose(y, y2[:, sample_offset : sample_offset + fs])
+
+
+def test_segment_load_float16():
+
+    sample_len = 2003
+    fs = 44100
+    test_file = os.path.join("tests", "test_audio.ogg")
+    y, sr = librosa.load(
+        test_file,
+        sr=None,
+        mono=False,
+        offset=0.0,
+        duration=sample_len / float(fs),
+        dtype=np.float16,
+    )
+    assert y.dtype == np.float16
+    assert y.shape[-1] == sample_len
+
+    y2, sr = librosa.load(test_file, sr=None, mono=False, dtype=np.float16)
+    assert np.allclose(y, y2[:, :sample_len])
+
+    sample_offset = 2048
+    y, sr = librosa.load(
+        test_file,
+        sr=None,
+        mono=False,
+        offset=sample_offset / float(fs),
+        duration=1.0,
+        dtype=np.float16,
+    )
+    assert y.dtype == np.float16
+    assert y.shape[-1] == fs
+
+    y2, sr = librosa.load(test_file, sr=None, mono=False, dtype=np.float16)
+    assert np.allclose(y, y2[:, sample_offset : sample_offset + fs], atol=1e-3)
+
+    # compare arrays loaded by float16 and default at the tolerance of float16
+    yfloat32, _ = librosa.load(
+        test_file,
+        sr=None,
+        mono=False,
+        offset=sample_offset / float(fs),
+        duration=1.0,
+    )
+    assert np.allclose(y, yfloat32, atol=1e-3)
 
 
 @pytest.fixture(scope="module", params=[22050, 44100])
@@ -1851,7 +1914,8 @@ def test_power_to_db_scalar():
 
 
 def test_power_to_db_bad_reducer():
-    x = np.ones((10,10))
+    x = np.ones((10, 10))
+
     def mymax(z, axis=None):
         # A bad reducer that does not support keepdims
         return np.max(z, axis=axis)
@@ -1861,7 +1925,8 @@ def test_power_to_db_bad_reducer():
 
 
 def test_amplitude_to_db_bad_reducer():
-    x = np.ones((10,10))
+    x = np.ones((10, 10))
+
     def mymax(z, axis=None):
         # A bad reducer that does not support keepdims
         return np.max(z, axis=axis)
@@ -2767,36 +2832,63 @@ def test_stream_badparam(path, block_length, frame_length, hop_length):
 
 def test_stream_bad_sr(path):
     with pytest.raises(librosa.ParameterError):
-        next(librosa.stream(path, block_length=10,
-                            frame_length=2048, hop_length=512,
-                            sr=-1))
+        next(
+            librosa.stream(
+                path, block_length=10, frame_length=2048, hop_length=512, sr=-1
+            )
+        )
 
 
 def test_stream_bad_res_type(path):
     with pytest.raises(librosa.ParameterError):
-        next(librosa.stream(path, block_length=10,
-                            frame_length=2048, hop_length=512,
-                            sr=16000, res_type="foo"))
+        next(
+            librosa.stream(
+                path,
+                block_length=10,
+                frame_length=2048,
+                hop_length=512,
+                sr=16000,
+                res_type="foo",
+            )
+        )
 
 
 def test_stream_bad_hop(path):
     # Fail if our hop length would not be integer-valued at the native
     # sampling rate
     with pytest.raises(librosa.ParameterError):
-        next(librosa.stream(path, block_length=3,
-                            frame_length=2048, hop_length=513,
-                            sr=16000))
+        next(
+            librosa.stream(
+                path, block_length=3, frame_length=2048, hop_length=513, sr=16000
+            )
+        )
 
 
 def _verify_stream_parity(
-    path, block_length=10, frame_length=1024, hop_length=512,
-    mono=True, offset=0.0, duration=None, fill_value=None,
-    dtype=np.float32, sr=None, res_type="soxr_hq"
+    path,
+    block_length=10,
+    frame_length=1024,
+    hop_length=512,
+    mono=True,
+    offset=0.0,
+    duration=None,
+    fill_value=None,
+    dtype=np.float32,
+    sr=None,
+    res_type="soxr_hq",
 ):
     stream = librosa.stream(
-        path, sr=sr, block_length=block_length, frame_length=frame_length,
-        hop_length=hop_length, dtype=dtype, mono=mono, offset=offset,
-        duration=duration, fill_value=fill_value, res_type=res_type
+        path,
+        sr=sr,
+        block_length=block_length,
+        frame_length=frame_length,
+        hop_length=hop_length,
+        dtype=dtype,
+        mono=mono,
+        offset=offset,
+        duration=duration,
+        fill_value=fill_value,
+        res_type=res_type,
     )
 
     y_frame_stream = []
@@ -2817,7 +2909,9 @@ def _verify_stream_parity(
 
         y_b_mono = librosa.to_mono(y_block)
         if len(y_b_mono) >= frame_length:
-            y_b_frame = librosa.util.frame(y_b_mono, frame_length=frame_length, hop_length=hop_length)
+            y_b_frame = librosa.util.frame(
+                y_b_mono, frame_length=frame_length, hop_length=hop_length
+            )
             y_frame_stream.append(y_b_frame)
 
     y_frame_stream = np.concatenate(y_frame_stream, axis=1)
@@ -2826,11 +2920,18 @@ def _verify_stream_parity(
         path.seek(0)
 
     y_full, _ = librosa.load(
-        path, sr=sr, dtype=dtype, mono=True, offset=offset,
-        duration=duration, res_type=res_type
+        path,
+        sr=sr,
+        dtype=dtype,
+        mono=True,
+        offset=offset,
+        duration=duration,
+        res_type=res_type,
     )
 
-    y_frame = librosa.util.frame(y_full, frame_length=frame_length, hop_length=hop_length)
+    y_frame = librosa.util.frame(
+        y_full, frame_length=frame_length, hop_length=hop_length
+    )
     n = y_frame.shape[1]
 
     assert np.allclose(y_frame[:, :n], y_frame_stream[:, :n])
@@ -2841,10 +2942,16 @@ def _verify_stream_parity(
 @pytest.mark.parametrize("hop_length", [512, np.int64(1024)])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("mono", [False, True])
-def test_stream_geometry_and_types(path, block_length, frame_length, hop_length, dtype, mono):
+def test_stream_geometry_and_types(
+    path, block_length, frame_length, hop_length, dtype, mono
+):
     _verify_stream_parity(
-        path, block_length=block_length, frame_length=frame_length,
-        hop_length=hop_length, dtype=dtype, mono=mono
+        path,
+        block_length=block_length,
+        frame_length=frame_length,
+        hop_length=hop_length,
+        dtype=dtype,
+        mono=mono,
     )
 
 

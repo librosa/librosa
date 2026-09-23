@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Core IO, DSP and utility functions."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
@@ -193,9 +194,62 @@ def __soundfile_load(path, offset, duration, dtype):
             frame_duration = -1
 
         # Load the target number of frames, and transpose to match librosa form
-        y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
+        if dtype in ("float16", np.float16):
+            y = __read_float16(sf_desc, frames=frame_duration).T
+        else:
+            y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
 
     return y, sr_native
+
+
+def __read_float16(f, frames=-1, buffer_size=2**16):
+    """Efficiently load audio data into float16
+
+    libsndfile doesn't support float16; to keep peak memory low,
+    this function performs a buffered read of float32 chunks, appending them to
+    a float16 array (rather than loading the entire array then casting)
+
+    Parameters
+    ----------
+    f : soundfile.SoundFile
+        The soundfile object to read from
+        (seek to start position has already occurred)
+    frames : int, default=-1
+        The number of frames to read. If -1, read all remaining frames. If
+        the number of remaining frames is less than the requested number,
+        returns all remaining frames
+    buffer_size : int, default=2**16
+        The number of frames to read into a float32 buffer at a time
+        - larger values increase peak memory slightly
+
+    Returns
+    -------
+    out : np.ndarray
+        The array of audio frames as np.float16, with shape (frames, channels) if multi-channel, or (frames,) if mono.
+        - note that there may be fewer frames than requested, e.g., if end of file is reached
+    """
+    # calculate the number of frames left from current reading position to end of file
+    remaining = f.frames - f.tell()
+
+    # determine number of frames to read:
+    # all if frames is -1 or there are fewer than requested; otherwise requested n frames
+    frames = remaining if frames < 0 else min(frames, remaining)
+    out = np.empty((frames, f.channels), np.float16)
+    buf = np.empty((min(buffer_size, max(frames, 1)), f.channels), np.float32)
+
+    # read up to `buffer_size` frames at a time, storing in float32 `buffer` array
+    # then adding to the aggregated float16 `out` array
+    # iterate until we have read the requested number of frames, or until there are no more frames to read
+    i = 0
+    while i < frames:
+        n = len(f.read(min(len(buf), frames - i), out=buf))
+        if n == 0:  # no more frames to read
+            break
+        # copy the loaded frames from the float32 buffer to the end of the float16 output array
+        out[i : i + n] = buf[:n]
+        i += n
+    out = out[:i]
+    return out[:, 0] if f.channels == 1 else out
 
 
 def _align_step_size(target_step, target_sr, orig_sr):
@@ -393,7 +447,9 @@ def stream(
         raise ParameterError(f"sr={sr} must be a positive number")
 
     if res_type not in {"soxr_vhq", "soxr_hq", "soxr_mq", "soxr_lq", "soxr_qq"}:
-        raise ParameterError(f"res_type={res_type} is not a valid soxr resampling mode for streaming")
+        raise ParameterError(
+            f"res_type={res_type} is not a valid soxr resampling mode for streaming"
+        )
 
     if isinstance(path, sf.SoundFile):
         sfo = path
@@ -432,7 +488,9 @@ def stream(
             )
 
         capacity = target_yield_size + (target_advance * 2)
-        buffer_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
+        buffer_shape = (
+            (capacity,) if process_channels == 1 else (capacity, process_channels)
+        )
         buffer = np.zeros(buffer_shape, dtype=dtype)
         write_idx = 0
         read_idx = 0
@@ -446,20 +504,22 @@ def stream(
         # chunk writes into a truncated view of it, avoiding a fresh
         # allocation on every block
         mono_buffer = (
-            np.empty(orig_read_size, dtype=dtype)
-            if mono and is_multichannel
-            else None
+            np.empty(orig_read_size, dtype=dtype) if mono and is_multichannel else None
         )
 
-        for orig_chunk in sfo.blocks(blocksize=orig_read_size,
-                                     overlap=0,
-                                     dtype=dtype,
-                                     always_2d=False,
-                                     frames=read_frames):
+        for orig_chunk in sfo.blocks(
+            blocksize=orig_read_size,
+            overlap=0,
+            dtype=dtype,
+            always_2d=False,
+            frames=read_frames,
+        ):
 
             if mono and is_multichannel:
                 # soundfile returns (samples, channels), to_mono expects (channels, samples)
-                assert mono_buffer is not None  # for mypy; set above under same condition
+                assert (
+                    mono_buffer is not None
+                )  # for mypy; set above under same condition
                 orig_chunk = to_mono(
                     orig_chunk.T, out=mono_buffer[: orig_chunk.shape[0]]
                 )
@@ -472,7 +532,7 @@ def stream(
 
             if write_idx + n_incoming > capacity:
                 available = write_idx - read_idx
-                buffer[:available] = buffer[read_idx : write_idx]
+                buffer[:available] = buffer[read_idx:write_idx]
                 read_idx = 0
                 write_idx = available
 
@@ -480,7 +540,11 @@ def stream(
                 # just in case something goes wrong with the input stream
                 if write_idx + n_incoming > capacity:  # pragma: no cover
                     capacity = write_idx + n_incoming + target_yield_size
-                    new_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
+                    new_shape = (
+                        (capacity,)
+                        if process_channels == 1
+                        else (capacity, process_channels)
+                    )
                     new_buffer = np.zeros(new_shape, dtype=dtype)
                     new_buffer[:write_idx] = buffer[:write_idx]
                     buffer = new_buffer
@@ -503,12 +567,16 @@ def stream(
         else:
             tail_chunk = None
 
-        final_data_list = [buffer[read_idx : write_idx]]
+        final_data_list = [buffer[read_idx:write_idx]]
         if tail_chunk is not None and tail_chunk.shape[0] > 0:
             final_data_list.append(tail_chunk)
-            remainder = np.concatenate(final_data_list, axis=0) if final_data_list else np.array([])
+            remainder = (
+                np.concatenate(final_data_list, axis=0)
+                if final_data_list
+                else np.array([])
+            )
         else:
-            remainder = buffer[read_idx : write_idx]
+            remainder = buffer[read_idx:write_idx]
 
         rem_idx = 0
         while rem_idx < remainder.shape[0]:
@@ -516,12 +584,18 @@ def stream(
 
             if current_slice.shape[0] < target_yield_size:
                 pad_length = target_yield_size - current_slice.shape[0]
-                pad_width = (0, pad_length) if process_channels == 1 else ((0, pad_length), (0, 0))
+                pad_width = (
+                    (0, pad_length)
+                    if process_channels == 1
+                    else ((0, pad_length), (0, 0))
+                )
                 if fill_value is not None:
-                    current_slice = np.pad(current_slice,
-                                           pad_width,
-                                           mode="constant",
-                                           constant_values=fill_value)
+                    current_slice = np.pad(
+                        current_slice,
+                        pad_width,
+                        mode="constant",
+                        constant_values=fill_value,
+                    )
 
             yield current_slice.T.copy()
             rem_idx += target_advance
@@ -532,7 +606,9 @@ def stream(
             sfo.close()
 
 
-def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarray, int | float]:
+def loadx(
+    key: str, *, hq: bool | None = None, **kwargs: Any
+) -> tuple[np.ndarray, int | float]:
     """Load an example audio file by key.
 
     This is a wrapper around `librosa.util.example` that provides the same
@@ -586,9 +662,9 @@ def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarra
     >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
     """
     if hq is None:
-        if (("sr" in kwargs and (kwargs["sr"] is None or kwargs["sr"] > 22050)) or
-            ("mono" in kwargs and kwargs["mono"] is False)
-            ):
+        if ("sr" in kwargs and (kwargs["sr"] is None or kwargs["sr"] > 22050)) or (
+            "mono" in kwargs and kwargs["mono"] is False
+        ):
             hq = True
         else:
             hq = False
@@ -596,8 +672,10 @@ def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarra
     try:
         path = example(key, hq=hq)
     except ParameterError as exc:
-        raise ParameterError(f"Could not load example with key '{key}'.  "
-                             "Did you mean to use librosa.load instead of loadx?") from exc
+        raise ParameterError(
+            f"Could not load example with key '{key}'.  "
+            "Did you mean to use librosa.load instead of loadx?"
+        ) from exc
 
     return load(path, **kwargs)
 
@@ -2041,6 +2119,7 @@ def chirp(
 
     method = "linear" if linear else "logarithmic"
     import scipy.signal
+
     y: np.ndarray = scipy.signal.chirp(  # type: ignore[call-overload]
         np.arange(int(duration * sr)) / sr,
         fmin,
@@ -2145,9 +2224,13 @@ def mu_compress(
 
 
 @overload
-def mu_expand(x: _FloatLike_co, *, mu: float = 255.0, quantize: bool = True) -> np.floating: ...
+def mu_expand(
+    x: _FloatLike_co, *, mu: float = 255.0, quantize: bool = True
+) -> np.floating: ...
 @overload
-def mu_expand(x: np.ndarray, *, mu: float = 255.0, quantize: bool = True) -> np.ndarray: ...
+def mu_expand(
+    x: np.ndarray, *, mu: float = 255.0, quantize: bool = True
+) -> np.ndarray: ...
 def mu_expand(
     x: np.ndarray | _FloatLike_co, *, mu: float = 255.0, quantize: bool = True
 ) -> np.ndarray | np.floating:
