@@ -239,9 +239,7 @@ def _mp_setup_axes(
     return fig, axes, output_shape
 
 
-def _mp_setup_labels(
-    labels: Sequence[str | None] | None, shape: tuple[int, ...]
-) -> npt.NDArray[np.object_]:
+def _mp_setup_labels(labels: Sequence[str | None] | None, shape: tuple[int, ...]) -> npt.NDArray[np.object_]:
     """Set up the labels for a multiplot grid.
 
     Parameters
@@ -309,10 +307,7 @@ def _mp_setup_prop_group(
     prop_group = np.asarray(share_properties)
 
     if prop_group.size != np.prod(shape):
-        raise ParameterError(
-            f"Shape mismatch between axes={shape} "
-            f"and share_properties={prop_group.shape}"
-        )
+        raise ParameterError(f"Shape mismatch between axes={shape} and share_properties={prop_group.shape}")
 
     return prop_group.reshape(shape)
 

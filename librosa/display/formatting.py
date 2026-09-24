@@ -55,9 +55,7 @@ if TYPE_CHECKING:
 
 
 # Keeps adaptors alive as long as their Axes exists, preventing GC
-_WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[mplaxes.Axes, set["AdaptiveWaveplot"]] = (
-    weakref.WeakKeyDictionary()
-)
+_WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[mplaxes.Axes, set["AdaptiveWaveplot"]] = weakref.WeakKeyDictionary()
 
 # Nominal center frequencies for oct3 bands
 _OCT3_FREQUENCIES = np.array(
@@ -319,9 +317,7 @@ class NoteFormatter(AdaptiveFormatterBase):
         assert self.vmax is not None and self.vmin is not None
         cents = self.vmax <= 2 * max(1, self.vmin)
 
-        return core.hz_to_note(
-            x, octave=self.octave, cents=cents, key=self.key, unicode=self.unicode
-        )
+        return core.hz_to_note(x, octave=self.octave, cents=cents, key=self.key, unicode=self.unicode)
 
 
 class SvaraFormatter(AdaptiveFormatterBase):
@@ -375,9 +371,7 @@ class SvaraFormatter(AdaptiveFormatterBase):
         unicode: bool = True,
     ):
         if Sa is None:
-            raise ParameterError(
-                "Sa frequency is required for svara display formatting"
-            )
+            raise ParameterError("Sa frequency is required for svara display formatting")
 
         super().__init__(major=major)
         self.Sa = Sa
@@ -388,9 +382,7 @@ class SvaraFormatter(AdaptiveFormatterBase):
 
     def _format_tick(self, x: float, pos: int | None = None) -> str:
         if self.mela is None:
-            return core.hz_to_svara_h(
-                x, Sa=self.Sa, octave=self.octave, abbr=self.abbr, unicode=self.unicode
-            )
+            return core.hz_to_svara_h(x, Sa=self.Sa, octave=self.octave, abbr=self.abbr, unicode=self.unicode)
         else:
             return core.hz_to_svara_c(
                 x,
@@ -561,9 +553,7 @@ class ChromaFormatter(mplticker.Formatter):
 
     def __call__(self, x: float, pos: int | None = None) -> str:
         """Format for chroma positions"""
-        return core.midi_to_note(
-            int(x), octave=False, cents=False, key=self.key, unicode=self.unicode
-        )
+        return core.midi_to_note(int(x), octave=False, cents=False, key=self.key, unicode=self.unicode)
 
 
 class ChromaSvaraFormatter(mplticker.Formatter):
@@ -629,9 +619,7 @@ class ChromaSvaraFormatter(mplticker.Formatter):
                 unicode=self.unicode,
             )
         else:
-            return core.midi_to_svara_h(
-                int(x), Sa=self.Sa, octave=False, abbr=self.abbr, unicode=self.unicode
-            )
+            return core.midi_to_svara_h(int(x), Sa=self.Sa, octave=False, abbr=self.abbr, unicode=self.unicode)
 
 
 class ChromaFJSFormatter(mplticker.Formatter):
@@ -681,9 +669,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
             if not isinstance(intervals, str):
                 bins_per_octave = len(intervals)
             if not isinstance(bins_per_octave, int):
-                raise ParameterError(
-                    f"bins_per_octave={bins_per_octave} must be integer-valued"
-                )
+                raise ParameterError(f"bins_per_octave={bins_per_octave} must be integer-valued")
             self.bins_per_octave = bins_per_octave
             # Construct the explicit interval set
             self.intervals_ = core.interval_frequencies(
@@ -935,9 +921,7 @@ class AdaptiveWaveplot:
                 # Viewport expands beyond current data in steps; update
                 # we want to cover a window of self.max_samples centered on the current viewport
                 midpoint_time = (start + end) / 2
-                idx_start = np.searchsorted(
-                    self.times, midpoint_time - 0.5 * self.max_samples / self.sr
-                )
+                idx_start = np.searchsorted(self.times, midpoint_time - 0.5 * self.max_samples / self.sr)
                 steps.set_data(
                     xdata[idx_start : idx_start + self.max_samples],
                     ydata[idx_start : idx_start + self.max_samples],
@@ -961,14 +945,16 @@ class _WaveplotDecoy(mlines.Line2D):
 
 
 class _AdaptiveWaveplotHandler(HandlerBase):
-    def create_artists(self, legend: Legend,
+    def create_artists(
+        self,
+        legend: Legend,
         orig_handle: Artist,
         xdescent: float,
         ydescent: float,
         width: float,
         height: float,
         fontsize: float,
-        trans: mtransforms.Transform
+        trans: mtransforms.Transform,
     ) -> list[Artist]:
         """
         Matplotlib automatically passes the exact dimensions and coordinate
@@ -982,9 +968,7 @@ class _AdaptiveWaveplotHandler(HandlerBase):
         else:
             bgcolor = "none"
         bg_rect = mpatches.Rectangle((0, 0), 1, 1, facecolor=bgcolor, edgecolor="none")
-        bg_artists = HandlerPatch().create_artists(
-            legend, bg_rect, xdescent, ydescent, width, height, fontsize, trans
-        )
+        bg_artists = HandlerPatch().create_artists(legend, bg_rect, xdescent, ydescent, width, height, fontsize, trans)
 
         proxy_line = mlines.Line2D([], [])
         if waveplot.steps is not None:
@@ -992,7 +976,7 @@ class _AdaptiveWaveplotHandler(HandlerBase):
         proxy_line.set_data([], [])
         proxy_line.set(visible=True)
         line_artists = HandlerLine2D().create_artists(
-            legend, proxy_line, xdescent, ydescent, width, height,  fontsize, trans
+            legend, proxy_line, xdescent, ydescent, width, height, fontsize, trans
         )
 
         return [*bg_artists, *line_artists]
@@ -1117,15 +1101,9 @@ class Transformf0(mtransforms.Transform):
         output = np.empty_like(values)
         output[:, idx[0]] = times
         if self.is_inverted:
-            output[:, idx[1]] = (
-                (np.log2(samples) - np.log2(self.f0_interp(times)))
-                * self.norm
-                * self.bins_per_octave
-            )
+            output[:, idx[1]] = (np.log2(samples) - np.log2(self.f0_interp(times))) * self.norm * self.bins_per_octave
         else:
-            output[:, idx[1]] = 2.0 ** (
-                samples / self.norm / self.bins_per_octave
-            ) * self.f0_interp(times)
+            output[:, idx[1]] = 2.0 ** (samples / self.norm / self.bins_per_octave) * self.f0_interp(times)
 
         return output
 
@@ -1224,11 +1202,7 @@ def infer_cmap(
 
 
 # Deprecation rename of cmap -> infer_cmap for 1.0
-cmap = moved(moved_from="librosa.display.cmap", version="1.0", version_removed="1.1")(
-    infer_cmap
-)
-
-
+cmap = moved(moved_from="librosa.display.cmap", version="1.0", version_removed="1.1")(infer_cmap)
 
 
 _chroma_ax_types = (
@@ -1292,16 +1266,13 @@ _AXIS_COMPAT = set(
 )
 
 
-
-
 def _check_axes(axes: mplaxes.Axes | None) -> mplaxes.Axes:
     """Check if "axes" is an instance of an axis object. If not, use `gca`."""
     if axes is None:
         axes = plt.gca()
     elif not isinstance(axes, mplaxes.Axes):
         raise ParameterError(
-            "`axes` must be an instance of matplotlib.axes.Axes. "
-            "Found type(axes)={}".format(type(axes))
+            "`axes` must be an instance of matplotlib.axes.Axes. Found type(axes)={}".format(type(axes))
         )
     return axes
 
@@ -1415,9 +1386,7 @@ def _decorate_axis(
     elif ax_type == "chroma_c":
         if Sa is None:
             Sa = 0
-        axis.set_major_formatter(
-            ChromaSvaraFormatter(Sa=Sa, mela=mela, unicode=unicode)
-        )
+        axis.set_major_formatter(ChromaSvaraFormatter(Sa=Sa, mela=mela, unicode=unicode))
         degrees = core.mela_to_degrees(mela)
         # Rotate degrees relative to Sa
         degrees = np.mod(degrees + Sa, 12)
@@ -1481,31 +1450,23 @@ def _decorate_axis(
 
     elif ax_type == "time":
         axis.set_major_formatter(TimeFormatter(unit=None, lag=False))
-        axis.set_major_locator(
-            mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
-        )
+        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Time")
 
     elif ax_type in time_units:
         axis.set_major_formatter(TimeFormatter(unit=ax_type, lag=False))
-        axis.set_major_locator(
-            mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
-        )
+        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Time ({:s})".format(time_units[ax_type]))
 
     elif ax_type == "lag":
         axis.set_major_formatter(TimeFormatter(unit=None, lag=True))
-        axis.set_major_locator(
-            mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
-        )
+        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Lag")
 
     elif isinstance(ax_type, str) and ax_type.startswith("lag_"):
         unit = ax_type[4:]
         axis.set_major_formatter(TimeFormatter(unit=unit, lag=True))
-        axis.set_major_locator(
-            mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
-        )
+        axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Lag ({:s})".format(time_units[unit]))
 
     elif ax_type == "cqt_note":
@@ -1515,11 +1476,7 @@ def _decorate_axis(
         C_offset = 2.0 ** (log_C1 - np.floor(log_C1))
         axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(C_offset,)))
         axis.set_minor_formatter(NoteFormatter(key=key, major=False, unicode=unicode))
-        axis.set_minor_locator(
-            mplticker.LogLocator(
-                base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0)
-            )
-        )
+        axis.set_minor_locator(mplticker.LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0)))
         axis.set_label_text("Note")
 
     elif ax_type == "cqt_svara":
@@ -1528,14 +1485,8 @@ def _decorate_axis(
         sa_offset = 2.0 ** (np.log2(Sa) - np.floor(np.log2(Sa)))
 
         axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(sa_offset,)))
-        axis.set_minor_formatter(
-            SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode)
-        )
-        axis.set_minor_locator(
-            mplticker.LogLocator(
-                base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0)
-            )
-        )
+        axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode))
+        axis.set_minor_locator(mplticker.LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0)))
         axis.set_label_text("Svara")
 
     elif ax_type == "vqt_fjs":
@@ -1589,9 +1540,7 @@ def _decorate_axis(
         axis.set_minor_locator(
             mplticker.LogLocator(
                 base=2.0,
-                subs=core.interval_frequencies(
-                    12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12
-                ),  # type: ignore[arg-type]
+                subs=core.interval_frequencies(12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12),  # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Hz")
@@ -1607,9 +1556,7 @@ def _decorate_axis(
         axis.set_minor_locator(
             mplticker.LogLocator(
                 base=2.0,
-                subs=core.interval_frequencies(
-                    12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12
-                ),  # type: ignore[arg-type]
+                subs=core.interval_frequencies(12, fmin=fmin_offset, intervals=intervals, bins_per_octave=12),  # type: ignore[arg-type]
             )
         )
         axis.set_label_text("Note")
@@ -1621,11 +1568,7 @@ def _decorate_axis(
         axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(C_offset,)))
         axis.set_major_locator(mplticker.LogLocator(base=2.0))
         axis.set_minor_formatter(LogHzFormatter(major=False))
-        axis.set_minor_locator(
-            mplticker.LogLocator(
-                base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0)
-            )
-        )
+        axis.set_minor_locator(mplticker.LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0)))
         axis.set_label_text("Hz")
 
     elif ax_type == "fft_note":
@@ -1646,19 +1589,9 @@ def _decorate_axis(
         log_Sa = np.log2(Sa)
         sa_offset = 2.0 ** (log_Sa - np.floor(log_Sa))
 
-        axis.set_major_locator(
-            mplticker.SymmetricalLogLocator(
-                axis.get_transform(), base=2.0, subs=[sa_offset]
-            )
-        )
-        axis.set_minor_formatter(
-            SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode)
-        )
-        axis.set_minor_locator(
-            mplticker.LogLocator(
-                base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0)
-            )
-        )
+        axis.set_major_locator(mplticker.SymmetricalLogLocator(axis.get_transform(), base=2.0, subs=[sa_offset]))
+        axis.set_minor_formatter(SvaraFormatter(Sa=Sa, mela=mela, major=False, unicode=unicode))
+        axis.set_minor_locator(mplticker.LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0)))
         axis.set_label_text("Svara")
 
     elif ax_type in ["mel", "log"]:
@@ -1694,9 +1627,7 @@ def _decorate_axis(
         raise ParameterError(f"Unsupported axis type: {ax_type}")
 
 
-def _coord_fft_hz(
-    n: int, sr: float = 22050, n_fft: int | None = None, **_kwargs: Any
-) -> _Array1D[np.float64]:
+def _coord_fft_hz(n: int, sr: float = 22050, n_fft: int | None = None, **_kwargs: Any) -> _Array1D[np.float64]:
     """Get the frequencies for FFT bins"""
     if n_fft is None:
         n_fft = 2 * (n - 1)
@@ -1747,8 +1678,7 @@ def _coord_cqt_hz(
 
     if np.any(freqs > 0.5 * sr):
         warnings.warn(
-            "Frequency axis exceeds Nyquist. "
-            "Did you remember to set all spectrogram parameters in specshow?",
+            "Frequency axis exceeds Nyquist. Did you remember to set all spectrogram parameters in specshow?",
             stacklevel=4,
         )
 
@@ -1770,14 +1700,11 @@ def _coord_vqt_hz(
     if intervals is None:
         raise ParameterError("VQT axis coordinates cannot be defined without intervals")
 
-    freqs = core.interval_frequencies(
-        n, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
-    )
+    freqs = core.interval_frequencies(n, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave)
 
     if np.any(freqs > 0.5 * sr):
         warnings.warn(
-            "Frequency axis exceeds Nyquist. "
-            "Did you remember to set all spectrogram parameters in specshow?",
+            "Frequency axis exceeds Nyquist. Did you remember to set all spectrogram parameters in specshow?",
             stacklevel=4,
         )
 
@@ -1789,9 +1716,7 @@ def _coord_chroma(n: int, bins_per_octave: int = 12, **_kwargs: Any) -> np.ndarr
     return np.linspace(0, (12.0 * n) / bins_per_octave, num=n, endpoint=False)
 
 
-def _coord_tempo(
-    n: int, sr: float = 22050, hop_length: int = 512, **_kwargs: Any
-) -> np.ndarray:
+def _coord_tempo(n: int, sr: float = 22050, hop_length: int = 512, **_kwargs: Any) -> np.ndarray:
     """Tempo coordinates"""
     basis = core.tempo_frequencies(n + 1, sr=sr, hop_length=hop_length)[1:]
     return basis
@@ -1809,9 +1734,7 @@ def _coord_fourier_tempo(
         win_length = 2 * (n - 1)
     # The following code centers the FFT bins at their frequencies
     # and clips to the non-negative frequency range [0, nyquist]
-    basis = core.fourier_tempo_frequencies(
-        sr=sr, hop_length=hop_length, win_length=win_length
-    )
+    basis = core.fourier_tempo_frequencies(sr=sr, hop_length=hop_length, win_length=win_length)
     return basis
 
 
@@ -1820,9 +1743,7 @@ def _coord_n(n: int, **_kwargs: Any) -> np.ndarray:
     return np.arange(n)
 
 
-def _coord_time(
-    n: int, sr: float = 22050, hop_length: int = 512, **_kwargs: Any
-) -> np.ndarray:
+def _coord_time(n: int, sr: float = 22050, hop_length: int = 512, **_kwargs: Any) -> np.ndarray:
     """Get time coordinates from frames"""
     times: np.ndarray = core.frames_to_time(np.arange(n), sr=sr, hop_length=hop_length)
     return times

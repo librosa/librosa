@@ -313,10 +313,7 @@ def waveshow(
         dec_axis = axes.xaxis
 
     if mask is not None:
-        mask = cast(
-            "Sequence[bool]",
-            np.asarray(mask, dtype=bool)[: len(y_top) * hop_length : hop_length]
-        )
+        mask = cast("Sequence[bool]", np.asarray(mask, dtype=bool)[: len(y_top) * hop_length : hop_length])
 
     (steps,) = axes.step(xdata, ydata, marker=marker, where=where, **kwargs)
 
@@ -529,9 +526,7 @@ def wavebars(
 
     # Create a proxy artist if we have a label to set
     # Even if we don't have a label, we'll still need it for handling inversion later on
-    proxy = mpatches.FancyBboxPatch(
-        (np.nan, np.nan), 1, 1, boxstyle=boxstyle, label=label, **patch_kwargs
-    )
+    proxy = mpatches.FancyBboxPatch((np.nan, np.nan), 1, 1, boxstyle=boxstyle, label=label, **patch_kwargs)
     proxy.set_in_layout(False)
     if label is not None:
         axes.add_patch(proxy)
