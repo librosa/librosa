@@ -1769,6 +1769,9 @@ def envelope(
         Padding mode passed to `scipy.ndimage` filter functions (e.g. ``'reflect'``,
         ``'constant'``, ``'nearest'``, ``'mirror'``, ``'wrap'``).
 
+    center : bool
+        If ``True``, the filtering window is centered on each sample. If ``False``, the window is left-aligned.
+
     percentile : float
         Percentile value (between 0 and 100) used when ``kind='percentile'``.
 
@@ -2117,6 +2120,10 @@ def chirp(
         phase offset, in radians.
         If unspecified, defaults to ``-np.pi * 0.5``.
 
+    weighting : str or None
+        Type of perceptual weighting to apply (e.g., ``'A'``, ``'B'``, ``'C'``, ``'D'``, ``'Z'``).
+        If ``None``, no weighting is applied.
+
     Returns
     -------
     chirp_signal : np.ndarray [shape=(length,), dtype=float64]
@@ -2132,6 +2139,7 @@ def chirp(
     See Also
     --------
     scipy.signal.chirp
+    perceptual_weighting
 
     Examples
     --------
