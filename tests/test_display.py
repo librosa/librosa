@@ -1702,7 +1702,10 @@ def test_wavef0(y, sr):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_legend_for_axes_no_axes():
     fig = plt.figure()
-    librosa.display.legend_for_axes(fig=fig)
+    try:
+        librosa.display.legend_for_axes(fig=fig)
+    finally:
+        plt.close(fig)
 
 
 def test_legend_for_axes_current():
@@ -1712,6 +1715,7 @@ def test_legend_for_axes_current():
     leg = librosa.display.legend_for_axes()
     assert leg is not None
     assert leg.figure is fig
+    plt.close(fig)
 
 
 def test_legend_for_axes_scalar():
@@ -1720,14 +1724,18 @@ def test_legend_for_axes_scalar():
     leg = librosa.display.legend_for_axes(axes=ax)
     assert leg is not None
     assert leg.figure is fig
+    plt.close(fig)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_legend_for_axes_mismatched_figures():
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
-
-    librosa.display.legend_for_axes([ax1, ax2])
+    try:
+        librosa.display.legend_for_axes([ax1, ax2])
+    finally:
+        plt.close(fig1)
+        plt.close(fig2)
 
 
 def test_legend_for_axes_explicit_bbox():
@@ -1739,6 +1747,7 @@ def test_legend_for_axes_explicit_bbox():
     )
 
     assert leg is not None
+    plt.close(fig)
 
 
 @pytest.mark.mpl_image_compare(
@@ -2049,6 +2058,7 @@ def test_mp_setup_axes_create(shape, orient, output_shape, axes_shape):
     assert fig is not None
     assert axes.shape == axes_shape
     assert out_shape == output_shape
+    plt.close(fig)
 
 
 def test_mp_setup_axes_with_fig():
@@ -2069,6 +2079,7 @@ def test_mp_setup_axes_with_fig():
     assert fig_out is fig
     assert axes.shape == (2, 1)
     assert out_shape == (2,)
+    plt.close(fig)
 
 
 @pytest.mark.parametrize(
@@ -2101,6 +2112,7 @@ def test_mp_setup_axes_array_input(orient, axes_in_shape, axes_out_shape, output
     assert fig_out is fig
     assert axes_out.shape == axes_out_shape
     assert out_shape == output_shape
+    plt.close(fig)
 
 
 def test_mp_setup_axes_scalar_input():
@@ -2121,23 +2133,26 @@ def test_mp_setup_axes_scalar_input():
     assert fig_out is fig
     assert axes_out.shape == (1, 1)
     assert out_shape == tuple()
+    plt.close(fig)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_mp_setup_axes_bad_shape():
     fig, axes = plt.subplots(nrows=2)
-
-    librosa.display._mp_setup_axes(
-        axes=np.asarray(axes),
-        fig=None,
-        fig_kw=None,
-        nrows=3,
-        ncols=1,
-        axshape=(3,),
-        orient="v",
-        sharex=True,
-        sharey=True,
-    )
+    try:
+        librosa.display._mp_setup_axes(
+            axes=np.asarray(axes),
+            fig=None,
+            fig_kw=None,
+            nrows=3,
+            ncols=1,
+            axshape=(3,),
+            orient="v",
+            sharex=True,
+            sharey=True,
+        )
+    finally:
+        plt.close(fig)
 
 
 def test_mp_setup_axes_single():
@@ -2158,6 +2173,7 @@ def test_mp_setup_axes_single():
     assert fig_out is fig
     assert axes_out.shape == (1, 1)
     assert out_shape == tuple()
+    plt.close(fig)
 
 
 def test_mp_setup_labels_none():

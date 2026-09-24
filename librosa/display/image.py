@@ -602,6 +602,7 @@ def _mesh_coords(ax_type, coords, n, **kwargs):
         "lag_ms": _coord_time,
         "tonnetz": _coord_n,
         "off": _coord_n,
+        "none": _coord_n,
         "tempo": _coord_tempo,
         "fourier_tempo": _coord_fourier_tempo,
         "frames": _coord_n,

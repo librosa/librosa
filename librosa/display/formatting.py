@@ -758,7 +758,11 @@ class AdaptiveWaveplot:
     max_samples: int
     transpose: bool
     cid: int | None
-    label_proxy_: _WaveplotDecoy
+    _steps_ref: weakref.ref[Line2D]
+    _envelope_ref: weakref.ref[PolyCollection]
+    _ax_ref: weakref.ref[mplaxes.Axes] | None
+    _label_proxy: _WaveplotDecoy | None
+    _label_proxy_ref: weakref.ref[_WaveplotDecoy] | None
 
     def __init__(
         self,
@@ -779,14 +783,32 @@ class AdaptiveWaveplot:
         self.max_samples = max_samples
         self.transpose = transpose
         self.cid = None
-        self._ax_ref: weakref.ref[mplaxes.Axes] | None = None
+        self._ax_ref = None
 
         # This creates an invisible proxy artist to contain the label
-        self.label_proxy_ = _WaveplotDecoy(self)
-        self.label_proxy_.set_in_layout(False)
+        decoy = _WaveplotDecoy(self)
+        decoy.set_in_layout(False)
 
         if label is not None:
-            self.label_proxy_.set_label(label)
+            decoy.set_label(label)
+
+        self._label_proxy = decoy
+        self._label_proxy_ref = weakref.ref(decoy)
+
+    @property
+    def label_proxy_(self) -> _WaveplotDecoy | None:
+        """The proxy artist for legend labeling, or None if garbage collected.
+
+        Returns
+        -------
+        _WaveplotDecoy or None
+            The proxy artist, or ``None`` if it has been garbage collected.
+        """
+        if self._label_proxy is not None:
+            return self._label_proxy
+        if self._label_proxy_ref is not None:
+            return self._label_proxy_ref()
+        return None
 
     # Preserve the old attribute API by exposing properties with same names
     @property
@@ -853,7 +875,10 @@ class AdaptiveWaveplot:
 
         # Attach to axes and store the connection id
         self._ax_ref = weakref.ref(ax)
-        ax.add_artist(self.label_proxy_)
+        proxy = self.label_proxy_
+        if proxy is not None:
+            ax.add_artist(proxy)
+            self._label_proxy = None
         self.cid = ax.callbacks.connect(signal, self.update)
 
     def disconnect(self, *, strict: bool = False) -> None:
@@ -878,6 +903,8 @@ class AdaptiveWaveplot:
             self.cid = None
         if strict:
             self._ax_ref = None
+            self._label_proxy = None
+            self._label_proxy_ref = None
 
     def update(self, ax: mplaxes.Axes) -> None:
         """Update the matplotlib display according to the current viewport limits.
@@ -935,13 +962,18 @@ class AdaptiveWaveplot:
 
 
 class _WaveplotDecoy(mlines.Line2D):
-    waveplot: AdaptiveWaveplot
+    _waveplot_ref: weakref.ref[AdaptiveWaveplot]
 
     def __init__(self, parent_waveplot: AdaptiveWaveplot, *args: Any, **kwargs: Any):
         # We'll never actually set the color on this decoy at construction time
         kwargs["color"] = "none"
         super().__init__([], [], *args, **kwargs)
-        self.waveplot = parent_waveplot  # Store reference to the parent wrapper
+        self._waveplot_ref = weakref.ref(parent_waveplot)
+
+    @property
+    def waveplot(self) -> AdaptiveWaveplot | None:
+        """Reference to the parent AdaptiveWaveplot adaptor."""
+        return self._waveplot_ref()
 
 
 class _AdaptiveWaveplotHandler(HandlerBase):
@@ -962,6 +994,8 @@ class _AdaptiveWaveplotHandler(HandlerBase):
         """
         orig_handle = cast("_WaveplotDecoy", orig_handle)
         waveplot = orig_handle.waveplot
+        if waveplot is None:
+            return []
         ax = waveplot.ax
         if ax is not None:
             bgcolor = ax.get_facecolor()
@@ -1202,6 +1236,7 @@ def infer_cmap(
 
 
 # Deprecation rename of cmap -> infer_cmap for 1.0
+infer_cmap.__module__ = "librosa.display"
 cmap = moved(moved_from="librosa.display.cmap", version="1.0", version_removed="1.1")(infer_cmap)
 
 
@@ -1230,6 +1265,7 @@ _freq_ax_types = (
     "fft_note",
     "fft_svara",
     "oct3",
+    "log_oct3",
 )
 _time_ax_types = (
     "time",

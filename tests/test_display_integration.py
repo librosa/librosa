@@ -14,7 +14,7 @@ from librosa.display.formatting import TimeFormatter, ChromaFormatter, NoteForma
 @pytest.fixture(scope="module")
 def audio_data():
     """Load a short example audio file."""
-    y, sr = librosa.load(librosa.ex("trumpet"), duration=2)
+    y, sr = librosa.load("tests/test_audio.ogg", duration=2)
     return y, sr
 
 # -------------------------------------------------------------------------
@@ -98,6 +98,7 @@ def test_pipeline_wavebars(audio_data):
     
     plt.close(fig)
 
+@pytest.mark.filterwarnings("ignore:invalid value encountered in cast:RuntimeWarning")
 def test_pipeline_pyin_to_wavef0(audio_data):
     """Test feature.pyin -> display.wavef0 for pitch tracking overlays."""
     y, sr = audio_data

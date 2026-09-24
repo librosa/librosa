@@ -493,6 +493,9 @@ def wavebars(
 
     axes = _check_axes(ax)
 
+    if n_bars <= 0:
+        raise ParameterError(f"n_bars={n_bars} must be strictly positive")
+
     hop = max(1, y.shape[-1] // n_bars)
     env = _envelope(y, hop)
     env_bottom, env_top = env[-1], env[0]
@@ -539,7 +542,7 @@ def wavebars(
             invert_color = axes.patch.get_facecolor()
 
         # Get the fg color from the steps plot
-        color = coll.get_facecolor()
+        color = coll.get_facecolor()[0]
 
         # Set the axes facecolor to our wave color
         axes.patch.set_facecolor(color)  # type: ignore[arg-type]

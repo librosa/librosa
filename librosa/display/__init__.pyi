@@ -6,6 +6,7 @@ from .formatting import ChromaSvaraFormatter as ChromaSvaraFormatter
 from .formatting import FJSFormatter as FJSFormatter
 from .formatting import LogHzFormatter as LogHzFormatter
 from .formatting import NoteFormatter as NoteFormatter
+from .formatting import SvaraFormatter as SvaraFormatter
 from .formatting import TimeFormatter as TimeFormatter
 from .formatting import TonnetzFormatter as TonnetzFormatter
 from .formatting import Transformf0 as Transformf0
