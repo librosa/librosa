@@ -182,7 +182,8 @@ class TimeFormatter(mplticker.Formatter):
         self.unit = unit
         self.lag = lag
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:  # noqa: ARG002
+        # pos is required by matplotlib's Formatter.__call__ interface and is unused in this method
         """Return the time format as pos"""
         assert self.axis is not None
 
@@ -311,7 +312,8 @@ class NoteFormatter(AdaptiveFormatterBase):
         self.key = key
         self.unicode = unicode
 
-    def _format_tick(self, x: float, pos: int | None = None) -> str:
+    def _format_tick(self, x: float, pos: int | None = None) -> str:  # noqa: ARG002
+        # pos is required by matplotlib's Formatter.__call__ interface and is unused in this method
         """Apply the formatter to position"""
         # Only use cent precision if our vspan is less than an octave
         assert self.vmax is not None and self.vmin is not None
@@ -380,7 +382,8 @@ class SvaraFormatter(AdaptiveFormatterBase):
         self.mela = mela
         self.unicode = unicode
 
-    def _format_tick(self, x: float, pos: int | None = None) -> str:
+    def _format_tick(self, x: float, pos: int | None = None) -> str:  # noqa: ARG002
+        # pos is required by matplotlib's Formatter.__call__ interface and is unused in this method
         if self.mela is None:
             return core.hz_to_svara_h(x, Sa=self.Sa, octave=self.octave, abbr=self.abbr, unicode=self.unicode)
         else:
@@ -463,7 +466,8 @@ class FJSFormatter(AdaptiveFormatterBase):
             n_bins, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave
         )
 
-    def _format_tick(self, x: float, pos: int | None = None) -> str:
+    def _format_tick(self, x: float, pos: int | None = None) -> str:  # noqa: ARG002
+        # pos is required by matplotlib's Formatter.__call__ interface and is unused in this method
         """Apply the formatter to position"""
         # Map the given frequency to the nearest JI interval
         idx = util.match_events(np.atleast_1d(x), self.frequencies_)[0]
@@ -496,7 +500,8 @@ class LogHzFormatter(AdaptiveFormatterBase):
     def __init__(self, major: bool = True):
         super().__init__(major=major)
 
-    def _format_tick(self, x: float, pos: int | None = None) -> str:
+    def _format_tick(self, x: float, pos: int | None = None) -> str:  # noqa: ARG002
+        # pos is required by matplotlib's Formatter.__call__ interface and is unused in this method
         """Apply the formatter to position"""
         return f"{x:g}"
 
@@ -551,7 +556,8 @@ class ChromaFormatter(mplticker.Formatter):
         self.key = key
         self.unicode = unicode
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:  # noqa: ARG002
+        # pos is required by matplotlib's Formatter.__call__ interface and is unused in this method
         """Format for chroma positions"""
         return core.midi_to_note(int(x), octave=False, cents=False, key=self.key, unicode=self.unicode)
 
@@ -607,7 +613,8 @@ class ChromaSvaraFormatter(mplticker.Formatter):
         self.abbr = abbr
         self.unicode = unicode
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:  # noqa: ARG002
+        # pos is required by matplotlib's Formatter.__call__ interface and is unused in this method
         """Format for chroma positions"""
         if self.mela is not None:
             return core.midi_to_svara_c(
@@ -683,7 +690,8 @@ class ChromaFJSFormatter(mplticker.Formatter):
                 f"intervals={intervals} must be of type str or a collection of numbers between 1 and 2"
             ) from exc
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:  # noqa: ARG002
+        # pos is required by matplotlib's Formatter.__call__ interface and is unused in this method
         """Format for chroma positions"""
         lab: str = core.interval_to_fjs(
             self.intervals_[int(x) % self.bins_per_octave],
@@ -701,7 +709,8 @@ class TonnetzFormatter(mplticker.Formatter):
     matplotlib.ticker.Formatter
     """
 
-    def __call__(self, x: float, pos: int | None = None) -> str:
+    def __call__(self, x: float, pos: int | None = None) -> str:  # noqa: ARG002
+        # pos is required by matplotlib's Formatter.__call__ interface and is unused in this method
         """Format for tonnetz positions"""
         return [r"5$_y$", r"5$_x$", r"m3$_y$", r"m3$_x$", r"M3$_y$", r"M3$_x$"][int(x)]
 
@@ -1727,7 +1736,7 @@ def _coord_vqt_hz(
     bins_per_octave: int = 12,
     sr: float = 22050,
     intervals: str | Collection[float] | None = None,
-    unison: str | None = None,
+    unison: str | None = None,  # noqa: ARG001
     **_kwargs: Any,
 ) -> _Array1D[np.float64]:
     if fmin is None:
@@ -1792,7 +1801,8 @@ def _same_axes(x_axis, y_axis, xlim, ylim):
     return axes_compatible_and_not_none and axes_same_lim
 
 
-def _radian_formatter(x, pos):
+def _radian_formatter(x, pos):  # noqa: ARG001
+    # pos is required by matplotlib's FuncFormatter calling convention and is unused here
     """Format a tick value (in radians) as a rational multiple of pi"""
     m = x / np.pi
     # hard to imagine going finer than pi/16 (11°)
