@@ -94,7 +94,7 @@ tools:
 
   ```shell
   conda install numpydoc
-  numpydoc lint librosa/**.py
+  numpydoc lint librosa/*.py librosa/*/*.py
   ```
 
 - Ensure that any new functionality has valid type annotations, check with:

@@ -470,10 +470,6 @@ def wavelet_lengths(
         This second output serves in cqt and vqt to ensure that all wavelet
         bands remain below the Nyquist frequency.
 
-    Notes
-    -----
-    This function caches at level 10.
-
     Raises
     ------
     ParameterError
@@ -484,6 +480,10 @@ def wavelet_lengths(
         - If any frequencies are <= 0
 
         - If the frequency array is not sorted in ascending order
+
+    Notes
+    -----
+    This function caches at level 10.
     """
     freqs = np.asarray(freqs)
     if filter_scale <= 0:
@@ -625,16 +625,16 @@ def wavelet(
     lengths : np.ndarray, ``len(lengths) == n_bins``
         The (fractional) length of each filter in samples
 
-    Notes
-    -----
-    This function caches at level 10.
-
     See Also
     --------
     wavelet_lengths
     librosa.cqt
     librosa.vqt
     librosa.util.normalize
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------
@@ -860,13 +860,13 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
         The equivalent noise bandwidth (in FFT bins) of the
         given window function
 
-    Notes
-    -----
-    This function caches at level 10.
-
     See Also
     --------
     get_window
+
+    Notes
+    -----
+    This function caches at level 10.
     """
     if hasattr(window, "__name__"):
         key = window.__name__
@@ -915,6 +915,12 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
     get_window : np.ndarray
         A window of length `Nx` and type `window`
 
+    Raises
+    ------
+    ParameterError
+        If `window` is supplied as a vector of length != `n_fft`,
+        or is otherwise mis-specified.
+
     See Also
     --------
     scipy.signal.get_window
@@ -922,12 +928,6 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
     Notes
     -----
     This function caches at level 10.
-
-    Raises
-    ------
-    ParameterError
-        If `window` is supplied as a vector of length != `n_fft`,
-        or is otherwise mis-specified.
     """
     if callable(window):
         return window(Nx)
@@ -1011,20 +1011,20 @@ def _multirate_fb(
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Samplerate for each filter.
 
-    Notes
-    -----
-    This function caches at level 10.
-
-    See Also
-    --------
-    scipy.signal.iirdesign
-
     Raises
     ------
     ParameterError
         If ``center_freqs`` is ``None``.
         If ``sample_rates`` is ``None``.
         If ``center_freqs.shape`` does not match ``sample_rates.shape``.
+
+    See Also
+    --------
+    scipy.signal.iirdesign
+
+    Notes
+    -----
+    This function caches at level 10.
     """
     if center_freqs is None:
         raise ParameterError("center_freqs must be provided.")
@@ -1096,13 +1096,13 @@ def mr_frequencies(tuning: float) -> tuple[np.ndarray, np.ndarray]:
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Sample rate for each filter, used for multirate filterbank.
 
-    Notes
-    -----
-    This function caches at level 10.
-
     See Also
     --------
     librosa.filters.semitone_filterbank
+
+    Notes
+    -----
+    This function caches at level 10.
     """
     center_freqs = midi_to_hz(np.arange(24 + tuning, 109 + tuning))
 

@@ -268,6 +268,10 @@ def valid_audio(y: np.ndarray) -> bool:
     ParameterError
         In any of the conditions specified above fails
 
+    See Also
+    --------
+    numpy.float32
+
     Notes
     -----
     This function caches at level 20.
@@ -286,10 +290,6 @@ def valid_audio(y: np.ndarray) -> bool:
     >>> librosa.util.valid_audio(y)
     ...
     ParameterError: Audio buffer is not finite everywhere
-
-    See Also
-    --------
-    numpy.float32
     """
     if not isinstance(y, np.ndarray):
         raise ParameterError("Audio data must be of type numpy.ndarray")
@@ -392,29 +392,6 @@ def pad_center(
     This differs from `np.pad` by centering the data prior to padding,
     analogous to `str.center`
 
-    Examples
-    --------
-    >>> # Generate a vector
-    >>> data = np.ones(5)
-    >>> librosa.util.pad_center(data, size=10, mode='constant')
-    array([ 0.,  0.,  1.,  1.,  1.,  1.,  1.,  0.,  0.,  0.])
-
-    >>> # Pad a matrix along its first dimension
-    >>> data = np.ones((3, 5))
-    >>> librosa.util.pad_center(data, size=7, axis=0)
-    array([[ 0.,  0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.,  0.],
-           [ 1.,  1.,  1.,  1.,  1.],
-           [ 1.,  1.,  1.,  1.,  1.],
-           [ 1.,  1.,  1.,  1.,  1.],
-           [ 0.,  0.,  0.,  0.,  0.],
-           [ 0.,  0.,  0.,  0.,  0.]])
-    >>> # Or its second dimension
-    >>> librosa.util.pad_center(data, size=7, axis=1)
-    array([[ 0.,  1.,  1.,  1.,  1.,  1.,  0.],
-           [ 0.,  1.,  1.,  1.,  1.,  1.,  0.],
-           [ 0.,  1.,  1.,  1.,  1.,  1.,  0.]])
-
     Parameters
     ----------
     data : np.ndarray
@@ -440,6 +417,29 @@ def pad_center(
     See Also
     --------
     numpy.pad
+
+    Examples
+    --------
+    >>> # Generate a vector
+    >>> data = np.ones(5)
+    >>> librosa.util.pad_center(data, size=10, mode='constant')
+    array([ 0.,  0.,  1.,  1.,  1.,  1.,  1.,  0.,  0.,  0.])
+
+    >>> # Pad a matrix along its first dimension
+    >>> data = np.ones((3, 5))
+    >>> librosa.util.pad_center(data, size=7, axis=0)
+    array([[ 0.,  0.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  0.,  0.],
+           [ 1.,  1.,  1.,  1.,  1.],
+           [ 1.,  1.,  1.,  1.,  1.],
+           [ 1.,  1.,  1.,  1.,  1.],
+           [ 0.,  0.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  0.,  0.]])
+    >>> # Or its second dimension
+    >>> librosa.util.pad_center(data, size=7, axis=1)
+    array([[ 0.,  1.,  1.,  1.,  1.,  1.,  0.],
+           [ 0.,  1.,  1.,  1.,  1.,  1.,  0.],
+           [ 0.,  1.,  1.,  1.,  1.,  1.,  0.]])
     """
     kwargs.setdefault("mode", "constant")
 
@@ -537,19 +537,6 @@ def fix_length(
     If ``data.shape[axis] < n``, pad according to the provided kwargs.
     By default, ``data`` is padded with trailing zeros.
 
-    Examples
-    --------
-    >>> y = np.arange(7)
-    >>> # Default: pad with zeros
-    >>> librosa.util.fix_length(y, size=10)
-    array([0, 1, 2, 3, 4, 5, 6, 0, 0, 0])
-    >>> # Trim to a desired length
-    >>> librosa.util.fix_length(y, size=5)
-    array([0, 1, 2, 3, 4])
-    >>> # Use edge-padding instead of zeros
-    >>> librosa.util.fix_length(y, size=10, mode='edge')
-    array([0, 1, 2, 3, 4, 5, 6, 6, 6, 6])
-
     Parameters
     ----------
     data : np.ndarray
@@ -570,6 +557,19 @@ def fix_length(
     See Also
     --------
     numpy.pad
+
+    Examples
+    --------
+    >>> y = np.arange(7)
+    >>> # Default: pad with zeros
+    >>> librosa.util.fix_length(y, size=10)
+    array([0, 1, 2, 3, 4, 5, 6, 0, 0, 0])
+    >>> # Trim to a desired length
+    >>> librosa.util.fix_length(y, size=5)
+    array([0, 1, 2, 3, 4])
+    >>> # Use edge-padding instead of zeros
+    >>> librosa.util.fix_length(y, size=10, mode='edge')
+    array([0, 1, 2, 3, 4, 5, 6, 6, 6, 6])
     """
     kwargs.setdefault("mode", "constant")
 
@@ -596,6 +596,28 @@ def fix_frames(
     pad: bool = True,
 ) -> _Array1D[np.int_]:
     """Fix a list of frames to lie within [x_min, x_max]
+
+    Parameters
+    ----------
+    frames : np.ndarray [shape=(n_frames,)]
+        List of non-negative frame indices
+    x_min : int >= 0 or None
+        Minimum allowed frame index
+    x_max : int >= 0 or None
+        Maximum allowed frame index
+    pad : bool
+        If ``True``, then ``frames`` is expanded to span the full range
+        ``[x_min, x_max]``
+
+    Returns
+    -------
+    fixed_frames : np.ndarray [shape=(n_fixed_frames,), dtype=int]
+        Fixed frame indices, flattened and sorted
+
+    Raises
+    ------
+    ParameterError
+        If ``frames`` contains negative values
 
     Examples
     --------
@@ -626,28 +648,6 @@ def fix_frames(
     >>> librosa.util.fix_frames(frames, x_max=500)
     array([  0, 200, 233, 266, 299, 332, 365, 398, 431, 464, 497,
            500])
-
-    Parameters
-    ----------
-    frames : np.ndarray [shape=(n_frames,)]
-        List of non-negative frame indices
-    x_min : int >= 0 or None
-        Minimum allowed frame index
-    x_max : int >= 0 or None
-        Maximum allowed frame index
-    pad : bool
-        If ``True``, then ``frames`` is expanded to span the full range
-        ``[x_min, x_max]``
-
-    Returns
-    -------
-    fixed_frames : np.ndarray [shape=(n_fixed_frames,), dtype=int]
-        Fixed frame indices, flattened and sorted
-
-    Raises
-    ------
-    ParameterError
-        If ``frames`` contains negative values
     """
     frames = np.asarray(frames)
 
@@ -702,6 +702,37 @@ def axis_sort(
 ) -> _Array2D[Any] | tuple[_Array2D[Any], _Array1D[np.int_]]:
     """Sort an array along its rows or columns.
 
+    Parameters
+    ----------
+    S : np.ndarray [shape=(d, n)]
+        Array to be sorted
+
+    axis : int [scalar]
+        The axis along which to compute the sorting values
+
+        - ``axis=0`` to sort rows by peak column index
+        - ``axis=1`` to sort columns by peak row index
+
+    index : bool [scalar]
+        If true, returns the index array as well as the permuted data.
+
+    value : function
+        function to return the index corresponding to the sort order.
+        Default: `np.argmax`.
+
+    Returns
+    -------
+    S_sort : np.ndarray [shape=(d, n)]
+        ``S`` with the columns or rows permuted in sorting order
+    idx : np.ndarray (optional) [shape=(d,) or (n,)]
+        If ``index == True``, the sorting index used to permute ``S``.
+        Length of ``idx`` corresponds to the selected ``axis``.
+
+    Raises
+    ------
+    ParameterError
+        If ``S`` does not have exactly 2 dimensions (``S.ndim != 2``)
+
     Examples
     --------
     Visualize NMF output for a spectrogram S
@@ -743,37 +774,6 @@ def axis_sort(
     >>> cbar = librosa.display.colorbar_db(img_w, ax=ax[:, 0], orientation='horizontal')
     >>> cbar.ax.tick_params("x", rotation=45)
     >>> fig.colorbar(img_act, ax=ax[:, 1], orientation='horizontal')
-
-    Parameters
-    ----------
-    S : np.ndarray [shape=(d, n)]
-        Array to be sorted
-
-    axis : int [scalar]
-        The axis along which to compute the sorting values
-
-        - ``axis=0`` to sort rows by peak column index
-        - ``axis=1`` to sort columns by peak row index
-
-    index : bool [scalar]
-        If true, returns the index array as well as the permuted data.
-
-    value : function
-        function to return the index corresponding to the sort order.
-        Default: `np.argmax`.
-
-    Returns
-    -------
-    S_sort : np.ndarray [shape=(d, n)]
-        ``S`` with the columns or rows permuted in sorting order
-    idx : np.ndarray (optional) [shape=(d,) or (n,)]
-        If ``index == True``, the sorting index used to permute ``S``.
-        Length of ``idx`` corresponds to the selected ``axis``.
-
-    Raises
-    ------
-    ParameterError
-        If ``S`` does not have exactly 2 dimensions (``S.ndim != 2``)
     """
     if value is None:
         value = np.argmax
@@ -1069,6 +1069,22 @@ def localmax(x: np.ndarray, *, axis: int = 0) -> NDArray[np.bool]:
     Note that the first condition is strict, and that the first element
     ``x[0]`` will never be considered as a local maximum.
 
+    Parameters
+    ----------
+    x : np.ndarray [shape=(d1,d2,...)]
+        input vector or array
+    axis : int
+        axis along which to compute local maximality
+
+    Returns
+    -------
+    m : np.ndarray [shape=x.shape, dtype=bool]
+        indicator array of local maximality along ``axis``
+
+    See Also
+    --------
+    localmin
+
     Examples
     --------
     >>> x = np.array([1, 0, 1, 2, -1, 0, -2, 1])
@@ -1085,22 +1101,6 @@ def localmax(x: np.ndarray, *, axis: int = 0) -> NDArray[np.bool]:
     array([[False, False,  True],
            [False, False,  True],
            [False, False,  True]], dtype=bool)
-
-    Parameters
-    ----------
-    x : np.ndarray [shape=(d1,d2,...)]
-        input vector or array
-    axis : int
-        axis along which to compute local maximality
-
-    Returns
-    -------
-    m : np.ndarray [shape=x.shape, dtype=bool]
-        indicator array of local maximality along ``axis``
-
-    See Also
-    --------
-    localmin
     """
     # Rotate the target axis to the end
     xi = x.swapaxes(-1, axis)
@@ -1130,6 +1130,22 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> NDArray[np.bool]:
     Note that the first condition is strict, and that the first element
     ``x[0]`` will never be considered as a local minimum.
 
+    Parameters
+    ----------
+    x : np.ndarray [shape=(d1,d2,...)]
+        input vector or array
+    axis : int
+        axis along which to compute local minimality
+
+    Returns
+    -------
+    m : np.ndarray [shape=x.shape, dtype=bool]
+        indicator array of local minimality along ``axis``
+
+    See Also
+    --------
+    localmax
+
     Examples
     --------
     >>> x = np.array([1, 0, 1, 2, -1, 0, -2, 1])
@@ -1147,22 +1163,6 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> NDArray[np.bool]:
     array([[False,  True, False],
            [False,  True, False],
            [False,  True, False]])
-
-    Parameters
-    ----------
-    x : np.ndarray [shape=(d1,d2,...)]
-        input vector or array
-    axis : int
-        axis along which to compute local minimality
-
-    Returns
-    -------
-    m : np.ndarray [shape=x.shape, dtype=bool]
-        indicator array of local minimality along ``axis``
-
-    See Also
-    --------
-    localmax
     """
     # Rotate the target axis to the end
     xi = x.swapaxes(-1, axis)
@@ -2799,6 +2799,10 @@ def interp_broadcast(
         The result from combining both arrays after interpolation.
         If ``op`` is set to ``None``, returns the interpolated arrays separately ``(y1, y2)``.
 
+    See Also
+    --------
+    librosa.feature.metrogram
+
     Examples
     --------
     >>> import numpy as np
@@ -2820,10 +2824,6 @@ def interp_broadcast(
     >>>
     >>> product
     array([ 5. ,  7.5, 10. ])
-
-    See Also
-    --------
-    librosa.feature.metrogram
     """
     if interp_pos is None:
         interp_pos = x1_pos
