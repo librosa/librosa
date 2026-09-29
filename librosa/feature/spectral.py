@@ -179,7 +179,7 @@ def spectral_centroid(
 
     # Compute the center frequencies of each bin
     if freq is None:
-        freq = fft_frequencies(sr=sr, n_fft=n_fft)
+        freq = fft_frequencies(sr=sr, n_fft=n_fft, dtype=S.dtype)
 
     if freq.ndim == 1:
         # reshape for broadcasting
@@ -337,7 +337,7 @@ def spectral_bandwidth(
 
     # Compute the center frequencies of each bin
     if freq is None:
-        freq = fft_frequencies(sr=sr, n_fft=n_fft)
+        freq = fft_frequencies(sr=sr, n_fft=n_fft, dtype=S.dtype)
 
     if freq.ndim == 1:
         deviation = np.abs(
@@ -471,7 +471,7 @@ def spectral_contrast(
 
     # Compute the center frequencies of each bin
     if freq is None:
-        freq = fft_frequencies(sr=sr, n_fft=n_fft)
+        freq = fft_frequencies(sr=sr, n_fft=n_fft, dtype=S.dtype)
 
     freq = np.atleast_1d(freq)
 
@@ -499,7 +499,7 @@ def spectral_contrast(
     shape = list(S.shape)
     shape[-2] = n_bands + 1
 
-    valley = np.zeros(shape)
+    valley = np.zeros(shape, dtype=S.dtype)
     peak = np.zeros_like(valley)
 
     for k, (f_low, f_high) in enumerate(itertools.pairwise(octa)):
@@ -667,7 +667,7 @@ def spectral_rolloff(
 
     # Compute the center frequencies of each bin
     if freq is None:
-        freq = fft_frequencies(sr=sr, n_fft=n_fft)
+        freq = fft_frequencies(sr=sr, n_fft=n_fft, dtype=S.dtype)
 
     # Make sure that frequency can be broadcast
     if freq.ndim == 1:
@@ -682,7 +682,11 @@ def spectral_rolloff(
     # reshape threshold for broadcasting
     threshold = np.expand_dims(threshold, axis=-2)
 
-    ind = np.where(total_energy < threshold, np.nan, 1)
+    # Allocate the mask at the spectrogram's precision so the following
+    # ``ind * freq`` does not promote a float32 pipeline to float64
+    # (``np.nan`` is a float64 scalar, which ``np.where`` would propagate).
+    ind = np.ones_like(total_energy)
+    ind[total_energy < threshold] = np.nan
 
     rolloff: np.ndarray = np.nanmin(ind * freq, axis=-2, keepdims=True)
     return rolloff
@@ -1042,7 +1046,7 @@ def poly_features(
 
     # Compute the center frequencies of each bin
     if freq is None:
-        freq = fft_frequencies(sr=sr, n_fft=n_fft)
+        freq = fft_frequencies(sr=sr, n_fft=n_fft, dtype=S.dtype)
 
     coefficients: np.ndarray
 
@@ -1064,7 +1068,10 @@ def poly_features(
             -2, -1
         )
 
-    return coefficients
+    # `np.polyfit` always computes (and returns) in float64 for numerical
+    # stability; cast back to the spectrogram dtype so a float32 pipeline is
+    # preserved, consistent with the other spectral features.
+    return coefficients.astype(S.dtype, copy=False)
 
 
 def zero_crossing_rate(

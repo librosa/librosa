@@ -325,6 +325,29 @@ def test_fft_frequencies(sr, n_fft):
     assert np.allclose(dels, dels[0])
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize(
+    "constructor",
+    [
+        lambda dtype: librosa.fft_frequencies(sr=22050, n_fft=1024, dtype=dtype),
+        lambda dtype: librosa.cqt_frequencies(24, fmin=32.7, dtype=dtype),
+        lambda dtype: librosa.mel_frequencies(40, dtype=dtype),
+        lambda dtype: librosa.tempo_frequencies(128, dtype=dtype),
+        lambda dtype: librosa.fourier_tempo_frequencies(dtype=dtype),
+    ],
+)
+def test_frequency_constructor_dtype(constructor, dtype):
+    # The frequency-grid constructors allocate at the requested precision.
+    # See https://github.com/librosa/librosa/issues/2099
+    assert constructor(dtype).dtype == dtype
+
+
+def test_fft_frequencies_dtype_values_unchanged():
+    # The default (float64) grid must stay bit-for-bit identical to rfftfreq.
+    ref = np.fft.rfftfreq(n=2048, d=1.0 / 22050)
+    assert np.array_equal(librosa.fft_frequencies(sr=22050, n_fft=2048), ref)
+
+
 @pytest.mark.parametrize("n_bins", [12, 24, 36])
 @pytest.mark.parametrize("fmin", [440.0])
 @pytest.mark.parametrize("bins_per_octave", [12, 24, 36])

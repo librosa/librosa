@@ -169,6 +169,26 @@ def test_spectral_centroid_empty(y, sr, S):
     assert not np.any(cent)
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize(
+    "feature",
+    [
+        "spectral_centroid",
+        "spectral_bandwidth",
+        "spectral_rolloff",
+        "spectral_contrast",
+        "poly_features",
+    ],
+)
+def test_spectral_feature_dtype(feature, dtype, rng):
+    # regression: these features internally generate the FFT frequency grid,
+    # which used to be float64 and silently upcast a float32 spectrogram.
+    # See https://github.com/librosa/librosa/issues/2099
+    S = np.abs(rng.standard_normal(size=(1025, 10)).astype(dtype))
+    out = getattr(librosa.feature, feature)(S=S)
+    assert out.dtype == dtype
+
+
 @pytest.mark.parametrize(
     "freq",
     [
