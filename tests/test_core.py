@@ -3115,20 +3115,6 @@ def test_phase_vocoder_bad_inputs():
     librosa.phase_vocoder(D, rate=1.0, t_out=np.arange(6))
 
 
-def test_phase_vocoder_hop_deprecated():
-    D = np.zeros((257, 12), dtype=np.complex64)
-
-    with pytest.warns(FutureWarning, match="`hop_length` parameter is deprecated"):
-        librosa.phase_vocoder(D, rate=1.0, hop_length=64)
-
-
-def test_phase_vocoder_nfft_deprecated():
-    D = np.zeros((257, 12), dtype=np.complex64)
-
-    with pytest.warns(FutureWarning, match="`n_fft` parameter is deprecated"):
-        librosa.phase_vocoder(D, rate=1.0, n_fft=64)
-
-
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_phase_vocoder_bad_t_out():
     D = np.zeros((257, 12), dtype=np.complex64)
