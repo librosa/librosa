@@ -118,6 +118,22 @@ def test_pitch_shift_multi(y_multi):
     assert not np.allclose(Call[0], Call[1])
 
 
+@pytest.mark.parametrize("pad_mode", ["constant", "reflect"])
+def test_time_stretch_pitch_shift_pad_mode(ysr, pad_mode):
+    # pad_mode must go to stft only; istft does not accept it
+    y, sr = ysr
+
+    ys = librosa.effects.time_stretch(y, rate=1.5, pad_mode=pad_mode)
+    yp = librosa.effects.pitch_shift(y, sr=sr, n_steps=2, pad_mode=pad_mode)
+
+    assert np.all(np.isfinite(ys))
+    assert yp.shape == y.shape
+
+    if pad_mode != "constant":
+        ys_const = librosa.effects.time_stretch(y, rate=1.5, pad_mode="constant")
+        assert not np.allclose(ys, ys_const)
+
+
 @pytest.mark.parametrize("align_zeros", [False, True])
 def test_remix_mono(align_zeros):
 
