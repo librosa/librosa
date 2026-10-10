@@ -1779,10 +1779,10 @@ def test_wavebars_transpose(y, sr):
 
 
 def test_wavebars_nbars_validation():
+    fig, ax = plt.subplots()
     with pytest.raises(librosa.ParameterError):
-        fig, ax = plt.subplots()
         librosa.display.wavebars(np.array([0.0, 1.0]), n_bars=0, ax=ax)
-        plt.close(fig)
+    plt.close(fig)
 
 def test_wavebars_invert_color():
     fig, ax = plt.subplots()
