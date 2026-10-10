@@ -113,7 +113,8 @@ def specshow(
 
         Valid types are:
 
-        - None, 'none', or 'off' : no axis decoration is displayed.
+        - None, 'none', or 'off' : no axis decoration is displayed,
+          and coordinates are plotted as sample/frame indices.
 
         Frequency types:
 
@@ -600,6 +601,8 @@ def _mesh_coords(ax_type, coords, n, **kwargs):
         "lag_m": _coord_time,
         "lag_s": _coord_time,
         "lag_ms": _coord_time,
+        # 'tonnetz' and 'off' fall back to basic index coordinates [0, ..., n]
+        # to match documented axis options without raising ParameterError.
         "tonnetz": _coord_n,
         "off": _coord_n,
         "none": _coord_n,

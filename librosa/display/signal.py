@@ -543,6 +543,10 @@ def wavebars(
 
         # Get the fg color from the steps plot
         color = coll.get_facecolor()[0]
+        # PatchCollection.get_facecolor() returns a 2D array of shape (1, 4).
+        # Unpack the first row [0] to supply a 1D (4,) RGBA sequence expected
+        # by single Patch artists (axes.patch and proxy) without relying on
+        # implicit downstream array flattening.
 
         # Set the axes facecolor to our wave color
         axes.patch.set_facecolor(color)  # type: ignore[arg-type]
