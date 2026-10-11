@@ -1482,7 +1482,7 @@ def test_axis_fallbacks():
     adaptor = librosa.display.formatting.AdaptiveWaveplot(
         times=np.array([0]), y=np.array([0]), steps=mock_line, envelope=mock_poly
     )
-    proxy = adaptor._label_proxy
+    proxy = adaptor.label_proxy_
     handler = librosa.display.formatting._AdaptiveWaveplotHandler()
     
     # plot something so legend isn't totally empty, just in case
@@ -1803,7 +1803,7 @@ def test_wavebars_orientation(y, sr):
     librosa.display.wavebars(y, sr=sr, transpose=True, ax=ax)
     plt.close(fig)
 
-def test_wavebars_label_proxy(y, sr):
+def test_wavebarslabel_proxy_(y, sr):
     fig, ax = plt.subplots()
     librosa.display.wavebars(y, sr=sr, label='TestLabel', ax=ax)
     librosa.display.wavebars(y, sr=sr, label=None, ax=ax)
