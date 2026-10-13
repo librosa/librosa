@@ -1,5 +1,3 @@
-from .formatting import _WAVESHOW_ADAPTORS as _WAVESHOW_ADAPTORS
-from .formatting import AdaptiveWaveplot as AdaptiveWaveplot
 from .formatting import ChromaFJSFormatter as ChromaFJSFormatter
 from .formatting import ChromaFormatter as ChromaFormatter
 from .formatting import ChromaSvaraFormatter as ChromaSvaraFormatter
@@ -27,6 +25,10 @@ from .multi import _squeeze_shape as _squeeze_shape
 from .multi import highlight as highlight
 from .multi import legend_for_axes as legend_for_axes
 from .multi import multiplot as multiplot
+from .signal import _WAVESHOW_ADAPTORS as _WAVESHOW_ADAPTORS
+from .signal import AdaptiveWaveplot as AdaptiveWaveplot
+from .signal import _AdaptiveWaveplotHandler as _AdaptiveWaveplotHandler
+from .signal import _WaveplotDecoy as _WaveplotDecoy
 from .signal import wavebars as wavebars
 from .signal import wavef0 as wavef0
 from .signal import waveshow as waveshow

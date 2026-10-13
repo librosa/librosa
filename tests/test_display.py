@@ -1216,7 +1216,7 @@ def test_waveshow_disconnect(y, sr):
 def test_adaptor_destructor():
     mock_line = mlines.Line2D([0], [0])
     mock_poly = mcoll.PolyCollection([])
-    adaptor = librosa.display.formatting.AdaptiveWaveplot(
+    adaptor = librosa.display.signal.AdaptiveWaveplot(
         times=np.array([0]), y=np.array([0]), steps=mock_line, envelope=mock_poly
     )
     adaptor.__del__()
@@ -1479,11 +1479,11 @@ def test_axis_fallbacks():
     
     mock_line = mlines.Line2D([0], [0])
     mock_poly = mcoll.PolyCollection([])
-    adaptor = librosa.display.formatting.AdaptiveWaveplot(
+    adaptor = librosa.display.signal.AdaptiveWaveplot(
         times=np.array([0]), y=np.array([0]), steps=mock_line, envelope=mock_poly
     )
     proxy = adaptor.label_proxy_
-    handler = librosa.display.formatting._AdaptiveWaveplotHandler()
+    handler = librosa.display.signal._AdaptiveWaveplotHandler()
     
     # plot something so legend isn't totally empty, just in case
     ax.plot([0,1],[0,1], label="test")

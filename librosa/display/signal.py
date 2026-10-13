@@ -14,6 +14,7 @@ zoom levels and sequence lengths.
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
 
+import weakref
 from typing import TYPE_CHECKING, cast
 
 # Third-party imports for plotting and numerical operations
@@ -21,7 +22,10 @@ import matplotlib.axes as mplaxes
 import matplotlib.collections as mcollections
 import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
+import matplotlib.transforms as mtransforms
 import numpy as np
+from matplotlib.legend import Legend
+from matplotlib.legend_handler import HandlerBase, HandlerLine2D, HandlerPatch
 
 # Core and utility imports for audio processing
 from .. import core, util
@@ -32,6 +36,9 @@ if TYPE_CHECKING:
     from typing import Any, Literal, Sequence
 
     import matplotlib
+    from matplotlib.artist import Artist
+    from matplotlib.collections import PolyCollection
+    from matplotlib.lines import Line2D
     from matplotlib.markers import MarkerStyle
     from matplotlib.path import Path as MplPath
 
@@ -39,12 +46,293 @@ if TYPE_CHECKING:
 
 # Module imports for waveform formatting and adaptive plotting
 from .formatting import (
-    _WAVESHOW_ADAPTORS,
-    AdaptiveWaveplot,
     Transformf0,
     _check_axes,
     _decorate_axis,
 )
+
+
+class AdaptiveWaveplot:
+    """A helper class for managing adaptive wave visualizations.
+
+    This object is used to dynamically switch between sample-based and envelope-based
+    visualizations of waveforms.
+    When the display is zoomed in such that no more than `max_samples` would be
+    visible, the sample-based display is used.
+    When displaying the raw samples would require more than `max_samples`, an
+    envelope-based plot is used instead.
+
+    You should never need to instantiate this object directly, as it is constructed
+    automatically by `waveshow`.
+
+    Parameters
+    ----------
+    times : np.ndarray
+        An array containing the time index (in seconds) for each sample.
+
+    y : np.ndarray
+        An array containing the (monophonic) wave samples.
+
+    steps : matplotlib.lines.Line2D
+        The matplotlib artist used for the sample-based visualization.
+        This is constructed by `matplotlib.pyplot.step`.
+
+    envelope : matplotlib.collections.PolyCollection
+        The matplotlib artist used for the envelope-based visualization.
+        This is constructed by `matplotlib.pyplot.fill_between`.
+
+    sr : number > 0
+        The sampling rate of the audio
+
+    max_samples : int > 0
+        The maximum number of samples to use for sample-based display.
+
+    transpose : bool
+        If `True`, display the wave vertically instead of horizontally.
+
+    label : str or None
+        An optional label for the waveplot, used in legend entries.
+
+    See Also
+    --------
+    waveshow
+    """
+
+    times: np.ndarray
+    samples: np.ndarray
+    sr: float
+    max_samples: int
+    transpose: bool
+    cid: int | None
+    label_proxy_: _WaveplotDecoy
+
+    def __init__(
+        self,
+        times: np.ndarray,
+        y: np.ndarray,
+        steps: Line2D,
+        envelope: PolyCollection,
+        sr: float = 22050,
+        max_samples: int = 11025,
+        transpose: bool = False,
+        label: str | None = None,
+    ):
+        self.times = times
+        self.samples = y
+        self._steps_ref = weakref.ref(steps)
+        self._envelope_ref = weakref.ref(envelope)
+        self.sr = sr
+        self.max_samples = max_samples
+        self.transpose = transpose
+        self.cid = None
+        self._ax_ref: weakref.ref[mplaxes.Axes] | None = None
+
+        # This creates an invisible proxy artist to contain the label
+        self.label_proxy_ = _WaveplotDecoy(self)
+        self.label_proxy_.set_in_layout(False)
+
+        if label is not None:
+            self.label_proxy_.set_label(label)
+
+    # Preserve the old attribute API by exposing properties with same names
+    @property
+    def steps(self) -> Line2D | None:
+        """The step plot artist (Line2D), or None if garbage collected.
+
+        Returns
+        -------
+        Line2D or None
+            The step plot artist, or ``None`` if it has been garbage collected.
+        """
+        return self._steps_ref()
+
+    @property
+    def envelope(self) -> PolyCollection | None:
+        """The envelope artist (PolyCollection), or None if garbage collected.
+
+        Returns
+        -------
+        PolyCollection or None
+            The envelope artist, or ``None`` if it has been garbage collected.
+        """
+        return self._envelope_ref()
+
+    @property
+    def ax(self) -> mplaxes.Axes | None:
+        """The connected Axes, or None if not connected or garbage collected.
+
+        Returns
+        -------
+        matplotlib.axes.Axes or None
+            The connected axes, or ``None`` if not connected or garbage collected.
+        """
+        return None if self._ax_ref is None else self._ax_ref()
+
+    def __del__(self) -> None:
+        """Disconnect callback methods on delete"""
+        self.disconnect(strict=True)
+
+    def connect(
+        self,
+        ax: mplaxes.Axes,
+        *,
+        signal: str = "xlim_changed",
+    ) -> None:
+        """Connect the adaptor to a signal on an axes object.
+
+        Note that if the adaptor has already been connected to an axes object,
+        that connect is first broken and then replaced by a new callback.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            The axes to connect with this adaptor's `update`
+        signal : string, {"xlim_changed", "ylim_changed"}
+            The signal to connect
+
+        See Also
+        --------
+        disconnect
+        """
+        # Disconnect any existing callback first
+        self.disconnect()
+
+        # Attach to axes and store the connection id
+        self._ax_ref = weakref.ref(ax)
+        ax.add_artist(self.label_proxy_)
+        self.cid = ax.callbacks.connect(signal, self.update)
+
+    def disconnect(self, *, strict: bool = False) -> None:
+        """Disconnect the adaptor's update callback.
+
+        Parameters
+        ----------
+        strict : bool
+            If `True`, remove references to the connected axes.
+            If `False` (default), only disconnect the callback.
+
+            This functionality is intended primarily for internal use,
+            and should have no observable effects for users.
+
+        See Also
+        --------
+        connect
+        """
+        ax = self.ax
+        if ax is not None and self.cid is not None:
+            ax.callbacks.disconnect(self.cid)
+            self.cid = None
+        if strict:
+            self._ax_ref = None
+
+    def update(self, ax: mplaxes.Axes) -> None:
+        """Update the matplotlib display according to the current viewport limits.
+
+        This is a callback function, and should not be used directly.
+
+        Parameters
+        ----------
+        ax : matplotlib.axes.Axes
+            The axes object to update
+        """
+        # Deref artists and bail if they've been garbage collected
+        steps = self.steps
+        envelope = self.envelope
+        if steps is None or envelope is None:
+            return
+
+        lims = ax.viewLim
+
+        if self.transpose:
+            dim = lims.height * self.sr
+            start, end = lims.y0, lims.y1
+            xdata, ydata = self.samples, self.times
+            data = steps.get_ydata()
+        else:
+            dim = lims.width * self.sr
+            start, end = lims.x0, lims.x1
+            xdata, ydata = self.times, self.samples
+            data = steps.get_xdata()
+        # Does our width cover fewer than max_samples?
+        # If so, then use the sample-based plot
+        if dim <= self.max_samples:
+            envelope.set_visible(False)
+            steps.set_visible(True)
+
+            # Now check our viewport
+            # we have to squash mypy errors on operand compatibility
+            # here because the type annotations from matplotlib are too
+            # loose.
+            if start <= data[0] or end >= data[-1]:  # type: ignore[index]
+                # Viewport expands beyond current data in steps; update
+                # we want to cover a window of self.max_samples centered on the current viewport
+                midpoint_time = (start + end) / 2
+                idx_start = np.searchsorted(self.times, midpoint_time - 0.5 * self.max_samples / self.sr)
+                steps.set_data(
+                    xdata[idx_start : idx_start + self.max_samples],
+                    ydata[idx_start : idx_start + self.max_samples],
+                )
+        else:
+            # Otherwise, use the envelope plot
+            envelope.set_visible(True)
+            steps.set_visible(False)
+
+        ax.figure.canvas.draw_idle()
+
+# Keeps adaptors alive as long as their Axes exists, preventing GC
+_WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[mplaxes.Axes, set["AdaptiveWaveplot"]] = weakref.WeakKeyDictionary()
+
+
+class _WaveplotDecoy(mlines.Line2D):
+    waveplot: AdaptiveWaveplot
+
+    def __init__(self, parent_waveplot: AdaptiveWaveplot, *args: Any, **kwargs: Any):
+        # We'll never actually set the color on this decoy at construction time
+        kwargs["color"] = "none"
+        super().__init__([], [], *args, **kwargs)
+        self.waveplot = parent_waveplot  # Store reference to the parent wrapper
+
+
+class _AdaptiveWaveplotHandler(HandlerBase):
+    def create_artists(
+        self,
+        legend: Legend,
+        orig_handle: Artist,
+        xdescent: float,
+        ydescent: float,
+        width: float,
+        height: float,
+        fontsize: float,
+        trans: mtransforms.Transform,
+    ) -> list[Artist]:
+        """
+        Matplotlib automatically passes the exact dimensions and coordinate
+        transform (`trans`) needed to paint safely inside the legend key box.
+        """
+        orig_handle = cast("_WaveplotDecoy", orig_handle)
+        waveplot = orig_handle.waveplot
+        ax = waveplot.ax
+        if ax is not None:
+            bgcolor = ax.get_facecolor()
+        else:
+            bgcolor = "none"
+        bg_rect = mpatches.Rectangle((0, 0), 1, 1, facecolor=bgcolor, edgecolor="none")
+        bg_artists = HandlerPatch().create_artists(legend, bg_rect, xdescent, ydescent, width, height, fontsize, trans)
+
+        proxy_line = mlines.Line2D([], [])
+        if waveplot.steps is not None:
+            proxy_line.update_from(waveplot.steps)
+        proxy_line.set_data([], [])
+        proxy_line.set(visible=True)
+        line_artists = HandlerLine2D().create_artists(
+            legend, proxy_line, xdescent, ydescent, width, height, fontsize, trans
+        )
+
+        return [*bg_artists, *line_artists]
+
+# Add our custom handler to the default legend handler map
+if _WaveplotDecoy not in Legend.get_default_handler_map():
+    Legend.update_default_handler_map({_WaveplotDecoy: _AdaptiveWaveplotHandler()})
 
 
 def _envelope(x, hop):

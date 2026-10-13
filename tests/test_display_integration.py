@@ -9,7 +9,8 @@ from matplotlib.collections import QuadMesh, PatchCollection
 from matplotlib.ticker import ScalarFormatter
 
 import librosa
-from librosa.display.formatting import TimeFormatter, ChromaFormatter, NoteFormatter, AdaptiveWaveplot
+from librosa.display.formatting import TimeFormatter, ChromaFormatter, NoteFormatter
+from librosa.display.signal import AdaptiveWaveplot
 
 @pytest.fixture(scope="module")
 def audio_data():
