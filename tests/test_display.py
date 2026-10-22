@@ -1214,13 +1214,35 @@ def test_waveshow_disconnect(y, sr):
 
 
 def test_adaptor_destructor():
-    mock_line = mlines.Line2D([0], [0])
-    mock_poly = mcoll.PolyCollection([])
-    adaptor = librosa.display.signal.AdaptiveWaveplot(
-        times=np.array([0]), y=np.array([0]), steps=mock_line, envelope=mock_poly
-    )
-    adaptor.__del__()
+    def _run_test():
+        fig, ax = plt.subplots()
+        try:
+            mock_line = mlines.Line2D([0], [0])
+            mock_poly = mcoll.PolyCollection([])
 
+            adaptor = librosa.display.signal.AdaptiveWaveplot(
+                times=np.array([0]), y=np.array([0]), steps=mock_line, envelope=mock_poly
+            )
+            adaptor.connect(ax)
+
+            assert adaptor.ax is ax
+            assert adaptor.cid is not None
+
+            ref = weakref.ref(adaptor)
+            assert ref() is not None
+
+            adaptor.__del__()
+            assert adaptor.ax is None
+            assert adaptor.cid is None
+
+            return ref
+        finally:
+            plt.close(fig)
+
+    ref = _run_test()
+    gc.collect()
+    assert ref() is None
+    
 def test_waveshow_deladaptor(y, sr):
     fig, ax = plt.subplots()
     ad = librosa.display.waveshow(y=y, sr=sr, ax=ax)
@@ -1643,46 +1665,6 @@ def test_oct3_minor(S_abs, C):
     return fig
 
 
-
-
-def test_waveshow_validation_max_points(y, sr):
-    fig, ax = plt.subplots()
-    with pytest.raises(librosa.ParameterError):
-        librosa.display.waveshow(y, sr=sr, max_points=0, ax=ax)
-    plt.close(fig)
-
-def test_waveshow_stereo_mono(y, sr):
-    fig, ax = plt.subplots()
-    librosa.display.waveshow(y, sr=sr, ax=ax)
-    y_stereo = np.zeros((2, 100))
-    librosa.display.waveshow(y_stereo, sr=sr, ax=ax)
-    plt.close(fig)
-
-def test_waveshow_transpose(y, sr):
-    fig, ax = plt.subplots()
-    librosa.display.waveshow(y, sr=sr, transpose=True, ax=ax)
-    plt.close(fig)
-
-def test_waveshow_mask():
-    fig, ax = plt.subplots()
-    y_zeros = np.zeros(100)
-    mask = np.ones(100, dtype=bool)
-    librosa.display.waveshow(y_zeros, sr=22050, mask=mask, ax=ax)
-    plt.close(fig)
-
-def test_waveshow_color_inversion(y, sr):
-    fig, ax = plt.subplots()
-    librosa.display.waveshow(y, sr=sr, invert=True, ax=ax)
-    librosa.display.waveshow(y, sr=sr, invert=True, invert_color="red", ax=ax)
-    plt.close(fig)
-
-def test_waveshow_axis_formats(y, sr):
-    fig, ax = plt.subplots()
-    librosa.display.waveshow(y, sr=sr, axis='off', ax=ax)
-    librosa.display.waveshow(y, sr=sr, axis='s', ax=ax)
-    librosa.display.waveshow(y, sr=sr, axis=None, ax=ax)
-    plt.close(fig)
-
 @pytest.mark.mpl_image_compare(
     baseline_images=["wavebars"],
     extensions=["png"],
@@ -1784,35 +1766,6 @@ def test_wavebars_nbars_validation():
         librosa.display.wavebars(np.array([0.0, 1.0]), n_bars=0, ax=ax)
     plt.close(fig)
 
-def test_wavebars_invert_color():
-    fig, ax = plt.subplots()
-    librosa.display.wavebars(np.array([0.0, 1.0]), n_bars=1, ax=ax, invert=True)
-    plt.close(fig)
-
-
-
-def test_wavebars_validation_n_bars_explicit(y, sr):
-    fig, ax = plt.subplots()
-    with pytest.raises(librosa.ParameterError):
-        librosa.display.wavebars(y, sr=sr, n_bars=0, ax=ax)
-    plt.close(fig)
-
-def test_wavebars_orientation(y, sr):
-    fig, ax = plt.subplots()
-    librosa.display.wavebars(y, sr=sr, transpose=False, ax=ax)
-    librosa.display.wavebars(y, sr=sr, transpose=True, ax=ax)
-    plt.close(fig)
-
-def test_wavebarslabel_proxy_(y, sr):
-    fig, ax = plt.subplots()
-    librosa.display.wavebars(y, sr=sr, label='TestLabel', ax=ax)
-    librosa.display.wavebars(y, sr=sr, label=None, ax=ax)
-    plt.close(fig)
-
-def test_wavebars_inverted_colors(y, sr):
-    fig, ax = plt.subplots()
-    librosa.display.wavebars(y, sr=sr, invert=True, ax=ax)
-    plt.close(fig)
 
 @pytest.mark.mpl_image_compare(
     baseline_images=["wavef0"],

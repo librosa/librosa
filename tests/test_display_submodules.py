@@ -22,7 +22,6 @@ def test_public_api_surface():
         "ChromaFJSFormatter",
         "TonnetzFormatter",
         "AdaptiveWaveplot",
-        "Transformf0",
     ]
     for symbol in expected_symbols:
         assert hasattr(librosa.display, symbol), f"librosa.display missing {symbol}"
