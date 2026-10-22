@@ -30,6 +30,11 @@ import librosa.display
 import numpy as np
 from typing import Any, Dict
 
+import matplotlib.lines as mlines
+import matplotlib.collections as mcoll
+import matplotlib.transforms as mtransforms
+import librosa.display.formatting
+import librosa.display.signal
 STYLE = "default"
 
 # Workaround for old freetype builds with our image fixtures
@@ -99,6 +104,11 @@ def beat_t(beats, sr):
 def Csync(C, beats):
     return librosa.util.sync(C, beats, aggregate=np.median)
 
+
+
+def test_axes_type_validation():
+    with pytest.raises(librosa.ParameterError):
+        librosa.display.formatting._check_axes("not_an_axes")  # type: ignore
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_unknown_time_unit(y):
@@ -223,6 +233,17 @@ def test_chroma(S_abs, sr):
     librosa.display.specshow(chr3, y_axis="chroma", bins_per_octave=3 * 12)
     return plt.gcf()
 
+
+
+def test_svara_parameter_error():
+    with pytest.raises(librosa.ParameterError):
+        librosa.display.formatting.SvaraFormatter(Sa=None)  # type: ignore
+
+def test_chroma_fallback_defaults():
+    fig, ax = plt.subplots()
+    librosa.display.formatting._decorate_axis(ax.yaxis, ax_type="chroma_h", Sa=None)
+    librosa.display.formatting._decorate_axis(ax.yaxis, ax_type="chroma_c", Sa=None, mela=1)
+    plt.close(fig)
 
 @pytest.mark.mpl_image_compare(
     baseline_images=["chroma_svara"], extensions=["png"], style=STYLE
@@ -1042,7 +1063,7 @@ def test_display_fourier_tempo_odd():
     ],
 )
 def test_same_axes(x_axis, y_axis, xlim, ylim, out):
-    assert librosa.display.__same_axes(x_axis, y_axis, xlim, ylim) == out
+    assert librosa.display._same_axes(x_axis, y_axis, xlim, ylim) == out
 
 
 def test_auto_aspect():
@@ -1191,6 +1212,37 @@ def test_waveshow_disconnect(y, sr):
     assert ad.envelope.get_visible() and not ad.steps.get_visible()
 
 
+
+def test_adaptor_destructor():
+    def _run_test():
+        fig, ax = plt.subplots()
+        try:
+            mock_line = mlines.Line2D([0], [0])
+            mock_poly = mcoll.PolyCollection([])
+
+            adaptor = librosa.display.signal.AdaptiveWaveplot(
+                times=np.array([0]), y=np.array([0]), steps=mock_line, envelope=mock_poly
+            )
+            adaptor.connect(ax)
+
+            assert adaptor.ax is ax
+            assert adaptor.cid is not None
+
+            ref = weakref.ref(adaptor)
+            assert ref() is not None
+
+            adaptor.__del__()
+            assert adaptor.ax is None
+            assert adaptor.cid is None
+
+            return ref
+        finally:
+            plt.close(fig)
+
+    ref = _run_test()
+    gc.collect()
+    assert ref() is None
+    
 def test_waveshow_deladaptor(y, sr):
     fig, ax = plt.subplots()
     ad = librosa.display.waveshow(y=y, sr=sr, ax=ax)
@@ -1283,13 +1335,13 @@ def test_vqt_hz_nointervals(C, sr):
 def test_parse_vscale_dbfs_ref(vscale):
     # This should raise an error because a reference value is
     # not allowed with dBFS
-    librosa.display.__parse_vscale(vscale)
+    librosa.display._parse_vscale(vscale)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize("vscale", ["bad string", "dB[gibberish]", "dBFS[gibberish]"])
 def test_parse_vscale_fail(vscale):
-    librosa.display.__parse_vscale(vscale)
+    librosa.display._parse_vscale(vscale)
 
 
 @pytest.mark.parametrize(
@@ -1306,7 +1358,7 @@ def test_parse_vscale_fail(vscale):
     ],
 )
 def test_parse_vscale(vscale, mode, scale_type, ref):
-    assert librosa.display.__parse_vscale(vscale) == (mode, scale_type, ref)
+    assert librosa.display._parse_vscale(vscale) == (mode, scale_type, ref)
 
 
 @pytest.mark.mpl_image_compare(
@@ -1438,6 +1490,38 @@ def test_colorbar_phase(S):
     )
     librosa.display.colorbar_phase(i2, ax=ax[1], label="Δ radians")
     return fig
+
+
+def test_axis_fallbacks():
+    fig, ax = plt.subplots()
+    im_real = ax.imshow(np.array([[0.0, 1.0], [1.0, 0.0]]))
+    
+    librosa.display.colorbar_db(im_real, ax=None)
+    librosa.display.colorbar_phase(im_real, ax=None)
+    
+    mock_line = mlines.Line2D([0], [0])
+    mock_poly = mcoll.PolyCollection([])
+    adaptor = librosa.display.signal.AdaptiveWaveplot(
+        times=np.array([0]), y=np.array([0]), steps=mock_line, envelope=mock_poly
+    )
+    proxy = adaptor.label_proxy_
+    handler = librosa.display.signal._AdaptiveWaveplotHandler()
+    
+    # plot something so legend isn't totally empty, just in case
+    ax.plot([0,1],[0,1], label="test")
+    leg = ax.legend()
+    
+    handler.create_artists(
+        leg, 
+        orig_handle=proxy,  # type: ignore 
+        xdescent=0, 
+        ydescent=0, 
+        width=10, 
+        height=10, 
+        fontsize=10, 
+        trans=mtransforms.IdentityTransform()
+    )
+    plt.close(fig)
 
 
 @pytest.mark.mpl_image_compare(
@@ -1581,7 +1665,6 @@ def test_oct3_minor(S_abs, C):
     return fig
 
 
-
 @pytest.mark.mpl_image_compare(
     baseline_images=["wavebars"],
     extensions=["png"],
@@ -1677,6 +1760,13 @@ def test_wavebars_transpose(y, sr):
     return fig
 
 
+def test_wavebars_nbars_validation():
+    fig, ax = plt.subplots()
+    with pytest.raises(librosa.ParameterError):
+        librosa.display.wavebars(np.array([0.0, 1.0]), n_bars=0, ax=ax)
+    plt.close(fig)
+
+
 @pytest.mark.mpl_image_compare(
     baseline_images=["wavef0"],
     extensions=["png"],
@@ -1702,7 +1792,10 @@ def test_wavef0(y, sr):
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_legend_for_axes_no_axes():
     fig = plt.figure()
-    librosa.display.legend_for_axes(fig=fig)
+    try:
+        librosa.display.legend_for_axes(fig=fig)
+    finally:
+        plt.close(fig)
 
 
 def test_legend_for_axes_current():
@@ -1712,6 +1805,7 @@ def test_legend_for_axes_current():
     leg = librosa.display.legend_for_axes()
     assert leg is not None
     assert leg.figure is fig
+    plt.close(fig)
 
 
 def test_legend_for_axes_scalar():
@@ -1720,14 +1814,18 @@ def test_legend_for_axes_scalar():
     leg = librosa.display.legend_for_axes(axes=ax)
     assert leg is not None
     assert leg.figure is fig
+    plt.close(fig)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_legend_for_axes_mismatched_figures():
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
-
-    librosa.display.legend_for_axes([ax1, ax2])
+    try:
+        librosa.display.legend_for_axes([ax1, ax2])
+    finally:
+        plt.close(fig1)
+        plt.close(fig2)
 
 
 def test_legend_for_axes_explicit_bbox():
@@ -1739,6 +1837,7 @@ def test_legend_for_axes_explicit_bbox():
     )
 
     assert leg is not None
+    plt.close(fig)
 
 
 @pytest.mark.mpl_image_compare(
@@ -2049,6 +2148,7 @@ def test_mp_setup_axes_create(shape, orient, output_shape, axes_shape):
     assert fig is not None
     assert axes.shape == axes_shape
     assert out_shape == output_shape
+    plt.close(fig)  # type: ignore
 
 
 def test_mp_setup_axes_with_fig():
@@ -2069,6 +2169,7 @@ def test_mp_setup_axes_with_fig():
     assert fig_out is fig
     assert axes.shape == (2, 1)
     assert out_shape == (2,)
+    plt.close(fig)
 
 
 @pytest.mark.parametrize(
@@ -2101,6 +2202,7 @@ def test_mp_setup_axes_array_input(orient, axes_in_shape, axes_out_shape, output
     assert fig_out is fig
     assert axes_out.shape == axes_out_shape
     assert out_shape == output_shape
+    plt.close(fig)  # type: ignore
 
 
 def test_mp_setup_axes_scalar_input():
@@ -2121,23 +2223,26 @@ def test_mp_setup_axes_scalar_input():
     assert fig_out is fig
     assert axes_out.shape == (1, 1)
     assert out_shape == tuple()
+    plt.close(fig)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)
 def test_mp_setup_axes_bad_shape():
     fig, axes = plt.subplots(nrows=2)
-
-    librosa.display._mp_setup_axes(
-        axes=np.asarray(axes),
-        fig=None,
-        fig_kw=None,
-        nrows=3,
-        ncols=1,
-        axshape=(3,),
-        orient="v",
-        sharex=True,
-        sharey=True,
-    )
+    try:
+        librosa.display._mp_setup_axes(
+            axes=np.asarray(axes),
+            fig=None,
+            fig_kw=None,
+            nrows=3,
+            ncols=1,
+            axshape=(3,),
+            orient="v",
+            sharex=True,
+            sharey=True,
+        )
+    finally:
+        plt.close(fig)
 
 
 def test_mp_setup_axes_single():
@@ -2158,6 +2263,7 @@ def test_mp_setup_axes_single():
     assert fig_out is fig
     assert axes_out.shape == (1, 1)
     assert out_shape == tuple()
+    plt.close(fig)
 
 
 def test_mp_setup_labels_none():
@@ -2546,3 +2652,39 @@ def test_specshow_boolean_norm(S_abs):
     for axi in ax.flat:
         axi.label_outer()
     return fig
+
+def test_wavef0_validation_method(y, sr):
+    fig, ax = plt.subplots()
+    f0 = np.array([440.0, 440.0])
+    with pytest.raises(librosa.ParameterError):
+        librosa.display.wavef0(y, sr=sr, f0=f0, method='invalid', ax=ax)
+    plt.close(fig)
+
+def test_wavef0_empty_audio(sr):
+    fig, ax = plt.subplots()
+    f0 = np.array([440.0])
+    with pytest.raises(librosa.ParameterError):
+        librosa.display.wavef0(np.empty(0), sr=sr, f0=f0, ax=ax)
+    plt.close(fig)
+
+def test_wavef0_methods(y, sr):
+    fig, ax = plt.subplots()
+    f0 = np.array([440.0, 440.0])
+    librosa.display.wavef0(y, sr=sr, f0=f0, method='waveshow', ax=ax)
+    librosa.display.wavef0(y, sr=sr, f0=f0, method='wavebars', ax=ax)
+    plt.close(fig)
+
+def test_wavef0_orientation(y, sr):
+    fig, ax = plt.subplots()
+    f0 = np.array([440.0, 440.0])
+    librosa.display.wavef0(y, sr=sr, f0=f0, transpose=False, ax=ax)
+    librosa.display.wavef0(y, sr=sr, f0=f0, transpose=True, ax=ax)
+    plt.close(fig)
+
+def test_wavef0_spectrogram_overlay(y, sr):
+    fig, ax = plt.subplots()
+    f0 = np.array([440.0, 440.0])
+    ax.plot([0, 1], [0, 1])
+    librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax)
+    plt.close(fig)
+
