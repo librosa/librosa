@@ -118,13 +118,11 @@ jobs:
             echo "${TEST_PREFIX}/Library/bin" >> "${GITHUB_PATH}"
 
         - name: Get Date
-          if: ${{ !matrix.win_arm64 }}
           id: get-date
           run: echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
           shell: bash
 
         - name: Cache Conda env
-          if: ${{ !matrix.win_arm64 }}
           uses: actions/cache@v6
           with:
             path: ${{ env.CONDA }}/envs
@@ -137,7 +135,6 @@ jobs:
           id: cache
 
         - name: Update environment
-          if: ${{ !matrix.win_arm64 && steps.cache.outputs.cache-hit != 'true' }}
           run:
             conda env update -n test -f ${{ matrix.envfile }} 
           if: steps.cache.outputs.cache-hit != 'true'
@@ -145,13 +142,8 @@ jobs:
         - name: Conda info
           shell: bash -l {0}
           run: |
-            if [ "${{ matrix.win_arm64 }}" == "true" ]; then
-              CONDA_CMD="${CONDA_EXE}"
-            else
-              CONDA_CMD="conda"
-            fi
-            "${CONDA_CMD}" info -a
-            "${CONDA_CMD}" list
+            conda info -a
+            conda list
             python -c "import scipy; scipy.show_config()"
 
         - name: Install librosa
