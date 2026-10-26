@@ -135,9 +135,13 @@ jobs:
           id: cache
 
         - name: Update environment
-          if: ${{ !matrix.win_arm64 && steps.cache.outputs.cache-hit != 'true' }}
           run:
-            conda env update -n test -f ${{ matrix.envfile }} 
+            if [ "${{ matrix.win_arm64 }}" == "true" ]; then
+              CONDA_CMD="${CONDA_EXE}"
+            else
+              CONDA_CMD="conda"
+            fi
+            "${CONDA_CMD}" env update -n test -f ${{ matrix.envfile }} 
           if: steps.cache.outputs.cache-hit != 'true'
 
         - name: Conda info
