@@ -1215,7 +1215,9 @@ def test_waveshow_disconnect(y, sr):
 
 def test_adaptor_destructor():
     def _run_test():
-        fig, ax = plt.subplots()
+        # GUI managers can retain the figure after close.
+        fig = plt.Figure()
+        ax = fig.subplots()
         try:
             mock_line = mlines.Line2D([0], [0])
             mock_poly = mcoll.PolyCollection([])
