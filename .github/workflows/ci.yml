@@ -135,7 +135,8 @@ jobs:
           id: cache
 
         - name: Update environment
-          run:
+          shell: bash -l {0}
+          run: |
             if [ "${{ matrix.win_arm64 }}" == "true" ]; then
               CONDA_CMD="${CONDA_EXE}"
             else
