@@ -1513,7 +1513,7 @@ def test_axis_fallbacks():
     
     handler.create_artists(
         leg, 
-        orig_handle=proxy,  # type: ignore 
+        orig_handle=proxy,
         xdescent=0, 
         ydescent=0, 
         width=10, 

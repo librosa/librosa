@@ -134,7 +134,7 @@ following rules before submitting:
 
 - Please ensure all code snippets and error messages are formatted in
   appropriate code blocks.
-  See [Creating and highlighting code blocks](https://help.github.com/articles/creating-and-highlighting-code-blocks).
+  See [Creating and highlighting code blocks](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-and-highlighting-code-blocks).
 
 - Please include your operating system type and version number, as well
   as your Python, librosa, numpy, and scipy versions. This information
