@@ -30,6 +30,7 @@ dependencies:
   - lazy_loader>=0.3
   - umap-learn>=0.5.3
   - pandas>=2.0.0
+  - ffmpeg
   - pip:
     - presets>=0.1.3
     - mir-eval>=0.6
