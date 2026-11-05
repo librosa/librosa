@@ -5,6 +5,7 @@
 
 # Disable cache
 import os
+import platform
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
@@ -919,6 +920,9 @@ def test_click_multi():
     assert np.allclose(yout[..., 2000:2100], click)
 
 
+# This test is allowed to fail if running on windows platform due to upstream build issues
+@pytest.mark.skipif(platform.system() == "Windows", reason="Fails on Windows due to upstream build issues"
+)
 def test_nnls_multi(s_multi):
 
     # Verify that a stereo melspectrogram can be reconstructed
