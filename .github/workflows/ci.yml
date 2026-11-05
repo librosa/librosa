@@ -12,6 +12,10 @@ concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: True
 
+env:
+    # Channel that provides native win-arm64 conda packages
+    WIN_ARM64_CONDA_CHANNEL: bootstrap-win-arm64-round-2-native
+
 jobs:
     test:
         name: >-
@@ -59,6 +63,11 @@ jobs:
                       channel-priority: "flexible"
                       envfile: ".github/environment-ci.yml"
 
+                    - os: windows-11-arm
+                      python-version: "3.14"
+                      channel-priority: "flexible"
+                      envfile: ".github/environment-ci.yml"
+                      win_arm64: true
         steps:
         - uses: actions/checkout@v7
 
@@ -75,12 +84,38 @@ jobs:
           shell: pwsh
 
         - name: Setup Miniforge
+          if: ${{ !matrix.win_arm64 }}
           uses: conda-incubator/setup-miniconda@v4
           with:
             miniforge-version: latest
             activate-environment: test
             conda-remove-defaults: true
             python-version: ${{ matrix.python-version }}
+
+        - name: Set up conda-standalone (Windows ARM64)
+          if: ${{ matrix.win_arm64 }}
+          uses: conda-incubator/setup-conda-standalone@00a34805e93a8b640aee5f8a20e8f481ad77e3b4 # v0.1.0
+          with:
+            channel: ${{ env.WIN_ARM64_CONDA_CHANNEL }}
+            conda-standalone-version: 26.3.2.post1
+            destination-directory: ${{ runner.temp }}/conda-standalone
+
+        - name: Create and populate conda env (Windows ARM64)
+          if: ${{ matrix.win_arm64 }}
+          shell: bash -elx {0}
+          env:
+            CONDA_CHANNELS: ${{ env.WIN_ARM64_CONDA_CHANNEL }},conda-forge
+            CONDA_CHANNEL_PRIORITY: ${{ matrix.channel-priority }}
+          run: |
+            TEST_PREFIX="${RUNNER_TEMP}/conda-envs/test"
+            "${CONDA_EXE}" create --yes --prefix "${TEST_PREFIX}" \
+              python=${{ matrix.python-version }}
+            "${CONDA_EXE}" env update --prefix "${TEST_PREFIX}" \
+              -f ${{ matrix.envfile }}
+            echo "CONDA_PREFIX=${TEST_PREFIX}" >> "${GITHUB_ENV}"
+            echo "${TEST_PREFIX}" >> "${GITHUB_PATH}"
+            echo "${TEST_PREFIX}/Scripts" >> "${GITHUB_PATH}"
+            echo "${TEST_PREFIX}/Library/bin" >> "${GITHUB_PATH}"
 
         - name: Get Date
           id: get-date
@@ -100,15 +135,26 @@ jobs:
           id: cache
 
         - name: Update environment
-          run:
-            conda env update -n test -f ${{ matrix.envfile }} 
+          shell: bash -l {0}
+          run: |
+            if [ "${{ matrix.win_arm64 }}" == "true" ]; then
+              CONDA_CMD="${CONDA_EXE}"
+            else
+              CONDA_CMD="conda"
+            fi
+            "${CONDA_CMD}" env update -n test -f ${{ matrix.envfile }} 
           if: steps.cache.outputs.cache-hit != 'true'
 
         - name: Conda info
           shell: bash -l {0}
           run: |
-            conda info -a
-            conda list
+            if [ "${{ matrix.win_arm64 }}" == "true" ]; then
+              CONDA_CMD="${CONDA_EXE}"
+            else
+              CONDA_CMD="conda"
+            fi
+            "${CONDA_CMD}" info -a
+            "${CONDA_CMD}" list
             python -c "import scipy; scipy.show_config()"
 
         - name: Install librosa
