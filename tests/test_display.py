@@ -22,7 +22,6 @@ import matplotlib
 
 import matplotlib.collections
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
 from matplotlib.testing.conftest import text_placeholders
 from matplotlib import colormaps as mcm
 
@@ -1216,9 +1215,7 @@ def test_waveshow_disconnect(y, sr):
 
 def test_adaptor_destructor():
     def _run_test():
-        # GUI managers can retain the figure after close.
-        fig = Figure()
-        ax = fig.subplots()
+        fig, ax = plt.subplots()
         try:
             mock_line = mlines.Line2D([0], [0])
             mock_poly = mcoll.PolyCollection([])
