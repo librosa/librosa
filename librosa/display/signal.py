@@ -315,6 +315,9 @@ class _AdaptiveWaveplotHandler(HandlerBase):
         """
         orig_handle = cast("_WaveplotDecoy", orig_handle)
         waveplot = orig_handle.waveplot
+        if waveplot is None:
+            return []
+
         ax = waveplot.ax
         if ax is not None:
             bgcolor = ax.get_facecolor()
