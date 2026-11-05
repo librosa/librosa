@@ -223,6 +223,8 @@ class AdaptiveWaveplot:
             ax.callbacks.disconnect(self.cid)
             self.cid = None
         if strict:
+            if self.label_proxy_.axes is not None:
+                self.label_proxy_.remove()
             self._ax_ref = None
 
     def update(self, ax: mplaxes.Axes) -> None:
@@ -290,7 +292,11 @@ class _WaveplotDecoy(mlines.Line2D):
         # We'll never actually set the color on this decoy at construction time
         kwargs["color"] = "none"
         super().__init__([], [], *args, **kwargs)
-        self.waveplot = parent_waveplot  # Store reference to the parent wrapper
+        self._waveplot_ref = weakref.ref(parent_waveplot)  # Store weak reference to the parent wrapper
+
+    @property
+    def waveplot(self) -> AdaptiveWaveplot | None:
+        return self._waveplot_ref()
 
 
 class _AdaptiveWaveplotHandler(HandlerBase):
