@@ -30,7 +30,6 @@ from matplotlib import colormaps as mcm
 
 # Core and utility imports for audio processing
 from .. import core, util
-from ..util.decorators import moved
 from ..util.exceptions import ParameterError
 
 # Type checking imports for development and static analysis
@@ -916,10 +915,6 @@ def infer_cmap(
         return cmap_seq
 
     return cmap_div
-
-
-# Deprecation rename of cmap -> infer_cmap for 1.0
-cmap = moved(moved_from="librosa.display.cmap", version="1.0", version_removed="1.1")(infer_cmap)
 
 
 _chroma_ax_types = (
