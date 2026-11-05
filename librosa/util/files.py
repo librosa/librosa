@@ -8,12 +8,12 @@ import glob
 import html as html_lib
 import json
 import os
+import tomllib
 from importlib import resources
 from typing import Any
 
 import msgpack
 import pooch
-import tomllib
 
 from ..version import version as librosa_version
 from .exceptions import ParameterError
