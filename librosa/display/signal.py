@@ -286,8 +286,6 @@ _WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[mplaxes.Axes, set["AdaptiveWaveplo
 
 
 class _WaveplotDecoy(mlines.Line2D):
-    waveplot: AdaptiveWaveplot
-
     def __init__(self, parent_waveplot: AdaptiveWaveplot, *args: Any, **kwargs: Any):
         # We'll never actually set the color on this decoy at construction time
         kwargs["color"] = "none"
