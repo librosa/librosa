@@ -141,7 +141,7 @@ def test_display_namespace_fidelity():
         'TonnetzFormatter',
         'FJSFormatter',
         'AdaptiveWaveplot',
-        'cmap',
+        'infer_cmap',
         'multiplot'
     ]
     

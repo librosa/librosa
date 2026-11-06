@@ -9,7 +9,6 @@ from .formatting import TimeFormatter as TimeFormatter
 from .formatting import TonnetzFormatter as TonnetzFormatter
 from .formatting import Transformf0 as Transformf0
 from .formatting import _same_axes as _same_axes
-from .formatting import cmap as cmap
 from .formatting import colorbar_db as colorbar_db
 from .formatting import colorbar_phase as colorbar_phase
 from .formatting import infer_cmap as infer_cmap
