@@ -18,7 +18,6 @@ __all__ = [
     "ChromaFJSFormatter",
     "ChromaFormatter",
     "ChromaSvaraFormatter",
-    "cmap",
     "colorbar_db",
     "colorbar_phase",
     "FJSFormatter",
