@@ -17,6 +17,7 @@ from .core import cqt as cqt
 from .core import cqt_frequencies as cqt_frequencies
 from .core import db_to_amplitude as db_to_amplitude
 from .core import db_to_power as db_to_power
+from .core import envelope as envelope
 from .core import estimate_tuning as estimate_tuning
 from .core import f0_harmonics as f0_harmonics
 from .core import fft_frequencies as fft_frequencies
@@ -84,6 +85,9 @@ from .core import salience as salience
 from .core import samples_like as samples_like
 from .core import samples_to_frames as samples_to_frames
 from .core import samples_to_time as samples_to_time
+from .core import shepard_risset_glissando as shepard_risset_glissando
+from .core import shepard_scale as shepard_scale
+from .core import shepard_tone as shepard_tone
 from .core import stft as stft
 from .core import stream as stream
 from .core import tempo_frequencies as tempo_frequencies
