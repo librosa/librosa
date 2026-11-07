@@ -9,6 +9,9 @@ on:
     types:
       - completed
 
+permissions: 
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -17,33 +20,34 @@ jobs:
   doc:
     name: "Documentation build"
     runs-on: ubuntu-latest
-
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
-      - name: Install Conda environment
-        uses: conda-incubator/setup-miniconda@v3
+      - name: Setup Micromamba (Python + ffmpeg)
+        uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3
         with:
-          auto-update-conda: false
-          python-version: "3.12"
-          add-pip-as-python-dependency: true
-          auto-activate-base: false
-          activate-environment: docs
-          channel-priority: flexible
-          environment-file: .github/environment-docs.yml
+          environment-name: docs
+          create-args: >-
+            python=3.14
+            ffmpeg
+          cache-downloads: true
 
-      - name: Conda info
+      - name: Setup uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: true
+          cache-dependency-glob: "pyproject.toml"
+
+      - name: Install librosa and doc dependencies
         shell: bash -el {0}
         run: |
-          conda info -a
-          conda list
-
-      - name: Install librosa
-        shell: bash -el {0}
-        run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
+          uv pip install --prefix "$CONDA_PREFIX" -e ".[docs]"
+          micromamba info
+          uv pip list --prefix "$CONDA_PREFIX"
 
       - name : Pull historical documentation assets
         shell: bash -el {0}
@@ -78,7 +82,7 @@ jobs:
 
 
       - name: Push to web
-        uses: peaceiris/actions-gh-pages@v4
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
         with:
           personal_token: ${{ secrets.DOC_PUBLISH_TOKEN }}
           external_repository: librosa/doc

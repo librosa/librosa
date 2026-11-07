@@ -8,6 +8,8 @@ on:
     branches:
     - main
 
+permissions: 
+  contents: read
   
 concurrency:
     group: ${{ github.workflow }}-${{ github.ref }}
@@ -20,69 +22,43 @@ env:
 jobs:
     setup:
         name: "Doc environment setup"
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: true
-            matrix:
-                include:
-                    - os: ubuntu-latest
-                      python-version: "3.12"
-                      channel-priority: "flexible"
-                      envfile: ".github/environment-docs.yml"
+        runs-on: ubuntu-latest
         steps:
-        - uses: actions/checkout@v7
+        - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
           with:
             fetch-depth: 0
 
-        - name: Setup Miniforge
-          uses: conda-incubator/setup-miniconda@v4
+        - name: Setup Micromamba (Python + ffmpeg)
+          uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3
           with:
-            miniforge-version: latest
-            activate-environment: docs
-            conda-remove-defaults: true
-            python-version: ${{ matrix.python-version }}
+            environment-name: docs
+            create-args: >-
+              python=3.14
+              ffmpeg
+            cache-downloads: true
 
-        - name: Get Date
-          id: get-date
-          run: echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
-          shell: bash
-
-        - name: Cache Conda env
-          uses: actions/cache@v6
+        - name: Setup uv
+          uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
           with:
-            path: ${{ env.CONDA }}/envs
-            key:
-              conda-${{ runner.os }}--${{ runner.arch }}--${{
-              steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER
-              }}-${{ matrix.python-version }}-${{ hashFiles( matrix.envfile ) }}
-          env:
-            CACHE_NUMBER: 0
-          id: cache
+            enable-cache: true
+            cache-dependency-glob: "pyproject.toml"
 
-        - name: Update environment
-          run:
-            mamba env update -n docs -f ${{ matrix.envfile }} 
-          if: steps.cache.outputs.cache-hit != 'true'
-
-        - name: Conda info
-          shell: bash -l {0}
+        - name: Install librosa and doc dependencies
+          shell: bash -el {0}
           run: |
-            conda info -a
-            conda list
-
-        - name: Install librosa
-          shell: bash -l {0}
-          run: python -m pip install --upgrade-strategy only-if-needed -e .[docs]
+            uv pip install --prefix "$CONDA_PREFIX" -e ".[docs]"
+            micromamba info
+            uv pip list --prefix "$CONDA_PREFIX"
 
         - name: Build documentation site
-          shell: bash -l {0}
+          shell: bash -el {0}
           run: |
             sphinx-build -b html -d build/doctrees docs build/html
             touch build/html/.nojekyll
 
         - name: Upload compiled documentation site
           if: github.event_name == 'pull_request'
-          uses: actions/upload-artifact@v7
+          uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
           with:
             name: librosa-docs-pr-${{ github.event.pull_request.number }}
             path: build/html
@@ -92,7 +68,7 @@ jobs:
 
         - name: Link checking
           id: linkcheck
-          shell: bash -l {0}
+          shell: bash -el {0}
           working-directory: docs
           run: make linkcheck
           continue-on-error: true
@@ -107,7 +83,7 @@ jobs:
           if: github.event_name == 'pull_request'
           run: echo "${{ github.event.pull_request.number }}" > pr_number.txt
 
-        - uses: actions/upload-artifact@v4
+        - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
           with:
             name: linkcheck-results
             path: |
@@ -122,6 +98,6 @@ jobs:
             echo "::warning Linkcheck failed: $OUTPUT"
 
         - name: Check for broken symbolic links
-          shell: bash -l {0}
+          shell: bash -el {0}
           run: |
             if [[ -n "$(find build/html/ -type l ! -exec test -e {} \; -print -quit)" ]]; then false; fi
