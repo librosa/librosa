@@ -45,16 +45,16 @@ jobs:
                       python-version: "3.15"
 
                     - os: ubuntu-latest
-                      python-version: "3.16"
+                      python-version: "3.15"
 
                     - os: macos-latest
-                      python-version: "3.16"
+                      python-version: "3.15"
 
                     - os: windows-latest
-                      python-version: "3.16"
+                      python-version: "3.15"
 
                     - os: windows-11-arm
-                      python-version: "3.16"
+                      python-version: "3.15"
                       win_arm64: true
         steps:
         - uses: actions/checkout@v7
