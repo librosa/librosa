@@ -12,7 +12,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: linkcheck-results
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -25,7 +25,7 @@ jobs:
           echo "pr_number=$(cat pr_number.txt)" >> $GITHUB_OUTPUT
 
       - name: Find existing failure comment
-        uses: peter-evans/find-comment@3eae4d37986fb5a8592848f6a574fdf654e61f9e # v3
+        uses: peter-evans/find-comment@b30e6a3c0ed37e7c023ccd3f1db5c6c0b0c23aad # v4.0.0
         id: find_comment
         with:
           issue-number: ${{ steps.data.outputs.pr_number }}
