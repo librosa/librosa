@@ -15,6 +15,7 @@ concurrency:
 env:
     # Channel that provides native win-arm64 conda packages
     WIN_ARM64_CONDA_CHANNEL: bootstrap-win-arm64-round-2-native
+    MPLBACKEND: Agg
 
 jobs:
     test:
@@ -74,13 +75,11 @@ jobs:
             condarc: |
               channels:
                 - ${{ matrix.win_arm64 && env.WIN_ARM64_CONDA_CHANNEL || 'conda-forge' }}
-                - conda-forge
                 ${{ matrix.win_arm64 && '- defaults' || '' }}
+                - conda-forge
             create-args: >-
               python=${{ matrix.python-version }}
-              ffmpeg
-              libsndfile
-              ${{ matrix.win_arm64 && 'soxr-python' || '' }}
+              ${{ !matrix.win_arm64 && 'ffmpeg libsndfile' || 'libsndfile soxr-python' }}
             cache-downloads: true
 
         - name: Setup uv
@@ -95,7 +94,7 @@ jobs:
             if [ "${{ matrix.variant }}" == "minimal" ]; then
               uv pip install --prefix "$CONDA_PREFIX" --resolution=lowest-direct -e ".[tests]"
             else
-              uv pip install --prefix "$CONDA_PREFIX" --upgrade -e ".[tests]"
+              uv pip install --prefix "$CONDA_PREFIX" -e ".[tests]"
             fi
 
         - name: Environment info

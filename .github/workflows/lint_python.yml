@@ -29,10 +29,10 @@ jobs:
         enable-cache: true
         cache-dependency-glob: "pyproject.toml"
 
-    - name: Install librosa and lint dependencies
+    - name: Install lint dependencies
       shell: bash -el {0}
       run: |
-        uv pip install --prefix "$CONDA_PREFIX" --group lint -e ".[tests]"
+        uv pip install --prefix "$CONDA_PREFIX" --group lint
         micromamba info
         uv pip list --prefix "$CONDA_PREFIX"
 

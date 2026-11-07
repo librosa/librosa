@@ -3,7 +3,7 @@ name: Update SPEC 0 dependencies
 on:
   schedule:
     # Day 3 of each quarter.
-Allows one day buffer after the quarterly schedule release on day 1
+    # Allows one day buffer after the quarterly schedule release on day 1
     - cron: "0 0 3 1,4,7,10 *"
   workflow_dispatch:
 
