@@ -21,7 +21,7 @@ jobs:
       with:
         environment-name: lint
         create-args: >-
-          python=3.12
+          python=3.14
         cache-downloads: true
 
     - name: Setup uv
