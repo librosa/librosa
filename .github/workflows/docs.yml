@@ -9,6 +9,9 @@ on:
     types:
       - completed
 
+permissions: 
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -17,7 +20,7 @@ jobs:
   doc:
     name: "Documentation build"
     runs-on: ubuntu-latest
-
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout source
         uses: actions/checkout@v7

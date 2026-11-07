@@ -6,14 +6,15 @@ on:
   pull_request:
     branches: [ "main" ]
 
+permissions: 
+  contents: read
+
 jobs:
   lint_python:
     name: "Lint and code analysis"
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v7
-      with:
-        fetch-depth: 0
 
     - name: Setup Micromamba
       uses: mamba-org/setup-micromamba@v3
