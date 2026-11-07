@@ -35,7 +35,7 @@ tests = [
     "pytest-cov>=6.0.0",
     "coverage>=7.6.0",
     "resampy>=0.4.3",
-    "samplerate; platform_machine != 'ARM64'",
+    "samplerate>=0.2.4; platform_machine != 'ARM64'",
     "scipy-stubs",
 ]
 docs = [

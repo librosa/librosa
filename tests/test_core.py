@@ -143,6 +143,8 @@ def resample_mono(resample_audio):
 )
 @pytest.mark.parametrize("fix", [False, True])
 def test_resample_mono(resample_mono, sr_out, res_type, fix):
+    if res_type in ("linear", "zero_order_hold", "sinc_best", "sinc_fastest", "sinc_medium"):
+        pytest.importorskip("samplerate")
 
     y, sr_in = resample_mono
     y = librosa.to_mono(y)
@@ -190,6 +192,8 @@ def test_resample_mono(resample_mono, sr_out, res_type, fix):
 )
 @pytest.mark.parametrize("fix", [False, True])
 def test_resample_stereo(resample_audio, sr_out, res_type, fix):
+    if res_type in ("linear", "zero_order_hold", "sinc_best", "sinc_fastest", "sinc_medium"):
+        pytest.importorskip("samplerate")
 
     y, sr_in = resample_audio
 
@@ -229,6 +233,8 @@ def test_resample_stereo(resample_audio, sr_out, res_type, fix):
 )
 @pytest.mark.parametrize("sr_out", [11025, 22050, 44100])
 def test_resample_scale(resample_mono, res_type, sr_out):
+    if res_type in ("linear", "zero_order_hold", "sinc_best", "sinc_fastest", "sinc_medium"):
+        pytest.importorskip("samplerate")
 
     y, sr_in = resample_mono
 
