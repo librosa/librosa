@@ -33,11 +33,8 @@ jobs:
             matrix:
                 include:
                     - os: ubuntu-latest
-                      python-version: "3.12"
+                      python-version: "3.13"
                       variant: "minimal"
-
-                    - os: ubuntu-latest
-                      python-version: "3.12"
 
                     - os: ubuntu-latest
                       python-version: "3.13"
