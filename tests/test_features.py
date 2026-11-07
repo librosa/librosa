@@ -1239,7 +1239,7 @@ def test_hybrid_tempogram():
 # computation frame-local, and that the default is unchanged.
 
 @pytest.fixture(scope="module")
-def top_db_signals():
+def top_db_signals(rng_mod):
     """A quiet passage, and the same passage followed by a loud burst.
 
     center=False with a length that is an exact multiple of hop_length means
@@ -1247,9 +1247,8 @@ def top_db_signals():
     follows them differs.
     """
     sr, hop, n_fft = 22050, 512, 2048
-    rng = np.random.default_rng(0)
-    quiet = 0.001 * rng.standard_normal(hop * 40 + n_fft)
-    loud = np.concatenate([quiet, 50.0 * rng.standard_normal(hop * 20)])
+    quiet = 0.001 * rng_mod.standard_normal(hop * 40 + n_fft)
+    loud = np.concatenate([quiet, 50.0 * rng_mod.standard_normal(hop * 20)])
     n_common = 1 + (quiet.size - n_fft) // hop
     return sr, hop, n_fft, quiet, loud, n_common
 
@@ -1380,7 +1379,8 @@ def test_mfcc_scalar_ref_shifts_only_dc(top_db_signals):
     assert not np.allclose(base[0], shifted[0])
 
 
-def test_spectral_contrast_scalar_ref_cancels(top_db_signals):
+@pytest.mark.parametrize('ref', [100.0, 0.01])
+def test_spectral_contrast_scalar_ref_cancels(top_db_signals, ref):
     """spectral_contrast is a difference of two dB conversions, so a scalar
     `ref` cancels exactly.  This can only hold if `ref` reached both calls: a
     regression forwarding it to `peak` alone would shift the output by
@@ -1389,11 +1389,10 @@ def test_spectral_contrast_scalar_ref_cancels(top_db_signals):
     sr, hop, n_fft, quiet, loud, n = top_db_signals
     kw = dict(y=loud, sr=sr, hop_length=hop, n_fft=n_fft, center=False)
     base = librosa.feature.spectral_contrast(**kw)
-    for value in (100.0, 0.01):
-        assert np.allclose(
-            base, librosa.feature.spectral_contrast(ref=value, **kw),
-            atol=1e-10, rtol=1e-10,
-        )
+    assert np.allclose(
+        base, librosa.feature.spectral_contrast(ref=ref, **kw),
+        atol=1e-10, rtol=1e-10,
+    )
 
 
 def test_spectral_contrast_linear_ignores_ref(top_db_signals):
