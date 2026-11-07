@@ -1,5 +1,11 @@
 name: lint_python
-on: [pull_request, push]
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
 jobs:
   lint_python:
     name: "Lint and code analysis"

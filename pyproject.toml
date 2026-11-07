@@ -10,7 +10,6 @@ name = "librosa"
 requires-python = ">=3.12"
 dynamic = ["version", "description", "readme", "license", "authors", "classifiers", "urls"]
 dependencies = [
-    "audioread>=2.1.9",
     "numba>=0.61.0",
     "numpy>=2.1.0",
     "scipy>=1.15.0",
@@ -22,7 +21,6 @@ dependencies = [
     "soxr>=1.0.0",
     "lazy_loader>=0.3",
     "msgpack>=1.0.5",
-    "packaging>=23.2",
 ]
 
 [project.optional-dependencies]
@@ -31,6 +29,7 @@ display = [
 ]
 tests = [
     "librosa[display]",
+    "packaging>=23.2",
     "pytest",
     "pytest-mpl",
     "pytest-cov",

@@ -75,6 +75,7 @@ jobs:
               channels:
                 - ${{ matrix.win_arm64 && env.WIN_ARM64_CONDA_CHANNEL || 'conda-forge' }}
                 - conda-forge
+                ${{ matrix.win_arm64 && '- defaults' || '' }}
             create-args: >-
               python=${{ matrix.python-version }}
               ffmpeg
