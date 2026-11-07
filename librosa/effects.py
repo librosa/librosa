@@ -17,7 +17,7 @@ from . import core, decompose, feature, util
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Callable, Iterable, Literal
+    from typing import Any, Callable, Iterable, Literal
 
     from numpy.typing import ArrayLike
 
