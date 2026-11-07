@@ -5,6 +5,72 @@ requires = [
 ]
 build-backend = 'setuptools.build_meta'
 
+[project]
+name = "librosa"
+requires-python = ">=3.12"
+dynamic = ["version", "description", "readme", "license", "authors", "classifiers", "urls"]
+dependencies = [
+    "numba>=0.61.0",
+    "numpy>=2.1.0",
+    "scipy>=1.15.0",
+    "scikit-learn>=1.6.0",
+    "joblib>=1.2.0",
+    "decorator>=5.2.1",
+    "soundfile>=0.12.1",
+    "pooch>=1.7.0",
+    "soxr>=1.0.0",
+    "lazy_loader>=0.3",
+    "msgpack>=1.0.5",
+]
+
+[project.optional-dependencies]
+display = [
+    "matplotlib>=3.10.0",
+]
+tests = [
+    "librosa[display]",
+    "packaging>=23.2",
+    "pytest>=9.0.0",
+    "pytest-mpl>=0.17.0",
+    "pytest-cov>=6.0.0",
+    "coverage>=7.6.0",
+    "resampy>=0.4.3",
+    "samplerate; platform_machine != 'ARM64'",
+    "scipy-stubs",
+]
+docs = [
+    "librosa[display]",
+    "numpydoc>=1.8.0",
+    "sphinx>=8.1.0",
+    "pydata-sphinx-theme>=0.18.0",
+    "sphinx-gallery>=0.10.1",
+    "sphinx-copybutton>=0.5.2",
+    "sphinx-design>=0.7.0",
+    "myst-parser>=2.0",
+    "ipython>=7.0",
+    "resampy>=0.4.3",
+    "umap-learn>=0.5.3",
+    "pandas>=2.0.0",
+    "presets>=0.1.3",
+    "mir-eval>=0.6",
+    "sphinxcontrib-svg2pdfconverter>=1.1.1",
+    "sphinxcontrib-googleanalytics>=0.4",
+]
+
+[dependency-groups]
+lint = [
+    "codespell",
+    "types-decorator",
+    "mypy",
+    "ruff",
+    "numpydoc>=1.8.0",
+    "sphinx>=8.1.0",
+    "scipy-stubs",
+    "numpy==2.1.0",
+    "matplotlib>=3.10.0",
+    "pytest>=9.0.0",
+]
+
 [tool.ruff]
 line-length = 119
 extend-exclude = [

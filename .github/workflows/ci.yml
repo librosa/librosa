@@ -15,6 +15,7 @@ concurrency:
 env:
     # Channel that provides native win-arm64 conda packages
     WIN_ARM64_CONDA_CHANNEL: bootstrap-win-arm64-round-2-native
+    MPLBACKEND: Agg
 
 jobs:
     test:
@@ -29,44 +30,28 @@ jobs:
                 include:
                     - os: ubuntu-latest
                       python-version: "3.12"
-                      envfile: ".github/environment-minimal.yml"
-                      channel-priority: "strict"
                       variant: "minimal"
 
                     - os: ubuntu-latest
                       python-version: "3.12"
-                      channel-priority: "strict"
-                      envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
                       python-version: "3.13"
-                      channel-priority: "strict"
-                      envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-24.04-arm
                       python-version: "3.14"
-                      channel-priority: "strict"
-                      envfile: ".github/environment-ci.yml"
 
                     - os: ubuntu-latest
                       python-version: "3.14"
-                      channel-priority: "strict"
-                      envfile: ".github/environment-ci.yml"
 
                     - os: macos-latest
                       python-version: "3.14"
-                      channel-priority: "flexible"
-                      envfile: ".github/environment-ci.yml"
 
                     - os: windows-latest
                       python-version: "3.14"
-                      channel-priority: "flexible"
-                      envfile: ".github/environment-ci.yml"
 
                     - os: windows-11-arm
                       python-version: "3.14"
-                      channel-priority: "flexible"
-                      envfile: ".github/environment-ci.yml"
                       win_arm64: true
         steps:
         - uses: actions/checkout@v7
@@ -83,86 +68,44 @@ jobs:
             echo "TEMP=C:\tmp" >> $env:GITHUB_ENV
           shell: pwsh
 
-        - name: Setup Miniforge
-          if: ${{ !matrix.win_arm64 }}
-          uses: conda-incubator/setup-miniconda@v4
+        - name: Setup Micromamba
+          uses: mamba-org/setup-micromamba@v3
           with:
-            miniforge-version: latest
-            activate-environment: test
-            conda-remove-defaults: true
-            python-version: ${{ matrix.python-version }}
-
-        - name: Set up conda-standalone (Windows ARM64)
-          if: ${{ matrix.win_arm64 }}
-          uses: conda-incubator/setup-conda-standalone@00a34805e93a8b640aee5f8a20e8f481ad77e3b4 # v0.1.0
-          with:
-            channel: ${{ env.WIN_ARM64_CONDA_CHANNEL }}
-            conda-standalone-version: 26.3.2.post1
-            destination-directory: ${{ runner.temp }}/conda-standalone
-
-        - name: Create and populate conda env (Windows ARM64)
-          if: ${{ matrix.win_arm64 }}
-          shell: bash -elx {0}
-          env:
-            CONDA_CHANNELS: ${{ env.WIN_ARM64_CONDA_CHANNEL }},conda-forge
-            CONDA_CHANNEL_PRIORITY: ${{ matrix.channel-priority }}
-          run: |
-            TEST_PREFIX="${RUNNER_TEMP}/conda-envs/test"
-            "${CONDA_EXE}" create --yes --prefix "${TEST_PREFIX}" \
+            environment-name: test
+            condarc: |
+              channels:
+                - ${{ matrix.win_arm64 && env.WIN_ARM64_CONDA_CHANNEL || 'conda-forge' }}
+                ${{ matrix.win_arm64 && '- defaults' || '' }}
+                - conda-forge
+            create-args: >-
               python=${{ matrix.python-version }}
-            "${CONDA_EXE}" env update --prefix "${TEST_PREFIX}" \
-              -f ${{ matrix.envfile }}
-            echo "CONDA_PREFIX=${TEST_PREFIX}" >> "${GITHUB_ENV}"
-            echo "${TEST_PREFIX}" >> "${GITHUB_PATH}"
-            echo "${TEST_PREFIX}/Scripts" >> "${GITHUB_PATH}"
-            echo "${TEST_PREFIX}/Library/bin" >> "${GITHUB_PATH}"
+              ${{ !matrix.win_arm64 && 'ffmpeg libsndfile' || 'libsndfile soxr-python' }}
+            cache-downloads: true
 
-        - name: Get Date
-          id: get-date
-          run: echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
-          shell: bash
-
-        - name: Cache Conda env
-          uses: actions/cache@v6
+        - name: Setup uv
+          uses: astral-sh/setup-uv@v10.3.3
           with:
-            path: ${{ env.CONDA }}/envs
-            key:
-              conda-${{ runner.os }}--${{ runner.arch }}--${{
-              steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER
-              }}-${{ matrix.python-version }}-${{ hashFiles( matrix.envfile ) }}
-          env:
-            CACHE_NUMBER: 0
-          id: cache
+            enable-cache: true
+            cache-dependency-glob: "pyproject.toml"
 
-        - name: Update environment
-          shell: bash -l {0}
+        - name: Install librosa and test dependencies
+          shell: bash -el {0}
           run: |
-            if [ "${{ matrix.win_arm64 }}" == "true" ]; then
-              CONDA_CMD="${CONDA_EXE}"
+            if [ "${{ matrix.variant }}" == "minimal" ]; then
+              uv pip install --prefix "$CONDA_PREFIX" --resolution=lowest-direct -e ".[tests]"
             else
-              CONDA_CMD="conda"
+              uv pip install --prefix "$CONDA_PREFIX" -e ".[tests]"
             fi
-            "${CONDA_CMD}" env update -n test -f ${{ matrix.envfile }} 
-          if: steps.cache.outputs.cache-hit != 'true'
 
-        - name: Conda info
-          shell: bash -l {0}
+        - name: Environment info
+          shell: bash -el {0}
           run: |
-            if [ "${{ matrix.win_arm64 }}" == "true" ]; then
-              CONDA_CMD="${CONDA_EXE}"
-            else
-              CONDA_CMD="conda"
-            fi
-            "${CONDA_CMD}" info -a
-            "${CONDA_CMD}" list
+            micromamba info
+            uv pip list --prefix "$CONDA_PREFIX"
             python -c "import scipy; scipy.show_config()"
 
-        - name: Install librosa
-          shell: bash -l {0}
-          run: python -m pip install --upgrade-strategy only-if-needed -e .[tests]
-
         - name: Run pytest
-          shell: bash -l {0}
+          shell: bash -el {0}
           run: pytest --mpl-results-path=mpl_image_results/
 
         - name: Prepare artifact directory structure

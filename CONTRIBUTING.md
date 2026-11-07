@@ -22,13 +22,20 @@ GitHub:
    git remote add upstream git@github.com:librosa/librosa.git
    ```
 
-4. Create a new conda environment in order to install dependencies:
+4. Create a new conda (or micromamba) environment and install dependencies:
 
    ```shell
-   conda create -n librosa-dev python=3.13
-   conda env update -n librosa-dev --file .github/environment-ci.yml
+   conda create -n librosa-dev -c conda-forge python=3.13 ffmpeg libsndfile
    conda activate librosa-dev
-   python -m pip install -e '.[tests]'
+   python -m pip install -e '.[tests]' --group lint
+   ```
+
+   Alternatively, if you prefer using `uv`:
+
+   ```shell
+   uv venv
+   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+   uv pip install -e '.[tests]' --group lint
    ```
 
 5. Create a branch to hold your changes:
@@ -75,7 +82,7 @@ following rules before submitting a pull request:
 - All functions should have informative [docstrings](https://numpydoc.readthedocs.io/en/latest/format.html) with sample usage presented.
 
 You can also check for common programming errors with the following
-tools:
+tools (included in the `lint` dependency group):
 
 - Code with good test coverage, check with:
 
@@ -86,22 +93,19 @@ tools:
 -  Style adherence, check with:
 
   ```shell
-  conda install ruff
   ruff check librosa
   ```
 
 - Ensure that your docstrings are properly formatted, check with:
 
   ```shell
-  conda install numpydoc
   numpydoc lint librosa/*.py librosa/*/*.py
   ```
 
 - Ensure that any new functionality has valid type annotations, check with:
 
   ```shell
-  python -m pip install mypy
-  python -m mypy librosa
+  mypy librosa
   ```
 
 Some tests in tests/test_display.py use baseline images for output comparison.
