@@ -22,7 +22,12 @@ import matplotlib
 
 import matplotlib.collections
 import matplotlib.pyplot as plt
-from matplotlib.testing.conftest import text_placeholders
+try:
+    from matplotlib.testing.conftest import text_placeholders
+except ImportError:
+    @pytest.fixture
+    def text_placeholders():
+        pass
 from matplotlib import colormaps as mcm
 
 import librosa
