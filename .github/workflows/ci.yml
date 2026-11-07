@@ -94,7 +94,7 @@ jobs:
             if [ "${{ matrix.variant }}" == "minimal" ]; then
               uv pip install --prefix "$CONDA_PREFIX" --resolution=lowest-direct -e ".[tests]"
             else
-              uv pip install --prefix "$CONDA_PREFIX" --upgrade-strategy only-if-needed -e ".[tests]"
+              uv pip install --prefix "$CONDA_PREFIX" --upgrade -e ".[tests]"
             fi
 
         - name: Environment info
