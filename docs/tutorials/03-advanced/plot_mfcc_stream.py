@@ -97,8 +97,8 @@ stream_default = streamed_mfcc()
 # With the default ``top_db=80``, the two disagree.  Each block was
 # thresholded against its own loudest frame rather than against the
 # loudest frame in the file.
-n = min(whole_default.shape[1], stream_default.shape[1])
-default_error = np.max(np.abs(whole_default[:, :n] - stream_default[:, :n]))
+n = min(whole_default.shape[-1], stream_default.shape[-1])
+default_error = np.max(np.abs(whole_default[..., :n] - stream_default[..., :n]))
 print(f"default top_db=80: max difference = {default_error:.4g}")
 
 #####################################################################
@@ -111,8 +111,8 @@ whole_none = librosa.feature.mfcc(
 )
 stream_none = streamed_mfcc(top_db=None)
 
-n = min(whole_none.shape[1], stream_none.shape[1])
-none_error = np.max(np.abs(whole_none[:, :n] - stream_none[:, :n]))
+n = min(whole_none.shape[-1], stream_none.shape[-1])
+none_error = np.max(np.abs(whole_none[..., :n] - stream_none[..., :n]))
 print(f"top_db=None:       max difference = {none_error:.4g}")
 
 #####################################################################
@@ -127,8 +127,8 @@ whole_refmax = librosa.feature.mfcc(
 )
 stream_refmax = streamed_mfcc(top_db=None, ref=np.max)
 
-n = min(whole_refmax.shape[1], stream_refmax.shape[1])
-refmax_error = np.max(np.abs(whole_refmax[:, :n] - stream_refmax[:, :n]))
+n = min(whole_refmax.shape[-1], stream_refmax.shape[-1])
+refmax_error = np.max(np.abs(whole_refmax[..., :n] - stream_refmax[..., :n]))
 print(f"top_db=None, ref=np.max: max difference = {refmax_error:.4g}")
 
 #####################################################################
@@ -146,19 +146,19 @@ print(f"top_db=None, ref=np.max: max difference = {refmax_error:.4g}")
 fig, ax = plt.subplots(nrows=3, sharex=True, figsize=(10, 8))
 
 librosa.display.specshow(
-    whole_default[:, :n], x_axis="time", sr=sr, hop_length=hop_length, ax=ax[0]
+    whole_default[..., :n], x_axis="time", sr=sr, hop_length=hop_length, ax=ax[0]
 )
 ax[0].set(title="MFCC, whole file, default top_db", ylabel="MFCC")
 ax[0].label_outer()
 
 librosa.display.specshow(
-    stream_default[:, :n], x_axis="time", sr=sr, hop_length=hop_length, ax=ax[1]
+    stream_default[..., :n], x_axis="time", sr=sr, hop_length=hop_length, ax=ax[1]
 )
 ax[1].set(title="MFCC, streamed, default top_db", ylabel="MFCC")
 ax[1].label_outer()
 
 img = librosa.display.specshow(
-    np.abs(whole_default[:, :n] - stream_default[:, :n]),
+    np.abs(whole_default[..., :n] - stream_default[..., :n]),
     x_axis="time", sr=sr, hop_length=hop_length, ax=ax[2],
 )
 ax[2].set(title="Absolute difference", ylabel="MFCC")
