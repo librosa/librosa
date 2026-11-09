@@ -161,6 +161,17 @@ def test_remix_stereo(align_zeros):
     assert np.allclose(y_out, y_t)
 
 
+@pytest.mark.parametrize("align_zeros", [False, True])
+def test_remix_tuples(align_zeros):
+    # intervals given as a list of (start, end) tuples
+    y = np.asarray([1, 1, -1, -1, 2, 2, -1, -1, 1, 1], dtype=float)
+    y_t = np.asarray([-1, -1, -1, -1, 1, 1, 1, 1, 2, 2], dtype=float)
+    intervals = [(2, 4), (6, 8), (0, 2), (8, 10), (4, 6)]
+
+    y_out = librosa.effects.remix(y, intervals, align_zeros=align_zeros)
+    assert np.allclose(y_out, y_t)
+
+
 def test_hpss(ysr):
 
     y, sr = ysr
