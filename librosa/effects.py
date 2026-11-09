@@ -694,7 +694,7 @@ def remix(
 
     for interval in intervals:
         if align_zeros:
-            interval = zeros[util.match_events(interval, zeros)]
+            interval = zeros[util.match_events(np.asarray(interval), zeros)]
 
         y_out.append(y[..., interval[0] : interval[1]])
 
