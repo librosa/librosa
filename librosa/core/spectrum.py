@@ -1347,16 +1347,18 @@ def magphase(D: np.ndarray, *, power: float = 1) -> tuple[np.ndarray, np.ndarray
     mag = np.abs(D)
 
     # Prevent NaNs and return magnitude 0, phase 1+0j for zero
-    zeros_to_ones = mag == 0
-    mag_nonzero = mag + zeros_to_ones
+    zero_mask = mag == 0
     # Compute real and imaginary separately, because complex division can
     # produce NaNs when denormalized numbers are involved (< ~2e-39 for
     # complex64, ~5e-309 for complex128)
     phase = np.empty_like(D, dtype=util.dtype_r2c(D.dtype))
-    phase.real = D.real / mag_nonzero + zeros_to_ones
-    phase.imag = D.imag / mag_nonzero
+    np.divide(D.real, mag, out=phase.real, where=~zero_mask)
+    phase.real[zero_mask] = 1.0
+    np.divide(D.imag, mag, out=phase.imag, where=~zero_mask)
+    phase.imag[zero_mask] = 0.0
 
-    mag **= power
+    if power != 1:
+        mag **= power
 
     return mag, phase
 
@@ -1873,13 +1875,15 @@ def power_to_db(
     else:
         ref_value = np.abs(ref)
 
-    log_spec: np.ndarray = 10.0 * np.log10(np.maximum(amin, magnitude))
+    log_spec: np.ndarray = np.asarray(np.maximum(amin, magnitude))
+    np.log10(log_spec, out=log_spec)
+    log_spec *= 10.0
     log_spec -= 10.0 * np.log10(np.maximum(amin, ref_value))
 
     if top_db is not None:
         if top_db < 0:
             raise ParameterError("top_db must be non-negative")
-        log_spec = np.maximum(log_spec, log_spec.max(axis=axes, keepdims=True) - top_db)
+        np.maximum(log_spec, log_spec.max(axis=axes, keepdims=True) - top_db, out=log_spec)
 
     return log_spec[()]
 
@@ -2999,19 +3003,20 @@ def _spectrogram(
             raise ParameterError(
                 "Input signal must be provided to compute a spectrogram"
             )
-        S = (
-            np.abs(
-                stft(
-                    y,
-                    n_fft=n_fft,
-                    hop_length=hop_length,
-                    win_length=win_length,
-                    center=center,
-                    window=window,
-                    pad_mode=pad_mode,
-                )
+        S = np.abs(
+            stft(
+                y,
+                n_fft=n_fft,
+                hop_length=hop_length,
+                win_length=win_length,
+                center=center,
+                window=window,
+                pad_mode=pad_mode,
             )
-            ** power
         )
+        if power == 2:
+            np.square(S, out=S)
+        elif power != 1:
+            S **= power
 
     return S, n_fft

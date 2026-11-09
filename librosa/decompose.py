@@ -376,25 +376,29 @@ def hpss(
     perc_shape = [1] * S.ndim
     perc_shape[-2] = int(win_perc)
 
-    # Compute median filters. Pre-allocation here preserves memory layout.
+    # Compute median filters directly into output arrays.
     from scipy.ndimage import median_filter
 
     harm = np.empty_like(S)
-
-    harm[:] = median_filter(S, size=harm_shape, mode="reflect")
+    median_filter(S, size=harm_shape, mode="reflect", output=harm)
 
     perc = np.empty_like(S)
-    perc[:] = median_filter(S, size=perc_shape, mode="reflect")
+    median_filter(S, size=perc_shape, mode="reflect", output=perc)
 
     split_zeros = margin_harm == 1 and margin_perc == 1
 
+    ref_perc = perc if margin_harm == 1 else perc * margin_harm
     mask_harm = util.softmask(
-        harm, perc * margin_harm, power=power, split_zeros=split_zeros
+        harm, ref_perc, power=power, split_zeros=split_zeros
     )
 
-    mask_perc = util.softmask(
-        perc, harm * margin_perc, power=power, split_zeros=split_zeros
-    )
+    if split_zeros and np.isfinite(power):
+        mask_perc = 1.0 - mask_harm
+    else:
+        ref_harm = harm if margin_perc == 1 else harm * margin_perc
+        mask_perc = util.softmask(
+            perc, ref_harm, power=power, split_zeros=split_zeros
+        )
 
     if mask:
         return mask_harm, mask_perc
