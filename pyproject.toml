@@ -55,6 +55,7 @@ docs = [
     "mir-eval>=0.8.0",
     "sphinxcontrib-svg2pdfconverter>=1.3.0",
     "sphinxcontrib-googleanalytics>=0.5",
+    "sounddevice>=0.4.0",
 ]
 
 [dependency-groups]
