@@ -621,9 +621,6 @@ def yin(
         y_frames, min_period, max_period
     )
 
-    # Parabolic interpolation.
-    parabolic_shifts = _parabolic_interpolation(yin_frames)
-
     # Find local minima.
     is_trough = util.localmin(yin_frames, axis=-2)
     is_trough[..., 0, :] = yin_frames[..., 0, :] < yin_frames[..., 1, :]
@@ -647,12 +644,26 @@ def yin(
     no_trough_below_threshold = np.all(~is_threshold_trough, axis=-2, keepdims=True)
     yin_period[no_trough_below_threshold] = global_min[no_trough_below_threshold]
 
-    # Refine peak by parabolic interpolation.
+    # Refine peak by parabolic interpolation evaluated only at the chosen periods.
+    n_periods = yin_frames.shape[-2]
+    interior = (yin_period > 0) & (yin_period < n_periods - 1)
+    p_safe = np.clip(yin_period, 1, n_periods - 2)
+
+    v_center = np.take_along_axis(yin_frames, p_safe, axis=-2)
+    v_plus = np.take_along_axis(yin_frames, p_safe + 1, axis=-2)
+    v_minus = np.take_along_axis(yin_frames, p_safe - 1, axis=-2)
+
+    a = v_plus + v_minus - 2.0 * v_center
+    b = 0.5 * (v_plus - v_minus)
+
+    valid = interior & (np.abs(b) < np.abs(a))
+    shift = np.zeros_like(b)
+    np.divide(-b, a, out=shift, where=valid)
 
     yin_period = (
         min_period
         + yin_period
-        + np.take_along_axis(parabolic_shifts, yin_period, axis=-2)
+        + shift
     )[..., 0, :]
 
     # Convert period to fundamental frequency.
@@ -822,9 +833,6 @@ def pyin(
         y_frames, min_period, max_period
     )
 
-    # Parabolic interpolation.
-    parabolic_shifts = _parabolic_interpolation(yin_frames)
-
     # Find Yin candidates and probabilities.
     # The implementation here follows the official pYIN software which
     # differs from the method described in the paper.
@@ -838,10 +846,9 @@ def pyin(
     n_bins_per_semitone = int(np.ceil(1.0 / resolution))
     n_pitch_bins = int(np.floor(12 * n_bins_per_semitone * np.log2(fmax / fmin))) + 1
 
-    def _helper(a, b):
+    def _helper(a):
         return __pyin_helper(
             a,
-            b,
             sr,
             thresholds,
             boltzmann_parameter,
@@ -853,8 +860,8 @@ def pyin(
             n_bins_per_semitone,
         )
 
-    helper = np.vectorize(_helper, signature="(f,t),(k,t)->(1,d,t),(j,t)")
-    observation_probs, voiced_prob = helper(yin_frames, parabolic_shifts)
+    helper = np.vectorize(_helper, signature="(f,t)->(1,d,t),(j,t)")
+    observation_probs, voiced_prob = helper(yin_frames)
 
     # Construct transition matrix.
     max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
@@ -886,7 +893,6 @@ def pyin(
 
 def __pyin_helper(
     yin_frames,
-    parabolic_shifts,
     sr,
     thresholds,
     boltzmann_parameter,
@@ -942,9 +948,23 @@ def __pyin_helper(
 
     yin_period, frame_index = np.nonzero(yin_probs)
 
-    # Refine peak by parabolic interpolation.
-    period_candidates = min_period + yin_period
-    period_candidates = period_candidates + parabolic_shifts[yin_period, frame_index]
+    # Refine peak by parabolic interpolation evaluated only at candidates.
+    n_periods = yin_frames.shape[0]
+    interior = (yin_period > 0) & (yin_period < n_periods - 1)
+    p_safe = np.clip(yin_period, 1, n_periods - 2)
+
+    v_center = yin_frames[p_safe, frame_index]
+    v_plus = yin_frames[p_safe + 1, frame_index]
+    v_minus = yin_frames[p_safe - 1, frame_index]
+
+    a = v_plus + v_minus - 2.0 * v_center
+    b = 0.5 * (v_plus - v_minus)
+
+    valid = interior & (np.abs(b) < np.abs(a))
+    shift = np.zeros_like(b)
+    np.divide(-b, a, out=shift, where=valid)
+
+    period_candidates = min_period + yin_period + shift
     f0_candidates = sr / period_candidates
 
     # Find pitch bin corresponding to each f0 candidate.
