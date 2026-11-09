@@ -144,6 +144,7 @@ class VirtualInputStream:
         self.callback = callback
         with sf.SoundFile(self.filepath) as af:
             self.samplerate = samplerate or af.samplerate
+            self.total_frames = af.frames
 
     def __enter__(self):
         return self
@@ -196,52 +197,62 @@ def process_rms(buffer):
 # %%
 # Visualizing the Live RMS Sparkline
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# We set up a Matplotlib figure with a rolling history buffer.
-# The animation update function drains `audio_queue`, computes the RMS energy for each
-# chunk using `process_rms`, rolls the history array, and updates the plot line.
+# We set up a Matplotlib figure aligned with the audio stream's timeline.
+# Time 0 on the plot corresponds directly to time 0 in the audio stream.
+# As each block arrives from `audio_queue`, we compute its RMS energy and update the
+# line trace forward in time.
 
 blocksize = 1024
-history_len = 60
-rms_history = np.zeros(history_len)
 
-# Represent time relative to the current moment (0 seconds is now)
-sr = librosa.get_samplerate(filename)
-time_window = (history_len - 1) * blocksize / sr
-times = np.linspace(-time_window, 0, history_len)
-
-fig_rms, ax_rms = plt.subplots(figsize=(8, 3))
-(line_rms,) = ax_rms.plot(times, rms_history, color="#3f90da", lw=2)
-ax_rms.set_ylim(0, 0.4)
-ax_rms.set_xlim(-time_window, 0)
-ax_rms.set_title("Live Stream Processing: Instantaneous RMS Energy")
-ax_rms.set_xlabel("Time (seconds relative to current)")
-ax_rms.set_ylabel("RMS Amplitude")
-ax_rms.grid(True, linestyle="--", alpha=0.5)
-
-
-def update_rms(_frame):
-    """Update function invoked by FuncAnimation on each frame."""
-    global rms_history
-    updated = False
-    while not audio_queue.empty():
-        block = audio_queue.get_nowait()
-        rms_val = process_rms(block)
-        rms_history = np.roll(rms_history, -1)
-        rms_history[-1] = rms_val
-        updated = True
-
-    if updated:
-        line_rms.set_ydata(rms_history)
-    return (line_rms,)
-
-
-# Open our virtual stream as a context manager, mirroring sounddevice.InputStream
 with VirtualInputStream(
     filename, blocksize=blocksize, callback=audio_callback
 ) as stream:
+    sr = stream.samplerate
+    duration = stream.total_frames / sr
+    n_blocks = int(np.ceil(stream.total_frames / blocksize))
+    times = np.arange(n_blocks) * (blocksize / sr)
+    rms_values = np.full(n_blocks, np.nan)
+
+    fig_rms, ax_rms = plt.subplots(figsize=(8, 3))
+    (line_rms,) = ax_rms.plot(times, rms_values, color="#3f90da", lw=2)
+    ax_rms.set_ylim(0, 0.4)
+    ax_rms.set_xlim(0, duration)
+    ax_rms.set_title("Live Stream Processing: Instantaneous RMS Energy")
+    ax_rms.set_xlabel("Time (seconds)")
+    ax_rms.set_ylabel("RMS Amplitude")
+    ax_rms.grid(True, linestyle="--", alpha=0.5)
+
+    block_idx_rms = 0
+
+    def init_rms():
+        """Reset plot data and state before starting an animation pass."""
+        global block_idx_rms
+        block_idx_rms = 0
+        rms_values[:] = np.nan
+        while not audio_queue.empty():
+            audio_queue.get_nowait()
+        line_rms.set_ydata(rms_values)
+        return (line_rms,)
+
+    def update_rms(_frame):
+        """Update function invoked by FuncAnimation on each frame."""
+        global block_idx_rms
+        updated = False
+        while not audio_queue.empty():
+            block = audio_queue.get_nowait()
+            if block_idx_rms < n_blocks:
+                rms_values[block_idx_rms] = process_rms(block)
+                block_idx_rms += 1
+                updated = True
+
+        if updated:
+            line_rms.set_ydata(rms_values)
+        return (line_rms,)
+
     ani_rms = animation.FuncAnimation(
         fig_rms,
         update_rms,
+        init_func=init_rms,
         frames=stream,
         interval=1000 * blocksize / stream.samplerate,
         blit=True,
@@ -296,6 +307,12 @@ class StreamingBuffer:
             else None
         )
         self.buffer = np.zeros(frame_length, dtype=np.float32)
+
+    def reset(self):
+        """Reset internal buffer and resampler state."""
+        self.buffer[:] = 0
+        if self.resampler is not None:
+            self.resampler.clear()
 
     def update(self, chunk):
         """Append a new raw audio block and return the updated analysis window.
@@ -360,59 +377,72 @@ def process_spectral_centroid(analysis_window, sr):
 # %%
 # Animating Spectral Centroid Tracking
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# We set up an animation to track the live spectral brightness of the trumpet:
+# We set up an animation to track the live spectral brightness of the trumpet over
+# the stream's timeline from time 0 to the end of the recording:
 
 target_sr = 11025
 frame_length = 1024
 hop_length = 512
 
-stream_buf = StreamingBuffer(
-    frame_length=frame_length,
-    in_sr=sr,
-    target_sr=target_sr,
-)
-
-history_len_sc = 60
-centroid_history = np.zeros(history_len_sc)
-
-# Represent time relative to the current moment (0 seconds is now)
-time_window_sc = (history_len_sc - 1) * hop_length / sr
-times_sc = np.linspace(-time_window_sc, 0, history_len_sc)
-
-fig_sc, ax_sc = plt.subplots(figsize=(8, 3))
-(line_sc,) = ax_sc.plot(times_sc, centroid_history, color="#bd1f01", lw=2)
-ax_sc.set_ylim(500, 4000)
-ax_sc.set_xlim(-time_window_sc, 0)
-ax_sc.set_title("Live Stream Processing: Spectral Centroid (Overlapping Buffer)")
-ax_sc.set_xlabel("Time (seconds relative to current)")
-ax_sc.set_ylabel("Frequency (Hz)")
-ax_sc.grid(True, linestyle="--", alpha=0.5)
-
-
-def update_centroid(_frame):
-    """Update function for spectral centroid tracking."""
-    global centroid_history
-    updated = False
-    while not audio_queue.empty():
-        block = audio_queue.get_nowait()
-        analysis_window = stream_buf.update(block)
-        sc_val = process_spectral_centroid(analysis_window, sr=target_sr)
-        centroid_history = np.roll(centroid_history, -1)
-        centroid_history[-1] = sc_val
-        updated = True
-
-    if updated:
-        line_sc.set_ydata(centroid_history)
-    return (line_sc,)
-
-
-# Open our virtual stream with shorter blocks (512 samples)
 with VirtualInputStream(
     filename, blocksize=hop_length, callback=audio_callback
 ) as stream:
+    sr = stream.samplerate
+    duration = stream.total_frames / sr
+    n_blocks_sc = int(np.ceil(stream.total_frames / hop_length))
+    times_sc = np.arange(n_blocks_sc) * (hop_length / sr)
+    centroid_values = np.full(n_blocks_sc, np.nan)
+
+    stream_buf = StreamingBuffer(
+        frame_length=frame_length,
+        in_sr=sr,
+        target_sr=target_sr,
+    )
+
+    fig_sc, ax_sc = plt.subplots(figsize=(8, 3))
+    (line_sc,) = ax_sc.plot(times_sc, centroid_values, color="#bd1f01", lw=2)
+    ax_sc.set_ylim(500, 4000)
+    ax_sc.set_xlim(0, duration)
+    ax_sc.set_title("Live Stream Processing: Spectral Centroid (Overlapping Buffer)")
+    ax_sc.set_xlabel("Time (seconds)")
+    ax_sc.set_ylabel("Frequency (Hz)")
+    ax_sc.grid(True, linestyle="--", alpha=0.5)
+
+    block_idx_sc = 0
+
+    def init_sc():
+        """Reset plot data and buffer state before starting an animation pass."""
+        global block_idx_sc
+        block_idx_sc = 0
+        centroid_values[:] = np.nan
+        stream_buf.reset()
+        while not audio_queue.empty():
+            audio_queue.get_nowait()
+        line_sc.set_ydata(centroid_values)
+        return (line_sc,)
+
+    def update_centroid(_frame):
+        """Update function for spectral centroid tracking."""
+        global block_idx_sc
+        updated = False
+        while not audio_queue.empty():
+            block = audio_queue.get_nowait()
+            if block_idx_sc < n_blocks_sc:
+                analysis_window = stream_buf.update(block)
+                centroid_values[block_idx_sc] = process_spectral_centroid(
+                    analysis_window, sr=target_sr
+                )
+                block_idx_sc += 1
+                updated = True
+
+        if updated:
+            line_sc.set_ydata(centroid_values)
+        return (line_sc,)
+
     ani_sc = animation.FuncAnimation(
         fig_sc,
         update_centroid,
+        init_func=init_sc,
         frames=stream,
         interval=1000 * hop_length / stream.samplerate,
         blit=True,
@@ -465,6 +495,11 @@ with VirtualInputStream(
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # When running on physical hardware, keep the following best practices in mind:
 #
+# - **Bounded vs. indefinite streams**: In this demonstration, we streamed an audio
+#   file with a fixed duration, allowing the plot to map directly onto ``[0, duration]``
+#   in sync with the player. For continuous, indefinite streams (like an open microphone),
+#   you can instead plot a rolling window of recent time (e.g. the last 5 seconds)
+#   by scrolling the line array with ``np.roll`` as demonstrated in ``StreamingBuffer``.
 # - **Block size and latency**: Smaller block sizes (e.g. 256-512 samples) reduce capture
 #   latency but increase callback frequency and CPU overhead. If you experience dropouts
 #   or buffer overruns (indicated by `status.input_overflow`), increase `blocksize`.
