@@ -9,41 +9,40 @@ Live stream processing
 This tutorial illustrates how to perform real-time stream processing and visualization
 on signals captured from an audio device.
 
-Live audio processing generally requires a **producer-consumer architecture**:
+Live audio processing often follows a **producer-consumer architecture**:
 
 1. **Producer (Audio Device Layer)**: An audio capture stream (such as `sounddevice.InputStream`)
    invokes a high-priority system callback whenever a new block of audio samples arrives from
    the hardware. To prevent buffer overruns and audio dropouts, this callback must never perform
    heavy computations, blocking I/O, or GUI drawing; instead, it immediately places incoming
-   blocks into a thread-safe FIFO queue.
+   blocks into a thread-safe FIFO (first-in, first-out) queue.
 2. **Consumer (Buffer Processing Layer)**: A consumer loop (or animation frame update) pulls
    blocks from the queue, maintains analysis buffers as needed, and invokes `librosa` to extract
    features on each buffer.
 3. **Display Layer**: The extracted features are rendered in real time (for example, as an
-   animated rolling sparkline using `matplotlib.animation.FuncAnimation`).
+   animated rolling sparkline using `matplotlib.animation.FuncAnimation` as below).
 
-The challenge of offline documentation builds
+Aside: virtual devices for this documentation
 ---------------------------------------------
-Documentation sites and continuous integration (CI) test suites usually run in headless,
-virtualized environments without physical microphones or audio devices attached.
-Furthermore, automated builds must execute fast, deterministically, and offline without
-connecting to external network streams or pausing for real-world playback delays.
+This tutorial document exists as part of the librosa documentation site, which is compiled
+automatically in a virtual environment and without access to physical audio devices.
 
-To resolve this, we construct a virtual audio device (`VirtualAudioDevice`) using `soundfile`
-to stream fixed-size blocks from one of librosa's packaged example recordings.
-Crucially, **`librosa.stream` is not used in the virtual device setup**. This maintains a
-strict, clean separation between:
+To illustrate the necessary concepts for this section, we construct a virtual audio device
+(`VirtualInputStream`) using `soundfile` to stream fixed-size blocks from one of librosa's packaged example recordings.
 
-- The **I/O layer** (`sounddevice` on live hardware, or `soundfile` in simulation), and
-- The **DSP layer** (`librosa`), which operates purely on in-memory numpy buffers regardless
-  of where they originated.
+.. note::
+    The `VirtualInputStream` code below is only needed for this document to run offline.
+    If you are adapting this tutorial for your own use with a real audio device, the `VirtualInputStream`
+    code is not needed.
+
 
 In this notebook, we present two examples:
 
 - **Example 1**: Basic stream processing, computing instantaneous Root-Mean-Square (RMS) energy per block.
 - **Example 2**: Advanced buffer handling, demonstrating stream resampling (via `soxr.ResampleStream`)
   and overlapping sliding analysis windows (via a rolling FIFO buffer) to compute spectral centroid.
-- **Connecting to live hardware**: How to swap the virtual device for a live microphone with `sounddevice.InputStream`.
+
+At the end, we describe how to swap the virtual device for a live microphone with `sounddevice.InputStream`.
 """
 
 # %%
@@ -57,7 +56,6 @@ from IPython.display import HTML
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 import numpy as np
-import sounddevice as sd  # noqa: F401
 import soundfile as sf
 import soxr
 
@@ -69,7 +67,7 @@ HTML(librosa.util.example_info("trumpet", html=True))
 
 
 # %%
-# Part 1: The Audio Device and Queue Setup
+# Part 0: The Audio Device and Queue Setup
 # ----------------------------------------
 # In real-time audio systems, the audio hardware driver calls an audio callback
 # function at regular intervals in a separate, high-priority OS thread.
@@ -80,17 +78,17 @@ HTML(librosa.util.example_info("trumpet", html=True))
 audio_queue = queue.Queue()
 
 
-def audio_callback(indata, frames, time, status):  # noqa: ARG001
+def audio_callback(indata, _frames, _time, status):
     """Audio callback invoked by the stream for each new audio block.
 
     Parameters
     ----------
     indata : np.ndarray
         Array of input audio samples, shape (frames, channels).
-    frames : int
-        Number of frames in the block.
-    time : CData
-        Timestamps from PortAudio.
+    _frames : int
+        Number of frames in the block (unused in this basic callback).
+    _time : CData
+        Timestamps from PortAudio (unused in this basic callback).
     status : CallbackFlags
         Status flags indicating underflow/overflow conditions.
     """
@@ -104,46 +102,68 @@ def audio_callback(indata, frames, time, status):  # noqa: ARG001
 # Simulating the Audio Device
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # In an offline build or automated test environment, no physical input device is available.
-# We create a `VirtualAudioDevice` class that reads fixed-size chunks from an audio file
-# using `soundfile.SoundFile.blocks()` and feeds them to the exact same `audio_callback`.
+# We create a `VirtualInputStream` class that mirrors the context-manager interface of
+# `sounddevice.InputStream`. It reads fixed-size chunks from an audio file using
+# `soundfile.SoundFile.blocks()` and feeds them to the exact same `audio_callback`.
 #
-# Notice that this virtual device knows nothing about `librosa`—it strictly mimics hardware I/O.
+# Notice that this virtual stream knows nothing about `librosa`—it strictly mimics hardware I/O.
 
 
-class VirtualAudioDevice:
-    """Simulates an audio input device by streaming blocks from a sound file.
+class VirtualInputStream:
+    """Simulate sounddevice.InputStream from an audio file.
 
     Parameters
     ----------
     filepath : str
         Path to the audio file.
+    samplerate : int, optional
+        Target sample rate. If None, uses the file's native sample rate.
     blocksize : int
         Number of frames per block.
+    channels : int
+        Number of channels.
+    dtype : str
+        Data type of the audio samples.
     callback : callable
         Audio callback function matching PortAudio callback signature.
     """
 
-    def __init__(self, filepath, blocksize=1024, callback=None):
+    def __init__(
+        self,
+        filepath,
+        samplerate=None,
+        blocksize=1024,
+        channels=1,
+        dtype="float32",
+        callback=None,
+    ):
         self.filepath = filepath
         self.blocksize = blocksize
+        self.channels = channels
+        self.dtype = dtype
         self.callback = callback
         with sf.SoundFile(self.filepath) as af:
-            self.samplerate = af.samplerate
-            self.channels = af.channels
+            self.samplerate = samplerate or af.samplerate
 
-    def stream(self):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def __iter__(self):
         """Generator yielding blocks from the file into the callback."""
         with sf.SoundFile(self.filepath) as af:
             for block in af.blocks(
-                blocksize=self.blocksize, dtype="float32", always_2d=True
+                blocksize=self.blocksize, dtype=self.dtype, always_2d=True
             ):
                 if self.callback:
                     self.callback(block, len(block), None, None)
-                yield
+                yield block
 
 
 # %%
-# Part 2: Example 1 — Basic Stream Processing (RMS Energy)
+# Part 1: Example 1 — Basic Stream Processing (RMS Energy)
 # --------------------------------------------------------
 # In our first example, we process incoming blocks independently to compute
 # instantaneous Root-Mean-Square (RMS) energy.
@@ -184,17 +204,22 @@ blocksize = 1024
 history_len = 60
 rms_history = np.zeros(history_len)
 
+# Represent time relative to the current moment (0 seconds is now)
+sr = librosa.get_samplerate(filename)
+time_window = (history_len - 1) * blocksize / sr
+times = np.linspace(-time_window, 0, history_len)
+
 fig_rms, ax_rms = plt.subplots(figsize=(8, 3))
-(line_rms,) = ax_rms.plot(rms_history, color="#3f90da", lw=2)
+(line_rms,) = ax_rms.plot(times, rms_history, color="#3f90da", lw=2)
 ax_rms.set_ylim(0, 0.4)
-ax_rms.set_xlim(0, history_len - 1)
+ax_rms.set_xlim(-time_window, 0)
 ax_rms.set_title("Live Stream Processing: Instantaneous RMS Energy")
-ax_rms.set_xlabel("Time (frames)")
+ax_rms.set_xlabel("Time (seconds relative to current)")
 ax_rms.set_ylabel("RMS Amplitude")
 ax_rms.grid(True, linestyle="--", alpha=0.5)
 
 
-def update_rms(frame):  # noqa: ARG001
+def update_rms(_frame):
     """Update function invoked by FuncAnimation on each frame."""
     global rms_history
     updated = False
@@ -210,27 +235,25 @@ def update_rms(frame):  # noqa: ARG001
     return (line_rms,)
 
 
-# Initialize our virtual device
-sim_device_rms = VirtualAudioDevice(
+# Open our virtual stream as a context manager, mirroring sounddevice.InputStream
+with VirtualInputStream(
     filename, blocksize=blocksize, callback=audio_callback
-)
-
-# Drive the animation with the simulated device stream
-ani_rms = animation.FuncAnimation(
-    fig_rms,
-    update_rms,
-    frames=sim_device_rms.stream,
-    interval=1000 * blocksize / sim_device_rms.samplerate,
-    blit=True,
-    repeat=False,
-    cache_frame_data=False,
-)
+) as stream:
+    ani_rms = animation.FuncAnimation(
+        fig_rms,
+        update_rms,
+        frames=stream,
+        interval=1000 * blocksize / stream.samplerate,
+        blit=True,
+        repeat=False,
+        cache_frame_data=False,
+    )
 
 # Sphinx-Gallery automatically captures the animation and renders it as an HTML5 video
 
 
 # %%
-# Part 3: Example 2 — Advanced Buffer Handling (Overlap & Resampling)
+# Part 2: Example 2 — Advanced Buffer Handling (Overlap & Resampling)
 # -------------------------------------------------------------------
 # While computing features block-by-block works for simple metrics like RMS energy,
 # real-world music information retrieval (MIR) often introduces two additional challenges:
@@ -345,24 +368,28 @@ hop_length = 512
 
 stream_buf = StreamingBuffer(
     frame_length=frame_length,
-    in_sr=sim_device_rms.samplerate,
+    in_sr=sr,
     target_sr=target_sr,
 )
 
 history_len_sc = 60
 centroid_history = np.zeros(history_len_sc)
 
+# Represent time relative to the current moment (0 seconds is now)
+time_window_sc = (history_len_sc - 1) * hop_length / sr
+times_sc = np.linspace(-time_window_sc, 0, history_len_sc)
+
 fig_sc, ax_sc = plt.subplots(figsize=(8, 3))
-(line_sc,) = ax_sc.plot(centroid_history, color="#bd1f01", lw=2)
+(line_sc,) = ax_sc.plot(times_sc, centroid_history, color="#bd1f01", lw=2)
 ax_sc.set_ylim(500, 4000)
-ax_sc.set_xlim(0, history_len_sc - 1)
+ax_sc.set_xlim(-time_window_sc, 0)
 ax_sc.set_title("Live Stream Processing: Spectral Centroid (Overlapping Buffer)")
-ax_sc.set_xlabel("Time (frames)")
+ax_sc.set_xlabel("Time (seconds relative to current)")
 ax_sc.set_ylabel("Frequency (Hz)")
 ax_sc.grid(True, linestyle="--", alpha=0.5)
 
 
-def update_centroid(frame):  # noqa: ARG001
+def update_centroid(_frame):
     """Update function for spectral centroid tracking."""
     global centroid_history
     updated = False
@@ -379,25 +406,24 @@ def update_centroid(frame):  # noqa: ARG001
     return (line_sc,)
 
 
-# Initialize our second virtual device with shorter blocks (512 samples)
-sim_device_sc = VirtualAudioDevice(
+# Open our virtual stream with shorter blocks (512 samples)
+with VirtualInputStream(
     filename, blocksize=hop_length, callback=audio_callback
-)
-
-ani_sc = animation.FuncAnimation(
-    fig_sc,
-    update_centroid,
-    frames=sim_device_sc.stream,
-    interval=1000 * hop_length / sim_device_sc.samplerate,
-    blit=True,
-    repeat=False,
-    cache_frame_data=False,
-)
+) as stream:
+    ani_sc = animation.FuncAnimation(
+        fig_sc,
+        update_centroid,
+        frames=stream,
+        interval=1000 * hop_length / stream.samplerate,
+        blit=True,
+        repeat=False,
+        cache_frame_data=False,
+    )
 
 
 # %%
-# Part 4: Connecting to a Live Audio Device
-# -----------------------------------------
+# Conclusion: Connecting to a Live Audio Device
+# ---------------------------------------------
 # The major strength of separating the audio I/O layer from the buffer processing
 # layer is that switching from simulation to a live microphone requires changing
 # **only the stream source**.
@@ -406,9 +432,9 @@ ani_sc = animation.FuncAnimation(
 # plotting routines—remains 100% identical.
 #
 # To connect to a real microphone or audio interface on your computer, replace
-# `VirtualAudioDevice` with `sounddevice.InputStream`:
+# `VirtualInputStream` with `sounddevice.InputStream`:
 #
-# .. code::
+# .. code:: python
 #
 #    import sounddevice as sd
 #
@@ -427,6 +453,13 @@ ani_sc = animation.FuncAnimation(
 #        # 3. In an interactive Python environment or script:
 #        ani = animation.FuncAnimation(fig_rms, update_rms, interval=30, blit=True)
 #        plt.show()
+#
+# Notice how the code structure matches: both `VirtualInputStream` and `sd.InputStream`
+# are context managers taking the same callback, block size, and channel settings.
+# The only operational difference is that `VirtualInputStream` acts as an iterable
+# (`frames=stream`) so `FuncAnimation` can render the animation frames deterministically
+# during offline documentation generation, whereas `sd.InputStream` runs on a live
+# background thread while `FuncAnimation` polls on an interactive timer (`interval=30`).
 #
 # Practical considerations for live streaming
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
