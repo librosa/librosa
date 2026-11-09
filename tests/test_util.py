@@ -380,6 +380,84 @@ def test_match_intervals_nonstrict(int_from, int_to, matches):
     assert np.array_equal(matches, test_matches)
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize(
+    "targets,queries,expected",
+    [
+        (
+            [[12, 16], [0, 3], [5, 10]],
+            [[0, 2], [6, 9], [13, 15], [2, 8]],
+            [1, 2, 0, 2],
+        ),
+        (
+            [[2, 4], [0, 2], [4, 6]],
+            [[0, 1], [2, 4], [3, 6]],
+            [1, 0, 2],
+        ),
+        (
+            [[0, 0], [0, 3], [3, 3], [5, 8], [9, 9]],
+            [[1, 2], [5, 7], [5, 8]],
+            [1, 3, 3],
+        ),
+        (
+            [[2, 7]],
+            [[2, 7], [3, 4], [2, 2], [7, 7]],
+            [0, 0, 0, 0],
+        ),
+    ],
+)
+def test_match_intervals_nonoverlapping(dtype, strict, targets, queries, expected):
+    """Keep original target indices when the target intervals do not overlap."""
+    actual = librosa.util.match_intervals(
+        np.asarray(queries, dtype=dtype), np.asarray(targets, dtype=dtype), strict=strict
+    )
+    np.testing.assert_array_equal(actual, expected)
+    assert actual.dtype == np.uint32
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
+@pytest.mark.parametrize("strict", [False, True])
+def test_match_intervals_nonoverlapping_ties(dtype, strict):
+    """Preserve existing matches when the highest Jaccard scores tie."""
+    # Sorting by start must not change the existing result for equal best scores.
+    targets = np.asarray([[2, 4], [0, 2]], dtype=dtype)
+    queries = np.asarray([[1, 3], [2, 2], [0, 0], [4, 4]], dtype=dtype)
+    actual = librosa.util.match_intervals(queries, targets, strict=strict)
+    np.testing.assert_array_equal(actual, [0, 0, 1, 0])
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize("gap", [0, 3])
+def test_match_intervals_nonoverlapping_jaccard(dtype, strict, gap, rng):
+    """Compare unique matches against an all-pairs Jaccard calculation."""
+    widths = rng.integers(1, 8, size=32)
+    starts = np.cumsum(np.r_[0, widths[:-1]]) + gap * np.arange(len(widths))
+    targets = np.column_stack([starts, starts + widths]).astype(dtype)
+    rng.shuffle(targets)
+    query_starts = rng.integers(0, int(targets.max()), size=100)
+    queries = np.column_stack([query_starts, query_starts + rng.integers(1, 20, 100)])
+
+    intersection = np.maximum(
+        0,
+        np.minimum(queries[:, None, 1], targets[None, :, 1])
+        - np.maximum(queries[:, None, 0], targets[None, :, 0]),
+    )
+    union = np.maximum(queries[:, None, 1], targets[None, :, 1]) - np.minimum(
+        queries[:, None, 0], targets[None, :, 0]
+    )
+    scores = intersection / union
+    sorted_scores = np.sort(scores, axis=1)
+    unique = (sorted_scores[:, -1] > 0) & (sorted_scores[:, -1] > sorted_scores[:, -2])
+    assert unique.any()
+    expected = scores[unique].argmax(axis=1)
+    actual = librosa.util.match_intervals(
+        queries[unique].astype(dtype), targets, strict=strict
+    )
+    np.testing.assert_array_equal(actual, expected)
+
+
 @pytest.mark.parametrize("n", [1, 5, 20, 100])
 @pytest.mark.parametrize("m", [1, 5, 20, 100])
 def test_match_events(n, m, rng):
