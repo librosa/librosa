@@ -6,7 +6,6 @@ from __future__ import annotations
 import warnings
 from typing import TYPE_CHECKING
 
-import numba
 import numpy as np
 
 from .. import sequence, util
@@ -449,64 +448,6 @@ def _cumulative_mean_normalized_difference(
     )
     return np.asarray(yin_frames)
 
-
-@numba.stencil  # type: ignore
-def _pi_stencil(x: np.ndarray) -> np.ndarray:
-    """Stencil to compute local parabolic interpolation"""
-    a = x[1] + x[-1] - 2 * x[0]
-    b = (x[1] - x[-1]) / 2
-
-    if np.abs(b) >= np.abs(a):
-        # If this happens, we'll shift by more than 1 bin
-        # Suppressing types because mypy has no idea about stencils
-        return 0  # type: ignore
-
-    return -b / a  # type: ignore
-
-
-@numba.guvectorize(
-    "(n)->(n)",
-    cache=True,
-    nopython=True,
-)  # type: ignore
-def _pi_wrapper(x: np.ndarray, y: np.ndarray) -> None:  # pragma: no cover
-    """Vectorized wrapper for the parabolic interpolation stencil"""
-    y[:] = _pi_stencil(x)
-
-
-def _parabolic_interpolation(x: np.ndarray, *, axis: int = -2) -> np.ndarray:
-    """Piecewise parabolic interpolation for yin and pyin.
-
-    Parameters
-    ----------
-    x : np.ndarray
-        array to interpolate
-    axis : int
-        axis along which to interpolate
-
-    Returns
-    -------
-    parabolic_shifts : np.ndarray [shape=x.shape]
-        position of the parabola optima (relative to bin indices)
-
-        Note: the shift at bin `n` is determined as 0 if the estimated
-        optimum is outside the range `[n-1, n+1]`.
-    """
-    # Rotate the target axis to the end
-    xi = x.swapaxes(-1, axis)
-
-    # Allocate the output array and rotate target axis
-    shifts = np.empty_like(x)
-    shiftsi = shifts.swapaxes(-1, axis)
-
-    # Call the vectorized stencil
-    _pi_wrapper(xi, shiftsi)
-
-    # Handle the edge condition not covered by the stencil
-    shiftsi[..., -1] = 0
-    shiftsi[..., 0] = 0
-
-    return shifts
 
 
 def yin(
