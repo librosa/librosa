@@ -208,6 +208,7 @@ intersphinx_mapping = {
     "mir_eval": ("https://mir-eval.readthedocs.io/latest/", None),
     "joblib": ("https://joblib.readthedocs.io/en/stable/", None),
     "IPython": ("https://ipython.readthedocs.io/en/stable/", None),
+    "sounddevice": ("https://python-sounddevice.readthedocs.io/en/latest/", None),
 }
 
 
