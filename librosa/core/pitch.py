@@ -328,40 +328,72 @@ def piptrack(
 
     fft_freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
 
-    # Do the parabolic interpolation everywhere,
-    # then figure out where the peaks are
-    # then restrict to the feasible range (fmin:fmax)
-    avg = np.gradient(S, axis=-2)
-    shift = _parabolic_interpolation(S, axis=-2)
-    # this will get us the interpolated peak value
-    dskew = 0.5 * avg * shift
-
-    # Pre-allocate output
-    pitches = np.zeros_like(S)
-    mags = np.zeros_like(S)
-
     # Clip to the viable frequency range
     freq_mask = (fmin <= fft_freqs) & (fft_freqs < fmax)
+    if not np.any(freq_mask):
+        return np.zeros_like(S), np.zeros_like(S)
+
     freq_mask = util.expand_to(freq_mask, ndim=S.ndim, axes=-2)
 
-    # Compute the column-wise local max of S after thresholding
-    # Find the argmax coordinates
+    # Compute local maxima of S along the frequency axis
+    peaks = util.localmax(S, axis=-2)
+    peaks &= freq_mask
+    idx_cand = np.nonzero(peaks)
+
+    if len(idx_cand[0]) == 0:
+        return np.zeros_like(S), np.zeros_like(S)
+
+    # Compute the reference value for thresholding
     if ref is None:
         ref = np.max
 
     if callable(ref):
         ref_value = threshold * ref(S, axis=-2)
         # Reinsert the frequency axis here, in case the callable doesn't
-
         # support keepdims=True
         ref_value = np.expand_dims(ref_value, -2)
     else:
         ref_value = np.abs(ref)
 
+    ref_bc = np.broadcast_to(ref_value, S.shape)
+    keep = S[idx_cand] > ref_bc[idx_cand]
+    if not np.any(keep):
+        return np.zeros_like(S), np.zeros_like(S)
+
+    idx = tuple(i[keep] for i in idx_cand)
+    del peaks, idx_cand, ref_bc, keep
+
+    # Parabolic interpolation evaluated only at peak locations
+    k = idx[-2]
+    idx_plus = list(idx)
+    idx_plus[-2] = k + 1
+    idx_plus = tuple(idx_plus)
+
+    idx_minus = list(idx)
+    idx_minus[-2] = k - 1
+    idx_minus = tuple(idx_minus)
+
+    val_center = S[idx]
+    val_plus = S[idx_plus]
+    val_minus = S[idx_minus]
+
+    a = val_plus + val_minus - 2.0 * val_center
+    b = 0.5 * (val_plus - val_minus)
+
+    # Local parabolic shift: -b / a where |b| < |a|
+    valid = np.abs(b) < np.abs(a)
+    shift_peak = np.zeros_like(b)
+    np.divide(-b, a, out=shift_peak, where=valid)
+
+    dskew_peak = 0.5 * b * shift_peak
+
+    # Pre-allocate output
+    pitches = np.zeros_like(S)
+    mags = np.zeros_like(S)
+
     # Store pitch and magnitude
-    idx = np.nonzero(freq_mask & util.localmax(S * (S > ref_value), axis=-2))
-    pitches[idx] = (idx[-2] + shift[idx]) * float(sr) / n_fft
-    mags[idx] = S[idx] + dskew[idx]
+    pitches[idx] = (k + shift_peak) * float(sr) / n_fft
+    mags[idx] = val_center + dskew_peak
 
     return pitches, mags
 
