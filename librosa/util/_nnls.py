@@ -21,7 +21,6 @@ if TYPE_CHECKING:
 
 __all__ = ["nnls"]
 
-COND = 1e-15  # Condition number cutoff for least squares solver initialization
 
 def _nnls_obj(
     x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray
@@ -71,7 +70,7 @@ def _nnls_lbfgs_block(
     import scipy.optimize
     if x_init is None:
         # Suppress type checks because mypy can't find pinv
-        x_init = np.einsum("fm,...mt->...ft", scipy.linalg.pinv(A, rtol=COND), B, optimize=True)
+        x_init = np.einsum("fm,...mt->...ft", scipy.linalg.pinv(A), B, optimize=True)
         np.clip(x_init, 0, None, out=x_init)
 
     # Adapt the hessian approximation to the dimension of the problem
@@ -145,27 +144,31 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
     >>> ax[1].label_outer()
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
+    import scipy.linalg
     import scipy.optimize
 
     # If B is a single vector, punt up to the scipy method
     if B.ndim == 1:
-        return scipy.optimize.nnls(A, B)[0]
+        return scipy.optimize.nnls(A, B)[0].astype(A.dtype)
 
     n_columns = int(MAX_MEM_BLOCK // (np.prod(B.shape[:-1]) * A.itemsize))
     n_columns = max(n_columns, 1)
 
+    pinv_A = scipy.linalg.pinv(A)
+
     # Process in blocks:
     if B.shape[-1] <= n_columns:
-        return _nnls_lbfgs_block(A, B, **kwargs).astype(A.dtype)
+        x_init = np.einsum("fm,...mt->...ft", pinv_A, B, optimize=True)
+        np.clip(x_init, 0, None, out=x_init)
+        return _nnls_lbfgs_block(A, B, x_init=x_init, **kwargs).astype(A.dtype)
 
     x: np.ndarray
-    x = np.einsum("fm,...mt->...ft", scipy.linalg.pinv(A, rtol=COND), B, optimize=True)
+    x = np.einsum("fm,...mt->...ft", pinv_A, B, optimize=True)
     np.clip(x, 0, None, out=x)
-    x_init = x
 
     for bl_s in range(0, x.shape[-1], n_columns):
         bl_t = min(bl_s + n_columns, B.shape[-1])
         x[..., bl_s:bl_t] = _nnls_lbfgs_block(
-            A, B[..., bl_s:bl_t], x_init=x_init[..., bl_s:bl_t], **kwargs
+            A, B[..., bl_s:bl_t], x_init=x[..., bl_s:bl_t].copy(), **kwargs
         )
-    return x
+    return x.astype(A.dtype)
