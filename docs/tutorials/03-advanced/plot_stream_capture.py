@@ -9,46 +9,57 @@ Live stream processing
 This tutorial illustrates how to perform real-time stream processing and visualization
 on signals captured from an audio device.
 
-Real-time audio processing typically decouples into three independent responsibilities:
+In real-world applications, streaming audio processing decouples into three independent
+responsibilities:
 
 1. **Audio I/O (Producer)**: High-priority system callbacks from the audio hardware
-   (such as `sounddevice.InputStream` or PortAudio) must never block or perform heavy
-   computation. [`librosa.util.StreamBridge`](file:///home/bmcfee/git/librosa/librosa/util/streaming.py#L354) acts directly as the
-   audio callback, receives raw audio blocks, normalizes channel geometries and data types,
-   and queues them safely.
+   (such as ``sounddevice.InputStream`` or PortAudio) execute on a separate OS thread
+   and must never block. :class:`librosa.util.StreamBridge` acts directly as the
+   audio callback, receiving raw audio blocks, normalizing channel geometries and data types,
+   and buffering them in a thread-safe queue.
 2. **Buffering & DSP (Analysis)**: Feature extractors often require observation windows that
-   differ in size or sample rate from the capture device. [`librosa.util.StreamBuffer`](file:///home/bmcfee/git/librosa/librosa/util/streaming.py#L52)
+   differ in size or sample rate from the capture device. :class:`librosa.util.StreamBuffer`
    accumulates incoming chunks into overlapping analysis windows, downmixes multi-channel audio,
-   and handles on-the-fly streaming sample-rate conversion via `soxr`.
-3. **Display (Consumer)**: Downstream consumers (such as GUI threads or Matplotlib animations)
-   pull ready blocks and update the user interface without holding up the audio pipeline.
+   and handles on-the-fly streaming sample-rate conversion via ``soxr``.
+3. **Display or Processing (Consumer)**: Downstream consumers (such as GUI animation threads,
+   network workers, or stream generators like :func:`librosa.stream` and :func:`librosa.astream`)
+   pull ready blocks and process them without stalling the audio callback.
 
-Aside: virtual devices for this documentation
----------------------------------------------
-This tutorial document is compiled automatically in a headless CI/CD environment without
-access to physical audio capture hardware.
+Live microphone capture pattern
+-------------------------------
+When connecting to a real microphone with ``sounddevice``, the complete capture and analysis
+pattern requires only a few lines:
 
-To illustrate these concepts, we construct a virtual audio device (`VirtualInputStream`)
-that streams fixed-size chunks from Librosa's packaged example recordings through the exact
-same callback interface used by `sounddevice.InputStream`.
+.. code:: python
 
-.. note::
-    `VirtualInputStream` is only needed for offline rendering. When running live on your
-    computer, simply swap it for `sounddevice.InputStream`.
+    import sounddevice as sd
+    import librosa
 
+    # 1. Create a stream bridge
+    bridge = librosa.util.StreamBridge(orig_sr=22050, channels=1)
 
-This tutorial covers three progression steps:
+    # 2. Open hardware input stream
+    with sd.InputStream(samplerate=22050, blocksize=512, callback=bridge):
+        # 3. Stream blocks through Librosa
+        for block in librosa.stream(bridge, frame_length=1024, hop_length=512):
+            # Compute features in real time
+            rms = librosa.feature.rms(y=block)
 
-- **Example 1: Instantaneous Block Processing**: Ingesting blocks with `StreamBridge` and computing RMS energy.
-- **Example 2: Overlapping Buffers & Streaming Resampling**: Using `StreamBuffer` to track spectral centroid across sliding analysis windows.
-- **Example 3: Modern Asynchronous Streaming**: Using `librosa.util.async_capture` and `librosa.astream`.
+Similarly, modern asynchronous applications can capture and process audio concurrently using
+:func:`librosa.util.async_capture` and :func:`librosa.astream`:
+
+.. code:: python
+
+    async with librosa.util.async_capture(samplerate=22050, blocksize=512) as stream:
+        async for block in librosa.astream(stream, frame_length=1024, hop_length=512):
+            rms = librosa.feature.rms(y=block)
 """
 
 # %%
 # Imports and Audio Source
 # ------------------------
-# We import Matplotlib for animation, `soundfile` for simulated hardware I/O,
-# and `librosa` for signal processing and streaming utilities.
+# We import Matplotlib for animation, ``soundfile`` for simulated hardware I/O,
+# and ``librosa`` for signal processing and streaming utilities.
 
 from IPython.display import HTML
 import matplotlib.animation as animation
@@ -64,12 +75,19 @@ HTML(librosa.util.example_info("trumpet", html=True))
 
 
 # %%
-# Simulating the Audio Device
-# ---------------------------
-# In an automated documentation build, no physical microphone is available.
-# `VirtualInputStream` mimics the context-manager interface of `sounddevice.InputStream`,
-# reading chunks from an audio file and invoking the stream callback with PortAudio-compatible
-# arguments:
+# Simulating Hardware Capture (Aside)
+# -----------------------------------
+# This tutorial document is compiled automatically in a headless CI/CD environment without
+# access to physical audio capture hardware.
+#
+# To make the examples below executable and renderable offline, we simulate the input device
+# using a helper class (``VirtualInputStream``) that reads fixed-size blocks from an audio
+# file and feeds them into the stream callback with the exact same PortAudio signature as
+# ``sounddevice.InputStream``.
+#
+# .. note::
+#     To run any of the examples below with a physical microphone, simply replace
+#     ``VirtualInputStream(filename, ...)`` with ``sounddevice.InputStream(...)``.
 
 
 class VirtualInputStream:
@@ -129,23 +147,25 @@ class VirtualInputStream:
 # %%
 # Encapsulating Live Visualization
 # --------------------------------
-# To prevent visualization boilerplate from cluttering our signal processing code,
-# we encapsulate the plotting canvas, sparkline trace, and animation state reset
-# into a self-contained helper class.
+# To prevent Matplotlib animation setup and array manipulation from obscuring
+# the signal processing logic, we encapsulate real-time sparkline plotting into
+# a helper class.
 #
-# This completely decouples plotting concerns from audio I/O and feature analysis:
+# Notice that this visualizer relies on the doc build's configured Matplotlib theme
+# without hardcoding plot colors, and encapsulates state resets across animation passes:
 
 
 class LiveSparkline:
     """Encapsulates Matplotlib animation setup and real-time line plotting."""
 
-    def __init__(self, times, ylim, title, ylabel, color):
+    def __init__(self, times, ylim, title, ylabel):
         self.times = times
         self.data = np.full(len(times), np.nan)
         self.idx = 0
 
         self.fig, self.ax = plt.subplots(figsize=(8, 3))
-        (self.line,) = self.ax.plot(self.times, self.data, color=color, lw=2)
+        # Rely on Matplotlib theme cycler for styling
+        (self.line,) = self.ax.plot(self.times, self.data, lw=2)
         self.ax.set_ylim(*ylim)
         self.ax.set_xlim(times[0], times[-1])
         self.ax.set_title(title)
@@ -169,17 +189,16 @@ class LiveSparkline:
 
 
 # %%
-# Part 1: Example 1 — Basic Stream Processing (RMS Energy)
-# --------------------------------------------------------
-# In our first example, we process incoming blocks independently to compute
-# instantaneous Root-Mean-Square (RMS) energy.
+# Example 1: Instantaneous Block Processing (RMS Energy)
+# ------------------------------------------------------
+# In this first example, incoming blocks are processed independently to compute
+# instantaneous Root-Mean-Square (RMS) energy using :func:`librosa.feature.rms`.
 #
-# Notice the clear separation of roles:
+# The architecture cleanly separates each component:
 #
-# 1. **I/O**: `librosa.util.StreamBridge` serves directly as the hardware callback
-#    and buffers incoming blocks.
-# 2. **Analysis**: `process_rms` computes the energy on each raw audio block.
-# 3. **Display**: `sparkline.append` draws the computed point on the timeline.
+# - **I/O**: :class:`librosa.util.StreamBridge` receives incoming blocks.
+# - **Analysis**: ``process_rms`` extracts energy from each raw block.
+# - **Display**: ``LiveSparkline.append`` plots each value forward in time.
 
 
 def process_rms(buffer):
@@ -192,10 +211,10 @@ def process_rms(buffer):
 
 
 # %%
-# Running the RMS Animation
-# ^^^^^^^^^^^^^^^^^^^^^^^^^
-# On each tick of `FuncAnimation`, `bridge.drain()` retrieves whatever blocks
-# arrived since the last frame without blocking the audio callback:
+# Visualizing the Live RMS Sparkline
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# In an interactive application, the UI event loop periodically calls
+# ``bridge.drain()`` to retrieve any blocks that arrived from the audio callback:
 
 blocksize = 1024
 
@@ -216,10 +235,9 @@ with VirtualInputStream(
         ylim=(0, 0.4),
         title="Live Stream: Instantaneous RMS Energy",
         ylabel="RMS Amplitude",
-        color="#3f90da",
     )
 
-    # 3. Consumer animation callbacks
+    # 3. Animation callbacks
     def init_rms():
         bridge_rms.reset()
         return sparkline_rms.reset()
@@ -244,23 +262,25 @@ with VirtualInputStream(
 
 
 # %%
-# Part 2: Example 2 — Overlapping Buffers & Resampling (`StreamBuffer`)
-# ---------------------------------------------------------------------
-# While instantaneous metrics like RMS work block-by-block, spectral and music
-# information retrieval (MIR) features introduce two common requirements:
+# Example 2: Overlapping Buffers & Online Resampling (`StreamBuffer`)
+# -------------------------------------------------------------------
+# While instantaneous metrics like RMS operate block-by-block, frequency-domain
+# features (such as :func:`librosa.feature.spectral_centroid`, STFT, or chroma)
+# introduce two additional requirements:
 #
 # 1. **Sliding Window Overlap**: Low-latency capture delivers small chunks (e.g. 512 samples / ~23 ms),
-#    but frequency transforms (like STFT or spectral centroid) require longer analysis windows
-#    (e.g. 1024 samples / ~93 ms) for frequency resolution. We need a sliding observation window
-#    where each incoming chunk shifts the buffer forward by a smaller hop size.
+#    but frequency transforms require longer observation windows (e.g. 1024 samples / ~93 ms)
+#    for spectral resolution. We need a sliding observation window where each incoming chunk shifts
+#    the buffer forward by a smaller hop size.
 # 2. **Online Resampling**: Hardware inputs frequently capture at 44.1 kHz or 48 kHz, while downstream
 #    models expect 22.05 kHz or 11.025 kHz.
 #
-# `librosa.util.StreamBuffer` encapsulates both requirements:
+# :class:`librosa.util.StreamBuffer` handles both requirements:
 #
-# - It accumulates incoming chunks and yields complete analysis blocks matching `frame_length` and `hop_length`.
-# - It streams chunks through `soxr` resampling on-the-fly.
-# - Setting ``warm_up=True`` pre-fills the initial observation window so the first frame produces output immediately without startup delay.
+# - It accumulates incoming chunks and yields complete analysis blocks matching ``frame_length`` and ``hop_length``.
+# - It streams chunks through ``soxr`` resampling on-the-fly.
+# - Setting ``warm_up=True`` pre-fills the initial observation window with silence so the first analysis
+#   frame is produced immediately without startup latency.
 
 
 def process_spectral_centroid(analysis_window, sr):
@@ -313,10 +333,9 @@ with VirtualInputStream(
         ylim=(500, 4000),
         title="Live Stream: Spectral Centroid (StreamBuffer)",
         ylabel="Frequency (Hz)",
-        color="#bd1f01",
     )
 
-    # 4. Consumer animation callbacks
+    # 4. Animation callbacks
     def init_sc():
         stream_buf.reset()
         bridge_sc.reset()
@@ -342,85 +361,19 @@ with VirtualInputStream(
 
 
 # %%
-# Part 3: Asynchronous Audio Streaming (`async_capture` and `astream`)
-# --------------------------------------------------------------------
-# Beyond UI animation loops, modern Python architectures (such as WebSocket servers,
-# FastAPI, or background worker threads) often process streaming audio asynchronously.
+# Practical Considerations for Live Hardware Streams
+# ---------------------------------------------------
+# When deploying live stream processing on physical hardware, keep the following
+# best practices in mind:
 #
-# Librosa provides first-class asynchronous streaming primitives:
-#
-# 1. `librosa.util.async_capture`: An asynchronous context manager wrapping
-#    `sounddevice.InputStream` to yield a `StreamBridge`.
-# 2. `librosa.astream`: An asynchronous generator that consumes any async stream
-#    and yields framed, resampled analysis blocks:
-#
-# .. code:: python
-#
-#    import asyncio
-#    import librosa
-#
-#    async def process_live_audio():
-#        # Capture audio asynchronously from the default microphone
-#        async with librosa.util.async_capture(samplerate=44100, blocksize=512) as stream:
-#            async for block in librosa.astream(
-#                stream,
-#                frame_length=2048,
-#                hop_length=512,
-#                sr=22050,
-#            ):
-#                # Non-blocking analysis on 22.05 kHz resampled blocks
-#                centroid = librosa.feature.spectral_centroid(y=block, sr=22050)
-#                print(f"Spectral Centroid: {centroid[0, 0]:.1f} Hz")
-#
-# In synchronous batch scripts or worker threads, `librosa.stream` can also
-# consume directly from a `StreamBridge`:
-#
-# .. code:: python
-#
-#    import sounddevice as sd
-#
-#    bridge = librosa.util.StreamBridge(orig_sr=44100)
-#    with sd.InputStream(samplerate=44100, blocksize=512, callback=bridge):
-#        for block in librosa.stream(bridge, frame_length=2048, hop_length=512, sr=22050):
-#            centroid = librosa.feature.spectral_centroid(y=block, sr=22050)
-
-
-# %%
-# Conclusion: Connecting to Physical Hardware
-# -------------------------------------------
-# Because the audio I/O layer (`StreamBridge`) is completely decoupled from the analysis
-# buffer (`StreamBuffer`) and display (`LiveSparkline`), switching from offline simulation
-# to a physical microphone requires changing **only the input device**:
-#
-# .. code:: python
-#
-#    import sounddevice as sd
-#
-#    # 1. Check available hardware devices
-#    print(sd.query_devices())
-#
-#    # 2. Create the stream bridge
-#    bridge = librosa.util.StreamBridge(orig_sr=22050, channels=1)
-#
-#    # 3. Connect to live microphone input
-#    with sd.InputStream(
-#        samplerate=22050,
-#        blocksize=1024,
-#        channels=1,
-#        dtype="float32",
-#        callback=bridge,
-#    ):
-#        # 4. Run interactive animation
-#        ani = animation.FuncAnimation(sparkline_rms.fig, update_rms, interval=30, blit=True)
-#        plt.show()
-#
-# Practical considerations for live streaming
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-#
-# - **Rolling history for open streams**: For continuous microphone capture with no set end time,
-#   maintain a rolling buffer of recent history (e.g. the last 5 seconds) by shifting the display
-#   array with `np.roll`.
-# - **Block size and latency**: Smaller block sizes reduce latency at the expense of higher CPU callback
-#   frequency. If dropouts or overflows occur (reported in `status`), increase `blocksize`.
-# - **Frame-local feature extraction**: Incremental feature extractors should avoid global normalization
-#   dependencies (e.g. use ``center=False``, fixed ``ref``, or frame-local parameters).
+# - **Continuous streams with rolling history**: In this demonstration, we processed a
+#   finite recording with a known duration. For open-ended live microphone streams,
+#   maintain a rolling window of recent history (such as the last 5 seconds) by shifting
+#   the display array with ``numpy.roll``.
+# - **Block size and latency**: Smaller block sizes reduce latency at the expense of higher
+#   CPU callback frequency. If buffer overruns occur (indicated by status flags in the audio
+#   callback), increase ``blocksize``.
+# - **Frame-local feature extraction**: To keep streaming features consistent with whole-file
+#   analysis, ensure that frame-level computations are context-independent (e.g. using
+#   ``center=False`` and avoiding dynamic global parameters like ``top_db`` or callable ``ref``).
+#   For further discussion, refer to :ref:`sphx_glr_auto_tutorials_03-advanced_plot_mfcc_stream.py`.
