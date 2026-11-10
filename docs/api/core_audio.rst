@@ -8,6 +8,8 @@ Audio signals
     load
     loadx
     stream
+    astream
+    StreamBuffer
     resample
     get_duration
     get_samplerate

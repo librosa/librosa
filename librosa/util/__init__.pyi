@@ -1,4 +1,4 @@
-from . import decorators, exceptions
+from . import decorators, exceptions, streaming
 from ._nnls import nnls as nnls
 from .deprecation import Deprecated as Deprecated
 from .deprecation import rename_kw as rename_kw
@@ -10,6 +10,9 @@ from .files import find_files as find_files
 from .files import list_examples as list_examples
 from .matching import match_events as match_events
 from .matching import match_intervals as match_intervals
+from .streaming import StreamBridge as StreamBridge
+from .streaming import StreamBuffer as StreamBuffer
+from .streaming import async_capture as async_capture
 from .utils import MAX_MEM_BLOCK as MAX_MEM_BLOCK
 from .utils import _ensure_hz as _ensure_hz
 from .utils import abs2 as abs2

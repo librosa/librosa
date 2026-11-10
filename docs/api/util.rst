@@ -13,3 +13,4 @@ Utilities
     util_matching
     util_validation
     util_files
+    util_streaming

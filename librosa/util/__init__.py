@@ -11,6 +11,7 @@ Utility functions are broadly categorized into the following groups:
     - Matching (events or time intervals)
     - Files and data (packaged examples, metadata, etc.)
     - Data validation (type and range checking)
+    - Stream processing (callbacks, sliding buffers, and async capture)
 """
 
 import lazy_loader as lazy
