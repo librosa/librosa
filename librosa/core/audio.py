@@ -3,6 +3,8 @@
 """Core IO, DSP and utility functions."""
 from __future__ import annotations
 
+import os
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, overload
 
 import lazy_loader as lazy
@@ -17,11 +19,18 @@ from .._cache import cache
 from ..util.decorators import future_default
 from ..util.exceptions import ParameterError
 from ..util.files import example
+from ..util.streaming import StreamBuffer, _align_step_size
 from .convert import frames_to_samples, time_to_samples
 
 if TYPE_CHECKING:
-    import os
-    from typing import Any, BinaryIO, Callable, Generator
+    from typing import (
+        Any,
+        AsyncGenerator,
+        AsyncIterable,
+        BinaryIO,
+        Callable,
+        Generator,
+    )
 
     from numpy.typing import DTypeLike, NDArray
 
@@ -36,6 +45,8 @@ __all__ = [
     "load",
     "loadx",
     "stream",
+    "astream",
+    "StreamBuffer",
     "to_mono",
     "to_stereo",
     "to_multi",
@@ -198,38 +209,19 @@ def __soundfile_load(path, offset, duration, dtype):
     return y, sr_native
 
 
-def _align_step_size(target_step, target_sr, orig_sr):
-    """
-    When resampling a stream, we need to ensure that the target step size
-    remains integer-valued in the original sampling rate
-    """
-    if target_sr is None or target_sr == orig_sr:
-        return target_step
-
-    exact_native_step = (target_step * orig_sr) / target_sr
-    aligned_native_step = np.round(exact_native_step)
-
-    # Tolerances (rtol=1e-7, atol=1e-5) safely absorb precision errors from float arithmetic
-    if not np.isclose(exact_native_step, aligned_native_step, rtol=1e-7, atol=1e-5):
-        raise ParameterError(
-            f"Target block step of {target_step} samples at {target_sr} results in a "
-            f"fractional sample advance at original sampling rate {orig_sr}."
-        )
-
-    return int(aligned_native_step)
-
-
 @future_default(param_name="sr", old_default=None, new_default=22050, version="1.1.0")
 def stream(
-    path: str | int | sf.SoundFile | BinaryIO,
+    path: str | int | sf.SoundFile | BinaryIO | Iterable[np.ndarray],
     *,
     block_length: int,
     frame_length: int,
     hop_length: int,
+    orig_sr: float | None = None,
     sr: float | None = None,
     mono: bool = True,
     offset: float = 0.0,
     duration: float | None = None,
+    warm_up: bool = False,
     fill_value: float | None = None,
     res_type: str = "soxr_hq",
     dtype: DTypeLike = np.float32,
@@ -282,12 +274,14 @@ def stream(
 
     Parameters
     ----------
-    path : str, int, sf.SoundFile, or file-like object
-        path to the input file to stream.
+    path : str, int, sf.SoundFile, file-like object, or Iterable[np.ndarray]
+        Path to the input file or an iterable of audio chunks to stream.
 
         Any codec supported by `soundfile` is permitted here.
-
         An existing `soundfile.SoundFile` object may also be provided.
+
+        Alternatively, an `Iterable[np.ndarray]` yielding chunks of audio
+        (such as `librosa.util.StreamBridge`) may be provided.
 
     block_length : int > 0
         The number of frames to include in each block.
@@ -307,6 +301,11 @@ def stream(
         will overlap.  Similarly, the last frame of one *block* will overlap
         with the first frame of the next *block*.
 
+    orig_sr : float > 0, optional
+        Original sampling rate when streaming from an `Iterable[np.ndarray]`.
+        If None, it will be inferred from duck-typed attributes on `path`
+        (e.g. `path.orig_sr` or `path.samplerate`). Ignored for audio files.
+
     sr : number > 0 [scalar]
         target sampling rate.  If not provided, the original sampling rate of the file will be
         used.
@@ -317,7 +316,8 @@ def stream(
     offset : float
         Start reading after this time (in seconds)
 
-        If negative, it will be interpreted relative to the end of the file.
+        If negative, it will be interpreted relative to the end of the file
+        (files only).
 
     duration : float
         Only load up to this much audio (in seconds)
@@ -348,6 +348,10 @@ def stream(
 
     See Also
     --------
+    astream
+    StreamBuffer
+    util.StreamBridge
+    util.async_capture
     load
     get_samplerate
     soundfile.blocks
@@ -382,154 +386,193 @@ def stream(
     ...                                              hop_length=2048,
     ...                                              center=False)
     """
-    if not util.is_positive_int(block_length):
-        raise ParameterError(f"block_length={block_length} must be a positive integer")
-    if not util.is_positive_int(frame_length):
-        raise ParameterError(f"frame_length={frame_length} must be a positive integer")
-    if not util.is_positive_int(hop_length):
-        raise ParameterError(f"hop_length={hop_length} must be a positive integer")
+    is_file = (
+        isinstance(path, (str, os.PathLike, int, sf.SoundFile))
+        or hasattr(path, "read")
+    )
 
-    if sr is not None and not (np.isfinite(sr) and sr > 0):
-        raise ParameterError(f"sr={sr} must be a positive number")
+    if is_file:
+        if isinstance(path, sf.SoundFile):
+            sfo = path
+            sfo_close = None
+        else:
+            sfo = sf.SoundFile(path)
+            sfo_close = sfo
 
-    if res_type not in {"soxr_vhq", "soxr_hq", "soxr_mq", "soxr_lq", "soxr_qq"}:
-        raise ParameterError(f"res_type={res_type} is not a valid soxr resampling mode for streaming")
-
-    if isinstance(path, sf.SoundFile):
-        sfo = path
-    else:
-        sfo = sf.SoundFile(path)
-
-    # Get the sample rate from the file info
-    orig_sr = sfo.samplerate
-
-    # Construct the stream
-    # Seek the soundfile object to the starting frame
-
-    target_yield_size = (block_length - 1) * hop_length + frame_length
-    target_advance = block_length * hop_length
-
-    # Determine internal channel state for buffer initialization
-    is_multichannel = sfo.channels > 1
-    process_channels = 1 if mono else sfo.channels
-
-    needs_resampling = (sr is not None) and (orig_sr != sr)
-    if sr is None:
-        sr = orig_sr
-
-    try:
-        orig_read_size = _align_step_size(target_advance, sr, orig_sr)
-
-        read_frames = int(duration * orig_sr) if duration is not None else -1
-
-        if needs_resampling:
-            resampler = soxr.ResampleStream(
-                in_rate=orig_sr,
-                out_rate=sr,
-                num_channels=process_channels,
-                dtype=dtype,
-                quality=res_type,
-            )
-
-        capacity = target_yield_size + (target_advance * 2)
-        buffer_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
-        buffer = np.zeros(buffer_shape, dtype=dtype)
-        write_idx = 0
-        read_idx = 0
+        native_sr = sfo.samplerate
+        num_channels = sfo.channels
+        target_advance = block_length * hop_length
+        target_sr = sr or native_sr
+        orig_read_size = _align_step_size(target_advance, target_sr, native_sr)
+        read_frames = int(duration * native_sr) if duration is not None else -1
 
         if offset >= 0:
-            sfo.seek(int(offset * orig_sr))
+            sfo.seek(int(offset * native_sr))
         else:
-            sfo.seek(-int(abs(offset) * orig_sr), whence=sf.SEEK_END)
+            sfo.seek(-int(abs(offset) * native_sr), whence=sf.SEEK_END)
 
-        # Reusable buffer for the per-chunk mono downmix; the final short
-        # chunk writes into a truncated view of it, avoiding a fresh
-        # allocation on every block
-        mono_buffer = (
-            np.empty(orig_read_size, dtype=dtype)
-            if mono and is_multichannel
-            else None
+        chunk_iter = sfo.blocks(
+            blocksize=orig_read_size,
+            overlap=0,
+            dtype=dtype,
+            always_2d=False,
+            frames=read_frames,
         )
 
-        for orig_chunk in sfo.blocks(blocksize=orig_read_size,
-                                     overlap=0,
-                                     dtype=dtype,
-                                     always_2d=False,
-                                     frames=read_frames):
+        buf = StreamBuffer(
+            frame_length=frame_length,
+            hop_length=hop_length,
+            block_length=block_length,
+            orig_sr=native_sr,
+            sr=sr,
+            channels=num_channels,
+            mono=mono,
+            offset=0.0,
+            duration=None,
+            warm_up=warm_up,
+            fill_value=fill_value,
+            res_type=res_type,
+            dtype=dtype,
+        )
+    elif isinstance(path, Iterable):
+        sfo_close = None
+        native_sr = orig_sr or getattr(path, "orig_sr", getattr(path, "samplerate", None))
+        if native_sr is None:
+            raise ParameterError(
+                "orig_sr must be specified when streaming from an iterable without a sample rate attribute."
+            )
+        num_channels = getattr(path, "channels", 1)
+        chunk_iter = iter(path)
+        buf = StreamBuffer(
+            frame_length=frame_length,
+            hop_length=hop_length,
+            block_length=block_length,
+            orig_sr=native_sr,
+            sr=sr,
+            channels=num_channels,
+            mono=mono,
+            offset=offset,
+            duration=duration,
+            warm_up=warm_up,
+            fill_value=fill_value,
+            res_type=res_type,
+            dtype=dtype,
+        )
+    else:
+        raise ParameterError(f"Unsupported source type for stream: {type(path)}")
 
-            if mono and is_multichannel:
-                # soundfile returns (samples, channels), to_mono expects (channels, samples)
-                assert mono_buffer is not None  # for mypy; set above under same condition
-                orig_chunk = to_mono(
-                    orig_chunk.T, out=mono_buffer[: orig_chunk.shape[0]]
-                )
-
-            if needs_resampling:
-                target_chunk = resampler.resample_chunk(orig_chunk)
-            else:
-                target_chunk = orig_chunk
-            n_incoming = target_chunk.shape[0]
-
-            if write_idx + n_incoming > capacity:
-                available = write_idx - read_idx
-                buffer[:available] = buffer[read_idx : write_idx]
-                read_idx = 0
-                write_idx = available
-
-                # The following branch should never happen, but it's here
-                # just in case something goes wrong with the input stream
-                if write_idx + n_incoming > capacity:  # pragma: no cover
-                    capacity = write_idx + n_incoming + target_yield_size
-                    new_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
-                    new_buffer = np.zeros(new_shape, dtype=dtype)
-                    new_buffer[:write_idx] = buffer[:write_idx]
-                    buffer = new_buffer
-
-            buffer[write_idx : write_idx + n_incoming] = target_chunk
-            write_idx += n_incoming
-
-            while write_idx - read_idx >= target_yield_size:
-                block = buffer[read_idx : read_idx + target_yield_size]
-                yield block.T.copy()
-                read_idx += target_advance
-
-        if process_channels == 1:
-            empty = np.empty((0,), dtype=buffer.dtype)
-        else:
-            empty = np.empty((0, process_channels), dtype=buffer.dtype)
-
-        if needs_resampling:
-            tail_chunk = resampler.resample_chunk(empty, last=True)
-        else:
-            tail_chunk = None
-
-        final_data_list = [buffer[read_idx : write_idx]]
-        if tail_chunk is not None and tail_chunk.shape[0] > 0:
-            final_data_list.append(tail_chunk)
-            remainder = np.concatenate(final_data_list, axis=0) if final_data_list else np.array([])
-        else:
-            remainder = buffer[read_idx : write_idx]
-
-        rem_idx = 0
-        while rem_idx < remainder.shape[0]:
-            current_slice = remainder[rem_idx : rem_idx + target_yield_size]
-
-            if current_slice.shape[0] < target_yield_size:
-                pad_length = target_yield_size - current_slice.shape[0]
-                pad_width = (0, pad_length) if process_channels == 1 else ((0, pad_length), (0, 0))
-                if fill_value is not None:
-                    current_slice = np.pad(current_slice,
-                                           pad_width,
-                                           mode="constant",
-                                           constant_values=fill_value)
-
-            yield current_slice.T.copy()
-            rem_idx += target_advance
+    try:
+        for chunk in chunk_iter:
+            for block in buf.push(chunk):
+                yield block
+            if buf.is_complete():
+                break
+        for block in buf.flush():
+            yield block
     finally:
-        # If we instantiated a new SoundFile object, we should close it.  If the
-        # user passed in an existing SoundFile object, we should leave it alone.
-        if not isinstance(path, sf.SoundFile):
-            sfo.close()
+        if sfo_close is not None:
+            sfo_close.close()
+
+
+@future_default(param_name="sr", old_default=None, new_default=22050, version="1.1.0")
+async def astream(
+    source: AsyncIterable[np.ndarray] | Iterable[np.ndarray],
+    *,
+    block_length: int = 1,
+    frame_length: int,
+    hop_length: int,
+    orig_sr: float | None = None,
+    sr: float | None = None,
+    mono: bool = True,
+    offset: float = 0.0,
+    duration: float | None = None,
+    warm_up: bool = False,
+    fill_value: float | None = None,
+    res_type: str = "soxr_hq",
+    dtype: DTypeLike = np.float32,
+) -> AsyncGenerator[np.ndarray, None]:
+    """Stream audio asynchronously in fixed-length buffers.
+
+    Parameters
+    ----------
+    source : AsyncIterable[np.ndarray] or Iterable[np.ndarray]
+        Input stream source yielding chunks of audio (such as `librosa.util.StreamBridge`).
+    block_length : int > 0, default=1
+        The number of frames to include in each block.
+    frame_length : int > 0
+        The number of samples per frame.
+    hop_length : int > 0
+        The number of samples to advance between frames.
+    orig_sr : float > 0, optional
+        Sampling rate of the input stream. If None, it will be inferred from
+        duck-typed attributes on `source` (e.g. `source.orig_sr` or `source.samplerate`).
+    sr : float > 0, optional
+        Target sampling rate.
+    mono : bool, default=True
+        Convert signal to mono during streaming.
+    offset : float >= 0, default=0.0
+        Start reading after this time (in seconds).
+    duration : float > 0, optional
+        Only yield up to this much audio (in seconds).
+    fill_value : float, optional
+        Value used to pad short blocks at the end of the stream.
+    res_type : str, default='soxr_hq'
+        Resample type for `soxr`.
+    dtype : numeric type, default=np.float32
+        Data type of the yielded blocks.
+
+    Yields
+    ------
+    block : np.ndarray
+        Audio blocks.
+
+    See Also
+    --------
+    stream
+    StreamBuffer
+    util.StreamBridge
+    util.async_capture
+    """
+    native_sr = orig_sr or getattr(source, "orig_sr", getattr(source, "samplerate", None))
+    if native_sr is None:
+        raise ParameterError(
+            "orig_sr must be specified when streaming from an iterable without a sample rate attribute."
+        )
+    num_channels = getattr(source, "channels", 1)
+
+    buf = StreamBuffer(
+        frame_length=frame_length,
+        hop_length=hop_length,
+        block_length=block_length,
+        orig_sr=native_sr,
+        sr=sr,
+        channels=num_channels,
+        mono=mono,
+        offset=offset,
+        duration=duration,
+        warm_up=warm_up,
+        fill_value=fill_value,
+        res_type=res_type,
+        dtype=dtype,
+    )
+
+    if hasattr(source, "__aiter__"):
+        async for chunk in source:
+            for block in buf.push(chunk):
+                yield block
+            if buf.is_complete():
+                break
+    elif isinstance(source, Iterable):
+        for chunk in source:
+            for block in buf.push(chunk):
+                yield block
+            if buf.is_complete():
+                break
+    else:
+        raise ParameterError(f"Unsupported source type for astream: {type(source)}")
+
+    for block in buf.flush():
+        yield block
 
 
 def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarray, int | float]:
