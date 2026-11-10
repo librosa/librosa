@@ -46,7 +46,6 @@ __all__ = [
     "loadx",
     "stream",
     "astream",
-    "StreamBuffer",
     "to_mono",
     "to_stereo",
     "to_multi",
