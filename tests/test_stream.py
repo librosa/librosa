@@ -14,7 +14,7 @@ from librosa.util.streaming import StreamBridge, StreamBuffer, async_capture
 
 
 def test_streaming_imports():
-    """Test submodule exports and top-level aliases."""
+    """Test submodule exports and util aliases."""
     import librosa.util.streaming as streaming
 
     assert streaming.StreamBuffer is StreamBuffer
@@ -25,13 +25,14 @@ def test_streaming_imports():
     assert librosa.util.StreamBridge is StreamBridge
     assert librosa.util.async_capture is async_capture
 
-    assert librosa.StreamBuffer is StreamBuffer
+    # StreamBuffer is a utility and should NOT be exported at the top-level librosa namespace
+    assert not hasattr(librosa, "StreamBuffer")
 
 
 def test_streambuffer_basic():
     """Test basic StreamBuffer push, frame framing, and flush."""
     # Frame length 1024, hop 512, block_length 1
-    buf = librosa.StreamBuffer(frame_length=1024, hop_length=512, orig_sr=22050)
+    buf = librosa.util.StreamBuffer(frame_length=1024, hop_length=512, orig_sr=22050)
     chunk1 = np.ones(512, dtype=np.float32)
     chunk2 = np.ones(512, dtype=np.float32) * 2
 
@@ -57,7 +58,7 @@ def test_streambuffer_resampling():
     """Test StreamBuffer with online resampling."""
     orig_sr = 44100
     sr = 22050
-    buf = librosa.StreamBuffer(
+    buf = librosa.util.StreamBuffer(
         frame_length=1024,
         hop_length=512,
         block_length=1,
@@ -81,7 +82,7 @@ def test_streambuffer_resampling():
 def test_streambuffer_multichannel():
     """Test StreamBuffer with multichannel mono conversion and stereo preservation."""
     # Stereo input (2 channels, 512 samples)
-    buf_mono = librosa.StreamBuffer(
+    buf_mono = librosa.util.StreamBuffer(
         frame_length=1024, hop_length=512, channels=2, mono=True
     )
     chunk = np.ones((2, 512), dtype=np.float32)
@@ -95,7 +96,7 @@ def test_streambuffer_multichannel():
     assert np.allclose(blocks[0], 2.0)  # Average of 1.0 and 3.0
 
     # Stereo preserving
-    buf_stereo = librosa.StreamBuffer(
+    buf_stereo = librosa.util.StreamBuffer(
         frame_length=1024, hop_length=512, channels=2, mono=False
     )
     buf_stereo.push(chunk)
@@ -108,7 +109,7 @@ def test_streambuffer_multichannel():
 
 def test_streambuffer_reset():
     """Test StreamBuffer reset functionality."""
-    buf = librosa.StreamBuffer(frame_length=1024, hop_length=512)
+    buf = librosa.util.StreamBuffer(frame_length=1024, hop_length=512)
     buf.push(np.ones(1024, dtype=np.float32))
     assert buf.yielded_samples > 0
     buf.reset()

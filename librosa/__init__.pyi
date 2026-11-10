@@ -93,7 +93,6 @@ from .core import shepard_scale as shepard_scale
 from .core import shepard_tone as shepard_tone
 from .core import stft as stft
 from .core import stream as stream
-from .core import StreamBuffer as StreamBuffer
 from .core import tempo_frequencies as tempo_frequencies
 from .core import thaat_to_degrees as thaat_to_degrees
 from .core import time_to_frames as time_to_frames

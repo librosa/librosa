@@ -1,4 +1,3 @@
-from .audio import StreamBuffer as StreamBuffer
 from .audio import astream as astream
 from .audio import autocorrelate as autocorrelate
 from .audio import chirp as chirp
