@@ -88,14 +88,42 @@ class StreamBuffer:
 
     Examples
     --------
-    Process incoming blocks of audio with a sliding window:
+    Accumulate small hardware I/O chunks (e.g., 512 samples from a 44.1 kHz
+    stereo soundcard) into 2048-sample mono analysis windows resampled to
+    22050 Hz with 512-sample hop:
 
-    >>> buf = librosa.util.streaming.StreamBuffer(frame_length=1024, hop_length=512, orig_sr=22050)
-    >>> for chunk in [np.ones(512, dtype=np.float32), np.ones(512, dtype=np.float32)]:
-    ...     blocks = buf.push(chunk)
-    ...     for block in blocks:
-    ...         print(block.shape)
-    (1024,)
+    >>> import librosa
+    >>> buf = librosa.util.StreamBuffer(
+    ...     frame_length=2048,
+    ...     hop_length=512,
+    ...     orig_sr=44100,
+    ...     sr=22050,
+    ...     channels=2,
+    ...     mono=True,
+    ...     fill_value=0.0,
+    ... )
+    >>> chunk = np.ones((2, 512), dtype=np.float32)
+    >>> blocks = []
+    >>> for _ in range(30):
+    ...     blocks.extend(buf.push(chunk))
+    >>> len(blocks), blocks[0].shape
+    (11, (2048,))
+    >>> flushed = buf.flush()
+    >>> len(flushed), flushed[0].shape
+    (4, (2048,))
+
+    For immediate real-time response on the very first chunk without an
+    initial fill delay, set ``warm_up=True``:
+
+    >>> buf = librosa.util.StreamBuffer(
+    ...     frame_length=1024,
+    ...     hop_length=512,
+    ...     orig_sr=22050,
+    ...     warm_up=True,
+    ... )
+    >>> blocks = buf.push(np.ones(512, dtype=np.float32))
+    >>> len(blocks), blocks[0].shape
+    (1, (1024,))
     """
 
     def __init__(
@@ -392,8 +420,13 @@ class StreamBridge:
     >>> import sounddevice as sd  # doctest: +SKIP
     >>> bridge = librosa.util.StreamBridge(orig_sr=48000, channels=1)  # doctest: +SKIP
     >>> with sd.InputStream(samplerate=48000, channels=1, callback=bridge):  # doctest: +SKIP
-    ...     for block in librosa.stream(bridge, frame_length=2048, hop_length=512):  # doctest: +SKIP
-    ...         centroid = librosa.feature.spectral_centroid(y=block)  # doctest: +SKIP
+    ...     for i, block in enumerate(librosa.stream(
+    ...         bridge, block_length=256, frame_length=2048, hop_length=512
+    ...     )):
+    ...         centroid = librosa.feature.spectral_centroid(y=block)
+    ...         print(f"Block {i}: mean centroid = {centroid.mean():.1f} Hz")
+    ...         if i >= 10:
+    ...             break
     """
 
     def __init__(
@@ -726,12 +759,22 @@ async def async_capture(
 
     Examples
     --------
-    Asynchronously stream live microphone input:
+    Asynchronously capture live microphone input and compute spectral centroids
+    in real time for the first 10 blocks:
 
-    >>> async def capture_audio():  # doctest: +SKIP
+    >>> import asyncio
+    >>> async def main():  # doctest: +SKIP
     ...     async with librosa.util.async_capture(samplerate=22050) as stream:
-    ...         async for block in librosa.astream(stream, frame_length=1024, hop_length=512):
+    ...         count = 0
+    ...         async for block in librosa.astream(
+    ...             stream, block_length=256, frame_length=1024, hop_length=512
+    ...         ):
     ...             centroid = librosa.feature.spectral_centroid(y=block)
+    ...             print(f"Block {count}: mean centroid = {centroid.mean():.1f} Hz")
+    ...             count += 1
+    ...             if count >= 10:
+    ...                 break
+    >>> asyncio.run(main())  # doctest: +SKIP
     """
     try:
         sd = importlib.import_module("sounddevice")

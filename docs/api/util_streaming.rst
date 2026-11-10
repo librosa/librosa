@@ -2,7 +2,7 @@ Streaming
 ---------
 .. currentmodule:: librosa.util
 .. autosummary::
-    :toctree: generated
+    :toctree: generated/
     :nosignatures:
 
     StreamBuffer
