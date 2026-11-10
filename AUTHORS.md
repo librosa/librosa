@@ -131,6 +131,13 @@ Contributors
 * emilazy <https://github.com/emilazy>
 * Ale Lloveras <https://github.com/MLsound>
 * Kayvan Zahiri <https://github.com/Kayvan-Zahiri>
+* Jyotishman Das <https://github.com/rishi02102017>
+* Ge Li <https://github.com/galleonli>
+* MUGUNDAN <https://github.com/MugundanMCW>
+* Rajit Sareen <https://github.com/rajit-sareen>
+* tritsystem <https://github.com/tritsystem>
+* isaacsight <https://github.com/isaacsight>
+
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
 

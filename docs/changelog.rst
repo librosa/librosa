@@ -2,6 +2,72 @@
 Changelog
 *********
 
+v1.0.1
+------
+2026-11-xx
+
+Enhancements
+    - `#2120`_, `#2076`_ memory optimizations in piptrack, magphase,
+      power_to_db, hpss, yin and pyin. *Brian McFee*
+    - `#2112`_ Speed up matching for non-overlapping target intervals. *Ge Li*
+    - `#2102`_, `#2021`_ Refactor/2021 display submodules. *Ale Lloveras*
+    - `#2095`_, `#2094`_ Expose top_db on features that call power_to_db.
+      *isaacsight*
+
+Bug fixes
+    - `#2122`_ util._nnls: use dtype-aware cutoff in pinv initialization. *Brian
+      McFee*
+    - `#2119`_ Fix Numba TypingError when passing tuple intervals to
+      effects.remix. *Jyotishman Das*
+    - `#2109`_, `#2107`_ Replace **kwargs with explicit STFT params in
+      time_stretch/pitch_shift. *Rajit Sareen*
+    - `#2106`_, `#2099`_ Preserve float32 in spectral features; add dtype= to
+      frequency constructors. *tritsystem*
+    - `#2097`_, `#2096`_ Forward `window` to stft and istft in effects.hpss,
+      harmonic and percussive. *isaacsight*
+
+Documentation
+    - `#2104`_, `#2103`_ Fix numpydoc lint glob to reach subpackages, reorder
+      flagged sections, fix power_to_db axes docstring. *Rajit Sareen*
+    - `#2089`_, `#2088`_ Keep doctrees and reST sources out of the published
+      docs. *Kayvan Zahiri*
+
+Maintenance
+    - `#2114`_ Spec0 action and environment workflow modernization. *Brian
+      McFee*
+    - `#2113`_ Updates for CI. *Brian McFee*
+    - `#2111`_ Add support for testing librosa on Windows ARM64. *MUGUNDAN*
+    - `#2101`_, `#2100`_ Enable Ruff ARG unused-argument checks and resolve
+      findings. *Rajit Sareen*
+    - `#2093`_ making linkcheck failures not catastrophic for CI. *Brian McFee*
+
+.. _#2122: https://github.com/librosa/librosa/pull/2122
+.. _#2120: https://github.com/librosa/librosa/pull/2120
+.. _#2119: https://github.com/librosa/librosa/pull/2119
+.. _#2114: https://github.com/librosa/librosa/pull/2114
+.. _#2113: https://github.com/librosa/librosa/pull/2113
+.. _#2112: https://github.com/librosa/librosa/pull/2112
+.. _#2111: https://github.com/librosa/librosa/pull/2111
+.. _#2109: https://github.com/librosa/librosa/pull/2109
+.. _#2107: https://github.com/librosa/librosa/issues/2107
+.. _#2106: https://github.com/librosa/librosa/pull/2106
+.. _#2104: https://github.com/librosa/librosa/pull/2104
+.. _#2103: https://github.com/librosa/librosa/issues/2103
+.. _#2102: https://github.com/librosa/librosa/pull/2102
+.. _#2101: https://github.com/librosa/librosa/pull/2101
+.. _#2100: https://github.com/librosa/librosa/issues/2100
+.. _#2099: https://github.com/librosa/librosa/issues/2099
+.. _#2097: https://github.com/librosa/librosa/pull/2097
+.. _#2096: https://github.com/librosa/librosa/issues/2096
+.. _#2095: https://github.com/librosa/librosa/pull/2095
+.. _#2094: https://github.com/librosa/librosa/issues/2094
+.. _#2093: https://github.com/librosa/librosa/pull/2093
+.. _#2089: https://github.com/librosa/librosa/pull/2089
+.. _#2088: https://github.com/librosa/librosa/issues/2088
+.. _#2076: https://github.com/librosa/librosa/issues/2076
+.. _#2021: https://github.com/librosa/librosa/issues/2021
+
+
 v1.0
 ====
 
