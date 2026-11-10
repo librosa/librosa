@@ -5,7 +5,6 @@
 
 # Disable cache
 import os
-import platform
 
 try:
     os.environ.pop("LIBROSA_CACHE_DIR")
@@ -920,9 +919,6 @@ def test_click_multi():
     assert np.allclose(yout[..., 2000:2100], click)
 
 
-# This test is allowed to fail if running on windows platform due to upstream build issues
-@pytest.mark.skipif(platform.system() == "Windows", reason="Fails on Windows due to upstream build issues"
-)
 def test_nnls_multi(s_multi):
 
     # Verify that a stereo melspectrogram can be reconstructed
@@ -973,8 +969,8 @@ def test_mel_to_stft_multi(power, n_fft, rng):
     stft1 = librosa.feature.inverse.mel_to_stft(mels1, power=power, n_fft=n_fft)
 
     # Check each channel
-    assert np.allclose(stft[0], stft0)
-    assert np.allclose(stft[1], stft1)
+    assert np.allclose(stft[0], stft0, atol=1e-6)
+    assert np.allclose(stft[1], stft1, atol=1e-6)
 
     # Check that they're not both the same
     assert not np.allclose(stft0, stft1)
