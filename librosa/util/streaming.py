@@ -355,7 +355,7 @@ class StreamBridge:
     """Universal I/O bridge connecting audio callbacks into NumPy chunk iterators.
 
     `StreamBridge` acts as an audio callback (compatible with PortAudio,
-    ``sounddevice``, and ``PyAudio``) that enqueues incoming raw audio chunks,
+    :mod:`sounddevice`, and ``PyAudio``) that enqueues incoming raw audio chunks,
     and simultaneously acts as both a synchronous and an asynchronous iterator
     of Librosa-canonical NumPy arrays.
 
@@ -368,7 +368,7 @@ class StreamBridge:
     channels_first : bool, default=False
         If True, incoming multi-channel buffers are shaped ``(channels, samples)``.
         If False, incoming multi-channel buffers are shaped ``(samples, channels)``
-        (standard for ``sounddevice`` and PortAudio) and will be transposed to
+        (standard for :mod:`sounddevice` and PortAudio) and will be transposed to
         canonical shape ``(channels, samples)``.
     in_dtype : np.dtype, default=np.float32
         Data type of incoming audio chunks or byte buffers. If integer PCM,
@@ -387,7 +387,7 @@ class StreamBridge:
 
     Examples
     --------
-    Bridge real-time input from ``sounddevice`` into `librosa.stream`:
+    Bridge real-time input from :mod:`sounddevice` into `librosa.stream`:
 
     >>> import sounddevice as sd  # doctest: +SKIP
     >>> bridge = librosa.util.StreamBridge(orig_sr=48000, channels=1)  # doctest: +SKIP
@@ -434,7 +434,7 @@ class StreamBridge:
     ) -> tuple[None, int]:
         """Universal audio callback.
 
-        Compatible with ``sounddevice`` (which ignores the return value) and
+        Compatible with :mod:`sounddevice` (which ignores the return value) and
         ``PyAudio`` (which expects a tuple ``(out_data, flag)`` where flag 0
         corresponds to ``paContinue``).
         """
@@ -694,7 +694,7 @@ async def async_capture(
     maxsize: int = 0,
     overflow_policy: str = "warn",
 ) -> AsyncIterator[StreamBridge]:
-    """Asynchronous context manager for live audio capture using ``sounddevice``.
+    """Asynchronous context manager for live audio capture using :mod:`sounddevice`.
 
     Parameters
     ----------
@@ -705,7 +705,7 @@ async def async_capture(
     blocksize : int, default=512
         Number of frames passed to each callback invocation.
     device : int, str, or None, default=None
-        Capture device identifier passed to ``sounddevice.InputStream``.
+        Capture device identifier passed to :class:`sounddevice.InputStream`.
         If None, selects the system default input device.
     dtype : str or np.dtype, default='float32'
         Data type expected from the input stream.
@@ -722,7 +722,7 @@ async def async_capture(
     Raises
     ------
     ImportError
-        If ``sounddevice`` is not installed.
+        If :mod:`sounddevice` is not installed.
 
     Examples
     --------
