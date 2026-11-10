@@ -13,7 +13,7 @@ In real-world applications, streaming audio processing decouples into three inde
 responsibilities:
 
 1. **Audio I/O (Producer)**: High-priority system callbacks from the audio hardware
-   (such as ``sounddevice.InputStream`` or PortAudio) execute on a separate OS thread
+   (such as :class:`sounddevice.InputStream` or PortAudio) execute on a separate OS thread
    and must never block. :class:`librosa.util.StreamBridge` acts directly as the
    audio callback, receiving raw audio blocks, normalizing channel geometries and data types,
    and buffering them in a thread-safe queue.
@@ -27,7 +27,7 @@ responsibilities:
 
 Live microphone capture pattern
 -------------------------------
-When connecting to a real microphone with ``sounddevice``, the complete capture and analysis
+When connecting to a real microphone with :mod:`sounddevice`, the complete capture and analysis
 pattern requires only a few lines:
 
 .. code:: python
@@ -83,15 +83,15 @@ HTML(librosa.util.example_info("trumpet", html=True))
 # To make the examples below executable and renderable offline, we simulate the input device
 # using a helper class (``VirtualInputStream``) that reads fixed-size blocks from an audio
 # file and feeds them into the stream callback with the exact same PortAudio signature as
-# ``sounddevice.InputStream``.
+# :class:`sounddevice.InputStream`.
 #
 # .. note::
 #     To run any of the examples below with a physical microphone, simply replace
-#     ``VirtualInputStream(filename, ...)`` with ``sounddevice.InputStream(...)``.
+#     ``VirtualInputStream(filename, ...)`` with :class:`sounddevice.InputStream`.
 
 
 class VirtualInputStream:
-    """Simulate sounddevice.InputStream from an audio file.
+    """Simulate :class:`sounddevice.InputStream` from an audio file.
 
     Parameters
     ----------
