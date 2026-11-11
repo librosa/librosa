@@ -70,6 +70,8 @@ from .convert import tuning_to_A4 as tuning_to_A4
 from .harmonic import f0_harmonics as f0_harmonics
 from .harmonic import interp_harmonics as interp_harmonics
 from .harmonic import salience as salience
+from .interpolate import interp_frequency as interp_frequency
+from .interpolate import interp_time as interp_time
 from .intervals import interval_frequencies as interval_frequencies
 from .intervals import plimit_intervals as plimit_intervals
 from .intervals import pythagorean_intervals as pythagorean_intervals

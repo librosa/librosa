@@ -41,7 +41,9 @@ from .core import hz_to_svara_c as hz_to_svara_c
 from .core import hz_to_svara_h as hz_to_svara_h
 from .core import icqt as icqt
 from .core import iirt as iirt
+from .core import interp_frequency as interp_frequency
 from .core import interp_harmonics as interp_harmonics
+from .core import interp_time as interp_time
 from .core import interval_frequencies as interval_frequencies
 from .core import interval_to_fjs as interval_to_fjs
 from .core import istft as istft

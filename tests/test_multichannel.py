@@ -780,6 +780,61 @@ def test_interp_harmonics_multi_vary(tfr_multi):
     assert not np.allclose(H0, H1)
 
 
+def test_interp_time_multi_static(s_multi):
+    S, sr = s_multi
+
+    times = librosa.times_like(S, sr=sr)
+    target_times = np.linspace(times[0], times[-1], 50)
+    Tall = librosa.interp_time(S, target_times=target_times, times=times)
+    T0 = librosa.interp_time(S[0], target_times=target_times, times=times)
+    T1 = librosa.interp_time(S[1], target_times=target_times, times=times)
+
+    assert np.allclose(Tall[0], T0)
+    assert np.allclose(Tall[1], T1)
+    assert not np.allclose(T0, T1)
+
+
+def test_interp_frequency_multi_static(s_multi):
+    S, sr = s_multi
+
+    freqs = librosa.fft_frequencies(sr=sr)
+    target_freqs = librosa.cqt_frequencies(n_bins=84, fmin=32.7)
+    Fall = librosa.interp_frequency(S, target_freqs=target_freqs, freqs=freqs)
+    F0 = librosa.interp_frequency(S[0], target_freqs=target_freqs, freqs=freqs)
+    F1 = librosa.interp_frequency(S[1], target_freqs=target_freqs, freqs=freqs)
+
+    assert np.allclose(Fall[0], F0)
+    assert np.allclose(Fall[1], F1)
+    assert not np.allclose(F0, F1)
+
+
+@pytest.mark.filterwarnings("ignore:.*are not unique.*")
+def test_interp_time_multi_vary(tfr_multi):
+    freqs, times, mags = tfr_multi
+
+    target_times = np.linspace(np.nanmin(times), np.nanmax(times), 50)
+    Tall = librosa.interp_time(mags, target_times=target_times, times=times, kind="nearest")
+    T0 = librosa.interp_time(mags[0], target_times=target_times, times=times[0], kind="nearest")
+    T1 = librosa.interp_time(mags[1], target_times=target_times, times=times[1], kind="nearest")
+
+    assert np.allclose(Tall[0], T0)
+    assert np.allclose(Tall[1], T1)
+    assert not np.allclose(T0, T1)
+
+
+@pytest.mark.filterwarnings("ignore:.*are not unique.*")
+def test_interp_frequency_multi_vary(tfr_multi):
+    freqs, times, mags = tfr_multi
+
+    target_freqs = np.linspace(100, 4000, 64)
+    Fall = librosa.interp_frequency(mags, target_freqs=target_freqs, freqs=freqs, kind="nearest")
+    F0 = librosa.interp_frequency(mags[0], target_freqs=target_freqs, freqs=freqs[0], kind="nearest")
+    F1 = librosa.interp_frequency(mags[1], target_freqs=target_freqs, freqs=freqs[1], kind="nearest")
+
+    assert np.allclose(Fall[0], F0)
+    assert np.allclose(Fall[1], F1)
+    assert not np.allclose(F0, F1)
+
 @pytest.mark.parametrize("filter_peaks", [False, True])
 def test_salience_multi_static(s_multi, filter_peaks):
     S, sr = s_multi
