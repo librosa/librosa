@@ -2,6 +2,9 @@
 Changelog
 *********
 
+v1.0
+====
+
 v1.0.1
 ------
 2026-11-xx
@@ -15,30 +18,21 @@ Enhancements
       *isaacsight*
 
 Bug fixes
-    - `#2122`_ util._nnls: use dtype-aware cutoff in pinv initialization. *Brian
-      McFee*
-    - `#2119`_ Fix Numba TypingError when passing tuple intervals to
-      effects.remix. *Jyotishman Das*
-    - `#2109`_, `#2107`_ Replace **kwargs with explicit STFT params in
-      time_stretch/pitch_shift. *Rajit Sareen*
-    - `#2106`_, `#2099`_ Preserve float32 in spectral features; add dtype= to
-      frequency constructors. *tritsystem*
-    - `#2097`_, `#2096`_ Forward `window` to stft and istft in effects.hpss,
-      harmonic and percussive. *isaacsight*
+    - `#2122`_ util._nnls: use dtype-aware cutoff in pinv initialization. *Brian McFee*
+    - `#2119`_ Fix Numba TypingError when passing tuple intervals to effects.remix. *Jyotishman Das*
+    - `#2109`_, `#2107`_ Replace `**kwargs` with explicit STFT params in time_stretch/pitch_shift. *Rajit Sareen*
+    - `#2106`_, `#2099`_ Preserve float32 in spectral features; add dtype= to frequency constructors. *tritsystem*
+    - `#2097`_, `#2096`_ Forward `window` to stft and istft in effects.hpss, harmonic and percussive. *isaacsight*
 
 Documentation
-    - `#2104`_, `#2103`_ Fix numpydoc lint glob to reach subpackages, reorder
-      flagged sections, fix power_to_db axes docstring. *Rajit Sareen*
-    - `#2089`_, `#2088`_ Keep doctrees and reST sources out of the published
-      docs. *Kayvan Zahiri*
+    - `#2104`_, `#2103`_ Fix numpydoc lint glob to reach subpackages, reorder flagged sections, fix power_to_db axes docstring. *Rajit Sareen*
+    - `#2089`_, `#2088`_ Keep doctrees and reST sources out of the published docs. *Kayvan Zahiri*
 
 Maintenance
-    - `#2114`_ Spec0 action and environment workflow modernization. *Brian
-      McFee*
+    - `#2114`_ Spec0 action and environment workflow modernization. *Brian McFee*
     - `#2113`_ Updates for CI. *Brian McFee*
     - `#2111`_ Add support for testing librosa on Windows ARM64. *MUGUNDAN*
-    - `#2101`_, `#2100`_ Enable Ruff ARG unused-argument checks and resolve
-      findings. *Rajit Sareen*
+    - `#2101`_, `#2100`_ Enable Ruff ARG unused-argument checks and resolve findings. *Rajit Sareen*
     - `#2093`_ making linkcheck failures not catastrophic for CI. *Brian McFee*
 
 .. _#2122: https://github.com/librosa/librosa/pull/2122
@@ -68,8 +62,9 @@ Maintenance
 .. _#2021: https://github.com/librosa/librosa/issues/2021
 
 
-v1.0
-====
+v1.0.0
+------
+2026-08-11
 
 This release marks the first "stable" version of librosa, and is intended to standardize the API developed
 over the 0.x series.
@@ -77,10 +72,6 @@ With 1.0, we are formally adopting [Intended Effort Versioning (EffVer)](https:/
 which will make it easier for users to understand the meaning behind subsequent major and minor releases.
 
 For an overview of what's new in the 1.0 release, see our [blog post](https://librosa.org/blog/posts/1.0/).
-
-v1.0.0
-------
-2026-08-11
 
 New features
     - `#2059`_ `librosa.display.legend_for_axes` for generating legends for collections of 
