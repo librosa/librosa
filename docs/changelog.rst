@@ -7,29 +7,29 @@ v1.0
 
 v1.0.1
 ------
-2026-11-xx
+2026-11-11
 
 Enhancements
     - `#2120`_, `#2076`_ memory optimizations in piptrack, magphase,
       power_to_db, hpss, yin and pyin. *Brian McFee*
     - `#2112`_ Speed up matching for non-overlapping target intervals. *Ge Li*
-    - `#2102`_, `#2021`_ Refactor/2021 display submodules. *Ale Lloveras*
+    - `#2102`_, `#2021`_ Refactor display submodules. *Ale Lloveras*
     - `#2095`_, `#2094`_ Expose top_db on features that call power_to_db.
       *Isaac Hernandez*
 
 Bug fixes
-    - `#2122`_ util._nnls: use dtype-aware cutoff in pinv initialization. *Brian McFee*
-    - `#2119`_ Fix Numba TypingError when passing tuple intervals to effects.remix. *Jyotishman Das*
+    - `#2122`_ `util._nnls`: use dtype-aware cutoff in pinv initialization. *Brian McFee*
+    - `#2119`_ Fix Numba TypingError when passing tuple intervals to `effects.remix`. *Jyotishman Das*
     - `#2109`_, `#2107`_ Replace `**kwargs` with explicit STFT params in time_stretch/pitch_shift. *Rajit Sareen*
     - `#2106`_, `#2099`_ Preserve float32 in spectral features; add dtype= to frequency constructors. *Gavin Branaa*
-    - `#2097`_, `#2096`_ Forward `window` to stft and istft in effects.hpss, harmonic and percussive. *Isaac Hernandez*
+    - `#2097`_, `#2096`_ Forward `window` to `stft` and `istft` in `effects.hpss, harmonic and percussive`. *Isaac Hernandez*
 
 Documentation
     - `#2104`_, `#2103`_ Fix numpydoc lint glob to reach subpackages, reorder flagged sections, fix power_to_db axes docstring. *Rajit Sareen*
     - `#2089`_, `#2088`_ Keep doctrees and reST sources out of the published docs. *Kayvan Zahiri*
 
 Maintenance
-    - `#2114`_ Spec0 action and environment workflow modernization. *Brian McFee*
+    - `#2114`_ SPEC0 action and environment workflow modernization. *Brian McFee*
     - `#2113`_ Updates for CI. *Brian McFee*
     - `#2111`_ Add support for testing librosa on Windows ARM64. *MUGUNDAN*
     - `#2101`_, `#2100`_ Enable Ruff ARG unused-argument checks and resolve findings. *Rajit Sareen*
