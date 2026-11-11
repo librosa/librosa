@@ -15,14 +15,14 @@ Enhancements
     - `#2112`_ Speed up matching for non-overlapping target intervals. *Ge Li*
     - `#2102`_, `#2021`_ Refactor/2021 display submodules. *Ale Lloveras*
     - `#2095`_, `#2094`_ Expose top_db on features that call power_to_db.
-      *isaacsight*
+      *Isaac Hernandez*
 
 Bug fixes
     - `#2122`_ util._nnls: use dtype-aware cutoff in pinv initialization. *Brian McFee*
     - `#2119`_ Fix Numba TypingError when passing tuple intervals to effects.remix. *Jyotishman Das*
     - `#2109`_, `#2107`_ Replace `**kwargs` with explicit STFT params in time_stretch/pitch_shift. *Rajit Sareen*
-    - `#2106`_, `#2099`_ Preserve float32 in spectral features; add dtype= to frequency constructors. *tritsystem*
-    - `#2097`_, `#2096`_ Forward `window` to stft and istft in effects.hpss, harmonic and percussive. *isaacsight*
+    - `#2106`_, `#2099`_ Preserve float32 in spectral features; add dtype= to frequency constructors. *Gavin Branaa*
+    - `#2097`_, `#2096`_ Forward `window` to stft and istft in effects.hpss, harmonic and percussive. *Isaac Hernandez*
 
 Documentation
     - `#2104`_, `#2103`_ Fix numpydoc lint glob to reach subpackages, reorder flagged sections, fix power_to_db axes docstring. *Rajit Sareen*

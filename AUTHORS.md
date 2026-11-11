@@ -135,8 +135,8 @@ Contributors
 * Ge Li <https://github.com/galleonli>
 * MUGUNDAN <https://github.com/MugundanMCW>
 * Rajit Sareen <https://github.com/rajit-sareen>
-* tritsystem <https://github.com/tritsystem>
-* isaacsight <https://github.com/isaacsight>
+* Gavin Branaa <https://github.com/tritsystem>
+* Isaac Hernandez <https://github.com/isaacsight>
 
 
 Some feature extraction code was based on <https://github.com/ronw/frontend> by Ron Weiss.
