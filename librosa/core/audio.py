@@ -1801,29 +1801,29 @@ def envelope(
 
     util.valid_audio(y)
 
+    if not util.is_positive_int(frame_length):
+        raise ParameterError(f"frame_length={frame_length} must be a positive integer")
+    if not util.is_positive_int(hop_length):
+        raise ParameterError(f"hop_length={hop_length} must be a positive integer")
+    if not (0.0 <= percentile <= 100.0):
+        raise ParameterError(f"percentile={percentile} must be in [0, 100]")
+    if axis < -y.ndim or axis >= y.ndim:
+        raise ParameterError(f"axis={axis} is out of bounds for audio array with ndim={y.ndim}")
+
     # scipy.ndimage bounds `origin` between -(size // 2) and (size - 1) // 2.
     # 0 maps directly to center=True. -(frame_length // 2) maps directly to center=False (left-aligned).
     origin_val = 0 if center else -(frame_length // 2)
 
     if kind in ("max", "min", "max_abs"):
-        if kind == "max":
-            env = scipy.ndimage.maximum_filter1d(y,
-                                                 size=frame_length,
-                                                 mode=mode,
-                                                 origin=origin_val,
-                                                 axis=axis)
-        elif kind == "max_abs":
-            env = scipy.ndimage.maximum_filter1d(np.abs(y),
-                                                 size=frame_length,
-                                                 mode=mode,
-                                                 origin=origin_val,
-                                                 axis=axis)
-        else:
-            env = scipy.ndimage.minimum_filter1d(y,
-                                                 size=frame_length,
-                                                 mode=mode,
-                                                 origin=origin_val,
-                                                 axis=axis)
+        filter_fn = scipy.ndimage.maximum_filter1d if kind in ("max", "max_abs") else scipy.ndimage.minimum_filter1d
+        target_y = np.abs(y) if kind == "max_abs" else y
+        env = filter_fn(
+            target_y,
+            size=frame_length,
+            mode=mode,
+            origin=origin_val,
+            axis=axis,
+        )
     elif kind in ("percentile", "median"):
         # scipy.ndimage lacks 1D variants for median/percentile.
         # We enforce 1D operation across the target axis by passing tuple shapes.
@@ -2069,6 +2069,10 @@ def tone(
     y: np.ndarray = np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
 
     if taper:
+        if frequency <= 0:
+            raise ParameterError(
+                f"frequency={frequency} must be strictly positive when taper=True"
+            )
         fade_len = int(np.round(sr / float(frequency)))
         fade_len = min(fade_len, length // 2)
         if fade_len > 0:
@@ -2179,6 +2183,11 @@ def chirp(
 
     fmin = util._ensure_hz(fmin)
     fmax = util._ensure_hz(fmax)
+
+    if min(fmin, fmax) <= 0:
+        raise ParameterError(
+            f"Frequencies fmin={fmin} and fmax={fmax} must be strictly positive"
+        )
 
     nyquist = sr / 2.0
     if min(fmin, fmax) >= nyquist:
@@ -2400,45 +2409,34 @@ def shepard_scale(
             raise ParameterError('either "length" or "duration" must be provided')
         length = int(duration * sr)
 
+    if n_steps == 0:
+        raise ParameterError("n_steps must be non-zero")
+
+    if not isinstance(intervals, str) and len(intervals) == 0:
+        raise ParameterError("intervals must not be empty")
+
     reverse_signal = n_steps < 0
     n_steps_abs = abs(n_steps)
 
-    if isinstance(intervals, str):
-        if reverse_signal:
-            # To start at f and descend, we find the fmin that makes the highest note f
-            ratios = interval_frequencies(
-                n_steps_abs,
-                fmin=1.0,
-                intervals=intervals,
-                bins_per_octave=bins_per_octave,
-                tuning=tuning,
-            )
-            fmin_calc = float(f) / ratios[-1]
-            freqs = interval_frequencies(
-                n_steps_abs,
-                fmin=fmin_calc,
-                intervals=intervals,
-                bins_per_octave=bins_per_octave,
-                tuning=tuning,
-            )[::-1]
-        else:
-            freqs = interval_frequencies(
-                n_steps_abs,
-                fmin=f,
-                intervals=intervals,
-                bins_per_octave=bins_per_octave,
-                tuning=tuning,
-            )
+    if reverse_signal:
+        # To start at f and descend, we find the fmin that makes the highest note f
+        ratios = interval_frequencies(
+            n_steps_abs,
+            fmin=1.0,
+            intervals=intervals,
+            bins_per_octave=bins_per_octave,
+            tuning=tuning,
+        )
+        freqs = (float(f) / ratios[-1]) * ratios
+        freqs = freqs[::-1]
     else:
-        ratios = np.asarray(intervals, dtype=np.float64)
-        b_oct = len(ratios)
-        n_oct = int(np.ceil(n_steps_abs / b_oct))
-        all_ratios = np.multiply.outer(2.0 ** np.arange(n_oct), ratios).flatten()[:n_steps_abs]
-        if reverse_signal:
-            freqs = (float(f) / all_ratios[-1]) * all_ratios
-            freqs = freqs[::-1]
-        else:
-            freqs = float(f) * all_ratios
+        freqs = interval_frequencies(
+            n_steps_abs,
+            fmin=f,
+            intervals=intervals,
+            bins_per_octave=bins_per_octave,
+            tuning=tuning,
+        )
 
     # Divide the total length into equal-length steps
     boundaries = np.round(np.linspace(0, length, len(freqs) + 1)).astype(int)
@@ -2448,6 +2446,10 @@ def shepard_scale(
         step_len = boundaries[i + 1] - boundaries[i]
         if step_len <= 0:
             continue
+
+        # Shepard tones are octave-periodic: fold down into [0, nyquist)
+        while freq >= nyquist:
+            freq /= 2.0
 
         tone_step = shepard_tone(
             freq,
@@ -2525,7 +2527,12 @@ def shepard_risset_glissando(
             f"f={f} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
-    target_len = length if length is not None else int((duration or 0) * sr)
+    if length is None:
+        if duration is None:
+            raise ParameterError('either "length" or "duration" must be provided')
+        target_len = int(duration * sr)
+    else:
+        target_len = length
     y: _Array1D[np.float64] = np.zeros(target_len, dtype=np.float64)
 
     f_min_sweep = min(float(f), float(f) * (2.0 ** n_octaves))

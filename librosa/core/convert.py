@@ -2001,7 +2001,7 @@ def Z_weighting(
     D_weighting
     """
     f_arr = np.asanyarray(frequencies)[()]
-    weights: np.ndarray = np.zeros(f_arr.shape)
+    weights: np.floating | np.ndarray = np.zeros_like(f_arr, dtype=np.float64)[()]
     if min_db is None:
         return weights
     else:

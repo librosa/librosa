@@ -514,6 +514,15 @@ def test_tremolo_errors():
         librosa.effects.tremolo(y, sr=22050, depth=1.5)
     with pytest.raises(librosa.ParameterError):
         librosa.effects.tremolo(y, sr=22050, mode="invalid")  # type: ignore[arg-type]
+    with pytest.raises(librosa.ParameterError):
+        librosa.effects.tremolo(np.ones(100, dtype=int), sr=22050)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_tremolo_dtype(dtype):
+    y = np.ones(22050, dtype=dtype)
+    yt = librosa.effects.tremolo(y, sr=22050)
+    assert yt.dtype == dtype
 
 
 @pytest.mark.parametrize("mode", ["sine", "triangle"])
@@ -548,3 +557,38 @@ def test_vibrato_errors():
         librosa.effects.vibrato(y, sr=22050, depth=-0.1)
     with pytest.raises(librosa.ParameterError):
         librosa.effects.vibrato(y, sr=22050, mode="square")  # type: ignore[arg-type]
+    with pytest.raises(librosa.ParameterError):
+        librosa.effects.vibrato(np.ones(100, dtype=int), sr=22050)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_vibrato_dtype(dtype):
+    y = np.ones(22050, dtype=dtype)
+    yv = librosa.effects.vibrato(y, sr=22050)
+    assert yv.dtype == dtype
+
+
+def test_vibrato_params():
+    y = np.ones(22050)
+    # Test hop_length=None
+    yv_none = librosa.effects.vibrato(y, sr=22050, hop_length=None)
+    assert yv_none.shape == y.shape
+
+    # Test custom win_length and n_fft
+    yv_win = librosa.effects.vibrato(y, sr=22050, n_fft=1024, win_length=512)
+    assert yv_win.shape == y.shape
+
+    # Test pad_mode
+    yv_pad = librosa.effects.vibrato(y, sr=22050, pad_mode="reflect")
+    assert yv_pad.shape == y.shape
+
+    # Test depth=0.0 returns exact copy
+    yv_zero = librosa.effects.vibrato(y, sr=22050, depth=0.0)
+    assert np.allclose(y, yv_zero)
+
+
+def test_vibrato_short():
+    # Signal producing < 2 frames in STFT should early return copy
+    y = np.ones(100)
+    yv = librosa.effects.vibrato(y, sr=22050)
+    assert np.allclose(y, yv)
