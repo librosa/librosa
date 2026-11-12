@@ -1086,6 +1086,12 @@ def _decorate_axis(
     n_bins=None,
 ):
     """Configure axis tickers, locators, and labels"""
+    if fmin is not None:
+        if isinstance(fmin, str):
+            fmin = float(core.note_to_hz(fmin))
+        else:
+            fmin = float(fmin)
+
     time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
 
     if ax_type == "tonnetz":
@@ -1419,14 +1425,18 @@ def _coord_mel_hz(
 
 def _coord_cqt_hz(
     n: int,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     bins_per_octave: int = 12,
     sr: float = 22050,
     **_kwargs: Any,
 ) -> _Array1D[np.float64]:
     """Get CQT bin frequencies"""
     if fmin is None:
-        fmin = core.note_to_hz("C1")
+        fmin = float(core.note_to_hz("C1"))
+    elif isinstance(fmin, str):
+        fmin = float(core.note_to_hz(fmin))
+    else:
+        fmin = float(fmin)
 
     # Apply tuning correction
     fmin = fmin * 2.0 ** (_kwargs.get("tuning", 0.0) / bins_per_octave)
@@ -1449,7 +1459,7 @@ def _coord_cqt_hz(
 
 def _coord_vqt_hz(
     n: int,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     bins_per_octave: int = 12,
     sr: float = 22050,
     intervals: str | Collection[float] | None = None,
@@ -1457,7 +1467,11 @@ def _coord_vqt_hz(
     **_kwargs: Any,
 ) -> _Array1D[np.float64]:
     if fmin is None:
-        fmin = core.note_to_hz("C1")
+        fmin = float(core.note_to_hz("C1"))
+    elif isinstance(fmin, str):
+        fmin = float(core.note_to_hz(fmin))
+    else:
+        fmin = float(fmin)
 
     if intervals is None:
         raise ParameterError("VQT axis coordinates cannot be defined without intervals")
@@ -1475,7 +1489,7 @@ def _coord_vqt_hz(
 
 def _coord_pitch_hz(
     n: int,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     bins_per_octave: int = 12,
     sr: float = 22050,
     intervals: str | Collection[float] | None = None,
@@ -1484,7 +1498,11 @@ def _coord_pitch_hz(
 ) -> _Array1D[np.float64]:
     """Get Pitch bin frequencies"""
     if fmin is None:
-        fmin = core.note_to_hz("C1")
+        fmin = float(core.note_to_hz("C1"))
+    elif isinstance(fmin, str):
+        fmin = float(core.note_to_hz(fmin))
+    else:
+        fmin = float(fmin)
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     if intervals is None or intervals == "equal":

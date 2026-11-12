@@ -1079,6 +1079,66 @@ def test_mel_to_stft_multi(power, n_fft, rng):
     assert not np.allclose(stft0, stft1)
 
 
+@pytest.mark.parametrize("power", [1, 2])
+@pytest.mark.parametrize("n_fft", [1024, 2048])
+def test_logfrequency_to_stft_multi(power, n_fft, rng):
+    sr = 22050
+    bins_per_octave = 12
+    fb = librosa.filters.logfrequency(sr=sr, n_fft=n_fft, bins_per_octave=bins_per_octave)
+
+    stft_orig = np.abs(rng.standard_normal(size=(2, n_fft // 2 + 1, 4))) ** power
+
+    L = np.einsum("...ft,mf->...mt", stft_orig, fb)
+    stft = librosa.feature.inverse.logfrequency_to_stft(
+        L, sr=sr, power=power, n_fft=n_fft, bins_per_octave=bins_per_octave
+    )
+    L0 = np.einsum("...ft,mf->...mt", stft_orig[0], fb)
+    stft0 = librosa.feature.inverse.logfrequency_to_stft(
+        L0, sr=sr, power=power, n_fft=n_fft, bins_per_octave=bins_per_octave
+    )
+    L1 = np.einsum("...ft,mf->...mt", stft_orig[1], fb)
+    stft1 = librosa.feature.inverse.logfrequency_to_stft(
+        L1, sr=sr, power=power, n_fft=n_fft, bins_per_octave=bins_per_octave
+    )
+
+    # Check each channel
+    assert np.allclose(stft[0], stft0, atol=1e-6)
+    assert np.allclose(stft[1], stft1, atol=1e-6)
+
+    # Check that they're not both the same
+    assert not np.allclose(stft0, stft1)
+
+
+@pytest.mark.parametrize("power", [1, 2])
+@pytest.mark.parametrize("n_fft", [1024, 2048])
+def test_pitch_to_stft_multi(power, n_fft, rng):
+    sr = 22050
+    n_pitches = 84
+    fb = librosa.filters.pitch(sr=sr, n_fft=n_fft, n_pitches=n_pitches, fmin="C1")
+
+    stft_orig = np.abs(rng.standard_normal(size=(2, n_fft // 2 + 1, 4))) ** power
+
+    P = np.einsum("...ft,mf->...mt", stft_orig, fb)
+    stft = librosa.feature.inverse.pitch_to_stft(
+        P, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1"
+    )
+    P0 = np.einsum("...ft,mf->...mt", stft_orig[0], fb)
+    stft0 = librosa.feature.inverse.pitch_to_stft(
+        P0, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1"
+    )
+    P1 = np.einsum("...ft,mf->...mt", stft_orig[1], fb)
+    stft1 = librosa.feature.inverse.pitch_to_stft(
+        P1, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1"
+    )
+
+    # Check each channel
+    assert np.allclose(stft[0], stft0, atol=1e-6)
+    assert np.allclose(stft[1], stft1, atol=1e-6)
+
+    # Check that they're not both the same
+    assert not np.allclose(stft0, stft1)
+
+
 @pytest.mark.parametrize("n_mfcc", [13, 20])
 @pytest.mark.parametrize("n_mels", [64, 128])
 @pytest.mark.parametrize("dct_type", [2, 3])

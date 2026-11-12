@@ -2,7 +2,7 @@ Interpolation
 -------------
 .. currentmodule:: librosa
 .. autosummary::
-    :toctree: generated/
+    :toctree: generated
     :nosignatures:
 
     interp_time

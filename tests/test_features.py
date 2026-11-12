@@ -973,6 +973,107 @@ def test_mel_to_audio():
     assert librosa.util.valid_audio(y_inv)
 
 
+@pytest.mark.parametrize("power", [1, 2])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("n_fft", [1024, 2048])
+def test_logfrequency_to_stft(power, dtype, n_fft, rng):
+    sr = 22050
+    bins_per_octave = 12
+    fb = librosa.filters.logfrequency(
+        sr=sr, n_fft=n_fft, bins_per_octave=bins_per_octave, dtype=dtype
+    )
+    n_bins = fb.shape[0]
+
+    stft_orig = (np.abs(rng.standard_normal(size=(n_fft // 2 + 1, 4))) ** power).astype(dtype)
+    L = fb.dot(stft_orig)
+
+    stft = librosa.feature.inverse.logfrequency_to_stft(
+        L, sr=sr, n_fft=n_fft, power=power, bins_per_octave=bins_per_octave
+    )
+
+    # Check precision
+    assert stft.dtype == dtype
+
+    # Check for non-negative spectrum
+    assert np.all(stft >= 0)
+
+    # Check that the shape is good
+    assert stft.shape[0] == 1 + n_fft // 2
+
+    # Check that the approximation is good in RMSE terms
+    assert np.sqrt(np.mean((fb.dot(stft**power) - L) ** 2)) <= 5e-2
+
+    # Check parameter error when n_bins does not match
+    with pytest.raises(librosa.ParameterError):
+        librosa.feature.inverse.logfrequency_to_stft(
+            L, sr=sr, n_fft=n_fft, power=power, n_bins=n_bins + 1
+        )
+
+
+def test_logfrequency_to_audio():
+    y = librosa.tone(440.0, sr=22050, duration=1)
+    L = librosa.feature.logfrequency_spectrogram(y=y, sr=22050)
+    y_inv = librosa.feature.inverse.logfrequency_to_audio(
+        L, sr=22050, length=len(y)
+    )
+
+    # Sanity check length
+    assert len(y) == len(y_inv)
+
+    # And that it's valid audio
+    assert librosa.util.valid_audio(y_inv)
+
+
+@pytest.mark.parametrize("power", [1, 2])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("n_fft", [1024, 2048])
+def test_pitch_to_stft(power, dtype, n_fft, rng):
+    sr = 22050
+    n_pitches = 84
+    fb = librosa.filters.pitch(
+        sr=sr, n_fft=n_fft, n_pitches=n_pitches, fmin="C1", dtype=dtype
+    )
+
+    stft_orig = (np.abs(rng.standard_normal(size=(n_fft // 2 + 1, 4))) ** power).astype(dtype)
+    P = fb.dot(stft_orig)
+
+    stft = librosa.feature.inverse.pitch_to_stft(
+        P, sr=sr, n_fft=n_fft, power=power, n_pitches=n_pitches, fmin="C1"
+    )
+
+    # Check precision
+    assert stft.dtype == dtype
+
+    # Check for non-negative spectrum
+    assert np.all(stft >= 0)
+
+    # Check that the shape is good
+    assert stft.shape[0] == 1 + n_fft // 2
+
+    # Check that the approximation is good in RMSE terms
+    assert np.sqrt(np.mean((fb.dot(stft**power) - P) ** 2)) <= 5e-2
+
+    # Check parameter error when n_pitches does not match
+    with pytest.raises(librosa.ParameterError):
+        librosa.feature.inverse.pitch_to_stft(
+            P, sr=sr, n_fft=n_fft, power=power, n_pitches=n_pitches + 1, fmin="C1"
+        )
+
+
+def test_pitch_to_audio():
+    y = librosa.tone(440.0, sr=22050, duration=1)
+    P = librosa.feature.pitch_spectrogram(y=y, sr=22050, n_pitches=84, fmin="C1")
+    y_inv = librosa.feature.inverse.pitch_to_audio(
+        P, sr=22050, length=len(y), n_pitches=84, fmin="C1"
+    )
+
+    # Sanity check length
+    assert len(y) == len(y_inv)
+
+    # And that it's valid audio
+    assert librosa.util.valid_audio(y_inv)
+
+
 @pytest.mark.parametrize("n_mfcc", [13, 20])
 @pytest.mark.parametrize("n_mels", [64, 128])
 @pytest.mark.parametrize("dct_type", [2, 3])

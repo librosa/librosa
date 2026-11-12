@@ -406,6 +406,7 @@ def frequency_filterbank(
         adjacent centers in ``freq_out``.
     window : str or callable, default="triangle"
         Filter window shape:
+
         - `'triangle'` or `'triang'`: Piecewise linear ramp from the lower boundary
           to the center and down to the upper boundary.
         - `'boxcar'` or `'rect'` or `'rectangular'`: Rectangular indicator window
@@ -413,18 +414,20 @@ def frequency_filterbank(
         - `'hann'` or `'cosine'`: Raised-cosine bell.
         - `'gaussian'`: Gaussian bell centered at each band center.
         - Callable: Any window function :math:`w(x)` mapping normalized coordinates
-          :math:`x \\in [-1, 1]` to filter weights.
+          :math:`x \in [-1, 1]` to filter weights.
     scale : {'linear', 'log'}, default='linear'
         Domain in which bandwidths and filter supports are evaluated:
+
         - `'linear'`: Distances and bandwidths are measured in linear Hz.
         - `'log'`: Distances and bandwidths are measured in logarithmic units (octaves).
           Geometric midpoints are used for filter boundaries, preserving constant-Q
           relationships.
     norm : {None, 'slaney', or number}, default=None
         Normalization applied to each filter row:
+
         - `None`: Unnormalized peak height (1.0).
         - `'slaney'`: Continuous area normalization (energy density per Hz),
-          scaling each filter by :math:`2 / \\text{width}` (or :math:`1 / \\text{width}` for boxcar).
+          scaling each filter by :math:`2 / \text{width}` (or :math:`1 / \text{width}` for boxcar).
         - Numeric: Use `librosa.util.normalize` to normalize each filter to unit :math:`L_p` norm.
     dtype : np.dtype, default=np.float32
         Data type of the output basis matrix.
@@ -606,6 +609,7 @@ def logfrequency(
         If None, automatically spans up to the Nyquist frequency (or ``freq_in[-1]``).
     bins_per_octave : int > 0 [scalar], default=12
         Number of filter bands per octave. Common values:
+
         - 12: Semitone resolution.
         - 24: Quarter-tone resolution (as used in SuperFlux and madmom).
     fmin : float > 0 or str, optional
@@ -734,6 +738,7 @@ def pitch(
         If None, defaults to MIDI 0 (~8.18 Hz) when ``n_pitches=128``, or `'C1'` (~32.7 Hz).
     intervals : str or collection of float, default='equal'
         Tuning / interval system to use:
+
         - `'equal'`: Equal temperament.
         - `'pythagorean'`: Pythagorean intervals.
         - `'ji3'`, `'ji5'`, `'ji7'`: 3-limit, 5-limit, or 7-limit Just Intonation.
@@ -744,7 +749,8 @@ def pitch(
         Tuning deviation from A440 in fractions of a bin.
     window : str, default='boxcar'
         Filter shape for each pitch band:
-        - `'boxcar'`: Rectangular indicator window $[f(p - 0.5), f(p + 0.5))$.
+
+        - `'boxcar'`: Rectangular indicator window :math:`[f(p - 0.5), f(p + 0.5))`.
           With ``norm=None``, this identically reproduces `libfmp.pool_pitch` energy pooling.
         - `'triangle'`: Triangular center-weighted filter.
         - `'hann'`: Raised-cosine bell.

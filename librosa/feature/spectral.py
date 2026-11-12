@@ -2287,6 +2287,7 @@ def logfrequency_spectrogram(
         If None, automatically spans up to the Nyquist frequency.
     bins_per_octave : int > 0 [scalar], default=12
         Number of filter bands per octave. Common choices:
+
         - 12: Semitone resolution.
         - 24: Quarter-tone resolution (as used in SuperFlux and madmom).
     fmin : float > 0 or str, optional
@@ -2323,7 +2324,18 @@ def logfrequency_spectrogram(
     ...     y=y, sr=sr, bins_per_octave=24, fmin="C1"
     ... )
     >>> S_log.shape
-    (203, 117)
+    (202, 230)
+
+    Display the log-frequency spectrogram:
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> S_dB = librosa.power_to_db(S_log, ref=np.max)
+    >>> img = librosa.display.specshow(S_dB, x_axis='time',
+    ...                                y_axis='logfreq_hz', sr=sr,
+    ...                                bins_per_octave=24, fmin='C1', ax=ax)
+    >>> librosa.display.colorbar_db(img)
+    >>> ax.set(title='Log-frequency spectrogram')
     """
     S, n_fft = _spectrogram(
         y=y,
@@ -2421,6 +2433,7 @@ def pitch_spectrogram(
         If None, defaults to MIDI 0 (~8.18 Hz) when ``n_pitches=128``, or `'C1'`.
     intervals : str or collection of float, default='equal'
         Interval system to use:
+
         - `'equal'`: Equal temperament.
         - `'pythagorean'`: Pythagorean intervals.
         - `'ji3'`, `'ji5'`, `'ji7'`: 3-limit, 5-limit, or 7-limit Just Intonation.
@@ -2454,7 +2467,7 @@ def pitch_spectrogram(
     >>> y, sr = librosa.loadx('trumpet')
     >>> S_pitch = librosa.feature.pitch_spectrogram(y=y, sr=sr)
     >>> S_pitch.shape
-    (128, 117)
+    (128, 230)
 
     Compute a Just Intonation pitch spectrogram:
 
@@ -2462,7 +2475,21 @@ def pitch_spectrogram(
     ...     y=y, sr=sr, intervals="ji5", fmin="C1", n_pitches=84
     ... )
     >>> S_ji.shape
-    (84, 117)
+    (84, 230)
+
+    Display a 7-octave (C1-B7) pitch spectrogram using musical note names:
+
+    >>> S_p7 = librosa.feature.pitch_spectrogram(
+    ...     y=y, sr=sr, n_pitches=84, fmin="C1"
+    ... )
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> S_dB = librosa.power_to_db(S_p7, ref=np.max)
+    >>> img = librosa.display.specshow(S_dB, x_axis='time',
+    ...                                y_axis='pitch_note', sr=sr,
+    ...                                fmin='C1', ax=ax)
+    >>> librosa.display.colorbar_db(img)
+    >>> ax.set(title='Pitch spectrogram')
     """
     S, n_fft = _spectrogram(
         y=y,
