@@ -622,6 +622,27 @@ def test_peak_pick(d, pre_max, post_max, pre_avg, post_avg, delta, wait, method,
     assert np.allclose(np.flatnonzero(dpeaks), peaks)
 
 
+@pytest.mark.parametrize("method", ["dp_count", "dp_value"])
+def test_peak_pick_dp_long_float32(method):
+    # The DP methods take window averages from a running sum over the whole
+    # signal. A float32 sum loses precision as it grows, which used to move
+    # peaks across the threshold on long signals.
+    x = (np.random.default_rng(0).standard_normal(500_000) ** 2).astype(np.float32)
+    kwargs = dict(pre_max=1, post_max=1, pre_avg=4, post_avg=5, delta=0.07, wait=1)
+
+    peaks = librosa.util.peak_pick(x, method=method, **kwargs)
+    greedy = librosa.util.peak_pick(x, method="greedy", **kwargs)
+    # With wait=0, the greedy method returns every frame that is a peak
+    candidates = librosa.util.peak_pick(x, method="greedy", **{**kwargs, "wait": 0})
+
+    assert np.all(np.isin(peaks, candidates))
+    if method == "dp_count":
+        # Picking the earliest peaks also maximizes their number
+        assert len(peaks) == len(greedy)
+    else:
+        assert x[peaks].sum(dtype=np.float64) >= x[greedy].sum(dtype=np.float64)
+
+
 @pytest.mark.xfail(raises=librosa.ParameterError)
 @pytest.mark.parametrize(
     "pre_max,post_max,pre_avg,post_avg,delta,wait",

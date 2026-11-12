@@ -1236,8 +1236,10 @@ def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, count, 
     pointers = np.zeros(len(x) + 1, dtype=np.int32)
     taken = np.zeros(len(x) + 1, dtype=np.bool_)
 
-    # Use the integral image trick to accelerate partial sums for averages
-    cumulate = np.cumsum(x)
+    # Use the integral image trick to accelerate partial sums for averages.
+    # Accumulate in float64: a float32 running sum loses precision as it grows,
+    # and the window averages taken from it then drift on long signals.
+    cumulate = np.cumsum(x.astype(np.float64))
 
     values[-1] = 0
     pointers[-1] = -1
