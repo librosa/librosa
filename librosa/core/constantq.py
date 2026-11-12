@@ -45,7 +45,7 @@ def cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     n_bins: int | None = 84,
     bins_per_octave: int = 12,
     tuning: float | None = 0.0,
@@ -185,6 +185,8 @@ def cqt(
            [5.147e-02, 6.959e-02, ..., 1.694e-05, 5.811e-06]])
     """
     # CQT is the special case of VQT with gamma=0
+    if fmin is not None:
+        fmin = util._ensure_hz(fmin)
     return vqt(
         y=y,
         sr=sr,
@@ -213,7 +215,7 @@ def hybrid_cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     n_bins: int | None = 84,
     bins_per_octave: int = 12,
     tuning: float | None = 0.0,
@@ -316,6 +318,8 @@ def hybrid_cqt(
     if fmin is None:
         # C1 by default
         fmin = note_to_hz("C1")
+    else:
+        fmin = util._ensure_hz(fmin)
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -420,7 +424,7 @@ def pseudo_cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     n_bins: int | None = 84,
     bins_per_octave: int = 12,
     tuning: float | None = 0.0,
@@ -515,6 +519,8 @@ def pseudo_cqt(
     if fmin is None:
         # C1 by default
         fmin = note_to_hz("C1")
+    else:
+        fmin = util._ensure_hz(fmin)
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -599,7 +605,7 @@ def icqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     filter_scale: float = 1,
@@ -825,7 +831,7 @@ def vqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     n_bins: int | None = 84,
     intervals: str | Collection[float] = "equal",
     gamma: float | None = None,
@@ -984,6 +990,8 @@ def vqt(
     if fmin is None:
         # C1 by default
         fmin = note_to_hz("C1")
+    else:
+        fmin = util._ensure_hz(fmin)
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -1291,7 +1299,7 @@ def griffinlim_cqt(
     n_iter: int = 32,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     filter_scale: float = 1,
