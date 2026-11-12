@@ -28,7 +28,7 @@ from .util.decorators import deprecated
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Collection, Literal
+    from typing import Any, Callable, Collection, Literal, Sequence
 
     from numpy.typing import ArrayLike, DTypeLike, NDArray
 
@@ -43,6 +43,7 @@ __all__ = [
     "frequency_filterbank",
     "logfrequency",
     "pitch",
+    "pitch_basis",
     "window_bandwidth",
     "get_window",
     "mr_frequencies",
@@ -849,6 +850,285 @@ def pitch(
         norm=norm,
         dtype=dtype,
     )
+
+
+def _dct_residual_basis(
+    n_features: int,
+    n_residual: int = 5,
+    *,
+    norm: float | None = 2,
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
+    """Construct non-negative residual spectral basis templates using the DCT.
+
+    Generates smooth, deterministic basis functions:
+    - 1st component (k=0): Constant flat broadband template.
+    - 2nd & 3rd components (k=1): Low-shelf and high-shelf complementary pair.
+    - 4th & 5th components (k=2): Mid-scoop and mid-hump complementary pair.
+
+    Parameters
+    ----------
+    n_features : int > 0
+        Number of input frequency bins (height of the spectrogram).
+    n_residual : int >= 0, default=5
+        Number of residual templates to construct. Recommended to be odd
+        (1, 3, 5, ...) to preserve symmetric shelf/hump pairs.
+    norm : {None, number}, default=2
+        Column normalization order.
+    dtype : np.dtype, default=np.float32
+        Output array data type.
+
+    Returns
+    -------
+    residual_basis : np.ndarray [shape=(n_features, n_residual)]
+        Non-negative residual basis matrix.
+    """
+    if n_residual <= 0:
+        return np.empty((n_features, 0), dtype=dtype)
+
+    import scipy.fft
+
+    D = scipy.fft.dct(np.eye(n_features), type=2, norm="ortho")
+    cols = [D[:, 0]]
+    k = 1
+    while len(cols) < n_residual and k < n_features:
+        dk = D[:, k]
+        # Low shelf / positive extrema shift
+        cols.append(dk - dk.min())
+        if len(cols) < n_residual:
+            # High shelf / negative extrema shift
+            cols.append((-dk) - (-dk).min())
+        k += 1
+
+    res = np.column_stack(cols[:n_residual]).astype(dtype)
+    if norm is not None:
+        col_norm = np.linalg.norm(res, ord=norm, axis=0, keepdims=True)
+        col_norm[col_norm == 0] = 1.0
+        res = res / col_norm
+    return res
+
+
+@cache(level=10)
+def pitch_basis(
+    *,
+    sr: float | None = None,
+    n_fft: int | None = None,
+    freq_in: ArrayLike | None = None,
+    n_pitches: int = 84,
+    fmin: float | str | None = None,
+    intervals: str | Collection[float] = "equal",
+    bins_per_octave: int = 12,
+    tuning: float = 0.0,
+    window: _WindowSpec = "triangle",
+    harmonics: Sequence[float] | None = None,
+    harmonic_weights: Sequence[float] | None = None,
+    offset: float = 1e-4,
+    n_residual: int = 5,
+    residual: ArrayLike | None = None,
+    norm: float | None = 2,
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
+    """Construct a pitch template basis matrix for decomposition.
+
+    Produces a non-negative spectral basis matrix suitable for initializing
+    or constraining non-negative matrix factorization (NMF) or other dictionary-based
+    decompositions.
+
+    By default, pitch templates model a harmonic comb decaying as :math:`1/m`,
+    supplemented by 5 non-negative Discrete Cosine Transform (DCT) residual templates
+    (broadband, low shelf, high shelf, mid-scoop, and mid-hump) to capture transients
+    and unpitched noise.
+
+    Parameters
+    ----------
+    sr : number > 0 [scalar, optional]
+        Audio sampling rate. Required if ``freq_in`` is not specified.
+    n_fft : int > 0 [scalar, optional]
+        Length of the FFT frame. Required if ``freq_in`` is not specified.
+    freq_in : np.ndarray [shape=(n_in,)], optional
+        Coordinates of input frequency bins. If not provided, computed
+        as ``fft_frequencies(sr=sr, n_fft=n_fft)``.
+    n_pitches : int > 0 [scalar], default=84
+        Number of pitch bands to generate. Default 84 covers 7 octaves.
+    fmin : float or str, optional
+        Minimum pitch center frequency (or note name, e.g. `'C1'`).
+        If None, defaults to `'C1'` (~32.7 Hz).
+    intervals : str or collection of float, default='equal'
+        Tuning / interval system to use:
+
+        - `'equal'`: Equal temperament.
+        - `'pythagorean'`: Pythagorean intervals.
+        - `'ji3'`, `'ji5'`, `'ji7'`: 3-limit, 5-limit, or 7-limit Just Intonation.
+        - Collection of floats in [1, 2): Custom interval set.
+    bins_per_octave : int > 0 [scalar], default=12
+        Number of bins per octave in the interval system.
+    tuning : float [scalar], default=0.0
+        Tuning deviation from A440 in fractions of a bin.
+    window : str or callable, default='triangle'
+        Filter shape for each pitch / harmonic peak:
+        `'triangle'`, `'boxcar'`, `'hann'`, or `'gaussian'`.
+    harmonics : sequence of float, optional
+        Harmonics to include in each pitch template.
+        If None, includes all harmonics up to Nyquist with :math:`1/m` decay.
+        Pass ``harmonics=[1]`` for fundamental-only templates (transposed pitch filter).
+    harmonic_weights : sequence of float, optional
+        Weights applied to each harmonic. If None, defaults to :math:`1.0 / m`.
+    offset : float >= 0, default=1e-4
+        Small additive offset applied to all template entries to ensure strictly positive
+        values, preventing multiplicative updates from freezing zero bins.
+    n_residual : int >= 0, default=5
+        Number of DCT-based residual templates to append for broadband transients/noise.
+        Odd numbers (e.g., 1, 3, 5) produce symmetric shelf/hump pairs.
+    residual : np.ndarray [shape=(n_in, n_residual)], optional
+        Pre-defined residual templates to append instead of the DCT basis.
+    norm : {None, number}, default=2
+        Column normalization applied to each basis template.
+    dtype : np.dtype, default=np.float32
+        Data type of the output basis matrix.
+
+    Returns
+    -------
+    basis : np.ndarray [shape=(n_in, n_components)]
+        Non-negative basis matrix with ``n_components = n_pitches + n_residual``.
+        Columns 0 to ``n_pitches - 1`` are the pitch templates.
+        Columns ``n_pitches`` to ``n_components - 1`` are the residual templates.
+
+    See Also
+    --------
+    pitch
+    frequency_filterbank
+    librosa.decompose.decompose
+    librosa.decompose.pitch_nmf
+
+    Examples
+    --------
+    Construct a pitch template basis covering 7 octaves with 5 residual templates:
+
+    >>> basis = librosa.filters.pitch_basis(sr=22050, n_fft=2048)
+    >>> basis.shape
+    (1025, 89)
+
+    Construct fundamental-only pitch templates without residual components:
+
+    >>> basis_fund = librosa.filters.pitch_basis(sr=22050, n_fft=2048, harmonics=[1], n_residual=0)
+    >>> basis_fund.shape
+    (1025, 84)
+
+    Plot the basis templates:
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(
+    ...     librosa.amplitude_to_db(basis, ref=np.max),
+    ...     sr=22050, n_fft=2048, y_axis='log', ax=ax
+    ... )
+    >>> ax.set(xlabel='Component', ylabel='Frequency (Hz)', title='Pitch template basis')
+    >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
+    """
+    if freq_in is None:
+        if sr is None or n_fft is None:
+            raise ParameterError("Either freq_in or both sr and n_fft must be provided")
+        f_in = fft_frequencies(sr=sr, n_fft=n_fft)
+    else:
+        f_in = np.asarray(freq_in, dtype=float)
+
+    if f_in.ndim != 1 or len(f_in) == 0:
+        raise ParameterError("freq_in must be a non-empty 1D array")
+    if len(f_in) > 1 and np.any(np.diff(f_in) < 0):
+        raise ParameterError("freq_in must be monotonically non-decreasing")
+
+    if fmin is None:
+        if intervals == "equal" and n_pitches == 128 and bins_per_octave == 12:
+            fmin_ = float(midi_to_hz(0))
+        else:
+            fmin_ = float(note_to_hz("C1"))
+    elif isinstance(fmin, str):
+        fmin_ = float(note_to_hz(fmin))
+    else:
+        fmin_ = float(fmin)
+
+    f_out = interval_frequencies(
+        n_bins=n_pitches,
+        fmin=fmin_,
+        intervals=intervals,
+        bins_per_octave=bins_per_octave,
+        tuning=tuning,
+    )
+
+    bpo = bins_per_octave
+    tol = 2.0 ** (1.0 / (2.0 * bpo)) - 1.0
+    K = len(f_in)
+    P = len(f_out)
+    W_pitch = np.zeros((K, P), dtype=dtype)
+
+    for j, f0 in enumerate(f_out):
+        if harmonics is None:
+            max_h = max(1, int(np.floor(f_in[-1] / ((1.0 - tol) * f0))))
+            h_list = np.arange(1, max_h + 1, dtype=float)
+            w_list = 1.0 / h_list
+        else:
+            h_list = np.asarray(harmonics, dtype=float)
+            if harmonic_weights is None:
+                w_list = 1.0 / h_list
+            else:
+                w_list = np.asarray(harmonic_weights, dtype=float)
+                if len(w_list) != len(h_list):
+                    raise ParameterError(
+                        f"harmonic_weights length ({len(w_list)}) must match harmonics length ({len(h_list)})"
+                    )
+
+        for m, w in zip(h_list, w_list, strict=True):
+            fm = m * f0
+            if fm > f_in[-1] + 1e-6:
+                continue
+            bw = fm * tol
+            d = np.abs(f_in - fm)
+            in_band = d < bw
+            if not np.any(in_band):
+                closest = int(np.argmin(d))
+                W_pitch[closest, j] += w
+                continue
+
+            if window in ("boxcar", "rect", "rectangular"):
+                W_pitch[in_band, j] += w
+            elif window in ("triangle", "triang"):
+                W_pitch[in_band, j] += w * (1.0 - d[in_band] / bw)
+            elif window == "hann":
+                W_pitch[in_band, j] += w * (0.5 + 0.5 * np.cos(np.pi * d[in_band] / bw))
+            elif window == "gaussian":
+                W_pitch[in_band, j] += w * np.exp(-0.5 * (d[in_band] / (bw / 2.0)) ** 2)
+            elif callable(window):
+                W_pitch[in_band, j] += w * window(d[in_band] / bw)
+            else:
+                raise ParameterError(f"Unsupported window: {window}")
+
+    if residual is not None:
+        W_res = np.asarray(residual, dtype=dtype)
+        if W_res.ndim == 1:
+            W_res = W_res[:, np.newaxis]
+        if W_res.shape[0] != K:
+            raise ParameterError(
+                f"residual shape {W_res.shape} must have {K} rows to match freq_in"
+            )
+    else:
+        W_res = _dct_residual_basis(K, n_residual=n_residual, norm=norm, dtype=dtype)
+
+    if W_res.shape[1] > 0:
+        W = np.hstack([W_pitch, W_res])
+    else:
+        W = W_pitch
+
+    if offset < 0:
+        raise ParameterError(f"offset must be non-negative, given: {offset}")
+    if offset > 0:
+        W = W + offset
+
+    if norm is not None:
+        col_norm = np.linalg.norm(W, ord=norm, axis=0, keepdims=True)
+        col_norm[col_norm == 0] = 1.0
+        W = W / col_norm
+
+    return W.astype(dtype)
 
 
 def __float_window(window_spec):

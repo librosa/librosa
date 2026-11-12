@@ -13,3 +13,5 @@ Spectrogram decomposition
     hpss
     nn_filter
     decompose
+    pitch_nmf
+    pitch_basis

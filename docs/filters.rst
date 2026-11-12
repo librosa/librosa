@@ -7,7 +7,7 @@ Filters and windows
 
 .. currentmodule:: librosa.filters
 .. autosummary::
-    :toctree: api/generated/
+    :toctree: api/generated
     :nosignatures:
 
     mel
@@ -17,6 +17,7 @@ Filters and windows
     frequency_filterbank
     logfrequency
     pitch
+    pitch_basis
 
     window_bandwidth
     get_window

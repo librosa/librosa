@@ -25,7 +25,7 @@ import glob
 import numpy as np
 import scipy.io
 import scipy.signal
-from typing import Any, ContextManager
+from typing import Any, ContextManager, Literal
 
 import pytest
 
@@ -614,8 +614,9 @@ def test_frequency_filterbank_shapes_and_windows():
     f_in = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
     f_out = np.linspace(200, 4000, 32)
 
+    norm_types: list[Literal["slaney"] | float | None] = [None, "slaney", 1.0, 2.0]
     for win in ["triangle", "triang", "boxcar", "rect", "rectangular", "hann", "cosine", "gaussian"]:
-        for norm in [None, "slaney", 1, 2]:
+        for norm in norm_types:
             fb = librosa.filters.frequency_filterbank(f_in, f_out, window=win, norm=norm)
             assert fb.shape == (32, 1025)
             assert not np.isnan(fb).any()
@@ -704,7 +705,7 @@ def test_frequency_filterbank_validation_errors():
 
     # unsupported norm
     with pytest.raises(librosa.ParameterError):
-        librosa.filters.frequency_filterbank(f_in, f_out, norm="unsupported")
+        librosa.filters.frequency_filterbank(f_in, f_out, norm="unsupported")  # type: ignore[arg-type]
 
 
 def test_logfrequency_filterbank():
@@ -792,6 +793,88 @@ def test_pitch_filterbank_temperaments():
         assert not np.isnan(fb_win).any()
 
 
+def test_dct_residual_basis():
+    from librosa.filters import _dct_residual_basis
+
+    for n_res in [0, 1, 2, 3, 5]:
+        res = _dct_residual_basis(513, n_residual=n_res)
+        assert res.shape == (513, n_res)
+        assert not np.isnan(res).any()
+        if n_res > 0:
+            assert np.all(res >= 0)
+            # Check unit L2 norm
+            assert np.allclose(np.linalg.norm(res, axis=0), 1.0)
+
+    # Check properties of components
+    res5 = _dct_residual_basis(100, n_residual=5)
+    # k=0: flat broadband
+    assert np.allclose(res5[:, 0], res5[0, 0])
+    # k=1: low shelf (monotonically non-increasing)
+    assert np.all(np.diff(res5[:, 1]) <= 1e-6)
+    # k=1 neg: high shelf (monotonically non-decreasing)
+    assert np.all(np.diff(res5[:, 2]) >= -1e-6)
+
+
+def test_pitch_basis():
+    sr, n_fft = 22050, 2048
+    # Default parameters: 84 pitches + 5 residual = 89
+    basis = librosa.filters.pitch_basis(sr=sr, n_fft=n_fft)
+    assert basis.shape == (1025, 89)
+    assert not np.isnan(basis).any()
+    assert np.all(basis > 0)
+    assert np.allclose(np.linalg.norm(basis, axis=0), 1.0)
+
+    # Fundamental only without residual
+    basis_fund = librosa.filters.pitch_basis(
+        sr=sr, n_fft=n_fft, harmonics=[1], n_residual=0
+    )
+    assert basis_fund.shape == (1025, 84)
+    assert np.all(basis_fund > 0)
+
+    # Specific harmonics and weights
+    basis_harms = librosa.filters.pitch_basis(
+        sr=sr, n_fft=n_fft, harmonics=[1, 2, 3], harmonic_weights=[1.0, 0.5, 0.25], n_residual=1
+    )
+    assert basis_harms.shape == (1025, 85)
+
+    # Custom residual array
+    custom_res = np.ones((1025, 2))
+    basis_custom_res = librosa.filters.pitch_basis(
+        sr=sr, n_fft=n_fft, residual=custom_res
+    )
+    assert basis_custom_res.shape == (1025, 86)
+
+    # Different windows
+    for win in ["triangle", "boxcar", "hann", "gaussian"]:
+        b = librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, window=win, n_pitches=24)
+        assert b.shape == (1025, 29)
+        assert not np.isnan(b).any()
+
+    # Different norms
+    for norm in [1, 2, None]:
+        b = librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, norm=norm, n_pitches=12)
+        if norm is not None:
+            assert np.allclose(np.linalg.norm(b, ord=norm, axis=0), 1.0)
+
+    # Error handling
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch_basis()  # No sr/n_fft or freq_in
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, offset=-1.0)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch_basis(
+            sr=sr, n_fft=n_fft, harmonics=[1, 2], harmonic_weights=[1.0]
+        )
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, residual=np.ones((512, 1)))
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, window="unsupported_window")
+
+
 def test_pitch_to_chroma_and_deprecation():
     # Check pitch_to_chroma bases
     p2c_c = librosa.filters.pitch_to_chroma(84, base="C")
@@ -829,7 +912,8 @@ def test_mel_vectorized_regression():
         for n_fft in [1024, 2048]:
             for n_mels in [40, 80, 128]:
                 for htk in [False, True]:
-                    for norm in ["slaney", 1, 2, None]:
+                    norm_vals: list[Literal["slaney"] | float | None] = ["slaney", 1.0, 2.0, None]
+                    for norm in norm_vals:
                         for dtype in [np.float32, np.float64]:
                             fb = librosa.filters.mel(
                                 sr=sr,
