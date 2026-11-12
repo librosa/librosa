@@ -10,6 +10,10 @@
             "affiliation": "New York University"
         },
         {
+            "name": "Ale Lloveras",
+            "affiliation": "SIMAI AgTech"
+        },
+        {
             "name": "Matt McVicar",
             "affiliation": "Researcher"
         },
@@ -27,6 +31,9 @@
             "name": "Scott Seyfarth"
         },
         {
+            "name": "Rajit Sareen"
+        },
+        {
             "name": "Vincent Lostanlen",
             "orcid": "0000-0003-0580-1651",
             "affiliation": "CNRS"
@@ -40,6 +47,9 @@
             "name": "Colin Raffel",
             "orcid": "0000-0002-5009-8048",
             "affiliation": "University of Toronto"
+        },
+        {
+            "name": "Isaac Hernandez"
         },
         {
             "name": "Benjamin van Niekirk",
@@ -135,11 +145,18 @@
             "name": "Alex Metsai"
         },
         {
+            "name": "Gavin Branaa"
+        },
+        {
             "name": "Stefan Sullivan"
         },
         {
             "name": "Pius Friesch",
             "affiliation": "KTH Royal Institute of Technology"
+        },
+        {
+            "name": "Ge Li",
+            "affiliation": "Carnegie Mellon University"
         },
         {
             "name": "Shunsuke Hidaka",
@@ -155,6 +172,10 @@
             "affiliation": "NVIDIA"
         },
         {
+            "name": "MUGUNDAN",
+            "affiliation": "MulticoreWare"
+        },
+        {
             "name": "Curtis Hawthorne",
             "affiliation": "Amazon AGI"
         },
@@ -165,10 +186,6 @@
         {
             "name": "Cameron Brooks",
             "affiliation": "Oregon State University"
-        },
-        {
-            "name": "Ale Lloveras",
-            "affiliation": "SIMAI AgTech"
         },
         {
             "name": "Viktor Andreevitch Morozov"
@@ -218,6 +235,10 @@
         {
             "name": "Alex Malins",
             "affiliation": "Kraken Technologies"
+        },
+        {
+            "name": "Jyotishman Das",
+            "affiliation": "Metafusion"
         },
         {
             "name": "Darío Hereñú"

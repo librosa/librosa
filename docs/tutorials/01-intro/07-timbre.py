@@ -29,8 +29,9 @@ content of audio signals.
 #    reduction, you might want to read up on those topics before continuing with this tutorial
 #    section.
 #    The scikit-learn documentation is a good place to start:
-#       - `Nearest neighbors <https://scikit-learn.org/stable/modules/neighbors.html>`_
-#       - `Dimensionality reduction <https://scikit-learn.org/stable/modules/manifold.html>`_
+#
+#    - `Nearest neighbors <https://scikit-learn.org/stable/modules/neighbors.html>`_
+#    - `Dimensionality reduction <https://scikit-learn.org/stable/modules/manifold.html>`_
 #
 # To study timbre, we want examples where pitch and timing are held roughly constant while the
 # instrument changes. For that, we use an excerpt from the `ChoraleBricks

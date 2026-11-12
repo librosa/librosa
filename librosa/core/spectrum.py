@@ -2089,7 +2089,7 @@ def db_to_amplitude(
 def perceptual_weighting(
     S: np.ndarray, frequencies: np.ndarray, *, kind: str = "A", **kwargs: Any
 ) -> np.ndarray:
-    """Perceptual weighting of a power spectrogram::
+    """Perceptual weighting of a power spectrogram
 
         S_p[..., f, :] = frequency_weighting(f, 'A') + 10*log(S[..., f, :] / ref)
 
