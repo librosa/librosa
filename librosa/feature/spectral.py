@@ -2272,12 +2272,12 @@ def logfrequency_spectrogram(
         Number of samples between successive frames.
     win_length : int <= n_fft [scalar]
         Window length for the STFT.
-    window : string, tuple, number, function, or np.ndarray
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         Window specification for the STFT.
-    center : boolean
+    center : bool
         If True, the input signal is padded so that frame ``t`` is centered at
         ``t * hop_length``.
-    pad_mode : string
+    pad_mode : str
         Padding mode for the STFT.
     power : float > 0 [scalar]
         Exponent for the magnitude spectrogram:
@@ -2400,12 +2400,12 @@ def pitch_spectrogram(
         Number of samples between successive frames.
     win_length : int <= n_fft [scalar]
         Window length for the STFT.
-    window : string, tuple, number, function, or np.ndarray
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
         Window specification for the STFT.
-    center : boolean
+    center : bool
         If True, the input signal is padded so that frame ``t`` is centered at
         ``t * hop_length``.
-    pad_mode : string
+    pad_mode : str
         Padding mode for the STFT.
     power : float > 0 [scalar]
         Exponent for the magnitude spectrogram:
