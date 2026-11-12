@@ -2451,6 +2451,7 @@ def test_mp_setup_properties_badprops():
     properties = librosa.display._mp_setup_properties(prop_group, ["color"], None)
 
     for prop in properties.flat:
+        assert isinstance(prop, dict)
         assert "color" not in prop
 
 
