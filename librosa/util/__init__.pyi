@@ -11,6 +11,7 @@ from .files import list_examples as list_examples
 from .matching import match_events as match_events
 from .matching import match_intervals as match_intervals
 from .utils import MAX_MEM_BLOCK as MAX_MEM_BLOCK
+from .utils import _ensure_hz as _ensure_hz
 from .utils import abs2 as abs2
 from .utils import axis_sort as axis_sort
 from .utils import buf_to_float as buf_to_float

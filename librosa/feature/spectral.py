@@ -366,7 +366,7 @@ def spectral_contrast(
     center: bool = True,
     pad_mode: _PadModeSTFT = "constant",
     freq: np.ndarray | None = None,
-    fmin: float = 200.0,
+    fmin: float | str = 200.0,
     n_bands: int = 6,
     quantile: float = 0.02,
     ref: float | Callable = 1.0,
@@ -503,6 +503,7 @@ def spectral_contrast(
     if not 0.0 < quantile < 1.0:
         raise ParameterError("quantile must lie in the range (0, 1)")
 
+    fmin = util._ensure_hz(fmin)
     if fmin <= 0:
         raise ParameterError("fmin must be a positive number")
 

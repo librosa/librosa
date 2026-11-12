@@ -18,6 +18,29 @@ from .exceptions import ParameterError
 if TYPE_CHECKING:
     from typing import Any, Callable, Literal, Sequence
 
+
+def _ensure_hz(value: float | str) -> float:
+    """Ensure a frequency value is in Hz.
+
+    If the input is a string, it is interpreted as Scientific Pitch Notation
+    and converted to Hz.
+
+    Parameters
+    ----------
+    value : float or str
+        Frequency in Hz or note name (e.g., 'C2').
+
+    Returns
+    -------
+    hz : float
+        Frequency in Hz.
+    """
+    if isinstance(value, str):
+        from ..core.convert import note_to_hz
+
+        return float(note_to_hz(value))
+    return float(value)
+
     from numpy.typing import DTypeLike, NDArray
 
     from .._typing import (

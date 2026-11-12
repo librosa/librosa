@@ -185,8 +185,8 @@ def piptrack(
     S: np.ndarray | None = None,
     n_fft: int | None = 2048,
     hop_length: int | None = None,
-    fmin: float = 150.0,
-    fmax: float = 4000.0,
+    fmin: _FloatLike_co | str = 150.0,
+    fmax: _FloatLike_co | str = 4000.0,
     threshold: float = 0.1,
     win_length: int | None = None,
     window: _WindowSpec = "hann",
@@ -322,6 +322,8 @@ def piptrack(
         S = np.abs(S)
 
     # Truncate to feasible region
+    fmin = util._ensure_hz(fmin)
+    fmax = util._ensure_hz(fmax)
     fmin = np.maximum(fmin, 0)
     fmax = np.minimum(fmax, float(sr) / 2)
 
@@ -453,8 +455,8 @@ def _cumulative_mean_normalized_difference(
 def yin(
     y: np.ndarray,
     *,
-    fmin: float,
-    fmax: float,
+    fmin: float | str,
+    fmax: float | str,
     sr: float = 22050,
     frame_length: int = 2048,
     hop_length: int | None = None,
@@ -532,9 +534,8 @@ def yin(
     array([442.66354675, 441.95299983, 441.58010963, ...,
         871.161732  , 873.99001454, 877.04297681])
     """
-    if fmin is None or fmax is None:
-        raise ParameterError('both "fmin" and "fmax" must be provided')
-
+    fmin = util._ensure_hz(fmin)
+    fmax = util._ensure_hz(fmax)
     __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length)
 
     # Set the default hop if it is not already specified.
@@ -615,8 +616,8 @@ def yin(
 def pyin(
     y: np.ndarray,
     *,
-    fmin: float,
-    fmax: float,
+    fmin: float | str,
+    fmax: float | str,
     sr: float = 22050,
     frame_length: int = 2048,
     hop_length: int | None = None,
@@ -744,9 +745,8 @@ def pyin(
     >>> ax.plot(times, f0, label='f0', path_effects=librosa.display.highlight(ax=ax))
     >>> ax.legend(loc='upper right')
     """
-    if fmin is None or fmax is None:
-        raise ParameterError('both "fmin" and "fmax" must be provided')
-
+    fmin = util._ensure_hz(fmin)
+    fmax = util._ensure_hz(fmax)
     __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length)
 
     # Set the default hop if it is not already specified.
