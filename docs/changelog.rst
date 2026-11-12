@@ -7,7 +7,7 @@ v1.0
 
 v1.0.1
 ------
-2026-11-11
+2026-11-12
 
 Enhancements
     - `#2120`_, `#2076`_ memory optimizations in piptrack, magphase,
