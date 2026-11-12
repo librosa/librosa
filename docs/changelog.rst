@@ -68,10 +68,10 @@ v1.0.0
 
 This release marks the first "stable" version of librosa, and is intended to standardize the API developed
 over the 0.x series.
-With 1.0, we are formally adopting [Intended Effort Versioning (EffVer)](https://jacobtomlinson.dev/effver/),
+With 1.0, we are formally adopting `Intended Effort Versioning (EffVer) <https://jacobtomlinson.dev/effver/>`_,
 which will make it easier for users to understand the meaning behind subsequent major and minor releases.
 
-For an overview of what's new in the 1.0 release, see our [blog post](https://librosa.org/blog/posts/1.0/).
+For an overview of what's new in the 1.0 release, see our `blog post <https://librosa.org/blog/posts/1.0/>`_.
 
 New features
     - `#2059`_ `librosa.display.legend_for_axes` for generating legends for collections of 
