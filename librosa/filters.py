@@ -472,6 +472,14 @@ def frequency_filterbank(
     >>> fb_pitch = librosa.filters.frequency_filterbank(f_in, f_pitches, window="boxcar", scale="log")
     >>> fb_pitch.shape
     (88, 1025)
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> ax[0].plot(f_in, fb.T)
+    >>> ax[0].set(xlim=[0, 4500], ylabel="Weight", title="Filter responses")
+    >>> img = librosa.display.specshow(fb, x_coords=f_in, x_axis="linear", ax=ax[1])
+    >>> ax[1].set(ylabel="Filter band", title="Filterbank matrix")
+    >>> fig.colorbar(img, ax=ax[1])
     """
     f_in = np.asarray(freq_in, dtype=float)
     f_out = np.asarray(freq_out, dtype=float)
@@ -654,6 +662,14 @@ def logfrequency(
     ... )
     >>> fb_nyq.shape
     (205, 1025)
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(
+    ...     fb, x_axis="linear", sr=22050, n_fft=2048, ax=ax
+    ... )
+    >>> ax.set(ylabel="Log-frequency filter", title="Log-frequency filter bank")
+    >>> fig.colorbar(img, ax=ax)
     """
     if freq_in is None:
         if sr is None or n_fft is None:
@@ -786,6 +802,14 @@ def pitch(
     >>> fb_ji = librosa.filters.pitch(sr=22050, n_fft=2048, intervals="ji5", fmin="C1", n_pitches=84)
     >>> fb_ji.shape
     (84, 1025)
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(
+    ...     fb, x_axis="linear", sr=22050, n_fft=2048, ax=ax
+    ... )
+    >>> ax.set(ylabel="Pitch filter", title="Pitch filter bank")
+    >>> fig.colorbar(img, ax=ax)
     """
     if freq_in is None:
         if sr is None or n_fft is None:
@@ -1224,6 +1248,12 @@ def pitch_to_chroma(
     >>> chroma_map = librosa.filters.pitch_to_chroma(CQT.shape[0])
     >>> chromagram = chroma_map.dot(CQT)
     >>> chromagram = librosa.util.normalize(chromagram, axis=0)
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(chroma_map, x_axis="cqt_note", ax=ax)
+    >>> ax.set(ylabel="Chroma", title="Pitch-to-chroma mapping")
+    >>> fig.colorbar(img, ax=ax)
     """
     n_merge = float(bins_per_octave) / n_chroma
 
