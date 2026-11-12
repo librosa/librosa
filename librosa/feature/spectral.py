@@ -2395,9 +2395,6 @@ def pitch_spectrogram(
     musical pitch bands under specified intonation assumptions
     (e.g., equal temperament, Pythagorean, Just Intonation).
 
-    This generalizes the pitch pooling operation from libfmp (`pool_pitch` and
-    `compute_spec_log_freq`).
-
     Parameters
     ----------
     y : np.ndarray [shape=(..., n)]
@@ -2477,17 +2474,17 @@ def pitch_spectrogram(
     >>> S_ji.shape
     (84, 230)
 
-    Display a 7-octave (C1-B7) pitch spectrogram using musical note names:
+    Display a 8-octave (C1-B8) pitch spectrogram using musical note names:
 
     >>> S_p7 = librosa.feature.pitch_spectrogram(
-    ...     y=y, sr=sr, n_pitches=84, fmin="C1"
+    ...     y=y, sr=sr, n_pitches=96, fmin="C1"
     ... )
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> S_dB = librosa.power_to_db(S_p7, ref=np.max)
     >>> img = librosa.display.specshow(S_dB, x_axis='time',
     ...                                y_axis='pitch_note', sr=sr,
-    ...                                fmin='C1', ax=ax)
+    ...                                fmin=librosa.note_to_hz("C1"), ax=ax)
     >>> librosa.display.colorbar_db(img)
     >>> ax.set(title='Pitch spectrogram')
     """

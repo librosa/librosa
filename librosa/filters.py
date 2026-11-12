@@ -666,7 +666,10 @@ def logfrequency(
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> img = librosa.display.specshow(
-    ...     fb, x_axis="linear", sr=22050, n_fft=2048, ax=ax
+    ...     fb, x_axis="log", y_axis="logfreq_hz",
+    ...     fmin=30.0, bins_per_octave=24,
+    ...     sr=22050, n_fft=2048, ax=ax,
+    ...     vscale='dB',
     ... )
     >>> ax.set(ylabel="Log-frequency filter", title="Log-frequency filter bank")
     >>> fig.colorbar(img, ax=ax)
@@ -806,7 +809,9 @@ def pitch(
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> img = librosa.display.specshow(
-    ...     fb, x_axis="linear", sr=22050, n_fft=2048, ax=ax
+    ...     fb, x_axis="linear",
+    ...     y_axis="pitch_note", intervals="ji5", fmin=librosa.note_to_hz("C1"),
+    ...     sr=22050, n_fft=2048, ax=ax
     ... )
     >>> ax.set(ylabel="Pitch filter", title="Pitch filter bank")
     >>> fig.colorbar(img, ax=ax)
