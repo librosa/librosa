@@ -382,7 +382,7 @@ def pitch_nmf(
 
     >>> y, sr = librosa.loadx('trumpet', duration=3)
     >>> S = np.abs(librosa.stft(y))
-    >>> comps, acts = librosa.decompose.pitch_nmf(S, sr=sr, n_pitches=36, fmin='C3')
+    >>> comps, acts = librosa.decompose.pitch_nmf(S, sr=sr, n_pitches=72, fmin='C2')
 
     >>> import matplotlib.pyplot as plt
     >>> layout = [list(".AAAA"), list("BCCCC"), list(".DDDD")]
