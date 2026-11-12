@@ -7,7 +7,7 @@ function processing, and related utilities.
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from numba import jit
@@ -554,7 +554,8 @@ def frequency_filterbank(
         norm_coord = 2.0 * (u_in - c_pt) / (r_edge - l_edge)
         in_band = (norm_coord >= -1.0) & (norm_coord <= 1.0)
         weights = np.zeros((n_out, len(u_in)), dtype=dtype)
-        weights[in_band] = window(norm_coord[in_band])  # type: ignore[arg-type]
+        win_fn = cast("Callable[[Any], Any]", window)
+        weights[in_band] = win_fn(norm_coord[in_band])
     else:
         raise ParameterError(f"Unsupported window={window}")
 
