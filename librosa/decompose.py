@@ -359,7 +359,8 @@ def pitch_nmf(
         Beta divergence loss to minimize.
     max_iter : int, default=200
         Maximum number of iterations.
-    **kwargs : Additional arguments to `sklearn.decomposition.NMF` or `decompose`.
+    **kwargs : additional keyword arguments
+        Additional arguments to `sklearn.decomposition.NMF` or `decompose`.
 
     Returns
     -------
