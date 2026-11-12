@@ -41,8 +41,6 @@ def _ensure_hz(value: float | str) -> float:
         return float(note_to_hz(value))
     return float(value)
 
-    from numpy.typing import DTypeLike, NDArray
-
     from .._typing import (
         _Array1D,
         _Array2D,
