@@ -1404,3 +1404,73 @@ def test_spectral_contrast_linear_ignores_ref(top_db_signals):
     a = librosa.feature.spectral_contrast(**kw)
     assert np.array_equal(a, librosa.feature.spectral_contrast(ref=100.0, **kw))
     assert np.array_equal(a, librosa.feature.spectral_contrast(ref=np.max, **kw))
+
+
+def test_logfrequency_spectrogram(y_chirp):
+    y, sr = y_chirp
+    # From audio
+    S_log = librosa.feature.logfrequency_spectrogram(y=y, sr=sr, bins_per_octave=12, fmin=32.7)
+    assert S_log.ndim == 2
+    assert not np.isnan(S_log).any()
+    assert np.all(S_log >= 0)
+
+    # From precomputed S
+    S = np.abs(librosa.stft(y)) ** 2
+    S_log_pre = librosa.feature.logfrequency_spectrogram(S=S, sr=sr, bins_per_octave=12, fmin=32.7)
+    assert np.allclose(S_log, S_log_pre)
+
+    # 24 bpo extending to Nyquist
+    S_24 = librosa.feature.logfrequency_spectrogram(
+        y=y, sr=sr, bins_per_octave=24, fmin=30.0, filter_window="triangle", norm="slaney"
+    )
+    assert S_24.shape[0] == 205
+    assert S_24.shape[1] == S_log.shape[1]
+
+    # Explicit n_bins
+    S_explicit = librosa.feature.logfrequency_spectrogram(
+        y=y, sr=sr, n_bins=120, bins_per_octave=24, fmin="C1"
+    )
+    assert S_explicit.shape[0] == 120
+
+
+def test_pitch_spectrogram(y_chirp):
+    y, sr = y_chirp
+    # From audio with default 128 pitches (pool_pitch style)
+    S_pitch = librosa.feature.pitch_spectrogram(y=y, sr=sr)
+    assert S_pitch.shape[0] == 128
+    assert not np.isnan(S_pitch).any()
+    assert np.all(S_pitch >= 0)
+
+    # From precomputed S
+    S = np.abs(librosa.stft(y)) ** 2
+    S_pitch_pre = librosa.feature.pitch_spectrogram(S=S, sr=sr)
+    assert np.allclose(S_pitch, S_pitch_pre)
+
+    # Alternative intonations
+    for intervals in ["equal", "pythagorean", "ji5"]:
+        S_int = librosa.feature.pitch_spectrogram(
+            y=y, sr=sr, intervals=intervals, fmin="C1", n_pitches=60
+        )
+        assert S_int.shape[0] == 60
+        assert not np.isnan(S_int).any()
+
+    # Different filter windows
+    for win in ["boxcar", "triangle", "hann"]:
+        S_win = librosa.feature.pitch_spectrogram(
+            y=y, sr=sr, filter_window=win, fmin="C1", n_pitches=60
+        )
+        assert S_win.shape[0] == 60
+        assert not np.isnan(S_win).any()
+
+
+def test_chroma_pitch_to_chroma_equivalence(y_chirp):
+    y, sr = y_chirp
+    # Test chroma_cqt with refactored pitch_to_chroma
+    c_cqt = librosa.feature.chroma_cqt(y=y, sr=sr)
+    assert c_cqt.shape[0] == 12
+    assert not np.isnan(c_cqt).any()
+
+    # Test chroma_vqt with refactored pitch_to_chroma
+    c_vqt = librosa.feature.chroma_vqt(y=y, sr=sr, intervals="equal")
+    assert c_vqt.shape[0] == 12
+    assert not np.isnan(c_vqt).any()

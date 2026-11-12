@@ -133,7 +133,7 @@ def _interp_slice(
     except (ValueError, FloatingPointError):
         return np.full(len(t), fill, dtype=v.dtype)
 
-    return np.nan_to_num(res, copy=False, nan=fill)
+    return np.asarray(np.nan_to_num(res, copy=False, nan=fill))
 
 
 def _interp_axis(
@@ -202,7 +202,7 @@ def _interp_axis(
         )
         res = interp(target_coords)
         fill = fill_value if isinstance(fill_value, (int, float)) else 0.0
-        return np.nan_to_num(res, copy=False, nan=fill)
+        return np.asarray(np.nan_to_num(res, copy=False, nan=fill))
 
     # General path: multidimensional coordinates, multidimensional targets, or NaNs
     c_ndim = coords.ndim if coords.ndim > 1 else 0

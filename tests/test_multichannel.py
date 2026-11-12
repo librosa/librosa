@@ -714,6 +714,54 @@ def test_melspectrogram_multi_time(y_multi):
     assert not np.allclose(Call[0], Call[1])
 
 
+def test_logfrequency_spectrogram_multi(s_multi):
+    S, sr = s_multi
+
+    C0 = librosa.feature.logfrequency_spectrogram(S=S[0], sr=sr)
+    C1 = librosa.feature.logfrequency_spectrogram(S=S[1], sr=sr)
+    Call = librosa.feature.logfrequency_spectrogram(S=S, sr=sr)
+
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_logfrequency_spectrogram_multi_time(y_multi):
+    y, sr = y_multi
+
+    C0 = librosa.feature.logfrequency_spectrogram(y=y[0], sr=sr)
+    C1 = librosa.feature.logfrequency_spectrogram(y=y[1], sr=sr)
+    Call = librosa.feature.logfrequency_spectrogram(y=y, sr=sr)
+
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_pitch_spectrogram_multi(s_multi):
+    S, sr = s_multi
+
+    C0 = librosa.feature.pitch_spectrogram(S=S[0], sr=sr)
+    C1 = librosa.feature.pitch_spectrogram(S=S[1], sr=sr)
+    Call = librosa.feature.pitch_spectrogram(S=S, sr=sr)
+
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_pitch_spectrogram_multi_time(y_multi):
+    y, sr = y_multi
+
+    C0 = librosa.feature.pitch_spectrogram(y=y[0], sr=sr)
+    C1 = librosa.feature.pitch_spectrogram(y=y[1], sr=sr)
+    Call = librosa.feature.pitch_spectrogram(y=y, sr=sr)
+
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+    assert not np.allclose(Call[0], Call[1])
+
+
 @pytest.mark.parametrize("rate", [0.5, 2])
 def test_phase_vocoder(y_multi, rate):
     y, sr = y_multi

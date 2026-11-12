@@ -607,3 +607,244 @@ def test_diagonal_filter(n, window, angle, slope, zero_mean):
         )
 
     assert np.allclose(k2, kernel.T)
+
+
+def test_frequency_filterbank_shapes_and_windows():
+    sr, n_fft = 22050, 2048
+    f_in = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+    f_out = np.linspace(200, 4000, 32)
+
+    for win in ["triangle", "triang", "boxcar", "rect", "rectangular", "hann", "cosine", "gaussian"]:
+        for norm in [None, "slaney", 1, 2]:
+            fb = librosa.filters.frequency_filterbank(f_in, f_out, window=win, norm=norm)
+            assert fb.shape == (32, 1025)
+            assert not np.isnan(fb).any()
+            assert not np.isinf(fb).any()
+            assert np.all(fb >= 0)
+
+    # Test callable window
+    custom_win = lambda x: np.cos(np.pi * x / 2.0) ** 2
+    fb_custom = librosa.filters.frequency_filterbank(f_in, f_out, window=custom_win)
+    assert fb_custom.shape == (32, 1025)
+    assert not np.isnan(fb_custom).any()
+
+
+def test_frequency_filterbank_partition_of_unity():
+    # Linear scale partition of unity
+    f_out_lin = np.linspace(200, 4000, 20)
+    f_in_lin = np.linspace(200, 4000, 2000)
+
+    for win in ["triangle", "hann", "boxcar"]:
+        fb = librosa.filters.frequency_filterbank(f_in_lin, f_out_lin, window=win, scale="linear")
+        col_sum = fb.sum(axis=0)
+        assert np.allclose(col_sum, 1.0, atol=1e-5), f"Failed for {win} linear"
+
+    # Log scale partition of unity
+    f_out_log = 440.0 * 2.0 ** (np.arange(24) / 12.0)
+    f_in_log = np.geomspace(f_out_log[0], f_out_log[-1], 2000)
+
+    for win in ["triangle", "hann", "boxcar"]:
+        fb = librosa.filters.frequency_filterbank(f_in_log, f_out_log, window=win, scale="log")
+        col_sum = fb.sum(axis=0)
+        assert np.allclose(col_sum, 1.0, atol=1e-5), f"Failed for {win} log"
+
+
+def test_frequency_filterbank_explicit_bandwidths():
+    f_in = np.linspace(100, 5000, 1000)
+    f_out = np.array([500.0, 1000.0, 2000.0])
+    bws = np.array([200.0, 400.0, 800.0])
+
+    fb = librosa.filters.frequency_filterbank(f_in, f_out, bandwidths=bws, window="triangle")
+    assert fb.shape == (3, 1000)
+    # Check that filter 0 is zero outside [400, 600]
+    assert np.all(fb[0, f_in < 400] == 0)
+    assert np.all(fb[0, f_in > 600] == 0)
+    assert np.isclose(fb[0, np.argmin(np.abs(f_in - 500))], 1.0, atol=0.05)
+
+
+def test_frequency_filterbank_validation_errors():
+    f_in = np.linspace(100, 5000, 50)
+    f_out = np.linspace(200, 4000, 10)
+
+    # freq_in not 1D
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.frequency_filterbank(f_in[:, None], f_out)
+
+    # freq_out not 1D
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.frequency_filterbank(f_in, f_out[:, None])
+
+    # freq_out empty
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.frequency_filterbank(f_in, [])
+
+    # freq_in non-monotonic
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.frequency_filterbank(f_in[::-1], f_out)
+
+    # freq_out non-strictly increasing
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.frequency_filterbank(f_in, [200, 200, 300])
+
+    # scale invalid
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.frequency_filterbank(f_in, f_out, scale="mel")  # type: ignore
+
+    # scale log with non-positive freq_out
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.frequency_filterbank(f_in, [0.0, 100.0, 200.0], scale="log")
+
+    # single freq_out without bandwidths
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.frequency_filterbank(f_in, [500.0])
+
+    # unsupported window
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.frequency_filterbank(f_in, f_out, window="nonexistent")
+
+    # unsupported norm
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.frequency_filterbank(f_in, f_out, norm="unsupported")
+
+
+def test_logfrequency_filterbank():
+    sr, n_fft = 22050, 2048
+    fb = librosa.filters.logfrequency(sr=sr, n_fft=n_fft, bins_per_octave=12, fmin=32.7)
+    assert fb.shape[1] == 1025
+    assert fb.shape[0] > 0
+    assert not np.isnan(fb).any()
+
+    # Fixed n_bins configuration (e.g. 7 octaves at 24 bpo)
+    fb_custom = librosa.filters.logfrequency(
+        sr=44100, n_fft=2048, n_bins=168, bins_per_octave=24, fmin=30.0, window="triangle", norm="slaney"
+    )
+    assert fb_custom.shape == (168, 1025)
+    assert np.all(fb_custom >= 0)
+
+    # Note name as fmin and tuning
+    fb_note = librosa.filters.logfrequency(
+        sr=sr, n_fft=n_fft, n_bins=84, bins_per_octave=12, fmin="C1", tuning=0.5
+    )
+    assert fb_note.shape == (84, 1025)
+
+    # With explicit freq_in
+    cqt_freqs = librosa.cqt_frequencies(n_bins=84, fmin=32.7)
+    fb_cqt = librosa.filters.logfrequency(freq_in=cqt_freqs, fmin=32.7, n_bins=84, bins_per_octave=12)
+    assert fb_cqt.shape[1] == 84
+
+    # Validation errors
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.logfrequency()  # neither sr nor freq_in
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.logfrequency(sr=22050, n_fft=2048, fmin=-10)
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.logfrequency(sr=22050, n_fft=2048, fmin=15000)  # fmin >= Nyquist
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.logfrequency(sr=22050, n_fft=2048, n_bins=-5)
+
+
+def test_pitch_filterbank_libfmp_equivalence():
+    Fs = 22050
+    N = 4096
+    k_freq = np.arange(N // 2 + 1) * Fs / N
+
+    # libfmp definition:
+    def f_pitch_fmp(p, pitch_ref=69, freq_ref=440.0):
+        return freq_ref * (2.0 ** ((p - pitch_ref) / 12.0))
+
+    def pool_pitch_fmp(p):
+        lower = f_pitch_fmp(p - 0.5)
+        upper = f_pitch_fmp(p + 0.5)
+        return np.where((lower <= k_freq) & (k_freq < upper))[0]
+
+    # Our pitch filterbank:
+    fb = librosa.filters.pitch(sr=Fs, n_fft=N, n_pitches=128, window="boxcar", norm=None)
+    assert fb.shape == (128, N // 2 + 1)
+
+    for p in range(128):
+        fmp_bins = pool_pitch_fmp(p)
+        our_bins = np.where(fb[p] > 0)[0]
+        assert np.array_equal(fmp_bins, our_bins), f"Mismatch for pitch {p}"
+        # Indicator weights should be exactly 1.0
+        if len(our_bins) > 0:
+            assert np.all(fb[p, our_bins] == 1.0)
+
+
+def test_pitch_filterbank_temperaments():
+    sr, n_fft = 22050, 2048
+
+    for intervals in ["equal", "pythagorean", "ji3", "ji5", "ji7"]:
+        fb = librosa.filters.pitch(sr=sr, n_fft=n_fft, intervals=intervals, fmin="C1", n_pitches=60)
+        assert fb.shape == (60, 1025)
+        assert not np.isnan(fb).any()
+
+    # Custom ratios
+    custom_ratios = [1.0, 9 / 8, 5 / 4, 4 / 3, 3 / 2, 5 / 3, 15 / 8]
+    fb_custom = librosa.filters.pitch(
+        sr=sr, n_fft=n_fft, intervals=custom_ratios, fmin=55.0, n_pitches=21
+    )
+    assert fb_custom.shape == (21, 1025)
+
+    # Different window shapes
+    for win in ["triangle", "hann", "gaussian"]:
+        fb_win = librosa.filters.pitch(sr=sr, n_fft=n_fft, window=win, fmin="C1", n_pitches=60)
+        assert fb_win.shape == (60, 1025)
+        assert not np.isnan(fb_win).any()
+
+
+def test_pitch_to_chroma_and_deprecation():
+    # Check pitch_to_chroma bases
+    p2c_c = librosa.filters.pitch_to_chroma(84, base="C")
+    p2c_a = librosa.filters.pitch_to_chroma(84, base="A")
+    assert p2c_c.shape == (12, 84)
+    assert p2c_a.shape == (12, 84)
+
+    # Circular shift between C and A base: A is 9 semitones above C (or 3 semitones below)
+    assert np.allclose(np.roll(p2c_c, -9, axis=0), p2c_a)
+
+    # Numeric base (0 for C, 9 for A)
+    p2c_0 = librosa.filters.pitch_to_chroma(84, base=0)
+    p2c_9 = librosa.filters.pitch_to_chroma(84, base=9)
+    assert np.array_equal(p2c_c, p2c_0)
+    assert np.array_equal(p2c_a, p2c_9)
+
+    # Check that cq_to_chroma raises a FutureWarning and produces exact match
+    with pytest.warns(FutureWarning, match="[Dd]eprecated"):
+        cq_c = librosa.filters.cq_to_chroma(84, base_c=True)
+    assert np.array_equal(cq_c, p2c_c)
+
+    with pytest.warns(FutureWarning, match="[Dd]eprecated"):
+        cq_a = librosa.filters.cq_to_chroma(84, base_c=False)
+    assert np.array_equal(cq_a, p2c_a)
+
+    # Check error cases
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch_to_chroma(84, bins_per_octave=13, n_chroma=12)
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch_to_chroma(84, base=None)  # type: ignore
+
+
+def test_mel_vectorized_regression():
+    for sr in [16000, 22050, 44100]:
+        for n_fft in [1024, 2048]:
+            for n_mels in [40, 80, 128]:
+                for htk in [False, True]:
+                    for norm in ["slaney", 1, 2, None]:
+                        for dtype in [np.float32, np.float64]:
+                            fb = librosa.filters.mel(
+                                sr=sr,
+                                n_fft=n_fft,
+                                n_mels=n_mels,
+                                htk=htk,
+                                norm=norm,
+                                dtype=dtype,
+                            )
+                            assert fb.shape == (n_mels, 1 + n_fft // 2)
+                            assert fb.dtype == dtype
+                            assert not np.isnan(fb).any()
+                            assert np.all(fb >= 0)
+                            active = fb.max(axis=-1) > 0
+                            if norm == 1:
+                                assert np.allclose(fb[active].sum(axis=-1), 1.0, atol=1e-5)
+                            elif norm == 2:
+                                assert np.allclose(np.linalg.norm(fb[active], axis=-1), 1.0, atol=1e-5)

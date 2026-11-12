@@ -928,6 +928,9 @@ _cqt_ax_types = (
     "cqt_note",
     "cqt_svara",
     "cqt_oct3",
+    "log_hz",
+    "pitch_hz",
+    "pitch_note",
 )
 _vqt_ax_types = (
     "vqt_hz",
@@ -1015,6 +1018,9 @@ def _scale_axes(axes, ax_type, which, tempo_min, tempo_max):
         "cqt_note",
         "cqt_svara",
         "cqt_oct3",
+        "log_hz",
+        "pitch_hz",
+        "pitch_note",
         "vqt_hz",
         "vqt_note",
         "vqt_fjs",
@@ -1181,7 +1187,7 @@ def _decorate_axis(
         axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Lag ({:s})".format(time_units[unit]))
 
-    elif ax_type == "cqt_note":
+    elif ax_type == "cqt_note" or (ax_type == "pitch_note" and (intervals is None or intervals == "equal")):
         axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
         # Where is C1 relative to 2**k hz?
         log_C1 = np.log2(core.note_to_hz("C1"))
@@ -1241,7 +1247,7 @@ def _decorate_axis(
         )
         axis.set_label_text("Note")
 
-    elif ax_type == "vqt_hz":
+    elif ax_type == "vqt_hz" or (ax_type == "pitch_hz" and intervals not in (None, "equal")):
         if fmin is None:
             fmin = core.note_to_hz("C1")
         axis.set_major_formatter(LogHzFormatter())
@@ -1257,7 +1263,7 @@ def _decorate_axis(
         )
         axis.set_label_text("Hz")
 
-    elif ax_type == "vqt_note":
+    elif ax_type == "vqt_note" or (ax_type == "pitch_note" and intervals not in (None, "equal")):
         if fmin is None:
             fmin = core.note_to_hz("C1")
         axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
@@ -1273,7 +1279,7 @@ def _decorate_axis(
         )
         axis.set_label_text("Note")
 
-    elif ax_type in ["cqt_hz"]:
+    elif ax_type in ["cqt_hz", "log_hz"] or (ax_type == "pitch_hz" and (intervals is None or intervals == "equal")):
         axis.set_major_formatter(LogHzFormatter())
         log_C1 = np.log2(core.note_to_hz("C1"))
         C_offset = 2.0 ** (log_C1 - np.floor(log_C1))
@@ -1421,6 +1427,22 @@ def _coord_vqt_hz(
         )
 
     return freqs
+
+
+def _coord_pitch_hz(
+    n: int,
+    fmin: _FloatLike_co | None = None,
+    bins_per_octave: int = 12,
+    sr: float = 22050,
+    intervals: str | Collection[float] | None = None,
+    **kwargs: Any,
+) -> _Array1D[np.float64]:
+    """Get Pitch bin frequencies"""
+    if intervals is None or intervals == "equal":
+        return _coord_cqt_hz(n, fmin=fmin, bins_per_octave=bins_per_octave, sr=sr, **kwargs)
+    return _coord_vqt_hz(
+        n, fmin=fmin, bins_per_octave=bins_per_octave, sr=sr, intervals=intervals, **kwargs
+    )
 
 
 def _coord_chroma(n: int, bins_per_octave: int = 12, **_kwargs: Any) -> np.ndarray:

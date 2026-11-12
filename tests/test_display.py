@@ -933,7 +933,7 @@ def test_sharex_waveplot_ms(y, sr, S_abs):
     return fig
 
 
-@pytest.mark.parametrize("format_str", ["cqt_hz", "cqt_note", "vqt_hz"])
+@pytest.mark.parametrize("format_str", ["cqt_hz", "cqt_note", "vqt_hz", "log_hz", "pitch_hz", "pitch_note"])
 def test_axis_bound_warning(format_str):
 
     with pytest.warns(UserWarning):
@@ -950,6 +950,27 @@ def test_axis_bound_warning(format_str):
             bins_per_octave=12,
             intervals="ji3",
         )
+
+
+@pytest.mark.parametrize("y_axis", ["log_hz", "pitch_hz", "pitch_note"])
+def test_specshow_log_pitch_axes(y_axis):
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    D = np.ones((84, 10))
+    librosa.display.specshow(D, y_axis=y_axis, fmin=32.7, bins_per_octave=12, ax=ax)
+    plt.close(fig)
+
+
+def test_specshow_pitch_temperaments():
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    D = np.ones((60, 10))
+    librosa.display.specshow(
+        D, y_axis="pitch_note", fmin=32.7, bins_per_octave=12, intervals="pythagorean", ax=ax
+    )
+    plt.close(fig)
 
 
 @pytest.mark.mpl_image_compare(

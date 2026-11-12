@@ -46,6 +46,7 @@ from .formatting import (
     _coord_fourier_tempo,
     _coord_mel_hz,
     _coord_n,
+    _coord_pitch_hz,
     _coord_tempo,
     _coord_time,
     _coord_vqt_hz,
@@ -133,6 +134,9 @@ def specshow(
         - 'cqt_oct3' : like 'oct3' above, but using the CQT scale.
         - 'cqt_note' : pitches are determined by the CQT scale.
         - 'cqt_svara' : like `cqt_note` but using Hindustani or Carnatic svara
+        - 'log_hz' : frequencies are determined by a logarithmic filterbank (`feature.logfrequency_spectrogram`).
+        - 'pitch_hz' : frequencies are determined by a pitch filterbank (`feature.pitch_spectrogram`).
+        - 'pitch_note' : pitches are determined by a pitch filterbank (`feature.pitch_spectrogram`).
         - 'vqt_hz' : like `cqt_hz` but using Variable-Q Transform (VQT) scale.
         - 'vqt_oct3' : like 'oct3' above, but using the VQT scale.
         - 'vqt_fjs' : like `cqt_note` but using Functional Just System (FJS)
@@ -256,7 +260,7 @@ def specshow(
         Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
         scales.  Can be provided as a number (in Hz) or a note name in SPN format (e.g., 'C1').
 
-        If ``y_axis`` is `cqt_hz` or `cqt_note` and ``fmin`` is not given,
+        If ``y_axis`` is `cqt_hz`, `cqt_note`, `log_hz`, `pitch_hz`, or `pitch_note` and ``fmin`` is not given,
         it is set by default to ``note_to_hz('C1')``.
 
     fmax : float > 0 [scalar], str, or None
@@ -589,6 +593,9 @@ def _mesh_coords(ax_type, coords, n, **kwargs):
         "cqt_note": _coord_cqt_hz,
         "cqt_svara": _coord_cqt_hz,
         "cqt_oct3": _coord_cqt_hz,
+        "log_hz": _coord_cqt_hz,
+        "pitch_hz": _coord_pitch_hz,
+        "pitch_note": _coord_pitch_hz,
         "vqt_fjs": _coord_vqt_hz,
         "vqt_hz": _coord_vqt_hz,
         "vqt_note": _coord_vqt_hz,
