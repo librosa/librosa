@@ -101,22 +101,38 @@ def _interp_slice(
         fill = fill_value if isinstance(fill_value, (int, float)) else 0.0
         return np.full(len(t), fill, dtype=v.dtype)
 
-    try:
-        interp = scipy.interpolate.interp1d(
-            c[idx],
-            v[idx],
-            bounds_error=False,
-            fill_value=fill_value,
-            assume_sorted=assume_sorted,
-            kind=kind,
-            copy=False,
-        )
-        res = interp(t)
-    except ValueError:
-        fill = fill_value if isinstance(fill_value, (int, float)) else 0.0
-        return np.full(len(t), fill, dtype=v.dtype)
+    c_clean = c[idx]
+    v_clean = v[idx]
+
+    # If coordinates are not asserted to be sorted, check for non-increasing or duplicate values
+    if not assume_sorted and len(c_clean) > 1 and np.any(np.diff(c_clean) <= 0):
+        c_clean, inv, counts = np.unique(c_clean, return_inverse=True, return_counts=True)
+        if len(c_clean) < 2:
+            fill = (
+                v_clean[0]
+                if len(c_clean) == 1
+                else (fill_value if isinstance(fill_value, (int, float)) else 0.0)
+            )
+            return np.full(len(t), fill, dtype=v.dtype)
+        v_clean = np.bincount(inv, weights=v_clean) / counts
+        assume_sorted = True
 
     fill = fill_value if isinstance(fill_value, (int, float)) else 0.0
+    try:
+        with np.errstate(divide="ignore", invalid="ignore"):
+            interp = scipy.interpolate.interp1d(
+                c_clean,
+                v_clean,
+                bounds_error=False,
+                fill_value=fill_value,
+                assume_sorted=assume_sorted,
+                kind=kind,
+                copy=False,
+            )
+            res = interp(t)
+    except (ValueError, FloatingPointError):
+        return np.full(len(t), fill, dtype=v.dtype)
+
     return np.nan_to_num(res, copy=False, nan=fill)
 
 
