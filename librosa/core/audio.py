@@ -1754,8 +1754,9 @@ def clicks(
         desired sampling rate of the output signal
     hop_length : int > 0
         if positions are specified by ``frames``, the number of samples between frames.
-    click_freq : float > 0
+    click_freq : float > 0 or str
         frequency (in Hz) of the default click signal.  Default is 1KHz.
+        Can also be provided as a note name (e.g., 'A5').
     click_duration : float > 0
         duration (in seconds) of the default click signal.  Default is 100ms.
     click : np.ndarray or None
@@ -1824,6 +1825,8 @@ def clicks(
 
     else:
         # Create default click signal
+        click_freq = util._ensure_hz(click_freq)
+
         if click_duration <= 0:
             raise ParameterError("click_duration must be strictly positive")
 
@@ -1866,7 +1869,7 @@ def clicks(
 
 
 def tone(
-    frequency: _FloatLike_co,
+    frequency: _FloatLike_co | str,
     *,
     sr: float = 22050,
     length: int | None = None,
@@ -1877,8 +1880,8 @@ def tone(
 
     Parameters
     ----------
-    frequency : float > 0
-        frequency
+    frequency : float > 0 or str
+        frequency (in Hz) or note name in SPN format (e.g., 'A4')
     sr : number > 0
         desired sampling rate of the output signal
     length : int > 0
@@ -1907,11 +1910,11 @@ def tone(
     --------
     Generate a pure sine tone A4
 
-    >>> tone = librosa.tone(440, duration=1, sr=22050)
+    >>> tone = librosa.tone("A4", duration=1, sr=22050)
 
     Or generate the same signal using `length`
 
-    >>> tone = librosa.tone(440, sr=22050, length=22050)
+    >>> tone = librosa.tone("A4", sr=22050, length=22050)
 
     Display spectrogram
 
@@ -1923,6 +1926,8 @@ def tone(
     """
     if frequency is None:
         raise ParameterError('"frequency" must be provided')
+
+    frequency = util._ensure_hz(frequency)
 
     # Compute signal length
     if length is None:
@@ -1939,8 +1944,8 @@ def tone(
 
 def chirp(
     *,
-    fmin: _FloatLike_co,
-    fmax: _FloatLike_co,
+    fmin: _FloatLike_co | str,
+    fmax: _FloatLike_co | str,
     sr: float = 22050,
     length: int | None = None,
     duration: float | None = None,
@@ -1953,11 +1958,11 @@ def chirp(
 
     Parameters
     ----------
-    fmin : float > 0
-        initial frequency
+    fmin : float > 0 or str
+        initial frequency (in Hz) or note name in SPN format (e.g., 'A2')
 
-    fmax : float > 0
-        final frequency
+    fmax : float > 0 or str
+        final frequency (in Hz) or note name in SPN format (e.g., 'A8')
 
     sr : number > 0
         desired sampling rate of the output signal
@@ -1999,17 +2004,17 @@ def chirp(
 
     Examples
     --------
-    Generate a exponential chirp from A2 to A8
+    Generate an exponential chirp from A2 to A8
 
-    >>> exponential_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1, sr=22050)
+    >>> exponential_chirp = librosa.chirp(fmin="A2", fmax="A8", duration=1, sr=22050)
 
     Or generate the same signal using ``length``
 
-    >>> exponential_chirp = librosa.chirp(fmin=110, fmax=110*64, sr=22050, length=22050)
+    >>> exponential_chirp = librosa.chirp(fmin="A2", fmax="A8", sr=22050, length=22050)
 
     Or generate a linear chirp instead
 
-    >>> linear_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1, linear=True, sr=22050)
+    >>> linear_chirp = librosa.chirp(fmin="A2", fmax="A8", duration=1, linear=True, sr=22050)
 
     Display spectrogram for both exponential and linear chirps.
 
@@ -2027,6 +2032,9 @@ def chirp(
     """
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
+
+    fmin = util._ensure_hz(fmin)
+    fmax = util._ensure_hz(fmax)
 
     # Compute signal duration
     period = 1.0 / sr

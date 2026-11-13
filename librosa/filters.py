@@ -90,8 +90,8 @@ def mel(
     sr: float,
     n_fft: int,
     n_mels: int = 128,
-    fmin: float = 0.0,
-    fmax: float | None = None,
+    fmin: float | str = 0.0,
+    fmax: float | str | None = None,
     htk: bool = False,
     norm: Literal["slaney"] | float | None = "slaney",
     dtype: DTypeLike = np.float32,
@@ -112,11 +112,11 @@ def mel(
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
 
-    fmin : float >= 0 [scalar]
-        lowest frequency (in Hz)
+    fmin : float >= 0 or str [scalar]
+        lowest frequency (in Hz) or note name (e.g., 'C1')
 
-    fmax : float >= 0 [scalar]
-        highest frequency (in Hz).
+    fmax : float >= 0 or str [scalar]
+        highest frequency (in Hz) or note name (e.g., 'C7').
         If `None`, use ``fmax = sr / 2.0``
 
     htk : bool [scalar]
@@ -174,8 +174,12 @@ def mel(
     >>> ax.set(ylabel='Mel filter', title='Mel filter bank')
     >>> fig.colorbar(img, ax=ax)
     """
+    fmin = util._ensure_hz(fmin)
+
     if fmax is None:
         fmax = float(sr) / 2
+    else:
+        fmax = util._ensure_hz(fmax)
 
     # Initialize the weights
     n_mels = int(n_mels)
@@ -640,7 +644,7 @@ def wavelet(
     --------
     Create a constant-Q basis
 
-    >>> freqs = librosa.cqt_frequencies(n_bins=84, fmin=librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=84, fmin='C1')
     >>> basis, lengths = librosa.filters.wavelet(freqs=freqs, sr=22050)
 
     Plot one octave of filters in time and frequency
@@ -710,7 +714,7 @@ def cq_to_chroma(
     *,
     bins_per_octave: int = 12,
     n_chroma: int = 12,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     window: np.ndarray | None = None,
     base_c: bool = True,
     dtype: DTypeLike = np.float32,
@@ -725,7 +729,7 @@ def cq_to_chroma(
         How many bins per octave in the CQT
     n_chroma : int > 0 [scalar]
         Number of output bins (per octave) in the chroma
-    fmin : None or float > 0
+    fmin : None, float > 0, or str
         Center frequency of the first constant-Q channel.
         Default: 'C1' ~= 32.7 Hz
     window : None or np.ndarray
@@ -785,7 +789,7 @@ def cq_to_chroma(
     if fmin is None:
         fmin_ = note_to_hz("C1")
     else:
-        fmin_ = fmin
+        fmin_ = util._ensure_hz(fmin)
 
     if np.mod(n_merge, 1) != 0:
         raise ParameterError(
