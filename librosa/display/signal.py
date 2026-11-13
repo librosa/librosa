@@ -947,6 +947,8 @@ def wavef0(
         Sa (tonic) frequency in Hz for the frequency axis.
         Required for `cqt_svara` mode.
 
+        Note that note name strings (e.g., 'C4') are not supported for ``Sa``.
+
     mela : str or int or None
         Mela (scale) name or index for the frequency axis.
         This is used to determine the svara names for the frequency axis when using

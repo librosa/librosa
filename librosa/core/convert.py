@@ -1405,7 +1405,7 @@ def fft_frequencies(
 def cqt_frequencies(
     n_bins: int,
     *,
-    fmin: float | str,
+    fmin: _FloatLike_co | str,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     dtype: npt.DTypeLike = np.float64,
@@ -1454,8 +1454,8 @@ def cqt_frequencies(
 def mel_frequencies(
     n_mels: int = 128,
     *,
-    fmin: float | str = 0.0,
-    fmax: float | str = 11025.0,
+    fmin: _FloatLike_co | str = 0.0,
+    fmax: _FloatLike_co | str = 11025.0,
     htk: bool = False,
     dtype: npt.DTypeLike = np.float64,
 ) -> np.ndarray:
@@ -2415,6 +2415,8 @@ def hz_to_svara_h(
 
     Sa : positive number
         Frequency (in Hz) of the reference Sa.
+        Note that note name strings are not supported; to convert from note
+        names, use `note_to_svara_h`.
 
     abbr : bool
         If `True` (default) return abbreviated names ('S', 'r', 'R', 'g', 'G', ...)
@@ -2682,6 +2684,8 @@ def hz_to_svara_c(
 
     Sa : positive number
         Frequency (in Hz) of the reference Sa.
+        Note that note name strings are not supported; to convert from note
+        names, use `note_to_svara_c`.
 
     mela : int [1, 72] or str
         The melakarta raga to use.
@@ -2829,7 +2833,7 @@ def note_to_svara_c(
 def hz_to_fjs(
     frequencies: _FloatLike_co,
     *,
-    fmin: float | str | None = ...,
+    fmin: _FloatLike_co | str | None = ...,
     unison: str | None = ...,
     unicode: bool = ...,
 ) -> str: ...
@@ -2837,14 +2841,14 @@ def hz_to_fjs(
 def hz_to_fjs(
     frequencies: _SequenceLike[_FloatLike_co],
     *,
-    fmin: float | str | None = ...,
+    fmin: _FloatLike_co | str | None = ...,
     unison: str | None = ...,
     unicode: bool = ...,
 ) -> npt.NDArray[np.str_]: ...
 def hz_to_fjs(
     frequencies: _ScalarOrSequence[_FloatLike_co],
     *,
-    fmin: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
     unison: str | None = None,
     unicode: bool = False,
 ) -> str | npt.NDArray[np.str_]:

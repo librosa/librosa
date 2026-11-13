@@ -458,8 +458,8 @@ def _cumulative_mean_normalized_difference(
 def yin(
     y: np.ndarray,
     *,
-    fmin: float | str,
-    fmax: float | str,
+    fmin: _FloatLike_co | str,
+    fmax: _FloatLike_co | str,
     sr: float = 22050,
     frame_length: int = 2048,
     hop_length: int | None = None,
@@ -622,8 +622,8 @@ def yin(
 def pyin(
     y: np.ndarray,
     *,
-    fmin: float | str,
-    fmax: float | str,
+    fmin: _FloatLike_co | str,
+    fmax: _FloatLike_co | str,
     sr: float = 22050,
     frame_length: int = 2048,
     hop_length: int | None = None,
