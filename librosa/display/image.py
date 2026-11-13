@@ -290,8 +290,6 @@ def specshow(
         of Sa within the chromagram.
         If not provided, Sa will default to 0 (equivalent to `C`).
 
-        Note that note name strings (e.g., 'C4' or 'C') are not supported for ``Sa``.
-
     mela : str or int, optional
         If using `chroma_c` or `cqt_svara` display mode, specify the melakarta raga.
 
