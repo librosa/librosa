@@ -2415,8 +2415,6 @@ def hz_to_svara_h(
 
     Sa : positive number
         Frequency (in Hz) of the reference Sa.
-        Note that note name strings are not supported; to convert from note
-        names, use `note_to_svara_h`.
 
     abbr : bool
         If `True` (default) return abbreviated names ('S', 'r', 'R', 'g', 'G', ...)
@@ -2684,8 +2682,6 @@ def hz_to_svara_c(
 
     Sa : positive number
         Frequency (in Hz) of the reference Sa.
-        Note that note name strings are not supported; to convert from note
-        names, use `note_to_svara_c`.
 
     mela : int [1, 72] or str
         The melakarta raga to use.
