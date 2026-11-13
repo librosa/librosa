@@ -424,8 +424,9 @@ def spectral_contrast(
         Center frequencies for spectrogram bins.
         If `None`, then FFT bin center frequencies are used.
         Otherwise, it can be a single array of ``d`` center frequencies.
-    fmin : float > 0
-        Frequency cutoff for the first bin ``[0, fmin]``
+    fmin : float > 0 or str
+        Frequency cutoff for the first bin ``[0, fmin]``, specified in Hz or
+        as a note name in SPN format (e.g., 'C3').
         Subsequent bins will cover ``[fmin, 2*fmin]`, `[2*fmin, 4*fmin]``, etc.
     n_bands : int > 1
         number of frequency bands
@@ -465,6 +466,8 @@ def spectral_contrast(
     >>> y, sr = librosa.loadx('trumpet')
     >>> S = np.abs(librosa.stft(y))
     >>> contrast = librosa.feature.spectral_contrast(S=S, sr=sr)
+    >>> # Or using a note name for the minimum frequency
+    >>> contrast = librosa.feature.spectral_contrast(S=S, sr=sr, fmin='C3')
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)

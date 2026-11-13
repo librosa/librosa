@@ -217,11 +217,11 @@ def piptrack(
     hop_length : int > 0 [scalar] or None
         number of samples to hop
 
-    fmin : float > 0 [scalar]
-        lower frequency cutoff.
+    fmin : float > 0 [scalar] or str
+        lower frequency cutoff (in Hz) or note name in SPN format (e.g., 'C2').
 
-    fmax : float > 0 [scalar]
-        upper frequency cutoff.
+    fmax : float > 0 [scalar] or str
+        upper frequency cutoff (in Hz) or note name in SPN format (e.g., 'C7').
 
     threshold : float in `(0, 1)`
         A bin in spectrum ``S`` is considered a pitch when it is greater than
