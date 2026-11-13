@@ -92,6 +92,11 @@ R = librosa.segment.recurrence_matrix(Csync_stack, width=3, mode="affinity",
 df = librosa.segment.timelag_filter(scipy.ndimage.median_filter)
 Rf = df(R, size=(1, 7))
 
+# The time-lag filter can break the symmetry of R near the first and last
+# beats. Symmetrizing again keeps the graph undirected, so that L (below)
+# is a proper normalized Laplacian for scipy.linalg.eigh.
+Rf = 0.5 * (Rf + Rf.T)
+
 
 ###################################################################
 # Now let's build the sequence matrix (S_loc) using mfcc-similarity
