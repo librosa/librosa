@@ -78,8 +78,9 @@ def cqt(
     hop_length : int > 0 [scalar]
         number of samples between successive CQT columns.
 
-    fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
+    fmin : float > 0 [scalar], str, or None
+        Minimum frequency (in Hz) or note name in SPN format (e.g., 'C1').
+        Defaults to `C1 ~= 32.70 Hz`.
 
     n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``.
@@ -244,8 +245,9 @@ def hybrid_cqt(
     hop_length : int > 0 [scalar]
         number of samples between successive CQT columns.
 
-    fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
+    fmin : float > 0 [scalar], str, or None
+        Minimum frequency (in Hz) or note name in SPN format (e.g., 'C1').
+        Defaults to `C1 ~= 32.70 Hz`.
 
     n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
@@ -454,8 +456,9 @@ def pseudo_cqt(
     hop_length : int > 0 [scalar]
         number of samples between successive CQT columns.
 
-    fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
+    fmin : float > 0 [scalar], str, or None
+        Minimum frequency (in Hz) or note name in SPN format (e.g., 'C1').
+        Defaults to `C1 ~= 32.70 Hz`.
 
     n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
@@ -632,8 +635,9 @@ def icqt(
     hop_length : int > 0 [scalar]
         number of samples between successive frames
 
-    fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
+    fmin : float > 0 [scalar], str, or None
+        Minimum frequency (in Hz) or note name in SPN format (e.g., 'C1').
+        Defaults to `C1 ~= 32.70 Hz`.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
@@ -869,8 +873,9 @@ def vqt(
     hop_length : int > 0 [scalar]
         number of samples between successive VQT columns.
 
-    fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
+    fmin : float > 0 [scalar], str, or None
+        Minimum frequency (in Hz) or note name in SPN format (e.g., 'C1').
+        Defaults to `C1 ~= 32.70 Hz`.
 
     n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
@@ -1348,10 +1353,9 @@ def griffinlim_cqt(
     hop_length : int > 0
         The hop length of the CQT
 
-    fmin : number > 0
-        Minimum frequency for the CQT.
-
-        If not provided, it defaults to `C1`.
+    fmin : number > 0, str, or None
+        Minimum frequency for the CQT (in Hz) or note name in SPN format (e.g., 'C1').
+        If not provided, it defaults to `C1 ~= 32.70 Hz`.
 
     bins_per_octave : int > 0
         Number of bins per octave
