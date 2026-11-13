@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Final, overload
 import msgpack
 import numpy as np
 
+from .. import util
 from .._cache import cache
 from ..util.files import _resource_file
 
@@ -28,7 +29,7 @@ with _resource_file("librosa.core", "intervals.msgpack") as _imsgpack, _imsgpack
 def interval_frequencies(
     n_bins: int,
     *,
-    fmin: _FloatLike_co,
+    fmin: _FloatLike_co | str,
     intervals: str | Collection[float],
     bins_per_octave: int = 12,
     tuning: float = 0.0,
@@ -41,8 +42,8 @@ def interval_frequencies(
     n_bins : int
         The number of frequencies to generate
 
-    fmin : float > 0
-        The minimum frequency
+    fmin : float > 0 or str
+        The minimum frequency (in Hz) or note name (e.g., 'A1')
 
     intervals : str or array of floats in [1, 2)
         If `str`, must be one of the following:
@@ -96,6 +97,8 @@ def interval_frequencies(
     array([ 55.   ,  73.333,  82.5  , 110.   , 146.667, 165.   , 220.   ,
        293.333, 330.   ])
     """
+    fmin = util._ensure_hz(fmin)
+
     if isinstance(intervals, str):
         if intervals == "equal":
             # Maybe include tuning here?

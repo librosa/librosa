@@ -218,7 +218,7 @@ import mir_eval.display
 
 bound_times = librosa.frames_to_time(bound_frames)
 freqs = librosa.cqt_frequencies(n_bins=C.shape[0],
-                                fmin=librosa.note_to_hz("C1"),
+                                fmin="C1",
                                 bins_per_octave=BINS_PER_OCTAVE)
 
 fig, ax = plt.subplots(figsize=(8, 5), nrows=2, gridspec_kw={"height_ratios": [1, 4]},

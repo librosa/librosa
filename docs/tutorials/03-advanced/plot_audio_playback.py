@@ -35,8 +35,8 @@ import mir_eval.sonify
 
 sr = 22050
 
-y_sweep = librosa.chirp(fmin=librosa.note_to_hz("C3"),
-                        fmax=librosa.note_to_hz("C5"),
+y_sweep = librosa.chirp(fmin="C3",
+                        fmax="C5",
                         sr=sr,
                         duration=1)
 
@@ -76,8 +76,8 @@ Audio(url=librosa.example("trumpet", url=True))
 # Using fill_na=None retains the best-guess f0 at unvoiced frames
 f0, voiced_flag, voiced_probs = librosa.pyin(y,
                                              sr=sr,
-                                             fmin=librosa.note_to_hz("C2"),
-                                             fmax=librosa.note_to_hz("C7"),
+                                             fmin="C2",
+                                             fmax="C7",
                                              fill_na=None)
 
 # To synthesize the f0, we'll need sample times

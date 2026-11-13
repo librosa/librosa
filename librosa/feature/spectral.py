@@ -1337,7 +1337,7 @@ def chroma_cqt(
     sr: float = 22050,
     C: np.ndarray | None = None,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     norm: float | None = np.inf,
     threshold: float = 0.0,
     tuning: float | None = None,
@@ -1359,7 +1359,7 @@ def chroma_cqt(
         a pre-computed constant-Q spectrogram
     hop_length : int > 0
         number of samples between successive chroma frames
-    fmin : float > 0
+    fmin : float > 0 or str
         minimum frequency to analyze in the CQT.
         Default: `C1 ~= 32.7 Hz`
     norm : int > 0, +-np.inf, or None
@@ -1423,6 +1423,8 @@ def chroma_cqt(
             f"multiple of n_chroma={n_chroma}"
         )
 
+    fmin = util._ensure_hz(fmin)
+
     # Build the CQT if we don't have one already
     if C is None:
         if y is None:
@@ -1467,7 +1469,7 @@ def chroma_cens(
     sr: float = 22050,
     C: np.ndarray | None = None,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     tuning: float | None = None,
     n_chroma: int = 12,
     n_octaves: int = 7,
@@ -1505,7 +1507,7 @@ def chroma_cens(
         a pre-computed constant-Q spectrogram
     hop_length : int > 0
         number of samples between successive chroma frames
-    fmin : float > 0
+    fmin : float > 0 or str
         minimum frequency to analyze in the CQT.
         Default: `C1 ~= 32.7 Hz`
     tuning : float [scalar] or None
@@ -1617,7 +1619,7 @@ def chroma_vqt(
     sr: float = 22050,
     V: np.ndarray | None = None,
     hop_length: int = 512,
-    fmin: float | None = None,
+    fmin: float | str | None = None,
     intervals: str | Collection[float],
     norm: float | None = np.inf,
     threshold: float = 0.0,
@@ -1645,7 +1647,7 @@ def chroma_vqt(
         a pre-computed variable-Q spectrogram
     hop_length : int > 0
         number of samples between successive chroma frames
-    fmin : float > 0
+    fmin : float > 0 or str
         minimum frequency to analyze in the CQT.
         Default: `C1 ~= 32.7 Hz`
     intervals : str or array of floats in [1, 2)
@@ -1705,6 +1707,8 @@ def chroma_vqt(
     # If intervals are provided as an array, override BPO
     if not isinstance(intervals, str):
         bins_per_octave = len(intervals)
+
+    fmin = util._ensure_hz(fmin)
 
     # Build the CQT if we don't have one already
     if V is None:
@@ -1777,7 +1781,7 @@ def tonnetz(
         a pre-computed constant-Q spectrogram
     hop_length : int > 0
         number of samples between successive chroma frames
-    fmin : float > 0
+    fmin : float > 0 or str
         minimum frequency to analyze in the CQT.
         Default: `C1 ~= 32.7 Hz`
     norm : int > 0, +-np.inf, or None
@@ -1968,10 +1972,10 @@ def mfcc(
         additional keyword arguments for Mel filter bank parameters
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
-    fmin : float >= 0 [scalar]
-        lowest frequency (in Hz)
-    fmax : float >= 0 [scalar]
-        highest frequency (in Hz).
+    fmin : float >= 0 or str [scalar]
+        lowest frequency (in Hz) or note name (e.g., 'C1')
+    fmax : float >= 0 or str [scalar]
+        highest frequency (in Hz) or note name (e.g., 'C7').
         If `None`, use ``fmax = sr / 2.0``
     htk : bool [scalar]
         use HTK formula instead of Slaney
@@ -2145,10 +2149,10 @@ def melspectrogram(
         additional keyword arguments for Mel filter bank parameters
     n_mels : int > 0 [scalar]
         number of Mel bands to generate
-    fmin : float >= 0 [scalar]
-        lowest frequency (in Hz)
-    fmax : float >= 0 [scalar]
-        highest frequency (in Hz).
+    fmin : float >= 0 or str [scalar]
+        lowest frequency (in Hz) or note name (e.g., 'C1')
+    fmax : float >= 0 or str [scalar]
+        highest frequency (in Hz) or note name (e.g., 'C7').
         If `None`, use ``fmax = sr / 2.0``
     htk : bool [scalar]
         use HTK formula instead of Slaney

@@ -164,8 +164,7 @@ def cqt(
 
     Limit the frequency range
 
-    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
-    ...                 n_bins=60))
+    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin='C2', n_bins=60))
     >>> C
     array([[6.830e-04, 6.361e-04, ..., 7.362e-09, 9.102e-09],
            [5.366e-04, 4.818e-04, ..., 8.953e-09, 1.067e-08],
@@ -175,7 +174,7 @@ def cqt(
 
     Using a higher frequency resolution
 
-    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
+    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin='C2',
     ...                 n_bins=60 * 2, bins_per_octave=12 * 2))
     >>> C
     array([[5.468e-04, 5.382e-04, ..., 5.911e-09, 6.105e-09],
@@ -715,6 +714,8 @@ def icqt(
     """
     if fmin is None:
         fmin = note_to_hz("C1")
+    else:
+        fmin = util._ensure_hz(fmin)
 
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
@@ -1474,6 +1475,8 @@ def griffinlim_cqt(
     """
     if fmin is None:
         fmin = note_to_hz("C1")
+    else:
+        fmin = util._ensure_hz(fmin)
 
     if not isinstance(random_state, Deprecated):
         if rng is not None:
