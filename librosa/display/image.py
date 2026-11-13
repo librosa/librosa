@@ -35,6 +35,8 @@ if TYPE_CHECKING:
 
     from matplotlib.collections import QuadMesh
 
+    from .._typing import _FloatLike_co
+
 # Module imports for image formatting and coordinate handling
 from .formatting import (
     _check_axes,
@@ -66,8 +68,8 @@ def specshow(
     hop_length: int = 512,
     n_fft: int | None = None,
     win_length: int | None = None,
-    fmin: float | str | None = None,
-    fmax: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
+    fmax: _FloatLike_co | str | None = None,
     tempo_min: float | None = 16,
     tempo_max: float | None = 480,
     tuning: float = 0.0,
@@ -282,11 +284,13 @@ def specshow(
     Sa : float or int
         If using Hindustani or Carnatic svara axis decorations, specify Sa.
 
-        For `cqt_svara`, ``Sa`` should be specified as a frequency in Hz.
+        For `cqt_svara` or `fft_svara`, ``Sa`` should be specified as a frequency in Hz.
 
         For `chroma_c` or `chroma_h`, ``Sa`` should correspond to the position
         of Sa within the chromagram.
-        If not provided, Sa will default to 0 (equivalent to `C`)
+        If not provided, Sa will default to 0 (equivalent to `C`).
+
+        Note that note name strings (e.g., 'C4' or 'C') are not supported for ``Sa``.
 
     mela : str or int, optional
         If using `chroma_c` or `cqt_svara` display mode, specify the melakarta raga.

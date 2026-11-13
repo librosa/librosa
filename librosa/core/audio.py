@@ -1734,7 +1734,7 @@ def clicks(
     frames: _SequenceLike[_IntLike_co] | None = None,
     sr: float = 22050,
     hop_length: int = 512,
-    click_freq: float | str = 1000.0,
+    click_freq: _FloatLike_co | str = 1000.0,
     click_duration: float = 0.1,
     click: np.ndarray | None = None,
     length: int | None = None,
