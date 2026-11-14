@@ -4,12 +4,12 @@
 from __future__ import annotations
 
 import asyncio
-from collections import deque
-from contextlib import suppress
 import queue
 import threading
-from typing import TYPE_CHECKING, Any
 import warnings
+from collections import deque
+from contextlib import suppress
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
 import soxr
@@ -18,6 +18,8 @@ from .exceptions import ParameterError
 from .utils import buf_to_float, is_positive_int
 
 if TYPE_CHECKING:
+    from typing import AsyncGenerator, Generator
+
     from numpy.typing import DTypeLike
     from typing_extensions import Self
 
@@ -62,7 +64,7 @@ class _StreamBuffer:
         frame_length: int,
         hop_length: int,
         block_length: int = 1,
-        orig_sr: float = 22050,
+        orig_sr: float,
         sr: float | None = None,
         channels: int = 1,
         mono: bool = True,
@@ -304,8 +306,8 @@ class StreamBridge:
 
     Parameters
     ----------
-    sr : float > 0, default=22050
-        Sampling rate of the incoming audio stream.
+    sr : float > 0
+        Sampling rate of the incoming audio stream (required keyword-only argument).
     channels : int > 0, default=1
         Number of audio channels in the incoming stream.
     channels_first : bool, default=False
@@ -330,24 +332,24 @@ class StreamBridge:
 
     Examples
     --------
-    Bridge real-time input from :mod:`sounddevice` into `librosa.stream`:
+    Bridge real-time input from :mod:`sounddevice` and stream analysis blocks:
 
     >>> import sounddevice as sd  # doctest: +SKIP
-    >>> bridge = librosa.util.StreamBridge(sr=48000, channels=1)  # doctest: +SKIP
-    >>> with sd.InputStream(samplerate=48000, channels=1, callback=bridge):  # doctest: +SKIP
-    ...     for i, block in enumerate(librosa.stream(
-    ...         bridge, block_length=256, frame_length=2048, hop_length=512
-    ...     )):
-    ...         centroid = librosa.feature.spectral_centroid(y=block)
-    ...         print(f"Block {i}: mean centroid = {centroid.mean():.1f} Hz")
-    ...         if i >= 10:
-    ...             break
+    >>> with librosa.util.StreamBridge(sr=48000, channels=1) as bridge:  # doctest: +SKIP
+    ...     with sd.InputStream(samplerate=48000, channels=1, callback=bridge):
+    ...         for i, block in enumerate(bridge.stream(
+    ...             block_length=256, frame_length=2048, hop_length=512
+    ...         )):
+    ...             centroid = librosa.feature.spectral_centroid(y=block)
+    ...             print(f"Block {i}: mean centroid = {centroid.mean():.1f} Hz")
+    ...             if i >= 10:
+    ...                 break
     """
 
     def __init__(
         self,
-        sr: float = 22050,
         *,
+        sr: float,
         channels: int = 1,
         channels_first: bool = False,
         dtype: DTypeLike = np.float32,
@@ -498,6 +500,164 @@ class StreamBridge:
                     raise StopAsyncIteration
                 self._async_event.clear()
             await self._async_event.wait()
+
+    def stream(
+        self,
+        *,
+        block_length: int,
+        frame_length: int,
+        hop_length: int,
+        sr: float | None = None,
+        mono: bool = True,
+        offset: float = 0.0,
+        duration: float | None = None,
+        warm_up: bool = False,
+        fill_value: float | None = None,
+        res_type: str = "soxr_hq",
+        dtype: DTypeLike = np.float32,
+    ) -> Generator[np.ndarray, None, None]:
+        """Stream audio from this bridge in fixed-length analysis buffers.
+
+        This method is equivalent to calling ``librosa.stream(self, ...)``.
+
+        Parameters
+        ----------
+        block_length : int > 0
+            The number of frames to include in each block.
+        frame_length : int > 0
+            The number of samples per frame.
+        hop_length : int > 0
+            The number of samples to advance between frames.
+        sr : float > 0, optional
+            Target sampling rate. If None, defaults to `self.sr`.
+        mono : bool, default=True
+            Convert multi-channel signals to mono during streaming.
+        offset : float >= 0, default=0.0
+            Start reading after this time (in seconds).
+        duration : float > 0, optional
+            Only yield up to this much audio (in seconds).
+        warm_up : bool, default=False
+            If True, pre-fill the buffer with silence (zeros) so that the first
+            incoming chunk of size ``block_length * hop_length`` immediately yields
+            a full analysis block without startup delay.
+        fill_value : float, optional
+            Value used to pad short blocks at the end of the stream.
+        res_type : str, default='soxr_hq'
+            Resample type for `soxr`.
+        dtype : numeric type, default=np.float32
+            Data type of the yielded blocks.
+
+        Yields
+        ------
+        block : np.ndarray
+            An audio buffer of (at most)
+            ``(block_length-1) * hop_length + frame_length`` samples.
+
+        See Also
+        --------
+        librosa.stream
+        astream
+        """
+        buf = _StreamBuffer(
+            frame_length=frame_length,
+            hop_length=hop_length,
+            block_length=block_length,
+            orig_sr=self.sr,
+            sr=sr,
+            channels=self.channels,
+            mono=mono,
+            offset=offset,
+            duration=duration,
+            warm_up=warm_up,
+            fill_value=fill_value,
+            res_type=res_type,
+            dtype=dtype,
+        )
+        for chunk in self:
+            yield from buf.push(chunk)
+            if buf.is_complete():
+                break
+        yield from buf.flush()
+
+    async def astream(
+        self,
+        *,
+        block_length: int,
+        frame_length: int,
+        hop_length: int,
+        sr: float | None = None,
+        mono: bool = True,
+        offset: float = 0.0,
+        duration: float | None = None,
+        warm_up: bool = False,
+        fill_value: float | None = None,
+        res_type: str = "soxr_hq",
+        dtype: DTypeLike = np.float32,
+    ) -> AsyncGenerator[np.ndarray, None]:
+        """Asynchronously stream audio from this bridge in fixed-length analysis buffers.
+
+        This method is equivalent to calling ``librosa.astream(self, ...)``.
+
+        Parameters
+        ----------
+        block_length : int > 0
+            The number of frames to include in each block.
+        frame_length : int > 0
+            The number of samples per frame.
+        hop_length : int > 0
+            The number of samples to advance between frames.
+        sr : float > 0, optional
+            Target sampling rate. If None, defaults to `self.sr`.
+        mono : bool, default=True
+            Convert multi-channel signals to mono during streaming.
+        offset : float >= 0, default=0.0
+            Start reading after this time (in seconds).
+        duration : float > 0, optional
+            Only yield up to this much audio (in seconds).
+        warm_up : bool, default=False
+            If True, pre-fill the buffer with silence (zeros) so that the first
+            incoming chunk of size ``block_length * hop_length`` immediately yields
+            a full analysis block without startup delay.
+        fill_value : float, optional
+            Value used to pad short blocks at the end of the stream.
+        res_type : str, default='soxr_hq'
+            Resample type for `soxr`.
+        dtype : numeric type, default=np.float32
+            Data type of the yielded blocks.
+
+        Yields
+        ------
+        block : np.ndarray
+            An audio buffer of (at most)
+            ``(block_length-1) * hop_length + frame_length`` samples.
+
+        See Also
+        --------
+        librosa.astream
+        stream
+        """
+        buf = _StreamBuffer(
+            frame_length=frame_length,
+            hop_length=hop_length,
+            block_length=block_length,
+            orig_sr=self.sr,
+            sr=sr,
+            channels=self.channels,
+            mono=mono,
+            offset=offset,
+            duration=duration,
+            warm_up=warm_up,
+            fill_value=fill_value,
+            res_type=res_type,
+            dtype=dtype,
+        )
+        async for chunk in self:
+            for block in buf.push(chunk):
+                yield block
+            if buf.is_complete():
+                break
+        for block in buf.flush():
+            yield block
 
     def close(self) -> None:
         """Close the bridge and signal termination to waiting consumers."""

@@ -32,6 +32,10 @@ def test_streaming_imports():
 
 def test_streambridge_validation():
     """Test parameter validation on StreamBridge."""
+    with pytest.raises(TypeError):
+        StreamBridge()  # type: ignore[call-arg]
+    with pytest.raises(TypeError):
+        StreamBridge(22050)  # type: ignore[misc]
     with pytest.raises(librosa.ParameterError):
         StreamBridge(sr=-1)
     with pytest.raises(librosa.ParameterError):
@@ -165,12 +169,10 @@ def test_stream_warm_up_and_multichannel():
     bridge = StreamBridge(sr=22050, channels=1)
     bridge(np.ones(512, dtype=np.float32))
 
-    stream_gen = librosa.stream(
-        bridge,
+    stream_gen = bridge.stream(
         block_length=1,
         frame_length=1024,
         hop_length=512,
-        sr=None,
         warm_up=True,
     )
     first_block = next(stream_gen)
@@ -269,7 +271,7 @@ def test_stream_file_and_bridge_parity(sr, offset, duration, fill_value):
     bridge_blocks = list(librosa.stream(bridge, **kwargs))
 
     assert len(file_blocks) == len(bridge_blocks)
-    for fb, bb in zip(file_blocks, bridge_blocks):
+    for fb, bb in zip(file_blocks, bridge_blocks, strict=True):
         assert fb.shape == bb.shape
         assert np.allclose(fb, bb, atol=1e-5)
 
@@ -311,12 +313,10 @@ def test_astream_and_async_bridge():
         pre_bridge.close()
         pre_blocks = [
             b
-            async for b in librosa.astream(
-                pre_bridge,
+            async for b in pre_bridge.astream(
                 block_length=1,
                 frame_length=1024,
                 hop_length=512,
-                sr=None,
             )
         ]
         assert len(pre_blocks) == 16
