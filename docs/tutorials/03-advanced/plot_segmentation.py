@@ -137,10 +137,8 @@ L = scipy.sparse.csgraph.laplacian(A, normed=True)
 
 
 # and its spectral decomposition.
-# The time-lag filter can make Rf (and hence L) slightly asymmetric near the
-# first and last beats, so we use eig rather than eigh (which assumes a
-# symmetric input) and sort the eigenvectors by ascending eigenvalue.
-# The leading eigenvalues are real, so we can drop the imaginary parts.
+# L may be slightly asymmetric (due to the time-lag filter), so we use eig
+# and sort by eigenvalue. The leading eigenpairs are real.
 evals, evecs = scipy.linalg.eig(L)
 order = np.argsort(evals.real)
 evals, evecs = evals[order].real, evecs[:, order].real
