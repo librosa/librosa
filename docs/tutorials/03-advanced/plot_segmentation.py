@@ -136,8 +136,12 @@ librosa.display.multiplot("specshow", Rf, R_path, A,
 L = scipy.sparse.csgraph.laplacian(A, normed=True)
 
 
-# and its spectral decomposition
-evals, evecs = scipy.linalg.eigh(L)
+# and its spectral decomposition.
+# L may be slightly asymmetric (due to the time-lag filter), so we use eig
+# and sort by eigenvalue. The leading eigenpairs are real.
+evals, evecs = scipy.linalg.eig(L)
+order = np.argsort(evals.real)
+evals, evecs = evals[order].real, evecs[:, order].real
 
 
 # We can clean this up further with a median filter.
