@@ -18,13 +18,12 @@ from .._cache import cache
 from ..util.decorators import future_default
 from ..util.exceptions import ParameterError
 from ..util.files import example
-from ..util.streaming import StreamBridge, _align_step_size, _StreamBuffer
 from .convert import frames_to_samples, frequency_weighting, time_to_samples
+from .streaming import StreamBridge, _align_step_size, _StreamBuffer
 
 if TYPE_CHECKING:
     from typing import (
         Any,
-        AsyncGenerator,
         BinaryIO,
         Callable,
         Collection,
@@ -44,7 +43,6 @@ __all__ = [
     "load",
     "loadx",
     "stream",
-    "astream",
     "to_mono",
     "to_stereo",
     "to_multi",
@@ -231,7 +229,7 @@ def stream(
 
     This is primarily useful for processing large files that won't
     fit entirely in memory at once, or for processing live audio streams
-    captured via `librosa.util.StreamBridge`.
+    captured via `librosa.StreamBridge`.
 
     Instead of loading the entire audio signal into memory (as
     in `load`), this function produces *blocks* of audio spanning
@@ -276,13 +274,13 @@ def stream(
 
     Parameters
     ----------
-    path : str, int, os.PathLike, sf.SoundFile, file-like object, or librosa.util.StreamBridge
-        Path to the input file or a `librosa.util.StreamBridge` instance to stream.
+    path : str, int, os.PathLike, sf.SoundFile, file-like object, or librosa.StreamBridge
+        Path to the input file or a `librosa.StreamBridge` instance to stream.
 
         Any codec supported by `soundfile` is permitted here.
         An existing `soundfile.SoundFile` object may also be provided.
 
-        Alternatively, a `librosa.util.StreamBridge` receiving live audio chunks
+        Alternatively, a `librosa.StreamBridge` receiving live audio chunks
         may be provided.
 
     block_length : int > 0
@@ -350,8 +348,7 @@ def stream(
 
     See Also
     --------
-    astream
-    util.StreamBridge
+    StreamBridge
     load
     get_samplerate
     soundfile.blocks
@@ -428,7 +425,7 @@ def stream(
             channels=num_channels,
             mono=mono,
             offset=0.0,
-            duration=None,
+            duration=duration,
             warm_up=warm_up,
             fill_value=fill_value,
             res_type=res_type,
@@ -458,101 +455,6 @@ def stream(
     finally:
         if sfo_close is not None:
             sfo_close.close()
-
-
-@future_default(param_name="sr", old_default=None, new_default=22050, version="1.1.0")
-async def astream(
-    stream: StreamBridge,
-    *,
-    block_length: int,
-    frame_length: int,
-    hop_length: int,
-    sr: float | None = None,
-    mono: bool = True,
-    offset: float = 0.0,
-    duration: float | None = None,
-    warm_up: bool = False,
-    fill_value: float | None = None,
-    res_type: str = "soxr_hq",
-    dtype: DTypeLike = np.float32,
-) -> AsyncGenerator[np.ndarray, None]:
-    """Stream audio asynchronously from a `librosa.util.StreamBridge` in fixed-length buffers.
-
-    Parameters
-    ----------
-    stream : librosa.util.StreamBridge
-        Input stream bridge yielding chunks of audio.
-    block_length : int > 0
-        The number of frames to include in each block.
-    frame_length : int > 0
-        The number of samples per frame.
-    hop_length : int > 0
-        The number of samples to advance between frames.
-    sr : float > 0, optional
-        Target sampling rate. If not provided, `stream.sr` will be used.
-    mono : bool, default=True
-        Convert signal to mono during streaming.
-    offset : float >= 0, default=0.0
-        Start reading after this time (in seconds).
-    duration : float > 0, optional
-        Only yield up to this much audio (in seconds).
-    warm_up : bool, default=False
-        If True, pre-fill the buffer with silence (zeros) so that the first
-        incoming chunk of size ``block_length * hop_length`` immediately yields
-        a full analysis block without startup delay.
-    fill_value : float, optional
-        Value used to pad short blocks at the end of the stream.
-    res_type : str, default='soxr_hq'
-        Resample type for `soxr`.
-    dtype : numeric type, default=np.float32
-        Data type of the yielded blocks.
-
-    Yields
-    ------
-    block : np.ndarray
-        An audio buffer of (at most)
-        ``(block_length-1) * hop_length + frame_length`` samples.
-
-    See Also
-    --------
-    stream
-    util.StreamBridge
-
-    Examples
-    --------
-    Asynchronously capture live microphone input via :mod:`sounddevice` and
-    compute spectral centroids in real time:
-
-    >>> import asyncio
-    >>> import sounddevice as sd  # doctest: +SKIP
-    >>> async def main():  # doctest: +SKIP
-    ...     with librosa.util.StreamBridge(sr=22050, channels=1) as bridge:
-    ...         with sd.InputStream(samplerate=22050, channels=1, blocksize=512, callback=bridge):
-    ...             async for i, block in enumerate(librosa.astream(
-    ...                 bridge, block_length=1, frame_length=1024, hop_length=512
-    ...             )):
-    ...                 centroid = librosa.feature.spectral_centroid(y=block)
-    ...                 if i >= 10:
-    ...                     break
-    >>> asyncio.run(main())  # doctest: +SKIP
-    """
-    if not isinstance(stream, StreamBridge):
-        raise ParameterError(f"Unsupported source type for astream: {type(stream)}")
-
-    async for block in stream.astream(
-        block_length=block_length,
-        frame_length=frame_length,
-        hop_length=hop_length,
-        sr=sr,
-        mono=mono,
-        offset=offset,
-        duration=duration,
-        warm_up=warm_up,
-        fill_value=fill_value,
-        res_type=res_type,
-        dtype=dtype,
-    ):
-        yield block
 
 
 def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarray, int | float]:

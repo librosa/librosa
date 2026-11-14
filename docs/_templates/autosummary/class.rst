@@ -18,6 +18,10 @@
    {% for item in public_methods %}
       ~{{ name }}.{{ item }}
    {%- endfor %}
+
+   {% for item in public_methods %}
+   .. automethod:: {{ item }}
+   {%- endfor %}
    {% endif %}
    {% endblock %}
 

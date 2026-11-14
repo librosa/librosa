@@ -5,9 +5,9 @@ from .core import A_weighting as A_weighting
 from .core import B_weighting as B_weighting
 from .core import C_weighting as C_weighting
 from .core import D_weighting as D_weighting
+from .core import StreamBridge as StreamBridge
 from .core import Z_weighting as Z_weighting
 from .core import amplitude_to_db as amplitude_to_db
-from .core import astream as astream
 from .core import autocorrelate as autocorrelate
 from .core import blocks_to_frames as blocks_to_frames
 from .core import blocks_to_samples as blocks_to_samples

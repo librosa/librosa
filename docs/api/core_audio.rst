@@ -8,7 +8,7 @@ Audio signals
     load
     loadx
     stream
-    astream
+    StreamBridge
     resample
     get_duration
     get_samplerate

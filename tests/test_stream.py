@@ -1,30 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Unit tests for StreamBridge, librosa.stream, and librosa.astream."""
+"""Unit tests for StreamBridge and librosa.stream."""
 from __future__ import annotations
 
-import asyncio
 import queue
+import threading
 
 import numpy as np
 import pytest
 import soundfile as sf
 
 import librosa
-from librosa.util.streaming import StreamBridge
+from librosa.core.streaming import StreamBridge
 
 
 def test_streaming_imports():
-    """Test submodule exports and util namespace."""
-    import librosa.util.streaming as streaming
+    """Test submodule exports and core/top-level aliases."""
+    import librosa.core.streaming as streaming
 
     assert streaming.StreamBridge is StreamBridge
-    assert librosa.util.StreamBridge is StreamBridge
+    assert librosa.core.StreamBridge is StreamBridge
+    assert librosa.StreamBridge is StreamBridge
     assert hasattr(librosa, "stream")
-    assert hasattr(librosa, "astream")
+    assert hasattr(StreamBridge, "stream")
 
     # Internal buffer and removed helpers should not be exported publicly
-    assert not hasattr(librosa, "StreamBridge")
+    assert not hasattr(librosa, "astream")
+    assert not hasattr(StreamBridge, "astream")
+    assert not hasattr(librosa.util, "StreamBridge")
     assert not hasattr(librosa, "StreamBuffer")
     assert not hasattr(librosa.util, "StreamBuffer")
     assert not hasattr(librosa.util, "async_capture")
@@ -47,13 +50,25 @@ def test_streambridge_validation():
     with pytest.raises(librosa.ParameterError):
         StreamBridge(sr=22050, overflow_policy="invalid")
 
-    bridge = StreamBridge(sr=22050)
+    bridge = StreamBridge(sr=22050, channels=1)
     with pytest.raises(librosa.ParameterError):
         bridge.push("not_an_array_or_bytes")  # type: ignore[arg-type]
+    # 2-channel input pushed into 1-channel bridge should raise ParameterError
+    with pytest.raises(librosa.ParameterError):
+        bridge.push(np.ones((64, 2), dtype=np.float32))
+    # 3D input should raise ParameterError
+    with pytest.raises(librosa.ParameterError):
+        bridge.push(np.ones((1, 64, 1), dtype=np.float32))
+
+    bridge_2ch = StreamBridge(sr=22050, channels=2)
+    with pytest.raises(librosa.ParameterError):
+        bridge_2ch.push(np.ones(63, dtype=np.float32))
 
     bridge.close()
+    # Direct push on closed bridge raises RuntimeError, while callback returns paComplete (1)
     with pytest.raises(RuntimeError):
         bridge.push(np.ones(64, dtype=np.float32))
+    assert bridge(np.ones(64, dtype=np.float32)) == (None, 1)
 
 
 def test_streambridge_sync_and_timeout():
@@ -276,52 +291,45 @@ def test_stream_file_and_bridge_parity(sr, offset, duration, fill_value):
         assert np.allclose(fb, bb, atol=1e-5)
 
 
-def test_astream_and_async_bridge():
-    """Test librosa.astream asynchronous consumption with StreamBridge."""
-    async def _test():
-        # Live producer with bounded queue and duration limit
-        async with StreamBridge(sr=22050, channels=1, maxsize=2, overflow_policy="error") as bridge:
-            blocks = []
+def test_threaded_producer_and_buffer_resize():
+    """Test background producer thread with StreamBridge.stream and buffer resizing."""
+    bridge = StreamBridge(sr=22050, channels=1, maxsize=4, overflow_policy="error")
 
-            async def producer():
-                bridge(np.array([], dtype=np.float32))
-                for i in range(6):
-                    bridge(np.ones(512, dtype=np.float32) * i)
-                    await asyncio.sleep(0.002)
-                bridge.close()
+    def producer():
+        bridge(np.array([], dtype=np.float32))
+        for i in range(6):
+            bridge(np.ones(512, dtype=np.float32) * i)
+        bridge.close()
 
-            prod_task = asyncio.create_task(producer())
-            async for block in librosa.astream(
-                bridge,
-                block_length=1,
-                frame_length=1024,
-                hop_length=512,
-                sr=22050,
-                duration=0.1,
-                dtype=np.float64,
-            ):
-                assert block.dtype == np.float64
-                blocks.append(block)
-            await prod_task
+    t = threading.Thread(target=producer)
+    t.start()
+    blocks = list(
+        bridge.stream(
+            block_length=1,
+            frame_length=1024,
+            hop_length=512,
+            sr=22050,
+            duration=0.1,
+            dtype=np.float64,
+        )
+    )
+    t.join()
 
-        assert len(blocks) > 0
-        assert blocks[0].shape == (1024,)
+    assert len(blocks) > 0
+    assert blocks[0].dtype == np.float64
+    assert blocks[0].shape == (1024,)
 
-        # Pre-buffered and closed before entering async for, with large chunk causing resize
-        pre_bridge = StreamBridge(sr=22050, channels=1)
+    # Large chunk causing internal buffer resize
+    with StreamBridge(sr=22050, channels=1) as pre_bridge:
         pre_bridge(np.ones(8192, dtype=np.float32))
-        pre_bridge.close()
-        pre_blocks = [
-            b
-            async for b in pre_bridge.astream(
-                block_length=1,
-                frame_length=1024,
-                hop_length=512,
-            )
-        ]
-        assert len(pre_blocks) == 16
-
-    asyncio.run(_test())
+    pre_blocks = list(
+        pre_bridge.stream(
+            block_length=1,
+            frame_length=1024,
+            hop_length=512,
+        )
+    )
+    assert len(pre_blocks) == 16
 
 
 def test_stream_invalid_sources_and_bounds():
@@ -360,16 +368,14 @@ def test_stream_invalid_sources_and_bounds():
                 duration=-1.0,
             )
         )
-
-    async def _bad_astream():
-        with pytest.raises(librosa.ParameterError):
-            async for _ in librosa.astream(
-                [np.ones(512)],  # type: ignore[arg-type]
+    with pytest.raises(librosa.ParameterError):
+        next(
+            librosa.stream(
+                librosa.ex("trumpet"),
                 block_length=1,
                 frame_length=1024,
                 hop_length=512,
                 sr=None,
-            ):
-                pass
-
-    asyncio.run(_bad_astream())
+                duration=-1.0,
+            )
+        )

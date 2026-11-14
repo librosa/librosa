@@ -14,17 +14,15 @@ responsibilities:
 
 1. **Audio I/O (Producer)**: High-priority system callbacks from the audio hardware
    (such as :class:`sounddevice.InputStream` or PortAudio) execute on a separate OS thread
-   and must never block. :class:`librosa.util.StreamBridge` acts directly as the
+   and must never block. :class:`librosa.StreamBridge` acts directly as the
    audio callback, receiving raw audio blocks, normalizing channel geometries and data types,
    and buffering them in a thread-safe queue.
 2. **Buffering & DSP (Analysis)**: Feature extractors often require observation windows that
-   differ in size or sample rate from the capture device. Calling :meth:`librosa.util.StreamBridge.stream`
-   (or :func:`librosa.stream`, or :meth:`~librosa.util.StreamBridge.astream` for ``asyncio``)
-   accumulates incoming chunks into overlapping analysis windows, downmixes multi-channel audio,
-   and handles on-the-fly streaming sample-rate conversion via ``soxr``.
-3. **Display or Processing (Consumer)**: Downstream consumers (such as GUI animation threads,
-   event loops, or async workers) iterate over the yielded analysis blocks without stalling
-   the audio callback.
+   differ in size or sample rate from the capture device. Calling :meth:`librosa.StreamBridge.stream`
+   (or :func:`librosa.stream`) accumulates incoming chunks into overlapping analysis windows,
+   downmixes multi-channel audio, and handles on-the-fly streaming sample-rate conversion via ``soxr``.
+3. **Display or Processing (Consumer)**: Downstream consumers (such as GUI animation threads
+   or worker threads) iterate over the yielded analysis blocks without stalling the audio callback.
 
 Live microphone capture pattern
 -------------------------------
@@ -38,7 +36,7 @@ pattern requires only a few lines:
 
     # 1. Create a stream bridge and open the hardware input stream
     with (
-        librosa.util.StreamBridge(sr=22050, channels=1) as bridge,
+        librosa.StreamBridge(sr=22050, channels=1) as bridge,
         sd.InputStream(samplerate=22050, blocksize=512, channels=1, callback=bridge),
     ):
         # 2. Stream blocks (or equivalently, librosa.stream(bridge, ...))
@@ -47,18 +45,6 @@ pattern requires only a few lines:
         ):
             # Compute features in real time
             rms = librosa.feature.rms(y=block, center=False)
-
-Similarly, asynchronous applications can capture and process audio concurrently using
-:meth:`librosa.util.StreamBridge.astream` (or :func:`librosa.astream`):
-
-.. code:: python
-
-    async with librosa.util.StreamBridge(sr=22050, channels=1) as bridge:
-        with sd.InputStream(samplerate=22050, blocksize=512, channels=1, callback=bridge):
-            async for block in bridge.astream(
-                block_length=1, frame_length=1024, hop_length=512
-            ):
-                rms = librosa.feature.rms(y=block, center=False)
 """
 
 # %%
@@ -193,8 +179,8 @@ class LiveSparkline:
 #
 # The architecture cleanly separates each component:
 #
-# - **I/O**: :class:`librosa.util.StreamBridge` receives incoming blocks from the device.
-# - **Streaming & Analysis**: :meth:`librosa.util.StreamBridge.stream` yields each block to ``process_rms``.
+# - **I/O**: :class:`librosa.StreamBridge` receives incoming blocks from the device.
+# - **Streaming & Analysis**: :meth:`librosa.StreamBridge.stream` yields each block to ``process_rms``.
 # - **Display**: ``LiveSparkline.append`` plots each value forward in time.
 
 
@@ -215,7 +201,7 @@ def process_rms(y):
 blocksize = 1024
 
 with (
-    librosa.util.StreamBridge(sr=22050, channels=1) as bridge_rms,
+    librosa.StreamBridge(sr=22050, channels=1) as bridge_rms,
     VirtualInputStream(filename, blocksize=blocksize, callback=bridge_rms) as stream,
 ):
     sr = stream.samplerate
@@ -262,7 +248,7 @@ with (
 # 2. **Online Resampling**: Hardware inputs frequently capture at 44.1 kHz or 48 kHz, while downstream
 #    models expect 22.05 kHz or 11.025 kHz.
 #
-# :meth:`librosa.util.StreamBridge.stream` (and :func:`librosa.stream`) handles both requirements:
+# :meth:`librosa.StreamBridge.stream` (and :func:`librosa.stream`) handles both requirements:
 #
 # - It accumulates incoming chunks and yields complete analysis blocks matching ``frame_length`` and ``hop_length``.
 # - It streams chunks through ``soxr`` resampling on-the-fly when ``sr`` differs from ``bridge.sr``.
@@ -293,7 +279,7 @@ frame_length = 1024
 hop_length = 512  # 512 samples at 22050 Hz corresponds to 256 samples at 11025 Hz
 
 with (
-    librosa.util.StreamBridge(sr=22050, channels=1) as bridge_sc,
+    librosa.StreamBridge(sr=22050, channels=1) as bridge_sc,
     VirtualInputStream(filename, blocksize=hop_length, callback=bridge_sc) as stream,
 ):
     sr = stream.samplerate
