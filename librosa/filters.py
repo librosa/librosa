@@ -7,18 +7,28 @@ function processing, and related utilities.
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 import numpy as np
 from numba import jit
 
 from . import util
 from ._cache import cache
-from .core.convert import fft_frequencies, hz_to_midi, hz_to_octs, mel_frequencies, midi_to_hz, note_to_hz
+from .core.convert import (
+    fft_frequencies,
+    hz_to_midi,
+    hz_to_octs,
+    mel_frequencies,
+    midi_to_hz,
+    note_to_hz,
+    note_to_midi,
+)
+from .core.intervals import interval_frequencies
+from .util.decorators import deprecated
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Literal
+    from typing import Any, Callable, Collection, Literal, Sequence
 
     from numpy.typing import ArrayLike, DTypeLike, NDArray
 
@@ -29,6 +39,11 @@ __all__ = [
     "mel",
     "chroma",
     "cq_to_chroma",
+    "pitch_to_chroma",
+    "frequency_filterbank",
+    "logfrequency",
+    "pitch",
+    "pitch_basis",
     "window_bandwidth",
     "get_window",
     "mr_frequencies",
@@ -183,7 +198,6 @@ def mel(
 
     # Initialize the weights
     n_mels = int(n_mels)
-    weights = np.zeros((n_mels, int(1 + n_fft // 2)), dtype=dtype)
 
     # Center freqs of each FFT bin
     fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
@@ -194,13 +208,10 @@ def mel(
     fdiff = np.diff(mel_f)
     ramps = np.subtract.outer(mel_f, fftfreqs)
 
-    for i in range(n_mels):
-        # lower and upper slopes for all bins
-        lower = -ramps[i] / fdiff[i]
-        upper = ramps[i + 2] / fdiff[i + 1]
-
-        # .. then intersect them with each other and zero
-        weights[i] = np.maximum(0, np.minimum(lower, upper))
+    # Vectorized lower and upper slopes for all bins
+    lower = -ramps[:n_mels] / fdiff[:n_mels, np.newaxis]
+    upper = ramps[2 : n_mels + 2] / fdiff[1 : n_mels + 1, np.newaxis]
+    weights = np.maximum(0, np.minimum(lower, upper)).astype(dtype)
 
     if isinstance(norm, str):
         if norm == "slaney":
@@ -367,6 +378,751 @@ def chroma(
 
     # remove aliasing columns, copy to ensure row-contiguity
     return np.ascontiguousarray(wts[:, : int(1 + n_fft / 2)], dtype=dtype)
+
+
+@cache(level=10)
+def frequency_filterbank(
+    freq_in: ArrayLike,
+    freq_out: ArrayLike,
+    *,
+    bandwidths: float | ArrayLike | None = None,
+    window: _WindowSpec | Callable[[np.ndarray], np.ndarray] = "triangle",
+    scale: Literal["linear", "log"] = "linear",
+    norm: Literal["slaney"] | float | None = None,
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
+    r"""Construct a linear filterbank matrix over arbitrary input and output frequency coordinates.
+
+    Parameters
+    ----------
+    freq_in : np.ndarray [shape=(n_in,)]
+        Coordinates of input frequency bins (e.g. from `fft_frequencies`, `cqt_frequencies`).
+        Must be a 1-dimensional array and monotonically non-decreasing.
+    freq_out : np.ndarray [shape=(n_out,)]
+        Center coordinates of target filter bands.
+        Must be a 1-dimensional non-empty array and strictly increasing.
+    bandwidths : float or np.ndarray [shape=(n_out,)], optional
+        Bandwidth of each filter.
+        If None, bandwidths and filter boundaries are automatically derived from
+        adjacent centers in ``freq_out``.
+    window : str or callable, default="triangle"
+        Filter window shape:
+
+        - `'triangle'` or `'triang'`: Piecewise linear ramp from the lower boundary
+          to the center and down to the upper boundary.
+        - `'boxcar'` or `'rect'` or `'rectangular'`: Rectangular indicator window
+          between adjacent midpoints.
+        - `'hann'` or `'cosine'`: Raised-cosine bell.
+        - `'gaussian'`: Gaussian bell centered at each band center.
+        - Callable: Any window function :math:`w(x)` mapping normalized coordinates
+          :math:`x \in [-1, 1]` to filter weights.
+    scale : {'linear', 'log'}, default='linear'
+        Domain in which bandwidths and filter supports are evaluated:
+
+        - `'linear'`: Distances and bandwidths are measured in linear Hz.
+        - `'log'`: Distances and bandwidths are measured in logarithmic units (octaves).
+          Geometric midpoints are used for filter boundaries, preserving constant-Q
+          relationships.
+    norm : {None, 'slaney', or number}, default=None
+        Normalization applied to each filter row:
+
+        - `None`: Unnormalized peak height (1.0).
+        - `'slaney'`: Continuous area normalization (energy density per Hz),
+          scaling each filter by :math:`2 / \text{width}` (or :math:`1 / \text{width}` for boxcar).
+        - Numeric: Use `librosa.util.normalize` to normalize each filter to unit :math:`L_p` norm.
+    dtype : np.dtype, default=np.float32
+        Data type of the output basis matrix.
+
+    Returns
+    -------
+    filterbank : np.ndarray [shape=(n_out, n_in)]
+        Transformation matrix: ``Y = filterbank.dot(X)``
+
+    Raises
+    ------
+    ParameterError
+        If ``freq_in`` is not 1D or not monotonically non-decreasing.
+        If ``freq_out`` is not 1D, is empty, or not strictly increasing.
+        If ``scale`` is not `'linear'` or `'log'`.
+        If ``scale='log'`` and any frequency in ``freq_out`` is non-positive.
+        If ``bandwidths`` is negative or improperly shaped.
+        If ``window`` or ``norm`` is unsupported.
+
+    See Also
+    --------
+    logfrequency
+    pitch
+    mel
+    chroma
+    pitch_to_chroma
+
+    Examples
+    --------
+    Construct a triangular filterbank mapping FFT bins onto linearly spaced bands:
+
+    >>> sr, n_fft = 22050, 2048
+    >>> f_in = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
+    >>> f_out = np.linspace(200, 4000, 32)
+    >>> fb = librosa.filters.frequency_filterbank(f_in, f_out, window="triangle")
+    >>> fb.shape
+    (32, 1025)
+
+    Construct a logarithmic boxcar filterbank (exact energy pooling):
+
+    >>> f_pitches = librosa.midi_to_hz(np.arange(21, 109))
+    >>> fb_pitch = librosa.filters.frequency_filterbank(f_in, f_pitches, window="boxcar", scale="log")
+    >>> fb_pitch.shape
+    (88, 1025)
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> ax[0].plot(f_in, fb.T)
+    >>> ax[0].set(xlim=[0, 4500], ylabel="Weight", title="Filter responses")
+    >>> img = librosa.display.specshow(fb, x_coords=f_in, x_axis="linear", ax=ax[1])
+    >>> ax[1].set(ylabel="Filter band", title="Filterbank matrix")
+    >>> fig.colorbar(img, ax=ax[1])
+    """
+    f_in = np.asarray(freq_in, dtype=float)
+    f_out = np.asarray(freq_out, dtype=float)
+
+    if f_in.ndim != 1:
+        raise ParameterError(f"freq_in must be 1D, shape given: {f_in.shape}")
+    if f_out.ndim != 1 or len(f_out) == 0:
+        raise ParameterError(f"freq_out must be a non-empty 1D array, shape given: {f_out.shape}")
+    if len(f_in) > 1 and np.any(np.diff(f_in) < 0):
+        raise ParameterError("freq_in must be monotonically non-decreasing")
+    if len(f_out) > 1 and np.any(np.diff(f_out) <= 0):
+        raise ParameterError("freq_out must be strictly increasing")
+    if scale not in ("linear", "log"):
+        raise ParameterError(f"scale must be 'linear' or 'log', given: {scale}")
+
+    if scale == "log":
+        if np.any(f_out <= 0):
+            raise ParameterError("freq_out must be strictly positive when scale='log'")
+        u_out = np.log2(f_out)
+        u_in = np.where(f_in > 0, np.log2(np.maximum(f_in, np.finfo(float).tiny)), -np.inf)
+    else:
+        u_out = f_out
+        u_in = f_in
+
+    n_out = len(u_out)
+    if bandwidths is None:
+        if n_out == 1:
+            raise ParameterError("bandwidths must be specified when len(freq_out) == 1")
+        c_prev = u_out[0] - (u_out[1] - u_out[0])
+        c_next = u_out[-1] + (u_out[-1] - u_out[-2])
+        c_ext = np.concatenate(([c_prev], u_out, [c_next]))
+
+        left_overlapping = c_ext[:-2]
+        right_overlapping = c_ext[2:]
+
+        left_midpoints = (c_ext[:-2] + c_ext[1:-1]) / 2.0
+        right_midpoints = (c_ext[1:-1] + c_ext[2:]) / 2.0
+    else:
+        b = np.broadcast_to(np.asarray(bandwidths, dtype=float), (n_out,))
+        if np.any(b <= 0):
+            raise ParameterError("bandwidths must be strictly positive")
+        h = b / 2.0
+        left_overlapping = u_out - h
+        right_overlapping = u_out + h
+        left_midpoints = left_overlapping
+        right_midpoints = right_overlapping
+        c_ext = None
+
+    if window in ("triangle", "triang"):
+        if bandwidths is None:
+            assert c_ext is not None
+            fdiff = np.diff(c_ext)
+            ramps = np.subtract.outer(c_ext, u_in)
+            lower = -ramps[:n_out] / fdiff[:n_out, np.newaxis]
+            upper = ramps[2 : n_out + 2] / fdiff[1 : n_out + 1, np.newaxis]
+            weights = np.maximum(0.0, np.minimum(lower, upper)).astype(dtype)
+        else:
+            diff = np.abs(u_in - u_out[:, np.newaxis])
+            weights = np.maximum(0.0, 1.0 - diff / h[:, np.newaxis]).astype(dtype)
+    elif window in ("boxcar", "rect", "rectangular"):
+        in_band = (u_in >= left_midpoints[:, np.newaxis]) & (u_in < right_midpoints[:, np.newaxis])
+        in_band[-1] |= (u_in == right_midpoints[-1])
+        weights = in_band.astype(dtype)
+    elif window in ("hann", "cosine"):
+        l_edge = left_overlapping[:, np.newaxis]
+        r_edge = right_overlapping[:, np.newaxis]
+        c_pt = u_out[:, np.newaxis]
+        weights = np.zeros((n_out, len(u_in)), dtype=dtype)
+        left_mask = (u_in >= l_edge) & (u_in <= c_pt)
+        right_mask = (u_in > c_pt) & (u_in <= r_edge)
+        d_left = (u_in - l_edge) / (c_pt - l_edge)
+        d_right = (u_in - c_pt) / (r_edge - c_pt)
+        weights[left_mask] = np.sin(0.5 * np.pi * d_left[left_mask]) ** 2
+        weights[right_mask] = np.cos(0.5 * np.pi * d_right[right_mask]) ** 2
+    elif window == "gaussian":
+        sigma = (right_overlapping - left_overlapping) / (2.0 * np.sqrt(2.0 * np.log(2.0)))
+        diff = (u_in - u_out[:, np.newaxis]) / sigma[:, np.newaxis]
+        weights = np.exp(-0.5 * (diff ** 2)).astype(dtype)
+    elif callable(window):
+        l_edge = left_overlapping[:, np.newaxis]
+        r_edge = right_overlapping[:, np.newaxis]
+        c_pt = u_out[:, np.newaxis]
+        norm_coord = 2.0 * (u_in - c_pt) / (r_edge - l_edge)
+        in_band = (norm_coord >= -1.0) & (norm_coord <= 1.0)
+        weights = np.zeros((n_out, len(u_in)), dtype=dtype)
+        win_fn = cast("Callable[[Any], Any]", window)
+        weights[in_band] = win_fn(norm_coord[in_band])
+    else:
+        raise ParameterError(f"Unsupported window={window}")
+
+    if norm == "slaney":
+        if scale == "log":
+            width_hz = 2.0 ** right_overlapping - 2.0 ** left_overlapping
+        else:
+            width_hz = right_overlapping - left_overlapping
+        scale_factor = 1.0 if window in ("boxcar", "rect", "rectangular") else 2.0
+        enorm = scale_factor / width_hz
+        weights *= enorm[:, np.newaxis]
+    elif norm is not None:
+        weights = util.normalize(weights, norm=norm, axis=-1)
+
+    return weights
+
+
+@cache(level=10)
+def logfrequency(
+    *,
+    sr: float | None = None,
+    n_fft: int | None = None,
+    freq_in: ArrayLike | None = None,
+    n_bins: int | None = None,
+    bins_per_octave: int = 12,
+    fmin: _FloatLike_co | str | None = None,
+    tuning: float = 0.0,
+    window: _WindowSpec = "triangle",
+    norm: Literal["slaney"] | float | None = "slaney",
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
+    """Create a logarithmic frequency filterbank.
+
+    Produces a linear transformation matrix to project frequency bins
+    onto geometrically spaced logarithmic frequency bands.
+
+    Parameters
+    ----------
+    sr : number > 0 [scalar, optional]
+        Audio sampling rate. Required if ``freq_in`` is not specified.
+    n_fft : int > 0 [scalar, optional]
+        Length of the FFT frame. Required if ``freq_in`` is not specified.
+    freq_in : np.ndarray [shape=(n_in,)], optional
+        Coordinates of input frequency bins. If not provided, computed
+        as ``fft_frequencies(sr=sr, n_fft=n_fft)``.
+    n_bins : int > 0 [scalar, optional]
+        Number of logarithmic frequency bands to generate.
+        If None, automatically spans up to the Nyquist frequency (or ``freq_in[-1]``).
+    bins_per_octave : int > 0 [scalar], default=12
+        Number of filter bands per octave. Common values:
+
+        - 12: Semitone resolution.
+        - 24: Quarter-tone resolution (as used in SuperFlux and madmom).
+    fmin : float > 0, str, or None, optional
+        Lowest frequency (in Hz) or note name in SPN format (e.g. `'C1'`).
+        Defaults to `note_to_hz('C1')` (~32.7 Hz).
+    tuning : float, default=0.0
+        Tuning deviation from A440 in fractional bins.
+    window : str, default='triangle'
+        Filter shape for each band. Choices include `'triangle'`, `'boxcar'`,
+        `'hann'`, `'gaussian'`.
+    norm : {None, 'slaney', or number}, default='slaney'
+        Normalization applied to each filter row.
+    dtype : np.dtype, default=np.float32
+        Data type of the output basis matrix.
+
+    Returns
+    -------
+    filterbank : np.ndarray [shape=(n_bins, n_in)]
+        Log-frequency filter matrix: ``Y = filterbank.dot(X)``
+
+    See Also
+    --------
+    frequency_filterbank
+    pitch
+    mel
+    librosa.feature.logfrequency_spectrogram
+
+    Examples
+    --------
+    Construct a semitone logarithmic filterbank covering 7 octaves (84 bins):
+
+    >>> fb = librosa.filters.logfrequency(
+    ...     sr=22050, n_fft=2048, n_bins=84, bins_per_octave=12, fmin="C1"
+    ... )
+    >>> fb.shape
+    (84, 1025)
+
+    Construct a quarter-tone filterbank (24 bins/octave) extending to Nyquist:
+
+    >>> fb_nyq = librosa.filters.logfrequency(
+    ...     sr=22050, n_fft=2048, bins_per_octave=24, fmin=30.0
+    ... )
+    >>> fb_nyq.shape
+    (205, 1025)
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(
+    ...     fb, x_axis="log", y_axis="logfreq_hz",
+    ...     fmin=30.0, bins_per_octave=24,
+    ...     sr=22050, n_fft=2048, ax=ax,
+    ...     vscale='dB',
+    ... )
+    >>> ax.set(ylabel="Log-frequency filter", title="Log-frequency filter bank")
+    >>> fig.colorbar(img, ax=ax)
+    """
+    if freq_in is None:
+        if sr is None or n_fft is None:
+            raise ParameterError("Either freq_in or both sr and n_fft must be provided")
+        f_in = fft_frequencies(sr=sr, n_fft=n_fft)
+    else:
+        f_in = np.asarray(freq_in, dtype=float)
+
+    if fmin is None:
+        f_min = float(note_to_hz("C1"))
+    else:
+        f_min = util._ensure_hz(fmin)
+
+    if f_min <= 0:
+        raise ParameterError(f"fmin={fmin} must be strictly positive")
+
+    if tuning != 0.0:
+        f_min = f_min * (2.0 ** (tuning / float(bins_per_octave)))
+
+    f_top = float(sr / 2.0) if sr is not None else float(f_in[-1])
+    if f_min >= f_top:
+        raise ParameterError(f"fmin={f_min} must be less than maximum frequency {f_top}")
+
+    if n_bins is None:
+        n_octaves = np.log2(f_top / f_min)
+        n_bins = int(np.floor(n_octaves * bins_per_octave)) + 1
+        f_out = f_min * (2.0 ** (np.arange(n_bins) / float(bins_per_octave)))
+        f_out = f_out[f_out <= f_top]
+    else:
+        if n_bins <= 0:
+            raise ParameterError(f"n_bins={n_bins} must be strictly positive")
+        f_out = f_min * (2.0 ** (np.arange(n_bins) / float(bins_per_octave)))
+
+    if len(f_out) == 0:
+        raise ParameterError(f"No filters fall within range below {f_top}.")
+
+    return frequency_filterbank(
+        freq_in=f_in,
+        freq_out=f_out,
+        window=window,
+        scale="log",
+        norm=norm,
+        dtype=dtype,
+    )
+
+
+@cache(level=10)
+def pitch(
+    *,
+    sr: float | None = None,
+    n_fft: int | None = None,
+    freq_in: ArrayLike | None = None,
+    n_pitches: int = 128,
+    fmin: _FloatLike_co | str | None = None,
+    intervals: str | Collection[float] = "equal",
+    bins_per_octave: int = 12,
+    tuning: float = 0.0,
+    window: _WindowSpec = "boxcar",
+    norm: Literal["slaney"] | float | None = None,
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
+    """Create a musical pitch-anchored filterbank.
+
+    Produces a linear transformation matrix mapping input frequency bins
+    to discrete musical pitch bands under specified intonation assumptions.
+
+    Parameters
+    ----------
+    sr : number > 0 [scalar, optional]
+        Audio sampling rate. Required if ``freq_in`` is not specified.
+    n_fft : int > 0 [scalar, optional]
+        Length of the FFT frame. Required if ``freq_in`` is not specified.
+    freq_in : np.ndarray [shape=(n_in,)], optional
+        Coordinates of input frequency bins. If not provided, computed
+        as ``fft_frequencies(sr=sr, n_fft=n_fft)``.
+    n_pitches : int > 0 [scalar], default=128
+        Number of pitch bands to generate. Default 128 covers MIDI notes 0 to 127.
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (or note name in SPN format, e.g. `'C1'`).
+        If None, defaults to MIDI 0 (~8.18 Hz) when ``n_pitches=128``, or `'C1'` (~32.7 Hz).
+    intervals : str or collection of float, default='equal'
+        Tuning / interval system to use:
+
+        - `'equal'`: Equal temperament.
+        - `'pythagorean'`: Pythagorean intervals.
+        - `'ji3'`, `'ji5'`, `'ji7'`: 3-limit, 5-limit, or 7-limit Just Intonation.
+        - Collection of floats in [1, 2): Custom interval set.
+    bins_per_octave : int > 0 [scalar], default=12
+        Number of bins per octave in the interval system.
+    tuning : float [scalar], default=0.0
+        Tuning deviation from A440 in fractions of a bin.
+    window : str, default='boxcar'
+        Filter shape for each pitch band:
+
+        - `'boxcar'`: Rectangular indicator window :math:`[f(p - 0.5), f(p + 0.5))`.
+          With ``norm=None``, this identically reproduces `libfmp.pool_pitch` energy pooling.
+        - `'triangle'`: Triangular center-weighted filter.
+        - `'hann'`: Raised-cosine bell.
+        - `'gaussian'`: Gaussian bump.
+    norm : {None, 'slaney', or number}, default=None
+        Normalization applied to each filter row. Default None performs unnormalized
+        energy summation.
+    dtype : np.dtype, default=np.float32
+        Data type of the output basis matrix.
+
+    Returns
+    -------
+    filterbank : np.ndarray [shape=(n_pitches, n_in)]
+        Pitch filter matrix: ``Y = filterbank.dot(X)``
+
+    See Also
+    --------
+    frequency_filterbank
+    logfrequency
+    pitch_to_chroma
+    librosa.feature.pitch_spectrogram
+
+    Examples
+    --------
+    Construct a 128-pitch boxcar filterbank (libfmp pool_pitch equivalent):
+
+    >>> fb = librosa.filters.pitch(sr=22050, n_fft=2048)
+    >>> fb.shape
+    (128, 1025)
+
+    Construct a Just Intonation pitch filterbank:
+
+    >>> fb_ji = librosa.filters.pitch(sr=22050, n_fft=2048, intervals="ji5", fmin="C1", n_pitches=84)
+    >>> fb_ji.shape
+    (84, 1025)
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(
+    ...     fb, x_axis="linear",
+    ...     y_axis="pitch_note", intervals="ji5", fmin=librosa.note_to_hz("C1"),
+    ...     sr=22050, n_fft=2048, ax=ax
+    ... )
+    >>> ax.set(ylabel="Pitch filter", title="Pitch filter bank")
+    >>> fig.colorbar(img, ax=ax)
+    """
+    if freq_in is None:
+        if sr is None or n_fft is None:
+            raise ParameterError("Either freq_in or both sr and n_fft must be provided")
+        f_in = fft_frequencies(sr=sr, n_fft=n_fft)
+    else:
+        f_in = np.asarray(freq_in, dtype=float)
+
+    if fmin is None:
+        if intervals == "equal" and n_pitches == 128 and bins_per_octave == 12:
+            fmin_ = float(midi_to_hz(0))
+        else:
+            fmin_ = float(note_to_hz("C1"))
+    else:
+        fmin_ = util._ensure_hz(fmin)
+
+    f_out = interval_frequencies(
+        n_bins=n_pitches,
+        fmin=fmin_,
+        intervals=intervals,
+        bins_per_octave=bins_per_octave,
+        tuning=tuning,
+    )
+
+    return frequency_filterbank(
+        freq_in=f_in,
+        freq_out=f_out,
+        window=window,
+        scale="log",
+        norm=norm,
+        dtype=dtype,
+    )
+
+
+def _dct_residual_basis(
+    n_features: int,
+    n_residual: int = 5,
+    *,
+    norm: float | None = 2,
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
+    """Construct non-negative residual spectral basis templates using the DCT.
+
+    Generates smooth, deterministic basis functions:
+    - 1st component (k=0): Constant flat broadband template.
+    - 2nd & 3rd components (k=1): Low-shelf and high-shelf complementary pair.
+    - 4th & 5th components (k=2): Mid-scoop and mid-hump complementary pair.
+
+    Parameters
+    ----------
+    n_features : int > 0
+        Number of input frequency bins (height of the spectrogram).
+    n_residual : int >= 0, default=5
+        Number of residual templates to construct. Recommended to be odd
+        (1, 3, 5, ...) to preserve symmetric shelf/hump pairs.
+    norm : {None, number}, default=2
+        Column normalization order.
+    dtype : np.dtype, default=np.float32
+        Output array data type.
+
+    Returns
+    -------
+    residual_basis : np.ndarray [shape=(n_features, n_residual)]
+        Non-negative residual basis matrix.
+    """
+    if n_residual <= 0:
+        return np.empty((n_features, 0), dtype=dtype)
+
+    import scipy.fft
+
+    D = scipy.fft.dct(np.eye(n_features), type=2, norm="ortho")
+    cols = [D[:, 0]]
+    k = 1
+    while len(cols) < n_residual and k < n_features:
+        dk = D[:, k]
+        # Low shelf / positive extrema shift
+        cols.append(dk - dk.min())
+        if len(cols) < n_residual:
+            # High shelf / negative extrema shift
+            cols.append((-dk) - (-dk).min())
+        k += 1
+
+    res = np.column_stack(cols[:n_residual]).astype(dtype)
+    if norm is not None:
+        col_norm = np.linalg.norm(res, ord=norm, axis=0, keepdims=True)
+        col_norm[col_norm == 0] = 1.0
+        res = res / col_norm
+    return res
+
+
+@cache(level=10)
+def pitch_basis(
+    *,
+    sr: float | None = None,
+    n_fft: int | None = None,
+    freq_in: ArrayLike | None = None,
+    n_pitches: int = 84,
+    fmin: _FloatLike_co | str | None = None,
+    intervals: str | Collection[float] = "equal",
+    bins_per_octave: int = 12,
+    tuning: float = 0.0,
+    window: _WindowSpec = "triangle",
+    harmonics: Sequence[float] | None = None,
+    harmonic_weights: Sequence[float] | None = None,
+    offset: float = 1e-4,
+    n_residual: int = 5,
+    residual: ArrayLike | None = None,
+    norm: float | None = 2,
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
+    """Construct a pitch template basis matrix for decomposition.
+
+    Produces a non-negative spectral basis matrix suitable for initializing
+    or constraining non-negative matrix factorization (NMF) or other dictionary-based
+    decompositions.
+
+    By default, pitch templates model a harmonic comb decaying as :math:`1/m`,
+    supplemented by 5 non-negative Discrete Cosine Transform (DCT) residual templates
+    (broadband, low shelf, high shelf, mid-scoop, and mid-hump) to capture transients
+    and unpitched noise.
+
+    Parameters
+    ----------
+    sr : number > 0 [scalar, optional]
+        Audio sampling rate. Required if ``freq_in`` is not specified.
+    n_fft : int > 0 [scalar, optional]
+        Length of the FFT frame. Required if ``freq_in`` is not specified.
+    freq_in : np.ndarray [shape=(n_in,)], optional
+        Coordinates of input frequency bins. If not provided, computed
+        as ``fft_frequencies(sr=sr, n_fft=n_fft)``.
+    n_pitches : int > 0 [scalar], default=84
+        Number of pitch bands to generate. Default 84 covers 7 octaves.
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (or note name in SPN format, e.g. `'C1'`).
+        If None, defaults to `'C1'` (~32.7 Hz).
+    intervals : str or collection of float, default='equal'
+        Tuning / interval system to use:
+
+        - `'equal'`: Equal temperament.
+        - `'pythagorean'`: Pythagorean intervals.
+        - `'ji3'`, `'ji5'`, `'ji7'`: 3-limit, 5-limit, or 7-limit Just Intonation.
+        - Collection of floats in [1, 2): Custom interval set.
+    bins_per_octave : int > 0 [scalar], default=12
+        Number of bins per octave in the interval system.
+    tuning : float [scalar], default=0.0
+        Tuning deviation from A440 in fractions of a bin.
+    window : str or callable, default='triangle'
+        Filter shape for each pitch / harmonic peak:
+        `'triangle'`, `'boxcar'`, `'hann'`, or `'gaussian'`.
+    harmonics : sequence of float, optional
+        Harmonics to include in each pitch template.
+        If None, includes all harmonics up to Nyquist with :math:`1/m` decay.
+        Pass ``harmonics=[1]`` for fundamental-only templates (transposed pitch filter).
+    harmonic_weights : sequence of float, optional
+        Weights applied to each harmonic. If None, defaults to :math:`1.0 / m`.
+    offset : float >= 0, default=1e-4
+        Small additive offset applied to all template entries to ensure strictly positive
+        values, preventing multiplicative updates from freezing zero bins.
+    n_residual : int >= 0, default=5
+        Number of DCT-based residual templates to append for broadband transients/noise.
+        Odd numbers (e.g., 1, 3, 5) produce symmetric shelf/hump pairs.
+    residual : np.ndarray [shape=(n_in, n_residual)], optional
+        Pre-defined residual templates to append instead of the DCT basis.
+    norm : {None, number}, default=2
+        Column normalization applied to each basis template.
+    dtype : np.dtype, default=np.float32
+        Data type of the output basis matrix.
+
+    Returns
+    -------
+    basis : np.ndarray [shape=(n_in, n_components)]
+        Non-negative basis matrix with ``n_components = n_pitches + n_residual``.
+        Columns 0 to ``n_pitches - 1`` are the pitch templates.
+        Columns ``n_pitches`` to ``n_components - 1`` are the residual templates.
+
+    See Also
+    --------
+    pitch
+    frequency_filterbank
+    librosa.decompose.decompose
+    librosa.decompose.pitch_nmf
+
+    Examples
+    --------
+    Construct a pitch template basis covering 7 octaves with 5 residual templates:
+
+    >>> basis = librosa.filters.pitch_basis(sr=22050, n_fft=2048)
+    >>> basis.shape
+    (1025, 89)
+
+    Construct fundamental-only pitch templates without residual components:
+
+    >>> basis_fund = librosa.filters.pitch_basis(sr=22050, n_fft=2048, harmonics=[1], n_residual=0)
+    >>> basis_fund.shape
+    (1025, 84)
+
+    Plot the basis templates:
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(
+    ...     librosa.amplitude_to_db(basis, ref=np.max),
+    ...     sr=22050, n_fft=2048, y_axis='log', ax=ax
+    ... )
+    >>> ax.set(xlabel='Component', ylabel='Frequency (Hz)', title='Pitch template basis')
+    >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
+    """
+    if freq_in is None:
+        if sr is None or n_fft is None:
+            raise ParameterError("Either freq_in or both sr and n_fft must be provided")
+        f_in = fft_frequencies(sr=sr, n_fft=n_fft)
+    else:
+        f_in = np.asarray(freq_in, dtype=float)
+
+    if f_in.ndim != 1 or len(f_in) == 0:
+        raise ParameterError("freq_in must be a non-empty 1D array")
+    if len(f_in) > 1 and np.any(np.diff(f_in) < 0):
+        raise ParameterError("freq_in must be monotonically non-decreasing")
+
+    if fmin is None:
+        if intervals == "equal" and n_pitches == 128 and bins_per_octave == 12:
+            fmin_ = float(midi_to_hz(0))
+        else:
+            fmin_ = float(note_to_hz("C1"))
+    else:
+        fmin_ = util._ensure_hz(fmin)
+
+    f_out = interval_frequencies(
+        n_bins=n_pitches,
+        fmin=fmin_,
+        intervals=intervals,
+        bins_per_octave=bins_per_octave,
+        tuning=tuning,
+    )
+
+    bpo = bins_per_octave
+    tol = 2.0 ** (1.0 / (2.0 * bpo)) - 1.0
+    K = len(f_in)
+    P = len(f_out)
+    W_pitch = np.zeros((K, P), dtype=dtype)
+
+    for j, f0 in enumerate(f_out):
+        if harmonics is None:
+            max_h = max(1, int(np.floor(f_in[-1] / ((1.0 - tol) * f0))))
+            h_list = np.arange(1, max_h + 1, dtype=float)
+            w_list = 1.0 / h_list
+        else:
+            h_list = np.asarray(harmonics, dtype=float)
+            if harmonic_weights is None:
+                w_list = 1.0 / h_list
+            else:
+                w_list = np.asarray(harmonic_weights, dtype=float)
+                if len(w_list) != len(h_list):
+                    raise ParameterError(
+                        f"harmonic_weights length ({len(w_list)}) must match harmonics length ({len(h_list)})"
+                    )
+
+        for m, w in zip(h_list, w_list, strict=True):
+            fm = m * f0
+            if fm > f_in[-1] + 1e-6:
+                continue
+            bw = fm * tol
+            d = np.abs(f_in - fm)
+            in_band = d < bw
+            if not np.any(in_band):
+                closest = int(np.argmin(d))
+                W_pitch[closest, j] += w
+                continue
+
+            if window in ("boxcar", "rect", "rectangular"):
+                W_pitch[in_band, j] += w
+            elif window in ("triangle", "triang"):
+                W_pitch[in_band, j] += w * (1.0 - d[in_band] / bw)
+            elif window == "hann":
+                W_pitch[in_band, j] += w * (0.5 + 0.5 * np.cos(np.pi * d[in_band] / bw))
+            elif window == "gaussian":
+                W_pitch[in_band, j] += w * np.exp(-0.5 * (d[in_band] / (bw / 2.0)) ** 2)
+            elif callable(window):
+                W_pitch[in_band, j] += w * window(d[in_band] / bw)
+            else:
+                raise ParameterError(f"Unsupported window: {window}")
+
+    if residual is not None:
+        W_res = np.asarray(residual, dtype=dtype)
+        if W_res.ndim == 1:
+            W_res = W_res[:, np.newaxis]
+        if W_res.shape[0] != K:
+            raise ParameterError(
+                f"residual shape {W_res.shape} must have {K} rows to match freq_in"
+            )
+    else:
+        W_res = _dct_residual_basis(K, n_residual=n_residual, norm=norm, dtype=dtype)
+
+    if W_res.shape[1] > 0:
+        W = np.hstack([W_pitch, W_res])
+    else:
+        W = W_pitch
+
+    if offset < 0:
+        raise ParameterError(f"offset must be non-negative, given: {offset}")
+    if offset > 0:
+        W = W + offset
+
+    if norm is not None:
+        col_norm = np.linalg.norm(W, ord=norm, axis=0, keepdims=True)
+        col_norm[col_norm == 0] = 1.0
+        W = W / col_norm
+
+    return W.astype(dtype)
 
 
 def __float_window(window_spec):
@@ -709,6 +1465,127 @@ def wavelet(
 
 
 @cache(level=10)
+def pitch_to_chroma(
+    n_input: int,
+    *,
+    bins_per_octave: int = 12,
+    n_chroma: int = 12,
+    fmin: _FloatLike_co | str | None = None,
+    window: np.ndarray | None = None,
+    base: str | int = "C",
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
+    """Construct a linear transformation matrix to map pitch/Constant-Q bins onto chroma bins.
+
+    Parameters
+    ----------
+    n_input : int > 0 [scalar]
+        Number of input components (pitch or CQT bins)
+    bins_per_octave : int > 0 [scalar], default=12
+        How many bins per octave in the input representation.
+    n_chroma : int > 0 [scalar], default=12
+        Number of output bins (per octave) in the chroma.
+    fmin : None, float > 0, or str, optional
+        Center frequency of the first constant-Q / pitch channel (in Hz) or note name in SPN format (e.g. `'C1'`).
+        Default: `note_to_hz('C1')` (~32.7 Hz).
+    window : None or np.ndarray, optional
+        If provided, the filter bank will be convolved with ``window``.
+    base : str or int, default='C'
+        The base note name (e.g. `'C'`, `'A'`, `'F#'`) or integer pitch class (0 to 11)
+        for the first chroma bin.
+    dtype : np.dtype, default=np.float32
+        The data type of the output basis matrix.
+
+    Returns
+    -------
+    pitch_to_chroma : np.ndarray [shape=(n_chroma, n_input)]
+        Transformation matrix: ``Chroma = pitch_to_chroma.dot(X)``
+
+    Raises
+    ------
+    ParameterError
+        If ``n_input`` is not an integer multiple of ``n_chroma``.
+        If ``base`` is invalid.
+
+    See Also
+    --------
+    pitch
+    logfrequency
+    chroma
+    cq_to_chroma
+
+    Notes
+    -----
+    This function caches at level 10.
+
+    Examples
+    --------
+    Get a CQT, and wrap bins to chroma
+
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> CQT = np.abs(librosa.cqt(y, sr=sr))
+    >>> chroma_map = librosa.filters.pitch_to_chroma(CQT.shape[0])
+    >>> chromagram = chroma_map.dot(CQT)
+    >>> chromagram = librosa.util.normalize(chromagram, axis=0)
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> img = librosa.display.specshow(chroma_map, x_axis="cqt_note", ax=ax)
+    >>> ax.set(ylabel="Chroma", title="Pitch-to-chroma mapping")
+    >>> fig.colorbar(img, ax=ax)
+    """
+    n_merge = float(bins_per_octave) / n_chroma
+
+    fmin_: _FloatLike_co
+    if fmin is None:
+        fmin_ = note_to_hz("C1")
+    else:
+        fmin_ = util._ensure_hz(fmin)
+
+    if np.mod(n_merge, 1) != 0:
+        raise ParameterError(
+            "Incompatible CQ merge: "
+            "input bins must be an "
+            "integer multiple of output bins."
+        )
+
+    # Tile the identity to merge fractional bins
+    cq_to_ch = np.repeat(np.eye(n_chroma), int(n_merge), axis=1)
+
+    # Roll it left to center on the target bin
+    cq_to_ch = np.roll(cq_to_ch, -int(n_merge // 2), axis=1)
+
+    # How many octaves are we repeating?
+    n_octaves = np.ceil(float(n_input) / bins_per_octave)
+
+    # Repeat and trim
+    cq_to_ch = np.tile(cq_to_ch, int(n_octaves))[:, :n_input]
+
+    # What's the note number of the first bin?
+    midi_0 = np.mod(hz_to_midi(fmin_), 12)
+
+    if isinstance(base, str):
+        base_midi = np.mod(note_to_midi(base), 12)
+    elif isinstance(base, (int, np.integer)):
+        base_midi = int(base) % 12
+    else:
+        raise ParameterError(f"base={base} must be a string or integer")
+
+    roll = int(np.round((midi_0 - base_midi) * (n_chroma / 12.0)))
+
+    # Apply the roll
+    cq_to_ch = np.roll(cq_to_ch, roll, axis=0).astype(dtype)
+
+    if window is not None:
+        import scipy.signal
+
+        cq_to_ch = scipy.signal.convolve(cq_to_ch, np.atleast_2d(window), mode="same")
+
+    return cq_to_ch
+
+
+@deprecated(version="1.1.0", version_removed="2.0")
+@cache(level=10)
 def cq_to_chroma(
     n_input: int,
     *,
@@ -720,6 +1597,10 @@ def cq_to_chroma(
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
     """Construct a linear transformation matrix to map Constant-Q bins onto chroma bins.
+
+    .. deprecated:: 1.1.0
+        This function is deprecated and will be removed in version 2.0.
+        Use `librosa.filters.pitch_to_chroma` instead.
 
     Parameters
     ----------
@@ -752,6 +1633,10 @@ def cq_to_chroma(
     ParameterError
         If ``n_input`` is not an integer multiple of ``n_chroma``
 
+    See Also
+    --------
+    pitch_to_chroma
+
     Notes
     -----
     This function caches at level 10.
@@ -766,74 +1651,17 @@ def cq_to_chroma(
     >>> chromagram = chroma_map.dot(CQT)
     >>> # Max-normalize each time step
     >>> chromagram = librosa.util.normalize(chromagram, axis=0)
-
-    >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> imgcq = librosa.display.specshow(CQT, vscale='dBFS',
-    ...                                  y_axis='cqt_note', x_axis='time',
-    ...                                  ax=ax[0])
-    >>> ax[0].set(title='CQT Magnitude')
-    >>> ax[0].label_outer()
-    >>> librosa.display.specshow(chromagram, y_axis='chroma', x_axis='time',
-    ...                          ax=ax[1])
-    >>> ax[1].set(title='Chroma (wrapped CQT)')
-    >>> ax[1].label_outer()
-    >>> chroma = librosa.feature.chroma_stft(y=y, sr=sr)
-    >>> imgchroma = librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[2])
-    >>> ax[2].set(title='librosa.feature.chroma_stft')
     """
-    # How many fractional bins are we merging?
-    n_merge = float(bins_per_octave) / n_chroma
-
-    fmin_: _FloatLike_co
-    if fmin is None:
-        fmin_ = note_to_hz("C1")
-    else:
-        fmin_ = util._ensure_hz(fmin)
-
-    if np.mod(n_merge, 1) != 0:
-        raise ParameterError(
-            "Incompatible CQ merge: "
-            "input bins must be an "
-            "integer multiple of output bins."
-        )
-
-    # Tile the identity to merge fractional bins
-    cq_to_ch = np.repeat(np.eye(n_chroma), int(n_merge), axis=1)
-
-    # Roll it left to center on the target bin
-    cq_to_ch = np.roll(cq_to_ch, -int(n_merge // 2), axis=1)
-
-    # How many octaves are we repeating?
-    n_octaves = np.ceil(float(n_input) / bins_per_octave)
-
-    # Repeat and trim
-    cq_to_ch = np.tile(cq_to_ch, int(n_octaves))[:, :n_input]
-
-    # What's the note number of the first bin in the CQT?
-    # midi uses 12 bins per octave here
-    midi_0 = np.mod(hz_to_midi(fmin_), 12)
-
-    if base_c:
-        # rotate to C
-        roll = midi_0
-    else:
-        # rotate to A
-        roll = midi_0 - 9
-
-    # Adjust the roll in terms of how many chroma we want out
-    # We need to be careful with rounding here
-    roll = int(np.round(roll * (n_chroma / 12.0)))
-
-    # Apply the roll
-    cq_to_ch = np.roll(cq_to_ch, roll, axis=0).astype(dtype)
-
-    if window is not None:
-        import scipy.signal
-
-        cq_to_ch = scipy.signal.convolve(cq_to_ch, np.atleast_2d(window), mode="same")
-
-    return cq_to_ch
+    base = "C" if base_c else "A"
+    return pitch_to_chroma(
+        n_input,
+        bins_per_octave=bins_per_octave,
+        n_chroma=n_chroma,
+        fmin=fmin,
+        window=window,
+        base=base,
+        dtype=dtype,
+    )
 
 
 @cache(level=10)

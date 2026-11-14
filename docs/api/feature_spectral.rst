@@ -11,6 +11,8 @@ Spectral features
     chroma_vqt
     tonnetz
     melspectrogram
+    logfrequency_spectrogram
+    pitch_spectrogram
     mfcc
     spectral_centroid
     spectral_bandwidth

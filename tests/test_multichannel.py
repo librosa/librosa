@@ -714,6 +714,54 @@ def test_melspectrogram_multi_time(y_multi):
     assert not np.allclose(Call[0], Call[1])
 
 
+def test_logfrequency_spectrogram_multi(s_multi):
+    S, sr = s_multi
+
+    C0 = librosa.feature.logfrequency_spectrogram(S=S[0], sr=sr)
+    C1 = librosa.feature.logfrequency_spectrogram(S=S[1], sr=sr)
+    Call = librosa.feature.logfrequency_spectrogram(S=S, sr=sr)
+
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_logfrequency_spectrogram_multi_time(y_multi):
+    y, sr = y_multi
+
+    C0 = librosa.feature.logfrequency_spectrogram(y=y[0], sr=sr)
+    C1 = librosa.feature.logfrequency_spectrogram(y=y[1], sr=sr)
+    Call = librosa.feature.logfrequency_spectrogram(y=y, sr=sr)
+
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_pitch_spectrogram_multi(s_multi):
+    S, sr = s_multi
+
+    C0 = librosa.feature.pitch_spectrogram(S=S[0], sr=sr)
+    C1 = librosa.feature.pitch_spectrogram(S=S[1], sr=sr)
+    Call = librosa.feature.pitch_spectrogram(S=S, sr=sr)
+
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+    assert not np.allclose(Call[0], Call[1])
+
+
+def test_pitch_spectrogram_multi_time(y_multi):
+    y, sr = y_multi
+
+    C0 = librosa.feature.pitch_spectrogram(y=y[0], sr=sr)
+    C1 = librosa.feature.pitch_spectrogram(y=y[1], sr=sr)
+    Call = librosa.feature.pitch_spectrogram(y=y, sr=sr)
+
+    assert np.allclose(C0, Call[0])
+    assert np.allclose(C1, Call[1])
+    assert not np.allclose(Call[0], Call[1])
+
+
 @pytest.mark.parametrize("rate", [0.5, 2])
 def test_phase_vocoder(y_multi, rate):
     y, sr = y_multi
@@ -779,6 +827,61 @@ def test_interp_harmonics_multi_vary(tfr_multi):
 
     assert not np.allclose(H0, H1)
 
+
+def test_interp_time_multi_static(s_multi):
+    S, sr = s_multi
+
+    times = librosa.times_like(S, sr=sr)
+    target_times = np.linspace(times[0], times[-1], 50)
+    Tall = librosa.interp_time(S, target_times=target_times, times=times)
+    T0 = librosa.interp_time(S[0], target_times=target_times, times=times)
+    T1 = librosa.interp_time(S[1], target_times=target_times, times=times)
+
+    assert np.allclose(Tall[0], T0)
+    assert np.allclose(Tall[1], T1)
+    assert not np.allclose(T0, T1)
+
+
+def test_interp_frequency_multi_static(s_multi):
+    S, sr = s_multi
+
+    freqs = librosa.fft_frequencies(sr=sr)
+    target_freqs = librosa.cqt_frequencies(n_bins=84, fmin=32.7)
+    Fall = librosa.interp_frequency(S, target_freqs=target_freqs, freqs=freqs)
+    F0 = librosa.interp_frequency(S[0], target_freqs=target_freqs, freqs=freqs)
+    F1 = librosa.interp_frequency(S[1], target_freqs=target_freqs, freqs=freqs)
+
+    assert np.allclose(Fall[0], F0)
+    assert np.allclose(Fall[1], F1)
+    assert not np.allclose(F0, F1)
+
+
+@pytest.mark.filterwarnings("ignore:.*are not unique.*")
+def test_interp_time_multi_vary(tfr_multi):
+    freqs, times, mags = tfr_multi
+
+    target_times = np.linspace(np.nanmin(times), np.nanmax(times), 50)
+    Tall = librosa.interp_time(mags, target_times=target_times, times=times, kind="nearest")
+    T0 = librosa.interp_time(mags[0], target_times=target_times, times=times[0], kind="nearest")
+    T1 = librosa.interp_time(mags[1], target_times=target_times, times=times[1], kind="nearest")
+
+    assert np.allclose(Tall[0], T0)
+    assert np.allclose(Tall[1], T1)
+    assert not np.allclose(T0, T1)
+
+
+@pytest.mark.filterwarnings("ignore:.*are not unique.*")
+def test_interp_frequency_multi_vary(tfr_multi):
+    freqs, times, mags = tfr_multi
+
+    target_freqs = np.linspace(100, 4000, 64)
+    Fall = librosa.interp_frequency(mags, target_freqs=target_freqs, freqs=freqs, kind="nearest")
+    F0 = librosa.interp_frequency(mags[0], target_freqs=target_freqs, freqs=freqs[0], kind="nearest")
+    F1 = librosa.interp_frequency(mags[1], target_freqs=target_freqs, freqs=freqs[1], kind="nearest")
+
+    assert np.allclose(Fall[0], F0)
+    assert np.allclose(Fall[1], F1)
+    assert not np.allclose(F0, F1)
 
 @pytest.mark.parametrize("filter_peaks", [False, True])
 def test_salience_multi_static(s_multi, filter_peaks):
@@ -967,6 +1070,66 @@ def test_mel_to_stft_multi(power, n_fft, rng):
     stft0 = librosa.feature.inverse.mel_to_stft(mels0, power=power, n_fft=n_fft)
     mels1 = np.einsum("...ft,mf->...mt", stft_orig[1], mel_basis)
     stft1 = librosa.feature.inverse.mel_to_stft(mels1, power=power, n_fft=n_fft)
+
+    # Check each channel
+    assert np.allclose(stft[0], stft0, atol=1e-6)
+    assert np.allclose(stft[1], stft1, atol=1e-6)
+
+    # Check that they're not both the same
+    assert not np.allclose(stft0, stft1)
+
+
+@pytest.mark.parametrize("power", [1, 2])
+@pytest.mark.parametrize("n_fft", [1024, 2048])
+def test_logfrequency_to_stft_multi(power, n_fft, rng):
+    sr = 22050
+    bins_per_octave = 12
+    fb = librosa.filters.logfrequency(sr=sr, n_fft=n_fft, bins_per_octave=bins_per_octave)
+
+    stft_orig = np.abs(rng.standard_normal(size=(2, n_fft // 2 + 1, 4))) ** power
+
+    L = np.einsum("...ft,mf->...mt", stft_orig, fb)
+    stft = librosa.feature.inverse.logfrequency_to_stft(
+        L, sr=sr, power=power, n_fft=n_fft, bins_per_octave=bins_per_octave
+    )
+    L0 = np.einsum("...ft,mf->...mt", stft_orig[0], fb)
+    stft0 = librosa.feature.inverse.logfrequency_to_stft(
+        L0, sr=sr, power=power, n_fft=n_fft, bins_per_octave=bins_per_octave
+    )
+    L1 = np.einsum("...ft,mf->...mt", stft_orig[1], fb)
+    stft1 = librosa.feature.inverse.logfrequency_to_stft(
+        L1, sr=sr, power=power, n_fft=n_fft, bins_per_octave=bins_per_octave
+    )
+
+    # Check each channel
+    assert np.allclose(stft[0], stft0, atol=1e-6)
+    assert np.allclose(stft[1], stft1, atol=1e-6)
+
+    # Check that they're not both the same
+    assert not np.allclose(stft0, stft1)
+
+
+@pytest.mark.parametrize("power", [1, 2])
+@pytest.mark.parametrize("n_fft", [1024, 2048])
+def test_pitch_to_stft_multi(power, n_fft, rng):
+    sr = 22050
+    n_pitches = 84
+    fb = librosa.filters.pitch(sr=sr, n_fft=n_fft, n_pitches=n_pitches, fmin="C1")
+
+    stft_orig = np.abs(rng.standard_normal(size=(2, n_fft // 2 + 1, 4))) ** power
+
+    P = np.einsum("...ft,mf->...mt", stft_orig, fb)
+    stft = librosa.feature.inverse.pitch_to_stft(
+        P, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1"
+    )
+    P0 = np.einsum("...ft,mf->...mt", stft_orig[0], fb)
+    stft0 = librosa.feature.inverse.pitch_to_stft(
+        P0, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1"
+    )
+    P1 = np.einsum("...ft,mf->...mt", stft_orig[1], fb)
+    stft1 = librosa.feature.inverse.pitch_to_stft(
+        P1, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1"
+    )
 
     # Check each channel
     assert np.allclose(stft[0], stft0, atol=1e-6)

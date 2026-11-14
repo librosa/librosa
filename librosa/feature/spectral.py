@@ -39,6 +39,8 @@ __all__ = [
     "melspectrogram",
     "mfcc",
     "tonnetz",
+    "logfrequency_spectrogram",
+    "pitch_spectrogram",
 ]
 
 
@@ -1377,7 +1379,7 @@ def chroma_cqt(
     n_octaves : int > 0
         Number of octaves to analyze above ``fmin``
     window : None or np.ndarray
-        Optional window parameter to `filters.cq_to_chroma`
+        Optional window parameter to `filters.pitch_to_chroma`
         Must be an integer multiple of ``n_chroma``.
         Default: 36 (3 bins per semitone)
         If `None`, it will match ``n_chroma``.
@@ -1447,7 +1449,7 @@ def chroma_cqt(
         )
 
     # Map to chroma
-    cq_to_chr = filters.cq_to_chroma(
+    cq_to_chr = filters.pitch_to_chroma(
         C.shape[-2],
         bins_per_octave=bins_per_octave,
         n_chroma=n_chroma,
@@ -1525,7 +1527,7 @@ def chroma_cens(
     cqt_mode : ['full', 'hybrid']
         Constant-Q transform mode
     window : None or np.ndarray
-        Optional window parameter to `filters.cq_to_chroma`
+        Optional window parameter to `filters.pitch_to_chroma`
     norm : int > 0, +-np.inf, or None
         Column-wise normalization of the chromagram.
     win_len_smooth : int > 0 or None
@@ -1733,7 +1735,7 @@ def chroma_vqt(
         )
 
     # Map to chroma
-    vq_to_chr = filters.cq_to_chroma(
+    vq_to_chr = filters.pitch_to_chroma(
         V.shape[-2],
         bins_per_octave=bins_per_octave,
         n_chroma=bins_per_octave,
@@ -1799,7 +1801,7 @@ def tonnetz(
     n_octaves : int > 0
         Number of octaves to analyze above ``fmin``
     window : None or np.ndarray
-        Optional window parameter to `filters.cq_to_chroma`
+        Optional window parameter to `filters.pitch_to_chroma`
     bins_per_octave : int > 0, optional
         Number of bins per octave in the CQT.
         Must be an integer multiple of ``n_chroma``.
@@ -2229,3 +2231,290 @@ def melspectrogram(
 
     melspec: np.ndarray = np.einsum("...ft,mf->...mt", S, mel_basis, optimize=True)
     return melspec
+
+
+def logfrequency_spectrogram(
+    *,
+    y: np.ndarray | None = None,
+    sr: float = 22050,
+    S: np.ndarray | None = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    win_length: int | None = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
+    power: float = 2.0,
+    n_bins: int | None = None,
+    bins_per_octave: int = 12,
+    fmin: _FloatLike_co | str | None = None,
+    tuning: float | None = 0.0,
+    filter_window: _WindowSpec = "triangle",
+    norm: Literal["slaney"] | float | None = "slaney",
+    **kwargs: Any,
+) -> np.ndarray:
+    """Compute a logarithmic frequency spectrogram.
+
+    Applies a logarithmic filterbank (`librosa.filters.logfrequency`)
+    to a Short-Time Fourier Transform (STFT) power or magnitude spectrogram.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)]
+        Audio time-series. Multi-channel is supported.
+    sr : number > 0 [scalar]
+        Sampling rate of ``y``.
+    S : np.ndarray [shape=(..., d, t)]
+        Pre-computed spectrogram.
+    n_fft : int > 0 [scalar]
+        Length of the FFT window.
+    hop_length : int > 0 [scalar]
+        Number of samples between successive frames.
+    win_length : int <= n_fft [scalar]
+        Window length for the STFT.
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        Window specification for the STFT.
+    center : bool
+        If True, the input signal is padded so that frame ``t`` is centered at
+        ``t * hop_length``.
+    pad_mode : str
+        Padding mode for the STFT.
+    power : float > 0 [scalar]
+        Exponent for the magnitude spectrogram:
+        e.g., 1 for energy, 2 for power, etc.
+    n_bins : int > 0 [scalar, optional]
+        Number of logarithmic frequency bands to generate.
+        If None, automatically spans up to the Nyquist frequency.
+    bins_per_octave : int > 0 [scalar], default=12
+        Number of filter bands per octave. Common choices:
+
+        - 12: Semitone resolution.
+        - 24: Quarter-tone resolution (as used in SuperFlux and madmom).
+    fmin : float > 0, str, or None, optional
+        Lowest frequency (in Hz) or note name in SPN format (e.g. `'C1'`).
+        Defaults to `note_to_hz('C1')` (~32.7 Hz).
+    tuning : float or None, default=0.0
+        Tuning deviation from A440 in fractional bins.
+        If None, tuning is automatically estimated from the spectrogram.
+    filter_window : str or callable, default='triangle'
+        Filter shape for the log-frequency basis.
+        Choices include `'triangle'`, `'boxcar'`, `'hann'`, `'gaussian'`.
+    norm : {None, 'slaney', or number}, default='slaney'
+        Normalization applied to each filter row.
+    **kwargs : additional keyword arguments
+        Additional keyword arguments to `librosa.filters.logfrequency`.
+
+    Returns
+    -------
+    logfspectrogram : np.ndarray [shape=(..., n_bins, t)]
+        Logarithmic frequency spectrogram.
+
+    See Also
+    --------
+    librosa.filters.logfrequency
+    pitch_spectrogram
+    melspectrogram
+
+    Examples
+    --------
+    Compute a 24-band-per-octave logarithmic spectrogram:
+
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> S_log = librosa.feature.logfrequency_spectrogram(
+    ...     y=y, sr=sr, bins_per_octave=24, fmin="C1"
+    ... )
+    >>> S_log.shape
+    (202, 230)
+
+    Display the log-frequency spectrogram:
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> S_dB = librosa.power_to_db(S_log, ref=np.max)
+    >>> img = librosa.display.specshow(S_dB, x_axis='time',
+    ...                                y_axis='logfreq_hz', sr=sr,
+    ...                                bins_per_octave=24, fmin='C1', ax=ax)
+    >>> librosa.display.colorbar_db(img)
+    >>> ax.set(title='Log-frequency spectrogram')
+    """
+    S, n_fft = _spectrogram(
+        y=y,
+        S=S,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        power=power,
+        win_length=win_length,
+        window=window,
+        center=center,
+        pad_mode=pad_mode,
+    )
+
+    if tuning is None:
+        tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=bins_per_octave)
+
+    log_fb = filters.logfrequency(
+        sr=sr,
+        n_fft=n_fft,
+        n_bins=n_bins,
+        bins_per_octave=bins_per_octave,
+        fmin=fmin,
+        tuning=tuning if tuning is not None else 0.0,
+        window=filter_window,
+        norm=norm,
+        dtype=S.dtype,
+        **kwargs,
+    )
+
+    return np.asarray(np.einsum("lf,...ft->...lt", log_fb, S, optimize=True))
+
+
+def pitch_spectrogram(
+    *,
+    y: np.ndarray | None = None,
+    sr: float = 22050,
+    S: np.ndarray | None = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    win_length: int | None = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
+    power: float = 2.0,
+    tuning: float | None = 0.0,
+    n_pitches: int = 128,
+    fmin: _FloatLike_co | str | None = None,
+    intervals: str | Collection[float] = "equal",
+    bins_per_octave: int = 12,
+    filter_window: _WindowSpec = "boxcar",
+    norm: Literal["slaney"] | float | None = None,
+    **kwargs: Any,
+) -> np.ndarray:
+    """Compute a musical pitch-anchored spectrogram.
+
+    Groups spectral energy from an STFT or input spectrogram into discrete
+    musical pitch bands under specified intonation assumptions
+    (e.g., equal temperament, Pythagorean, Just Intonation).
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)]
+        Audio time-series. Multi-channel is supported.
+    sr : number > 0 [scalar]
+        Sampling rate of ``y``.
+    S : np.ndarray [shape=(..., d, t)]
+        Pre-computed spectrogram.
+    n_fft : int > 0 [scalar]
+        Length of the FFT window.
+    hop_length : int > 0 [scalar]
+        Number of samples between successive frames.
+    win_length : int <= n_fft [scalar]
+        Window length for the STFT.
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        Window specification for the STFT.
+    center : bool
+        If True, the input signal is padded so that frame ``t`` is centered at
+        ``t * hop_length``.
+    pad_mode : str
+        Padding mode for the STFT.
+    power : float > 0 [scalar]
+        Exponent for the magnitude spectrogram:
+        e.g., 1 for energy, 2 for power, etc.
+    tuning : float [scalar] or None
+        Deviation (in fractions of a bin) from A440 tuning.
+        If None and ``intervals == 'equal'``, tuning is automatically estimated
+        from the spectrogram.
+    n_pitches : int > 0 [scalar], default=128
+        Number of pitch bands to generate. Default 128 covers MIDI notes 0 to 127.
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (or note name in SPN format, e.g. `'C1'`).
+        If None, defaults to MIDI 0 (~8.18 Hz) when ``n_pitches=128``, or `'C1'`.
+    intervals : str or collection of float, default='equal'
+        Interval system to use:
+
+        - `'equal'`: Equal temperament.
+        - `'pythagorean'`: Pythagorean intervals.
+        - `'ji3'`, `'ji5'`, `'ji7'`: 3-limit, 5-limit, or 7-limit Just Intonation.
+        - Collection of floats in [1, 2): Custom interval set.
+    bins_per_octave : int > 0 [scalar], default=12
+        Number of bins per octave in the interval system.
+    filter_window : str, default='boxcar'
+        Filter shape for each pitch band. Default `'boxcar'` performs exact
+        rectangular energy summation across semitone boundaries.
+        Also supports `'triangle'`, `'hann'`, `'gaussian'`.
+    norm : {None, 'slaney', or number}, default=None
+        Normalization applied to each filter row.
+    **kwargs : additional keyword arguments
+        Additional keyword arguments to `librosa.filters.pitch`.
+
+    Returns
+    -------
+    pitch_spectrogram : np.ndarray [shape=(..., n_pitches, t)]
+        Pitch spectrogram.
+
+    See Also
+    --------
+    librosa.filters.pitch
+    logfrequency_spectrogram
+    chroma_stft
+
+    Examples
+    --------
+    Compute a 128-pitch spectrogram with rectangular pooling (libfmp pool_pitch equivalent):
+
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> S_pitch = librosa.feature.pitch_spectrogram(y=y, sr=sr)
+    >>> S_pitch.shape
+    (128, 230)
+
+    Compute a Just Intonation pitch spectrogram:
+
+    >>> S_ji = librosa.feature.pitch_spectrogram(
+    ...     y=y, sr=sr, intervals="ji5", fmin="C1", n_pitches=84
+    ... )
+    >>> S_ji.shape
+    (84, 230)
+
+    Display a 8-octave (C1-B8) pitch spectrogram using musical note names:
+
+    >>> S_p7 = librosa.feature.pitch_spectrogram(
+    ...     y=y, sr=sr, n_pitches=96, fmin="C1"
+    ... )
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> S_dB = librosa.power_to_db(S_p7, ref=np.max)
+    >>> img = librosa.display.specshow(S_dB, x_axis='time',
+    ...                                y_axis='pitch_note', sr=sr,
+    ...                                fmin=librosa.note_to_hz("C1"), ax=ax)
+    >>> librosa.display.colorbar_db(img)
+    >>> ax.set(title='Pitch spectrogram')
+    """
+    S, n_fft = _spectrogram(
+        y=y,
+        S=S,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        power=power,
+        win_length=win_length,
+        window=window,
+        center=center,
+        pad_mode=pad_mode,
+    )
+
+    if tuning is None and intervals == "equal":
+        tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=bins_per_octave)
+
+    pitch_fb = filters.pitch(
+        sr=sr,
+        n_fft=n_fft,
+        n_pitches=n_pitches,
+        fmin=fmin,
+        intervals=intervals,
+        bins_per_octave=bins_per_octave,
+        tuning=tuning if tuning is not None else 0.0,
+        window=filter_window,
+        norm=norm,
+        dtype=S.dtype,
+        **kwargs,
+    )
+
+    return np.asarray(np.einsum("pf,...ft->...pt", pitch_fb, S, optimize=True))

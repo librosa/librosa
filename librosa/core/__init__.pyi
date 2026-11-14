@@ -1,6 +1,7 @@
 from .audio import autocorrelate as autocorrelate
 from .audio import chirp as chirp
 from .audio import clicks as clicks
+from .audio import envelope as envelope
 from .audio import get_duration as get_duration
 from .audio import get_samplerate as get_samplerate
 from .audio import load as load
@@ -9,6 +10,9 @@ from .audio import lpc as lpc
 from .audio import mu_compress as mu_compress
 from .audio import mu_expand as mu_expand
 from .audio import resample as resample
+from .audio import shepard_risset_glissando as shepard_risset_glissando
+from .audio import shepard_scale as shepard_scale
+from .audio import shepard_tone as shepard_tone
 from .audio import stream as stream
 from .audio import to_mono as to_mono
 from .audio import to_multi as to_multi
@@ -66,6 +70,8 @@ from .convert import tuning_to_A4 as tuning_to_A4
 from .harmonic import f0_harmonics as f0_harmonics
 from .harmonic import interp_harmonics as interp_harmonics
 from .harmonic import salience as salience
+from .interpolate import interp_frequency as interp_frequency
+from .interpolate import interp_time as interp_time
 from .intervals import interval_frequencies as interval_frequencies
 from .intervals import plimit_intervals as plimit_intervals
 from .intervals import pythagorean_intervals as pythagorean_intervals

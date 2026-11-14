@@ -24,6 +24,7 @@ if TYPE_CHECKING:
     from ._typing import (
         _Array1D,
         _FloatLike_co,
+        _InterpKind,
         _IntLike_co,
         _PadModeSTFT,
         _WindowSpec,
@@ -41,6 +42,8 @@ __all__ = [
     "split",
     "preemphasis",
     "deemphasis",
+    "vibrato",
+    "tremolo",
 ]
 
 
@@ -1135,3 +1138,270 @@ def deemphasis(
         return y_out, zf
     else:
         return y_out
+
+
+def tremolo(
+    y: np.ndarray,
+    *,
+    sr: float,
+    rate: float = 5.0,
+    depth: float = 0.5,
+    mode: Literal["sine", "triangle", "square"] = "sine",
+    phase: float = 0.0,
+) -> np.ndarray:
+    """Apply tremolo (amplitude modulation) to an audio signal.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)]
+        Audio time series. Multi-channel is supported.
+
+    sr : number > 0 [scalar]
+        Audio sampling rate of ``y``.
+
+    rate : float > 0 [scalar]
+        Modulation frequency in Hertz (Hz).
+        Defaults to 5.0 Hz.
+
+    depth : float in [0.0, 1.0]
+        Modulation depth controlling the severity of amplitude variation.
+        At 0.0, no modulation occurs. At 1.0, maximum amplitude drops to zero.
+
+    mode : {'sine', 'triangle', 'square'}
+        The LFO waveform type used for modulation:
+        - 'sine' : Sinusoidal modulation
+        - 'triangle' : Triangular modulation
+        - 'square' : Square / pulse wave modulation
+
+    phase : float
+        Initial phase offset of the LFO in radians.
+
+    Returns
+    -------
+    y_tremolo : np.ndarray [shape=(..., n)]
+        The amplitude-modulated audio time series.
+
+    See Also
+    --------
+    vibrato
+
+    Examples
+    --------
+    Apply tremolo to a pure tone and plot the waveforms before and after.
+
+    >>> import matplotlib.pyplot as plt
+    >>> sr = 22050
+    >>> y = librosa.tone(80, sr=sr, duration=0.25)
+    >>> y_trem = librosa.effects.tremolo(y, sr=sr, rate=8.0, depth=0.7)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> librosa.display.waveshow(y, sr=sr, ax=ax[0])
+    >>> ax[0].set(title="Original tone")
+    >>> librosa.display.waveshow(y_trem, sr=sr, ax=ax[1])
+    >>> ax[1].set(title="Tremolo tone")
+    """
+    util.valid_audio(y)
+
+    if sr <= 0:
+        raise ParameterError("sr must be a positive number")
+    if rate <= 0:
+        raise ParameterError("rate must be a positive number")
+    if not 0.0 <= depth <= 1.0:
+        raise ParameterError("depth must be between 0.0 and 1.0")
+
+    t = np.arange(y.shape[-1], dtype=np.float64) / float(sr)
+    angle = 2.0 * np.pi * rate * t + phase
+
+    lfo: np.ndarray
+    if mode == "sine":
+        lfo = 0.5 * (1.0 + np.sin(angle))
+    elif mode == "triangle":
+        import scipy.signal
+        lfo = 0.5 * (1.0 + scipy.signal.sawtooth(angle, width=0.5))
+    elif mode == "square":
+        import scipy.signal
+        lfo = 0.5 * (1.0 + scipy.signal.square(angle))
+    else:
+        raise ParameterError(f"Invalid mode='{mode}'. Must be 'sine', 'triangle', or 'square'.")
+
+    modulation: np.ndarray = 1.0 - depth * (1.0 - lfo)
+    y_out: np.ndarray = y * modulation
+    return y_out.astype(y.dtype, copy=False)
+
+
+def vibrato(
+    y: np.ndarray,
+    *,
+    sr: float,
+    rate: float = 5.0,
+    depth: float = 0.5,
+    mode: Literal["sine", "triangle"] = "sine",
+    phase: float = 0.0,
+    kind: _InterpKind = "linear",
+    n_fft: int = 2048,
+    hop_length: int | None = None,
+    win_length: int | None = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
+) -> np.ndarray:
+    """Apply vibrato (pitch modulation) to an audio signal.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)]
+        Audio time series. Multi-channel is supported.
+
+    sr : number > 0 [scalar]
+        Audio sampling rate of ``y``.
+
+    rate : float > 0 [scalar]
+        Modulation frequency in Hertz (Hz).
+        Defaults to 5.0 Hz.
+
+    depth : float > 0 [scalar]
+        Modulation depth in semitones (e.g. 0.5 corresponds to +-0.5 semitones deviation).
+
+    mode : {'sine', 'triangle'}
+        The LFO waveform shape used for frequency modulation:
+        - 'sine' : Sinusoidal modulation
+        - 'triangle' : Triangular modulation
+
+    phase : float
+        Initial phase offset of the LFO in radians.
+
+    kind : str
+        Specifies the type of interpolation used when re-aligning time warping.
+        Passed to `scipy.interpolate.interp1d`. Defaults to "linear".
+
+    n_fft : int > 0 [scalar]
+        Length of the windowed signal after padding with zeros.
+        The number of rows in the STFT matrix is ``(1 + n_fft/2)``.
+
+    hop_length : int or None
+        Number of audio samples between adjacent STFT columns.
+        If unspecified, defaults to ``win_length // 4``.
+
+    win_length : int or None
+        Each frame of audio is windowed by ``window`` of length ``win_length``
+        and then padded with zeros to match ``n_fft``.
+        If unspecified, defaults to ``win_length = n_fft``.
+
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        Window specification. See `scipy.signal.get_window` for supported values.
+
+    center : bool
+        If ``True``, the signal is padded so that frame ``t`` is centered
+        at ``y[t * hop_length]``.
+
+    pad_mode : str
+        Padding mode used when ``center=True``.
+        See `numpy.pad` for available modes.
+
+    Returns
+    -------
+    y_vibrato : np.ndarray [shape=(..., n)]
+        The pitch-modulated audio time series.
+
+    See Also
+    --------
+    tremolo
+    pitch_shift
+    librosa.phase_vocoder
+
+    Examples
+    --------
+    Apply vibrato to a pure tone and plot the spectrograms before and after.
+
+    >>> import matplotlib.pyplot as plt
+    >>> sr = 22050
+    >>> y = librosa.tone(440, sr=sr, duration=2.0)
+    >>> y_vib = librosa.effects.vibrato(y, sr=sr, rate=5.0, depth=1.0)
+    >>> S_orig = librosa.stft(y)
+    >>> S_vib = librosa.stft(y_vib)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> librosa.display.specshow(S_orig, sr=sr, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[0])
+    >>> ax[0].set(title="Original tone spectrogram")
+    >>> librosa.display.specshow(S_vib, sr=sr, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[1])
+    >>> ax[1].set(title="Vibrato tone spectrogram")
+    >>> plt.show()
+    """
+    util.valid_audio(y)
+
+    if sr <= 0:
+        raise ParameterError("sr must be a positive number")
+    if rate <= 0:
+        raise ParameterError("rate must be a positive number")
+    if depth < 0:
+        raise ParameterError("depth must be non-negative")
+    if mode not in ("sine", "triangle"):
+        raise ParameterError(f"Invalid mode='{mode}'. Must be 'sine' or 'triangle'.")
+
+    if depth == 0.0:
+        return y.copy()
+
+    if win_length is None:
+        win_length = n_fft
+
+    if hop_length is None:
+        hop_length = int(win_length // 4)
+
+    # STFT frame-level modulation time-steps
+    stft = core.stft(
+        y,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        window=window,
+        center=center,
+        pad_mode=pad_mode,
+    )
+    n_frames = stft.shape[-1]
+    if n_frames < 2:
+        return y.copy()
+
+    t_frames = np.arange(n_frames, dtype=np.float64) * hop_length / float(sr)
+    angle = 2.0 * np.pi * rate * t_frames + phase
+
+    if mode == "sine":
+        lfo = np.sin(angle)
+    elif mode == "triangle":
+        import scipy.signal
+        lfo = scipy.signal.sawtooth(angle, width=0.5)
+    else:
+        raise ParameterError(f"Invalid mode='{mode}'. Must be 'sine' or 'triangle'.")
+
+    # Pitch factor alpha = 2^(semitones / 12)
+    # Instantaneous time step size for phase vocoder is the pitch scaling factor
+    time_steps = 2.0 ** (depth * lfo / 12.0)
+
+    # Phase-vocoder stretch along the frame sequence
+    time_steps_accumulated = np.cumsum(time_steps) - time_steps[0]
+    t_out = (
+        time_steps_accumulated / time_steps_accumulated[-1] * (n_frames - 1)
+    )
+
+    stft_vib = core.phase_vocoder(stft, t_out=t_out)
+
+    y_vib = core.istft(
+        stft_vib,
+        n_fft=n_fft,
+        hop_length=hop_length,
+        win_length=win_length,
+        window=window,
+        center=center,
+        dtype=y.dtype,
+        length=y.shape[-1],
+    )
+
+    # Resample to compensate for the time-warping introduced by the phase vocoder
+    # This restores the original timing while preserving the pitch modulation
+    import scipy.interpolate
+    t_original = np.linspace(0, 1, y.shape[-1])
+    t_warped = np.interp(t_original, np.linspace(0, 1, len(t_out)), t_out / (n_frames - 1))
+
+    interpolator = scipy.interpolate.interp1d(
+        t_original, y_vib, axis=-1, kind=kind, fill_value="extrapolate"
+    )
+    y_out = interpolator(t_warped)
+
+    return y_out.astype(y.dtype, copy=False)

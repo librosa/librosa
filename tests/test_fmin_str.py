@@ -184,12 +184,120 @@ def test_spectral_features_str():
 
 
 def test_display_specshow_str():
-    fig, ax = plt.subplots(nrows=2)
+    fig, ax = plt.subplots(nrows=4)
     D = np.abs(librosa.stft(np.zeros(2048)))
     # specshow with fmin, fmax
     librosa.display.specshow(D, sr=22050, y_axis="mel", fmin="C2", fmax="C7", ax=ax[0])
     librosa.display.specshow(D, sr=22050, y_axis="cqt_hz", fmin="C2", ax=ax[1])
+    librosa.display.specshow(D, sr=22050, y_axis="logfreq_hz", fmin="C2", ax=ax[2])
+    librosa.display.specshow(D, sr=22050, y_axis="pitch_hz", fmin="C2", ax=ax[3])
     plt.close(fig)
+
+
+def test_shepard_tone_str():
+    s_str = librosa.shepard_tone("A4", duration=0.1, sr=22050)
+    s_num = librosa.shepard_tone(librosa.note_to_hz("A4"), duration=0.1, sr=22050)
+    assert np.allclose(s_str, s_num)
+
+
+def test_shepard_scale_str():
+    s_str = librosa.shepard_scale("C4", duration=0.1, sr=22050)
+    s_num = librosa.shepard_scale(librosa.note_to_hz("C4"), duration=0.1, sr=22050)
+    assert np.allclose(s_str, s_num)
+
+
+def test_shepard_risset_glissando_str():
+    g_str = librosa.shepard_risset_glissando("C4", duration=0.1, sr=22050)
+    g_num = librosa.shepard_risset_glissando(
+        librosa.note_to_hz("C4"), duration=0.1, sr=22050
+    )
+    assert np.allclose(g_str, g_num)
+
+
+def test_filters_logfrequency_str():
+    f_str = librosa.filters.logfrequency(sr=22050, n_fft=2048, fmin="C2")
+    f_num = librosa.filters.logfrequency(
+        sr=22050, n_fft=2048, fmin=librosa.note_to_hz("C2")
+    )
+    assert np.allclose(f_str, f_num)
+
+
+def test_filters_pitch_str():
+    f_str = librosa.filters.pitch(sr=22050, n_fft=2048, fmin="C2")
+    f_num = librosa.filters.pitch(
+        sr=22050, n_fft=2048, fmin=librosa.note_to_hz("C2")
+    )
+    assert np.allclose(f_str, f_num)
+
+
+def test_filters_pitch_basis_str():
+    b_str = librosa.filters.pitch_basis(sr=22050, n_fft=2048, fmin="C2")
+    b_num = librosa.filters.pitch_basis(
+        sr=22050, n_fft=2048, fmin=librosa.note_to_hz("C2")
+    )
+    assert np.allclose(b_str, b_num)
+
+
+def test_filters_pitch_to_chroma_str():
+    p_str = librosa.filters.pitch_to_chroma(n_input=84, bins_per_octave=12, fmin="C2")
+    p_num = librosa.filters.pitch_to_chroma(
+        n_input=84, bins_per_octave=12, fmin=librosa.note_to_hz("C2")
+    )
+    assert np.allclose(p_str, p_num)
+
+
+def test_spectral_logfrequency_spectrogram_str():
+    y = np.random.default_rng(0).standard_normal(4096)
+    sr = 22050
+    s_str = librosa.feature.logfrequency_spectrogram(y=y, sr=sr, fmin="C2")
+    s_num = librosa.feature.logfrequency_spectrogram(
+        y=y, sr=sr, fmin=librosa.note_to_hz("C2")
+    )
+    assert np.allclose(s_str, s_num)
+
+
+def test_spectral_pitch_spectrogram_str():
+    y = np.random.default_rng(0).standard_normal(4096)
+    sr = 22050
+    s_str = librosa.feature.pitch_spectrogram(y=y, sr=sr, fmin="C2")
+    s_num = librosa.feature.pitch_spectrogram(
+        y=y, sr=sr, fmin=librosa.note_to_hz("C2")
+    )
+    assert np.allclose(s_str, s_num)
+
+
+def test_decompose_pitch_nmf_str():
+    y = np.random.default_rng(0).standard_normal(4096)
+    sr = 22050
+    S = np.abs(librosa.stft(y))
+    c_str, a_str = librosa.decompose.pitch_nmf(S, sr=sr, fmin="C2", max_iter=5)
+    c_num, a_num = librosa.decompose.pitch_nmf(
+        S, sr=sr, fmin=librosa.note_to_hz("C2"), max_iter=5
+    )
+    assert np.allclose(c_str, c_num)
+    assert np.allclose(a_str, a_num)
+
+
+def test_inverse_logfrequency_str():
+    rng = np.random.default_rng(0)
+    L = rng.uniform(0.1, 1.0, size=(84, 10))
+    sr = 22050
+    s_str = librosa.feature.inverse.logfrequency_to_stft(L, sr=sr, fmin="C2")
+    s_num = librosa.feature.inverse.logfrequency_to_stft(
+        L, sr=sr, fmin=librosa.note_to_hz("C2")
+    )
+    assert np.allclose(s_str, s_num)
+
+
+def test_inverse_pitch_str():
+    rng = np.random.default_rng(0)
+    P = rng.uniform(0.1, 1.0, size=(84, 10))
+    sr = 22050
+    s_str = librosa.feature.inverse.pitch_to_stft(P, sr=sr, fmin="C2")
+    s_num = librosa.feature.inverse.pitch_to_stft(
+        P, sr=sr, fmin=librosa.note_to_hz("C2")
+    )
+    assert np.allclose(s_str, s_num)
 
 
 def test_invalid_str_raises():
@@ -198,3 +306,24 @@ def test_invalid_str_raises():
 
     with pytest.raises(librosa.ParameterError):
         librosa.cqt_frequencies(12, fmin="not_a_note")
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.shepard_tone("not_a_note", duration=0.1)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.shepard_scale("not_a_note", duration=0.1)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.shepard_risset_glissando("not_a_note", duration=0.1)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.logfrequency(sr=22050, n_fft=2048, fmin="not_a_note")
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch(sr=22050, n_fft=2048, fmin="not_a_note")
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch_basis(sr=22050, n_fft=2048, fmin="not_a_note")
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch_to_chroma(n_input=84, fmin="not_a_note")

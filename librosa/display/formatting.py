@@ -935,6 +935,23 @@ _vqt_ax_types = (
     "vqt_oct3",
     "vqt_fjs",
 )
+_pitch_ax_types = (
+    "pitch_hz",
+    "pitch_note",
+    "pitch_svara",
+    "pitch_oct3",
+    "pitch_fjs",
+)
+_logfreq_ax_types = (
+    "logfreq_hz",
+    "logfreq_note",
+    "logfreq_svara",
+    "logfreq_oct3",
+    "logfrequency_hz",
+    "logfrequency_note",
+    "logfrequency_svara",
+    "logfrequency_oct3",
+)
 _freq_ax_types = (
     "linear",
     "fft",
@@ -972,6 +989,8 @@ _AXIS_COMPAT = set(
     + [t for t in product(_chroma_ax_types, _chroma_ax_types)]
     + [t for t in product(_cqt_ax_types, _cqt_ax_types)]
     + [t for t in product(_vqt_ax_types, _vqt_ax_types)]
+    + [t for t in product(_pitch_ax_types, _pitch_ax_types)]
+    + [t for t in product(_logfreq_ax_types, _logfreq_ax_types)]
     + [t for t in product(_freq_ax_types, _freq_ax_types)]
     + [t for t in product(_time_ax_types, _time_ax_types)]
     + [t for t in product(_lag_ax_types, _lag_ax_types)]
@@ -1015,6 +1034,19 @@ def _scale_axes(axes, ax_type, which, tempo_min, tempo_max):
         "cqt_note",
         "cqt_svara",
         "cqt_oct3",
+        "logfreq_hz",
+        "logfreq_note",
+        "logfreq_svara",
+        "logfreq_oct3",
+        "logfrequency_hz",
+        "logfrequency_note",
+        "logfrequency_svara",
+        "logfrequency_oct3",
+        "pitch_hz",
+        "pitch_note",
+        "pitch_svara",
+        "pitch_oct3",
+        "pitch_fjs",
         "vqt_hz",
         "vqt_note",
         "vqt_fjs",
@@ -1054,6 +1086,12 @@ def _decorate_axis(
     n_bins=None,
 ):
     """Configure axis tickers, locators, and labels"""
+    if fmin is not None:
+        if isinstance(fmin, str):
+            fmin = float(core.note_to_hz(fmin))
+        else:
+            fmin = float(fmin)
+
     time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
 
     if ax_type == "tonnetz":
@@ -1181,7 +1219,9 @@ def _decorate_axis(
         axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Lag ({:s})".format(time_units[unit]))
 
-    elif ax_type == "cqt_note":
+    elif ax_type in ["cqt_note", "logfreq_note", "logfrequency_note"] or (
+        ax_type == "pitch_note" and (intervals is None or intervals == "equal")
+    ):
         axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
         # Where is C1 relative to 2**k hz?
         log_C1 = np.log2(core.note_to_hz("C1"))
@@ -1191,7 +1231,11 @@ def _decorate_axis(
         axis.set_minor_locator(mplticker.LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0)))
         axis.set_label_text("Note")
 
-    elif ax_type == "cqt_svara":
+    elif ax_type in ["cqt_svara", "logfreq_svara", "logfrequency_svara"] or ax_type == "pitch_svara":
+        if ax_type == "pitch_svara" and intervals not in (None, "equal"):
+            raise ParameterError("Svara display is not currently supported for non-equal pitch intervals")
+        if Sa is None:
+            raise ParameterError("Sa frequency is required for svara display formatting")
         axis.set_major_formatter(SvaraFormatter(Sa=Sa, mela=mela, unicode=unicode))
         # Find the offset of Sa relative to 2**k Hz
         sa_offset = 2.0 ** (np.log2(Sa) - np.floor(np.log2(Sa)))
@@ -1201,7 +1245,7 @@ def _decorate_axis(
         axis.set_minor_locator(mplticker.LogLocator(base=2.0, subs=sa_offset * 2.0 ** (np.arange(1, 12) / 12.0)))
         axis.set_label_text("Svara")
 
-    elif ax_type == "vqt_fjs":
+    elif ax_type in ["vqt_fjs", "pitch_fjs"]:
         if fmin is None:
             fmin = float(core.note_to_hz("C1"))
         axis.set_major_formatter(
@@ -1241,7 +1285,7 @@ def _decorate_axis(
         )
         axis.set_label_text("Note")
 
-    elif ax_type == "vqt_hz":
+    elif ax_type == "vqt_hz" or (ax_type == "pitch_hz" and intervals not in (None, "equal")):
         if fmin is None:
             fmin = core.note_to_hz("C1")
         axis.set_major_formatter(LogHzFormatter())
@@ -1257,7 +1301,7 @@ def _decorate_axis(
         )
         axis.set_label_text("Hz")
 
-    elif ax_type == "vqt_note":
+    elif ax_type == "vqt_note" or (ax_type == "pitch_note" and intervals not in (None, "equal")):
         if fmin is None:
             fmin = core.note_to_hz("C1")
         axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
@@ -1273,11 +1317,14 @@ def _decorate_axis(
         )
         axis.set_label_text("Note")
 
-    elif ax_type in ["cqt_hz"]:
+    elif ax_type in [
+        "cqt_hz",
+        "logfreq_hz",
+        "logfrequency_hz",
+    ] or (ax_type == "pitch_hz" and (intervals is None or intervals == "equal")):
         axis.set_major_formatter(LogHzFormatter())
         log_C1 = np.log2(core.note_to_hz("C1"))
         C_offset = 2.0 ** (log_C1 - np.floor(log_C1))
-        axis.set_major_locator(mplticker.LogLocator(base=2.0, subs=(C_offset,)))
         axis.set_major_locator(mplticker.LogLocator(base=2.0))
         axis.set_minor_formatter(LogHzFormatter(major=False))
         axis.set_minor_locator(mplticker.LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0)))
@@ -1315,7 +1362,16 @@ def _decorate_axis(
         axis.set_major_formatter(mplticker.ScalarFormatter())
         axis.set_label_text("Hz")
 
-    elif ax_type in ["oct3", "cqt_oct3", "vqt_oct3", "log_oct3", "mel_oct3"]:
+    elif ax_type in [
+        "oct3",
+        "cqt_oct3",
+        "vqt_oct3",
+        "log_oct3",
+        "mel_oct3",
+        "logfreq_oct3",
+        "logfrequency_oct3",
+        "pitch_oct3",
+    ]:
         # Label once per octave
         if ax_type == "mel_oct3":
             # Suppress major ticks for frequencies below 100 Hz in mel mode
@@ -1369,14 +1425,18 @@ def _coord_mel_hz(
 
 def _coord_cqt_hz(
     n: int,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     bins_per_octave: int = 12,
     sr: float = 22050,
     **_kwargs: Any,
 ) -> _Array1D[np.float64]:
     """Get CQT bin frequencies"""
     if fmin is None:
-        fmin = core.note_to_hz("C1")
+        fmin = float(core.note_to_hz("C1"))
+    elif isinstance(fmin, str):
+        fmin = float(core.note_to_hz(fmin))
+    else:
+        fmin = float(fmin)
 
     # Apply tuning correction
     fmin = fmin * 2.0 ** (_kwargs.get("tuning", 0.0) / bins_per_octave)
@@ -1399,7 +1459,7 @@ def _coord_cqt_hz(
 
 def _coord_vqt_hz(
     n: int,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     bins_per_octave: int = 12,
     sr: float = 22050,
     intervals: str | Collection[float] | None = None,
@@ -1407,7 +1467,11 @@ def _coord_vqt_hz(
     **_kwargs: Any,
 ) -> _Array1D[np.float64]:
     if fmin is None:
-        fmin = core.note_to_hz("C1")
+        fmin = float(core.note_to_hz("C1"))
+    elif isinstance(fmin, str):
+        fmin = float(core.note_to_hz(fmin))
+    else:
+        fmin = float(fmin)
 
     if intervals is None:
         raise ParameterError("VQT axis coordinates cannot be defined without intervals")
@@ -1421,6 +1485,32 @@ def _coord_vqt_hz(
         )
 
     return freqs
+
+
+def _coord_pitch_hz(
+    n: int,
+    fmin: _FloatLike_co | str | None = None,
+    bins_per_octave: int = 12,
+    sr: float = 22050,
+    intervals: str | Collection[float] | None = None,
+    tuning: float = 0.0,
+    **kwargs: Any,
+) -> _Array1D[np.float64]:
+    """Get Pitch bin frequencies"""
+    if fmin is None:
+        fmin = float(core.note_to_hz("C1"))
+    else:
+        fmin = util._ensure_hz(fmin)
+    fmin = fmin * 2.0 ** (tuning / bins_per_octave)
+
+    if intervals is None or intervals == "equal":
+        return _coord_cqt_hz(n, fmin=fmin, bins_per_octave=bins_per_octave, sr=sr, tuning=0.0, **kwargs)
+    return _coord_vqt_hz(
+        n, fmin=fmin, bins_per_octave=bins_per_octave, sr=sr, intervals=intervals, **kwargs
+    )
+
+
+_coord_logfreq_hz = _coord_cqt_hz
 
 
 def _coord_chroma(n: int, bins_per_octave: int = 12, **_kwargs: Any) -> np.ndarray:

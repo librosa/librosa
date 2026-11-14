@@ -4,13 +4,12 @@
 
 from __future__ import annotations
 
-import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ..util import is_unique
 from ..util.exceptions import ParameterError
+from .interpolate import _validate_coords, interp_frequency
 
 if TYPE_CHECKING:
     from typing import Callable, Sequence
@@ -242,17 +241,11 @@ def interp_harmonics(
     """
     import scipy.interpolate
 
-    if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
+    _validate_coords(freqs, x.shape[axis], axis, name="Frequencies")
+
+    if freqs.ndim == 1:
         # Build the 1-D interpolator.
         # All frames have a common domain, so we only need one interpolator here.
-
-        # First, verify that the input frequencies are unique
-        if not is_unique(freqs, axis=0):
-            warnings.warn(
-                "Frequencies are not unique. This may produce incorrect harmonic interpolations.",
-                stacklevel=2,
-            )
-
         f_interp = scipy.interpolate.interp1d(
             freqs,
             x,
@@ -270,12 +263,6 @@ def interp_harmonics(
         return f_interp(f_out)
 
     elif freqs.shape == x.shape:
-        if not np.all(is_unique(freqs, axis=axis)):
-            warnings.warn(
-                "Frequencies are not unique. This may produce incorrect harmonic interpolations.",
-                stacklevel=2,
-            )
-
         # If we have time-varying frequencies, then it must match exactly the shape of the input
 
         # We'll define a frame-wise interpolator helper function that we will vectorize over
@@ -396,70 +383,17 @@ def f0_harmonics(
     >>> ax[1].set_yticklabels(harmonics)
     >>> ax[1].set(ylabel='Harmonics')
     """
-    result: np.ndarray
-    import scipy.interpolate
-
-    if freqs.ndim == 1 and len(freqs) == x.shape[axis]:
-        if not is_unique(freqs, axis=0):
-            warnings.warn(
-                "Frequencies are not unique. This may produce incorrect harmonic interpolations.",
-                stacklevel=2,
-            )
-
-        # We have a fixed frequency grid
-        idx = np.isfinite(freqs)
-
-        def _f_interps(data, f):
-            interp = scipy.interpolate.interp1d(
-                freqs[idx],
-                data[idx],
-                axis=0,
-                bounds_error=False,
-                copy=False,
-                assume_sorted=False,
-                kind=kind,
-                fill_value=fill_value,
-            )
-            return interp(f)
-
-        xfunc = np.vectorize(_f_interps, signature="(f),(h)->(h)")
-        result = xfunc(x.swapaxes(axis, -1), np.multiply.outer(f0, harmonics)).swapaxes(
-            axis, -1
-        )
-
-    elif freqs.shape == x.shape:
-        if not np.all(is_unique(freqs, axis=axis)):
-            warnings.warn(
-                "Frequencies are not unique. This may produce incorrect harmonic interpolations.",
-                stacklevel=2,
-            )
-
-        # We have a dynamic frequency grid, not so bad
-        def _f_interpd(data, frequencies, f):
-            idx = np.isfinite(frequencies)
-            interp = scipy.interpolate.interp1d(
-                frequencies[idx],
-                data[idx],
-                axis=0,
-                bounds_error=False,
-                copy=False,
-                assume_sorted=False,
-                kind=kind,
-                fill_value=fill_value,
-            )
-            return interp(f)
-
-        xfunc = np.vectorize(_f_interpd, signature="(f),(f),(h)->(h)")
-        result = xfunc(
-            x.swapaxes(axis, -1),
-            freqs.swapaxes(axis, -1),
-            np.multiply.outer(f0, harmonics),
-        ).swapaxes(axis, -1)
-
-    else:
+    if freqs.ndim != 1 and freqs.shape != x.shape:
         raise ParameterError(
             f"freqs.shape={freqs.shape} is incompatible with input shape={x.shape}"
         )
 
-    result = np.nan_to_num(result, copy=False, nan=fill_value)
-    return result
+    target_freqs = np.moveaxis(np.multiply.outer(f0, harmonics), -1, axis)
+    return interp_frequency(
+        x,
+        target_freqs=target_freqs,
+        freqs=freqs,
+        kind=kind,
+        fill_value=fill_value,
+        axis=axis,
+    )

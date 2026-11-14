@@ -141,7 +141,7 @@ def test_viterbi_discriminative_negative_minprob():
     p_state_marginal = p_joint.sum(axis=1)
     p_init = p_state_marginal
     p_state_given_obs = (p_joint / p_obs_marginal).T
-    seq = np.asarray([1, 1, 0, 1, 1, 1, 0, 0])
+    seq = [1, 1, 0, 1, 1, 1, 0, 0]
     prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
 
     librosa.sequence.viterbi_discriminative(
@@ -260,7 +260,7 @@ def test_viterbi_discriminative_example(transition_min_prob):
     p_state_given_obs = (p_joint / p_obs_marginal).T
 
     # Let's make a test observation sequence
-    seq = np.asarray([1, 1, 0, 1, 1, 1, 0, 0])
+    seq = [1, 1, 0, 1, 1, 1, 0, 0]
 
     # Then our conditional probability table can be constructed directly as
     prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
@@ -297,7 +297,7 @@ def test_viterbi_discriminative_multi():
     p_state_given_obs = (p_joint / p_obs_marginal).T
 
     # Let's make a test observation sequence
-    seq = np.asarray([1, 1, 0, 1, 1, 1, 0, 0])
+    seq = [1, 1, 0, 1, 1, 1, 0, 0]
 
     # Then our conditional probability table can be constructed directly as
     prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
@@ -363,7 +363,7 @@ def test_viterbi_discriminative_example_init():
     p_state_given_obs = (p_joint / p_obs_marginal).T
 
     # Let's make a test observation sequence
-    seq = np.asarray([1, 1, 0, 1, 1, 1, 0, 0])
+    seq = [1, 1, 0, 1, 1, 1, 0, 0]
 
     # Then our conditional probability table can be constructed directly as
     prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T

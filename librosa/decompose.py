@@ -16,14 +16,17 @@ import scipy.sparse
 
 from . import core, segment, util
 from ._cache import cache
+from .filters import pitch_basis
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from typing import Any, Callable, Collection, Sequence
 
-    from ._typing import _FloatLike_co, _IntLike_co, _SparseArray
+    from numpy.typing import ArrayLike
 
-__all__ = ["decompose", "hpss", "nn_filter"]
+    from ._typing import _FloatLike_co, _IntLike_co, _SparseArray, _WindowSpec
+
+__all__ = ["decompose", "hpss", "nn_filter", "pitch_basis", "pitch_nmf"]
 
 
 def decompose(
@@ -33,6 +36,8 @@ def decompose(
     transformer: object | None = None,
     sort: bool = False,
     fit: bool = True,
+    components: np.ndarray | None = None,
+    activations: np.ndarray | None = None,
     **kwargs: Any,
 ) -> tuple[np.ndarray, np.ndarray]:
     """Decompose a feature matrix.
@@ -59,7 +64,8 @@ def decompose(
     n_components : int > 0 [scalar] or None
         number of desired components
 
-        if None, then ``n_features`` components are used
+        if None and ``components`` is provided, ``components.shape[-1]`` is used.
+        if None and ``components`` is None, then ``n_features`` components are used.
 
     transformer : None or object
         If None, use `sklearn.decomposition.NMF`
@@ -94,7 +100,18 @@ def decompose(
         If `True`, components are estimated from the input ``S``.
 
         If `False`, components are assumed to be pre-computed and stored
-        in ``transformer``, and are not changed.
+        in ``transformer`` or passed via ``components``, and are not changed.
+
+    components : np.ndarray, optional
+        Pre-computed or initial components (basis).
+        If ``fit=True``, these serve as custom initial basis components.
+        If ``fit=False``, these components are kept fixed and only activations are estimated.
+        If ``S`` is multi-channel, ``components`` may be 2D (automatically broadcast across channels)
+        or match the leading channel dimensions of ``S``.
+
+    activations : np.ndarray, optional
+        Pre-computed or initial activations.
+        Used when ``fit=True`` and custom initial components are provided.
 
     **kwargs : Additional keyword arguments to the default transformer
         `sklearn.decomposition.NMF`
@@ -109,12 +126,14 @@ def decompose(
     Raises
     ------
     ParameterError
-        if ``fit`` is False and no ``transformer`` object is provided.
+        if ``fit`` is False and neither ``transformer`` nor ``components`` is provided.
 
         if the input array is multi-channel and ``sort=True`` is specified.
 
     See Also
     --------
+    pitch_nmf
+    pitch_basis
     sklearn.decomposition : SciKit-Learn matrix decomposition modules
 
     Examples
@@ -135,6 +154,11 @@ def decompose(
     >>> import sklearn.decomposition
     >>> T = sklearn.decomposition.MiniBatchDictionaryLearning(n_components=16)
     >>> scomps, sacts = librosa.decompose.decompose(S, transformer=T, sort=True)
+
+    Decompose using fixed pre-computed basis components:
+
+    >>> basis = librosa.filters.pitch_basis(sr=sr, n_fft=2048)
+    >>> comps, acts = librosa.decompose.decompose(S, components=basis, fit=False)
 
     >>> import matplotlib.pyplot as plt
     >>> layout = [list(".AAAA"), list("BCCCC"), list(".DDDD")]
@@ -173,35 +197,250 @@ def decompose(
     # Use order='F' here to preserve the temporal ordering
     S = S.T.reshape((S.shape[-1], -1), order="F")
 
+    if components is not None:
+        components = np.asarray(components)
+        if len(orig_shape) > 2 and components.ndim == 2 and components.shape[0] == orig_shape[-2]:
+            components = np.broadcast_to(components, (*orig_shape[:-1], components.shape[-1]))
+
+        if components.shape[:-1] != tuple(orig_shape[:-1]):
+            raise ParameterError(
+                f"components feature dimensions {components.shape[:-1]} "
+                f"must match input S dimensions {tuple(orig_shape[:-1])}"
+            )
+        if n_components is None:
+            n_components = components.shape[-1]
+        elif n_components != components.shape[-1]:
+            raise ParameterError(
+                f"n_components={n_components} does not match components.shape[-1]={components.shape[-1]}"
+            )
+
     if n_components is None:
         n_components = S.shape[-1]
 
     if transformer is None:
-        if fit is False:
-            raise ParameterError("fit must be True if transformer is None")
+        if fit is False and components is None:
+            raise ParameterError("fit must be True if transformer and components are None")
 
         import sklearn.decomposition
 
-        transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
+        if fit:
+            init_mode = "custom" if components is not None else kwargs.pop("init", None)
+            transformer = sklearn.decomposition.NMF(
+                n_components=n_components, init=init_mode, **kwargs
+            )
+        else:
+            transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
+            assert components is not None
+            H_fixed = components.reshape((-1, n_components), order="F").T.astype(S.dtype)
+            transformer.components_ = H_fixed
+            transformer.n_components_ = n_components
+
+    fit_kwargs = {}
+    if fit and components is not None:
+        H_init = components.reshape((-1, n_components), order="F").T.astype(S.dtype)
+        fit_kwargs["H"] = H_init
+        if activations is None:
+            avg = np.sqrt(S.mean() / n_components)
+            W_init = np.full((S.shape[0], n_components), avg, dtype=S.dtype)
+        else:
+            activations_arr = np.asarray(activations)
+            if activations_arr.shape != (n_components, orig_shape[-1]):
+                raise ParameterError(
+                    f"activations shape {activations_arr.shape} must match "
+                    f"(n_components, n_samples) = {(n_components, orig_shape[-1])}"
+                )
+            W_init = activations_arr.T.astype(S.dtype)
+        fit_kwargs["W"] = W_init
 
     # Suppressing type errors here because we don't want to overly restrict
     # the transformer object type
-    activations: np.ndarray
+    activations_out: np.ndarray
     if fit:
-        activations = transformer.fit_transform(S).T  # type: ignore
+        activations_out = transformer.fit_transform(S, **fit_kwargs).T  # type: ignore
     else:
-        activations = transformer.transform(S).T  # type: ignore
+        activations_out = transformer.transform(S).T  # type: ignore
 
-    components: np.ndarray = transformer.components_  # type: ignore
+    components_out: np.ndarray = transformer.components_  # type: ignore
     component_shape = [*orig_shape[:-1], -1]
     # use order='F' here to preserve component ordering
-    components = components.reshape(component_shape[::-1], order="F").T
+    components_out = components_out.reshape(component_shape[::-1], order="F").T
 
     if sort:
-        components, idx = util.axis_sort(components, index=True)
-        activations = activations[idx]
+        components_out, idx = util.axis_sort(components_out, index=True)
+        activations_out = activations_out[idx]
 
-    return components, activations
+    return components_out, activations_out
+
+
+def pitch_nmf(
+    S: np.ndarray,
+    *,
+    sr: float = 22050,
+    n_fft: int | None = None,
+    freq_in: ArrayLike | None = None,
+    n_pitches: int = 84,
+    fmin: _FloatLike_co | str | None = None,
+    intervals: str | Collection[float] = "equal",
+    bins_per_octave: int = 12,
+    tuning: float = 0.0,
+    window: _WindowSpec = "triangle",
+    harmonics: Sequence[float] | None = None,
+    harmonic_weights: Sequence[float] | None = None,
+    offset: float = 1e-4,
+    n_residual: int = 5,
+    residual: ArrayLike | None = None,
+    norm: float | None = 2,
+    fit: bool = True,
+    solver: str = "mu",
+    beta_loss: float | str = "frobenius",
+    max_iter: int = 200,
+    **kwargs: Any,
+) -> tuple[np.ndarray, np.ndarray]:
+    """Perform pitch-informed Non-negative Matrix Factorization (NMF).
+
+    This function constructs a pitch template basis matrix via `pitch_basis`
+    and applies Non-negative Matrix Factorization to decompose the input spectrogram
+    ``S ~= components.dot(activations)``.
+
+    By default, it uses multiplicative updates (``solver='mu'``) initialized with
+    harmonic comb templates (decaying as :math:`1/m`) and 5 DCT-based residual
+    templates (broadband, low shelf, high shelf, mid-scoop, and mid-hump) to capture
+    non-pitched transients and noise.
+
+    Parameters
+    ----------
+    S : np.ndarray [shape=(..., n_features, n_samples)]
+        Input spectrogram (e.g., magnitude spectrogram).
+    sr : number > 0 [scalar], default=22050
+        Audio sampling rate.
+    n_fft : int > 0 [scalar, optional]
+        FFT window length. If not provided and ``freq_in`` is not given,
+        it is inferred from ``S.shape[-2]`` as ``2 * (S.shape[-2] - 1)``.
+    freq_in : np.ndarray, optional
+        Frequencies of the spectrogram rows.
+    n_pitches : int > 0, default=84
+        Number of pitch bands to generate. Default 84 covers 7 octaves.
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (in Hz) or note name in SPN format (e.g. `'C1'`).
+        Defaults to `'C1'` (~32.7 Hz).
+    intervals : str or collection of float, default='equal'
+        Interval system to use (`'equal'`, `'pythagorean'`, `'ji5'`, etc.).
+    bins_per_octave : int > 0, default=12
+        Number of bins per octave in the interval system.
+    tuning : float, default=0.0
+        Tuning deviation from A440 in fractions of a bin.
+    window : str or callable, default='triangle'
+        Filter shape for each pitch / harmonic peak.
+    harmonics : sequence of float, optional
+        Harmonics to include in each pitch template.
+        If None, includes all harmonics up to Nyquist with :math:`1/m` decay.
+        Pass ``harmonics=[1]`` for fundamental-only templates.
+    harmonic_weights : sequence of float, optional
+        Weights for each harmonic. If None, defaults to :math:`1/m`.
+    offset : float >= 0, default=1e-4
+        Small additive offset applied to all template values to ensure
+        well-posed multiplicative updates.
+    n_residual : int >= 0, default=5
+        Number of DCT-based residual templates (for broadband transients/noise).
+        Odd numbers (e.g., 1, 3, 5) produce symmetric shelf/hump pairs.
+    residual : np.ndarray, optional
+        Custom residual basis templates to append instead of DCT basis.
+    norm : {None, number}, default=2
+        Column normalization for basis templates.
+    fit : bool, default=True
+        If True, estimates components and activations via NMF starting from
+        the pitch template basis.
+        If False, uses the pitch template basis as fixed components and estimates
+        only activations.
+    solver : {'mu', 'cd'}, default='mu'
+        NMF solver. Multiplicative updates (``'mu'``) is the standard in music
+        audio decomposition.
+    beta_loss : {'frobenius', 'kullback-leibler', 'itakura-saito'} or float, default='frobenius'
+        Beta divergence loss to minimize.
+    max_iter : int, default=200
+        Maximum number of iterations.
+    **kwargs : additional keyword arguments
+        Additional arguments to `sklearn.decomposition.NMF` or `decompose`.
+
+    Returns
+    -------
+    components : np.ndarray [shape=(..., n_features, n_components)]
+        Learned or fixed basis components, where ``n_components = n_pitches + n_residual``.
+        Pitch components are in ``components[..., :n_pitches]``, and residual
+        components are in ``components[..., n_pitches:]``.
+    activations : np.ndarray [shape=(n_components, n_samples)]
+        Temporal activations for each component.
+
+    See Also
+    --------
+    decompose
+    pitch_basis
+    librosa.filters.pitch
+
+    Examples
+    --------
+    Decompose a trumpet spectrogram into pitch and residual components:
+
+    >>> y, sr = librosa.loadx('trumpet', duration=3)
+    >>> S = np.abs(librosa.stft(y))
+    >>> comps, acts = librosa.decompose.pitch_nmf(S, sr=sr, n_pitches=72, fmin='C2')
+
+    >>> import matplotlib.pyplot as plt
+    >>> layout = [list(".AAAA"), list("BCCCC"), list(".DDDD")]
+    >>> fig, ax = plt.subplot_mosaic(layout, constrained_layout=True)
+    >>> librosa.display.specshow(S, vscale='dBFS',
+    ...                          y_axis='log', x_axis='time', ax=ax['A'])
+    >>> ax['A'].set(title='Input spectrogram')
+    >>> ax['A'].label_outer()
+    >>> librosa.display.specshow(comps, vscale='dBFS',
+    ...                          y_axis='log', ax=ax['B'])
+    >>> ax['B'].set(title='Components')
+    >>> ax['B'].label_outer()
+    >>> ax['B'].sharey(ax['A'])
+    >>> librosa.display.specshow(acts, x_axis='time', ax=ax['C'], cmap='gray_r')
+    >>> ax['C'].set(ylabel='Components', title='Activations')
+    >>> ax['C'].sharex(ax['A'])
+    >>> ax['C'].label_outer()
+    >>> S_approx = comps.dot(acts)
+    >>> img = librosa.display.specshow(S_approx, vscale='dBFS',
+    ...                                y_axis='log', x_axis='time', ax=ax['D'])
+    >>> ax['D'].set(title='Reconstructed spectrogram')
+    >>> ax['D'].sharex(ax['A'])
+    >>> ax['D'].sharey(ax['A'])
+    >>> ax['D'].label_outer()
+    >>> librosa.display.colorbar_db(img, ax=list(ax.values()))
+    """
+    if freq_in is None and n_fft is None:
+        n_fft = 2 * (S.shape[-2] - 1)
+
+    basis = pitch_basis(
+        sr=sr,
+        n_fft=n_fft,
+        freq_in=freq_in,
+        n_pitches=n_pitches,
+        fmin=fmin,
+        intervals=intervals,
+        bins_per_octave=bins_per_octave,
+        tuning=tuning,
+        window=window,
+        harmonics=harmonics,
+        harmonic_weights=harmonic_weights,
+        offset=offset,
+        n_residual=n_residual,
+        residual=residual,
+        norm=norm,
+        dtype=S.dtype,
+    )
+
+    return decompose(
+        S,
+        components=basis,
+        fit=fit,
+        solver=solver,
+        beta_loss=beta_loss,
+        max_iter=max_iter,
+        **kwargs,
+    )
 
 
 @cache(level=30)

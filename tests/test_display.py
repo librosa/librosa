@@ -933,7 +933,18 @@ def test_sharex_waveplot_ms(y, sr, S_abs):
     return fig
 
 
-@pytest.mark.parametrize("format_str", ["cqt_hz", "cqt_note", "vqt_hz"])
+@pytest.mark.parametrize(
+    "format_str",
+    [
+        "cqt_hz",
+        "cqt_note",
+        "vqt_hz",
+        "logfreq_hz",
+        "logfreq_note",
+        "pitch_hz",
+        "pitch_note",
+    ],
+)
 def test_axis_bound_warning(format_str):
 
     with pytest.warns(UserWarning):
@@ -950,6 +961,105 @@ def test_axis_bound_warning(format_str):
             bins_per_octave=12,
             intervals="ji3",
         )
+
+
+@pytest.mark.parametrize(
+    "y_axis,expected_formatter",
+    [
+        ("logfreq_hz", librosa.display.LogHzFormatter),
+        ("logfreq_note", librosa.display.NoteFormatter),
+        ("logfreq_svara", librosa.display.SvaraFormatter),
+        ("logfreq_oct3", librosa.display.formatting.AdaptiveEngFormatter),
+        ("logfrequency_hz", librosa.display.LogHzFormatter),
+        ("logfrequency_note", librosa.display.NoteFormatter),
+        ("logfrequency_svara", librosa.display.SvaraFormatter),
+        ("logfrequency_oct3", librosa.display.formatting.AdaptiveEngFormatter),
+        ("pitch_hz", librosa.display.LogHzFormatter),
+        ("pitch_note", librosa.display.NoteFormatter),
+        ("pitch_svara", librosa.display.SvaraFormatter),
+        ("pitch_oct3", librosa.display.formatting.AdaptiveEngFormatter),
+        ("pitch_fjs", librosa.display.FJSFormatter),
+    ],
+)
+def test_specshow_logfreq_pitch_axes(y_axis, expected_formatter):
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    D = np.ones((84, 10))
+    librosa.display.specshow(
+        D,
+        y_axis=y_axis,
+        fmin=32.7,
+        bins_per_octave=12,
+        Sa=261.63,
+        intervals="ji3" if y_axis == "pitch_fjs" else None,
+        ax=ax,
+    )
+    assert isinstance(ax.yaxis.get_major_formatter(), expected_formatter)
+    plt.close(fig)
+
+
+@pytest.mark.parametrize("y_axis", ["pitch_hz", "pitch_note", "pitch_fjs"])
+@pytest.mark.parametrize(
+    "intervals",
+    [
+        "ji3",
+        "pythagorean",
+        [1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 1.95, 1.98],
+    ],
+)
+def test_specshow_pitch_temperaments(y_axis, intervals):
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    D = np.ones((60, 10))
+    librosa.display.specshow(
+        D, y_axis=y_axis, fmin=32.7, bins_per_octave=12, intervals=intervals, ax=ax
+    )
+    plt.close(fig)
+
+
+def test_specshow_svara_validation():
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    D = np.ones((60, 10))
+    with pytest.raises(librosa.ParameterError, match="Sa frequency is required"):
+        librosa.display.specshow(D, y_axis="logfreq_svara", ax=ax)
+    with pytest.raises(librosa.ParameterError, match="Sa frequency is required"):
+        librosa.display.specshow(D, y_axis="pitch_svara", ax=ax)
+    with pytest.raises(librosa.ParameterError, match="Svara display is not currently supported"):
+        librosa.display.specshow(D, y_axis="pitch_svara", Sa=261.63, intervals="ji3", ax=ax)
+    plt.close(fig)
+
+
+def test_specshow_logfreq_pitch_same_axes():
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    R = np.ones((84, 84))
+    librosa.display.specshow(
+        R,
+        x_axis="logfreq_hz",
+        y_axis="logfreq_note",
+        fmin=32.7,
+        bins_per_octave=12,
+        ax=ax,
+    )
+    assert ax.get_aspect() == 1.0
+    plt.close(fig)
+
+    fig, ax = plt.subplots()
+    librosa.display.specshow(
+        R,
+        x_axis="pitch_hz",
+        y_axis="pitch_note",
+        fmin=32.7,
+        bins_per_octave=12,
+        ax=ax,
+    )
+    assert ax.get_aspect() == 1.0
+    plt.close(fig)
 
 
 @pytest.mark.mpl_image_compare(
@@ -2341,7 +2451,8 @@ def test_mp_setup_properties_badprops():
     properties = librosa.display._mp_setup_properties(prop_group, ["color"], None)
 
     for prop in properties.flat:
-        assert "color" not in prop  # type:ignore[operator]
+        assert isinstance(prop, dict)
+        assert "color" not in prop
 
 
 @pytest.mark.mpl_image_compare(

@@ -23,3 +23,6 @@ Effects
     preemphasis
     deemphasis
 
+    vibrato
+    tremolo
+

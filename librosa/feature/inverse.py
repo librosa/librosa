@@ -16,13 +16,23 @@ from ..util.exceptions import ParameterError
 from ..util.utils import tiny
 
 if TYPE_CHECKING:
-    from typing import Any
+    from collections.abc import Collection
+    from typing import Any, Literal
 
     from numpy.typing import DTypeLike
 
-    from .._typing import _DCTNorm, _DCTType, _PadModeSTFT, _WindowSpec
+    from .._typing import _DCTNorm, _DCTType, _FloatLike_co, _PadModeSTFT, _WindowSpec
 
-__all__ = ["mel_to_stft", "mel_to_audio", "mfcc_to_mel", "mfcc_to_audio"]
+__all__ = [
+    "mel_to_stft",
+    "mel_to_audio",
+    "mfcc_to_mel",
+    "mfcc_to_audio",
+    "logfrequency_to_stft",
+    "logfrequency_to_audio",
+    "pitch_to_stft",
+    "pitch_to_audio",
+]
 
 
 def mel_to_stft(
@@ -379,3 +389,450 @@ def mfcc_to_audio(
     )
 
     return mel_to_audio(mel_spec, **kwargs)
+
+
+def logfrequency_to_stft(
+    L: np.ndarray,
+    *,
+    sr: float = 22050,
+    n_fft: int = 2048,
+    power: float = 2.0,
+    n_bins: int | None = None,
+    bins_per_octave: int = 12,
+    fmin: _FloatLike_co | str | None = None,
+    tuning: float = 0.0,
+    filter_window: _WindowSpec = "triangle",
+    norm: Literal["slaney"] | float | None = "slaney",
+    **kwargs: Any,
+) -> np.ndarray:
+    """Approximate STFT magnitude from a logarithmic frequency spectrogram.
+
+    Parameters
+    ----------
+    L : np.ndarray [shape=(..., n_bins, t), non-negative]
+        The spectrogram as produced by `feature.logfrequency_spectrogram`
+    sr : number > 0 [scalar]
+        Sampling rate of the underlying signal.
+    n_fft : int > 0 [scalar]
+        Length of the FFT frame of the resulting STFT; the output has ``1 + n_fft // 2`` frequency bins.
+    power : float > 0 [scalar]
+        Exponent for the magnitude spectrogram.
+    n_bins : int > 0 [scalar, optional]
+        Number of logarithmic frequency bands. If None, defaults to ``L.shape[-2]``.
+    bins_per_octave : int > 0 [scalar], default=12
+        Number of filter bands per octave.
+    fmin : float > 0, str, or None, optional
+        Lowest frequency (in Hz) or note name in SPN format (e.g. `'C1'`).
+        Defaults to `note_to_hz('C1')` (~32.7 Hz).
+    tuning : float, default=0.0
+        Tuning deviation from A440 in fractional bins.
+    filter_window : str or callable, default='triangle'
+        Filter shape for the log-frequency basis.
+    norm : {None, 'slaney', or number}, default='slaney'
+        Normalization applied to each filter row.
+    **kwargs : additional keyword arguments
+        Additional keyword arguments for `librosa.filters.logfrequency`.
+
+    Returns
+    -------
+    S : np.ndarray [shape=(..., 1 + n_fft // 2, t), non-negative]
+        An approximate linear magnitude spectrogram.
+
+    Raises
+    ------
+    ParameterError
+        If ``n_bins`` is provided and does not match ``L.shape[-2]``.
+
+    See Also
+    --------
+    logfrequency_to_audio
+    librosa.feature.logfrequency_spectrogram
+    librosa.filters.logfrequency
+    librosa.util.nnls
+    mel_to_stft
+
+    Examples
+    --------
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> S = librosa.util.abs2(librosa.stft(y))
+    >>> log_spec = librosa.feature.logfrequency_spectrogram(
+    ...     S=S, sr=sr, bins_per_octave=24, fmin='C1'
+    ... )
+    >>> S_inv = librosa.feature.inverse.logfrequency_to_stft(
+    ...     log_spec, sr=sr, bins_per_octave=24, fmin='C1'
+    ... )
+
+    Compare the results visually:
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
+    >>> img = librosa.display.specshow(
+    ...     S, vscale='dBFS[power]', top_db=None,
+    ...     y_axis='log', x_axis='time', ax=ax[0]
+    ... )
+    >>> ax[0].set(title='Original STFT')
+    >>> ax[0].label_outer()
+    >>> librosa.display.specshow(
+    ...     S_inv, vscale='dBFS[power]', top_db=None,
+    ...     y_axis='log', x_axis='time', ax=ax[1]
+    ... )
+    >>> ax[1].set(title='Reconstructed STFT')
+    >>> ax[1].label_outer()
+    >>> librosa.display.specshow(
+    ...     S_inv - S, vscale=f'dB[power,{S.max()}]', top_db=None,
+    ...     vmax=0, y_axis='log', x_axis='time', ax=ax[2]
+    ... )
+    >>> ax[2].set(title='Residual error (dB)')
+    >>> librosa.display.colorbar_db(img, ax=ax)
+    """
+    if n_bins is not None and n_bins != L.shape[-2]:
+        raise ParameterError(
+            f"Number of frequency bins in L ({L.shape[-2]}) does not match n_bins ({n_bins})"
+        )
+
+    log_basis = filters.logfrequency(
+        sr=sr,
+        n_fft=n_fft,
+        n_bins=L.shape[-2],
+        bins_per_octave=bins_per_octave,
+        fmin=fmin,
+        tuning=tuning,
+        window=filter_window,
+        norm=norm,
+        dtype=L.dtype,
+        **kwargs,
+    )
+
+    inverse = nnls(log_basis, L)
+    np.power(inverse, 1.0 / power, out=inverse)
+    return inverse
+
+
+def logfrequency_to_audio(
+    L: np.ndarray,
+    *,
+    sr: float = 22050,
+    n_fft: int = 2048,
+    hop_length: int | None = None,
+    win_length: int | None = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
+    power: float = 2.0,
+    n_iter: int = 32,
+    length: int | None = None,
+    dtype: DTypeLike = np.float32,
+    n_bins: int | None = None,
+    bins_per_octave: int = 12,
+    fmin: _FloatLike_co | str | None = None,
+    tuning: float = 0.0,
+    filter_window: _WindowSpec = "triangle",
+    norm: Literal["slaney"] | float | None = "slaney",
+    **kwargs: Any,
+) -> np.ndarray:
+    """Invert a logarithmic frequency spectrogram to audio using Griffin-Lim.
+
+    This is primarily a convenience wrapper for:
+
+        >>> S = librosa.feature.inverse.logfrequency_to_stft(L)
+        >>> y = librosa.griffinlim(S)
+
+    Parameters
+    ----------
+    L : np.ndarray [shape=(..., n_bins, t), non-negative]
+        The spectrogram as produced by `feature.logfrequency_spectrogram`
+    sr : number > 0 [scalar]
+        Sampling rate of the underlying signal.
+    n_fft : int > 0 [scalar]
+        Length of the FFT frame for the intermediate STFT.
+    hop_length : None or int > 0
+        The hop length of the STFT. If not provided, it will default to ``n_fft // 4``.
+    win_length : None or int > 0
+        The window length of the STFT. By default, it will equal ``n_fft``.
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        A window specification as supported by `stft` or `istft`.
+    center : bool
+        If True, the STFT is assumed to use centered frames.
+        If False, the STFT is assumed to use left-aligned frames.
+    pad_mode : str
+        If ``center=True``, the padding mode to use at the edges of the signal.
+        By default, STFT uses zero padding.
+    power : float > 0 [scalar]
+        Exponent for the magnitude spectrogram.
+    n_iter : int > 0
+        The number of iterations for Griffin-Lim.
+    length : None or int > 0
+        If provided, the output ``y`` is zero-padded or clipped to exactly ``length`` samples.
+    dtype : np.dtype
+        Real numeric type for the time-domain signal. Default is 32-bit float.
+    n_bins : int > 0 [scalar, optional]
+        Number of logarithmic frequency bands. If None, defaults to ``L.shape[-2]``.
+    bins_per_octave : int > 0 [scalar], default=12
+        Number of filter bands per octave.
+    fmin : float > 0, str, or None, optional
+        Lowest frequency (in Hz) or note name in SPN format (e.g. `'C1'`).
+        Defaults to `note_to_hz('C1')` (~32.7 Hz).
+    tuning : float, default=0.0
+        Tuning deviation from A440 in fractional bins.
+    filter_window : str or callable, default='triangle'
+        Filter shape for the log-frequency basis.
+    norm : {None, 'slaney', or number}, default='slaney'
+        Normalization applied to each filter row.
+    **kwargs : additional keyword arguments
+        Additional keyword arguments for `librosa.filters.logfrequency`.
+
+    Returns
+    -------
+    y : np.ndarray [shape=(..., n)]
+        Time-domain signal reconstructed from ``L``.
+
+    See Also
+    --------
+    logfrequency_to_stft
+    librosa.feature.logfrequency_spectrogram
+    librosa.griffinlim
+    mel_to_audio
+    """
+    stft = logfrequency_to_stft(
+        L,
+        sr=sr,
+        n_fft=n_fft,
+        power=power,
+        n_bins=n_bins,
+        bins_per_octave=bins_per_octave,
+        fmin=fmin,
+        tuning=tuning,
+        filter_window=filter_window,
+        norm=norm,
+        **kwargs,
+    )
+
+    return griffinlim(
+        stft,
+        n_iter=n_iter,
+        hop_length=hop_length,
+        win_length=win_length,
+        n_fft=n_fft,
+        window=window,
+        center=center,
+        dtype=dtype,
+        length=length,
+        pad_mode=pad_mode,
+    )
+
+
+def pitch_to_stft(
+    P: np.ndarray,
+    *,
+    sr: float = 22050,
+    n_fft: int = 2048,
+    power: float = 2.0,
+    n_pitches: int | None = None,
+    fmin: _FloatLike_co | str | None = None,
+    intervals: str | Collection[float] = "equal",
+    bins_per_octave: int = 12,
+    tuning: float = 0.0,
+    filter_window: _WindowSpec = "boxcar",
+    norm: Literal["slaney"] | float | None = None,
+    **kwargs: Any,
+) -> np.ndarray:
+    """Approximate STFT magnitude from a musical pitch spectrogram.
+
+    Parameters
+    ----------
+    P : np.ndarray [shape=(..., n_pitches, t), non-negative]
+        The pitch spectrogram as produced by `feature.pitch_spectrogram`
+    sr : number > 0 [scalar]
+        Sampling rate of the underlying signal.
+    n_fft : int > 0 [scalar]
+        Length of the FFT frame of the resulting STFT; the output has ``1 + n_fft // 2`` frequency bins.
+    power : float > 0 [scalar]
+        Exponent for the magnitude spectrogram.
+    n_pitches : int > 0 [scalar, optional]
+        Number of pitch bands. If None, defaults to ``P.shape[-2]``.
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (or note name in SPN format, e.g. `'C1'`).
+        If None, defaults to MIDI 0 (~8.18 Hz) when ``n_pitches=128``, or `'C1'`.
+    intervals : str or collection of float, default='equal'
+        Interval system used to construct the pitch filterbank.
+    bins_per_octave : int > 0 [scalar], default=12
+        Number of bins per octave in the interval system.
+    tuning : float, default=0.0
+        Tuning deviation from A440 in fractional bins.
+    filter_window : str, default='boxcar'
+        Filter shape for each pitch band.
+    norm : {None, 'slaney', or number}, default=None
+        Normalization applied to each filter row.
+    **kwargs : additional keyword arguments
+        Additional keyword arguments for `librosa.filters.pitch`.
+
+    Returns
+    -------
+    S : np.ndarray [shape=(..., 1 + n_fft // 2, t), non-negative]
+        An approximate linear magnitude spectrogram.
+
+    Raises
+    ------
+    ParameterError
+        If ``n_pitches`` is provided and does not match ``P.shape[-2]``.
+
+    See Also
+    --------
+    pitch_to_audio
+    librosa.feature.pitch_spectrogram
+    librosa.filters.pitch
+    librosa.util.nnls
+    logfrequency_to_stft
+    mel_to_stft
+
+    Examples
+    --------
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> S = librosa.util.abs2(librosa.stft(y))
+    >>> pitch_spec = librosa.feature.pitch_spectrogram(
+    ...     S=S, sr=sr, n_pitches=84, fmin='C1'
+    ... )
+    >>> S_inv = librosa.feature.inverse.pitch_to_stft(
+    ...     pitch_spec, sr=sr, n_pitches=84, fmin='C1'
+    ... )
+    """
+    if n_pitches is not None and n_pitches != P.shape[-2]:
+        raise ParameterError(
+            f"Number of pitch bands in P ({P.shape[-2]}) does not match n_pitches ({n_pitches})"
+        )
+
+    pitch_basis = filters.pitch(
+        sr=sr,
+        n_fft=n_fft,
+        n_pitches=P.shape[-2],
+        fmin=fmin,
+        intervals=intervals,
+        bins_per_octave=bins_per_octave,
+        tuning=tuning,
+        window=filter_window,
+        norm=norm,
+        dtype=P.dtype,
+        **kwargs,
+    )
+
+    inverse = nnls(pitch_basis, P)
+    np.power(inverse, 1.0 / power, out=inverse)
+    return inverse
+
+
+def pitch_to_audio(
+    P: np.ndarray,
+    *,
+    sr: float = 22050,
+    n_fft: int = 2048,
+    hop_length: int | None = None,
+    win_length: int | None = None,
+    window: _WindowSpec = "hann",
+    center: bool = True,
+    pad_mode: _PadModeSTFT = "constant",
+    power: float = 2.0,
+    n_iter: int = 32,
+    length: int | None = None,
+    dtype: DTypeLike = np.float32,
+    n_pitches: int | None = None,
+    fmin: _FloatLike_co | str | None = None,
+    intervals: str | Collection[float] = "equal",
+    bins_per_octave: int = 12,
+    tuning: float = 0.0,
+    filter_window: _WindowSpec = "boxcar",
+    norm: Literal["slaney"] | float | None = None,
+    **kwargs: Any,
+) -> np.ndarray:
+    """Invert a musical pitch spectrogram to audio using Griffin-Lim.
+
+    This is primarily a convenience wrapper for:
+
+        >>> S = librosa.feature.inverse.pitch_to_stft(P)
+        >>> y = librosa.griffinlim(S)
+
+    Parameters
+    ----------
+    P : np.ndarray [shape=(..., n_pitches, t), non-negative]
+        The spectrogram as produced by `feature.pitch_spectrogram`
+    sr : number > 0 [scalar]
+        Sampling rate of the underlying signal.
+    n_fft : int > 0 [scalar]
+        Length of the FFT frame for the intermediate STFT.
+    hop_length : None or int > 0
+        The hop length of the STFT. If not provided, it will default to ``n_fft // 4``.
+    win_length : None or int > 0
+        The window length of the STFT. By default, it will equal ``n_fft``.
+    window : str, tuple, number, function, or np.ndarray [shape=(n_fft,)]
+        A window specification as supported by `stft` or `istft`.
+    center : bool
+        If True, the STFT is assumed to use centered frames.
+        If False, the STFT is assumed to use left-aligned frames.
+    pad_mode : str
+        If ``center=True``, the padding mode to use at the edges of the signal.
+        By default, STFT uses zero padding.
+    power : float > 0 [scalar]
+        Exponent for the magnitude spectrogram.
+    n_iter : int > 0
+        The number of iterations for Griffin-Lim.
+    length : None or int > 0
+        If provided, the output ``y`` is zero-padded or clipped to exactly ``length`` samples.
+    dtype : np.dtype
+        Real numeric type for the time-domain signal. Default is 32-bit float.
+    n_pitches : int > 0 [scalar, optional]
+        Number of pitch bands. If None, defaults to ``P.shape[-2]``.
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (or note name in SPN format, e.g. `'C1'`).
+        If None, defaults to MIDI 0 (~8.18 Hz) when ``n_pitches=128``, or `'C1'`.
+    intervals : str or collection of float, default='equal'
+        Interval system used to construct the pitch filterbank.
+    bins_per_octave : int > 0 [scalar], default=12
+        Number of bins per octave in the interval system.
+    tuning : float, default=0.0
+        Tuning deviation from A440 in fractional bins.
+    filter_window : str, default='boxcar'
+        Filter shape for each pitch band.
+    norm : {None, 'slaney', or number}, default=None
+        Normalization applied to each filter row.
+    **kwargs : additional keyword arguments
+        Additional keyword arguments for `librosa.filters.pitch`.
+
+    Returns
+    -------
+    y : np.ndarray [shape=(..., n)]
+        Time-domain signal reconstructed from ``P``.
+
+    See Also
+    --------
+    pitch_to_stft
+    librosa.feature.pitch_spectrogram
+    librosa.griffinlim
+    logfrequency_to_audio
+    mel_to_audio
+    """
+    stft = pitch_to_stft(
+        P,
+        sr=sr,
+        n_fft=n_fft,
+        power=power,
+        n_pitches=n_pitches,
+        fmin=fmin,
+        intervals=intervals,
+        bins_per_octave=bins_per_octave,
+        tuning=tuning,
+        filter_window=filter_window,
+        norm=norm,
+        **kwargs,
+    )
+
+    return griffinlim(
+        stft,
+        n_iter=n_iter,
+        hop_length=hop_length,
+        win_length=win_length,
+        n_fft=n_fft,
+        window=window,
+        center=center,
+        dtype=dtype,
+        length=length,
+        pad_mode=pad_mode,
+    )
