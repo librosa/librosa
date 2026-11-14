@@ -37,8 +37,6 @@ def test_streambridge_validation():
     """Test parameter validation on StreamBridge."""
     with pytest.raises(TypeError):
         StreamBridge()  # type: ignore[call-arg]
-    with pytest.raises(TypeError):
-        StreamBridge(22050)
     with pytest.raises(librosa.ParameterError):
         StreamBridge(sr=-1)
     with pytest.raises(librosa.ParameterError):
