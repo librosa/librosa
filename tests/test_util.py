@@ -628,7 +628,9 @@ def test_peak_pick_dp_long_float32(method):
     # signal. A float32 sum loses precision as it grows, which used to move
     # peaks across the threshold on long signals.
     x = (np.random.default_rng(0).standard_normal(500_000) ** 2).astype(np.float32)
-    kwargs = dict(pre_max=1, post_max=1, pre_avg=4, post_avg=5, delta=0.07, wait=1)
+    kwargs: dict[str, Any] = dict(
+        pre_max=1, post_max=1, pre_avg=4, post_avg=5, delta=0.07, wait=1
+    )
 
     peaks = librosa.util.peak_pick(x, method=method, **kwargs)
     greedy = librosa.util.peak_pick(x, method="greedy", **kwargs)
