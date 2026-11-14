@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Streaming utilities for audio I/O bridging, sliding window buffering, and asynchronous capture."""
+"""Streaming utilities for audio I/O bridging and sliding window buffering."""
 from __future__ import annotations
 
 import asyncio
-import importlib
+from collections import deque
+from contextlib import suppress
 import queue
+import threading
+from typing import TYPE_CHECKING, Any
 import warnings
-from contextlib import asynccontextmanager, suppress
-from typing import TYPE_CHECKING, Any, AsyncIterator
 
 import numpy as np
 import soxr
@@ -22,9 +23,7 @@ if TYPE_CHECKING:
 
 
 __all__ = [
-    "StreamBuffer",
     "StreamBridge",
-    "async_capture",
 ]
 
 
@@ -48,82 +47,13 @@ def _align_step_size(
     return int(aligned_native_step)
 
 
-class StreamBuffer:
-    """Sliding analysis window accumulator and streaming DSP processor.
+class _StreamBuffer:
+    """Internal sliding analysis window accumulator and streaming DSP processor.
 
-    `StreamBuffer` maintains a sliding observation buffer for real-time and
-    streaming audio processing. It handles on-the-fly sample rate conversion
-    via `soxr.ResampleStream`, multi-channel downmixing to mono, offset skipping,
+    `_StreamBuffer` maintains a sliding observation buffer for streaming audio
+    processing. It handles on-the-fly sample rate conversion via
+    `soxr.ResampleStream`, multi-channel downmixing to mono, offset skipping,
     and duration bounds.
-
-    Parameters
-    ----------
-    frame_length : int > 0
-        The number of samples per frame.
-    hop_length : int > 0
-        The number of samples to advance between successive frames.
-    block_length : int > 0, default=1
-        The number of frames to include in each yielded block.
-    orig_sr : float > 0, default=22050
-        Native sample rate of incoming audio chunks.
-    sr : float > 0, optional
-        Target sample rate for analysis. If None, defaults to `orig_sr`.
-    channels : int > 0, default=1
-        Number of audio channels in incoming chunks.
-    mono : bool, default=True
-        If True, convert multi-channel signals to mono.
-    offset : float >= 0, default=0.0
-        Time (in seconds) to skip before yielding frames.
-    duration : float > 0, optional
-        Maximum time (in seconds) of audio to yield.
-    warm_up : bool, default=False
-        If True, pre-fill the buffer with silence (zeros) so that the first
-        incoming chunk immediately yields an analysis block without delay.
-    fill_value : float, optional
-        If provided, pad the final incomplete block to full length on `flush`.
-    res_type : str, default='soxr_hq'
-        Soxr resampling mode ('soxr_vhq', 'soxr_hq', 'soxr_mq', 'soxr_lq', 'soxr_qq').
-    dtype : numeric type, default=np.float32
-        Data type of the output blocks.
-
-    Examples
-    --------
-    Accumulate small hardware I/O chunks (e.g., 512 samples from a 44.1 kHz
-    stereo soundcard) into 2048-sample mono analysis windows resampled to
-    22050 Hz with 512-sample hop:
-
-    >>> import librosa
-    >>> buf = librosa.util.StreamBuffer(
-    ...     frame_length=2048,
-    ...     hop_length=512,
-    ...     orig_sr=44100,
-    ...     sr=22050,
-    ...     channels=2,
-    ...     mono=True,
-    ...     fill_value=0.0,
-    ... )
-    >>> chunk = np.ones((2, 512), dtype=np.float32)
-    >>> blocks = []
-    >>> for _ in range(30):
-    ...     blocks.extend(buf.push(chunk))
-    >>> len(blocks), blocks[0].shape
-    (11, (2048,))
-    >>> flushed = buf.flush()
-    >>> len(flushed), flushed[0].shape
-    (4, (2048,))
-
-    For immediate real-time response on the very first chunk without an
-    initial fill delay, set ``warm_up=True``:
-
-    >>> buf = librosa.util.StreamBuffer(
-    ...     frame_length=1024,
-    ...     hop_length=512,
-    ...     orig_sr=22050,
-    ...     warm_up=True,
-    ... )
-    >>> blocks = buf.push(np.ones(512, dtype=np.float32))
-    >>> len(blocks), blocks[0].shape
-    (1, (1024,))
     """
 
     def __init__(
@@ -157,6 +87,12 @@ class StreamBuffer:
             raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
         if sr is not None and not (np.isfinite(sr) and sr > 0):
             raise ParameterError(f"sr={sr} must be a positive number")
+        if not is_positive_int(channels):
+            raise ParameterError(f"channels={channels} must be a positive integer")
+        if offset < 0:
+            raise ParameterError(f"offset={offset} must be non-negative")
+        if duration is not None and duration < 0:
+            raise ParameterError(f"duration={duration} must be non-negative")
         if res_type not in {"soxr_vhq", "soxr_hq", "soxr_mq", "soxr_lq", "soxr_qq"}:
             raise ParameterError(
                 f"res_type={res_type} is not a valid soxr resampling mode for streaming"
@@ -213,19 +149,17 @@ class StreamBuffer:
         self.samples_to_skip = (
             int(self.offset * self.orig_sr) if self.offset > 0 else 0
         )
-        self.yielded_samples = 0
-        self.max_samples = (
-            int(self.duration * self.sr) if self.duration is not None else None
+        self.samples_remaining = (
+            int(self.duration * self.orig_sr) if self.duration is not None else None
         )
 
     def push(self, chunk: np.ndarray) -> list[np.ndarray]:
-        """Ingest a raw audio chunk and return any ready analysis blocks.
+        """Ingest a canonical audio chunk and return any ready analysis blocks.
 
         Parameters
         ----------
         chunk : np.ndarray
-            Incoming audio chunk of shape ``(samples,)``, ``(channels, samples)``,
-            or ``(samples, channels)``.
+            Incoming audio chunk of shape ``(samples,)`` or ``(channels, samples)``.
 
         Returns
         -------
@@ -235,20 +169,13 @@ class StreamBuffer:
         if self.is_complete() or chunk.size == 0:
             return []
 
-        # Downmix / channel alignment
+        # Downmix or transpose from canonical (channels, samples) to (samples, channels)
         if chunk.ndim > 1:
-            if chunk.shape[0] == self.channels:
-                y = (
-                    np.mean(chunk, axis=0, dtype=chunk.dtype)
-                    if self.mono
-                    else chunk.T
-                )
-            else:
-                y = (
-                    np.mean(chunk, axis=-1, dtype=chunk.dtype)
-                    if self.mono
-                    else chunk
-                )
+            y = (
+                np.mean(chunk, axis=0, dtype=self.dtype)
+                if self.mono
+                else chunk.T
+            )
         else:
             y = chunk
 
@@ -263,6 +190,16 @@ class StreamBuffer:
                 return []
             y = y[self.samples_to_skip :]
             self.samples_to_skip = 0
+
+        # Truncate to duration if specified
+        if self.samples_remaining is not None:
+            if y.shape[0] >= self.samples_remaining:
+                y = y[: self.samples_remaining]
+                self.samples_remaining = 0
+            else:
+                self.samples_remaining -= y.shape[0]
+            if y.shape[0] == 0:
+                return []
 
         # Resample on-the-fly
         if self.resampler is not None:
@@ -298,12 +235,9 @@ class StreamBuffer:
         # Slice all complete blocks
         blocks = []
         while self.write_idx - self.read_idx >= self.target_yield_size:
-            if self.is_complete():
-                break
             block = self.buffer[self.read_idx : self.read_idx + self.target_yield_size]
             blocks.append(block.T.copy())
             self.read_idx += self.target_advance
-            self.yielded_samples += self.target_advance
 
         return blocks
 
@@ -328,18 +262,12 @@ class StreamBuffer:
         final_data_list = [self.buffer[self.read_idx : self.write_idx]]
         if tail is not None and tail.shape[0] > 0:
             final_data_list.append(tail)
-            remainder = (
-                np.concatenate(final_data_list, axis=0)
-                if final_data_list
-                else np.array([])
-            )
+            remainder = np.concatenate(final_data_list, axis=0)
         else:
             remainder = self.buffer[self.read_idx : self.write_idx]
 
         rem_idx = 0
         while rem_idx < remainder.shape[0]:
-            if self.is_complete():
-                break
             current_slice = remainder[rem_idx : rem_idx + self.target_yield_size]
             if current_slice.shape[0] < self.target_yield_size:
                 pad_length = self.target_yield_size - current_slice.shape[0]
@@ -357,30 +285,17 @@ class StreamBuffer:
                     )
             blocks.append(current_slice.T.copy())
             rem_idx += self.target_advance
-            self.yielded_samples += self.target_advance
 
         self.read_idx = self.write_idx
         return blocks
 
-    def reset(self) -> None:
-        """Reset internal buffer state for replay or animation restarts."""
-        self.buffer[:] = 0
-        self.write_idx = self.prefill
-        self.read_idx = 0
-        self.yielded_samples = 0
-        self.samples_to_skip = (
-            int(self.offset * self.orig_sr) if self.offset > 0 else 0
-        )
-        if self.resampler is not None:
-            self.resampler.clear()
-
     def is_complete(self) -> bool:
-        """Check if the maximum duration has been reached."""
-        return self.max_samples is not None and self.yielded_samples >= self.max_samples
+        """Check if the maximum input duration has been reached."""
+        return self.samples_remaining is not None and self.samples_remaining <= 0
 
 
 class StreamBridge:
-    """Universal I/O bridge connecting audio callbacks into NumPy chunk iterators.
+    """Universal I/O bridge connecting audio callbacks into `librosa.stream` and `librosa.astream`.
 
     `StreamBridge` acts as an audio callback (compatible with PortAudio,
     :mod:`sounddevice`, and ``PyAudio``) that enqueues incoming raw audio chunks,
@@ -389,8 +304,8 @@ class StreamBridge:
 
     Parameters
     ----------
-    orig_sr : float > 0
-        Native sample rate of the incoming audio stream.
+    sr : float > 0, default=22050
+        Sampling rate of the incoming audio stream.
     channels : int > 0, default=1
         Number of audio channels in the incoming stream.
     channels_first : bool, default=False
@@ -398,7 +313,7 @@ class StreamBridge:
         If False, incoming multi-channel buffers are shaped ``(samples, channels)``
         (standard for :mod:`sounddevice` and PortAudio) and will be transposed to
         canonical shape ``(channels, samples)``.
-    in_dtype : np.dtype, default=np.float32
+    dtype : DTypeLike, default=np.float32
         Data type of incoming audio chunks or byte buffers. If integer PCM,
         samples are normalized to floating-point ``[-1.0, 1.0]`` using `buf_to_float`.
     maxsize : int >= 0, default=0
@@ -418,7 +333,7 @@ class StreamBridge:
     Bridge real-time input from :mod:`sounddevice` into `librosa.stream`:
 
     >>> import sounddevice as sd  # doctest: +SKIP
-    >>> bridge = librosa.util.StreamBridge(orig_sr=48000, channels=1)  # doctest: +SKIP
+    >>> bridge = librosa.util.StreamBridge(sr=48000, channels=1)  # doctest: +SKIP
     >>> with sd.InputStream(samplerate=48000, channels=1, callback=bridge):  # doctest: +SKIP
     ...     for i, block in enumerate(librosa.stream(
     ...         bridge, block_length=256, frame_length=2048, hop_length=512
@@ -431,36 +346,37 @@ class StreamBridge:
 
     def __init__(
         self,
-        orig_sr: float,
+        sr: float = 22050,
         *,
         channels: int = 1,
         channels_first: bool = False,
-        in_dtype: DTypeLike = np.float32,
+        dtype: DTypeLike = np.float32,
         maxsize: int = 0,
         overflow_policy: str = "warn",
         timeout: float | None = None,
     ):
-        if not (np.isfinite(orig_sr) and orig_sr > 0):
-            raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
-        if channels < 1:
+        if not (np.isfinite(sr) and sr > 0):
+            raise ParameterError(f"sr={sr} must be a positive number")
+        if not is_positive_int(channels):
             raise ParameterError(f"channels={channels} must be a positive integer")
+        if maxsize < 0:
+            raise ParameterError(f"maxsize={maxsize} must be non-negative")
         if overflow_policy not in {"warn", "drop_oldest", "drop_newest", "error"}:
             raise ParameterError(f"Invalid overflow_policy='{overflow_policy}'")
 
-        self.orig_sr = float(orig_sr)
-        self.samplerate = self.orig_sr  # Duck-typing compatibility with SoundFile
+        self.sr = float(sr)
         self.channels = int(channels)
         self.channels_first = bool(channels_first)
-        self.in_dtype = np.dtype(in_dtype)
+        self.dtype = np.dtype(dtype)
         self.maxsize = int(maxsize)
         self.overflow_policy = overflow_policy
         self.timeout = timeout
 
-        self._sync_queue: queue.Queue = queue.Queue()
-        self._async_queue: asyncio.Queue | None = None
+        self._buffer: deque[np.ndarray] = deque()
+        self._cond = threading.Condition()
         self._loop: asyncio.AbstractEventLoop | None = None
+        self._async_event: asyncio.Event | None = None
         self._closed = False
-        self._sentinel = object()
 
     def __call__(
         self, data: np.ndarray | bytes, *_args: Any, **_kwargs: Any
@@ -481,212 +397,117 @@ class StreamBridge:
         ----------
         data : np.ndarray, bytes, or memoryview
             Incoming audio buffer. Integer arrays or byte buffers are
-            converted to float32 according to `in_dtype`. Multi-channel audio
-            is converted to Librosa canonical shape ``(channels, samples)``.
+            converted to float32 according to `dtype`. Single-channel audio is
+            normalized to 1D shape ``(samples,)``, and multi-channel audio is
+            normalized to shape ``(channels, samples)``.
         """
-        if self._closed:
-            raise RuntimeError("Cannot push data to a closed StreamBridge.")
-
         chunk = self._normalize(data)
 
-        # Handle sync queue overflow
-        if self.maxsize > 0 and self._sync_queue.qsize() >= self.maxsize:
-            if self.overflow_policy == "drop_oldest":
-                with suppress(queue.Empty):
-                    self._sync_queue.get_nowait()
-            elif self.overflow_policy == "drop_newest":
-                return
-            elif self.overflow_policy == "error":
-                raise BufferError(
-                    "StreamBridge queue overflow: consumer is slower than capture."
-                )
-            elif self.overflow_policy == "warn":
-                warnings.warn(
-                    "StreamBridge queue is full; dropping oldest chunk.",
-                    RuntimeWarning,
-                    stacklevel=2,
-                )
-                with suppress(queue.Empty):
-                    self._sync_queue.get_nowait()
+        with self._cond:
+            if self._closed:
+                raise RuntimeError("Cannot push data to a closed StreamBridge.")
 
-        self._sync_queue.put_nowait(chunk)
+            if self.maxsize > 0 and len(self._buffer) >= self.maxsize:
+                if self.overflow_policy == "drop_oldest":
+                    self._buffer.popleft()
+                elif self.overflow_policy == "drop_newest":
+                    return
+                elif self.overflow_policy == "error":
+                    raise BufferError(
+                        "StreamBridge queue overflow: consumer is slower than capture."
+                    )
+                elif self.overflow_policy == "warn":
+                    warnings.warn(
+                        "StreamBridge queue is full; dropping oldest chunk.",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
+                    self._buffer.popleft()
 
-        # Forward to async queue if active
-        if self._async_queue is not None and self._loop is not None:
-            self._loop.call_soon_threadsafe(self._async_put, chunk)
-
-    def _async_put(self, chunk: np.ndarray) -> None:
-        """Enqueue into async queue within the event loop thread."""
-        assert self._async_queue is not None
-        if self.maxsize > 0 and self._async_queue.qsize() >= self.maxsize:
-            if self.overflow_policy == "drop_oldest":
-                with suppress(asyncio.QueueEmpty):
-                    self._async_queue.get_nowait()
-            elif self.overflow_policy == "drop_newest":
-                return
-            elif self.overflow_policy == "error":
-                raise BufferError(
-                    "StreamBridge async queue overflow: consumer is slower than capture."
-                )
-            elif self.overflow_policy == "warn":
-                warnings.warn(
-                    "StreamBridge async queue is full; dropping oldest chunk.",
-                    RuntimeWarning,
-                    stacklevel=2,
-                )
-                with suppress(asyncio.QueueEmpty):
-                    self._async_queue.get_nowait()
-
-        self._async_queue.put_nowait(chunk)
+            self._buffer.append(chunk)
+            self._cond.notify()
+            if self._loop is not None and self._async_event is not None:
+                self._loop.call_soon_threadsafe(self._async_event.set)
 
     def _normalize(self, data: np.ndarray | bytes | memoryview) -> np.ndarray:
         """Normalize any incoming audio representation into Librosa canonical float32."""
         if isinstance(data, (bytes, bytearray, memoryview)):
-            if np.issubdtype(self.in_dtype, np.integer):
-                arr = buf_to_float(
-                    data, n_bytes=self.in_dtype.itemsize, dtype=np.float32
-                )
-            else:
-                arr = np.frombuffer(data, dtype=self.in_dtype).astype(np.float32)
+            raw = np.frombuffer(data, dtype=self.dtype)
         elif isinstance(data, np.ndarray):
-            if np.issubdtype(data.dtype, np.integer):
-                arr = buf_to_float(data, n_bytes=data.dtype.itemsize, dtype=np.float32)
-            else:
-                arr = data.astype(np.float32, copy=True)
+            raw = data
         else:
             raise ParameterError(f"Unsupported audio data type: {type(data)}")
 
-        if self.channels > 1 and arr.ndim == 1:
+        if np.issubdtype(raw.dtype, np.integer):
+            arr = buf_to_float(raw, n_bytes=raw.dtype.itemsize, dtype=np.float32)
+        else:
+            arr = raw.astype(np.float32, copy=True)
+
+        if self.channels == 1:
+            return arr.reshape(-1)
+
+        if arr.ndim == 1:
             if not self.channels_first:
-                arr = arr.reshape(-1, self.channels)
+                arr = arr.reshape(-1, self.channels).T
             else:
                 arr = arr.reshape(self.channels, -1)
-
-        if arr.ndim == 2 and not self.channels_first:
+        elif arr.ndim == 2 and not self.channels_first:
             arr = arr.T
 
         return arr
-
-    @property
-    def empty(self) -> bool:
-        """Check if the internal queue is currently empty."""
-        return self._sync_queue.empty()
-
-    def get_nowait(self) -> np.ndarray:
-        """Retrieve an audio chunk immediately without blocking.
-
-        Raises
-        ------
-        StopIteration
-            If the bridge is closed and no more data is available.
-        queue.Empty
-            If no audio chunk is currently available.
-        """
-        if self._closed and self._sync_queue.empty():
-            raise StopIteration
-
-        try:
-            item = self._sync_queue.get_nowait()
-        except queue.Empty:
-            if self._closed:
-                raise StopIteration from None
-            raise
-
-        if item is self._sentinel:
-            raise StopIteration
-
-        return item
-
-    def drain(self) -> list[np.ndarray]:
-        """Drain all currently available audio chunks without blocking.
-
-        Returns
-        -------
-        chunks : list of np.ndarray
-            List of buffered audio chunks retrieved from the queue.
-        """
-        chunks = []
-        while True:
-            try:
-                chunks.append(self.get_nowait())
-            except (queue.Empty, StopIteration):
-                break
-        return chunks
 
     def __iter__(self) -> Self:
         """Return synchronous iterator."""
         return self
 
     def __next__(self) -> np.ndarray:
-        """Return the next audio chunk from the queue."""
-        if self._closed and self._sync_queue.empty():
-            raise StopIteration
-
-        try:
-            item = self._sync_queue.get(timeout=self.timeout)
-        except queue.Empty:
+        """Return the next audio chunk from the buffer."""
+        with self._cond:
+            if not self._buffer and not self._closed:
+                self._cond.wait_for(
+                    lambda: bool(self._buffer) or self._closed,
+                    timeout=self.timeout,
+                )
+            if self._buffer:
+                return self._buffer.popleft()
             if self._closed:
-                raise StopIteration from None
-            raise
-
-        if item is self._sentinel:
-            raise StopIteration
-
-        return item
+                raise StopIteration
+            raise queue.Empty
 
     def __aiter__(self) -> Self:
-        """Return asynchronous iterator, initializing the async queue if needed."""
-        if self._async_queue is None:
-            self._loop = asyncio.get_running_loop()
-            self._async_queue = asyncio.Queue()
-            # Drain any items already present in the sync queue
-            item = None
-            while not self._sync_queue.empty():
-                try:
-                    item = self._sync_queue.get_nowait()
-                    if self.maxsize > 0 and self._async_queue.qsize() >= self.maxsize:
-                        with suppress(asyncio.QueueEmpty):
-                            self._async_queue.get_nowait()
-                    self._async_queue.put_nowait(item)
-                except queue.Empty:
-                    break
-            if self._closed and (
-                self._async_queue.empty() or item is not self._sentinel
-            ):
-                self._async_queue.put_nowait(self._sentinel)
+        """Return asynchronous iterator."""
+        with self._cond:
+            if self._async_event is None:
+                self._loop = asyncio.get_running_loop()
+                self._async_event = asyncio.Event()
+                if self._buffer or self._closed:
+                    self._async_event.set()
         return self
 
     async def __anext__(self) -> np.ndarray:
-        """Asynchronously return the next audio chunk from the queue."""
-        assert self._async_queue is not None
-        if self._closed and self._async_queue.empty():
-            raise StopAsyncIteration
-        item = await self._async_queue.get()
-        if item is self._sentinel:
-            raise StopAsyncIteration
-        return item
+        """Asynchronously return the next audio chunk from the buffer."""
+        if self._async_event is None:
+            self.__aiter__()
+        assert self._async_event is not None
+
+        while True:
+            with self._cond:
+                if self._buffer:
+                    return self._buffer.popleft()
+                if self._closed:
+                    raise StopAsyncIteration
+                self._async_event.clear()
+            await self._async_event.wait()
 
     def close(self) -> None:
         """Close the bridge and signal termination to waiting consumers."""
-        if not self._closed:
-            self._closed = True
-            self._sync_queue.put_nowait(self._sentinel)
-            if self._async_queue is not None and self._loop is not None:
-                self._loop.call_soon_threadsafe(
-                    self._async_queue.put_nowait, self._sentinel
-                )
-
-    def reset(self) -> None:
-        """Reset internal queue state for replay or animation restarts."""
-        self._closed = False
-        while not self._sync_queue.empty():
-            with suppress(queue.Empty):
-                self._sync_queue.get_nowait()
-
-        if self._async_queue is not None:
-            while not self._async_queue.empty():
-                with suppress(asyncio.QueueEmpty):
-                    self._async_queue.get_nowait()
+        with self._cond:
+            if not self._closed:
+                self._closed = True
+                self._cond.notify_all()
+                if self._loop is not None and self._async_event is not None:
+                    with suppress(RuntimeError):
+                        self._loop.call_soon_threadsafe(self._async_event.set)
 
     def __enter__(self) -> Self:
         """Enter synchronous context manager."""
@@ -714,96 +535,3 @@ class StreamBridge:
     ) -> None:
         """Exit asynchronous context manager, closing the bridge."""
         self.close()
-
-
-@asynccontextmanager
-async def async_capture(
-    samplerate: float = 22050,
-    *,
-    channels: int = 1,
-    blocksize: int = 512,
-    device: int | str | None = None,
-    dtype: DTypeLike = "float32",
-    maxsize: int = 0,
-    overflow_policy: str = "warn",
-) -> AsyncIterator[StreamBridge]:
-    """Asynchronous context manager for live audio capture using :mod:`sounddevice`.
-
-    Parameters
-    ----------
-    samplerate : float, default=22050
-        Target sample rate of the capture stream.
-    channels : int, default=1
-        Number of input channels.
-    blocksize : int, default=512
-        Number of frames passed to each callback invocation.
-    device : int, str, or None, default=None
-        Capture device identifier passed to :class:`sounddevice.InputStream`.
-        If None, selects the system default input device.
-    dtype : str or np.dtype, default='float32'
-        Data type expected from the input stream.
-    maxsize : int >= 0, default=0
-        Maximum capacity of the internal buffer.
-    overflow_policy : str, default='warn'
-        Policy for handling queue overflow.
-
-    Yields
-    ------
-    stream : StreamBridge
-        Asynchronously iterable audio stream bridge.
-
-    Raises
-    ------
-    ImportError
-        If :mod:`sounddevice` is not installed.
-
-    Examples
-    --------
-    Asynchronously capture live microphone input and compute spectral centroids
-    in real time for the first 10 blocks:
-
-    >>> import asyncio
-    >>> async def main():  # doctest: +SKIP
-    ...     async with librosa.util.async_capture(samplerate=22050) as stream:
-    ...         count = 0
-    ...         async for block in librosa.astream(
-    ...             stream, block_length=256, frame_length=1024, hop_length=512
-    ...         ):
-    ...             centroid = librosa.feature.spectral_centroid(y=block)
-    ...             print(f"Block {count}: mean centroid = {centroid.mean():.1f} Hz")
-    ...             count += 1
-    ...             if count >= 10:
-    ...                 break
-    >>> asyncio.run(main())  # doctest: +SKIP
-    """
-    try:
-        sd = importlib.import_module("sounddevice")
-    except ImportError as exc:
-        raise ImportError(
-            "sounddevice is required for async_capture. "
-            "Install it via `pip install sounddevice` or `conda install -c conda-forge python-sounddevice`."
-        ) from exc
-
-    bridge = StreamBridge(
-        orig_sr=samplerate,
-        channels=channels,
-        in_dtype=dtype,
-        maxsize=maxsize,
-        overflow_policy=overflow_policy,
-    )
-    bridge.__aiter__()
-
-    input_stream = sd.InputStream(
-        samplerate=samplerate,
-        channels=channels,
-        blocksize=blocksize,
-        device=device,
-        dtype=dtype,
-        callback=bridge,
-    )
-
-    with input_stream:
-        try:
-            yield bridge
-        finally:
-            bridge.close()

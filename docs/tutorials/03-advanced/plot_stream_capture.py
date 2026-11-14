@@ -18,12 +18,13 @@ responsibilities:
    audio callback, receiving raw audio blocks, normalizing channel geometries and data types,
    and buffering them in a thread-safe queue.
 2. **Buffering & DSP (Analysis)**: Feature extractors often require observation windows that
-   differ in size or sample rate from the capture device. :class:`librosa.util.StreamBuffer`
-   accumulates incoming chunks into overlapping analysis windows, downmixes multi-channel audio,
-   and handles on-the-fly streaming sample-rate conversion via ``soxr``.
+   differ in size or sample rate from the capture device. Passing the bridge into
+   :func:`librosa.stream` (or :func:`librosa.astream` for ``asyncio``) accumulates incoming
+   chunks into overlapping analysis windows, downmixes multi-channel audio, and handles
+   on-the-fly streaming sample-rate conversion via ``soxr``.
 3. **Display or Processing (Consumer)**: Downstream consumers (such as GUI animation threads,
-   network workers, or stream generators like :func:`librosa.stream` and :func:`librosa.astream`)
-   pull ready blocks and process them without stalling the audio callback.
+   event loops, or async workers) iterate over the yielded analysis blocks without stalling
+   the audio callback.
 
 Live microphone capture pattern
 -------------------------------
@@ -36,23 +37,27 @@ pattern requires only a few lines:
     import librosa
 
     # 1. Create a stream bridge
-    bridge = librosa.util.StreamBridge(orig_sr=22050, channels=1)
+    with librosa.util.StreamBridge(sr=22050, channels=1) as bridge:
+        # 2. Open hardware input stream
+        with sd.InputStream(samplerate=22050, blocksize=512, channels=1, callback=bridge):
+            # 3. Stream blocks through Librosa
+            for block in librosa.stream(
+                bridge, block_length=1, frame_length=1024, hop_length=512
+            ):
+                # Compute features in real time
+                rms = librosa.feature.rms(y=block, center=False)
 
-    # 2. Open hardware input stream
-    with sd.InputStream(samplerate=22050, blocksize=512, callback=bridge):
-        # 3. Stream blocks through Librosa
-        for block in librosa.stream(bridge, frame_length=1024, hop_length=512):
-            # Compute features in real time
-            rms = librosa.feature.rms(y=block)
-
-Similarly, modern asynchronous applications can capture and process audio concurrently using
-:func:`librosa.util.async_capture` and :func:`librosa.astream`:
+Similarly, asynchronous applications can capture and process audio concurrently using
+:func:`librosa.astream`:
 
 .. code:: python
 
-    async with librosa.util.async_capture(samplerate=22050, blocksize=512) as stream:
-        async for block in librosa.astream(stream, frame_length=1024, hop_length=512):
-            rms = librosa.feature.rms(y=block)
+    async with librosa.util.StreamBridge(sr=22050, channels=1) as bridge:
+        with sd.InputStream(samplerate=22050, blocksize=512, channels=1, callback=bridge):
+            async for block in librosa.astream(
+                bridge, block_length=1, frame_length=1024, hop_length=512
+            ):
+                rms = librosa.feature.rms(y=block, center=False)
 """
 
 # %%
@@ -86,7 +91,7 @@ HTML(librosa.util.example_info("trumpet", html=True))
 # :class:`sounddevice.InputStream`.
 #
 # .. note::
-#     To run any of the examples below with a physical microphone, simply replace
+#     To run any of the examples below with a physical microphone, replace
 #     ``VirtualInputStream(filename, ...)`` with :class:`sounddevice.InputStream`.
 
 
@@ -128,20 +133,17 @@ class VirtualInputStream:
             self.total_frames = af.frames
 
     def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        pass
-
-    def __iter__(self):
-        """Generator yielding blocks from the file into the callback."""
         with sf.SoundFile(self.filepath) as af:
             for block in af.blocks(
                 blocksize=self.blocksize, dtype=self.dtype, always_2d=True
             ):
-                if self.callback:
+                if self.callback is not None:
                     self.callback(block, len(block), None, None)
-                yield block
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if hasattr(self.callback, "close"):
+            self.callback.close()
 
 
 # %%
@@ -191,19 +193,19 @@ class LiveSparkline:
 # %%
 # Example 1: Instantaneous Block Processing (RMS Energy)
 # ------------------------------------------------------
-# In this first example, incoming blocks are processed independently to compute
-# instantaneous Root-Mean-Square (RMS) energy using :func:`librosa.feature.rms`.
+# In this first example, incoming blocks are processed with non-overlapping frames
+# (``frame_length=blocksize, hop_length=blocksize``) to compute instantaneous
+# Root-Mean-Square (RMS) energy using :func:`librosa.feature.rms`.
 #
 # The architecture cleanly separates each component:
 #
-# - **I/O**: :class:`librosa.util.StreamBridge` receives incoming blocks.
-# - **Analysis**: ``process_rms`` extracts energy from each raw block.
+# - **I/O**: :class:`librosa.util.StreamBridge` receives incoming blocks from the device.
+# - **Streaming & Analysis**: :func:`librosa.stream` yields each block to ``process_rms``.
 # - **Display**: ``LiveSparkline.append`` plots each value forward in time.
 
 
-def process_rms(buffer):
+def process_rms(y):
     """Compute instantaneous RMS energy for a single audio block."""
-    y = buffer.squeeze()
     rms = librosa.feature.rms(
         y=y, frame_length=len(y), hop_length=len(y), center=False
     )
@@ -213,19 +215,18 @@ def process_rms(buffer):
 # %%
 # Visualizing the Live RMS Sparkline
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# In an interactive application, the UI event loop periodically calls
-# ``bridge.drain()`` to retrieve any blocks that arrived from the audio callback:
+# We pass :func:`librosa.stream` directly as the ``frames`` generator to
+# :class:`matplotlib.animation.FuncAnimation`:
 
 blocksize = 1024
 
 # 1. Set up audio I/O bridge
-bridge_rms = librosa.util.StreamBridge(orig_sr=22050, channels=1)
+bridge_rms = librosa.util.StreamBridge(sr=22050, channels=1)
 
 with VirtualInputStream(
     filename, blocksize=blocksize, callback=bridge_rms
 ) as stream:
     sr = stream.samplerate
-    duration = stream.total_frames / sr
     n_blocks = int(np.ceil(stream.total_frames / blocksize))
     times = np.arange(n_blocks) * (blocksize / sr)
 
@@ -237,22 +238,23 @@ with VirtualInputStream(
         ylabel="RMS Amplitude",
     )
 
-    # 3. Animation callbacks
-    def init_rms():
-        bridge_rms.reset()
-        return sparkline_rms.reset()
-
-    def update_rms(_frame):
-        for chunk in bridge_rms.drain():
-            sparkline_rms.append(process_rms(chunk))
+    # 3. Animation update callback
+    def update_rms(block):
+        sparkline_rms.append(process_rms(block))
         return (sparkline_rms.line,)
 
     ani_rms = animation.FuncAnimation(
         sparkline_rms.fig,
         update_rms,
-        init_func=init_rms,
-        frames=stream,
-        interval=1000 * blocksize / stream.samplerate,
+        init_func=sparkline_rms.reset,
+        frames=librosa.stream(
+            bridge_rms,
+            block_length=1,
+            frame_length=blocksize,
+            hop_length=blocksize,
+            sr=None,
+        ),
+        interval=1000 * blocksize / sr,
         blit=True,
         repeat=False,
         cache_frame_data=False,
@@ -262,9 +264,9 @@ with VirtualInputStream(
 
 
 # %%
-# Example 2: Overlapping Buffers & Online Resampling (`StreamBuffer`)
-# -------------------------------------------------------------------
-# While instantaneous metrics like RMS operate block-by-block, frequency-domain
+# Example 2: Overlapping Windows & Online Resampling
+# --------------------------------------------------
+# While instantaneous metrics like RMS can operate on non-overlapping blocks, frequency-domain
 # features (such as :func:`librosa.feature.spectral_centroid`, STFT, or chroma)
 # introduce two additional requirements:
 #
@@ -275,10 +277,10 @@ with VirtualInputStream(
 # 2. **Online Resampling**: Hardware inputs frequently capture at 44.1 kHz or 48 kHz, while downstream
 #    models expect 22.05 kHz or 11.025 kHz.
 #
-# :class:`librosa.util.StreamBuffer` handles both requirements:
+# :func:`librosa.stream` handles both requirements directly when given a :class:`librosa.util.StreamBridge`:
 #
 # - It accumulates incoming chunks and yields complete analysis blocks matching ``frame_length`` and ``hop_length``.
-# - It streams chunks through ``soxr`` resampling on-the-fly.
+# - It streams chunks through ``soxr`` resampling on-the-fly when ``sr`` differs from ``bridge.sr``.
 # - Setting ``warm_up=True`` pre-fills the initial observation window with silence so the first analysis
 #   frame is produced immediately without startup latency.
 
@@ -306,54 +308,43 @@ frame_length = 1024
 hop_length = 512  # 512 samples at 22050 Hz corresponds to 256 samples at 11025 Hz
 
 # 1. Set up audio I/O bridge
-bridge_sc = librosa.util.StreamBridge(orig_sr=22050, channels=1)
+bridge_sc = librosa.util.StreamBridge(sr=22050, channels=1)
 
 with VirtualInputStream(
     filename, blocksize=hop_length, callback=bridge_sc
 ) as stream:
     sr = stream.samplerate
-    duration = stream.total_frames / sr
     target_hop = int(hop_length * target_sr / sr)
     n_blocks_sc = int(np.ceil(stream.total_frames / hop_length))
     times_sc = np.arange(n_blocks_sc) * (hop_length / sr)
 
-    # 2. Set up sliding window DSP buffer with online resampling
-    stream_buf = librosa.util.StreamBuffer(
-        frame_length=frame_length,
-        hop_length=target_hop,
-        block_length=1,
-        orig_sr=sr,
-        sr=target_sr,
-        warm_up=True,
-    )
-
-    # 3. Set up visualization
+    # 2. Set up visualization
     sparkline_sc = LiveSparkline(
         times_sc,
         ylim=(500, 4000),
-        title="Live Stream: Spectral Centroid (StreamBuffer)",
+        title="Live Stream: Spectral Centroid",
         ylabel="Frequency (Hz)",
     )
 
-    # 4. Animation callbacks
-    def init_sc():
-        stream_buf.reset()
-        bridge_sc.reset()
-        return sparkline_sc.reset()
-
-    def update_centroid(_frame):
-        for chunk in bridge_sc.drain():
-            for block in stream_buf.push(chunk):
-                centroid_val = process_spectral_centroid(block, sr=target_sr)
-                sparkline_sc.append(centroid_val)
+    # 3. Animation update callback
+    def update_centroid(block):
+        centroid_val = process_spectral_centroid(block, sr=target_sr)
+        sparkline_sc.append(centroid_val)
         return (sparkline_sc.line,)
 
     ani_sc = animation.FuncAnimation(
         sparkline_sc.fig,
         update_centroid,
-        init_func=init_sc,
-        frames=stream,
-        interval=1000 * hop_length / stream.samplerate,
+        init_func=sparkline_sc.reset,
+        frames=librosa.stream(
+            bridge_sc,
+            block_length=1,
+            frame_length=frame_length,
+            hop_length=target_hop,
+            sr=target_sr,
+            warm_up=True,
+        ),
+        interval=1000 * hop_length / sr,
         blit=True,
         repeat=False,
         cache_frame_data=False,

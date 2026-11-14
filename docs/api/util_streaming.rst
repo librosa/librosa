@@ -5,6 +5,4 @@ Streaming
     :toctree: generated/
     :nosignatures:
 
-    StreamBuffer
     StreamBridge
-    async_capture

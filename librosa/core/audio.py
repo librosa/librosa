@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import os
-from collections.abc import Iterable
 from typing import TYPE_CHECKING, Literal, overload
 
 import lazy_loader as lazy
@@ -19,14 +18,13 @@ from .._cache import cache
 from ..util.decorators import future_default
 from ..util.exceptions import ParameterError
 from ..util.files import example
-from ..util.streaming import StreamBuffer, _align_step_size
+from ..util.streaming import StreamBridge, _StreamBuffer, _align_step_size
 from .convert import frames_to_samples, frequency_weighting, time_to_samples
 
 if TYPE_CHECKING:
     from typing import (
         Any,
         AsyncGenerator,
-        AsyncIterable,
         BinaryIO,
         Callable,
         Collection,
@@ -215,12 +213,11 @@ def __soundfile_load(path, offset, duration, dtype):
 
 @future_default(param_name="sr", old_default=None, new_default=22050, version="1.1.0")
 def stream(
-    path: str | int | sf.SoundFile | BinaryIO | Iterable[np.ndarray],
+    path: str | int | os.PathLike[Any] | sf.SoundFile | BinaryIO | StreamBridge,
     *,
     block_length: int,
     frame_length: int,
     hop_length: int,
-    orig_sr: float | None = None,
     sr: float | None = None,
     mono: bool = True,
     offset: float = 0.0,
@@ -233,10 +230,11 @@ def stream(
     """Stream audio in fixed-length buffers.
 
     This is primarily useful for processing large files that won't
-    fit entirely in memory at once.
+    fit entirely in memory at once, or for processing live audio streams
+    captured via `librosa.util.StreamBridge`.
 
     Instead of loading the entire audio signal into memory (as
-    in `load`, this function produces *blocks* of audio spanning
+    in `load`), this function produces *blocks* of audio spanning
     a fixed number of frames at a specified frame length and hop
     length.
 
@@ -278,14 +276,14 @@ def stream(
 
     Parameters
     ----------
-    path : str, int, sf.SoundFile, file-like object, or Iterable[np.ndarray]
-        Path to the input file or an iterable of audio chunks to stream.
+    path : str, int, os.PathLike, sf.SoundFile, file-like object, or librosa.util.StreamBridge
+        Path to the input file or a `librosa.util.StreamBridge` instance to stream.
 
         Any codec supported by `soundfile` is permitted here.
         An existing `soundfile.SoundFile` object may also be provided.
 
-        Alternatively, an `Iterable[np.ndarray]` yielding chunks of audio
-        (such as `librosa.util.StreamBridge`) may be provided.
+        Alternatively, a `librosa.util.StreamBridge` receiving live audio chunks
+        may be provided.
 
     block_length : int > 0
         The number of frames to include in each block.
@@ -301,18 +299,13 @@ def stream(
     hop_length : int > 0
         The number of samples to advance between frames.
 
-        Note that by when ``hop_length < frame_length``, neighboring frames
+        Note that when ``hop_length < frame_length``, neighboring frames
         will overlap.  Similarly, the last frame of one *block* will overlap
         with the first frame of the next *block*.
 
-    orig_sr : float > 0, optional
-        Original sampling rate when streaming from an `Iterable[np.ndarray]`.
-        If None, it will be inferred from duck-typed attributes on `path`
-        (e.g. `path.orig_sr` or `path.samplerate`). Ignored for audio files.
-
     sr : number > 0 [scalar]
-        target sampling rate.  If not provided, the original sampling rate of the file will be
-        used.
+        target sampling rate.  If not provided, the original sampling rate of the
+        file or `StreamBridge` will be used.
 
     mono : bool
         Convert the signal to mono during streaming
@@ -325,6 +318,11 @@ def stream(
 
     duration : float
         Only load up to this much audio (in seconds)
+
+    warm_up : bool, default=False
+        If True, pre-fill the buffer with silence (zeros) so that the first
+        incoming chunk of size ``block_length * hop_length`` immediately yields
+        a full analysis block without startup delay.
 
     fill_value : float [optional]
         If padding the signal to produce constant-length blocks,
@@ -353,9 +351,7 @@ def stream(
     See Also
     --------
     astream
-    StreamBuffer
     util.StreamBridge
-    util.async_capture
     load
     get_samplerate
     soundfile.blocks
@@ -390,21 +386,63 @@ def stream(
     ...                                              hop_length=2048,
     ...                                              center=False)
     """
+    if isinstance(path, StreamBridge):
+        buf = _StreamBuffer(
+            frame_length=frame_length,
+            hop_length=hop_length,
+            block_length=block_length,
+            orig_sr=path.sr,
+            sr=sr,
+            channels=path.channels,
+            mono=mono,
+            offset=offset,
+            duration=duration,
+            warm_up=warm_up,
+            fill_value=fill_value,
+            res_type=res_type,
+            dtype=dtype,
+        )
+        for chunk in path:
+            for block in buf.push(chunk):
+                yield block
+            if buf.is_complete():
+                break
+        for block in buf.flush():
+            yield block
+        return
+
     is_file = (
         isinstance(path, (str, os.PathLike, int, sf.SoundFile))
         or hasattr(path, "read")
     )
+    if not is_file:
+        raise ParameterError(f"Unsupported source type for stream: {type(path)}")
 
-    if is_file:
-        if isinstance(path, sf.SoundFile):
-            sfo = path
-            sfo_close = None
-        else:
-            sfo = sf.SoundFile(path)
-            sfo_close = sfo
+    if isinstance(path, sf.SoundFile):
+        sfo = path
+        sfo_close = None
+    else:
+        sfo = sf.SoundFile(path)
+        sfo_close = sfo
 
+    try:
         native_sr = sfo.samplerate
         num_channels = sfo.channels
+        buf = _StreamBuffer(
+            frame_length=frame_length,
+            hop_length=hop_length,
+            block_length=block_length,
+            orig_sr=native_sr,
+            sr=sr,
+            channels=num_channels,
+            mono=mono,
+            offset=0.0,
+            duration=None,
+            warm_up=warm_up,
+            fill_value=fill_value,
+            res_type=res_type,
+            dtype=dtype,
+        )
         target_advance = block_length * hop_length
         target_sr = sr or native_sr
         orig_read_size = _align_step_size(target_advance, target_sr, native_sr)
@@ -423,54 +461,9 @@ def stream(
             frames=read_frames,
         )
 
-        buf = StreamBuffer(
-            frame_length=frame_length,
-            hop_length=hop_length,
-            block_length=block_length,
-            orig_sr=native_sr,
-            sr=sr,
-            channels=num_channels,
-            mono=mono,
-            offset=0.0,
-            duration=None,
-            warm_up=warm_up,
-            fill_value=fill_value,
-            res_type=res_type,
-            dtype=dtype,
-        )
-    elif isinstance(path, Iterable):
-        sfo_close = None
-        native_sr = orig_sr or getattr(path, "orig_sr", getattr(path, "samplerate", None))
-        if native_sr is None:
-            raise ParameterError(
-                "orig_sr must be specified when streaming from an iterable without a sample rate attribute."
-            )
-        num_channels = getattr(path, "channels", 1)
-        chunk_iter = iter(path)
-        buf = StreamBuffer(
-            frame_length=frame_length,
-            hop_length=hop_length,
-            block_length=block_length,
-            orig_sr=native_sr,
-            sr=sr,
-            channels=num_channels,
-            mono=mono,
-            offset=offset,
-            duration=duration,
-            warm_up=warm_up,
-            fill_value=fill_value,
-            res_type=res_type,
-            dtype=dtype,
-        )
-    else:
-        raise ParameterError(f"Unsupported source type for stream: {type(path)}")
-
-    try:
         for chunk in chunk_iter:
-            for block in buf.push(chunk):
+            for block in buf.push(chunk.T):
                 yield block
-            if buf.is_complete():
-                break
         for block in buf.flush():
             yield block
     finally:
@@ -480,12 +473,11 @@ def stream(
 
 @future_default(param_name="sr", old_default=None, new_default=22050, version="1.1.0")
 async def astream(
-    source: AsyncIterable[np.ndarray] | Iterable[np.ndarray],
+    stream: StreamBridge,
     *,
-    block_length: int = 1,
+    block_length: int,
     frame_length: int,
     hop_length: int,
-    orig_sr: float | None = None,
     sr: float | None = None,
     mono: bool = True,
     offset: float = 0.0,
@@ -495,29 +487,30 @@ async def astream(
     res_type: str = "soxr_hq",
     dtype: DTypeLike = np.float32,
 ) -> AsyncGenerator[np.ndarray, None]:
-    """Stream audio asynchronously in fixed-length buffers.
+    """Stream audio asynchronously from a `librosa.util.StreamBridge` in fixed-length buffers.
 
     Parameters
     ----------
-    source : AsyncIterable[np.ndarray] or Iterable[np.ndarray]
-        Input stream source yielding chunks of audio (such as `librosa.util.StreamBridge`).
-    block_length : int > 0, default=1
+    stream : librosa.util.StreamBridge
+        Input stream bridge yielding chunks of audio.
+    block_length : int > 0
         The number of frames to include in each block.
     frame_length : int > 0
         The number of samples per frame.
     hop_length : int > 0
         The number of samples to advance between frames.
-    orig_sr : float > 0, optional
-        Sampling rate of the input stream. If None, it will be inferred from
-        duck-typed attributes on `source` (e.g. `source.orig_sr` or `source.samplerate`).
     sr : float > 0, optional
-        Target sampling rate.
+        Target sampling rate. If not provided, `stream.sr` will be used.
     mono : bool, default=True
         Convert signal to mono during streaming.
     offset : float >= 0, default=0.0
         Start reading after this time (in seconds).
     duration : float > 0, optional
         Only yield up to this much audio (in seconds).
+    warm_up : bool, default=False
+        If True, pre-fill the buffer with silence (zeros) so that the first
+        incoming chunk of size ``block_length * hop_length`` immediately yields
+        a full analysis block without startup delay.
     fill_value : float, optional
         Value used to pad short blocks at the end of the stream.
     res_type : str, default='soxr_hq'
@@ -528,29 +521,42 @@ async def astream(
     Yields
     ------
     block : np.ndarray
-        Audio blocks.
+        An audio buffer of (at most)
+        ``(block_length-1) * hop_length + frame_length`` samples.
 
     See Also
     --------
     stream
-    StreamBuffer
     util.StreamBridge
-    util.async_capture
-    """
-    native_sr = orig_sr or getattr(source, "orig_sr", getattr(source, "samplerate", None))
-    if native_sr is None:
-        raise ParameterError(
-            "orig_sr must be specified when streaming from an iterable without a sample rate attribute."
-        )
-    num_channels = getattr(source, "channels", 1)
 
-    buf = StreamBuffer(
+    Examples
+    --------
+    Asynchronously capture live microphone input via :mod:`sounddevice` and
+    compute spectral centroids in real time:
+
+    >>> import asyncio
+    >>> import sounddevice as sd  # doctest: +SKIP
+    >>> async def main():  # doctest: +SKIP
+    ...     with librosa.util.StreamBridge(sr=22050, channels=1) as bridge:
+    ...         with sd.InputStream(samplerate=22050, channels=1, blocksize=512, callback=bridge):
+    ...             async for i, block in enumerate(librosa.astream(
+    ...                 bridge, block_length=1, frame_length=1024, hop_length=512
+    ...             )):
+    ...                 centroid = librosa.feature.spectral_centroid(y=block)
+    ...                 if i >= 10:
+    ...                     break
+    >>> asyncio.run(main())  # doctest: +SKIP
+    """
+    if not isinstance(stream, StreamBridge):
+        raise ParameterError(f"Unsupported source type for astream: {type(stream)}")
+
+    buf = _StreamBuffer(
         frame_length=frame_length,
         hop_length=hop_length,
         block_length=block_length,
-        orig_sr=native_sr,
+        orig_sr=stream.sr,
         sr=sr,
-        channels=num_channels,
+        channels=stream.channels,
         mono=mono,
         offset=offset,
         duration=duration,
@@ -560,20 +566,11 @@ async def astream(
         dtype=dtype,
     )
 
-    if hasattr(source, "__aiter__"):
-        async for chunk in source:
-            for block in buf.push(chunk):
-                yield block
-            if buf.is_complete():
-                break
-    elif isinstance(source, Iterable):
-        for chunk in source:
-            for block in buf.push(chunk):
-                yield block
-            if buf.is_complete():
-                break
-    else:
-        raise ParameterError(f"Unsupported source type for astream: {type(source)}")
+    async for chunk in stream:
+        for block in buf.push(chunk):
+            yield block
+        if buf.is_complete():
+            break
 
     for block in buf.flush():
         yield block
