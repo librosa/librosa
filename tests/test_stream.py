@@ -38,7 +38,7 @@ def test_streambridge_validation():
     with pytest.raises(TypeError):
         StreamBridge()  # type: ignore[call-arg]
     with pytest.raises(TypeError):
-        StreamBridge(22050)  # type: ignore[misc]
+        StreamBridge(22050)
     with pytest.raises(librosa.ParameterError):
         StreamBridge(sr=-1)
     with pytest.raises(librosa.ParameterError):
@@ -337,7 +337,7 @@ def test_stream_invalid_sources_and_bounds():
     with pytest.raises(librosa.ParameterError):
         next(
             librosa.stream(
-                [np.ones(512, dtype=np.float32)],  # type: ignore[arg-type]
+                [np.ones(512, dtype=np.float32)],
                 block_length=1,
                 frame_length=1024,
                 hop_length=512,
