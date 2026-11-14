@@ -117,9 +117,9 @@ class _StreamBuffer:
         self.target_advance = self.block_length * self.hop_length
         self.process_channels = 1 if self.mono else self.channels
 
+        self.orig_read_size = _align_step_size(self.target_advance, self.sr, self.orig_sr)
         self.needs_resampling = (sr is not None) and (self.orig_sr != self.sr)
         if self.needs_resampling:
-            _align_step_size(self.target_advance, self.sr, self.orig_sr)
             self.resampler = soxr.ResampleStream(
                 in_rate=self.orig_sr,
                 out_rate=self.sr,

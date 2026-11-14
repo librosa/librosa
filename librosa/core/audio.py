@@ -19,7 +19,7 @@ from ..util.decorators import future_default
 from ..util.exceptions import ParameterError
 from ..util.files import example
 from .convert import frames_to_samples, frequency_weighting, time_to_samples
-from .streaming import StreamBridge, _align_step_size, _StreamBuffer
+from .streaming import StreamBridge, _StreamBuffer
 
 if TYPE_CHECKING:
     from typing import (
@@ -431,9 +431,6 @@ def stream(
             res_type=res_type,
             dtype=dtype,
         )
-        target_advance = block_length * hop_length
-        target_sr = sr or native_sr
-        orig_read_size = _align_step_size(target_advance, target_sr, native_sr)
         read_frames = int(duration * native_sr) if duration is not None else -1
 
         if offset >= 0:
@@ -442,7 +439,7 @@ def stream(
             sfo.seek(-int(abs(offset) * native_sr), whence=sf.SEEK_END)
 
         chunk_iter = sfo.blocks(
-            blocksize=orig_read_size,
+            blocksize=buf.orig_read_size,
             overlap=0,
             dtype=dtype,
             always_2d=False,
