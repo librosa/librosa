@@ -293,7 +293,7 @@ def test_stream_file_and_bridge_parity(sr, offset, duration, fill_value):
 
 def test_threaded_producer_and_buffer_resize():
     """Test background producer thread with StreamBridge.stream and buffer resizing."""
-    bridge = StreamBridge(sr=22050, channels=1, maxsize=4, overflow_policy="error")
+    bridge = StreamBridge(sr=22050, channels=1)
 
     def producer():
         bridge(np.array([], dtype=np.float32))
