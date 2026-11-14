@@ -1499,10 +1499,8 @@ def _coord_pitch_hz(
     """Get Pitch bin frequencies"""
     if fmin is None:
         fmin = float(core.note_to_hz("C1"))
-    elif isinstance(fmin, str):
-        fmin = float(core.note_to_hz(fmin))
     else:
-        fmin = float(fmin)
+        fmin = util._ensure_hz(fmin)
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     if intervals is None or intervals == "equal":

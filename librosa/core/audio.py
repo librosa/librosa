@@ -2238,7 +2238,7 @@ def chirp(
 
 
 def shepard_tone(
-    frequency: _FloatLike_co,
+    frequency: _FloatLike_co | str,
     *,
     sr: float = 22050,
     length: int | None = None,
@@ -2253,8 +2253,8 @@ def shepard_tone(
 
     Parameters
     ----------
-    frequency : float > 0
-        Base frequency of the tone (in Hz).
+    frequency : float > 0 or str
+        Base frequency of the tone (in Hz) or note name in SPN format (e.g., 'A4').
     sr : number > 0
         Desired sampling rate of the output signal.
     length : int > 0 or None
@@ -2285,8 +2285,16 @@ def shepard_tone(
     Generate a single Shepard tone at 440 Hz:
 
     >>> y = librosa.shepard_tone(440.0, duration=1.0, sr=22050)
+
+    Or using a note name:
+
+    >>> y = librosa.shepard_tone("A4", duration=1.0, sr=22050)
     """
-    if frequency is None or frequency <= 0:
+    if frequency is None:
+        raise ParameterError('"frequency" must be a positive number')
+
+    frequency = util._ensure_hz(frequency)
+    if frequency <= 0:
         raise ParameterError('"frequency" must be a positive number')
 
     nyquist = sr / 2.0
@@ -2327,7 +2335,7 @@ def shepard_tone(
 
 
 def shepard_scale(
-    f: _FloatLike_co,
+    f: _FloatLike_co | str,
     *,
     sr: float = 22050,
     length: int | None = None,
@@ -2345,8 +2353,8 @@ def shepard_scale(
 
     Parameters
     ----------
-    f : float > 0
-        Starting frequency of the scale (in Hz).
+    f : float > 0 or str
+        Starting frequency of the scale (in Hz) or note name in SPN format (e.g., 'C4').
     sr : number > 0
         Desired sampling rate of the output signal.
     length : int > 0 or None
@@ -2389,13 +2397,21 @@ def shepard_scale(
 
     >>> y = librosa.shepard_scale(110.0, duration=2.0, n_steps=12)
 
+    Or starting from note C4:
+
+    >>> y_c4 = librosa.shepard_scale("C4", duration=2.0, n_steps=12)
+
     Generate a 12-step descending Shepard scale starting at 110 Hz:
 
     >>> y_desc = librosa.shepard_scale(110.0, duration=2.0, n_steps=-12)
     """
     from .intervals import interval_frequencies
 
-    if f is None or f <= 0:
+    if f is None:
+        raise ParameterError('"f" must be a positive number')
+
+    f = util._ensure_hz(f)
+    if f <= 0:
         raise ParameterError('"f" must be a positive number')
 
     nyquist = sr / 2.0
@@ -2465,7 +2481,7 @@ def shepard_scale(
 
 
 def shepard_risset_glissando(
-    f: _FloatLike_co,
+    f: _FloatLike_co | str,
     *,
     n_octaves: float = 1.0,
     sr: float = 22050,
@@ -2480,8 +2496,8 @@ def shepard_risset_glissando(
 
     Parameters
     ----------
-    f : float > 0
-        Starting frequency of the base tone (in Hz).
+    f : float > 0 or str
+        Starting frequency of the base tone (in Hz) or note name in SPN format (e.g., 'C4').
     n_octaves : float
         Number of octaves to sweep over. Can be fractional or negative (for a
         descending glissando).
@@ -2514,11 +2530,19 @@ def shepard_risset_glissando(
 
     >>> y = librosa.shepard_risset_glissando(110.0, duration=3.0, n_octaves=2.0)
 
+    Or starting from note C4:
+
+    >>> y_c4 = librosa.shepard_risset_glissando("C4", duration=3.0, n_octaves=2.0)
+
     Generate a descending Shepard-Risset glissando sweeping over 2 octaves:
 
     >>> y_desc = librosa.shepard_risset_glissando(110.0, duration=3.0, n_octaves=-2.0)
     """
-    if f is None or f <= 0:
+    if f is None:
+        raise ParameterError('"f" must be a positive number')
+
+    f = util._ensure_hz(f)
+    if f <= 0:
         raise ParameterError('"f" must be a positive number')
 
     nyquist = sr / 2.0

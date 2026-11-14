@@ -279,7 +279,7 @@ def pitch_nmf(
     n_fft: int | None = None,
     freq_in: ArrayLike | None = None,
     n_pitches: int = 84,
-    fmin: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
     intervals: str | Collection[float] = "equal",
     bins_per_octave: int = 12,
     tuning: float = 0.0,
@@ -320,8 +320,8 @@ def pitch_nmf(
         Frequencies of the spectrogram rows.
     n_pitches : int > 0, default=84
         Number of pitch bands to generate. Default 84 covers 7 octaves.
-    fmin : float or str, optional
-        Minimum pitch center frequency (or note name, e.g. `'C1'`).
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (in Hz) or note name in SPN format (e.g. `'C1'`).
         Defaults to `'C1'` (~32.7 Hz).
     intervals : str or collection of float, default='equal'
         Interval system to use (`'equal'`, `'pythagorean'`, `'ji5'`, etc.).

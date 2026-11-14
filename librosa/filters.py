@@ -593,7 +593,7 @@ def logfrequency(
     freq_in: ArrayLike | None = None,
     n_bins: int | None = None,
     bins_per_octave: int = 12,
-    fmin: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
     tuning: float = 0.0,
     window: _WindowSpec = "triangle",
     norm: Literal["slaney"] | float | None = "slaney",
@@ -621,8 +621,8 @@ def logfrequency(
 
         - 12: Semitone resolution.
         - 24: Quarter-tone resolution (as used in SuperFlux and madmom).
-    fmin : float > 0 or str, optional
-        Lowest frequency (in Hz) or note name (e.g. `'C1'`).
+    fmin : float > 0, str, or None, optional
+        Lowest frequency (in Hz) or note name in SPN format (e.g. `'C1'`).
         Defaults to `note_to_hz('C1')` (~32.7 Hz).
     tuning : float, default=0.0
         Tuning deviation from A440 in fractional bins.
@@ -684,10 +684,8 @@ def logfrequency(
 
     if fmin is None:
         f_min = float(note_to_hz("C1"))
-    elif isinstance(fmin, str):
-        f_min = float(note_to_hz(fmin))
     else:
-        f_min = float(fmin)
+        f_min = util._ensure_hz(fmin)
 
     if f_min <= 0:
         raise ParameterError(f"fmin={fmin} must be strictly positive")
@@ -729,7 +727,7 @@ def pitch(
     n_fft: int | None = None,
     freq_in: ArrayLike | None = None,
     n_pitches: int = 128,
-    fmin: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
     intervals: str | Collection[float] = "equal",
     bins_per_octave: int = 12,
     tuning: float = 0.0,
@@ -753,8 +751,8 @@ def pitch(
         as ``fft_frequencies(sr=sr, n_fft=n_fft)``.
     n_pitches : int > 0 [scalar], default=128
         Number of pitch bands to generate. Default 128 covers MIDI notes 0 to 127.
-    fmin : float or str, optional
-        Minimum pitch center frequency (or note name, e.g. `'C1'`).
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (or note name in SPN format, e.g. `'C1'`).
         If None, defaults to MIDI 0 (~8.18 Hz) when ``n_pitches=128``, or `'C1'` (~32.7 Hz).
     intervals : str or collection of float, default='equal'
         Tuning / interval system to use:
@@ -829,10 +827,8 @@ def pitch(
             fmin_ = float(midi_to_hz(0))
         else:
             fmin_ = float(note_to_hz("C1"))
-    elif isinstance(fmin, str):
-        fmin_ = float(note_to_hz(fmin))
     else:
-        fmin_ = float(fmin)
+        fmin_ = util._ensure_hz(fmin)
 
     f_out = interval_frequencies(
         n_bins=n_pitches,
@@ -915,7 +911,7 @@ def pitch_basis(
     n_fft: int | None = None,
     freq_in: ArrayLike | None = None,
     n_pitches: int = 84,
-    fmin: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
     intervals: str | Collection[float] = "equal",
     bins_per_octave: int = 12,
     tuning: float = 0.0,
@@ -950,8 +946,8 @@ def pitch_basis(
         as ``fft_frequencies(sr=sr, n_fft=n_fft)``.
     n_pitches : int > 0 [scalar], default=84
         Number of pitch bands to generate. Default 84 covers 7 octaves.
-    fmin : float or str, optional
-        Minimum pitch center frequency (or note name, e.g. `'C1'`).
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (or note name in SPN format, e.g. `'C1'`).
         If None, defaults to `'C1'` (~32.7 Hz).
     intervals : str or collection of float, default='equal'
         Tuning / interval system to use:
@@ -1042,10 +1038,8 @@ def pitch_basis(
             fmin_ = float(midi_to_hz(0))
         else:
             fmin_ = float(note_to_hz("C1"))
-    elif isinstance(fmin, str):
-        fmin_ = float(note_to_hz(fmin))
     else:
-        fmin_ = float(fmin)
+        fmin_ = util._ensure_hz(fmin)
 
     f_out = interval_frequencies(
         n_bins=n_pitches,
@@ -1491,8 +1485,8 @@ def pitch_to_chroma(
         How many bins per octave in the input representation.
     n_chroma : int > 0 [scalar], default=12
         Number of output bins (per octave) in the chroma.
-    fmin : None or float > 0, optional
-        Center frequency of the first constant-Q / pitch channel.
+    fmin : None, float > 0, or str, optional
+        Center frequency of the first constant-Q / pitch channel (in Hz) or note name in SPN format (e.g. `'C1'`).
         Default: `note_to_hz('C1')` (~32.7 Hz).
     window : None or np.ndarray, optional
         If provided, the filter bank will be convolved with ``window``.

@@ -2247,7 +2247,7 @@ def logfrequency_spectrogram(
     power: float = 2.0,
     n_bins: int | None = None,
     bins_per_octave: int = 12,
-    fmin: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
     tuning: float | None = 0.0,
     filter_window: _WindowSpec = "triangle",
     norm: Literal["slaney"] | float | None = "slaney",
@@ -2290,8 +2290,8 @@ def logfrequency_spectrogram(
 
         - 12: Semitone resolution.
         - 24: Quarter-tone resolution (as used in SuperFlux and madmom).
-    fmin : float > 0 or str, optional
-        Lowest frequency (in Hz) or note name (e.g. `'C1'`).
+    fmin : float > 0, str, or None, optional
+        Lowest frequency (in Hz) or note name in SPN format (e.g. `'C1'`).
         Defaults to `note_to_hz('C1')` (~32.7 Hz).
     tuning : float or None, default=0.0
         Tuning deviation from A440 in fractional bins.
@@ -2382,7 +2382,7 @@ def pitch_spectrogram(
     power: float = 2.0,
     tuning: float | None = 0.0,
     n_pitches: int = 128,
-    fmin: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
     intervals: str | Collection[float] = "equal",
     bins_per_octave: int = 12,
     filter_window: _WindowSpec = "boxcar",
@@ -2425,8 +2425,8 @@ def pitch_spectrogram(
         from the spectrogram.
     n_pitches : int > 0 [scalar], default=128
         Number of pitch bands to generate. Default 128 covers MIDI notes 0 to 127.
-    fmin : float or str, optional
-        Minimum pitch center frequency (or note name, e.g. `'C1'`).
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (or note name in SPN format, e.g. `'C1'`).
         If None, defaults to MIDI 0 (~8.18 Hz) when ``n_pitches=128``, or `'C1'`.
     intervals : str or collection of float, default='equal'
         Interval system to use:

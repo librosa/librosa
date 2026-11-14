@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 
     from numpy.typing import DTypeLike
 
-    from .._typing import _DCTNorm, _DCTType, _PadModeSTFT, _WindowSpec
+    from .._typing import _DCTNorm, _DCTType, _FloatLike_co, _PadModeSTFT, _WindowSpec
 
 __all__ = [
     "mel_to_stft",
@@ -399,7 +399,7 @@ def logfrequency_to_stft(
     power: float = 2.0,
     n_bins: int | None = None,
     bins_per_octave: int = 12,
-    fmin: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
     tuning: float = 0.0,
     filter_window: _WindowSpec = "triangle",
     norm: Literal["slaney"] | float | None = "slaney",
@@ -421,8 +421,8 @@ def logfrequency_to_stft(
         Number of logarithmic frequency bands. If None, defaults to ``L.shape[-2]``.
     bins_per_octave : int > 0 [scalar], default=12
         Number of filter bands per octave.
-    fmin : float > 0 or str, optional
-        Lowest frequency (in Hz) or note name (e.g. `'C1'`).
+    fmin : float > 0, str, or None, optional
+        Lowest frequency (in Hz) or note name in SPN format (e.g. `'C1'`).
         Defaults to `note_to_hz('C1')` (~32.7 Hz).
     tuning : float, default=0.0
         Tuning deviation from A440 in fractional bins.
@@ -524,7 +524,7 @@ def logfrequency_to_audio(
     dtype: DTypeLike = np.float32,
     n_bins: int | None = None,
     bins_per_octave: int = 12,
-    fmin: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
     tuning: float = 0.0,
     filter_window: _WindowSpec = "triangle",
     norm: Literal["slaney"] | float | None = "slaney",
@@ -569,8 +569,8 @@ def logfrequency_to_audio(
         Number of logarithmic frequency bands. If None, defaults to ``L.shape[-2]``.
     bins_per_octave : int > 0 [scalar], default=12
         Number of filter bands per octave.
-    fmin : float > 0 or str, optional
-        Lowest frequency (in Hz) or note name (e.g. `'C1'`).
+    fmin : float > 0, str, or None, optional
+        Lowest frequency (in Hz) or note name in SPN format (e.g. `'C1'`).
         Defaults to `note_to_hz('C1')` (~32.7 Hz).
     tuning : float, default=0.0
         Tuning deviation from A440 in fractional bins.
@@ -628,7 +628,7 @@ def pitch_to_stft(
     n_fft: int = 2048,
     power: float = 2.0,
     n_pitches: int | None = None,
-    fmin: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
     intervals: str | Collection[float] = "equal",
     bins_per_octave: int = 12,
     tuning: float = 0.0,
@@ -650,8 +650,8 @@ def pitch_to_stft(
         Exponent for the magnitude spectrogram.
     n_pitches : int > 0 [scalar, optional]
         Number of pitch bands. If None, defaults to ``P.shape[-2]``.
-    fmin : float or str, optional
-        Minimum pitch center frequency (or note name, e.g. `'C1'`).
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (or note name in SPN format, e.g. `'C1'`).
         If None, defaults to MIDI 0 (~8.18 Hz) when ``n_pitches=128``, or `'C1'`.
     intervals : str or collection of float, default='equal'
         Interval system used to construct the pitch filterbank.
@@ -735,7 +735,7 @@ def pitch_to_audio(
     length: int | None = None,
     dtype: DTypeLike = np.float32,
     n_pitches: int | None = None,
-    fmin: float | str | None = None,
+    fmin: _FloatLike_co | str | None = None,
     intervals: str | Collection[float] = "equal",
     bins_per_octave: int = 12,
     tuning: float = 0.0,
@@ -780,8 +780,8 @@ def pitch_to_audio(
         Real numeric type for the time-domain signal. Default is 32-bit float.
     n_pitches : int > 0 [scalar, optional]
         Number of pitch bands. If None, defaults to ``P.shape[-2]``.
-    fmin : float or str, optional
-        Minimum pitch center frequency (or note name, e.g. `'C1'`).
+    fmin : float > 0, str, or None, optional
+        Minimum pitch center frequency (or note name in SPN format, e.g. `'C1'`).
         If None, defaults to MIDI 0 (~8.18 Hz) when ``n_pitches=128``, or `'C1'`.
     intervals : str or collection of float, default='equal'
         Interval system used to construct the pitch filterbank.
