@@ -92,11 +92,6 @@ R = librosa.segment.recurrence_matrix(Csync_stack, width=3, mode="affinity",
 df = librosa.segment.timelag_filter(scipy.ndimage.median_filter)
 Rf = df(R, size=(1, 7))
 
-# The time-lag filter can break the symmetry of R near the first and last
-# beats. Symmetrizing again keeps the graph undirected, so that L (below)
-# is a proper normalized Laplacian for scipy.linalg.eigh.
-Rf = 0.5 * (Rf + Rf.T)
-
 
 ###################################################################
 # Now let's build the sequence matrix (S_loc) using mfcc-similarity
@@ -141,8 +136,14 @@ librosa.display.multiplot("specshow", Rf, R_path, A,
 L = scipy.sparse.csgraph.laplacian(A, normed=True)
 
 
-# and its spectral decomposition
-evals, evecs = scipy.linalg.eigh(L)
+# and its spectral decomposition.
+# The time-lag filter can make Rf (and hence L) slightly asymmetric near the
+# first and last beats, so we use eig rather than eigh (which assumes a
+# symmetric input) and sort the eigenvectors by ascending eigenvalue.
+# The leading eigenvalues are real, so we can drop the imaginary parts.
+evals, evecs = scipy.linalg.eig(L)
+order = np.argsort(evals.real)
+evals, evecs = evals[order].real, evecs[:, order].real
 
 
 # We can clean this up further with a median filter.
