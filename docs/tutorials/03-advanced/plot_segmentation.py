@@ -136,8 +136,12 @@ librosa.display.multiplot("specshow", Rf, R_path, A,
 L = scipy.sparse.csgraph.laplacian(A, normed=True)
 
 
-# and its spectral decomposition
-evals, evecs = scipy.linalg.eigh(L)
+# and its spectral decomposition.
+# L may be slightly asymmetric (due to the time-lag filter), so we use eig
+# and sort by eigenvalue. The leading eigenpairs are real.
+evals, evecs = scipy.linalg.eig(L)
+order = np.argsort(evals.real)
+evals, evecs = evals[order].real, evecs[:, order].real
 
 
 # We can clean this up further with a median filter.
@@ -218,7 +222,7 @@ import mir_eval.display
 
 bound_times = librosa.frames_to_time(bound_frames)
 freqs = librosa.cqt_frequencies(n_bins=C.shape[0],
-                                fmin=librosa.note_to_hz("C1"),
+                                fmin="C1",
                                 bins_per_octave=BINS_PER_OCTAVE)
 
 fig, ax = plt.subplots(figsize=(8, 5), nrows=2, gridspec_kw={"height_ratios": [1, 4]},

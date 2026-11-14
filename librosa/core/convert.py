@@ -1405,7 +1405,7 @@ def fft_frequencies(
 def cqt_frequencies(
     n_bins: int,
     *,
-    fmin: float,
+    fmin: _FloatLike_co | str,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     dtype: npt.DTypeLike = np.float64,
@@ -1416,8 +1416,8 @@ def cqt_frequencies(
     ----------
     n_bins : int > 0 [scalar]
         Number of constant-Q bins
-    fmin : float > 0 [scalar]
-        Minimum frequency
+    fmin : float > 0 or str [scalar]
+        Minimum frequency (in Hz) or note name (e.g., 'C2')
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
     tuning : float
@@ -1434,12 +1434,15 @@ def cqt_frequencies(
     Examples
     --------
     >>> # Get the CQT frequencies for 24 notes, starting at C2
-    >>> librosa.cqt_frequencies(24, fmin=librosa.note_to_hz('C2'))
+    >>> librosa.cqt_frequencies(24, fmin='C2')
     array([  65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
              92.499,   97.999,  103.826,  110.   ,  116.541,  123.471,
             130.813,  138.591,  146.832,  155.563,  164.814,  174.614,
             184.997,  195.998,  207.652,  220.   ,  233.082,  246.942])
     """
+    if isinstance(fmin, str):
+        fmin = float(note_to_hz(fmin))
+
     correction: float = 2.0 ** (float(tuning) / bins_per_octave)
     frequencies: np.ndarray = 2.0 ** (
         np.arange(0, n_bins, dtype=dtype) / bins_per_octave
@@ -1451,8 +1454,8 @@ def cqt_frequencies(
 def mel_frequencies(
     n_mels: int = 128,
     *,
-    fmin: float = 0.0,
-    fmax: float = 11025.0,
+    fmin: _FloatLike_co | str = 0.0,
+    fmax: _FloatLike_co | str = 11025.0,
     htk: bool = False,
     dtype: npt.DTypeLike = np.float64,
 ) -> np.ndarray:
@@ -1491,10 +1494,10 @@ def mel_frequencies(
     ----------
     n_mels : int > 0 [scalar]
         Number of mel bins.
-    fmin : float >= 0 [scalar]
-        Minimum frequency (Hz).
-    fmax : float >= 0 [scalar]
-        Maximum frequency (Hz).
+    fmin : float >= 0 or str [scalar]
+        Minimum frequency (in Hz) or note name (e.g., 'C1').
+    fmax : float >= 0 or str [scalar]
+        Maximum frequency (in Hz) or note name (e.g., 'C7').
     htk : bool
         If True, use HTK formula to convert Hz to mel.
         Otherwise (False), use Slaney's Auditory Toolbox.
@@ -1529,6 +1532,11 @@ def mel_frequencies(
              5955.205,   6502.92 ,   7101.009,   7754.107,
              8467.272,   9246.028,  10096.408,  11025.   ])
     """
+    if isinstance(fmin, str):
+        fmin = float(note_to_hz(fmin))
+    if isinstance(fmax, str):
+        fmax = float(note_to_hz(fmax))
+
     # 'Center freqs' of mel bands - uniformly spaced between limits
     min_mel = hz_to_mel(fmin, htk=htk)
     max_mel = hz_to_mel(fmax, htk=htk)
@@ -1666,7 +1674,7 @@ def A_weighting(
     Get the A-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
     >>> weights = librosa.A_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
@@ -1749,7 +1757,7 @@ def B_weighting(
     Get the B-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
     >>> weights = librosa.B_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
@@ -1831,7 +1839,7 @@ def C_weighting(
     Get the C-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
     >>> weights = librosa.C_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
@@ -1909,7 +1917,7 @@ def D_weighting(
     Get the D-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
     >>> weights = librosa.D_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
@@ -2049,7 +2057,7 @@ def frequency_weighting(
     Get the A-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
     >>> weights = librosa.frequency_weighting(freqs, kind='A')
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
@@ -2098,7 +2106,7 @@ def multi_frequency_weighting(
     Get the A, B, C, D, and Z weightings for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin=librosa.note_to_hz('C1'))
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
     >>> weightings = 'ABCDZ'
     >>> weights = librosa.multi_frequency_weighting(freqs, kinds=weightings)
     >>> fig, ax = plt.subplots()
@@ -2821,7 +2829,7 @@ def note_to_svara_c(
 def hz_to_fjs(
     frequencies: _FloatLike_co,
     *,
-    fmin: float | None = ...,
+    fmin: _FloatLike_co | str | None = ...,
     unison: str | None = ...,
     unicode: bool = ...,
 ) -> str: ...
@@ -2829,14 +2837,14 @@ def hz_to_fjs(
 def hz_to_fjs(
     frequencies: _SequenceLike[_FloatLike_co],
     *,
-    fmin: float | None = ...,
+    fmin: _FloatLike_co | str | None = ...,
     unison: str | None = ...,
     unicode: bool = ...,
 ) -> npt.NDArray[np.str_]: ...
 def hz_to_fjs(
     frequencies: _ScalarOrSequence[_FloatLike_co],
     *,
-    fmin: float | None = None,
+    fmin: _FloatLike_co | str | None = None,
     unison: str | None = None,
     unicode: bool = False,
 ) -> str | npt.NDArray[np.str_]:
@@ -2846,9 +2854,10 @@ def hz_to_fjs(
     ----------
     frequencies : float or iterable of float
         Input frequencies, specified in Hz
-    fmin : float (optional)
+    fmin : float or str (optional)
         The minimum frequency, corresponding to a unison note.
-        If not provided, it will be inferred as `min(frequencies)`
+        If not provided, it will be inferred as `min(frequencies)`.
+        Can be provided as a number in Hz or a note name in SPN format (e.g., 'C2').
     unison : str (optional)
         The name of the unison note.
         If not provided, it will be inferred as the scientific pitch
@@ -2891,6 +2900,8 @@ def hz_to_fjs(
     if fmin is None:
         # mypy doesn't know that min can handle scalars
         fmin = np.min(frequencies)  # type: ignore
+    elif isinstance(fmin, str):
+        fmin = float(note_to_hz(fmin))
     if unison is None:
         unison = hz_to_note(fmin, octave=False, unicode=False)
 

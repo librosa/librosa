@@ -45,7 +45,7 @@ def cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     n_bins: int | None = 84,
     bins_per_octave: int = 12,
     tuning: float | None = 0.0,
@@ -78,8 +78,9 @@ def cqt(
     hop_length : int > 0 [scalar]
         number of samples between successive CQT columns.
 
-    fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
+    fmin : float > 0 [scalar], str, or None
+        Minimum frequency (in Hz) or note name in SPN format (e.g., 'C1').
+        Defaults to `C1 ~= 32.70 Hz`.
 
     n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``.
@@ -164,8 +165,7 @@ def cqt(
 
     Limit the frequency range
 
-    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
-    ...                 n_bins=60))
+    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin='C2', n_bins=60))
     >>> C
     array([[6.830e-04, 6.361e-04, ..., 7.362e-09, 9.102e-09],
            [5.366e-04, 4.818e-04, ..., 8.953e-09, 1.067e-08],
@@ -175,7 +175,7 @@ def cqt(
 
     Using a higher frequency resolution
 
-    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('C2'),
+    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin='C2',
     ...                 n_bins=60 * 2, bins_per_octave=12 * 2))
     >>> C
     array([[5.468e-04, 5.382e-04, ..., 5.911e-09, 6.105e-09],
@@ -185,6 +185,8 @@ def cqt(
            [5.147e-02, 6.959e-02, ..., 1.694e-05, 5.811e-06]])
     """
     # CQT is the special case of VQT with gamma=0
+    if fmin is not None:
+        fmin = util._ensure_hz(fmin)
     return vqt(
         y=y,
         sr=sr,
@@ -213,7 +215,7 @@ def hybrid_cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     n_bins: int | None = 84,
     bins_per_octave: int = 12,
     tuning: float | None = 0.0,
@@ -243,8 +245,9 @@ def hybrid_cqt(
     hop_length : int > 0 [scalar]
         number of samples between successive CQT columns.
 
-    fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
+    fmin : float > 0 [scalar], str, or None
+        Minimum frequency (in Hz) or note name in SPN format (e.g., 'C1').
+        Defaults to `C1 ~= 32.70 Hz`.
 
     n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
@@ -316,6 +319,8 @@ def hybrid_cqt(
     if fmin is None:
         # C1 by default
         fmin = note_to_hz("C1")
+    else:
+        fmin = util._ensure_hz(fmin)
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -420,7 +425,7 @@ def pseudo_cqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     n_bins: int | None = 84,
     bins_per_octave: int = 12,
     tuning: float | None = 0.0,
@@ -451,8 +456,9 @@ def pseudo_cqt(
     hop_length : int > 0 [scalar]
         number of samples between successive CQT columns.
 
-    fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
+    fmin : float > 0 [scalar], str, or None
+        Minimum frequency (in Hz) or note name in SPN format (e.g., 'C1').
+        Defaults to `C1 ~= 32.70 Hz`.
 
     n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
@@ -515,6 +521,8 @@ def pseudo_cqt(
     if fmin is None:
         # C1 by default
         fmin = note_to_hz("C1")
+    else:
+        fmin = util._ensure_hz(fmin)
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -599,7 +607,7 @@ def icqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     filter_scale: float = 1,
@@ -627,8 +635,9 @@ def icqt(
     hop_length : int > 0 [scalar]
         number of samples between successive frames
 
-    fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
+    fmin : float > 0 [scalar], str, or None
+        Minimum frequency (in Hz) or note name in SPN format (e.g., 'C1').
+        Defaults to `C1 ~= 32.70 Hz`.
 
     bins_per_octave : int > 0 [scalar]
         Number of bins per octave
@@ -709,6 +718,8 @@ def icqt(
     """
     if fmin is None:
         fmin = note_to_hz("C1")
+    else:
+        fmin = util._ensure_hz(fmin)
 
     # Apply tuning correction
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
@@ -825,7 +836,7 @@ def vqt(
     *,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     n_bins: int | None = 84,
     intervals: str | Collection[float] = "equal",
     gamma: float | None = None,
@@ -862,8 +873,9 @@ def vqt(
     hop_length : int > 0 [scalar]
         number of samples between successive VQT columns.
 
-    fmin : float > 0 [scalar]
-        Minimum frequency. Defaults to `C1 ~= 32.70 Hz`
+    fmin : float > 0 [scalar], str, or None
+        Minimum frequency (in Hz) or note name in SPN format (e.g., 'C1').
+        Defaults to `C1 ~= 32.70 Hz`.
 
     n_bins : int > 0 or None [scalar]
         Number of frequency bins, starting at ``fmin``
@@ -984,6 +996,8 @@ def vqt(
     if fmin is None:
         # C1 by default
         fmin = note_to_hz("C1")
+    else:
+        fmin = util._ensure_hz(fmin)
 
     if tuning is None:
         tuning = estimate_tuning(y=y, sr=sr, bins_per_octave=bins_per_octave)
@@ -1291,7 +1305,7 @@ def griffinlim_cqt(
     n_iter: int = 32,
     sr: float = 22050,
     hop_length: int = 512,
-    fmin: _FloatLike_co | None = None,
+    fmin: _FloatLike_co | str | None = None,
     bins_per_octave: int = 12,
     tuning: float = 0.0,
     filter_scale: float = 1,
@@ -1339,10 +1353,9 @@ def griffinlim_cqt(
     hop_length : int > 0
         The hop length of the CQT
 
-    fmin : number > 0
-        Minimum frequency for the CQT.
-
-        If not provided, it defaults to `C1`.
+    fmin : number > 0, str, or None
+        Minimum frequency for the CQT (in Hz) or note name in SPN format (e.g., 'C1').
+        If not provided, it defaults to `C1 ~= 32.70 Hz`.
 
     bins_per_octave : int > 0
         Number of bins per octave
@@ -1466,6 +1479,8 @@ def griffinlim_cqt(
     """
     if fmin is None:
         fmin = note_to_hz("C1")
+    else:
+        fmin = util._ensure_hz(fmin)
 
     if not isinstance(random_state, Deprecated):
         if rng is not None:

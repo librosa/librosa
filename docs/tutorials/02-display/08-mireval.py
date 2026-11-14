@@ -50,10 +50,7 @@ HTML(librosa.util.example_info("trumpet", html=True))
 # %%
 # Estimate the f0 using pyin
 
-f0, voiced_flag, voiced_probs = librosa.pyin(y, fmin=librosa.note_to_hz("C2"),
-                                             fmax=librosa.note_to_hz("C7"),
-                                             fill_na=None,
-                                             sr=sr)
+f0, voiced_flag, voiced_probs = librosa.pyin(y, fmin="C2", fmax="C7", fill_na=None, sr=sr)
 # sphinx_gallery_thumbnail_number = 4
 # Mark unvoiced frames as negative.
 # Everywhere that `voiced_flag[i]` is False, we will multiply `f0[i]` by -1.
@@ -146,9 +143,7 @@ y, sr = librosa.loadx("trumpet")
 stft = librosa.stft(y)
 
 # Estimate f0
-f0, voiced_flag, voiced_probs = librosa.pyin(y, fmin=librosa.note_to_hz("C2"),
-                                             fmax=librosa.note_to_hz("C7"),
-                                             sr=sr)
+f0, voiced_flag, voiced_probs = librosa.pyin(y, fmin="C2", fmax="C7", sr=sr)
 
 # Quantize to integer MIDI numbers
 f0_midi = np.round(librosa.hz_to_midi(f0))

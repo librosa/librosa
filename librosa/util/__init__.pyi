@@ -14,6 +14,7 @@ from .streaming import StreamBridge as StreamBridge
 from .streaming import StreamBuffer as StreamBuffer
 from .streaming import async_capture as async_capture
 from .utils import MAX_MEM_BLOCK as MAX_MEM_BLOCK
+from .utils import _ensure_hz as _ensure_hz
 from .utils import abs2 as abs2
 from .utils import axis_sort as axis_sort
 from .utils import buf_to_float as buf_to_float

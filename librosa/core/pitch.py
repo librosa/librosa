@@ -19,7 +19,7 @@ if TYPE_CHECKING:
 
     from numpy.typing import ArrayLike
 
-    from .._typing import _PadMode, _PadModeSTFT, _WindowSpec
+    from .._typing import _FloatLike_co, _PadMode, _PadModeSTFT, _WindowSpec
 
 __all__ = ["estimate_tuning", "pitch_tuning", "piptrack", "yin", "pyin"]
 
@@ -88,7 +88,7 @@ def estimate_tuning(
     Using pass-through arguments to `librosa.piptrack`
 
     >>> librosa.estimate_tuning(y=y, sr=sr, n_fft=8192,
-    ...                         fmax=librosa.note_to_hz('G#9'))
+    ...                         fmax='G#9')
     -0.08000000000000002
     """
     pitch, mag = piptrack(y=y, sr=sr, S=S, n_fft=n_fft, **kwargs)
@@ -185,8 +185,8 @@ def piptrack(
     S: np.ndarray | None = None,
     n_fft: int | None = 2048,
     hop_length: int | None = None,
-    fmin: float = 150.0,
-    fmax: float = 4000.0,
+    fmin: _FloatLike_co | str = 150.0,
+    fmax: _FloatLike_co | str = 4000.0,
     threshold: float = 0.1,
     win_length: int | None = None,
     window: _WindowSpec = "hann",
@@ -217,11 +217,11 @@ def piptrack(
     hop_length : int > 0 [scalar] or None
         number of samples to hop
 
-    fmin : float > 0 [scalar]
-        lower frequency cutoff.
+    fmin : float > 0 [scalar] or str
+        lower frequency cutoff (in Hz) or note name in SPN format (e.g., 'C2').
 
-    fmax : float > 0 [scalar]
-        upper frequency cutoff.
+    fmax : float > 0 [scalar] or str
+        upper frequency cutoff (in Hz) or note name in SPN format (e.g., 'C7').
 
     threshold : float in `(0, 1)`
         A bin in spectrum ``S`` is considered a pitch when it is greater than
@@ -322,6 +322,11 @@ def piptrack(
         S = np.abs(S)
 
     # Truncate to feasible region
+    if fmin is None or fmax is None:
+        raise ParameterError('both "fmin" and "fmax" must be provided')
+
+    fmin = util._ensure_hz(fmin)
+    fmax = util._ensure_hz(fmax)
     fmin = np.maximum(fmin, 0)
     fmax = np.minimum(fmax, float(sr) / 2)
 
@@ -453,8 +458,8 @@ def _cumulative_mean_normalized_difference(
 def yin(
     y: np.ndarray,
     *,
-    fmin: float,
-    fmax: float,
+    fmin: _FloatLike_co | str,
+    fmax: _FloatLike_co | str,
     sr: float = 22050,
     frame_length: int = 2048,
     hop_length: int | None = None,
@@ -479,13 +484,13 @@ def yin(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported..
-    fmin : number > 0 [scalar]
-        minimum frequency in Hertz.
-        The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
+    fmin : number > 0 [scalar] or str
+        minimum frequency in Hertz, or note name in SPN format (e.g., 'C2').
+        The recommended minimum is ``'C2'`` (~65 Hz)
         though lower values may be feasible.
-    fmax : number > fmin, <= sr/2 [scalar]
-        maximum frequency in Hertz.
-        The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
+    fmax : number > fmin, <= sr/2 [scalar] or str
+        maximum frequency in Hertz, or note name in SPN format (e.g., 'C7').
+        The recommended maximum is ``'C7'`` (~2093 Hz)
         though higher values may be feasible.
     sr : number > 0 [scalar]
         sampling rate of ``y`` in Hertz.
@@ -535,6 +540,8 @@ def yin(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
+    fmin = util._ensure_hz(fmin)
+    fmax = util._ensure_hz(fmax)
     __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length)
 
     # Set the default hop if it is not already specified.
@@ -615,8 +622,8 @@ def yin(
 def pyin(
     y: np.ndarray,
     *,
-    fmin: float,
-    fmax: float,
+    fmin: _FloatLike_co | str,
+    fmax: _FloatLike_co | str,
     sr: float = 22050,
     frame_length: int = 2048,
     hop_length: int | None = None,
@@ -650,13 +657,13 @@ def pyin(
     ----------
     y : np.ndarray [shape=(..., n)]
         audio time series. Multi-channel is supported.
-    fmin : number > 0 [scalar]
-        minimum frequency in Hertz.
-        The recommended minimum is ``librosa.note_to_hz('C2')`` (~65 Hz)
+    fmin : number > 0 [scalar] or str
+        minimum frequency in Hertz, or note name in SPN format (e.g., 'C2').
+        The recommended minimum is ``'C2'`` (~65 Hz)
         though lower values may be feasible.
-    fmax : number > fmin, <= sr/2 [scalar]
-        maximum frequency in Hertz.
-        The recommended maximum is ``librosa.note_to_hz('C7')`` (~2093 Hz)
+    fmax : number > fmin, <= sr/2 [scalar] or str
+        maximum frequency in Hertz, or note name in SPN format (e.g., 'C7').
+        The recommended maximum is ``'C7'`` (~2093 Hz)
         though higher values may be feasible.
     sr : number > 0 [scalar]
         sampling rate of ``y`` in Hertz.
@@ -729,8 +736,8 @@ def pyin(
     >>> y, sr = librosa.loadx('trumpet')
     >>> f0, voiced_flag, voiced_probs = librosa.pyin(y,
     ...                                              sr=sr,
-    ...                                              fmin=librosa.note_to_hz('C2'),
-    ...                                              fmax=librosa.note_to_hz('C7'))
+    ...                                              fmin='C2',
+    ...                                              fmax='C7')
     >>> times = librosa.times_like(f0, sr=sr)
 
     Overlay F0 over a spectrogram
@@ -747,6 +754,8 @@ def pyin(
     if fmin is None or fmax is None:
         raise ParameterError('both "fmin" and "fmax" must be provided')
 
+    fmin = util._ensure_hz(fmin)
+    fmax = util._ensure_hz(fmax)
     __check_yin_params(sr=sr, fmax=fmax, fmin=fmin, frame_length=frame_length)
 
     # Set the default hop if it is not already specified.

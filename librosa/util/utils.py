@@ -37,6 +37,35 @@ if TYPE_CHECKING:
     type _PeakPickMethod = Literal["greedy", "dp_count", "dp_value"]
 
 
+@overload
+def _ensure_hz(value: None) -> None: ...
+@overload
+def _ensure_hz(value: _FloatLike_co | str) -> float: ...
+def _ensure_hz(value: _FloatLike_co | str | None) -> float | None:
+    """Ensure a frequency value is in Hz.
+
+    If the input is a string, it is interpreted as Scientific Pitch Notation
+    and converted to Hz.
+
+    Parameters
+    ----------
+    value : float or str or None
+        Frequency in Hz or note name (e.g., 'C2').
+
+    Returns
+    -------
+    hz : float or None
+        Frequency in Hz.
+    """
+    if value is None:
+        return None
+    if isinstance(value, str):
+        from ..core.convert import note_to_hz
+
+        return float(note_to_hz(value))
+    return float(value)
+
+
 # Constrain STFT block sizes to 256 KB
 MAX_MEM_BLOCK = 2**8 * 2**10
 
@@ -1236,8 +1265,10 @@ def __peak_pick_dp(x, pre_max, post_max, pre_avg, post_avg, delta, wait, count, 
     pointers = np.zeros(len(x) + 1, dtype=np.int32)
     taken = np.zeros(len(x) + 1, dtype=np.bool_)
 
-    # Use the integral image trick to accelerate partial sums for averages
-    cumulate = np.cumsum(x)
+    # Use the integral image trick to accelerate partial sums for averages.
+    # Accumulate in float64: a float32 running sum loses precision as it grows,
+    # and the window averages taken from it then drift on long signals.
+    cumulate = np.cumsum(x.astype(np.float64))
 
     values[-1] = 0
     pointers[-1] = -1

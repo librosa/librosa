@@ -947,6 +947,8 @@ def wavef0(
         Sa (tonic) frequency in Hz for the frequency axis.
         Required for `cqt_svara` mode.
 
+        Note that note name strings (e.g., 'C4') are not supported for ``Sa``.
+
     mela : str or int or None
         Mela (scale) name or index for the frequency axis.
         This is used to determine the svara names for the frequency axis when using
@@ -1003,8 +1005,7 @@ def wavef0(
 
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.loadx('trumpet')
-    >>> f0, _, _ = librosa.pyin(y, fmin=librosa.note_to_hz('C2'),
-    ...                         fmax=librosa.note_to_hz('C7'),
+    >>> f0, _, _ = librosa.pyin(y, fmin='C2', fmax='C7',
     ...                         sr=sr, hop_length=512)
     >>> fig, ax = plt.subplots()
     >>> librosa.display.wavef0(y=y, f0=f0, sr=sr, ax=ax,

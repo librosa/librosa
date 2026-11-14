@@ -26,7 +26,7 @@ import numpy as np
 from matplotlib import colormaps as mcm
 
 # Core and utility imports for audio processing
-from .. import core
+from .. import core, util
 from ..util.exceptions import ParameterError
 
 # Image visualization utilities for spectral and 2D matrix displays
@@ -34,6 +34,8 @@ if TYPE_CHECKING:
     from typing import Any, Callable
 
     from matplotlib.collections import QuadMesh
+
+    from .._typing import _FloatLike_co
 
 # Module imports for image formatting and coordinate handling
 from .formatting import (
@@ -66,8 +68,8 @@ def specshow(
     hop_length: int = 512,
     n_fft: int | None = None,
     win_length: int | None = None,
-    fmin: float | None = None,
-    fmax: float | None = None,
+    fmin: _FloatLike_co | str | None = None,
+    fmax: _FloatLike_co | str | None = None,
     tempo_min: float | None = 16,
     tempo_max: float | None = 480,
     tuning: float = 0.0,
@@ -250,15 +252,16 @@ def specshow(
         This is primarily useful for specifying odd window lengths in
         Fourier tempogram displays.
 
-    fmin : float > 0 [scalar] or None
+    fmin : float > 0 [scalar], str, or None
         Frequency of the lowest spectrogram bin.  Used for Mel, CQT, and VQT
-        scales.
+        scales.  Can be provided as a number (in Hz) or a note name in SPN format (e.g., 'C1').
 
         If ``y_axis`` is `cqt_hz` or `cqt_note` and ``fmin`` is not given,
         it is set by default to ``note_to_hz('C1')``.
 
-    fmax : float > 0 [scalar] or None
-        Used for setting the Mel frequency scales
+    fmax : float > 0 [scalar], str, or None
+        Used for setting the Mel frequency scales.
+        Can be provided as a number (in Hz) or a note name in SPN format (e.g., 'C7').
 
     tempo_min : float > 0 [scalar]
         Lowest tempo (in beats per minute) for tempogram display.
@@ -281,11 +284,11 @@ def specshow(
     Sa : float or int
         If using Hindustani or Carnatic svara axis decorations, specify Sa.
 
-        For `cqt_svara`, ``Sa`` should be specified as a frequency in Hz.
+        For `cqt_svara` or `fft_svara`, ``Sa`` should be specified as a frequency in Hz.
 
         For `chroma_c` or `chroma_h`, ``Sa`` should correspond to the position
         of Sa within the chromagram.
-        If not provided, Sa will default to 0 (equivalent to `C`)
+        If not provided, Sa will default to 0 (equivalent to `C`).
 
     mela : str or int, optional
         If using `chroma_c` or `cqt_svara` display mode, specify the melakarta raga.
@@ -408,6 +411,9 @@ def specshow(
     >>> ax[1].label_outer()
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
+    fmin = util._ensure_hz(fmin)
+    fmax = util._ensure_hz(fmax)
+
     all_params = dict(
         kwargs=kwargs,
         sr=sr,

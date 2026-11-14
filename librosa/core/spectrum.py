@@ -2088,9 +2088,8 @@ def perceptual_weighting(
     Re-weight a CQT power spectrum, using peak power as reference
 
     >>> y, sr = librosa.loadx('trumpet')
-    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin=librosa.note_to_hz('A1')))
-    >>> freqs = librosa.cqt_frequencies(C.shape[0],
-    ...                                 fmin=librosa.note_to_hz('A1'))
+    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin='A1'))
+    >>> freqs = librosa.cqt_frequencies(C.shape[0], fmin='A1')
     >>> perceptual_CQT = librosa.perceptual_weighting(C**2,
     ...                                               freqs,
     ...                                               ref=np.max)
@@ -2105,13 +2104,13 @@ def perceptual_weighting(
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> img = librosa.display.specshow(librosa.amplitude_to_db(C,
     ...                                                        ref=np.max),
-    ...                                fmin=librosa.note_to_hz('A1'),
+    ...                                fmin='A1',
     ...                                y_axis='cqt_hz', x_axis='time',
     ...                                ax=ax[0])
     >>> ax[0].set(title='Log CQT power')
     >>> ax[0].label_outer()
     >>> imgp = librosa.display.specshow(perceptual_CQT, y_axis='cqt_hz',
-    ...                                 fmin=librosa.note_to_hz('A1'),
+    ...                                 fmin='A1',
     ...                                 x_axis='time', ax=ax[1])
     >>> ax[1].set(title='Perceptually weighted log CQT')
     >>> librosa.display.colorbar_db(img, ax=ax[0])
