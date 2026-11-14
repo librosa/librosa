@@ -8,6 +8,7 @@ from .core import D_weighting as D_weighting
 from .core import Z_weighting as Z_weighting
 from .core import amplitude_to_db as amplitude_to_db
 from .core import autocorrelate as autocorrelate
+from .core import astream as astream
 from .core import blocks_to_frames as blocks_to_frames
 from .core import blocks_to_samples as blocks_to_samples
 from .core import blocks_to_time as blocks_to_time
