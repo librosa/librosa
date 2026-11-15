@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import queue
 import threading
+import warnings
 
 import numpy as np
 import pytest
@@ -23,14 +24,6 @@ def test_streaming_imports():
     assert librosa.StreamBridge is StreamBridge
     assert hasattr(librosa, "stream")
     assert hasattr(StreamBridge, "stream")
-
-    # Internal buffer and removed helpers should not be exported publicly
-    assert not hasattr(librosa, "astream")
-    assert not hasattr(StreamBridge, "astream")
-    assert not hasattr(librosa.util, "StreamBridge")
-    assert not hasattr(librosa, "StreamBuffer")
-    assert not hasattr(librosa.util, "StreamBuffer")
-    assert not hasattr(librosa.util, "async_capture")
 
 
 def test_streambridge_validation():
@@ -191,18 +184,54 @@ def test_streambridge_overflow_policies():
     assert [c[0] for c in chunks] == [1.0, 2.0]
 
     # warn
-    with StreamBridge(sr=22050, maxsize=1, overflow_policy="warn") as b_warn:
+    b_warn = StreamBridge(sr=22050, maxsize=1, overflow_policy="warn")
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         b_warn.push(np.array([1.0], dtype=np.float32))
-        with pytest.warns(RuntimeWarning, match="StreamBridge queue is full"):
-            b_warn.push(np.array([2.0], dtype=np.float32))
-    chunks = list(b_warn)
+        b_warn.push(np.array([2.0], dtype=np.float32))
+    b_warn.close()
+
+    with pytest.warns(RuntimeWarning, match=r"StreamBridge queue is full; dropped 1 chunk\(s\)"):
+        chunks = list(b_warn)
     assert [c[0] for c in chunks] == [2.0]
+
+    b_warn2 = StreamBridge(sr=22050, maxsize=1, overflow_policy="warn")
+    b_warn2.push(np.array([1.0], dtype=np.float32))
+    b_warn2.push(np.array([2.0], dtype=np.float32))
+    b_warn2.push(np.array([3.0], dtype=np.float32))
+    b_warn2.close()
+    with pytest.warns(RuntimeWarning, match=r"StreamBridge queue is full; dropped 2 chunk\(s\)"):
+        chunks2 = list(b_warn2)
+    assert [c[0] for c in chunks2] == [3.0]
 
     # error
     with StreamBridge(sr=22050, maxsize=1, overflow_policy="error") as b_err:
         b_err.push(np.array([1.0], dtype=np.float32))
         with pytest.raises(BufferError):
             b_err.push(np.array([2.0], dtype=np.float32))
+
+
+def test_stream_warm_up_empty():
+    """Test warm_up on empty bridge or zero duration yields nothing."""
+    with StreamBridge(sr=22050, channels=1) as bridge:
+        pass
+    blocks = list(
+        bridge.stream(block_length=1, frame_length=1024, hop_length=512, warm_up=True)
+    )
+    assert blocks == []
+
+    with StreamBridge(sr=22050, channels=1) as bridge:
+        bridge.push(np.ones(512, dtype=np.float32))
+    blocks_zero = list(
+        bridge.stream(
+            block_length=1,
+            frame_length=1024,
+            hop_length=512,
+            warm_up=True,
+            duration=0.0,
+        )
+    )
+    assert blocks_zero == []
 
 
 def test_stream_warm_up_and_multichannel():

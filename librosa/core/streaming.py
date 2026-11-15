@@ -87,7 +87,7 @@ class _StreamBuffer:
             raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
         if sr is not None and not (np.isfinite(sr) and sr > 0):
             raise ParameterError(f"sr={sr} must be a positive number")
-        if not is_positive_int(channels):
+        if not (isinstance(channels, (int, np.integer)) and channels > 0):
             raise ParameterError(f"channels={channels} must be a positive integer")
         if offset < 0:
             raise ParameterError(f"offset={offset} must be non-negative")
@@ -152,6 +152,7 @@ class _StreamBuffer:
         self.samples_remaining = (
             int(self.duration * self.orig_sr) if self.duration is not None else None
         )
+        self.has_input = False
 
     def push(self, chunk: np.ndarray) -> list[np.ndarray]:
         """Ingest a canonical audio chunk and return any ready analysis blocks.
@@ -201,6 +202,8 @@ class _StreamBuffer:
             if y.shape[0] == 0:
                 return []
 
+        self.has_input = True
+
         # Resample on-the-fly
         if self.resampler is not None:
             target_chunk = self.resampler.resample_chunk(y)
@@ -249,6 +252,9 @@ class _StreamBuffer:
         blocks : list of np.ndarray
             Remaining complete or padded analysis blocks.
         """
+        if not self.has_input:
+            return []
+
         remainder = self.buffer[self.read_idx : self.write_idx]
         if self.resampler is not None:
             empty = np.empty((0, *remainder.shape[1:]), dtype=self.dtype)
@@ -300,7 +306,7 @@ class StreamBridge:
         Maximum capacity of the internal chunk buffer. If 0, capacity is unbounded.
     overflow_policy : {'warn', 'drop_oldest', 'drop_newest', 'error'}, default='warn'
         Action taken when `maxsize` is reached:
-            - ``"warn"``: Discard the oldest queued chunk and emit a warning.
+            - ``"warn"``: Discard the oldest queued chunk and emit a warning when chunks are retrieved.
             - ``"drop_oldest"``: Discard the oldest queued chunk (fixed-latency ring buffer).
             - ``"drop_newest"``: Discard the incoming chunk.
             - ``"error"``: Raise `BufferError`.
@@ -333,16 +339,16 @@ class StreamBridge:
         self,
         *,
         sr: float,
-        channels: int = 1,
+        channels: int | np.integer[Any] = 1,
         channels_first: bool = False,
         dtype: DTypeLike = np.float32,
-        maxsize: int = 0,
+        maxsize: int | np.integer[Any] = 0,
         overflow_policy: str = "warn",
         timeout: float | None = None,
     ):
         if not (np.isfinite(sr) and sr > 0):
             raise ParameterError(f"sr={sr} must be a positive number")
-        if not is_positive_int(channels):
+        if not (isinstance(channels, (int, np.integer)) and channels > 0):
             raise ParameterError(f"channels={channels} must be a positive integer")
         if not (isinstance(maxsize, (int, np.integer)) and maxsize >= 0):
             raise ParameterError(f"maxsize={maxsize} must be a non-negative integer")
@@ -360,6 +366,7 @@ class StreamBridge:
         self._buffer: deque[np.ndarray] = deque()
         self._cond = threading.Condition()
         self._closed = False
+        self._dropped_chunks = 0
 
     def __call__(
         self, data: np.ndarray | bytes, *_args: Any, **_kwargs: Any
@@ -412,11 +419,7 @@ class StreamBridge:
                         "StreamBridge queue overflow: consumer is slower than capture."
                     )
                 elif self.overflow_policy == "warn":
-                    warnings.warn(
-                        "StreamBridge queue is full; dropping oldest chunk.",
-                        RuntimeWarning,
-                        stacklevel=3,
-                    )
+                    self._dropped_chunks += 1
                     self._buffer.popleft()
 
             self._buffer.append(chunk)
@@ -478,17 +481,34 @@ class StreamBridge:
 
     def __next__(self) -> np.ndarray:
         """Return the next audio chunk from the buffer."""
+        dropped = 0
         with self._cond:
             if not self._buffer and not self._closed:
                 self._cond.wait_for(
                     lambda: bool(self._buffer) or self._closed,
                     timeout=self.timeout,
                 )
+            if self._dropped_chunks > 0:
+                dropped = self._dropped_chunks
+                self._dropped_chunks = 0
+
             if self._buffer:
-                return self._buffer.popleft()
-            if self._closed:
-                raise StopIteration
-            raise queue.Empty
+                chunk = self._buffer.popleft()
+            elif self._closed:
+                chunk = None
+            else:
+                raise queue.Empty
+
+        if dropped > 0:
+            warnings.warn(
+                f"StreamBridge queue is full; dropped {dropped} chunk(s).",
+                RuntimeWarning,
+                stacklevel=2,
+            )
+
+        if chunk is not None:
+            return chunk
+        raise StopIteration
 
     def stream(
         self,
