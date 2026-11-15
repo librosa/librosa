@@ -370,9 +370,8 @@ class StreamBridge:
         ``PyAudio`` (which expects a tuple ``(out_data, flag)`` where flag 0
         corresponds to ``paContinue`` and flag 1 corresponds to ``paComplete``).
         """
-        if self._closed:
+        if not self._enqueue(data, raise_on_closed=False):
             return (None, 1)
-        self.push(data)
         return (None, 0)
 
     def push(self, data: np.ndarray | bytes | memoryview) -> None:
@@ -386,17 +385,28 @@ class StreamBridge:
             normalized to 1D shape ``(samples,)``, and multi-channel audio is
             normalized to shape ``(channels, samples)``.
         """
+        self._enqueue(data, raise_on_closed=True)
+
+    def _enqueue(
+        self, data: np.ndarray | bytes | memoryview, *, raise_on_closed: bool
+    ) -> bool:
+        """Normalize and atomically enqueue an audio chunk if the bridge is open."""
+        if not raise_on_closed and self._closed:
+            return False
+
         chunk = self._normalize(data)
 
         with self._cond:
             if self._closed:
-                raise RuntimeError("Cannot push data to a closed StreamBridge.")
+                if raise_on_closed:
+                    raise RuntimeError("Cannot push data to a closed StreamBridge.")
+                return False
 
             if self.maxsize > 0 and len(self._buffer) >= self.maxsize:
                 if self.overflow_policy == "drop_oldest":
                     self._buffer.popleft()
                 elif self.overflow_policy == "drop_newest":
-                    return
+                    return True
                 elif self.overflow_policy == "error":
                     raise BufferError(
                         "StreamBridge queue overflow: consumer is slower than capture."
@@ -405,12 +415,13 @@ class StreamBridge:
                     warnings.warn(
                         "StreamBridge queue is full; dropping oldest chunk.",
                         RuntimeWarning,
-                        stacklevel=2,
+                        stacklevel=3,
                     )
                     self._buffer.popleft()
 
             self._buffer.append(chunk)
             self._cond.notify()
+            return True
 
     def _normalize(self, data: np.ndarray | bytes | memoryview) -> np.ndarray:
         """Normalize any incoming audio representation into Librosa canonical float32."""
@@ -421,8 +432,18 @@ class StreamBridge:
         else:
             raise ParameterError(f"Unsupported audio data type: {type(data)}")
 
-        if np.issubdtype(raw.dtype, np.integer):
-            arr = buf_to_float(raw, n_bytes=raw.dtype.itemsize, dtype=np.float32)
+        if np.issubdtype(raw.dtype, np.signedinteger):
+            n_bytes = raw.dtype.itemsize
+            contig = np.ascontiguousarray(raw, dtype=f"<i{n_bytes}")
+            arr = buf_to_float(contig, n_bytes=n_bytes, dtype=np.float32).reshape(
+                raw.shape
+            )
+        elif np.issubdtype(raw.dtype, np.unsignedinteger):
+            n_bytes = raw.dtype.itemsize
+            midpoint = float(1 << (8 * n_bytes - 1))
+            arr = ((raw.astype(np.float32) - midpoint) / midpoint).astype(
+                np.float32, copy=False
+            )
         else:
             arr = raw.astype(np.float32, copy=True)
 
@@ -540,10 +561,11 @@ class StreamBridge:
             res_type=res_type,
             dtype=dtype,
         )
-        for chunk in self:
-            yield from buf.push(chunk)
-            if buf.is_complete():
-                break
+        if not buf.is_complete():
+            for chunk in self:
+                yield from buf.push(chunk)
+                if buf.is_complete():
+                    break
         yield from buf.flush()
 
     def close(self) -> None:

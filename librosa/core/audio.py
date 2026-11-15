@@ -438,16 +438,17 @@ def stream(
         else:
             sfo.seek(-int(abs(offset) * native_sr), whence=sf.SEEK_END)
 
-        chunk_iter = sfo.blocks(
-            blocksize=buf.orig_read_size,
-            overlap=0,
-            dtype=dtype,
-            always_2d=False,
-            frames=read_frames,
-        )
+        if not buf.is_complete():
+            chunk_iter = sfo.blocks(
+                blocksize=buf.orig_read_size,
+                overlap=0,
+                dtype=dtype,
+                always_2d=False,
+                frames=read_frames,
+            )
 
-        for chunk in chunk_iter:
-            yield from buf.push(chunk.T)
+            for chunk in chunk_iter:
+                yield from buf.push(chunk.T)
         yield from buf.flush()
     finally:
         if sfo_close is not None:

@@ -44,7 +44,9 @@ pattern requires only a few lines:
             block_length=1, frame_length=1024, hop_length=512
         ):
             # Compute features in real time
-            rms = librosa.feature.rms(y=block, center=False)
+            rms = librosa.feature.rms(
+                y=block, frame_length=1024, hop_length=512, center=False
+            )
 """
 
 # %%

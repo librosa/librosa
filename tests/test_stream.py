@@ -51,9 +51,11 @@ def test_streambridge_validation():
     bridge = StreamBridge(sr=22050, channels=1)
     with pytest.raises(librosa.ParameterError):
         bridge.push("not_an_array_or_bytes")  # type: ignore[arg-type]
-    # 2-channel input pushed into 1-channel bridge should raise ParameterError
+    # 2-channel input pushed into 1-channel bridge should raise ParameterError (float and int16)
     with pytest.raises(librosa.ParameterError):
         bridge.push(np.ones((64, 2), dtype=np.float32))
+    with pytest.raises(librosa.ParameterError):
+        bridge.push(np.ones((64, 2), dtype=np.int16))
     # 3D input should raise ParameterError
     with pytest.raises(librosa.ParameterError):
         bridge.push(np.ones((1, 64, 1), dtype=np.float32))
@@ -88,18 +90,35 @@ def test_streambridge_sync_and_timeout():
 
 def test_streambridge_pcm_and_float_bytes():
     """Test StreamBridge decoding of raw PCM and float byte buffers."""
-    # 16-bit integer PCM
+    # 16-bit integer PCM (bytes, 1D array, and non-contiguous 2D view)
     with StreamBridge(sr=22050, channels=1, dtype=np.int16) as bridge:
         int_data = np.array([0, 16384, -16384, 32767], dtype=np.int16)
         bridge(int_data.tobytes())
         bridge(int_data)
+        int_2d = np.column_stack([int_data, int_data])
+        bridge(int_2d[:, :1])  # non-contiguous (4, 1) view
 
     chunks = list(bridge)
-    assert len(chunks) == 2
+    assert len(chunks) == 3
     for chunk in chunks:
         assert chunk.dtype == np.float32
+        assert chunk.shape == (4,)
         assert np.isclose(chunk[1], 0.5, atol=1e-3)
         assert np.isclose(chunk[2], -0.5, atol=1e-3)
+
+    # Unsigned 8-bit integer PCM (128 is silence -> 0.0, 0 -> -1.0, 192 -> 0.5)
+    with StreamBridge(sr=22050, channels=1, dtype=np.uint8) as bridge_u8:
+        u8_data = np.array([128, 0, 192], dtype=np.uint8)
+        bridge_u8(u8_data.tobytes())
+        bridge_u8(u8_data)
+
+    chunks_u8 = list(bridge_u8)
+    assert len(chunks_u8) == 2
+    for chunk in chunks_u8:
+        assert chunk.dtype == np.float32
+        assert np.isclose(chunk[0], 0.0)
+        assert np.isclose(chunk[1], -1.0)
+        assert np.isclose(chunk[2], 0.5)
 
     # Float32 raw bytes
     with StreamBridge(sr=22050, channels=1, dtype=np.float32) as bridge_f32:
@@ -377,3 +396,21 @@ def test_stream_invalid_sources_and_bounds():
                 duration=-1.0,
             )
         )
+
+    # Zero duration on an open bridge returns immediately without blocking or consuming chunks
+    open_bridge = StreamBridge(sr=22050, timeout=0.05)
+    open_bridge.push(np.ones(1024, dtype=np.float32))
+    assert (
+        list(
+            open_bridge.stream(
+                block_length=1,
+                frame_length=1024,
+                hop_length=512,
+                duration=0.0,
+            )
+        )
+        == []
+    )
+    # The queued chunk was not consumed by the zero-duration stream
+    open_bridge.close()
+    assert len(list(open_bridge)) == 1
