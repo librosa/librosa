@@ -364,7 +364,7 @@ class StreamBridge:
     ):
         if not (np.isfinite(sr) and sr > 0):
             raise ParameterError(f"sr={sr} must be a positive number")
-        if not is_positive_int(channels):
+        if not is_positive_int(channels):  # type: ignore[arg-type]
             raise ParameterError(f"channels={channels} must be a positive integer")
         if not (isinstance(maxsize, (int, np.integer)) and maxsize >= 0):
             raise ParameterError(f"maxsize={maxsize} must be a non-negative integer")
