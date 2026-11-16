@@ -320,6 +320,10 @@ class StreamBridge:
         their integer bit depth.
     maxsize : int >= 0, default=0
         Maximum capacity of the internal chunk buffer. If 0, capacity is unbounded.
+        For live real-time hardware streams where downstream processing might
+        intermittently stall, setting a bounded capacity (e.g. ``maxsize=100``)
+        combined with ``overflow_policy="drop_oldest"`` prevents uncontrolled
+        memory growth and latency accumulation.
     overflow_policy : {'warn', 'drop_oldest', 'drop_newest', 'error'}, default='warn'
         Action taken when `maxsize` is reached:
             - ``"warn"``: Discard the oldest queued chunk and emit a warning when chunks are retrieved.
@@ -493,21 +497,20 @@ class StreamBridge:
         """Return the next audio chunk from the buffer."""
         dropped = 0
         with self._cond:
-            if not self._buffer and not self._closed:
-                self._cond.wait_for(
-                    lambda: bool(self._buffer) or self._closed,
-                    timeout=self.timeout,
-                )
+            if not self._cond.wait_for(
+                lambda: bool(self._buffer) or self._closed,
+                timeout=self.timeout,
+            ):
+                raise queue.Empty
+
             if self._dropped_chunks > 0:
                 dropped = self._dropped_chunks
                 self._dropped_chunks = 0
 
             if self._buffer:
                 chunk = self._buffer.popleft()
-            elif self._closed:
-                chunk = None
             else:
-                raise queue.Empty
+                chunk = None
 
         if dropped > 0:
             warnings.warn(

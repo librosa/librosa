@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import queue
 import threading
+import time
 import warnings
 
 import numpy as np
@@ -454,3 +455,51 @@ def test_stream_invalid_sources_and_bounds():
     # The queued chunk was not consumed by the zero-duration stream
     open_bridge.close()
     assert len(list(open_bridge)) == 1
+
+
+def test_streambridge_concurrent_close():
+    """Test that concurrent close from a separate thread cleanly terminates consumer iteration."""
+    bridge = StreamBridge(sr=22050, channels=1)
+    consumed_blocks = []
+    started_event = threading.Event()
+
+    def consumer():
+        started_event.set()
+        for block in bridge.stream(block_length=1, frame_length=1024, hop_length=512):
+            consumed_blocks.append(block)
+
+    t = threading.Thread(target=consumer)
+    t.start()
+
+    assert started_event.wait(timeout=2.0)
+    time.sleep(0.05)
+    bridge.close()
+    t.join(timeout=2.0)
+
+    assert not t.is_alive()
+    assert consumed_blocks == []
+
+
+def test_streambridge_concurrent_close_with_data():
+    """Test concurrent close drains pending chunks before stopping."""
+    bridge = StreamBridge(sr=22050, channels=1)
+    bridge.push(np.ones(1024, dtype=np.float32))
+    consumed_blocks = []
+    started_event = threading.Event()
+
+    def consumer():
+        started_event.set()
+        for block in bridge.stream(block_length=1, frame_length=1024, hop_length=512):
+            consumed_blocks.append(block)
+
+    t = threading.Thread(target=consumer)
+    t.start()
+
+    assert started_event.wait(timeout=2.0)
+    time.sleep(0.05)
+    bridge.close()
+    t.join(timeout=2.0)
+
+    assert not t.is_alive()
+    assert len(consumed_blocks) >= 1
+
