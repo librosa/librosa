@@ -3,7 +3,6 @@
 """Core IO, DSP and utility functions."""
 from __future__ import annotations
 
-import os
 from typing import TYPE_CHECKING, Literal, overload
 
 import lazy_loader as lazy
@@ -20,12 +19,12 @@ from ..util.files import example
 from .convert import frames_to_samples, frequency_weighting, time_to_samples
 
 if TYPE_CHECKING:
+    import os
     from typing import (
         Any,
         BinaryIO,
         Callable,
         Collection,
-        Generator,
     )
 
     from numpy.typing import DTypeLike, NDArray
