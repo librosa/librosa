@@ -10,7 +10,7 @@ This tutorial illustrates how to perform real-time stream processing and visuali
 on signals captured from an audio device.
 
 In real-world applications, streaming audio processing requires coordinating three
-independent responsibilities:
+components:
 
 1. **Audio I/O & Callbacks (Producer)**: High-priority system callbacks from the audio hardware
    (such as :class:`sounddevice.InputStream` or PortAudio) execute on a dedicated OS thread
@@ -19,62 +19,11 @@ independent responsibilities:
    and buffering them in a thread-safe queue.
 2. **Buffering, Overlap, & Resampling (Analysis)**: Feature extractors often require observation windows that
    differ in size or sample rate from the capture device. Calling :meth:`librosa.StreamBridge.stream`
-   (or :func:`librosa.stream`) accumulates incoming chunks into overlapping analysis windows,
+   accumulates incoming chunks into overlapping analysis windows,
    downmixes multi-channel audio, and handles on-the-fly streaming sample-rate conversion via ``soxr``.
 3. **Display or Processing (Consumer)**: Downstream consumers (such as GUI animation loops,
    feature extraction pipelines, or worker threads) iterate over the yielded analysis blocks
    without stalling the audio callback.
-
-.. note::
-    **Understanding Sampling Rates: Hardware vs. Analysis**
-
-    A frequent source of errors in live capture is confusing the **hardware capture rate**
-    with the **downstream analysis rate**:
-
-    - **Device rate (``device_sr``)**: Physical audio hardware (built-in microphones, USB interfaces)
-      operates at fixed native rates—almost always 44,100 Hz or 48,000 Hz. If you request an
-      unsupported rate like 22,050 Hz from :class:`sounddevice.InputStream`, the driver will
-      typically fail with an invalid sample rate error. Both :class:`sounddevice.InputStream`
-      and :class:`librosa.StreamBridge` **must match the device's native sampling rate**.
-    - **Analysis rate (``target_sr``)**: Downstream analysis algorithms or machine learning models
-      often expect a different rate (such as 22,050 Hz or 16,000 Hz). Resampling is *not* done
-      by the callback or the bridge; it is performed on the fly when calling
-      :meth:`librosa.StreamBridge.stream(..., sr=target_sr) <librosa.StreamBridge.stream>`.
-
-Live microphone capture pattern
--------------------------------
-When connecting to a real microphone with :mod:`sounddevice`, query the input device's
-native sample rate, configure both :class:`sounddevice.InputStream` and :class:`librosa.StreamBridge`
-at that rate, and specify your desired analysis rate in :meth:`~librosa.StreamBridge.stream`:
-
-.. code:: python
-
-    import sounddevice as sd
-    import librosa
-
-    # 1. Query the device's native sampling rate (typically 44100 or 48000 Hz)
-    device_info = sd.query_devices(kind="input")
-    device_sr = int(device_info["default_samplerate"])
-
-    # 2. Select target analysis rate (e.g. 22050 Hz for 44.1 kHz, or 24000 Hz for 48 kHz).
-    #    An integer downsampling ratio (2:1 or 3:1) ensures seamless sample alignment.
-    target_sr = 22050 if device_sr % 22050 == 0 else (device_sr // 2)
-
-    # 3. Create the bridge and open the input stream at the device's native rate
-    with (
-        librosa.StreamBridge(sr=device_sr, channels=1) as bridge,
-        sd.InputStream(
-            samplerate=device_sr, blocksize=512, channels=1, callback=bridge
-        ),
-    ):
-        # 4. Stream analysis blocks, converting from device_sr to target_sr on the fly
-        for block in bridge.stream(
-            block_length=1, frame_length=1024, hop_length=512, sr=target_sr
-        ):
-            # Compute features in real time on the resampled audio block
-            rms = librosa.feature.rms(
-                y=block, frame_length=1024, hop_length=512, center=False
-            )
 """
 
 # %%
@@ -97,80 +46,54 @@ HTML(librosa.util.example_info("trumpet", html=True))
 
 
 # %%
-# Real-Time Audio Architecture: Callbacks, Bridging, and Windows
-# --------------------------------------------------------------
-# Before looking at the code, let's examine how streaming audio capture works
-# under the hood and why a bridge is required between the audio hardware and Librosa.
+# Real-Time Audio Architecture
+# ----------------------------
+# Before diving into code, let's examine how live capture works under the hood
+# and how :class:`~librosa.StreamBridge` connects the hardware to Librosa:
 #
-# 1. Audio Callbacks & Real-Time Constraints
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# Audio capture libraries like :mod:`sounddevice` (and PortAudio) use an event-driven
-# **push model**. When an input stream starts, the operating system's audio subsystem
-# runs a dedicated, high-priority background audio thread. As the hardware's Analog-to-Digital
-# Converter (ADC) samples sound, it fills a small hardware buffer. Once filled (every ``blocksize``
-# frames), PortAudio interrupts the OS to invoke an **audio callback function**, passing the
-# newly captured samples.
+# 1. Audio Callbacks & Real-Time Deadlines
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Audio capture libraries like :mod:`sounddevice` use an event-driven **push model**:
+# the hardware Analog-to-Digital Converter (ADC) fills small audio buffers on a dedicated
+# OS real-time thread, invoking an **audio callback function** every ``blocksize`` frames.
 #
-# Audio callbacks operate under hard real-time constraints:
-#
-# - **Strict time deadlines**: The callback must return before the hardware fills the next buffer.
-# - **Buffer overruns (xruns)**: If the callback runs too slow, the hardware buffer overflows.
-#   Incoming samples are dropped, causing permanent data loss and audible glitches.
-# - **Forbidden operations**: Audio callbacks must **never** perform blocking operations, heavy
-#   computations (such as FFTs, STFT, or deep learning inference), memory allocations, file/network I/O,
-#   or GUI updates.
+# Callbacks operate under hard deadlines: if a callback blocks (e.g. performing heavy FFTs,
+# file I/O, or memory allocations), the hardware buffer overflows (**xrun**), causing
+# permanent data loss and audible dropouts.
 #
 # 2. The Role of StreamBridge
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# Python data analysis code is typically **pull-based** (e.g. iterating over a generator in a
-# ``for`` loop). This creates an architectural clash with the **push-based** audio callback.
-#
+# Python data analysis code is **pull-based** (iterating over a generator in a ``for`` loop).
 # :class:`librosa.StreamBridge` bridges this gap:
 #
-# - **Producer side (Audio Callback)**: Passed directly as ``callback=bridge`` to :class:`sounddevice.InputStream`.
-#   When invoked on the real-time audio thread, it rapidly normalizes incoming data (converting integer
-#   PCM like 16-bit or 24-bit to standard float32, transposing channel dimensions to Librosa's canonical
-#   shape), pushes the chunk into a thread-safe internal queue, and immediately returns.
-# - **Consumer side (Python Iterator)**: In your main or worker thread, ``bridge`` acts as an iterable
-#   stream of audio chunks, yielding data safely without risking audio thread starvation.
-# - **Jitter absorption & Overflow protection**: If feature extraction or plotting experiences a brief
-#   CPU spike, the internal queue absorbs the latency. Configurable overflow policies (such as ``"warn"``
-#   or ``"drop_oldest"``) prevent uncontrolled memory growth if the consumer falls behind.
+# - **Producer (Audio Callback)**: Passed directly as ``callback=bridge`` to :class:`sounddevice.InputStream`.
+#   On the real-time thread, it normalizes incoming data (converting integer PCM like 16-bit to standard float32
+#   and transposing channels to canonical Librosa layout) and pushes chunks into an internal queue without blocking.
+# - **Consumer (Python Generator)**: In downstream threads, calling :meth:`bridge.stream(...) <librosa.StreamBridge.stream>`
+#   yields complete analysis blocks safely.
+# - **Latency & Jitter**: The internal queue absorbs transient CPU spikes. Configurable overflow policies
+#   (such as ``overflow_policy="drop_oldest"``) prevent unbounded latency if the consumer falls behind.
 #
-# 3. Hardware Sampling Rate vs. Analysis Sampling Rate
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# A key concept in live streaming is that **the capture sampling rate and the analysis sampling rate
-# are completely decoupled**:
+# 3. Hardware Rate vs. Analysis Rate
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# In live streaming, the **hardware capture rate** and the **downstream analysis rate** are decoupled:
 #
-# - **Hardware capture rate (``device_sr``)**: Physical sound cards and microphones operate natively at
-#   fixed rates—most commonly 44,100 Hz or 48,000 Hz. Requesting an arbitrary rate like 22,050 Hz from
-#   :class:`sounddevice.InputStream` will fail on devices that do not support hardware resampling.
-#   Therefore, **both** :class:`sounddevice.InputStream` **and** :class:`librosa.StreamBridge`
-#   **must match the device's native rate**.
-# - **Analysis rate (``target_sr``)**: Librosa feature extraction pipelines often expect a specific
-#   rate (such as 22,050 Hz or 16,000 Hz). The ``StreamBridge`` does *not* resample chunks inside the callback,
-#   as resampling is too computationally expensive for the real-time thread. Instead, sample-rate conversion
-#   is handled downstream by calling :meth:`librosa.StreamBridge.stream(..., sr=target_sr) <librosa.StreamBridge.stream>`.
-#   The stream generator resamples incoming chunks on the fly via ``soxr`` before yielding analysis blocks.
+# - **Hardware capture rate**: Sound capture devices operate natively at
+#   fixed rates (typically 44,100 Hz or 48,000 Hz). Both :class:`sounddevice.InputStream` and
+#   :class:`librosa.StreamBridge` **must match the device's native rate**.
+# - **Analysis rate**: Downstream algorithms or models often expect a lower rate (e.g. 22,050 Hz
+#   or 16,000 Hz). Resampling is *not* done in the callback; it is performed on the fly when calling
+#   :meth:`bridge.stream(..., sr=target_sr) <librosa.StreamBridge.stream>`.
 #
-# 4. Hardware Blocks, Sliding Windows, and Overlapping Frames
-# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# Live audio involves three distinct sizing parameters:
-#
-# - **Capture chunk size (``blocksize``)**: The number of raw samples pushed per callback invocation
-#   (e.g., 512 samples at ``device_sr``). Lower values reduce latency; higher values reduce CPU overhead.
-# - **Analysis frame length (``frame_length``)**: The observation window required by spectral algorithms
-#   (e.g., 1024 or 2048 samples at ``target_sr``) to achieve sufficient frequency resolution.
-# - **Hop length (``hop_length``)**: The step size between consecutive analysis windows (e.g., 512 samples).
-#   Because ``frame_length > hop_length``, consecutive analysis blocks overlap in time.
-#
-# :meth:`librosa.StreamBridge.stream` accumulates incoming chunks into an internal sliding buffer,
-# advances by ``hop_length`` samples on each step, and yields full analysis blocks of length ``frame_length``.
-# Setting ``warm_up=True`` pre-fills the initial buffer history with silence so that the first analysis block
-# is yielded immediately as soon as the first hop arrives, eliminating startup delay.
+# 4. Sliding Windows & Overlapping Frames
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# Capture devices push small buffers (e.g. 512 samples) to minimize latency, but spectral transforms
+# require longer observation windows (``frame_length``) stepped forward by ``hop_length``.
+# :meth:`librosa.StreamBridge.stream` buffers incoming audio and yields complete overlapping frames.
+# Setting ``warm_up=True`` pre-fills the initial overlap with silence so that the very first hop produces
+# an analysis frame without startup lag.
 #
 #
-# %%
 # Simulating an Input Device
 # --------------------------
 # To make the examples below self-contained and reproducible without requiring a
@@ -178,16 +101,9 @@ HTML(librosa.util.example_info("trumpet", html=True))
 # reads fixed-size blocks from an audio file and invokes ``callback`` with the same
 # signature as :class:`sounddevice.InputStream`.
 #
-# Notice how ``VirtualInputStream`` mimics PortAudio:
-#
-# 1. In ``__enter__``, it slices the audio file into chunks of size ``blocksize`` and passes them to
-#    ``callback(block, len(block), None, None)``, exactly as the PortAudio C library does.
-# 2. In ``__exit__``, it invokes ``callback.close()``, which signals to the :class:`~librosa.StreamBridge`
-#    that capture has ended. Downstream consumer loops will cleanly complete once the buffer drains.
-#
-# .. note::
-#     To run any of the examples below with a physical microphone, replace
-#     ``VirtualInputStream(filename, ...)`` with :class:`sounddevice.InputStream`.
+# In ``__enter__``, it slices the audio file into chunks of size ``blocksize`` and passes them to
+# ``callback(block, len(block), None, None)``. In ``__exit__``, it closes the callback to signal
+# stream completion.
 
 
 class VirtualInputStream:
@@ -246,9 +162,8 @@ class VirtualInputStream:
 # %%
 # Encapsulating Live Visualization
 # --------------------------------
-# To prevent Matplotlib animation setup and array manipulation from obscuring
-# the signal processing logic, we encapsulate real-time sparkline plotting into
-# a helper class:
+# To prevent animation setup from obscuring signal processing logic,
+# we encapsulate real-time sparkline plotting into a helper class:
 
 
 class LiveSparkline:
@@ -260,13 +175,13 @@ class LiveSparkline:
         self.idx = 0
 
         self.fig, self.ax = plt.subplots(figsize=(8, 3))
-        (self.line,) = self.ax.plot(self.times, self.data, lw=2)
+        (self.line,) = self.ax.plot(self.times, self.data, lw=2, label='Live')
         self.ax.set_ylim(*ylim)
         self.ax.set_xlim(times[0], times[-1])
         self.ax.set_title(title)
         self.ax.set_xlabel("Time (seconds)")
         self.ax.set_ylabel(ylabel)
-        self.ax.grid(True, linestyle="--", alpha=0.5)
+        self.ax.grid(True, linestyle="-.", alpha=0.5)
 
     def reset(self):
         """Reset plot data and pointer for a clean animation replay pass."""
@@ -286,23 +201,12 @@ class LiveSparkline:
 # %%
 # Example 1: Instantaneous Block Processing (RMS Energy)
 # ------------------------------------------------------
-# In this first example, incoming blocks are processed with non-overlapping frames
-# (``frame_length=blocksize, hop_length=blocksize``) to compute instantaneous
-# Root-Mean-Square (RMS) energy using :func:`librosa.feature.rms`.
+# For instantaneous energy metrics like Root-Mean-Square (RMS), we can process
+# incoming audio block-by-block with non-overlapping frames (``frame_length=blocksize, hop_length=blocksize``).
 #
-# Notice how the sampling rates are configured:
-#
-# - The audio source (the trumpet example) is recorded at 22,050 Hz.
-# - Both :class:`VirtualInputStream` and :class:`~librosa.StreamBridge` are configured
-#   with ``sr=22050`` to match this input rate.
-# - In ``bridge_rms.stream(...)``, we do not specify ``sr`` (leaving it as ``None``), so
-#   analysis runs directly at the native 22,050 Hz rate without resampling.
-#
-# The architecture cleanly separates each component:
-#
-# - **I/O**: :class:`librosa.StreamBridge` receives incoming blocks from the device callback.
-# - **Streaming & Analysis**: :meth:`librosa.StreamBridge.stream` yields each block to ``process_rms``.
-# - **Display**: ``LiveSparkline.append`` plots each value forward in time.
+# Because our audio source is recorded at 22,050 Hz and no sample-rate conversion is needed,
+# both :class:`VirtualInputStream` and :class:`~librosa.StreamBridge` use ``sr=22050``,
+# and ``bridge_rms.stream(...)`` runs directly at the native rate without resampling.
 
 
 def process_rms(y):
@@ -348,40 +252,40 @@ with (
             block_length=1,
             frame_length=blocksize,
             hop_length=blocksize,
+            sr=None,
         ),
         interval=1000 * blocksize / sr,
         blit=True,
         cache_frame_data=False,
     )
 
+    # And for comparison, visualize the same analysis computed from a
+    # the full file
+    y, sr = librosa.load(filename, sr=22050)
+    full_rms = librosa.feature.rms(y=y,
+                                   center=False,
+                                   frame_length=blocksize,
+                                   hop_length=blocksize
+                                   )
+    times = librosa.times_like(full_rms, sr=sr, hop_length=blocksize)
+    sparkline_rms.ax.plot(times, full_rms[0], linestyle='--', label='Full')
+    sparkline_rms.ax.legend(loc='upper right')
 
 # %%
 # Example 2: Overlapping Windows & Online Resampling
 # --------------------------------------------------
-# While instantaneous metrics like RMS can operate on non-overlapping blocks, frequency-domain
-# features (such as :func:`librosa.feature.spectral_centroid`, STFT, or chroma)
-# introduce two additional requirements:
+# Spectral features (such as :func:`librosa.feature.spectral_centroid` or STFT)
+# introduce two additional streaming requirements:
 #
-# 1. **Sliding Window Overlap**: Low-latency capture delivers small chunks (e.g. 512 samples / ~23 ms
-#    at 22,050 Hz), but frequency transforms require longer observation windows (e.g. 1024 samples / ~93 ms
-#    at 11,025 Hz) for spectral resolution. We need a sliding observation window where each incoming
-#    chunk shifts the buffer forward by a smaller hop size, producing overlapping windows.
-# 2. **Online Resampling**: Hardware inputs frequently capture at 44.1 kHz or 48 kHz, while downstream
-#    models expect 22.05 kHz or 11.025 kHz.
+# 1. **Sliding Window Overlap**: Low-latency capture delivers small chunks (e.g. 512 samples / ~23 ms),
+#    but spectral resolution requires wider observation windows (e.g. 1024 samples).
+#    :meth:`~librosa.StreamBridge.stream` accumulates incoming chunks into overlapping windows.
+# 2. **Stream resampling**: Hardware often captures at a higher rate (here 22,050 Hz) than
+#    analysis requires (here 11,025 Hz). Passing ``sr=11025`` to :meth:`~librosa.StreamBridge.stream`
+#    resamples chunks on the fly via ``soxr`` before windowing.
 #
-# Here, we clearly distinguish between the two sampling rates:
-#
-# - **Input / Bridge Rate (22,050 Hz)**: :class:`~librosa.StreamBridge` is initialized with ``sr=22050``,
-#   matching the simulated device (the trumpet file).
-# - **Analysis / Resampled Rate (11,025 Hz)**: The call to :meth:`bridge_sc.stream(..., sr=target_sr) <librosa.StreamBridge.stream>`
-#   specifies ``sr=11025``. The stream generator resamples incoming chunks on the fly using ``soxr``
-#   before assembling them into sliding analysis windows.
-#
-# In addition:
-#
-# - Setting ``warm_up=True`` pre-fills the initial observation window with silence (zeros) so that
-#   the first analysis frame is produced immediately upon receiving the first hop, eliminating
-#   startup latency.
+# Setting ``warm_up=True`` pre-fills the initial overlap with silence (zeros) so that
+# the first analysis frame is produced immediately upon receiving the first hop.
 
 
 def process_spectral_centroid(analysis_window, sr):
@@ -443,34 +347,61 @@ with (
         cache_frame_data=False,
     )
 
+# %%
+# In the example above, we retain `block_length=1` to minimize latency: each
+# frame is processed as soon as possible.  However, it is also possible to
+# process multiple overlapping frames by increasing `block_length`, exactly as
+# in :func:`librosa.stream`.  This is particularly useful when working with
+# algorithms that require multiple frames' worth of input to process.
 
 # %%
-# Practical Considerations for Live Hardware Streams
-# ---------------------------------------------------
-# When deploying live stream processing on physical hardware, keep the following
-# best practices in mind:
+# Connecting to a Physical Microphone
+# -----------------------------------
+# To run this pipeline on a physical microphone with :mod:`sounddevice`,
+# query the input device's default sample rate, configure both :class:`sounddevice.InputStream`
+# and :class:`librosa.StreamBridge` at that rate, and specify your desired analysis rate in
+# :meth:`~librosa.StreamBridge.stream`:
 #
-# - **Matching the hardware device rate**: Audio hardware devices typically operate natively
-#   at 44.1 kHz or 48 kHz. Always query the default rate of your input device using
-#   ``device_sr = int(sd.query_devices(kind='input')['default_samplerate'])`` and supply that
-#   exact rate to both :class:`sounddevice.InputStream` and :class:`librosa.StreamBridge`.
-#   Never request an arbitrary unsupported rate in :class:`sounddevice.InputStream`.
-# - **Choosing resampling ratios**: When converting sample rates in :meth:`~librosa.StreamBridge.stream`,
-#   Librosa requires that ``(block_length * hop_length * orig_sr) / sr`` evaluates to an exact integer.
-#   Integer downsampling ratios (such as 44,100 Hz -> 22,050 Hz [2:1] or 48,000 Hz -> 24,000 Hz [2:1]
-#   or 16,000 Hz [3:1]) satisfy this cleanly for any hop size.
-# - **Block size and latency**: Smaller hardware block sizes (e.g. 256 or 512 frames) reduce latency
-#   at the expense of higher CPU callback frequency. If buffer overruns occur (indicated by status flags
-#   in the audio callback), increase ``blocksize`` (e.g. 1024 or 2048 frames).
-# - **Queue overflow policies**: In production environments where feature extraction or rendering
-#   may experience intermittent stalls, configure :class:`~librosa.StreamBridge` with
-#   ``overflow_policy="drop_oldest"`` to operate as a fixed-latency ring buffer, preventing unbounded
-#   memory accumulation.
-# - **Continuous streams with rolling history**: In this demonstration, we processed a
-#   finite recording with a known duration. For open-ended live microphone streams,
-#   maintain a rolling window of recent history (such as the last 5 seconds) by shifting
-#   the display array with ``numpy.roll``.
-# - **Frame-local feature extraction**: To keep streaming features consistent with whole-file
-#   analysis, ensure that frame-level computations are context-independent (e.g. using
-#   ``center=False`` and avoiding dynamic global parameters like ``top_db`` or callable ``ref``).
-#   For further discussion, refer to :ref:`sphx_glr_auto_tutorials_03-advanced_plot_mfcc_stream.py`.
+# .. code:: python
+#
+#     import sounddevice as sd
+#     import librosa
+#
+#     # 1. Query the device's native sampling rate (typically 44100 or 48000 Hz)
+#     device_info = sd.query_devices(kind="input")
+#     device_sr = int(device_info["default_samplerate"])
+#
+#     # 2. Select target analysis rate with an integer ratio (e.g. 2:1 or 3:1)
+#     target_sr = 22050 if device_sr % 22050 == 0 else (device_sr // 2)
+#
+#     # 3. Open the bridge and input stream at the device's native rate
+#     with (
+#         librosa.StreamBridge(sr=device_sr, channels=1) as bridge,
+#         sd.InputStream(
+#             samplerate=device_sr, blocksize=512, channels=1, callback=bridge
+#         ),
+#     ):
+#         # 4. Stream analysis blocks, converting from device_sr to target_sr on the fly
+#         for block in bridge.stream(
+#             block_length=1, frame_length=1024, hop_length=512, sr=target_sr
+#         ):
+#             rms = librosa.feature.rms(
+#                 y=block, frame_length=1024, hop_length=512, center=False
+#             )
+#
+# Practical Tips for Live Streams
+# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+# - **Integer resampling ratios**: When converting sample rates in :meth:`~librosa.StreamBridge.stream`,
+#   ensure ``(block_length * hop_length * orig_sr) / sr`` evaluates to an exact integer (such as 44.1 kHz -> 22.05 kHz
+#   or 48 kHz -> 24 kHz / 16 kHz).
+# - **Latency vs. CPU load**: Smaller hardware block sizes (e.g. 256 or 512 frames) minimize latency,
+#   while larger sizes reduce callback frequency and CPU overhead.
+# - **Queue overflow handling**: If downstream processing experiences intermittent stalls, configure
+#   :class:`~librosa.StreamBridge` with ``overflow_policy="drop_oldest"`` to operate as a fixed-latency
+#   ring buffer and discard stale audio rather than accumulating latency.
+# - **Continuous rolling displays**: For indefinite microphone streaming, maintain a rolling display
+#   buffer (e.g. the last 5 seconds) by shifting visual traces with :func:`numpy.roll`.
+# - **Frame-local feature extraction**: Keep streaming features consistent with whole-file analysis by
+#   ensuring computations are context-independent (e.g., using ``center=False`` and avoiding dynamic global
+#   normalizations like ``top_db``; see :ref:`sphx_glr_auto_tutorials_03-advanced_plot_mfcc_stream.py`).
+
