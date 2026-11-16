@@ -224,7 +224,9 @@ class VirtualInputStream:
         self.dtype = dtype
         self.callback = callback
         with sf.SoundFile(self.filepath) as af:
-            self.samplerate = samplerate or af.samplerate
+            if samplerate is not None and af.samplerate != samplerate:
+                raise ValueError(f"Sample rate {samplerate} does not match input file's sample rate {af.samplerate}")
+            self.samplerate = af.samplerate
             self.total_frames = af.frames
 
     def __enter__(self):
