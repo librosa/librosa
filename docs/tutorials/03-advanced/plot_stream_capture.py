@@ -175,7 +175,7 @@ class LiveSparkline:
         self.idx = 0
 
         self.fig, self.ax = plt.subplots(figsize=(8, 3))
-        (self.line,) = self.ax.plot(self.times, self.data, lw=2, label='Live')
+        (self.line,) = self.ax.plot(self.times, self.data, lw=2, label="Live")
         self.ax.set_ylim(*ylim)
         self.ax.set_xlim(times[0], times[-1])
         self.ax.set_title(title)
@@ -268,8 +268,8 @@ with (
                                    hop_length=blocksize
                                    )
     times = librosa.times_like(full_rms, sr=sr, hop_length=blocksize)
-    sparkline_rms.ax.plot(times, full_rms[0], linestyle='--', label='Full')
-    sparkline_rms.ax.legend(loc='upper right')
+    sparkline_rms.ax.plot(times, full_rms[0], linestyle="--", label="Full")
+    sparkline_rms.ax.legend(loc="upper right")
 
 # %%
 # Example 2: Overlapping Windows & Online Resampling
