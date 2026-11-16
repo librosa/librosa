@@ -377,6 +377,11 @@ class StreamBridge:
         """Sampling rate of the incoming audio stream.
 
         Alias for `orig_sr`.
+
+        Returns
+        -------
+        orig_sr
+            Sampling rate of the incoming audio stream (required keyword-only argument).
         """
         return self.orig_sr
 
