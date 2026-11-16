@@ -3,20 +3,25 @@
 """Streaming utilities for audio I/O bridging and sliding window buffering."""
 from __future__ import annotations
 
+import os
 import queue
 import threading
 import warnings
 from collections import deque
+from contextlib import nullcontext
 from typing import TYPE_CHECKING, Any
 
 import numpy as np
+import soundfile as sf
 import soxr
 
+from ..util.decorators import future_default
 from ..util.exceptions import ParameterError
-from ..util.utils import buf_to_float, fix_length, is_positive_int
+from ..util.utils import fix_length, is_positive_int
+from .audio import to_mono
 
 if TYPE_CHECKING:
-    from typing import Generator
+    from typing import BinaryIO, Generator, Iterable
 
     from numpy.typing import DTypeLike
     from typing_extensions import Self
@@ -24,6 +29,7 @@ if TYPE_CHECKING:
 
 __all__ = [
     "StreamBridge",
+    "stream",
 ]
 
 
@@ -87,7 +93,7 @@ class _StreamBuffer:
             raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
         if sr is not None and not (np.isfinite(sr) and sr > 0):
             raise ParameterError(f"sr={sr} must be a positive number")
-        if not (isinstance(channels, (int, np.integer)) and channels > 0):
+        if not is_positive_int(channels):
             raise ParameterError(f"channels={channels} must be a positive integer")
         if offset < 0:
             raise ParameterError(f"offset={offset} must be non-negative")
@@ -131,15 +137,10 @@ class _StreamBuffer:
             self.resampler = None
 
         self.capacity = self.target_yield_size + (self.target_advance * 2)
-        buffer_shape = (
-            (self.capacity,)
-            if self.process_channels == 1
-            else (self.capacity, self.process_channels)
-        )
-        self.buffer = np.zeros(buffer_shape, dtype=self.dtype)
+        self.buffer = np.zeros(self._buffer_shape(self.capacity), dtype=self.dtype)
         self.warm_up = bool(warm_up)
         self.prefill = (
-            max(0, self.target_yield_size - self.target_advance)
+            max(0, self.frame_length - self.hop_length)
             if self.warm_up
             else 0
         )
@@ -153,6 +154,14 @@ class _StreamBuffer:
             int(self.duration * self.orig_sr) if self.duration is not None else None
         )
         self.has_input = False
+
+    def _buffer_shape(self, capacity: int) -> tuple[int, ...]:
+        """Return the buffer shape for a given sample capacity."""
+        return (
+            (capacity,)
+            if self.process_channels == 1
+            else (capacity, self.process_channels)
+        )
 
     def push(self, chunk: np.ndarray) -> list[np.ndarray]:
         """Ingest a canonical audio chunk and return any ready analysis blocks.
@@ -170,18 +179,16 @@ class _StreamBuffer:
         if self.is_complete() or chunk.size == 0:
             return []
 
+        if chunk.dtype != self.dtype:
+            chunk = chunk.astype(self.dtype)
+
         # Downmix or transpose from canonical (channels, samples) to (samples, channels)
-        if chunk.ndim > 1:
-            y = (
-                np.mean(chunk, axis=0, dtype=self.dtype)
-                if self.mono
-                else chunk.T
-            )
+        if self.mono:
+            y = to_mono(chunk)
+        elif chunk.ndim > 1:
+            y = chunk.T
         else:
             y = chunk
-
-        if y.dtype != self.dtype:
-            y = y.astype(self.dtype)
 
         # Skip initial offset samples
         if self.samples_to_skip > 0:
@@ -223,12 +230,9 @@ class _StreamBuffer:
 
             if self.write_idx + n_incoming > self.capacity:
                 self.capacity = self.write_idx + n_incoming + self.target_yield_size
-                new_shape = (
-                    (self.capacity,)
-                    if self.process_channels == 1
-                    else (self.capacity, self.process_channels)
+                new_buffer = np.zeros(
+                    self._buffer_shape(self.capacity), dtype=self.dtype
                 )
-                new_buffer = np.zeros(new_shape, dtype=self.dtype)
                 new_buffer[: self.write_idx] = self.buffer[: self.write_idx]
                 self.buffer = new_buffer
 
@@ -280,6 +284,17 @@ class _StreamBuffer:
         """Check if the maximum input duration has been reached."""
         return self.samples_remaining is not None and self.samples_remaining <= 0
 
+    def process_stream(
+        self, chunks: Iterable[np.ndarray]
+    ) -> Generator[np.ndarray, None, None]:
+        """Ingest chunks from an iterable, yielding ready analysis blocks followed by flush."""
+        if not self.is_complete():
+            for chunk in chunks:
+                yield from self.push(chunk)
+                if self.is_complete():
+                    break
+        yield from self.flush()
+
 
 class StreamBridge:
     """Universal I/O bridge connecting audio callbacks into `librosa.stream`.
@@ -301,7 +316,8 @@ class StreamBridge:
         canonical shape ``(channels, samples)``.
     dtype : DTypeLike, default=np.float32
         Data type of incoming audio chunks or byte buffers. If integer PCM,
-        samples are normalized to floating-point ``[-1.0, 1.0]`` using `librosa.util.buf_to_float`.
+        samples are normalized to floating-point ``[-1.0, 1.0]`` according to
+        their integer bit depth.
     maxsize : int >= 0, default=0
         Maximum capacity of the internal chunk buffer. If 0, capacity is unbounded.
     overflow_policy : {'warn', 'drop_oldest', 'drop_newest', 'error'}, default='warn'
@@ -348,7 +364,7 @@ class StreamBridge:
     ):
         if not (np.isfinite(sr) and sr > 0):
             raise ParameterError(f"sr={sr} must be a positive number")
-        if not (isinstance(channels, (int, np.integer)) and channels > 0):
+        if not is_positive_int(channels):
             raise ParameterError(f"channels={channels} must be a positive integer")
         if not (isinstance(maxsize, (int, np.integer)) and maxsize >= 0):
             raise ParameterError(f"maxsize={maxsize} must be a non-negative integer")
@@ -436,17 +452,11 @@ class StreamBridge:
             raise ParameterError(f"Unsupported audio data type: {type(data)}")
 
         if np.issubdtype(raw.dtype, np.signedinteger):
-            n_bytes = raw.dtype.itemsize
-            contig = np.ascontiguousarray(raw, dtype=f"<i{n_bytes}")
-            arr = buf_to_float(contig, n_bytes=n_bytes, dtype=np.float32).reshape(
-                raw.shape
-            )
+            scale = float(1 << (8 * raw.dtype.itemsize - 1))
+            arr = raw.astype(np.float32) / scale
         elif np.issubdtype(raw.dtype, np.unsignedinteger):
-            n_bytes = raw.dtype.itemsize
-            midpoint = float(1 << (8 * n_bytes - 1))
-            arr = ((raw.astype(np.float32) - midpoint) / midpoint).astype(
-                np.float32, copy=False
-            )
+            midpoint = float(1 << (8 * raw.dtype.itemsize - 1))
+            arr = (raw.astype(np.float32) - midpoint) / midpoint
         else:
             arr = raw.astype(np.float32, copy=True)
 
@@ -581,12 +591,7 @@ class StreamBridge:
             res_type=res_type,
             dtype=dtype,
         )
-        if not buf.is_complete():
-            for chunk in self:
-                yield from buf.push(chunk)
-                if buf.is_complete():
-                    break
-        yield from buf.flush()
+        yield from buf.process_stream(self)
 
     def close(self) -> None:
         """Close the bridge and signal termination to waiting consumers."""
@@ -607,3 +612,244 @@ class StreamBridge:
     ) -> None:
         """Exit context manager, closing the bridge."""
         self.close()
+
+
+@future_default(param_name="sr", old_default=None, new_default=22050, version="1.1.0")
+def stream(
+    path: str | int | os.PathLike[Any] | sf.SoundFile | BinaryIO | StreamBridge,
+    *,
+    block_length: int,
+    frame_length: int,
+    hop_length: int,
+    sr: float | None = None,
+    mono: bool = True,
+    offset: float = 0.0,
+    duration: float | None = None,
+    warm_up: bool = False,
+    fill_value: float | None = None,
+    res_type: str = "soxr_hq",
+    dtype: DTypeLike = np.float32,
+) -> Generator[np.ndarray, None, None]:
+    """Stream audio in fixed-length buffers.
+
+    This is primarily useful for processing large files that won't
+    fit entirely in memory at once, or for processing live audio streams
+    captured via `librosa.StreamBridge`.
+
+    Instead of loading the entire audio signal into memory (as
+    in `load`), this function produces *blocks* of audio spanning
+    a fixed number of frames at a specified frame length and hop
+    length.
+
+    While this function strives for similar behavior to `load`,
+    there are a few caveats that users should be aware of:
+
+        1. This function does not return audio buffers directly.
+           It returns a generator, which you can iterate over
+           to produce blocks of audio.  A *block*, in this context,
+           refers to a buffer of audio which spans a given number of
+           (potentially overlapping) frames.
+        2. Automatic sample-rate conversion is supported,
+           but not all combinations of ``block_length``, ``frame_length``, and
+           ``hop_length`` will be compatible with all sampling rates.
+           Specifically, ``(block_length * hop_length * native_sr) / sr``
+           must evaluate to an exact integer, where ``native_sr`` is the original
+           sampling rate of the stream prior to resampling.
+        3. Many analyses require access to the entire signal
+           to behave correctly, such as `resample`, `cqt`, or
+           `beat_track`, so these methods will not be appropriate
+           for streamed data.
+        4. The ``block_length`` parameter specifies how many frames
+           of audio will be produced per block.  Larger values will
+           consume more memory, but will be more efficient to process
+           down-stream.  The best value will ultimately depend on your
+           application and other system constraints.
+        5. By default, most librosa analyses (e.g., short-time Fourier
+           transform) assume centered frames, which requires padding the
+           signal at the beginning and end.  This will not work correctly
+           when the signal is carved into blocks, because it would introduce
+           padding in the middle of the signal.  To disable this feature,
+           use ``center=False`` in all frame-based analyses.
+        6. If you break out of the generator loop early, the underlying audio
+           file handle and resampling buffers will remain open until the
+           generator object is garbage-collected. To explicitly release resources,
+           call the generator's ``.close()`` method.
+
+    See the examples below for proper usage of this function.
+
+    Parameters
+    ----------
+    path : str, int, os.PathLike, sf.SoundFile, file-like object, or librosa.StreamBridge
+        Path to the input file or a `librosa.StreamBridge` instance to stream.
+
+        Any codec supported by `soundfile` is permitted here.
+        An existing `soundfile.SoundFile` object may also be provided.
+
+        Alternatively, a `librosa.StreamBridge` receiving live audio chunks
+        may be provided.
+
+    block_length : int > 0
+        The number of frames to include in each block.
+
+        Note that at the end of the file, there may not be enough
+        data to fill an entire block, resulting in a shorter block
+        by default.  To pad the signal out so that blocks are always
+        full length, set ``fill_value`` (see below).
+
+    frame_length : int > 0
+        The number of samples per frame.
+
+    hop_length : int > 0
+        The number of samples to advance between frames.
+
+        Note that when ``hop_length < frame_length``, neighboring frames
+        will overlap.  Similarly, the last frame of one *block* will overlap
+        with the first frame of the next *block*.
+
+    sr : number > 0 [scalar]
+        target sampling rate.  If not provided, the original sampling rate of the
+        file or `StreamBridge` will be used.
+
+    mono : bool
+        Convert the signal to mono during streaming
+
+    offset : float
+        Start reading after this time (in seconds)
+
+        If negative, it will be interpreted relative to the end of the file
+        (files only).
+
+    duration : float
+        Only load up to this much audio (in seconds)
+
+    warm_up : bool, default=False
+        If True, pre-fill the buffer with silence (zeros) so that the first
+        incoming chunk of size ``block_length * hop_length`` immediately yields
+        a full analysis block without startup delay.
+
+    fill_value : float [optional]
+        If padding the signal to produce constant-length blocks,
+        this value will be used at the end of the signal.
+
+        In most cases, ``fill_value=0`` (silence) is expected, but
+        you may specify any value here.
+
+    res_type : str
+        Resample type, must be one of the following:
+
+        'soxr_vhq', 'soxr_hq', 'soxr_mq' or 'soxr_lq'
+            `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
+            ``'soxr_hq'`` is the default setting of `soxr`.
+        'soxr_qq'
+            `soxr` Quick cubic interpolation (very fast, but not bandlimited)
+    dtype : numeric type
+        data type of audio buffers to be produced
+
+    Yields
+    ------
+    y : np.ndarray
+        An audio buffer of (at most)
+        ``(block_length-1) * hop_length + frame_length`` samples.
+
+    See Also
+    --------
+    StreamBridge
+    load
+    get_samplerate
+    soundfile.blocks
+
+    Examples
+    --------
+    Apply a short-term Fourier transform to blocks of 256 frames
+    at a time.  Note that streaming operation requires left-aligned
+    frames, so we must set ``center=False`` to avoid padding artifacts.
+
+    >>> filename = librosa.ex('brahms')
+    >>> sr = librosa.get_samplerate(filename)
+    >>> stream = librosa.stream(filename,
+    ...                       block_length=256,
+    ...                       frame_length=4096,
+    ...                       hop_length=1024)
+    >>> for y_block in stream:
+    ...     D_block = librosa.stft(y_block, center=False)
+
+    Or compute a mel spectrogram over a stream, using a shorter frame
+    and non-overlapping windows
+
+    >>> filename = librosa.ex('brahms')
+    >>> sr = librosa.get_samplerate(filename)
+    >>> stream = librosa.stream(filename,
+    ...                         block_length=256,
+    ...                         frame_length=2048,
+    ...                         hop_length=2048)
+    >>> for y_block in stream:
+    ...     m_block = librosa.feature.melspectrogram(y=y_block, sr=sr,
+    ...                                              n_fft=2048,
+    ...                                              hop_length=2048,
+    ...                                              center=False)
+    """
+    if isinstance(path, StreamBridge):
+        yield from path.stream(
+            block_length=block_length,
+            frame_length=frame_length,
+            hop_length=hop_length,
+            sr=sr,
+            mono=mono,
+            offset=offset,
+            duration=duration,
+            warm_up=warm_up,
+            fill_value=fill_value,
+            res_type=res_type,
+            dtype=dtype,
+        )
+        return
+
+    is_file = (
+        isinstance(path, (str, os.PathLike, int, sf.SoundFile))
+        or hasattr(path, "read")
+    )
+    if not is_file:
+        raise ParameterError(f"Unsupported source type for stream: {type(path)}")
+
+    context = (
+        nullcontext(path)
+        if isinstance(path, sf.SoundFile)
+        else sf.SoundFile(path)
+    )
+
+    with context as sfo:
+        native_sr = sfo.samplerate
+        num_channels = sfo.channels
+        buf = _StreamBuffer(
+            frame_length=frame_length,
+            hop_length=hop_length,
+            block_length=block_length,
+            orig_sr=native_sr,
+            sr=sr,
+            channels=num_channels,
+            mono=mono,
+            offset=0.0,
+            duration=duration,
+            warm_up=warm_up,
+            fill_value=fill_value,
+            res_type=res_type,
+            dtype=dtype,
+        )
+        read_frames = int(duration * native_sr) if duration is not None else -1
+
+        if offset >= 0:
+            sfo.seek(int(offset * native_sr))
+        else:
+            sfo.seek(-int(abs(offset) * native_sr), whence=sf.SEEK_END)
+
+        chunk_iter = (
+            chunk.T
+            for chunk in sfo.blocks(
+                blocksize=buf.orig_read_size,
+                overlap=0,
+                dtype=dtype,
+                always_2d=False,
+                frames=read_frames,
+            )
+        )
+        yield from buf.process_stream(chunk_iter)

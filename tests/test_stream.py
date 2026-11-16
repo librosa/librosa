@@ -22,7 +22,8 @@ def test_streaming_imports():
     assert streaming.StreamBridge is StreamBridge
     assert librosa.core.StreamBridge is StreamBridge
     assert librosa.StreamBridge is StreamBridge
-    assert hasattr(librosa, "stream")
+    assert streaming.stream is librosa.stream
+    assert librosa.core.stream is librosa.stream
     assert hasattr(StreamBridge, "stream")
 
 

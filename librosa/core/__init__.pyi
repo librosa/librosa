@@ -13,7 +13,6 @@ from .audio import resample as resample
 from .audio import shepard_risset_glissando as shepard_risset_glissando
 from .audio import shepard_scale as shepard_scale
 from .audio import shepard_tone as shepard_tone
-from .audio import stream as stream
 from .audio import to_mono as to_mono
 from .audio import to_multi as to_multi
 from .audio import to_stereo as to_stereo
@@ -104,3 +103,4 @@ from .spectrum import power_to_db as power_to_db
 from .spectrum import reassigned_spectrogram as reassigned_spectrogram
 from .spectrum import stft as stft
 from .streaming import StreamBridge as StreamBridge
+from .streaming import stream as stream
