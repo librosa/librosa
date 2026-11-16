@@ -71,6 +71,7 @@ MAX_MEM_BLOCK = 2**8 * 2**10
 
 __all__ = [
     "MAX_MEM_BLOCK",
+    "align_samples",
     "frame",
     "pad_center",
     "expand_to",
@@ -385,6 +386,99 @@ def is_positive_int(x: float) -> bool:
     """
     # Check type first to catch None values.
     return isinstance(x, (int, np.integer)) and (x > 0)
+
+
+def align_samples(
+    n_samples: int,
+    *,
+    orig_sr: float,
+    target_sr: float | None = None,
+    error: bool = False,
+) -> int | None:
+    """Calculate the integer-aligned sample count when converting between sampling rates.
+
+    This function determines whether a duration spanning `n_samples` at sampling rate
+    `orig_sr` corresponds to an exact integer number of samples at `target_sr` (within
+    numerical precision tolerances).
+
+    This is primarily useful in streaming audio workflows to ensure that block advances
+    or buffer sizes align exactly between the input capture rate and downstream analysis rate
+    without cumulative fractional sample drift.
+
+    Parameters
+    ----------
+    n_samples : int > 0
+        Number of samples at rate `orig_sr`.
+    orig_sr : float > 0
+        Sampling rate corresponding to `n_samples`.
+    target_sr : float > 0, optional
+        Target sampling rate. If None, defaults to `orig_sr`.
+    error : bool, default=False
+        If True, raises `ParameterError` when the sample count does not align
+        to an integer.
+        If False, returns None.
+
+    Returns
+    -------
+    aligned_samples : int or None
+        The corresponding sample count at `target_sr`.
+        If the combination results in a non-integer sample count and `error=False`,
+        returns None.
+
+    Raises
+    ------
+    ParameterError
+        If `n_samples` is not a positive integer.
+        If `orig_sr` or `target_sr` is not a positive number.
+        If `error=True` and the sample count does not evaluate to an integer at `target_sr`.
+
+    See Also
+    --------
+    librosa.stream
+    librosa.StreamBridge
+
+    Examples
+    --------
+    Check if a 512-sample hop at 22,050 Hz aligns at 44,100 Hz:
+
+    >>> librosa.util.align_samples(512, orig_sr=22050, target_sr=44100)
+    1024
+
+    Check compatibility between 48,000 Hz and 22,050 Hz:
+
+    >>> librosa.util.align_samples(512, orig_sr=48000, target_sr=22050)
+    None
+
+    Raise an exception on non-integer alignment:
+
+    >>> librosa.util.align_samples(512, orig_sr=48000, target_sr=22050, error=True)
+    Traceback (most recent call last):
+        ...
+    librosa.util.exceptions.ParameterError: Sample count of 512 at 48000...
+    """
+    if not is_positive_int(n_samples):
+        raise ParameterError(f"n_samples={n_samples} must be a positive integer")
+    if not (np.isfinite(orig_sr) and orig_sr > 0):
+        raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
+    if target_sr is not None and not (np.isfinite(target_sr) and target_sr > 0):
+        raise ParameterError(f"target_sr={target_sr} must be a positive number")
+
+    if target_sr is None or target_sr == orig_sr:
+        return int(n_samples)
+
+    exact_samples = (int(n_samples) * float(target_sr)) / float(orig_sr)
+    aligned_samples = np.round(exact_samples)
+
+    # Tolerances safely absorb precision errors from float arithmetic
+    if not np.isclose(exact_samples, aligned_samples, rtol=1e-7, atol=1e-5):
+        if error:
+            raise ParameterError(
+                f"Sample count of {n_samples} at {orig_sr} Hz results in a "
+                f"fractional sample count ({exact_samples:.4f}) at {target_sr} Hz."
+            )
+        return None
+
+    return int(aligned_samples)
 
 
 def valid_intervals(intervals: np.ndarray) -> bool:

@@ -88,7 +88,7 @@ HTML(librosa.util.example_info("trumpet", html=True))
 # 4. Sliding Windows & Overlapping Frames
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Capture devices push small buffers (e.g. 512 samples) to minimize latency, but spectral transforms
-# require longer observation windows (``frame_length``) stepped forward by ``hop_length``.
+# require longer observation windows (``frame_length``) advanced by ``hop_length``.
 # :meth:`librosa.StreamBridge.stream` buffers incoming audio and yields complete overlapping frames.
 # Setting ``warm_up=True`` pre-fills the initial overlap with silence so that the very first hop produces
 # an analysis frame without startup lag.
@@ -304,7 +304,7 @@ def process_spectral_centroid(analysis_window, sr):
 # Animating Spectral Centroid Tracking
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # Here we downsample 22,050 Hz capture audio to 11,025 Hz, maintain an analysis window
-# of 1,024 samples (at 11,025 Hz), and step forward by 256 samples per hop:
+# of 1,024 samples (at 11,025 Hz), and advance by 256 samples per hop:
 
 target_sr = 11025
 frame_length = 1024
@@ -315,7 +315,9 @@ with (
     VirtualInputStream(filename, blocksize=hop_length, callback=bridge_sc) as stream,
 ):
     sr = stream.samplerate
-    target_hop = int(hop_length * target_sr / sr)
+    target_hop = librosa.util.align_samples(
+        hop_length, orig_sr=sr, target_sr=target_sr
+    )
     n_blocks_sc = int(np.ceil(stream.total_frames / hop_length))
     times_sc = np.arange(n_blocks_sc) * (hop_length / sr)
 
@@ -374,26 +376,32 @@ with (
 #     # 2. Select target analysis rate with an integer ratio (e.g. 2:1 or 3:1)
 #     target_sr = 22050 if device_sr % 22050 == 0 else (device_sr // 2)
 #
-#     # 3. Open the bridge and input stream at the device's native rate
+#     # 3. Use align_samples to find the matching native hardware block size
+#     analysis_hop = 512
+#     native_blocksize = librosa.util.align_samples(
+#         analysis_hop, orig_sr=target_sr, target_sr=device_sr
+#     )
+#
+#     # 4. Open the bridge and input stream at the device's native rate
 #     with (
 #         librosa.StreamBridge(sr=device_sr, channels=1) as bridge,
 #         sd.InputStream(
-#             samplerate=device_sr, blocksize=512, channels=1, callback=bridge
+#             samplerate=device_sr, blocksize=native_blocksize, channels=1, callback=bridge
 #         ),
 #     ):
-#         # 4. Stream analysis blocks, converting from device_sr to target_sr on the fly
+#         # 5. Stream analysis blocks, converting from device_sr to target_sr on the fly
 #         for block in bridge.stream(
-#             block_length=1, frame_length=1024, hop_length=512, sr=target_sr
+#             block_length=1, frame_length=1024, hop_length=analysis_hop, sr=target_sr
 #         ):
 #             rms = librosa.feature.rms(
-#                 y=block, frame_length=1024, hop_length=512, center=False
+#                 y=block, frame_length=1024, hop_length=analysis_hop, center=False
 #             )
 #
 # Practical Tips for Live Streams
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-# - **Integer resampling ratios**: When converting sample rates in :meth:`~librosa.StreamBridge.stream`,
-#   ensure ``(block_length * hop_length * orig_sr) / sr`` evaluates to an exact integer (such as 44.1 kHz -> 22.05 kHz
-#   or 48 kHz -> 24 kHz / 16 kHz).
+# - **Sample count alignment**: Use :func:`librosa.util.align_samples` to verify that your
+#   analysis hop or buffer size at ``target_sr`` corresponds to an exact integer sample count at ``device_sr``
+#   without fractional drift. If `align_samples` returns None, the rates and sample counts are incompatible.
 # - **Latency vs. CPU load**: Smaller hardware block sizes (e.g. 256 or 512 frames) minimize latency,
 #   while larger sizes reduce callback frequency and CPU overhead.
 # - **Queue overflow handling**: If downstream processing experiences intermittent stalls, configure

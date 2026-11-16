@@ -17,7 +17,7 @@ import soxr
 
 from ..util.decorators import future_default
 from ..util.exceptions import ParameterError
-from ..util.utils import fix_length, is_positive_int
+from ..util.utils import align_samples, fix_length, is_positive_int
 from .audio import to_mono
 
 if TYPE_CHECKING:
@@ -31,26 +31,6 @@ __all__ = [
     "StreamBridge",
     "stream",
 ]
-
-
-def _align_step_size(
-    target_step: int, target_sr: float | None, orig_sr: float
-) -> int:
-    """Ensure that the target step size remains integer-valued in the original sampling rate."""
-    if target_sr is None or target_sr == orig_sr:
-        return target_step
-
-    exact_native_step = (target_step * orig_sr) / target_sr
-    aligned_native_step = np.round(exact_native_step)
-
-    # Tolerances safely absorb precision errors from float arithmetic
-    if not np.isclose(exact_native_step, aligned_native_step, rtol=1e-7, atol=1e-5):
-        raise ParameterError(
-            f"Target block step of {target_step} samples at {target_sr} results in a "
-            f"fractional sample advance at original sampling rate {orig_sr}."
-        )
-
-    return int(aligned_native_step)
 
 
 class _StreamBuffer:
@@ -120,10 +100,15 @@ class _StreamBuffer:
         self.target_yield_size = (
             self.block_length - 1
         ) * self.hop_length + self.frame_length
-        self.target_advance = self.block_length * self.hop_length
+        self.block_hop_length = self.block_length * self.hop_length
         self.process_channels = 1 if self.mono else self.channels
 
-        self.orig_read_size = _align_step_size(self.target_advance, self.sr, self.orig_sr)
+        self.orig_read_size = align_samples(
+            self.block_hop_length,
+            orig_sr=self.sr,
+            target_sr=self.orig_sr,
+            error=True,
+        )
         self.needs_resampling = (sr is not None) and (self.orig_sr != self.sr)
         if self.needs_resampling:
             self.resampler = soxr.ResampleStream(
@@ -136,7 +121,7 @@ class _StreamBuffer:
         else:
             self.resampler = None
 
-        self.capacity = self.target_yield_size + (self.target_advance * 2)
+        self.capacity = self.target_yield_size + (self.block_hop_length * 2)
         self.buffer = np.zeros(self._buffer_shape(self.capacity), dtype=self.dtype)
         self.warm_up = bool(warm_up)
         self.prefill = (
@@ -244,7 +229,7 @@ class _StreamBuffer:
         while self.write_idx - self.read_idx >= self.target_yield_size:
             block = self.buffer[self.read_idx : self.read_idx + self.target_yield_size]
             blocks.append(block.T.copy())
-            self.read_idx += self.target_advance
+            self.read_idx += self.block_hop_length
 
         return blocks
 
@@ -267,7 +252,7 @@ class _StreamBuffer:
                 remainder = np.concatenate([remainder, tail], axis=0)
 
         blocks = []
-        for rem_idx in range(0, remainder.shape[0], self.target_advance):
+        for rem_idx in range(0, remainder.shape[0], self.block_hop_length):
             block = remainder[rem_idx : rem_idx + self.target_yield_size].T.copy()
             if block.shape[-1] < self.target_yield_size and self.fill_value is not None:
                 block = fix_length(

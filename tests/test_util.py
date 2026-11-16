@@ -1815,3 +1815,39 @@ def test_interp_broadcast_axis_upper_bound():
         x2_pos=np.arange(9),
         axis=2,
     )
+
+
+def test_align_samples():
+    """Test librosa.util.align_samples with various sampling rates and alignments."""
+    # Target same as orig or target_sr is None
+    assert librosa.util.align_samples(512, orig_sr=22050) == 512
+    assert librosa.util.align_samples(512, orig_sr=22050, target_sr=22050) == 512
+
+    # Integer multiples (e.g. 2:1 upsampling and 2:1 downsampling)
+    assert librosa.util.align_samples(512, orig_sr=22050, target_sr=44100) == 1024
+    assert librosa.util.align_samples(1024, orig_sr=44100, target_sr=22050) == 512
+    assert librosa.util.align_samples(480, orig_sr=48000, target_sr=16000) == 160
+
+    # Non-integer ratio returns None by default
+    assert librosa.util.align_samples(512, orig_sr=48000, target_sr=22050) is None
+    assert (
+        librosa.util.align_samples(512, orig_sr=48000, target_sr=22050, error=False)
+        is None
+    )
+
+    # Non-integer ratio with error=True raises ParameterError
+    with pytest.raises(librosa.ParameterError, match=r"fractional sample count"):
+        librosa.util.align_samples(512, orig_sr=48000, target_sr=22050, error=True)
+
+    # Validation errors
+    with pytest.raises(librosa.ParameterError, match=r"n_samples"):
+        librosa.util.align_samples(0, orig_sr=22050)
+    with pytest.raises(librosa.ParameterError, match=r"n_samples"):
+        librosa.util.align_samples(-512, orig_sr=22050)
+    with pytest.raises(librosa.ParameterError, match=r"orig_sr"):
+        librosa.util.align_samples(512, orig_sr=0)
+    with pytest.raises(librosa.ParameterError, match=r"orig_sr"):
+        librosa.util.align_samples(512, orig_sr=-22050)
+    with pytest.raises(librosa.ParameterError, match=r"target_sr"):
+        librosa.util.align_samples(512, orig_sr=22050, target_sr=-11025)
+

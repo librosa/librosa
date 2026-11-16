@@ -456,6 +456,19 @@ def test_stream_invalid_sources_and_bounds():
     open_bridge.close()
     assert len(list(open_bridge)) == 1
 
+    # Non-integer sample advance ratio raises ParameterError
+    bridge_48k = StreamBridge(sr=48000)
+    with pytest.raises(librosa.ParameterError, match=r"fractional sample count"):
+        next(
+            librosa.stream(
+                bridge_48k,
+                block_length=1,
+                frame_length=1024,
+                hop_length=512,
+                sr=22050,
+            )
+        )
+
 
 def test_streambridge_concurrent_close():
     """Test that concurrent close from a separate thread cleanly terminates consumer iteration."""
