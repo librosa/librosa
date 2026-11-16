@@ -80,10 +80,10 @@ HTML(librosa.util.example_info("trumpet", html=True))
 #
 # - **Hardware capture rate**: Sound capture devices operate natively at
 #   fixed rates (typically 44,100 Hz or 48,000 Hz). Both :class:`sounddevice.InputStream` and
-#   :class:`librosa.StreamBridge` **must match the device's native rate**.
+#   :class:`librosa.StreamBridge` (via ``orig_sr``) **must match the device's native rate**.
 # - **Analysis rate**: Downstream algorithms or models often expect a lower rate (e.g. 22,050 Hz
 #   or 16,000 Hz). Resampling is *not* done in the callback; it is performed on the fly when calling
-#   :meth:`bridge.stream(..., sr=target_sr) <librosa.StreamBridge.stream>`.
+#   :meth:`bridge.stream(..., sr=target_sr) <librosa.StreamBridge.stream>` (defaulting to 22,050 Hz).
 #
 # 4. Sliding Windows & Overlapping Frames
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -205,7 +205,7 @@ class LiveSparkline:
 # incoming audio block-by-block with non-overlapping frames (``frame_length=blocksize, hop_length=blocksize``).
 #
 # Because our audio source is recorded at 22,050 Hz and no sample-rate conversion is needed,
-# both :class:`VirtualInputStream` and :class:`~librosa.StreamBridge` use ``sr=22050``,
+# both :class:`VirtualInputStream` and :class:`~librosa.StreamBridge` use ``orig_sr=22050``,
 # and ``bridge_rms.stream(...)`` runs directly at the native rate without resampling.
 
 
@@ -226,7 +226,7 @@ def process_rms(y):
 blocksize = 1024
 
 with (
-    librosa.StreamBridge(sr=22050, channels=1) as bridge_rms,
+    librosa.StreamBridge(orig_sr=22050, channels=1) as bridge_rms,
     VirtualInputStream(filename, blocksize=blocksize, callback=bridge_rms) as stream,
 ):
     sr = stream.samplerate
@@ -311,7 +311,7 @@ frame_length = 1024
 hop_length = 512  # 512 samples at 22050 Hz corresponds to 256 samples at 11025 Hz
 
 with (
-    librosa.StreamBridge(sr=22050, channels=1) as bridge_sc,
+    librosa.StreamBridge(orig_sr=22050, channels=1) as bridge_sc,
     VirtualInputStream(filename, blocksize=hop_length, callback=bridge_sc) as stream,
 ):
     sr = stream.samplerate
@@ -384,7 +384,7 @@ with (
 #
 #     # 4. Open the bridge and input stream at the device's native rate
 #     with (
-#         librosa.StreamBridge(sr=device_sr, channels=1) as bridge,
+#         librosa.StreamBridge(orig_sr=device_sr, channels=1) as bridge,
 #         sd.InputStream(
 #             samplerate=device_sr, blocksize=native_blocksize, channels=1, callback=bridge
 #         ),

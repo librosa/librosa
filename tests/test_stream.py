@@ -3,6 +3,7 @@
 """Unit tests for StreamBridge and librosa.stream."""
 from __future__ import annotations
 
+import os
 import queue
 import threading
 import time
@@ -33,27 +34,27 @@ def test_streambridge_validation():
     with pytest.raises(TypeError):
         StreamBridge()  # type: ignore[call-arg]
     with pytest.raises(librosa.ParameterError):
-        StreamBridge(sr=-1)
+        StreamBridge(orig_sr=-1)
     with pytest.raises(librosa.ParameterError):
-        StreamBridge(sr=np.nan)
+        StreamBridge(orig_sr=np.nan)
     with pytest.raises(librosa.ParameterError):
-        StreamBridge(sr=22050, channels=0)
+        StreamBridge(orig_sr=22050, channels=0)
     with pytest.raises(librosa.ParameterError):
-        StreamBridge(sr=22050, channels=1.5)  # type: ignore[arg-type]
+        StreamBridge(orig_sr=22050, channels=1.5)  # type: ignore[arg-type]
     with pytest.raises(librosa.ParameterError):
-        StreamBridge(sr=22050, maxsize=-1)
+        StreamBridge(orig_sr=22050, maxsize=-1)
     with pytest.raises(librosa.ParameterError):
-        StreamBridge(sr=22050, maxsize=1.5)  # type: ignore[arg-type]
+        StreamBridge(orig_sr=22050, maxsize=1.5)  # type: ignore[arg-type]
     with pytest.raises(librosa.ParameterError):
-        StreamBridge(sr=22050, maxsize="invalid")  # type: ignore[arg-type]
+        StreamBridge(orig_sr=22050, maxsize="invalid")  # type: ignore[arg-type]
     with pytest.raises(librosa.ParameterError):
-        StreamBridge(sr=22050, overflow_policy="invalid")
+        StreamBridge(orig_sr=22050, overflow_policy="invalid")
 
     # Verify numpy integer scalars are accepted
-    assert StreamBridge(sr=22050, channels=np.int32(1), maxsize=np.int64(0)).maxsize == 0
-    assert StreamBridge(sr=22050, maxsize=np.int64(5)).maxsize == 5
+    assert StreamBridge(orig_sr=22050, channels=np.int32(1), maxsize=np.int64(0)).maxsize == 0
+    assert StreamBridge(orig_sr=22050, maxsize=np.int64(5)).maxsize == 5
 
-    bridge = StreamBridge(sr=22050, channels=1)
+    bridge = StreamBridge(orig_sr=22050, channels=1)
     with pytest.raises(librosa.ParameterError):
         bridge.push("not_an_array_or_bytes")  # type: ignore[arg-type]
     # 2-channel input pushed into 1-channel bridge should raise ParameterError (float and int16)
@@ -65,7 +66,7 @@ def test_streambridge_validation():
     with pytest.raises(librosa.ParameterError):
         bridge.push(np.ones((1, 64, 1), dtype=np.float32))
 
-    bridge_2ch = StreamBridge(sr=22050, channels=2)
+    bridge_2ch = StreamBridge(orig_sr=22050, channels=2)
     with pytest.raises(librosa.ParameterError):
         bridge_2ch.push(np.ones(63, dtype=np.float32))
 
@@ -78,7 +79,7 @@ def test_streambridge_validation():
 
 def test_streambridge_sync_and_timeout():
     """Test StreamBridge synchronous context manager, iteration, and timeout."""
-    with StreamBridge(sr=22050, channels=1) as bridge:
+    with StreamBridge(orig_sr=22050, channels=1) as bridge:
         ret = bridge(np.ones((512, 1), dtype=np.float32) * 2)
         assert ret == (None, 0)
 
@@ -88,7 +89,7 @@ def test_streambridge_sync_and_timeout():
     assert np.allclose(chunks[0], 2.0)
 
     # Timeout when empty and open
-    bridge_timeout = StreamBridge(sr=22050, timeout=0.01)
+    bridge_timeout = StreamBridge(orig_sr=22050, timeout=0.01)
     with pytest.raises(queue.Empty):
         next(bridge_timeout)
 
@@ -96,7 +97,7 @@ def test_streambridge_sync_and_timeout():
 def test_streambridge_pcm_and_float_bytes():
     """Test StreamBridge decoding of raw PCM and float byte buffers."""
     # 16-bit integer PCM (bytes, 1D array, and non-contiguous 2D view)
-    with StreamBridge(sr=22050, channels=1, dtype=np.int16) as bridge:
+    with StreamBridge(orig_sr=22050, channels=1, dtype=np.int16) as bridge:
         int_data = np.array([0, 16384, -16384, 32767], dtype=np.int16)
         bridge(int_data.tobytes())
         bridge(int_data)
@@ -112,7 +113,7 @@ def test_streambridge_pcm_and_float_bytes():
         assert np.isclose(chunk[2], -0.5, atol=1e-3)
 
     # Unsigned 8-bit integer PCM (128 is silence -> 0.0, 0 -> -1.0, 192 -> 0.5)
-    with StreamBridge(sr=22050, channels=1, dtype=np.uint8) as bridge_u8:
+    with StreamBridge(orig_sr=22050, channels=1, dtype=np.uint8) as bridge_u8:
         u8_data = np.array([128, 0, 192], dtype=np.uint8)
         bridge_u8(u8_data.tobytes())
         bridge_u8(u8_data)
@@ -126,7 +127,7 @@ def test_streambridge_pcm_and_float_bytes():
         assert np.isclose(chunk[2], 0.5)
 
     # Float32 raw bytes
-    with StreamBridge(sr=22050, channels=1, dtype=np.float32) as bridge_f32:
+    with StreamBridge(orig_sr=22050, channels=1, dtype=np.float32) as bridge_f32:
         f_data = np.array([0.25, -0.75], dtype=np.float32)
         bridge_f32(f_data.tobytes())
 
@@ -138,7 +139,7 @@ def test_streambridge_pcm_and_float_bytes():
 def test_streambridge_channel_transposition():
     """Test StreamBridge channel transposition for 2D and 1D interleaved buffers."""
     # 2D (samples, channels) with channels_first=False
-    with StreamBridge(sr=22050, channels=2, channels_first=False) as bridge:
+    with StreamBridge(orig_sr=22050, channels=2, channels_first=False) as bridge:
         data = np.zeros((512, 2), dtype=np.float32)
         data[:, 0] = 1.0
         data[:, 1] = 2.0
@@ -157,7 +158,7 @@ def test_streambridge_channel_transposition():
     assert np.allclose(chunks[1][1], 2.0)
 
     # channels_first=True
-    with StreamBridge(sr=22050, channels=2, channels_first=True) as bridge_cf:
+    with StreamBridge(orig_sr=22050, channels=2, channels_first=True) as bridge_cf:
         flat_cf = np.array([1.0, 1.0, 2.0, 2.0], dtype=np.float32)
         bridge_cf(flat_cf)
 
@@ -170,7 +171,7 @@ def test_streambridge_channel_transposition():
 def test_streambridge_overflow_policies():
     """Test all StreamBridge buffer overflow policies."""
     # drop_oldest
-    with StreamBridge(sr=22050, maxsize=2, overflow_policy="drop_oldest") as b_old:
+    with StreamBridge(orig_sr=22050, maxsize=2, overflow_policy="drop_oldest") as b_old:
         b_old.push(np.array([1.0], dtype=np.float32))
         b_old.push(np.array([2.0], dtype=np.float32))
         b_old.push(np.array([3.0], dtype=np.float32))
@@ -178,7 +179,7 @@ def test_streambridge_overflow_policies():
     assert [c[0] for c in chunks] == [2.0, 3.0]
 
     # drop_newest
-    with StreamBridge(sr=22050, maxsize=2, overflow_policy="drop_newest") as b_new:
+    with StreamBridge(orig_sr=22050, maxsize=2, overflow_policy="drop_newest") as b_new:
         b_new.push(np.array([1.0], dtype=np.float32))
         b_new.push(np.array([2.0], dtype=np.float32))
         b_new.push(np.array([3.0], dtype=np.float32))
@@ -186,7 +187,7 @@ def test_streambridge_overflow_policies():
     assert [c[0] for c in chunks] == [1.0, 2.0]
 
     # warn
-    b_warn = StreamBridge(sr=22050, maxsize=1, overflow_policy="warn")
+    b_warn = StreamBridge(orig_sr=22050, maxsize=1, overflow_policy="warn")
     with warnings.catch_warnings():
         warnings.simplefilter("error")
         b_warn.push(np.array([1.0], dtype=np.float32))
@@ -197,7 +198,7 @@ def test_streambridge_overflow_policies():
         chunks = list(b_warn)
     assert [c[0] for c in chunks] == [2.0]
 
-    b_warn2 = StreamBridge(sr=22050, maxsize=1, overflow_policy="warn")
+    b_warn2 = StreamBridge(orig_sr=22050, maxsize=1, overflow_policy="warn")
     b_warn2.push(np.array([1.0], dtype=np.float32))
     b_warn2.push(np.array([2.0], dtype=np.float32))
     b_warn2.push(np.array([3.0], dtype=np.float32))
@@ -207,7 +208,7 @@ def test_streambridge_overflow_policies():
     assert [c[0] for c in chunks2] == [3.0]
 
     # error
-    with StreamBridge(sr=22050, maxsize=1, overflow_policy="error") as b_err:
+    with StreamBridge(orig_sr=22050, maxsize=1, overflow_policy="error") as b_err:
         b_err.push(np.array([1.0], dtype=np.float32))
         with pytest.raises(BufferError):
             b_err.push(np.array([2.0], dtype=np.float32))
@@ -215,14 +216,14 @@ def test_streambridge_overflow_policies():
 
 def test_stream_warm_up_empty():
     """Test warm_up on empty bridge or zero duration yields nothing."""
-    with StreamBridge(sr=22050, channels=1) as bridge:
+    with StreamBridge(orig_sr=22050, channels=1) as bridge:
         pass
     blocks = list(
         bridge.stream(block_length=1, frame_length=1024, hop_length=512, warm_up=True)
     )
     assert blocks == []
 
-    with StreamBridge(sr=22050, channels=1) as bridge:
+    with StreamBridge(orig_sr=22050, channels=1) as bridge:
         bridge.push(np.ones(512, dtype=np.float32))
     blocks_zero = list(
         bridge.stream(
@@ -239,7 +240,7 @@ def test_stream_warm_up_empty():
 def test_stream_warm_up_and_multichannel():
     """Test warm_up and multichannel handling through librosa.stream(bridge)."""
     # warm_up=True yields immediately on the first hop-sized chunk before closing
-    bridge = StreamBridge(sr=22050, channels=1)
+    bridge = StreamBridge(orig_sr=22050, channels=1)
     bridge(np.ones(512, dtype=np.float32))
 
     stream_gen = bridge.stream(
@@ -260,7 +261,7 @@ def test_stream_warm_up_and_multichannel():
     assert np.allclose(remaining_blocks[0], 1.0)
 
     # 1-channel with mono=False on 2D callback input (samples, 1)
-    with StreamBridge(sr=22050, channels=1) as bridge_1ch:
+    with StreamBridge(orig_sr=22050, channels=1) as bridge_1ch:
         bridge_1ch(np.ones((1024, 1), dtype=np.float32))
 
     blocks_1ch = list(
@@ -280,7 +281,7 @@ def test_stream_warm_up_and_multichannel():
     stereo_chunk[:, 0] = 1.0
     stereo_chunk[:, 1] = 3.0
 
-    with StreamBridge(sr=22050, channels=2) as b_mono:
+    with StreamBridge(orig_sr=22050, channels=2) as b_mono:
         b_mono(stereo_chunk)
         b_mono(stereo_chunk)
 
@@ -297,7 +298,7 @@ def test_stream_warm_up_and_multichannel():
     assert blocks_mono[0].shape == (1024,)
     assert np.allclose(blocks_mono[0], 2.0)
 
-    with StreamBridge(sr=22050, channels=2) as b_stereo:
+    with StreamBridge(orig_sr=22050, channels=2) as b_stereo:
         b_stereo(stereo_chunk)
         b_stereo(stereo_chunk)
 
@@ -326,7 +327,7 @@ def test_stream_file_and_bridge_parity(sr, offset, duration, fill_value):
     with sf.SoundFile(filename) as sfo:
         native_sr = sfo.samplerate
         channels = sfo.channels
-        bridge = StreamBridge(sr=native_sr, channels=channels)
+        bridge = StreamBridge(orig_sr=native_sr, channels=channels)
         for chunk in sfo.blocks(blocksize=400, dtype=np.float32, always_2d=True):
             bridge(chunk)
         bridge.close()
@@ -351,7 +352,7 @@ def test_stream_file_and_bridge_parity(sr, offset, duration, fill_value):
 
 def test_threaded_producer_and_buffer_resize():
     """Test background producer thread with StreamBridge.stream and buffer resizing."""
-    bridge = StreamBridge(sr=22050, channels=1)
+    bridge = StreamBridge(orig_sr=22050, channels=1)
 
     def producer():
         bridge(np.array([], dtype=np.float32))
@@ -378,7 +379,7 @@ def test_threaded_producer_and_buffer_resize():
     assert blocks[0].shape == (1024,)
 
     # Large chunk causing internal buffer resize
-    with StreamBridge(sr=22050, channels=1) as pre_bridge:
+    with StreamBridge(orig_sr=22050, channels=1) as pre_bridge:
         pre_bridge(np.ones(8192, dtype=np.float32))
     pre_blocks = list(
         pre_bridge.stream(
@@ -403,7 +404,7 @@ def test_stream_invalid_sources_and_bounds():
             )
         )
 
-    bridge = StreamBridge(sr=22050)
+    bridge = StreamBridge(orig_sr=22050)
     with pytest.raises(librosa.ParameterError):
         next(
             librosa.stream(
@@ -439,7 +440,7 @@ def test_stream_invalid_sources_and_bounds():
         )
 
     # Zero duration on an open bridge returns immediately without blocking or consuming chunks
-    open_bridge = StreamBridge(sr=22050, timeout=0.05)
+    open_bridge = StreamBridge(orig_sr=22050, timeout=0.05)
     open_bridge.push(np.ones(1024, dtype=np.float32))
     assert (
         list(
@@ -457,7 +458,7 @@ def test_stream_invalid_sources_and_bounds():
     assert len(list(open_bridge)) == 1
 
     # Non-integer sample advance ratio raises ParameterError
-    bridge_48k = StreamBridge(sr=48000)
+    bridge_48k = StreamBridge(orig_sr=48000)
     with pytest.raises(librosa.ParameterError, match=r"fractional sample count"):
         next(
             librosa.stream(
@@ -472,7 +473,7 @@ def test_stream_invalid_sources_and_bounds():
 
 def test_streambridge_concurrent_close():
     """Test that concurrent close from a separate thread cleanly terminates consumer iteration."""
-    bridge = StreamBridge(sr=22050, channels=1)
+    bridge = StreamBridge(orig_sr=22050, channels=1)
     consumed_blocks = []
     started_event = threading.Event()
 
@@ -495,7 +496,7 @@ def test_streambridge_concurrent_close():
 
 def test_streambridge_concurrent_close_with_data():
     """Test concurrent close drains pending chunks before stopping."""
-    bridge = StreamBridge(sr=22050, channels=1)
+    bridge = StreamBridge(orig_sr=22050, channels=1)
     bridge.push(np.ones(1024, dtype=np.float32))
     consumed_blocks = []
     started_event = threading.Event()
@@ -515,4 +516,66 @@ def test_streambridge_concurrent_close_with_data():
 
     assert not t.is_alive()
     assert len(consumed_blocks) >= 1
+
+
+def test_stream_default_sr():
+    """Test default sr=22050 behavior in stream and StreamBridge matching load()."""
+    filename = os.path.join("tests", "test_audio.ogg")
+
+    # 1. librosa.stream with default sr should match librosa.load with default sr (22050)
+    y_load_default, sr_default = librosa.load(filename)
+    assert sr_default == 22050
+
+    stream_default = librosa.stream(
+        filename, block_length=16, frame_length=1024, hop_length=512
+    )
+    blocks = list(stream_default)
+    # Reassemble blocks using hop advance
+    y_stream = []
+    for i, b in enumerate(blocks):
+        if i == len(blocks) - 1:
+            y_stream.append(b)
+        else:
+            y_stream.append(b[: 16 * 512])
+    y_stream_concat = np.concatenate(y_stream)
+    assert np.allclose(y_stream_concat[: len(y_load_default)], y_load_default[: len(y_stream_concat)], atol=1e-3)
+
+    # 2. librosa.stream with sr=None should match librosa.load with sr=None (native)
+    y_load_native, sr_native = librosa.load(filename, sr=None)
+    assert sr_native != 22050  # test_audio.ogg is 44100 Hz
+
+    stream_native = librosa.stream(
+        filename, block_length=16, frame_length=1024, hop_length=512, sr=None
+    )
+    blocks_native = list(stream_native)
+    y_stream_nat = []
+    for i, b in enumerate(blocks_native):
+        if i == len(blocks_native) - 1:
+            y_stream_nat.append(b)
+        else:
+            y_stream_nat.append(b[: 16 * 512])
+    y_stream_nat_concat = np.concatenate(y_stream_nat)
+    assert np.allclose(y_stream_nat_concat[: len(y_load_native)], y_load_native[: len(y_stream_nat_concat)], atol=1e-3)
+
+    # 3. StreamBridge orig_sr attribute and sr alias property
+    bridge = StreamBridge(orig_sr=44100, channels=1)
+    assert bridge.orig_sr == 44100
+    assert bridge.sr == 44100
+
+    # StreamBridge.stream default sr=22050 resamples from 44100
+    # 44100 to 22050 is a 2:1 ratio. Hop length 512 at 22050 corresponds to 1024 samples at 44100.
+    test_signal = np.sin(2 * np.pi * 440 * np.arange(44100) / 44100).astype(np.float32)
+    bridge.push(test_signal)
+    bridge.close()
+
+    # Streaming with default sr=22050
+    resampled_blocks = list(bridge.stream(block_length=1, frame_length=1024, hop_length=512))
+    assert len(resampled_blocks) > 0
+
+    # Streaming from another 44100 bridge with sr=None preserves native 44100
+    bridge_native = StreamBridge(orig_sr=44100, channels=1)
+    bridge_native.push(test_signal[:2048])
+    bridge_native.close()
+    native_blocks = list(bridge_native.stream(block_length=1, frame_length=1024, hop_length=512, sr=None))
+    assert len(native_blocks) > 0
 

@@ -15,7 +15,6 @@ import numpy as np
 import soundfile as sf
 import soxr
 
-from ..util.decorators import future_default
 from ..util.exceptions import ParameterError
 from ..util.utils import align_samples, fix_length, is_positive_int
 from .audio import to_mono
@@ -49,7 +48,7 @@ class _StreamBuffer:
         hop_length: int,
         block_length: int = 1,
         orig_sr: float,
-        sr: float | None = None,
+        sr: float | None = 22050,
         channels: int = 1,
         mono: bool = True,
         offset: float = 0.0,
@@ -290,7 +289,7 @@ class StreamBridge:
 
     Parameters
     ----------
-    sr : float > 0
+    orig_sr : float > 0
         Sampling rate of the incoming audio stream (required keyword-only argument).
     channels : int > 0, default=1
         Number of audio channels in the incoming stream.
@@ -327,10 +326,10 @@ class StreamBridge:
     For a complete walkthrough, see :ref:`sphx_glr_auto_tutorials_03-advanced_plot_stream_capture.py`.
 
     >>> import sounddevice as sd  # doctest: +SKIP
-    >>> with librosa.StreamBridge(sr=48000, channels=1) as bridge:  # doctest: +SKIP
+    >>> with librosa.StreamBridge(orig_sr=48000, channels=1) as bridge:  # doctest: +SKIP
     ...     with sd.InputStream(samplerate=48000, channels=1, callback=bridge):
     ...         for i, block in enumerate(bridge.stream(
-    ...             block_length=256, frame_length=2048, hop_length=512
+    ...             block_length=256, frame_length=2048, hop_length=512, sr=None
     ...         )):
     ...             centroid = librosa.feature.spectral_centroid(
     ...                 y=block, sr=48000, n_fft=2048, hop_length=512, center=False
@@ -343,7 +342,7 @@ class StreamBridge:
     def __init__(
         self,
         *,
-        sr: float,
+        orig_sr: float,
         channels: int | np.integer[Any] = 1,
         channels_first: bool = False,
         dtype: DTypeLike = np.float32,
@@ -351,8 +350,8 @@ class StreamBridge:
         overflow_policy: str = "warn",
         timeout: float | None = None,
     ):
-        if not (np.isfinite(sr) and sr > 0):
-            raise ParameterError(f"sr={sr} must be a positive number")
+        if not (np.isfinite(orig_sr) and orig_sr > 0):
+            raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
         if not is_positive_int(channels):  # type: ignore[arg-type]
             raise ParameterError(f"channels={channels} must be a positive integer")
         if not (isinstance(maxsize, (int, np.integer)) and maxsize >= 0):
@@ -360,7 +359,7 @@ class StreamBridge:
         if overflow_policy not in {"warn", "drop_oldest", "drop_newest", "error"}:
             raise ParameterError(f"Invalid overflow_policy='{overflow_policy}'")
 
-        self.sr = float(sr)
+        self.orig_sr = float(orig_sr)
         self.channels = int(channels)
         self.channels_first = bool(channels_first)
         self.dtype = np.dtype(dtype)
@@ -372,6 +371,14 @@ class StreamBridge:
         self._cond = threading.Condition()
         self._closed = False
         self._dropped_chunks = 0
+
+    @property
+    def sr(self) -> float:
+        """Sampling rate of the incoming audio stream.
+
+        Alias for `orig_sr`.
+        """
+        return self.orig_sr
 
     def __call__(
         self, data: np.ndarray | bytes, *_args: Any, **_kwargs: Any
@@ -514,7 +521,7 @@ class StreamBridge:
         block_length: int,
         frame_length: int,
         hop_length: int,
-        sr: float | None = None,
+        sr: float | None = 22050,
         mono: bool = True,
         offset: float = 0.0,
         duration: float | None = None,
@@ -535,8 +542,9 @@ class StreamBridge:
             The number of samples per frame.
         hop_length : int > 0
             The number of samples to advance between frames.
-        sr : float > 0, optional
-            Target sampling rate. If None, defaults to `self.sr`.
+        sr : float > 0, default=22050
+            Target sampling rate.
+            If None, uses `self.orig_sr` without resampling.
         mono : bool, default=True
             Convert multi-channel signals to mono during streaming.
         offset : float >= 0, default=0.0
@@ -568,7 +576,7 @@ class StreamBridge:
             frame_length=frame_length,
             hop_length=hop_length,
             block_length=block_length,
-            orig_sr=self.sr,
+            orig_sr=self.orig_sr,
             sr=sr,
             channels=self.channels,
             mono=mono,
@@ -602,14 +610,13 @@ class StreamBridge:
         self.close()
 
 
-@future_default(param_name="sr", old_default=None, new_default=22050, version="1.1.0")
 def stream(
     path: str | int | os.PathLike[Any] | sf.SoundFile | BinaryIO | StreamBridge,
     *,
     block_length: int,
     frame_length: int,
     hop_length: int,
-    sr: float | None = None,
+    sr: float | None = 22050,
     mono: bool = True,
     offset: float = 0.0,
     duration: float | None = None,
@@ -694,9 +701,9 @@ def stream(
         will overlap.  Similarly, the last frame of one *block* will overlap
         with the first frame of the next *block*.
 
-    sr : number > 0 [scalar]
-        target sampling rate.  If not provided, the original sampling rate of the
-        file or `StreamBridge` will be used.
+    sr : number > 0 [scalar], default=22050
+        target sampling rate.
+        'None' uses the native sampling rate of the file or `StreamBridge`.
 
     mono : bool
         Convert the signal to mono during streaming
@@ -753,23 +760,23 @@ def stream(
     frames, so we must set ``center=False`` to avoid padding artifacts.
 
     >>> filename = librosa.ex('brahms')
-    >>> sr = librosa.get_samplerate(filename)
     >>> stream = librosa.stream(filename,
-    ...                       block_length=256,
-    ...                       frame_length=4096,
-    ...                       hop_length=1024)
+    ...                         block_length=256,
+    ...                         frame_length=4096,
+    ...                         hop_length=1024)
     >>> for y_block in stream:
     ...     D_block = librosa.stft(y_block, center=False)
 
-    Or compute a mel spectrogram over a stream, using a shorter frame
-    and non-overlapping windows
+    Or compute a mel spectrogram over a stream in its native sampling rate,
+    using a shorter frame and non-overlapping windows
 
     >>> filename = librosa.ex('brahms')
     >>> sr = librosa.get_samplerate(filename)
     >>> stream = librosa.stream(filename,
     ...                         block_length=256,
     ...                         frame_length=2048,
-    ...                         hop_length=2048)
+    ...                         hop_length=2048,
+    ...                         sr=None)
     >>> for y_block in stream:
     ...     m_block = librosa.feature.melspectrogram(y=y_block, sr=sr,
     ...                                              n_fft=2048,
