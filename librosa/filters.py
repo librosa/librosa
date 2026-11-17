@@ -50,6 +50,7 @@ __all__ = [
     "semitone_filterbank",
     "window_sumsquare",
     "diagonal_filter",
+    "checkerboard_kernel",
     "wavelet",
     "wavelet_lengths",
 ]
@@ -2209,3 +2210,131 @@ def diagonal_filter(
         win -= win.mean()
 
     return win
+
+
+@cache(level=10)
+def checkerboard_kernel(
+    n: int,
+    *,
+    window: _WindowSpec = "boxcar",
+    var: float = 0.5,
+    norm: bool | float | None = 1,
+    zero_mean: bool = False,
+    dtype: DTypeLike = np.float32,
+) -> np.ndarray:
+    """Build a 2-dimensional checkerboard filter kernel for novelty detection.
+
+    This kernel is primarily used for detecting structural transitions along the
+    main diagonal of self-similarity and recurrence matrices (Foote's method) [#]_.
+
+    A checkerboard kernel has positive values on the main diagonal quadrants
+    (representing coherent self-similarity within homogeneous sections) and
+    negative values on the off-diagonal quadrants (representing anti-coherence
+    or cross-similarity across section boundaries).
+
+    .. [#] Foote, Jonathan.
+        "Automatic audio segmentation using a measure of audio novelty."
+        In 2000 IEEE International Conference on Multimedia and Expo (ICME),
+        vol. 1, pp. 452-455. IEEE, 2000.
+
+    Parameters
+    ----------
+    n : int > 0
+        The length of the kernel along each dimension (produces an ``(n, n)`` matrix).
+    window : str, tuple, number, callable, or list-like, default="boxcar"
+        Window function for tapering the kernel:
+
+        - ``"boxcar"`` (default) or ``None``: classic box checkerboard without tapering.
+        - ``"gaussian"``: Gaussian tapering with standard deviation
+          ``var * (n - 1) / 2``, matching `libfmp` [#]_.
+        - Any other window specification supported by `get_window` (e.g. ``"hann"``,
+          ``("kaiser", 4.0)``).
+
+    var : float > 0, default=0.5
+        Variance parameter when ``window="gaussian"``. Ignored for other windows.
+    norm : bool, float, or None, default=1
+        Normalization applied to the kernel:
+
+        - 1 or True: :math:`L_1`-normalization (sum of absolute values equals 1).
+        - float: :math:`L_p`-normalization via `librosa.util.normalize`.
+        - None or False: unnormalized.
+
+    zero_mean : bool, default=False
+        If True, subtract the mean so the kernel strictly sums to zero.
+        (Note: symmetric checkerboard kernels with symmetric windows are already zero-mean).
+    dtype : np.dtype, default=np.float32
+        Data type of the output kernel.
+
+    Returns
+    -------
+    kernel : np.ndarray, shape=(n, n)
+        The 2D checkerboard filter kernel.
+
+    See Also
+    --------
+    diagonal_filter
+    librosa.segment.diagonal_convolve
+    librosa.segment.recurrence_novelty
+
+    Notes
+    -----
+    This function caches at level 10.
+
+    References
+    ----------
+    .. [#] Müller, Meinard.
+        "Fundamentals of music processing: Audio, analysis, algorithms, applications."
+        Springer, 2015.
+
+    Examples
+    --------
+    Construct a boxcar checkerboard kernel (unwindowed):
+
+    >>> K_box = librosa.filters.checkerboard_kernel(33)
+
+    Construct a Gaussian-tapered checkerboard kernel:
+
+    >>> K_gauss = librosa.filters.checkerboard_kernel(33, window="gaussian", var=0.5)
+
+    Plot both kernels:
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots(ncols=2, figsize=(8, 4))
+    >>> img0 = ax[0].imshow(K_box, cmap="coolwarm", interpolation="nearest")
+    >>> ax[0].set(title="Boxcar Checkerboard")
+    >>> fig.colorbar(img0, ax=ax[0], orientation="horizontal")
+    >>> img1 = ax[1].imshow(K_gauss, cmap="coolwarm", interpolation="nearest")
+    >>> ax[1].set(title="Gaussian Checkerboard (var=0.5)")
+    >>> fig.colorbar(img1, ax=ax[1], orientation="horizontal")
+    """
+    if n <= 0:
+        raise ParameterError(f"n={n} must be strictly positive")
+
+    coord = np.arange(n) - (n - 1) / 2.0
+    s = np.sign(coord)
+
+    w: np.ndarray
+    if window in ("boxcar", "rect", None):
+        w = np.ones(n, dtype=dtype)
+    elif window == "gaussian":
+        if var <= 0:
+            raise ParameterError(f"var={var} must be strictly positive")
+        std = var * (n - 1) / 2.0
+        w = get_window(("gaussian", std), n, fftbins=False).astype(dtype)
+    else:
+        w = get_window(window, n, fftbins=False).astype(dtype)
+
+    v = s * w
+    kernel: np.ndarray = np.outer(v, v).astype(dtype)
+
+    if norm is True or norm == 1:
+        total_abs = np.sum(np.abs(kernel))
+        if total_abs > 0:
+            kernel /= total_abs
+    elif norm is not None and norm is not False:
+        kernel = util.normalize(kernel, norm=norm, axis=None)
+
+    if zero_mean:
+        kernel -= kernel.mean()
+
+    return kernel

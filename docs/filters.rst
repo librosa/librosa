@@ -28,4 +28,5 @@ Filters and windows
     mr_frequencies
     window_sumsquare
     diagonal_filter
+    checkerboard_kernel
 

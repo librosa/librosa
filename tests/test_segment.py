@@ -565,3 +565,186 @@ def test_path_enhance_multi(rng):
     assert np.allclose(Rs0, Rs[0])
     assert np.allclose(Rs1, Rs[1])
     assert not np.allclose(Rs0, Rs1)
+
+
+@pytest.mark.parametrize("M", [3, 4, 5])
+@pytest.mark.parametrize("mode", ["same", "valid", "full"])
+@pytest.mark.parametrize("k", [-3, 0, 2])
+def test_diagonal_convolve_scipy_parity(rng, M, mode, k):
+    import scipy.signal
+
+    R = rng.standard_normal(size=(25, 25))
+    K = rng.standard_normal(size=(M, M))
+
+    ref = np.diagonal(
+        scipy.signal.convolve2d(R, K, mode=mode, boundary="fill", fillvalue=0.0),
+        offset=k,
+    )
+    est = librosa.segment.diagonal_convolve(
+        R, K, k=k, mode=mode, boundary="fill", fillvalue=0.0
+    )
+
+    assert np.allclose(ref, est, atol=1e-6)
+
+
+def test_diagonal_convolve_separable(rng):
+    import scipy.signal
+
+    R = rng.standard_normal(size=(30, 30))
+    u = rng.standard_normal(size=7)
+    v = rng.standard_normal(size=7)
+    K_2d = np.outer(u, v)
+
+    # 1. 2D kernel
+    out_2d = librosa.segment.diagonal_convolve(R, K_2d, mode="same")
+
+    # 2. Tuple of 1D arrays
+    out_tuple = librosa.segment.diagonal_convolve(R, (u, v), mode="same")
+    assert np.allclose(out_2d, out_tuple, atol=1e-6)
+
+    # 3. 1D array (symmetric kernel)
+    K_sym = np.outer(u, u)
+    out_sym_2d = librosa.segment.diagonal_convolve(R, K_sym, mode="same")
+    out_sym_1d = librosa.segment.diagonal_convolve(R, u, mode="same")
+    assert np.allclose(out_sym_2d, out_sym_1d, atol=1e-6)
+
+
+@pytest.mark.parametrize("boundary", ["fill", "symm", "wrap", "reflect", "edge"])
+def test_diagonal_convolve_boundaries(rng, boundary):
+    R = rng.standard_normal(size=(20, 20))
+    K = rng.standard_normal(size=(5, 5))
+
+    out = librosa.segment.diagonal_convolve(
+        R, K, mode="same", boundary=boundary, fillvalue=1.5
+    )
+    assert out.shape == (20,)
+    assert np.all(np.isfinite(out))
+
+
+def test_diagonal_convolve_multichannel(rng):
+    R = rng.standard_normal(size=(2, 3, 25, 25))
+    K = rng.standard_normal(size=(5, 5))
+
+    out = librosa.segment.diagonal_convolve(R, K, mode="same")
+    assert out.shape == (2, 3, 25)
+
+    for i in range(2):
+        for j in range(3):
+            single = librosa.segment.diagonal_convolve(R[i, j], K, mode="same")
+            assert np.allclose(out[i, j], single)
+
+
+def test_diagonal_convolve_sparse_raises():
+    import scipy.sparse
+
+    R_sparse = scipy.sparse.csr_array(np.eye(20))
+    K = np.ones((5, 5))
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.segment.diagonal_convolve(R_sparse, K)
+
+
+def test_diagonal_convolve_bad_inputs():
+    R = np.eye(20)
+
+    # Invalid kernel dimensions
+    with pytest.raises(librosa.ParameterError):
+        librosa.segment.diagonal_convolve(R, np.ones((2, 2, 2)))
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.segment.diagonal_convolve(R, (np.ones((2, 2)), np.ones(2)))
+
+    # Empty kernel
+    with pytest.raises(librosa.ParameterError):
+        librosa.segment.diagonal_convolve(R, np.empty((0, 0)))
+
+    # Invalid mode
+    with pytest.raises(librosa.ParameterError):
+        librosa.segment.diagonal_convolve(R, np.ones((3, 3)), mode="invalid")
+
+
+def test_recurrence_novelty_libfmp_parity(rng):
+    # Reference libfmp implementation of compute_novelty_ssm
+    def libfmp_novelty_ssm(S, L=5, var=0.5, exclude=False):
+        # 1. Kernel
+        s = np.arange(-L, L + 1)
+        X, Y = np.meshgrid(s, s)
+        kernel = (np.sign(X) * np.sign(Y)) * np.exp(-0.5 * (X**2 + Y**2) / (var * L)**2)
+        kernel /= np.sum(np.abs(kernel))
+
+        # 2. Padded sliding sum
+        N = S.shape[0]
+        M = 2 * L + 1
+        nov = np.zeros(N)
+        S_padded = np.pad(S, L, mode="constant")
+        for n in range(N):
+            nov[n] = np.sum(S_padded[n : n + M, n : n + M] * kernel)
+
+        if exclude:
+            nov[0:L] = 0
+            nov[N - L : N] = 0
+        return nov
+
+    N = 30
+    L = 5
+    n = 2 * L + 1
+    S = rng.uniform(low=0.0, high=1.0, size=(N, N))
+    S = 0.5 * (S + S.T)  # symmetric SSM
+
+    ref_nov = libfmp_novelty_ssm(S, L=L, var=0.5, exclude=False)
+    # clip=False to match raw libfmp sum
+    est_nov = librosa.segment.recurrence_novelty(
+        S, n=n, window="gaussian", var=0.5, norm=1, clip=False, exclude=False
+    )
+    assert np.allclose(ref_nov, est_nov, atol=1e-5)
+
+    # Test exclude=True
+    ref_ex = libfmp_novelty_ssm(S, L=L, var=0.5, exclude=True)
+    est_ex = librosa.segment.recurrence_novelty(
+        S, n=n, window="gaussian", var=0.5, norm=1, clip=False, exclude=True
+    )
+    assert np.allclose(ref_ex, est_ex, atol=1e-5)
+
+
+@pytest.mark.parametrize("clip", [False, True])
+@pytest.mark.parametrize("exclude", [False, True])
+@pytest.mark.parametrize("mode", ["same", "valid", "full"])
+def test_recurrence_novelty_options(rng, clip, exclude, mode):
+    R = rng.standard_normal(size=(30, 30))
+    nov = librosa.segment.recurrence_novelty(
+        R, n=9, window="boxcar", clip=clip, exclude=exclude, mode=mode
+    )
+
+    if mode == "same":
+        assert nov.shape == (30,)
+        if exclude:
+            assert np.all(nov[:4] == 0.0)
+            assert np.all(nov[-4:] == 0.0)
+    elif mode == "valid":
+        assert nov.shape == (22,)
+    elif mode == "full":
+        assert nov.shape == (38,)
+
+    if clip:
+        assert np.all(nov >= 0.0)
+
+
+def test_recurrence_novelty_precomputed_kernel(rng):
+    R = rng.standard_normal(size=(25, 25))
+    K = librosa.filters.checkerboard_kernel(15, window="hann")
+
+    nov = librosa.segment.recurrence_novelty(R, kernel=K)
+    assert nov.shape == (25,)
+    assert np.all(np.isfinite(nov))
+
+
+def test_recurrence_novelty_multichannel(rng):
+    R = rng.standard_normal(size=(2, 20, 20))
+    nov = librosa.segment.recurrence_novelty(R, n=7)
+    assert nov.shape == (2, 20)
+
+    nov0 = librosa.segment.recurrence_novelty(R[0], n=7)
+    nov1 = librosa.segment.recurrence_novelty(R[1], n=7)
+    assert np.allclose(nov[0], nov0)
+    assert np.allclose(nov[1], nov1)
+

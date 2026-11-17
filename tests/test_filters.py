@@ -609,6 +609,90 @@ def test_diagonal_filter(n, window, angle, slope, zero_mean):
     assert np.allclose(k2, kernel.T)
 
 
+@pytest.mark.parametrize("n", [1, 2, 5, 16, 33])
+def test_checkerboard_kernel_shapes(n):
+    kernel = librosa.filters.checkerboard_kernel(n)
+    assert kernel.shape == (n, n)
+    assert np.all(np.isfinite(kernel))
+
+
+def test_checkerboard_kernel_bad_params():
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.checkerboard_kernel(0)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.checkerboard_kernel(-5)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.checkerboard_kernel(15, window="gaussian", var=0.0)
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.checkerboard_kernel(15, window="gaussian", var=-0.5)
+
+
+@pytest.mark.parametrize("n", [5, 17])
+@pytest.mark.parametrize("window", ["boxcar", "gaussian", "hann"])
+def test_checkerboard_kernel_symmetry_and_zero_mean(n, window):
+    kernel = librosa.filters.checkerboard_kernel(n, window=window, norm=1)
+
+    # Transpose symmetry
+    assert np.allclose(kernel, kernel.T)
+
+    # Central symmetry (rotation by 180 degrees)
+    assert np.allclose(kernel, kernel[::-1, ::-1])
+
+    # Zero mean for symmetric window
+    assert np.isclose(kernel.sum(), 0.0, atol=1e-7)
+
+    # Normalized L1 sum of absolute values equals 1
+    assert np.isclose(np.sum(np.abs(kernel)), 1.0)
+
+
+def test_checkerboard_kernel_boxcar_signs():
+    n = 5
+    kernel = librosa.filters.checkerboard_kernel(n, window="boxcar", norm=None)
+    # Signs in quadrants:
+    # Top-left (i < 2, j < 2) is +1
+    assert np.all(kernel[:2, :2] == 1.0)
+    # Bottom-right (i > 2, j > 2) is +1
+    assert np.all(kernel[3:, 3:] == 1.0)
+    # Top-right (i < 2, j > 2) is -1
+    assert np.all(kernel[:2, 3:] == -1.0)
+    # Bottom-left (i > 2, j < 2) is -1
+    assert np.all(kernel[3:, :2] == -1.0)
+    # Center cross (i == 2 or j == 2) is 0
+    assert np.all(kernel[2, :] == 0.0)
+    assert np.all(kernel[:, 2] == 0.0)
+
+
+@pytest.mark.parametrize("norm", [None, False, 1, True, 2])
+def test_checkerboard_kernel_norms(norm):
+    kernel = librosa.filters.checkerboard_kernel(11, window="boxcar", norm=norm)
+    if norm in (1, True):
+        assert np.isclose(np.sum(np.abs(kernel)), 1.0)
+    elif norm == 2:
+        assert np.isclose(np.linalg.norm(kernel), 1.0)
+    else:
+        # Unnormalized boxcar has values in {-1, 0, 1}
+        assert np.all(np.isin(kernel, [-1.0, 0.0, 1.0]))
+
+
+@pytest.mark.parametrize("L", [5, 10, 16])
+@pytest.mark.parametrize("var", [0.5, 1.0])
+def test_checkerboard_kernel_libfmp_parity(L, var):
+    # Reference formula from libfmp.c4.compute_kernel_checkerboard_gaussian
+    s = np.arange(-L, L + 1)
+    X, Y = np.meshgrid(s, s)
+    kernel_box = np.sign(X) * np.sign(Y)
+    gaussian2D = np.exp(-0.5 * (X**2 + Y**2) / (var * L)**2)
+    ref = (kernel_box * gaussian2D)
+    ref /= np.sum(np.abs(ref))
+
+    n = 2 * L + 1
+    ours = librosa.filters.checkerboard_kernel(n, window="gaussian", var=var, norm=1)
+    assert np.allclose(ref, ours, atol=1e-6)
+
+
 def test_frequency_filterbank_shapes_and_windows():
     sr, n_fft = 22050, 2048
     f_in = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
