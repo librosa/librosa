@@ -1499,7 +1499,7 @@ def diagonal_convolve(
     Compute the main diagonal of a 2D convolution with a 17x17 checkerboard kernel
     on a short excerpt:
 
-    >>> y, sr = librosa.loadx('nutcracker', duration=15)
+    >>> y, sr = librosa.loadx('nutcracker', duration=30)
     >>> hop_length = 512
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity', self=True)
@@ -1510,7 +1510,8 @@ def diagonal_convolve(
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(nov, sr=sr, hop_length=hop_length)
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [3, 1]})
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, height_ratios=[3, 1],
+    ...                        layout='compressed')
     >>> librosa.display.specshow(rec, x_axis='time', y_axis='time', sr=sr,
     ...                          hop_length=hop_length, ax=ax[0])
     >>> ax[0].set(title='Recurrence Matrix')
@@ -1704,7 +1705,7 @@ def recurrence_novelty(
     Compute and plot Foote's novelty curve on a short excerpt using a 17-frame boxcar
     checkerboard kernel:
 
-    >>> y, sr = librosa.loadx('nutcracker', duration=15)
+    >>> y, sr = librosa.loadx('nutcracker', duration=30)
     >>> hop_length = 512
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
@@ -1719,7 +1720,8 @@ def recurrence_novelty(
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(nov, sr=sr, hop_length=hop_length)
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [3, 1]})
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, height_ratios=[3, 1],
+    ...                        layout='compressed')
     >>> librosa.display.specshow(rec, x_axis='time', y_axis='time', sr=sr,
     ...                          hop_length=hop_length, ax=ax[0])
     >>> ax[0].set(title='Recurrence Matrix')
