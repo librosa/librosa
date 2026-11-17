@@ -648,6 +648,17 @@ def test_checkerboard_kernel_symmetry_and_zero_mean(n, window):
     assert np.isclose(np.sum(np.abs(kernel)), 1.0)
 
 
+def test_checkerboard_kernel_explicit_zero_mean():
+    # Symmetric window with zero_mean=True
+    k1 = librosa.filters.checkerboard_kernel(15, window="boxcar", zero_mean=True)
+    assert np.isclose(k1.sum(), 0.0)
+
+    # Asymmetric window where zero_mean branch adjusts the non-zero mean
+    w_asym = np.linspace(0.1, 1.0, 15)
+    k2 = librosa.filters.checkerboard_kernel(15, window=w_asym, zero_mean=True, dtype=np.float64)
+    assert np.isclose(k2.sum(), 0.0)
+
+
 def test_checkerboard_kernel_boxcar_signs():
     n = 5
     kernel = librosa.filters.checkerboard_kernel(n, window="boxcar", norm=None)

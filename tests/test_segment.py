@@ -588,8 +588,6 @@ def test_diagonal_convolve_scipy_parity(rng, M, mode, k):
 
 
 def test_diagonal_convolve_separable(rng):
-    import scipy.signal
-
     R = rng.standard_normal(size=(30, 30))
     u = rng.standard_normal(size=7)
     v = rng.standard_normal(size=7)
@@ -641,7 +639,7 @@ def test_diagonal_convolve_sparse_raises():
     K = np.ones((5, 5))
 
     with pytest.raises(librosa.ParameterError):
-        librosa.segment.diagonal_convolve(R_sparse, K)
+        librosa.segment.diagonal_convolve(R_sparse, K)  # type: ignore[arg-type]
 
 
 def test_diagonal_convolve_bad_inputs():
@@ -660,7 +658,28 @@ def test_diagonal_convolve_bad_inputs():
 
     # Invalid mode
     with pytest.raises(librosa.ParameterError):
-        librosa.segment.diagonal_convolve(R, np.ones((3, 3)), mode="invalid")
+        librosa.segment.diagonal_convolve(
+            R, np.ones((3, 3)), mode="invalid"  # type: ignore[arg-type]
+        )
+
+
+def test_diagonal_convolve_empty_dimensions():
+    # mode='valid' with kernel larger than input matrix -> grid_rows/cols <= 0
+    out_valid = librosa.segment.diagonal_convolve(
+        np.ones((5, 5)), np.ones((10, 10)), mode="valid"
+    )
+    assert out_valid.shape == (0,)
+
+    # Out-of-bounds offset k -> length == 0
+    out_pos = librosa.segment.diagonal_convolve(
+        np.ones((10, 10)), np.ones((3, 3)), k=15, mode="same"
+    )
+    assert out_pos.shape == (0,)
+
+    out_neg = librosa.segment.diagonal_convolve(
+        np.ones((10, 10)), np.ones((3, 3)), k=-15, mode="same"
+    )
+    assert out_neg.shape == (0,)
 
 
 def test_recurrence_novelty_libfmp_parity(rng):
@@ -747,4 +766,36 @@ def test_recurrence_novelty_multichannel(rng):
     nov1 = librosa.segment.recurrence_novelty(R[1], n=7)
     assert np.allclose(nov[0], nov0)
     assert np.allclose(nov[1], nov1)
+
+
+def test_recurrence_novelty_exclude_kernel_types():
+    R = np.eye(20)
+
+    # 1. Tuple kernel (u, v)
+    nov_tuple = librosa.segment.recurrence_novelty(
+        R, kernel=(np.ones(5), np.ones(5)), exclude=True
+    )
+    assert np.all(nov_tuple[:2] == 0.0)
+    assert np.all(nov_tuple[-2:] == 0.0)
+
+    # 2. 1D kernel array
+    nov_1d = librosa.segment.recurrence_novelty(
+        R, kernel=np.ones(5), exclude=True
+    )
+    assert np.all(nov_1d[:2] == 0.0)
+    assert np.all(nov_1d[-2:] == 0.0)
+
+    # 3. 2D kernel array
+    nov_2d = librosa.segment.recurrence_novelty(
+        R, kernel=np.ones((5, 5)), exclude=True
+    )
+    assert np.all(nov_2d[:2] == 0.0)
+    assert np.all(nov_2d[-2:] == 0.0)
+
+    # 4. List kernel (hits else: k_len = n)
+    nov_list = librosa.segment.recurrence_novelty(
+        R, n=5, kernel=[[1, -1], [-1, 1]], exclude=True  # type: ignore[arg-type]
+    )
+    assert np.all(nov_list[:2] == 0.0)
+    assert np.all(nov_list[-2:] == 0.0)
 

@@ -2299,11 +2299,11 @@ def checkerboard_kernel(
     Plot both kernels:
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax = plt.subplots(ncols=2, figsize=(8, 4))
-    >>> img0 = ax[0].imshow(K_box, cmap="coolwarm", interpolation="nearest")
+    >>> fig, ax = plt.subplots(ncols=2, figsize=(8, 4), sharey=True)
+    >>> img0 = librosa.display.specshow(K_box, cmap="coolwarm", ax=ax[0])
     >>> ax[0].set(title="Boxcar Checkerboard")
     >>> fig.colorbar(img0, ax=ax[0], orientation="horizontal")
-    >>> img1 = ax[1].imshow(K_gauss, cmap="coolwarm", interpolation="nearest")
+    >>> img1 = librosa.display.specshow(K_gauss, cmap="coolwarm", ax=ax[1])
     >>> ax[1].set(title="Gaussian Checkerboard (var=0.5)")
     >>> fig.colorbar(img1, ax=ax[1], orientation="horizontal")
     """
@@ -2314,9 +2314,9 @@ def checkerboard_kernel(
     s = np.sign(coord)
 
     w: np.ndarray
-    if window in ("boxcar", "rect", None):
+    if window is None or (isinstance(window, str) and window in ("boxcar", "rect")):
         w = np.ones(n, dtype=dtype)
-    elif window == "gaussian":
+    elif isinstance(window, str) and window == "gaussian":
         if var <= 0:
             raise ParameterError(f"var={var} must be strictly positive")
         std = var * (n - 1) / 2.0

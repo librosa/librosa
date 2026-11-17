@@ -1496,20 +1496,21 @@ def diagonal_convolve(
 
     Examples
     --------
-    Compute the main diagonal of a 2D convolution with a 33x33 checkerboard kernel:
+    Compute the main diagonal of a 2D convolution with a 17x17 checkerboard kernel
+    on a short excerpt:
 
-    >>> y, sr = librosa.loadx('nutcracker')
-    >>> hop_length = 1024
+    >>> y, sr = librosa.loadx('nutcracker', duration=15)
+    >>> hop_length = 512
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity', self=True)
-    >>> kernel = librosa.filters.checkerboard_kernel(33)
+    >>> kernel = librosa.filters.checkerboard_kernel(17)
     >>> nov = librosa.segment.diagonal_convolve(rec, kernel)
 
-    Plot the recurrence matrix and the resulting novelty trace:
+    Plot the recurrence matrix and the resulting novelty trace with proportional heights:
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(nov, sr=sr, hop_length=hop_length)
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [3, 1]})
     >>> librosa.display.specshow(rec, x_axis='time', y_axis='time', sr=sr,
     ...                          hop_length=hop_length, ax=ax[0])
     >>> ax[0].set(title='Recurrence Matrix')
@@ -1700,24 +1701,25 @@ def recurrence_novelty(
 
     Examples
     --------
-    Compute and plot Foote's novelty curve using a 33-frame boxcar checkerboard kernel:
+    Compute and plot Foote's novelty curve on a short excerpt using a 17-frame boxcar
+    checkerboard kernel:
 
-    >>> y, sr = librosa.loadx('nutcracker')
-    >>> hop_length = 1024
+    >>> y, sr = librosa.loadx('nutcracker', duration=15)
+    >>> hop_length = 512
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
     >>> rec = librosa.segment.recurrence_matrix(chroma_stack, mode='affinity', self=True)
-    >>> nov = librosa.segment.recurrence_novelty(rec, n=33)
+    >>> nov = librosa.segment.recurrence_novelty(rec, n=17)
 
     Compare unwindowed (boxcar) and Gaussian-tapered novelty curves:
 
-    >>> nov_gauss = librosa.segment.recurrence_novelty(rec, n=33, window='gaussian', var=0.5)
+    >>> nov_gauss = librosa.segment.recurrence_novelty(rec, n=17, window='gaussian', var=0.5)
 
-    Plot the recurrence matrix and both novelty curves:
+    Plot the recurrence matrix and both novelty curves with proportional heights:
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(nov, sr=sr, hop_length=hop_length)
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, gridspec_kw={'height_ratios': [3, 1]})
     >>> librosa.display.specshow(rec, x_axis='time', y_axis='time', sr=sr,
     ...                          hop_length=hop_length, ax=ax[0])
     >>> ax[0].set(title='Recurrence Matrix')
