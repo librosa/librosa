@@ -839,7 +839,7 @@ def test_valid_int_fail(x, cast):
     librosa.util.valid_int(x, cast=cast)
 
 
-@pytest.mark.parametrize("x", [1, 64])
+@pytest.mark.parametrize("x", [1, 64, np.int32(1), np.int64(64)])
 def test_is_positive_int(x):
     assert librosa.util.is_positive_int(x) is True
 
@@ -1838,6 +1838,11 @@ def test_align_samples():
     # Non-integer ratio with error=True raises ParameterError
     with pytest.raises(librosa.ParameterError, match=r"fractional sample count"):
         librosa.util.align_samples(512, orig_sr=48000, target_sr=22050, error=True)
+
+    # Ratio producing less than 1 sample returns None or raises ParameterError
+    assert librosa.util.align_samples(1, orig_sr=48000, target_sr=10) is None
+    with pytest.raises(librosa.ParameterError, match=r"fractional sample count"):
+        librosa.util.align_samples(1, orig_sr=48000, target_sr=10, error=True)
 
     # Validation errors
     with pytest.raises(librosa.ParameterError, match=r"n_samples"):

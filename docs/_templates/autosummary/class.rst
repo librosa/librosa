@@ -37,5 +37,9 @@
    {% for item in public_attributes %}
       ~{{ name }}.{{ item }}
    {%- endfor %}
+
+   {% for item in public_attributes %}
+   .. autoattribute:: {{ item }}
+   {%- endfor %}
    {% endif %}
    {% endblock %}

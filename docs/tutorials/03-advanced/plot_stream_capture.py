@@ -259,7 +259,7 @@ with (
         cache_frame_data=False,
     )
 
-    # And for comparison, visualize the same analysis computed from a
+    # And for comparison, visualize the same analysis computed from
     # the full file
     y, sr = librosa.load(filename, sr=22050)
     full_rms = librosa.feature.rms(y=y,

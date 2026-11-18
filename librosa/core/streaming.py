@@ -352,7 +352,7 @@ class StreamBridge:
     ):
         if not (np.isfinite(orig_sr) and orig_sr > 0):
             raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
-        if not is_positive_int(channels):  # type: ignore[arg-type]
+        if not is_positive_int(channels):
             raise ParameterError(f"channels={channels} must be a positive integer")
         if not (isinstance(maxsize, (int, np.integer)) and maxsize >= 0):
             raise ParameterError(f"maxsize={maxsize} must be a non-negative integer")
@@ -380,8 +380,8 @@ class StreamBridge:
 
         Returns
         -------
-        orig_sr
-            Sampling rate of the incoming audio stream (required keyword-only argument).
+        sr : float
+            Sampling rate of the incoming audio stream.
         """
         return self.orig_sr
 

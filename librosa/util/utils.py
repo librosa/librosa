@@ -371,7 +371,7 @@ def valid_int(x: float, *, cast: Callable[[float], float] | None = None) -> int:
     return int(cast(x))
 
 
-def is_positive_int(x: float) -> bool:
+def is_positive_int(x: _FloatLike_co | None) -> bool:
     """Check that x is a positive integer, i.e. 1 or greater.
 
     Parameters
@@ -385,9 +385,33 @@ def is_positive_int(x: float) -> bool:
         True if x is a positive integer, False otherwise
     """
     # Check type first to catch None values.
-    return isinstance(x, (int, np.integer)) and (x > 0)
+    return bool(isinstance(x, (int, np.integer)) and (x > 0))
 
 
+@overload
+def align_samples(
+    n_samples: int,
+    *,
+    orig_sr: float,
+    target_sr: float | None = ...,
+    error: Literal[True],
+) -> int: ...
+@overload
+def align_samples(
+    n_samples: int,
+    *,
+    orig_sr: float,
+    target_sr: float | None = ...,
+    error: Literal[False] = ...,
+) -> int | None: ...
+@overload
+def align_samples(
+    n_samples: int,
+    *,
+    orig_sr: float,
+    target_sr: float | None = ...,
+    error: bool = ...,
+) -> int | None: ...
 def align_samples(
     n_samples: int,
     *,
@@ -470,7 +494,9 @@ def align_samples(
     aligned_samples = np.round(exact_samples)
 
     # Tolerances safely absorb precision errors from float arithmetic
-    if not np.isclose(exact_samples, aligned_samples, rtol=1e-7, atol=1e-5):
+    if (aligned_samples < 1) or not np.isclose(
+        exact_samples, aligned_samples, rtol=1e-7, atol=1e-5
+    ):
         if error:
             raise ParameterError(
                 f"Sample count of {n_samples} at {orig_sr} Hz results in a "
