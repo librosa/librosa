@@ -398,7 +398,7 @@ def onset_strength(
     >>> ax[3].plot(times, onset_cqt / onset_cqt.max(), alpha=0.8,
     ...            label='Mean (CQT)', color='C2')
     >>> ax[3].label_outer()
-    >>> fig.legend()
+    >>> fig.legend(loc='center right', ncols=3)
     """
     if aggregate is False:
         raise ParameterError(
