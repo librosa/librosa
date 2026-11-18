@@ -6,6 +6,7 @@ and estimating onset events from audio signals.
 """
 from __future__ import annotations
 
+import inspect
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -16,9 +17,18 @@ from .feature.spectral import melspectrogram
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Sequence
+    from typing import Any, Callable, Literal, Sequence
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
+
+
+def _call_with_kwargs(func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    """Call a function with positional arguments and signature-filtered keyword arguments."""
+    sig = inspect.signature(func)
+    params = sig.parameters
+    if not any(p.kind == inspect.Parameter.VAR_KEYWORD for p in params.values()):
+        kwargs = {k: v for k, v in kwargs.items() if k in params}
+    return func(*args, **kwargs)
 
 
 def onset_detect(
@@ -220,24 +230,43 @@ def onset_strength(
     feature: Callable | None = None,
     aggregate: Callable | bool | None = None,
     top_db: float | None = 80.0,
+    mode: Literal["flux", "complex"] | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope.
 
-    Onset strength at time ``t`` is determined by::
+    In standard spectral flux mode (``mode="flux"``), onset strength at time ``t``
+    is determined by::
 
         mean_f max(0, S[f, t] - ref[f, t - lag])
 
     where ``ref`` is ``S`` after local max filtering along the frequency
     axis [#]_.
 
-    By default, if a time series ``y`` is provided, S will be the
-    log-power Mel spectrogram.
+    In complex-domain mode (``mode="complex"``), onset strength models both energy
+    dynamics and phase trajectory continuity [#]_ [#]_. The complex phasor at
+    frame ``t`` is predicted by extrapolating the phase advance from reference frame
+    ``t - lag``, and the onset envelope measures the Euclidean residual between the
+    target phasor and predicted phasor under non-decreasing magnitude.
+
+    By default, if a time series ``y`` is provided:
+
+    - In ``"flux"`` mode: ``S`` will be the log-power Mel spectrogram.
+    - In ``"complex"`` mode: ``S`` will be the complex STFT.
 
     .. [#] Böck, Sebastian, and Gerhard Widmer.
            "Maximum filter vibrato suppression for onset detection."
            16th International Conference on Digital Audio Effects,
            Maynooth, Ireland. 2013.
+
+    .. [#] Bello, Juan Pablo, Laurent Daudet, Samer Abdallah, Chris Duxbury, Mike Davies, and Mark B. Sandler.
+           "A tutorial on onset detection in music signals."
+           IEEE Transactions on Speech and Audio Processing 13, no. 5 (2005): 1035-1047.
+
+    .. [#] Dixon, Simon.
+           "Onset detection revisited."
+           In Proceedings of the 9th International Conference on Digital Audio Effects (DAFx-06),
+           pp. 133-137. 2006.
 
     Parameters
     ----------
@@ -248,7 +277,8 @@ def onset_strength(
         sampling rate of ``y``
 
     S : np.ndarray [shape=(..., d, m)]
-        pre-computed (log-power) spectrogram
+        pre-computed spectrogram.
+        Can be real-valued (magnitude/power) or complex-valued.
 
     lag : int > 0
         time lag for computing differences
@@ -256,11 +286,13 @@ def onset_strength(
     max_size : int > 0
         size (in frequency bins) of the local max filter.
         set to `1` to disable filtering.
+        Must be `1` when ``mode="complex"``.
 
     ref : None or np.ndarray [shape=(..., d, m)]
         An optional pre-computed reference spectrum, of the same shape as ``S``.
         If not provided, it will be computed from ``S``.
         If provided, it will override any local max filtering governed by ``max_size``.
+        Must be `None` when ``mode="complex"``.
 
     detrend : bool [scalar]
         Filter the onset strength to remove the DC component
@@ -270,9 +302,17 @@ def onset_strength(
         This corresponds to using a centered frame analysis in the short-time Fourier
         transform.
 
-    feature : function
-        Function for computing time-series features, eg, scaled spectrograms.
-        By default, uses `librosa.feature.melspectrogram` with ``fmax=sr/2``
+    feature : function, optional
+        Function for computing time-series features (spectrograms).
+        By default:
+
+        - In ``"flux"`` mode: uses `librosa.feature.melspectrogram` with ``fmax=sr/2``
+          and log-amplitude scaling (`power_to_db`).
+        - In ``"complex"`` mode: uses `librosa.core.stft` to preserve complex phase.
+
+        If a custom callable is provided, arguments are filtered to match its signature,
+        allowing functions like `librosa.stft`, `librosa.cqt`, `librosa.vqt`, or custom
+        callables to be passed directly.
 
     aggregate : function
         Aggregation function to use when combining onsets
@@ -282,15 +322,18 @@ def onset_strength(
 
     top_db : float or None
         Threshold the spectrogram at ``top_db`` below its peak before the
-        dB conversion, as in `power_to_db`.  The peak is computed over the
-        frequency and time axes, independently for each leading channel, so
-        a numeric value couples every frame in a channel to the loudest one.
-        Pass ``None`` to disable that coupling.
+        dB conversion in ``"flux"`` mode, as in `power_to_db`. Pass ``None`` to
+        disable thresholding. Ignored when ``mode="complex"``.
 
-        Note that this does not make the result depend on a single frame:
-        onset strength is a spectral flux, so it compares each frame with
-        the one ``lag`` frames earlier, and ``detrend`` adds a further
-        dependence on neighbouring frames when enabled.
+    mode : {"flux", "complex"} or None, default=None
+        Computation mode for onset strength:
+
+        - ``None``: infer automatically from ``S`` if provided (``"complex"`` if
+          `numpy.iscomplexobj(S)` else ``"flux"``); defaults to ``"flux"`` if
+          ``(y, sr)`` is provided.
+        - ``"flux"``: standard spectral flux (rectified spectral difference).
+        - ``"complex"``: complex-domain spectral flux.
+
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
@@ -306,6 +349,14 @@ def onset_strength(
         if neither ``(y, sr)`` nor ``S`` are provided
 
         or if ``lag`` or ``max_size`` are not positive integers
+
+        or if ``mode`` is not one of ``None``, ``"flux"``, or ``"complex"``
+
+        or if ``mode="complex"`` and ``max_size > 1``
+
+        or if ``mode="complex"`` and ``ref is not None``
+
+        or if ``mode="complex"`` and ``S`` (or ``feature(...)``) is real-valued
 
     See Also
     --------
@@ -332,19 +383,17 @@ def onset_strength(
     >>> ax[1].plot(times, 2 + onset_env / onset_env.max(), alpha=0.8,
     ...            label='Mean (mel)')
 
-    Median aggregation, and custom mel options
+    Compute complex-domain onset strength
 
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
-    ...                                          aggregate=np.median,
-    ...                                          fmax=8000, n_mels=256)
-    >>> ax[1].plot(times, 1 + onset_env / onset_env.max(), alpha=0.8,
-    ...            label='Median (custom mel)')
+    >>> onset_complex = librosa.onset.onset_strength(y=y, sr=sr, mode='complex')
+    >>> ax[1].plot(times, 1 + onset_complex / onset_complex.max(), alpha=0.8,
+    ...            label='Complex domain (STFT)')
 
     Constant-Q spectrogram instead of Mel
 
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
-    >>> onset_env = librosa.onset.onset_strength(sr=sr, S=librosa.amplitude_to_db(C, ref=np.max))
-    >>> ax[1].plot(times, onset_env / onset_env.max(), alpha=0.8,
+    >>> onset_cqt = librosa.onset.onset_strength(sr=sr, S=librosa.amplitude_to_db(C, ref=np.max))
+    >>> ax[1].plot(times, onset_cqt / onset_cqt.max(), alpha=0.8,
     ...          label='Mean (CQT)')
     >>> ax[1].legend()
     >>> ax[1].set(ylabel='Normalized strength', yticks=[])
@@ -367,6 +416,7 @@ def onset_strength(
         aggregate=aggregate,
         channels=None,
         top_db=top_db,
+        mode=mode,
         **kwargs,
     )
 
@@ -464,6 +514,7 @@ def onset_strength_multi(
     aggregate: Callable | bool | None = None,
     channels: Sequence[int] | Sequence[slice] | None = None,
     top_db: float | None = 80.0,
+    mode: Literal["flux", "complex"] | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope across multiple channels.
@@ -481,7 +532,8 @@ def onset_strength_multi(
         sampling rate of ``y``
 
     S : np.ndarray [shape=(..., d, m)]
-        pre-computed (log-power) spectrogram
+        pre-computed spectrogram.
+        Can be real-valued (magnitude/power) or complex-valued.
 
     n_fft : int > 0 [scalar]
         length of the FFT frame for use in ``feature()`` if ``S`` is not provided.
@@ -495,11 +547,13 @@ def onset_strength_multi(
     max_size : int > 0
         size (in frequency bins) of the local max filter.
         set to `1` to disable filtering.
+        Must be `1` when ``mode="complex"``.
 
     ref : None or np.ndarray [shape=(d, m)]
         An optional pre-computed reference spectrum, of the same shape as ``S``.
         If not provided, it will be computed from ``S``.
         If provided, it will override any local max filtering governed by ``max_size``.
+        Must be `None` when ``mode="complex"``.
 
     detrend : bool [scalar]
         Filter the onset strength to remove the DC component
@@ -509,11 +563,17 @@ def onset_strength_multi(
         This corresponds to using a centered frame analysis in the short-time Fourier
         transform.
 
-    feature : function
-        Function for computing time-series features, eg, scaled spectrograms.
-        By default, uses `librosa.feature.melspectrogram` with ``fmax=sr/2``
+    feature : function, optional
+        Function for computing time-series features (spectrograms).
+        By default:
 
-        Must support arguments: ``y, sr, n_fft, hop_length``
+        - In ``"flux"`` mode: uses `librosa.feature.melspectrogram` with ``fmax=sr/2``
+          and log-amplitude scaling (`power_to_db`).
+        - In ``"complex"`` mode: uses `librosa.core.stft` to preserve complex phase.
+
+        If a custom callable is provided, arguments are filtered to match its signature,
+        allowing functions like `librosa.stft`, `librosa.cqt`, `librosa.vqt`, or custom
+        callables to be passed directly.
 
     aggregate : function or False
         Aggregation function to use when combining onsets
@@ -529,15 +589,18 @@ def onset_strength_multi(
 
     top_db : float or None
         Threshold the spectrogram at ``top_db`` below its peak before the
-        dB conversion, as in `power_to_db`.  The peak is computed over the
-        frequency and time axes, independently for each leading channel, so
-        a numeric value couples every frame in a channel to the loudest one.
-        Pass ``None`` to disable that coupling.
+        dB conversion in ``"flux"`` mode, as in `power_to_db`. Pass ``None`` to
+        disable thresholding. Ignored when ``mode="complex"``.
 
-        Note that this does not make the result depend on a single frame:
-        onset strength is a spectral flux, so it compares each frame with
-        the one ``lag`` frames earlier, and ``detrend`` adds a further
-        dependence on neighbouring frames when enabled.
+    mode : {"flux", "complex"} or None, default=None
+        Computation mode for onset strength:
+
+        - ``None``: infer automatically from ``S`` if provided (``"complex"`` if
+          `numpy.iscomplexobj(S)` else ``"flux"``); defaults to ``"flux"`` if
+          ``(y, sr)`` is provided.
+        - ``"flux"``: standard spectral flux (rectified spectral difference).
+        - ``"complex"``: complex-domain spectral flux.
+
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
@@ -550,6 +613,16 @@ def onset_strength_multi(
     ------
     ParameterError
         if neither ``(y, sr)`` nor ``S`` are provided
+
+        or if ``lag`` or ``max_size`` are not positive integers
+
+        or if ``mode`` is not one of ``None``, ``"flux"``, or ``"complex"``
+
+        or if ``mode="complex"`` and ``max_size > 1``
+
+        or if ``mode="complex"`` and ``ref is not None``
+
+        or if ``mode="complex"`` and ``S`` (or ``feature(...)``) is real-valued
 
     See Also
     --------
@@ -581,10 +654,6 @@ def onset_strength_multi(
     >>> ax[1].set(ylabel='Sub-bands', title='Sub-band onset strength')
     >>> fig.colorbar(img2, ax=[ax[1]])
     """
-    if feature is None:
-        feature = melspectrogram
-        kwargs.setdefault("fmax", 0.5 * sr)
-
     if aggregate is None:
         aggregate = np.mean
 
@@ -594,38 +663,98 @@ def onset_strength_multi(
     if not util.is_positive_int(max_size):
         raise ParameterError(f"max_size={max_size} must be a positive integer")
 
-    # First, compute mel spectrogram
-    if S is None:
-        S = np.abs(feature(y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, **kwargs))
+    if mode is not None and mode not in ("flux", "complex"):
+        raise ParameterError(f"Invalid mode='{mode}'. Must be one of ['flux', 'complex']")
 
-        # Convert to dBs
-        S = core.power_to_db(S, top_db=top_db)
+    # First, resolve S and mode
+    if S is not None:
+        if mode is None:
+            mode = "complex" if np.iscomplexobj(S) else "flux"
+        elif mode == "complex" and not np.iscomplexobj(S):
+            raise ParameterError(
+                "mode='complex' was specified, but input spectrogram S is real-valued"
+            )
+        elif mode == "flux" and np.iscomplexobj(S):
+            S = np.abs(S)
+    else:
+        if y is None:
+            raise ParameterError("One of y or S must be provided")
 
-    # Assertion to make type checking happy
-    assert S is not None
+        if mode is None:
+            mode = "flux"
+
+        if mode == "flux":
+            if feature is None:
+                feature = melspectrogram
+                kwargs.setdefault("fmax", 0.5 * sr)
+
+            S = _call_with_kwargs(
+                feature, y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, **kwargs
+            )
+            S = np.abs(S)
+            S = core.power_to_db(S, top_db=top_db)
+        else:  # mode == "complex"
+            if feature is None:
+                feature = core.stft
+
+            S = _call_with_kwargs(
+                feature, y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, **kwargs
+            )
+            if not np.iscomplexobj(S):
+                raise ParameterError(
+                    f"mode='complex' requires a complex-valued spectrogram, "
+                    f"but feature={feature} returned a real-valued array"
+                )
 
     # Ensure that S is at least 2-d
     S = np.atleast_2d(S)
 
-    # Compute the reference spectrogram.
-    # Efficiency hack: skip filtering step and pass by reference
-    # if max_size will produce a no-op.
-    if ref is None:
-        if max_size == 1:
-            ref = S
+    if mode == "complex":
+        if max_size > 1:
+            raise ParameterError(
+                "max_size > 1 is not supported for complex-valued spectrograms S"
+            )
+        if ref is not None:
+            raise ParameterError(
+                "ref is not supported for complex-valued spectrograms S"
+            )
+
+        pad_width = lag + 1
+        if S.shape[-1] <= pad_width:
+            onset_env = np.zeros((*S.shape[:-1], 0), dtype=S.real.dtype)
         else:
-            import scipy.ndimage
-            ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=-2)
-    elif ref.shape != S.shape:
-        raise ParameterError(
-            f"Reference spectrum shape {ref.shape} must match input spectrum {S.shape}"
-        )
+            mag, phase = core.magphase(S)
+            phi = np.angle(phase)
+            dphi = np.angle(S[..., 1:] * np.conj(S[..., :-1]))
 
-    # Compute difference to the reference, spaced by lag
-    onset_env = S[..., lag:] - ref[..., :-lag]
+            ref_mag = mag[..., 1:-lag]
+            pred_phase = phi[..., 1:-lag] + lag * dphi[..., :-lag]
+            pred_S = ref_mag * np.exp(1j * pred_phase)
 
-    # Discard negatives (decreasing amplitude)
-    onset_env = np.maximum(0.0, onset_env)
+            onset_env = np.where(
+                mag[..., 1 + lag:] >= ref_mag,
+                np.abs(S[..., 1 + lag:] - pred_S),
+                0.0,
+            )
+    else:
+        pad_width = lag
+        if ref is None:
+            if max_size == 1:
+                ref = S
+            else:
+                import scipy.ndimage
+
+                ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=-2)
+        elif ref.shape != S.shape:
+            raise ParameterError(
+                f"Reference spectrum shape {ref.shape} must match input spectrum {S.shape}"
+            )
+
+        # Compute difference to the reference, spaced by lag
+        onset_env = S[..., lag:] - ref[..., :-lag]
+
+        # Discard negatives (decreasing amplitude)
+        onset_env = np.maximum(0.0, onset_env)
 
     # Aggregate within channels
     pad = True
@@ -640,7 +769,6 @@ def onset_strength_multi(
         )
 
     # compensate for lag
-    pad_width = lag
     if center:
         # Counter-act framing effects. Shift the onsets by n_fft / hop_length
         pad_width += n_fft // (2 * hop_length)
