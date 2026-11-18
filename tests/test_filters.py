@@ -802,6 +802,10 @@ def test_frequency_filterbank_validation_errors():
     with pytest.raises(librosa.ParameterError):
         librosa.filters.frequency_filterbank(f_in, f_out, norm="unsupported")  # type: ignore[arg-type]
 
+    # negative bandwidths
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.frequency_filterbank(f_in, f_out, bandwidths=-10.0)
+
 
 def test_logfrequency_filterbank():
     sr, n_fft = 22050, 2048
@@ -887,6 +891,14 @@ def test_pitch_filterbank_temperaments():
         assert fb_win.shape == (60, 1025)
         assert not np.isnan(fb_win).any()
 
+    # fmin=None with non-equal intervals defaults to C1
+    fb_fmin_none = librosa.filters.pitch(sr=sr, n_fft=n_fft, intervals="pythagorean", fmin=None)
+    assert fb_fmin_none.shape == (128, 1025)
+
+    # Missing sr/n_fft and freq_in raises ParameterError
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch()
+
 
 def test_dct_residual_basis():
     from librosa.filters import _dct_residual_basis
@@ -944,6 +956,12 @@ def test_pitch_basis():
         b = librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, window=win, n_pitches=24)
         assert b.shape == (1025, 29)
         assert not np.isnan(b).any()
+
+    # Callable window
+    b_callable = librosa.filters.pitch_basis(
+        sr=sr, n_fft=n_fft, window=lambda x: np.maximum(0, 1 - np.abs(x)), n_pitches=12
+    )
+    assert b_callable.shape == (1025, 17)
 
     # Different norms
     for norm in [1, 2, None]:

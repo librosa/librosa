@@ -1321,9 +1321,9 @@ def vibrato(
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> librosa.display.specshow(S_orig, sr=sr, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[0])
     >>> ax[0].set(title="Original tone spectrogram")
+    >>> ax[0].label_outer()
     >>> librosa.display.specshow(S_vib, sr=sr, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[1])
     >>> ax[1].set(title="Vibrato tone spectrogram")
-    >>> plt.show()
     """
     util.valid_audio(y)
 
@@ -1364,11 +1364,10 @@ def vibrato(
 
     if mode == "sine":
         lfo = np.sin(angle)
-    elif mode == "triangle":
+    else:  # mode == "triangle"
         import scipy.signal
+
         lfo = scipy.signal.sawtooth(angle, width=0.5)
-    else:
-        raise ParameterError(f"Invalid mode='{mode}'. Must be 'sine' or 'triangle'.")
 
     # Pitch factor alpha = 2^(semitones / 12)
     # Instantaneous time step size for phase vocoder is the pitch scaling factor
@@ -1395,13 +1394,17 @@ def vibrato(
 
     # Resample to compensate for the time-warping introduced by the phase vocoder
     # This restores the original timing while preserving the pitch modulation
-    import scipy.interpolate
     t_original = np.linspace(0, 1, y.shape[-1])
-    t_warped = np.interp(t_original, np.linspace(0, 1, len(t_out)), t_out / (n_frames - 1))
-
-    interpolator = scipy.interpolate.interp1d(
-        t_original, y_vib, axis=-1, kind=kind, fill_value="extrapolate"
+    t_warped = np.interp(
+        t_original, np.linspace(0, 1, len(t_out)), t_out / (n_frames - 1)
     )
-    y_out = interpolator(t_warped)
+
+    y_out = core.interp_time(
+        y_vib,
+        target_times=t_warped,
+        times=t_original,
+        kind=kind,
+        fill_value="extrapolate",
+    )
 
     return y_out.astype(y.dtype, copy=False)

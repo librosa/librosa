@@ -1494,7 +1494,7 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     )
 
 
-@jit(nopython=True, cache=True)  # type: ignore
+@jit(nopython=True, cache=True)
 def __lpc(
     y: np.ndarray,
     order: int,
@@ -2227,11 +2227,11 @@ def chirp(
         if weighting is not None:
             weight_db = frequency_weighting(freqs, kind=weighting)
             amp = 10.0 ** (weight_db / 20.0)
+            amp[freqs < 30.0] = 0.0
         else:
             amp = np.ones_like(freqs)
 
         amp[freqs >= sr / 2.0] = 0.0
-        amp[freqs < 30.0] = 0.0
         y *= amp
 
     return y
@@ -2317,9 +2317,6 @@ def shepard_tone(
 
     for shift in octave_shifts:
         freq_k = float(frequency) * (2.0 ** shift)
-
-        if freq_k >= nyquist or freq_k < 30.0:
-            continue
 
         if weighting is not None:
             weight_db = frequency_weighting(freq_k, kind=weighting)

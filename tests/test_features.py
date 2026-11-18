@@ -1533,6 +1533,12 @@ def test_logfrequency_spectrogram(y_chirp):
     )
     assert S_explicit.shape[0] == 120
 
+    # Automatic tuning estimation
+    S_tune = librosa.feature.logfrequency_spectrogram(
+        y=y, sr=sr, bins_per_octave=12, fmin=32.7, tuning=None
+    )
+    assert S_tune.shape == S_log.shape
+
 
 def test_pitch_spectrogram(y_chirp):
     y, sr = y_chirp
@@ -1546,6 +1552,10 @@ def test_pitch_spectrogram(y_chirp):
     S = np.abs(librosa.stft(y)) ** 2
     S_pitch_pre = librosa.feature.pitch_spectrogram(S=S, sr=sr)
     assert np.allclose(S_pitch, S_pitch_pre)
+
+    # Automatic tuning estimation
+    S_tune = librosa.feature.pitch_spectrogram(y=y, sr=sr, tuning=None)
+    assert S_tune.shape == S_pitch.shape
 
     # Alternative intonations
     for intervals in ["equal", "pythagorean", "ji5"]:

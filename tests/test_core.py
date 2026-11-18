@@ -2484,6 +2484,27 @@ def test_chirp_cross_nyquist(fmin, fmax):
     assert np.any(y[~above_nyq] != 0.0)
 
 
+def test_chirp_low_frequency_weighting():
+    sr = 22050
+    duration = 1.0
+    # Sweeping 10 Hz to 15000 Hz (crosses both 30 Hz and Nyquist)
+    y_unweighted = librosa.chirp(
+        fmin=10, fmax=15000, sr=sr, duration=duration, linear=True
+    )
+    t = np.arange(len(y_unweighted)) / sr
+    freqs = 10 + (15000 - 10) * (t / duration)
+    below_30 = freqs < 30.0
+
+    # Unweighted chirp should NOT mute below 30 Hz
+    assert np.any(y_unweighted[below_30] != 0.0)
+
+    # Weighted chirp SHOULD mute below 30 Hz
+    y_weighted = librosa.chirp(
+        fmin=10, fmax=15000, sr=sr, duration=duration, linear=True, weighting="A"
+    )
+    assert np.all(y_weighted[below_30] == 0.0)
+
+
 @pytest.mark.parametrize("n_octaves", [-2.0, 2.0])
 def test_shepard_risset_glissando_cross_nyquist(n_octaves):
     sr = 22050
