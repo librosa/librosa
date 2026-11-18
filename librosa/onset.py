@@ -371,7 +371,7 @@ def onset_strength(
     >>> y, sr = librosa.loadx('trumpet', duration=3)
     >>> D = np.abs(librosa.stft(y))
     >>> times = librosa.times_like(D, sr=sr)
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> fig, ax = plt.subplots(nrows=4, sharex=True, height_ratios=[3, 1, 1, 1])
     >>> librosa.display.specshow(D, vscale='dBFS',
     ...                          y_axis='log', x_axis='time', ax=ax[0], sr=sr)
     >>> ax[0].set(title='Power spectrogram')
@@ -380,23 +380,25 @@ def onset_strength(
     Construct a standard onset function
 
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
-    >>> ax[1].plot(times, 2 + onset_env / onset_env.max(), alpha=0.8,
-    ...            label='Mean (mel)')
+    >>> ax[1].plot(times, onset_env / onset_env.max(), alpha=0.8,
+    ...            label='Mean (mel)', color='C0')
+    >>> ax[1].label_outer()
 
     Compute complex-domain onset strength
 
     >>> onset_complex = librosa.onset.onset_strength(y=y, sr=sr, mode='complex')
-    >>> ax[1].plot(times, 1 + onset_complex / onset_complex.max(), alpha=0.8,
-    ...            label='Complex domain (STFT)')
+    >>> ax[2].plot(times, onset_complex / onset_complex.max(), alpha=0.8,
+    ...            label='Complex domain (STFT)', color='C1')
+    >>> ax[2].label_outer()
 
     Constant-Q spectrogram instead of Mel
 
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> onset_cqt = librosa.onset.onset_strength(sr=sr, S=librosa.amplitude_to_db(C, ref=np.max))
-    >>> ax[1].plot(times, onset_cqt / onset_cqt.max(), alpha=0.8,
-    ...          label='Mean (CQT)')
-    >>> ax[1].legend()
-    >>> ax[1].set(ylabel='Normalized strength', yticks=[])
+    >>> ax[3].plot(times, onset_cqt / onset_cqt.max(), alpha=0.8,
+    ...            label='Mean (CQT)', color='C2')
+    >>> ax[3].label_outer()
+    >>> fig.legend()
     """
     if aggregate is False:
         raise ParameterError(
