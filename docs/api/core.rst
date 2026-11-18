@@ -10,6 +10,7 @@ Core functionality
 
     core_audio
     core_harmonics
+    core_interpolation
     core_magnitude
 
 

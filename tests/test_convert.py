@@ -462,9 +462,15 @@ def test_D_weighting(min_db):
 
 @pytest.mark.parametrize("min_db", [None, -40, -80])
 def test_Z_weighting(min_db):
-    # Check that 1KHz is around 0dB
-    d_khz = librosa.Z_weighting(np.linspace(2e1, 2e4), min_db=min_db)
-    assert np.allclose(d_khz, 0, atol=1e-3)
+    # Check that scalar input returns a numpy floating scalar
+    z_scalar = librosa.Z_weighting(1000.0, min_db=min_db)
+    assert isinstance(z_scalar, np.floating)
+    assert np.allclose(z_scalar, 0, atol=1e-3)
+
+    # Check that array input returns an ndarray
+    z_range = librosa.Z_weighting(np.linspace(2e1, 2e4), min_db=min_db)
+    assert isinstance(z_range, np.ndarray)
+    assert np.allclose(z_range, 0, atol=1e-3)
 
 
 @pytest.mark.parametrize("kind", ["A", "B", "C", "D", "Z", None])

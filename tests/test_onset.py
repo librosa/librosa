@@ -411,3 +411,184 @@ def test_onset_detect_inplace_normalize():
     librosa.onset.onset_detect(onset_envelope=oenv_in, normalize=True)
 
     assert np.allclose(oenv_in, oenv_orig) and oenv_in is not oenv_orig
+
+
+def test_onset_strength_mode_validation(ysr):
+    y, sr = ysr
+    S_complex = librosa.stft(y[:2048])
+    S_real = np.abs(S_complex)
+
+    # Invalid mode string
+    with pytest.raises(librosa.ParameterError):
+        librosa.onset.onset_strength(y=y, sr=sr, mode="invalid")  # type: ignore[arg-type]
+
+    # max_size > 1 with complex mode
+    with pytest.raises(librosa.ParameterError):
+        librosa.onset.onset_strength(S=S_complex, max_size=3, mode="complex")
+
+    # ref is not None with complex mode
+    with pytest.raises(librosa.ParameterError):
+        librosa.onset.onset_strength(S=S_complex, ref=S_complex, mode="complex")
+
+    # Real S with mode="complex"
+    with pytest.raises(librosa.ParameterError):
+        librosa.onset.onset_strength(S=S_real, mode="complex")
+
+    # Real feature with mode="complex"
+    with pytest.raises(librosa.ParameterError):
+        librosa.onset.onset_strength(
+            y=y, sr=sr, mode="complex", feature=librosa.feature.melspectrogram
+        )
+
+
+def test_onset_strength_complex_linear_phase(rng):
+    F, T = 16, 60
+    omega = np.linspace(0.1, 1.5, F)[:, None]
+    n = np.arange(T)[None, :]
+    phase = omega * n
+    mag = rng.uniform(0.5, 2.0, size=(F, T))
+
+    S = mag * np.exp(1j * phase)
+
+    for lag in [1, 2, 3]:
+        # Without centering: compare frames n >= lag + 1
+        oenv_complex = librosa.onset.onset_strength(S=S, lag=lag, center=False)
+        oenv_mag = librosa.onset.onset_strength(S=mag, lag=lag, center=False)
+
+        assert oenv_complex.shape == (T,)
+        assert oenv_mag.shape == (T,)
+        assert np.allclose(oenv_complex[lag + 1 :], oenv_mag[lag + 1 :])
+
+        # With centering
+        oenv_complex_c = librosa.onset.onset_strength(S=S, lag=lag, center=True)
+        oenv_mag_c = librosa.onset.onset_strength(S=mag, lag=lag, center=True)
+        assert oenv_complex_c.shape == (T,)
+        assert oenv_mag_c.shape == (T,)
+        shift = (lag + 1) + 2048 // (2 * 512)
+        assert np.allclose(oenv_complex_c[shift:], oenv_mag_c[shift:])
+
+
+def test_onset_strength_complex_phase_reset():
+    F, T = 8, 50
+    omega = 0.5
+    phase = omega * np.arange(T)
+
+    # Constant magnitude everywhere
+    mag = np.ones((F, T), dtype=np.float64)
+
+    # Phase reset at frame 25
+    phase[25:] += np.pi
+    S = mag * np.exp(1j * phase[None, :])
+
+    oenv_mag = librosa.onset.onset_strength(S=np.abs(S), center=False)
+    assert np.allclose(oenv_mag, 0.0)
+
+    oenv_complex = librosa.onset.onset_strength(S=S, center=False)
+    # Peak must occur at frame 25
+    assert np.argmax(oenv_complex) == 25
+    assert oenv_complex[25] > 0.5
+
+
+def test_onset_strength_audio_modes(ysr):
+    y, sr = ysr
+
+    oenv_flux = librosa.onset.onset_strength(y=y, sr=sr, mode="flux")
+    oenv_default = librosa.onset.onset_strength(y=y, sr=sr)
+    assert np.allclose(oenv_flux, oenv_default)
+
+    oenv_complex = librosa.onset.onset_strength(y=y, sr=sr, mode="complex")
+    assert oenv_complex.shape == oenv_flux.shape
+    assert np.all(oenv_complex >= 0)
+    assert np.any(oenv_complex > 0)
+
+
+def test_onset_strength_custom_features(ysr):
+    y, sr = ysr
+
+    # complex mode with cqt
+    oenv_cqt_complex = librosa.onset.onset_strength(y=y, sr=sr, mode="complex", feature=librosa.cqt)
+    assert oenv_cqt_complex.ndim == 1
+    assert len(oenv_cqt_complex) == 1 + len(y) // 512
+
+    # flux mode with stft (stft has no sr kwarg, handled by _call_with_kwargs)
+    oenv_stft_flux = librosa.onset.onset_strength(y=y, sr=sr, mode="flux", feature=librosa.stft)
+    assert oenv_stft_flux.ndim == 1
+    assert len(oenv_stft_flux) == 1 + len(y) // 512
+
+    # flux mode with cqt (cqt has no n_fft kwarg, handled by _call_with_kwargs)
+    oenv_cqt_flux = librosa.onset.onset_strength(y=y, sr=sr, mode="flux", feature=librosa.cqt)
+    assert oenv_cqt_flux.ndim == 1
+
+    # custom lambda
+    oenv_lambda = librosa.onset.onset_strength(
+        y=y,
+        sr=sr,
+        mode="complex",
+        feature=lambda y, hop_length: librosa.stft(y, hop_length=hop_length),
+    )
+    assert len(oenv_lambda) == len(oenv_cqt_complex)
+
+
+def test_onset_strength_complex_spec_input(ysr):
+    y, _ = ysr
+    D = librosa.stft(y)
+
+    # auto-inference of complex mode
+    oenv_auto = librosa.onset.onset_strength(S=D)
+    oenv_explicit = librosa.onset.onset_strength(S=D, mode="complex")
+    assert np.allclose(oenv_auto, oenv_explicit)
+
+    # explicit flux mode on complex S converts to magnitude
+    oenv_flux_from_complex = librosa.onset.onset_strength(S=D, mode="flux")
+    oenv_flux_from_mag = librosa.onset.onset_strength(S=np.abs(D), mode="flux")
+    assert np.allclose(oenv_flux_from_complex, oenv_flux_from_mag)
+
+
+def test_onset_strength_complex_multichannel(rng):
+    y = rng.standard_normal(size=(2, 22050))
+    sr = 22050
+
+    # multi-channel audio input
+    oenv = librosa.onset.onset_strength(y=y, sr=sr, mode="complex")
+    assert oenv.shape == (2, 44)
+
+    # onset_strength_multi with sub-band channels
+    channels = [0, 128, 256, 512, 1025]
+    odf = librosa.onset.onset_strength_multi(
+        y=y, sr=sr, mode="complex", channels=channels
+    )
+    assert odf.shape == (2, len(channels) - 1, 44)
+
+
+def test_onset_strength_complex_dtypes_and_edge_cases(rng):
+    # complex64 -> float32
+    S32 = (
+        rng.standard_normal(size=(10, 20)) + 1j * rng.standard_normal(size=(10, 20))
+    ).astype(np.complex64)
+    res32 = librosa.onset.onset_strength(S=S32)
+    assert res32.dtype == np.float32
+
+    # complex128 -> float64
+    S64 = (
+        rng.standard_normal(size=(10, 20)) + 1j * rng.standard_normal(size=(10, 20))
+    ).astype(np.complex128)
+    res64 = librosa.onset.onset_strength(S=S64)
+    assert res64.dtype == np.float64
+
+    # All zeros
+    S_zeros = np.zeros((10, 20), dtype=np.complex64)
+    res_zeros = librosa.onset.onset_strength(S=S_zeros)
+    assert not np.isnan(res_zeros).any()
+    assert not np.isinf(res_zeros).any()
+    assert np.all(res_zeros == 0.0)
+
+    # Short input T <= lag + 1
+    S_short = np.ones((10, 2), dtype=np.complex64)
+    res_center = librosa.onset.onset_strength(S=S_short, lag=2, center=True)
+    assert res_center.shape == (2,)
+    assert np.all(res_center == 0.0)
+
+    res_nocenter = librosa.onset.onset_strength(S=S_short, lag=2, center=False)
+    assert res_nocenter.shape == (3,)
+    assert np.all(res_nocenter == 0.0)
+

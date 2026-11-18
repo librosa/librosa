@@ -19,7 +19,7 @@ from decorator import decorator
 
 from . import util
 from ._cache import cache
-from .filters import diagonal_filter
+from .filters import checkerboard_kernel, diagonal_filter
 from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
@@ -44,6 +44,8 @@ __all__ = [
     "agglomerative",
     "subsegment",
     "path_enhance",
+    "diagonal_convolve",
+    "recurrence_novelty",
 ]
 
 
@@ -1419,3 +1421,340 @@ def __affinity_bandwidth(
             out = np.array((sigma_i_data + sigma_j_data + rec.data) / 3)
 
     return out
+
+
+def diagonal_convolve(
+    data: np.ndarray,
+    kernel: np.ndarray | tuple[np.ndarray, np.ndarray],
+    *,
+    k: int = 0,
+    mode: Literal["full", "valid", "same"] = "same",
+    boundary: str = "fill",
+    fillvalue: float = 0.0,
+) -> np.ndarray:
+    """Efficient 2D convolution along a diagonal.
+
+    Computes the 2-dimensional convolution of `data` and `kernel` evaluated
+    only along the diagonal specified by `k`, without allocating or calculating
+    the full 2D convolution output [#]_.
+
+    Parameters
+    ----------
+    data : np.ndarray [shape=(..., n_rows, n_cols)]
+        Input 2D matrix (or multi-channel batch of matrices), such as a recurrence
+        or self-similarity matrix.
+        Sparse matrices are not supported.
+    kernel : np.ndarray [shape=(m, m)] or tuple of np.ndarray [shape=((m1,), (m2,))]
+        Filter kernel. Can be:
+
+        - A 2D array of shape ``(m1, m2)``
+        - A 1D array ``v`` of shape ``(m,)`` representing a symmetric separable kernel ``v @ v.T``
+        - A tuple of two 1D arrays ``(u, v)`` representing a separable kernel ``u @ v.T``
+
+    k : int, default=0
+        Diagonal offset. ``k=0`` is the main diagonal. ``k > 0`` is above the main
+        diagonal, ``k < 0`` is below. Matches `numpy.diagonal(..., offset=k)`.
+    mode : {'same', 'valid', 'full'}, default='same'
+        Convolution mode, matching `scipy.signal.convolve2d`:
+
+        - ``'same'``: Output has the same length as the diagonal of `data`, centered.
+        - ``'valid'``: Output contains only positions where `kernel` completely overlaps `data`.
+        - ``'full'``: Output contains all positions where `kernel` overlaps `data` by at least one element.
+
+    boundary : str, default='fill'
+        Boundary condition matching `scipy.signal.convolve2d`:
+
+        - ``'fill'``: pad with `fillvalue` (default 0.0).
+        - ``'symm'``: symmetric reflection padding.
+        - ``'wrap'``: circular padding.
+        - Standard `numpy.pad` mode strings (e.g. ``'constant'``, ``'edge'``, ``'reflect'``) are also accepted.
+
+    fillvalue : float, default=0.0
+        Value to fill past boundaries when `boundary='fill'` or `'constant'`.
+
+    Returns
+    -------
+    diag_conv : np.ndarray [shape=(..., n_diag)]
+        The 2D convolution evaluated along diagonal `k`.
+
+    Raises
+    ------
+    ParameterError
+        If `data` is sparse, if `kernel` shape is invalid, or if `mode` is unsupported.
+
+    See Also
+    --------
+    recurrence_novelty
+    librosa.filters.checkerboard_kernel
+
+    References
+    ----------
+    .. [#] Foote, Jonathan.
+        "Automatic audio segmentation using a measure of audio novelty."
+        In 2000 IEEE International Conference on Multimedia and Expo (ICME),
+        vol. 1, pp. 452-455. IEEE, 2000.
+
+    Examples
+    --------
+    Compute the main diagonal of a 2D convolution with a 17x17 checkerboard kernel
+    on a short excerpt:
+
+    >>> y, sr = librosa.loadx('nutcracker', duration=30)
+    >>> hop_length = 512
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
+    >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity', self=True)
+    >>> kernel = librosa.filters.checkerboard_kernel(17)
+    >>> nov = librosa.segment.diagonal_convolve(rec, kernel)
+
+    Plot the recurrence matrix and the resulting novelty trace with proportional heights:
+
+    >>> import matplotlib.pyplot as plt
+    >>> times = librosa.times_like(nov, sr=sr, hop_length=hop_length)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, height_ratios=[3, 1],
+    ...                        layout='compressed')
+    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time', sr=sr,
+    ...                          hop_length=hop_length, ax=ax[0])
+    >>> ax[0].set(title='Recurrence Matrix')
+    >>> ax[0].label_outer()
+    >>> ax[1].plot(times, nov, label='Novelty')
+    >>> ax[1].set(title='Diagonal 2D Convolution (Novelty)', xlabel='Time (s)')
+    >>> ax[1].legend()
+    """
+    if scipy.sparse.issparse(data):
+        raise ParameterError(
+            "Sparse matrices are not supported by diagonal_convolve. "
+            "Convert to a dense array (e.g. data.toarray()) first."
+        )
+
+    data = np.asanyarray(data)
+
+    is_separable = False
+    u: np.ndarray
+    v: np.ndarray
+    K: np.ndarray
+    M1: int
+    M2: int
+
+    if isinstance(kernel, tuple) and len(kernel) == 2:
+        u = np.asanyarray(kernel[0])
+        v = np.asanyarray(kernel[1])
+        if u.ndim == 1 and v.ndim == 1:
+            is_separable = True
+            M1, M2 = len(u), len(v)
+        else:
+            raise ParameterError("Tuple kernel must contain two 1D arrays")
+    elif isinstance(kernel, np.ndarray) and kernel.ndim == 1:
+        u = v = kernel
+        is_separable = True
+        M1, M2 = len(u), len(v)
+    else:
+        K = np.asanyarray(kernel)
+        if K.ndim != 2:
+            raise ParameterError(
+                f"kernel must be 2D, 1D, or a tuple of two 1D arrays; shape={K.shape}"
+            )
+        M1, M2 = K.shape
+
+    if M1 <= 0 or M2 <= 0:
+        raise ParameterError(f"Kernel dimensions must be positive, got ({M1}, {M2})")
+
+    N1, N2 = data.shape[-2], data.shape[-1]
+
+    if mode == "full":
+        shift1, shift2 = 0, 0
+        grid_rows, grid_cols = N1 + M1 - 1, N2 + M2 - 1
+    elif mode == "same":
+        shift1, shift2 = (M1 - 1) // 2, (M2 - 1) // 2
+        grid_rows, grid_cols = N1, N2
+    elif mode == "valid":
+        shift1, shift2 = M1 - 1, M2 - 1
+        grid_rows, grid_cols = max(0, N1 - M1 + 1), max(0, N2 - M2 + 1)
+    else:
+        raise ParameterError(
+            f"Unsupported mode='{mode}'. Must be one of ('same', 'valid', 'full')"
+        )
+
+    if grid_rows <= 0 or grid_cols <= 0:
+        return np.empty((*data.shape[:-2], 0), dtype=data.dtype)
+
+    if k >= 0:
+        length = max(0, min(grid_rows, grid_cols - k))
+        row_start_mode = 0
+        col_start_mode = k
+    else:
+        length = max(0, min(grid_rows + k, grid_cols))
+        row_start_mode = -k
+        col_start_mode = 0
+
+    if length == 0:
+        return np.empty((*data.shape[:-2], 0), dtype=data.dtype)
+
+    boundary_map = {
+        "fill": "constant",
+        "symm": "symmetric",
+        "wrap": "wrap",
+    }
+    np_pad_mode: Any = boundary_map.get(boundary, boundary)
+
+    pad_width = [(0, 0)] * (data.ndim - 2) + [(M1 - 1, M1 - 1), (M2 - 1, M2 - 1)]
+
+    data_pad: np.ndarray
+    if np_pad_mode == "constant":
+        data_pad = np.pad(
+            data, pad_width, mode=np_pad_mode, constant_values=fillvalue
+        )
+    else:
+        data_pad = np.pad(data, pad_width, mode=np_pad_mode)
+
+    r_start = shift1 + row_start_mode
+    c_start = shift2 + col_start_mode
+
+    leading_shape = data.shape[:-2]
+    leading_strides = data_pad.strides[:-2]
+    s0, s1 = data_pad.strides[-2], data_pad.strides[-1]
+
+    sub = data_pad[
+        ..., r_start : r_start + length + M1 - 1, c_start : c_start + length + M2 - 1
+    ]
+    out_shape = (*leading_shape, length, M1, M2)
+    out_strides = (*leading_strides, s0 + s1, s0, s1)
+    patches = np.lib.stride_tricks.as_strided(
+        sub, shape=out_shape, strides=out_strides
+    )
+
+    if is_separable:
+        return np.asanyarray((patches @ v[::-1]) @ u[::-1])
+    else:
+        return np.asanyarray(
+            np.tensordot(patches, K[::-1, ::-1], axes=([-2, -1], [0, 1]))
+        )
+
+
+def recurrence_novelty(
+    rec: np.ndarray,
+    *,
+    n: int = 33,
+    window: _WindowSpec | None = None,
+    var: float = 0.5,
+    norm: bool | float | None = 1,
+    kernel: np.ndarray | tuple[np.ndarray, np.ndarray] | None = None,
+    clip: bool = True,
+    exclude: bool = False,
+    mode: Literal["full", "valid", "same"] = "same",
+    boundary: str = "fill",
+    fillvalue: float = 0.0,
+) -> np.ndarray:
+    """Compute Foote's novelty curve from a recurrence or self-similarity matrix.
+
+    Slides a checkerboard kernel along the main diagonal of `rec` to detect
+    structural transitions [#]_. Homogeneous musical sections appear as high-similarity
+    blocks along the diagonal of `rec`. When two contrasting sections meet, the
+    kernel aligns with the block boundary, producing a local peak in the novelty curve.
+
+    Parameters
+    ----------
+    rec : np.ndarray [shape=(..., n_frames, n_frames)]
+        Self-similarity or recurrence matrix.
+        Note: Sparse matrices are not supported.
+    n : int > 0, default=33
+        Length of the checkerboard kernel if `kernel` is not provided.
+    window : _WindowSpec or None, default=None
+        Window type for the checkerboard kernel. Defaults to ``None`` (unwindowed).
+        See `librosa.filters.checkerboard_kernel` for details.
+    var : float > 0, default=0.5
+        Gaussian variance parameter for the checkerboard kernel when ``window='gaussian'``.
+    norm : bool, float, or None, default=1
+        Normalization for the checkerboard kernel.
+    kernel : np.ndarray or tuple, optional
+        Pre-computed filter kernel. If provided, `n`, `window`, `var`, `norm` are ignored.
+    clip : bool, default=True
+        If True, half-wave rectifies the output (negative novelty scores clipped to 0).
+    exclude : bool, default=False
+        If True and ``mode='same'``, zeroes out the first and last ``n // 2`` values to
+        suppress boundary artifacts (as in libfmp [#]_).
+    mode : {'same', 'valid', 'full'}, default='same'
+        Convolution mode passed to `diagonal_convolve`.
+    boundary : str, default='fill'
+        Boundary padding mode passed to `diagonal_convolve`.
+    fillvalue : float, default=0.0
+        Fill value for boundary padding.
+
+    Returns
+    -------
+    novelty : np.ndarray [shape=(..., n_out)]
+        1D novelty curve.
+
+    See Also
+    --------
+    diagonal_convolve
+    librosa.filters.checkerboard_kernel
+    librosa.segment.recurrence_matrix
+
+    References
+    ----------
+    .. [#] Foote, Jonathan.
+        "Automatic audio segmentation using a measure of audio novelty."
+        In 2000 IEEE International Conference on Multimedia and Expo (ICME),
+        vol. 1, pp. 452-455. IEEE, 2000.
+    .. [#] Müller, Meinard.
+        "Fundamentals of music processing: Audio, analysis, algorithms, applications."
+        Springer, 2015.
+
+    Examples
+    --------
+    Compute and plot Foote's novelty curve on a short excerpt using a 17-frame boxcar
+    checkerboard kernel:
+
+    >>> y, sr = librosa.loadx('nutcracker', duration=30)
+    >>> hop_length = 512
+    >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
+    >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
+    >>> rec = librosa.segment.recurrence_matrix(chroma_stack, mode='affinity', self=True)
+    >>> nov = librosa.segment.recurrence_novelty(rec, n=17)
+
+    Compare unwindowed (boxcar) and Gaussian-tapered novelty curves:
+
+    >>> nov_gauss = librosa.segment.recurrence_novelty(rec, n=17, window='gaussian', var=0.5)
+
+    Plot the recurrence matrix and both novelty curves with proportional heights:
+
+    >>> import matplotlib.pyplot as plt
+    >>> times = librosa.times_like(nov, sr=sr, hop_length=hop_length)
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, height_ratios=[3, 1],
+    ...                        layout='compressed')
+    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time', sr=sr,
+    ...                          hop_length=hop_length, ax=ax[0])
+    >>> ax[0].set(title='Recurrence Matrix')
+    >>> ax[0].label_outer()
+    >>> ax[1].plot(times, nov, label='Boxcar (default)')
+    >>> ax[1].plot(times, nov_gauss, label='Gaussian (var=0.5)', linestyle='--')
+    >>> ax[1].set(title='Foote Novelty Curve', xlabel='Time (s)')
+    >>> ax[1].legend()
+    """
+    if kernel is None:
+        kernel = checkerboard_kernel(n, window=window, var=var, norm=norm)
+
+    nov = diagonal_convolve(
+        rec, kernel, k=0, mode=mode, boundary=boundary, fillvalue=fillvalue
+    )
+
+    if clip:
+        np.clip(nov, 0, None, out=nov)
+
+    if exclude and mode == "same":
+        k_len: int
+        if isinstance(kernel, tuple) and len(kernel) == 2:
+            k_len = max(len(kernel[0]), len(kernel[1]))
+        elif isinstance(kernel, np.ndarray) and kernel.ndim == 1:
+            k_len = len(kernel)
+        elif isinstance(kernel, np.ndarray):
+            k_len = max(kernel.shape[-2:])
+        else:
+            k_len = n
+
+        L = k_len // 2
+        if L > 0:
+            nov[..., :L] = 0
+            nov[..., -L:] = 0
+
+    return nov

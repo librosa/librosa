@@ -16,5 +16,7 @@ Structure and segmentation
     lag_to_recurrence
     timelag_filter
     path_enhance
+    diagonal_convolve
+    recurrence_novelty
     agglomerative
     subsegment

@@ -14,7 +14,7 @@ from . import notation
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
-    from typing import Any, Callable, Iterable, Sized
+    from typing import Any, Callable, Iterable
 
     import numpy.typing as npt
 
@@ -1956,9 +1956,21 @@ def D_weighting(
         return weights
 
 
+@overload
+def Z_weighting(frequencies: float, *, min_db: float | None = ...) -> np.float64: ...
+@overload
+def Z_weighting(frequencies: _FloatLike_co, *, min_db: float | None = ...) -> np.floating: ...
+@overload
 def Z_weighting(
-    frequencies: Sized, *, min_db: float | None = None
-) -> _Array1D[np.float64]:
+    frequencies: Sequence[float], *, min_db: float | None = ...
+) -> _Array1D[np.float64]: ...
+@overload
+def Z_weighting(
+    frequencies: _SequenceLike[_FloatLike_co], *, min_db: float | None = ...
+) -> np.ndarray: ...
+def Z_weighting(
+    frequencies: _ScalarOrSequence[_FloatLike_co], *, min_db: float | None = None
+    ) -> np.floating | np.ndarray:
     """Apply no weighting curve (aka Z-weighting).
 
     This function behaves similarly to `A_weighting`, `B_weighting`, etc.,
@@ -1988,7 +2000,8 @@ def Z_weighting(
     C_weighting
     D_weighting
     """
-    weights: np.ndarray = np.zeros(len(frequencies))
+    f_arr = np.asanyarray(frequencies)[()]
+    weights: np.floating | np.ndarray = np.zeros_like(f_arr, dtype=np.float64)[()]
     if min_db is None:
         return weights
     else:
