@@ -1634,7 +1634,7 @@ def recurrence_novelty(
     rec: np.ndarray,
     *,
     n: int = 33,
-    window: _WindowSpec = "boxcar",
+    window: _WindowSpec | None = None,
     var: float = 0.5,
     norm: bool | float | None = 1,
     kernel: np.ndarray | tuple[np.ndarray, np.ndarray] | None = None,
@@ -1658,8 +1658,8 @@ def recurrence_novelty(
         Note: Sparse matrices are not supported.
     n : int > 0, default=33
         Length of the checkerboard kernel if `kernel` is not provided.
-    window : _WindowSpec, default='boxcar'
-        Window type for the checkerboard kernel. Defaults to ``'boxcar'`` (unwindowed).
+    window : _WindowSpec or None, default=None
+        Window type for the checkerboard kernel. Defaults to ``None`` (unwindowed).
         See `librosa.filters.checkerboard_kernel` for details.
     var : float > 0, default=0.5
         Gaussian variance parameter for the checkerboard kernel when ``window='gaussian'``.

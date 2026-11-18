@@ -1114,7 +1114,7 @@ def test_logfrequency_to_stft_multi(power, n_fft, rng):
 def test_pitch_to_stft_multi(power, n_fft, rng):
     sr = 22050
     n_pitches = 84
-    fb = librosa.filters.pitch(sr=sr, n_fft=n_fft, n_pitches=n_pitches, fmin="C1")
+    fb = librosa.filters.pitch_filterbank(sr=sr, n_fft=n_fft, n_pitches=n_pitches, fmin="C1")
 
     stft_orig = np.abs(rng.standard_normal(size=(2, n_fft // 2 + 1, 4))) ** power
 

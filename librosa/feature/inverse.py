@@ -632,7 +632,7 @@ def pitch_to_stft(
     intervals: str | Collection[float] = "equal",
     bins_per_octave: int = 12,
     tuning: float = 0.0,
-    filter_window: _WindowSpec = "boxcar",
+    filter_window: _WindowSpec | None = None,
     norm: Literal["slaney"] | float | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -659,12 +659,12 @@ def pitch_to_stft(
         Number of bins per octave in the interval system.
     tuning : float, default=0.0
         Tuning deviation from A440 in fractional bins.
-    filter_window : str, default='boxcar'
+    filter_window : str, callable, or None, default=None
         Filter shape for each pitch band.
     norm : {None, 'slaney', or number}, default=None
         Normalization applied to each filter row.
     **kwargs : additional keyword arguments
-        Additional keyword arguments for `librosa.filters.pitch`.
+        Additional keyword arguments for `librosa.filters.pitch_filterbank`.
 
     Returns
     -------
@@ -680,7 +680,7 @@ def pitch_to_stft(
     --------
     pitch_to_audio
     librosa.feature.pitch_spectrogram
-    librosa.filters.pitch
+    librosa.filters.pitch_filterbank
     librosa.util.nnls
     logfrequency_to_stft
     mel_to_stft
@@ -701,7 +701,7 @@ def pitch_to_stft(
             f"Number of pitch bands in P ({P.shape[-2]}) does not match n_pitches ({n_pitches})"
         )
 
-    pitch_basis = filters.pitch(
+    pitch_basis = filters.pitch_filterbank(
         sr=sr,
         n_fft=n_fft,
         n_pitches=P.shape[-2],
@@ -739,7 +739,7 @@ def pitch_to_audio(
     intervals: str | Collection[float] = "equal",
     bins_per_octave: int = 12,
     tuning: float = 0.0,
-    filter_window: _WindowSpec = "boxcar",
+    filter_window: _WindowSpec | None = None,
     norm: Literal["slaney"] | float | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -789,12 +789,12 @@ def pitch_to_audio(
         Number of bins per octave in the interval system.
     tuning : float, default=0.0
         Tuning deviation from A440 in fractional bins.
-    filter_window : str, default='boxcar'
+    filter_window : str, callable, or None, default=None
         Filter shape for each pitch band.
     norm : {None, 'slaney', or number}, default=None
         Normalization applied to each filter row.
     **kwargs : additional keyword arguments
-        Additional keyword arguments for `librosa.filters.pitch`.
+        Additional keyword arguments for `librosa.filters.pitch_filterbank`.
 
     Returns
     -------

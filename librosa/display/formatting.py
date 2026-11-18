@@ -947,10 +947,6 @@ _logfreq_ax_types = (
     "logfreq_note",
     "logfreq_svara",
     "logfreq_oct3",
-    "logfrequency_hz",
-    "logfrequency_note",
-    "logfrequency_svara",
-    "logfrequency_oct3",
 )
 _freq_ax_types = (
     "linear",
@@ -1038,10 +1034,6 @@ def _scale_axes(axes, ax_type, which, tempo_min, tempo_max):
         "logfreq_note",
         "logfreq_svara",
         "logfreq_oct3",
-        "logfrequency_hz",
-        "logfrequency_note",
-        "logfrequency_svara",
-        "logfrequency_oct3",
         "pitch_hz",
         "pitch_note",
         "pitch_svara",
@@ -1086,11 +1078,7 @@ def _decorate_axis(
     n_bins=None,
 ):
     """Configure axis tickers, locators, and labels"""
-    if fmin is not None:
-        if isinstance(fmin, str):
-            fmin = float(core.note_to_hz(fmin))
-        else:
-            fmin = float(fmin)
+    fmin = util._ensure_hz(fmin)
 
     time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
 
@@ -1219,7 +1207,7 @@ def _decorate_axis(
         axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Lag ({:s})".format(time_units[unit]))
 
-    elif ax_type in ["cqt_note", "logfreq_note", "logfrequency_note"] or (
+    elif ax_type in ["cqt_note", "logfreq_note"] or (
         ax_type == "pitch_note" and (intervals is None or intervals == "equal")
     ):
         axis.set_major_formatter(NoteFormatter(key=key, unicode=unicode))
@@ -1231,7 +1219,7 @@ def _decorate_axis(
         axis.set_minor_locator(mplticker.LogLocator(base=2.0, subs=C_offset * 2.0 ** (np.arange(1, 12) / 12.0)))
         axis.set_label_text("Note")
 
-    elif ax_type in ["cqt_svara", "logfreq_svara", "logfrequency_svara"] or ax_type == "pitch_svara":
+    elif ax_type in ["cqt_svara", "logfreq_svara"] or ax_type == "pitch_svara":
         if ax_type == "pitch_svara" and intervals not in (None, "equal"):
             raise ParameterError("Svara display is not currently supported for non-equal pitch intervals")
         if Sa is None:
@@ -1320,7 +1308,6 @@ def _decorate_axis(
     elif ax_type in [
         "cqt_hz",
         "logfreq_hz",
-        "logfrequency_hz",
     ] or (ax_type == "pitch_hz" and (intervals is None or intervals == "equal")):
         axis.set_major_formatter(LogHzFormatter())
         log_C1 = np.log2(core.note_to_hz("C1"))
@@ -1369,7 +1356,6 @@ def _decorate_axis(
         "log_oct3",
         "mel_oct3",
         "logfreq_oct3",
-        "logfrequency_oct3",
         "pitch_oct3",
     ]:
         # Label once per octave
@@ -1431,12 +1417,9 @@ def _coord_cqt_hz(
     **_kwargs: Any,
 ) -> _Array1D[np.float64]:
     """Get CQT bin frequencies"""
+    fmin = util._ensure_hz(fmin)
     if fmin is None:
         fmin = float(core.note_to_hz("C1"))
-    elif isinstance(fmin, str):
-        fmin = float(core.note_to_hz(fmin))
-    else:
-        fmin = float(fmin)
 
     # Apply tuning correction
     fmin = fmin * 2.0 ** (_kwargs.get("tuning", 0.0) / bins_per_octave)
@@ -1466,12 +1449,9 @@ def _coord_vqt_hz(
     unison: str | None = None,  # noqa: ARG001
     **_kwargs: Any,
 ) -> _Array1D[np.float64]:
+    fmin = util._ensure_hz(fmin)
     if fmin is None:
         fmin = float(core.note_to_hz("C1"))
-    elif isinstance(fmin, str):
-        fmin = float(core.note_to_hz(fmin))
-    else:
-        fmin = float(fmin)
 
     if intervals is None:
         raise ParameterError("VQT axis coordinates cannot be defined without intervals")
@@ -1497,10 +1477,9 @@ def _coord_pitch_hz(
     **kwargs: Any,
 ) -> _Array1D[np.float64]:
     """Get Pitch bin frequencies"""
+    fmin = util._ensure_hz(fmin)
     if fmin is None:
         fmin = float(core.note_to_hz("C1"))
-    else:
-        fmin = util._ensure_hz(fmin)
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     if intervals is None or intervals == "equal":

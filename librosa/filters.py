@@ -42,6 +42,7 @@ __all__ = [
     "pitch_to_chroma",
     "frequency_filterbank",
     "logfrequency",
+    "pitch_filterbank",
     "pitch",
     "pitch_basis",
     "window_bandwidth",
@@ -387,7 +388,7 @@ def frequency_filterbank(
     freq_out: ArrayLike,
     *,
     bandwidths: float | ArrayLike | None = None,
-    window: _WindowSpec | Callable[[np.ndarray], np.ndarray] = "triangle",
+    window: _WindowSpec | Callable[[np.ndarray], np.ndarray] | None = "triangle",
     scale: Literal["linear", "log"] = "linear",
     norm: Literal["slaney"] | float | None = None,
     dtype: DTypeLike = np.float32,
@@ -531,8 +532,7 @@ def frequency_filterbank(
         c_ext = None
 
     if window in ("triangle", "triang"):
-        if bandwidths is None:
-            assert c_ext is not None
+        if bandwidths is None and c_ext is not None:
             fdiff = np.diff(c_ext)
             ramps = np.subtract.outer(c_ext, u_in)
             lower = -ramps[:n_out] / fdiff[:n_out, np.newaxis]
@@ -541,11 +541,13 @@ def frequency_filterbank(
         else:
             diff = np.abs(u_in - u_out[:, np.newaxis])
             weights = np.maximum(0.0, 1.0 - diff / h[:, np.newaxis]).astype(dtype)
-    elif window in ("boxcar", "rect", "rectangular"):
+    elif window is None or (
+        isinstance(window, str) and window in ("boxcar", "ones", "rect", "rectangular")
+    ):
         in_band = (u_in >= left_midpoints[:, np.newaxis]) & (u_in < right_midpoints[:, np.newaxis])
         in_band[-1] |= (u_in == right_midpoints[-1])
         weights = in_band.astype(dtype)
-    elif window in ("hann", "cosine"):
+    elif window in ("hann", "hanning"):
         l_edge = left_overlapping[:, np.newaxis]
         r_edge = right_overlapping[:, np.newaxis]
         c_pt = u_out[:, np.newaxis]
@@ -556,6 +558,13 @@ def frequency_filterbank(
         d_right = (u_in - c_pt) / (r_edge - c_pt)
         weights[left_mask] = np.sin(0.5 * np.pi * d_left[left_mask]) ** 2
         weights[right_mask] = np.cos(0.5 * np.pi * d_right[right_mask]) ** 2
+    elif window in ("cosine", "cos", "sine"):
+        l_edge = left_overlapping[:, np.newaxis]
+        r_edge = right_overlapping[:, np.newaxis]
+        weights = np.zeros((n_out, len(u_in)), dtype=dtype)
+        in_band = (u_in >= l_edge) & (u_in <= r_edge)
+        norm_coord = (u_in - l_edge) / (r_edge - l_edge)
+        weights[in_band] = np.sin(np.pi * norm_coord[in_band])
     elif window == "gaussian":
         sigma = (right_overlapping - left_overlapping) / (2.0 * np.sqrt(2.0 * np.log(2.0)))
         diff = (u_in - u_out[:, np.newaxis]) / sigma[:, np.newaxis]
@@ -577,7 +586,15 @@ def frequency_filterbank(
             width_hz = 2.0 ** right_overlapping - 2.0 ** left_overlapping
         else:
             width_hz = right_overlapping - left_overlapping
-        scale_factor = 1.0 if window in ("boxcar", "rect", "rectangular") else 2.0
+        scale_factor = (
+            1.0
+            if window is None
+            or (
+                isinstance(window, str)
+                and window in ("boxcar", "ones", "rect", "rectangular")
+            )
+            else 2.0
+        )
         enorm = scale_factor / width_hz
         weights *= enorm[:, np.newaxis]
     elif norm is not None:
@@ -719,7 +736,7 @@ def logfrequency(
 
 
 @cache(level=10)
-def pitch(
+def pitch_filterbank(
     *,
     sr: float | None = None,
     n_fft: int | None = None,
@@ -729,7 +746,7 @@ def pitch(
     intervals: str | Collection[float] = "equal",
     bins_per_octave: int = 12,
     tuning: float = 0.0,
-    window: _WindowSpec = "boxcar",
+    window: _WindowSpec | None = None,
     norm: Literal["slaney"] | float | None = None,
     dtype: DTypeLike = np.float32,
 ) -> np.ndarray:
@@ -763,10 +780,10 @@ def pitch(
         Number of bins per octave in the interval system.
     tuning : float [scalar], default=0.0
         Tuning deviation from A440 in fractions of a bin.
-    window : str, default='boxcar'
+    window : str, callable, or None, default=None
         Filter shape for each pitch band:
 
-        - `'boxcar'`: Rectangular indicator window :math:`[f(p - 0.5), f(p + 0.5))`.
+        - None (or `'ones'`, `'boxcar'`): Rectangular indicator window :math:`[f(p - 0.5), f(p + 0.5))`.
           With ``norm=None``, this identically reproduces `libfmp.pool_pitch` energy pooling.
         - `'triangle'`: Triangular center-weighted filter.
         - `'hann'`: Raised-cosine bell.
@@ -793,13 +810,13 @@ def pitch(
     --------
     Construct a 128-pitch boxcar filterbank (libfmp pool_pitch equivalent):
 
-    >>> fb = librosa.filters.pitch(sr=22050, n_fft=2048)
+    >>> fb = librosa.filters.pitch_filterbank(sr=22050, n_fft=2048)
     >>> fb.shape
     (128, 1025)
 
     Construct a Just Intonation pitch filterbank:
 
-    >>> fb_ji = librosa.filters.pitch(sr=22050, n_fft=2048, intervals="ji5", fmin="C1", n_pitches=84)
+    >>> fb_ji = librosa.filters.pitch_filterbank(sr=22050, n_fft=2048, intervals="ji5", fmin="C1", n_pitches=84)
     >>> fb_ji.shape
     (84, 1025)
 
@@ -846,6 +863,9 @@ def pitch(
     )
 
 
+pitch = pitch_filterbank
+
+
 def _dct_residual_basis(
     n_features: int,
     n_residual: int = 5,
@@ -880,25 +900,23 @@ def _dct_residual_basis(
     if n_residual <= 0:
         return np.empty((n_features, 0), dtype=dtype)
 
-    import scipy.fft
+    res = np.empty((n_features, n_residual), dtype=dtype)
+    res[:, 0] = 1.0
+    col = 1
+    n = np.arange(n_features) + 0.5
+    for k in range(1, (n_residual + 1) // 2 + 1):
+        if col >= n_residual:
+            break
+        basis = np.cos(n * (k * np.pi / n_features))
+        res[:, col] = basis - basis.min()
+        col += 1
+        if col < n_residual:
+            res[:, col] = basis.max() - basis
+            col += 1
 
-    D = scipy.fft.dct(np.eye(n_features), type=2, norm="ortho")
-    cols = [D[:, 0]]
-    k = 1
-    while len(cols) < n_residual and k < n_features:
-        dk = D[:, k]
-        # Low shelf / positive extrema shift
-        cols.append(dk - dk.min())
-        if len(cols) < n_residual:
-            # High shelf / negative extrema shift
-            cols.append((-dk) - (-dk).min())
-        k += 1
-
-    res = np.column_stack(cols[:n_residual]).astype(dtype)
     if norm is not None:
-        col_norm = np.linalg.norm(res, ord=norm, axis=0, keepdims=True)
-        col_norm[col_norm == 0] = 1.0
-        res = res / col_norm
+        res = util.normalize(res, norm=norm, axis=0)
+
     return res
 
 
@@ -989,7 +1007,7 @@ def pitch_basis(
 
     See Also
     --------
-    pitch
+    pitch_filterbank
     frequency_filterbank
     librosa.decompose.decompose
     librosa.decompose.pitch_nmf
@@ -1081,12 +1099,17 @@ def pitch_basis(
                 W_pitch[closest, j] += w
                 continue
 
-            if window in ("boxcar", "rect", "rectangular"):
+            if window is None or (
+                isinstance(window, str)
+                and window in ("boxcar", "ones", "rect", "rectangular")
+            ):
                 W_pitch[in_band, j] += w
             elif window in ("triangle", "triang"):
                 W_pitch[in_band, j] += w * (1.0 - d[in_band] / bw)
-            elif window == "hann":
+            elif window in ("hann", "hanning"):
                 W_pitch[in_band, j] += w * (0.5 + 0.5 * np.cos(np.pi * d[in_band] / bw))
+            elif window in ("cosine", "cos"):
+                W_pitch[in_band, j] += w * np.cos(0.5 * np.pi * d[in_band] / bw)
             elif window == "gaussian":
                 W_pitch[in_band, j] += w * np.exp(-0.5 * (d[in_band] / (bw / 2.0)) ** 2)
             elif callable(window):
@@ -1116,9 +1139,7 @@ def pitch_basis(
         W = W + offset
 
     if norm is not None:
-        col_norm = np.linalg.norm(W, ord=norm, axis=0, keepdims=True)
-        col_norm[col_norm == 0] = 1.0
-        W = W / col_norm
+        W = util.normalize(W, norm=norm, axis=0)
 
     return W.astype(dtype)
 
@@ -2213,7 +2234,7 @@ def diagonal_filter(
 def checkerboard_kernel(
     n: int,
     *,
-    window: _WindowSpec = "boxcar",
+    window: _WindowSpec | None = None,
     var: float = 0.5,
     norm: bool | float | None = 1,
     zero_mean: bool = False,
@@ -2238,10 +2259,10 @@ def checkerboard_kernel(
     ----------
     n : int > 0
         The length of the kernel along each dimension (produces an ``(n, n)`` matrix).
-    window : str, tuple, number, callable, or list-like, default="boxcar"
+    window : str, tuple, number, callable, list-like, or None, default=None
         Window function for tapering the kernel:
 
-        - ``"boxcar"`` (default) or ``None``: classic box checkerboard without tapering.
+        - ``None`` (default) or ``"ones"`` or ``"boxcar"``: classic box checkerboard without tapering.
         - ``"gaussian"``: Gaussian tapering with standard deviation
           ``var * (n - 1) / 2``, matching `libfmp` [#]_.
         - Any other window specification supported by `get_window` (e.g. ``"hann"``,
@@ -2311,7 +2332,9 @@ def checkerboard_kernel(
     s = np.sign(coord)
 
     w: np.ndarray
-    if window is None or (isinstance(window, str) and window in ("boxcar", "rect")):
+    if window is None or (
+        isinstance(window, str) and window in ("boxcar", "ones", "rect", "rectangular")
+    ):
         w = np.ones(n, dtype=dtype)
     elif isinstance(window, str) and window == "gaussian":
         if var <= 0:

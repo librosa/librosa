@@ -16,7 +16,7 @@ Filters and windows
     semitone_filterbank
     frequency_filterbank
     logfrequency
-    pitch
+    pitch_filterbank
     pitch_basis
 
     window_bandwidth

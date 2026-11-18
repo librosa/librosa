@@ -218,22 +218,20 @@ def decompose(
         n_components = S.shape[-1]
 
     if transformer is None:
-        if fit is False and components is None:
-            raise ParameterError("fit must be True if transformer and components are None")
-
         import sklearn.decomposition
 
-        if fit:
+        if not fit:
+            if components is None:
+                raise ParameterError("fit must be True if transformer and components are None")
+            transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
+            H_fixed = components.reshape((-1, n_components), order="F").T.astype(S.dtype)
+            transformer.components_ = H_fixed
+            transformer.n_components_ = n_components
+        else:
             init_mode = "custom" if components is not None else kwargs.pop("init", None)
             transformer = sklearn.decomposition.NMF(
                 n_components=n_components, init=init_mode, **kwargs
             )
-        else:
-            transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
-            assert components is not None
-            H_fixed = components.reshape((-1, n_components), order="F").T.astype(S.dtype)
-            transformer.components_ = H_fixed
-            transformer.n_components_ = n_components
 
     fit_kwargs = {}
     if fit and components is not None:
@@ -375,7 +373,7 @@ def pitch_nmf(
     --------
     decompose
     pitch_basis
-    librosa.filters.pitch
+    librosa.filters.pitch_filterbank
 
     Examples
     --------

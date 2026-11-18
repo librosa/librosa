@@ -727,7 +727,7 @@ def onset_strength_multi(
         else:
             mag, phase = core.magphase(S)
             phi = np.angle(phase)
-            dphi = np.angle(S[..., 1:] * np.conj(S[..., :-1]))
+            dphi = np.angle(phase[..., 1:] * np.conj(phase[..., :-1]))
 
             ref_mag = mag[..., 1:-lag]
             pred_phase = phi[..., 1:-lag] + lag * dphi[..., :-lag]

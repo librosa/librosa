@@ -2358,7 +2358,7 @@ def logfrequency_spectrogram(
         n_bins=n_bins,
         bins_per_octave=bins_per_octave,
         fmin=fmin,
-        tuning=tuning if tuning is not None else 0.0,
+        tuning=tuning,
         window=filter_window,
         norm=norm,
         dtype=S.dtype,
@@ -2385,7 +2385,7 @@ def pitch_spectrogram(
     fmin: _FloatLike_co | str | None = None,
     intervals: str | Collection[float] = "equal",
     bins_per_octave: int = 12,
-    filter_window: _WindowSpec = "boxcar",
+    filter_window: _WindowSpec | None = None,
     norm: Literal["slaney"] | float | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
@@ -2437,14 +2437,14 @@ def pitch_spectrogram(
         - Collection of floats in [1, 2): Custom interval set.
     bins_per_octave : int > 0 [scalar], default=12
         Number of bins per octave in the interval system.
-    filter_window : str, default='boxcar'
-        Filter shape for each pitch band. Default `'boxcar'` performs exact
+    filter_window : str, callable, or None, default=None
+        Filter shape for each pitch band. Default None (or `'ones'`) performs exact
         rectangular energy summation across semitone boundaries.
         Also supports `'triangle'`, `'hann'`, `'gaussian'`.
     norm : {None, 'slaney', or number}, default=None
         Normalization applied to each filter row.
     **kwargs : additional keyword arguments
-        Additional keyword arguments to `librosa.filters.pitch`.
+        Additional keyword arguments to `librosa.filters.pitch_filterbank`.
 
     Returns
     -------
@@ -2453,7 +2453,7 @@ def pitch_spectrogram(
 
     See Also
     --------
-    librosa.filters.pitch
+    librosa.filters.pitch_filterbank
     logfrequency_spectrogram
     chroma_stft
 
@@ -2500,17 +2500,20 @@ def pitch_spectrogram(
         pad_mode=pad_mode,
     )
 
-    if tuning is None and intervals == "equal":
-        tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=bins_per_octave)
+    if tuning is None:
+        if intervals == "equal":
+            tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=bins_per_octave)
+        else:
+            tuning = 0.0
 
-    pitch_fb = filters.pitch(
+    pitch_fb = filters.pitch_filterbank(
         sr=sr,
         n_fft=n_fft,
         n_pitches=n_pitches,
         fmin=fmin,
         intervals=intervals,
         bins_per_octave=bins_per_octave,
-        tuning=tuning if tuning is not None else 0.0,
+        tuning=tuning,
         window=filter_window,
         norm=norm,
         dtype=S.dtype,

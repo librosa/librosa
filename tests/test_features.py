@@ -1030,7 +1030,7 @@ def test_logfrequency_to_audio():
 def test_pitch_to_stft(power, dtype, n_fft, rng):
     sr = 22050
     n_pitches = 84
-    fb = librosa.filters.pitch(
+    fb = librosa.filters.pitch_filterbank(
         sr=sr, n_fft=n_fft, n_pitches=n_pitches, fmin="C1", dtype=dtype
     )
 

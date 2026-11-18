@@ -223,8 +223,8 @@ def test_filters_logfrequency_str():
 
 
 def test_filters_pitch_str():
-    f_str = librosa.filters.pitch(sr=22050, n_fft=2048, fmin="C2")
-    f_num = librosa.filters.pitch(
+    f_str = librosa.filters.pitch_filterbank(sr=22050, n_fft=2048, fmin="C2")
+    f_num = librosa.filters.pitch_filterbank(
         sr=22050, n_fft=2048, fmin=librosa.note_to_hz("C2")
     )
     assert np.allclose(f_str, f_num)
@@ -320,7 +320,7 @@ def test_invalid_str_raises():
         librosa.filters.logfrequency(sr=22050, n_fft=2048, fmin="not_a_note")
 
     with pytest.raises(librosa.ParameterError):
-        librosa.filters.pitch(sr=22050, n_fft=2048, fmin="not_a_note")
+        librosa.filters.pitch_filterbank(sr=22050, n_fft=2048, fmin="not_a_note")
 
     with pytest.raises(librosa.ParameterError):
         librosa.filters.pitch_basis(sr=22050, n_fft=2048, fmin="not_a_note")

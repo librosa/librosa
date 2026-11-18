@@ -858,8 +858,10 @@ def test_pitch_filterbank_libfmp_equivalence():
         return np.where((lower <= k_freq) & (k_freq < upper))[0]
 
     # Our pitch filterbank:
-    fb = librosa.filters.pitch(sr=Fs, n_fft=N, n_pitches=128, window="boxcar", norm=None)
+    fb = librosa.filters.pitch_filterbank(sr=Fs, n_fft=N, n_pitches=128, window=None, norm=None)
     assert fb.shape == (128, N // 2 + 1)
+    # Check alias compatibility
+    assert librosa.filters.pitch is librosa.filters.pitch_filterbank
 
     for p in range(128):
         fmp_bins = pool_pitch_fmp(p)
@@ -874,35 +876,35 @@ def test_pitch_filterbank_temperaments():
     sr, n_fft = 22050, 2048
 
     for intervals in ["equal", "pythagorean", "ji3", "ji5", "ji7"]:
-        fb = librosa.filters.pitch(sr=sr, n_fft=n_fft, intervals=intervals, fmin="C1", n_pitches=60)
+        fb = librosa.filters.pitch_filterbank(sr=sr, n_fft=n_fft, intervals=intervals, fmin="C1", n_pitches=60)
         assert fb.shape == (60, 1025)
         assert not np.isnan(fb).any()
 
     # Custom ratios
     custom_ratios = [1.0, 9 / 8, 5 / 4, 4 / 3, 3 / 2, 5 / 3, 15 / 8]
-    fb_custom = librosa.filters.pitch(
+    fb_custom = librosa.filters.pitch_filterbank(
         sr=sr, n_fft=n_fft, intervals=custom_ratios, fmin=55.0, n_pitches=21
     )
     assert fb_custom.shape == (21, 1025)
 
     # Different window shapes
-    for win in ["triangle", "hann", "gaussian"]:
-        fb_win = librosa.filters.pitch(sr=sr, n_fft=n_fft, window=win, fmin="C1", n_pitches=60)
+    for win in ["triangle", "hann", "cosine", "gaussian", "ones", "boxcar", None]:
+        fb_win = librosa.filters.pitch_filterbank(sr=sr, n_fft=n_fft, window=win, fmin="C1", n_pitches=60)
         assert fb_win.shape == (60, 1025)
         assert not np.isnan(fb_win).any()
 
     # fmin=None with non-equal intervals defaults to C1
-    fb_fmin_none = librosa.filters.pitch(sr=sr, n_fft=n_fft, intervals="pythagorean", fmin=None)
+    fb_fmin_none = librosa.filters.pitch_filterbank(sr=sr, n_fft=n_fft, intervals="pythagorean", fmin=None)
     assert fb_fmin_none.shape == (128, 1025)
 
     # With explicit freq_in
     f_in = np.linspace(0, 11025, 1025)
-    fb_freq_in = librosa.filters.pitch(freq_in=f_in, n_pitches=60)
+    fb_freq_in = librosa.filters.pitch_filterbank(freq_in=f_in, n_pitches=60)
     assert fb_freq_in.shape == (60, 1025)
 
     # Missing sr/n_fft and freq_in raises ParameterError
     with pytest.raises(librosa.ParameterError):
-        librosa.filters.pitch()
+        librosa.filters.pitch_filterbank()
 
 
 def test_dct_residual_basis():
