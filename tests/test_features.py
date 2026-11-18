@@ -1557,6 +1557,12 @@ def test_pitch_spectrogram(y_chirp):
     S_tune = librosa.feature.pitch_spectrogram(y=y, sr=sr, tuning=None)
     assert S_tune.shape == S_pitch.shape
 
+    # Automatic tuning with non-equal intervals defaults to 0.0
+    S_tune_non_equal = librosa.feature.pitch_spectrogram(
+        y=y, sr=sr, intervals="pythagorean", tuning=None, fmin="C1", n_pitches=60
+    )
+    assert S_tune_non_equal.shape[0] == 60
+
     # Alternative intonations
     for intervals in ["equal", "pythagorean", "ji5"]:
         S_int = librosa.feature.pitch_spectrogram(

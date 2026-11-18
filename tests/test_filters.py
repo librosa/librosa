@@ -975,7 +975,7 @@ def test_pitch_basis():
     assert basis_128.shape == (1025, 133)
 
     # Different windows
-    for win in ["triangle", "boxcar", "hann", "gaussian"]:
+    for win in ["triangle", "boxcar", "hann", "cosine", "gaussian", "ones", None]:
         b = librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, window=win, n_pitches=24)
         assert b.shape == (1025, 29)
         assert not np.isnan(b).any()
