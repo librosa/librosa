@@ -927,7 +927,7 @@ def pitch_basis(
     intervals: str | Collection[float] = "equal",
     bins_per_octave: int = 12,
     tuning: float = 0.0,
-    window: _WindowSpec = "triangle",
+    window: _WindowSpec | None = "triangle",
     harmonics: Sequence[float] | None = None,
     harmonic_weights: Sequence[float] | None = None,
     offset: float = 1e-4,
