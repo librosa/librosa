@@ -21,7 +21,15 @@ if TYPE_CHECKING:
 
     from numpy.typing import DTypeLike
 
-    from .._typing import _DCTNorm, _DCTType, _FloatLike_co, _PadModeSTFT, _WindowSpec
+    from .._typing import (
+        RNGLike,
+        SeedLike,
+        _DCTNorm,
+        _DCTType,
+        _FloatLike_co,
+        _PadModeSTFT,
+        _WindowSpec,
+    )
 
 __all__ = [
     "mel_to_stft",
@@ -138,6 +146,7 @@ def mel_to_audio(
     n_iter: int = 32,
     length: int | None = None,
     dtype: DTypeLike = np.float32,
+    rng: RNGLike | SeedLike | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Invert a mel power spectrogram to audio using Griffin-Lim.
@@ -176,6 +185,9 @@ def mel_to_audio(
         samples.
     dtype : np.dtype
         Real numeric type for the time-domain signal.  Default is 32-bit float.
+    rng : None, int, sequence of int, np.random.Generator, or np.random.RandomState
+        Random number generator or seed for phase initialization in `librosa.griffinlim`.
+        Pass an integer seed for reproducible reconstruction.
     **kwargs :
         additional keyword arguments for Mel filter bank parameters
     fmin : float >= 0 [scalar]
@@ -218,6 +230,7 @@ def mel_to_audio(
         dtype=dtype,
         length=length,
         pad_mode=pad_mode,
+        rng=rng,
     )
 
 
@@ -305,6 +318,7 @@ def mfcc_to_audio(
     norm: _DCTNorm | None = "ortho",
     ref: float = 1.0,
     lifter: float = 0,
+    rng: RNGLike | SeedLike | None = None,
     **kwargs: Any,
 ) -> np.ndarray:
     """Convert Mel-frequency cepstral coefficients to a time-domain audio signal
@@ -332,6 +346,9 @@ def mfcc_to_audio(
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
             M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter)) * lifter / 2
+    rng : None, int, sequence of int, np.random.Generator, or np.random.RandomState
+        Random number generator or seed for phase initialization in `librosa.griffinlim`.
+        Pass an integer seed for reproducible reconstruction.
     **kwargs
         additional keyword arguments to pass through to `mel_to_audio`
     M : np.ndarray [shape=(..., n_mels, n), non-negative]
@@ -388,7 +405,7 @@ def mfcc_to_audio(
         mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm, ref=ref, lifter=lifter
     )
 
-    return mel_to_audio(mel_spec, **kwargs)
+    return mel_to_audio(mel_spec, rng=rng, **kwargs)
 
 
 def logfrequency_to_stft(

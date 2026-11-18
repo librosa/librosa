@@ -973,6 +973,24 @@ def test_mel_to_audio():
     assert librosa.util.valid_audio(y_inv)
 
 
+@pytest.mark.parametrize(
+    "invert, kwargs",
+    [
+        (librosa.feature.inverse.mel_to_audio, {}),
+        (librosa.feature.inverse.mfcc_to_audio, {"n_mels": 8}),
+    ],
+)
+def test_feature_to_audio_rng(invert, kwargs):
+    features = np.ones((8, 5))
+    kwargs = dict(kwargs, n_fft=128, n_iter=2)
+
+    audio = invert(features, rng=123, **kwargs)
+    np.testing.assert_allclose(
+        audio, invert(features, rng=np.random.default_rng(123), **kwargs)
+    )
+    assert not np.allclose(audio, invert(features, rng=456, **kwargs))
+
+
 @pytest.mark.parametrize("power", [1, 2])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("n_fft", [1024, 2048])
