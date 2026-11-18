@@ -43,7 +43,6 @@ __all__ = [
     "frequency_filterbank",
     "logfrequency",
     "pitch_filterbank",
-    "pitch",
     "pitch_basis",
     "window_bandwidth",
     "get_window",
@@ -861,9 +860,6 @@ def pitch_filterbank(
         norm=norm,
         dtype=dtype,
     )
-
-
-pitch = pitch_filterbank
 
 
 def _dct_residual_basis(

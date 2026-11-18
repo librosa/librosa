@@ -860,8 +860,6 @@ def test_pitch_filterbank_libfmp_equivalence():
     # Our pitch filterbank:
     fb = librosa.filters.pitch_filterbank(sr=Fs, n_fft=N, n_pitches=128, window=None, norm=None)
     assert fb.shape == (128, N // 2 + 1)
-    # Check alias compatibility
-    assert librosa.filters.pitch is librosa.filters.pitch_filterbank
 
     for p in range(128):
         fmp_bins = pool_pitch_fmp(p)
