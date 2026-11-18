@@ -2332,7 +2332,7 @@ def shepard_tone(
 
 
 def shepard_scale(
-    f: _FloatLike_co | str,
+    frequency: _FloatLike_co | str,
     *,
     sr: float = 22050,
     length: int | None = None,
@@ -2346,11 +2346,11 @@ def shepard_scale(
     """Construct a discrete Shepard scale signal.
 
     A Shepard scale is a sequence of discrete Shepard tones starting from
-    ``f`` over the allotted duration.
+    ``frequency`` over the allotted duration.
 
     Parameters
     ----------
-    f : float > 0 or str
+    frequency : float > 0 or str
         Starting frequency of the scale (in Hz) or note name in SPN format (e.g., 'C4').
     sr : number > 0
         Desired sampling rate of the output signal.
@@ -2404,17 +2404,17 @@ def shepard_scale(
     """
     from .intervals import interval_frequencies
 
-    if f is None:
-        raise ParameterError('"f" must be a positive number')
+    if frequency is None:
+        raise ParameterError('"frequency" must be a positive number')
 
-    f = util._ensure_hz(f)
-    if f <= 0:
-        raise ParameterError('"f" must be a positive number')
+    frequency = util._ensure_hz(frequency)
+    if frequency <= 0:
+        raise ParameterError('"frequency" must be a positive number')
 
     nyquist = sr / 2.0
-    if float(f) >= nyquist:
+    if float(frequency) >= nyquist:
         raise ParameterError(
-            f"f={f} must be strictly less than Nyquist (sr/2={nyquist})"
+            f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
     if length is None:
@@ -2432,7 +2432,7 @@ def shepard_scale(
     n_steps_abs = abs(n_steps)
 
     if reverse_signal:
-        # To start at f and descend, we find the fmin that makes the highest note f
+        # To start at frequency and descend, we find the fmin that makes the highest note frequency
         ratios = interval_frequencies(
             n_steps_abs,
             fmin=1.0,
@@ -2440,12 +2440,12 @@ def shepard_scale(
             bins_per_octave=bins_per_octave,
             tuning=tuning,
         )
-        freqs = (float(f) / ratios[-1]) * ratios
+        freqs = (float(frequency) / ratios[-1]) * ratios
         freqs = freqs[::-1]
     else:
         freqs = interval_frequencies(
             n_steps_abs,
-            fmin=f,
+            fmin=frequency,
             intervals=intervals,
             bins_per_octave=bins_per_octave,
             tuning=tuning,
@@ -2478,7 +2478,7 @@ def shepard_scale(
 
 
 def shepard_risset_glissando(
-    f: _FloatLike_co | str,
+    frequency: _FloatLike_co | str,
     *,
     n_octaves: float = 1.0,
     sr: float = 22050,
@@ -2493,7 +2493,7 @@ def shepard_risset_glissando(
 
     Parameters
     ----------
-    f : float > 0 or str
+    frequency : float > 0 or str
         Starting frequency of the base tone (in Hz) or note name in SPN format (e.g., 'C4').
     n_octaves : float
         Number of octaves to sweep over. Can be fractional or negative (for a
@@ -2535,17 +2535,17 @@ def shepard_risset_glissando(
 
     >>> y_desc = librosa.shepard_risset_glissando(110.0, duration=3.0, n_octaves=-2.0)
     """
-    if f is None:
-        raise ParameterError('"f" must be a positive number')
+    if frequency is None:
+        raise ParameterError('"frequency" must be a positive number')
 
-    f = util._ensure_hz(f)
-    if f <= 0:
-        raise ParameterError('"f" must be a positive number')
+    frequency = util._ensure_hz(frequency)
+    if frequency <= 0:
+        raise ParameterError('"frequency" must be a positive number')
 
     nyquist = sr / 2.0
-    if float(f) >= nyquist:
+    if float(frequency) >= nyquist:
         raise ParameterError(
-            f"f={f} must be strictly less than Nyquist (sr/2={nyquist})"
+            f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
     if length is None:
@@ -2556,16 +2556,16 @@ def shepard_risset_glissando(
         target_len = length
     y: _Array1D[np.float64] = np.zeros(target_len, dtype=np.float64)
 
-    f_min_sweep = min(float(f), float(f) * (2.0 ** n_octaves))
-    f_max_sweep = max(float(f), float(f) * (2.0 ** n_octaves))
+    f_min_sweep = min(float(frequency), float(frequency) * (2.0 ** n_octaves))
+    f_max_sweep = max(float(frequency), float(frequency) * (2.0 ** n_octaves))
     k_min = int(np.ceil(np.log2(30.0 / f_max_sweep)))
     k_max = int(np.floor(np.log2(np.nextafter(nyquist, 0) / f_min_sweep)))
     octave_shifts = np.arange(k_min, k_max + 1)
 
     for shift in octave_shifts:
         scale = 2.0 ** shift
-        fmin_k = float(f) * scale
-        fmax_k = float(f) * (2.0 ** n_octaves) * scale
+        fmin_k = float(frequency) * scale
+        fmax_k = float(frequency) * (2.0 ** n_octaves) * scale
 
         y += chirp(
             fmin=fmin_k,

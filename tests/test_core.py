@@ -2402,7 +2402,7 @@ def test_shepard_scale(f, sr, duration, n_steps, intervals, weighting):
 
 def test_shepard_scale_zero_step_len():
     # Test step_len <= 0 branch in shepard_scale loop by requesting more steps than output samples
-    y = librosa.shepard_scale(110.0, sr=22050, length=5, n_steps=10)
+    y = librosa.shepard_scale(frequency=110.0, sr=22050, length=5, n_steps=10)
     assert len(y) == 5
     assert np.all(np.isfinite(y))
 
@@ -2521,7 +2521,7 @@ def test_shepard_risset_glissando_cross_nyquist(n_octaves):
 def test_shepard_risset_glissando_length():
     sr = 22050
     target_length = 22050
-    y = librosa.shepard_risset_glissando(110.0, sr=sr, length=target_length)
+    y = librosa.shepard_risset_glissando(frequency=110.0, sr=sr, length=target_length)
     assert len(y) == target_length
     assert np.all(np.isfinite(y))
     assert np.any(y != 0.0)
