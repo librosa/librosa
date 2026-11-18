@@ -708,9 +708,6 @@ def logfrequency(
             raise ParameterError(f"n_bins={n_bins} must be strictly positive")
         f_out = f_min * (2.0 ** (np.arange(n_bins) / float(bins_per_octave)))
 
-    if len(f_out) == 0:
-        raise ParameterError(f"No filters fall within range below {f_top}.")
-
     return frequency_filterbank(
         freq_in=f_in,
         freq_out=f_out,

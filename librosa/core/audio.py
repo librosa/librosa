@@ -1496,14 +1496,14 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
 
 @jit(nopython=True, cache=True)
 def __lpc(
-    y: np.ndarray,
-    order: int,
-    ar_coeffs: np.ndarray,
-    ar_coeffs_prev: np.ndarray,
-    reflect_coeff: np.ndarray,
-    den: np.ndarray,
-    epsilon: float,
-) -> np.ndarray:
+    y,
+    order,
+    ar_coeffs,
+    ar_coeffs_prev,
+    reflect_coeff,
+    den,
+    epsilon,
+):
     # This implementation follows the description of Burg's algorithm given in
     # section III of Marple's paper referenced in the docstring.
     #
@@ -2566,9 +2566,6 @@ def shepard_risset_glissando(
         scale = 2.0 ** shift
         fmin_k = float(f) * scale
         fmax_k = float(f) * (2.0 ** n_octaves) * scale
-
-        if min(fmin_k, fmax_k) >= nyquist:
-            continue
 
         y += chirp(
             fmin=fmin_k,

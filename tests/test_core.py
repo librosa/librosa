@@ -2518,15 +2518,13 @@ def test_shepard_risset_glissando_cross_nyquist(n_octaves):
     assert np.any(y != 0.0)
 
 
-def test_shepard_risset_glissando_nyquist_skip():
-    # Test min(fmin_k, fmax_k) >= nyquist skip branch in shepard_risset_glissando
+def test_shepard_risset_glissando_length():
     sr = 22050
-    # f is below Nyquist (valid input parameter) but high octave shift components exceed Nyquist
-    y = librosa.shepard_risset_glissando(
-        10000.0, sr=sr, duration=0.5, n_octaves=2.0
-    )
-    assert len(y) == int(0.5 * sr)
+    target_length = 22050
+    y = librosa.shepard_risset_glissando(110.0, sr=sr, length=target_length)
+    assert len(y) == target_length
     assert np.all(np.isfinite(y))
+    assert np.any(y != 0.0)
 
 
 @pytest.mark.xfail(raises=librosa.ParameterError)

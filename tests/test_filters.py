@@ -895,6 +895,11 @@ def test_pitch_filterbank_temperaments():
     fb_fmin_none = librosa.filters.pitch(sr=sr, n_fft=n_fft, intervals="pythagorean", fmin=None)
     assert fb_fmin_none.shape == (128, 1025)
 
+    # With explicit freq_in
+    f_in = np.linspace(0, 11025, 1025)
+    fb_freq_in = librosa.filters.pitch(freq_in=f_in, n_pitches=60)
+    assert fb_freq_in.shape == (60, 1025)
+
     # Missing sr/n_fft and freq_in raises ParameterError
     with pytest.raises(librosa.ParameterError):
         librosa.filters.pitch()
@@ -944,12 +949,28 @@ def test_pitch_basis():
     )
     assert basis_harms.shape == (1025, 85)
 
-    # Custom residual array
+    # Custom residual array (2D and 1D)
     custom_res = np.ones((1025, 2))
     basis_custom_res = librosa.filters.pitch_basis(
         sr=sr, n_fft=n_fft, residual=custom_res
     )
     assert basis_custom_res.shape == (1025, 86)
+
+    custom_res_1d = np.ones(1025)
+    basis_custom_res_1d = librosa.filters.pitch_basis(
+        sr=sr, n_fft=n_fft, residual=custom_res_1d
+    )
+    assert basis_custom_res_1d.shape == (1025, 85)
+
+    # Explicit freq_in and fmin note string
+    basis_explicit = librosa.filters.pitch_basis(
+        freq_in=np.linspace(0, 11025, 1025), n_pitches=36, fmin="C2"
+    )
+    assert basis_explicit.shape == (1025, 41)
+
+    # 128 pitches with fmin=None defaults to MIDI 0 (~8.18 Hz)
+    basis_128 = librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, n_pitches=128)
+    assert basis_128.shape == (1025, 133)
 
     # Different windows
     for win in ["triangle", "boxcar", "hann", "gaussian"]:
@@ -986,6 +1007,12 @@ def test_pitch_basis():
 
     with pytest.raises(librosa.ParameterError):
         librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, window="unsupported_window")
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch_basis(freq_in=np.array([]))
+
+    with pytest.raises(librosa.ParameterError):
+        librosa.filters.pitch_basis(freq_in=np.array([100.0, 50.0]))
 
 
 def test_pitch_to_chroma_and_deprecation():
