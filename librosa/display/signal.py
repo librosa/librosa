@@ -29,7 +29,9 @@ from matplotlib.legend_handler import HandlerBase, HandlerLine2D, HandlerPatch
 
 # Core and utility imports for audio processing
 from .. import core, util
-from ..util.exceptions import ParameterError
+from ..util.exceptions import (
+    ParameterValueError,
+)
 
 # Signal visualization utilities for time-domain waveforms
 if TYPE_CHECKING:
@@ -579,7 +581,7 @@ def waveshow(
         y = y[np.newaxis, :]
 
     if max_points <= 0:
-        raise ParameterError(f"max_points={max_points} must be strictly positive")
+        raise ParameterValueError(f"max_points={max_points} must be strictly positive")
 
     # Create the adaptive drawing object
     axes = _check_axes(ax)
@@ -789,7 +791,7 @@ def wavebars(
     axes = _check_axes(ax)
 
     if n_bars <= 0:
-        raise ParameterError(f"n_bars={n_bars} must be strictly positive")
+        raise ParameterValueError(f"n_bars={n_bars} must be strictly positive")
 
     hop = max(1, y.shape[-1] // n_bars)
     env = _envelope(y, hop)
@@ -1036,7 +1038,7 @@ def wavef0(
     axes = _check_axes(ax)
 
     if method not in ("waveshow", "wavebars"):
-        raise ParameterError(f"Invalid display method={method}.")
+        raise ParameterValueError(f"Invalid display method={method}.")
 
     # Force norm to be strictly positive and handle empty arrays
     norm = float(util.tiny(y))

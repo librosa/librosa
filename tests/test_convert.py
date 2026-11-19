@@ -194,7 +194,7 @@ def test_note_to_midi(tuning, accidental, octave, round_midi: bool):
     assert midi[0] == midi_true
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_note_to_midi_badnote():
     librosa.note_to_midi("does not pass")
 
@@ -247,7 +247,7 @@ def test_note_to_hz(tuning, octave, accidental, round_midi: bool):
     assert np.allclose(hz[0], hz_true)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_note_to_hz_badnote():
     librosa.note_to_hz("does not pass")
 
@@ -272,7 +272,7 @@ def test_midi_to_note(midi_num, note, octave, cents):
     assert note_out == note
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_midi_to_note_cents_nooctave():
     librosa.midi_to_note(24.25, octave=False, cents=True)
 
@@ -304,7 +304,7 @@ def test_hz_to_note(hz, note, octave, cents):
         assert np.all(note_out == note)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_hz_to_note_cents_nooctave():
     librosa.hz_to_note(440, octave=False, cents=True)
 

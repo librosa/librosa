@@ -14,7 +14,11 @@ from ..core.constantq import cqt, hybrid_cqt, vqt
 from ..core.convert import fft_frequencies
 from ..core.pitch import estimate_tuning
 from ..core.spectrum import _spectrogram, power_to_db
-from ..util.exceptions import ParameterError
+from ..exceptions import (
+    ParameterShapeError,
+    ParameterTypeError,
+    ParameterValueError,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Collection, Literal
@@ -171,11 +175,11 @@ def spectral_centroid(
     )
 
     if not np.isrealobj(S):
-        raise ParameterError(
+        raise ParameterTypeError(
             "Spectral centroid is only defined " "with real-valued input"
         )
     elif np.any(S < 0):
-        raise ParameterError(
+        raise ParameterValueError(
             "Spectral centroid is only defined " "with non-negative energies"
         )
 
@@ -322,11 +326,11 @@ def spectral_bandwidth(
     )
 
     if not np.isrealobj(S):
-        raise ParameterError(
+        raise ParameterTypeError(
             "Spectral bandwidth is only defined " "with real-valued input"
         )
     elif np.any(S < 0):
-        raise ParameterError(
+        raise ParameterValueError(
             "Spectral bandwidth is only defined " "with non-negative energies"
         )
 
@@ -500,23 +504,23 @@ def spectral_contrast(
     freq = np.atleast_1d(freq)
 
     if freq.ndim != 1 or len(freq) != S.shape[-2]:
-        raise ParameterError(f"freq.shape mismatch: expected ({S.shape[-2]:d},)")
+        raise ParameterShapeError(f"freq.shape mismatch: expected ({S.shape[-2]:d},)")
 
     if n_bands < 1 or not isinstance(n_bands, (int, np.integer)):
-        raise ParameterError("n_bands must be a positive integer")
+        raise ParameterValueError("n_bands must be a positive integer")
 
     if not 0.0 < quantile < 1.0:
-        raise ParameterError("quantile must lie in the range (0, 1)")
+        raise ParameterValueError("quantile must lie in the range (0, 1)")
 
     fmin = util._ensure_hz(fmin)
     if fmin <= 0:
-        raise ParameterError("fmin must be a positive number")
+        raise ParameterValueError("fmin must be a positive number")
 
     octa = np.zeros(n_bands + 2)
     octa[1:] = fmin * (2.0 ** np.arange(0, n_bands + 1))
 
     if np.any(octa[:-1] >= 0.5 * sr):
-        raise ParameterError(
+        raise ParameterValueError(
             "Frequency band exceeds Nyquist. " "Reduce either fmin or n_bands."
         )
 
@@ -670,7 +674,7 @@ def spectral_rolloff(
     >>> ax.set(title='log Power spectrogram')
     """
     if not 0.0 < roll_percent < 1.0:
-        raise ParameterError("roll_percent must lie in the range (0, 1)")
+        raise ParameterValueError("roll_percent must lie in the range (0, 1)")
 
     S, n_fft = _spectrogram(
         y=y,
@@ -684,11 +688,11 @@ def spectral_rolloff(
     )
 
     if not np.isrealobj(S):
-        raise ParameterError(
+        raise ParameterTypeError(
             "Spectral rolloff is only defined " "with real-valued input"
         )
     elif np.any(S < 0):
-        raise ParameterError(
+        raise ParameterValueError(
             "Spectral rolloff is only defined " "with non-negative energies"
         )
 
@@ -809,7 +813,7 @@ def spectral_flatness(
     array([[0.001, 0.   , ..., 0.218, 0.184]], dtype=float32)
     """
     if amin <= 0:
-        raise ParameterError("amin must be strictly positive")
+        raise ParameterValueError("amin must be strictly positive")
 
     S, n_fft = _spectrogram(
         y=y,
@@ -824,11 +828,11 @@ def spectral_flatness(
     )
 
     if not np.isrealobj(S):
-        raise ParameterError(
+        raise ParameterTypeError(
             "Spectral flatness is only defined " "with real-valued input"
         )
     elif np.any(S < 0):
-        raise ParameterError(
+        raise ParameterValueError(
             "Spectral flatness is only defined " "with non-negative energies"
         )
 
@@ -929,7 +933,7 @@ def rms(
     elif S is not None:
         # Check the frame length
         if S.shape[-2] != frame_length // 2 + 1:
-            raise ParameterError(
+            raise ParameterShapeError(
                 "Since S.shape[-2] is {}, "
                 "frame_length is expected to be {} or {}; "
                 "found {}".format(
@@ -948,7 +952,7 @@ def rms(
         # Calculate power
         power = 2 * np.sum(x, axis=-2, keepdims=True) / frame_length**2
     else:
-        raise ParameterError("Either `y` or `S` must be input.")
+        raise ParameterValueError("Either `y` or `S` must be input.")
 
     rms_result: np.ndarray = np.sqrt(power)
     return rms_result
@@ -1423,7 +1427,7 @@ def chroma_cqt(
     if bins_per_octave is None:
         bins_per_octave = n_chroma
     elif np.remainder(bins_per_octave, n_chroma) != 0:
-        raise ParameterError(
+        raise ParameterValueError(
             f"bins_per_octave={bins_per_octave} must be an integer "
             f"multiple of n_chroma={n_chroma}"
         )
@@ -1433,7 +1437,7 @@ def chroma_cqt(
     # Build the CQT if we don't have one already
     if C is None:
         if y is None:
-            raise ParameterError(
+            raise ParameterValueError(
                 "At least one of C or y must be provided to compute chroma"
             )
         C = np.abs(
@@ -1569,7 +1573,7 @@ def chroma_cens(
         (win_len_smooth is None)
         or (isinstance(win_len_smooth, (int, np.integer)) and win_len_smooth > 0)
     ):
-        raise ParameterError(
+        raise ParameterValueError(
             f"win_len_smooth={win_len_smooth} must be a positive integer or None"
         )
 
@@ -1718,7 +1722,7 @@ def chroma_vqt(
     # Build the CQT if we don't have one already
     if V is None:
         if y is None:
-            raise ParameterError(
+            raise ParameterValueError(
                 "At least one of y or V must be provided to compute chroma"
             )
         V = np.abs(
@@ -1857,7 +1861,7 @@ def tonnetz(
     >>> fig.colorbar(img2, ax=[ax[1]])
     """
     if y is None and chroma is None:
-        raise ParameterError(
+        raise ParameterValueError(
             "Either the audio samples or the chromagram must be "
             "passed as an argument."
         )
@@ -2087,7 +2091,7 @@ def mfcc(
     elif lifter == 0:
         return M
     else:
-        raise ParameterError(f"MFCC lifter={lifter} must be a non-negative number")
+        raise ParameterValueError(f"MFCC lifter={lifter} must be a non-negative number")
 
 
 def melspectrogram(

@@ -1338,7 +1338,7 @@ def test_peak_pick_axis(rng):
     assert np.allclose(peaks_t.T, peaks)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_peak_pick_multi_fail(rng):
 
     x = rng.standard_normal(size=(3, 1000)) ** 2
@@ -1432,7 +1432,7 @@ def test_beat_track_multi_bpm_vector(y_multi):
     assert np.allclose(beats[1], beats1)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_beat_track_multi_sparse(y_multi):
     y, sr = y_multi
     librosa.beat.beat_track(y=y, sr=sr, sparse=True)

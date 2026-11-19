@@ -17,7 +17,10 @@ from numba import jit
 
 from .filters import get_window
 from .util import expand_to, fill_off_diagonal, is_positive_int, pad_center, tiny
-from .util.exceptions import ParameterError
+from .util.exceptions import (
+    ParameterShapeError,
+    ParameterValueError,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Iterable, Literal
@@ -318,17 +321,17 @@ def dtw(
     assert weights_mul is not None
 
     if np.any(step_sizes_sigma < 0):
-        raise ParameterError("step_sizes_sigma cannot contain negative values")
+        raise ParameterValueError("step_sizes_sigma cannot contain negative values")
 
     if len(step_sizes_sigma) != len(weights_add):
-        raise ParameterError("len(weights_add) must be equal to len(step_sizes_sigma)")
+        raise ParameterShapeError("len(weights_add) must be equal to len(step_sizes_sigma)")
     if len(step_sizes_sigma) != len(weights_mul):
-        raise ParameterError("len(weights_mul) must be equal to len(step_sizes_sigma)")
+        raise ParameterShapeError("len(weights_mul) must be equal to len(step_sizes_sigma)")
 
     if C is None and (X is None or Y is None):
-        raise ParameterError("If C is not supplied, both X and Y must be supplied")
+        raise ParameterValueError("If C is not supplied, both X and Y must be supplied")
     if C is not None and (X is not None or Y is not None):
-        raise ParameterError("If C is supplied, both X and Y must not be supplied")
+        raise ParameterValueError("If C is supplied, both X and Y must not be supplied")
 
     c_is_transposed = False
 
@@ -359,7 +362,7 @@ def dtw(
             from scipy.spatial.distance import cdist
             C = cdist(X, Y, metric=metric)  # type: ignore[call-overload]
         except ValueError as exc:
-            raise ParameterError(
+            raise ParameterShapeError(
                 "scipy.spatial.distance.cdist returned an error.\n"
                 "Please provide your input in the form X.shape=(K, N) "
                 "and Y.shape=(K, M).\n 1-dimensional sequences should "
@@ -379,7 +382,7 @@ def dtw(
     if np.array_equal(step_sizes_sigma, np.array([[1, 1]])) and (
         C.shape[0] > C.shape[1]
     ):
-        raise ParameterError(
+        raise ParameterShapeError(
             "For diagonal matching: Y.shape[-1] >= X.shape[-11] "
             "(C.shape[1] >= C.shape[0])"
         )
@@ -389,7 +392,7 @@ def dtw(
 
     # check C here for nans before building global constraints
     if np.any(np.isnan(C)):
-        raise ParameterError("DTW cost matrix C has NaN values. ")
+        raise ParameterValueError("DTW cost matrix C has NaN values. ")
 
     if global_constraints:
         # Apply global constraints to the cost matrix
@@ -429,7 +432,7 @@ def dtw(
         wp: np.ndarray
         if subseq:
             if np.all(np.isinf(D[-1])):
-                raise ParameterError(
+                raise ParameterValueError(
                     "No valid sub-sequence warping path could "
                     "be constructed with the given step sizes."
                 )
@@ -438,14 +441,14 @@ def dtw(
         else:
             # perform warping path backtracking
             if np.isinf(D[-1, -1]):
-                raise ParameterError(
+                raise ParameterValueError(
                     "No valid sub-sequence warping path could "
                     "be constructed with the given step sizes."
                 )
 
             _wp = __dtw_backtracking(steps, step_sizes_sigma, subseq)
             if _wp[-1] != (0, 0):
-                raise ParameterError(
+                raise ParameterValueError(
                     "Unable to compute a full DTW warping path. "
                     "You may want to try again with subseq=True."
                 )
@@ -652,7 +655,7 @@ def dtw_backtracking(
     dtw
     """
     if subseq is False and start is not None:
-        raise ParameterError(
+        raise ParameterValueError(
             f"start is only allowed to be set if subseq is True (start={start}, subseq={subseq})"
         )
 
@@ -828,9 +831,9 @@ def rqa(
     >>> plt.show()
     """
     if gap_onset < 0:
-        raise ParameterError("gap_onset={} must be strictly positive")
+        raise ParameterValueError("gap_onset={} must be strictly positive")
     if gap_extend < 0:
-        raise ParameterError("gap_extend={} must be strictly positive")
+        raise ParameterValueError("gap_extend={} must be strictly positive")
 
     score: np.ndarray
     pointers: np.ndarray
@@ -1193,7 +1196,7 @@ def _viterbi(
         for j in range(n_states):
             possible_states = np.flatnonzero(log_trans[:, j] >= log_trans_threshold)
             if len(possible_states) == 0:
-                raise ParameterError(
+                raise ParameterValueError(
                     f"Empty transition matrix detected for state {j} in Viterbi. "
                     f"Try reducing your minimum transition probability threshold."
                 )
@@ -1340,19 +1343,19 @@ def viterbi(
     n_states, _n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
-        raise ParameterError(
+        raise ParameterShapeError(
             f"transition.shape={transition.shape}, must be "
             f"(n_states, n_states)={n_states, n_states}"
         )
 
     if np.any(transition < 0) or not np.allclose(transition.sum(axis=1), 1):
-        raise ParameterError(
+        raise ParameterValueError(
             "Invalid transition matrix: must be non-negative "
             "and sum to 1 on each row."
         )
 
     if np.any(prob < 0) or np.any(prob > 1):
-        raise ParameterError("Invalid probability values: must be between 0 and 1.")
+        raise ParameterValueError("Invalid probability values: must be between 0 and 1.")
 
     # Compute log-likelihoods while avoiding log-underflow
     epsilon = tiny(prob)
@@ -1365,7 +1368,7 @@ def viterbi(
         or not np.allclose(p_init.sum(), 1)
         or p_init.shape != (n_states,)
     ):
-        raise ParameterError(f"Invalid initial state distribution: p_init={p_init}")
+        raise ParameterValueError(f"Invalid initial state distribution: p_init={p_init}")
 
     log_trans = np.log(transition + epsilon)
     log_prob = np.log(prob + epsilon)
@@ -1376,7 +1379,7 @@ def viterbi(
     elif transition_min_prob is None or transition_min_prob == 0:
         log_trans_threshold = -np.inf
     else:
-        raise ParameterError(
+        raise ParameterValueError(
             f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative."
         )
 
@@ -1561,19 +1564,19 @@ def viterbi_discriminative(
     n_states, _n_steps = prob.shape[-2:]
 
     if transition.shape != (n_states, n_states):
-        raise ParameterError(
+        raise ParameterShapeError(
             f"transition.shape={transition.shape}, must be "
             f"(n_states, n_states)={n_states, n_states}"
         )
 
     if np.any(transition < 0) or not np.allclose(transition.sum(axis=1), 1):
-        raise ParameterError(
+        raise ParameterValueError(
             "Invalid transition matrix: must be non-negative "
             "and sum to 1 on each row."
         )
 
     if np.any(prob < 0) or not np.allclose(prob.sum(axis=-2), 1):
-        raise ParameterError(
+        raise ParameterValueError(
             "Invalid probability values: each column must "
             "sum to 1 and be non-negative"
         )
@@ -1586,12 +1589,12 @@ def viterbi_discriminative(
         p_state = np.empty(n_states)
         p_state.fill(1.0 / n_states)
     elif p_state.shape != (n_states,):
-        raise ParameterError(
+        raise ParameterShapeError(
             "Marginal distribution p_state must have shape (n_states,). "
             f"Got p_state.shape={p_state.shape}"
         )
     elif np.any(p_state < 0) or not np.allclose(p_state.sum(axis=-1), 1):
-        raise ParameterError(f"Invalid marginal state distribution: p_state={p_state}")
+        raise ParameterValueError(f"Invalid marginal state distribution: p_state={p_state}")
 
     if p_init is None:
         p_init = np.empty(n_states)
@@ -1601,7 +1604,7 @@ def viterbi_discriminative(
         or not np.allclose(p_init.sum(), 1)
         or p_init.shape != (n_states,)
     ):
-        raise ParameterError(f"Invalid initial state distribution: p_init={p_init}")
+        raise ParameterValueError(f"Invalid initial state distribution: p_init={p_init}")
 
     # By Bayes' rule, P[X | Y] * P[Y] = P[Y | X] * P[X]
     # P[X] is constant for the sake of maximum likelihood inference
@@ -1619,7 +1622,7 @@ def viterbi_discriminative(
     elif transition_min_prob is None or transition_min_prob == 0:
         log_trans_threshold = -np.inf
     else:
-        raise ParameterError(
+        raise ParameterValueError(
             f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative."
         )
 
@@ -1781,19 +1784,19 @@ def viterbi_binary(
     if transition.shape == (2, 2):
         transition = np.tile(transition, (n_states, 1, 1))
     elif transition.shape != (n_states, 2, 2):
-        raise ParameterError(
+        raise ParameterShapeError(
             f"transition.shape={transition.shape}, must be (2, 2) or "
             f"(n_states, 2, 2)={n_states}"
         )
 
     if np.any(transition < 0) or not np.allclose(transition.sum(axis=-1), 1):
-        raise ParameterError(
+        raise ParameterValueError(
             "Invalid transition matrix: must be non-negative "
             "and sum to 1 on each row."
         )
 
     if np.any(prob < 0) or np.any(prob > 1):
-        raise ParameterError("Invalid probability values: prob must be between [0, 1]")
+        raise ParameterValueError("Invalid probability values: prob must be between [0, 1]")
 
     if p_state is None:
         p_state = np.empty(n_states)
@@ -1804,7 +1807,7 @@ def viterbi_binary(
     assert p_state is not None
 
     if p_state.shape != (n_states,) or np.any(p_state < 0) or np.any(p_state > 1):
-        raise ParameterError(f"Invalid marginal state distributions: p_state={p_state}")
+        raise ParameterValueError(f"Invalid marginal state distributions: p_state={p_state}")
 
     if p_init is None:
         p_init = np.empty(n_states)
@@ -1815,7 +1818,7 @@ def viterbi_binary(
     assert p_init is not None
 
     if p_init.shape != (n_states,) or np.any(p_init < 0) or np.any(p_init > 1):
-        raise ParameterError(f"Invalid initial state distributions: p_init={p_init}")
+        raise ParameterValueError(f"Invalid initial state distributions: p_init={p_init}")
 
     shape_prefix = list(prob.shape[:-2])
     states = np.empty([*shape_prefix, n_states, n_steps], dtype=np.uint16)
@@ -1871,7 +1874,7 @@ def transition_uniform(n_states: int) -> _Array2D[np.float64]:
            [0.333, 0.333, 0.333]])
     """
     if not is_positive_int(n_states):
-        raise ParameterError(f"n_states={n_states} must be a positive integer")
+        raise ParameterValueError(f"n_states={n_states} must be a positive integer")
 
     transition = np.empty((n_states, n_states), dtype=np.float64)
     transition.fill(1.0 / n_states)
@@ -1918,7 +1921,7 @@ def transition_loop(n_states: int, prob: float | Iterable[float]) -> _Array2D[np
            [0.375, 0.375, 0.25 ]])
     """
     if not (is_positive_int(n_states) and (n_states > 1)):
-        raise ParameterError(f"n_states={n_states} must be a positive integer > 1")
+        raise ParameterValueError(f"n_states={n_states} must be a positive integer > 1")
 
     transition = np.empty((n_states, n_states), dtype=np.float64)
 
@@ -1929,12 +1932,12 @@ def transition_loop(n_states: int, prob: float | Iterable[float]) -> _Array2D[np
         prob = np.tile(prob, n_states)
 
     if prob.shape != (n_states,):
-        raise ParameterError(
+        raise ParameterShapeError(
             f"prob={prob} must have length equal to n_states={n_states}"
         )
 
     if np.any(prob < 0) or np.any(prob > 1):
-        raise ParameterError(f"prob={prob} must have values in the range [0, 1]")
+        raise ParameterValueError(f"prob={prob} must have values in the range [0, 1]")
 
     for i, prob_i in enumerate(prob):
         transition[i] = (1.0 - prob_i) / (n_states - 1)
@@ -1982,7 +1985,7 @@ def transition_cycle(n_states: int, prob: float | Iterable[float]) -> _Array2D[n
            [0.1, 0. , 0. , 0.9]])
     """
     if not (is_positive_int(n_states) and n_states > 1):
-        raise ParameterError(f"n_states={n_states} must be a positive integer > 1")
+        raise ParameterValueError(f"n_states={n_states} must be a positive integer > 1")
 
     transition = np.zeros((n_states, n_states), dtype=np.float64)
 
@@ -1993,12 +1996,12 @@ def transition_cycle(n_states: int, prob: float | Iterable[float]) -> _Array2D[n
         prob = np.tile(prob, n_states)
 
     if prob.shape != (n_states,):
-        raise ParameterError(
+        raise ParameterShapeError(
             f"prob={prob} must have length equal to n_states={n_states}"
         )
 
     if np.any(prob < 0) or np.any(prob > 1):
-        raise ParameterError(f"prob={prob} must have values in the range [0, 1]")
+        raise ParameterValueError(f"prob={prob} must have values in the range [0, 1]")
 
     for i, prob_i in enumerate(prob):
         transition[i, np.mod(i + 1, n_states)] = 1.0 - prob_i
@@ -2086,19 +2089,19 @@ def transition_local(
            [0.   , 0.   , 0.   , 0.   , 1.   ]])
     """
     if not (is_positive_int(n_states) and n_states > 1):
-        raise ParameterError(f"n_states={n_states} must be a positive integer > 1")
+        raise ParameterValueError(f"n_states={n_states} must be a positive integer > 1")
 
     width = np.asarray(width, dtype=int)
     if width.ndim == 0:
         width = np.tile(width, n_states)
 
     if width.shape != (n_states,):
-        raise ParameterError(
+        raise ParameterShapeError(
             f"width={width} must have length equal to n_states={n_states}"
         )
 
     if np.any(width < 1):
-        raise ParameterError(f"width={width} must be at least 1")
+        raise ParameterValueError(f"width={width} must be at least 1")
 
     transition = np.zeros((n_states, n_states), dtype=np.float64)
 

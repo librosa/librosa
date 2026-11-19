@@ -189,7 +189,7 @@ def test_mel_norm(norm):
         assert np.max(np.abs(msum * fft_spacing - 1)) < 5e-2
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_mel_badnorm():
     librosa.filters.mel(sr=22050, n_fft=2048, norm="garbage")  # type: ignore
 
@@ -368,27 +368,27 @@ def test_wavelet(sr, fmin, n_bins, bins_per_octave, filter_scale, pad_fft, norm,
     assert np.max(F_fft[:, -F_fft.shape[1] // 2 :]) < 1e-3
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_wavelet_lengths_badscale():
     librosa.filters.wavelet_lengths(freqs=2 ** np.arange(3), filter_scale=-1)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_wavelet_lengths_badgamma():
     librosa.filters.wavelet_lengths(freqs=2 ** np.arange(3), gamma=-1)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_wavelet_lengths_badfreqs():
     librosa.filters.wavelet_lengths(freqs=2 ** np.arange(3) - 20)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_wavelet_lengths_badfreqsorder():
     librosa.filters.wavelet_lengths(freqs=2 ** np.arange(3)[::-1])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_wavelet_lengths_noalpha():
     librosa.filters.wavelet_lengths(freqs=[64], alpha=None)
 
@@ -437,7 +437,7 @@ def test_cq_to_chroma(n_octaves, semitones, n_chroma, fmin, base_c, window):
 
     ctx: ContextManager[Any]
     if np.mod(bins_per_octave, n_chroma) != 0:
-        ctx = pytest.raises(librosa.ParameterError)
+        ctx = pytest.raises(librosa.ParameterValueError)
     else:
         ctx = dnr()
 
@@ -483,7 +483,7 @@ def test_cq_to_chroma(n_octaves, semitones, n_chroma, fmin, base_c, window):
             assert np.allclose(np.mod(i - resid, 12), 0.0), i - resid
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_get_window_fail():
 
     librosa.filters.get_window(None, 32)  # type: ignore
@@ -617,16 +617,16 @@ def test_checkerboard_kernel_shapes(n):
 
 
 def test_checkerboard_kernel_bad_params():
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.checkerboard_kernel(0)
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.checkerboard_kernel(-5)
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.checkerboard_kernel(15, window="gaussian", var=0.0)
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.checkerboard_kernel(15, window="gaussian", var=-0.5)
 
 
@@ -763,47 +763,47 @@ def test_frequency_filterbank_validation_errors():
     f_out = np.linspace(200, 4000, 10)
 
     # freq_in not 1D
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.filters.frequency_filterbank(f_in[:, None], f_out)
 
     # freq_out not 1D
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.filters.frequency_filterbank(f_in, f_out[:, None])
 
     # freq_out empty
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.filters.frequency_filterbank(f_in, [])
 
     # freq_in non-monotonic
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.frequency_filterbank(f_in[::-1], f_out)
 
     # freq_out non-strictly increasing
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.frequency_filterbank(f_in, [200, 200, 300])
 
     # scale invalid
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.frequency_filterbank(f_in, f_out, scale="mel")  # type: ignore
 
     # scale log with non-positive freq_out
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.frequency_filterbank(f_in, [0.0, 100.0, 200.0], scale="log")
 
     # single freq_out without bandwidths
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.frequency_filterbank(f_in, [500.0])
 
     # unsupported window
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.frequency_filterbank(f_in, f_out, window="nonexistent")
 
     # unsupported norm
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.frequency_filterbank(f_in, f_out, norm="unsupported")  # type: ignore[arg-type]
 
     # negative bandwidths
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.frequency_filterbank(f_in, f_out, bandwidths=-10.0)
 
 
@@ -833,13 +833,13 @@ def test_logfrequency_filterbank():
     assert fb_cqt.shape[1] == 84
 
     # Validation errors
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.logfrequency()  # neither sr nor freq_in
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.logfrequency(sr=22050, n_fft=2048, fmin=-10)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.logfrequency(sr=22050, n_fft=2048, fmin=15000)  # fmin >= Nyquist
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.logfrequency(sr=22050, n_fft=2048, n_bins=-5)
 
 
@@ -901,7 +901,7 @@ def test_pitch_filterbank_temperaments():
     assert fb_freq_in.shape == (60, 1025)
 
     # Missing sr/n_fft and freq_in raises ParameterError
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.pitch_filterbank()
 
 
@@ -991,27 +991,27 @@ def test_pitch_basis():
             assert np.allclose(np.linalg.norm(b, ord=norm, axis=0), 1.0)
 
     # Error handling
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.pitch_basis()  # No sr/n_fft or freq_in
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, offset=-1.0)
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.filters.pitch_basis(
             sr=sr, n_fft=n_fft, harmonics=[1, 2], harmonic_weights=[1.0]
         )
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, residual=np.ones((512, 1)))
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.pitch_basis(sr=sr, n_fft=n_fft, window="unsupported_window")
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.filters.pitch_basis(freq_in=np.array([]))
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.pitch_basis(freq_in=np.array([100.0, 50.0]))
 
 
@@ -1041,9 +1041,9 @@ def test_pitch_to_chroma_and_deprecation():
     assert np.array_equal(cq_a, p2c_a)
 
     # Check error cases
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.pitch_to_chroma(84, bins_per_octave=13, n_chroma=12)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterTypeError):
         librosa.filters.pitch_to_chroma(84, base=None)  # type: ignore
 
 

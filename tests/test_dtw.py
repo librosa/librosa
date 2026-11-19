@@ -8,7 +8,7 @@ from scipy.spatial.distance import cdist
 import pytest
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_1d_input():
     X = np.array([[1], [3], [3], [8], [1]])
     Y = np.array([[2], [0], [0], [8], [7], [2]])
@@ -138,7 +138,7 @@ def test_dtw_subseq_steps():
     assert np.array_equal(wp1, wp2)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_backtracking_incompatible_args_01():
     # See https://github.com/librosa/librosa/pull/1166
     X = np.array([1, 2, 3, 4, 5])
@@ -151,38 +151,38 @@ def test_dtw_backtracking_incompatible_args_01():
     librosa.sequence.dtw_backtracking(steps, subseq=False, start=start_idx)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_incompatible_args_01():
     librosa.sequence.dtw(C=1, X=1, Y=1)  # type: ignore
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_incompatible_args_02():
     librosa.sequence.dtw(C=None, X=None, Y=None)  # type: ignore
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_dtw_incompatible_sigma_add():
     X = np.array([[1, 3, 3, 8, 1]])
     Y = np.array([[2, 0, 0, 8, 7, 2]])
     librosa.sequence.dtw(X=X, Y=Y, weights_add=np.arange(10))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_dtw_incompatible_sigma_mul():
     X = np.array([[1, 3, 3, 8, 1]])
     Y = np.array([[2, 0, 0, 8, 7, 2]])
     librosa.sequence.dtw(X=X, Y=Y, weights_mul=np.arange(10))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_incompatible_sigma_diag():
     X = np.array([[1, 3, 3, 8, 1, 2]])
     Y = np.array([[2, 0, 0, 8, 7]])
     librosa.sequence.dtw(X=X, Y=Y, step_sizes_sigma=np.ones((1, 2), dtype=int))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_incompatible_sigma_diag_precomp():
     C = np.ones((5, 3))
     librosa.sequence.dtw(C=C, step_sizes_sigma=[[1, 1]])  # type: ignore
@@ -272,7 +272,7 @@ def test_dtw_global_inf():
     # Construct a cost matrix where full alignment is impossible
     C = np.zeros((4, 4), dtype=float)
     C[-1, -1] = np.inf
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.sequence.dtw(C=C, subseq=False)
 
 
@@ -281,7 +281,7 @@ def test_dtw_subseq_inf():
     C = np.zeros((4, 4), dtype=float)
     C[-1, :] = np.inf
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.sequence.dtw(C=C, subseq=True)
 
 
@@ -292,14 +292,14 @@ def test_dtw_subseq_pass():
     librosa.sequence.dtw(C=C, subseq=True)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_nan_fail():
     C = np.ones((10, 10))
     C[4, 6] = np.nan
     librosa.sequence.dtw(C=C)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize(
     "steps", [np.array([[1, -1]]), np.array([[-1, 1]]), np.array([[-1, -1]])]
 )

@@ -10,7 +10,7 @@ import numpy as np
 
 from .. import sequence, util
 from .._cache import cache
-from ..util.exceptions import ParameterError
+from ..exceptions import ParameterValueError
 from . import audio, convert
 from .spectrum import _spectrogram
 
@@ -323,7 +323,7 @@ def piptrack(
 
     # Truncate to feasible region
     if fmin is None or fmax is None:
-        raise ParameterError('both "fmin" and "fmax" must be provided')
+        raise ParameterValueError('both "fmin" and "fmax" must be provided')
 
     fmin = util._ensure_hz(fmin)
     fmax = util._ensure_hz(fmax)
@@ -538,7 +538,7 @@ def yin(
         871.161732  , 873.99001454, 877.04297681])
     """
     if fmin is None or fmax is None:
-        raise ParameterError('both "fmin" and "fmax" must be provided')
+        raise ParameterValueError('both "fmin" and "fmax" must be provided')
 
     fmin = util._ensure_hz(fmin)
     fmax = util._ensure_hz(fmax)
@@ -752,7 +752,7 @@ def pyin(
     >>> ax.legend(loc='upper right')
     """
     if fmin is None or fmax is None:
-        raise ParameterError('both "fmin" and "fmax" must be provided')
+        raise ParameterValueError('both "fmin" and "fmax" must be provided')
 
     fmin = util._ensure_hz(fmin)
     fmax = util._ensure_hz(fmax)
@@ -944,16 +944,16 @@ def __check_yin_params(*, sr: float, fmax: float, fmin: float, frame_length: int
     3. sr / fmin < frame_length / 2: Ideally, at least two periods of fmin should fit into the frame.
     """
     if fmax > sr / 2:
-        raise ParameterError(f"fmax={fmax:.3f} cannot exceed Nyquist frequency {sr/2}")
+        raise ParameterValueError(f"fmax={fmax:.3f} cannot exceed Nyquist frequency {sr/2}")
     if fmin >= fmax:
-        raise ParameterError(f"fmin={fmin:.3f} must be less than fmax={fmax:.3f}")
+        raise ParameterValueError(f"fmin={fmin:.3f} must be less than fmax={fmax:.3f}")
     if fmin <= 0:
-        raise ParameterError(f"fmin={fmin:.3f} must be strictly positive")
+        raise ParameterValueError(f"fmin={fmin:.3f} must be strictly positive")
 
     if sr / fmin >= frame_length - 1:
         fmin_feasible = sr / (frame_length - 1)
         frame_length_feasible = int(np.ceil(sr / fmin) + 1)
-        raise ParameterError(
+        raise ParameterValueError(
             f"fmin={fmin:.3f} is too small for frame_length={frame_length} and sr={sr}. "
             f"Either increase to fmin={fmin_feasible:.3f} or frame_length={frame_length_feasible}"
         )

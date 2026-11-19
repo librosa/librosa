@@ -8,8 +8,8 @@ from typing import TYPE_CHECKING, overload
 
 import numpy as np
 
+from ..exceptions import ParameterValueError
 from ..util.decorators import vectorize
-from ..util.exceptions import ParameterError
 from . import notation
 
 if TYPE_CHECKING:
@@ -714,7 +714,7 @@ def note_to_midi(
     match = notation.NOTE_RE.match(note)
 
     if not match:
-        raise ParameterError(f"Improper note format: {note:s}")
+        raise ParameterValueError(f"Improper note format: {note:s}")
 
     pitch = match.group("note").upper()
     offset = np.sum([acc_map[o] for o in match.group("accidental")])
@@ -842,7 +842,7 @@ def midi_to_note(
            'B♭0', 'B0'], dtype='<U3')
     """
     if cents and not octave:
-        raise ParameterError("Cannot encode cents without octave information.")
+        raise ParameterValueError("Cannot encode cents without octave information.")
 
     if not np.isfinite(midi):  # type: ignore
         return ""

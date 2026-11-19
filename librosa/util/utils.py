@@ -14,7 +14,6 @@ from numpy.lib.stride_tricks import as_strided
 
 from .._cache import cache
 from ..exceptions import (
-    ParameterError,
     ParameterShapeError,
     ParameterTypeError,
     ParameterValueError,
@@ -250,7 +249,7 @@ def frame(
         )
 
     if hop_length < 1:
-        raise ParameterError(f"Invalid hop_length: {hop_length:d}")
+        raise ParameterValueError(f"Invalid hop_length: {hop_length:d}")
 
     # put our new within-frame axis at the end for now
     out_strides = x.strides + tuple([x.strides[axis]])
@@ -806,7 +805,7 @@ def fix_frames(
     frames = np.asarray(frames)
 
     if np.any(frames < 0):
-        raise ParameterError("Negative frame index detected")
+        raise ParameterValueError("Negative frame index detected")
 
     # TODO: this whole function could be made more efficient
 
@@ -1644,7 +1643,7 @@ def peak_pick(
             peaks.swapaxes(axis, -1),
         )
     else:
-        raise ParameterError(f"Unknown method {method}")
+        raise ParameterValueError(f"Unknown method {method}")
 
     if sparse:
         return np.flatnonzero(peaks)
@@ -1950,7 +1949,7 @@ def sync(
             np.asarray(idx), idx_min=0, idx_max=shape[axis], pad=pad
         )
     else:
-        raise ParameterError(f"Invalid index set: {idx}")
+        raise ParameterValueError(f"Invalid index set: {idx}")
 
     agg_shape = list(shape)
     agg_shape[axis] = len(slices)
@@ -2493,7 +2492,7 @@ def stack(arrays: list[np.ndarray], *, axis: int = 0) -> np.ndarray:
     if len(shapes) > 1:
         raise ParameterShapeError("all input arrays must have the same shape")
     elif len(shapes) < 1:
-        raise ParameterError("at least one input array must be provided for stack")
+        raise ParameterValueError("at least one input array must be provided for stack")
 
     shape_in = shapes.pop()
 

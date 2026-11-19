@@ -9,7 +9,10 @@ import numpy as np
 from numba import jit
 
 from .._cache import cache
-from ..util.exceptions import ParameterError
+from ..exceptions import (
+    ParameterShapeError,
+    ParameterValueError,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Literal
@@ -109,16 +112,16 @@ def delta(
     data = np.atleast_1d(data)
 
     if mode == "interp" and width > data.shape[axis]:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"when mode='interp', width={width} "
             f"cannot exceed data.shape[axis]={data.shape[axis]}"
         )
 
     if width < 3 or np.mod(width, 2) != 1:
-        raise ParameterError("width must be an odd integer >= 3")
+        raise ParameterValueError("width must be an odd integer >= 3")
 
     if order <= 0 or not isinstance(order, (int, np.integer)):
-        raise ParameterError("order must be a positive integer")
+        raise ParameterValueError("order must be a positive integer")
 
     kwargs.pop("deriv", None)
     kwargs.setdefault("polyorder", order)
@@ -230,16 +233,16 @@ def stack_memory(
     >>> ax.set(title='Time-lagged chroma', ylabel="")
     """
     if n_steps < 1:
-        raise ParameterError("n_steps must be a positive integer")
+        raise ParameterValueError("n_steps must be a positive integer")
 
     if delay == 0:
-        raise ParameterError("delay must be a non-zero integer")
+        raise ParameterValueError("delay must be a non-zero integer")
 
     data = np.atleast_2d(data)
     t = data.shape[-1]
 
     if t < 1:
-        raise ParameterError(
+        raise ParameterShapeError(
             "Cannot stack memory when input data has "
             f"no columns. Given data.shape={data.shape}"
         )

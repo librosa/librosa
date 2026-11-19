@@ -24,8 +24,12 @@ from .core.convert import (
     note_to_midi,
 )
 from .core.intervals import interval_frequencies
+from .exceptions import (
+    ParameterShapeError,
+    ParameterTypeError,
+    ParameterValueError,
+)
 from .util.decorators import deprecated
-from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Collection, Literal, Sequence
@@ -220,7 +224,7 @@ def mel(
             enorm = 2.0 / (mel_f[2 : n_mels + 2] - mel_f[:n_mels])
             weights *= enorm[:, np.newaxis]
         else:
-            raise ParameterError(f"Unsupported norm={norm}")
+            raise ParameterValueError(f"Unsupported norm={norm}")
     else:
         weights = util.normalize(weights, norm=norm, axis=-1)
 
@@ -487,19 +491,19 @@ def frequency_filterbank(
     f_out = np.asarray(freq_out, dtype=float)
 
     if f_in.ndim != 1:
-        raise ParameterError(f"freq_in must be 1D, shape given: {f_in.shape}")
+        raise ParameterShapeError(f"freq_in must be 1D, shape given: {f_in.shape}")
     if f_out.ndim != 1 or len(f_out) == 0:
-        raise ParameterError(f"freq_out must be a non-empty 1D array, shape given: {f_out.shape}")
+        raise ParameterShapeError(f"freq_out must be a non-empty 1D array, shape given: {f_out.shape}")
     if len(f_in) > 1 and np.any(np.diff(f_in) < 0):
-        raise ParameterError("freq_in must be monotonically non-decreasing")
+        raise ParameterValueError("freq_in must be monotonically non-decreasing")
     if len(f_out) > 1 and np.any(np.diff(f_out) <= 0):
-        raise ParameterError("freq_out must be strictly increasing")
+        raise ParameterValueError("freq_out must be strictly increasing")
     if scale not in ("linear", "log"):
-        raise ParameterError(f"scale must be 'linear' or 'log', given: {scale}")
+        raise ParameterValueError(f"scale must be 'linear' or 'log', given: {scale}")
 
     if scale == "log":
         if np.any(f_out <= 0):
-            raise ParameterError("freq_out must be strictly positive when scale='log'")
+            raise ParameterValueError("freq_out must be strictly positive when scale='log'")
         u_out = np.log2(f_out)
         u_in = np.where(f_in > 0, np.log2(np.maximum(f_in, np.finfo(float).tiny)), -np.inf)
     else:
@@ -509,7 +513,7 @@ def frequency_filterbank(
     n_out = len(u_out)
     if bandwidths is None:
         if n_out == 1:
-            raise ParameterError("bandwidths must be specified when len(freq_out) == 1")
+            raise ParameterValueError("bandwidths must be specified when len(freq_out) == 1")
         c_prev = u_out[0] - (u_out[1] - u_out[0])
         c_next = u_out[-1] + (u_out[-1] - u_out[-2])
         c_ext = np.concatenate(([c_prev], u_out, [c_next]))
@@ -522,7 +526,7 @@ def frequency_filterbank(
     else:
         b = np.broadcast_to(np.asarray(bandwidths, dtype=float), (n_out,))
         if np.any(b <= 0):
-            raise ParameterError("bandwidths must be strictly positive")
+            raise ParameterValueError("bandwidths must be strictly positive")
         h = b / 2.0
         left_overlapping = u_out - h
         right_overlapping = u_out + h
@@ -578,7 +582,7 @@ def frequency_filterbank(
         win_fn = cast("Callable[[Any], Any]", window)
         weights[in_band] = win_fn(norm_coord[in_band])
     else:
-        raise ParameterError(f"Unsupported window={window}")
+        raise ParameterValueError(f"Unsupported window={window}")
 
     if norm == "slaney":
         if scale == "log":
@@ -694,7 +698,7 @@ def logfrequency(
     """
     if freq_in is None:
         if sr is None or n_fft is None:
-            raise ParameterError("Either freq_in or both sr and n_fft must be provided")
+            raise ParameterValueError("Either freq_in or both sr and n_fft must be provided")
         f_in = fft_frequencies(sr=sr, n_fft=n_fft)
     else:
         f_in = np.asarray(freq_in, dtype=float)
@@ -705,14 +709,14 @@ def logfrequency(
         f_min = util._ensure_hz(fmin)
 
     if f_min <= 0:
-        raise ParameterError(f"fmin={fmin} must be strictly positive")
+        raise ParameterValueError(f"fmin={fmin} must be strictly positive")
 
     if tuning != 0.0:
         f_min = f_min * (2.0 ** (tuning / float(bins_per_octave)))
 
     f_top = float(sr / 2.0) if sr is not None else float(f_in[-1])
     if f_min >= f_top:
-        raise ParameterError(f"fmin={f_min} must be less than maximum frequency {f_top}")
+        raise ParameterValueError(f"fmin={f_min} must be less than maximum frequency {f_top}")
 
     if n_bins is None:
         n_octaves = np.log2(f_top / f_min)
@@ -721,7 +725,7 @@ def logfrequency(
         f_out = f_out[f_out <= f_top]
     else:
         if n_bins <= 0:
-            raise ParameterError(f"n_bins={n_bins} must be strictly positive")
+            raise ParameterValueError(f"n_bins={n_bins} must be strictly positive")
         f_out = f_min * (2.0 ** (np.arange(n_bins) / float(bins_per_octave)))
 
     return frequency_filterbank(
@@ -831,7 +835,7 @@ def pitch_filterbank(
     """
     if freq_in is None:
         if sr is None or n_fft is None:
-            raise ParameterError("Either freq_in or both sr and n_fft must be provided")
+            raise ParameterValueError("Either freq_in or both sr and n_fft must be provided")
         f_in = fft_frequencies(sr=sr, n_fft=n_fft)
     else:
         f_in = np.asarray(freq_in, dtype=float)
@@ -1035,15 +1039,15 @@ def pitch_basis(
     """
     if freq_in is None:
         if sr is None or n_fft is None:
-            raise ParameterError("Either freq_in or both sr and n_fft must be provided")
+            raise ParameterValueError("Either freq_in or both sr and n_fft must be provided")
         f_in = fft_frequencies(sr=sr, n_fft=n_fft)
     else:
         f_in = np.asarray(freq_in, dtype=float)
 
     if f_in.ndim != 1 or len(f_in) == 0:
-        raise ParameterError("freq_in must be a non-empty 1D array")
+        raise ParameterShapeError("freq_in must be a non-empty 1D array")
     if len(f_in) > 1 and np.any(np.diff(f_in) < 0):
-        raise ParameterError("freq_in must be monotonically non-decreasing")
+        raise ParameterValueError("freq_in must be monotonically non-decreasing")
 
     if fmin is None:
         if intervals == "equal" and n_pitches == 128 and bins_per_octave == 12:
@@ -1079,7 +1083,7 @@ def pitch_basis(
             else:
                 w_list = np.asarray(harmonic_weights, dtype=float)
                 if len(w_list) != len(h_list):
-                    raise ParameterError(
+                    raise ParameterShapeError(
                         f"harmonic_weights length ({len(w_list)}) must match harmonics length ({len(h_list)})"
                     )
 
@@ -1111,14 +1115,14 @@ def pitch_basis(
             elif callable(window):
                 W_pitch[in_band, j] += w * window(d[in_band] / bw)
             else:
-                raise ParameterError(f"Unsupported window: {window}")
+                raise ParameterValueError(f"Unsupported window: {window}")
 
     if residual is not None:
         W_res = np.asarray(residual, dtype=dtype)
         if W_res.ndim == 1:
             W_res = W_res[:, np.newaxis]
         if W_res.shape[0] != K:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"residual shape {W_res.shape} must have {K} rows to match freq_in"
             )
     else:
@@ -1130,7 +1134,7 @@ def pitch_basis(
         W = W_pitch
 
     if offset < 0:
-        raise ParameterError(f"offset must be non-negative, given: {offset}")
+        raise ParameterValueError(f"offset must be non-negative, given: {offset}")
     if offset > 0:
         W = W + offset
 
@@ -1262,16 +1266,16 @@ def wavelet_lengths(
     """
     freqs = np.asarray(freqs)
     if filter_scale <= 0:
-        raise ParameterError(f"filter_scale={filter_scale} must be positive")
+        raise ParameterValueError(f"filter_scale={filter_scale} must be positive")
 
     if gamma is not None and gamma < 0:
-        raise ParameterError(f"gamma={gamma} must be non-negative")
+        raise ParameterValueError(f"gamma={gamma} must be non-negative")
 
     if np.any(freqs <= 0):
-        raise ParameterError("frequencies must be strictly positive")
+        raise ParameterValueError("frequencies must be strictly positive")
 
     if len(freqs) > 1 and np.any(freqs[:-1] > freqs[1:]):
-        raise ParameterError(
+        raise ParameterValueError(
             f"Frequency array={freqs} must be in strictly ascending order"
         )
 
@@ -1314,7 +1318,7 @@ def _relative_bandwidth(*, freqs: np.ndarray) -> np.ndarray:
         Relative bandwidth
     """
     if len(freqs) <= 1:
-        raise ParameterError(f"2 or more frequencies are required to compute bandwidths. Given freqs={freqs}")
+        raise ParameterShapeError(f"2 or more frequencies are required to compute bandwidths. Given freqs={freqs}")
 
     # Approximate the local octave resolution around each frequency
     bpo = np.empty_like(freqs)
@@ -1558,7 +1562,7 @@ def pitch_to_chroma(
         fmin_ = util._ensure_hz(fmin)
 
     if np.mod(n_merge, 1) != 0:
-        raise ParameterError(
+        raise ParameterValueError(
             "Incompatible CQ merge: "
             "input bins must be an "
             "integer multiple of output bins."
@@ -1584,7 +1588,7 @@ def pitch_to_chroma(
     elif isinstance(base, (int, np.integer)):
         base_midi = int(base) % 12
     else:
-        raise ParameterError(f"base={base} must be a string or integer")
+        raise ParameterTypeError(f"base={base} must be a string or integer")
 
     roll = int(np.round((midi_0 - base_midi) * (n_chroma / 12.0)))
 
@@ -1790,9 +1794,9 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
         if len(window) == Nx:
             return np.asarray(window)
 
-        raise ParameterError(f"Window size mismatch: {len(window):d} != {Nx:d}")
+        raise ParameterShapeError(f"Window size mismatch: {len(window):d} != {Nx:d}")
     else:
-        raise ParameterError(f"Invalid window specification: {window!r}")
+        raise ParameterValueError(f"Invalid window specification: {window!r}")
 
 
 @cache(level=10)
@@ -1874,13 +1878,13 @@ def _multirate_fb(
     This function caches at level 10.
     """
     if center_freqs is None:
-        raise ParameterError("center_freqs must be provided.")
+        raise ParameterValueError("center_freqs must be provided.")
 
     if sample_rates is None:
-        raise ParameterError("sample_rates must be provided.")
+        raise ParameterValueError("sample_rates must be provided.")
 
     if center_freqs.shape != sample_rates.shape:
-        raise ParameterError(
+        raise ParameterShapeError(
             "Number of provided center_freqs and sample_rates must be equal."
         )
 
@@ -2322,7 +2326,7 @@ def checkerboard_kernel(
     >>> fig.colorbar(img1, ax=ax[1], orientation="horizontal")
     """
     if n <= 0:
-        raise ParameterError(f"n={n} must be strictly positive")
+        raise ParameterValueError(f"n={n} must be strictly positive")
 
     coord = np.arange(n) - (n - 1) / 2.0
     s = np.sign(coord)
@@ -2334,7 +2338,7 @@ def checkerboard_kernel(
         w = np.ones(n, dtype=dtype)
     elif isinstance(window, str) and window == "gaussian":
         if var <= 0:
-            raise ParameterError(f"var={var} must be strictly positive")
+            raise ParameterValueError(f"var={var} must be strictly positive")
         std = var * (n - 1) / 2.0
         w = get_window(("gaussian", std), n, fftbins=False).astype(dtype)
     else:

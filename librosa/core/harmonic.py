@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from ..util.exceptions import ParameterError
+from ..exceptions import ParameterShapeError
 from .interpolate import _validate_coords, interp_frequency
 
 if TYPE_CHECKING:
@@ -294,7 +294,7 @@ def interp_harmonics(
             )
         )
     else:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"freqs.shape={freqs.shape} is incompatible with input shape={x.shape}"
         )
 
@@ -384,7 +384,7 @@ def f0_harmonics(
     >>> ax[1].set(ylabel='Harmonics')
     """
     if freqs.ndim != 1 and freqs.shape != x.shape:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"freqs.shape={freqs.shape} is incompatible with input shape={x.shape}"
         )
 

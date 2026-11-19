@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numba
 import numpy as np
 
-from .exceptions import ParameterError
+from .exceptions import ParameterValueError
 from .utils import valid_intervals
 
 if TYPE_CHECKING:
@@ -121,7 +121,7 @@ def __match_intervals(
             output[i] = __match_interval_overlaps(query, intervals_to, candidates)
         elif strict:
             # Numba only lets us use compile-time constants in exception messages
-            raise ParameterError
+            raise ParameterValueError
         else:
             # Find the closest interval
             # (start_index[after_query] - query[1]) is the distance to the next interval
@@ -222,7 +222,7 @@ def match_intervals(
     >>> # [6, 7] => [4, 5]  (ints_from[2])
     """
     if len(intervals_from) == 0 or len(intervals_to) == 0:
-        raise ParameterError("Attempting to match empty interval list")
+        raise ParameterValueError("Attempting to match empty interval list")
 
     # Verify that the input intervals has correct shape and size
     valid_intervals(intervals_from)
@@ -231,8 +231,8 @@ def match_intervals(
     try:
         # Suppress type check because of numba wrapper
         return __match_intervals(intervals_from, intervals_to, strict=strict)  # type: ignore
-    except ParameterError as exc:
-        raise ParameterError(f"Unable to match intervals with strict={strict}") from exc
+    except ParameterValueError as exc:
+        raise ParameterValueError(f"Unable to match intervals with strict={strict}") from exc
 
 
 def match_events(
@@ -300,12 +300,12 @@ def match_events(
      (84, 80), (91, 90), (98, 90)]
     """
     if len(events_from) == 0 or len(events_to) == 0:
-        raise ParameterError("Attempting to match empty event list")
+        raise ParameterValueError("Attempting to match empty event list")
 
     # If we can't match left or right, then only strict equivalence
     # counts as a match.
     if not (left or right) and not np.all(np.isin(events_from, events_to)):
-        raise ParameterError(
+        raise ParameterValueError(
             "Cannot match events with left=right=False "
             "and events_from is not contained "
             "in events_to"
@@ -314,7 +314,7 @@ def match_events(
     # If we can't match to the left, then there should be at least one
     # target event greater-equal to every source event
     if (not left) and max(events_to) < max(events_from):
-        raise ParameterError(
+        raise ParameterValueError(
             "Cannot match events with left=False "
             "and max(events_to) < max(events_from)"
         )
@@ -322,7 +322,7 @@ def match_events(
     # If we can't match to the right, then there should be at least one
     # target event less-equal to every source event
     if (not right) and min(events_to) > min(events_from):
-        raise ParameterError(
+        raise ParameterValueError(
             "Cannot match events with right=False "
             "and min(events_to) > min(events_from)"
         )

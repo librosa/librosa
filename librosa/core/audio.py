@@ -14,7 +14,12 @@ from numba import guvectorize, jit, stencil
 
 from .. import util
 from .._cache import cache
-from ..util.exceptions import ParameterError
+from ..exceptions import (
+    ParameterKeyError,
+    ParameterShapeError,
+    ParameterTypeError,
+    ParameterValueError,
+)
 from ..util.files import example
 from .convert import frames_to_samples, frequency_weighting, time_to_samples
 
@@ -268,8 +273,8 @@ def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarra
 
     try:
         path = example(key, hq=hq)
-    except ParameterError as exc:
-        raise ParameterError(f"Could not load example with key '{key}'.  "
+    except ParameterKeyError as exc:
+        raise ParameterKeyError(f"Could not load example with key '{key}'.  "
                              "Did you mean to use librosa.load instead of loadx?") from exc
 
     return load(path, **kwargs)
@@ -289,9 +294,9 @@ def _init_output(
     if out is None:
         return np.zeros(shape, dtype=dtype)
     if out.shape != shape:
-        raise ParameterError(f"out has shape={out.shape}, but expected {shape}")
+        raise ParameterShapeError(f"out has shape={out.shape}, but expected {shape}")
     if np.promote_types(out.dtype, dtype) != out.dtype:
-        raise ParameterError(
+        raise ParameterTypeError(
             f"out has dtype={out.dtype}, which cannot hold the result dtype {dtype}"
         )
     out[...] = 0
@@ -379,7 +384,7 @@ def to_mono(
     """
     # Validate the buffer(s) and identify lengths, dtypes, etc
     if not signals:
-        raise ParameterError("At least one signal must be provided to `to_mono`.")
+        raise ParameterValueError("At least one signal must be provided to `to_mono`.")
     n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
     dtype = signals[0].dtype
     for y in signals:
@@ -495,7 +500,7 @@ def to_stereo(
     # This flag tracks whether we had only one signal to begin with
     onesided = True
     if left is None and right is None:
-        raise ParameterError("At least one of 'left' or 'right' must be provided")
+        raise ParameterValueError("At least one of 'left' or 'right' must be provided")
 
     elif left is None:
         # These are somewhat inefficient ways to allocate a silent channel,
@@ -536,7 +541,7 @@ def to_stereo(
         elif left.ndim == 2 and left.shape[0] == 2:
             output[:] = left
         else:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"left input has unsupported shape {left.shape} for downmix=False"
             )
 
@@ -545,7 +550,7 @@ def to_stereo(
         elif right.ndim == 2 and right.shape[0] == 2:
             output[:] += right
         else:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"right input has unsupported shape {right.shape} for downmix=False"
             )
         if norm and not onesided:
@@ -620,7 +625,7 @@ def to_multi(
     """
     # Validate the buffer(s) and identify lengths, dtypes, etc
     if not signals:
-        raise ParameterError("At least one signal must be provided.")
+        raise ParameterValueError("At least one signal must be provided.")
     n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
     dtype = signals[0].dtype
     if downmix:
@@ -638,7 +643,7 @@ def to_multi(
         n_max = max(n_max, y.shape[-1])
         dtype = np.promote_types(dtype, y.dtype)
         if not downmix and y.shape[:-1] != channel_layout:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"Cannot combine signals with different channel layouts {y.shape[:-1]} when downmix=False"
             )
 
@@ -801,7 +806,7 @@ def resample(
         y_hat = scipy.signal.resample(y, n_samples, axis=axis)
     elif res_type == "polyphase":
         if int(orig_sr) != orig_sr or int(target_sr) != target_sr:
-            raise ParameterError(
+            raise ParameterValueError(
                 "polyphase resampling is only supported for integer-valued sampling rates."
             )
 
@@ -944,7 +949,7 @@ def get_duration(
 
     if y is None:
         if S is None:
-            raise ParameterError("At least one of (y, sr), S, or path must be provided")
+            raise ParameterValueError("At least one of (y, sr), S, or path must be provided")
 
         n_frames = S.shape[-1]
         n_samples = n_fft + hop_length * (n_frames - 1)
@@ -1134,7 +1139,7 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     >>> ax.set_title('LP Model Forward Prediction')
     """
     if not util.is_positive_int(order):
-        raise ParameterError(f"order={order} must be an integer > 0")
+        raise ParameterValueError(f"order={order} must be an integer > 0")
 
     util.valid_audio(y)
 
@@ -1471,13 +1476,13 @@ def envelope(
     util.valid_audio(y)
 
     if not util.is_positive_int(frame_length):
-        raise ParameterError(f"frame_length={frame_length} must be a positive integer")
+        raise ParameterValueError(f"frame_length={frame_length} must be a positive integer")
     if not util.is_positive_int(hop_length):
-        raise ParameterError(f"hop_length={hop_length} must be a positive integer")
+        raise ParameterValueError(f"hop_length={hop_length} must be a positive integer")
     if not (0.0 <= percentile <= 100.0):
-        raise ParameterError(f"percentile={percentile} must be in [0, 100]")
+        raise ParameterValueError(f"percentile={percentile} must be in [0, 100]")
     if axis < -y.ndim or axis >= y.ndim:
-        raise ParameterError(f"axis={axis} is out of bounds for audio array with ndim={y.ndim}")
+        raise ParameterShapeError(f"axis={axis} is out of bounds for audio array with ndim={y.ndim}")
 
     # scipy.ndimage bounds `origin` between -(size // 2) and (size - 1) // 2.
     # 0 maps directly to center=True. -(frame_length // 2) maps directly to center=False (left-aligned).
@@ -1513,7 +1518,7 @@ def envelope(
                                               mode=mode,
                                               origin=tuple(origin_tuple))
     else:
-        raise ParameterError(f"Unsupported envelope kind: {kind}")
+        raise ParameterValueError(f"Unsupported envelope kind: {kind}")
 
     # Decimate output along the specified axis
     slices = [slice(None)] * y.ndim
@@ -1605,7 +1610,7 @@ def clicks(
     positions: np.ndarray
     if times is None:
         if frames is None:
-            raise ParameterError('either "times" or "frames" must be provided')
+            raise ParameterValueError('either "times" or "frames" must be provided')
 
         positions = frames_to_samples(frames, hop_length=hop_length)
     else:
@@ -1621,10 +1626,10 @@ def clicks(
         click_freq = util._ensure_hz(click_freq)
 
         if click_duration <= 0:
-            raise ParameterError("click_duration must be strictly positive")
+            raise ParameterValueError("click_duration must be strictly positive")
 
         if click_freq <= 0:
-            raise ParameterError("click_freq must be strictly positive")
+            raise ParameterValueError("click_freq must be strictly positive")
 
         angular_freq = 2 * np.pi * click_freq / float(sr)
 
@@ -1637,7 +1642,7 @@ def clicks(
         length = positions.max() + click.shape[-1]
     else:
         if length < 1:
-            raise ParameterError("length must be a positive integer")
+            raise ParameterValueError("length must be a positive integer")
 
         # Filter out any positions past the length boundary
         positions = positions[positions < length]
@@ -1722,14 +1727,14 @@ def tone(
     ...                          x_axis='time', y_axis='mel', ax=ax)
     """
     if frequency is None:
-        raise ParameterError('"frequency" must be provided')
+        raise ParameterValueError('"frequency" must be provided')
 
     frequency = util._ensure_hz(frequency)
 
     # Compute signal length
     if length is None:
         if duration is None:
-            raise ParameterError('either "length" or "duration" must be provided')
+            raise ParameterValueError('either "length" or "duration" must be provided')
         length = int(duration * sr)
 
     if phi is None:
@@ -1739,7 +1744,7 @@ def tone(
 
     if taper:
         if frequency <= 0:
-            raise ParameterError(
+            raise ParameterValueError(
                 f"frequency={frequency} must be strictly positive when taper=True"
             )
         fade_len = int(np.round(sr / float(frequency)))
@@ -1848,19 +1853,19 @@ def chirp(
     >>> ax[1].set(title='Linear chirp')
     """
     if fmin is None or fmax is None:
-        raise ParameterError('both "fmin" and "fmax" must be provided')
+        raise ParameterValueError('both "fmin" and "fmax" must be provided')
 
     fmin = util._ensure_hz(fmin)
     fmax = util._ensure_hz(fmax)
 
     if min(fmin, fmax) <= 0:
-        raise ParameterError(
+        raise ParameterValueError(
             f"Frequencies fmin={fmin} and fmax={fmax} must be strictly positive"
         )
 
     nyquist = sr / 2.0
     if min(fmin, fmax) >= nyquist:
-        raise ParameterError(
+        raise ParameterValueError(
             f"Frequencies min(fmin, fmax)={min(fmin, fmax)} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
@@ -1868,7 +1873,7 @@ def chirp(
     period = 1.0 / sr
     if length is None:
         if duration is None:
-            raise ParameterError('either "length" or "duration" must be provided')
+            raise ParameterValueError('either "length" or "duration" must be provided')
     else:
         duration = period * length
 
@@ -1960,21 +1965,21 @@ def shepard_tone(
     >>> y = librosa.shepard_tone("A4", duration=1.0, sr=22050)
     """
     if frequency is None:
-        raise ParameterError('"frequency" must be a positive number')
+        raise ParameterValueError('"frequency" must be a positive number')
 
     frequency = util._ensure_hz(frequency)
     if frequency <= 0:
-        raise ParameterError('"frequency" must be a positive number')
+        raise ParameterValueError('"frequency" must be a positive number')
 
     nyquist = sr / 2.0
     if float(frequency) >= nyquist:
-        raise ParameterError(
+        raise ParameterValueError(
             f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
     if length is None:
         if duration is None:
-            raise ParameterError('either "length" or "duration" must be provided')
+            raise ParameterValueError('either "length" or "duration" must be provided')
         target_len = int(duration * sr)
     else:
         target_len = length
@@ -2074,28 +2079,28 @@ def shepard_scale(
     from .intervals import interval_frequencies
 
     if frequency is None:
-        raise ParameterError('"frequency" must be a positive number')
+        raise ParameterValueError('"frequency" must be a positive number')
 
     frequency = util._ensure_hz(frequency)
     if frequency <= 0:
-        raise ParameterError('"frequency" must be a positive number')
+        raise ParameterValueError('"frequency" must be a positive number')
 
     nyquist = sr / 2.0
     if float(frequency) >= nyquist:
-        raise ParameterError(
+        raise ParameterValueError(
             f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
     if length is None:
         if duration is None:
-            raise ParameterError('either "length" or "duration" must be provided')
+            raise ParameterValueError('either "length" or "duration" must be provided')
         length = int(duration * sr)
 
     if n_steps == 0:
-        raise ParameterError("n_steps must be non-zero")
+        raise ParameterValueError("n_steps must be non-zero")
 
     if not isinstance(intervals, str) and len(intervals) == 0:
-        raise ParameterError("intervals must not be empty")
+        raise ParameterValueError("intervals must not be empty")
 
     reverse_signal = n_steps < 0
     n_steps_abs = abs(n_steps)
@@ -2205,21 +2210,21 @@ def shepard_risset_glissando(
     >>> y_desc = librosa.shepard_risset_glissando(110.0, duration=3.0, n_octaves=-2.0)
     """
     if frequency is None:
-        raise ParameterError('"frequency" must be a positive number')
+        raise ParameterValueError('"frequency" must be a positive number')
 
     frequency = util._ensure_hz(frequency)
     if frequency <= 0:
-        raise ParameterError('"frequency" must be a positive number')
+        raise ParameterValueError('"frequency" must be a positive number')
 
     nyquist = sr / 2.0
     if float(frequency) >= nyquist:
-        raise ParameterError(
+        raise ParameterValueError(
             f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
         )
 
     if length is None:
         if duration is None:
-            raise ParameterError('either "length" or "duration" must be provided')
+            raise ParameterValueError('either "length" or "duration" must be provided')
         target_len = int(duration * sr)
     else:
         target_len = length
@@ -2319,12 +2324,12 @@ def mu_compress(
     array([-8, -7, -7, -6, -6, -5, -4, -2,  2,  4,  5,  6,  6,  7,  7,  7])
     """
     if mu <= 0:
-        raise ParameterError(
+        raise ParameterValueError(
             f"mu-law compression parameter mu={mu} must be strictly positive."
         )
 
     if np.any(x < -1) or np.any(x > 1):
-        raise ParameterError(f"mu-law input x={x} must be in the range [-1, +1].")
+        raise ParameterValueError(f"mu-law input x={x} must be in the range [-1, +1].")
 
     x_comp: np.ndarray = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
 
@@ -2418,7 +2423,7 @@ def mu_expand(
             0.95743702])
     """
     if mu <= 0:
-        raise ParameterError(
+        raise ParameterValueError(
             f"Inverse mu-law compression parameter mu={mu} must be strictly positive."
         )
 
@@ -2426,7 +2431,7 @@ def mu_expand(
         x = x * 2.0 / (1 + mu)
 
     if np.any(x < -1) or np.any(x > 1):
-        raise ParameterError(
+        raise ParameterValueError(
             f"Inverse mu-law input x={x} must be in the range [-1, +1]."
         )
 

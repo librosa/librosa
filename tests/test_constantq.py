@@ -97,7 +97,7 @@ def y_cqt_110(sr_cqt):
     return librosa.tone(110.0, sr=sr_cqt, duration=0.75)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("hop_length", [-1, 0])
 @pytest.mark.parametrize("bpo", [12, 24])
 def test_cqt_bad_hop(y_cqt, sr_cqt, hop_length, bpo):
@@ -108,7 +108,7 @@ def test_cqt_bad_hop(y_cqt, sr_cqt, hop_length, bpo):
     )
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("bpo", [12, 24])
 def test_cqt_exceed_passband(y_cqt, sr_cqt, bpo):
     # Filters going beyond nyquist: 500 Hz -> 4 octaves = 8000 > 11025/2
@@ -382,7 +382,7 @@ def test_cqt_position(y, sr, note_min: int):
     assert np.nanmax(Cscale) < 5e-2, Cscale
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_cqt_fail_short_early():
 
     # sampling rate is sufficiently above the top octave to trigger early downsampling
@@ -732,7 +732,7 @@ def test_griffinlim_cqt_init(y_chirp, init):
     assert np.all(np.isfinite(y_rec))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_badinit():
     x = np.zeros((33, 3))
@@ -746,7 +746,7 @@ def test_griffinlim_cqt_badrng():
     librosa.griffinlim_cqt(x, rng="garbage")  # type: ignore
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_griffinlim_cqt_bad_momentum():
     x = np.zeros((33, 3))
     librosa.griffinlim_cqt(x, momentum=-1)
@@ -780,7 +780,7 @@ def test_griffinlim_cqt_deprecated_randomstate(y_chirp):
     assert np.allclose(y1, y2)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_griffinlim_cqt_oldrng():
     x = np.zeros((33, 3))
     # We can't have both parameters set
@@ -824,7 +824,7 @@ def test_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave):
     assert np.allclose(C, C2)
 
     # Now verify that going one step further would raise an error
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=C.shape[-2] + 1, bins_per_octave=bins_per_octave)
 
 
@@ -857,7 +857,7 @@ def test_vqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, intervals, gamma, fmin):
     assert np.allclose(V, V2)
 
     # Now verify that going one step further would raise an error
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.vqt(
             y=y_cqt,
             sr=sr_cqt,
@@ -869,17 +869,17 @@ def test_vqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, intervals, gamma, fmin):
         )
 
 def test_vqt_fmin_high(y_cqt):
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.vqt(y=y_cqt, sr=2000, fmin=999,
                     n_bins=2, bins_per_octave=1)
 
 def test_vqt_nbins_none_small(y_cqt):
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.vqt(y=y_cqt, sr=2000, fmin=999,
                     n_bins=None, bins_per_octave=1)
 
 def test_vqt_fmin_over(y_cqt):
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.vqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
 
 
@@ -906,7 +906,7 @@ def test_hybrid_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
     assert np.allclose(V, V2)
 
     # Now verify that going one step further would raise an error
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.hybrid_cqt(
             y=y_cqt,
             sr=sr_cqt,
@@ -916,17 +916,17 @@ def test_hybrid_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
         )
 
 def test_hybrid_cqt_fmin_high(y_cqt):
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=999,
                     n_bins=2, bins_per_octave=1)
 
 def test_hybrid_cqt_nbins_none_small(y_cqt):
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=999,
                     n_bins=None, bins_per_octave=1)
 
 def test_hybrid_cqt_fmin_over(y_cqt):
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
 
 
@@ -963,7 +963,7 @@ def test_pseudo_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
     assert np.allclose(V, V2)
 
     # Now verify that going one step further would raise an error
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.pseudo_cqt(
             y=y_cqt,
             sr=sr_cqt,
@@ -973,15 +973,15 @@ def test_pseudo_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
         )
 
 def test_pseudo_cqt_fmin_high(y_cqt):
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=999,
                     n_bins=2, bins_per_octave=1)
 
 def test_pseudo_cqt_nbins_none_small(y_cqt):
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=999,
                     n_bins=None, bins_per_octave=1)
 
 def test_pseudo_cqt_fmin_over(y_cqt):
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)

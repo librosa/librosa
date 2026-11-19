@@ -11,7 +11,7 @@ import numpy as np
 from numba import jit
 
 from .._cache import cache
-from ..exceptions import ParameterError, ParameterKeyError, ParameterValueError
+from ..exceptions import ParameterKeyError, ParameterValueError
 from ..util.decorators import vectorize
 from .intervals import INTERVALS
 
@@ -535,7 +535,7 @@ def __note_to_degree(key: str | _IterableLike[str] | Iterable[str]) -> int | _Ar
     match = NOTE_RE.match(key)
 
     if not match:
-        raise ParameterError(f"Improper key format: {key:s}")
+        raise ParameterKeyError(f"Improper key format: {key:s}")
 
     letter = match.group("note").upper()
     accidental = match.group("accidental")
@@ -574,7 +574,7 @@ def __simplify_note(
     match = NOTE_RE.match(key+additional_acc)
 
     if not match:
-        raise ParameterError(f"Improper key format: {key:s}")
+        raise ParameterKeyError(f"Improper key format: {key:s}")
 
     letter = match.group("note").upper()
     accidental = match.group("accidental")
@@ -609,7 +609,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     match = KEY_RE.match(signature)
 
     if not match:
-        raise ParameterError("Improper format: {:s}".format(signature))
+        raise ParameterKeyError("Improper format: {:s}".format(signature))
 
     if match.group("scale") or not match.group("mode"):
         # We're already fine here, but let's pass the key through __simpify_note()
@@ -741,7 +741,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> lis
     match = KEY_RE.match(key)
 
     if not match:
-        raise ParameterError(f"Improper key format: {key:s}")
+        raise ParameterKeyError(f"Improper key format: {key:s}")
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 
@@ -924,7 +924,7 @@ def key_to_degrees(key: str) -> np.ndarray:
     match = KEY_RE.match(key)
 
     if not match:
-        raise ParameterError(f"Improper key format: {key:s}")
+        raise ParameterKeyError(f"Improper key format: {key:s}")
 
     if match.group("mode") or not match.group("scale"):
         equiv = __mode_to_key(key)
@@ -1009,7 +1009,7 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
     match = NOTE_RE.match(unison)
 
     if not match:
-        raise ParameterError(f"Improper note format: {unison:s}")
+        raise ParameterValueError(f"Improper note format: {unison:s}")
 
     # Find unison in the alphabet
     pitch = match.group("note").upper()
@@ -1189,7 +1189,7 @@ def interval_to_fjs(
     # suppressing the type check here because mypy won't introspect through
     # numpy vectorization
     if interval <= 0:  # type: ignore
-        raise ParameterError(f"Interval={interval} must be strictly positive")
+        raise ParameterValueError(f"Interval={interval} must be strictly positive")
 
     # Find the approximate number of fifth-steps to get within tolerance
     # of the target interval

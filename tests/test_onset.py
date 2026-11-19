@@ -119,19 +119,19 @@ def test_onset_strength_aggregate(melspec_sr):
     assert np.all(oenv_mean <= oenv_max)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_strength_badlag(ysr):
     y, sr = ysr
     librosa.onset.onset_strength(y=y, sr=sr, lag=0)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_strength_badmax(ysr):
     y, sr = ysr
     librosa.onset.onset_strength(y=y, sr=sr, max_size=0)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_strength_noinput():
     librosa.onset.onset_strength(y=None, S=None)
 
@@ -255,7 +255,7 @@ def test_onset_detect_real(ysr, oenv, hop, bt, normalize):
         assert np.all(onsets < len(oenv))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_detect_nosignal():
     librosa.onset.onset_detect(y=None, onset_envelope=None)
 
@@ -295,7 +295,7 @@ def test_onset_detect_dense_const():
         ("frames", dnr()),
         ("time", dnr()),
         ("samples", dnr()),
-        ("bad units", pytest.raises(librosa.ParameterError)),
+        ("bad units", pytest.raises(librosa.ParameterValueError)),
     ],
 )
 @pytest.mark.parametrize("hop_length", [512, 1024])
@@ -353,7 +353,7 @@ def test_onset_backtrack(ysr, oenv, hop, energy):
     assert np.all(energy[onsets_bt] <= energy[np.maximum(0, onsets_bt - 1)])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_backtrack_fail(ysr):
     y, sr = ysr
     onsets = librosa.onset.onset_detect(y=y, sr=sr, backtrack=True, sparse=False)
@@ -372,13 +372,13 @@ def test_onset_sparse(ysr, oenv, hop, energy):
     assert np.allclose(onsets, np.flatnonzero(onsetsd))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_strength_noagg():
     S = np.zeros((3, 3))
     librosa.onset.onset_strength(S=S, aggregate=False)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_onset_strength_badref():
     S = np.zeros((3, 3))
     librosa.onset.onset_strength(S=S, ref=S[:, :2])
@@ -419,23 +419,23 @@ def test_onset_strength_mode_validation(ysr):
     S_real = np.abs(S_complex)
 
     # Invalid mode string
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.onset.onset_strength(y=y, sr=sr, mode="invalid")  # type: ignore[arg-type]
 
     # max_size > 1 with complex mode
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.onset.onset_strength(S=S_complex, max_size=3, mode="complex")
 
     # ref is not None with complex mode
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.onset.onset_strength(S=S_complex, ref=S_complex, mode="complex")
 
     # Real S with mode="complex"
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.onset.onset_strength(S=S_real, mode="complex")
 
     # Real feature with mode="complex"
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.onset.onset_strength(
             y=y, sr=sr, mode="complex", feature=librosa.feature.melspectrogram
         )

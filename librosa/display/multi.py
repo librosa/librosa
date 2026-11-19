@@ -27,7 +27,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Core and utility imports for exception handling
-from ..util.exceptions import ParameterError
+from ..util.exceptions import (
+    ParameterKeyError,
+    ParameterShapeError,
+    ParameterValueError,
+)
 
 # Type checking imports for development and static analysis
 if TYPE_CHECKING:
@@ -82,7 +86,7 @@ def _resolve_multiplot(
     try:
         return display_map[func]
     except KeyError as exc:
-        raise ParameterError(f"Invalid display '{func}' for multiplot") from exc
+        raise ParameterKeyError(f"Invalid display '{func}' for multiplot") from exc
 
 
 def _mp_get_layout(
@@ -113,7 +117,7 @@ def _mp_get_layout(
         this flag is True.  Otherwise, False.
     """
     if orient not in ("h", "v"):
-        raise ParameterError(f"Invalid value orient={orient}")
+        raise ParameterValueError(f"Invalid value orient={orient}")
 
     multi_plot = False
     if len(data) == 1 and isinstance(data[0], np.ndarray) and data[0].ndim > dims:
@@ -124,7 +128,7 @@ def _mp_get_layout(
         multi_plot = True
         axshape = (len(data),)
     else:
-        raise ParameterError("multiplot requires at least one data array to plot")
+        raise ParameterValueError("multiplot requires at least one data array to plot")
 
     if len(axshape) == 1:
         if orient == "v":
@@ -136,7 +140,7 @@ def _mp_get_layout(
         # In a sane world it would just be nrows, ncols = axshape
         nrows, ncols = axshape[0], axshape[-1]
     else:
-        raise ParameterError(f"Invalid axes shape={axshape}")
+        raise ParameterShapeError(f"Invalid axes shape={axshape}")
 
     return axshape, nrows, ncols, multi_plot
 
@@ -234,7 +238,7 @@ def _mp_setup_axes(
     fig = axes.flat[0].get_figure()
 
     if _squeeze_shape(axes.shape) != _squeeze_shape(axshape):
-        raise ParameterError(f"axes shape={axes.shape} is incompatible with data shape")
+        raise ParameterShapeError(f"axes shape={axes.shape} is incompatible with data shape")
 
     return fig, axes, output_shape
 
@@ -307,7 +311,7 @@ def _mp_setup_prop_group(
     prop_group = np.asarray(share_properties)
 
     if prop_group.size != np.prod(shape):
-        raise ParameterError(f"Shape mismatch between axes={shape} and share_properties={prop_group.shape}")
+        raise ParameterShapeError(f"Shape mismatch between axes={shape} and share_properties={prop_group.shape}")
 
     return prop_group.reshape(shape)
 
@@ -603,14 +607,14 @@ def legend_for_axes(
     axes_array = np.atleast_1d(np.asarray(axes, dtype=object))
 
     if len(axes_array.flat) == 0:
-        raise ParameterError("No axes provided for legend aggregation")
+        raise ParameterValueError("No axes provided for legend aggregation")
 
     if fig is None:
         fig = axes_array.flat[0].figure
 
     for ax in axes_array.flat:
         if ax.figure is not fig:
-            raise ParameterError("All axes must belong to the same figure")
+            raise ParameterValueError("All axes must belong to the same figure")
 
     handles: list[Artist] = []
     labels: list[str] = []
