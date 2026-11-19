@@ -2245,11 +2245,10 @@ def samples_like(
     >>> samples
     array([      0,     512,    1024, ..., 1353728, 1354240, 1354752])
     """
-    # suppress type checks because mypy does not understand isscalar
     if np.isscalar(X):
-        frames = np.arange(X)  # type: ignore
+        frames = np.arange(X)
     else:
-        frames = np.arange(X.shape[axis])  # type: ignore
+        frames = np.arange(X.shape[axis])
     return frames_to_samples(frames, hop_length=hop_length, n_fft=n_fft)
 
 
@@ -2911,8 +2910,7 @@ def hz_to_fjs(
        'G₅', 'G♯⁵'], dtype='<U3')
     """
     if fmin is None:
-        # mypy doesn't know that min can handle scalars
-        fmin = np.min(frequencies)  # type: ignore
+        fmin = np.min(frequencies)
     elif isinstance(fmin, str):
         fmin = float(note_to_hz(fmin))
     if unison is None:
@@ -2924,5 +2922,4 @@ def hz_to_fjs(
     else:
         intervals = np.asarray(frequencies) / fmin
 
-    # mypy does not understand vectorization
-    return notation.interval_to_fjs(intervals, unison=unison, unicode=unicode)  # type: ignore
+    return notation.interval_to_fjs(intervals, unison=unison, unicode=unicode)
