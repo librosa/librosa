@@ -1614,14 +1614,14 @@ def test_chroma_pitch_to_chroma_equivalence(y_chirp):
 
 def test_delta_bad_order_type():
     with pytest.raises(librosa.ParameterTypeError, match="must be an integer"):
-        librosa.feature.delta(np.ones((10, 10)), order="invalid")
+        librosa.feature.delta(np.ones((10, 10)), order="invalid")  # type: ignore[arg-type]
     with pytest.raises(librosa.ParameterTypeError, match="must be an integer"):
-        librosa.feature.delta(np.ones((10, 10)), order=1.5)
+        librosa.feature.delta(np.ones((10, 10)), order=1.5)  # type: ignore[arg-type]
 
 
 def test_spectral_contrast_bad_bands_type():
     with pytest.raises(librosa.ParameterTypeError, match="n_bands=1.5 must be an integer"):
-        librosa.feature.spectral_contrast(S=np.ones((1025, 2)), n_bands=1.5)
+        librosa.feature.spectral_contrast(S=np.ones((1025, 2)), n_bands=1.5)  # type: ignore[arg-type]
 
 
 def test_chroma_cqt_bins_per_octave_none(y_chirp):

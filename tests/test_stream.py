@@ -599,7 +599,7 @@ def test_stream_default_sr():
     assert len(native_blocks) > 0
 
 
-def test_streambridge_enqueue_race_closed():
+def test_streambridge_enqueue_race_closed(monkeypatch):
     bridge = StreamBridge(orig_sr=22050)
     data = np.ones(512, dtype=np.float32)
 
@@ -607,7 +607,7 @@ def test_streambridge_enqueue_race_closed():
         bridge.close()
         return np.ones((512, 1), dtype=np.float32)
 
-    bridge._normalize = close_during_normalize
+    monkeypatch.setattr(bridge, "_normalize", close_during_normalize)
     assert bridge._enqueue(data, raise_on_closed=False) is False
 
 

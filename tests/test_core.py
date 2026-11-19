@@ -3386,7 +3386,7 @@ def test_phase_vocoder_negative_rate(rate):
 
 def test_stft_bad_pad_mode():
     with pytest.raises(librosa.ParameterValueError, match="is not supported by librosa.stft"):
-        librosa.stft(np.zeros(22050), pad_mode="wrap")
+        librosa.stft(np.zeros(22050), pad_mode="wrap")  # type: ignore[arg-type]
 
 
 def test_power_to_db_librosa_error_in_ref():
@@ -3429,9 +3429,9 @@ def test_lpc_bad_order(y_chirp_lpc, order):
 def test_piptrack_missing_fmin_fmax():
     y = np.zeros(22050)
     with pytest.raises(librosa.ParameterValueError, match='both "fmin" and "fmax" must be provided'):
-        librosa.piptrack(y=y, fmin=None, fmax=4000)
+        librosa.piptrack(y=y, fmin=None, fmax=4000)  # type: ignore[arg-type]
     with pytest.raises(librosa.ParameterValueError, match='both "fmin" and "fmax" must be provided'):
-        librosa.piptrack(y=y, fmin=150, fmax=None)
+        librosa.piptrack(y=y, fmin=150, fmax=None)  # type: ignore[arg-type]
 
 
 def test_f0_harmonics_bad_freqs_shape():
