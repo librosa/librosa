@@ -11,8 +11,8 @@ import numpy as np
 from numba import jit
 
 from .._cache import cache
+from ..exceptions import ParameterError, ParameterKeyError
 from ..util.decorators import vectorize
-from ..util.exceptions import ParameterError
 from .intervals import INTERVALS
 
 if TYPE_CHECKING:
@@ -230,7 +230,10 @@ def mela_to_degrees(mela: str | int) -> _Array1D[np.int_]:
     array([0, 1, 2, 5, 7, 8, 9])
     """
     if isinstance(mela, str):
-        index = MELAKARTA_MAP[mela.lower()] - 1
+        try:
+            index = MELAKARTA_MAP[mela.lower()] - 1
+        except KeyError as exc:
+            raise ParameterKeyError(f"Unknown melakarta raga '{mela}'") from exc
     elif 0 < mela <= 72:
         index = mela - 1
     else:
@@ -388,7 +391,10 @@ def mela_to_svara(
     ]
 
     if isinstance(mela, str):
-        mela_idx = MELAKARTA_MAP[mela.lower()] - 1
+        try:
+            mela_idx = MELAKARTA_MAP[mela.lower()] - 1
+        except KeyError as exc:
+            raise ParameterKeyError(f"Unknown melakarta raga '{mela}'") from exc
     elif 0 < mela <= 72:
         mela_idx = mela - 1
     else:
@@ -1198,7 +1204,7 @@ def interval_to_fjs(
         interval_b = __o_fold(interval)
         powers = INTERVALS[np.around(interval_b, decimals=6)]
     except KeyError as exc:
-        raise ParameterError(f"Unknown interval={interval}") from exc
+        raise ParameterKeyError(f"Unknown interval={interval}") from exc
 
     # Ignore pythagorean spelling
     powers = {p: powers[p] for p in powers if p > 3}

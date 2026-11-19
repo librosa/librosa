@@ -15,8 +15,8 @@ from typing import Any
 import msgpack
 import pooch
 
+from ..exceptions import ParameterError, ParameterKeyError
 from ..version import version as librosa_version
-from .exceptions import ParameterError
 
 __all__ = [
     "find_files",
@@ -105,7 +105,7 @@ def example(key: str, *, hq: bool = False, url: bool = False) -> str:
     >>> y, sr = librosa.load(librosa.example('vibeace', hq=True))
     """
     if key not in __TRACKMAP:
-        raise ParameterError(f"Unknown example key: {key}")
+        raise ParameterKeyError(f"Unknown example key: {key}")
 
     if hq:
         ext = ".hq.ogg"
@@ -196,7 +196,7 @@ def example_info(key: str, *, html: bool = False) -> str | None:
     pooch.os_cache
     """
     if key not in __TRACKMAP:
-        raise ParameterError(f"Unknown example key: {key}")
+        raise ParameterKeyError(f"Unknown example key: {key}")
 
     license_file = __GOODBOY.fetch(__TRACKMAP[key]["path"] + ".toml")
 
@@ -431,6 +431,6 @@ def cite(version: str | None=None, *, bib: bool = False) -> str:
         try:
             return bib_index[version]
         except KeyError as exc:
-            raise ParameterError(f"No BibTeX entry found for version {version}.") from exc
+            raise ParameterKeyError(f"No BibTeX entry found for version {version}.") from exc
 
     return f"https://doi.org/{version_index[version]}"

@@ -30,7 +30,11 @@ from matplotlib import colormaps as mcm
 
 # Core and utility imports for audio processing
 from .. import core, util
-from ..util.exceptions import ParameterError
+from ..exceptions import (
+    LibrosaNotImplementedError,
+    ParameterError,
+    ParameterTypeError,
+)
 
 # Type checking imports for development and static analysis
 if TYPE_CHECKING:
@@ -249,8 +253,8 @@ class AdaptiveFormatterBase(mplticker.Formatter):
 
         return self._format_tick(x, pos)
 
-    def _format_tick(self, x: float, pos: int | None = None) -> str:
-        raise NotImplementedError
+    def _format_tick(self, x: float, pos: int | None = None) -> str:  # noqa: ARG002
+        raise LibrosaNotImplementedError
 
 
 class NoteFormatter(AdaptiveFormatterBase):
@@ -660,12 +664,13 @@ class ChromaFJSFormatter(mplticker.Formatter):
         self.unison = unison
         self.unicode = unicode
         self.intervals = intervals
+        if not isinstance(intervals, str):
+            bins_per_octave = len(intervals)
+        if not isinstance(bins_per_octave, int):
+            raise ParameterTypeError(f"bins_per_octave={bins_per_octave} must be integer-valued")
+        self.bins_per_octave = bins_per_octave
+
         try:
-            if not isinstance(intervals, str):
-                bins_per_octave = len(intervals)
-            if not isinstance(bins_per_octave, int):
-                raise ParameterError(f"bins_per_octave={bins_per_octave} must be integer-valued")
-            self.bins_per_octave = bins_per_octave
             # Construct the explicit interval set
             self.intervals_ = core.interval_frequencies(
                 self.bins_per_octave,
@@ -674,7 +679,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
                 bins_per_octave=self.bins_per_octave,
             )
         except TypeError as exc:
-            raise ParameterError(
+            raise ParameterTypeError(
                 f"intervals={intervals} must be of type str or a collection of numbers between 1 and 2"
             ) from exc
 

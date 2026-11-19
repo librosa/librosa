@@ -1,4 +1,4 @@
-from . import beat, core, decompose, display, effects, feature, filters, onset, segment, sequence, util
+from . import beat, core, decompose, display, effects, exceptions, feature, filters, onset, segment, sequence, util
 from ._cache import cache as cache
 from .core import A4_to_tuning as A4_to_tuning
 from .core import A_weighting as A_weighting
@@ -106,8 +106,16 @@ from .core import tuning_to_A4 as tuning_to_A4
 from .core import vqt as vqt
 from .core import yin as yin
 from .core import zero_crossings as zero_crossings
-from .util.exceptions import LibrosaError as LibrosaError
-from .util.exceptions import ParameterError as ParameterError
+from .exceptions import LibrosaError as LibrosaError
+from .exceptions import LibrosaNotImplementedError as LibrosaNotImplementedError
+from .exceptions import ParameterError as ParameterError
+from .exceptions import ParameterKeyError as ParameterKeyError
+from .exceptions import ParameterShapeError as ParameterShapeError
+from .exceptions import ParameterTypeError as ParameterTypeError
+from .exceptions import StreamBufferError as StreamBufferError
+from .exceptions import StreamClosedError as StreamClosedError
+from .exceptions import StreamError as StreamError
+from .exceptions import StreamTimeoutError as StreamTimeoutError
 from .util.files import cite as cite
 from .util.files import ex as ex
 from .util.files import example as example

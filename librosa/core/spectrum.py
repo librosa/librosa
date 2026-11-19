@@ -12,9 +12,13 @@ from numba import jit
 
 from .. import util
 from .._cache import cache
+from ..exceptions import (
+    LibrosaError,
+    ParameterError,
+    ParameterTypeError,
+)
 from ..filters import get_window, semitone_filterbank, window_sumsquare
 from ..util.deprecation import Deprecated, rename_kw
-from ..util.exceptions import ParameterError
 from . import convert
 from .audio import resample
 
@@ -1833,7 +1837,9 @@ def power_to_db(
             # Compute the reference value along the specified axes, keeping dimensions for broadcasting
             ref_value = ref(magnitude, axis=axes, keepdims=True)
         except TypeError as e:
-            raise ParameterError(
+            if isinstance(e, LibrosaError):
+                raise
+            raise ParameterTypeError(
                 "The provided reference function must support 'axis' and "
                 "'keepdims' arguments for proper multichannel processing."
             ) from e
@@ -1993,7 +1999,9 @@ def amplitude_to_db(
             # Compute the reference value along the specified axes, keeping dimensions for broadcasting
             ref_value = ref(magnitude, axis=axes, keepdims=True)
         except TypeError as e:
-            raise ParameterError(
+            if isinstance(e, LibrosaError):
+                raise
+            raise ParameterTypeError(
                 "The provided reference function must support 'axis' and "
                 "'keepdims' arguments for proper multichannel processing."
             ) from e

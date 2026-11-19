@@ -18,3 +18,4 @@ API documentation
     segment
     sequence
     util
+    exceptions
