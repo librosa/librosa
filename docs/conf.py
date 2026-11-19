@@ -71,7 +71,7 @@ extensions = [
     "myst_parser",  # markdown support for CONTRIBUTING.md inclusion
 ]
 
-mermaid_version = "latest"
+mermaid_version = "12.3.0"
 
 # Generate plots for example sections
 if "LIBROSA_DOC_DEBUG" in os.environ:
