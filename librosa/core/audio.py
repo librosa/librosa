@@ -384,7 +384,7 @@ def to_mono(
     """
     # Validate the buffer(s) and identify lengths, dtypes, etc
     if not signals:
-        raise ParameterValueError("At least one signal must be provided to `to_mono`.")
+        raise ParameterShapeError("At least one signal must be provided to `to_mono`.")
     n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
     dtype = signals[0].dtype
     for y in signals:
@@ -625,7 +625,7 @@ def to_multi(
     """
     # Validate the buffer(s) and identify lengths, dtypes, etc
     if not signals:
-        raise ParameterValueError("At least one signal must be provided.")
+        raise ParameterShapeError("At least one signal must be provided.")
     n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
     dtype = signals[0].dtype
     if downmix:
@@ -2100,7 +2100,7 @@ def shepard_scale(
         raise ParameterValueError("n_steps must be non-zero")
 
     if not isinstance(intervals, str) and len(intervals) == 0:
-        raise ParameterValueError("intervals must not be empty")
+        raise ParameterShapeError("intervals must not be empty")
 
     reverse_signal = n_steps < 0
     n_steps_abs = abs(n_steps)

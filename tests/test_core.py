@@ -1037,7 +1037,7 @@ def test_to_mono_norm(norm, nchannels):
         assert np.allclose(y_mono, nchannels)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_to_mono_empty():
     librosa.to_mono()
 

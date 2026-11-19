@@ -11,6 +11,7 @@ from numba import jit
 from .._cache import cache
 from ..exceptions import (
     ParameterShapeError,
+    ParameterTypeError,
     ParameterValueError,
 )
 
@@ -112,7 +113,7 @@ def delta(
     data = np.atleast_1d(data)
 
     if mode == "interp" and width > data.shape[axis]:
-        raise ParameterShapeError(
+        raise ParameterValueError(
             f"when mode='interp', width={width} "
             f"cannot exceed data.shape[axis]={data.shape[axis]}"
         )
@@ -120,7 +121,10 @@ def delta(
     if width < 3 or np.mod(width, 2) != 1:
         raise ParameterValueError("width must be an odd integer >= 3")
 
-    if order <= 0 or not isinstance(order, (int, np.integer)):
+    if not isinstance(order, (int, np.integer)):
+        raise ParameterTypeError(f"order={order} must be an integer")
+
+    if order <= 0:
         raise ParameterValueError("order must be a positive integer")
 
     kwargs.pop("deriv", None)

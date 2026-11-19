@@ -360,7 +360,9 @@ class StreamBridge:
             raise ParameterValueError(f"orig_sr={orig_sr} must be a positive number")
         if not is_positive_int(channels):
             raise ParameterValueError(f"channels={channels} must be a positive integer")
-        if not (isinstance(maxsize, (int, np.integer)) and maxsize >= 0):
+        if not isinstance(maxsize, (int, np.integer)):
+            raise ParameterTypeError(f"maxsize={maxsize} must be an integer")
+        if maxsize < 0:
             raise ParameterValueError(f"maxsize={maxsize} must be a non-negative integer")
         if overflow_policy not in {"warn", "drop_oldest", "drop_newest", "error"}:
             raise ParameterValueError(f"Invalid overflow_policy='{overflow_policy}'")

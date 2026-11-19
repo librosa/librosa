@@ -1796,7 +1796,7 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
 
         raise ParameterShapeError(f"Window size mismatch: {len(window):d} != {Nx:d}")
     else:
-        raise ParameterValueError(f"Invalid window specification: {window!r}")
+        raise ParameterTypeError(f"Invalid window specification: {window!r}")
 
 
 @cache(level=10)

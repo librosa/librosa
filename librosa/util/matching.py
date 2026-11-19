@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 import numba
 import numpy as np
 
-from .exceptions import ParameterValueError
+from .exceptions import ParameterShapeError, ParameterValueError
 from .utils import valid_intervals
 
 if TYPE_CHECKING:
@@ -222,7 +222,7 @@ def match_intervals(
     >>> # [6, 7] => [4, 5]  (ints_from[2])
     """
     if len(intervals_from) == 0 or len(intervals_to) == 0:
-        raise ParameterValueError("Attempting to match empty interval list")
+        raise ParameterShapeError("Attempting to match empty interval list")
 
     # Verify that the input intervals has correct shape and size
     valid_intervals(intervals_from)
@@ -300,7 +300,7 @@ def match_events(
      (84, 80), (91, 90), (98, 90)]
     """
     if len(events_from) == 0 or len(events_to) == 0:
-        raise ParameterValueError("Attempting to match empty event list")
+        raise ParameterShapeError("Attempting to match empty event list")
 
     # If we can't match left or right, then only strict equivalence
     # counts as a match.

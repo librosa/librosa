@@ -28,7 +28,6 @@ import numpy as np
 
 # Core and utility imports for exception handling
 from ..util.exceptions import (
-    ParameterKeyError,
     ParameterShapeError,
     ParameterValueError,
 )
@@ -86,7 +85,7 @@ def _resolve_multiplot(
     try:
         return display_map[func]
     except KeyError as exc:
-        raise ParameterKeyError(f"Invalid display '{func}' for multiplot") from exc
+        raise ParameterValueError(f"Invalid display '{func}' for multiplot") from exc
 
 
 def _mp_get_layout(
@@ -128,7 +127,7 @@ def _mp_get_layout(
         multi_plot = True
         axshape = (len(data),)
     else:
-        raise ParameterValueError("multiplot requires at least one data array to plot")
+        raise ParameterShapeError("multiplot requires at least one data array to plot")
 
     if len(axshape) == 1:
         if orient == "v":
@@ -607,7 +606,7 @@ def legend_for_axes(
     axes_array = np.atleast_1d(np.asarray(axes, dtype=object))
 
     if len(axes_array.flat) == 0:
-        raise ParameterValueError("No axes provided for legend aggregation")
+        raise ParameterShapeError("No axes provided for legend aggregation")
 
     if fig is None:
         fig = axes_array.flat[0].figure

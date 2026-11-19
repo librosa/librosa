@@ -15,7 +15,7 @@ from typing import Any
 import msgpack
 import pooch
 
-from ..exceptions import ParameterKeyError
+from ..exceptions import ParameterKeyError, ParameterValueError
 from ..version import version as librosa_version
 
 __all__ = [
@@ -418,10 +418,10 @@ def cite(version: str | None=None, *, bib: bool = False) -> str:
 
     if version not in version_index:
         if "dev" in version:
-            raise ParameterKeyError(f"Version {version} is not yet released and "
+            raise ParameterValueError(f"Version {version} is not yet released and "
                                  "therefore does not yet have a citable DOI.")
         else:
-            raise ParameterKeyError(f"Version {version} not found in the citation index")
+            raise ParameterValueError(f"Version {version} not found in the citation index")
 
     if bib:
         bib_data = __GOODBOY.fetch("bib_index.msgpack")
@@ -431,6 +431,6 @@ def cite(version: str | None=None, *, bib: bool = False) -> str:
         try:
             return bib_index[version]
         except KeyError as exc:
-            raise ParameterKeyError(f"No BibTeX entry found for version {version}.") from exc
+            raise ParameterValueError(f"No BibTeX entry found for version {version}.") from exc
 
     return f"https://doi.org/{version_index[version]}"

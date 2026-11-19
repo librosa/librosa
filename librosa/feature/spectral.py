@@ -506,7 +506,10 @@ def spectral_contrast(
     if freq.ndim != 1 or len(freq) != S.shape[-2]:
         raise ParameterShapeError(f"freq.shape mismatch: expected ({S.shape[-2]:d},)")
 
-    if n_bands < 1 or not isinstance(n_bands, (int, np.integer)):
+    if not isinstance(n_bands, (int, np.integer)):
+        raise ParameterTypeError(f"n_bands={n_bands} must be an integer")
+
+    if n_bands < 1:
         raise ParameterValueError("n_bands must be a positive integer")
 
     if not 0.0 < quantile < 1.0:

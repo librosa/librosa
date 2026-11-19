@@ -10,19 +10,34 @@ Exceptions raised by Librosa inherit from both :class:`LibrosaError` and relevan
 Exception Hierarchy
 -------------------
 
-.. code-block:: text
+.. mermaid::
 
-    LibrosaError
-    ├── ParameterError
-    │   ├── ParameterValueError (also inherits ValueError)
-    │   │   └── ParameterShapeError
-    │   ├── ParameterTypeError (also inherits TypeError)
-    │   └── ParameterKeyError (also inherits KeyError)
-    ├── StreamError
-    │   ├── StreamClosedError (also inherits RuntimeError)
-    │   ├── StreamBufferError (also inherits BufferError)
-    │   └── StreamTimeoutError (also inherits TimeoutError, queue.Empty)
-    └── LibrosaNotImplementedError (also inherits NotImplementedError)
+    flowchart TD
+        LibrosaError["LibrosaError"]
+        ParameterError["ParameterError"]
+        ParameterValueError["ParameterValueError<br>(ValueError)"]
+        ParameterShapeError["ParameterShapeError"]
+        ParameterTypeError["ParameterTypeError<br>(TypeError)"]
+        ParameterKeyError["ParameterKeyError<br>(KeyError)"]
+        StreamError["StreamError"]
+        StreamClosedError["StreamClosedError<br>(RuntimeError)"]
+        StreamBufferError["StreamBufferError<br>(BufferError)"]
+        StreamTimeoutError["StreamTimeoutError<br>(TimeoutError, queue.Empty)"]
+        LibrosaNotImplementedError["LibrosaNotImplementedError<br>(NotImplementedError)"]
+
+        LibrosaError --> ParameterError
+        LibrosaError --> StreamError
+        LibrosaError --> LibrosaNotImplementedError
+
+        ParameterError --> ParameterValueError
+        ParameterError --> ParameterTypeError
+        ParameterError --> ParameterKeyError
+
+        ParameterValueError --> ParameterShapeError
+
+        StreamError --> StreamClosedError
+        StreamError --> StreamBufferError
+        StreamError --> StreamTimeoutError
 
 Usage Guidance
 --------------

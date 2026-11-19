@@ -483,7 +483,7 @@ def test_cq_to_chroma(n_octaves, semitones, n_chroma, fmin, base_c, window):
             assert np.allclose(np.mod(i - resid, 12), 0.0), i - resid
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
+@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_get_window_fail():
 
     librosa.filters.get_window(None, 32)  # type: ignore

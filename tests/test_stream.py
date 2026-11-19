@@ -43,9 +43,9 @@ def test_streambridge_validation():
         StreamBridge(orig_sr=22050, channels=1.5)  # type: ignore[arg-type]
     with pytest.raises(librosa.ParameterValueError):
         StreamBridge(orig_sr=22050, maxsize=-1)
-    with pytest.raises(librosa.ParameterValueError):
+    with pytest.raises(librosa.ParameterTypeError):
         StreamBridge(orig_sr=22050, maxsize=1.5)  # type: ignore[arg-type]
-    with pytest.raises(librosa.ParameterValueError):
+    with pytest.raises(librosa.ParameterTypeError):
         StreamBridge(orig_sr=22050, maxsize="invalid")  # type: ignore[arg-type]
     with pytest.raises(librosa.ParameterValueError):
         StreamBridge(orig_sr=22050, overflow_policy="invalid")

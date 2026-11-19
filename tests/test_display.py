@@ -2184,7 +2184,7 @@ def test_resolve_multiplot(func, dims, badprops):
     assert badprops_out == badprops
 
 
-@pytest.mark.xfail(raises=librosa.ParameterKeyError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_resolve_multiplot_bad():
     librosa.display._resolve_multiplot("bogus")  # type: ignore
 

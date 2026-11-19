@@ -192,7 +192,7 @@ def decompose(
     orig_shape = list(S.shape)
 
     if S.ndim > 2 and sort:
-        raise ParameterValueError(
+        raise ParameterShapeError(
             "Parameter sort=True is unsupported for input with more than two dimensions"
         )
 

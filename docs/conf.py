@@ -66,6 +66,7 @@ extensions = [
     "sphinx_design",
     "numpydoc",  # docstring examples
     "sphinxcontrib.inkscapeconverter",  # used for badge / logo conversion in tex
+    "sphinxcontrib.mermaid",  # mermaid diagrams
     "pydata_sphinx_theme",  # theme for docs
     "myst_parser",  # markdown support for CONTRIBUTING.md inclusion
 ]

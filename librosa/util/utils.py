@@ -1949,7 +1949,7 @@ def sync(
             np.asarray(idx), idx_min=0, idx_max=shape[axis], pad=pad
         )
     else:
-        raise ParameterValueError(f"Invalid index set: {idx}")
+        raise ParameterTypeError(f"Invalid index set: {idx}")
 
     agg_shape = list(shape)
     agg_shape[axis] = len(slices)
@@ -2492,7 +2492,7 @@ def stack(arrays: list[np.ndarray], *, axis: int = 0) -> np.ndarray:
     if len(shapes) > 1:
         raise ParameterShapeError("all input arrays must have the same shape")
     elif len(shapes) < 1:
-        raise ParameterValueError("at least one input array must be provided for stack")
+        raise ParameterShapeError("at least one input array must be provided for stack")
 
     shape_in = shapes.pop()
 

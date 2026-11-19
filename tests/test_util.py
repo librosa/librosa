@@ -346,7 +346,7 @@ def test_axis_sort(ndim, axis, index, value, rng):
         (np.zeros((0, 2), dtype=int), np.asarray([[0, 2], [0, 4], [3, 6]])),
     ],
 )
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_match_intervals_empty(int_from, int_to):
     librosa.util.match_intervals(int_from, int_to)
 
@@ -475,7 +475,7 @@ def test_match_events(n, m, rng):
 @pytest.mark.parametrize(
     "ev1,ev2", [(np.array([]), np.arange(5)), (np.arange(5), np.array([]))]
 )
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_match_events_failempty(ev1, ev2):
     librosa.util.match_events(ev1, ev2)
 
@@ -1095,7 +1095,7 @@ def test_sync_frames_pad(atype, pad):
 
 @pytest.mark.parametrize("data", [np.mod(np.arange(135), 5)])
 @pytest.mark.parametrize("idx", [["foo", "bar"], [None], [slice(None), None]])
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
+@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_sync_fail(data, idx):
     librosa.util.sync(data, idx)
 
@@ -1404,7 +1404,7 @@ def test_stack_fail_shape():
     librosa.util.stack([x1, x2])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_stack_fail_empty():
     librosa.util.stack([])
 
@@ -1671,13 +1671,13 @@ def test_cite_released(bib):
 
 
 @pytest.mark.network
-@pytest.mark.xfail(raises=librosa.ParameterKeyError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_cite_badversion():
     librosa.cite(version="-1.5")
 
 
 @pytest.mark.network
-@pytest.mark.xfail(raises=librosa.ParameterKeyError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("bib", [False, True])
 def test_cite_unreleased(bib):
     librosa.cite("0.10.0.dev0", bib=bib)

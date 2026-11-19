@@ -1363,11 +1363,12 @@ def viterbi(
     if p_init is None:
         p_init = np.empty(n_states)
         p_init.fill(1.0 / n_states)
-    elif (
-        np.any(p_init < 0)
-        or not np.allclose(p_init.sum(), 1)
-        or p_init.shape != (n_states,)
-    ):
+    elif p_init.shape != (n_states,):
+        raise ParameterShapeError(
+            "Initial distribution p_init must have shape (n_states,). "
+            f"Got p_init.shape={p_init.shape}"
+        )
+    elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1):
         raise ParameterValueError(f"Invalid initial state distribution: p_init={p_init}")
 
     log_trans = np.log(transition + epsilon)
@@ -1599,11 +1600,12 @@ def viterbi_discriminative(
     if p_init is None:
         p_init = np.empty(n_states)
         p_init.fill(1.0 / n_states)
-    elif (
-        np.any(p_init < 0)
-        or not np.allclose(p_init.sum(), 1)
-        or p_init.shape != (n_states,)
-    ):
+    elif p_init.shape != (n_states,):
+        raise ParameterShapeError(
+            "Initial distribution p_init must have shape (n_states,). "
+            f"Got p_init.shape={p_init.shape}"
+        )
+    elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1):
         raise ParameterValueError(f"Invalid initial state distribution: p_init={p_init}")
 
     # By Bayes' rule, P[X | Y] * P[Y] = P[Y | X] * P[X]
@@ -1806,7 +1808,12 @@ def viterbi_binary(
 
     assert p_state is not None
 
-    if p_state.shape != (n_states,) or np.any(p_state < 0) or np.any(p_state > 1):
+    if p_state.shape != (n_states,):
+        raise ParameterShapeError(
+            "Marginal distribution p_state must have shape (n_states,). "
+            f"Got p_state.shape={p_state.shape}"
+        )
+    elif np.any(p_state < 0) or np.any(p_state > 1):
         raise ParameterValueError(f"Invalid marginal state distributions: p_state={p_state}")
 
     if p_init is None:
@@ -1817,7 +1824,12 @@ def viterbi_binary(
 
     assert p_init is not None
 
-    if p_init.shape != (n_states,) or np.any(p_init < 0) or np.any(p_init > 1):
+    if p_init.shape != (n_states,):
+        raise ParameterShapeError(
+            "Initial distribution p_init must have shape (n_states,). "
+            f"Got p_init.shape={p_init.shape}"
+        )
+    elif np.any(p_init < 0) or np.any(p_init > 1):
         raise ParameterValueError(f"Invalid initial state distributions: p_init={p_init}")
 
     shape_prefix = list(prob.shape[:-2])

@@ -267,7 +267,7 @@ def beat_track(
         )
 
     if sparse and onset_envelope.ndim != 1:
-        raise ParameterValueError(f"sparse=True (default) does not support "
+        raise ParameterShapeError(f"sparse=True (default) does not support "
                 f"{onset_envelope.ndim}-dimensional inputs. "
                 f"Either set sparse=False or convert the signal to mono.")
 
