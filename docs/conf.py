@@ -71,6 +71,8 @@ extensions = [
     "myst_parser",  # markdown support for CONTRIBUTING.md inclusion
 ]
 
+mermaid_version = "latest"
+
 # Generate plots for example sections
 if "LIBROSA_DOC_DEBUG" in os.environ:
     numpydoc_use_plots = False

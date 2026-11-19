@@ -12,32 +12,18 @@ Exception Hierarchy
 
 .. mermaid::
 
-    flowchart TD
-        LibrosaError["LibrosaError"]
-        ParameterError["ParameterError"]
-        ParameterValueError["ParameterValueError<br>(ValueError)"]
-        ParameterShapeError["ParameterShapeError"]
-        ParameterTypeError["ParameterTypeError<br>(TypeError)"]
-        ParameterKeyError["ParameterKeyError<br>(KeyError)"]
-        StreamError["StreamError"]
-        StreamClosedError["StreamClosedError<br>(RuntimeError)"]
-        StreamBufferError["StreamBufferError<br>(BufferError)"]
-        StreamTimeoutError["StreamTimeoutError<br>(TimeoutError, queue.Empty)"]
-        LibrosaNotImplementedError["LibrosaNotImplementedError<br>(NotImplementedError)"]
-
-        LibrosaError --> ParameterError
-        LibrosaError --> StreamError
-        LibrosaError --> LibrosaNotImplementedError
-
-        ParameterError --> ParameterValueError
-        ParameterError --> ParameterTypeError
-        ParameterError --> ParameterKeyError
-
-        ParameterValueError --> ParameterShapeError
-
-        StreamError --> StreamClosedError
-        StreamError --> StreamBufferError
-        StreamError --> StreamTimeoutError
+    treeView-beta
+    LibrosaError
+    ├── ParameterError
+    │   ├── ParameterValueError ## (also inherits ValueError)
+    │   │   └── ParameterShapeError
+    │   ├── ParameterTypeError ## (also inherits TypeError)
+    │   └── ParameterKeyError ## (also inherits KeyError)
+    ├── StreamError
+    │   ├── StreamClosedError ## (also inherits RuntimeError)
+    │   ├── StreamBufferError ## (also inherits BufferError)
+    │   └── StreamTimeoutError ## (also inherits TimeoutError, queue.Empty)
+    └── LibrosaNotImplementedError ## (also inherits NotImplementedError)
 
 Usage Guidance
 --------------
