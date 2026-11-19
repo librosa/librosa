@@ -17,6 +17,7 @@ from ..exceptions import (
     ParameterError,
     ParameterShapeError,
     ParameterTypeError,
+    ParameterValueError,
 )
 
 if TYPE_CHECKING:
@@ -337,7 +338,7 @@ def valid_audio(y: np.ndarray) -> bool:
         )
 
     if not np.isfinite(y).all():
-        raise ParameterError("Audio buffer is not finite everywhere")
+        raise ParameterValueError("Audio buffer is not finite everywhere")
 
     return True
 
@@ -485,11 +486,11 @@ def align_samples(
     librosa.util.exceptions.ParameterError: Sample count of 512 at 48000...
     """
     if not is_positive_int(n_samples):
-        raise ParameterError(f"n_samples={n_samples} must be a positive integer")
+        raise ParameterValueError(f"n_samples={n_samples} must be a positive integer")
     if not (np.isfinite(orig_sr) and orig_sr > 0):
-        raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
+        raise ParameterValueError(f"orig_sr={orig_sr} must be a positive number")
     if target_sr is not None and not (np.isfinite(target_sr) and target_sr > 0):
-        raise ParameterError(f"target_sr={target_sr} must be a positive number")
+        raise ParameterValueError(f"target_sr={target_sr} must be a positive number")
 
     if target_sr is None or target_sr == orig_sr:
         return int(n_samples)
@@ -502,7 +503,7 @@ def align_samples(
         exact_samples, aligned_samples, rtol=1e-7, atol=1e-5
     ):
         if error:
-            raise ParameterError(
+            raise ParameterValueError(
                 f"Sample count of {n_samples} at {orig_sr} Hz results in a "
                 f"fractional sample count ({exact_samples:.4f}) at {target_sr} Hz."
             )
@@ -532,7 +533,7 @@ def valid_intervals(intervals: np.ndarray) -> bool:
         raise ParameterShapeError("intervals must have shape (n, 2)")
 
     if np.any(intervals[:, 0] > intervals[:, 1]):
-        raise ParameterError(f"intervals={intervals} must have non-negative durations")
+        raise ParameterValueError(f"intervals={intervals} must have non-negative durations")
 
     return True
 
@@ -1113,13 +1114,13 @@ def normalize(
         threshold = tiny(S)
 
     elif threshold <= 0:
-        raise ParameterError(f"threshold={threshold} must be strictly positive")
+        raise ParameterValueError(f"threshold={threshold} must be strictly positive")
 
     if fill not in [None, False, True]:
         raise ParameterTypeError(f"fill={fill} must be None or boolean")
 
     if not np.all(np.isfinite(S)):
-        raise ParameterError("Input must be finite")
+        raise ParameterValueError("Input must be finite")
 
     # All norms only depend on magnitude, let's do that first
     mag = np.abs(S).astype(float)
@@ -1138,7 +1139,7 @@ def normalize(
 
     elif norm == 0:
         if fill is True:
-            raise ParameterError("Cannot normalize with norm=0 and fill=True")
+            raise ParameterValueError("Cannot normalize with norm=0 and fill=True")
 
         length = np.sum(mag > 0, axis=axis, keepdims=True, dtype=mag.dtype)
 
@@ -1151,7 +1152,7 @@ def normalize(
             fill_norm = mag.shape[axis] ** (-1.0 / norm)
 
     else:
-        raise ParameterError(f"Unsupported norm: {norm!r}")
+        raise ParameterValueError(f"Unsupported norm: {norm!r}")
 
     # indices where norm is below the threshold
     small_idx = length < threshold
@@ -1581,17 +1582,17 @@ def peak_pick(
     >>> ax[0].label_outer()
     """
     if pre_max < 0:
-        raise ParameterError("pre_max must be non-negative")
+        raise ParameterValueError("pre_max must be non-negative")
     if pre_avg < 0:
-        raise ParameterError("pre_avg must be non-negative")
+        raise ParameterValueError("pre_avg must be non-negative")
     if delta < 0:
-        raise ParameterError("delta must be non-negative")
+        raise ParameterValueError("delta must be non-negative")
     if wait < 0:
-        raise ParameterError("wait must be non-negative")
+        raise ParameterValueError("wait must be non-negative")
     if post_max <= 0:
-        raise ParameterError("post_max must be positive")
+        raise ParameterValueError("post_max must be positive")
     if post_avg <= 0:
-        raise ParameterError("post_avg must be positive")
+        raise ParameterValueError("post_avg must be positive")
     if sparse and x.ndim != 1:
         raise ParameterShapeError(
             f"sparse=True (default) does not support "
@@ -1728,7 +1729,7 @@ def sparsify_rows(
         )
 
     if not 0.0 <= quantile < 1:
-        raise ParameterError(f"Invalid quantile {quantile:.2f}")
+        raise ParameterValueError(f"Invalid quantile {quantile:.2f}")
 
     if dtype is None:
         dtype = x.dtype
@@ -2052,10 +2053,10 @@ def softmask(
         raise ParameterShapeError(f"Shape mismatch: {X.shape}!={X_ref.shape}")
 
     if np.any(X < 0) or np.any(X_ref < 0):
-        raise ParameterError("X and X_ref must be non-negative")
+        raise ParameterValueError("X and X_ref must be non-negative")
 
     if power <= 0:
-        raise ParameterError("power must be strictly positive")
+        raise ParameterValueError("power must be strictly positive")
 
     # We're working with ints, cast to float.
     dtype = X.dtype

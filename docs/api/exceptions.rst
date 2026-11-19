@@ -12,6 +12,7 @@ Exceptions
 
     LibrosaError
     ParameterError
+    ParameterValueError
     ParameterTypeError
     ParameterShapeError
     ParameterKeyError

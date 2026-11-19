@@ -9,6 +9,7 @@ from ..exceptions import (
     ParameterKeyError,
     ParameterShapeError,
     ParameterTypeError,
+    ParameterValueError,
     StreamBufferError,
     StreamClosedError,
     StreamError,
@@ -18,6 +19,7 @@ from ..exceptions import (
 __all__ = [
     "LibrosaError",
     "ParameterError",
+    "ParameterValueError",
     "ParameterTypeError",
     "ParameterShapeError",
     "ParameterKeyError",

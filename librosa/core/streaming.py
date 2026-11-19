@@ -15,9 +15,9 @@ import soundfile as sf
 import soxr
 
 from ..exceptions import (
-    ParameterError,
     ParameterShapeError,
     ParameterTypeError,
+    ParameterValueError,
     StreamBufferError,
     StreamClosedError,
     StreamTimeoutError,
@@ -65,27 +65,27 @@ class _StreamBuffer:
         dtype: DTypeLike = np.float32,
     ):
         if not is_positive_int(block_length):
-            raise ParameterError(
+            raise ParameterValueError(
                 f"block_length={block_length} must be a positive integer"
             )
         if not is_positive_int(frame_length):
-            raise ParameterError(
+            raise ParameterValueError(
                 f"frame_length={frame_length} must be a positive integer"
             )
         if not is_positive_int(hop_length):
-            raise ParameterError(f"hop_length={hop_length} must be a positive integer")
+            raise ParameterValueError(f"hop_length={hop_length} must be a positive integer")
         if not (np.isfinite(orig_sr) and orig_sr > 0):
-            raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
+            raise ParameterValueError(f"orig_sr={orig_sr} must be a positive number")
         if sr is not None and not (np.isfinite(sr) and sr > 0):
-            raise ParameterError(f"sr={sr} must be a positive number")
+            raise ParameterValueError(f"sr={sr} must be a positive number")
         if not is_positive_int(channels):
-            raise ParameterError(f"channels={channels} must be a positive integer")
+            raise ParameterValueError(f"channels={channels} must be a positive integer")
         if offset < 0:
-            raise ParameterError(f"offset={offset} must be non-negative")
+            raise ParameterValueError(f"offset={offset} must be non-negative")
         if duration is not None and duration < 0:
-            raise ParameterError(f"duration={duration} must be non-negative")
+            raise ParameterValueError(f"duration={duration} must be non-negative")
         if res_type not in {"soxr_vhq", "soxr_hq", "soxr_mq", "soxr_lq", "soxr_qq"}:
-            raise ParameterError(
+            raise ParameterValueError(
                 f"res_type={res_type} is not a valid soxr resampling mode for streaming"
             )
 
@@ -357,13 +357,13 @@ class StreamBridge:
         timeout: float | None = None,
     ):
         if not (np.isfinite(orig_sr) and orig_sr > 0):
-            raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
+            raise ParameterValueError(f"orig_sr={orig_sr} must be a positive number")
         if not is_positive_int(channels):
-            raise ParameterError(f"channels={channels} must be a positive integer")
+            raise ParameterValueError(f"channels={channels} must be a positive integer")
         if not (isinstance(maxsize, (int, np.integer)) and maxsize >= 0):
-            raise ParameterError(f"maxsize={maxsize} must be a non-negative integer")
+            raise ParameterValueError(f"maxsize={maxsize} must be a non-negative integer")
         if overflow_policy not in {"warn", "drop_oldest", "drop_newest", "error"}:
-            raise ParameterError(f"Invalid overflow_policy='{overflow_policy}'")
+            raise ParameterValueError(f"Invalid overflow_policy='{overflow_policy}'")
 
         self.orig_sr = float(orig_sr)
         self.channels = int(channels)

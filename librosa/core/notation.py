@@ -11,7 +11,7 @@ import numpy as np
 from numba import jit
 
 from .._cache import cache
-from ..exceptions import ParameterError, ParameterKeyError
+from ..exceptions import ParameterError, ParameterKeyError, ParameterValueError
 from ..util.decorators import vectorize
 from .intervals import INTERVALS
 
@@ -237,7 +237,7 @@ def mela_to_degrees(mela: str | int) -> _Array1D[np.int_]:
     elif 0 < mela <= 72:
         index = mela - 1
     else:
-        raise ParameterError(f"mela={mela} must be in range [1, 72]")
+        raise ParameterValueError(f"mela={mela} must be in range [1, 72]")
 
     # always have Sa [0]
     degrees = [0]
@@ -398,7 +398,7 @@ def mela_to_svara(
     elif 0 < mela <= 72:
         mela_idx = mela - 1
     else:
-        raise ParameterError(f"mela={mela} must be in range [1, 72]")
+        raise ParameterValueError(f"mela={mela} must be in range [1, 72]")
 
     # Determine Ri2/Ga1
     lower = mela_idx % 36

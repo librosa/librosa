@@ -18,6 +18,7 @@ from librosa.exceptions import (
     ParameterKeyError,
     ParameterShapeError,
     ParameterTypeError,
+    ParameterValueError,
     StreamBufferError,
     StreamClosedError,
     StreamError,
@@ -27,6 +28,7 @@ from librosa.exceptions import (
 ALL_EXCEPTIONS = [
     LibrosaError,
     ParameterError,
+    ParameterValueError,
     ParameterTypeError,
     ParameterShapeError,
     ParameterKeyError,
@@ -45,22 +47,29 @@ def test_exception_inheritance():
 
     # Parameter error hierarchy
     assert issubclass(ParameterError, LibrosaError)
-    assert issubclass(ParameterError, ValueError)
+    assert not issubclass(ParameterError, ValueError)
 
-    assert issubclass(ParameterTypeError, ParameterError)
-    assert issubclass(ParameterTypeError, TypeError)
-    assert issubclass(ParameterTypeError, ValueError)
-    assert issubclass(ParameterTypeError, LibrosaError)
+    assert issubclass(ParameterValueError, ParameterError)
+    assert issubclass(ParameterValueError, ValueError)
+    assert issubclass(ParameterValueError, LibrosaError)
+    assert not issubclass(ParameterValueError, TypeError)
 
+    assert issubclass(ParameterShapeError, ParameterValueError)
     assert issubclass(ParameterShapeError, ParameterError)
     assert issubclass(ParameterShapeError, ValueError)
     assert issubclass(ParameterShapeError, LibrosaError)
+    assert not issubclass(ParameterShapeError, TypeError)
+
+    assert issubclass(ParameterTypeError, ParameterError)
+    assert issubclass(ParameterTypeError, TypeError)
+    assert issubclass(ParameterTypeError, LibrosaError)
+    assert not issubclass(ParameterTypeError, ValueError)
 
     assert issubclass(ParameterKeyError, ParameterError)
     assert issubclass(ParameterKeyError, KeyError)
     assert issubclass(ParameterKeyError, LookupError)
-    assert issubclass(ParameterKeyError, ValueError)
     assert issubclass(ParameterKeyError, LibrosaError)
+    assert not issubclass(ParameterKeyError, ValueError)
 
     # Streaming error hierarchy
     assert issubclass(StreamError, LibrosaError)
@@ -84,12 +93,18 @@ def test_exception_inheritance():
 
 
 def test_exception_mro():
-    """Verify that specific builtin exceptions appear before general ones in MRO."""
+    """Verify that specific builtin exceptions appear in MRO."""
+    val_mro = ParameterValueError.__mro__
+    assert ValueError in val_mro
+    assert ParameterError in val_mro
+
     type_mro = ParameterTypeError.__mro__
-    assert type_mro.index(TypeError) < type_mro.index(ValueError)
+    assert TypeError in type_mro
+    assert ValueError not in type_mro
 
     key_mro = ParameterKeyError.__mro__
-    assert key_mro.index(KeyError) < key_mro.index(ValueError)
+    assert KeyError in key_mro
+    assert ValueError not in key_mro
 
     closed_mro = StreamClosedError.__mro__
     assert closed_mro.index(RuntimeError) < closed_mro.index(LibrosaError)
@@ -115,6 +130,9 @@ def test_exception_instances(exc_cls):
 def test_parameter_error_backward_compatibility():
     """Verify that catching ParameterError catches all parameter error subclasses."""
     with pytest.raises(ParameterError):
+        raise ParameterValueError("value error")
+
+    with pytest.raises(ParameterError):
         raise ParameterTypeError("type error")
 
     with pytest.raises(ParameterError):
@@ -126,15 +144,39 @@ def test_parameter_error_backward_compatibility():
 
 def test_builtin_catch_compatibility():
     """Verify standard builtin exception catch clauses work as expected."""
+    # ParameterValueError is a ValueError
     with pytest.raises(ValueError):
-        raise ParameterError("value error")
+        raise ParameterValueError("value error")
 
+    # ParameterShapeError is a ValueError (and ParameterValueError)
+    with pytest.raises(ValueError):
+        raise ParameterShapeError("shape error")
+
+    with pytest.raises(ParameterValueError):
+        raise ParameterShapeError("shape error")
+
+    # ParameterTypeError is a TypeError and NOT a ValueError
     with pytest.raises(TypeError):
-        raise ParameterTypeError("type error")
+        try:
+            raise ParameterTypeError("type error")
+        except ValueError:
+            pytest.fail("ParameterTypeError should not be caught by except ValueError")
 
+    # ParameterKeyError is a KeyError and NOT a ValueError
     with pytest.raises(KeyError):
-        raise ParameterKeyError("key error")
+        try:
+            raise ParameterKeyError("key error")
+        except ValueError:
+            pytest.fail("ParameterKeyError should not be caught by except ValueError")
 
+    # ParameterError base is NOT a ValueError
+    with pytest.raises(ParameterError):
+        try:
+            raise ParameterError("base parameter error")
+        except ValueError:
+            pytest.fail("ParameterError base should not be caught by except ValueError")
+
+    # Streaming & stubs
     with pytest.raises(RuntimeError):
         raise StreamClosedError("closed stream")
 
@@ -165,16 +207,20 @@ def test_exception_pickle(exc_cls):
 
 
 def test_numba_exception_compatibility():
-    """Test that ParameterError can be raised from numba-jitted code."""
+    """Test that ParameterError and ParameterValueError can be raised from numba-jitted code."""
     @numba.jit(nopython=True)
     def jitted_validator(x):
         if x < 0:
             raise ParameterError
+        elif x == 0:
+            raise ParameterValueError
         return x * 2
 
     assert jitted_validator(5) == 10
     with pytest.raises(ParameterError):
         jitted_validator(-1)
+    with pytest.raises(ParameterValueError):
+        jitted_validator(0)
 
 
 def test_export_parity():

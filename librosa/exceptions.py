@@ -9,6 +9,7 @@ import queue
 __all__ = [
     "LibrosaError",
     "ParameterError",
+    "ParameterValueError",
     "ParameterTypeError",
     "ParameterShapeError",
     "ParameterKeyError",
@@ -24,19 +25,23 @@ class LibrosaError(Exception):
     """The root librosa exception class"""
 
 
-class ParameterError(LibrosaError, ValueError):
-    """Exception class for mal-formed inputs"""
+class ParameterError(LibrosaError):
+    """Base exception class for mal-formed inputs or parameter validation errors"""
 
 
-class ParameterTypeError(TypeError, ParameterError):
+class ParameterValueError(ParameterError, ValueError):
+    """Exception class for invalid parameter values"""
+
+
+class ParameterTypeError(ParameterError, TypeError):
     """Exception class for parameter type mismatches"""
 
 
-class ParameterShapeError(ParameterError):
+class ParameterShapeError(ParameterValueError):
     """Exception class for array shape, dimension, or channel mismatches"""
 
 
-class ParameterKeyError(KeyError, ParameterError):
+class ParameterKeyError(ParameterError, KeyError):
     """Exception class for invalid lookup keys, catalog entries, or note/interval names"""
 
 

@@ -112,6 +112,7 @@ from .exceptions import ParameterError as ParameterError
 from .exceptions import ParameterKeyError as ParameterKeyError
 from .exceptions import ParameterShapeError as ParameterShapeError
 from .exceptions import ParameterTypeError as ParameterTypeError
+from .exceptions import ParameterValueError as ParameterValueError
 from .exceptions import StreamBufferError as StreamBufferError
 from .exceptions import StreamClosedError as StreamClosedError
 from .exceptions import StreamError as StreamError
