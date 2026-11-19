@@ -1610,3 +1610,39 @@ def test_chroma_pitch_to_chroma_equivalence(y_chirp):
     c_vqt = librosa.feature.chroma_vqt(y=y, sr=sr, intervals="equal")
     assert c_vqt.shape[0] == 12
     assert not np.isnan(c_vqt).any()
+
+
+def test_delta_bad_order_type():
+    with pytest.raises(librosa.ParameterTypeError, match="must be an integer"):
+        librosa.feature.delta(np.ones((10, 10)), order="invalid")
+    with pytest.raises(librosa.ParameterTypeError, match="must be an integer"):
+        librosa.feature.delta(np.ones((10, 10)), order=1.5)
+
+
+def test_spectral_contrast_bad_bands_type():
+    with pytest.raises(librosa.ParameterTypeError, match="n_bands=1.5 must be an integer"):
+        librosa.feature.spectral_contrast(S=np.ones((1025, 2)), n_bands=1.5)
+
+
+def test_chroma_cqt_bins_per_octave_none(y_chirp):
+    y, sr = y_chirp
+    chroma = librosa.feature.chroma_cqt(y=y, sr=sr, bins_per_octave=None)
+    assert chroma.shape[0] == 12
+
+
+def test_chroma_cqt_bad_bins_per_octave(y_chirp):
+    y, sr = y_chirp
+    with pytest.raises(librosa.ParameterValueError, match="must be an integer multiple"):
+        librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24, bins_per_octave=36)
+
+
+def test_tempogram_ratio_no_input():
+    with pytest.raises(librosa.ParameterValueError, match="Either y or onset_envelope must be provided"):
+        librosa.feature.tempogram_ratio(y=None, onset_envelope=None)
+
+
+def test_hybrid_tempogram_no_input():
+    with pytest.raises(librosa.ParameterValueError, match="Either y or onset_envelope must be provided"):
+        librosa.feature.hybrid_tempogram(y=None, onset_envelope=None)
+
+

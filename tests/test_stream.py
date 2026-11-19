@@ -439,6 +439,25 @@ def test_stream_invalid_sources_and_bounds():
             )
         )
 
+    from librosa.core.streaming import _StreamBuffer
+
+    with pytest.raises(librosa.ParameterValueError, match="orig_sr"):
+        _StreamBuffer(
+            frame_length=1024,
+            hop_length=512,
+            block_length=1,
+            orig_sr=-1,
+        )
+
+    with pytest.raises(librosa.ParameterValueError, match="channels"):
+        _StreamBuffer(
+            frame_length=1024,
+            hop_length=512,
+            block_length=1,
+            orig_sr=22050,
+            channels=0,
+        )
+
     # Zero duration on an open bridge returns immediately without blocking or consuming chunks
     open_bridge = StreamBridge(orig_sr=22050, timeout=0.05)
     open_bridge.push(np.ones(1024, dtype=np.float32))
@@ -578,4 +597,17 @@ def test_stream_default_sr():
     bridge_native.close()
     native_blocks = list(bridge_native.stream(block_length=1, frame_length=1024, hop_length=512, sr=None))
     assert len(native_blocks) > 0
+
+
+def test_streambridge_enqueue_race_closed():
+    bridge = StreamBridge(orig_sr=22050)
+    data = np.ones(512, dtype=np.float32)
+
+    def close_during_normalize(x):
+        bridge.close()
+        return np.ones((512, 1), dtype=np.float32)
+
+    bridge._normalize = close_during_normalize
+    assert bridge._enqueue(data, raise_on_closed=False) is False
+
 

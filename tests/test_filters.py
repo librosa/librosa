@@ -569,6 +569,21 @@ def test_semitone_filterbank_layout():
         assert np.allclose(tf[1], ba_fb[i][1])
 
 
+def test_semitone_filterbank_bad_inputs():
+    freqs = np.array([440.0, 880.0])
+    srs = np.array([8000, 8000])
+
+    with pytest.raises(librosa.ParameterValueError, match="center_freqs must be provided"):
+        librosa.filters.semitone_filterbank(center_freqs=None, sample_rates=srs)
+
+    with pytest.raises(librosa.ParameterValueError, match="sample_rates must be provided"):
+        librosa.filters.semitone_filterbank(center_freqs=freqs, sample_rates=None)
+
+    with pytest.raises(librosa.ParameterShapeError, match="must be equal"):
+        librosa.filters.semitone_filterbank(center_freqs=freqs, sample_rates=srs[:1])
+
+
+
 @pytest.mark.parametrize("n", [9, 17])
 @pytest.mark.parametrize("window", ["hann", "rect"])
 @pytest.mark.parametrize("angle", [None, np.pi / 4, np.pi / 6])

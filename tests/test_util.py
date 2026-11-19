@@ -1683,6 +1683,23 @@ def test_cite_unreleased(bib):
     librosa.cite("0.10.0.dev0", bib=bib)
 
 
+def test_cite_missing_bib_entry(monkeypatch):
+    import msgpack
+
+    call_count = [0]
+
+    def mock_load(f):
+        call_count[0] += 1
+        if call_count[0] == 1:
+            return {"0.10.0": "doi_val"}
+        return {}
+
+    monkeypatch.setattr(msgpack, "load", mock_load)
+    with pytest.raises(librosa.ParameterValueError, match="No BibTeX entry found"):
+        librosa.cite("0.10.0", bib=True)
+
+
+
 @pytest.mark.parametrize("n_bytes", [1, 2, 4])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_buf_to_float(n_bytes, dtype):

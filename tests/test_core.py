@@ -3382,3 +3382,63 @@ def test_phase_vocoder_negative_rate(rate):
 
     D = np.zeros((3, 2), dtype=np.complex64)
     librosa.phase_vocoder(D, rate=rate)
+
+
+def test_stft_bad_pad_mode():
+    with pytest.raises(librosa.ParameterValueError, match="is not supported by librosa.stft"):
+        librosa.stft(np.zeros(22050), pad_mode="wrap")
+
+
+def test_power_to_db_librosa_error_in_ref():
+    x = np.ones((10, 10))
+    def my_ref(z, axis=None, keepdims=True):
+        raise librosa.ParameterTypeError("custom type error")
+
+    with pytest.raises(librosa.ParameterTypeError, match="custom type error"):
+        librosa.power_to_db(x, ref=my_ref)
+
+
+def test_amplitude_to_db_librosa_error_in_ref():
+    x = np.ones((10, 10))
+    def my_ref(z, axis=None, keepdims=True):
+        raise librosa.ParameterTypeError("custom type error")
+
+    with pytest.raises(librosa.ParameterTypeError, match="custom type error"):
+        librosa.amplitude_to_db(x, ref=my_ref)
+
+
+def test_fmt_redundant_samples(monkeypatch):
+    y = np.arange(10, dtype=float)
+    monkeypatch.setattr(np, "unique", lambda arr: np.array([0.0]))
+    with pytest.raises(librosa.ParameterValueError, match="Redundant sample positions"):
+        librosa.fmt(y)
+
+
+def test_spectrogram_no_y():
+    from librosa.core.spectrum import _spectrogram
+    with pytest.raises(librosa.ParameterValueError, match="Input signal must be provided"):
+        _spectrogram(y=None, S=None, n_fft=2048)
+
+
+@pytest.mark.parametrize("order", [0, -1, 1.5, "invalid"])
+def test_lpc_bad_order(y_chirp_lpc, order):
+    with pytest.raises(librosa.ParameterValueError, match="must be an integer > 0"):
+        librosa.lpc(y_chirp_lpc, order=order)
+
+
+def test_piptrack_missing_fmin_fmax():
+    y = np.zeros(22050)
+    with pytest.raises(librosa.ParameterValueError, match='both "fmin" and "fmax" must be provided'):
+        librosa.piptrack(y=y, fmin=None, fmax=4000)
+    with pytest.raises(librosa.ParameterValueError, match='both "fmin" and "fmax" must be provided'):
+        librosa.piptrack(y=y, fmin=150, fmax=None)
+
+
+def test_f0_harmonics_bad_freqs_shape():
+    x = np.ones((8, 10))
+    f0 = np.ones(10)
+    harmonics = np.array([1, 2])
+    bad_freqs = np.ones((5, 5))
+    with pytest.raises(librosa.ParameterShapeError, match="freqs.shape="):
+        librosa.f0_harmonics(x, f0=f0, harmonics=harmonics, freqs=bad_freqs)
+

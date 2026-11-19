@@ -188,6 +188,19 @@ def test_dtw_incompatible_sigma_diag_precomp():
     librosa.sequence.dtw(C=C, step_sizes_sigma=[[1, 1]])  # type: ignore
 
 
+def test_dtw_diagonal_matching_shape_error(monkeypatch):
+    monkeypatch.setattr(np, "array_equal", lambda a, b: True)
+    with pytest.raises(librosa.ParameterShapeError, match="For diagonal matching"):
+        librosa.sequence.dtw(C=np.ones((5, 3)))
+
+
+def test_dtw_incomplete_warping_path(monkeypatch):
+    monkeypatch.setattr("librosa.sequence.__dtw_backtracking", lambda *args, **kwargs: [(1, 1)])
+    with pytest.raises(librosa.ParameterValueError, match="Unable to compute a full DTW warping path"):
+        librosa.sequence.dtw(C=np.ones((2, 2)), subseq=False)
+
+
+
 def test_dtw_global_diagonal():
     # query is a linear ramp
     X = np.linspace(0.1, 1, 10)

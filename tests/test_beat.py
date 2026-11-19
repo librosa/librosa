@@ -277,3 +277,11 @@ def test_tempo_tgin(ysr):
     t2 = librosa.feature.tempo(tg=tg, sr=sr, aggregate=None)
 
     assert np.allclose(t1, t2)
+
+
+def test_beat_tracker_bad_bpm_shape():
+    from librosa.beat import __beat_tracker
+
+    with pytest.raises(librosa.ParameterShapeError, match="Invalid bpm shape"):
+        __beat_tracker(np.ones(100), np.ones(5), 43.0, 100, True)
+

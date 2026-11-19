@@ -2800,3 +2800,12 @@ def test_wavef0_spectrogram_overlay(y, sr):
     librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax)
     plt.close(fig)
 
+
+def test_adaptive_formatter_base_not_implemented():
+    from librosa.display.formatting import AdaptiveFormatterBase
+
+    formatter = AdaptiveFormatterBase()
+    with pytest.raises(librosa.LibrosaNotImplementedError):
+        formatter._format_tick(0.0)
+
+
