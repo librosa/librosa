@@ -17,11 +17,11 @@
     .. tab-item:: source
 
         If you've downloaded the archive manually from the `releases
-        <https://github.com/librosa/librosa/releases/>`_ page, you can install using the `setuptools` script::
+        <https://github.com/librosa/librosa/releases/>`_ page, you can install using `pip`::
 
             tar xzf librosa-VERSION.tar.gz
             cd librosa-VERSION/
-            python setup.py install
+            pip install .
 
         If you intend to develop librosa or make changes to the source code, you can
         install with `pip install -e` to link to your actively developed source tree::
