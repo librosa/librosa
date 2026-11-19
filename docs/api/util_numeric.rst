@@ -5,6 +5,7 @@ Numerical operations
     :toctree: generated/
     :nosignatures:
 
+    align_samples
     localmax
     localmin
     peak_pick

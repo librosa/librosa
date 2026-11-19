@@ -54,11 +54,14 @@ which can be iterated over as in the following example:
    frame_length = (2048 * sr) // 22050
    hop_length = (512 * sr) // 22050
 
-   # Stream the data, working on 128 frames at a time
+   # Stream the data, working on 128 frames at a time.
+   # By default, librosa.stream() resamples to sr=22050 (matching librosa.load).
+   # To preserve the file's native sampling rate, pass sr=None.
    stream = librosa.stream('path/to/file.wav',
                            block_length=128,
                            frame_length=frame_length,
-                           hop_length=hop_length)
+                           hop_length=hop_length,
+                           sr=None)
 
    chromas = []
    for y in stream:
