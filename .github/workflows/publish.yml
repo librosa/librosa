@@ -22,6 +22,9 @@ jobs:
     - name: Build a binary wheel and a source tarball
       run: uv build --sdist --wheel --out-dir dist/
 
+    - name: Verify distribution archives
+      run: uvx twine check --strict dist/*
+
     - name: Publish distribution 📦 to PyPI
       if: startsWith(github.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # release/v1
