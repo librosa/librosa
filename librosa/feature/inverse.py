@@ -539,6 +539,7 @@ def logfrequency_to_audio(
     n_iter: int = 32,
     length: int | None = None,
     dtype: DTypeLike = np.float32,
+    rng: RNGLike | SeedLike | None = None,
     n_bins: int | None = None,
     bins_per_octave: int = 12,
     fmin: _FloatLike_co | str | None = None,
@@ -582,6 +583,9 @@ def logfrequency_to_audio(
         If provided, the output ``y`` is zero-padded or clipped to exactly ``length`` samples.
     dtype : np.dtype
         Real numeric type for the time-domain signal. Default is 32-bit float.
+    rng : None, int, sequence of int, np.random.Generator, or np.random.RandomState
+        Random number generator or seed for phase initialization in `librosa.griffinlim`.
+        Pass an integer seed for reproducible reconstruction.
     n_bins : int > 0 [scalar, optional]
         Number of logarithmic frequency bands. If None, defaults to ``L.shape[-2]``.
     bins_per_octave : int > 0 [scalar], default=12
@@ -635,6 +639,7 @@ def logfrequency_to_audio(
         dtype=dtype,
         length=length,
         pad_mode=pad_mode,
+        rng=rng,
     )
 
 

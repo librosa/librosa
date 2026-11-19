@@ -978,6 +978,7 @@ def test_mel_to_audio():
     [
         (librosa.feature.inverse.mel_to_audio, {}),
         (librosa.feature.inverse.mfcc_to_audio, {"n_mels": 8}),
+        (librosa.feature.inverse.logfrequency_to_audio, {"sr": 2048, "fmin": 256}),
     ],
 )
 def test_feature_to_audio_rng(invert, kwargs):
