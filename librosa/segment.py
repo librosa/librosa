@@ -28,13 +28,11 @@ from .util.exceptions import (
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from typing import Any, Literal, TypeVar
+    from typing import Any, Literal
 
     import sklearn.cluster
 
     from ._typing import _Array1D, _FloatLike_co, _SparseArray, _WindowSpec
-
-    _ArrayOrSparseArray = TypeVar("_ArrayOrSparseArray", bound=np.ndarray | _SparseArray)
 
 
 __all__ = [
@@ -694,8 +692,8 @@ def recurrence_matrix(
 
 
 def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
-    rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int = -1
-) -> _ArrayOrSparseArray:
+    rec: ArrayOrSparseArray, *, pad: bool = True, axis: int = -1
+) -> ArrayOrSparseArray:
     """Convert a recurrence matrix into a lag matrix.
 
         ``lag[i, j] == rec[i+j, j]``
@@ -793,7 +791,7 @@ def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
             # Suppress type check, mypy doesn't know that rec is an ndarray here
             rec = np.pad(rec, padding, mode="constant")  # type: ignore
 
-    lag: _ArrayOrSparseArray = util.shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
+    lag: ArrayOrSparseArray = util.shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
 
     if sparse:
         # Suppress type check, mypy doesn't know
@@ -804,8 +802,8 @@ def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
 
 
 def lag_to_recurrence[ArrayOrSparseArray: np.ndarray | _SparseArray](
-    lag: _ArrayOrSparseArray, *, axis: int = -1
-) -> _ArrayOrSparseArray:
+    lag: ArrayOrSparseArray, *, axis: int = -1
+) -> ArrayOrSparseArray:
     """Convert a lag matrix into a recurrence matrix.
 
     Parameters
@@ -880,7 +878,7 @@ def lag_to_recurrence[ArrayOrSparseArray: np.ndarray | _SparseArray](
 
     sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)
-    rec_slice: _ArrayOrSparseArray = rec[tuple(sub_slice)]  # type: ignore[assignment]
+    rec_slice: ArrayOrSparseArray = rec[tuple(sub_slice)]  # type: ignore[assignment]
     return rec_slice
 
 
