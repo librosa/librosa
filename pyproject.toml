@@ -176,7 +176,8 @@ extend-exclude = [
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
-docstring-code-format = false
+docstring-code-format = true
+docstring-code-line-length = 80
 
 [tool.ruff.lint]
 select = ["E", "F", "S", "D", "W", "I", "PYI", "Q", "B", "SIM", "RUF", "TC", "NPY", "ARG"]
