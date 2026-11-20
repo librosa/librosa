@@ -581,19 +581,10 @@ def __beat_local_score(onset_envelope, frames_per_beat, localscore):
 
     if len(frames_per_beat) == 1:
         # Static tempo mode
-        # NOTE: when we can bump the minimum numba to 0.58, we can eliminate this branch and just use
-        # np.convolve(..., mode='same') directly
         window = np.exp(
             -0.5 * (np.arange(-frames_per_beat[0], frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2
         )
-        K = len(window)
-        # This is a vanilla same-mode convolution
-        for i in range(len(onset_envelope)):
-            localscore[i] = 0.0
-            # we need i + K // 2 - k < N ==> k > i + K //2 - N
-            # and i + K // 2 - k >= 0 ==>    k <= i + K // 2
-            for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
-                localscore[i] += window[k] * onset_envelope[i + K // 2 - k]
+        localscore[:] = np.convolve(onset_envelope, window, mode="same")
 
     elif len(frames_per_beat) == len(onset_envelope):
         # Time-varying tempo estimates
@@ -670,9 +661,7 @@ def __trim_beats(localscore, beats, trim, beats_trimmed):
 
     # Compute the threshold: 1/2 RMS of the smoothed beat envelope
     w = np.hanning(5)
-    # Slicing here to implement same-mode convolution in older numba where
-    # mode='same' is not yet supported
-    smooth_boe = np.convolve(localscore[beats], w)[len(w) // 2 : len(localscore) + len(w) // 2]
+    smooth_boe = np.convolve(localscore[beats], w, mode="same")
 
     # This logic is to preserve old behavior and always discard beats detected with oenv==0
     if trim:
