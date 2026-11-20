@@ -52,7 +52,6 @@ display = [
 ]
 tests = [
     "librosa[display]",
-    "packaging>=24.2",
     "pytest>=9.0.0",
     "pytest-mpl>=0.18.0",
     "pytest-cov>=6.1.0",
