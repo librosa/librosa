@@ -1054,6 +1054,7 @@ def autocorrelate(y: np.ndarray, *, max_size: int | None = None, axis: int = -1)
     return autocorr_slice
 
 
+@cache(level=20)
 def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     """Linear Prediction Coefficients via Burg's method
 
@@ -1099,6 +1100,10 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     See Also
     --------
     scipy.signal.lfilter
+
+    Notes
+    -----
+    This function caches at level 20.
 
     Examples
     --------
@@ -1385,6 +1390,7 @@ def zero_crossings(
     return z
 
 
+@cache(level=20)
 def envelope(
     y: np.ndarray,
     *,
@@ -1443,6 +1449,10 @@ def envelope(
     ParameterValueError
         - If ``frame_length`` or ``hop_length`` are not positive integers.
         - If ``kind`` is unrecognized.
+
+    Notes
+    -----
+    This function caches at level 20.
 
     Examples
     --------

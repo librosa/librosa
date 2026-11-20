@@ -460,6 +460,10 @@ def frequency_filterbank(
     chroma
     pitch_to_chroma
 
+    Notes
+    -----
+    This function caches at level 10.
+
     Examples
     --------
     Construct a triangular filterbank mapping FFT bins onto linearly spaced bands:
@@ -662,6 +666,10 @@ def logfrequency(
     mel
     librosa.feature.logfrequency_spectrogram
 
+    Notes
+    -----
+    This function caches at level 10.
+
     Examples
     --------
     Construct a semitone logarithmic filterbank covering 7 octaves (84 bins):
@@ -808,6 +816,10 @@ def pitch_filterbank(
     logfrequency
     pitch_to_chroma
     librosa.feature.pitch_spectrogram
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------
@@ -1018,6 +1030,10 @@ def pitch_basis(
     frequency_filterbank
     librosa.decompose.decompose
     librosa.decompose.pitch_nmf
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------
@@ -1974,6 +1990,7 @@ def mr_frequencies(tuning: float) -> tuple[np.ndarray, np.ndarray]:
     return center_freqs, sample_rates
 
 
+@cache(level=10)
 def semitone_filterbank(
     *,
     center_freqs: np.ndarray | None = None,
@@ -2032,6 +2049,10 @@ def semitone_filterbank(
     librosa.iirt
     librosa.filters.mr_frequencies
     scipy.signal.iirdesign
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------

@@ -268,7 +268,6 @@ def frame(
     return xw[tuple(slices)]
 
 
-@cache(level=20)
 def valid_audio(y: np.ndarray) -> bool:
     """Determine whether a variable contains valid audio data.
 
@@ -301,10 +300,6 @@ def valid_audio(y: np.ndarray) -> bool:
     See Also
     --------
     numpy.float32
-
-    Notes
-    -----
-    This function caches at level 20.
 
     Examples
     --------

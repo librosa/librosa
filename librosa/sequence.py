@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, cast, overload
 import numpy as np
 from numba import jit
 
+from ._cache import cache
 from .filters import get_window
 from .util import expand_to, fill_off_diagonal, is_positive_int, pad_center, tiny
 from .util.exceptions import (
@@ -162,6 +163,7 @@ def dtw(
     band_rad: float = ...,
     return_steps: Literal[True],
 ) -> tuple[_Array2D[np.float64], _Array2D[np.int_], _Array2D[np.int32]]: ...
+@cache(level=30)
 def dtw(
     X: np.ndarray | None = None,
     Y: np.ndarray | None = None,
@@ -261,6 +263,10 @@ def dtw(
         If your input dimensions are incompatible.
 
         If the cost matrix has NaN values.
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -679,6 +685,7 @@ def rqa(
     knight_moves: bool = ...,
     backtrack: Literal[True] = ...,
 ) -> tuple[_Array2D[Any], _Array2D[np.uint]]: ...
+@cache(level=30)
 def rqa(
     sim: np.ndarray,
     *,
@@ -772,6 +779,10 @@ def rqa(
     librosa.segment.recurrence_matrix
     librosa.segment.cross_similarity
     dtw
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -1232,6 +1243,7 @@ def viterbi(
     return_logp: Literal[False] = ...,
     transition_min_prob: float | None = ...,
 ) -> npt.NDArray[np.uint16]: ...
+@cache(level=30)
 def viterbi(
     prob: np.ndarray,
     transition: np.ndarray,
@@ -1284,6 +1296,10 @@ def viterbi(
     See Also
     --------
     viterbi_discriminative : Viterbi decoding from state likelihoods
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------

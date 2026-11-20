@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
+from .._cache import cache
 from ..exceptions import ParameterShapeError
 from .interpolate import _validate_coords, interp_frequency
 
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
 __all__ = ["salience", "interp_harmonics", "f0_harmonics"]
 
 
+@cache(level=30)
 def salience(
     S: np.ndarray,
     *,
@@ -91,6 +93,10 @@ def salience(
     --------
     interp_harmonics
 
+    Notes
+    -----
+    This function caches at level 30.
+
     Examples
     --------
     >>> y, sr = librosa.loadx("trumpet", duration=3)
@@ -145,6 +151,7 @@ def salience(
     return S_sal
 
 
+@cache(level=30)
 def interp_harmonics(
     x: np.ndarray,
     *,
@@ -195,6 +202,10 @@ def interp_harmonics(
     See Also
     --------
     scipy.interpolate.interp1d
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------

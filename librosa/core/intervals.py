@@ -73,6 +73,10 @@ def interval_frequencies(
     frequencies : array of float
         The frequencies
 
+    Notes
+    -----
+    This function caches at level 10.
+
     Examples
     --------
     Generate two octaves of Pythagorean intervals starting at 55Hz
@@ -175,6 +179,10 @@ def pythagorean_intervals(
     See Also
     --------
     plimit_intervals
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------
@@ -342,6 +350,10 @@ def plimit_intervals(
     See Also
     --------
     pythagorean_intervals
+
+    Notes
+    -----
+    This function caches at level 10.
 
     Examples
     --------

@@ -387,7 +387,7 @@ def stft(
     return stft_matrix
 
 
-@cache(level=30)
+@cache(level=20)
 def istft(
     stft_matrix: np.ndarray,
     *,
@@ -477,7 +477,7 @@ def istft(
 
     Notes
     -----
-    This function caches at level 30.
+    This function caches at level 20.
 
     Examples
     --------
@@ -975,6 +975,7 @@ def __reassign_times(
     return times, S_h
 
 
+@cache(level=20)
 def reassigned_spectrogram(
     y: np.ndarray,
     *,
@@ -1136,6 +1137,8 @@ def reassigned_spectrogram(
 
     Notes
     -----
+    This function caches at level 20.
+
     It is recommended to use ``center=False`` with this function rather than the
     librosa default ``True``. Unlike ``stft``, reassigned times are not aligned to
     the left or center of each frame, so padding the signal does not affect the
@@ -1560,6 +1563,10 @@ def iirt(
     scipy.signal.filtfilt
     scipy.signal.sosfiltfilt
 
+    Notes
+    -----
+    This function caches at level 20.
+
     Examples
     --------
     >>> import matplotlib.pyplot as plt
@@ -1669,7 +1676,6 @@ def power_to_db(
     top_db: float | None = ...,
     axes: Literal["auto"] | int | tuple[int, ...] | None = ...,
 ) -> np.ndarray: ...
-@cache(level=30)
 def power_to_db(
     S: _ScalarOrSequence[_ComplexLike_co],
     *,
@@ -1725,10 +1731,6 @@ def power_to_db(
     db_to_power
     amplitude_to_db
     db_to_amplitude
-
-    Notes
-    -----
-    This function caches at level 30.
 
     Examples
     --------
@@ -1844,7 +1846,6 @@ def db_to_power(
     *,
     ref: float = ...,
 ) -> np.ndarray: ...
-@cache(level=30)
 def db_to_power(S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0) -> np.floating | np.ndarray:
     """Convert dB-scale values to a power values.
 
@@ -1863,10 +1864,6 @@ def db_to_power(S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0) -> np.flo
     -------
     S : np.ndarray
         Power values
-
-    Notes
-    -----
-    This function caches at level 30.
     """
     return ref * np.power(10.0, S_db * 0.1)
 
@@ -1889,7 +1886,6 @@ def amplitude_to_db(
     top_db: float | None = ...,
     axes: Literal["auto"] | int | tuple[int, ...] | None = ...,
 ) -> np.ndarray: ...
-@cache(level=30)
 def amplitude_to_db(
     S: _ScalarOrSequence[_ComplexLike_co],
     *,
@@ -1940,10 +1936,6 @@ def amplitude_to_db(
     See Also
     --------
     power_to_db, db_to_amplitude
-
-    Notes
-    -----
-    This function caches at level 30.
     """
     S = np.asarray(S)
 
@@ -1998,7 +1990,6 @@ def db_to_amplitude(
     *,
     ref: float = ...,
 ) -> np.ndarray: ...
-@cache(level=30)
 def db_to_amplitude(S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0) -> np.floating | np.ndarray:
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
@@ -2017,10 +2008,6 @@ def db_to_amplitude(S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0) -> np
     -------
     S : np.ndarray
         Linear magnitude values
-
-    Notes
-    -----
-    This function caches at level 30.
     """
     return db_to_power(S_db, ref=ref**2) ** 0.5
 
@@ -2480,6 +2467,10 @@ def pcen(
     --------
     amplitude_to_db
     librosa.onset.onset_strength
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------

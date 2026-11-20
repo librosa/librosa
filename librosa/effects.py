@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, overload
 import numpy as np
 
 from . import core, decompose, feature, util
+from ._cache import cache
 from .exceptions import (
     ParameterValueError,
 )
@@ -407,6 +408,7 @@ def percussive(
     return y_perc
 
 
+@cache(level=30)
 def time_stretch(
     y: np.ndarray,
     *,
@@ -466,6 +468,10 @@ def time_stretch(
     pyrubberband.pyrb.time_stretch :
         High-quality time stretching using RubberBand
 
+    Notes
+    -----
+    This function caches at level 30.
+
     Examples
     --------
     Compress to be twice as fast
@@ -512,6 +518,7 @@ def time_stretch(
     return y_stretch
 
 
+@cache(level=30)
 def pitch_shift(
     y: np.ndarray,
     *,
@@ -591,6 +598,10 @@ def pitch_shift(
         Spectrogram phase vocoder
     pyrubberband.pyrb.pitch_shift :
         High-quality pitch shifting using RubberBand
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
