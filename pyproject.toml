@@ -116,6 +116,7 @@ xfail_strict = true
 addopts = "--mpl --mpl-baseline-path=tests/baseline_images/test_display"
 filterwarnings = [
     "ignore::DeprecationWarning:resampy.*",
+    "ignore:invalid value encountered in cast:RuntimeWarning:numba.*",
 ]
 
 [tool.coverage.run]
@@ -125,7 +126,6 @@ source = ["librosa"]
 [tool.coverage.report]
 omit = [
     "*/python?.?/*",
-    "*/site-packages/nose/*",
 ]
 exclude_lines = [
     "@numba.jit",

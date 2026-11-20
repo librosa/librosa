@@ -36,37 +36,58 @@ jobs:
                       python-version: "3.13"
                       variant: "minimal"
                       coverage: false
+                      cache_data: true
 
                     - os: ubuntu-latest
                       python-version: "3.13"
                       coverage: false
+                      cache_data: true
 
                     - os: ubuntu-latest
                       python-version: "3.14"
                       coverage: false
+                      cache_data: true
 
                     - os: ubuntu-24.04-arm
                       python-version: "3.15"
                       coverage: false
+                      cache_data: true
 
                     - os: ubuntu-latest
                       python-version: "3.15"
                       coverage: true
+                      cache_data: false
 
                     - os: macos-latest
                       python-version: "3.15"
                       coverage: true
+                      cache_data: true
 
                     - os: windows-latest
                       python-version: "3.15"
                       coverage: true
+                      cache_data: true
 
                     - os: windows-11-arm
                       python-version: "3.14"  # FIXME: bump this when llvmlite starts working on win11-arm64
                       win_arm64: true
                       coverage: true
+                      cache_data: true
         steps:
         - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+        - name: Checkout example audio data
+          if: ${{ matrix.cache_data }}
+          uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+          with:
+            repository: librosa/data
+            path: librosa-data
+
+        - name: Configure example audio data cache
+          if: ${{ matrix.cache_data }}
+          shell: bash
+          run: |
+            echo "LIBROSA_DATA_DIR=${{ github.workspace }}/librosa-data/audio" >> "$GITHUB_ENV"
 
         - name: Create short temp directory (Windows only)
           if: runner.os == 'Windows'

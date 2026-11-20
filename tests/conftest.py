@@ -31,6 +31,15 @@ def rng_mod(rng_factory):
     return rng_factory()
 
 
+@pytest.fixture(autouse=True)
+def _close_matplotlib_figures():
+    """Ensure no Matplotlib figures leak across test instances."""
+    yield
+    import matplotlib.pyplot as plt
+
+    plt.close("all")
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--librosa-isolation",
