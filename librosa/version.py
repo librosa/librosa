@@ -2,18 +2,26 @@
 """Version info"""
 
 import importlib
+import importlib.metadata
 import sys
 
 short_version = "1.1.0dev"
 version = "1.1.0dev"
 
 
-def __get_mod_version(modname):
+def __get_mod_version(modname: str) -> str | None:
     try:
-        if modname in sys.modules:
-            mod = sys.modules[modname]
+        dist_name = "scikit-learn" if modname == "sklearn" else modname
+        return importlib.metadata.version(dist_name)
+    except (importlib.metadata.PackageNotFoundError, ValueError):
+        pass
+
+    try:
+        name = "IPython" if modname.lower() == "ipython" else modname.replace("-", "_")
+        if name in sys.modules:
+            mod = sys.modules[name]
         else:
-            mod = importlib.import_module(modname)
+            mod = importlib.import_module(name)
         try:
             return mod.__version__
         except AttributeError:
@@ -28,7 +36,7 @@ def show_versions() -> None:
     core_deps = [
         "numpy",
         "scipy",
-        "sklearn",
+        "scikit-learn",
         "joblib",
         "decorator",
         "numba",
@@ -44,25 +52,25 @@ def show_versions() -> None:
         "sphinx",
         "pydata-sphinx-theme",
         "matplotlib",
-        "sphinx_gallery",
+        "sphinx-gallery",
         "sphinx-design",
         "sphinxcontrib-googleanalytics",
         "sphinx-copybutton",
+        "sphinxcontrib-mermaid",
+        "sphinxcontrib-svg2pdfconverter",
         "umap-learn",
         "pandas",
         "myst-parser",
-        "mir_eval",
+        "mir-eval",
         "ipython",
-        "sphinxcontrib.rsvgconverter",
+        "sounddevice",
         "pytest",
-        "pytest_mpl",
-        "pytest_cov",
+        "pytest-mpl",
+        "pytest-cov",
         "samplerate",
         "resampy",
         "presets",
-        "packaging",
         "scipy-stubs",
-        "types-decorator",
     ]
 
     print("INSTALLED VERSIONS")
