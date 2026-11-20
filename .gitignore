@@ -42,6 +42,9 @@ docs/auto_tutorials/
 
 # Testing and checkpoints
 .ipynb_checkpoints
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 tests/result_images/
 .coverage
 .coverage.*
