@@ -23,7 +23,7 @@ def __get_mod_version(modname: str) -> str | None:
         else:
             mod = importlib.import_module(name)
         try:
-            return mod.__version__
+            return str(mod.__version__)
         except AttributeError:
             return "installed, no version number available"
 
