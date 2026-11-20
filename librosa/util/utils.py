@@ -176,9 +176,9 @@ def frame(
 
     Raises
     ------
-    ParameterError
+    ParameterShapeError
         If ``x.shape[axis] < frame_length``, there is not enough data to fill one frame.
-
+    ParameterValueError
         If ``hop_length < 1``, frames cannot advance.
 
     See Also
@@ -291,8 +291,12 @@ def valid_audio(y: np.ndarray) -> bool:
 
     Raises
     ------
-    ParameterError
-        In any of the conditions specified above fails
+    ParameterTypeError
+        If ``y`` is not a numpy array or is not floating point.
+    ParameterShapeError
+        If ``y`` has zero dimensions.
+    ParameterValueError
+        If ``y`` is not finite everywhere.
 
     See Also
     --------
@@ -314,7 +318,7 @@ def valid_audio(y: np.ndarray) -> bool:
 
     >>> y[5] = np.nan
     >>> librosa.util.valid_audio(y)
-    ParameterError: Audio buffer is not finite everywhere
+    ParameterValueError: Audio buffer is not finite everywhere
     """
     if not isinstance(y, np.ndarray):
         raise ParameterTypeError("Audio data must be of type numpy.ndarray")
@@ -352,7 +356,7 @@ def valid_int(x: float, *, cast: Callable[[float], float] | None = None) -> int:
 
     Raises
     ------
-    ParameterError
+    ParameterTypeError
         If ``cast`` is provided and is not callable.
     """
     if cast is None:
@@ -444,7 +448,7 @@ def align_samples(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         If `n_samples` is not a positive integer.
         If `orig_sr` or `target_sr` is not a positive number.
         If `error=True` and the sample count does not evaluate to an integer at `target_sr`.
@@ -471,7 +475,7 @@ def align_samples(
     >>> librosa.util.align_samples(512, orig_sr=48000, target_sr=22050, error=True)
     Traceback (most recent call last):
         ...
-    librosa.util.exceptions.ParameterError: Sample count of 512 at 48000...
+    librosa.util.exceptions.ParameterValueError: Sample count of 512 at 48000...
     """
     if not is_positive_int(n_samples):
         raise ParameterValueError(f"n_samples={n_samples} must be a positive integer")
@@ -549,7 +553,7 @@ def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) ->
 
     Raises
     ------
-    ParameterError
+    ParameterShapeError
         If ``size < data.shape[axis]``
 
     See Also

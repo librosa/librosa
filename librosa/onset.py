@@ -121,7 +121,7 @@ def onset_detect(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         if neither ``y`` nor ``onsets`` are provided
 
         or if ``units`` is not one of 'frames', 'samples', or 'time'
@@ -357,7 +357,7 @@ def onset_strength(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         if neither ``(y, sr)`` nor ``S`` are provided
 
         or if ``lag`` or ``max_size`` are not positive integers
@@ -655,7 +655,7 @@ def onset_strength_multi(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         if neither ``(y, sr)`` nor ``S`` are provided
 
         or if ``lag`` or ``max_size`` are not positive integers

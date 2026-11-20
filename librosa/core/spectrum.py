@@ -1549,7 +1549,7 @@ def iirt(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         If ``flayout`` is not None, `ba`, or `sos`.
 
     See Also
@@ -2164,10 +2164,11 @@ def fmt(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         if ``n_fmt < 2`` or ``t_min <= 0``
         or if ``y`` is not finite
-        or if ``y.shape[axis] < 3``.
+    ParameterShapeError
+        if ``y.shape[axis] < 3``.
 
     Notes
     -----

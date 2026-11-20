@@ -734,7 +734,8 @@ def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
 
     Raises
     ------
-    ParameterError : if ``rec`` is non-square
+    ParameterShapeError
+        If ``rec`` is non-square
 
     See Also
     --------
@@ -823,7 +824,8 @@ def lag_to_recurrence[ArrayOrSparseArray: np.ndarray | _SparseArray](
 
     Raises
     ------
-    ParameterError : if ``lag`` does not have the correct shape
+    ParameterShapeError
+        If ``lag`` does not have the correct shape
 
     See Also
     --------
@@ -1522,8 +1524,12 @@ def diagonal_convolve(
 
     Raises
     ------
-    ParameterError
-        If `data` is sparse, if `kernel` shape is invalid, or if `mode` is unsupported.
+    ParameterTypeError
+        If `data` is sparse.
+    ParameterShapeError
+        If `kernel` shape is invalid.
+    ParameterValueError
+        If `mode` is unsupported.
 
     See Also
     --------

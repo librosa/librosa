@@ -183,9 +183,11 @@ def beat_track(
 
     Raises
     ------
-    ParameterError
-        if neither ``y`` nor ``onset_envelope`` are provided,
-        or if ``units`` is not one of 'frames', 'samples', or 'time'
+    ParameterValueError
+        If neither ``y`` nor ``onset_envelope`` are provided,
+        or if ``units`` is not one of 'frames', 'samples', or 'time'.
+    ParameterShapeError
+        If ``sparse=True`` and ``onset_envelope`` is multidimensional.
 
     See Also
     --------

@@ -622,7 +622,7 @@ def note_to_midi(note: str | Iterable[str], *, round_midi: bool = True) -> float
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         If the input is not in valid note format
 
     See Also
@@ -773,7 +773,7 @@ def midi_to_note(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         if ``cents`` is True and ``octave`` is False
 
     See Also
