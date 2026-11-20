@@ -73,8 +73,7 @@ S = np.abs(librosa.stft(y))
 times = librosa.times_like(S, sr=sr)
 
 fig, ax = plt.subplots()
-librosa.display.specshow(S, vscale="dBFS",
-                         y_axis="log", x_axis="time", ax=ax)
+librosa.display.specshow(S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax)
 hl = librosa.display.highlight(ax=ax, linewidth=3, alpha=0.75, color="k")
 ax.plot(times, f0, linewidth=2, color="white", label="f0", path_effects=hl)
 ax.legend()
@@ -106,10 +105,8 @@ harmonic_energy = librosa.f0_harmonics(S, f0=f0, harmonics=harmonics, freqs=freq
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
 
-librosa.display.specshow(S, vscale="dBFS",
-                         y_axis="log", x_axis="time", ax=ax[0])
-librosa.display.specshow(harmonic_energy, vscale="dBFS",
-                         x_axis="time", ax=ax[1])
+librosa.display.specshow(S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[0])
+librosa.display.specshow(harmonic_energy, vscale="dBFS", x_axis="time", ax=ax[1])
 ax[0].label_outer()
 ax[1].set(ylabel="Harmonics")
 
@@ -143,12 +140,9 @@ f0_synth = np.nan_to_num(f0)
 
 y_out = np.zeros_like(y)
 
-for (factor, energy) in zip(harmonics, harmonic_energy, strict=True):
+for factor, energy in zip(harmonics, harmonic_energy, strict=True):
     # Mix in a synthesized pitch contour
-    y_out = y_out + mir_eval.sonify.pitch_contour(times, f0_synth * factor,
-                                                amplitudes=energy,
-                                                fs=sr,
-                                                length=len(y))
+    y_out = y_out + mir_eval.sonify.pitch_contour(times, f0_synth * factor, amplitudes=energy, fs=sr, length=len(y))
 
 Audio(data=y_out, rate=sr)
 
@@ -170,11 +164,8 @@ f_mono = 110 * np.ones_like(f0)
 
 ymono = np.zeros_like(y)
 
-for (factor, energy) in zip(harmonics, harmonic_energy, strict=True):
+for factor, energy in zip(harmonics, harmonic_energy, strict=True):
     # Use f_mono here instead of f0
-    ymono = ymono + mir_eval.sonify.pitch_contour(times, f_mono * factor,
-                                                amplitudes=energy,
-                                                fs=sr,
-                                                length=len(y))
+    ymono = ymono + mir_eval.sonify.pitch_contour(times, f_mono * factor, amplitudes=energy, fs=sr, length=len(y))
 
 Audio(data=ymono, rate=sr)

@@ -69,20 +69,16 @@ Audio(x_2, rate=fs)
 # -----------------------
 hop_length = 1024
 
-x_1_chroma = librosa.feature.chroma_cqt(y=x_1, sr=fs,
-                                         hop_length=hop_length)
-x_2_chroma = librosa.feature.chroma_cqt(y=x_2, sr=fs,
-                                         hop_length=hop_length)
+x_1_chroma = librosa.feature.chroma_cqt(y=x_1, sr=fs, hop_length=hop_length)
+x_2_chroma = librosa.feature.chroma_cqt(y=x_2, sr=fs, hop_length=hop_length)
 
 fig, ax = plt.subplots(nrows=2, sharey=True, sharex=True)
-img = librosa.display.specshow(x_1_chroma, x_axis="time",
-                               y_axis="chroma", key="G:major",
-                               hop_length=hop_length, ax=ax[0])
+img = librosa.display.specshow(
+    x_1_chroma, x_axis="time", y_axis="chroma", key="G:major", hop_length=hop_length, ax=ax[0]
+)
 ax[0].label_outer()
 ax[0].set(title="Chroma Representation of $X_1$", xlabel="")
-librosa.display.specshow(x_2_chroma, x_axis="time",
-                         y_axis="chroma", key="G:major",
-                         hop_length=hop_length, ax=ax[1])
+librosa.display.specshow(x_2_chroma, x_axis="time", y_axis="chroma", key="G:major", hop_length=hop_length, ax=ax[1])
 ax[1].set(title="Chroma Representation of $X_2$")
 fig.colorbar(img, ax=ax)
 
@@ -100,20 +96,27 @@ wp_s = wp_s[::-1]
 # We'll make a subplot mosaic to show the chroma features for each signal
 # aligned with the DTW cost matrix.
 fig, ax = plt.subplot_mosaic(
-        """
+    """
         ABB
         ABB
         .CC
-        """, height_ratios=[2, 2, 1], width_ratios=[1, 2, 2], figsize=(10, 7))
-librosa.display.specshow(x_1_chroma.T, y_axis="time", x_axis="chroma", key="G:major", sr=fs, hop_length=hop_length,
-                         ax=ax["A"])
+        """,
+    height_ratios=[2, 2, 1],
+    width_ratios=[1, 2, 2],
+    figsize=(10, 7),
+)
+librosa.display.specshow(
+    x_1_chroma.T, y_axis="time", x_axis="chroma", key="G:major", sr=fs, hop_length=hop_length, ax=ax["A"]
+)
 ax["A"].set(ylabel="Time $X_1$", xlabel="")
-ax["A"].invert_xaxis() # Invert x-axis to match transposed chroma display
-librosa.display.specshow(x_2_chroma, x_axis="time", y_axis="chroma", key="G:major", sr=fs, hop_length=hop_length,
-                         ax=ax["C"])
+ax["A"].invert_xaxis()  # Invert x-axis to match transposed chroma display
+librosa.display.specshow(
+    x_2_chroma, x_axis="time", y_axis="chroma", key="G:major", sr=fs, hop_length=hop_length, ax=ax["C"]
+)
 ax["C"].set(xlabel="Time $X_2$", ylabel="")
-img = librosa.display.specshow(D, x_axis="time", y_axis="time", sr=fs,
-                               cmap="gray_r", hop_length=hop_length, ax=ax["B"])
+img = librosa.display.specshow(
+    D, x_axis="time", y_axis="time", sr=fs, cmap="gray_r", hop_length=hop_length, ax=ax["B"]
+)
 ax["A"].sharey(ax["B"])
 ax["C"].sharex(ax["B"])
 
@@ -123,9 +126,21 @@ dx, dy = np.diff(wp_s, axis=0, prepend=0).T
 norm = np.sqrt(dx**2 + dy**2) + librosa.util.tiny(dx)
 dx /= norm
 dy /= norm
-q = ax["B"].quiver(wp_s[:, 1], wp_s[:, 0], dy, dx,
-          angles="xy", pivot="tip", scale_units="xy", scale=10,
-          color="C2", width=0.001, headwidth=20., headlength=20., headaxislength=10.)
+q = ax["B"].quiver(
+    wp_s[:, 1],
+    wp_s[:, 0],
+    dy,
+    dx,
+    angles="xy",
+    pivot="tip",
+    scale_units="xy",
+    scale=10,
+    color="C2",
+    width=0.001,
+    headwidth=20.0,
+    headlength=20.0,
+    headaxislength=10.0,
+)
 librosa.display.highlight(artist=q, alpha=0.1)
 ax["B"].set(title="Warping Path on Acc. Cost Matrix $D$")
 fig.colorbar(img, ax=ax["B"], label="DTW Cost")
@@ -142,7 +157,7 @@ ax["B"].label_outer()
 # (Thanks to F. Zalkow for the nice visualization.)
 from matplotlib.patches import ConnectionPatch
 
-fig, (ax_1, ax_2) = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8,4))
+fig, (ax_1, ax_2) = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 4))
 
 # Plot x_2
 librosa.display.waveshow(x_2, sr=fs, ax=ax_2, color="C1")
@@ -155,14 +170,20 @@ ax_1.label_outer()
 
 
 n_arrows = 20
-for tp1, tp2 in wp_s[::len(wp_s)//n_arrows]:
+for tp1, tp2 in wp_s[:: len(wp_s) // n_arrows]:
     # Create a connection patch between the aligned time points
     # in each subplot
-    con = ConnectionPatch(xyA=(tp1, 0), xyB=(tp2, 0),
-                          axesA=ax_1, axesB=ax_2,
-                          coordsA="data", coordsB="data",
-                          color="C2", linestyle="--",
-                          alpha=0.5)
+    con = ConnectionPatch(
+        xyA=(tp1, 0),
+        xyB=(tp2, 0),
+        axesA=ax_1,
+        axesB=ax_2,
+        coordsA="data",
+        coordsB="data",
+        color="C2",
+        linestyle="--",
+        alpha=0.5,
+    )
     con.set_in_layout(False)  # This is needed to preserve layout
     ax_2.add_artist(con)
 

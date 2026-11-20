@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Core IO, DSP and utility functions."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, overload
@@ -264,9 +265,9 @@ def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarra
     >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
     """
     if hq is None:
-        if (("sr" in kwargs and (kwargs["sr"] is None or kwargs["sr"] > 22050)) or
-            ("mono" in kwargs and kwargs["mono"] is False)
-            ):
+        if ("sr" in kwargs and (kwargs["sr"] is None or kwargs["sr"] > 22050)) or (
+            "mono" in kwargs and kwargs["mono"] is False
+        ):
             hq = True
         else:
             hq = False
@@ -274,15 +275,14 @@ def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarra
     try:
         path = example(key, hq=hq)
     except ParameterKeyError as exc:
-        raise ParameterKeyError(f"Could not load example with key '{key}'.  "
-                             "Did you mean to use librosa.load instead of loadx?") from exc
+        raise ParameterKeyError(
+            f"Could not load example with key '{key}'.  Did you mean to use librosa.load instead of loadx?"
+        ) from exc
 
     return load(path, **kwargs)
 
 
-def _init_output(
-    out: np.ndarray | None, shape: tuple[int, ...], dtype: np.dtype
-) -> np.ndarray:
+def _init_output(out: np.ndarray | None, shape: tuple[int, ...], dtype: np.dtype) -> np.ndarray:
     """Validate a caller-provided output buffer, or allocate a new one.
 
     If ``out`` is ``None``, return a new zero-filled array of the given shape
@@ -296,9 +296,7 @@ def _init_output(
     if out.shape != shape:
         raise ParameterShapeError(f"out has shape={out.shape}, but expected {shape}")
     if np.promote_types(out.dtype, dtype) != out.dtype:
-        raise ParameterTypeError(
-            f"out has dtype={out.dtype}, which cannot hold the result dtype {dtype}"
-        )
+        raise ParameterTypeError(f"out has dtype={out.dtype}, which cannot hold the result dtype {dtype}")
     out[...] = 0
     return out
 
@@ -408,9 +406,7 @@ def to_mono(
 
     # Now, average the signals together
     for y in signals:
-        output += util.fix_length(
-            combine(y, axis=tuple(range(y.ndim - 1))), size=output.shape[-1], axis=-1
-        )
+        output += util.fix_length(combine(y, axis=tuple(range(y.ndim - 1))), size=output.shape[-1], axis=-1)
     if norm:
         # Divide by the number of input signals given
         output /= len(signals)
@@ -541,18 +537,14 @@ def to_stereo(
         elif left.ndim == 2 and left.shape[0] == 2:
             output[:] = left
         else:
-            raise ParameterShapeError(
-                f"left input has unsupported shape {left.shape} for downmix=False"
-            )
+            raise ParameterShapeError(f"left input has unsupported shape {left.shape} for downmix=False")
 
         if right.ndim == 1:
             output[1] += right
         elif right.ndim == 2 and right.shape[0] == 2:
             output[:] += right
         else:
-            raise ParameterShapeError(
-                f"right input has unsupported shape {right.shape} for downmix=False"
-            )
+            raise ParameterShapeError(f"right input has unsupported shape {right.shape} for downmix=False")
         if norm and not onesided:
             # Only normalize here if we had both channels on input
             output /= 2
@@ -806,9 +798,7 @@ def resample(
         y_hat = scipy.signal.resample(y, n_samples, axis=axis)
     elif res_type == "polyphase":
         if int(orig_sr) != orig_sr or int(target_sr) != target_sr:
-            raise ParameterValueError(
-                "polyphase resampling is only supported for integer-valued sampling rates."
-            )
+            raise ParameterValueError("polyphase resampling is only supported for integer-valued sampling rates.")
 
         import scipy.signal
 
@@ -818,9 +808,7 @@ def resample(
         orig_sr = int(orig_sr)
         target_sr = int(target_sr)
         gcd = np.gcd(orig_sr, target_sr)
-        y_hat = scipy.signal.resample_poly(
-            y, target_sr // gcd, orig_sr // gcd, axis=axis
-        )
+        y_hat = scipy.signal.resample_poly(y, target_sr // gcd, orig_sr // gcd, axis=axis)
     elif res_type in (
         "linear",
         "zero_order_hold",
@@ -830,9 +818,7 @@ def resample(
     ):
         # Use numpy to vectorize the resampler along the target axis
         # This is because samplerate does not support ndim>2 generally.
-        y_hat = np.apply_along_axis(
-            samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type
-        )
+        y_hat = np.apply_along_axis(samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type)
     elif res_type.startswith("soxr"):
         # Use numpy to vectorize the resampler along the target axis
         # This is because soxr does not support ndim>2 generally.
@@ -995,9 +981,7 @@ def get_samplerate(path: str | int | sf.SoundFile | BinaryIO) -> float:
 
 
 @cache(level=20)
-def autocorrelate(
-    y: np.ndarray, *, max_size: int | None = None, axis: int = -1
-) -> np.ndarray:
+def autocorrelate(y: np.ndarray, *, max_size: int | None = None, axis: int = -1) -> np.ndarray:
     """Bounded-lag auto-correlation
 
     Parameters
@@ -1163,9 +1147,7 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     epsilon = util.tiny(den)
 
     # Call the helper, and swap the results back to the target axis position
-    return np.swapaxes(
-        __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, float(epsilon)), 0, axis
-    )
+    return np.swapaxes(__lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, float(epsilon)), 0, axis)
 
 
 @jit(nopython=True, cache=True)
@@ -1225,9 +1207,7 @@ def __lpc(
         ar_coeffs_prev, ar_coeffs = ar_coeffs, ar_coeffs_prev
         for j in range(1, i + 2):
             # reflection multiply should be broadcast
-            ar_coeffs[j] = (
-                ar_coeffs_prev[j] + reflect_coeff[0] * ar_coeffs_prev[i - j + 1]
-            )
+            ar_coeffs[j] = ar_coeffs_prev[j] + reflect_coeff[0] * ar_coeffs_prev[i - j + 1]
 
         # Update the forward and backward prediction errors corresponding to
         # eqns 13 and 14.  We start with f_{M-1,k+1} and b_{M-1,k} and use them
@@ -1508,15 +1488,11 @@ def envelope(
         origin_tuple[axis] = origin_val
 
         if kind == "percentile":
-            env = scipy.ndimage.percentile_filter(y, percentile=percentile,
-                                                  size=tuple(size_tuple),
-                                                  mode=mode,
-                                                  origin=tuple(origin_tuple))
+            env = scipy.ndimage.percentile_filter(
+                y, percentile=percentile, size=tuple(size_tuple), mode=mode, origin=tuple(origin_tuple)
+            )
         else:
-            env = scipy.ndimage.median_filter(y,
-                                              size=tuple(size_tuple),
-                                              mode=mode,
-                                              origin=tuple(origin_tuple))
+            env = scipy.ndimage.median_filter(y, size=tuple(size_tuple), mode=mode, origin=tuple(origin_tuple))
     else:
         raise ParameterValueError(f"Unsupported envelope kind: {kind}")
 
@@ -1744,9 +1720,7 @@ def tone(
 
     if taper:
         if frequency <= 0:
-            raise ParameterValueError(
-                f"frequency={frequency} must be strictly positive when taper=True"
-            )
+            raise ParameterValueError(f"frequency={frequency} must be strictly positive when taper=True")
         fade_len = int(np.round(sr / float(frequency)))
         fade_len = min(fade_len, length // 2)
         if fade_len > 0:
@@ -1859,9 +1833,7 @@ def chirp(
     fmax = util._ensure_hz(fmax)
 
     if min(fmin, fmax) <= 0:
-        raise ParameterValueError(
-            f"Frequencies fmin={fmin} and fmax={fmax} must be strictly positive"
-        )
+        raise ParameterValueError(f"Frequencies fmin={fmin} and fmax={fmax} must be strictly positive")
 
     nyquist = sr / 2.0
     if min(fmin, fmax) >= nyquist:
@@ -1882,6 +1854,7 @@ def chirp(
 
     method = "linear" if linear else "logarithmic"
     import scipy.signal
+
     y: np.ndarray = scipy.signal.chirp(  # type: ignore[call-overload]
         np.arange(int(duration * sr)) / sr,
         fmin,
@@ -1973,9 +1946,7 @@ def shepard_tone(
 
     nyquist = sr / 2.0
     if float(frequency) >= nyquist:
-        raise ParameterValueError(
-            f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
-        )
+        raise ParameterValueError(f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})")
 
     if length is None:
         if duration is None:
@@ -1990,7 +1961,7 @@ def shepard_tone(
     octave_shifts = np.arange(k_min, k_max + 1)
 
     for shift in octave_shifts:
-        freq_k = float(frequency) * (2.0 ** shift)
+        freq_k = float(frequency) * (2.0**shift)
 
         if weighting is not None:
             weight_db = frequency_weighting(freq_k, kind=weighting)
@@ -1998,9 +1969,7 @@ def shepard_tone(
         else:
             amp = 1.0
 
-        y += amp * tone(
-            freq_k, sr=sr, length=length, duration=duration, taper=taper
-        )
+        y += amp * tone(freq_k, sr=sr, length=length, duration=duration, taper=taper)
 
     return y
 
@@ -2087,9 +2056,7 @@ def shepard_scale(
 
     nyquist = sr / 2.0
     if float(frequency) >= nyquist:
-        raise ParameterValueError(
-            f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
-        )
+        raise ParameterValueError(f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})")
 
     if length is None:
         if duration is None:
@@ -2218,9 +2185,7 @@ def shepard_risset_glissando(
 
     nyquist = sr / 2.0
     if float(frequency) >= nyquist:
-        raise ParameterValueError(
-            f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})"
-        )
+        raise ParameterValueError(f"frequency={frequency} must be strictly less than Nyquist (sr/2={nyquist})")
 
     if length is None:
         if duration is None:
@@ -2230,16 +2195,16 @@ def shepard_risset_glissando(
         target_len = length
     y: _Array1D[np.float64] = np.zeros(target_len, dtype=np.float64)
 
-    f_min_sweep = min(float(frequency), float(frequency) * (2.0 ** n_octaves))
-    f_max_sweep = max(float(frequency), float(frequency) * (2.0 ** n_octaves))
+    f_min_sweep = min(float(frequency), float(frequency) * (2.0**n_octaves))
+    f_max_sweep = max(float(frequency), float(frequency) * (2.0**n_octaves))
     k_min = int(np.ceil(np.log2(30.0 / f_max_sweep)))
     k_max = int(np.floor(np.log2(np.nextafter(nyquist, 0) / f_min_sweep)))
     octave_shifts = np.arange(k_min, k_max + 1)
 
     for shift in octave_shifts:
-        scale = 2.0 ** shift
+        scale = 2.0**shift
         fmin_k = float(frequency) * scale
-        fmax_k = float(frequency) * (2.0 ** n_octaves) * scale
+        fmax_k = float(frequency) * (2.0**n_octaves) * scale
 
         y += chirp(
             fmin=fmin_k,
@@ -2253,9 +2218,7 @@ def shepard_risset_glissando(
     return y
 
 
-def mu_compress(
-    x: np.ndarray | _FloatLike_co, *, mu: float = 255, quantize: bool = True
-) -> np.ndarray:
+def mu_compress(x: np.ndarray | _FloatLike_co, *, mu: float = 255, quantize: bool = True) -> np.ndarray:
     """Compression by μ-law
 
     Given an input signal ``-1 <= x <= 1``, the mu-law compression
@@ -2324,9 +2287,7 @@ def mu_compress(
     array([-8, -7, -7, -6, -6, -5, -4, -2,  2,  4,  5,  6,  6,  7,  7,  7])
     """
     if mu <= 0:
-        raise ParameterValueError(
-            f"mu-law compression parameter mu={mu} must be strictly positive."
-        )
+        raise ParameterValueError(f"mu-law compression parameter mu={mu} must be strictly positive.")
 
     if np.any(x < -1) or np.any(x > 1):
         raise ParameterValueError(f"mu-law input x={x} must be in the range [-1, +1].")
@@ -2335,10 +2296,7 @@ def mu_compress(
 
     if quantize:
         y: np.ndarray = (
-            np.digitize(
-                x_comp, np.linspace(-1, 1, num=int(1 + mu), endpoint=True), right=True
-            )
-            - int(mu + 1) // 2
+            np.digitize(x_comp, np.linspace(-1, 1, num=int(1 + mu), endpoint=True), right=True) - int(mu + 1) // 2
         )
         return y
 
@@ -2349,9 +2307,7 @@ def mu_compress(
 def mu_expand(x: _FloatLike_co, *, mu: float = 255.0, quantize: bool = True) -> np.floating: ...
 @overload
 def mu_expand(x: np.ndarray, *, mu: float = 255.0, quantize: bool = True) -> np.ndarray: ...
-def mu_expand(
-    x: np.ndarray | _FloatLike_co, *, mu: float = 255.0, quantize: bool = True
-) -> np.ndarray | np.floating:
+def mu_expand(x: np.ndarray | _FloatLike_co, *, mu: float = 255.0, quantize: bool = True) -> np.ndarray | np.floating:
     """Expansion by μ-law
 
     This function is the inverse of ``mu_compress``. Given a mu-law compressed
@@ -2423,17 +2379,13 @@ def mu_expand(
             0.95743702])
     """
     if mu <= 0:
-        raise ParameterValueError(
-            f"Inverse mu-law compression parameter mu={mu} must be strictly positive."
-        )
+        raise ParameterValueError(f"Inverse mu-law compression parameter mu={mu} must be strictly positive.")
 
     if quantize:
         x = x * 2.0 / (1 + mu)
 
     if np.any(x < -1) or np.any(x > 1):
-        raise ParameterValueError(
-            f"Inverse mu-law input x={x} must be in the range [-1, +1]."
-        )
+        raise ParameterValueError(f"Inverse mu-law input x={x} must be in the range [-1, +1].")
 
     y: np.ndarray | np.floating = np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)
     return y

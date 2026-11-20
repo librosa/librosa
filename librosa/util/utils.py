@@ -106,7 +106,7 @@ __all__ = [
     "is_unique",
     "abs2",
     "phasor",
-    "interp_broadcast"
+    "interp_broadcast",
 ]
 
 
@@ -244,9 +244,7 @@ def frame(
     x = np.array(x, copy=False, subok=subok)
 
     if x.shape[axis] < frame_length:
-        raise ParameterShapeError(
-            f"Input is too short (n={x.shape[axis]:d}) for frame_length={frame_length:d}"
-        )
+        raise ParameterShapeError(f"Input is too short (n={x.shape[axis]:d}) for frame_length={frame_length:d}")
 
     if hop_length < 1:
         raise ParameterValueError(f"Invalid hop_length: {hop_length:d}")
@@ -259,9 +257,7 @@ def frame(
     x_shape_trimmed[axis] -= frame_length - 1
 
     out_shape = tuple(x_shape_trimmed) + tuple([frame_length])
-    xw = as_strided(
-        x, strides=out_strides, shape=out_shape, subok=subok, writeable=writeable
-    )
+    xw = as_strided(x, strides=out_strides, shape=out_shape, subok=subok, writeable=writeable)
 
     if axis < 0:
         target_axis = axis - 1
@@ -332,9 +328,7 @@ def valid_audio(y: np.ndarray) -> bool:
         raise ParameterTypeError("Audio data must be floating-point")
 
     if y.ndim == 0:
-        raise ParameterShapeError(
-            f"Audio data must be at least one-dimensional, given y.shape={y.shape}"
-        )
+        raise ParameterShapeError(f"Audio data must be at least one-dimensional, given y.shape={y.shape}")
 
     if not np.isfinite(y).all():
         raise ParameterValueError("Audio buffer is not finite everywhere")
@@ -498,9 +492,7 @@ def align_samples(
     aligned_samples = np.round(exact_samples)
 
     # Tolerances safely absorb precision errors from float arithmetic
-    if (aligned_samples < 1) or not np.isclose(
-        exact_samples, aligned_samples, rtol=1e-7, atol=1e-5
-    ):
+    if (aligned_samples < 1) or not np.isclose(exact_samples, aligned_samples, rtol=1e-7, atol=1e-5):
         if error:
             raise ParameterValueError(
                 f"Sample count of {n_samples} at {orig_sr} Hz results in a "
@@ -537,9 +529,7 @@ def valid_intervals(intervals: np.ndarray) -> bool:
     return True
 
 
-def pad_center(
-    data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any
-) -> np.ndarray:
+def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
     """Pad an array to a target length along a target axis.
 
     This differs from `np.pad` by centering the data prior to padding,
@@ -604,16 +594,12 @@ def pad_center(
     lengths[axis] = (lpad, int(size - n - lpad))
 
     if lpad < 0:
-        raise ParameterShapeError(
-            f"Target size ({size:d}) must be at least input size ({n:d})"
-        )
+        raise ParameterShapeError(f"Target size ({size:d}) must be at least input size ({n:d})")
 
     return np.pad(data, lengths, **kwargs)
 
 
-def expand_to(
-    x: np.ndarray, *, ndim: int, axes: int | slice | Sequence[int] | Sequence[slice]
-) -> np.ndarray:
+def expand_to(x: np.ndarray, *, ndim: int, axes: int | slice | Sequence[int] | Sequence[slice]) -> np.ndarray:
     """Expand the dimensions of an input array with
 
     Parameters
@@ -666,14 +652,10 @@ def expand_to(
         axes_tup = tuple([axes])  # type: ignore
 
     if len(axes_tup) != x.ndim:
-        raise ParameterShapeError(
-            f"Shape mismatch between axes={axes_tup} and input x.shape={x.shape}"
-        )
+        raise ParameterShapeError(f"Shape mismatch between axes={axes_tup} and input x.shape={x.shape}")
 
     if ndim < x.ndim:
-        raise ParameterShapeError(
-            f"Cannot expand x.shape={x.shape} to fewer dimensions ndim={ndim}"
-        )
+        raise ParameterShapeError(f"Cannot expand x.shape={x.shape} to fewer dimensions ndim={ndim}")
 
     shape: list[int] = [1] * ndim
     for i, axi in enumerate(axes_tup):
@@ -682,9 +664,7 @@ def expand_to(
     return x.reshape(shape)
 
 
-def fix_length(
-    data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any
-) -> np.ndarray:
+def fix_length(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) -> np.ndarray:
     """Fix the length an array ``data`` to exactly ``size`` along a target axis.
 
     If ``data.shape[axis] < n``, pad according to the provided kwargs.
@@ -1652,9 +1632,7 @@ def peak_pick(
 
 
 @cache(level=40)
-def sparsify_rows(
-    x: np.ndarray, *, quantile: float = 0.01, dtype: DTypeLike | None = None
-) -> scipy.sparse.csr_array:
+def sparsify_rows(x: np.ndarray, *, quantile: float = 0.01, dtype: DTypeLike | None = None) -> scipy.sparse.csr_array:
     """Return a row-sparse array approximating the input
 
     Parameters
@@ -1723,9 +1701,7 @@ def sparsify_rows(
         x = x.reshape((1, -1))
 
     elif x.ndim > 2:
-        raise ParameterShapeError(
-            f"Input must have 2 or fewer dimensions. Provided x.shape={x.shape}."
-        )
+        raise ParameterShapeError(f"Input must have 2 or fewer dimensions. Provided x.shape={x.shape}.")
 
     if not 0.0 <= quantile < 1:
         raise ParameterValueError(f"Invalid quantile {quantile:.2f}")
@@ -1752,9 +1728,7 @@ def sparsify_rows(
     return scipy.sparse.csr_array(out)
 
 
-def buf_to_float(
-    x: np.ndarray, *, n_bytes: int = 2, dtype: DTypeLike = np.float32
-) -> np.ndarray:
+def buf_to_float(x: np.ndarray, *, n_bytes: int = 2, dtype: DTypeLike = np.float32) -> np.ndarray:
     """Convert an integer buffer to floating point values.
 
     This is primarily useful when loading integer-valued wav data
@@ -1945,18 +1919,14 @@ def sync(
     if np.all([isinstance(_, slice) for _ in idx]):
         slices = idx
     elif np.all([np.issubdtype(type(_), np.integer) for _ in idx]):
-        slices = index_to_slice(
-            np.asarray(idx), idx_min=0, idx_max=shape[axis], pad=pad
-        )
+        slices = index_to_slice(np.asarray(idx), idx_min=0, idx_max=shape[axis], pad=pad)
     else:
         raise ParameterTypeError(f"Invalid index set: {idx}")
 
     agg_shape = list(shape)
     agg_shape[axis] = len(slices)
 
-    data_agg = np.empty(
-        agg_shape, order="F" if np.isfortran(data) else "C", dtype=data.dtype
-    )
+    data_agg = np.empty(agg_shape, order="F" if np.isfortran(data) else "C", dtype=data.dtype)
 
     idx_in = [slice(None)] * data.ndim
     idx_agg = [slice(None)] * data_agg.ndim
@@ -1969,9 +1939,7 @@ def sync(
     return data_agg
 
 
-def softmask(
-    X: np.ndarray, X_ref: np.ndarray, *, power: float = 1, split_zeros: bool = False
-) -> np.ndarray:
+def softmask(X: np.ndarray, X_ref: np.ndarray, *, power: float = 1, split_zeros: bool = False) -> np.ndarray:
     """Robustly compute a soft-mask operation.
 
         ``M = X**power / (X**power + X_ref**power)``
@@ -2144,9 +2112,7 @@ def tiny(x: complex | np.ndarray) -> np.floating[Any]:
     x = np.asarray(x)
 
     # Only floating types generate a tiny
-    if np.issubdtype(x.dtype, np.floating) or np.issubdtype(
-        x.dtype, np.complexfloating
-    ):
+    if np.issubdtype(x.dtype, np.floating) or np.issubdtype(x.dtype, np.complexfloating):
         dtype = x.dtype
     else:
         dtype = np.dtype(np.float32)
@@ -2222,9 +2188,7 @@ def fill_off_diagonal(x: np.ndarray, *, radius: float, value: float = 0) -> None
     x[idx_l] = value
 
 
-def cyclic_gradient(
-    data: np.ndarray, *, edge_order: Literal[1, 2] = 1, axis: int = -1
-) -> np.ndarray:
+def cyclic_gradient(data: np.ndarray, *, edge_order: Literal[1, 2] = 1, axis: int = -1) -> np.ndarray:
     """Estimate the gradient of a function over a uniformly sampled, periodic domain.
 
     This is essentially the same as `np.gradient`, except that edge effects
@@ -2303,9 +2267,12 @@ def __shear_dense(X: np.ndarray, *, factor: int = +1, axis: int = -1) -> np.ndar
 
     return X_shear
 
+
 if TYPE_CHECKING:
+
     def _asformat_sparse(X: _SparseArray | _SparseMatrix, fmt: str) -> _SparseArray | _SparseMatrix: ...
 else:
+
     def _asformat_sparse(X, fmt):
         return X.asformat(fmt)
 
@@ -2353,11 +2320,11 @@ def __shear_sparse(
     # And convert back to the input format
     return _asformat_sparse(X_shear, fmt)
 
+
 @overload
 def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 @overload
-def shear(X: _SparseArray | _SparseMatrix, *,
-          factor: int = ..., axis: int = ...) -> _SparseArray | _SparseMatrix: ...
+def shear(X: _SparseArray | _SparseMatrix, *, factor: int = ..., axis: int = ...) -> _SparseArray | _SparseMatrix: ...
 def shear(
     X: np.ndarray | _SparseArray | _SparseMatrix, *, factor: int = 1, axis: int = -1
 ) -> np.ndarray | _SparseArray | _SparseMatrix:
@@ -2514,9 +2481,7 @@ def stack(arrays: list[np.ndarray], *, axis: int = 0) -> np.ndarray:
         return result
 
 
-def dtype_r2c(
-    d: DTypeLike, *, default: type[np.complexfloating] = np.complex64
-) -> np.dtype[np.complexfloating]:
+def dtype_r2c(d: DTypeLike, *, default: type[np.complexfloating] = np.complex64) -> np.dtype[np.complexfloating]:
     """Find the complex numpy dtype corresponding to a real dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2571,9 +2536,7 @@ def dtype_r2c(
     return np.dtype(mapping.get(dt, default))
 
 
-def dtype_c2r(
-    d: DTypeLike, *, default: type[np.floating] | None = np.float32
-) -> np.dtype[np.floating]:
+def dtype_c2r(d: DTypeLike, *, default: type[np.floating] | None = np.float32) -> np.dtype[np.floating]:
     """Find the real numpy dtype corresponding to a complex dtype.
 
     This is used to maintain numerical precision and memory footprint
@@ -2732,9 +2695,7 @@ def is_unique(data: np.ndarray, *, axis: int = -1) -> NDArray[np.bool]:
     return np.apply_along_axis(__is_unique, axis, data)
 
 
-@numba.vectorize(
-    nopython=True, cache=True, identity=0
-)  # type: ignore
+@numba.vectorize(nopython=True, cache=True, identity=0)  # type: ignore
 def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
     """Efficiently compute abs2 on complex inputs"""
     return x.real**2 + x.imag**2
@@ -2744,9 +2705,7 @@ def _cabs2(x: _ComplexLike_co) -> _FloatLike_co:  # pragma: no cover
 def abs2(x: np.ndarray, dtype: DTypeLike | None = ...) -> np.ndarray: ...
 @overload
 def abs2(x: _Complex, dtype: DTypeLike | None = ...) -> np.floating: ...
-def abs2(
-    x: np.ndarray | _Real | _Complex, dtype: DTypeLike | None = None
-) -> np.ndarray | np.floating:
+def abs2(x: np.ndarray | _Real | _Complex, dtype: DTypeLike | None = None) -> np.ndarray | np.floating:
     """Compute the squared magnitude of a real or complex array.
 
     This function is equivalent to calling `np.abs(x)**2` but it
@@ -2786,12 +2745,9 @@ def abs2(
         return np.square(x, dtype=dtype)
 
 
-@numba.vectorize(
-    nopython=True, cache=True, identity=1
-)  # type: ignore
+@numba.vectorize(nopython=True, cache=True, identity=1)  # type: ignore
 def _phasor_angles(x) -> np.complexfloating:
     return np.cos(x) + 1j * np.sin(x)  # type: ignore
-
 
 
 @overload
@@ -2985,30 +2941,16 @@ def interp_broadcast(
 
     min_ndim = min(x1.ndim, x2.ndim)
     if axis < -min_ndim or axis >= min_ndim:
-        raise ParameterShapeError(
-            f"axis={axis} is out of range for minimum ndim={min_ndim}"
-        )
+        raise ParameterShapeError(f"axis={axis} is out of range for minimum ndim={min_ndim}")
 
     import scipy.interpolate
 
     x1_interp = scipy.interpolate.interp1d(
-        x1_pos,
-        x1,
-        axis=axis,
-        kind=kind,
-        copy=False,
-        bounds_error=False,
-        fill_value=fill_value
+        x1_pos, x1, axis=axis, kind=kind, copy=False, bounds_error=False, fill_value=fill_value
     )
 
     x2_interp = scipy.interpolate.interp1d(
-        x2_pos,
-        x2,
-        axis=axis,
-        kind=kind,
-        copy=False,
-        bounds_error=False,
-        fill_value=fill_value
+        x2_pos, x2, axis=axis, kind=kind, copy=False, bounds_error=False, fill_value=fill_value
     )
 
     y1 = cast("NDArray[np.float64]", x1_interp(interp_pos))

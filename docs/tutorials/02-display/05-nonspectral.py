@@ -85,8 +85,7 @@ tempo_ft = librosa.feature.fourier_tempogram(y=y, sr=sr)
 fig, ax = plt.subplots(nrows=2, sharex=True)
 # Plot the autocorrelation tempogram, but clip negative values to zero for better visualization
 librosa.display.specshow(np.maximum(tempo_ac, 0), y_axis="tempo", x_axis="time", ax=ax[0])
-librosa.display.specshow(tempo_ft, y_axis="fourier_tempo", x_axis="time",
-                         vscale="dBFS", top_db=24, ax=ax[1])
+librosa.display.specshow(tempo_ft, y_axis="fourier_tempo", x_axis="time", vscale="dBFS", top_db=24, ax=ax[1])
 ax[0].label_outer()
 ax[0].set(title="Autocorrelation Tempogram")
 ax[1].set(title="Fourier Tempogram")

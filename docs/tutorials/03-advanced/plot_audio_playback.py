@@ -35,10 +35,7 @@ import mir_eval.sonify
 
 sr = 22050
 
-y_sweep = librosa.chirp(fmin="C3",
-                        fmax="C5",
-                        sr=sr,
-                        duration=1)
+y_sweep = librosa.chirp(fmin="C3", fmax="C5", sr=sr, duration=1)
 
 Audio(data=y_sweep, rate=sr)
 
@@ -74,11 +71,7 @@ Audio(url=librosa.example("trumpet", url=True))
 # and `mir_eval.sonify.pitch_contour` for synthesis.
 
 # Using fill_na=None retains the best-guess f0 at unvoiced frames
-f0, voiced_flag, voiced_probs = librosa.pyin(y,
-                                             sr=sr,
-                                             fmin="C2",
-                                             fmax="C7",
-                                             fill_na=None)
+f0, voiced_flag, voiced_probs = librosa.pyin(y, sr=sr, fmin="C2", fmax="C7", fill_na=None)
 
 # To synthesize the f0, we'll need sample times
 times = librosa.times_like(f0)
@@ -91,7 +84,7 @@ times = librosa.times_like(f0)
 # -1 for unvoiced frames.
 # This way, `f0 * vneg` will leave voiced estimates unchanged,
 # and negate the frequency for unvoiced frames.
-vneg = (-1)**(~voiced_flag)
+vneg = (-1) ** (~voiced_flag)
 
 # And sonify the f0 using mir_eval
 y_f0 = mir_eval.sonify.pitch_contour(times, f0 * vneg, sr)
@@ -125,7 +118,7 @@ y_clicks = librosa.clicks(times=onset_times, length=len(y), sr=sr)
 
 # %%
 # We can play back the original signal mixed with the click track by adding them together.
-Audio(data=y+y_clicks, rate=sr)
+Audio(data=y + y_clicks, rate=sr)
 
 # %%
 # Sometimes it's helpful to keep the original signal and the click track separate.

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Matching functions"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -79,9 +80,7 @@ def __match_intervals(
     end_sorted = intervals_to[end_index, 1]
 
     # Sorting non-overlapping targets by start also orders their end values.
-    non_overlapping = np.all(
-        intervals_to[start_index[:-1], 1] <= start_sorted[1:]
-    )
+    non_overlapping = np.all(intervals_to[start_index[:-1], 1] <= start_sorted[1:])
 
     search_ends = np.searchsorted(start_sorted, intervals_from[:, 1], side="right")
     search_starts = np.searchsorted(end_sorted, intervals_from[:, 0], side="left")
@@ -139,9 +138,7 @@ def __match_intervals(
     return output
 
 
-def match_intervals(
-    intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True
-) -> _Array1D[np.uint32]:
+def match_intervals(intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True) -> _Array1D[np.uint32]:
     """Match one set of time intervals to another.
 
     This can be useful for tasks such as mapping beat timings
@@ -306,26 +303,18 @@ def match_events(
     # counts as a match.
     if not (left or right) and not np.all(np.isin(events_from, events_to)):
         raise ParameterValueError(
-            "Cannot match events with left=right=False "
-            "and events_from is not contained "
-            "in events_to"
+            "Cannot match events with left=right=False and events_from is not contained in events_to"
         )
 
     # If we can't match to the left, then there should be at least one
     # target event greater-equal to every source event
     if (not left) and max(events_to) < max(events_from):
-        raise ParameterValueError(
-            "Cannot match events with left=False "
-            "and max(events_to) < max(events_from)"
-        )
+        raise ParameterValueError("Cannot match events with left=False and max(events_to) < max(events_from)")
 
     # If we can't match to the right, then there should be at least one
     # target event less-equal to every source event
     if (not right) and min(events_to) > min(events_from):
-        raise ParameterValueError(
-            "Cannot match events with right=False "
-            "and min(events_to) > min(events_from)"
-        )
+        raise ParameterValueError("Cannot match events with right=False and min(events_to) > min(events_from)")
 
     # array of matched items
     output = np.empty_like(events_from, dtype=np.int32)
@@ -388,8 +377,7 @@ def __match_events_helper(
             right_diff = abs(sorted_to[right_ind] - sorted_from_num)
 
         if left_flag and (
-            (not right
-            and (sorted_to[middle_ind] > sorted_from_num))
+            (not right and (sorted_to[middle_ind] > sorted_from_num))
             or (not right_flag and left_diff < mid_diff)
             or (left_diff < right_diff and left_diff < mid_diff)
         ):

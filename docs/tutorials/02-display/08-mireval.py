@@ -68,13 +68,9 @@ hl = librosa.display.highlight(ax=ax, linewidth=6)
 
 # Get the time values for f0
 times = librosa.times_like(f0, sr=sr)
-mir_eval.display.pitch(times, f0_voiced_unvoiced,
-                       ax=ax,
-                       unvoiced=True,
-                       label="pyin f0 estimate",
-                       color="C2",
-                       linewidth=3,
-                       path_effects=hl)
+mir_eval.display.pitch(
+    times, f0_voiced_unvoiced, ax=ax, unvoiced=True, label="pyin f0 estimate", color="C2", linewidth=3, path_effects=hl
+)
 ax.legend(loc="upper right")
 
 # %%
@@ -102,8 +98,7 @@ ax[0].legend(loc="upper right")
 ax[0].label_outer()
 librosa.display.specshow(stft, vscale="dBFS", x_axis="time", y_axis="log_oct3", ax=ax[1])
 hl = librosa.display.highlight(ax=ax[1], linewidth=3)
-mir_eval.display.events(onsets, ax=ax[1], color="C1", label="estimated onsets",
-                        path_effects=hl)
+mir_eval.display.events(onsets, ax=ax[1], color="C1", label="estimated onsets", path_effects=hl)
 ax[1].legend(loc="upper right")
 
 # %%
@@ -128,8 +123,7 @@ fig, ax = plt.subplots()
 stft = librosa.stft(y)
 librosa.display.specshow(stft, vscale="dBFS", x_axis="time", y_axis="log_oct3", ax=ax)
 hl = librosa.display.highlight(ax=ax, linewidth=3)
-mir_eval.display.events(beats, ax=ax, path_effects=hl,
-                        labels=beat_labels)
+mir_eval.display.events(beats, ax=ax, path_effects=hl, labels=beat_labels)
 # Zoom in to see labels more clearly
 ax.set(xlim=[5, 10])
 
@@ -152,8 +146,7 @@ f0_midi = np.round(librosa.hz_to_midi(f0))
 boundaries = np.where(np.diff(f0_midi) != 0)[0] + 1
 
 # Convert boundaries to start/end intervals
-intervals = np.column_stack([np.concatenate([[0], boundaries]),
-                             np.concatenate([boundaries, [len(f0_midi)]])])
+intervals = np.column_stack([np.concatenate([[0], boundaries]), np.concatenate([boundaries, [len(f0_midi)]])])
 
 # Convert the MIDI numbers to note names, using F dorian as the key
 # Unvoiced (nan) frames will be labeled with an empty string
@@ -161,14 +154,10 @@ notes = librosa.midi_to_note(f0_midi[intervals[:, 0]], key="F:dorian")
 
 fig, ax = plt.subplots(figsize=(10, 4))
 # Plot the spectrogram in grayscale so we can overlay colors
-librosa.display.specshow(stft, vscale="dBFS",
-                         x_axis="time", y_axis="fft_note", ax=ax,
-                         cmap="gray_r")
+librosa.display.specshow(stft, vscale="dBFS", x_axis="time", y_axis="fft_note", ax=ax, cmap="gray_r")
 
 # Label the intervals with the detected notes
-mir_eval.display.segments(librosa.frames_to_time(intervals, sr=sr),
-                          notes,
-                          ax=ax, text=True, alpha=0.5)
+mir_eval.display.segments(librosa.frames_to_time(intervals, sr=sr), notes, ax=ax, text=True, alpha=0.5)
 ax.set(xlim=[0, 4.5])
 fig.legend(loc="outside center right")
 

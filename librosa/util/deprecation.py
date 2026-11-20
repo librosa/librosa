@@ -16,13 +16,7 @@ class Deprecated:
 
 
 def rename_kw(
-    *,
-    old_name: str,
-    old_value: Any,
-    new_name: str,
-    new_value: Any,
-    version_deprecated: str,
-    version_removed: str
+    *, old_name: str, old_value: Any, new_name: str, new_value: Any, version_deprecated: str, version_removed: str
 ) -> Any:
     """Handle renamed arguments.
 
@@ -61,9 +55,7 @@ def rename_kw(
             "{:s}() keyword argument '{:s}' has been "
             "renamed to '{:s}' in version {:}."
             "\n\tThis alias will be removed in version "
-            "{:}.".format(
-                dep_func[3], old_name, new_name, version_deprecated, version_removed
-            ),
+            "{:}.".format(dep_func[3], old_name, new_name, version_deprecated, version_removed),
             category=FutureWarning,
             stacklevel=3,
         )

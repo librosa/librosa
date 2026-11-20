@@ -132,10 +132,11 @@ librosa.display.waveshow(y, sr=sr, ax=ax, label="Waveshow plot", alpha=0.5)
 ax.legend(loc="upper left")
 
 # We'll zoom in to the middle of the track +- 0.001 seconds
-t_mid = len(y)/sr * 0.5
+t_mid = len(y) / sr * 0.5
 
 n_frames = 200
 window = np.geomspace(t_mid, 0.001, num=n_frames)
+
 
 def _update(delta):
     """Update the plot for each frame."""
@@ -144,11 +145,8 @@ def _update(delta):
     ax.set(xlim=[t_mid - delta, t_mid + delta])
     return None
 
-ani = animation.FuncAnimation(fig,
-                              func=_update,
-                              frames=window,
-                              repeat=False,
-                              interval=1000/30)
+
+ani = animation.FuncAnimation(fig, func=_update, frames=window, repeat=False, interval=1000 / 30)
 
 
 # %%

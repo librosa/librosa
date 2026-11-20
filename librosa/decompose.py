@@ -7,6 +7,7 @@ into components.
 This includes harmonic-percussive source separation (HPSS), nearest-neighbor filtering, and
 general matrix decomposition (e.g. NMF).
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -192,9 +193,7 @@ def decompose(
     orig_shape = list(S.shape)
 
     if S.ndim > 2 and sort:
-        raise ParameterShapeError(
-            "Parameter sort=True is unsupported for input with more than two dimensions"
-        )
+        raise ParameterShapeError("Parameter sort=True is unsupported for input with more than two dimensions")
 
     # Transpose S and unroll feature dimensions
     # Use order='F' here to preserve the temporal ordering
@@ -232,9 +231,7 @@ def decompose(
             transformer.n_components_ = n_components
         else:
             init_mode = "custom" if components is not None else kwargs.pop("init", None)
-            transformer = sklearn.decomposition.NMF(
-                n_components=n_components, init=init_mode, **kwargs
-            )
+            transformer = sklearn.decomposition.NMF(n_components=n_components, init=init_mode, **kwargs)
 
     fit_kwargs = {}
     if fit and components is not None:
@@ -605,9 +602,7 @@ def hpss(
 
     # margin minimum is 1.0
     if margin_harm < 1 or margin_perc < 1:
-        raise ParameterValueError(
-            "Margins must be >= 1.0. " "A typical range is between 1 and 10."
-        )
+        raise ParameterValueError("Margins must be >= 1.0. A typical range is between 1 and 10.")
 
     # shape for kernels
     harm_shape = [1] * S.ndim
@@ -628,17 +623,13 @@ def hpss(
     split_zeros = margin_harm == 1 and margin_perc == 1
 
     ref_perc = perc if margin_harm == 1 else perc * margin_harm
-    mask_harm = util.softmask(
-        harm, ref_perc, power=power, split_zeros=split_zeros
-    )
+    mask_harm = util.softmask(harm, ref_perc, power=power, split_zeros=split_zeros)
 
     if split_zeros and np.isfinite(power):
         mask_perc = 1.0 - mask_harm
     else:
         ref_harm = harm if margin_perc == 1 else harm * margin_perc
-        mask_perc = util.softmask(
-            perc, ref_harm, power=power, split_zeros=split_zeros
-        )
+        mask_perc = util.softmask(perc, ref_harm, power=power, split_zeros=split_zeros)
 
     if mask:
         return mask_harm, mask_perc
@@ -779,18 +770,15 @@ def nn_filter(
 
     if rec_s.shape[0] != S.shape[axis] or rec_s.shape[0] != rec_s.shape[1]:
         raise ParameterShapeError(
-            "Invalid self-similarity matrix shape "
-            f"rec.shape={rec_s.shape} for S.shape={S.shape}"
+            f"Invalid self-similarity matrix shape rec.shape={rec_s.shape} for S.shape={S.shape}"
         )
 
-    return __nn_filter_helper(
-        rec_s.data, rec_s.indices, rec_s.indptr, S.swapaxes(0, axis), aggregate
-    ).swapaxes(0, axis)
+    return __nn_filter_helper(rec_s.data, rec_s.indices, rec_s.indptr, S.swapaxes(0, axis), aggregate).swapaxes(
+        0, axis
+    )
 
 
-def __nn_filter_helper(
-    R_data, R_indices, R_ptr, S: np.ndarray, aggregate: Callable
-) -> np.ndarray:
+def __nn_filter_helper(R_data, R_indices, R_ptr, S: np.ndarray, aggregate: Callable) -> np.ndarray:
     """Nearest-neighbor filter helper function.
 
     This is an internal function, not for use outside of the decompose module.

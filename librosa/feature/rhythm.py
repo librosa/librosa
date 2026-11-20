@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Rhythmic feature extraction"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -173,9 +174,7 @@ def tempogram(
     if center:
         padding = [(0, 0) for _ in onset_envelope.shape]
         padding[-1] = (int(win_length // 2),) * 2
-        onset_envelope = np.pad(
-            onset_envelope, padding, mode="linear_ramp", end_values=[0, 0]
-        )
+        onset_envelope = np.pad(onset_envelope, padding, mode="linear_ramp", end_values=[0, 0])
 
     # Carve onset envelope into frames
     odf_frame = util.frame(onset_envelope, frame_length=win_length, hop_length=1)
@@ -188,9 +187,7 @@ def tempogram(
     ac_window = util.expand_to(ac_window, ndim=odf_frame.ndim, axes=-2)
 
     # Window, autocorrelate, and normalize
-    return util.normalize(
-        autocorrelate(odf_frame * ac_window, axis=-2), norm=norm, axis=-2
-    )
+    return util.normalize(autocorrelate(odf_frame * ac_window, axis=-2), norm=norm, axis=-2)
 
 
 def fourier_tempogram(
@@ -288,9 +285,7 @@ def fourier_tempogram(
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
     # Generate the short-time Fourier transform
-    return stft(
-        onset_envelope, n_fft=win_length, hop_length=1, center=center, window=window
-    )
+    return stft(onset_envelope, n_fft=win_length, hop_length=1, center=center, window=window)
 
 
 @cache(level=30)
@@ -661,18 +656,15 @@ def tempogram_ratio(
 
     if factors is None:
         # metric multiples from Prockup'15
-        factors = np.array(
-            [4, 8 / 3, 3, 2, 4 / 3, 3 / 2, 1, 2 / 3, 3 / 4, 1 / 2, 1 / 3, 3 / 8, 1 / 4]
-        )
+        factors = np.array([4, 8 / 3, 3, 2, 4 / 3, 3 / 2, 1, 2 / 3, 3 / 4, 1 / 2, 1 / 3, 3 / 8, 1 / 4])
 
-    tgr = f0_harmonics(
-        tg, freqs=freqs, f0=bpm, harmonics=factors, kind=kind, fill_value=fill_value
-    )
+    tgr = f0_harmonics(tg, freqs=freqs, f0=bpm, harmonics=factors, kind=kind, fill_value=fill_value)
 
     if aggregate is not None:
         return aggregate(tgr, axis=-1)  # type: ignore
 
     return tgr
+
 
 def hybrid_tempogram(
     *,
@@ -771,6 +763,7 @@ def hybrid_tempogram(
         if y is None:
             raise ParameterValueError("Either y or onset_envelope must be provided")
         from ..onset import onset_strength
+
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
     # 1. Compute Fourier tempogram
@@ -785,9 +778,7 @@ def hybrid_tempogram(
     )
 
     # Get Fourier tempogram frequencies
-    freqs = fourier_tempo_frequencies(
-        sr=sr, hop_length=hop_length, win_length=win_length
-    )
+    freqs = fourier_tempo_frequencies(sr=sr, hop_length=hop_length, win_length=win_length)
 
     # 2. Compute Autocorrelation tempogram
     tg_a = tempogram(
@@ -810,9 +801,7 @@ def hybrid_tempogram(
     # 4. Hybrid Interpolation
     import scipy.interpolate
 
-    f_interp = scipy.interpolate.interp1d(
-        lags_finite, tg_a_finite, **interp_kwargs_dict
-    )
+    f_interp = scipy.interpolate.interp1d(lags_finite, tg_a_finite, **interp_kwargs_dict)
     tg_a_resampled = f_interp(freqs)
 
     # 5. Shape Matching - align time frames
@@ -823,6 +812,7 @@ def hybrid_tempogram(
     hybrid = np.sqrt(np.maximum(0, product))
 
     return np.asarray(hybrid)
+
 
 @cache(level=40)
 def metrogram(
@@ -921,9 +911,7 @@ def metrogram(
     if factors is None:
         factors = np.array([1 / 3, 1 / 4, 1 / 5, 1 / 7])
 
-    tg_interp = interp_harmonics(
-        tg, freqs=freqs, harmonics=factors, kind=kind, fill_value=fill_value, axis=-2
-    )
+    tg_interp = interp_harmonics(tg, freqs=freqs, harmonics=factors, kind=kind, fill_value=fill_value, axis=-2)
 
     product: np.ndarray = tg_interp * np.expand_dims(tg, axis=-3)
 

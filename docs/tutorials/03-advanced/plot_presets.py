@@ -15,6 +15,7 @@ default parameters for librosa.
 # We'll need matplotlib for this example
 import matplotlib.pyplot as plt
 from IPython.display import HTML  # for rendering example metadata
+
 # Import the Preset class
 from presets import Preset
 
@@ -69,15 +70,12 @@ M_highres = librosa.feature.melspectrogram(y=y, hop_length=512)
 # And plot the results
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 
-librosa.display.specshow(M, vscale="dBFS[power]",
-                         y_axis="mel", x_axis="time", ax=ax[0])
+librosa.display.specshow(M, vscale="dBFS[power]", y_axis="mel", x_axis="time", ax=ax[0])
 
 ax[0].set(title="44100/1024/4096")
 ax[0].label_outer()
 
-librosa.display.specshow(M_highres, vscale="dBFS[power]",
-                         hop_length=512,
-                         y_axis="mel", x_axis="time", ax=ax[1])
+librosa.display.specshow(M_highres, vscale="dBFS[power]", hop_length=512, y_axis="mel", x_axis="time", ax=ax[1])
 ax[1].set(title="44100/512/4096")
 ax[1].label_outer()
 
@@ -88,7 +86,6 @@ librosa["sr"] = 11025
 y2, sr2 = librosa.load(filename, duration=5, offset=35)
 M2 = librosa.feature.melspectrogram(y=y2, sr=sr2)
 
-librosa.display.specshow(M2, vscale="dBFS[power]",
-                         y_axis="mel", x_axis="time", ax=ax[2])
+librosa.display.specshow(M2, vscale="dBFS[power]", y_axis="mel", x_axis="time", ax=ax[2])
 
 ax[2].set(title="11025/1024/4096")

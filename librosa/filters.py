@@ -4,6 +4,7 @@
 librosa.filters provides functionality for filter bank construction, window
 function processing, and related utilities.
 """
+
 from __future__ import annotations
 
 import warnings
@@ -349,9 +350,7 @@ def chroma(
     # Get the FFT bins, not counting the DC component
     frequencies = np.linspace(0, sr, n_fft, endpoint=False)[1:]
 
-    frqbins = n_chroma * hz_to_octs(
-        frequencies, tuning=tuning, bins_per_octave=n_chroma
-    )
+    frqbins = n_chroma * hz_to_octs(frequencies, tuning=tuning, bins_per_octave=n_chroma)
 
     # make up a value for the 0 Hz bin = 1.5 octaves below bin 1
     # (so chroma is 50% rotated from bin 1, and bin width is broad)
@@ -544,11 +543,9 @@ def frequency_filterbank(
         else:
             diff = np.abs(u_in - u_out[:, np.newaxis])
             weights = np.maximum(0.0, 1.0 - diff / h[:, np.newaxis]).astype(dtype)
-    elif window is None or (
-        isinstance(window, str) and window in ("boxcar", "ones", "rect", "rectangular")
-    ):
+    elif window is None or (isinstance(window, str) and window in ("boxcar", "ones", "rect", "rectangular")):
         in_band = (u_in >= left_midpoints[:, np.newaxis]) & (u_in < right_midpoints[:, np.newaxis])
-        in_band[-1] |= (u_in == right_midpoints[-1])
+        in_band[-1] |= u_in == right_midpoints[-1]
         weights = in_band.astype(dtype)
     elif window in ("hann", "hanning"):
         l_edge = left_overlapping[:, np.newaxis]
@@ -571,7 +568,7 @@ def frequency_filterbank(
     elif window == "gaussian":
         sigma = (right_overlapping - left_overlapping) / (2.0 * np.sqrt(2.0 * np.log(2.0)))
         diff = (u_in - u_out[:, np.newaxis]) / sigma[:, np.newaxis]
-        weights = np.exp(-0.5 * (diff ** 2)).astype(dtype)
+        weights = np.exp(-0.5 * (diff**2)).astype(dtype)
     elif callable(window):
         l_edge = left_overlapping[:, np.newaxis]
         r_edge = right_overlapping[:, np.newaxis]
@@ -586,16 +583,12 @@ def frequency_filterbank(
 
     if norm == "slaney":
         if scale == "log":
-            width_hz = 2.0 ** right_overlapping - 2.0 ** left_overlapping
+            width_hz = 2.0**right_overlapping - 2.0**left_overlapping
         else:
             width_hz = right_overlapping - left_overlapping
         scale_factor = (
             1.0
-            if window is None
-            or (
-                isinstance(window, str)
-                and window in ("boxcar", "ones", "rect", "rectangular")
-            )
+            if window is None or (isinstance(window, str) and window in ("boxcar", "ones", "rect", "rectangular"))
             else 2.0
         )
         enorm = scale_factor / width_hz
@@ -1099,10 +1092,7 @@ def pitch_basis(
                 W_pitch[closest, j] += w
                 continue
 
-            if window is None or (
-                isinstance(window, str)
-                and window in ("boxcar", "ones", "rect", "rectangular")
-            ):
+            if window is None or (isinstance(window, str) and window in ("boxcar", "ones", "rect", "rectangular")):
                 W_pitch[in_band, j] += w
             elif window in ("triangle", "triang"):
                 W_pitch[in_band, j] += w * (1.0 - d[in_band] / bw)
@@ -1122,9 +1112,7 @@ def pitch_basis(
         if W_res.ndim == 1:
             W_res = W_res[:, np.newaxis]
         if W_res.shape[0] != K:
-            raise ParameterShapeError(
-                f"residual shape {W_res.shape} must have {K} rows to match freq_in"
-            )
+            raise ParameterShapeError(f"residual shape {W_res.shape} must have {K} rows to match freq_in")
     else:
         W_res = _dct_residual_basis(K, n_residual=n_residual, norm=norm, dtype=dtype)
 
@@ -1154,6 +1142,7 @@ def __float_window(window_spec):
 
     For integer-valued ``x``, there should be no change in behavior.
     """
+
     def _wrap(n, **kwargs):
         """Wrap the window"""
         n_min, n_max = int(np.floor(n)), int(np.ceil(n))
@@ -1275,9 +1264,7 @@ def wavelet_lengths(
         raise ParameterValueError("frequencies must be strictly positive")
 
     if len(freqs) > 1 and np.any(freqs[:-1] > freqs[1:]):
-        raise ParameterValueError(
-            f"Frequency array={freqs} must be in strictly ascending order"
-        )
+        raise ParameterValueError(f"Frequency array={freqs} must be in strictly ascending order")
 
     if alpha is None:
         alpha = _relative_bandwidth(freqs=freqs)
@@ -1457,9 +1444,7 @@ def wavelet(
     filters = []
     for ilen, freq in zip(lengths, freqs, strict=True):
         # Build the filter: note, length will be ceil(ilen)
-        sig = util.phasor(
-            np.arange(-ilen // 2, ilen // 2, dtype=float) * 2 * np.pi * freq / sr
-        )
+        sig = util.phasor(np.arange(-ilen // 2, ilen // 2, dtype=float) * 2 * np.pi * freq / sr)
 
         # Apply the windowing function
         sig *= __float_window(window)(len(sig))
@@ -1476,9 +1461,7 @@ def wavelet(
     else:
         max_len = int(np.ceil(max_len))
 
-    filters = np.asarray(
-        [util.pad_center(filt, size=max_len, **kwargs) for filt in filters], dtype=dtype
-    )
+    filters = np.asarray([util.pad_center(filt, size=max_len, **kwargs) for filt in filters], dtype=dtype)
 
     return filters, lengths
 
@@ -1562,11 +1545,7 @@ def pitch_to_chroma(
         fmin_ = util._ensure_hz(fmin)
 
     if np.mod(n_merge, 1) != 0:
-        raise ParameterValueError(
-            "Incompatible CQ merge: "
-            "input bins must be an "
-            "integer multiple of output bins."
-        )
+        raise ParameterValueError("Incompatible CQ merge: input bins must be an integer multiple of output bins.")
 
     # Tile the identity to merge fractional bins
     cq_to_ch = np.repeat(np.eye(n_chroma), int(n_merge), axis=1)
@@ -1726,9 +1705,7 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
 
     if key not in WINDOW_BANDWIDTHS:
         win = get_window(window, n)
-        WINDOW_BANDWIDTHS[key] = (
-            n * np.sum(win**2) / (np.sum(win) ** 2 + util.tiny(win))
-        )
+        WINDOW_BANDWIDTHS[key] = n * np.sum(win**2) / (np.sum(win) ** 2 + util.tiny(win))
 
     return WINDOW_BANDWIDTHS[key]
 
@@ -1787,6 +1764,7 @@ def get_window(window: _WindowSpec, Nx: int, *, fftbins: bool = True) -> np.ndar
         # TODO: if we add custom window functions in librosa, call them here
 
         import scipy.signal
+
         win: np.ndarray = scipy.signal.get_window(window, Nx, fftbins=fftbins)  # type: ignore
         return win
 
@@ -1884,18 +1862,14 @@ def _multirate_fb(
         raise ParameterValueError("sample_rates must be provided.")
 
     if center_freqs.shape != sample_rates.shape:
-        raise ParameterShapeError(
-            "Number of provided center_freqs and sample_rates must be equal."
-        )
+        raise ParameterShapeError("Number of provided center_freqs and sample_rates must be equal.")
 
     nyquist = 0.5 * sample_rates
     filter_bandwidths = center_freqs / float(Q)
 
     filterbank = []
 
-    for cur_center_freq, cur_nyquist, cur_bw in zip(
-        center_freqs, nyquist, filter_bandwidths, strict=True
-    ):
+    for cur_center_freq, cur_nyquist, cur_bw in zip(center_freqs, nyquist, filter_bandwidths, strict=True):
         passband_freqs = [
             cur_center_freq - 0.5 * cur_bw,
             cur_center_freq + 0.5 * cur_bw,
@@ -1906,6 +1880,7 @@ def _multirate_fb(
         ] / cur_nyquist
 
         import scipy.signal
+
         cur_filter = scipy.signal.iirdesign(
             passband_freqs,
             stopband_freqs,
@@ -2217,9 +2192,8 @@ def diagonal_filter(
 
     if not np.isclose(angle, np.pi / 4):
         import scipy.ndimage
-        win = scipy.ndimage.rotate(
-            win, 45 - angle * 180 / np.pi, order=5, prefilter=False
-        )
+
+        win = scipy.ndimage.rotate(win, 45 - angle * 180 / np.pi, order=5, prefilter=False)
 
     np.clip(win, 0, None, out=win)
     win /= win.sum()
@@ -2332,9 +2306,7 @@ def checkerboard_kernel(
     s = np.sign(coord)
 
     w: np.ndarray
-    if window is None or (
-        isinstance(window, str) and window in ("boxcar", "ones", "rect", "rectangular")
-    ):
+    if window is None or (isinstance(window, str) and window in ("boxcar", "ones", "rect", "rectangular")):
         w = np.ones(n, dtype=dtype)
     elif isinstance(window, str) and window == "gaussian":
         if var <= 0:

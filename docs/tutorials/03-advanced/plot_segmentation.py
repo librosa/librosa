@@ -48,15 +48,12 @@ HTML(librosa.util.example_info("fishin", html=True))
 # Next, we'll compute and plot a log-power CQT
 BINS_PER_OCTAVE = 12 * 3
 N_OCTAVES = 7
-C = librosa.amplitude_to_db(np.abs(librosa.cqt(y=y, sr=sr,
-                                        bins_per_octave=BINS_PER_OCTAVE,
-                                        n_bins=N_OCTAVES * BINS_PER_OCTAVE)),
-                            ref=np.max)
+C = librosa.amplitude_to_db(
+    np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=BINS_PER_OCTAVE, n_bins=N_OCTAVES * BINS_PER_OCTAVE)), ref=np.max
+)
 
 fig, ax = plt.subplots()
-librosa.display.specshow(C, y_axis="cqt_hz", sr=sr,
-                         bins_per_octave=BINS_PER_OCTAVE,
-                         x_axis="time", ax=ax)
+librosa.display.specshow(C, y_axis="cqt_hz", sr=sr, bins_per_octave=BINS_PER_OCTAVE, x_axis="time", ax=ax)
 
 
 ##########################################################
@@ -66,14 +63,12 @@ Csync = librosa.util.sync(C, beats, aggregate=np.median)
 
 # For plotting purposes, we'll need the timing of the beats
 # we fix_frames to include non-beat frames 0 and C.shape[1] (final frame)
-beat_times = librosa.frames_to_time(librosa.util.fix_frames(beats,
-                                                            x_min=0),
-                                    sr=sr)
+beat_times = librosa.frames_to_time(librosa.util.fix_frames(beats, x_min=0), sr=sr)
 
 fig, ax = plt.subplots()
-librosa.display.specshow(Csync, bins_per_octave=BINS_PER_OCTAVE, sr=sr,
-                         y_axis="cqt_hz", x_axis="time",
-                         x_coords=beat_times, ax=ax)
+librosa.display.specshow(
+    Csync, bins_per_octave=BINS_PER_OCTAVE, sr=sr, y_axis="cqt_hz", x_axis="time", x_coords=beat_times, ax=ax
+)
 
 
 #####################################################################
@@ -85,8 +80,7 @@ librosa.display.specshow(Csync, bins_per_octave=BINS_PER_OCTAVE, sr=sr,
 # We'll also use some time-delay embedding to reduce false links.
 
 Csync_stack = librosa.feature.stack_memory(Csync, n_steps=3, delay=1)
-R = librosa.segment.recurrence_matrix(Csync_stack, width=3, mode="affinity",
-                                      sym=True)
+R = librosa.segment.recurrence_matrix(Csync_stack, width=3, mode="affinity", sym=True)
 
 # Enhance diagonals with a median filter (Equation 2)
 df = librosa.segment.timelag_filter(scipy.ndimage.median_filter)
@@ -103,7 +97,7 @@ Rf = df(R, size=(1, 7))
 mfcc = librosa.feature.mfcc(y=y, sr=sr)
 Msync = librosa.util.sync(mfcc, beats)
 
-path_distance = np.sum(librosa.feature.delta(Msync, axis=1)**2, axis=0)[1:]
+path_distance = np.sum(librosa.feature.delta(Msync, axis=1) ** 2, axis=0)[1:]
 sigma = np.median(path_distance)
 path_sim = np.exp(-path_distance / sigma)
 
@@ -116,7 +110,7 @@ R_path = np.diag(path_sim, k=1) + np.diag(path_sim, k=-1)
 deg_path = np.sum(R_path, axis=1)
 deg_rec = np.sum(Rf, axis=1)
 
-mu = deg_path.dot(deg_path + deg_rec) / np.sum((deg_path + deg_rec)**2)
+mu = deg_path.dot(deg_path + deg_rec) / np.sum((deg_path + deg_rec) ** 2)
 
 A = mu * Rf + (1 - mu) * R_path
 
@@ -124,12 +118,19 @@ A = mu * Rf + (1 - mu) * R_path
 ###########################################################
 # Plot the resulting graphs (Figure 1, left and center)
 fig, ax = plt.subplots(ncols=3, sharex=True, sharey=True, figsize=(10, 4))
-librosa.display.multiplot("specshow", Rf, R_path, A,
-                          titles=["Recurrence similarity", "Path similarity", "Combined graph"],
-                          cmap="gray_r",
-                          y_axis="time", x_axis="s",
-                          y_coords=beat_times, x_coords=beat_times,
-                          axes=ax)
+librosa.display.multiplot(
+    "specshow",
+    Rf,
+    R_path,
+    A,
+    titles=["Recurrence similarity", "Path similarity", "Combined graph"],
+    cmap="gray_r",
+    y_axis="time",
+    x_axis="s",
+    y_coords=beat_times,
+    x_coords=beat_times,
+    axes=ax,
+)
 
 #####################################################
 # Now let's compute the normalized Laplacian (Eq. 10)
@@ -150,14 +151,14 @@ evecs = scipy.ndimage.median_filter(evecs, size=(9, 1))
 
 
 # cumulative normalization is needed for symmetric normalize laplacian eigenvectors
-Cnorm = np.cumsum(evecs**2, axis=1)**0.5
+Cnorm = np.cumsum(evecs**2, axis=1) ** 0.5
 
 # If we want k clusters, use the first k normalized eigenvectors.
 # Fun exercise: see how the segmentation changes as you vary k
 
 k = 5
 
-X = evecs[:, :k] / Cnorm[:, k-1:k]
+X = evecs[:, :k] / Cnorm[:, k - 1 : k]
 
 ##################################################################################
 # We can now plot the resulting representation along with the recurrence matrix to
@@ -167,17 +168,16 @@ X = evecs[:, :k] / Cnorm[:, k-1:k]
 # the number of beats.  The collection of structural components can be used as
 # features to describe each beat, which can then be clustered to identify segments.
 
-fig, ax = plt.subplots(nrows=2, sharex=True, figsize=(6, 8),
-                       layout="compressed",
-                       gridspec_kw={"height_ratios": [1, 4]})
-librosa.display.specshow(Rf, cmap="gray_r", y_axis="time", x_axis="time",
-                         y_coords=beat_times, x_coords=beat_times, ax=ax[1])
+fig, ax = plt.subplots(
+    nrows=2, sharex=True, figsize=(6, 8), layout="compressed", gridspec_kw={"height_ratios": [1, 4]}
+)
+librosa.display.specshow(
+    Rf, cmap="gray_r", y_axis="time", x_axis="time", y_coords=beat_times, x_coords=beat_times, ax=ax[1]
+)
 ax[1].set(ylabel="Recurrence similarity")
 
-librosa.display.specshow(X.T,
-                         x_axis="time",
-                         x_coords=beat_times, ax=ax[0])
-ax[0].set(yticks=np.arange(k), yticklabels=[f"Component {i+1}" for i in range(k)])
+librosa.display.specshow(X.T, x_axis="time", x_coords=beat_times, ax=ax[0])
+ax[0].set(yticks=np.arange(k), yticklabels=[f"Component {i + 1}" for i in range(k)])
 ax[0].set(title="Structure components")
 ax[0].label_outer()
 
@@ -205,9 +205,7 @@ bound_segs = list(seg_ids[bound_beats])
 bound_frames = beats[bound_beats]
 
 # Make sure we cover to the end of the track
-bound_frames = librosa.util.fix_frames(bound_frames,
-                                       x_min=None,
-                                       x_max=C.shape[1]-1)
+bound_frames = librosa.util.fix_frames(bound_frames, x_min=None, x_max=C.shape[1] - 1)
 
 ###################################################
 # And plot the final segmentation alongside the CQT and the structure components.
@@ -221,20 +219,16 @@ import itertools
 import mir_eval.display
 
 bound_times = librosa.frames_to_time(bound_frames)
-freqs = librosa.cqt_frequencies(n_bins=C.shape[0],
-                                fmin="C1",
-                                bins_per_octave=BINS_PER_OCTAVE)
+freqs = librosa.cqt_frequencies(n_bins=C.shape[0], fmin="C1", bins_per_octave=BINS_PER_OCTAVE)
 
-fig, ax = plt.subplots(figsize=(8, 5), nrows=2, gridspec_kw={"height_ratios": [1, 4]},
-                       layout="compressed")
+fig, ax = plt.subplots(figsize=(8, 5), nrows=2, gridspec_kw={"height_ratios": [1, 4]}, layout="compressed")
 librosa.display.specshow(X.T, x_axis="time", x_coords=beat_times, ax=ax[0])
-ax[0].set(yticks=np.arange(k), yticklabels=[f"#{i+1}" for i in range(k)])
+ax[0].set(yticks=np.arange(k), yticklabels=[f"#{i + 1}" for i in range(k)])
 ax[0].set(title="Structure components")
 ax[0].label_outer()
-librosa.display.specshow(C, y_axis="cqt_hz", sr=sr,
-                         bins_per_octave=BINS_PER_OCTAVE,
-                         cmap="gray_r",
-                         x_axis="time", ax=ax[1])
+librosa.display.specshow(
+    C, y_axis="cqt_hz", sr=sr, bins_per_octave=BINS_PER_OCTAVE, cmap="gray_r", x_axis="time", ax=ax[1]
+)
 
 # Convert boundary times to a set of intervals
 intervals = np.asarray(list(itertools.pairwise(bound_times)))
@@ -253,4 +247,3 @@ fig.legend(loc="outside lower center", title="Segment ID", ncols=k)
 # actually occur.
 # Still, the pattern of repetition and grouping of regions is clear and can be used to quickly
 # understand the structure of the song.
-

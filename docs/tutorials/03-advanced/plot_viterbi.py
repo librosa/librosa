@@ -32,8 +32,7 @@ S_full, phase = librosa.magphase(librosa.stft(y))
 # %%
 # Plot the spectrum
 fig, ax = plt.subplots()
-img = librosa.display.specshow(S_full, vscale="dBFS",
-                               y_axis="log", x_axis="time", sr=sr, ax=ax)
+img = librosa.display.specshow(S_full, vscale="dBFS", y_axis="log", x_axis="time", sr=sr, ax=ax)
 librosa.display.colorbar_db(img)
 
 # %%
@@ -86,10 +85,9 @@ ax.legend()
 # independently of its neighbors, which would result in the following plot:
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
-librosa.display.specshow(S_full, vscale="dBFS",
-                         y_axis="log", x_axis="time", sr=sr, ax=ax[0])
+librosa.display.specshow(S_full, vscale="dBFS", y_axis="log", x_axis="time", sr=sr, ax=ax[0])
 ax[0].label_outer()
-ax[1].step(times, p>=0.5, label="Non-silent")
+ax[1].step(times, p >= 0.5, label="Non-silent")
 ax[1].set(ylim=[0, 1.05])
 ax[1].legend()
 
@@ -122,10 +120,9 @@ states = librosa.sequence.viterbi_discriminative(full_p, transition)
 
 # sphinx_gallery_thumbnail_number = 5
 fig, ax = plt.subplots(nrows=2, sharex=True)
-librosa.display.specshow(S_full, vscale="dBFS",
-                         y_axis="log", x_axis="time", sr=sr, ax=ax[0])
+librosa.display.specshow(S_full, vscale="dBFS", y_axis="log", x_axis="time", sr=sr, ax=ax[0])
 ax[0].label_outer()
-ax[1].step(times, p>=0.5, label="Frame-wise")
+ax[1].step(times, p >= 0.5, label="Frame-wise")
 ax[1].step(times, states, linestyle="--", color="orange", label="Viterbi")
 ax[1].set(ylim=[0, 1.05])
 ax[1].legend()

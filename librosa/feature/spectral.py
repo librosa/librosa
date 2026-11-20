@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Spectral feature extraction"""
+
 from __future__ import annotations
 
 import itertools
@@ -175,13 +176,9 @@ def spectral_centroid(
     )
 
     if not np.isrealobj(S):
-        raise ParameterTypeError(
-            "Spectral centroid is only defined " "with real-valued input"
-        )
+        raise ParameterTypeError("Spectral centroid is only defined with real-valued input")
     elif np.any(S < 0):
-        raise ParameterValueError(
-            "Spectral centroid is only defined " "with non-negative energies"
-        )
+        raise ParameterValueError("Spectral centroid is only defined with non-negative energies")
 
     # Compute the center frequencies of each bin
     if freq is None:
@@ -192,9 +189,7 @@ def spectral_centroid(
         freq = util.expand_to(freq, ndim=S.ndim, axes=-2)
 
     # Column-normalize S
-    centroid: np.ndarray = np.sum(
-        freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True
-    )
+    centroid: np.ndarray = np.sum(freq * util.normalize(S, norm=1, axis=-2), axis=-2, keepdims=True)
     return centroid
 
 
@@ -326,29 +321,21 @@ def spectral_bandwidth(
     )
 
     if not np.isrealobj(S):
-        raise ParameterTypeError(
-            "Spectral bandwidth is only defined " "with real-valued input"
-        )
+        raise ParameterTypeError("Spectral bandwidth is only defined with real-valued input")
     elif np.any(S < 0):
-        raise ParameterValueError(
-            "Spectral bandwidth is only defined " "with non-negative energies"
-        )
+        raise ParameterValueError("Spectral bandwidth is only defined with non-negative energies")
 
     # If we don't have a centroid provided, compute it using the existing
     # spectrogram S
     if centroid is None:
-        centroid = spectral_centroid(
-            y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length, freq=freq
-        )
+        centroid = spectral_centroid(y=y, sr=sr, S=S, n_fft=n_fft, hop_length=hop_length, freq=freq)
 
     # Compute the center frequencies of each bin
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft, dtype=S.dtype)
 
     if freq.ndim == 1:
-        deviation = np.abs(
-            np.subtract.outer(centroid[..., 0, :], freq).swapaxes(-2, -1)
-        )
+        deviation = np.abs(np.subtract.outer(centroid[..., 0, :], freq).swapaxes(-2, -1))
     else:
         deviation = np.abs(freq - centroid)
 
@@ -523,9 +510,7 @@ def spectral_contrast(
     octa[1:] = fmin * (2.0 ** np.arange(0, n_bands + 1))
 
     if np.any(octa[:-1] >= 0.5 * sr):
-        raise ParameterValueError(
-            "Frequency band exceeds Nyquist. " "Reduce either fmin or n_bands."
-        )
+        raise ParameterValueError("Frequency band exceeds Nyquist. Reduce either fmin or n_bands.")
 
     # shape of valleys and peaks based on spectrogram
     shape = list(S.shape)
@@ -563,9 +548,7 @@ def spectral_contrast(
     if linear:
         contrast = peak - valley
     else:
-        contrast = power_to_db(peak, ref=ref, top_db=top_db) - power_to_db(
-            valley, ref=ref, top_db=top_db
-        )
+        contrast = power_to_db(peak, ref=ref, top_db=top_db) - power_to_db(valley, ref=ref, top_db=top_db)
     return contrast
 
 
@@ -691,13 +674,9 @@ def spectral_rolloff(
     )
 
     if not np.isrealobj(S):
-        raise ParameterTypeError(
-            "Spectral rolloff is only defined " "with real-valued input"
-        )
+        raise ParameterTypeError("Spectral rolloff is only defined with real-valued input")
     elif np.any(S < 0):
-        raise ParameterValueError(
-            "Spectral rolloff is only defined " "with non-negative energies"
-        )
+        raise ParameterValueError("Spectral rolloff is only defined with non-negative energies")
 
     # Compute the center frequencies of each bin
     if freq is None:
@@ -831,13 +810,9 @@ def spectral_flatness(
     )
 
     if not np.isrealobj(S):
-        raise ParameterTypeError(
-            "Spectral flatness is only defined " "with real-valued input"
-        )
+        raise ParameterTypeError("Spectral flatness is only defined with real-valued input")
     elif np.any(S < 0):
-        raise ParameterValueError(
-            "Spectral flatness is only defined " "with non-negative energies"
-        )
+        raise ParameterValueError("Spectral flatness is only defined with non-negative energies")
 
     S_thresh = np.maximum(amin, S**power)
     gmean = np.exp(np.mean(np.log(S_thresh), axis=-2, keepdims=True))
@@ -937,9 +912,7 @@ def rms(
         # Check the frame length
         if S.shape[-2] != frame_length // 2 + 1:
             raise ParameterShapeError(
-                "Since S.shape[-2] is {}, "
-                "frame_length is expected to be {} or {}; "
-                "found {}".format(
+                "Since S.shape[-2] is {}, frame_length is expected to be {} or {}; found {}".format(
                     S.shape[-2], S.shape[-2] * 2 - 2, S.shape[-2] * 2 - 1, frame_length
                 )
             )
@@ -1086,21 +1059,15 @@ def poly_features(
 
     if freq.ndim == 1:
         # If frequencies are constant over frames, then we only need to fit once
-        fitter = np.vectorize(
-            lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)"
-        )
+        fitter = np.vectorize(lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)")
         coefficients = fitter(S)
     else:
         # Otherwise, we have variable frequencies, and need to fit independently
-        fitter = np.vectorize(
-            lambda x, y: np.polyfit(x, y, order), signature="(f),(f)->(d)"
-        )
+        fitter = np.vectorize(lambda x, y: np.polyfit(x, y, order), signature="(f),(f)->(d)")
 
         # We have to do some axis swapping to preserve layout
         # otherwise, the new dimension gets put at the end instead of the penultimate position
-        coefficients = fitter(freq.swapaxes(-2, -1), S.swapaxes(-2, -1)).swapaxes(
-            -2, -1
-        )
+        coefficients = fitter(freq.swapaxes(-2, -1), S.swapaxes(-2, -1)).swapaxes(-2, -1)
 
     # `np.polyfit` always computes (and returns) in float64 for numerical
     # stability; cast back to the spectrogram dtype so a float32 pipeline is
@@ -1332,9 +1299,7 @@ def chroma_stft(
         tuning = estimate_tuning(S=S, sr=sr, bins_per_octave=n_chroma)
 
     # Get the filter bank
-    chromafb = filters.chroma(
-        sr=sr, n_fft=n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs
-    )
+    chromafb = filters.chroma(sr=sr, n_fft=n_fft, tuning=tuning, n_chroma=n_chroma, **kwargs)
 
     # Compute raw chroma
     raw_chroma = np.einsum("cf,...ft->...ct", chromafb, S, optimize=True)
@@ -1431,8 +1396,7 @@ def chroma_cqt(
         bins_per_octave = n_chroma
     elif np.remainder(bins_per_octave, n_chroma) != 0:
         raise ParameterValueError(
-            f"bins_per_octave={bins_per_octave} must be an integer "
-            f"multiple of n_chroma={n_chroma}"
+            f"bins_per_octave={bins_per_octave} must be an integer multiple of n_chroma={n_chroma}"
         )
 
     fmin = util._ensure_hz(fmin)
@@ -1440,9 +1404,7 @@ def chroma_cqt(
     # Build the CQT if we don't have one already
     if C is None:
         if y is None:
-            raise ParameterValueError(
-                "At least one of C or y must be provided to compute chroma"
-            )
+            raise ParameterValueError("At least one of C or y must be provided to compute chroma")
         C = np.abs(
             cqt_func[cqt_mode](
                 y,
@@ -1572,13 +1534,8 @@ def chroma_cens(
     >>> ax[1].set(title='chroma_cens')
     >>> fig.colorbar(img, ax=ax)
     """
-    if not (
-        (win_len_smooth is None)
-        or (isinstance(win_len_smooth, (int, np.integer)) and win_len_smooth > 0)
-    ):
-        raise ParameterValueError(
-            f"win_len_smooth={win_len_smooth} must be a positive integer or None"
-        )
+    if not ((win_len_smooth is None) or (isinstance(win_len_smooth, (int, np.integer)) and win_len_smooth > 0)):
+        raise ParameterValueError(f"win_len_smooth={win_len_smooth} must be a positive integer or None")
 
     chroma = chroma_cqt(
         y=y,
@@ -1725,9 +1682,7 @@ def chroma_vqt(
     # Build the CQT if we don't have one already
     if V is None:
         if y is None:
-            raise ParameterValueError(
-                "At least one of y or V must be provided to compute chroma"
-            )
+            raise ParameterValueError("At least one of y or V must be provided to compute chroma")
         V = np.abs(
             vqt(
                 y=y,
@@ -1864,10 +1819,7 @@ def tonnetz(
     >>> fig.colorbar(img2, ax=[ax[1]])
     """
     if y is None and chroma is None:
-        raise ParameterValueError(
-            "Either the audio samples or the chromagram must be "
-            "passed as an argument."
-        )
+        raise ParameterValueError("Either the audio samples or the chromagram must be passed as an argument.")
 
     if chroma is None:
         chroma = chroma_cqt(y=y, sr=sr, **kwargs)
@@ -1887,9 +1839,7 @@ def tonnetz(
     phi = R[:, np.newaxis] * np.cos(np.pi * V)
 
     # Do the transform to tonnetz
-    ton: np.ndarray = np.einsum(
-        "pc,...ci->...pi", phi, util.normalize(chroma, norm=1, axis=-2), optimize=True
-    )
+    ton: np.ndarray = np.einsum("pc,...ci->...pi", phi, util.normalize(chroma, norm=1, axis=-2), optimize=True)
     return ton
 
 
@@ -2080,9 +2030,7 @@ def mfcc(
 
     import scipy.fft
 
-    M: np.ndarray = scipy.fft.dct(S, axis=-2, type=dct_type, norm=norm)[
-        ..., :n_mfcc, :
-    ]
+    M: np.ndarray = scipy.fft.dct(S, axis=-2, type=dct_type, norm=norm)[..., :n_mfcc, :]
 
     if lifter > 0:
         # shape lifter for broadcasting

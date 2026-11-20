@@ -78,9 +78,7 @@ fig, ax = plt.subplots(nrows=2)
 librosa.display.waveshow(y, sr=sr, ax=ax[0])
 ax[0].set(title="Time-domain")
 ax[1].plot(frequencies, np.abs(y_dft), color="C1")
-ax[1].set(title="Frequency domain",
-          xlabel="Frequency (Hz)",
-          ylabel="Magnitude")
+ax[1].set(title="Frequency domain", xlabel="Frequency (Hz)", ylabel="Magnitude")
 
 # %%
 # There are a few things to observe in the frequency domain plot:
@@ -110,9 +108,7 @@ frequencies_rfft = np.fft.rfftfreq(len(y), d=1 / sr)
 
 fig, ax = plt.subplots()
 ax.plot(frequencies_rfft, np.abs(y_rfft), color="C1")
-ax.set(title="Frequency domain (non-negative frequencies)",
-       xlabel="Frequency (Hz)",
-       ylabel="Magnitude")
+ax.set(title="Frequency domain (non-negative frequencies)", xlabel="Frequency (Hz)", ylabel="Magnitude")
 
 # %%
 # The result of `rfft` has approximately half the number of frequencies
@@ -212,8 +208,7 @@ print(frame_times)
 # its waveform for comparison.
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
-img = librosa.display.specshow(stft, vscale="dBFS",
-                               sr=sr, hop_length=512, x_axis="time", y_axis="hz", ax=ax[0])
+img = librosa.display.specshow(stft, vscale="dBFS", sr=sr, hop_length=512, x_axis="time", y_axis="hz", ax=ax[0])
 librosa.display.colorbar_db(img, label="dBFS")
 ax[0].set(title="Spectrogram")
 ax[0].label_outer()
@@ -230,6 +225,7 @@ ax[1].set(title="Time-domain")
 # follow along with the waveform and spectrogram plots above.
 
 from IPython.display import Audio
+
 Audio(url=librosa.example("trumpet", url=True))
 
 # %%

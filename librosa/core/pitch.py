@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Pitch-tracking and tuning estimation"""
+
 from __future__ import annotations
 
 import warnings
@@ -108,9 +109,7 @@ def estimate_tuning(
     )
 
 
-def pitch_tuning(
-    frequencies: ArrayLike, *, resolution: float = 0.01, bins_per_octave: int = 12
-) -> float:
+def pitch_tuning(frequencies: ArrayLike, *, resolution: float = 0.01, bins_per_octave: int = 12) -> float:
     """Given a collection of pitches, estimate its tuning offset relative to A440=440.0Hz.
 
     Parameters
@@ -155,9 +154,7 @@ def pitch_tuning(
     frequencies = frequencies[frequencies > 0]
 
     if not np.any(frequencies):
-        warnings.warn(
-            "Trying to estimate tuning from empty frequency set.", stacklevel=2
-        )
+        warnings.warn("Trying to estimate tuning from empty frequency set.", stacklevel=2)
         return 0.0
 
     # Compute the residual relative to the number of bins
@@ -436,10 +433,7 @@ def _cumulative_mean_normalized_difference(
     # Difference function: d(k) = 2 * (ACF(0) - ACF(k)) - sum_{m=0}^{k-1} y(m)^2
     k = slice(1, max_period + 1)
     yin_frames[..., 0, :] = 0
-    yin_frames[..., k, :] = (
-        2 * (acf_frames[..., 0:1, :] - acf_frames[..., k, :])
-        - yin_frames[..., : k.stop - 1, :]
-    )
+    yin_frames[..., k, :] = 2 * (acf_frames[..., 0:1, :] - acf_frames[..., k, :]) - yin_frames[..., : k.stop - 1, :]
 
     # Cumulative mean normalized difference function.
     yin_numerator = yin_frames[..., min_period : max_period + 1, :]
@@ -448,11 +442,8 @@ def _cumulative_mean_normalized_difference(
 
     cumulative_mean = np.cumsum(yin_frames[..., k, :], axis=-2) / k_range
     yin_denominator = cumulative_mean[..., min_period - 1 : max_period, :]
-    yin_frames = yin_numerator / (
-        yin_denominator + util.tiny(yin_denominator)
-    )
+    yin_frames = yin_numerator / (yin_denominator + util.tiny(yin_denominator))
     return np.asarray(yin_frames)
-
 
 
 def yin(
@@ -565,9 +556,7 @@ def yin(
     max_period = min(int(np.ceil(sr / fmin)), frame_length - 1)
 
     # Calculate cumulative mean normalized difference function.
-    yin_frames = _cumulative_mean_normalized_difference(
-        y_frames, min_period, max_period
-    )
+    yin_frames = _cumulative_mean_normalized_difference(y_frames, min_period, max_period)
 
     # Find local minima.
     is_trough = util.localmin(yin_frames, axis=-2)
@@ -608,11 +597,7 @@ def yin(
     shift = np.zeros_like(b)
     np.divide(-b, a, out=shift, where=valid)
 
-    yin_period = (
-        min_period
-        + yin_period
-        + shift
-    )[..., 0, :]
+    yin_period = (min_period + yin_period + shift)[..., 0, :]
 
     # Convert period to fundamental frequency.
     f0: np.ndarray = sr / yin_period
@@ -779,9 +764,7 @@ def pyin(
     max_period = min(int(np.ceil(sr / fmin)), frame_length - 1)
 
     # Calculate cumulative mean normalized difference function.
-    yin_frames = _cumulative_mean_normalized_difference(
-        y_frames, min_period, max_period
-    )
+    yin_frames = _cumulative_mean_normalized_difference(y_frames, min_period, max_period)
 
     # Find Yin candidates and probabilities.
     # The implementation here follows the official pYIN software which
@@ -817,9 +800,7 @@ def pyin(
     max_semitones_per_frame = round(max_transition_rate * 12 * hop_length / sr)
     transition_width = max_semitones_per_frame * n_bins_per_semitone + 1
     # Construct the within voicing transition probabilities
-    transition = sequence.transition_local(
-        n_pitch_bins, transition_width, window="triangle", wrap=False
-    )
+    transition = sequence.transition_local(n_pitch_bins, transition_width, window="triangle", wrap=False)
 
     # Include across voicing transition probabilities
     t_switch = sequence.transition_loop(2, 1 - switch_prob)
@@ -827,8 +808,7 @@ def pyin(
 
     p_init = np.ones(2 * n_pitch_bins) / (2 * n_pitch_bins)
 
-    states = sequence.viterbi(observation_probs, transition, p_init=p_init,
-                              transition_min_prob=transition_min_prob)
+    states = sequence.viterbi(observation_probs, transition, p_init=p_init, transition_min_prob=transition_min_prob)
 
     # Find f0 corresponding to each decoded pitch bin.
     freqs = fmin * 2 ** (np.arange(n_pitch_bins) / (12 * n_bins_per_semitone))
@@ -877,9 +857,7 @@ def __pyin_helper(
 
         import scipy.stats
 
-        trough_prior = scipy.stats.boltzmann.pmf(
-            trough_positions, boltzmann_parameter, n_troughs
-        )
+        trough_prior = scipy.stats.boltzmann.pmf(trough_positions, boltzmann_parameter, n_troughs)
 
         trough_prior[~trough_thresholds] = 0
 
@@ -890,9 +868,7 @@ def __pyin_helper(
 
         global_min = np.argmin(trough_heights)
         n_thresholds_below_min = np.count_nonzero(~trough_thresholds[global_min, :])
-        probs[global_min] += no_trough_prob * np.sum(
-            beta_probs[:n_thresholds_below_min]
-        )
+        probs[global_min] += no_trough_prob * np.sum(beta_probs[:n_thresholds_below_min])
 
         yin_probs[trough_index, i] = probs
 
@@ -925,9 +901,7 @@ def __pyin_helper(
     observation_probs = np.zeros((2 * n_pitch_bins, yin_frames.shape[1]))
     observation_probs[bin_index, frame_index] = yin_probs[yin_period, frame_index]
 
-    voiced_prob = np.clip(
-        np.sum(observation_probs[:n_pitch_bins, :], axis=0, keepdims=True), 0, 1
-    )
+    voiced_prob = np.clip(np.sum(observation_probs[:n_pitch_bins, :], axis=0, keepdims=True), 0, 1)
     observation_probs[n_pitch_bins:, :] = (1 - voiced_prob) / n_pitch_bins
 
     return observation_probs[np.newaxis], voiced_prob
@@ -944,7 +918,7 @@ def __check_yin_params(*, sr: float, fmax: float, fmin: float, frame_length: int
     3. sr / fmin < frame_length / 2: Ideally, at least two periods of fmin should fit into the frame.
     """
     if fmax > sr / 2:
-        raise ParameterValueError(f"fmax={fmax:.3f} cannot exceed Nyquist frequency {sr/2}")
+        raise ParameterValueError(f"fmax={fmax:.3f} cannot exceed Nyquist frequency {sr / 2}")
     if fmin >= fmax:
         raise ParameterValueError(f"fmin={fmin:.3f} must be less than fmax={fmax:.3f}")
     if fmin <= 0:

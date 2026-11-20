@@ -4,9 +4,7 @@ import json
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Generate versions.json for PyData Sphinx Theme switcher."
-    )
+    parser = argparse.ArgumentParser(description="Generate versions.json for PyData Sphinx Theme switcher.")
     parser.add_argument(
         "--output",
         default="build/html/versions.json",

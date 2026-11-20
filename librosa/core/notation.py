@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Music notation utilities"""
+
 from __future__ import annotations
 
 import re
@@ -139,8 +140,8 @@ MELAKARTA_MAP = {
 # Pre-compiled regular expressions for note and key parsing
 KEY_RE = re.compile(
     r"^(?P<tonic>[A-Ga-g])"
-        r"(?P<accidental>[#♯𝄪b!♭𝄫♮n]*)"
-        r":((?P<scale>(maj|min)(or)?)|(?P<mode>(((ion|dor|phryg|lyd|mixolyd|aeol|locr)(ian)?)|phr|mix|aeo|loc)))$"
+    r"(?P<accidental>[#♯𝄪b!♭𝄫♮n]*)"
+    r":((?P<scale>(maj|min)(or)?)|(?P<mode>(((ion|dor|phryg|lyd|mixolyd|aeol|locr)(ian)?)|phr|mix|aeo|loc)))$"
 )
 
 NOTE_RE = re.compile(
@@ -158,12 +159,12 @@ MAJOR_DICT = {
     "lyd": {"C": "G", "D": "A", "E": "B", "F": "C", "G": "D", "A": "E", "B": "F♯"},
     "mix": {"C": "F", "D": "G", "E": "A", "F": "B♭", "G": "C", "A": "D", "B": "E"},
     "aeo": {"C": "E♭", "D": "F", "E": "G", "F": "A♭", "G": "B♭", "A": "C", "B": "D"},
-    "loc": {"C": "D♭", "D": "E♭", "E": "F", "F": "G♭", "G": "A♭", "A": "B♭", "B": "C"}
+    "loc": {"C": "D♭", "D": "E♭", "E": "F", "F": "G♭", "G": "A♭", "A": "B♭", "B": "C"},
 }
 
-OFFSET_DICT = { "ion": 0, "dor": 1, "phr": 2, "lyd": 3, "mix": 4, "aeo": 5, "loc": 6 }
+OFFSET_DICT = {"ion": 0, "dor": 1, "phr": 2, "lyd": 3, "mix": 4, "aeo": 5, "loc": 6}
 
-ACC_MAP = {"#": 1, "♮": 0, "": 0, "n": 0,  "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
+ACC_MAP = {"#": 1, "♮": 0, "": 0, "n": 0, "b": -1, "!": -1, "♯": 1, "♭": -1, "𝄪": 2, "𝄫": -2}
 
 
 def thaat_to_degrees(thaat: str) -> _Array1D[np.int_]:
@@ -299,9 +300,7 @@ def mela_to_degrees(mela: str | int) -> _Array1D[np.int_]:
 
 
 @cache(level=10)
-def mela_to_svara(
-    mela: str | int, *, abbr: bool = True, unicode: bool = True
-) -> list[str]:
+def mela_to_svara(mela: str | int, *, abbr: bool = True, unicode: bool = True) -> list[str]:
     """Spell the Carnatic svara names for a given melakarta raga
 
     This function exists to resolve enharmonic equivalences between
@@ -509,6 +508,7 @@ def list_thaat() -> list[str]:
     """
     return list(THAAT_MAP.keys())
 
+
 @overload
 def __note_to_degree(key: str) -> int: ...
 @overload
@@ -531,7 +531,6 @@ def __note_to_degree(key: str | _IterableLike[str] | Iterable[str]) -> int | _Ar
     if not isinstance(key, str):
         return np.array([__note_to_degree(n) for n in key])
 
-
     match = NOTE_RE.match(key)
 
     if not match:
@@ -541,10 +540,11 @@ def __note_to_degree(key: str | _IterableLike[str] | Iterable[str]) -> int | _Ar
     accidental = match.group("accidental")
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
     counter = Counter(accidental)
-    return (pitch_map[letter]+sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP]))%12
+    return (pitch_map[letter] + sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP])) % 12
+
 
 @overload
-def __simplify_note(key: str, additional_acc: str =..., unicode: bool =  ...) -> str: ...
+def __simplify_note(key: str, additional_acc: str = ..., unicode: bool = ...) -> str: ...
 @overload
 def __simplify_note(
     key: _IterableLike[str], additional_acc: str = ..., unicode: bool = ...
@@ -568,10 +568,10 @@ def __simplify_note(
     array(['C', 'C♭𝄫'], dtype='<U3')
 
     """
-    if not isinstance(key,str):
-        return np.array([__simplify_note(n+additional_acc, unicode=unicode) for n in key])
+    if not isinstance(key, str):
+        return np.array([__simplify_note(n + additional_acc, unicode=unicode) for n in key])
 
-    match = NOTE_RE.match(key+additional_acc)
+    match = NOTE_RE.match(key + additional_acc)
 
     if not match:
         raise ParameterValueError(f"Improper key format: {key:s}")
@@ -582,16 +582,17 @@ def __simplify_note(
     offset = sum([ACC_MAP[acc] * counter[acc] for acc in ACC_MAP])
 
     simplified_note = letter
-    if offset>=0:
-        simplified_note += "♯"*(offset%2)+ "𝄪"*(offset//2)
+    if offset >= 0:
+        simplified_note += "♯" * (offset % 2) + "𝄪" * (offset // 2)
     else:
-        simplified_note += "♭"*(offset%2)+ "𝄫"*(abs(offset)//2)
+        simplified_note += "♭" * (offset % 2) + "𝄫" * (abs(offset) // 2)
 
     if not unicode:
         translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb", "♮": "n"})
         simplified_note = simplified_note.translate(translations)
 
     return simplified_note
+
 
 def __mode_to_key(signature: str, unicode: bool = True) -> str:
     """Translate a mode (eg D:dorian) into its equivalent major key.
@@ -614,9 +615,9 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     if match.group("scale") or not match.group("mode"):
         # We're already fine here, but let's pass the key through __simpify_note()
         # to ensure good formatting.
-        signature = (__simplify_note(match.group("tonic").upper()+match.group("accidental"),
-                                     unicode=unicode) + (":"+match.group("scale") if
-                                                         match.group("scale") else ""))
+        signature = __simplify_note(match.group("tonic").upper() + match.group("accidental"), unicode=unicode) + (
+            ":" + match.group("scale") if match.group("scale") else ""
+        )
         return signature
 
     # We have a mode, time to translate
@@ -625,11 +626,11 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     # Get the relative major
     tonic = MAJOR_DICT[mode][match.group("tonic").upper()]
 
-    return __simplify_note(tonic+match.group("accidental"), unicode = unicode)+":maj"
+    return __simplify_note(tonic + match.group("accidental"), unicode=unicode) + ":maj"
 
 
 @cache(level=10)
-def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> list[str]:
+def key_to_notes(key: str, *, unicode: bool = True, natural: bool = False) -> list[str]:
     """List all 12 chromatic note names, as spelled according to a given key or mode.
 
     This function exists to resolve enharmonic equivalences between different
@@ -752,11 +753,11 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> lis
 
     if match.group("mode") or not match.group("scale"):
         equiv = __mode_to_key(key)
-        return key_to_notes(equiv, unicode=unicode, natural = natural)
+        return key_to_notes(equiv, unicode=unicode, natural=natural)
 
     scale = match.group("scale")[:3].lower()
 
-    multiple = abs(offset)>=2
+    multiple = abs(offset) >= 2
 
     # If multiple accidentals, we use recursion, then cycle through so that the
     # enharmonic equivalent of C is at the beginning again.
@@ -764,7 +765,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> lis
     if multiple:
         sign_map = {+1: "♯", -1: "♭"}
         additional_acc = sign_map[np.sign(offset)]
-        intermediate_notes = key_to_notes(tonic+additional_acc*(abs(offset)-1)+":"+scale, natural = False)
+        intermediate_notes = key_to_notes(tonic + additional_acc * (abs(offset) - 1) + ":" + scale, natural=False)
         notes = [__simplify_note(note, additional_acc) for note in intermediate_notes]
         degrees = __note_to_degree(notes)
         notes = np.roll(notes, shift=-np.argwhere(degrees == 0)[0])
@@ -776,7 +777,6 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> lis
             notes = list(n.translate(translations) for n in notes)
 
         return notes
-
 
     # Determine major or minor
     major = scale == "maj"
@@ -861,8 +861,8 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> lis
         for place, note in enumerate(notes):
             if __note_to_degree(note) in scale_notes:
                 continue
-            if len(note)==1:
-                notes[place] = note+"♮"
+            if len(note) == 1:
+                notes[place] = note + "♮"
 
     # Finally, apply any unicode down-translation if necessary
     if not unicode:
@@ -871,7 +871,9 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> lis
 
     return notes
 
+
 # I made this work even for key signatures like 'C#b#:min'
+
 
 def key_to_degrees(key: str) -> np.ndarray:
     """Construct the diatonic scale degrees for a given key.
@@ -917,9 +919,7 @@ def key_to_degrees(key: str) -> np.ndarray:
     >>> librosa.key_to_degrees('A:min')
     array([ 9, 11,  0,  2,  4,  5,  7])
     """
-    notes = dict(
-        maj=np.array([0, 2, 4, 5, 7, 9, 11]), min=np.array([0, 2, 3, 5, 7, 8, 10])
-    )
+    notes = dict(maj=np.array([0, 2, 4, 5, 7, 9, 11]), min=np.array([0, 2, 3, 5, 7, 8, 10]))
 
     match = KEY_RE.match(key)
 
@@ -929,13 +929,13 @@ def key_to_degrees(key: str) -> np.ndarray:
     if match.group("mode") or not match.group("scale"):
         equiv = __mode_to_key(key)
         offset = OFFSET_DICT[match.group("mode")[:3]]
-        return np.roll(key_to_degrees(equiv),-offset)
+        return np.roll(key_to_degrees(equiv), -offset)
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
     tonic = match.group("tonic").upper()
     accidental = match.group("accidental")
     counts = Counter(accidental)
-    offset = sum([ACC_MAP[acc]*counts[acc] for acc in ACC_MAP])
+    offset = sum([ACC_MAP[acc] * counts[acc] for acc in ACC_MAP])
 
     scale = match.group("scale")[:3].lower()
 
@@ -988,18 +988,7 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
     # Starting the circle of fifths at F makes accidentals easier to count
     COFMAP = "FCGDAEB"
 
-    acc_map = {
-        "#": 1,
-        "": 0,
-        "b": -1,
-        "!": -1,
-        "♯": 1,
-        "𝄪": 2,
-        "♭": -1,
-        "𝄫": -2,
-        "♮": 0,
-        "n": 0
-    }
+    acc_map = {"#": 1, "": 0, "b": -1, "!": -1, "♯": 1, "𝄪": 2, "♭": -1, "𝄫": -2, "♮": 0, "n": 0}
 
     if unicode:
         acc_map_inv = {1: "♯", 2: "𝄪", -1: "♭", -2: "𝄫", 0: ""}
@@ -1026,9 +1015,9 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
     acc_index = offset + (circle_idx + fifths) // 7
 
     # Compress multiple-accidentals as needed
-    acc_str = acc_map_inv[np.sign(acc_index) * 2] * int(
-        abs(acc_index) // 2
-    ) + acc_map_inv[np.sign(acc_index)] * int(abs(acc_index) % 2)
+    acc_str = acc_map_inv[np.sign(acc_index) * 2] * int(abs(acc_index) // 2) + acc_map_inv[np.sign(acc_index)] * int(
+        abs(acc_index) % 2
+    )
 
     return raw_output + acc_str
 
@@ -1069,10 +1058,7 @@ def __fifth_search(interval, tolerance):
     log_tolerance = np.abs(np.log2(tolerance))
     for power in range(32):
         for sign in [1, -1]:
-            if (
-                np.abs(np.log2(__bo_fold(interval / 3.0 ** (power * sign))))
-                <= log_tolerance
-            ):
+            if np.abs(np.log2(__bo_fold(interval / 3.0 ** (power * sign)))) <= log_tolerance:
                 return power * sign
         power += 1
     return power

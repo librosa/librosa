@@ -7,6 +7,7 @@ harmonic-percussive source separation, and standard audio effects.
 It also provides some basic functions for trimming, splitting, or
 splicing signals.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, overload
@@ -151,9 +152,7 @@ def hpss(
     )
 
     # Decompose into harmonic and percussives
-    stft_harm, stft_perc = decompose.hpss(
-        stft, kernel_size=kernel_size, power=power, mask=mask, margin=margin
-    )
+    stft_harm, stft_perc = decompose.hpss(stft, kernel_size=kernel_size, power=power, mask=mask, margin=margin)
 
     # Invert the STFTs.  Adjust length to match the input.
     y_harm = core.istft(
@@ -277,9 +276,7 @@ def harmonic(
     )
 
     # Remove percussives
-    stft_harm = decompose.hpss(
-        stft, kernel_size=kernel_size, power=power, mask=mask, margin=margin
-    )[0]
+    stft_harm = decompose.hpss(stft, kernel_size=kernel_size, power=power, mask=mask, margin=margin)[0]
 
     # Invert the STFTs
     y_harm = core.istft(
@@ -393,9 +390,7 @@ def percussive(
     )
 
     # Remove harmonics
-    stft_perc = decompose.hpss(
-        stft, kernel_size=kernel_size, power=power, mask=mask, margin=margin
-    )[1]
+    stft_perc = decompose.hpss(stft, kernel_size=kernel_size, power=power, mask=mask, margin=margin)[1]
 
     # Invert the STFT
     y_perc = core.istft(
@@ -614,9 +609,7 @@ def pitch_shift(
     ...                                          bins_per_octave=24)
     """
     if not util.is_positive_int(bins_per_octave):
-        raise ParameterValueError(
-            f"bins_per_octave={bins_per_octave} must be a positive integer."
-        )
+        raise ParameterValueError(f"bins_per_octave={bins_per_octave} must be a positive integer.")
 
     rate = 2.0 ** (-float(n_steps) / bins_per_octave)
 
@@ -642,9 +635,7 @@ def pitch_shift(
     return util.fix_length(y_shift, size=y.shape[-1])
 
 
-def remix(
-    y: np.ndarray, intervals: Iterable[tuple[int, int]], *, align_zeros: bool = True
-) -> np.ndarray:
+def remix(y: np.ndarray, intervals: Iterable[tuple[int, int]], *, align_zeros: bool = True) -> np.ndarray:
     """Remix an audio signal by re-ordering time intervals.
 
     Parameters
@@ -1026,6 +1017,7 @@ def preemphasis(
     z_f: np.ndarray
 
     import scipy.signal
+
     y_out, z_f = scipy.signal.lfilter(b, a, y, zi=np.asarray(zi, dtype=y.dtype))
 
     if return_zf:
@@ -1120,17 +1112,14 @@ def deemphasis(
     y_out: np.ndarray
     zf: np.ndarray
     import scipy.signal
+
     if zi is None:
         # initialize with all zeros
         zi = np.zeros([*list(y.shape[:-1]), 1], dtype=y.dtype)
         y_out, zf = scipy.signal.lfilter(a, b, y, zi=zi)
 
         # factor in the linear extrapolation
-        y_out -= (
-            ((2 - coef) * y[..., 0:1] - y[..., 1:2])
-            / (3 - coef)
-            * (coef ** np.arange(y.shape[-1]))
-        )
+        y_out -= ((2 - coef) * y[..., 0:1] - y[..., 1:2]) / (3 - coef) * (coef ** np.arange(y.shape[-1]))
 
     else:
         zi = np.atleast_1d(zi)
@@ -1218,9 +1207,11 @@ def tremolo(
         lfo = 0.5 * (1.0 + np.sin(angle))
     elif mode == "triangle":
         import scipy.signal
+
         lfo = 0.5 * (1.0 + scipy.signal.sawtooth(angle, width=0.5))
     elif mode == "square":
         import scipy.signal
+
         lfo = 0.5 * (1.0 + scipy.signal.square(angle))
     else:
         raise ParameterValueError(f"Invalid mode='{mode}'. Must be 'sine', 'triangle', or 'square'.")
@@ -1377,9 +1368,7 @@ def vibrato(
 
     # Phase-vocoder stretch along the frame sequence
     time_steps_accumulated = np.cumsum(time_steps) - time_steps[0]
-    t_out = (
-        time_steps_accumulated / time_steps_accumulated[-1] * (n_frames - 1)
-    )
+    t_out = time_steps_accumulated / time_steps_accumulated[-1] * (n_frames - 1)
 
     stft_vib = core.phase_vocoder(stft, t_out=t_out)
 
@@ -1397,9 +1386,7 @@ def vibrato(
     # Resample to compensate for the time-warping introduced by the phase vocoder
     # This restores the original timing while preserving the pitch modulation
     t_original = np.linspace(0, 1, y.shape[-1])
-    t_warped = np.interp(
-        t_original, np.linspace(0, 1, len(t_out)), t_out / (n_frames - 1)
-    )
+    t_warped = np.interp(t_original, np.linspace(0, 1, len(t_out)), t_out / (n_frames - 1))
 
     y_out = core.interp_time(
         y_vib,

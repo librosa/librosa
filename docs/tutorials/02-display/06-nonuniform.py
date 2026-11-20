@@ -79,9 +79,7 @@ fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
 librosa.display.specshow(chroma, y_axis="chroma", x_axis="time", ax=ax[0])
 ax[0].set(title="Uniformly sampled chroma", xlabel=None)
 
-librosa.display.specshow(chroma_sync, y_axis="chroma",
-                         x_coords=beat_times, x_axis="time",
-                         ax=ax[1])
+librosa.display.specshow(chroma_sync, y_axis="chroma", x_coords=beat_times, x_axis="time", ax=ax[1])
 ax[1].set(title="Beat-synchronous chroma", xlabel=None)
 
 # %%

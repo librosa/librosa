@@ -58,13 +58,13 @@ chroma_orig = librosa.feature.chroma_cqt(y=y, sr=sr)
 idx = tuple([slice(None), slice(*list(librosa.time_to_frames([45, 60])))])
 
 # And for comparison, we'll show the CQT matrix as well.
-C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=12*3, n_bins=7*12*3))
+C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=12 * 3, n_bins=7 * 12 * 3))
 
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
-img1 = librosa.display.specshow(C[idx], vscale="dBFS",
-                                y_axis="cqt_note", x_axis="time", bins_per_octave=12*3,
-                                ax=ax[0])
+img1 = librosa.display.specshow(
+    C[idx], vscale="dBFS", y_axis="cqt_note", x_axis="time", bins_per_octave=12 * 3, ax=ax[0]
+)
 librosa.display.colorbar_db(img1, ax=ax[0])
 ax[0].label_outer()
 
@@ -93,10 +93,7 @@ ax[1].set(ylabel="Harmonic")
 # There's still some noise in there though.
 # We can clean it up using non-local filtering.
 # This effectively removes any sparse additive noise from the features.
-chroma_filter = np.minimum(chroma_harm,
-                           librosa.decompose.nn_filter(chroma_harm,
-                                                       aggregate=np.median,
-                                                       metric="cosine"))
+chroma_filter = np.minimum(chroma_harm, librosa.decompose.nn_filter(chroma_harm, aggregate=np.median, metric="cosine"))
 
 
 fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
@@ -127,9 +124,7 @@ ax[1].set(ylabel="Median-filtered")
 # A final comparison between the CQT, original chromagram
 # and the result of our filtering.
 fig, ax = plt.subplots(nrows=3, sharex=True)
-librosa.display.specshow(C[idx], vscale="dBFS",
-                         y_axis="cqt_note", x_axis="time",
-                         bins_per_octave=12*3, ax=ax[0])
+librosa.display.specshow(C[idx], vscale="dBFS", y_axis="cqt_note", x_axis="time", bins_per_octave=12 * 3, ax=ax[0])
 ax[0].set(ylabel="CQT")
 ax[0].label_outer()
 librosa.display.specshow(chroma_orig[idx], y_axis="chroma", x_axis="time", ax=ax[1])

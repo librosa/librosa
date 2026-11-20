@@ -27,10 +27,7 @@ ORCID_RE = re.compile(r"\d{4}-\d{4}-\d{4}-\d{3}[0-9Xx]")
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate Zenodo metadata.")
     parser.add_argument(
-        "--authors",
-        type=Path,
-        default=Path("../AUTHORS.md"),
-        help="Path to the canonical authors mapping file."
+        "--authors", type=Path, default=Path("../AUTHORS.md"), help="Path to the canonical authors mapping file."
     )
     parser.add_argument("--owner", type=str, default="librosa")
     parser.add_argument("--repo", type=str, default="librosa")
@@ -46,7 +43,7 @@ def parse_authors(filepath: Path) -> dict:
 
     pattern = re.compile(
         r"^\*\s+(.+?)\s+<https://github\.com/([^>]+)>(?:\s+\[ORCID:\s*(\d{4}-\d{4}-\d{4}-\d{3}[0-9xX])\])?",
-        re.IGNORECASE
+        re.IGNORECASE,
     )
 
     for line in filepath.read_text(encoding="utf-8").splitlines():
@@ -66,10 +63,7 @@ async def fetch_repo_metadata(client: httpx.AsyncClient, owner: str, repo: str, 
     response = await client.get(url, headers=headers)
     response.raise_for_status()
     data = response.json()
-    return {
-        "title": data.get("name", repo),
-        "description": data.get("description", "No description provided.")
-    }
+    return {"title": data.get("name", repo), "description": data.get("description", "No description provided.")}
 
 
 async def fetch_all_contributors(client: httpx.AsyncClient, owner: str, repo: str, headers: dict) -> list[str]:
@@ -171,7 +165,7 @@ async def fetch_user_profiles_graphql(client: httpx.AsyncClient, logins: list[st
     chunk_size = 50
 
     for i in range(0, len(logins), chunk_size):
-        chunk = logins[i:i + chunk_size]
+        chunk = logins[i : i + chunk_size]
 
         lines = ["query {"]
         for idx, login in enumerate(chunk):

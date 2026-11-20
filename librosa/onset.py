@@ -4,6 +4,7 @@
 librosa.onset contains functions for computing onset strength envelopes
 and estimating onset events from audio signals.
 """
+
 from __future__ import annotations
 
 import inspect
@@ -404,9 +405,7 @@ def onset_strength(
     >>> fig.legend(loc='center right', ncols=3)
     """
     if aggregate is False:
-        raise ParameterValueError(
-            "aggregate parameter cannot be False when computing full-spectrum onset strength."
-        )
+        raise ParameterValueError("aggregate parameter cannot be False when computing full-spectrum onset strength.")
 
     odf_all = onset_strength_multi(
         y=y,
@@ -676,9 +675,7 @@ def onset_strength_multi(
         if mode is None:
             mode = "complex" if np.iscomplexobj(S) else "flux"
         elif mode == "complex" and not np.iscomplexobj(S):
-            raise ParameterValueError(
-                "mode='complex' was specified, but input spectrogram S is real-valued"
-            )
+            raise ParameterValueError("mode='complex' was specified, but input spectrogram S is real-valued")
         elif mode == "flux" and np.iscomplexobj(S):
             S = np.abs(S)
     else:
@@ -693,18 +690,14 @@ def onset_strength_multi(
                 feature = melspectrogram
                 kwargs.setdefault("fmax", 0.5 * sr)
 
-            S = _call_with_kwargs(
-                feature, y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, **kwargs
-            )
+            S = _call_with_kwargs(feature, y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, **kwargs)
             S = np.abs(S)
             S = core.power_to_db(S, top_db=top_db)
         else:  # mode == "complex"
             if feature is None:
                 feature = core.stft
 
-            S = _call_with_kwargs(
-                feature, y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, **kwargs
-            )
+            S = _call_with_kwargs(feature, y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, **kwargs)
             if not np.iscomplexobj(S):
                 raise ParameterValueError(
                     f"mode='complex' requires a complex-valued spectrogram, "
@@ -716,13 +709,9 @@ def onset_strength_multi(
 
     if mode == "complex":
         if max_size > 1:
-            raise ParameterValueError(
-                "max_size > 1 is not supported for complex-valued spectrograms S"
-            )
+            raise ParameterValueError("max_size > 1 is not supported for complex-valued spectrograms S")
         if ref is not None:
-            raise ParameterValueError(
-                "ref is not supported for complex-valued spectrograms S"
-            )
+            raise ParameterValueError("ref is not supported for complex-valued spectrograms S")
 
         pad_width = lag + 1
         if S.shape[-1] <= pad_width:
@@ -737,8 +726,8 @@ def onset_strength_multi(
             pred_S = ref_mag * np.exp(1j * pred_phase)
 
             onset_env = np.where(
-                mag[..., 1 + lag:] >= ref_mag,
-                np.abs(S[..., 1 + lag:] - pred_S),
+                mag[..., 1 + lag :] >= ref_mag,
+                np.abs(S[..., 1 + lag :] - pred_S),
                 0.0,
             )
     else:
@@ -751,9 +740,7 @@ def onset_strength_multi(
 
                 ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=-2)
         elif ref.shape != S.shape:
-            raise ParameterShapeError(
-                f"Reference spectrum shape {ref.shape} must match input spectrum {S.shape}"
-            )
+            raise ParameterShapeError(f"Reference spectrum shape {ref.shape} must match input spectrum {S.shape}")
 
         # Compute difference to the reference, spaced by lag
         onset_env = S[..., lag:] - ref[..., :-lag]
@@ -769,9 +756,7 @@ def onset_strength_multi(
         pad = False
 
     if callable(aggregate):
-        onset_env = util.sync(
-            onset_env, channels, aggregate=aggregate, pad=pad, axis=-2
-        )
+        onset_env = util.sync(onset_env, channels, aggregate=aggregate, pad=pad, axis=-2)
 
     # compensate for lag
     if center:

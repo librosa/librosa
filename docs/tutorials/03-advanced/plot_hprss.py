@@ -56,10 +56,17 @@ rp = np.max(np.abs(D))
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 
-imgs = librosa.display.multiplot("specshow", D, D_harmonic, D_percussive,
-                                 vscale=f"dB[{rp}]", y_axis="log", x_axis="time",
-                                 titles=["Full spectrogram", "Harmonic spectrogram", "Percussive spectrogram"],
-                                 axes=ax)
+imgs = librosa.display.multiplot(
+    "specshow",
+    D,
+    D_harmonic,
+    D_percussive,
+    vscale=f"dB[{rp}]",
+    y_axis="log",
+    x_axis="time",
+    titles=["Full spectrogram", "Harmonic spectrogram", "Percussive spectrogram"],
+    axes=ax,
+)
 librosa.display.colorbar_db(imgs[0], ax=ax)
 
 #########################################################################
@@ -103,10 +110,30 @@ D_harmonic16, D_percussive16 = librosa.decompose.hpss(D, margin=16)
 # In the plots below, note that vibrato has been suppressed from the harmonic
 # components, and vocals have been suppressed in the percussive components.
 fig, ax = plt.subplots(nrows=5, ncols=2, sharex=True, sharey=True, figsize=(10, 10))
-librosa.display.multiplot("specshow", D_harmonic, D_harmonic2, D_harmonic4, D_harmonic8, D_harmonic16,
-                          vscale=f"dB[{rp}]", y_axis="log", x_axis="time", axes=ax[:, 0])
-librosa.display.multiplot("specshow", D_percussive, D_percussive2, D_percussive4, D_percussive8, D_percussive16,
-                          vscale=f"dB[{rp}]", y_axis="log", x_axis="time", axes=ax[:, 1])
+librosa.display.multiplot(
+    "specshow",
+    D_harmonic,
+    D_harmonic2,
+    D_harmonic4,
+    D_harmonic8,
+    D_harmonic16,
+    vscale=f"dB[{rp}]",
+    y_axis="log",
+    x_axis="time",
+    axes=ax[:, 0],
+)
+librosa.display.multiplot(
+    "specshow",
+    D_percussive,
+    D_percussive2,
+    D_percussive4,
+    D_percussive8,
+    D_percussive16,
+    vscale=f"dB[{rp}]",
+    y_axis="log",
+    x_axis="time",
+    axes=ax[:, 1],
+)
 ax[0, 0].set(title="Harmonic")
 ax[0, 1].set(title="Percussive")
 for i in range(5):

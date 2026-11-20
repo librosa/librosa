@@ -84,9 +84,7 @@ def get_contributors(repo_owner, repo_name):
                 # Although HTTPError is raised for non-200 statuses,
                 # we check status_code here for consistency with the original script.
                 if status_code != 200:
-                    raise Exception(
-                        f"Failed to retrieve contributors: {json_data.get('message', 'Unknown error')}"
-                    )
+                    raise Exception(f"Failed to retrieve contributors: {json_data.get('message', 'Unknown error')}")
 
                 # Process each contributor in the JSON response.
                 for contributor in json_data:

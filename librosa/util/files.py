@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
+
 from __future__ import annotations
 
 import contextlib
@@ -29,9 +30,7 @@ __all__ = [
 
 # Instantiate the pooch
 __data_path = os.environ.get("LIBROSA_DATA_DIR", pooch.os_cache("librosa"))
-__GOODBOY = pooch.create(
-    __data_path, base_url="https://librosa.org/data/audio/", registry=None
-)
+__GOODBOY = pooch.create(__data_path, base_url="https://librosa.org/data/audio/", registry=None)
 
 
 @contextlib.contextmanager
@@ -244,11 +243,7 @@ def example_info(key: str, *, html: bool = False) -> str | None:
             </div>
         """
     else:
-        lines = [
-            title,
-            "=" * len(title),
-            f"Attribution: {attribution}"
-        ]
+        lines = [title, "=" * len(title), f"Attribution: {attribution}"]
         if corpus:
             lines.append(f"Corpus:      {corpus}")
         lines.append(f"License:     {spdx_id}")
@@ -375,7 +370,7 @@ def __get_files(dir_name: str | os.PathLike[Any], extensions: set[str]):
     return myfiles
 
 
-def cite(version: str | None=None, *, bib: bool = False) -> str:
+def cite(version: str | None = None, *, bib: bool = False) -> str:
     r"""Print the citation information for librosa.
 
     Parameters
@@ -418,8 +413,9 @@ def cite(version: str | None=None, *, bib: bool = False) -> str:
 
     if version not in version_index:
         if "dev" in version:
-            raise ParameterValueError(f"Version {version} is not yet released and "
-                                 "therefore does not yet have a citable DOI.")
+            raise ParameterValueError(
+                f"Version {version} is not yet released and therefore does not yet have a citable DOI."
+            )
         else:
             raise ParameterValueError(f"Version {version} not found in the citation index")
 

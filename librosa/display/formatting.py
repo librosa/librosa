@@ -1489,9 +1489,7 @@ def _coord_pitch_hz(
 
     if intervals is None or intervals == "equal":
         return _coord_cqt_hz(n, fmin=fmin, bins_per_octave=bins_per_octave, sr=sr, tuning=0.0, **kwargs)
-    return _coord_vqt_hz(
-        n, fmin=fmin, bins_per_octave=bins_per_octave, sr=sr, intervals=intervals, **kwargs
-    )
+    return _coord_vqt_hz(n, fmin=fmin, bins_per_octave=bins_per_octave, sr=sr, intervals=intervals, **kwargs)
 
 
 _coord_logfreq_hz = _coord_cqt_hz

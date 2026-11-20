@@ -7,6 +7,7 @@ Music notation
 This section introduces tools for working with various music notational systems, and
 converting between them.
 """
+
 # %%
 # .. _tutorial-intro-notation:
 #
@@ -250,7 +251,7 @@ print(librosa.midi_to_svara_c(midi, Sa=60, mela=36, abbr=False))
 # as SPN.  However, librosa does support the Functional Just System (FJS) for notating just intonation intervals.
 # For example with a unison note of 'A', the interval 5:4 (major third in 5-limit tuning) can be represented as follows:
 
-print(librosa.interval_to_fjs(5/4, unison="A"))
+print(librosa.interval_to_fjs(5 / 4, unison="A"))
 
 # %%
 # where the super-scripted 5 indicates that the numerator of the interval relies on prime factor 5.  (Factors of 3 and 2 are suppressed in FJS.)
