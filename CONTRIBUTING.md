@@ -106,6 +106,8 @@ tools (included in the `lint` dependency group):
   ruff check --fix librosa docs tests scripts
   ```
 
+  Note: Package and test code follow a 119-character limit, while documentation tutorials and docstring code examples are constrained to 80 characters to prevent horizontal scrolling in rendered documentation.
+
 - Ignoring formatting revisions in `git blame`:
 
   To avoid mass reformatting commits cluttering `git blame`, configure git locally to use the repository's `.git-blame-ignore-revs` file:

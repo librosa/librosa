@@ -1,0 +1,6 @@
+# Extend root pyproject.toml configuration
+extend = "../pyproject.toml"
+
+# Narrower line length for documentation tutorials and scripts
+# to prevent horizontal scrolling in rendered docs
+line-length = 80
