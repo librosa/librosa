@@ -74,11 +74,23 @@ x_2_chroma = librosa.feature.chroma_cqt(y=x_2, sr=fs, hop_length=hop_length)
 
 fig, ax = plt.subplots(nrows=2, sharey=True, sharex=True)
 img = librosa.display.specshow(
-    x_1_chroma, x_axis="time", y_axis="chroma", key="G:major", hop_length=hop_length, ax=ax[0]
+    x_1_chroma,
+    x_axis="time",
+    y_axis="chroma",
+    key="G:major",
+    hop_length=hop_length,
+    ax=ax[0],
 )
 ax[0].label_outer()
 ax[0].set(title="Chroma Representation of $X_1$", xlabel="")
-librosa.display.specshow(x_2_chroma, x_axis="time", y_axis="chroma", key="G:major", hop_length=hop_length, ax=ax[1])
+librosa.display.specshow(
+    x_2_chroma,
+    x_axis="time",
+    y_axis="chroma",
+    key="G:major",
+    hop_length=hop_length,
+    ax=ax[1],
+)
 ax[1].set(title="Chroma Representation of $X_2$")
 fig.colorbar(img, ax=ax)
 
@@ -106,16 +118,34 @@ fig, ax = plt.subplot_mosaic(
     figsize=(10, 7),
 )
 librosa.display.specshow(
-    x_1_chroma.T, y_axis="time", x_axis="chroma", key="G:major", sr=fs, hop_length=hop_length, ax=ax["A"]
+    x_1_chroma.T,
+    y_axis="time",
+    x_axis="chroma",
+    key="G:major",
+    sr=fs,
+    hop_length=hop_length,
+    ax=ax["A"],
 )
 ax["A"].set(ylabel="Time $X_1$", xlabel="")
 ax["A"].invert_xaxis()  # Invert x-axis to match transposed chroma display
 librosa.display.specshow(
-    x_2_chroma, x_axis="time", y_axis="chroma", key="G:major", sr=fs, hop_length=hop_length, ax=ax["C"]
+    x_2_chroma,
+    x_axis="time",
+    y_axis="chroma",
+    key="G:major",
+    sr=fs,
+    hop_length=hop_length,
+    ax=ax["C"],
 )
 ax["C"].set(xlabel="Time $X_2$", ylabel="")
 img = librosa.display.specshow(
-    D, x_axis="time", y_axis="time", sr=fs, cmap="gray_r", hop_length=hop_length, ax=ax["B"]
+    D,
+    x_axis="time",
+    y_axis="time",
+    sr=fs,
+    cmap="gray_r",
+    hop_length=hop_length,
+    ax=ax["B"],
 )
 ax["A"].sharey(ax["B"])
 ax["C"].sharex(ax["B"])
@@ -157,7 +187,9 @@ ax["B"].label_outer()
 # (Thanks to F. Zalkow for the nice visualization.)
 from matplotlib.patches import ConnectionPatch
 
-fig, (ax_1, ax_2) = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 4))
+fig, (ax_1, ax_2) = plt.subplots(
+    nrows=2, sharex=True, sharey=True, figsize=(8, 4)
+)
 
 # Plot x_2
 librosa.display.waveshow(x_2, sr=fs, ax=ax_2, color="C1")
@@ -208,7 +240,9 @@ x_1_stft = librosa.stft(x_1, hop_length=hop_length)
 
 stft_stretched = librosa.phase_vocoder(x_1_stft, t_out=steps)
 # Convert the stretched STFT back to the time domain
-x_1_stretched = librosa.istft(stft_stretched, hop_length=hop_length, length=len(x_2))
+x_1_stretched = librosa.istft(
+    stft_stretched, hop_length=hop_length, length=len(x_2)
+)
 
 # %%
 # We can now visualize and listen to the stretched signal in comparison to the faster signal.
@@ -241,7 +275,9 @@ Audio(librosa.to_stereo(left=x_2, right=x_1_stretched), rate=fs)
 steps_inv = librosa.sequence.path_to_steps(wp, inverse=True)
 x_2_stft = librosa.stft(x_2, hop_length=hop_length)
 stft2_stretched = librosa.phase_vocoder(x_2_stft, t_out=steps_inv)
-x_2_stretched = librosa.istft(stft2_stretched, hop_length=hop_length, length=len(x_1))
+x_2_stretched = librosa.istft(
+    stft2_stretched, hop_length=hop_length, length=len(x_1)
+)
 
 # %%
 # And we can visualize the results just like before:

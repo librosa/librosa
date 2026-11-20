@@ -159,17 +159,18 @@ def cqt(
     Generate and plot a constant-Q power spectrum
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(C, vscale='dBFS',
-    ...                                sr=sr, x_axis='time', y_axis='cqt_note', ax=ax)
-    >>> ax.set_title('Constant-Q power spectrum')
+    >>> img = librosa.display.specshow(
+    ...     C, vscale="dBFS", sr=sr, x_axis="time", y_axis="cqt_note", ax=ax
+    ... )
+    >>> ax.set_title("Constant-Q power spectrum")
     >>> librosa.display.colorbar_db(img)
 
     Limit the frequency range
 
-    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin='C2', n_bins=60))
+    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin="C2", n_bins=60))
     >>> C
     array([[6.830e-04, 6.361e-04, ..., 7.362e-09, 9.102e-09],
            [5.366e-04, 4.818e-04, ..., 8.953e-09, 1.067e-08],
@@ -179,8 +180,9 @@ def cqt(
 
     Using a higher frequency resolution
 
-    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin='C2',
-    ...                 n_bins=60 * 2, bins_per_octave=12 * 2))
+    >>> C = np.abs(
+    ...     librosa.cqt(y, sr=sr, fmin="C2", n_bins=60 * 2, bins_per_octave=12 * 2)
+    ... )
     >>> C
     array([[5.468e-04, 5.382e-04, ..., 5.911e-09, 6.105e-09],
            [4.118e-04, 4.014e-04, ..., 7.788e-09, 8.160e-09],
@@ -707,7 +709,7 @@ def icqt(
     --------
     Using default parameters
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> C = librosa.cqt(y=y, sr=sr)
     >>> y_hat = librosa.icqt(C=C, sr=sr)
 
@@ -715,10 +717,16 @@ def icqt(
 
     >>> hop_length = 256
     >>> bins_per_octave = 12 * 3
-    >>> C = librosa.cqt(y=y, sr=sr, hop_length=256, n_bins=7*bins_per_octave,
-    ...                 bins_per_octave=bins_per_octave)
-    >>> y_hat = librosa.icqt(C=C, sr=sr, hop_length=hop_length,
-    ...                 bins_per_octave=bins_per_octave)
+    >>> C = librosa.cqt(
+    ...     y=y,
+    ...     sr=sr,
+    ...     hop_length=256,
+    ...     n_bins=7 * bins_per_octave,
+    ...     bins_per_octave=bins_per_octave,
+    ... )
+    >>> y_hat = librosa.icqt(
+    ...     C=C, sr=sr, hop_length=hop_length, bins_per_octave=bins_per_octave
+    ... )
     """
     if fmin is None:
         fmin = note_to_hz("C1")
@@ -978,17 +986,19 @@ def vqt(
     Generate and plot a variable-Q power spectrum
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('choice', duration=5)
+    >>> y, sr = librosa.loadx("choice", duration=5)
     >>> C = np.abs(librosa.cqt(y, sr=sr))
     >>> V = np.abs(librosa.vqt(y, sr=sr))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(C, vscale='dBFS',
-    ...                          sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[0])
-    >>> ax[0].set(title='Constant-Q power spectrum', xlabel=None)
+    >>> librosa.display.specshow(
+    ...     C, vscale="dBFS", sr=sr, x_axis="time", y_axis="cqt_note", ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Constant-Q power spectrum", xlabel=None)
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(V, vscale='dBFS',
-    ...                                sr=sr, x_axis='time', y_axis='cqt_note', ax=ax[1])
-    >>> ax[1].set_title('Variable-Q power spectrum')
+    >>> img = librosa.display.specshow(
+    ...     V, vscale="dBFS", sr=sr, x_axis="time", y_axis="cqt_note", ax=ax[1]
+    ... )
+    >>> ax[1].set_title("Variable-Q power spectrum")
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
     # If intervals are provided as an array, override BPO
@@ -1435,9 +1445,9 @@ def griffinlim_cqt(
     --------
     A basic CQT inverse example
 
-    >>> y, sr = librosa.loadx('trumpet', sr=None)
+    >>> y, sr = librosa.loadx("trumpet", sr=None)
     >>> # Get the CQT magnitude, 7 octaves at 36 bins per octave
-    >>> C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=36, n_bins=7*36))
+    >>> C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=36, n_bins=7 * 36))
     >>> # Invert using Griffin-Lim
     >>> y_inv = librosa.griffinlim_cqt(C, sr=sr, bins_per_octave=36)
     >>> # And invert without estimating phase
@@ -1447,14 +1457,14 @@ def griffinlim_cqt(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.waveshow(y, sr=sr, color='C0', ax=ax[0])
-    >>> ax[0].set(title='Original', xlabel=None)
+    >>> librosa.display.waveshow(y, sr=sr, color="C0", ax=ax[0])
+    >>> ax[0].set(title="Original", xlabel=None)
     >>> ax[0].label_outer()
-    >>> librosa.display.waveshow(y_inv, sr=sr, color='C1', ax=ax[1])
-    >>> ax[1].set(title='Griffin-Lim reconstruction', xlabel=None)
+    >>> librosa.display.waveshow(y_inv, sr=sr, color="C1", ax=ax[1])
+    >>> ax[1].set(title="Griffin-Lim reconstruction", xlabel=None)
     >>> ax[1].label_outer()
-    >>> librosa.display.waveshow(y_icqt, sr=sr, color='C2', ax=ax[2])
-    >>> ax[2].set(title='Magnitude-only icqt reconstruction')
+    >>> librosa.display.waveshow(y_icqt, sr=sr, color="C2", ax=ax[2])
+    >>> ax[2].set(title="Magnitude-only icqt reconstruction")
     """
     if fmin is None:
         fmin = note_to_hz("C1")

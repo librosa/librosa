@@ -136,7 +136,7 @@ def load(
     Examples
     --------
     >>> # Load an ogg vorbis file
-    >>> filename = librosa.ex('trumpet')
+    >>> filename = librosa.ex("trumpet")
     >>> y, sr = librosa.load(filename)
     >>> y
     array([-1.407e-03, -4.461e-04, ..., -3.042e-05,  1.277e-05],
@@ -145,7 +145,7 @@ def load(
     22050
 
     >>> # Load a file and resample to 11 KHz
-    >>> filename = librosa.ex('trumpet')
+    >>> filename = librosa.ex("trumpet")
     >>> y, sr = librosa.load(filename, sr=11025)
     >>> y
     array([-8.746e-04, -3.363e-04, ..., -1.301e-05,  0.000e+00],
@@ -154,7 +154,7 @@ def load(
     11025
 
     >>> # Load 5 seconds of a file, starting 15 seconds in
-    >>> filename = librosa.ex('brahms')
+    >>> filename = librosa.ex("brahms")
     >>> y, sr = librosa.load(filename, offset=15.0, duration=5.0)
     >>> y
     array([0.146, 0.144, ..., 0.128, 0.015], dtype=float32)
@@ -163,7 +163,7 @@ def load(
 
     >>> # Load using an already open SoundFile object
     >>> import soundfile
-    >>> sfo = soundfile.SoundFile(librosa.ex('brahms'))
+    >>> sfo = soundfile.SoundFile(librosa.ex("brahms"))
     >>> y, sr = librosa.load(sfo)
     """
     y, sr_native = __soundfile_load(path, offset, duration, dtype)
@@ -256,13 +256,13 @@ def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarra
     --------
     Load the default version of the 'trumpet' example
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
 
     Load the stereo version of the 'trumpet' example
 
-    >>> y, sr = librosa.loadx('trumpet', mono=False)
+    >>> y, sr = librosa.loadx("trumpet", mono=False)
     >>> # This is equivalent to the following more verbose code:
-    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
+    >>> y, sr = librosa.load(librosa.ex("trumpet", hq=True), mono=False)
     """
     if hq is None:
         if ("sr" in kwargs and (kwargs["sr"] is None or kwargs["sr"] > 22050)) or (
@@ -364,7 +364,7 @@ def to_mono(
     --------
     Downmix a stereo input
 
-    >>> y, sr = librosa.loadx('trumpet', mono=False)
+    >>> y, sr = librosa.loadx("trumpet", mono=False)
     >>> y.shape
     (2, 117601)
     >>> y_mono = librosa.to_mono(y)
@@ -777,7 +777,7 @@ def resample(
     --------
     Downsample from 22 KHz to 8 KHz
 
-    >>> y, sr = librosa.loadx('trumpet', sr=22050)
+    >>> y, sr = librosa.loadx("trumpet", sr=22050)
     >>> y_8k = librosa.resample(y, orig_sr=sr, target_sr=8000)
     >>> y.shape, y_8k.shape
     ((117601,), (42668,))
@@ -911,16 +911,16 @@ def get_duration(
     Examples
     --------
     >>> # Load an example audio file
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> librosa.get_duration(y=y, sr=sr)
     5.333378684807256
 
     >>> # Or directly from an audio file
-    >>> librosa.get_duration(filename=librosa.ex('trumpet'))
+    >>> librosa.get_duration(filename=librosa.ex("trumpet"))
     5.333378684807256
 
     >>> # Or compute duration from an STFT matrix
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> S = librosa.stft(y)
     >>> librosa.get_duration(S=S, sr=sr)
     5.317369614512471
@@ -970,7 +970,7 @@ def get_samplerate(path: str | int | sf.SoundFile | BinaryIO) -> float:
     --------
     Get the sampling rate for the included audio file
 
-    >>> path = librosa.ex('trumpet')
+    >>> path = librosa.ex("trumpet")
     >>> librosa.get_samplerate(path)
     22050
     """
@@ -1010,7 +1010,7 @@ def autocorrelate(y: np.ndarray, *, max_size: int | None = None, axis: int = -1)
     --------
     Compute full autocorrelation of ``y``
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> librosa.autocorrelate(y)
     array([ 6.899e+02,  6.236e+02, ...,  3.710e-08, -1.796e-08])
 
@@ -1021,7 +1021,7 @@ def autocorrelate(y: np.ndarray, *, max_size: int | None = None, axis: int = -1)
     >>> ac = librosa.autocorrelate(odf, max_size=4 * sr // 512)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(ac)
-    >>> ax.set(title='Auto-correlation', xlabel='Lag (frames)')
+    >>> ax.set(title="Auto-correlation", xlabel="Lag (frames)")
     """
     if max_size is None:
         max_size = y.shape[axis]
@@ -1105,22 +1105,22 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
     --------
     Compute LP coefficients of y at order 16 on entire series
 
-    >>> y, sr = librosa.loadx('libri1')
+    >>> y, sr = librosa.loadx("libri1")
     >>> librosa.lpc(y, order=16)
 
     Compute LP coefficients, and plot LP estimate of original series
 
     >>> import matplotlib.pyplot as plt
     >>> import scipy
-    >>> y, sr = librosa.loadx('libri1', duration=0.020)
+    >>> y, sr = librosa.loadx("libri1", duration=0.020)
     >>> a = librosa.lpc(y, order=2)
     >>> b = np.hstack([[0], -1 * a[1:]])
     >>> y_hat = scipy.signal.lfilter(b, [1], y)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(y)
-    >>> ax.plot(y_hat, linestyle='--')
-    >>> ax.legend(['y', 'y_hat'])
-    >>> ax.set_title('LP Model Forward Prediction')
+    >>> ax.plot(y_hat, linestyle="--")
+    >>> ax.legend(["y", "y_hat"])
+    >>> ax.set_title("LP Model Forward Prediction")
     """
     if not util.is_positive_int(order):
         raise ParameterValueError(f"order={order} must be an integer > 0")
@@ -1446,8 +1446,8 @@ def envelope(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet')
-    >>> env = librosa.envelope(y, frame_length=2048, hop_length=512, kind='max')
+    >>> y, sr = librosa.loadx("trumpet")
+    >>> env = librosa.envelope(y, frame_length=2048, hop_length=512, kind="max")
     >>> env.shape
     (230,)
     """
@@ -1554,7 +1554,7 @@ def clicks(
     Examples
     --------
     >>> # Sonify detected beat events
-    >>> y, sr = librosa.loadx('choice', duration=10)
+    >>> y, sr = librosa.loadx("choice", duration=10)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> y_beats = librosa.clicks(frames=beats, sr=sr)
 
@@ -1566,18 +1566,19 @@ def clicks(
     >>> y_beat_times = librosa.clicks(times=times, sr=sr)
 
     >>> # Or with a click frequency of 880Hz and a 500ms sample
-    >>> y_beat_times880 = librosa.clicks(times=times, sr=sr,
-    ...                                  click_freq=880, click_duration=0.5)
+    >>> y_beat_times880 = librosa.clicks(
+    ...     times=times, sr=sr, click_freq=880, click_duration=0.5
+    ... )
 
     Display click waveform next to the spectrogram
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
-    >>> librosa.display.specshow(S, vscale='dBFS[power]',
-    ...                          x_axis='time', y_axis='mel', ax=ax[0])
-    >>> librosa.display.waveshow(y_beat_times, sr=sr, label='Beat clicks',
-    ...                          ax=ax[1])
+    >>> librosa.display.specshow(
+    ...     S, vscale="dBFS[power]", x_axis="time", y_axis="mel", ax=ax[0]
+    ... )
+    >>> librosa.display.waveshow(y_beat_times, sr=sr, label="Beat clicks", ax=ax[1])
     >>> ax[1].legend()
     >>> ax[0].label_outer()
     >>> ax[0].set_title(None)
@@ -1699,8 +1700,9 @@ def tone(
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> S = librosa.feature.melspectrogram(y=tone)
-    >>> librosa.display.specshow(S, vscale='dBFS[power]',
-    ...                          x_axis='time', y_axis='mel', ax=ax)
+    >>> librosa.display.specshow(
+    ...     S, vscale="dBFS[power]", x_axis="time", y_axis="mel", ax=ax
+    ... )
     """
     if frequency is None:
         raise ParameterValueError('"frequency" must be provided')
@@ -1810,21 +1812,25 @@ def chirp(
 
     Or generate a linear chirp instead
 
-    >>> linear_chirp = librosa.chirp(fmin="A2", fmax="A8", duration=1, linear=True, sr=22050)
+    >>> linear_chirp = librosa.chirp(
+    ...     fmin="A2", fmax="A8", duration=1, linear=True, sr=22050
+    ... )
 
     Display spectrogram for both exponential and linear chirps.
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> S_exponential = np.abs(librosa.stft(y=exponential_chirp))
-    >>> librosa.display.specshow(S_exponential, vscale='dBFS',
-    ...                          x_axis='time', y_axis='linear', ax=ax[0])
-    >>> ax[0].set(title='Exponential chirp', xlabel=None)
+    >>> librosa.display.specshow(
+    ...     S_exponential, vscale="dBFS", x_axis="time", y_axis="linear", ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Exponential chirp", xlabel=None)
     >>> ax[0].label_outer()
     >>> S_linear = np.abs(librosa.stft(y=linear_chirp))
-    >>> librosa.display.specshow(S_linear, vscale='dBFS',
-    ...                          x_axis='time', y_axis='linear', ax=ax[1])
-    >>> ax[1].set(title='Linear chirp')
+    >>> librosa.display.specshow(
+    ...     S_linear, vscale="dBFS", x_axis="time", y_axis="linear", ax=ax[1]
+    ... )
+    >>> ax[1].set(title="Linear chirp")
     """
     if fmin is None or fmax is None:
         raise ParameterValueError('both "fmin" and "fmax" must be provided')
@@ -2224,7 +2230,7 @@ def mu_compress(x: np.ndarray | _FloatLike_co, *, mu: float = 255, quantize: boo
     Given an input signal ``-1 <= x <= 1``, the mu-law compression
     is calculated by::
 
-        sign(x) * ln(1 + mu * abs(x)) /  ln(1 + mu)
+        sign(x) * ln(1 + mu * abs(x)) / ln(1 + mu)
 
     Parameters
     ----------
@@ -2313,7 +2319,7 @@ def mu_expand(x: np.ndarray | _FloatLike_co, *, mu: float = 255.0, quantize: boo
     This function is the inverse of ``mu_compress``. Given a mu-law compressed
     signal ``-1 <= x <= 1``, the mu-law expansion is calculated by::
 
-        sign(x) * (1 / mu) * ((1 + mu)**abs(x) - 1)
+        sign(x) * (1 / mu) * ((1 + mu) ** abs(x) - 1)
 
     Parameters
     ----------

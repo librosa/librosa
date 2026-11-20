@@ -68,7 +68,7 @@ def example(key: str, *, hq: bool = False, url: bool = False) -> str:
     an environment variable ``LIBROSA_DATA_DIR`` prior to importing librosa:
 
     >>> import os
-    >>> os.environ['LIBROSA_DATA_DIR'] = '/path/to/store/data'
+    >>> os.environ["LIBROSA_DATA_DIR"] = "/path/to/store/data"
     >>> import librosa
 
     Parameters
@@ -96,12 +96,12 @@ def example(key: str, *, hq: bool = False, url: bool = False) -> str:
     --------
     Load "Hungarian Dance #5" by Johannes Brahms
 
-    >>> y, sr = librosa.load(librosa.example('brahms'))
+    >>> y, sr = librosa.load(librosa.example("brahms"))
 
     Load "Vibe Ace" by Kevin MacLeod (the example previously packaged with librosa)
     in high-quality mode
 
-    >>> y, sr = librosa.load(librosa.example('vibeace', hq=True))
+    >>> y, sr = librosa.load(librosa.example("vibeace", hq=True))
     """
     if key not in __TRACKMAP:
         raise ParameterKeyError(f"Unknown example key: {key}")
@@ -300,26 +300,26 @@ def find_files(
     Examples
     --------
     >>> # Get all audio files in a directory sub-tree
-    >>> files = librosa.util.find_files('~/Music')
+    >>> files = librosa.util.find_files("~/Music")
 
     >>> # Look only within a specific directory, not the sub-tree
-    >>> files = librosa.util.find_files('~/Music', recurse=False)
+    >>> files = librosa.util.find_files("~/Music", recurse=False)
 
     >>> # Only look for mp3 files
-    >>> files = librosa.util.find_files('~/Music', ext='mp3')
+    >>> files = librosa.util.find_files("~/Music", ext="mp3")
 
     >>> # Or just mp3 and ogg
-    >>> files = librosa.util.find_files('~/Music', ext=['mp3', 'ogg'])
+    >>> files = librosa.util.find_files("~/Music", ext=["mp3", "ogg"])
 
     >>> # Only get the first 10 files
-    >>> files = librosa.util.find_files('~/Music', limit=10)
+    >>> files = librosa.util.find_files("~/Music", limit=10)
 
     >>> # Or last 10 files
-    >>> files = librosa.util.find_files('~/Music', offset=-10)
+    >>> files = librosa.util.find_files("~/Music", offset=-10)
 
     >>> # Avoid including search patterns in the path string
     >>> import glob
-    >>> directory = '~/[202206] Music'
+    >>> directory = "~/[202206] Music"
     >>> directory = glob.escape(directory)  # Escape the special characters
     >>> files = librosa.util.find_files(directory)
     """

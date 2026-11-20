@@ -41,7 +41,9 @@ stft = librosa.stft(y)
 chroma = librosa.feature.chroma_cqt(y=y, sr=sr, threshold=0.5)
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
-librosa.display.specshow(stft, y_axis="log_oct3", x_axis="time", vscale="dBFS", ax=ax[0])
+librosa.display.specshow(
+    stft, y_axis="log_oct3", x_axis="time", vscale="dBFS", ax=ax[0]
+)
 librosa.display.specshow(chroma, y_axis="chroma", x_axis="time", ax=ax[1])
 ax[0].label_outer()
 
@@ -51,7 +53,9 @@ ax[0].label_outer()
 # in the key of `F dorian` by setting `key='F:dorian'` in the call to `specshow`.
 
 fig, ax = plt.subplots(figsize=(6, 3))
-librosa.display.specshow(chroma, y_axis="chroma", x_axis="time", key="F:dorian", ax=ax)
+librosa.display.specshow(
+    chroma, y_axis="chroma", x_axis="time", key="F:dorian", ax=ax
+)
 
 # %%
 # The data here is unchanged - the only difference in the resulting plot is that the
@@ -84,8 +88,17 @@ tempo_ft = librosa.feature.fourier_tempogram(y=y, sr=sr)
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
 # Plot the autocorrelation tempogram, but clip negative values to zero for better visualization
-librosa.display.specshow(np.maximum(tempo_ac, 0), y_axis="tempo", x_axis="time", ax=ax[0])
-librosa.display.specshow(tempo_ft, y_axis="fourier_tempo", x_axis="time", vscale="dBFS", top_db=24, ax=ax[1])
+librosa.display.specshow(
+    np.maximum(tempo_ac, 0), y_axis="tempo", x_axis="time", ax=ax[0]
+)
+librosa.display.specshow(
+    tempo_ft,
+    y_axis="fourier_tempo",
+    x_axis="time",
+    vscale="dBFS",
+    top_db=24,
+    ax=ax[1],
+)
 ax[0].label_outer()
 ax[0].set(title="Autocorrelation Tempogram")
 ax[1].set(title="Fourier Tempogram")
@@ -112,7 +125,9 @@ rec = librosa.segment.recurrence_matrix(chroma, mode="affinity")
 
 fig, ax = plt.subplots(figsize=(4, 4))
 # We'll use a reversed grayscale colormap here so that the relatively few positive values are more visible
-librosa.display.specshow(rec, y_axis="time", x_axis="time", ax=ax, cmap="gray_r")
+librosa.display.specshow(
+    rec, y_axis="time", x_axis="time", ax=ax, cmap="gray_r"
+)
 ax.set(title="Recurrence Plot")
 
 # %%
@@ -138,13 +153,24 @@ ax["B"].sharey(ax["A"])
 ax["B"].sharex(ax["C"])
 
 # We'll put the recurrence plot in the upper-right (B subplot)
-librosa.display.specshow(rec, y_axis="time", x_axis="time", ax=ax["B"], auto_aspect=False, cmap="gray_r")
+librosa.display.specshow(
+    rec,
+    y_axis="time",
+    x_axis="time",
+    ax=ax["B"],
+    auto_aspect=False,
+    cmap="gray_r",
+)
 
 # The regular spectrogram along the bottom (C subplot)
-librosa.display.specshow(stft, y_axis="log_oct3", x_axis="time", vscale="dBFS", ax=ax["C"])
+librosa.display.specshow(
+    stft, y_axis="log_oct3", x_axis="time", vscale="dBFS", ax=ax["C"]
+)
 
 # And a transposed copy of the spectrogram along the left (A subplot)
-librosa.display.specshow(stft.T, x_axis="log_oct3", y_axis="time", vscale="dBFS", ax=ax["A"])
+librosa.display.specshow(
+    stft.T, x_axis="log_oct3", y_axis="time", vscale="dBFS", ax=ax["A"]
+)
 
 # Invert the horizontal axis on the transposed spectrogram so that the lowest frequency
 # appears on the right side, not the left

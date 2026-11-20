@@ -129,18 +129,14 @@ def frame(
     can be framed with frame length 3 and hop length 2 in two ways.
     The first (``axis=-1``), results in the array ``x_frames``::
 
-        [[0, 2, 4],
-         [1, 3, 5],
-         [2, 4, 6]]
+        [[0, 2, 4], [1, 3, 5], [2, 4, 6]]
 
     where each column ``x_frames[:, i]`` contains a contiguous slice of
     the input ``x[i * hop_length : i * hop_length + frame_length]``.
 
     The second way (``axis=0``) results in the array ``x_frames``::
 
-        [[0, 1, 2],
-         [2, 3, 4],
-         [4, 5, 6]]
+        [[0, 1, 2], [2, 3, 4], [4, 5, 6]]
 
     where each row ``x_frames[i]`` contains a contiguous slice of the input.
 
@@ -193,7 +189,7 @@ def frame(
     --------
     Extract 2048-sample frames from monophonic signal with a hop of 64 samples per frame
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
     >>> frames
     array([[-1.407e-03, -2.604e-02, ..., -1.795e-05, -8.108e-06],
@@ -216,7 +212,7 @@ def frame(
 
     Frame a stereo signal:
 
-    >>> y, sr = librosa.loadx('trumpet', mono=False)
+    >>> y, sr = librosa.loadx("trumpet", mono=False)
     >>> y.shape
     (2, 117601)
     >>> frames = librosa.util.frame(y, frame_length=2048, hop_length=64)
@@ -224,7 +220,7 @@ def frame(
 
     Carve an STFT into fixed-length patches of 32 frames with 50% overlap
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> S = np.abs(librosa.stft(y))
     >>> S.shape
     (1025, 230)
@@ -318,7 +314,6 @@ def valid_audio(y: np.ndarray) -> bool:
 
     >>> y[5] = np.nan
     >>> librosa.util.valid_audio(y)
-    ...
     ParameterError: Audio buffer is not finite everywhere
     """
     if not isinstance(y, np.ndarray):
@@ -565,7 +560,7 @@ def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) ->
     --------
     >>> # Generate a vector
     >>> data = np.ones(5)
-    >>> librosa.util.pad_center(data, size=10, mode='constant')
+    >>> librosa.util.pad_center(data, size=10, mode="constant")
     array([ 0.,  0.,  1.,  1.,  1.,  1.,  1.,  0.,  0.,  0.])
 
     >>> # Pad a matrix along its first dimension
@@ -641,7 +636,7 @@ def expand_to(x: np.ndarray, *, ndim: int, axes: int | slice | Sequence[int] | S
     Expand a 2d array into (1, n, m, 1) shape
 
     >>> x = np.vander(np.arange(3))
-    >>> librosa.util.expand_to(x, ndim=4, axes=[1,2]).shape
+    >>> librosa.util.expand_to(x, ndim=4, axes=[1, 2]).shape
     (1, 3, 3, 1)
     """
     # Force axes into a tuple
@@ -701,7 +696,7 @@ def fix_length(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) ->
     >>> librosa.util.fix_length(y, size=5)
     array([0, 1, 2, 3, 4])
     >>> # Use edge-padding instead of zeros
-    >>> librosa.util.fix_length(y, size=10, mode='edge')
+    >>> librosa.util.fix_length(y, size=10, mode="edge")
     array([0, 1, 2, 3, 4, 5, 6, 6, 6, 6])
     """
     kwargs.setdefault("mode", "constant")
@@ -871,7 +866,7 @@ def axis_sort(
     Visualize NMF output for a spectrogram S
 
     >>> # Sort the columns of W by peak frequency bin
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> S = np.abs(librosa.stft(y))
     >>> W, H = librosa.decompose.decompose(S, n_components=64)
     >>> W_sort = librosa.util.axis_sort(W)
@@ -891,22 +886,20 @@ def axis_sort(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, ncols=2)
-    >>> img_w = librosa.display.specshow(W, vscale='dBFS',
-    ...                                  y_axis='log', ax=ax[0, 0])
-    >>> ax[0, 0].set(title='W')
+    >>> img_w = librosa.display.specshow(W, vscale="dBFS", y_axis="log", ax=ax[0, 0])
+    >>> ax[0, 0].set(title="W")
     >>> ax[0, 0].label_outer()
-    >>> img_act = librosa.display.specshow(H, x_axis='time', ax=ax[0, 1])
-    >>> ax[0, 1].set(title='H')
+    >>> img_act = librosa.display.specshow(H, x_axis="time", ax=ax[0, 1])
+    >>> ax[0, 1].set(title="H")
     >>> ax[0, 1].label_outer()
-    >>> librosa.display.specshow(W_sort, vscale='dBFS',
-    ...                          y_axis='log', ax=ax[1, 0])
-    >>> ax[1, 0].set(title='W sorted')
-    >>> librosa.display.specshow(H_sort, x_axis='time', ax=ax[1, 1])
-    >>> ax[1, 1].set(title='H sorted')
+    >>> librosa.display.specshow(W_sort, vscale="dBFS", y_axis="log", ax=ax[1, 0])
+    >>> ax[1, 0].set(title="W sorted")
+    >>> librosa.display.specshow(H_sort, x_axis="time", ax=ax[1, 1])
+    >>> ax[1, 1].set(title="H sorted")
     >>> ax[1, 1].label_outer()
-    >>> cbar = librosa.display.colorbar_db(img_w, ax=ax[:, 0], orientation='horizontal')
+    >>> cbar = librosa.display.colorbar_db(img_w, ax=ax[:, 0], orientation="horizontal")
     >>> cbar.ax.tick_params("x", rotation=45)
-    >>> fig.colorbar(img_act, ax=ax[:, 1], orientation='horizontal')
+    >>> fig.colorbar(img_act, ax=ax[:, 1], orientation="horizontal")
     """
     if value is None:
         value = np.argmax
@@ -1225,7 +1218,7 @@ def localmax(x: np.ndarray, *, axis: int = 0) -> NDArray[np.bool]:
     array([False, False, False,  True, False,  True, False,  True], dtype=bool)
 
     >>> # Two-dimensional example
-    >>> x = np.array([[1,0,1], [2, -1, 0], [2, 1, 3]])
+    >>> x = np.array([[1, 0, 1], [2, -1, 0], [2, 1, 3]])
     >>> librosa.util.localmax(x, axis=0)
     array([[False, False, False],
            [ True, False, False],
@@ -1286,7 +1279,7 @@ def localmin(x: np.ndarray, *, axis: int = 0) -> NDArray[np.bool]:
     array([False,  True, False, False,  True, False,  True, False])
 
     >>> # Two-dimensional example
-    >>> x = np.array([[1,0,1], [2, -1, 0], [2, 1, 3]])
+    >>> x = np.array([[1, 0, 1], [2, -1, 0], [2, 1, 3]])
     >>> librosa.util.localmin(x, axis=0)
     array([[False, False, False],
            [False,  True,  True],
@@ -1534,29 +1527,45 @@ def peak_pick(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet')
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
-    ...                                          hop_length=512,
-    ...                                          aggregate=np.median)
-    >>> peaks = librosa.util.peak_pick(onset_env, pre_max=3, post_max=3, pre_avg=3, post_avg=5, delta=0.5, wait=10)
+    >>> y, sr = librosa.loadx("trumpet")
+    >>> onset_env = librosa.onset.onset_strength(
+    ...     y=y, sr=sr, hop_length=512, aggregate=np.median
+    ... )
+    >>> peaks = librosa.util.peak_pick(
+    ...     onset_env, pre_max=3, post_max=3, pre_avg=3, post_avg=5, delta=0.5, wait=10
+    ... )
     >>> peaks
     array([  3,  27,  40,  61,  72,  88, 103])
 
     Using dense output to make a boolean array of peak indicators
-    >>> librosa.util.peak_pick(onset_env, pre_max=3, post_max=3, pre_avg=3, post_avg=5,
-    ...                        delta=0.5, wait=10, sparse=False)
+    >>> librosa.util.peak_pick(
+    ...     onset_env,
+    ...     pre_max=3,
+    ...     post_max=3,
+    ...     pre_avg=3,
+    ...     post_avg=5,
+    ...     delta=0.5,
+    ...     wait=10,
+    ...     sparse=False,
+    ... )
     array([False, False, ..., False, False])
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=512)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> D = np.abs(librosa.stft(y))
-    >>> librosa.display.specshow(D, vscale='dBFS',
-    ...                          y_axis='log', x_axis='time', ax=ax[1])
-    >>> ax[0].plot(times, onset_env, alpha=0.8, label='Onset strength')
-    >>> ax[0].vlines(times[peaks], 0,
-    ...              onset_env.max(), color='r', alpha=0.8,
-    ...              label='Selected peaks')
+    >>> librosa.display.specshow(
+    ...     D, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[1]
+    ... )
+    >>> ax[0].plot(times, onset_env, alpha=0.8, label="Onset strength")
+    >>> ax[0].vlines(
+    ...     times[peaks],
+    ...     0,
+    ...     onset_env.max(),
+    ...     color="r",
+    ...     alpha=0.8,
+    ...     label="Selected peaks",
+    ... )
     >>> ax[0].legend(frameon=True, framealpha=0.8)
     >>> ax[0].label_outer()
     """
@@ -1799,13 +1808,13 @@ def index_to_slice(
     [slice(20, 35, None), slice(35, 50, None), slice(50, 65, None), slice(65, 80, None),
      slice(80, 95, None)]
     >>> # Pad to span the range (0, 100)
-    >>> librosa.util.index_to_slice(np.arange(20, 100, 15),
-    ...                             idx_min=0, idx_max=100)
+    >>> librosa.util.index_to_slice(np.arange(20, 100, 15), idx_min=0, idx_max=100)
     [slice(0, 20, None), slice(20, 35, None), slice(35, 50, None), slice(50, 65, None),
      slice(65, 80, None), slice(80, 95, None), slice(95, 100, None)]
     >>> # Use a step of 5 for each slice
-    >>> librosa.util.index_to_slice(np.arange(20, 100, 15),
-    ...                             idx_min=0, idx_max=100, step=5)
+    >>> librosa.util.index_to_slice(
+    ...     np.arange(20, 100, 15), idx_min=0, idx_max=100, step=5
+    ... )
     [slice(0, 20, 5), slice(20, 35, 5), slice(35, 50, 5), slice(50, 65, 5), slice(65, 80, 5),
      slice(80, 95, 5), slice(95, 100, 5)]
     """
@@ -1856,7 +1865,7 @@ def sync(
 
         For example, a 2-dimensional ``data`` with ``axis=-1`` should satisfy::
 
-            data_sync[:, i] = aggregate(data[:, idx[i-1]:idx[i]], axis=-1)
+            data_sync[:, i] = aggregate(data[:, idx[i - 1] : idx[i]], axis=-1)
 
     Raises
     ------
@@ -1871,7 +1880,7 @@ def sync(
     --------
     Beat-synchronous CQT spectra
 
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.loadx("choice")
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, trim=False)
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> beats = librosa.util.fix_frames(beats)
@@ -1882,8 +1891,7 @@ def sync(
 
     Use median-aggregation instead of mean
 
-    >>> C_med = librosa.util.sync(C, beats,
-    ...                              aggregate=np.median)
+    >>> C_med = librosa.util.sync(C, beats, aggregate=np.median)
 
     Or sub-beat synchronization
 
@@ -1897,19 +1905,20 @@ def sync(
     >>> beat_t = librosa.frames_to_time(beats, sr=sr)
     >>> subbeat_t = librosa.frames_to_time(sub_beats, sr=sr)
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.specshow(C, vscale='dBFS',
-    ...                          x_axis='time', ax=ax[0])
-    >>> ax[0].set(title='CQT power, shape={}'.format(C.shape))
+    >>> librosa.display.specshow(C, vscale="dBFS", x_axis="time", ax=ax[0])
+    >>> ax[0].set(title="CQT power, shape={}".format(C.shape))
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(C_med, vscale='dBFS',
-    ...                          x_coords=beat_t, x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Beat synchronous CQT power, '
-    ...                 'shape={}'.format(C_med.shape))
+    >>> librosa.display.specshow(
+    ...     C_med, vscale="dBFS", x_coords=beat_t, x_axis="time", ax=ax[1]
+    ... )
+    >>> ax[1].set(title="Beat synchronous CQT power, shape={}".format(C_med.shape))
     >>> ax[1].label_outer()
-    >>> librosa.display.specshow(C_med_sub, vscale='dBFS',
-    ...                          x_coords=subbeat_t, x_axis='time', ax=ax[2])
-    >>> ax[2].set(title='Sub-beat synchronous CQT power, '
-    ...                 'shape={}'.format(C_med_sub.shape))
+    >>> librosa.display.specshow(
+    ...     C_med_sub, vscale="dBFS", x_coords=subbeat_t, x_axis="time", ax=ax[2]
+    ... )
+    >>> ax[2].set(
+    ...     title="Sub-beat synchronous CQT power, shape={}".format(C_med_sub.shape)
+    ... )
     """
     if aggregate is None:
         aggregate = np.mean
@@ -2228,13 +2237,12 @@ def cyclic_gradient(data: np.ndarray, *, edge_order: Literal[1, 2] = 1, axis: in
     >>> cyclic_grad = librosa.util.cyclic_gradient(y)
     >>> true_grad = -np.sin(x) * 2 * np.pi / len(x)
     >>> fig, ax = plt.subplots()
-    >>> ax.plot(x, true_grad, label='True gradient', linewidth=5,
-    ...          alpha=0.35)
-    >>> ax.plot(x, cyclic_grad, label='cyclic_gradient')
-    >>> ax.plot(x, grad, label='np.gradient', linestyle=':')
+    >>> ax.plot(x, true_grad, label="True gradient", linewidth=5, alpha=0.35)
+    >>> ax.plot(x, cyclic_grad, label="cyclic_gradient")
+    >>> ax.plot(x, grad, label="np.gradient", linestyle=":")
     >>> ax.legend()
     >>> # Zoom into the first part of the sequence
-    >>> ax.set(xlim=[0, np.pi/16], ylim=[-0.025, 0.025])
+    >>> ax.set(xlim=[0, np.pi / 16], ylim=[-0.025, 0.025])
     """
     # Wrap-pad the data along the target axis by `edge_order` on each side
     padding = [(0, 0)] * data.ndim
@@ -2729,7 +2737,7 @@ def abs2(x: np.ndarray | _Real | _Complex, dtype: DTypeLike | None = None) -> np
     >>> librosa.util.abs2(3 + 4j)
     25.0
 
-    >>> librosa.util.abs2((0.5j)**np.arange(8))
+    >>> librosa.util.abs2((0.5j) ** np.arange(8))
     array([1.000e+00, 2.500e-01, 6.250e-02, 1.562e-02, 3.906e-03, 9.766e-04,
        2.441e-04, 6.104e-05])
     """
@@ -2798,18 +2806,18 @@ def phasor(
     --------
     Construct unit phasors at angles 0, pi/2, and pi:
 
-    >>> librosa.util.phasor([0, np.pi/2, np.pi])
+    >>> librosa.util.phasor([0, np.pi / 2, np.pi])
     array([ 1.000e+00+0.000e+00j,  6.123e-17+1.000e+00j,
            -1.000e+00+1.225e-16j])
 
     Construct a phasor with magnitude 1/2:
 
-    >>> librosa.util.phasor(np.pi/2, mag=0.5)
+    >>> librosa.util.phasor(np.pi / 2, mag=0.5)
     (3.061616997868383e-17+0.5j)
 
     Or arrays of angles and magnitudes:
 
-    >>> librosa.util.phasor(np.array([0, np.pi/2]), mag=np.array([0.5, 1.5]))
+    >>> librosa.util.phasor(np.array([0, np.pi / 2]), mag=np.array([0.5, 1.5]))
     array([5.000e-01+0.j , 9.185e-17+1.5j])
     """
     z = np.empty_like(angles, dtype=dtype_r2c(np.asarray(angles).dtype))

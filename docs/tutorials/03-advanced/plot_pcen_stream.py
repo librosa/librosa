@@ -48,7 +48,13 @@ hop_length = 512
 sr = librosa.get_samplerate(filename)
 
 stream = librosa.stream(
-    filename, block_length=16, frame_length=n_fft, hop_length=hop_length, mono=True, sr=sr, fill_value=0
+    filename,
+    block_length=16,
+    frame_length=n_fft,
+    hop_length=hop_length,
+    mono=True,
+    sr=sr,
+    fill_value=0,
 )
 #######################################################################
 # For this example, we'll compute PCEN on each block, find the maximum
@@ -67,12 +73,16 @@ D = None
 
 for y_block in stream:
     # Compute the STFT (without padding, so center=False)
-    D = librosa.stft(y_block, n_fft=n_fft, hop_length=hop_length, center=False, out=D)
+    D = librosa.stft(
+        y_block, n_fft=n_fft, hop_length=hop_length, center=False, out=D
+    )
 
     # Compute PCEN on the magnitude spectrum, using initial delays
     # returned from our previous call (if any)
     # store the final delays for use as zi in the next iteration
-    P, zi = librosa.pcen(np.abs(D), sr=sr, hop_length=hop_length, zi=zi, return_zf=True)
+    P, zi = librosa.pcen(
+        np.abs(D), sr=sr, hop_length=hop_length, zi=zi, return_zf=True
+    )
 
     # Compute the max PCEN over frequency, and append it to our list
     pcen_blocks.extend(np.max(P, axis=0))
@@ -101,7 +111,9 @@ pcen_full = np.max(P, axis=0)
 
 # First, plot the spectrum
 fig, ax = plt.subplots(nrows=2, sharex=True)
-librosa.display.specshow(P, sr=sr, hop_length=hop_length, x_axis="time", y_axis="log", ax=ax[0])
+librosa.display.specshow(
+    P, sr=sr, hop_length=hop_length, x_axis="time", y_axis="log", ax=ax[0]
+)
 ax[0].set(title="PCEN spectrum")
 ax[0].label_outer()
 

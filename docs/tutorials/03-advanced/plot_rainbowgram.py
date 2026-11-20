@@ -42,7 +42,15 @@ alpha = (mag - mag.min()) / (mag.max() - mag.min())
 # This mode is used to visualize how the phase at each time-frequency location compares to what
 # would be expected for a sinusoid at that frequency compared to the phase at the previous time step.
 fig, ax = plt.subplots()
-img = librosa.display.specshow(D, vscale="dphase", cmap="hsv", alpha=alpha, ax=ax, y_axis="log", x_axis="time")
+img = librosa.display.specshow(
+    D,
+    vscale="dphase",
+    cmap="hsv",
+    alpha=alpha,
+    ax=ax,
+    y_axis="log",
+    x_axis="time",
+)
 ax.set_facecolor("#000")
 librosa.display.colorbar_phase(img)
 plt.show()
@@ -63,7 +71,13 @@ plt.show()
 # is a neutral gray color, rather than black.
 fig, ax = plt.subplots()
 img = librosa.display.specshow(
-    D, vscale="dphase", cmap="twilight_shifted", alpha=alpha, ax=ax, y_axis="log", x_axis="time"
+    D,
+    vscale="dphase",
+    cmap="twilight_shifted",
+    alpha=alpha,
+    ax=ax,
+    y_axis="log",
+    x_axis="time",
 )
 ax.set_facecolor("#888")
 librosa.display.colorbar_phase(img)
@@ -73,7 +87,15 @@ librosa.display.colorbar_phase(img)
 # This can be done using the regular `twilight` colormap, which has a dark center value (0) and diverges to light colors at the extremes (±π).
 #
 fig, ax = plt.subplots()
-img = librosa.display.specshow(D, vscale="dphase", cmap="twilight", alpha=alpha, ax=ax, y_axis="log", x_axis="time")
+img = librosa.display.specshow(
+    D,
+    vscale="dphase",
+    cmap="twilight",
+    alpha=alpha,
+    ax=ax,
+    y_axis="log",
+    x_axis="time",
+)
 ax.set_facecolor("#fff")
 librosa.display.colorbar_phase(img)
 

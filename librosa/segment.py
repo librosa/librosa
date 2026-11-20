@@ -213,8 +213,8 @@ def cross_similarity(
     Find nearest neighbors in CQT space between two sequences
 
     >>> hop_length = 1024
-    >>> y_ref, sr = librosa.loadx('pistachio')
-    >>> y_comp, sr = librosa.loadx('pistachio', offset=10)
+    >>> y_ref, sr = librosa.loadx("pistachio")
+    >>> y_comp, sr = librosa.loadx("pistachio", offset=10)
     >>> chroma_ref = librosa.feature.chroma_cqt(y=y_ref, sr=sr, hop_length=hop_length)
     >>> chroma_comp = librosa.feature.chroma_cqt(y=y_comp, sr=sr, hop_length=hop_length)
     >>> # Use time-delay embedding to get a cleaner recurrence matrix
@@ -228,25 +228,34 @@ def cross_similarity(
 
     Use cosine similarity instead of Euclidean distance
 
-    >>> xsim = librosa.segment.cross_similarity(x_comp, x_ref, metric='cosine')
+    >>> xsim = librosa.segment.cross_similarity(x_comp, x_ref, metric="cosine")
 
     Use an affinity matrix instead of binary connectivity
 
-    >>> xsim_aff = librosa.segment.cross_similarity(x_comp, x_ref, metric='cosine', mode='affinity')
+    >>> xsim_aff = librosa.segment.cross_similarity(
+    ...     x_comp, x_ref, metric="cosine", mode="affinity"
+    ... )
 
     Plot the feature and recurrence matrices
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-    >>> imgsim = librosa.display.specshow(xsim, x_axis='s', y_axis='s',
-    ...                          hop_length=hop_length, ax=ax[0])
-    >>> ax[0].set(title='Binary cross-similarity (symmetric)')
-    >>> imgaff = librosa.display.specshow(xsim_aff, x_axis='s', y_axis='s',
-    ...                          cmap='magma_r', hop_length=hop_length, ax=ax[1])
-    >>> ax[1].set(title='Cross-affinity')
+    >>> imgsim = librosa.display.specshow(
+    ...     xsim, x_axis="s", y_axis="s", hop_length=hop_length, ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Binary cross-similarity (symmetric)")
+    >>> imgaff = librosa.display.specshow(
+    ...     xsim_aff,
+    ...     x_axis="s",
+    ...     y_axis="s",
+    ...     cmap="magma_r",
+    ...     hop_length=hop_length,
+    ...     ax=ax[1],
+    ... )
+    >>> ax[1].set(title="Cross-affinity")
     >>> ax[1].label_outer()
-    >>> fig.colorbar(imgsim, ax=ax[0], orientation='horizontal', ticks=[0, 1])
-    >>> fig.colorbar(imgaff, ax=ax[1], orientation='horizontal')
+    >>> fig.colorbar(imgsim, ax=ax[0], orientation="horizontal", ticks=[0, 1])
+    >>> fig.colorbar(imgaff, ax=ax[1], orientation="horizontal")
     """
     data_ref = np.atleast_2d(data_ref)
     data = np.atleast_2d(data)
@@ -528,7 +537,7 @@ def recurrence_matrix(
     --------
     Find nearest neighbors in CQT space
 
-    >>> y, sr = librosa.loadx('nutcracker')
+    >>> y, sr = librosa.loadx("nutcracker")
     >>> hop_length = 1024
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> # Use time-delay embedding to get a cleaner recurrence matrix
@@ -545,7 +554,7 @@ def recurrence_matrix(
 
     Use cosine similarity instead of Euclidean distance
 
-    >>> R = librosa.segment.recurrence_matrix(chroma_stack, metric='cosine')
+    >>> R = librosa.segment.recurrence_matrix(chroma_stack, metric="cosine")
 
     Require mutual nearest neighbors
 
@@ -553,22 +562,30 @@ def recurrence_matrix(
 
     Use an affinity matrix instead of binary connectivity
 
-    >>> R_aff = librosa.segment.recurrence_matrix(chroma_stack, metric='cosine',
-    ...                                           mode='affinity')
+    >>> R_aff = librosa.segment.recurrence_matrix(
+    ...     chroma_stack, metric="cosine", mode="affinity"
+    ... )
 
     Plot the feature and recurrence matrices
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-    >>> imgsim = librosa.display.specshow(R, x_axis='s', y_axis='s',
-    ...                          hop_length=hop_length, ax=ax[0])
-    >>> ax[0].set(title='Binary recurrence (symmetric)')
-    >>> imgaff = librosa.display.specshow(R_aff, x_axis='s', y_axis='s',
-    ...                          hop_length=hop_length, cmap='magma_r', ax=ax[1])
-    >>> ax[1].set(title='Affinity recurrence')
+    >>> imgsim = librosa.display.specshow(
+    ...     R, x_axis="s", y_axis="s", hop_length=hop_length, ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Binary recurrence (symmetric)")
+    >>> imgaff = librosa.display.specshow(
+    ...     R_aff,
+    ...     x_axis="s",
+    ...     y_axis="s",
+    ...     hop_length=hop_length,
+    ...     cmap="magma_r",
+    ...     ax=ax[1],
+    ... )
+    >>> ax[1].set(title="Affinity recurrence")
     >>> ax[1].label_outer()
-    >>> fig.colorbar(imgsim, ax=ax[0], orientation='horizontal', ticks=[0, 1])
-    >>> fig.colorbar(imgaff, ax=ax[1], orientation='horizontal')
+    >>> fig.colorbar(imgsim, ax=ax[0], orientation="horizontal", ticks=[0, 1])
+    >>> fig.colorbar(imgaff, ax=ax[1], orientation="horizontal")
     """
     data = np.atleast_2d(data)
 
@@ -725,7 +742,7 @@ def recurrence_to_lag(rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int =
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('nutcracker')
+    >>> y, sr = librosa.loadx("nutcracker")
     >>> hop_length = 1024
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
@@ -735,13 +752,15 @@ def recurrence_to_lag(rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int =
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(lag_pad, x_axis='time', y_axis='lag',
-    ...                          hop_length=hop_length, ax=ax[0])
-    >>> ax[0].set(title='Lag (zero-padded)')
+    >>> librosa.display.specshow(
+    ...     lag_pad, x_axis="time", y_axis="lag", hop_length=hop_length, ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Lag (zero-padded)")
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(lag_nopad, x_axis='time', y_axis='lag',
-    ...                          hop_length=hop_length, ax=ax[1])
-    >>> ax[1].set(title='Lag (no padding)')
+    >>> librosa.display.specshow(
+    ...     lag_nopad, x_axis="time", y_axis="lag", hop_length=hop_length, ax=ax[1]
+    ... )
+    >>> ax[1].set(title="Lag (no padding)")
     """
     axis = np.abs(axis)
 
@@ -808,7 +827,7 @@ def lag_to_recurrence(lag: _ArrayOrSparseArray, *, axis: int = -1) -> _ArrayOrSp
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('nutcracker')
+    >>> y, sr = librosa.loadx("nutcracker")
     >>> hop_length = 1024
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
@@ -820,20 +839,24 @@ def lag_to_recurrence(lag: _ArrayOrSparseArray, *, axis: int = -1) -> _ArrayOrSp
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, ncols=2, sharex=True)
-    >>> librosa.display.specshow(lag_pad, x_axis='s', y_axis='lag',
-    ...                          hop_length=hop_length, ax=ax[0, 0])
-    >>> ax[0, 0].set(title='Lag (zero-padded)')
+    >>> librosa.display.specshow(
+    ...     lag_pad, x_axis="s", y_axis="lag", hop_length=hop_length, ax=ax[0, 0]
+    ... )
+    >>> ax[0, 0].set(title="Lag (zero-padded)")
     >>> ax[0, 0].label_outer()
-    >>> librosa.display.specshow(lag_nopad, x_axis='s', y_axis='time',
-    ...                          hop_length=hop_length, ax=ax[0, 1])
-    >>> ax[0, 1].set(title='Lag (no padding)')
+    >>> librosa.display.specshow(
+    ...     lag_nopad, x_axis="s", y_axis="time", hop_length=hop_length, ax=ax[0, 1]
+    ... )
+    >>> ax[0, 1].set(title="Lag (no padding)")
     >>> ax[0, 1].label_outer()
-    >>> librosa.display.specshow(rec_pad, x_axis='s', y_axis='time',
-    ...                          hop_length=hop_length, ax=ax[1, 0])
-    >>> ax[1, 0].set(title='Recurrence (with padding)')
-    >>> librosa.display.specshow(rec_nopad, x_axis='s', y_axis='time',
-    ...                          hop_length=hop_length, ax=ax[1, 1])
-    >>> ax[1, 1].set(title='Recurrence (without padding)')
+    >>> librosa.display.specshow(
+    ...     rec_pad, x_axis="s", y_axis="time", hop_length=hop_length, ax=ax[1, 0]
+    ... )
+    >>> ax[1, 0].set(title="Recurrence (with padding)")
+    >>> librosa.display.specshow(
+    ...     rec_nopad, x_axis="s", y_axis="time", hop_length=hop_length, ax=ax[1, 1]
+    ... )
+    >>> ax[1, 1].set(title="Recurrence (without padding)")
     >>> ax[1, 1].label_outer()
     """
     if axis not in [0, 1, -1]:
@@ -890,33 +913,35 @@ def timelag_filter[F: Callable[..., Any]](function: F, pad: bool = True, index: 
     With default, parameters, this corresponds to a time window of about
     0.72 seconds.
 
-    >>> y, sr = librosa.loadx('nutcracker', duration=30)
+    >>> y, sr = librosa.loadx("nutcracker", duration=30)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=3, delay=3)
     >>> rec = librosa.segment.recurrence_matrix(chroma_stack)
     >>> from scipy.ndimage import median_filter
     >>> diagonal_median = librosa.segment.timelag_filter(median_filter)
-    >>> rec_filtered = diagonal_median(rec, size=(1, 31), mode='mirror')
+    >>> rec_filtered = diagonal_median(rec, size=(1, 31), mode="mirror")
 
     Or with affinity weights
 
-    >>> rec_aff = librosa.segment.recurrence_matrix(chroma_stack, mode='affinity')
-    >>> rec_aff_fil = diagonal_median(rec_aff, size=(1, 31), mode='mirror')
+    >>> rec_aff = librosa.segment.recurrence_matrix(chroma_stack, mode="affinity")
+    >>> rec_aff_fil = diagonal_median(rec_aff, size=(1, 31), mode="mirror")
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(rec, y_axis='s', x_axis='s', ax=ax[0, 0])
-    >>> ax[0, 0].set(title='Raw recurrence matrix')
+    >>> librosa.display.specshow(rec, y_axis="s", x_axis="s", ax=ax[0, 0])
+    >>> ax[0, 0].set(title="Raw recurrence matrix")
     >>> ax[0, 0].label_outer()
-    >>> librosa.display.specshow(rec_filtered, y_axis='s', x_axis='s', ax=ax[0, 1])
-    >>> ax[0, 1].set(title='Filtered recurrence matrix')
+    >>> librosa.display.specshow(rec_filtered, y_axis="s", x_axis="s", ax=ax[0, 1])
+    >>> ax[0, 1].set(title="Filtered recurrence matrix")
     >>> ax[0, 1].label_outer()
-    >>> librosa.display.specshow(rec_aff, x_axis='s', y_axis='s',
-    ...                          cmap='magma_r', ax=ax[1, 0])
-    >>> ax[1, 0].set(title='Raw affinity matrix')
-    >>> librosa.display.specshow(rec_aff_fil, x_axis='s', y_axis='s',
-    ...                          cmap='magma_r', ax=ax[1, 1])
-    >>> ax[1, 1].set(title='Filtered affinity matrix')
+    >>> librosa.display.specshow(
+    ...     rec_aff, x_axis="s", y_axis="s", cmap="magma_r", ax=ax[1, 0]
+    ... )
+    >>> ax[1, 0].set(title="Raw affinity matrix")
+    >>> librosa.display.specshow(
+    ...     rec_aff_fil, x_axis="s", y_axis="s", cmap="magma_r", ax=ax[1, 1]
+    ... )
+    >>> ax[1, 1].set(title="Filtered affinity matrix")
     >>> ax[1, 1].label_outer()
     """
 
@@ -982,33 +1007,81 @@ def subsegment(data: np.ndarray, frames: np.ndarray, *, n_segments: int = 4, axi
     --------
     Load audio, detect beat frames, and subdivide in twos by CQT
 
-    >>> y, sr = librosa.loadx('choice', duration=6.5)
+    >>> y, sr = librosa.loadx("choice", duration=6.5)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
-    >>> cqt = np.abs(librosa.cqt(y, sr=sr, bins_per_octave=36, n_bins=36*7, hop_length=512))
+    >>> cqt = np.abs(
+    ...     librosa.cqt(y, sr=sr, bins_per_octave=36, n_bins=36 * 7, hop_length=512)
+    ... )
     >>> subseg = librosa.segment.subsegment(cqt, beats, n_segments=2)
     >>> subseg_t = librosa.frames_to_time(subseg, sr=sr, hop_length=512)
 
     >>> import matplotlib.pyplot as plt
     >>> import matplotlib.transforms as mpt
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(cqt, vscale='dBFS', bins_per_octave=36,
-    ...                          y_axis='cqt_hz', x_axis='time', ax=ax)
+    >>> librosa.display.specshow(
+    ...     cqt,
+    ...     vscale="dBFS",
+    ...     bins_per_octave=36,
+    ...     y_axis="cqt_hz",
+    ...     x_axis="time",
+    ...     ax=ax,
+    ... )
     >>> hl = librosa.display.highlight(ax=ax, alpha=0.75, linewidth=2)
-    >>> trans = mpt.blended_transform_factory(
-    ...             ax.transData, ax.transAxes)
-    >>> ax.plot(beat_times, np.zeros_like(beat_times), '^', zorder=4,
-    ...         markerfacecolor='C0', color='C0', linestyle='', clip_on=False,
-    ...         markersize=10, label='Beats', transform=trans, path_effects=hl)
-    >>> ax.vlines(beat_times, 0, 1, color='C0', linestyle='-', transform=trans,
-    ...            linewidth=3, alpha=0.9, zorder=1.5, path_effects=hl)
-    >>> ax.plot(subseg_t, np.zeros_like(subseg_t), '^', zorder=3,
-    ...         markerfacecolor='C2', color='C2', linestyle='', clip_on=False,
-    ...         markersize=6, label='Sub-beats', transform=trans, path_effects=hl)
-    >>> ax.vlines(subseg_t, 0, 1, color='C2', linestyle='--', transform=trans,
-    ...            linewidth=1, alpha=0.9, path_effects=hl)
-    >>> ax.legend(loc='upper right')
-    >>> ax.set(title='CQT + Beat and sub-beat markers')
+    >>> trans = mpt.blended_transform_factory(ax.transData, ax.transAxes)
+    >>> ax.plot(
+    ...     beat_times,
+    ...     np.zeros_like(beat_times),
+    ...     "^",
+    ...     zorder=4,
+    ...     markerfacecolor="C0",
+    ...     color="C0",
+    ...     linestyle="",
+    ...     clip_on=False,
+    ...     markersize=10,
+    ...     label="Beats",
+    ...     transform=trans,
+    ...     path_effects=hl,
+    ... )
+    >>> ax.vlines(
+    ...     beat_times,
+    ...     0,
+    ...     1,
+    ...     color="C0",
+    ...     linestyle="-",
+    ...     transform=trans,
+    ...     linewidth=3,
+    ...     alpha=0.9,
+    ...     zorder=1.5,
+    ...     path_effects=hl,
+    ... )
+    >>> ax.plot(
+    ...     subseg_t,
+    ...     np.zeros_like(subseg_t),
+    ...     "^",
+    ...     zorder=3,
+    ...     markerfacecolor="C2",
+    ...     color="C2",
+    ...     linestyle="",
+    ...     clip_on=False,
+    ...     markersize=6,
+    ...     label="Sub-beats",
+    ...     transform=trans,
+    ...     path_effects=hl,
+    ... )
+    >>> ax.vlines(
+    ...     subseg_t,
+    ...     0,
+    ...     1,
+    ...     color="C2",
+    ...     linestyle="--",
+    ...     transform=trans,
+    ...     linewidth=1,
+    ...     alpha=0.9,
+    ...     path_effects=hl,
+    ... )
+    >>> ax.legend(loc="upper right")
+    >>> ax.set(title="CQT + Beat and sub-beat markers")
     """
     frames = util.fix_frames(frames, x_min=0, x_max=data.shape[axis], pad=True)
 
@@ -1071,7 +1144,7 @@ def agglomerative(
     --------
     Cluster by chroma similarity, break into 20 segments
 
-    >>> y, sr = librosa.loadx('nutcracker', duration=15)
+    >>> y, sr = librosa.loadx("nutcracker", duration=15)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, threshold=0.5)
     >>> bounds = librosa.segment.agglomerative(chroma, 20)
     >>> bound_times = librosa.frames_to_time(bounds, sr=sr)
@@ -1085,15 +1158,20 @@ def agglomerative(
     >>> import matplotlib.pyplot as plt
     >>> import matplotlib.transforms as mpt
     >>> fig, ax = plt.subplots()
-    >>> trans = mpt.blended_transform_factory(
-    ...             ax.transData, ax.transAxes)
-    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax)
+    >>> trans = mpt.blended_transform_factory(ax.transData, ax.transAxes)
+    >>> librosa.display.specshow(chroma, y_axis="chroma", x_axis="time", ax=ax)
     >>> hl = librosa.display.highlight(ax=ax)
-    >>> ax.vlines(bound_times, 0, 1, linestyle='--', path_effects=hl,
-    ...           label='Segment boundaries',
-    ...           transform=trans)
+    >>> ax.vlines(
+    ...     bound_times,
+    ...     0,
+    ...     1,
+    ...     linestyle="--",
+    ...     path_effects=hl,
+    ...     label="Segment boundaries",
+    ...     transform=trans,
+    ... )
     >>> ax.legend()
-    >>> ax.set(title='Power spectrogram')
+    >>> ax.set(title="Power spectrogram")
     """
     # Make sure we have at least two dimensions
     data = np.atleast_2d(data)
@@ -1143,7 +1221,7 @@ def path_enhance(
 
     Technically, the output is a matrix R_smooth such that::
 
-        R_smooth[i, j] = max_theta (R * filter_theta)[i, j]
+        R_smooth[i, j] = max_theta(R * filter_theta)[i, j]
 
     where `*` denotes 2-dimensional convolution, and ``filter_theta`` is a smoothing filter at
     orientation theta.
@@ -1226,26 +1304,30 @@ def path_enhance(
     --------
     Use a 51-frame diagonal smoothing filter to enhance paths in a recurrence matrix
 
-    >>> y, sr = librosa.loadx('nutcracker')
+    >>> y, sr = librosa.loadx("nutcracker")
     >>> hop_length = 2048
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
-    >>> rec = librosa.segment.recurrence_matrix(chroma_stack, mode='affinity', self=True)
-    >>> rec_smooth = librosa.segment.path_enhance(rec, 51, window='hann', n_filters=7)
+    >>> rec = librosa.segment.recurrence_matrix(
+    ...     chroma_stack, mode="affinity", self=True
+    ... )
+    >>> rec_smooth = librosa.segment.path_enhance(rec, 51, window="hann", n_filters=7)
 
     Plot the recurrence matrix before and after smoothing
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(rec, x_axis='s', y_axis='s',
-    ...                          hop_length=hop_length, ax=ax[0])
-    >>> ax[0].set(title='Unfiltered recurrence')
-    >>> imgpe = librosa.display.specshow(rec_smooth, x_axis='s', y_axis='s',
-    ...                          hop_length=hop_length, ax=ax[1])
-    >>> ax[1].set(title='Multi-angle enhanced recurrence')
+    >>> img = librosa.display.specshow(
+    ...     rec, x_axis="s", y_axis="s", hop_length=hop_length, ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Unfiltered recurrence")
+    >>> imgpe = librosa.display.specshow(
+    ...     rec_smooth, x_axis="s", y_axis="s", hop_length=hop_length, ax=ax[1]
+    ... )
+    >>> ax[1].set(title="Multi-angle enhanced recurrence")
     >>> ax[1].label_outer()
-    >>> fig.colorbar(img, ax=ax[0], orientation='horizontal')
-    >>> fig.colorbar(imgpe, ax=ax[1], orientation='horizontal')
+    >>> fig.colorbar(img, ax=ax[0], orientation="horizontal")
+    >>> fig.colorbar(imgpe, ax=ax[1], orientation="horizontal")
     """
     if min_ratio is None:
         min_ratio = 1.0 / max_ratio
@@ -1456,10 +1538,10 @@ def diagonal_convolve(
     Compute the main diagonal of a 2D convolution with a 17x17 checkerboard kernel
     on a short excerpt:
 
-    >>> y, sr = librosa.loadx('nutcracker', duration=30)
+    >>> y, sr = librosa.loadx("nutcracker", duration=30)
     >>> hop_length = 512
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
-    >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity', self=True)
+    >>> rec = librosa.segment.recurrence_matrix(chroma, mode="affinity", self=True)
     >>> kernel = librosa.filters.checkerboard_kernel(17)
     >>> nov = librosa.segment.diagonal_convolve(rec, kernel)
 
@@ -1467,14 +1549,16 @@ def diagonal_convolve(
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(nov, sr=sr, hop_length=hop_length)
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, height_ratios=[3, 1],
-    ...                        layout='compressed')
-    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time', sr=sr,
-    ...                          hop_length=hop_length, ax=ax[0])
-    >>> ax[0].set(title='Recurrence Matrix')
+    >>> fig, ax = plt.subplots(
+    ...     nrows=2, sharex=True, height_ratios=[3, 1], layout="compressed"
+    ... )
+    >>> librosa.display.specshow(
+    ...     rec, x_axis="time", y_axis="time", sr=sr, hop_length=hop_length, ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Recurrence Matrix")
     >>> ax[0].label_outer()
-    >>> ax[1].plot(times, nov, label='Novelty')
-    >>> ax[1].set(title='Diagonal 2D Convolution (Novelty)', xlabel='Time (s)')
+    >>> ax[1].plot(times, nov, label="Novelty")
+    >>> ax[1].set(title="Diagonal 2D Convolution (Novelty)", xlabel="Time (s)")
     >>> ax[1].legend()
     """
     if scipy.sparse.issparse(data):
@@ -1650,30 +1734,36 @@ def recurrence_novelty(
     Compute and plot Foote's novelty curve on a short excerpt using a 17-frame boxcar
     checkerboard kernel:
 
-    >>> y, sr = librosa.loadx('nutcracker', duration=30)
+    >>> y, sr = librosa.loadx("nutcracker", duration=30)
     >>> hop_length = 512
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, hop_length=hop_length)
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
-    >>> rec = librosa.segment.recurrence_matrix(chroma_stack, mode='affinity', self=True)
+    >>> rec = librosa.segment.recurrence_matrix(
+    ...     chroma_stack, mode="affinity", self=True
+    ... )
     >>> nov = librosa.segment.recurrence_novelty(rec, n=17)
 
     Compare unwindowed (boxcar) and Gaussian-tapered novelty curves:
 
-    >>> nov_gauss = librosa.segment.recurrence_novelty(rec, n=17, window='gaussian', var=0.5)
+    >>> nov_gauss = librosa.segment.recurrence_novelty(
+    ...     rec, n=17, window="gaussian", var=0.5
+    ... )
 
     Plot the recurrence matrix and both novelty curves with proportional heights:
 
     >>> import matplotlib.pyplot as plt
     >>> times = librosa.times_like(nov, sr=sr, hop_length=hop_length)
-    >>> fig, ax = plt.subplots(nrows=2, sharex=True, height_ratios=[3, 1],
-    ...                        layout='compressed')
-    >>> librosa.display.specshow(rec, x_axis='time', y_axis='time', sr=sr,
-    ...                          hop_length=hop_length, ax=ax[0])
-    >>> ax[0].set(title='Recurrence Matrix')
+    >>> fig, ax = plt.subplots(
+    ...     nrows=2, sharex=True, height_ratios=[3, 1], layout="compressed"
+    ... )
+    >>> librosa.display.specshow(
+    ...     rec, x_axis="time", y_axis="time", sr=sr, hop_length=hop_length, ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Recurrence Matrix")
     >>> ax[0].label_outer()
-    >>> ax[1].plot(times, nov, label='Boxcar (default)')
-    >>> ax[1].plot(times, nov_gauss, label='Gaussian (var=0.5)', linestyle='--')
-    >>> ax[1].set(title='Foote Novelty Curve', xlabel='Time (s)')
+    >>> ax[1].plot(times, nov, label="Boxcar (default)")
+    >>> ax[1].plot(times, nov_gauss, label="Gaussian (var=0.5)", linestyle="--")
+    >>> ax[1].set(title="Foote Novelty Curve", xlabel="Time (s)")
     >>> ax[1].legend()
     """
     if kernel is None:

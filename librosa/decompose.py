@@ -144,14 +144,13 @@ def decompose(
     --------
     Decompose a magnitude spectrogram into 16 components with NMF
 
-    >>> y, sr = librosa.loadx('pistachio', duration=5)
+    >>> y, sr = librosa.loadx("pistachio", duration=5)
     >>> S = np.abs(librosa.stft(y))
     >>> comps, acts = librosa.decompose.decompose(S, n_components=16)
 
     Sort components by ascending peak frequency
 
-    >>> comps, acts = librosa.decompose.decompose(S, n_components=16,
-    ...                                           sort=True)
+    >>> comps, acts = librosa.decompose.decompose(S, n_components=16, sort=True)
 
     Or with sparse dictionary learning
 
@@ -167,26 +166,27 @@ def decompose(
     >>> import matplotlib.pyplot as plt
     >>> layout = [list(".AAAA"), list("BCCCC"), list(".DDDD")]
     >>> fig, ax = plt.subplot_mosaic(layout, constrained_layout=True)
-    >>> librosa.display.specshow(S, vscale='dBFS',
-    ...                          y_axis='log', x_axis='time', ax=ax['A'])
-    >>> ax['A'].set(title='Input spectrogram')
-    >>> ax['A'].label_outer()
-    >>> librosa.display.specshow(comps, vscale='dBFS',
-    ...                          y_axis='log', ax=ax['B'])
-    >>> ax['B'].set(title='Components')
-    >>> ax['B'].label_outer()
-    >>> ax['B'].sharey(ax['A'])
-    >>> librosa.display.specshow(acts, x_axis='time', ax=ax['C'], cmap='gray_r')
-    >>> ax['C'].set(ylabel='Components', title='Activations')
-    >>> ax['C'].sharex(ax['A'])
-    >>> ax['C'].label_outer()
+    >>> librosa.display.specshow(
+    ...     S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax["A"]
+    ... )
+    >>> ax["A"].set(title="Input spectrogram")
+    >>> ax["A"].label_outer()
+    >>> librosa.display.specshow(comps, vscale="dBFS", y_axis="log", ax=ax["B"])
+    >>> ax["B"].set(title="Components")
+    >>> ax["B"].label_outer()
+    >>> ax["B"].sharey(ax["A"])
+    >>> librosa.display.specshow(acts, x_axis="time", ax=ax["C"], cmap="gray_r")
+    >>> ax["C"].set(ylabel="Components", title="Activations")
+    >>> ax["C"].sharex(ax["A"])
+    >>> ax["C"].label_outer()
     >>> S_approx = comps.dot(acts)
-    >>> img = librosa.display.specshow(S_approx, vscale='dBFS',
-    ...                                y_axis='log', x_axis='time', ax=ax['D'])
-    >>> ax['D'].set(title='Reconstructed spectrogram')
-    >>> ax['D'].sharex(ax['A'])
-    >>> ax['D'].sharey(ax['A'])
-    >>> ax['D'].label_outer()
+    >>> img = librosa.display.specshow(
+    ...     S_approx, vscale="dBFS", y_axis="log", x_axis="time", ax=ax["D"]
+    ... )
+    >>> ax["D"].set(title="Reconstructed spectrogram")
+    >>> ax["D"].sharex(ax["A"])
+    >>> ax["D"].sharey(ax["A"])
+    >>> ax["D"].label_outer()
     >>> librosa.display.colorbar_db(img, ax=list(ax.values()))
     """
     # Do a swapaxes and unroll
@@ -379,33 +379,34 @@ def pitch_nmf(
     --------
     Decompose a trumpet spectrogram into pitch and residual components:
 
-    >>> y, sr = librosa.loadx('trumpet', duration=3)
+    >>> y, sr = librosa.loadx("trumpet", duration=3)
     >>> S = np.abs(librosa.stft(y))
-    >>> comps, acts = librosa.decompose.pitch_nmf(S, sr=sr, n_pitches=72, fmin='C2')
+    >>> comps, acts = librosa.decompose.pitch_nmf(S, sr=sr, n_pitches=72, fmin="C2")
 
     >>> import matplotlib.pyplot as plt
     >>> layout = [list(".AAAA"), list("BCCCC"), list(".DDDD")]
     >>> fig, ax = plt.subplot_mosaic(layout, constrained_layout=True)
-    >>> librosa.display.specshow(S, vscale='dBFS',
-    ...                          y_axis='log', x_axis='time', ax=ax['A'])
-    >>> ax['A'].set(title='Input spectrogram')
-    >>> ax['A'].label_outer()
-    >>> librosa.display.specshow(comps, vscale='dBFS',
-    ...                          y_axis='log', ax=ax['B'])
-    >>> ax['B'].set(title='Components')
-    >>> ax['B'].label_outer()
-    >>> ax['B'].sharey(ax['A'])
-    >>> librosa.display.specshow(acts, x_axis='time', ax=ax['C'], cmap='gray_r')
-    >>> ax['C'].set(ylabel='Components', title='Activations')
-    >>> ax['C'].sharex(ax['A'])
-    >>> ax['C'].label_outer()
+    >>> librosa.display.specshow(
+    ...     S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax["A"]
+    ... )
+    >>> ax["A"].set(title="Input spectrogram")
+    >>> ax["A"].label_outer()
+    >>> librosa.display.specshow(comps, vscale="dBFS", y_axis="log", ax=ax["B"])
+    >>> ax["B"].set(title="Components")
+    >>> ax["B"].label_outer()
+    >>> ax["B"].sharey(ax["A"])
+    >>> librosa.display.specshow(acts, x_axis="time", ax=ax["C"], cmap="gray_r")
+    >>> ax["C"].set(ylabel="Components", title="Activations")
+    >>> ax["C"].sharex(ax["A"])
+    >>> ax["C"].label_outer()
     >>> S_approx = comps.dot(acts)
-    >>> img = librosa.display.specshow(S_approx, vscale='dBFS',
-    ...                                y_axis='log', x_axis='time', ax=ax['D'])
-    >>> ax['D'].set(title='Reconstructed spectrogram')
-    >>> ax['D'].sharex(ax['A'])
-    >>> ax['D'].sharey(ax['A'])
-    >>> ax['D'].label_outer()
+    >>> img = librosa.display.specshow(
+    ...     S_approx, vscale="dBFS", y_axis="log", x_axis="time", ax=ax["D"]
+    ... )
+    >>> ax["D"].set(title="Reconstructed spectrogram")
+    >>> ax["D"].sharex(ax["A"])
+    >>> ax["D"].sharey(ax["A"])
+    >>> ax["D"].label_outer()
     >>> librosa.display.colorbar_db(img, ax=list(ax.values()))
     """
     if freq_in is None and n_fft is None:
@@ -525,24 +526,27 @@ def hpss(
     --------
     Separate into harmonic and percussive
 
-    >>> y, sr = librosa.loadx('choice', duration=5)
+    >>> y, sr = librosa.loadx("choice", duration=5)
     >>> D = librosa.stft(y)
     >>> H, P = librosa.decompose.hpss(D)
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(D, vscale='dBFS',
-    ...                                y_axis='log', x_axis='time', ax=ax[0])
-    >>> ax[0].set(title='Full power spectrogram')
+    >>> img = librosa.display.specshow(
+    ...     D, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Full power spectrogram")
     >>> ax[0].label_outer()
     >>> ref = np.max(np.abs(D))  # reference for dBFS scaling comes from full mix
-    >>> librosa.display.specshow(H, vscale=f'dB[{ref}]',
-    ...                          y_axis='log', x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Harmonic power spectrogram')
+    >>> librosa.display.specshow(
+    ...     H, vscale=f"dB[{ref}]", y_axis="log", x_axis="time", ax=ax[1]
+    ... )
+    >>> ax[1].set(title="Harmonic power spectrogram")
     >>> ax[1].label_outer()
-    >>> librosa.display.specshow(P, vscale=f'dB[{ref}]',
-    ...                          y_axis='log', x_axis='time', ax=ax[2])
-    >>> ax[2].set(title='Percussive power spectrogram')
+    >>> librosa.display.specshow(
+    ...     P, vscale=f"dB[{ref}]", y_axis="log", x_axis="time", ax=ax[2]
+    ... )
+    >>> ax[2].set(title="Percussive power spectrogram")
     >>> librosa.display.colorbar_db(img, ax=ax)
 
     Or with a narrower horizontal filter
@@ -570,14 +574,14 @@ def hpss(
     Separate into harmonic/percussive/residual components by using a margin > 1.0
 
     >>> H, P = librosa.decompose.hpss(D, margin=3.0)
-    >>> R = D - (H+P)
+    >>> R = D - (H + P)
     >>> y_harm = librosa.istft(H)
     >>> y_perc = librosa.istft(P)
     >>> y_resi = librosa.istft(R)
 
     Get a more isolated percussive component by widening its margin
 
-    >>> H, P = librosa.decompose.hpss(D, margin=(1.0,5.0))
+    >>> H, P = librosa.decompose.hpss(D, margin=(1.0, 5.0))
     """
     phase: float | np.ndarray
 
@@ -719,38 +723,42 @@ def nn_filter(
     By default this would use euclidean distance to select neighbors,
     but this can be overridden directly by setting the ``metric`` parameter.
 
-    >>> y, sr = librosa.loadx('brahms', offset=30, duration=10)
+    >>> y, sr = librosa.loadx("brahms", offset=30, duration=10)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
-    >>> chroma_med = librosa.decompose.nn_filter(chroma,
-    ...                                          aggregate=np.median,
-    ...                                          metric='cosine')
+    >>> chroma_med = librosa.decompose.nn_filter(
+    ...     chroma, aggregate=np.median, metric="cosine"
+    ... )
 
     To use non-local means, provide an affinity matrix and ``aggregate=np.average``.
 
-    >>> rec = librosa.segment.recurrence_matrix(chroma, mode='affinity',
-    ...                                         metric='cosine', sparse=True)
-    >>> chroma_nlm = librosa.decompose.nn_filter(chroma, rec=rec,
-    ...                                          aggregate=np.average)
+    >>> rec = librosa.segment.recurrence_matrix(
+    ...     chroma, mode="affinity", metric="cosine", sparse=True
+    ... )
+    >>> chroma_nlm = librosa.decompose.nn_filter(chroma, rec=rec, aggregate=np.average)
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=5, sharex=True, sharey=True, figsize=(10, 10))
-    >>> librosa.display.specshow(chroma, y_axis='chroma', x_axis='time', ax=ax[0])
-    >>> ax[0].set(title='Unfiltered')
+    >>> librosa.display.specshow(chroma, y_axis="chroma", x_axis="time", ax=ax[0])
+    >>> ax[0].set(title="Unfiltered")
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(chroma_med, y_axis='chroma', x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Median-filtered')
+    >>> librosa.display.specshow(chroma_med, y_axis="chroma", x_axis="time", ax=ax[1])
+    >>> ax[1].set(title="Median-filtered")
     >>> ax[1].label_outer()
-    >>> imgc = librosa.display.specshow(chroma_nlm, y_axis='chroma', x_axis='time', ax=ax[2])
-    >>> ax[2].set(title='Non-local means')
+    >>> imgc = librosa.display.specshow(
+    ...     chroma_nlm, y_axis="chroma", x_axis="time", ax=ax[2]
+    ... )
+    >>> ax[2].set(title="Non-local means")
     >>> ax[2].label_outer()
-    >>> imgr1 = librosa.display.specshow(chroma - chroma_med,
-    ...                          y_axis='chroma', x_axis='time', ax=ax[3])
-    >>> ax[3].set(title='Original - median')
+    >>> imgr1 = librosa.display.specshow(
+    ...     chroma - chroma_med, y_axis="chroma", x_axis="time", ax=ax[3]
+    ... )
+    >>> ax[3].set(title="Original - median")
     >>> ax[3].label_outer()
-    >>> imgr2 = librosa.display.specshow(chroma - chroma_nlm,
-    ...                          y_axis='chroma', x_axis='time', ax=ax[4])
+    >>> imgr2 = librosa.display.specshow(
+    ...     chroma - chroma_nlm, y_axis="chroma", x_axis="time", ax=ax[4]
+    ... )
     >>> ax[4].label_outer()
-    >>> ax[4].set(title='Original - NLM')
+    >>> ax[4].set(title="Original - NLM")
     >>> fig.colorbar(imgc, ax=ax[:3])
     >>> fig.colorbar(imgr1, ax=[ax[3]])
     >>> fig.colorbar(imgr2, ax=[ax[4]])

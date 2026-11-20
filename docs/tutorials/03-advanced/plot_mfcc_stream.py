@@ -88,7 +88,9 @@ def streamed_mfcc(**kwargs):
 # For comparison, load the whole file and compute the MFCCs in one pass.
 y, sr = librosa.load(filename, sr=sr)
 
-whole_default = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length, center=False)
+whole_default = librosa.feature.mfcc(
+    y=y, sr=sr, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length, center=False
+)
 stream_default = streamed_mfcc()
 
 #####################################################################
@@ -154,11 +156,23 @@ print(f"top_db=None, ref=np.max: max difference = {refmax_error:.4g}")
 # frames in a block without one are not.
 fig, ax = plt.subplots(nrows=3, sharex=True, figsize=(10, 8))
 
-librosa.display.specshow(whole_default[..., :n], x_axis="time", sr=sr, hop_length=hop_length, ax=ax[0])
+librosa.display.specshow(
+    whole_default[..., :n],
+    x_axis="time",
+    sr=sr,
+    hop_length=hop_length,
+    ax=ax[0],
+)
 ax[0].set(title="MFCC, whole file, default top_db", ylabel="MFCC")
 ax[0].label_outer()
 
-librosa.display.specshow(stream_default[..., :n], x_axis="time", sr=sr, hop_length=hop_length, ax=ax[1])
+librosa.display.specshow(
+    stream_default[..., :n],
+    x_axis="time",
+    sr=sr,
+    hop_length=hop_length,
+    ax=ax[1],
+)
 ax[1].set(title="MFCC, streamed, default top_db", ylabel="MFCC")
 ax[1].label_outer()
 

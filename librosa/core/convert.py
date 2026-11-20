@@ -117,7 +117,7 @@ def frames_to_samples(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.loadx("choice")
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> beat_samples = librosa.frames_to_samples(beats, sr=sr)
     """
@@ -165,7 +165,7 @@ def samples_to_frames(
     frames : int or np.ndarray [shape=(n,), dtype=int]
         Frame numbers corresponding to the given times::
 
-            frames[i] = floor( samples[i] / hop_length )
+            frames[i] = floor(samples[i] / hop_length)
 
     See Also
     --------
@@ -244,7 +244,7 @@ def frames_to_time(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.loadx("choice")
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> beat_times = librosa.frames_to_time(beats, sr=sr)
     """
@@ -301,7 +301,7 @@ def time_to_frames(
     frames : np.ndarray [shape=(n,), dtype=int]
         Frame numbers corresponding to the given times::
 
-            frames[i] = floor( times[i] * sr / hop_length )
+            frames[i] = floor(times[i] * sr / hop_length)
 
     See Also
     --------
@@ -312,8 +312,7 @@ def time_to_frames(
     --------
     Get the frame numbers for every 100ms
 
-    >>> librosa.time_to_frames(np.arange(0, 1, 0.1),
-    ...                         sr=22050, hop_length=512)
+    >>> librosa.time_to_frames(np.arange(0, 1, 0.1), sr=22050, hop_length=512)
     array([ 0,  4,  8, 12, 17, 21, 25, 30, 34, 38])
     """
     samples = time_to_samples(times, sr=sr)
@@ -427,10 +426,11 @@ def blocks_to_frames(
     --------
     Get frame indices for each block in a stream
 
-    >>> filename = librosa.ex('brahms')
+    >>> filename = librosa.ex("brahms")
     >>> sr = librosa.get_samplerate(filename)
-    >>> stream = librosa.stream(filename, block_length=16,
-    ...                         frame_length=2048, hop_length=512)
+    >>> stream = librosa.stream(
+    ...     filename, block_length=16, frame_length=2048, hop_length=512
+    ... )
     >>> for n, y in enumerate(stream):
     ...     n_frame = librosa.blocks_to_frames(n, block_length=16)
     """
@@ -475,13 +475,13 @@ def blocks_to_samples(
     --------
     Get sample indices for each block in a stream
 
-    >>> filename = librosa.ex('brahms')
+    >>> filename = librosa.ex("brahms")
     >>> sr = librosa.get_samplerate(filename)
-    >>> stream = librosa.stream(filename, block_length=16,
-    ...                         frame_length=2048, hop_length=512)
+    >>> stream = librosa.stream(
+    ...     filename, block_length=16, frame_length=2048, hop_length=512
+    ... )
     >>> for n, y in enumerate(stream):
-    ...     n_sample = librosa.blocks_to_samples(n, block_length=16,
-    ...                                          hop_length=512)
+    ...     n_sample = librosa.blocks_to_samples(n, block_length=16, hop_length=512)
     """
     frames = blocks_to_frames(blocks, block_length=block_length)
     return frames_to_samples(frames, hop_length=hop_length)
@@ -531,13 +531,13 @@ def blocks_to_time(
     --------
     Get time indices for each block in a stream
 
-    >>> filename = librosa.ex('brahms')
+    >>> filename = librosa.ex("brahms")
     >>> sr = librosa.get_samplerate(filename)
-    >>> stream = librosa.stream(filename, block_length=16,
-    ...                         frame_length=2048, hop_length=512)
+    >>> stream = librosa.stream(
+    ...     filename, block_length=16, frame_length=2048, hop_length=512
+    ... )
     >>> for n, y in enumerate(stream):
-    ...     n_time = librosa.blocks_to_time(n, block_length=16,
-    ...                                     hop_length=512, sr=sr)
+    ...     n_time = librosa.blocks_to_time(n, block_length=16, hop_length=512, sr=sr)
     """
     samples = blocks_to_samples(blocks, block_length=block_length, hop_length=hop_length)
     return samples_to_time(samples, sr=sr)
@@ -576,16 +576,16 @@ def note_to_hz(
     Examples
     --------
     >>> # Get the frequency of a note
-    >>> librosa.note_to_hz('C')
+    >>> librosa.note_to_hz("C")
     array([ 16.352])
     >>> # Or multiple notes
-    >>> librosa.note_to_hz(['A3', 'A4', 'A5'])
+    >>> librosa.note_to_hz(["A3", "A4", "A5"])
     array([ 220.,  440.,  880.])
     >>> # Notes with tuning deviations
-    >>> librosa.note_to_hz(['C2-32', 'C2'])
+    >>> librosa.note_to_hz(["C2-32", "C2"])
     array([ 64.209,  65.406])
     >>> # Or discarding tuning deviations
-    >>> librosa.note_to_hz(['C2-32', 'C2'], round_midi=True)
+    >>> librosa.note_to_hz(["C2-32", "C2"], round_midi=True)
     array([ 65.406,  65.406])
     """
     return midi_to_hz(note_to_midi(note, round_midi=round_midi))
@@ -633,28 +633,28 @@ def note_to_midi(note: str | Iterable[str], *, round_midi: bool = True) -> float
 
     Examples
     --------
-    >>> librosa.note_to_midi('C')
+    >>> librosa.note_to_midi("C")
     12
-    >>> librosa.note_to_midi('C#3')
+    >>> librosa.note_to_midi("C#3")
     49
-    >>> librosa.note_to_midi('C♯3')  # Using Unicode sharp
+    >>> librosa.note_to_midi("C♯3")  # Using Unicode sharp
     49
-    >>> librosa.note_to_midi('C♭3')  # Using Unicode flat
+    >>> librosa.note_to_midi("C♭3")  # Using Unicode flat
     47
-    >>> librosa.note_to_midi('f4')
+    >>> librosa.note_to_midi("f4")
     65
-    >>> librosa.note_to_midi('Bb-1')
+    >>> librosa.note_to_midi("Bb-1")
     10
-    >>> librosa.note_to_midi('A!8')
+    >>> librosa.note_to_midi("A!8")
     116
-    >>> librosa.note_to_midi('G𝄪6')  # Double-sharp
+    >>> librosa.note_to_midi("G𝄪6")  # Double-sharp
     93
-    >>> librosa.note_to_midi('B𝄫6')  # Double-flat
+    >>> librosa.note_to_midi("B𝄫6")  # Double-flat
     93
-    >>> librosa.note_to_midi('C♭𝄫5')  # Triple-flats also work
+    >>> librosa.note_to_midi("C♭𝄫5")  # Triple-flats also work
     69
     >>> # Lists of notes also work
-    >>> librosa.note_to_midi(['C', 'E', 'G'])
+    >>> librosa.note_to_midi(["C", "E", "G"])
     array([12, 16, 19])
     """
     if not isinstance(note, str):
@@ -810,7 +810,7 @@ def midi_to_note(
 
     Use a key signature to resolve enharmonic equivalences
 
-    >>> librosa.midi_to_note(range(12, 24), key='F:min')
+    >>> librosa.midi_to_note(range(12, 24), key="F:min")
     array(['C0', 'D♭0', 'D0', 'E♭0', 'E0', 'F0', 'G♭0', 'G0', 'A♭0', 'A0',
            'B♭0', 'B0'], dtype='<U3')
     """
@@ -953,8 +953,7 @@ def hz_to_note(frequencies: _ScalarOrSequence[_FloatLike_co], **kwargs: Any) -> 
 
     Get multiple notes, but suppress octave labels
 
-    >>> librosa.hz_to_note(440.0 * (2.0 ** np.linspace(0, 1, 12)),
-    ...                    octave=False)
+    >>> librosa.hz_to_note(440.0 * (2.0 ** np.linspace(0, 1, 12)), octave=False)
     ['A', 'A#', 'B', 'C', 'C#', 'D', 'E', 'F', 'F#', 'G', 'G#', 'A']
     """
     return midi_to_note(hz_to_midi(frequencies), **kwargs)
@@ -1055,7 +1054,7 @@ def mel_to_hz(mels: _ScalarOrSequence[_FloatLike_co], *, htk: bool = False) -> n
     >>> librosa.mel_to_hz(3)
     200.
 
-    >>> librosa.mel_to_hz([1,2,3,4,5])
+    >>> librosa.mel_to_hz([1, 2, 3, 4, 5])
     array([  66.667,  133.333,  200.   ,  266.667,  333.333])
     """
     mels = np.asanyarray(mels)[()]
@@ -1373,7 +1372,7 @@ def cqt_frequencies(
     Examples
     --------
     >>> # Get the CQT frequencies for 24 notes, starting at C2
-    >>> librosa.cqt_frequencies(24, fmin='C2')
+    >>> librosa.cqt_frequencies(24, fmin="C2")
     array([  65.406,   69.296,   73.416,   77.782,   82.407,   87.307,
              92.499,   97.999,  103.826,  110.   ,  116.541,  123.471,
             130.813,  138.591,  146.832,  155.563,  164.814,  174.614,
@@ -1605,13 +1604,15 @@ def A_weighting(
     Get the A-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin="C1")
     >>> weights = librosa.A_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
-    >>> ax.set(xlabel='Frequency (Hz)',
-    ...        ylabel='Weighting (log10)',
-    ...        title='A-Weighting of CQT frequencies')
+    >>> ax.set(
+    ...     xlabel="Frequency (Hz)",
+    ...     ylabel="Weighting (log10)",
+    ...     title="A-Weighting of CQT frequencies",
+    ... )
     """
     f_sq = np.asanyarray(frequencies)[()] ** 2.0
 
@@ -1683,13 +1684,15 @@ def B_weighting(
     Get the B-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin="C1")
     >>> weights = librosa.B_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
-    >>> ax.set(xlabel='Frequency (Hz)',
-    ...        ylabel='Weighting (log10)',
-    ...        title='B-Weighting of CQT frequencies')
+    >>> ax.set(
+    ...     xlabel="Frequency (Hz)",
+    ...     ylabel="Weighting (log10)",
+    ...     title="B-Weighting of CQT frequencies",
+    ... )
     """
     f_sq = np.asanyarray(frequencies)[()] ** 2.0
 
@@ -1760,12 +1763,15 @@ def C_weighting(
     Get the C-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin="C1")
     >>> weights = librosa.C_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
-    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
-    ...        title='C-Weighting of CQT frequencies')
+    >>> ax.set(
+    ...     xlabel="Frequency (Hz)",
+    ...     ylabel="Weighting (log10)",
+    ...     title="C-Weighting of CQT frequencies",
+    ... )
     """
     f_sq = np.asanyarray(frequencies)[()] ** 2.0
 
@@ -1830,12 +1836,15 @@ def D_weighting(
     Get the D-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin="C1")
     >>> weights = librosa.D_weighting(freqs)
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
-    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
-    ...        title='D-Weighting of CQT frequencies')
+    >>> ax.set(
+    ...     xlabel="Frequency (Hz)",
+    ...     ylabel="Weighting (log10)",
+    ...     title="D-Weighting of CQT frequencies",
+    ... )
     """
     f_sq = np.asanyarray(frequencies)[()] ** 2.0
 
@@ -1970,12 +1979,15 @@ def frequency_weighting(
     Get the A-weighting for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
-    >>> weights = librosa.frequency_weighting(freqs, kind='A')
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin="C1")
+    >>> weights = librosa.frequency_weighting(freqs, kind="A")
     >>> fig, ax = plt.subplots()
     >>> ax.plot(freqs, weights)
-    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
-    ...        title='A-Weighting of CQT frequencies')
+    >>> ax.set(
+    ...     xlabel="Frequency (Hz)",
+    ...     ylabel="Weighting (log10)",
+    ...     title="A-Weighting of CQT frequencies",
+    ... )
     """
     if isinstance(kind, str):
         kind = kind.upper()
@@ -2019,14 +2031,17 @@ def multi_frequency_weighting(
     Get the A, B, C, D, and Z weightings for CQT frequencies
 
     >>> import matplotlib.pyplot as plt
-    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin='C1')
-    >>> weightings = 'ABCDZ'
+    >>> freqs = librosa.cqt_frequencies(n_bins=108, fmin="C1")
+    >>> weightings = "ABCDZ"
     >>> weights = librosa.multi_frequency_weighting(freqs, kinds=weightings)
     >>> fig, ax = plt.subplots()
     >>> for label, w in zip(weightings, weights):
     ...     ax.plot(freqs, w, label=label)
-    >>> ax.set(xlabel='Frequency (Hz)', ylabel='Weighting (log10)',
-    ...        title='Weightings of CQT frequencies')
+    >>> ax.set(
+    ...     xlabel="Frequency (Hz)",
+    ...     ylabel="Weighting (log10)",
+    ...     title="Weightings of CQT frequencies",
+    ... )
     >>> ax.legend()
     """
     return np.stack([frequency_weighting(frequencies, kind=k, **kwargs) for k in kinds], axis=0)
@@ -2073,7 +2088,7 @@ def times_like(
     --------
     Provide a feature matrix input:
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> D = librosa.stft(y)
     >>> times = librosa.times_like(D, sr=sr)
     >>> times
@@ -2130,7 +2145,7 @@ def samples_like(
     --------
     Provide a feature matrix input:
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> X = librosa.stft(y)
     >>> samples = librosa.samples_like(X)
     >>> samples
@@ -2359,7 +2374,7 @@ def hz_to_svara_h(
     --------
     Convert Sa in three octaves:
 
-    >>> librosa.hz_to_svara_h([261/2, 261, 261*2], Sa=261)
+    >>> librosa.hz_to_svara_h([261 / 2, 261, 261 * 2], Sa=261)
     ['Ṣ', 'S', 'Ṡ']
 
     Convert one octave worth of frequencies with full names:
@@ -2438,7 +2453,7 @@ def note_to_svara_h(
 
     Examples
     --------
-    >>> librosa.note_to_svara_h(['C4', 'G4', 'C5', 'G5'], Sa='C5')
+    >>> librosa.note_to_svara_h(["C4", "G4", "C5", "G5"], Sa="C5")
     ['Ṣ', 'P̣', 'S', 'P']
     """
     midis = note_to_midi(notes, round_midi=False)
@@ -2624,7 +2639,7 @@ def hz_to_svara_c(
     --------
     Convert Sa in three octaves:
 
-    >>> librosa.hz_to_svara_c([261/2, 261, 261*2], Sa=261, mela='kanakangi')
+    >>> librosa.hz_to_svara_c([261 / 2, 261, 261 * 2], Sa=261, mela="kanakangi")
     ['Ṣ', 'S', 'Ṡ']
 
     Convert one octave worth of frequencies using melakarta #36:
@@ -2717,7 +2732,7 @@ def note_to_svara_c(
 
     Examples
     --------
-    >>> librosa.note_to_svara_h(['C4', 'G4', 'C5', 'D5', 'G5'], Sa='C5', mela=1)
+    >>> librosa.note_to_svara_h(["C4", "G4", "C5", "D5", "G5"], Sa="C5", mela=1)
     ['Ṣ', 'P̣', 'S', 'G₁', 'P']
     """
     midis = note_to_midi(notes, round_midi=False)

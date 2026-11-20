@@ -101,7 +101,7 @@ def mel_to_stft(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> S = librosa.util.abs2(librosa.stft(y))
     >>> mel_spec = librosa.feature.melspectrogram(S=S, sr=sr)
     >>> S_inv = librosa.feature.inverse.mel_to_stft(mel_spec, sr=sr)
@@ -110,17 +110,31 @@ def mel_to_stft(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(S, vscale='dBFS[power]', top_db=None,
-    ...                          y_axis='log', x_axis='time', ax=ax[0])
-    >>> ax[0].set(title='Original STFT')
+    >>> img = librosa.display.specshow(
+    ...     S, vscale="dBFS[power]", top_db=None, y_axis="log", x_axis="time", ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Original STFT")
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(S_inv, vscale='dBFS[power]', top_db=None,
-    ...                          y_axis='log', x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Reconstructed STFT')
+    >>> librosa.display.specshow(
+    ...     S_inv,
+    ...     vscale="dBFS[power]",
+    ...     top_db=None,
+    ...     y_axis="log",
+    ...     x_axis="time",
+    ...     ax=ax[1],
+    ... )
+    >>> ax[1].set(title="Reconstructed STFT")
     >>> ax[1].label_outer()
-    >>> librosa.display.specshow(S_inv - S, vscale=f'dB[power,{S.max()}]', top_db=None,
-    ...                          vmax=0, y_axis='log', x_axis='time', ax=ax[2])
-    >>> ax[2].set(title='Residual error (dB)')
+    >>> librosa.display.specshow(
+    ...     S_inv - S,
+    ...     vscale=f"dB[power,{S.max()}]",
+    ...     top_db=None,
+    ...     vmax=0,
+    ...     y_axis="log",
+    ...     x_axis="time",
+    ...     ax=ax[2],
+    ... )
+    >>> ax[2].set(title="Residual error (dB)")
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
     # Construct a mel basis with dtype matching the input data
@@ -269,7 +283,7 @@ def mfcc_to_mel(
         Reference power for (inverse) decibel calculation
     lifter : number >= 0
         If ``lifter>0``, apply inverse liftering (inverse cepstral filtering)::
-            M[n, :] <- M[n, :] / (1 + sin(pi * (n + 1) / lifter) * lifter / 2)
+            M[n, :] < -M[n, :] / (1 + sin(pi * (n + 1) / lifter) * lifter / 2)
 
     Returns
     -------
@@ -470,13 +484,13 @@ def logfrequency_to_stft(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> S = librosa.util.abs2(librosa.stft(y))
     >>> log_spec = librosa.feature.logfrequency_spectrogram(
-    ...     S=S, sr=sr, bins_per_octave=24, fmin='C1'
+    ...     S=S, sr=sr, bins_per_octave=24, fmin="C1"
     ... )
     >>> S_inv = librosa.feature.inverse.logfrequency_to_stft(
-    ...     log_spec, sr=sr, bins_per_octave=24, fmin='C1'
+    ...     log_spec, sr=sr, bins_per_octave=24, fmin="C1"
     ... )
 
     Compare the results visually:
@@ -484,22 +498,30 @@ def logfrequency_to_stft(
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
     >>> img = librosa.display.specshow(
-    ...     S, vscale='dBFS[power]', top_db=None,
-    ...     y_axis='log', x_axis='time', ax=ax[0]
+    ...     S, vscale="dBFS[power]", top_db=None, y_axis="log", x_axis="time", ax=ax[0]
     ... )
-    >>> ax[0].set(title='Original STFT')
+    >>> ax[0].set(title="Original STFT")
     >>> ax[0].label_outer()
     >>> librosa.display.specshow(
-    ...     S_inv, vscale='dBFS[power]', top_db=None,
-    ...     y_axis='log', x_axis='time', ax=ax[1]
+    ...     S_inv,
+    ...     vscale="dBFS[power]",
+    ...     top_db=None,
+    ...     y_axis="log",
+    ...     x_axis="time",
+    ...     ax=ax[1],
     ... )
-    >>> ax[1].set(title='Reconstructed STFT')
+    >>> ax[1].set(title="Reconstructed STFT")
     >>> ax[1].label_outer()
     >>> librosa.display.specshow(
-    ...     S_inv - S, vscale=f'dB[power,{S.max()}]', top_db=None,
-    ...     vmax=0, y_axis='log', x_axis='time', ax=ax[2]
+    ...     S_inv - S,
+    ...     vscale=f"dB[power,{S.max()}]",
+    ...     top_db=None,
+    ...     vmax=0,
+    ...     y_axis="log",
+    ...     x_axis="time",
+    ...     ax=ax[2],
     ... )
-    >>> ax[2].set(title='Residual error (dB)')
+    >>> ax[2].set(title="Residual error (dB)")
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if n_bins is not None and n_bins != L.shape[-2]:
@@ -707,13 +729,13 @@ def pitch_to_stft(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> S = librosa.util.abs2(librosa.stft(y))
     >>> pitch_spec = librosa.feature.pitch_spectrogram(
-    ...     S=S, sr=sr, n_pitches=84, fmin='C1'
+    ...     S=S, sr=sr, n_pitches=84, fmin="C1"
     ... )
     >>> S_inv = librosa.feature.inverse.pitch_to_stft(
-    ...     pitch_spec, sr=sr, n_pitches=84, fmin='C1'
+    ...     pitch_spec, sr=sr, n_pitches=84, fmin="C1"
     ... )
     """
     if n_pitches is not None and n_pitches != P.shape[-2]:

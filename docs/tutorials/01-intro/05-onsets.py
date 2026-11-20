@@ -43,7 +43,9 @@ S = librosa.stft(y)
 # Generate a plot of waveform and spectrogram
 fig, ax = plt.subplots(nrows=2, sharex=True, height_ratios=(1, 4))
 librosa.display.waveshow(y=y, sr=sr, ax=ax[0], label="Waveform")
-img = librosa.display.specshow(S, vscale="dBFS", x_axis="time", y_axis="log", sr=sr)
+img = librosa.display.specshow(
+    S, vscale="dBFS", x_axis="time", y_axis="log", sr=sr
+)
 librosa.display.colorbar_db(img, label="dBFS")
 ax[0].label_outer()
 ax[0].legend()
@@ -98,9 +100,21 @@ diffS_thresh = np.maximum(diffS, 0)
 
 # Visualize the results
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-i1 = librosa.display.specshow(S, vscale="dBFS", x_axis="time", y_axis="log", ax=ax[0], sr=sr)
-i2 = librosa.display.specshow(diffS, x_axis="time", y_axis="log", ax=ax[1], sr=sr)
-i3 = librosa.display.specshow(diffS_thresh, x_axis="time", y_axis="log", ax=ax[2], sr=sr, norm=i2.norm, cmap=i2.cmap)
+i1 = librosa.display.specshow(
+    S, vscale="dBFS", x_axis="time", y_axis="log", ax=ax[0], sr=sr
+)
+i2 = librosa.display.specshow(
+    diffS, x_axis="time", y_axis="log", ax=ax[1], sr=sr
+)
+i3 = librosa.display.specshow(
+    diffS_thresh,
+    x_axis="time",
+    y_axis="log",
+    ax=ax[2],
+    sr=sr,
+    norm=i2.norm,
+    cmap=i2.cmap,
+)
 
 librosa.display.colorbar_db(i1, label="dBFS")
 librosa.display.colorbar_db(i2, label="Δ dB")
@@ -134,7 +148,9 @@ onset_env = np.mean(diffS_thresh, axis=0)
 
 fig, ax = plt.subplots(nrows=3, sharex=True, height_ratios=(1, 1, 4))
 librosa.display.waveshow(y=y, sr=sr, ax=ax[0], label="Waveform")
-img = librosa.display.specshow(S, vscale="dBFS", x_axis="time", y_axis="log", ax=ax[2], sr=sr)
+img = librosa.display.specshow(
+    S, vscale="dBFS", x_axis="time", y_axis="log", ax=ax[2], sr=sr
+)
 librosa.display.colorbar_db(img, label="dBFS")
 times = librosa.times_like(onset_env, sr=sr)
 ax[1].plot(times, onset_env, label="Onset envelope", color="C1")
@@ -178,7 +194,13 @@ fig, ax = plt.subplots(nrows=2, sharex=True, height_ratios=(3, 1))
 librosa.display.waveshow(y=y, sr=sr, ax=ax[1], label="Waveform")
 ax[1].legend()
 ax[0].plot(times, onset_env, label="Onset envelope", color="C1")
-ax[0].scatter(times[onset_peaks], onset_env[onset_peaks], marker="^", color="k", label="Peaks")
+ax[0].scatter(
+    times[onset_peaks],
+    onset_env[onset_peaks],
+    marker="^",
+    color="k",
+    label="Peaks",
+)
 ax[0].legend()
 ax[0].label_outer()
 
@@ -200,9 +222,20 @@ fig, ax = plt.subplots(nrows=2, sharex=True, height_ratios=(3, 1))
 librosa.display.waveshow(y=y, sr=sr, ax=ax[1], label="Waveform")
 ax[1].legend()
 ax[0].plot(times, onset_env, label="Onset envelope", color="C1")
-ax[0].scatter(times[onset_peaks], onset_env[onset_peaks], marker="^", color="k", label="Localmax Peaks")
 ax[0].scatter(
-    times[onset_detect], onset_env[onset_detect], marker="o", edgecolor="C2", facecolor="none", label="onset_detect"
+    times[onset_peaks],
+    onset_env[onset_peaks],
+    marker="^",
+    color="k",
+    label="Localmax Peaks",
+)
+ax[0].scatter(
+    times[onset_detect],
+    onset_env[onset_detect],
+    marker="o",
+    edgecolor="C2",
+    facecolor="none",
+    label="onset_detect",
 )
 ax[0].legend()
 ax[0].label_outer()

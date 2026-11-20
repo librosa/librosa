@@ -71,7 +71,7 @@ def estimate_tuning(
     --------
     With time-series input
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> librosa.estimate_tuning(y=y, sr=sr)
     -0.08000000000000002
 
@@ -88,8 +88,7 @@ def estimate_tuning(
 
     Using pass-through arguments to `librosa.piptrack`
 
-    >>> librosa.estimate_tuning(y=y, sr=sr, n_fft=8192,
-    ...                         fmax='G#9')
+    >>> librosa.estimate_tuning(y=y, sr=sr, n_fft=8192, fmax="G#9")
     -0.08000000000000002
     """
     pitch, mag = piptrack(y=y, sr=sr, S=S, n_fft=n_fft, **kwargs)
@@ -140,9 +139,8 @@ def pitch_tuning(frequencies: ArrayLike, *, resolution: float = 0.01, bins_per_o
     0.25
 
     >>> # Track frequencies from a real spectrogram
-    >>> y, sr = librosa.loadx('trumpet')
-    >>> freqs, times, mags = librosa.reassigned_spectrogram(y, sr=sr,
-    ...                                                     fill_nan=True)
+    >>> y, sr = librosa.loadx("trumpet")
+    >>> freqs, times, mags = librosa.reassigned_spectrogram(y, sr=sr, fill_nan=True)
     >>> # Select out pitches with high energy
     >>> freqs = freqs[mags > np.median(mags)]
     >>> librosa.pitch_tuning(freqs)
@@ -284,7 +282,7 @@ def piptrack(
     --------
     Computing pitches from a waveform input
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> pitches, magnitudes = librosa.piptrack(y=y, sr=sr)
 
     Or from a spectrogram input
@@ -295,8 +293,7 @@ def piptrack(
     Or with an alternate reference value for pitch detection, where
     values above the mean spectral energy in each frame are counted as pitches
 
-    >>> pitches, magnitudes = librosa.piptrack(S=S, sr=sr, threshold=1,
-    ...                                        ref=np.mean)
+    >>> pitches, magnitudes = librosa.piptrack(S=S, sr=sr, threshold=1, ref=np.mean)
     """
     # Check that we received an audio time series or STFT
     S, n_fft = _spectrogram(
@@ -718,11 +715,8 @@ def pyin(
     --------
     Computing a fundamental frequency (F0) curve from an audio input
 
-    >>> y, sr = librosa.loadx('trumpet')
-    >>> f0, voiced_flag, voiced_probs = librosa.pyin(y,
-    ...                                              sr=sr,
-    ...                                              fmin='C2',
-    ...                                              fmax='C7')
+    >>> y, sr = librosa.loadx("trumpet")
+    >>> f0, voiced_flag, voiced_probs = librosa.pyin(y, sr=sr, fmin="C2", fmax="C7")
     >>> times = librosa.times_like(f0, sr=sr)
 
     Overlay F0 over a spectrogram
@@ -730,11 +724,11 @@ def pyin(
     >>> import matplotlib.pyplot as plt
     >>> D = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max)
     >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(D, x_axis='time', y_axis='log', ax=ax)
-    >>> ax.set(title='pYIN fundamental frequency estimation')
+    >>> img = librosa.display.specshow(D, x_axis="time", y_axis="log", ax=ax)
+    >>> ax.set(title="pYIN fundamental frequency estimation")
     >>> librosa.display.colorbar_db(img)
-    >>> ax.plot(times, f0, label='f0', path_effects=librosa.display.highlight(ax=ax))
-    >>> ax.legend(loc='upper right')
+    >>> ax.plot(times, f0, label="f0", path_effects=librosa.display.highlight(ax=ax))
+    >>> ax.legend(loc="upper right")
     """
     if fmin is None or fmax is None:
         raise ParameterValueError('both "fmin" and "fmax" must be provided')

@@ -36,7 +36,9 @@ HTML(librosa.util.example_info("trumpet", html=True))
 
 S = np.abs(librosa.stft(y))
 fig, ax = plt.subplots()
-img = librosa.display.specshow(S, vscale="dBFS", x_axis="time", y_axis="log", ax=ax)
+img = librosa.display.specshow(
+    S, vscale="dBFS", x_axis="time", y_axis="log", ax=ax
+)
 librosa.display.colorbar_db(img, label="dBFS")
 
 # %%
@@ -87,7 +89,9 @@ C = librosa.cqt(y=y, sr=sr)
 # function, but note that the `y_axis` parameter is now different:
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(C, vscale="dBFS", x_axis="time", y_axis="cqt_hz", ax=ax)
+img = librosa.display.specshow(
+    C, vscale="dBFS", x_axis="time", y_axis="cqt_hz", ax=ax
+)
 librosa.display.colorbar_db(img, label="dBFS")
 
 # %%
@@ -117,7 +121,8 @@ librosa.display.colorbar_db(img, label="dBFS")
 C = librosa.cqt(
     y=y,
     sr=sr,
-    bins_per_octave=12 * 3,  # writing it this way makes the octave division clear
+    bins_per_octave=12
+    * 3,  # writing it this way makes the octave division clear
     n_bins=12 * 3 * 8,
 )  # this makes it clear that we have 8 octaves now
 
@@ -127,7 +132,14 @@ C = librosa.cqt(
 # on configuring frequency ranges in `specshow`.)
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(C, vscale="dBFS", x_axis="time", y_axis="cqt_hz", bins_per_octave=12 * 3, ax=ax)
+img = librosa.display.specshow(
+    C,
+    vscale="dBFS",
+    x_axis="time",
+    y_axis="cqt_hz",
+    bins_per_octave=12 * 3,
+    ax=ax,
+)
 librosa.display.colorbar_db(img, label="dBFS")
 
 # %%
@@ -167,7 +179,14 @@ Audio(url=librosa.example("sweetwaltz", url=True))
 C = librosa.cqt(y=y, sr=sr, bins_per_octave=12 * 3, n_bins=12 * 3 * 8)
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(C, vscale="dBFS", x_axis="time", y_axis="cqt_hz", bins_per_octave=12 * 3, ax=ax)
+img = librosa.display.specshow(
+    C,
+    vscale="dBFS",
+    x_axis="time",
+    y_axis="cqt_hz",
+    bins_per_octave=12 * 3,
+    ax=ax,
+)
 librosa.display.colorbar_db(img, label="dBFS")
 
 # %%
@@ -198,11 +217,22 @@ chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
 # We'll plot this underneath the CQT plot from above so the two can be directly compared.
 
 fig, ax = plt.subplots(nrows=2, sharex=True, height_ratios=(3, 1))
-imgcqt = librosa.display.specshow(C, vscale="dBFS", x_axis="time", y_axis="cqt_hz", bins_per_octave=12 * 3, ax=ax[0])
+imgcqt = librosa.display.specshow(
+    C,
+    vscale="dBFS",
+    x_axis="time",
+    y_axis="cqt_hz",
+    bins_per_octave=12 * 3,
+    ax=ax[0],
+)
 librosa.display.colorbar_db(imgcqt, label="dBFS")
 ax[0].label_outer()  # only show x-axis labels on the bottom plot
-imgchroma = librosa.display.specshow(chroma, x_axis="time", y_axis="chroma", ax=ax[1])
-fig.colorbar(imgchroma, ax=ax[1], aspect=20 / 3)  # aspect compensates for the 3:1 height ratio of these plots
+imgchroma = librosa.display.specshow(
+    chroma, x_axis="time", y_axis="chroma", ax=ax[1]
+)
+fig.colorbar(
+    imgchroma, ax=ax[1], aspect=20 / 3
+)  # aspect compensates for the 3:1 height ratio of these plots
 
 # %%
 # Each row of the chroma corresponds to a pitch class, and the value corresponds to the amount of

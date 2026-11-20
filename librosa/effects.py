@@ -134,11 +134,11 @@ def hpss(
     Examples
     --------
     >>> # Extract harmonic and percussive components
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.loadx("choice")
     >>> y_harmonic, y_percussive = librosa.effects.hpss(y)
 
     >>> # Get a more isolated percussive component by widening its margin
-    >>> y_harmonic, y_percussive = librosa.effects.hpss(y, margin=(1.0,5.0))
+    >>> y_harmonic, y_percussive = librosa.effects.hpss(y, margin=(1.0, 5.0))
     """
     # Compute the STFT matrix
     stft = core.stft(
@@ -258,7 +258,7 @@ def harmonic(
     Examples
     --------
     >>> # Extract harmonic component
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.loadx("choice")
     >>> y_harmonic = librosa.effects.harmonic(y)
 
     >>> # Use a margin > 1.0 for greater harmonic separation
@@ -372,7 +372,7 @@ def percussive(
     Examples
     --------
     >>> # Extract percussive component
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.loadx("choice")
     >>> y_percussive = librosa.effects.percussive(y)
 
     >>> # Use a margin > 1.0 for greater percussive separation
@@ -470,7 +470,7 @@ def time_stretch(
     --------
     Compress to be twice as fast
 
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.loadx("choice")
     >>> y_fast = librosa.effects.time_stretch(y, rate=2.0)
 
     Or half the original speed
@@ -596,7 +596,7 @@ def pitch_shift(
     --------
     Shift up by a major third (four steps if ``bins_per_octave`` is 12)
 
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.loadx("choice")
     >>> y_third = librosa.effects.pitch_shift(y, sr=sr, n_steps=4)
 
     Shift down by a tritone (six steps if ``bins_per_octave`` is 12)
@@ -605,8 +605,9 @@ def pitch_shift(
 
     Shift up by 3 quarter-tones
 
-    >>> y_three_qt = librosa.effects.pitch_shift(y, sr=sr, n_steps=3,
-    ...                                          bins_per_octave=24)
+    >>> y_three_qt = librosa.effects.pitch_shift(
+    ...     y, sr=sr, n_steps=3, bins_per_octave=24
+    ... )
     """
     if not util.is_positive_int(bins_per_octave):
         raise ParameterValueError(f"bins_per_octave={bins_per_octave} must be a positive integer.")
@@ -660,12 +661,11 @@ def remix(y: np.ndarray, intervals: Iterable[tuple[int, int]], *, align_zeros: b
     --------
     Load in the example track and reverse the beats
 
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.loadx("choice")
 
     Compute beats
 
-    >>> _, beat_frames = librosa.beat.beat_track(y=y, sr=sr,
-    ...                                          hop_length=512)
+    >>> _, beat_frames = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
 
     Convert from frames to sample indices
 
@@ -673,8 +673,7 @@ def remix(y: np.ndarray, intervals: Iterable[tuple[int, int]], *, align_zeros: b
 
     Generate intervals from consecutive events
 
-    >>> intervals = librosa.util.frame(beat_samples, frame_length=2,
-    ...                                hop_length=1).T
+    >>> intervals = librosa.util.frame(beat_samples, frame_length=2, hop_length=1).T
 
     Reverse the beat intervals
 
@@ -808,7 +807,7 @@ def trim(
     Examples
     --------
     >>> # Load some audio
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.loadx("choice")
     >>> # Trim the beginning and ending silence
     >>> yt, index = librosa.effects.trim(y)
     >>> # Print the durations
@@ -983,17 +982,21 @@ def preemphasis(
     Apply a standard pre-emphasis filter
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> y_filt = librosa.effects.preemphasis(y)
     >>> # and plot the results for comparison
-    >>> S_orig = librosa.amplitude_to_db(np.abs(librosa.stft(y)), ref=np.max, top_db=None)
-    >>> S_preemph = librosa.amplitude_to_db(np.abs(librosa.stft(y_filt)), ref=np.max, top_db=None)
+    >>> S_orig = librosa.amplitude_to_db(
+    ...     np.abs(librosa.stft(y)), ref=np.max, top_db=None
+    ... )
+    >>> S_preemph = librosa.amplitude_to_db(
+    ...     np.abs(librosa.stft(y_filt)), ref=np.max, top_db=None
+    ... )
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(S_orig, y_axis='log', x_axis='time', ax=ax[0])
-    >>> ax[0].set(title='Original signal')
+    >>> librosa.display.specshow(S_orig, y_axis="log", x_axis="time", ax=ax[0])
+    >>> ax[0].set(title="Original signal")
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(S_preemph, y_axis='log', x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Pre-emphasized signal')
+    >>> img = librosa.display.specshow(S_preemph, y_axis="log", x_axis="time", ax=ax[1])
+    >>> ax[1].set(title="Pre-emphasized signal")
     >>> librosa.display.colorbar_db(img, ax=ax)
 
     Apply pre-emphasis in pieces for block streaming.  Note that the second block
@@ -1053,7 +1056,7 @@ def deemphasis(
 
     If y = preemphasis(x, coef=coef, zi=zi), the deemphasis is:
 
-    >>> x[i] = y[i] + coef * x[i-1]
+    >>> x[i] = y[i] + coef * x[i - 1]
     >>> x = deemphasis(y, coef=coef, zi=zi)
 
     Parameters
@@ -1100,7 +1103,7 @@ def deemphasis(
     --------
     Apply a standard pre-emphasis filter and invert it with de-emphasis
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> y_filt = librosa.effects.preemphasis(y)
     >>> y_deemph = librosa.effects.deemphasis(y_filt)
     >>> np.allclose(y, y_deemph)
@@ -1312,10 +1315,14 @@ def vibrato(
     >>> S_orig = librosa.stft(y)
     >>> S_vib = librosa.stft(y_vib)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(S_orig, sr=sr, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[0])
+    >>> librosa.display.specshow(
+    ...     S_orig, sr=sr, vscale="dBFS", x_axis="time", y_axis="log", ax=ax[0]
+    ... )
     >>> ax[0].set(title="Original tone spectrogram")
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(S_vib, sr=sr, vscale='dBFS', x_axis='time', y_axis='log', ax=ax[1])
+    >>> librosa.display.specshow(
+    ...     S_vib, sr=sr, vscale="dBFS", x_axis="time", y_axis="log", ax=ax[1]
+    ... )
     >>> ax[1].set(title="Vibrato tone spectrogram")
     """
     util.valid_audio(y)

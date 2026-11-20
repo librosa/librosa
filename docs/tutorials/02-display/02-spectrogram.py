@@ -132,7 +132,9 @@ librosa.display.colorbar_db(img)
 # time markers), or link axes to other plots, as illustrated in the following example.
 
 fig, ax = plt.subplots(nrows=2, sharex=True, height_ratios=[4, 1])
-img = librosa.display.specshow(stft, x_axis="time", y_axis="log", vscale="dB", ax=ax[0])
+img = librosa.display.specshow(
+    stft, x_axis="time", y_axis="log", vscale="dB", ax=ax[0]
+)
 librosa.display.colorbar_db(img)
 
 ax[0].axhline(librosa.note_to_hz("F4"), label="Frequency F4", color="C3")
@@ -173,7 +175,14 @@ print(f"stft shape={stft.shape}")
 
 fig, ax = plt.subplots()
 img = librosa.display.specshow(
-    stft, x_axis="time", y_axis="log", vscale="dB", sr=sr, hop_length=256, top_db=60, cmap_seq="gray_r"
+    stft,
+    x_axis="time",
+    y_axis="log",
+    vscale="dB",
+    sr=sr,
+    hop_length=256,
+    top_db=60,
+    cmap_seq="gray_r",
 )
 librosa.display.colorbar_db(img)
 

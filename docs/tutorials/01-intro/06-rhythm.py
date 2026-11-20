@@ -44,7 +44,9 @@ S = librosa.stft(y)
 fig, ax = plt.subplots(nrows=3, sharex=True, height_ratios=(1, 1, 2))
 ax[0].plot(times, onset_env, label="Onset strength", color="C1")
 librosa.display.waveshow(y, sr=sr, ax=ax[1], label="Waveform")
-img = librosa.display.specshow(S, sr=sr, vscale="dBFS", x_axis="time", y_axis="log", ax=ax[2])
+img = librosa.display.specshow(
+    S, sr=sr, vscale="dBFS", x_axis="time", y_axis="log", ax=ax[2]
+)
 librosa.display.colorbar_db(img, label="dBFS")
 ax[0].legend(loc="upper right")
 ax[1].legend(loc="upper right")
@@ -72,7 +74,9 @@ ax[1].label_outer()
 fig, ax = plt.subplots(nrows=2)
 times = librosa.times_like(onset_env, sr=sr)
 ax[0].plot(times, onset_env, label="Onset strength", color="C1")
-onset_delayed = ax[0].plot(times, onset_env, label="Delayed onset strength", color="C4", linestyle="--")[0]
+onset_delayed = ax[0].plot(
+    times, onset_env, label="Delayed onset strength", color="C4", linestyle="--"
+)[0]
 
 ax[0].set(xlim=(0, 5), xlabel="Time (s)")
 ax[0].legend(loc="upper right")
@@ -94,7 +98,13 @@ def _update(num):
     return (onset_delayed, corrplot)
 
 
-ani = animation.FuncAnimation(fig, func=_update, frames=int(np.ceil(5 / times[1]).astype(int)), interval=50, blit=True)
+ani = animation.FuncAnimation(
+    fig,
+    func=_update,
+    frames=int(np.ceil(5 / times[1]).astype(int)),
+    interval=50,
+    blit=True,
+)
 
 # %%
 # The tempo is determined by the position of the first prominent peak in the autocorrelation,
@@ -122,9 +132,17 @@ print(f"Estimated tempo: {tempo[0]:.2f} BPM")
 #
 tgram = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr)
 fig, ax = plt.subplots()
-librosa.display.specshow(tgram, x_axis="time", y_axis="tempo", sr=sr, ax=ax, cmap_seq="magma")
+librosa.display.specshow(
+    tgram, x_axis="time", y_axis="tempo", sr=sr, ax=ax, cmap_seq="magma"
+)
 hl = librosa.display.highlight(ax=ax, alpha=0.95, linewidth=8)
-ax.axhline([tempo], label="Estimated tempo", path_effects=hl, linewidth=4, linestyle="--")
+ax.axhline(
+    [tempo],
+    label="Estimated tempo",
+    path_effects=hl,
+    linewidth=4,
+    linestyle="--",
+)
 ax.legend(loc="upper right")
 
 # %%
@@ -151,7 +169,9 @@ ax.legend(loc="upper right")
 # Like the onset detector, we can select the units applied to the beat tracker's estimates:
 # frame indices (default), sample indices, or time (seconds).
 
-tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr, units="time")
+tempo, beats = librosa.beat.beat_track(
+    onset_envelope=onset_env, sr=sr, units="time"
+)
 print(f"Estimated tempo: {tempo}")
 print(f"Estimated beats: {beats}")
 

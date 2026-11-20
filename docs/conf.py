@@ -28,7 +28,9 @@ needs_sphinx = "8.2"
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-spec = importlib.util.spec_from_file_location("librosa.version", srcpath / "librosa" / "version.py")
+spec = importlib.util.spec_from_file_location(
+    "librosa.version", srcpath / "librosa" / "version.py"
+)
 if spec is None or spec.loader is None:
     raise ImportError("Could not load librosa.version")
 librosa_version = importlib.util.module_from_spec(spec)
@@ -104,7 +106,9 @@ plot_include_source = True
 plot_html_show_source_link = False
 
 # Environment-aware DPI configuration (80 for CI / preview builds, 100 for default local/production)
-default_dpi = 80 if ("CI" in os.environ or "LIBROSA_DOC_DEBUG" in os.environ) else 100
+default_dpi = (
+    80 if ("CI" in os.environ or "LIBROSA_DOC_DEBUG" in os.environ) else 100
+)
 doc_dpi = int(os.environ.get("LIBROSA_DOC_DPI", default_dpi))
 
 plot_formats = [("png", doc_dpi)]
@@ -117,7 +121,18 @@ from cycler import cycler
 plot_rcparams = {
     "axes.prop_cycle": cycler(
         "color",
-        ["#3f90da", "#ffa90e", "#bd1f01", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#717581", "#92dadd"],
+        [
+            "#3f90da",
+            "#ffa90e",
+            "#bd1f01",
+            "#94a4a2",
+            "#832db6",
+            "#a96b59",
+            "#e76300",
+            "#b9ac70",
+            "#717581",
+            "#92dadd",
+        ],
     ),
     "font.size": 10,
     "legend.loc": "upper right",
@@ -206,7 +221,10 @@ intersphinx_mapping = {
     "mir_eval": ("https://mir-eval.readthedocs.io/latest/", None),
     "joblib": ("https://joblib.readthedocs.io/en/stable/", None),
     "IPython": ("https://ipython.readthedocs.io/en/stable/", None),
-    "sounddevice": ("https://python-sounddevice.readthedocs.io/en/latest/", None),
+    "sounddevice": (
+        "https://python-sounddevice.readthedocs.io/en/latest/",
+        None,
+    ),
 }
 
 
@@ -363,7 +381,15 @@ latex_logo = "img/librosa_logo_text.png"
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [("index", "librosa", "librosa Documentation", ["The librosa development team"], 1)]
+man_pages = [
+    (
+        "index",
+        "librosa",
+        "librosa Documentation",
+        ["The librosa development team"],
+        1,
+    )
+]
 
 # -- Options for Texinfo output ------------------------------------------------
 

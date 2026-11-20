@@ -191,8 +191,8 @@ def mel(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(melfb, x_axis='linear', ax=ax)
-    >>> ax.set(ylabel='Mel filter', title='Mel filter bank')
+    >>> img = librosa.display.specshow(melfb, x_axis="linear", ax=ax)
+    >>> ax.set(ylabel="Mel filter", title="Mel filter bank")
     >>> fig.colorbar(img, ax=ax)
     """
     fmin = util._ensure_hz(fmin)
@@ -341,8 +341,8 @@ def chroma(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(chromafb, x_axis='linear', ax=ax)
-    >>> ax.set(ylabel='Chroma filter', title='Chroma filter bank')
+    >>> img = librosa.display.specshow(chromafb, x_axis="linear", ax=ax)
+    >>> ax.set(ylabel="Chroma filter", title="Chroma filter bank")
     >>> fig.colorbar(img, ax=ax)
     """
     wts = np.zeros((n_chroma, n_fft))
@@ -474,7 +474,9 @@ def frequency_filterbank(
     Construct a logarithmic boxcar filterbank (exact energy pooling):
 
     >>> f_pitches = librosa.midi_to_hz(np.arange(21, 109))
-    >>> fb_pitch = librosa.filters.frequency_filterbank(f_in, f_pitches, window="boxcar", scale="log")
+    >>> fb_pitch = librosa.filters.frequency_filterbank(
+    ...     f_in, f_pitches, window="boxcar", scale="log"
+    ... )
     >>> fb_pitch.shape
     (88, 1025)
 
@@ -681,10 +683,15 @@ def logfrequency(
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> img = librosa.display.specshow(
-    ...     fb, x_axis="log", y_axis="logfreq_hz",
-    ...     fmin=30.0, bins_per_octave=24,
-    ...     sr=22050, n_fft=2048, ax=ax,
-    ...     vscale='dB',
+    ...     fb,
+    ...     x_axis="log",
+    ...     y_axis="logfreq_hz",
+    ...     fmin=30.0,
+    ...     bins_per_octave=24,
+    ...     sr=22050,
+    ...     n_fft=2048,
+    ...     ax=ax,
+    ...     vscale="dB",
     ... )
     >>> ax.set(ylabel="Log-frequency filter", title="Log-frequency filter bank")
     >>> fig.colorbar(img, ax=ax)
@@ -812,16 +819,23 @@ def pitch_filterbank(
 
     Construct a Just Intonation pitch filterbank:
 
-    >>> fb_ji = librosa.filters.pitch_filterbank(sr=22050, n_fft=2048, intervals="ji5", fmin="C1", n_pitches=84)
+    >>> fb_ji = librosa.filters.pitch_filterbank(
+    ...     sr=22050, n_fft=2048, intervals="ji5", fmin="C1", n_pitches=84
+    ... )
     >>> fb_ji.shape
     (84, 1025)
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> img = librosa.display.specshow(
-    ...     fb, x_axis="linear",
-    ...     y_axis="pitch_note", intervals="ji5", fmin=librosa.note_to_hz("C1"),
-    ...     sr=22050, n_fft=2048, ax=ax
+    ...     fb,
+    ...     x_axis="linear",
+    ...     y_axis="pitch_note",
+    ...     intervals="ji5",
+    ...     fmin=librosa.note_to_hz("C1"),
+    ...     sr=22050,
+    ...     n_fft=2048,
+    ...     ax=ax,
     ... )
     >>> ax.set(ylabel="Pitch filter", title="Pitch filter bank")
     >>> fig.colorbar(img, ax=ax)
@@ -1015,7 +1029,9 @@ def pitch_basis(
 
     Construct fundamental-only pitch templates without residual components:
 
-    >>> basis_fund = librosa.filters.pitch_basis(sr=22050, n_fft=2048, harmonics=[1], n_residual=0)
+    >>> basis_fund = librosa.filters.pitch_basis(
+    ...     sr=22050, n_fft=2048, harmonics=[1], n_residual=0
+    ... )
     >>> basis_fund.shape
     (1025, 84)
 
@@ -1025,10 +1041,15 @@ def pitch_basis(
     >>> fig, ax = plt.subplots()
     >>> img = librosa.display.specshow(
     ...     librosa.amplitude_to_db(basis, ref=np.max),
-    ...     sr=22050, n_fft=2048, y_axis='log', ax=ax
+    ...     sr=22050,
+    ...     n_fft=2048,
+    ...     y_axis="log",
+    ...     ax=ax,
     ... )
-    >>> ax.set(xlabel='Component', ylabel='Frequency (Hz)', title='Pitch template basis')
-    >>> fig.colorbar(img, ax=ax, format='%+2.0f dB')
+    >>> ax.set(
+    ...     xlabel="Component", ylabel="Frequency (Hz)", title="Pitch template basis"
+    ... )
+    >>> fig.colorbar(img, ax=ax, format="%+2.0f dB")
     """
     if freq_in is None:
         if sr is None or n_fft is None:
@@ -1196,7 +1217,7 @@ def wavelet_lengths(
 
         ``alpha[k]`` is twice the relative difference between ``freqs[k+1]`` and ``freqs[k-1]``::
 
-            alpha[k] = (freqs[k+1]-freqs[k-1]) / (freqs[k+1]+freqs[k-1])
+            alpha[k] = (freqs[k + 1] - freqs[k - 1]) / (freqs[k + 1] + freqs[k - 1])
 
         If ``freqs`` follows a geometric progression (as in CQT and VQT), the vector
         ``alpha`` is constant and such that::
@@ -1406,7 +1427,7 @@ def wavelet(
     --------
     Create a constant-Q basis
 
-    >>> freqs = librosa.cqt_frequencies(n_bins=84, fmin='C1')
+    >>> freqs = librosa.cqt_frequencies(n_bins=84, fmin="C1")
     >>> basis, lengths = librosa.filters.wavelet(freqs=freqs, sr=22050)
 
     Plot one octave of filters in time and frequency
@@ -1418,17 +1439,20 @@ def wavelet(
     >>> for i, (f, n) in enumerate(zip(basis, notes[:12])):
     ...     f_scale = librosa.util.normalize(f) / 2
     ...     ax[0].plot(i + f_scale.real)
-    ...     ax[0].plot(i + f_scale.imag, linestyle=':')
-    >>> ax[0].set(yticks=np.arange(len(notes[:12])), yticklabels=notes[:12],
-    ...           ylabel='CQ filters',
-    ...           title='CQ filters (one octave, time domain)',
-    ...           xlabel='Time (samples at 22050 Hz)')
-    >>> ax[0].legend(['Real', 'Imaginary'])
+    ...     ax[0].plot(i + f_scale.imag, linestyle=":")
+    >>> ax[0].set(
+    ...     yticks=np.arange(len(notes[:12])),
+    ...     yticklabels=notes[:12],
+    ...     ylabel="CQ filters",
+    ...     title="CQ filters (one octave, time domain)",
+    ...     xlabel="Time (samples at 22050 Hz)",
+    ... )
+    >>> ax[0].legend(["Real", "Imaginary"])
     >>> F = np.abs(np.fft.fftn(basis, axes=[-1]))
     >>> # Keep only the positive frequencies
-    >>> F = F[:, :(1 + F.shape[1] // 2)]
-    >>> librosa.display.specshow(F, x_axis='linear', y_axis='cqt_note', ax=ax[1])
-    >>> ax[1].set(ylabel='CQ filters', title='CQ filter magnitudes (frequency domain)')
+    >>> F = F[:, : (1 + F.shape[1] // 2)]
+    >>> librosa.display.specshow(F, x_axis="linear", y_axis="cqt_note", ax=ax[1])
+    >>> ax[1].set(ylabel="CQ filters", title="CQ filter magnitudes (frequency domain)")
     """
     # Pass-through parameters to get the filter lengths
     lengths, _ = wavelet_lengths(
@@ -1524,7 +1548,7 @@ def pitch_to_chroma(
     --------
     Get a CQT, and wrap bins to chroma
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> CQT = np.abs(librosa.cqt(y, sr=sr))
     >>> chroma_map = librosa.filters.pitch_to_chroma(CQT.shape[0])
     >>> chromagram = chroma_map.dot(CQT)
@@ -1643,7 +1667,7 @@ def cq_to_chroma(
     --------
     Get a CQT, and wrap bins to chroma
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> CQT = np.abs(librosa.cqt(y, sr=sr))
     >>> chroma_map = librosa.filters.cq_to_chroma(CQT.shape[0])
     >>> chromagram = chroma_map.dot(CQT)
@@ -1669,7 +1693,7 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
     The ENBW of a window is defined by [#]_ (equation 11) as the normalized
     ratio of the sum of squares to the square of sums::
 
-        enbw = n * sum(window**2) / sum(window)**2
+        enbw = n * sum(window**2) / sum(window) ** 2
 
     .. [#] Harris, F. J.
         "On the use of windows for harmonic analysis with the discrete Fourier transform."
@@ -2017,13 +2041,13 @@ def semitone_filterbank(
     >>> semitone_filterbank, sample_rates = librosa.filters.semitone_filterbank(
     ...     center_freqs=librosa.midi_to_hz(np.arange(60, 72)),
     ...     sample_rates=np.repeat(4410.0, 12),
-    ...     flayout='sos'
-    ...     )
+    ...     flayout="sos",
+    ... )
     >>> magnitudes = []
     >>> for cur_sr, cur_filter in zip(sample_rates, semitone_filterbank):
-    ...     w, h = scipy.signal.sosfreqz(cur_filter,fs=cur_sr, worN=1025)
+    ...     w, h = scipy.signal.sosfreqz(cur_filter, fs=cur_sr, worN=1025)
     ...     magnitudes.append(20 * np.log10(np.abs(h)))
-    >>> fig, ax = plt.subplots(figsize=(12,6))
+    >>> fig, ax = plt.subplots(figsize=(12, 6))
     >>> img = librosa.display.specshow(
     ...     np.array(magnitudes),
     ...     x_axis="hz",
@@ -2031,15 +2055,15 @@ def semitone_filterbank(
     ...     y_coords=librosa.midi_to_hz(np.arange(60, 72)),
     ...     vmin=-60,
     ...     vmax=3,
-    ...     ax=ax
-    ...     )
+    ...     ax=ax,
+    ... )
     >>> librosa.display.colorbar_db(img)
     >>> ax.set(
     ...     xlim=[200, 600],
     ...     yticks=librosa.midi_to_hz(np.arange(60, 72)),
-    ...     title='Magnitude Responses of the Pitch Filterbank',
-    ...     xlabel='Frequency (Hz)',
-    ...     ylabel='Semitone filter center frequency (Hz)'
+    ...     title="Magnitude Responses of the Pitch Filterbank",
+    ...     xlabel="Frequency (Hz)",
+    ...     ylabel="Semitone filter center frequency (Hz)",
     ... )
     """
     if (center_freqs is None) and (sample_rates is None):
@@ -2106,18 +2130,24 @@ def window_sumsquare(
     at different hop lengths:
 
     >>> n_frames = 50
-    >>> wss_256 = librosa.filters.window_sumsquare(window='hann', n_frames=n_frames, hop_length=256)
-    >>> wss_512 = librosa.filters.window_sumsquare(window='hann', n_frames=n_frames, hop_length=512)
-    >>> wss_1024 = librosa.filters.window_sumsquare(window='hann', n_frames=n_frames, hop_length=1024)
+    >>> wss_256 = librosa.filters.window_sumsquare(
+    ...     window="hann", n_frames=n_frames, hop_length=256
+    ... )
+    >>> wss_512 = librosa.filters.window_sumsquare(
+    ...     window="hann", n_frames=n_frames, hop_length=512
+    ... )
+    >>> wss_1024 = librosa.filters.window_sumsquare(
+    ...     window="hann", n_frames=n_frames, hop_length=1024
+    ... )
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharey=True)
     >>> ax[0].plot(wss_256)
-    >>> ax[0].set(title='hop_length=256')
+    >>> ax[0].set(title="hop_length=256")
     >>> ax[1].plot(wss_512)
-    >>> ax[1].set(title='hop_length=512')
+    >>> ax[1].set(title="hop_length=512")
     >>> ax[2].plot(wss_1024)
-    >>> ax[2].set(title='hop_length=1024')
+    >>> ax[2].set(title="hop_length=1024")
     """
     if win_length is None:
         win_length = n_fft

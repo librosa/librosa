@@ -108,7 +108,11 @@ frequencies_rfft = np.fft.rfftfreq(len(y), d=1 / sr)
 
 fig, ax = plt.subplots()
 ax.plot(frequencies_rfft, np.abs(y_rfft), color="C1")
-ax.set(title="Frequency domain (non-negative frequencies)", xlabel="Frequency (Hz)", ylabel="Magnitude")
+ax.set(
+    title="Frequency domain (non-negative frequencies)",
+    xlabel="Frequency (Hz)",
+    ylabel="Magnitude",
+)
 
 # %%
 # The result of `rfft` has approximately half the number of frequencies
@@ -178,7 +182,9 @@ print(frequencies_stft)
 # To convert between frame indices and time, librosa provides the
 # `librosa.frames_to_time` function:
 
-frame_times = librosa.frames_to_time(np.arange(stft.shape[1]), sr=sr, hop_length=512)
+frame_times = librosa.frames_to_time(
+    np.arange(stft.shape[1]), sr=sr, hop_length=512
+)
 print(frame_times)
 
 # %%
@@ -208,7 +214,15 @@ print(frame_times)
 # its waveform for comparison.
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
-img = librosa.display.specshow(stft, vscale="dBFS", sr=sr, hop_length=512, x_axis="time", y_axis="hz", ax=ax[0])
+img = librosa.display.specshow(
+    stft,
+    vscale="dBFS",
+    sr=sr,
+    hop_length=512,
+    x_axis="time",
+    y_axis="hz",
+    ax=ax[0],
+)
 librosa.display.colorbar_db(img, label="dBFS")
 ax[0].set(title="Spectrogram")
 ax[0].label_outer()

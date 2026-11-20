@@ -189,10 +189,10 @@ def thaat_to_degrees(thaat: str) -> _Array1D[np.int_]:
 
     Examples
     --------
-    >>> librosa.thaat_to_degrees('bilaval')
+    >>> librosa.thaat_to_degrees("bilaval")
     array([ 0,  2,  4,  5,  7,  9, 11])
 
-    >>> librosa.thaat_to_degrees('todi')
+    >>> librosa.thaat_to_degrees("todi")
     array([ 0,  1,  3,  6,  7,  8, 11])
     """
     return np.asarray(THAAT_MAP[thaat.lower()])
@@ -227,7 +227,7 @@ def mela_to_degrees(mela: str | int) -> _Array1D[np.int_]:
 
     Or using a name directly:
 
-    >>> librosa.mela_to_degrees('kanakangi')
+    >>> librosa.mela_to_degrees("kanakangi")
     array([0, 1, 2, 5, 7, 8, 9])
     """
     if isinstance(mela, str):
@@ -370,7 +370,7 @@ def mela_to_svara(mela: str | int, *, abbr: bool = True, unicode: bool = True) -
 
     # You can also query by raga name instead of index:
 
-    >>> librosa.mela_to_svara('chalanatta')
+    >>> librosa.mela_to_svara("chalanatta")
     ['S', 'R₁', 'R₂', 'R₃', 'G₃', 'M₁', 'M₂', 'P', 'D₁', 'D₂', 'D₃', 'N₃']
     """
     # The following will be constant for all ragas
@@ -518,13 +518,13 @@ def __note_to_degree(key: Iterable[str]) -> int | _Array1D[np.int_]: ...
 def __note_to_degree(key: str | _IterableLike[str] | Iterable[str]) -> int | _Array1D[np.int_]:
     """Take a note name and return the degree of that note (e.g. 'C#' -> 1). We allow possibilities like "C#b".
 
-    >>> librosa.__note_to_degree('B#')
+    >>> librosa.__note_to_degree("B#")
     0
 
-    >>> librosa.__note_to_degree('D♮##b')
+    >>> librosa.__note_to_degree("D♮##b")
     3
 
-    >>> librosa.__note_to_degree(['B#','D♮##b'])
+    >>> librosa.__note_to_degree(["B#", "D♮##b"])
     array([0,3])
 
     """
@@ -558,13 +558,13 @@ def __simplify_note(
 ) -> str | npt.NDArray[np.str_]:
     """Take in a note name and simplify by canceling sharp-flat pairs, and doubling accidentals as appropriate.
 
-    >>> librosa.__simplify_note('C♭♯')
+    >>> librosa.__simplify_note("C♭♯")
     'C'
 
-    >>> librosa.__simplify_note('C♭♭♭')
+    >>> librosa.__simplify_note("C♭♭♭")
     'C♭𝄫'
 
-    >>> librosa.__simplify_note(['C♭♯', 'C♭♭♭'])
+    >>> librosa.__simplify_note(["C♭♯", "C♭♭♭"])
     array(['C', 'C♭𝄫'], dtype='<U3')
 
     """
@@ -600,10 +600,10 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     If unicode==True, return the accidentals as unicode symbols, regardless of nature
     of accidentals in signature. Otherwise, return accidentals as ASCII symbols.
 
-    >>> librosa.__mode_to_key('Db:loc')
+    >>> librosa.__mode_to_key("Db:loc")
     'E𝄫:maj'
 
-    >>> librosa.__mode_to_key('D♭:loc', unicode = False)
+    >>> librosa.__mode_to_key("D♭:loc", unicode=False)
     'Ebb:maj'
 
     """
@@ -692,49 +692,49 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool = False) -> li
     --------
     `C:maj` will use all sharps
 
-    >>> librosa.key_to_notes('C:maj')
+    >>> librosa.key_to_notes("C:maj")
     ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
     `A:min` has the same notes
 
-    >>> librosa.key_to_notes('A:min')
+    >>> librosa.key_to_notes("A:min")
     ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
     `A♯:min` will use sharps, but spell note 0 (`C`) as `B♯`
 
-    >>> librosa.key_to_notes('A#:min')
+    >>> librosa.key_to_notes("A#:min")
     ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
     `G♯:maj` will use a double-sharp to spell note 7 (`G`) as `F𝄪`:
 
-    >>> librosa.key_to_notes('G#:maj')
+    >>> librosa.key_to_notes("G#:maj")
     ['B♯', 'C♯', 'D', 'D♯', 'E', 'E♯', 'F♯', 'F𝄪', 'G♯', 'A', 'A♯', 'B']
 
     `F♭:min` will use double-flats
 
-    >>> librosa.key_to_notes('Fb:min')
+    >>> librosa.key_to_notes("Fb:min")
     ['D𝄫', 'D♭', 'E𝄫', 'E♭', 'F♭', 'F', 'G♭', 'A𝄫', 'A♭', 'B𝄫', 'B♭', 'C♭']
 
     `G:loc` uses flats
 
-    >>> librosa.key_to_notes('G:loc')
+    >>> librosa.key_to_notes("G:loc")
     ['C', 'D♭', 'D', 'E♭', 'E', 'F', 'G♭', 'G', 'A♭', 'A', 'B♭', 'B']
 
     If `natural=True`, print natural accidentals.
 
-    >>> librosa.key_to_notes('G:loc', natural=True)
+    >>> librosa.key_to_notes("G:loc", natural=True)
     ['C', 'D♭', 'D♮', 'E♭', 'E♮', 'F', 'G♭', 'G', 'A♭', 'A♮', 'B♭', 'B♮']
 
-    >>> librosa.key_to_notes('D:maj', natural=True)
+    >>> librosa.key_to_notes("D:maj", natural=True)
     ['C♮', 'C♯', 'D', 'D♯', 'E', 'F♮', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B']
 
-    >>> librosa.key_to_notes('G#:maj', unicode = False, natural = True)
+    >>> librosa.key_to_notes("G#:maj", unicode=False, natural=True)
     ['B#', 'C#', 'Dn', 'D#', 'En', 'E#', 'F#', 'F##', 'G#', 'An', 'A#', 'B']
 
     We can combine this with ``key_to_degrees`` to get the notes for a given scale:
 
-    >>> notes = librosa.key_to_notes('D:maj')
-    >>> degrees = librosa.key_to_degrees('D:maj')
+    >>> notes = librosa.key_to_notes("D:maj")
+    >>> degrees = librosa.key_to_degrees("D:maj")
     >>> print([notes[d] for d in degrees])
     ['D', 'E', 'F♯', 'G', 'A', 'B', 'C♯']
     """
@@ -907,16 +907,16 @@ def key_to_degrees(key: str) -> np.ndarray:
 
     Examples
     --------
-    >>> librosa.key_to_degrees('C:maj')
+    >>> librosa.key_to_degrees("C:maj")
     array([ 0,  2,  4,  5,  7,  9, 11])
 
-    >>> librosa.key_to_degrees('C#:maj')
+    >>> librosa.key_to_degrees("C#:maj")
     array([ 1,  3,  5,  6,  8, 10,  0])
 
-    >>> librosa.key_to_degrees('A:min')
+    >>> librosa.key_to_degrees("A:min")
     array([ 9, 11,  0,  2,  4,  5,  7])
 
-    >>> librosa.key_to_degrees('A:min')
+    >>> librosa.key_to_degrees("A:min")
     array([ 9, 11,  0,  2,  4,  5,  7])
     """
     notes = dict(maj=np.array([0, 2, 4, 5, 7, 9, 11]), min=np.array([0, 2, 3, 5, 7, 8, 10]))
@@ -976,13 +976,13 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
 
     Examples
     --------
-    >>> librosa.fifths_to_note(unison='C', fifths=6)
+    >>> librosa.fifths_to_note(unison="C", fifths=6)
     'F♯'
 
-    >>> librosa.fifths_to_note(unison='G', fifths=-3)
+    >>> librosa.fifths_to_note(unison="G", fifths=-3)
     'B♭'
 
-    >>> librosa.fifths_to_note(unison='Eb', fifths=11, unicode=False)
+    >>> librosa.fifths_to_note(unison="Eb", fifths=11, unicode=False)
     'G#'
     """
     # Starting the circle of fifths at F makes accidentals easier to count
@@ -1144,32 +1144,32 @@ def interval_to_fjs(
     Pythagorean intervals appear as expected, with no otonal
     or utonal extensions:
 
-    >>> librosa.interval_to_fjs(3/2, unison='C')
+    >>> librosa.interval_to_fjs(3 / 2, unison="C")
     'G'
-    >>> librosa.interval_to_fjs(4/3, unison='F')
+    >>> librosa.interval_to_fjs(4 / 3, unison="F")
     'B♭'
 
     A ptolemaic major third will appear with an otonal '5':
 
-    >>> librosa.interval_to_fjs(5/4, unison='A')
+    >>> librosa.interval_to_fjs(5 / 4, unison="A")
     'C♯⁵'
 
     And a ptolemaic minor third will appear with utonal '5':
 
-    >>> librosa.interval_to_fjs(6/5, unison='A')
+    >>> librosa.interval_to_fjs(6 / 5, unison="A")
     'C₅'
 
     More complex intervals will have compound accidentals.
     For example:
 
-    >>> librosa.interval_to_fjs(25/14, unison='F#')
+    >>> librosa.interval_to_fjs(25 / 14, unison="F#")
     'E²⁵₇'
-    >>> librosa.interval_to_fjs(25/14, unison='F#', unicode=False)
+    >>> librosa.interval_to_fjs(25 / 14, unison="F#", unicode=False)
     'E^25_7'
 
     Array inputs are also supported:
 
-    >>> librosa.interval_to_fjs([3/2, 4/3, 5/3])
+    >>> librosa.interval_to_fjs([3 / 2, 4 / 3, 5 / 3])
     array(['G', 'F', 'A⁵'], dtype='<U2')
     """
     # suppressing the type check here because mypy won't introspect through

@@ -112,47 +112,79 @@ def tempogram(
     Examples
     --------
     >>> # Compute local onset autocorrelation
-    >>> y, sr = librosa.loadx('nutcracker', duration=30)
+    >>> y, sr = librosa.loadx("nutcracker", duration=30)
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
-    >>> tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
-    ...                                       hop_length=hop_length)
+    >>> tempogram = librosa.feature.tempogram(
+    ...     onset_envelope=oenv, sr=sr, hop_length=hop_length
+    ... )
     >>> # Compute global onset autocorrelation
     >>> ac_global = librosa.autocorrelate(oenv, max_size=tempogram.shape[0])
     >>> ac_global = librosa.util.normalize(ac_global)
     >>> # Estimate the global tempo for display purposes
-    >>> tempo = librosa.feature.tempo(onset_envelope=oenv, sr=sr,
-    ...                               hop_length=hop_length)[0]
+    >>> tempo = librosa.feature.tempo(
+    ...     onset_envelope=oenv, sr=sr, hop_length=hop_length
+    ... )[0]
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=4, figsize=(10, 10))
     >>> times = librosa.times_like(oenv, sr=sr, hop_length=hop_length)
-    >>> ax[0].plot(times, oenv, label='Onset strength')
+    >>> ax[0].plot(times, oenv, label="Onset strength")
     >>> ax[0].label_outer()
     >>> ax[0].legend(frameon=True)
-    >>> librosa.display.specshow(tempogram, sr=sr, hop_length=hop_length,
-    ...                          x_axis='time', y_axis='tempo', cmap='magma',
-    ...                          ax=ax[1])
-    >>> hl = librosa.display.highlight(ax=ax[1], linewidth=4, color='w', alpha=.75)
-    >>> ax[1].axhline(tempo, path_effects=hl, linewidth=2, color='k', linestyle='--',
-    ...               label='Estimated tempo={:g}'.format(tempo))
-    >>> ax[1].legend(loc='upper right')
-    >>> ax[1].set(title='Tempogram')
-    >>> x = np.linspace(0, tempogram.shape[0] * float(hop_length) / sr,
-    ...                 num=tempogram.shape[0])
-    >>> ax[2].plot(x, np.mean(tempogram, axis=1), label='Mean local autocorrelation')
-    >>> ax[2].plot(x, ac_global, '--', alpha=0.75, label='Global autocorrelation')
-    >>> ax[2].set(xlabel='Lag (seconds)')
+    >>> librosa.display.specshow(
+    ...     tempogram,
+    ...     sr=sr,
+    ...     hop_length=hop_length,
+    ...     x_axis="time",
+    ...     y_axis="tempo",
+    ...     cmap="magma",
+    ...     ax=ax[1],
+    ... )
+    >>> hl = librosa.display.highlight(ax=ax[1], linewidth=4, color="w", alpha=0.75)
+    >>> ax[1].axhline(
+    ...     tempo,
+    ...     path_effects=hl,
+    ...     linewidth=2,
+    ...     color="k",
+    ...     linestyle="--",
+    ...     label="Estimated tempo={:g}".format(tempo),
+    ... )
+    >>> ax[1].legend(loc="upper right")
+    >>> ax[1].set(title="Tempogram")
+    >>> x = np.linspace(
+    ...     0, tempogram.shape[0] * float(hop_length) / sr, num=tempogram.shape[0]
+    ... )
+    >>> ax[2].plot(x, np.mean(tempogram, axis=1), label="Mean local autocorrelation")
+    >>> ax[2].plot(x, ac_global, "--", alpha=0.75, label="Global autocorrelation")
+    >>> ax[2].set(xlabel="Lag (seconds)")
     >>> ax[2].legend(frameon=True)
-    >>> freqs = librosa.tempo_frequencies(tempogram.shape[0], hop_length=hop_length, sr=sr)
-    >>> ax[3].semilogx(freqs[1:], np.mean(tempogram[1:], axis=1),
-    ...               label='Mean local autocorrelation', base=2)
-    >>> ax[3].semilogx(freqs[1:], ac_global[1:], '--', alpha=0.75,
-    ...               label='Global autocorrelation', base=2)
-    >>> ax[3].axvline(tempo, color='black', linestyle='--', alpha=.8,
-    ...               label='Estimated tempo={:g}'.format(tempo))
+    >>> freqs = librosa.tempo_frequencies(
+    ...     tempogram.shape[0], hop_length=hop_length, sr=sr
+    ... )
+    >>> ax[3].semilogx(
+    ...     freqs[1:],
+    ...     np.mean(tempogram[1:], axis=1),
+    ...     label="Mean local autocorrelation",
+    ...     base=2,
+    ... )
+    >>> ax[3].semilogx(
+    ...     freqs[1:],
+    ...     ac_global[1:],
+    ...     "--",
+    ...     alpha=0.75,
+    ...     label="Global autocorrelation",
+    ...     base=2,
+    ... )
+    >>> ax[3].axvline(
+    ...     tempo,
+    ...     color="black",
+    ...     linestyle="--",
+    ...     alpha=0.8,
+    ...     label="Estimated tempo={:g}".format(tempo),
+    ... )
     >>> ax[3].legend(frameon=True)
-    >>> ax[3].set(xlabel='BPM')
+    >>> ax[3].set(xlabel="BPM")
     >>> ax[3].grid(True)
     """
     from ..onset import onset_strength
@@ -249,29 +281,31 @@ def fourier_tempogram(
     Examples
     --------
     >>> # Compute local onset autocorrelation
-    >>> y, sr = librosa.loadx('nutcracker')
+    >>> y, sr = librosa.loadx("nutcracker")
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
-    >>> tempogram = librosa.feature.fourier_tempogram(onset_envelope=oenv, sr=sr,
-    ...                                               hop_length=hop_length)
+    >>> tempogram = librosa.feature.fourier_tempogram(
+    ...     onset_envelope=oenv, sr=sr, hop_length=hop_length
+    ... )
     >>> # Compute the auto-correlation tempogram, unnormalized to make comparison easier
-    >>> ac_tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
-    ...                                          hop_length=hop_length, norm=None)
+    >>> ac_tempogram = librosa.feature.tempogram(
+    ...     onset_envelope=oenv, sr=sr, hop_length=hop_length, norm=None
+    ... )
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> ax[0].plot(librosa.times_like(oenv), oenv, label='Onset strength')
+    >>> ax[0].plot(librosa.times_like(oenv), oenv, label="Onset strength")
     >>> ax[0].legend(frameon=True)
     >>> ax[0].label_outer()
     >>> librosa.display.specshow(np.abs(tempogram), sr=sr, hop_length=hop_length,
     >>>                          x_axis='time', y_axis='fourier_tempo', cmap='magma',
     ...                          ax=ax[1])
-    >>> ax[1].set(title='Fourier tempogram')
+    >>> ax[1].set(title="Fourier tempogram")
     >>> ax[1].label_outer()
     >>> librosa.display.specshow(ac_tempogram, sr=sr, hop_length=hop_length,
     >>>                          x_axis='time', y_axis='tempo', cmap='magma',
     ...                          ax=ax[2])
-    >>> ax[2].set(title='Autocorrelation tempogram')
+    >>> ax[2].set(title="Autocorrelation tempogram")
     """
     from ..onset import onset_strength
 
@@ -353,7 +387,7 @@ def tempo(
     Examples
     --------
     >>> # Estimate a static tempo
-    >>> y, sr = librosa.loadx('nutcracker', duration=30)
+    >>> y, sr = librosa.loadx("nutcracker", duration=30)
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> tempo = librosa.feature.tempo(onset_envelope=onset_env, sr=sr)
     >>> tempo
@@ -367,16 +401,15 @@ def tempo(
     array([161.499])
 
     >>> # Or a dynamic tempo
-    >>> dtempo = librosa.feature.tempo(onset_envelope=onset_env, sr=sr,
-    ...                                aggregate=None)
+    >>> dtempo = librosa.feature.tempo(onset_envelope=onset_env, sr=sr, aggregate=None)
     >>> dtempo
     array([ 89.103,  89.103,  89.103, ..., 123.047, 123.047, 123.047])
 
     >>> # Dynamic tempo with a proper log-normal prior
     >>> prior_lognorm = scipy.stats.lognorm(loc=np.log(120), scale=120, s=1)
-    >>> dtempo_lognorm = librosa.feature.tempo(onset_envelope=onset_env, sr=sr,
-    ...                                        aggregate=None,
-    ...                                        prior=prior_lognorm)
+    >>> dtempo_lognorm = librosa.feature.tempo(
+    ...     onset_envelope=onset_env, sr=sr, aggregate=None, prior=prior_lognorm
+    ... )
     >>> dtempo_lognorm
     array([ 89.103,  89.103,  89.103, ..., 123.047, 123.047, 123.047])
 
@@ -389,17 +422,34 @@ def tempo(
     >>> # Compute 2-second windowed autocorrelation
     >>> hop_length = 512
     >>> ac = librosa.autocorrelate(onset_env, max_size=2 * sr // hop_length)
-    >>> freqs = librosa.tempo_frequencies(len(ac), sr=sr,
-    ...                                   hop_length=hop_length)
+    >>> freqs = librosa.tempo_frequencies(len(ac), sr=sr, hop_length=hop_length)
     >>> # Plot on a BPM axis.  We skip the first (0-lag) bin.
     >>> fig, ax = plt.subplots()
-    >>> ax.semilogx(freqs[1:], librosa.util.normalize(ac)[1:],
-    ...              label='Onset autocorrelation', base=2)
-    >>> ax.axvline(tempo, 0, 1, alpha=0.75, linestyle='--', color='r',
-    ...             label='Tempo (default prior): {:.2f} BPM'.format(tempo))
-    >>> ax.axvline(utempo, 0, 1, alpha=0.75, linestyle=':', color='g',
-    ...             label='Tempo (uniform prior): {:.2f} BPM'.format(utempo))
-    >>> ax.set(xlabel='Tempo (BPM)', title='Static tempo estimation')
+    >>> ax.semilogx(
+    ...     freqs[1:],
+    ...     librosa.util.normalize(ac)[1:],
+    ...     label="Onset autocorrelation",
+    ...     base=2,
+    ... )
+    >>> ax.axvline(
+    ...     tempo,
+    ...     0,
+    ...     1,
+    ...     alpha=0.75,
+    ...     linestyle="--",
+    ...     color="r",
+    ...     label="Tempo (default prior): {:.2f} BPM".format(tempo),
+    ... )
+    >>> ax.axvline(
+    ...     utempo,
+    ...     0,
+    ...     1,
+    ...     alpha=0.75,
+    ...     linestyle=":",
+    ...     color="g",
+    ...     label="Tempo (uniform prior): {:.2f} BPM".format(utempo),
+    ... )
+    >>> ax.set(xlabel="Tempo (BPM)", title="Static tempo estimation")
     >>> ax.grid(True)
     >>> ax.legend()
     >>> plt.show()
@@ -407,16 +457,28 @@ def tempo(
     Plot dynamic tempo estimates over a tempogram
 
     >>> fig, ax = plt.subplots()
-    >>> tg = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr,
-    ...                                hop_length=hop_length)
-    >>> librosa.display.specshow(tg, x_axis='time', y_axis='tempo', cmap='magma', ax=ax)
-    >>> hl = librosa.display.highlight(ax=ax, alpha=.85, linewidth=3, color='k')
-    >>> ax.plot(librosa.times_like(dtempo), dtempo, linewidth=2,
-    ...         path_effects=hl, label='Tempo estimate (default prior)')
-    >>> ax.plot(librosa.times_like(dtempo_lognorm), dtempo_lognorm, color='C0',
-    ...         linestyle='--', linewidth=2,
-    ...         path_effects=hl, label='Tempo estimate (lognorm prior)')
-    >>> ax.set(title='Dynamic tempo estimation')
+    >>> tg = librosa.feature.tempogram(
+    ...     onset_envelope=onset_env, sr=sr, hop_length=hop_length
+    ... )
+    >>> librosa.display.specshow(tg, x_axis="time", y_axis="tempo", cmap="magma", ax=ax)
+    >>> hl = librosa.display.highlight(ax=ax, alpha=0.85, linewidth=3, color="k")
+    >>> ax.plot(
+    ...     librosa.times_like(dtempo),
+    ...     dtempo,
+    ...     linewidth=2,
+    ...     path_effects=hl,
+    ...     label="Tempo estimate (default prior)",
+    ... )
+    >>> ax.plot(
+    ...     librosa.times_like(dtempo_lognorm),
+    ...     dtempo_lognorm,
+    ...     color="C0",
+    ...     linestyle="--",
+    ...     linewidth=2,
+    ...     path_effects=hl,
+    ...     label="Tempo estimate (lognorm prior)",
+    ... )
+    >>> ax.set(title="Dynamic tempo estimation")
     >>> ax.legend()
     >>> plt.show()
     """
@@ -614,13 +676,12 @@ def tempogram_ratio(
     for a waltz (3/4 time)
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('sweetwaltz')
+    >>> y, sr = librosa.loadx("sweetwaltz")
     >>> tempogram = librosa.feature.tempogram(y=y, sr=sr)
     >>> tgr = librosa.feature.tempogram_ratio(tg=tempogram, sr=sr)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(tempogram, x_axis='time', y_axis='tempo',
-    ...                          ax=ax[0])
-    >>> librosa.display.specshow(tgr, x_axis='time', ax=ax[1])
+    >>> librosa.display.specshow(tempogram, x_axis="time", y_axis="tempo", ax=ax[0])
+    >>> librosa.display.specshow(tgr, x_axis="time", ax=ax[1])
     >>> ax[0].label_outer()
     >>> ax[0].set(title="Tempogram")
     >>> ax[1].set(title="Tempogram ratio")
@@ -721,35 +782,48 @@ def hybrid_tempogram(
     --------
     Compute local onset autocorrelation
 
-    >>> y, sr = librosa.loadx('nutcracker')
+    >>> y, sr = librosa.loadx("nutcracker")
     >>> hop_length = 512
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
 
     Compute the autocorrelation, Fourier, and hybrid tempograms
 
-    >>> tempogram = librosa.feature.tempogram(onset_envelope=oenv, sr=sr,
-    ...                                       hop_length=hop_length)
-    >>> fourier_tempogram = librosa.feature.fourier_tempogram(onset_envelope=oenv, sr=sr,
-    ...                                                       hop_length=hop_length)
-    >>> hybrid_tempogram = librosa.feature.hybrid_tempogram(onset_envelope=oenv, sr=sr,
-    ...                                                     hop_length=hop_length)
+    >>> tempogram = librosa.feature.tempogram(
+    ...     onset_envelope=oenv, sr=sr, hop_length=hop_length
+    ... )
+    >>> fourier_tempogram = librosa.feature.fourier_tempogram(
+    ...     onset_envelope=oenv, sr=sr, hop_length=hop_length
+    ... )
+    >>> hybrid_tempogram = librosa.feature.hybrid_tempogram(
+    ...     onset_envelope=oenv, sr=sr, hop_length=hop_length
+    ... )
 
     Plot the results
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> librosa.display.specshow(tempogram, x_axis='time', y_axis='tempo',
-    ...                          hop_length=hop_length, ax=ax[0])
-    >>> ax[0].set(title='Autocorrelation Tempogram')
+    >>> librosa.display.specshow(
+    ...     tempogram, x_axis="time", y_axis="tempo", hop_length=hop_length, ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Autocorrelation Tempogram")
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(np.abs(fourier_tempogram), x_axis='time',
-    ...                          y_axis='fourier_tempo', hop_length=hop_length, ax=ax[1])
-    >>> ax[1].set(title='Fourier Tempogram')
+    >>> librosa.display.specshow(
+    ...     np.abs(fourier_tempogram),
+    ...     x_axis="time",
+    ...     y_axis="fourier_tempo",
+    ...     hop_length=hop_length,
+    ...     ax=ax[1],
+    ... )
+    >>> ax[1].set(title="Fourier Tempogram")
     >>> ax[1].label_outer()
-    >>> img = librosa.display.specshow(hybrid_tempogram, x_axis='time',
-    ...                                y_axis='fourier_tempo', hop_length=hop_length,
-    ...                                ax=ax[2])
-    >>> ax[2].set(title='Hybrid Tempogram')
+    >>> img = librosa.display.specshow(
+    ...     hybrid_tempogram,
+    ...     x_axis="time",
+    ...     y_axis="fourier_tempo",
+    ...     hop_length=hop_length,
+    ...     ax=ax[2],
+    ... )
+    >>> ax[2].set(title="Hybrid Tempogram")
     >>> fig.colorbar(img, ax=ax)
     """
     interp_kwargs_dict: dict[str, Any] = kwargs if kwargs else {}
@@ -889,7 +963,9 @@ def metrogram(
     >>> y, sr = librosa.loadx("sweetwaltz")
     >>> # extend the window, to capture the slower downbeat pulses
     >>> win_length = 384 * 4
-    >>> fourier_tempogram = librosa.feature.fourier_tempogram(y=y, win_length=win_length)
+    >>> fourier_tempogram = librosa.feature.fourier_tempogram(
+    ...     y=y, win_length=win_length
+    ... )
     >>> fourier_freqs = librosa.fourier_tempo_frequencies(win_length=win_length)
     >>> ac_tempogram = librosa.feature.tempogram(y=y, win_length=win_length)
     >>> ac_freqs = librosa.tempo_frequencies(ac_tempogram.shape[-2])
@@ -899,11 +975,15 @@ def metrogram(
     >>> fundamental_tempogram = librosa.util.interp_broadcast(
     ...     x1=ac_tempogram,
     ...     x1_pos=ac_freqs,
-    ...     x2=fourier_tempogram[..., :-1],  # both tempograms must be of equal length along time
+    ...     x2=fourier_tempogram[
+    ...         ..., :-1
+    ...     ],  # both tempograms must be of equal length along time
     ...     x2_pos=fourier_freqs,
     ...     interp_pos=funt_freqs,
     ... )
-    >>> metrogram = librosa.feature.metrogram(tg=fundamental_tempogram, freqs=funt_freqs)
+    >>> metrogram = librosa.feature.metrogram(
+    ...     tg=fundamental_tempogram, freqs=funt_freqs
+    ... )
     >>> fig, ax = plt.subplots()
     >>> librosa.display.specshow(np.abs(metrogram), x_axis="time", ax=ax)
     >>> ax.set(title="Metrogram")
