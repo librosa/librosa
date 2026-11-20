@@ -99,7 +99,7 @@ class LibrosaCallVisitor(ast.NodeVisitor):
             return self.is_librosa_call(node.value)
         # If the node is a name and it's 'librosa', we've found a librosa call
         elif isinstance(node, ast.Name):
-            return node.id == 'librosa'
+            return node.id == "librosa"
         return False
 
     def get_full_func_name(self, node):
@@ -110,7 +110,7 @@ class LibrosaCallVisitor(ast.NodeVisitor):
             node = node.value
         if isinstance(node, ast.Name):
             parts.append(node.id)
-        return '.'.join(reversed(parts))
+        return ".".join(reversed(parts))
 
 
 def extract_librosa_calls(code_blocks, target_functions, desc=""):
@@ -137,7 +137,6 @@ def extract_librosa_calls(code_blocks, target_functions, desc=""):
             print()
 
 
-
 def extract_code_blocks(docstring):
     # Parse the docstring
     parsed_doc = nds.NumpyDocString(docstring)
@@ -145,30 +144,30 @@ def extract_code_blocks(docstring):
     code_blocks = []
 
     # Extract the "Examples" section (which is a list)
-    examples = parsed_doc['Examples']
-    
+    examples = parsed_doc["Examples"]
+
     current_block = []
 
     for line in examples:
         stripped_line = line.lstrip()  # Strip leading whitespace
 
-        if stripped_line.startswith('>>>') or stripped_line.startswith('...'):
+        if stripped_line.startswith(">>>") or stripped_line.startswith("..."):
             # Remove '>>>' or '...' from the start, but preserve indentation for continuation lines
-            code_line = stripped_line[4:] if stripped_line.startswith('>>>') else stripped_line[3:]
+            code_line = stripped_line[4:] if stripped_line.startswith(">>>") else stripped_line[3:]
             current_block.append(code_line)
         elif current_block:
             # If we hit a non-code line and there's an ongoing block, end and save the current block
-            code_blocks.append('\n'.join(current_block))
+            code_blocks.append("\n".join(current_block))
             current_block = []
 
     # Add the last block if it exists
     if current_block:
-        code_blocks.append('\n'.join(current_block))
+        code_blocks.append("\n".join(current_block))
 
     return code_blocks
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     target_functions = find_functions_with_param(librosa, "sr")
 
     # Extract code blocks from the function's docstring

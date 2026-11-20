@@ -33,8 +33,7 @@ Audio(url=librosa.example("libri1", url=True))
 
 ######################################
 # Compute a log-scaled Mel spectrogram
-melspec = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr),
-                              ref=np.max)
+melspec = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr), ref=np.max)
 
 ##################################################
 # The resulting spectrogram has a number of frames
@@ -60,9 +59,7 @@ hop_length = librosa.time_to_frames(0.10)
 print(f"Frame length={frame_length}, hop length={hop_length}")
 
 ########################################
-patches = librosa.util.frame(melspec,
-                             frame_length=frame_length,
-                             hop_length=hop_length)
+patches = librosa.util.frame(melspec, frame_length=frame_length, hop_length=hop_length)
 
 ###########################################################
 # The resulting `patches` array is now three-dimensional,
@@ -96,9 +93,7 @@ librosa.display.specshow(melspec, x_axis="time", y_axis="mel", ax=ax["A"])
 ax["A"].set(title="Full spectrogram", xlabel=None)
 
 for index in [0, 1, 2]:
-    librosa.display.specshow(patches[..., index],
-                             x_axis="time", y_axis="mel",
-                             ax=ax[str(index)])
+    librosa.display.specshow(patches[..., index], x_axis="time", y_axis="mel", ax=ax[str(index)])
     ax[str(index)].set(title=f"Patch #{index}")
     ax[str(index)].label_outer()
 
@@ -112,8 +107,7 @@ for index in [0, 1, 2]:
 # sphinx_gallery_thumbnail_number = 2
 
 fig, ax = plt.subplots()
-mesh = librosa.display.specshow(patches[..., 0], x_axis="time",
-                                y_axis="mel", ax=ax)
+mesh = librosa.display.specshow(patches[..., 0], x_axis="time", y_axis="mel", ax=ax)
 
 
 # This helper function is used to render each frame of the animation
@@ -128,8 +122,10 @@ def _update(num):
     return (mesh,)
 
 
-ani = animation.FuncAnimation(fig,
-                              func=_update,
-                              frames=patches.shape[-1],
-                              interval=100,  # 100 milliseconds = 1/10 sec
-                              blit=True)
+ani = animation.FuncAnimation(
+    fig,
+    func=_update,
+    frames=patches.shape[-1],
+    interval=100,  # 100 milliseconds = 1/10 sec
+    blit=True,
+)

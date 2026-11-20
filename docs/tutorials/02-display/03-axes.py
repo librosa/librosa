@@ -75,11 +75,10 @@ for axi in ax.flat:
 # If we deviate from these defaults, we have to inform `specshow` accordingly.
 
 # Use 3 bins per semitone, and span 8 octaves
-cqt = librosa.cqt(y=y, sr=sr, n_bins=8*3*12, bins_per_octave=3*12)
+cqt = librosa.cqt(y=y, sr=sr, n_bins=8 * 3 * 12, bins_per_octave=3 * 12)
 
 fig, ax = plt.subplots()
-librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_hz", vscale="dBFS",
-                         sr=sr, bins_per_octave=3*12)
+librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_hz", vscale="dBFS", sr=sr, bins_per_octave=3 * 12)
 ax.set(title="CQT with 8 octaves, 36 bins per octave")
 
 # %%
@@ -115,12 +114,9 @@ ax.set(title="CQT with 8 octaves, 36 bins per octave")
 # The following example compares Hz, oct3, and note:
 
 fig, ax = plt.subplots(nrows=3, sharex=True, figsize=(8, 8))
-librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_hz", vscale="dBFS",
-                         sr=sr, bins_per_octave=3*12, ax=ax[0])
-librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_oct3", vscale="dBFS",
-                         sr=sr, bins_per_octave=3*12, ax=ax[1])
-librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_note", vscale="dBFS",
-                         sr=sr, bins_per_octave=3*12, ax=ax[2])
+librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_hz", vscale="dBFS", sr=sr, bins_per_octave=3 * 12, ax=ax[0])
+librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_oct3", vscale="dBFS", sr=sr, bins_per_octave=3 * 12, ax=ax[1])
+librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_note", vscale="dBFS", sr=sr, bins_per_octave=3 * 12, ax=ax[2])
 for axi in ax.flat:
     axi.label_outer()
 
@@ -131,12 +127,9 @@ for axi in ax.flat:
 # frequency range.
 
 fig, ax = plt.subplots(nrows=3, sharex=True, figsize=(8, 8))
-librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_hz", vscale="dBFS",
-                         sr=sr, bins_per_octave=3*12, ax=ax[0])
-librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_oct3", vscale="dBFS",
-                         sr=sr, bins_per_octave=3*12, ax=ax[1])
-librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_note", vscale="dBFS",
-                         sr=sr, bins_per_octave=3*12, ax=ax[2])
+librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_hz", vscale="dBFS", sr=sr, bins_per_octave=3 * 12, ax=ax[0])
+librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_oct3", vscale="dBFS", sr=sr, bins_per_octave=3 * 12, ax=ax[1])
+librosa.display.specshow(cqt, x_axis="time", y_axis="cqt_note", vscale="dBFS", sr=sr, bins_per_octave=3 * 12, ax=ax[2])
 
 for axi in ax.flat:
     axi.set(ylim=[250, 500])

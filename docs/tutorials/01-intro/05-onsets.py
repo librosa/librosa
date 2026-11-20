@@ -201,8 +201,9 @@ librosa.display.waveshow(y=y, sr=sr, ax=ax[1], label="Waveform")
 ax[1].legend()
 ax[0].plot(times, onset_env, label="Onset envelope", color="C1")
 ax[0].scatter(times[onset_peaks], onset_env[onset_peaks], marker="^", color="k", label="Localmax Peaks")
-ax[0].scatter(times[onset_detect], onset_env[onset_detect], marker="o",
-              edgecolor="C2", facecolor="none", label="onset_detect")
+ax[0].scatter(
+    times[onset_detect], onset_env[onset_detect], marker="o", edgecolor="C2", facecolor="none", label="onset_detect"
+)
 ax[0].legend()
 ax[0].label_outer()
 
@@ -239,8 +240,7 @@ onset_times = librosa.frames_to_time(onset_detect, sr=sr)
 # This is a common enough use case that the `onset_detect` function can
 # also return the times directly, by setting the `units` argument:
 
-onset_times = librosa.onset.onset_detect(onset_envelope=onset_env,
-                                         units="time")
+onset_times = librosa.onset.onset_detect(onset_envelope=onset_env, units="time")
 
 print(onset_times)
 

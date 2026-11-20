@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """The librosa.beat module provides two functions for estimating beat locations from an audio signal."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Literal, overload
@@ -24,9 +25,7 @@ if TYPE_CHECKING:
 
     from ._typing import _Array1D
 
-    type _BpmLike = (
-        float | np.floating[Any] | np.integer[Any] | npt.NDArray[np.floating[Any]]
-    )
+    type _BpmLike = float | np.floating[Any] | np.integer[Any] | npt.NDArray[np.floating[Any]]
 
     # `typing_extensions.TypeVar` is only needed until Python 3.13, which adds support
     # for type parameter defaults (PEP 696).
@@ -93,7 +92,7 @@ def beat_track(
     bpm: _BpmLike | None = None,
     prior: scipy.stats.rv_continuous | None = None,
     units: str = "frames",
-    sparse: bool = True
+    sparse: bool = True,
 ) -> tuple[float | np.floating[Any] | np.integer[Any] | np.ndarray, np.ndarray]:
     r"""Dynamic programming beat tracker.
 
@@ -262,22 +261,21 @@ def beat_track(
         if y is None:
             raise ParameterValueError("y or onset_envelope must be provided")
 
-        onset_envelope = onset.onset_strength(
-            y=y, sr=sr, hop_length=hop_length, aggregate=np.median
-        )
+        onset_envelope = onset.onset_strength(y=y, sr=sr, hop_length=hop_length, aggregate=np.median)
 
     if sparse and onset_envelope.ndim != 1:
-        raise ParameterShapeError(f"sparse=True (default) does not support "
-                f"{onset_envelope.ndim}-dimensional inputs. "
-                f"Either set sparse=False or convert the signal to mono.")
+        raise ParameterShapeError(
+            f"sparse=True (default) does not support "
+            f"{onset_envelope.ndim}-dimensional inputs. "
+            f"Either set sparse=False or convert the signal to mono."
+        )
 
     # Do we have any onsets to grab?
     if not onset_envelope.any():
         if sparse:
             return (0.0, np.array([], dtype=int))
         else:
-            return (np.zeros(shape=onset_envelope.shape[:-1], dtype=float),
-                    np.zeros_like(onset_envelope, dtype=bool))
+            return (np.zeros(shape=onset_envelope.shape[:-1], dtype=float), np.zeros_like(onset_envelope, dtype=bool))
 
     # Estimate BPM if one was not provided
     if bpm is None:
@@ -291,9 +289,7 @@ def beat_track(
 
     # Ensure that tempo is in a shape that is compatible with vectorization
     _bpm = np.atleast_1d(bpm)
-    bpm_expanded = util.expand_to(_bpm,
-                                  ndim=onset_envelope.ndim,
-                                  axes=range(_bpm.ndim))
+    bpm_expanded = util.expand_to(_bpm, ndim=onset_envelope.ndim, axes=range(_bpm.ndim))
 
     # Then, run the tracker
     beats = __beat_tracker(onset_envelope, bpm_expanded, float(sr) / hop_length, tightness, trim)
@@ -449,14 +445,10 @@ def plp[FloatT: np.floating[Any]](
     """
     # Step 1: get the onset envelope
     if onset_envelope is None:
-        onset_envelope = onset.onset_strength(
-            y=y, sr=sr, hop_length=hop_length, aggregate=np.median
-        )
+        onset_envelope = onset.onset_strength(y=y, sr=sr, hop_length=hop_length, aggregate=np.median)
 
     if tempo_min is not None and tempo_max is not None and tempo_max <= tempo_min:
-        raise ParameterValueError(
-            f"tempo_max={tempo_max} must be larger than tempo_min={tempo_min}"
-        )
+        raise ParameterValueError(f"tempo_max={tempo_max} must be larger than tempo_min={tempo_min}")
 
     # Step 2: get the fourier tempogram
     ftgram = fourier_tempogram(
@@ -467,9 +459,7 @@ def plp[FloatT: np.floating[Any]](
     )
 
     # Step 3: pin to the feasible tempo range
-    tempo_frequencies = core.fourier_tempo_frequencies(
-        sr=sr, hop_length=hop_length, win_length=win_length
-    )
+    tempo_frequencies = core.fourier_tempo_frequencies(sr=sr, hop_length=hop_length, win_length=win_length)
 
     if tempo_min is not None:
         ftgram[..., tempo_frequencies < tempo_min, :] = 0
@@ -491,9 +481,7 @@ def plp[FloatT: np.floating[Any]](
     ftgram /= util.tiny(ftgram) ** 0.5 + np.abs(ftgram.max(axis=-2, keepdims=True))
 
     # Step 5: invert the Fourier tempogram to get the pulse
-    pulse = core.istft(
-        ftgram, hop_length=1, n_fft=win_length, length=onset_envelope.shape[-1]
-    )
+    pulse = core.istft(ftgram, hop_length=1, n_fft=win_length, length=onset_envelope.shape[-1])
 
     # Step 6: retain only the positive part of the pulse cycle
     pulse = np.clip(pulse, 0, None, pulse)
@@ -533,8 +521,9 @@ def __beat_tracker(
 
     # TODO: this might be better accomplished with a np.broadcast_shapes check
     if bpm.shape[-1] not in (1, onset_envelope.shape[-1]):
-        raise ParameterShapeError(f"Invalid bpm shape={bpm.shape} does not match "
-                             f"onset envelope shape={onset_envelope.shape}")
+        raise ParameterShapeError(
+            f"Invalid bpm shape={bpm.shape} does not match onset envelope shape={onset_envelope.shape}"
+        )
 
     # convert bpm to frames per beat (rounded)
     # [frames / sec] * [60 sec / min] / [beat / min] = [frames / beat]
@@ -565,13 +554,10 @@ def __normalize_onsets(onsets):
     return onsets / (norm + util.tiny(onsets))
 
 
-@numba.guvectorize(
-        "(t),(n)->(t)",
-        nopython=True, cache=False)
+@numba.guvectorize("(t),(n)->(t)", nopython=True, cache=False)
 def __beat_local_score(onset_envelope, frames_per_beat, localscore):
     # This function essentially implements a same-mode convolution,
     # but also allows for a time-varying convolution-like filter to support dynamic tempo.
-
 
     N = len(onset_envelope)
 
@@ -579,38 +565,41 @@ def __beat_local_score(onset_envelope, frames_per_beat, localscore):
         # Static tempo mode
         # NOTE: when we can bump the minimum numba to 0.58, we can eliminate this branch and just use
         # np.convolve(..., mode='same') directly
-        window = np.exp(-0.5 * (np.arange(-frames_per_beat[0],
-                                          frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2)
+        window = np.exp(
+            -0.5 * (np.arange(-frames_per_beat[0], frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2
+        )
         K = len(window)
         # This is a vanilla same-mode convolution
         for i in range(len(onset_envelope)):
-            localscore[i] = 0.
+            localscore[i] = 0.0
             # we need i + K // 2 - k < N ==> k > i + K //2 - N
             # and i + K // 2 - k >= 0 ==>    k <= i + K // 2
             for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
-                localscore[i] += window[k] * onset_envelope[i + K//2 -k]
+                localscore[i] += window[k] * onset_envelope[i + K // 2 - k]
 
     elif len(frames_per_beat) == len(onset_envelope):
         # Time-varying tempo estimates
         # This isn't exactly a convolution anymore, since the filter is time-varying, but it's pretty close
         for i in range(len(onset_envelope)):
-            window = np.exp(-0.5 * (np.arange(-frames_per_beat[i],
-                                              frames_per_beat[i] + 1) * 32.0 / frames_per_beat[i]) ** 2)
+            window = np.exp(
+                -0.5 * (np.arange(-frames_per_beat[i], frames_per_beat[i] + 1) * 32.0 / frames_per_beat[i]) ** 2
+            )
             K = 2 * int(frames_per_beat[i]) + 1
 
-            localscore[i] = 0.
+            localscore[i] = 0.0
             for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
                 localscore[i] += window[k] * onset_envelope[i + K // 2 - k]
 
 
-
 @numba.guvectorize(
-        [
-            "void(float32[:], float32[:], float32, int32[:], float32[:])",
-            "void(float64[:], float64[:], float32, int32[:], float64[:])",
-        ],
-        "(t),(n),()->(t),(t)",
-        nopython=True, cache=True)
+    [
+        "void(float32[:], float32[:], float32, int32[:], float32[:])",
+        "void(float64[:], float64[:], float32, int32[:], float64[:])",
+    ],
+    "(t),(n),()->(t),(t)",
+    nopython=True,
+    cache=True,
+)
 def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
     """Core dynamic program for beat tracking"""
     # Threshold for the first beat to exceed
@@ -626,16 +615,16 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
     tv = int(len(frames_per_beat) > 1)
 
     for i, score_i in enumerate(localscore):
-        best_score = - np.inf
+        best_score = -np.inf
         beat_location = -1
         # Search over all possible predecessors to find the best preceding beat
         # NOTE: to provide time-varying tempo estimates, we replace
         # frames_per_beat[0] by frames_per_beat[i] in this loop body.
-        for loc in range(i - round(frames_per_beat[tv * i] / 2), int(i - 2 * frames_per_beat[tv * i] - 1), - 1):
+        for loc in range(i - round(frames_per_beat[tv * i] / 2), int(i - 2 * frames_per_beat[tv * i] - 1), -1):
             # Once we're searching past the start, break out
             if loc < 0:
                 break
-            score = cumscore[loc] - tightness * (np.log(i - loc) - np.log(frames_per_beat[tv * i]))**2
+            score = cumscore[loc] - tightness * (np.log(i - loc) - np.log(frames_per_beat[tv * i])) ** 2
             if score > best_score:
                 best_score = score
                 beat_location = loc
@@ -655,10 +644,7 @@ def __beat_track_dp(localscore, frames_per_beat, tightness, backlink, cumscore):
             first_beat = False
 
 
-@numba.guvectorize(
-    "(t),(t),()->(t)",
-    nopython=True, cache=True
-    )
+@numba.guvectorize("(t),(t),()->(t)", nopython=True, cache=True)
 def __trim_beats(localscore, beats, trim, beats_trimmed):
     """Remove spurious leading and trailing beats from the detection array"""
     # Populate the trimmed beats array with the existing values
@@ -668,11 +654,11 @@ def __trim_beats(localscore, beats, trim, beats_trimmed):
     w = np.hanning(5)
     # Slicing here to implement same-mode convolution in older numba where
     # mode='same' is not yet supported
-    smooth_boe = np.convolve(localscore[beats], w)[len(w)//2:len(localscore)+len(w)//2]
+    smooth_boe = np.convolve(localscore[beats], w)[len(w) // 2 : len(localscore) + len(w) // 2]
 
     # This logic is to preserve old behavior and always discard beats detected with oenv==0
     if trim:
-        threshold = 0.5 * ((smooth_boe**2).mean()**0.5)
+        threshold = 0.5 * ((smooth_boe**2).mean() ** 0.5)
     else:
         threshold = 0.0
 
@@ -704,10 +690,7 @@ def __last_beat(cumscore):
     return tail
 
 
-@numba.guvectorize(
-        "(t),(t),()->()",
-        nopython=True, cache=True
-        )
+@numba.guvectorize("(t),(t),()->()", nopython=True, cache=True)
 def __last_beat_selector(cumscore, mask, threshold, out):
     """Vectorized helper to identify the last valid beat position:
 
@@ -724,10 +707,7 @@ def __last_beat_selector(cumscore, mask, threshold, out):
             n -= 1
 
 
-@numba.guvectorize(
-        "(t),()->(t)",
-        nopython=True, cache=True
-        )
+@numba.guvectorize("(t),()->(t)", nopython=True, cache=True)
 def __dp_backtrack(backlinks, tail, beats):
     """Populate the beat indicator array from a sequence of backlinks"""
     n = tail

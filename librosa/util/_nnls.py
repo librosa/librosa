@@ -22,9 +22,7 @@ if TYPE_CHECKING:
 __all__ = ["nnls"]
 
 
-def _nnls_obj(
-    x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray
-) -> tuple[float, np.ndarray]:
+def _nnls_obj(x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray) -> tuple[float, np.ndarray]:
     """Compute the objective and gradient for NNLS"""
     # Scipy's lbfgs flattens all arrays, so we first reshape
     # the iterate x
@@ -43,9 +41,7 @@ def _nnls_obj(
     return value, grad.flatten()
 
 
-def _nnls_lbfgs_block(
-    A: np.ndarray, B: np.ndarray, x_init: np.ndarray | None = None, **kwargs: Any
-) -> np.ndarray:
+def _nnls_lbfgs_block(A: np.ndarray, B: np.ndarray, x_init: np.ndarray | None = None, **kwargs: Any) -> np.ndarray:
     """Solve the constrained problem over a single block
 
     Parameters
@@ -68,6 +64,7 @@ def _nnls_lbfgs_block(
     # least squares solution
     import scipy.linalg
     import scipy.optimize
+
     if x_init is None:
         # Suppress type checks because mypy can't find pinv
         x_init = np.einsum("fm,...mt->...ft", scipy.linalg.pinv(A), B, optimize=True)
@@ -168,7 +165,5 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
 
     for bl_s in range(0, x.shape[-1], n_columns):
         bl_t = min(bl_s + n_columns, B.shape[-1])
-        x[..., bl_s:bl_t] = _nnls_lbfgs_block(
-            A, B[..., bl_s:bl_t], x_init=x[..., bl_s:bl_t].copy(), **kwargs
-        )
+        x[..., bl_s:bl_t] = _nnls_lbfgs_block(A, B[..., bl_s:bl_t], x_init=x[..., bl_s:bl_t].copy(), **kwargs)
     return x.astype(A.dtype)

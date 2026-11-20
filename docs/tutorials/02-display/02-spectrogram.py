@@ -172,9 +172,9 @@ print(f"stft shape={stft.shape}")
 # Here we'll use a black-on-white colormap, suitable for print media.
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(stft, x_axis="time", y_axis="log", vscale="dB",
-                               sr=sr, hop_length=256, top_db=60,
-                               cmap_seq="gray_r")
+img = librosa.display.specshow(
+    stft, x_axis="time", y_axis="log", vscale="dB", sr=sr, hop_length=256, top_db=60, cmap_seq="gray_r"
+)
 librosa.display.colorbar_db(img)
 
 # %%

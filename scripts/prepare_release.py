@@ -365,10 +365,12 @@ def extract_linked_issues(
         available_matches = sorted(matched - claimed_issues)
         claimed_issues.update(available_matches)
 
-        grouped_prs.append({
-            "pr": pr,
-            "linked_issues": available_matches,
-        })
+        grouped_prs.append(
+            {
+                "pr": pr,
+                "linked_issues": available_matches,
+            }
+        )
 
     unclaimed_issues = sorted(milestone_issue_numbers - claimed_issues)
     return grouped_prs, unclaimed_issues
@@ -398,9 +400,7 @@ def categorize_entry(labels: list[dict]) -> str:
     if any("doc" in n for n in names):
         return "Documentation"
     if any(
-        n in ["testing", "management", "maintenance", "ci", "infrastructure", "build"]
-        or "test" in n
-        or "maint" in n
+        n in ["testing", "management", "maintenance", "ci", "infrastructure", "build"] or "test" in n or "maint" in n
         for n in names
     ):
         return "Maintenance"
@@ -719,9 +719,7 @@ def main() -> None:
     milestone_issue_numbers = set(milestone_issues_dict.keys())
 
     # Link issues to PRs
-    grouped_prs, unclaimed_issue_nums = extract_linked_issues(
-        prs, milestone_issue_numbers, gh_path, repo
-    )
+    grouped_prs, unclaimed_issue_nums = extract_linked_issues(prs, milestone_issue_numbers, gh_path, repo)
     unclaimed_issues = [milestone_issues_dict[n] for n in unclaimed_issue_nums]
 
     user_cache: dict[str, str] = {}

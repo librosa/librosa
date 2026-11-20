@@ -8,6 +8,7 @@ This includes recurrence (self-similarity) and cross-similarity matrix
 computation, filtering and transformations of similarity matrices, and
 temporal segmentation by clustering.
 """
+
 from __future__ import annotations
 
 import itertools
@@ -33,10 +34,7 @@ if TYPE_CHECKING:
 
     from ._typing import _Array1D, _FloatLike_co, _SparseArray, _WindowSpec
 
-    _ArrayOrSparseArray = TypeVar(
-        "_ArrayOrSparseArray", bound=np.ndarray | _SparseArray
-    )
-
+    _ArrayOrSparseArray = TypeVar("_ArrayOrSparseArray", bound=np.ndarray | _SparseArray)
 
 
 __all__ = [
@@ -269,12 +267,7 @@ def cross_similarity(
     data = data.reshape((n, -1), order="F")
 
     if mode not in ["connectivity", "distance", "affinity"]:
-        raise ParameterValueError(
-            (
-                f"Invalid mode='{mode}'. Must be one of "
-                "['connectivity', 'distance', 'affinity']"
-            )
-        )
+        raise ParameterValueError((f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']"))
     if k is None:
         k = min(n_ref, 2 * np.ceil(np.sqrt(n_ref)))
 
@@ -291,13 +284,9 @@ def cross_similarity(
     import sklearn.neighbors
 
     try:
-        knn = sklearn.neighbors.NearestNeighbors(
-            n_neighbors=min(n_ref, k), metric=metric, algorithm="auto"
-        )
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_ref, k), metric=metric, algorithm="auto")
     except ValueError:
-        knn = sklearn.neighbors.NearestNeighbors(
-            n_neighbors=min(n_ref, k), metric=metric, algorithm="brute"
-        )
+        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_ref, k), metric=metric, algorithm="brute")
 
     knn.fit(data_ref)
 
@@ -323,7 +312,6 @@ def cross_similarity(
             # Everything past the kth closest gets squashed
             xsim[i, idx[k:]] = 0
 
-
     # Convert to CSR
     xsim = xsim.tocsr()
     xsim.eliminate_zeros()
@@ -336,7 +324,6 @@ def cross_similarity(
     elif mode == "affinity":
         aff_bandwidth = __affinity_bandwidth(xsim, bandwidth, bandwidth_k)
         xsim.data[:] = np.exp(xsim.data / (-1 * aff_bandwidth))
-
 
     # Transpose to n_ref by n and guarantee sparse *array* return type
     xsim = scipy.sparse.csc_array(xsim.T)
@@ -593,18 +580,11 @@ def recurrence_matrix(
 
     if width < 1 or width >= (t - 1) // 2:
         raise ParameterValueError(
-            "width={} must be at least 1 and at most (data.shape[{}] - 1) // 2={}".format(
-                width, axis, (t - 1) // 2
-            )
+            "width={} must be at least 1 and at most (data.shape[{}] - 1) // 2={}".format(width, axis, (t - 1) // 2)
         )
 
     if mode not in ["connectivity", "distance", "affinity"]:
-        raise ParameterValueError(
-            (
-                f"Invalid mode='{mode}'. Must be one of "
-                "['connectivity', 'distance', 'affinity']"
-            )
-        )
+        raise ParameterValueError((f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']"))
     if k is None:
         k = 2 * np.ceil(np.sqrt(t - 2 * width + 1))
 
@@ -696,9 +676,7 @@ def recurrence_matrix(
     return rec
 
 
-def recurrence_to_lag(
-    rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int = -1
-) -> _ArrayOrSparseArray:
+def recurrence_to_lag(rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int = -1) -> _ArrayOrSparseArray:
     """Convert a recurrence matrix into a lag matrix.
 
         ``lag[i, j] == rec[i+j, j]``
@@ -803,9 +781,7 @@ def recurrence_to_lag(
     return lag
 
 
-def lag_to_recurrence(
-    lag: _ArrayOrSparseArray, *, axis: int = -1
-) -> _ArrayOrSparseArray:
+def lag_to_recurrence(lag: _ArrayOrSparseArray, *, axis: int = -1) -> _ArrayOrSparseArray:
     """Convert a lag matrix into a recurrence matrix.
 
     Parameters
@@ -865,9 +841,7 @@ def lag_to_recurrence(
 
     axis = np.abs(axis)
 
-    if lag.ndim != 2 or (
-        lag.shape[0] != lag.shape[1] and lag.shape[1 - axis] != 2 * lag.shape[axis]
-    ):
+    if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and lag.shape[1 - axis] != 2 * lag.shape[axis]):
         raise ParameterShapeError(f"Invalid lag matrix shape: {lag.shape}")
 
     # Since lag must be 2-dimensional, abs(axis) = axis
@@ -879,7 +853,6 @@ def lag_to_recurrence(
     sub_slice[1 - axis] = slice(t)
     rec_slice: _ArrayOrSparseArray = rec[tuple(sub_slice)]  # type: ignore[assignment]
     return rec_slice
-
 
 
 def timelag_filter[F: Callable[..., Any]](function: F, pad: bool = True, index: int = 0) -> F:
@@ -946,6 +919,7 @@ def timelag_filter[F: Callable[..., Any]](function: F, pad: bool = True, index: 
     >>> ax[1, 1].set(title='Filtered affinity matrix')
     >>> ax[1, 1].label_outer()
     """
+
     def __my_filter(wrapped_f, *args, **kwargs):
         """Wrap the filter with lag conversions"""
         # Map the input data into time-lag space
@@ -963,9 +937,7 @@ def timelag_filter[F: Callable[..., Any]](function: F, pad: bool = True, index: 
 
 
 @cache(level=30)
-def subsegment(
-    data: np.ndarray, frames: np.ndarray, *, n_segments: int = 4, axis: int = -1
-) -> _Array1D[np.int_]:
+def subsegment(data: np.ndarray, frames: np.ndarray, *, n_segments: int = 4, axis: int = -1) -> _Array1D[np.int_]:
     """Sub-divide a segmentation by feature clustering.
 
     Given a set of frame boundaries (``frames``), and a data matrix (``data``),
@@ -1141,9 +1113,7 @@ def agglomerative(
         grid = sklearn.feature_extraction.image.grid_to_graph(n_x=n, n_y=1, n_z=1)
 
         # Instantiate the clustering object
-        clusterer = sklearn.cluster.AgglomerativeClustering(
-            n_clusters=k, connectivity=grid, memory=cache.memory
-        )
+        clusterer = sklearn.cluster.AgglomerativeClustering(n_clusters=k, connectivity=grid, memory=cache.memory)
 
     # Fit the model
     clusterer.fit(data)
@@ -1280,14 +1250,10 @@ def path_enhance(
     if min_ratio is None:
         min_ratio = 1.0 / max_ratio
     elif min_ratio > max_ratio:
-        raise ParameterValueError(
-            f"min_ratio={min_ratio} cannot exceed max_ratio={max_ratio}"
-        )
+        raise ParameterValueError(f"min_ratio={min_ratio} cannot exceed max_ratio={max_ratio}")
 
     R_smooth = None
-    for ratio in np.logspace(
-        np.log2(min_ratio), np.log2(max_ratio), num=n_filters, base=2
-    ):
+    for ratio in np.logspace(np.log2(min_ratio), np.log2(max_ratio), num=n_filters, base=2):
         kernel = diagonal_filter(window, n, slope=ratio, zero_mean=zero_mean)
 
         # Expand leading dimensions to match R
@@ -1308,9 +1274,7 @@ def path_enhance(
             R_smooth = scipy.ndimage.convolve(R, kernel, **kwargs)
         else:
             # Compute the point-wise maximum in-place
-            np.maximum(
-                R_smooth, scipy.ndimage.convolve(R, kernel, **kwargs), out=R_smooth
-            )
+            np.maximum(R_smooth, scipy.ndimage.convolve(R, kernel, **kwargs), out=R_smooth)
 
     if clip:
         # Clip the output in-place
@@ -1331,22 +1295,15 @@ def __affinity_bandwidth(
         bandwidth = bw_mode
         # check if bw is the right size
         if bandwidth.shape != rec.shape:
-            raise ParameterShapeError(
-                f"Invalid matrix bandwidth shape: {bandwidth.shape}."
-                f"Should be {rec.shape}."
-            )
+            raise ParameterShapeError(f"Invalid matrix bandwidth shape: {bandwidth.shape}.Should be {rec.shape}.")
         if (bandwidth <= 0).any():
-            raise ParameterValueError(
-                "Invalid bandwidth. All entries must be strictly positive."
-            )
+            raise ParameterValueError("Invalid bandwidth. All entries must be strictly positive.")
         return np.array(bandwidth[rec.nonzero()])
 
     elif isinstance(bw_mode, (int, float)):
         scalar_bandwidth = float(bw_mode)
         if scalar_bandwidth <= 0:
-            raise ParameterValueError(
-                f"Invalid scalar bandwidth={scalar_bandwidth}. Must be strictly positive."
-            )
+            raise ParameterValueError(f"Invalid scalar bandwidth={scalar_bandwidth}. Must be strictly positive.")
         return scalar_bandwidth
 
     if bw_mode is None:
@@ -1409,13 +1366,9 @@ def __affinity_bandwidth(
         sigma_i_data = np.empty_like(rec.data)
         sigma_j_data = np.empty_like(rec.data)
         for row in range(t):
-            sigma_i_data[rec.indptr[row] : rec.indptr[row + 1]] = avg_dist_to_first_ks[
-                row
-            ]
+            sigma_i_data[rec.indptr[row] : rec.indptr[row + 1]] = avg_dist_to_first_ks[row]
             col_idx = rec.indices[rec.indptr[row] : rec.indptr[row + 1]]
-            sigma_j_data[rec.indptr[row] : rec.indptr[row + 1]] = avg_dist_to_first_ks[
-                col_idx
-            ]
+            sigma_j_data[rec.indptr[row] : rec.indptr[row + 1]] = avg_dist_to_first_ks[col_idx]
 
         if bw_mode == "mean_k_avg":
             out = np.array((sigma_i_data + sigma_j_data) / 2)
@@ -1554,9 +1507,7 @@ def diagonal_convolve(
     else:
         K = np.asanyarray(kernel)
         if K.ndim != 2:
-            raise ParameterShapeError(
-                f"kernel must be 2D, 1D, or a tuple of two 1D arrays; shape={K.shape}"
-            )
+            raise ParameterShapeError(f"kernel must be 2D, 1D, or a tuple of two 1D arrays; shape={K.shape}")
         M1, M2 = K.shape
 
     if M1 <= 0 or M2 <= 0:
@@ -1574,9 +1525,7 @@ def diagonal_convolve(
         shift1, shift2 = M1 - 1, M2 - 1
         grid_rows, grid_cols = max(0, N1 - M1 + 1), max(0, N2 - M2 + 1)
     else:
-        raise ParameterValueError(
-            f"Unsupported mode='{mode}'. Must be one of ('same', 'valid', 'full')"
-        )
+        raise ParameterValueError(f"Unsupported mode='{mode}'. Must be one of ('same', 'valid', 'full')")
 
     if grid_rows <= 0 or grid_cols <= 0:
         return np.empty((*data.shape[:-2], 0), dtype=data.dtype)
@@ -1604,9 +1553,7 @@ def diagonal_convolve(
 
     data_pad: np.ndarray
     if np_pad_mode == "constant":
-        data_pad = np.pad(
-            data, pad_width, mode=np_pad_mode, constant_values=fillvalue
-        )
+        data_pad = np.pad(data, pad_width, mode=np_pad_mode, constant_values=fillvalue)
     else:
         data_pad = np.pad(data, pad_width, mode=np_pad_mode)
 
@@ -1617,21 +1564,15 @@ def diagonal_convolve(
     leading_strides = data_pad.strides[:-2]
     s0, s1 = data_pad.strides[-2], data_pad.strides[-1]
 
-    sub = data_pad[
-        ..., r_start : r_start + length + M1 - 1, c_start : c_start + length + M2 - 1
-    ]
+    sub = data_pad[..., r_start : r_start + length + M1 - 1, c_start : c_start + length + M2 - 1]
     out_shape = (*leading_shape, length, M1, M2)
     out_strides = (*leading_strides, s0 + s1, s0, s1)
-    patches = np.lib.stride_tricks.as_strided(
-        sub, shape=out_shape, strides=out_strides
-    )
+    patches = np.lib.stride_tricks.as_strided(sub, shape=out_shape, strides=out_strides)
 
     if is_separable:
         return np.asanyarray((patches @ v[::-1]) @ u[::-1])
     else:
-        return np.asanyarray(
-            np.tensordot(patches, K[::-1, ::-1], axes=([-2, -1], [0, 1]))
-        )
+        return np.asanyarray(np.tensordot(patches, K[::-1, ::-1], axes=([-2, -1], [0, 1])))
 
 
 def recurrence_novelty(
@@ -1738,9 +1679,7 @@ def recurrence_novelty(
     if kernel is None:
         kernel = checkerboard_kernel(n, window=window, var=var, norm=norm)
 
-    nov = diagonal_convolve(
-        rec, kernel, k=0, mode=mode, boundary=boundary, fillvalue=fillvalue
-    )
+    nov = diagonal_convolve(rec, kernel, k=0, mode=mode, boundary=boundary, fillvalue=fillvalue)
 
     if clip:
         np.clip(nov, 0, None, out=nov)

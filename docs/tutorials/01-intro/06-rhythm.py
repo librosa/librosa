@@ -82,6 +82,7 @@ corrplot = ax[1].plot(times, xcorr, label="Autocorrelation", color="C2")[0]
 ax[1].legend(loc="upper right")
 ax[1].set(xlim=(0, 5), xlabel="Lag (s)")
 
+
 def _update(num):
     """Update the plot for each frame."""
     # Update the delayed onset strength
@@ -92,11 +93,8 @@ def _update(num):
     corrplot.set_ydata(xcorr[:num])
     return (onset_delayed, corrplot)
 
-ani = animation.FuncAnimation(fig,
-                              func=_update,
-                              frames=int(np.ceil(5 / times[1]).astype(int)),
-                              interval=50,
-                              blit=True)
+
+ani = animation.FuncAnimation(fig, func=_update, frames=int(np.ceil(5 / times[1]).astype(int)), interval=50, blit=True)
 
 # %%
 # The tempo is determined by the position of the first prominent peak in the autocorrelation,
@@ -126,8 +124,7 @@ tgram = librosa.feature.tempogram(onset_envelope=onset_env, sr=sr)
 fig, ax = plt.subplots()
 librosa.display.specshow(tgram, x_axis="time", y_axis="tempo", sr=sr, ax=ax, cmap_seq="magma")
 hl = librosa.display.highlight(ax=ax, alpha=0.95, linewidth=8)
-ax.axhline([tempo], label="Estimated tempo",
-           path_effects=hl, linewidth=4, linestyle="--")
+ax.axhline([tempo], label="Estimated tempo", path_effects=hl, linewidth=4, linestyle="--")
 ax.legend(loc="upper right")
 
 # %%
@@ -178,4 +175,3 @@ ax.plot(times, onset_env, label="Onset envelope", color="C1")
 mir_eval.display.events(beats, ax=ax, label="Beats", linestyle="--")
 ax.legend(loc="upper right")
 ax.set(xlim=[5, 15])
-

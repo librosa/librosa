@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Constant-Q transforms"""
+
 from __future__ import annotations
 
 import warnings
@@ -332,7 +333,7 @@ def hybrid_cqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     if fmin >= sr / 2:
-        raise ParameterValueError(f"fmin={fmin} must be less than sr/2={sr/2}")
+        raise ParameterValueError(f"fmin={fmin} must be less than sr/2={sr / 2}")
 
     if n_bins is None:
         n_bins = int(np.ceil(bins_per_octave * (np.log2(sr) - np.log2(fmin))))
@@ -361,7 +362,7 @@ def hybrid_cqt(
 
     if filter_cutoff > sr / 2:
         raise ParameterValueError(
-            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. "
+            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr / 2}. "
             "Try reducing the number of frequency bins."
         )
 
@@ -537,7 +538,7 @@ def pseudo_cqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     if fmin >= sr / 2:
-        raise ParameterValueError(f"fmin={fmin} must be less than sr/2={sr/2}")
+        raise ParameterValueError(f"fmin={fmin} must be less than sr/2={sr / 2}")
 
     if n_bins is None:
         n_bins = int(np.ceil(bins_per_octave * (np.log2(sr) - np.log2(fmin))))
@@ -563,7 +564,7 @@ def pseudo_cqt(
 
     if filter_cutoff > sr / 2:
         raise ParameterValueError(
-            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. "
+            f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr / 2}. "
             "Try reducing the number of frequency bins."
         )
 
@@ -805,9 +806,7 @@ def icqt(
                 optimize=True,
             )
         else:
-            D_oct = np.einsum(
-                "fc,c,...ct->...ft", inv_basis, freq_power, C[..., sl, :], optimize=True
-            )
+            D_oct = np.einsum("fc,c,...ct->...ft", inv_basis, freq_power, C[..., sl, :], optimize=True)
 
         y_oct = istft(D_oct, window="ones", hop_length=my_hop, dtype=dtype)
 
@@ -1012,7 +1011,7 @@ def vqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     if fmin >= sr / 2:
-        raise ParameterValueError(f"fmin={fmin} must be less than sr/2={sr/2}")
+        raise ParameterValueError(f"fmin={fmin} must be less than sr/2={sr / 2}")
     if n_bins is None:
         # If n_bins is None, we need to compute the number of bins to reach sr/2
         # Over-allocating by one octave buys us enough buffer to be safe.
@@ -1064,9 +1063,7 @@ def vqt(
     n_octaves = int(np.ceil(float(n_bins) / bins_per_octave))
     n_filters = min(bins_per_octave, n_bins)
 
-    y, sr, hop_length = __early_downsample(
-        y, sr, hop_length, res_type, n_octaves, nyquist, filter_cutoff, scale
-    )
+    y, sr, hop_length = __early_downsample(y, sr, hop_length, res_type, n_octaves, nyquist, filter_cutoff, scale)
 
     vqt_resp = []
 
@@ -1100,9 +1097,7 @@ def vqt(
         fft_basis[:] *= np.sqrt(sr / my_sr)
 
         # Compute the vqt filter response and append to the stack
-        vqt_resp.append(
-            __cqt_response(my_y, n_fft, my_hop, fft_basis, pad_mode, dtype=dtype)
-        )
+        vqt_resp.append(__cqt_response(my_y, n_fft, my_hop, fft_basis, pad_mode, dtype=dtype))
 
         # We can downsample here if the hop length is even, and the highest frequency
         # in the next octave down is comfortably below the target Nyquist frequency.
@@ -1115,9 +1110,7 @@ def vqt(
             if my_hop % 2 == 0 and f_max_next <= my_sr / 5:
                 my_hop //= 2
                 my_sr /= 2.0
-                my_y = audio.resample(
-                    my_y, orig_sr=2, target_sr=1, res_type=res_type, scale=True
-                )
+                my_y = audio.resample(my_y, orig_sr=2, target_sr=1, res_type=res_type, scale=True)
 
     V = __trim_stack(vqt_resp, n_bins, dtype)
 
@@ -1186,9 +1179,7 @@ def __vqt_filter_fft(
     return fft_basis, n_fft, lengths
 
 
-def __trim_stack(
-    cqt_resp: list[np.ndarray], n_bins: int, dtype: DTypeLike
-) -> np.ndarray:
+def __trim_stack(cqt_resp: list[np.ndarray], n_bins: int, dtype: DTypeLike) -> np.ndarray:
     """Trim and stack a collection of CQT responses"""
     max_col = min(c_i.shape[-1] for c_i in cqt_resp)
     # Grab any leading dimensions
@@ -1214,23 +1205,17 @@ def __trim_stack(
     return cqt_out
 
 
-def __cqt_response(
-    y, n_fft, hop_length, fft_basis, mode, window="ones", phase=True, dtype=None
-):
+def __cqt_response(y, n_fft, hop_length, fft_basis, mode, window="ones", phase=True, dtype=None):
     """Compute the filter response with a target STFT hop."""
     # Compute the STFT matrix
-    D = stft(
-        y, n_fft=n_fft, hop_length=hop_length, window=window, pad_mode=mode, dtype=dtype
-    )
+    D = stft(y, n_fft=n_fft, hop_length=hop_length, window=window, pad_mode=mode, dtype=dtype)
 
     if not phase:
         D = np.abs(D)
 
     # Reshape D to Dr
     Dr = D.reshape((-1, D.shape[-2], D.shape[-1]))
-    output_flat = np.empty(
-        (Dr.shape[0], fft_basis.shape[0], Dr.shape[-1]), dtype=D.dtype
-    )
+    output_flat = np.empty((Dr.shape[0], fft_basis.shape[0], Dr.shape[-1]), dtype=D.dtype)
 
     # iterate over channels
     #   project fft_basis.dot(Dr[i])
@@ -1252,13 +1237,9 @@ def __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves):
     return min(downsample_count1, downsample_count2)
 
 
-def __early_downsample(
-    y, sr, hop_length, res_type, n_octaves, nyquist, filter_cutoff, scale
-):
+def __early_downsample(y, sr, hop_length, res_type, n_octaves, nyquist, filter_cutoff, scale):
     """Perform early downsampling on an audio signal, if it applies."""
-    downsample_count = __early_downsample_count(
-        nyquist, filter_cutoff, hop_length, n_octaves
-    )
+    downsample_count = __early_downsample_count(nyquist, filter_cutoff, hop_length, n_octaves)
 
     if downsample_count > 0:
         downsample_factor = 2 ** (downsample_count)
@@ -1266,15 +1247,10 @@ def __early_downsample(
         hop_length //= downsample_factor
 
         if y.shape[-1] < downsample_factor:
-            raise ParameterShapeError(
-                f"Input signal length={len(y):d} is too short for "
-                f"{n_octaves:d}-octave CQT"
-            )
+            raise ParameterShapeError(f"Input signal length={len(y):d} is too short for {n_octaves:d}-octave CQT")
 
         new_sr = sr / float(downsample_factor)
-        y = audio.resample(
-            y, orig_sr=downsample_factor, target_sr=1, res_type=res_type, scale=True
-        )
+        y = audio.resample(y, orig_sr=downsample_factor, target_sr=1, res_type=res_type, scale=True)
 
         # If we're not going to length-scale after CQT, we
         # need to compensate for the downsampling factor here
@@ -1488,8 +1464,7 @@ def griffinlim_cqt(
     if not isinstance(random_state, Deprecated):
         if rng is not None:
             raise ParameterValueError(
-                f"Both random_state={random_state!r} and rng={rng!r} were provided. "
-                "Please use only the rng parameter."
+                f"Both random_state={random_state!r} and rng={rng!r} were provided. Please use only the rng parameter."
             )
 
         # Otherwise transfer the state object and throw a deprecation warning
@@ -1509,8 +1484,7 @@ def griffinlim_cqt(
 
     if momentum > 1:
         warnings.warn(
-            f"Griffin-Lim with momentum={momentum} > 1 can be unstable. "
-            "Proceed with caution!",
+            f"Griffin-Lim with momentum={momentum} > 1 can be unstable. Proceed with caution!",
             stacklevel=2,
         )
     elif momentum < 0:
@@ -1618,11 +1592,7 @@ def __et_relative_bw(bins_per_octave: int) -> np.ndarray:
 
 
 def __clip_freqs(
-    freqs: NDArray,
-    window: _WindowSpec,
-    filter_scale: float,
-    gamma: float | None,
-    sr: float
+    freqs: NDArray, window: _WindowSpec, filter_scale: float, gamma: float | None, sr: float
 ) -> NDArray[np.float64]:
     """Clip a frequency set to avoid exceeding the Nyquist frequency.
 
@@ -1659,7 +1629,7 @@ def __clip_freqs(
     # fmax.
     bpo = 1 / np.diff(logf, prepend=0)
     bpo[0] = 1 / (logf[1] - logf[0])
-    alpha = (2.0**(2/bpo) - 1) / (2.0 ** (2/bpo) + 1)
+    alpha = (2.0 ** (2 / bpo) - 1) / (2.0 ** (2 / bpo) + 1)
 
     if gamma is None:
         gamma_ = alpha * 24.7 / 0.108

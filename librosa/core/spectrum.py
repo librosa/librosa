@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Utilities for spectral processing"""
+
 from __future__ import annotations
 
 import warnings
@@ -265,15 +266,10 @@ def stft(
             # >>> my_pad_func = functools.partial(pad_func, foo=x, bar=y)
             # >>> librosa.stft(..., pad_mode=my_pad_func)
 
-            raise ParameterValueError(
-                f"pad_mode='{pad_mode}' is not supported by librosa.stft"
-            )
+            raise ParameterValueError(f"pad_mode='{pad_mode}' is not supported by librosa.stft")
 
         if n_fft > y.shape[-1]:
-            warnings.warn(
-                f"n_fft={n_fft} is too large for input signal of length={y.shape[-1]}",
-                stacklevel=2
-            )
+            warnings.warn(f"n_fft={n_fft} is too large for input signal of length={y.shape[-1]}", stacklevel=2)
 
         # Set up the padding array to be empty, and we'll fix the target dimension later
         padding = [(0, 0) for _ in range(y.ndim)]
@@ -315,12 +311,8 @@ def stft(
             # Determine if we have any frames that will fit inside the tail pad
             if tail_k * hop_length - n_fft // 2 + n_fft <= y.shape[-1] + n_fft // 2:
                 padding[-1] = (0, n_fft // 2)
-                y_post = np.pad(
-                    y[..., (tail_k) * hop_length - n_fft // 2 :], padding, mode=pad_mode
-                )
-                y_frames_post = util.frame(
-                    y_post, frame_length=n_fft, hop_length=hop_length
-                )
+                y_post = np.pad(y[..., (tail_k) * hop_length - n_fft // 2 :], padding, mode=pad_mode)
+                y_frames_post = util.frame(y_post, frame_length=n_fft, hop_length=hop_length)
                 # How many extra frames do we have from the tail?
                 extra += y_frames_post.shape[-1]
             else:
@@ -382,9 +374,7 @@ def stft(
     else:
         off_start = 0
 
-    n_columns = int(
-        util.MAX_MEM_BLOCK // (np.prod(y_frames.shape[:-1]) * y_frames.itemsize)
-    )
+    n_columns = int(util.MAX_MEM_BLOCK // (np.prod(y_frames.shape[:-1]) * y_frames.itemsize))
     n_columns = max(n_columns, 1)
 
     for bl_s in range(0, y_frames.shape[-1], n_columns):
@@ -551,9 +541,7 @@ def istft(
     if out is None:
         y = np.zeros(shape, dtype=dtype)
     elif not np.allclose(out.shape, shape):
-        raise ParameterShapeError(
-            f"Shape mismatch for provided output array out.shape={out.shape} != {shape}"
-        )
+        raise ParameterShapeError(f"Shape mismatch for provided output array out.shape={out.shape} != {shape}")
     else:
         y = out
         # Since we'll be doing overlap-add here, this needs to be initialized to zero.
@@ -590,9 +578,7 @@ def istft(
         start_frame = 0
         offset = 0
 
-    n_columns = int(
-        util.MAX_MEM_BLOCK // (np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize)
-    )
+    n_columns = int(util.MAX_MEM_BLOCK // (np.prod(stft_matrix.shape[:-1]) * stft_matrix.itemsize))
     n_columns = max(n_columns, 1)
 
     frame = 0
@@ -804,9 +790,7 @@ def __reassign_frequencies(
         correction = -np.imag(S_dh / S_h)
 
     freqs = convert.fft_frequencies(sr=sr, n_fft=n_fft)
-    freqs = util.expand_to(freqs, ndim=correction.ndim, axes=-2) + correction * (
-        0.5 * sr / np.pi
-    )
+    freqs = util.expand_to(freqs, ndim=correction.ndim, axes=-2) + correction * (0.5 * sr / np.pi)
 
     return freqs, S_h
 
@@ -983,9 +967,7 @@ def __reassign_times(
     else:
         pad_length = n_fft
 
-    times = convert.frames_to_time(
-        np.arange(S_h.shape[-1]), sr=sr, hop_length=hop_length, n_fft=pad_length
-    )
+    times = convert.frames_to_time(np.arange(S_h.shape[-1]), sr=sr, hop_length=hop_length, n_fft=pad_length)
 
     times = util.expand_to(times, ndim=correction.ndim, axes=-1) + correction / sr
 
@@ -1451,9 +1433,7 @@ def phase_vocoder(
         raise ParameterValueError("t_out values must be in the range [0, D.shape[-1])")
 
     if np.any(np.diff(t_out) < 0):
-        warnings.warn(
-            "t_out is not monotonic; phase estimation may be unstable", stacklevel=2
-        )
+        warnings.warn("t_out is not monotonic; phase estimation may be unstable", stacklevel=2)
 
     i0 = np.floor(t_out).astype(int)
     i1 = np.minimum(i0 + 1, n_frames - 1)
@@ -1612,9 +1592,7 @@ def iirt(
         y = np.pad(y, padding, mode=pad_mode)
 
     # get the semitone filterbank
-    filterbank_ct, sample_rates = semitone_filterbank(
-        tuning=tuning, flayout=flayout, **kwargs
-    )
+    filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, flayout=flayout, **kwargs)
 
     # create three downsampled versions of the audio signal
     y_resampled = []
@@ -1638,22 +1616,17 @@ def iirt(
 
     slices: list[int | slice] = [slice(None) for _ in bands_power.shape]
     import scipy.signal
-    for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates,
-                                                 filterbank_ct,
-                                                 strict=True)):
+
+    for i, (cur_sr, cur_filter) in enumerate(zip(sample_rates, filterbank_ct, strict=True)):
         slices[-2] = i
 
         # filter the signal
         cur_sr_idx = np.flatnonzero(y_srs == cur_sr)[0]
 
         if flayout == "ba":
-            cur_filter_output = scipy.signal.filtfilt(
-                cur_filter[0], cur_filter[1], y_resampled[cur_sr_idx], axis=-1
-            )
+            cur_filter_output = scipy.signal.filtfilt(cur_filter[0], cur_filter[1], y_resampled[cur_sr_idx], axis=-1)
         elif flayout == "sos":
-            cur_filter_output = scipy.signal.sosfiltfilt(
-                cur_filter, y_resampled[cur_sr_idx], axis=-1
-            )
+            cur_filter_output = scipy.signal.sosfiltfilt(cur_filter, y_resampled[cur_sr_idx], axis=-1)
 
         factor = sr / cur_sr
         hop_length_STMSP = hop_length / factor
@@ -1661,13 +1634,9 @@ def iirt(
 
         # hop_length_STMSP is used here as a floating-point number.
         # The discretization happens at the end to avoid accumulated rounding errors.
-        start_idx = np.arange(
-            0, cur_filter_output.shape[-1] - win_length_STMSP_round, hop_length_STMSP
-        )
+        start_idx = np.arange(0, cur_filter_output.shape[-1] - win_length_STMSP_round, hop_length_STMSP)
         if len(start_idx) < n_frames:
-            min_length = (
-                int(np.ceil(n_frames * hop_length_STMSP)) + win_length_STMSP_round
-            )
+            min_length = int(np.ceil(n_frames * hop_length_STMSP)) + win_length_STMSP_round
             cur_filter_output = util.fix_length(cur_filter_output, size=min_length)
             start_idx = np.arange(
                 0,
@@ -1678,9 +1647,7 @@ def iirt(
 
         idx = np.add.outer(start_idx, np.arange(win_length_STMSP_round))
 
-        bands_power[tuple(slices)] = factor * np.sum(
-            cur_filter_output[..., idx] ** 2, axis=-1
-        )
+        bands_power[tuple(slices)] = factor * np.sum(cur_filter_output[..., idx] ** 2, axis=-1)
 
     return bands_power
 
@@ -1873,9 +1840,7 @@ def db_to_power(
     ref: float = ...,
 ) -> np.ndarray: ...
 @cache(level=30)
-def db_to_power(
-    S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0
-) -> np.floating | np.ndarray:
+def db_to_power(S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0) -> np.floating | np.ndarray:
     """Convert dB-scale values to a power values.
 
     This effectively inverts ``power_to_db``::
@@ -2012,9 +1977,7 @@ def amplitude_to_db(
     out_array = magnitude if isinstance(magnitude, np.ndarray) else None
     power = np.square(magnitude, out=out_array)
 
-    db: np.ndarray = power_to_db(power, ref=ref_value**2,
-                                 amin=amin**2, top_db=top_db,
-                                 axes=axes)
+    db: np.ndarray = power_to_db(power, ref=ref_value**2, amin=amin**2, top_db=top_db, axes=axes)
     return db[()]
 
 
@@ -2031,9 +1994,7 @@ def db_to_amplitude(
     ref: float = ...,
 ) -> np.ndarray: ...
 @cache(level=30)
-def db_to_amplitude(
-    S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0
-) -> np.floating | np.ndarray:
+def db_to_amplitude(S_db: _FloatLike_co | np.ndarray, *, ref: float = 1.0) -> np.floating | np.ndarray:
     """Convert a dB-scaled spectrogram to an amplitude spectrogram.
 
     This effectively inverts `amplitude_to_db`::
@@ -2060,9 +2021,7 @@ def db_to_amplitude(
 
 
 @cache(level=30)
-def perceptual_weighting(
-    S: np.ndarray, frequencies: np.ndarray, *, kind: str = "A", **kwargs: Any
-) -> np.ndarray:
+def perceptual_weighting(S: np.ndarray, frequencies: np.ndarray, *, kind: str = "A", **kwargs: Any) -> np.ndarray:
     """Perceptual weighting of a power spectrogram
 
         S_p[..., f, :] = frequency_weighting(f, 'A') + 10*log(S[..., f, :] / ref)
@@ -2327,9 +2286,7 @@ def fmt(
 
     # Apply the window and fft
     # Normalization is absorbed into the window here for expedience
-    result: np.ndarray = scipy.fft.rfft(
-        y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt), axis=axis
-    )
+    result: np.ndarray = scipy.fft.rfft(y_res * ((x_exp**beta).reshape(shape) * np.sqrt(n) / n_fmt), axis=axis)
     return result
 
 
@@ -2596,21 +2553,19 @@ def pcen(
         if max_size == 1:
             ref = S
         elif S.ndim == 1:
-            raise ParameterShapeError(
-                "Max-filtering cannot be applied to 1-dimensional input"
-            )
+            raise ParameterShapeError("Max-filtering cannot be applied to 1-dimensional input")
         else:
             if max_axis is None:
                 if S.ndim != 2:
                     raise ParameterShapeError(
-                        f"Max-filtering a {S.ndim:d}-dimensional spectrogram "
-                        "requires you to specify max_axis"
+                        f"Max-filtering a {S.ndim:d}-dimensional spectrogram requires you to specify max_axis"
                     )
                 # if axis = 0, max_axis=1
                 # if axis = +- 1, max_axis = 0
                 max_axis = np.mod(1 - axis, 2)
 
             import scipy.ndimage
+
             ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
 
     import scipy.signal
@@ -2795,8 +2750,7 @@ def griffinlim(
     if not isinstance(random_state, Deprecated):
         if rng is not None:
             raise ParameterValueError(
-                f"Both random_state={random_state!r} and rng={rng!r} were provided. "
-                "Please use only the rng parameter."
+                f"Both random_state={random_state!r} and rng={rng!r} were provided. Please use only the rng parameter."
             )
 
         # Otherwise transfer the state object and throw a deprecation warning
@@ -2816,8 +2770,7 @@ def griffinlim(
 
     if momentum > 1:
         warnings.warn(
-            f"Griffin-Lim with momentum={momentum} > 1 can be unstable. "
-            "Proceed with caution!",
+            f"Griffin-Lim with momentum={momentum} > 1 can be unstable. Proceed with caution!",
             stacklevel=2,
         )
     elif momentum < 0:
@@ -2973,9 +2926,7 @@ def _spectrogram(
         if n_fft is None:
             raise ParameterValueError(f"Unable to compute spectrogram with n_fft={n_fft}")
         if y is None:
-            raise ParameterValueError(
-                "Input signal must be provided to compute a spectrogram"
-            )
+            raise ParameterValueError("Input signal must be provided to compute a spectrogram")
         S = np.abs(
             stft(
                 y,

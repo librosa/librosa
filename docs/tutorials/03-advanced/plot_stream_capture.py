@@ -147,9 +147,7 @@ class VirtualInputStream:
 
     def __enter__(self):
         with sf.SoundFile(self.filepath) as af:
-            for block in af.blocks(
-                blocksize=self.blocksize, dtype=self.dtype, always_2d=True
-            ):
+            for block in af.blocks(blocksize=self.blocksize, dtype=self.dtype, always_2d=True):
                 if self.callback is not None:
                     self.callback(block, len(block), None, None)
         return self
@@ -211,9 +209,7 @@ class LiveSparkline:
 
 def process_rms(y):
     """Compute instantaneous RMS energy for a single audio block."""
-    rms = librosa.feature.rms(
-        y=y, frame_length=len(y), hop_length=len(y), center=False
-    )
+    rms = librosa.feature.rms(y=y, frame_length=len(y), hop_length=len(y), center=False)
     return float(rms[0, 0])
 
 
@@ -262,11 +258,7 @@ with (
     # And for comparison, visualize the same analysis computed from
     # the full file
     y, sr = librosa.load(filename, sr=22050)
-    full_rms = librosa.feature.rms(y=y,
-                                   center=False,
-                                   frame_length=blocksize,
-                                   hop_length=blocksize
-                                   )
+    full_rms = librosa.feature.rms(y=y, center=False, frame_length=blocksize, hop_length=blocksize)
     times = librosa.times_like(full_rms, sr=sr, hop_length=blocksize)
     sparkline_rms.ax.plot(times, full_rms[0], linestyle="--", label="Full")
     sparkline_rms.ax.legend(loc="upper right")
@@ -315,9 +307,7 @@ with (
     VirtualInputStream(filename, blocksize=hop_length, callback=bridge_sc) as stream,
 ):
     sr = stream.samplerate
-    target_hop = librosa.util.align_samples(
-        hop_length, orig_sr=sr, target_sr=target_sr
-    )
+    target_hop = librosa.util.align_samples(hop_length, orig_sr=sr, target_sr=target_sr)
     n_blocks_sc = int(np.ceil(stream.total_frames / hop_length))
     times_sc = np.arange(n_blocks_sc) * (hop_length / sr)
 
@@ -412,4 +402,3 @@ with (
 # - **Frame-local feature extraction**: Keep streaming features consistent with whole-file analysis by
 #   ensuring computations are context-independent (e.g., using ``center=False`` and avoiding dynamic global
 #   normalizations like ``top_db``; see :ref:`sphx_glr_auto_tutorials_03-advanced_plot_mfcc_stream.py`).
-

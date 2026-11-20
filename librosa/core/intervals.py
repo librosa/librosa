@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 """Functions for interval construction"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Final, overload
@@ -33,7 +34,7 @@ def interval_frequencies(
     intervals: str | Collection[float],
     bins_per_octave: int = 12,
     tuning: float = 0.0,
-    sort: bool = True
+    sort: bool = True,
 ) -> _Array1D[np.float64]:
     """Construct a set of frequencies from an interval set
 
@@ -102,23 +103,15 @@ def interval_frequencies(
     if isinstance(intervals, str):
         if intervals == "equal":
             # Maybe include tuning here?
-            ratios = 2.0 ** (
-                (tuning + np.arange(0, bins_per_octave, dtype=float)) / bins_per_octave
-            )
+            ratios = 2.0 ** ((tuning + np.arange(0, bins_per_octave, dtype=float)) / bins_per_octave)
         elif intervals == "pythagorean":
             ratios = pythagorean_intervals(bins_per_octave=bins_per_octave, sort=sort)
         elif intervals == "ji3":
-            ratios = plimit_intervals(
-                primes=[3], bins_per_octave=bins_per_octave, sort=sort
-            )
+            ratios = plimit_intervals(primes=[3], bins_per_octave=bins_per_octave, sort=sort)
         elif intervals == "ji5":
-            ratios = plimit_intervals(
-                primes=[3, 5], bins_per_octave=bins_per_octave, sort=sort
-            )
+            ratios = plimit_intervals(primes=[3, 5], bins_per_octave=bins_per_octave, sort=sort)
         elif intervals == "ji7":
-            ratios = plimit_intervals(
-                primes=[3, 5, 7], bins_per_octave=bins_per_octave, sort=sort
-            )
+            ratios = plimit_intervals(primes=[3, 5, 7], bins_per_octave=bins_per_octave, sort=sort)
     else:
         ratios = np.array(intervals)
         bins_per_octave = len(ratios)
@@ -126,9 +119,7 @@ def interval_frequencies(
     # We have one octave of ratios, tile it up to however many we need
     # and trim back to the right number of bins
     n_octaves = np.ceil(n_bins / bins_per_octave)
-    all_ratios = np.multiply.outer(2.0 ** np.arange(n_octaves), ratios).flatten()[
-        :n_bins
-    ]
+    all_ratios = np.multiply.outer(2.0 ** np.arange(n_octaves), ratios).flatten()[:n_bins]
 
     if sort:
         all_ratios = np.sort(all_ratios)
@@ -432,10 +423,7 @@ def plimit_intervals(
 
                 HD += distances[s, point]
 
-            if HD < score or (
-                np.isclose(HD, score)
-                and _crystal_tie_break(point, frontier[best_f], logs)
-            ):
+            if HD < score or (np.isclose(HD, score) and _crystal_tie_break(point, frontier[best_f], logs)):
                 score = HD
                 best_f = f
 
@@ -477,9 +465,7 @@ def plimit_intervals(
             if pow2[i] != 0:
                 v[2] = -pow2[i]
 
-            v.update({p: int(power) for p, power in zip(primes,
-                                                        pows[i],
-                                                        strict=False) if power != 0})
+            v.update({p: int(power) for p, power in zip(primes, pows[i], strict=False) if power != 0})
 
             factors.append(v)
         return factors

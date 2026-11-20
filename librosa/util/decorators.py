@@ -2,6 +2,7 @@
 # -*- encoding: utf-8 -*-
 # CREATED:2015-02-15 10:06:03 by Brian McFee <brian.mcfee@nyu.edu>
 """Helpful tools for deprecation"""
+
 from __future__ import annotations
 
 import functools
@@ -21,6 +22,7 @@ if TYPE_CHECKING:
     @type_check_only
     class _Decorator(Protocol):
         def __call__[**P, R](self, fn: Callable[P, R], /) -> Callable[P, R]: ...
+
 
 __all__ = ["moved", "deprecated", "vectorize"]
 
@@ -51,9 +53,7 @@ def moved(*, moved_from: str, version: str, version_removed: str) -> _Decorator:
             "{:s}\n\tThis function was moved to '{:s}.{:s}' in "
             "librosa version {:s}."
             "\n\tThis alias will be removed in librosa version "
-            "{:s}.".format(
-                moved_from, func.__module__, func.__name__, version, version_removed
-            ),
+            "{:s}.".format(moved_from, func.__module__, func.__name__, version, version_removed),
             category=FutureWarning,
             stacklevel=3,  # Would be 2, but the decorator adds a level
         )
@@ -176,6 +176,7 @@ def future_default(*, param_name: str, old_default: Any, new_default: Any, versi
     decorator : Callable
         A decorator that can be applied to the function to warn about the future change in default value
     """
+
     def decorator[**P, R](func: Callable[P, R]) -> Callable[P, R]:
         sig = inspect.signature(func)
 
@@ -190,9 +191,11 @@ def future_default(*, param_name: str, old_default: Any, new_default: Any, versi
                     f"{old_default!r} to {new_default!r} in librosa version {version}. "
                     f"To suppress this warning, explicitly pass '{param_name}={old_default!r}'.",
                     FutureWarning,
-                    stacklevel=2
+                    stacklevel=2,
                 )
 
             return func(*args, **kwargs)
+
         return __wrapper
+
     return decorator

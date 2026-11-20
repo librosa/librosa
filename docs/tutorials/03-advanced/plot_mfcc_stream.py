@@ -88,9 +88,7 @@ def streamed_mfcc(**kwargs):
 # For comparison, load the whole file and compute the MFCCs in one pass.
 y, sr = librosa.load(filename, sr=sr)
 
-whole_default = librosa.feature.mfcc(
-    y=y, sr=sr, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length, center=False
-)
+whole_default = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length, center=False)
 stream_default = streamed_mfcc()
 
 #####################################################################
@@ -106,8 +104,13 @@ print(f"default top_db=80: max difference = {default_error:.4g}")
 # computed from its own samples alone, so the streamed result matches
 # the whole-file result to floating point precision.
 whole_none = librosa.feature.mfcc(
-    y=y, sr=sr, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length,
-    center=False, top_db=None,
+    y=y,
+    sr=sr,
+    n_mfcc=n_mfcc,
+    n_fft=n_fft,
+    hop_length=hop_length,
+    center=False,
+    top_db=None,
 )
 stream_none = streamed_mfcc(top_db=None)
 
@@ -122,8 +125,14 @@ print(f"top_db=None:       max difference = {none_error:.4g}")
 # such as `np.max` reduces over the same axes and reintroduces exactly the
 # same disagreement, with the threshold still switched off.
 whole_refmax = librosa.feature.mfcc(
-    y=y, sr=sr, n_mfcc=n_mfcc, n_fft=n_fft, hop_length=hop_length,
-    center=False, top_db=None, ref=np.max,
+    y=y,
+    sr=sr,
+    n_mfcc=n_mfcc,
+    n_fft=n_fft,
+    hop_length=hop_length,
+    center=False,
+    top_db=None,
+    ref=np.max,
 )
 stream_refmax = streamed_mfcc(top_db=None, ref=np.max)
 
@@ -145,21 +154,20 @@ print(f"top_db=None, ref=np.max: max difference = {refmax_error:.4g}")
 # frames in a block without one are not.
 fig, ax = plt.subplots(nrows=3, sharex=True, figsize=(10, 8))
 
-librosa.display.specshow(
-    whole_default[..., :n], x_axis="time", sr=sr, hop_length=hop_length, ax=ax[0]
-)
+librosa.display.specshow(whole_default[..., :n], x_axis="time", sr=sr, hop_length=hop_length, ax=ax[0])
 ax[0].set(title="MFCC, whole file, default top_db", ylabel="MFCC")
 ax[0].label_outer()
 
-librosa.display.specshow(
-    stream_default[..., :n], x_axis="time", sr=sr, hop_length=hop_length, ax=ax[1]
-)
+librosa.display.specshow(stream_default[..., :n], x_axis="time", sr=sr, hop_length=hop_length, ax=ax[1])
 ax[1].set(title="MFCC, streamed, default top_db", ylabel="MFCC")
 ax[1].label_outer()
 
 img = librosa.display.specshow(
     np.abs(whole_default[..., :n] - stream_default[..., :n]),
-    x_axis="time", sr=sr, hop_length=hop_length, ax=ax[2],
+    x_axis="time",
+    sr=sr,
+    hop_length=hop_length,
+    ax=ax[2],
 )
 ax[2].set(title="Absolute difference", ylabel="MFCC")
 fig.colorbar(img, ax=ax[2])

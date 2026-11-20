@@ -23,9 +23,7 @@ import librosa
 def main():
 
     # Get the intervals
-    intervals_pythagorean = librosa.pythagorean_intervals(
-        bins_per_octave=72, sort=False, return_factors=True
-    )
+    intervals_pythagorean = librosa.pythagorean_intervals(bins_per_octave=72, sort=False, return_factors=True)
     intervals_3lim = librosa.plimit_intervals(
         primes=[3],
         bins_per_octave=72,
@@ -71,9 +69,7 @@ def main():
             log_value += np.log2(p) * interval[p]
         value = np.around(np.power(2.0, log_value), 6)
 
-        factorized[float(value)] = {
-            int(p): int(interval[p]) for p in interval if interval[p] != 0
-        }
+        factorized[float(value)] = {int(p): int(interval[p]) for p in interval if interval[p] != 0}
 
     with open("intervals.msgpack", "wb") as fdesc:
         msgpack.dump(factorized, fdesc)

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Feature manipulation utilities"""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -114,8 +115,7 @@ def delta(
 
     if mode == "interp" and width > data.shape[axis]:
         raise ParameterValueError(
-            f"when mode='interp', width={width} "
-            f"cannot exceed data.shape[axis]={data.shape[axis]}"
+            f"when mode='interp', width={width} cannot exceed data.shape[axis]={data.shape[axis]}"
         )
 
     if width < 3 or np.mod(width, 2) != 1:
@@ -131,16 +131,12 @@ def delta(
     kwargs.setdefault("polyorder", order)
     import scipy.signal
 
-    result: np.ndarray = scipy.signal.savgol_filter(
-        data, width, deriv=order, axis=axis, mode=mode, **kwargs
-    )
+    result: np.ndarray = scipy.signal.savgol_filter(data, width, deriv=order, axis=axis, mode=mode, **kwargs)
     return result
 
 
 @cache(level=40)
-def stack_memory(
-    data: np.ndarray, *, n_steps: int = 2, delay: int = 1, **kwargs: Any
-) -> np.ndarray:
+def stack_memory(data: np.ndarray, *, n_steps: int = 2, delay: int = 1, **kwargs: Any) -> np.ndarray:
     """Short-term history embedding: concatenate an array with delayed copies of itself.
 
     Each column ``data[:, i]`` is mapped to::
@@ -246,10 +242,7 @@ def stack_memory(
     t = data.shape[-1]
 
     if t < 1:
-        raise ParameterShapeError(
-            "Cannot stack memory when input data has "
-            f"no columns. Given data.shape={data.shape}"
-        )
+        raise ParameterShapeError(f"Cannot stack memory when input data has no columns. Given data.shape={data.shape}")
     kwargs.setdefault("mode", "constant")
 
     if kwargs["mode"] == "constant":
@@ -306,9 +299,7 @@ def __stack(history, data, n_steps, delay):
         for step in range(n_steps):
             q = n_steps - 1 - step
             # nth block is original shifted left by n*delay steps
-            history[..., step * d : (step + 1) * d, :] = data[
-                ..., q * delay : q * delay + t
-            ]
+            history[..., step * d : (step + 1) * d, :] = data[..., q * delay : q * delay + t]
     else:
         # Handle the last block separately to avoid -t:0 empty slices
         history[..., -d:, :] = data[..., -t:]
@@ -316,6 +307,4 @@ def __stack(history, data, n_steps, delay):
         for step in range(n_steps - 1):
             # nth block is original shifted right by n*delay steps
             q = n_steps - 1 - step
-            history[..., step * d : (step + 1) * d, :] = data[
-                ..., -t + q * delay : q * delay
-            ]
+            history[..., step * d : (step + 1) * d, :] = data[..., -t + q * delay : q * delay]

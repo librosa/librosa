@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Feature inversion"""
+
 from __future__ import annotations
 
 import warnings
@@ -123,9 +124,7 @@ def mel_to_stft(
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
     # Construct a mel basis with dtype matching the input data
-    mel_basis = filters.mel(
-        sr=sr, n_fft=n_fft, n_mels=M.shape[-2], dtype=M.dtype, **kwargs
-    )
+    mel_basis = filters.mel(sr=sr, n_fft=n_fft, n_mels=M.shape[-2], dtype=M.dtype, **kwargs)
 
     # Find the non-negative least squares solution, and apply
     # the inverse exponent.
@@ -404,9 +403,7 @@ def mfcc_to_audio(
     librosa.griffinlim
     scipy.fft.dct
     """
-    mel_spec = mfcc_to_mel(
-        mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm, ref=ref, lifter=lifter
-    )
+    mel_spec = mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type, norm=norm, ref=ref, lifter=lifter)
 
     return mel_to_audio(mel_spec, rng=rng, **kwargs)
 
@@ -506,9 +503,7 @@ def logfrequency_to_stft(
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if n_bins is not None and n_bins != L.shape[-2]:
-        raise ParameterShapeError(
-            f"Number of frequency bins in L ({L.shape[-2]}) does not match n_bins ({n_bins})"
-        )
+        raise ParameterShapeError(f"Number of frequency bins in L ({L.shape[-2]}) does not match n_bins ({n_bins})")
 
     log_basis = filters.logfrequency(
         sr=sr,
@@ -722,9 +717,7 @@ def pitch_to_stft(
     ... )
     """
     if n_pitches is not None and n_pitches != P.shape[-2]:
-        raise ParameterShapeError(
-            f"Number of pitch bands in P ({P.shape[-2]}) does not match n_pitches ({n_pitches})"
-        )
+        raise ParameterShapeError(f"Number of pitch bands in P ({P.shape[-2]}) does not match n_pitches ({n_pitches})")
 
     pitch_basis = filters.pitch_filterbank(
         sr=sr,

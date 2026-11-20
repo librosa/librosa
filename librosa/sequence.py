@@ -8,6 +8,7 @@ various forms of Viterbi decoding.
 Helper utilities are also provided for constructing transition matrices
 or post-processing alignment paths.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, cast, overload
@@ -360,6 +361,7 @@ def dtw(
 
         try:
             from scipy.spatial.distance import cdist
+
             C = cdist(X, Y, metric=metric)  # type: ignore[call-overload]
         except ValueError as exc:
             raise ParameterShapeError(
@@ -379,13 +381,8 @@ def dtw(
 
     # if diagonal matching, Y has to be longer than X
     # (X simply cannot be contained in Y)
-    if np.array_equal(step_sizes_sigma, np.array([[1, 1]])) and (
-        C.shape[0] > C.shape[1]
-    ):
-        raise ParameterShapeError(
-            "For diagonal matching: Y.shape[-1] >= X.shape[-11] "
-            "(C.shape[1] >= C.shape[0])"
-        )
+    if np.array_equal(step_sizes_sigma, np.array([[1, 1]])) and (C.shape[0] > C.shape[1]):
+        raise ParameterShapeError("For diagonal matching: Y.shape[-1] >= X.shape[-11] (C.shape[1] >= C.shape[0])")
 
     max_0 = step_sizes_sigma[:, 0].max()
     max_1 = step_sizes_sigma[:, 1].max()
@@ -419,9 +416,7 @@ def dtw(
     steps[:, 0] = 2
 
     # calculate accumulated cost matrix
-    D, steps = __dtw_calc_accu_cost(
-        C, D, steps, step_sizes_sigma, weights_mul, weights_add, max_0, max_1
-    )
+    D, steps = __dtw_calc_accu_cost(C, D, steps, step_sizes_sigma, weights_mul, weights_add, max_0, max_1)
 
     # delete infinity rows and columns
     D = D[max_0:, max_1:]
@@ -433,8 +428,7 @@ def dtw(
         if subseq:
             if np.all(np.isinf(D[-1])):
                 raise ParameterValueError(
-                    "No valid sub-sequence warping path could "
-                    "be constructed with the given step sizes."
+                    "No valid sub-sequence warping path could be constructed with the given step sizes."
                 )
             start = np.argmin(D[-1, :])
             _wp = __dtw_backtracking(steps, step_sizes_sigma, subseq, start)
@@ -442,24 +436,20 @@ def dtw(
             # perform warping path backtracking
             if np.isinf(D[-1, -1]):
                 raise ParameterValueError(
-                    "No valid sub-sequence warping path could "
-                    "be constructed with the given step sizes."
+                    "No valid sub-sequence warping path could be constructed with the given step sizes."
                 )
 
             _wp = __dtw_backtracking(steps, step_sizes_sigma, subseq)
             if _wp[-1] != (0, 0):
                 raise ParameterValueError(
-                    "Unable to compute a full DTW warping path. "
-                    "You may want to try again with subseq=True."
+                    "Unable to compute a full DTW warping path. You may want to try again with subseq=True."
                 )
 
         wp = np.asarray(_wp, dtype=int)
 
         # since we transposed in the beginning, we have to adjust the index pairs back
         if subseq and (
-            (X is not None and Y is not None and X.shape[0] > Y.shape[0])
-            or c_is_transposed
-            or C.shape[0] > C.shape[1]
+            (X is not None and Y is not None and X.shape[0] > Y.shape[0]) or c_is_transposed or C.shape[0] > C.shape[1]
         ):
             wp = np.fliplr(wp)
         return_values = [D, wp]
@@ -531,7 +521,7 @@ def __dtw_calc_accu_cost(
             # accumulate costs
             for cur_step_idx, cur_w_add, cur_w_mul in zip(  # noqa: B905
                 range(step_sizes_sigma.shape[0]), weights_add, weights_mul
-                ):
+            ):
                 cur_D = D[
                     cur_n - step_sizes_sigma[cur_step_idx, 0],
                     cur_m - step_sizes_sigma[cur_step_idx, 1],
@@ -930,9 +920,7 @@ def __rqa_dp(
             score[i, j] = score_values[backtrack[i, j]] + sim[i, j]  # or + 1 for binary
         else:
             vec[:init_limit] = (
-                score_values[:init_limit]
-                - t_values[:init_limit] * gap_onset
-                - (~t_values[:init_limit]) * gap_extend
+                score_values[:init_limit] - t_values[:init_limit] * gap_onset - (~t_values[:init_limit]) * gap_extend
             )
 
             backtrack[i, j] = np.argmax(vec[:init_limit])
@@ -953,9 +941,7 @@ def __rqa_dp(
 
         else:
             vec[:init_limit] = (
-                score_values[:init_limit]
-                - t_values[:init_limit] * gap_onset
-                - (~t_values[:init_limit]) * gap_extend
+                score_values[:init_limit] - t_values[:init_limit] * gap_onset - (~t_values[:init_limit]) * gap_extend
             )
 
             backtrack[i, j] = np.argmax(vec[:init_limit])
@@ -980,18 +966,12 @@ def __rqa_dp(
                 # for backtracking purposes, if the max is 0 then it's the start of a new sequence
                 # if the max is non-zero, then we extend the existing sequence
                 backtrack[i, j] = np.argmax(score_values[:limit])
-                score[i, j] = (
-                    score_values[backtrack[i, j]] + sim[i, j]
-                )  # or + 1 for binary
+                score[i, j] = score_values[backtrack[i, j]] + sim[i, j]  # or + 1 for binary
 
             else:
                 # if the max of our options is negative, then it's a hard reset
                 # otherwise, it's a skip move
-                vec[:limit] = (
-                    score_values[:limit]
-                    - t_values[:limit] * gap_onset
-                    - (~t_values[:limit]) * gap_extend
-                )
+                vec[:limit] = score_values[:limit] - t_values[:limit] * gap_onset - (~t_values[:limit]) * gap_extend
 
                 backtrack[i, j] = np.argmax(vec[:limit])
                 score[i, j] = max(0, vec[backtrack[i, j]])
@@ -1141,9 +1121,8 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> npt.NDArray[np.
         idx_from, idx_to = 0, 1
 
     import scipy.interpolate
-    step_interp = scipy.interpolate.interp1d(
-        path[:, idx_to], path[:, idx_from], kind="linear"
-    )
+
+    step_interp = scipy.interpolate.interp1d(path[:, idx_to], path[:, idx_from], kind="linear")
     frames_in = np.arange(path[:, idx_to].min(), path[:, idx_to].max() + 1)
     steps = step_interp(frames_in)
 
@@ -1344,15 +1323,11 @@ def viterbi(
 
     if transition.shape != (n_states, n_states):
         raise ParameterShapeError(
-            f"transition.shape={transition.shape}, must be "
-            f"(n_states, n_states)={n_states, n_states}"
+            f"transition.shape={transition.shape}, must be (n_states, n_states)={n_states, n_states}"
         )
 
     if np.any(transition < 0) or not np.allclose(transition.sum(axis=1), 1):
-        raise ParameterValueError(
-            "Invalid transition matrix: must be non-negative "
-            "and sum to 1 on each row."
-        )
+        raise ParameterValueError("Invalid transition matrix: must be non-negative and sum to 1 on each row.")
 
     if np.any(prob < 0) or np.any(prob > 1):
         raise ParameterValueError("Invalid probability values: must be between 0 and 1.")
@@ -1365,8 +1340,7 @@ def viterbi(
         p_init.fill(1.0 / n_states)
     elif p_init.shape != (n_states,):
         raise ParameterShapeError(
-            "Initial distribution p_init must have shape (n_states,). "
-            f"Got p_init.shape={p_init.shape}"
+            f"Initial distribution p_init must have shape (n_states,). Got p_init.shape={p_init.shape}"
         )
     elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1):
         raise ParameterValueError(f"Invalid initial state distribution: p_init={p_init}")
@@ -1380,9 +1354,7 @@ def viterbi(
     elif transition_min_prob is None or transition_min_prob == 0:
         log_trans_threshold = -np.inf
     else:
-        raise ParameterValueError(
-            f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative."
-        )
+        raise ParameterValueError(f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative.")
 
     def _helper(lp) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]:
         # Transpose input
@@ -1397,9 +1369,7 @@ def viterbi(
         states, logp = _helper(log_prob)
     else:
         # Vectorize the helper
-        __viterbi = np.vectorize(
-            _helper, otypes=[np.uint16, np.float64], signature="(s,t)->(t),(1)"
-        )
+        __viterbi = np.vectorize(_helper, otypes=[np.uint16, np.float64], signature="(s,t)->(t),(1)")
 
         states, logp = __viterbi(log_prob)
 
@@ -1566,21 +1536,14 @@ def viterbi_discriminative(
 
     if transition.shape != (n_states, n_states):
         raise ParameterShapeError(
-            f"transition.shape={transition.shape}, must be "
-            f"(n_states, n_states)={n_states, n_states}"
+            f"transition.shape={transition.shape}, must be (n_states, n_states)={n_states, n_states}"
         )
 
     if np.any(transition < 0) or not np.allclose(transition.sum(axis=1), 1):
-        raise ParameterValueError(
-            "Invalid transition matrix: must be non-negative "
-            "and sum to 1 on each row."
-        )
+        raise ParameterValueError("Invalid transition matrix: must be non-negative and sum to 1 on each row.")
 
     if np.any(prob < 0) or not np.allclose(prob.sum(axis=-2), 1):
-        raise ParameterValueError(
-            "Invalid probability values: each column must "
-            "sum to 1 and be non-negative"
-        )
+        raise ParameterValueError("Invalid probability values: each column must sum to 1 and be non-negative")
 
     # Compute log-likelihoods while avoiding log-underflow
     epsilon = tiny(prob)
@@ -1591,8 +1554,7 @@ def viterbi_discriminative(
         p_state.fill(1.0 / n_states)
     elif p_state.shape != (n_states,):
         raise ParameterShapeError(
-            "Marginal distribution p_state must have shape (n_states,). "
-            f"Got p_state.shape={p_state.shape}"
+            f"Marginal distribution p_state must have shape (n_states,). Got p_state.shape={p_state.shape}"
         )
     elif np.any(p_state < 0) or not np.allclose(p_state.sum(axis=-1), 1):
         raise ParameterValueError(f"Invalid marginal state distribution: p_state={p_state}")
@@ -1602,8 +1564,7 @@ def viterbi_discriminative(
         p_init.fill(1.0 / n_states)
     elif p_init.shape != (n_states,):
         raise ParameterShapeError(
-            "Initial distribution p_init must have shape (n_states,). "
-            f"Got p_init.shape={p_init.shape}"
+            f"Initial distribution p_init must have shape (n_states,). Got p_init.shape={p_init.shape}"
         )
     elif np.any(p_init < 0) or not np.allclose(p_init.sum(), 1):
         raise ParameterValueError(f"Invalid initial state distribution: p_init={p_init}")
@@ -1624,9 +1585,7 @@ def viterbi_discriminative(
     elif transition_min_prob is None or transition_min_prob == 0:
         log_trans_threshold = -np.inf
     else:
-        raise ParameterValueError(
-            f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative."
-        )
+        raise ParameterValueError(f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative.")
 
     # reshape to broadcast against prob
     log_marginal = expand_to(log_marginal, ndim=prob.ndim, axes=-2)
@@ -1645,9 +1604,7 @@ def viterbi_discriminative(
         states, logp = _helper(log_prob)
     else:
         # Vectorize the helper
-        __viterbi = np.vectorize(
-            _helper, otypes=[np.uint16, np.float64], signature="(s,t)->(t),(1)"
-        )
+        __viterbi = np.vectorize(_helper, otypes=[np.uint16, np.float64], signature="(s,t)->(t),(1)")
 
         states, logp = __viterbi(log_prob)
 
@@ -1787,15 +1744,11 @@ def viterbi_binary(
         transition = np.tile(transition, (n_states, 1, 1))
     elif transition.shape != (n_states, 2, 2):
         raise ParameterShapeError(
-            f"transition.shape={transition.shape}, must be (2, 2) or "
-            f"(n_states, 2, 2)={n_states}"
+            f"transition.shape={transition.shape}, must be (2, 2) or (n_states, 2, 2)={n_states}"
         )
 
     if np.any(transition < 0) or not np.allclose(transition.sum(axis=-1), 1):
-        raise ParameterValueError(
-            "Invalid transition matrix: must be non-negative "
-            "and sum to 1 on each row."
-        )
+        raise ParameterValueError("Invalid transition matrix: must be non-negative and sum to 1 on each row.")
 
     if np.any(prob < 0) or np.any(prob > 1):
         raise ParameterValueError("Invalid probability values: prob must be between [0, 1]")
@@ -1810,8 +1763,7 @@ def viterbi_binary(
 
     if p_state.shape != (n_states,):
         raise ParameterShapeError(
-            "Marginal distribution p_state must have shape (n_states,). "
-            f"Got p_state.shape={p_state.shape}"
+            f"Marginal distribution p_state must have shape (n_states,). Got p_state.shape={p_state.shape}"
         )
     elif np.any(p_state < 0) or np.any(p_state > 1):
         raise ParameterValueError(f"Invalid marginal state distributions: p_state={p_state}")
@@ -1826,8 +1778,7 @@ def viterbi_binary(
 
     if p_init.shape != (n_states,):
         raise ParameterShapeError(
-            "Initial distribution p_init must have shape (n_states,). "
-            f"Got p_init.shape={p_init.shape}"
+            f"Initial distribution p_init must have shape (n_states,). Got p_init.shape={p_init.shape}"
         )
     elif np.any(p_init < 0) or np.any(p_init > 1):
         raise ParameterValueError(f"Invalid initial state distributions: p_init={p_init}")
@@ -1944,9 +1895,7 @@ def transition_loop(n_states: int, prob: float | Iterable[float]) -> _Array2D[np
         prob = np.tile(prob, n_states)
 
     if prob.shape != (n_states,):
-        raise ParameterShapeError(
-            f"prob={prob} must have length equal to n_states={n_states}"
-        )
+        raise ParameterShapeError(f"prob={prob} must have length equal to n_states={n_states}")
 
     if np.any(prob < 0) or np.any(prob > 1):
         raise ParameterValueError(f"prob={prob} must have values in the range [0, 1]")
@@ -2008,9 +1957,7 @@ def transition_cycle(n_states: int, prob: float | Iterable[float]) -> _Array2D[n
         prob = np.tile(prob, n_states)
 
     if prob.shape != (n_states,):
-        raise ParameterShapeError(
-            f"prob={prob} must have length equal to n_states={n_states}"
-        )
+        raise ParameterShapeError(f"prob={prob} must have length equal to n_states={n_states}")
 
     if np.any(prob < 0) or np.any(prob > 1):
         raise ParameterValueError(f"prob={prob} must have values in the range [0, 1]")
@@ -2108,9 +2055,7 @@ def transition_local(
         width = np.tile(width, n_states)
 
     if width.shape != (n_states,):
-        raise ParameterShapeError(
-            f"width={width} must have length equal to n_states={n_states}"
-        )
+        raise ParameterShapeError(f"width={width} must have length equal to n_states={n_states}")
 
     if np.any(width < 1):
         raise ParameterValueError(f"width={width} must be at least 1")
@@ -2119,9 +2064,7 @@ def transition_local(
 
     # Fill in the widths.  This is inefficient, but simple
     for i, width_i in enumerate(width):
-        trans_row = pad_center(
-            get_window(window, width_i, fftbins=False), size=n_states
-        )
+        trans_row = pad_center(get_window(window, width_i, fftbins=False), size=n_states)
         trans_row = np.roll(trans_row, n_states // 2 + i + 1)
 
         if not wrap:

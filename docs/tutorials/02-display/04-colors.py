@@ -112,11 +112,7 @@ ax[1, 1].set_title("Boolean (Recurrence)")
 # For example, `librosa.display.colorbar_db` is helpful for creating a colorbar that is labeled in decibels:
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(stft,
-                               vscale="dBFS",
-                               x_axis="time",
-                               y_axis="log",
-                               ax=ax)
+img = librosa.display.specshow(stft, vscale="dBFS", x_axis="time", y_axis="log", ax=ax)
 librosa.display.colorbar_db(img)
 
 # %%
@@ -124,11 +120,7 @@ librosa.display.colorbar_db(img)
 # where the positions are labeled as fractions of π:
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(stft,
-                               vscale="dphase",
-                               x_axis="time",
-                               y_axis="log",
-                               ax=ax)
+img = librosa.display.specshow(stft, vscale="dphase", x_axis="time", y_axis="log", ax=ax)
 librosa.display.colorbar_phase(img)
 
 # %%

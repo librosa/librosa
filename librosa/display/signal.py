@@ -283,6 +283,7 @@ class AdaptiveWaveplot:
 
         ax.figure.canvas.draw_idle()
 
+
 # Keeps adaptors alive as long as their Axes exists, preventing GC
 _WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[mplaxes.Axes, set["AdaptiveWaveplot"]] = weakref.WeakKeyDictionary()
 
@@ -338,6 +339,7 @@ class _AdaptiveWaveplotHandler(HandlerBase):
         )
 
         return [*bg_artists, *line_artists]
+
 
 # Add our custom handler to the default legend handler map
 if _WaveplotDecoy not in Legend.get_default_handler_map():

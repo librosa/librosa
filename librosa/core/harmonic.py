@@ -294,9 +294,7 @@ def interp_harmonics(
             )
         )
     else:
-        raise ParameterShapeError(
-            f"freqs.shape={freqs.shape} is incompatible with input shape={x.shape}"
-        )
+        raise ParameterShapeError(f"freqs.shape={freqs.shape} is incompatible with input shape={x.shape}")
 
 
 def f0_harmonics(
@@ -384,9 +382,7 @@ def f0_harmonics(
     >>> ax[1].set(ylabel='Harmonics')
     """
     if freqs.ndim != 1 and freqs.shape != x.shape:
-        raise ParameterShapeError(
-            f"freqs.shape={freqs.shape} is incompatible with input shape={x.shape}"
-        )
+        raise ParameterShapeError(f"freqs.shape={freqs.shape} is incompatible with input shape={x.shape}")
 
     target_freqs = np.moveaxis(np.multiply.outer(f0, harmonics), -1, axis)
     return interp_frequency(

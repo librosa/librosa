@@ -162,6 +162,7 @@ Audio(data=y, rate=sr)
 # This can be used to show multiple players in the same cell.
 
 from IPython.display import display
+
 display(Audio(data=y, rate=sr))
 
 # %%

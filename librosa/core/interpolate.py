@@ -108,11 +108,7 @@ def _interp_slice(
     if not assume_sorted and len(c_clean) > 1 and np.any(np.diff(c_clean) <= 0):
         c_clean, inv, counts = np.unique(c_clean, return_inverse=True, return_counts=True)
         if len(c_clean) < 2:
-            fill = (
-                v_clean[0]
-                if len(c_clean) == 1
-                else (fill_value if isinstance(fill_value, (int, float)) else 0.0)
-            )
+            fill = v_clean[0] if len(c_clean) == 1 else (fill_value if isinstance(fill_value, (int, float)) else 0.0)
             return np.full(len(t), fill, dtype=v.dtype)
         v_clean = np.bincount(inv, weights=v_clean) / counts
         assume_sorted = True
@@ -174,20 +170,14 @@ def _interp_axis(
         The interpolated array.
     """
     if axis < -x.ndim or axis >= x.ndim:
-        raise ParameterShapeError(
-            f"axis={axis} is out of bounds for input array with ndim={x.ndim}"
-        )
+        raise ParameterShapeError(f"axis={axis} is out of bounds for input array with ndim={x.ndim}")
     ax = axis if axis >= 0 else axis + x.ndim
     n_in = x.shape[ax]
 
     _validate_coords(coords, n_in, ax, name=coord_name)
 
     # Fast path: 1D source and 1D target coordinates with fully finite coordinates
-    if (
-        coords.ndim == 1
-        and target_coords.ndim == 1
-        and np.all(np.isfinite(coords))
-    ):
+    if coords.ndim == 1 and target_coords.ndim == 1 and np.all(np.isfinite(coords)):
         import scipy.interpolate
 
         interp = scipy.interpolate.interp1d(

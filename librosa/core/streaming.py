@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Streaming utilities for audio I/O bridging and sliding window buffering."""
+
 from __future__ import annotations
 
 import os
@@ -65,13 +66,9 @@ class _StreamBuffer:
         dtype: DTypeLike = np.float32,
     ):
         if not is_positive_int(block_length):
-            raise ParameterValueError(
-                f"block_length={block_length} must be a positive integer"
-            )
+            raise ParameterValueError(f"block_length={block_length} must be a positive integer")
         if not is_positive_int(frame_length):
-            raise ParameterValueError(
-                f"frame_length={frame_length} must be a positive integer"
-            )
+            raise ParameterValueError(f"frame_length={frame_length} must be a positive integer")
         if not is_positive_int(hop_length):
             raise ParameterValueError(f"hop_length={hop_length} must be a positive integer")
         if not (np.isfinite(orig_sr) and orig_sr > 0):
@@ -85,9 +82,7 @@ class _StreamBuffer:
         if duration is not None and duration < 0:
             raise ParameterValueError(f"duration={duration} must be non-negative")
         if res_type not in {"soxr_vhq", "soxr_hq", "soxr_mq", "soxr_lq", "soxr_qq"}:
-            raise ParameterValueError(
-                f"res_type={res_type} is not a valid soxr resampling mode for streaming"
-            )
+            raise ParameterValueError(f"res_type={res_type} is not a valid soxr resampling mode for streaming")
 
         self.block_length = int(block_length)
         self.frame_length = int(frame_length)
@@ -102,9 +97,7 @@ class _StreamBuffer:
         self.res_type = res_type
         self.dtype = np.dtype(dtype)
 
-        self.target_yield_size = (
-            self.block_length - 1
-        ) * self.hop_length + self.frame_length
+        self.target_yield_size = (self.block_length - 1) * self.hop_length + self.frame_length
         self.block_hop_length = self.block_length * self.hop_length
         self.process_channels = 1 if self.mono else self.channels
 
@@ -129,29 +122,17 @@ class _StreamBuffer:
         self.capacity = self.target_yield_size + (self.block_hop_length * 2)
         self.buffer = np.zeros(self._buffer_shape(self.capacity), dtype=self.dtype)
         self.warm_up = bool(warm_up)
-        self.prefill = (
-            max(0, self.frame_length - self.hop_length)
-            if self.warm_up
-            else 0
-        )
+        self.prefill = max(0, self.frame_length - self.hop_length) if self.warm_up else 0
         self.write_idx = self.prefill
         self.read_idx = 0
 
-        self.samples_to_skip = (
-            int(self.offset * self.orig_sr) if self.offset > 0 else 0
-        )
-        self.samples_remaining = (
-            int(self.duration * self.orig_sr) if self.duration is not None else None
-        )
+        self.samples_to_skip = int(self.offset * self.orig_sr) if self.offset > 0 else 0
+        self.samples_remaining = int(self.duration * self.orig_sr) if self.duration is not None else None
         self.has_input = False
 
     def _buffer_shape(self, capacity: int) -> tuple[int, ...]:
         """Return the buffer shape for a given sample capacity."""
-        return (
-            (capacity,)
-            if self.process_channels == 1
-            else (capacity, self.process_channels)
-        )
+        return (capacity,) if self.process_channels == 1 else (capacity, self.process_channels)
 
     def push(self, chunk: np.ndarray) -> list[np.ndarray]:
         """Ingest a canonical audio chunk and return any ready analysis blocks.
@@ -220,9 +201,7 @@ class _StreamBuffer:
 
             if self.write_idx + n_incoming > self.capacity:
                 self.capacity = self.write_idx + n_incoming + self.target_yield_size
-                new_buffer = np.zeros(
-                    self._buffer_shape(self.capacity), dtype=self.dtype
-                )
+                new_buffer = np.zeros(self._buffer_shape(self.capacity), dtype=self.dtype)
                 new_buffer[: self.write_idx] = self.buffer[: self.write_idx]
                 self.buffer = new_buffer
 
@@ -274,9 +253,7 @@ class _StreamBuffer:
         """Check if the maximum input duration has been reached."""
         return self.samples_remaining is not None and self.samples_remaining <= 0
 
-    def process_stream(
-        self, chunks: Iterable[np.ndarray]
-    ) -> Generator[np.ndarray, None, None]:
+    def process_stream(self, chunks: Iterable[np.ndarray]) -> Generator[np.ndarray, None, None]:
         """Ingest chunks from an iterable, yielding ready analysis blocks followed by flush."""
         if not self.is_complete():
             for chunk in chunks:
@@ -393,9 +370,7 @@ class StreamBridge:
         """
         return self.orig_sr
 
-    def __call__(
-        self, data: np.ndarray | bytes, *_args: Any, **_kwargs: Any
-    ) -> tuple[None, int]:
+    def __call__(self, data: np.ndarray | bytes, *_args: Any, **_kwargs: Any) -> tuple[None, int]:
         """Universal audio callback.
 
         Compatible with :mod:`sounddevice` (which ignores the return value) and
@@ -419,9 +394,7 @@ class StreamBridge:
         """
         self._enqueue(data, raise_on_closed=True)
 
-    def _enqueue(
-        self, data: np.ndarray | bytes | memoryview, *, raise_on_closed: bool
-    ) -> bool:
+    def _enqueue(self, data: np.ndarray | bytes | memoryview, *, raise_on_closed: bool) -> bool:
         """Normalize and atomically enqueue an audio chunk if the bridge is open."""
         if not raise_on_closed and self._closed:
             return False
@@ -440,9 +413,7 @@ class StreamBridge:
                 elif self.overflow_policy == "drop_newest":
                     return True
                 elif self.overflow_policy == "error":
-                    raise StreamBufferError(
-                        "StreamBridge queue overflow: consumer is slower than capture."
-                    )
+                    raise StreamBufferError("StreamBridge queue overflow: consumer is slower than capture.")
                 elif self.overflow_policy == "warn":
                     self._dropped_chunks += 1
                     self._buffer.popleft()
@@ -475,18 +446,12 @@ class StreamBridge:
                     raise ParameterShapeError(
                         f"1D input of size {arr.size} is not divisible by channels={self.channels}"
                     )
-                arr = (
-                    arr.reshape(self.channels, -1)
-                    if self.channels_first
-                    else arr.reshape(-1, self.channels).T
-                )
+                arr = arr.reshape(self.channels, -1) if self.channels_first else arr.reshape(-1, self.channels).T
         elif arr.ndim == 2:
             if not self.channels_first:
                 arr = arr.T
             if arr.shape[0] != self.channels:
-                raise ParameterShapeError(
-                    f"Expected {self.channels} channels, but got {arr.shape[0]}"
-                )
+                raise ParameterShapeError(f"Expected {self.channels} channels, but got {arr.shape[0]}")
             if self.channels == 1:
                 arr = arr.reshape(-1)
         else:
@@ -812,18 +777,11 @@ def stream(
         )
         return
 
-    is_file = (
-        isinstance(path, (str, os.PathLike, int, sf.SoundFile))
-        or hasattr(path, "read")
-    )
+    is_file = isinstance(path, (str, os.PathLike, int, sf.SoundFile)) or hasattr(path, "read")
     if not is_file:
         raise ParameterTypeError(f"Unsupported source type for stream: {type(path)}")
 
-    context = (
-        nullcontext(path)
-        if isinstance(path, sf.SoundFile)
-        else sf.SoundFile(path)
-    )
+    context = nullcontext(path) if isinstance(path, sf.SoundFile) else sf.SoundFile(path)
 
     with context as sfo:
         native_sr = sfo.samplerate

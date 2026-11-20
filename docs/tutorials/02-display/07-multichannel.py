@@ -46,10 +46,9 @@ fig.legend(loc="outside right")
 #
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-librosa.display.multiplot("waveshow", y, y_harmonic, y_percussive,
-                          sr=sr,
-                          labels=["Original", "Harmonic", "Percussive"],
-                          axes=ax)
+librosa.display.multiplot(
+    "waveshow", y, y_harmonic, y_percussive, sr=sr, labels=["Original", "Harmonic", "Percussive"], axes=ax
+)
 fig.legend(loc="outside right")
 
 # %%
@@ -100,10 +99,16 @@ y_all = librosa.to_multi(y, y_harmonic, y_percussive)
 stft_all = librosa.stft(y_all)
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-imgs = librosa.display.multiplot("specshow", stft_all, sr=sr,
-                                 y_axis="log_oct3", x_axis="time", vscale="dBFS",
-                                 titles=["Original", "Harmonic", "Percussive"],
-                                 axes=ax)
+imgs = librosa.display.multiplot(
+    "specshow",
+    stft_all,
+    sr=sr,
+    y_axis="log_oct3",
+    x_axis="time",
+    vscale="dBFS",
+    titles=["Original", "Harmonic", "Percussive"],
+    axes=ax,
+)
 librosa.display.colorbar_db(imgs[0], ax=ax, location="right")
 
 # %%
@@ -127,19 +132,22 @@ librosa.display.colorbar_db(imgs[0], ax=ax, location="right")
 # Multiplot can also be used to mix different display functions across slices of a subplot array.
 # This is done simply by slicing the `axes` array and passing it to different calls to `multiplot`.
 
-fig, ax = plt.subplots(nrows=2, ncols=3, sharex=True, sharey="row",
-                       gridspec_kw={"height_ratios": [3, 1]})
+fig, ax = plt.subplots(nrows=2, ncols=3, sharex=True, sharey="row", gridspec_kw={"height_ratios": [3, 1]})
 
 # Waves along the bottom
-librosa.display.multiplot("waveshow", y_all, sr=sr,
-                          labels=["Original", "Harmonic", "Percussive"],
-                          axes=ax[1, :])
+librosa.display.multiplot("waveshow", y_all, sr=sr, labels=["Original", "Harmonic", "Percussive"], axes=ax[1, :])
 
 # Spectrograms along the top
-imgs = librosa.display.multiplot("specshow", stft_all, sr=sr,
-                                 y_axis="log_oct3", x_axis="time", vscale="dBFS",
-                                 titles=["Original", "Harmonic", "Percussive"],
-                                 axes=ax[0, :])
+imgs = librosa.display.multiplot(
+    "specshow",
+    stft_all,
+    sr=sr,
+    y_axis="log_oct3",
+    x_axis="time",
+    vscale="dBFS",
+    titles=["Original", "Harmonic", "Percussive"],
+    axes=ax[0, :],
+)
 # Colorbar on the top row only
 librosa.display.colorbar_db(imgs[0], ax=ax[0, :], location="right")
 
@@ -156,12 +164,16 @@ ax[0, 0].set(xlim=[12, 14])
 # By setting `share_properties=True`, all subplots are styled the same:
 
 fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-librosa.display.multiplot("waveshow", y_all, share_properties=True,
-                          sr=sr,
-                          # Use titles instead of labels, since now all three
-                          # subplots have the same styling
-                          titles=["Original", "Harmonic", "Percussive"],
-                          axes=ax)
+librosa.display.multiplot(
+    "waveshow",
+    y_all,
+    share_properties=True,
+    sr=sr,
+    # Use titles instead of labels, since now all three
+    # subplots have the same styling
+    titles=["Original", "Harmonic", "Percussive"],
+    axes=ax,
+)
 
 # %%
 # Similarly, setting `share_properties="row"` or `"col"` will only link the style properties of subplots in the
@@ -185,15 +197,16 @@ fig, ax = plt.subplots(nrows=6, ncols=1, sharex=True, sharey=True, gridspec_kw={
 # it could be a numpy array if the axes are multi-dimensional.
 group = [0, 0, 1, 1, 2, 2]
 
-librosa.display.multiplot("wavebars", y_paired,
-                          share_properties=group,
-                          sr=sr,
-                          invert=True,
-                          n_bars=200,
-                          labels=["Original L", "Original R",
-                                  "Harmonic L", "Harmonic R",
-                                  "Percussive L", "Percussive R"],
-                          axes=ax)
+librosa.display.multiplot(
+    "wavebars",
+    y_paired,
+    share_properties=group,
+    sr=sr,
+    invert=True,
+    n_bars=200,
+    labels=["Original L", "Original R", "Harmonic L", "Harmonic R", "Percussive L", "Percussive R"],
+    axes=ax,
+)
 fig.legend(loc="outside right")
 
 # %%
@@ -210,14 +223,12 @@ fig.legend(loc="outside right")
 y_harmonic2, y_percussive2 = librosa.effects.hpss(y, margin=(8, 4))
 
 fig, ax = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
-librosa.display.multiplot("waveshow", y_harmonic, y_percussive,
-                          sr=sr,
-                          labels=["Harmonic 1", "Percussive 1"],
-                          axes=ax[:, 0])
-librosa.display.multiplot("waveshow", y_harmonic2, y_percussive2,
-                          sr=sr,
-                          labels=["Harmonic 2", "Percussive 2"],
-                          axes=ax[:, 1])
+librosa.display.multiplot(
+    "waveshow", y_harmonic, y_percussive, sr=sr, labels=["Harmonic 1", "Percussive 1"], axes=ax[:, 0]
+)
+librosa.display.multiplot(
+    "waveshow", y_harmonic2, y_percussive2, sr=sr, labels=["Harmonic 2", "Percussive 2"], axes=ax[:, 1]
+)
 librosa.display.legend_for_axes(ax[:, 0], loc="outside upper left", ncols=2)
 librosa.display.legend_for_axes(ax[:, 1], loc="outside upper right", ncols=2)
 
