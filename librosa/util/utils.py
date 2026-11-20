@@ -1680,7 +1680,8 @@ def sparsify_rows(x: np.ndarray, *, quantile: float = 0.01, dtype: DTypeLike | N
     Examples
     --------
     >>> # Construct a Hann window to sparsify
-    >>> x = scipy.signal.hann(32)
+    >>> import scipy.signal
+    >>> x = scipy.signal.windows.hann(32)
     >>> x
     array([ 0.   ,  0.01 ,  0.041,  0.09 ,  0.156,  0.236,  0.326,
             0.424,  0.525,  0.625,  0.72 ,  0.806,  0.879,  0.937,

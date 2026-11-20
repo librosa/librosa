@@ -2771,10 +2771,8 @@ def griffinlim(
             version_removed="1.2.0",
         )
 
-    # Coerce the various input types to a proper Generator
-    # This branch is necessary until we bump to numpy 2.2
-    if not isinstance(rng, np.random.RandomState):
-        rng = np.random.default_rng(rng)
+    # Coerce the input into a proper Generator (supported natively for RandomState in numpy >= 2.2)
+    rng = np.random.default_rng(rng)
 
     if momentum > 1:
         warnings.warn(

@@ -1703,7 +1703,7 @@ def window_bandwidth(window: _WindowSpec, n: int = 1000) -> float:
     ----------
     window : callable or str
         A window function, or the name of a window function,
-        e.g.: `scipy.signal.hann` or `'boxcar'`
+        e.g.: `scipy.signal.windows.hann` or `'boxcar'`
     n : int > 0
         The number of coefficients to use in estimating the
         window bandwidth
@@ -2045,7 +2045,7 @@ def semitone_filterbank(
     ... )
     >>> magnitudes = []
     >>> for cur_sr, cur_filter in zip(sample_rates, semitone_filterbank):
-    ...     w, h = scipy.signal.sosfreqz(cur_filter, fs=cur_sr, worN=1025)
+    ...     w, h = scipy.signal.freqz_sos(cur_filter, fs=cur_sr, worN=1025)
     ...     magnitudes.append(20 * np.log10(np.abs(h)))
     >>> fig, ax = plt.subplots(figsize=(12, 6))
     >>> img = librosa.display.specshow(

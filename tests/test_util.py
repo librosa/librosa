@@ -1350,14 +1350,7 @@ def test_shear_badfactor():
 
 
 def test_shear_sparse_1d_raises():
-    try:
-        x = scipy.sparse.coo_array([1, 0, 2])
-    except Exception:
-        pytest.skip("SciPy cannot construct a 1D sparse array in this build")
-
-    if x.ndim != 1:
-        pytest.skip("SciPy coerces 1D sparse array constructors to 2D in this version")
-
+    x = scipy.sparse.coo_array([1, 0, 2])
     with pytest.raises(librosa.ParameterShapeError, match="Input must be 2D"):
         librosa.util.shear(x, factor=1, axis=0)
 

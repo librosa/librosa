@@ -1346,13 +1346,7 @@ def path_enhance(
         # This way, if R has shape, eg, [2, 3, n, n]
         # the expanded kernel will have shape [1, 1, m, m]
 
-        # The following is valid for numpy >= 1.18
-        # kernel = np.expand_dims(kernel, axis=list(np.arange(R.ndim - kernel.ndim)))
-
-        # This is functionally equivalent, but works on numpy 1.17
-        shape = [1] * R.ndim
-        shape[-2:] = kernel.shape
-        kernel = np.reshape(kernel, shape)
+        kernel = np.expand_dims(kernel, axis=tuple(range(R.ndim - kernel.ndim)))
 
         import scipy.ndimage
 
