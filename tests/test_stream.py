@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Unit tests for StreamBridge and librosa.stream."""
+
 from __future__ import annotations
 
 import os
-import queue
 import threading
 import time
 import warnings
@@ -218,9 +218,7 @@ def test_stream_warm_up_empty():
     """Test warm_up on empty bridge or zero duration yields nothing."""
     with StreamBridge(orig_sr=22050, channels=1) as bridge:
         pass
-    blocks = list(
-        bridge.stream(block_length=1, frame_length=1024, hop_length=512, warm_up=True)
-    )
+    blocks = list(bridge.stream(block_length=1, frame_length=1024, hop_length=512, warm_up=True))
     assert blocks == []
 
     with StreamBridge(orig_sr=22050, channels=1) as bridge:
@@ -545,9 +543,7 @@ def test_stream_default_sr():
     y_load_default, sr_default = librosa.load(filename)
     assert sr_default == 22050
 
-    stream_default = librosa.stream(
-        filename, block_length=16, frame_length=1024, hop_length=512
-    )
+    stream_default = librosa.stream(filename, block_length=16, frame_length=1024, hop_length=512)
     blocks = list(stream_default)
     # Reassemble blocks using hop advance
     y_stream = []
@@ -563,9 +559,7 @@ def test_stream_default_sr():
     y_load_native, sr_native = librosa.load(filename, sr=None)
     assert sr_native != 22050  # test_audio.ogg is 44100 Hz
 
-    stream_native = librosa.stream(
-        filename, block_length=16, frame_length=1024, hop_length=512, sr=None
-    )
+    stream_native = librosa.stream(filename, block_length=16, frame_length=1024, hop_length=512, sr=None)
     blocks_native = list(stream_native)
     y_stream_nat = []
     for i, b in enumerate(blocks_native):
@@ -603,11 +597,9 @@ def test_streambridge_enqueue_race_closed(monkeypatch):
     bridge = StreamBridge(orig_sr=22050)
     data = np.ones(512, dtype=np.float32)
 
-    def close_during_normalize(x):
+    def close_during_normalize(_x):
         bridge.close()
         return np.ones((512, 1), dtype=np.float32)
 
     monkeypatch.setattr(bridge, "_normalize", close_during_normalize)
     assert bridge._enqueue(data, raise_on_closed=False) is False
-
-

@@ -4,22 +4,20 @@
 #   unit tests for librosa cache
 """Tests for librosa.cache"""
 
+import contextlib
 import os
-import sys
-import tempfile
 import shutil
+import tempfile
+
 import numpy as np
-
 import pytest
-import librosa._cache
 
+import librosa._cache
 
 # Disable any initial cache settings
 for key in ["DIR", "MMAP", "COMPRESS", "VERBOSE", "LEVEL"]:
-    try:
+    with contextlib.suppress(KeyError):
         os.environ.pop("LIBROSA_CACHE_{:s}".format(key))
-    except KeyError:
-        pass
 
 
 @pytest.fixture
@@ -57,5 +55,5 @@ def test_cache_enabled(local_cache):
     # issue three calls to func
     y = func(5)
 
-    for i in range(3):
+    for _i in range(3):
         assert np.allclose(func_cache(5), y)

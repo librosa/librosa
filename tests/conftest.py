@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # Test configuration and customization
 
-import pytest
-import numpy as np
 import matplotlib
+import numpy as np
+import pytest
+
 matplotlib.use("Agg")
 from packaging.version import parse as parse_version
 
@@ -30,6 +31,15 @@ def rng_mod(rng_factory):
     return rng_factory()
 
 
+@pytest.fixture(autouse=True)
+def _close_matplotlib_figures():
+    """Ensure no Matplotlib figures leak across test instances."""
+    yield
+    import matplotlib.pyplot as plt
+
+    plt.close("all")
+
+
 def pytest_addoption(parser):
     parser.addoption(
         "--librosa-isolation",
@@ -50,12 +60,10 @@ def pytest_collection_modifyitems(config, items):
 
 
 def pytest_configure(config):
-    config.addinivalue_line(
-        "markers", "network: mark tests that require network access."
-    )
+    config.addinivalue_line("markers", "network: mark tests that require network access.")
     # Bypass image comparison tests on older matplotlib versions
     # due to changes in font rendering
     if parse_version(matplotlib.__version__) < parse_version("3.11"):
-        # pytest-mpl relies on config.getoption("--mpl") 
+        # pytest-mpl relies on config.getoption("--mpl")
         # which reads directly from config.option.mpl
         config.option.mpl = False

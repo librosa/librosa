@@ -208,6 +208,7 @@ def test_exception_pickle(exc_cls):
 
 def test_numba_exception_compatibility():
     """Test that ParameterError and ParameterValueError can be raised from numba-jitted code."""
+
     @numba.jit(nopython=True)
     def jitted_validator(x):
         if x < 0:

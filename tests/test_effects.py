@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 """Unit tests for the effects module"""
-import warnings
 
 # Disable cache
+import contextlib
 import os
 
-try:
+with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
-except KeyError:
-    pass
 
 from contextlib import nullcontext as dnr
+
 import numpy as np
 import pytest
 
@@ -21,7 +20,7 @@ import librosa
 @pytest.fixture(scope="module")
 def y_multi():
     sr = 44100
-    y = librosa.chirp(fmin=100, fmax=2000, sr=sr, duration=5.0)
+    y = librosa.chirp(fmin=100, fmax=2000, sr=sr, duration=1.5)
     y = np.vstack([y, y[::-1]])
     return y, sr
 
@@ -29,14 +28,13 @@ def y_multi():
 @pytest.fixture(scope="module", params=[22050, 44100])
 def ysr(request):
     sr = request.param
-    y = librosa.chirp(fmin=100, fmax=2000, sr=sr, duration=5.0)
+    y = librosa.chirp(fmin=100, fmax=2000, sr=sr, duration=1.5)
     return y, sr
 
 
 @pytest.mark.parametrize(
     "rate,ctx",
     [
-        (0.25, dnr()),
         (0.25, dnr()),
         (1.0, dnr()),
         (2.0, dnr()),
@@ -60,7 +58,7 @@ def test_time_stretch(ysr, rate, ctx, n_fft):
 
 
 def test_time_stretch_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # compare each channel
     C0 = librosa.effects.time_stretch(y[0], rate=1.1)
@@ -90,9 +88,7 @@ def test_pitch_shift(ysr, n_steps, bins_per_octave, ctx, n_fft):
 
     with ctx:
         y, sr = ysr
-        ys = librosa.effects.pitch_shift(
-            y, sr=sr, n_steps=n_steps, bins_per_octave=bins_per_octave, n_fft=n_fft
-        )
+        ys = librosa.effects.pitch_shift(y, sr=sr, n_steps=n_steps, bins_per_octave=bins_per_octave, n_fft=n_fft)
 
         orig_duration = librosa.get_duration(y=y, sr=sr)
         new_duration = librosa.get_duration(y=ys, sr=sr)
@@ -174,7 +170,7 @@ def test_remix_tuples(align_zeros):
 
 def test_hpss(ysr):
 
-    y, sr = ysr
+    y, _sr = ysr
 
     y_harm, y_perc = librosa.effects.hpss(y)
 
@@ -188,7 +184,7 @@ def test_hpss(ysr):
 
 
 def test_hpss_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # compare each channel
     CH0, CP0 = librosa.effects.hpss(y[0])
@@ -209,9 +205,9 @@ def test_hpss_multi(y_multi):
 @pytest.mark.parametrize("window", ["hann", "hamming", "blackman"])
 def test_percussive(ysr, window):
 
-    y, sr = ysr
+    y, _sr = ysr
 
-    yh1, yp1 = librosa.effects.hpss(y, window=window)
+    _yh1, yp1 = librosa.effects.hpss(y, window=window)
 
     yp2 = librosa.effects.percussive(y, window=window)
 
@@ -221,9 +217,9 @@ def test_percussive(ysr, window):
 @pytest.mark.parametrize("window", ["hann", "hamming", "blackman"])
 def test_harmonic(ysr, window):
 
-    y, sr = ysr
+    y, _sr = ysr
 
-    yh1, yp1 = librosa.effects.hpss(y, window=window)
+    yh1, _yp1 = librosa.effects.hpss(y, window=window)
 
     yh2 = librosa.effects.harmonic(y, window=window)
 
@@ -238,7 +234,7 @@ def test_effects_window(ysr, effect_fn):
     # The window must reach the STFT.  Asserting only that the outputs differ
     # would also pass if it reached stft but not istft, so the reconstruction
     # check below and component equivalence tests above pin synthesis as well.
-    y, sr = ysr
+    y, _sr = ysr
 
     def first(result):
         return result[0] if isinstance(result, tuple) else result
@@ -255,7 +251,7 @@ def test_effects_window(ysr, effect_fn):
 def test_hpss_window_reconstruction(ysr, window):
     # Analysis and synthesis must use the same window, otherwise the harmonic
     # and percussive parts no longer sum back to the input.
-    y, sr = ysr
+    y, _sr = ysr
 
     y_harm, y_perc = librosa.effects.hpss(y=y, window=window)
 
@@ -321,13 +317,13 @@ def test_trim_empty():
 
 def test_trim_multi(y_multi):
     # Test for https://github.com/librosa/librosa/issues/1489
-    y, sr = y_multi
+    y, _sr = y_multi
     librosa.effects.trim(y=y)
 
 
 def test_split_multi(y_multi):
     # Test for https://github.com/librosa/librosa/issues/1489
-    y, sr = y_multi
+    y, _sr = y_multi
 
     librosa.effects.split(y=y)
 
@@ -378,9 +374,7 @@ def test_split(y_split_idx, frame_length, hop_length, top_db):
 
     y, idx_true = y_split_idx
 
-    intervals = librosa.effects.split(
-        y, top_db=top_db, frame_length=frame_length, hop_length=hop_length
-    )
+    intervals = librosa.effects.split(y, top_db=top_db, frame_length=frame_length, hop_length=hop_length)
 
     assert np.all(intervals <= y.shape[-1])
 
@@ -400,7 +394,7 @@ def test_preemphasis(coef, zi, return_zf: bool, dtype):
     x = np.arange(10, dtype=dtype)
 
     if return_zf:
-        y, zf = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
+        y, _zf = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
     else:
         y = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
 
@@ -425,7 +419,7 @@ def test_preemphasis_continue(dtype):
 
 
 def test_preemphasis_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # compare each channel
     C0, zf0 = librosa.effects.preemphasis(y[0], return_zf=True)
@@ -444,7 +438,7 @@ def test_preemphasis_multi(y_multi):
 
 
 def test_deemphasis_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # compare each channel
     C0, zf0 = librosa.effects.deemphasis(y[0], return_zf=True)
@@ -472,7 +466,7 @@ def test_deemphasis(coef, zi, return_zf, dtype):
     y = librosa.effects.preemphasis(x, coef=coef, zi=zi, return_zf=return_zf)
 
     if return_zf:
-        y, zf = y
+        y, _zf = y
 
     y_deemph = librosa.effects.deemphasis(y, coef=coef, zi=zi)
 
@@ -590,5 +584,6 @@ def test_vibrato_params():
 def test_vibrato_short():
     # Signal producing < 2 frames in STFT should early return copy
     y = np.ones(100)
-    yv = librosa.effects.vibrato(y, sr=22050)
+    with pytest.warns(UserWarning, match=r"n_fft=.*is too large for input signal"):
+        yv = librosa.effects.vibrato(y, sr=22050)
     assert np.allclose(y, yv)

@@ -113,9 +113,10 @@ librosa = [
 
 [tool.pytest.ini_options]
 xfail_strict = true
-addopts = "--cov-report term-missing --cov librosa --cov-report=xml --mpl --mpl-baseline-path=tests/baseline_images/test_display"
+addopts = "--mpl --mpl-baseline-path=tests/baseline_images/test_display"
 filterwarnings = [
     "ignore::DeprecationWarning:resampy.*",
+    "ignore:invalid value encountered in cast:RuntimeWarning:numba.*",
 ]
 
 [tool.coverage.run]
@@ -125,7 +126,6 @@ source = ["librosa"]
 [tool.coverage.report]
 omit = [
     "*/python?.?/*",
-    "*/site-packages/nose/*",
 ]
 exclude_lines = [
     "@numba.jit",
@@ -239,4 +239,7 @@ exclude_files = [
     "I",     # Disable isort to maintain your custom pedagogical import ordering
     "B018",  # Allow "useless expressions" (necessary for Sphinx-Gallery to render repr outputs)
     "D",     # Disable strict pydocstyle checks for tutorial scripts
+]
+"tests/**/*.py" = [
+    "D",     # Disable strict pydocstyle checks for unit tests
 ]

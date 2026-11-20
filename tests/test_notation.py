@@ -2,33 +2,32 @@
 # -*- encoding: utf-8 -*-
 # CREATED:2020-07-16 16:49:03 by Brian McFee <brian.mcfee@nyu.edu>
 """Unit tests for music notations"""
+
+import contextlib
 import os
-import sys
 
-try:
+with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
-except KeyError:
-    pass
 
-import warnings
 import numpy as np
 import pytest
+
 import librosa
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_key_to_notes_badkey():
-    librosa.key_to_notes("not a key")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.key_to_notes("not a key")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_simplify_note_badnote():
-    librosa.core.notation.__simplify_note("not a note")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.core.notation.__simplify_note("not a note")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_note_to_degree_badnote():
-    librosa.core.notation.__note_to_degree("not a note")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.core.notation.__note_to_degree("not a note")
 
 
 @pytest.mark.parametrize(
@@ -199,7 +198,7 @@ def test_note_to_degree_badnote():
 def test_key_to_notes(key, ref_notes):
     notes = librosa.key_to_notes(key, unicode=False, natural=True)
     assert len(notes) == len(ref_notes)
-    for n, rn in zip(notes, ref_notes):
+    for n, rn in zip(notes, ref_notes, strict=False):
         assert n == rn
 
 
@@ -231,7 +230,7 @@ def test_key_to_notes(key, ref_notes):
 def test_key_to_notes_unicode(key, ref_notes, natural):
     notes = librosa.key_to_notes(key, unicode=True, natural=natural)
     assert len(notes) == len(ref_notes)
-    for n, rn in zip(notes, ref_notes):
+    for n, rn in zip(notes, ref_notes, strict=False):
         assert n == rn
 
 
@@ -251,7 +250,7 @@ def test_key_to_notes_unicode(key, ref_notes, natural):
 def test_key_to_notes_no_natural(key, ref_notes):
     notes = librosa.key_to_notes(key, unicode=True, natural=False)
     assert len(notes) == len(ref_notes)
-    for n, rn in zip(notes, ref_notes):
+    for n, rn in zip(notes, ref_notes, strict=False):
         assert n == rn
 
 
@@ -264,7 +263,7 @@ def test_key_to_notes_no_natural(key, ref_notes):
 )
 def test_simplify_note_ascii(note, ref_simplified_ascii):
     simplified_note = librosa.core.notation.__simplify_note(note, unicode=False)
-    for n, rn in zip(simplified_note, ref_simplified_ascii):
+    for n, rn in zip(simplified_note, ref_simplified_ascii, strict=False):
         assert n == rn
 
 
@@ -274,13 +273,13 @@ def test_simplify_note_ascii(note, ref_simplified_ascii):
 )
 def test_simplify_note_array(notes, ref_simplified_array):
     simplified_note = librosa.core.notation.__simplify_note(notes)
-    for n, rn in zip(simplified_note, ref_simplified_array):
+    for n, rn in zip(simplified_note, ref_simplified_array, strict=False):
         assert n == rn
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_key_to_degrees_badkey():
-    librosa.key_to_degrees("not a key")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.key_to_degrees("not a key")
 
 
 @pytest.mark.parametrize(
@@ -303,13 +302,13 @@ def test_key_to_degrees_badkey():
 def test_key_to_degrees(key, ref_degrees):
     degrees = librosa.key_to_degrees(key)
     assert len(degrees) == len(ref_degrees)
-    for d, rd in zip(degrees, ref_degrees):
+    for d, rd in zip(degrees, ref_degrees, strict=False):
         assert d == rd
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_mode_to_key_badkey():
-    librosa.core.notation.__mode_to_key("not a key")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.core.notation.__mode_to_key("not a key")
 
 
 @pytest.mark.parametrize(
@@ -317,8 +316,8 @@ def test_mode_to_key_badkey():
     [("C:maj", "C:maj")],
 )
 def test_mode_to_key_no_change(mode, ref_mode):
-    simplified_mode = librosa.core.notation.__mode_to_key(mode)
-    for n, rn in zip(mode, ref_mode):
+    librosa.core.notation.__mode_to_key(mode)
+    for n, rn in zip(mode, ref_mode, strict=False):
         assert n == rn
 
 
@@ -380,7 +379,7 @@ def test_mela_to_degrees(mela, idx):
 def test_mela_to_svara(mela, svara, abbr, unicode):
     svara_est = librosa.mela_to_svara(mela, abbr=abbr, unicode=unicode)
 
-    for s1, s2 in zip(svara_est, svara):
+    for s1, s2 in zip(svara_est, svara, strict=False):
         assert s1[0] == s2[0]
 
     if abbr:
@@ -396,24 +395,24 @@ def test_mela_to_svara(mela, svara, abbr, unicode):
             assert s.isascii()
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_mela_to_degrees_badmela():
-    librosa.mela_to_degrees("some garbage")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.mela_to_degrees("some garbage")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_mela_to_degrees_badidx():
-    librosa.mela_to_degrees(0)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.mela_to_degrees(0)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_mela_to_svara_badmela():
-    librosa.mela_to_svara("some garbage")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.mela_to_svara("some garbage")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_mela_to_svara_badidx():
-    librosa.mela_to_svara(0)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.mela_to_svara(0)
 
 
 @pytest.mark.parametrize(
@@ -438,27 +437,25 @@ def test_mela_to_svara_badidx():
     ],
 )
 def test_fifths_to_note(unison, fifths, unicode, result):
-    note = librosa.core.notation.fifths_to_note(
-        unison=unison, fifths=fifths, unicode=unicode
-    )
+    note = librosa.core.notation.fifths_to_note(unison=unison, fifths=fifths, unicode=unicode)
     assert note == result
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_fifths_to_note_badunison():
-    librosa.fifths_to_note(unison="X", fifths=1)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.fifths_to_note(unison="X", fifths=1)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_interval_to_fjs_irrational():
     # Test FJS conversion with a non-just interval
-    librosa.interval_to_fjs(np.sqrt(2))
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.interval_to_fjs(np.sqrt(2))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("r", [0, -1, -1 / 2])
 def test_interval_to_fjs_nonpos(r):
-    librosa.interval_to_fjs(r)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.interval_to_fjs(r)
 
 
 @pytest.mark.parametrize(
@@ -487,13 +484,11 @@ def test_interval_to_fjs(interval, unison, unicode, result):
 
 @pytest.mark.parametrize("unison", ["C", "F#", "Gbb"])
 @pytest.mark.parametrize("unicode", [False, True])
-@pytest.mark.parametrize(
-    "intervals", [librosa.plimit_intervals(primes=[3, 5, 7], bins_per_octave=24)]
-)
+@pytest.mark.parametrize("intervals", [librosa.plimit_intervals(primes=[3, 5, 7], bins_per_octave=24)])
 def test_interval_to_fjs_set(unison, unicode, intervals):
     fjs = librosa.interval_to_fjs(intervals, unison=unison, unicode=unicode)
 
-    for interval, note in zip(intervals, fjs):
+    for interval, note in zip(intervals, fjs, strict=False):
         fjs_single = librosa.interval_to_fjs(interval, unison=unison, unicode=unicode)
         assert fjs_single == note
 

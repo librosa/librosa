@@ -4,23 +4,19 @@
 #
 
 # Disable cache
+import contextlib
 import os
 
-try:
+with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
-except KeyError:
-    pass
 
-import librosa
-import glob
-import numpy as np
-import scipy.stats
-import pytest
-import warnings
-from unittest import mock
 from typing import List, Union
 
-from contextlib import nullcontext as dnr
+import numpy as np
+import pytest
+import scipy.stats
+
+import librosa
 
 
 @pytest.fixture(scope="module")
@@ -43,7 +39,7 @@ def s_multi(y_multi):
 
 @pytest.fixture(scope="module")
 def tfr_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
     return librosa.reassigned_spectrogram(y, fill_nan=True)
 
 
@@ -97,7 +93,7 @@ def test_stft_multi(y_multi):
 
     # Verify that a stereo STFT matches on
     # each channel individually
-    y, sr = y_multi
+    y, _sr = y_multi
 
     D = librosa.stft(y)
 
@@ -116,7 +112,7 @@ def test_onset_strength(y_multi):
 
     # Verify that a stereo spectral flux onset strength envelope matches on
     # each channel individually
-    y, sr = y_multi
+    y, _sr = y_multi
 
     S = librosa.stft(y)
 
@@ -177,7 +173,7 @@ def test_fourier_tempogram(s_multi):
     assert not np.allclose(t0, t1, atol=1e-6, rtol=1e-6)
 
 
-def test_tempo_multi(y_multi):
+def test_tempo_multi():
 
     sr = 22050
     tempi = [78, 128]
@@ -188,17 +184,11 @@ def test_tempo_multi(y_multi):
     y[0, :: delay[0]] = 1
     y[1, :: delay[1]] = 1
 
-    t = librosa.feature.tempo(
-        y=y, sr=sr, hop_length=512, ac_size=4, aggregate=np.mean, prior=None
-    )
+    t = librosa.feature.tempo(y=y, sr=sr, hop_length=512, ac_size=4, aggregate=np.mean, prior=None)
 
-    t0 = librosa.feature.tempo(
-        y=y[0], sr=sr, hop_length=512, ac_size=4, aggregate=np.mean, prior=None
-    )
+    t0 = librosa.feature.tempo(y=y[0], sr=sr, hop_length=512, ac_size=4, aggregate=np.mean, prior=None)
 
-    t1 = librosa.feature.tempo(
-        y=y[1], sr=sr, hop_length=512, ac_size=4, aggregate=np.mean, prior=None
-    )
+    t1 = librosa.feature.tempo(y=y[1], sr=sr, hop_length=512, ac_size=4, aggregate=np.mean, prior=None)
 
     # Check each channel
     assert np.allclose(t[0], t0)
@@ -217,9 +207,7 @@ def test_tempo_multi(y_multi):
         (60, None),
     ],
 )
-@pytest.mark.parametrize(
-    "prior", [None, scipy.stats.lognorm(s=1, loc=np.log(120), scale=120)]
-)
+@pytest.mark.parametrize("prior", [None, scipy.stats.lognorm(s=1, loc=np.log(120), scale=120)])
 def test_plp_multi(s_multi, hop_length, win_length, tempo_min, tempo_max, prior):
 
     S, sr = s_multi
@@ -266,7 +254,7 @@ def test_plp_multi(s_multi, hop_length, win_length, tempo_min, tempo_max, prior)
 def test_istft_multi(y_multi):
 
     # Verify that a stereo ISTFT matches on each channel
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # Assume the forward transform works properly in stereo
     D = librosa.stft(y)
@@ -287,7 +275,7 @@ def test_istft_multi(y_multi):
 
 
 def test_griffinlim_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # Compute the stft
     D = librosa.stft(y)
@@ -325,9 +313,10 @@ def test_hybrid_cqt_multi(y_multi, scale, res_type):
     y, sr = y_multi
 
     # Assuming single-channel CQT is well behaved
-    C0 = librosa.hybrid_cqt(y=y[0], sr=sr, scale=scale, res_type=res_type)
-    C1 = librosa.hybrid_cqt(y=y[1], sr=sr, scale=scale, res_type=res_type)
-    Call = librosa.hybrid_cqt(y=y, sr=sr, scale=scale, res_type=res_type)
+    with pytest.warns(FutureWarning, match=r"[Dd]eprecated"):
+        C0 = librosa.hybrid_cqt(y=y[0], sr=sr, scale=scale, res_type=res_type)
+        C1 = librosa.hybrid_cqt(y=y[1], sr=sr, scale=scale, res_type=res_type)
+        Call = librosa.hybrid_cqt(y=y, sr=sr, scale=scale, res_type=res_type)
 
     # Check each channel
     assert np.allclose(C0, Call[0])
@@ -504,7 +493,7 @@ def test_spectral_rolloff_multi_variable(s_multi, rng):
 
 
 def test_spectral_flatness_multi(s_multi):
-    S, sr = s_multi
+    S, _sr = s_multi
 
     # compare each channel
     C0 = librosa.feature.spectral_flatness(S=S[0])
@@ -520,7 +509,7 @@ def test_spectral_flatness_multi(s_multi):
 
 
 def test_poly_multi_static(s_multi):
-    mags, sr = s_multi
+    mags, _sr = s_multi
 
     Pall = librosa.feature.poly_features(S=mags, order=5)
 
@@ -539,7 +528,7 @@ def test_poly_multi_static(s_multi):
 def test_poly_multi_varying(tfr_multi):
 
     # Get some time-varying frequencies
-    times, freqs, mags = tfr_multi
+    _times, freqs, mags = tfr_multi
     Pall = librosa.feature.poly_features(S=mags, freq=freqs, order=5)
 
     # Compute per channel
@@ -553,7 +542,7 @@ def test_poly_multi_varying(tfr_multi):
 
 
 def test_rms_multi(s_multi):
-    S, sr = s_multi
+    S, _sr = s_multi
 
     # compare each channel
     C0 = librosa.feature.rms(S=S[0])
@@ -571,7 +560,7 @@ def test_rms_multi(s_multi):
 
 
 def test_zcr_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # compare each channel
     C0 = librosa.feature.zero_crossing_rate(y=y[0])
@@ -587,7 +576,7 @@ def test_zcr_multi(y_multi):
 
 
 def test_chroma_stft_multi(s_multi):
-    S, sr = s_multi
+    S, _sr = s_multi
 
     # compare each channel
     C0 = librosa.feature.chroma_stft(S=S[0], tuning=0)
@@ -603,7 +592,7 @@ def test_chroma_stft_multi(s_multi):
 
 
 def test_chroma_cqt_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # compare each channel
     C0 = librosa.feature.chroma_cqt(y=y[0], tuning=0)
@@ -619,7 +608,7 @@ def test_chroma_cqt_multi(y_multi):
 
 
 def test_chroma_cens_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # compare each channel
     C0 = librosa.feature.chroma_cens(y=y[0], tuning=0)
@@ -635,7 +624,7 @@ def test_chroma_cens_multi(y_multi):
 
 
 def test_tonnetz_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # compare each channel
     C0 = librosa.feature.tonnetz(y=y[0], tuning=0)
@@ -651,7 +640,7 @@ def test_tonnetz_multi(y_multi):
 
 
 def test_mfcc_multi(s_multi):
-    S, sr = s_multi
+    S, _sr = s_multi
 
     # compare each channel
     C0 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[0], top_db=None))
@@ -683,7 +672,7 @@ def test_mfcc_multi_time(y_multi):
 
 
 def test_melspectrogram_multi(s_multi):
-    S, sr = s_multi
+    S, _sr = s_multi
 
     # compare each channel
     C0 = librosa.feature.melspectrogram(S=S[0])
@@ -699,7 +688,7 @@ def test_melspectrogram_multi(s_multi):
 
 
 def test_melspectrogram_multi_time(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # compare each channel
     C0 = librosa.feature.melspectrogram(y=y[0])
@@ -764,7 +753,7 @@ def test_pitch_spectrogram_multi_time(y_multi):
 
 @pytest.mark.parametrize("rate", [0.5, 2])
 def test_phase_vocoder(y_multi, rate):
-    y, sr = y_multi
+    y, _sr = y_multi
     D = librosa.stft(y)
 
     D0 = librosa.phase_vocoder(D[0], rate=rate)
@@ -810,17 +799,11 @@ def test_interp_harmonics_multi_static(s_multi):
 # Not worried about this warning here
 @pytest.mark.filterwarnings("ignore:Frequencies are not unique")
 def test_interp_harmonics_multi_vary(tfr_multi):
-    times, freqs, mags = tfr_multi
+    _times, freqs, mags = tfr_multi
 
-    Hall = librosa.interp_harmonics(
-        mags, freqs=freqs, harmonics=[0.5, 1, 2], kind="nearest"
-    )
-    H0 = librosa.interp_harmonics(
-        mags[0], freqs=freqs[0], harmonics=[0.5, 1, 2], kind="nearest"
-    )
-    H1 = librosa.interp_harmonics(
-        mags[1], freqs=freqs[1], harmonics=[0.5, 1, 2], kind="nearest"
-    )
+    Hall = librosa.interp_harmonics(mags, freqs=freqs, harmonics=[0.5, 1, 2], kind="nearest")
+    H0 = librosa.interp_harmonics(mags[0], freqs=freqs[0], harmonics=[0.5, 1, 2], kind="nearest")
+    H1 = librosa.interp_harmonics(mags[1], freqs=freqs[1], harmonics=[0.5, 1, 2], kind="nearest")
 
     assert np.allclose(Hall[0], H0)
     assert np.allclose(Hall[1], H1)
@@ -858,7 +841,7 @@ def test_interp_frequency_multi_static(s_multi):
 
 @pytest.mark.filterwarnings("ignore:.*are not unique.*")
 def test_interp_time_multi_vary(tfr_multi):
-    freqs, times, mags = tfr_multi
+    _freqs, times, mags = tfr_multi
 
     target_times = np.linspace(np.nanmin(times), np.nanmax(times), 50)
     Tall = librosa.interp_time(mags, target_times=target_times, times=times, kind="nearest")
@@ -872,7 +855,7 @@ def test_interp_time_multi_vary(tfr_multi):
 
 @pytest.mark.filterwarnings("ignore:.*are not unique.*")
 def test_interp_frequency_multi_vary(tfr_multi):
-    freqs, times, mags = tfr_multi
+    freqs, _times, mags = tfr_multi
 
     target_freqs = np.linspace(100, 4000, 64)
     Fall = librosa.interp_frequency(mags, target_freqs=target_freqs, freqs=freqs, kind="nearest")
@@ -882,6 +865,7 @@ def test_interp_frequency_multi_vary(tfr_multi):
     assert np.allclose(Fall[0], F0)
     assert np.allclose(Fall[1], F1)
     assert not np.allclose(F0, F1)
+
 
 @pytest.mark.parametrize("filter_peaks", [False, True])
 def test_salience_multi_static(s_multi, filter_peaks):
@@ -923,7 +907,7 @@ def test_salience_multi_static(s_multi, filter_peaks):
 # Not worried about this warning here
 @pytest.mark.filterwarnings("ignore:Frequencies are not unique")
 def test_salience_multi_dynamic(tfr_multi, filter_peaks):
-    times, freqs, S = tfr_multi
+    _times, freqs, S = tfr_multi
 
     sal_all = librosa.salience(
         S,
@@ -969,7 +953,7 @@ def test_iirt_multi(y_multi, center):
 
 
 def test_lpc_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     Lall = librosa.lpc(y, order=6)
     L0 = librosa.lpc(y[0], order=6)
@@ -981,7 +965,7 @@ def test_lpc_multi(y_multi):
 
 
 def test_yin_multi(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     Pall = librosa.yin(y, fmin=30, fmax=300)
     P0 = librosa.yin(y[0], fmin=30, fmax=300)
@@ -1043,12 +1027,8 @@ def test_nnls_multi(s_multi):
     S1_recover = librosa.util.nnls(mel_basis, M1)
 
     # Check each channel
-    assert np.allclose(S_recover[0], S0_recover, atol=1e-5, rtol=1e-5), np.max(
-        np.abs(S_recover[0] - S0_recover)
-    )
-    assert np.allclose(S_recover[1], S1_recover, atol=1e-5, rtol=1e-5), np.max(
-        np.abs(S_recover[1] - S1_recover)
-    )
+    assert np.allclose(S_recover[0], S0_recover, atol=1e-5, rtol=1e-5), np.max(np.abs(S_recover[0] - S0_recover))
+    assert np.allclose(S_recover[1], S1_recover, atol=1e-5, rtol=1e-5), np.max(np.abs(S_recover[1] - S1_recover))
 
     # Check that they're not both the same
     assert not np.allclose(S0_recover, S1_recover)
@@ -1119,17 +1099,11 @@ def test_pitch_to_stft_multi(power, n_fft, rng):
     stft_orig = np.abs(rng.standard_normal(size=(2, n_fft // 2 + 1, 4))) ** power
 
     P = np.einsum("...ft,mf->...mt", stft_orig, fb)
-    stft = librosa.feature.inverse.pitch_to_stft(
-        P, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1"
-    )
+    stft = librosa.feature.inverse.pitch_to_stft(P, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1")
     P0 = np.einsum("...ft,mf->...mt", stft_orig[0], fb)
-    stft0 = librosa.feature.inverse.pitch_to_stft(
-        P0, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1"
-    )
+    stft0 = librosa.feature.inverse.pitch_to_stft(P0, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1")
     P1 = np.einsum("...ft,mf->...mt", stft_orig[1], fb)
-    stft1 = librosa.feature.inverse.pitch_to_stft(
-        P1, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1"
-    )
+    stft1 = librosa.feature.inverse.pitch_to_stft(P1, sr=sr, power=power, n_fft=n_fft, n_pitches=n_pitches, fmin="C1")
 
     # Check each channel
     assert np.allclose(stft[0], stft0, atol=1e-6)
@@ -1144,22 +1118,16 @@ def test_pitch_to_stft_multi(power, n_fft, rng):
 @pytest.mark.parametrize("dct_type", [2, 3])
 def test_mfcc_to_mel_multi(s_multi, n_mfcc, n_mels, dct_type):
 
-    S, sr = s_multi
+    S, _sr = s_multi
 
     # compare each channel
-    mfcc0 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[0], top_db=None))
-    mfcc1 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[1], top_db=None))
-    mfcc = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S, top_db=None))
+    mfcc0 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[0], top_db=None), n_mfcc=n_mfcc)
+    mfcc1 = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S[1], top_db=None), n_mfcc=n_mfcc)
+    mfcc = librosa.feature.mfcc(S=librosa.core.amplitude_to_db(S=S, top_db=None), n_mfcc=n_mfcc)
 
-    mel_recover = librosa.feature.inverse.mfcc_to_mel(
-        mfcc, n_mels=n_mels, dct_type=dct_type
-    )
-    mel_recover0 = librosa.feature.inverse.mfcc_to_mel(
-        mfcc0, n_mels=n_mels, dct_type=dct_type
-    )
-    mel_recover1 = librosa.feature.inverse.mfcc_to_mel(
-        mfcc1, n_mels=n_mels, dct_type=dct_type
-    )
+    mel_recover = librosa.feature.inverse.mfcc_to_mel(mfcc, n_mels=n_mels, dct_type=dct_type)
+    mel_recover0 = librosa.feature.inverse.mfcc_to_mel(mfcc0, n_mels=n_mels, dct_type=dct_type)
+    mel_recover1 = librosa.feature.inverse.mfcc_to_mel(mfcc1, n_mels=n_mels, dct_type=dct_type)
 
     # Check each channel
     assert np.allclose(mel_recover[0], mel_recover0)
@@ -1170,14 +1138,14 @@ def test_mfcc_to_mel_multi(s_multi, n_mfcc, n_mels, dct_type):
 
 
 def test_trim_multichannel(y_multi):
-    y, sr = y_multi
+    y, _sr = y_multi
 
     # Make one channel much quieter than the other
     y = y * np.array([[1e-6, 1e6]]).T
-    yt, ival = librosa.effects.trim(y)
+    _yt, ival = librosa.effects.trim(y)
 
-    yt0, ival0 = librosa.effects.trim(y[0])
-    yt1, ival1 = librosa.effects.trim(y[1])
+    _yt0, ival0 = librosa.effects.trim(y[0])
+    _yt1, ival1 = librosa.effects.trim(y[1])
 
     # Trim uses max aggregation across channels by default
     # So the multichannel trimming window will be the
@@ -1186,9 +1154,7 @@ def test_trim_multichannel(y_multi):
     assert ival[1] == min(ival0[1], ival1[1])
 
 
-@pytest.mark.parametrize(
-    "res_type", ("scipy", "polyphase", "sinc_fastest", "kaiser_fast", "soxr_qq")
-)
+@pytest.mark.parametrize("res_type", ("scipy", "polyphase", "sinc_fastest", "kaiser_fast", "soxr_qq"))
 def test_resample_multichannel(y_multi, res_type):
     if res_type in ("linear", "zero_order_hold", "sinc_best", "sinc_fastest", "sinc_medium"):
         pytest.importorskip("samplerate")
@@ -1204,30 +1170,22 @@ def test_resample_multichannel(y_multi, res_type):
     assert y_res[0].shape == y0_res.shape
 
 
-@pytest.mark.parametrize(
-    "res_type", ("scipy", "polyphase", "sinc_fastest", "kaiser_fast", "soxr_qq")
-)
+@pytest.mark.parametrize("res_type", ("scipy", "polyphase", "sinc_fastest", "kaiser_fast", "soxr_qq"))
 @pytest.mark.parametrize("x", [np.zeros((2, 2, 2, 22050))])
 def test_resample_highdim(x, res_type):
     if res_type in ("linear", "zero_order_hold", "sinc_best", "sinc_fastest", "sinc_medium"):
         pytest.importorskip("samplerate")
     # Just run these to verify that it doesn't crash with ndim>2
-    y = librosa.resample(x, orig_sr=22050, target_sr=11025, res_type=res_type)
+    librosa.resample(x, orig_sr=22050, target_sr=11025, res_type=res_type)
 
 
-@pytest.mark.parametrize(
-    "res_type", ("scipy", "polyphase", "sinc_fastest", "kaiser_fast", "soxr_qq")
-)
-@pytest.mark.parametrize(
-    "x, axis", [(np.zeros((2, 2, 2, 22050)), -1), (np.zeros((22050, 2, 3)), 0)]
-)
+@pytest.mark.parametrize("res_type", ("scipy", "polyphase", "sinc_fastest", "kaiser_fast", "soxr_qq"))
+@pytest.mark.parametrize("x, axis", [(np.zeros((2, 2, 2, 22050)), -1), (np.zeros((22050, 2, 3)), 0)])
 def test_resample_highdim_axis(x, axis, res_type):
     if res_type in ("linear", "zero_order_hold", "sinc_best", "sinc_fastest", "sinc_medium"):
         pytest.importorskip("samplerate")
     # Resample along the target axis
-    y = librosa.resample(
-        x, orig_sr=22050, target_sr=11025, axis=axis, res_type=res_type
-    )
+    y = librosa.resample(x, orig_sr=22050, target_sr=11025, axis=axis, res_type=res_type)
 
     # Verify that the target axis is the correct shape
     assert y.shape[axis] == 11025
@@ -1338,7 +1296,6 @@ def test_peak_pick_axis(rng):
     assert np.allclose(peaks_t.T, peaks)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_peak_pick_multi_fail(rng):
 
     x = rng.standard_normal(size=(3, 1000)) ** 2
@@ -1350,17 +1307,18 @@ def test_peak_pick_multi_fail(rng):
     wait = 10
     delta = 0.5
 
-    pm = librosa.util.peak_pick(
-        x,
-        pre_max=pre_max,
-        post_max=post_max,
-        pre_avg=pre_avg,
-        post_avg=post_avg,
-        wait=wait,
-        delta=delta,
-        sparse=True,
-        axis=-1,
-    )
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.peak_pick(
+            x,
+            pre_max=pre_max,
+            post_max=post_max,
+            pre_avg=pre_avg,
+            post_avg=post_avg,
+            wait=wait,
+            delta=delta,
+            sparse=True,
+            axis=-1,
+        )
 
 
 def test_onset_detect(y_multi):
@@ -1432,7 +1390,7 @@ def test_beat_track_multi_bpm_vector(y_multi):
     assert np.allclose(beats[1], beats1)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_beat_track_multi_sparse(y_multi):
     y, sr = y_multi
-    librosa.beat.beat_track(y=y, sr=sr, sparse=True)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.beat.beat_track(y=y, sr=sr, sparse=True)

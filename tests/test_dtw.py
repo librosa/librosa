@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 
-import librosa
 import numpy as np
+import pytest
 from scipy.spatial.distance import cdist
 
-import pytest
+import librosa
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_1d_input():
     X = np.array([[1], [3], [3], [8], [1]])
     Y = np.array([[2], [0], [0], [8], [7], [2]])
-    librosa.sequence.dtw(X=X, Y=Y)
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.sequence.dtw(X=X, Y=Y)
 
 
 def test_dtw_global():
@@ -56,9 +56,7 @@ def test_dtw_global_constrained():
         ]
     )
 
-    mut_D = librosa.sequence.dtw(
-        X, Y, backtrack=False, global_constraints=True, band_rad=0.5
-    )
+    mut_D = librosa.sequence.dtw(X, Y, backtrack=False, global_constraints=True, band_rad=0.5)
     assert np.array_equal(gt_D, mut_D)
 
 
@@ -93,11 +91,9 @@ def test_dtw_gobal_boundary():
     # See https://github.com/librosa/librosa/pull/920
     X = np.array([1, 2, 3, 4, 5])
     Y = np.array([1, 1, 1, 2, 4, 5, 6, 5, 5])
-    gt_wp = np.array(
-        [[0, 0], [0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [4, 5], [4, 6], [4, 7], [4, 8]]
-    )
+    gt_wp = np.array([[0, 0], [0, 1], [0, 2], [1, 3], [2, 3], [3, 4], [4, 5], [4, 6], [4, 7], [4, 8]])
 
-    D, wp = librosa.sequence.dtw(X, Y, subseq=False)
+    _D, wp = librosa.sequence.dtw(X, Y, subseq=False)
     wp = wp[::-1]
     assert np.array_equal(gt_wp, wp)
 
@@ -110,7 +106,7 @@ def test_dtw_subseq_boundary():
     Y = np.array([1, 1, 1, 2, 4, 5, 6, 5, 5])
     gt_wp = np.array([[0, 2], [1, 3], [2, 3], [3, 4], [4, 5]])
 
-    D, wp = librosa.sequence.dtw(X, Y, subseq=True)
+    _D, wp = librosa.sequence.dtw(X, Y, subseq=True)
     wp = wp[::-1]
     assert np.array_equal(gt_wp, wp)
 
@@ -126,9 +122,7 @@ def test_dtw_subseq_steps():
     D1, wp1 = librosa.sequence.dtw(X, Y, subseq=True, backtrack=True)
     wp1 = wp1[::-1]
 
-    D2, steps = librosa.sequence.dtw(
-        X, Y, subseq=True, backtrack=False, return_steps=True
-    )
+    D2, steps = librosa.sequence.dtw(X, Y, subseq=True, backtrack=False, return_steps=True)
     start_idx = np.argmin(D2[-1, :])
     wp2 = librosa.sequence.dtw_backtracking(steps, subseq=True, start=start_idx)
     wp2 = wp2[::-1]
@@ -138,67 +132,64 @@ def test_dtw_subseq_steps():
     assert np.array_equal(wp1, wp2)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_backtracking_incompatible_args_01():
     # See https://github.com/librosa/librosa/pull/1166
     X = np.array([1, 2, 3, 4, 5])
     Y = np.array([1, 1, 1, 2, 4, 5, 6, 5, 5])
 
-    D, steps = librosa.sequence.dtw(
-        X, Y, subseq=True, backtrack=False, return_steps=True
-    )
+    D, steps = librosa.sequence.dtw(X, Y, subseq=True, backtrack=False, return_steps=True)
     start_idx = np.argmin(D[-1, :])
-    librosa.sequence.dtw_backtracking(steps, subseq=False, start=start_idx)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.dtw_backtracking(steps, subseq=False, start=start_idx)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_incompatible_args_01():
-    librosa.sequence.dtw(C=1, X=1, Y=1)  # type: ignore
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.dtw(C=1, X=1, Y=1)  # type: ignore
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_incompatible_args_02():
-    librosa.sequence.dtw(C=None, X=None, Y=None)  # type: ignore
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.dtw(C=None, X=None, Y=None)  # type: ignore
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_dtw_incompatible_sigma_add():
     X = np.array([[1, 3, 3, 8, 1]])
     Y = np.array([[2, 0, 0, 8, 7, 2]])
-    librosa.sequence.dtw(X=X, Y=Y, weights_add=np.arange(10))
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.sequence.dtw(X=X, Y=Y, weights_add=np.arange(10))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_dtw_incompatible_sigma_mul():
     X = np.array([[1, 3, 3, 8, 1]])
     Y = np.array([[2, 0, 0, 8, 7, 2]])
-    librosa.sequence.dtw(X=X, Y=Y, weights_mul=np.arange(10))
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.sequence.dtw(X=X, Y=Y, weights_mul=np.arange(10))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_incompatible_sigma_diag():
     X = np.array([[1, 3, 3, 8, 1, 2]])
     Y = np.array([[2, 0, 0, 8, 7]])
-    librosa.sequence.dtw(X=X, Y=Y, step_sizes_sigma=np.ones((1, 2), dtype=int))
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.dtw(X=X, Y=Y, step_sizes_sigma=np.ones((1, 2), dtype=int))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_incompatible_sigma_diag_precomp():
     C = np.ones((5, 3))
-    librosa.sequence.dtw(C=C, step_sizes_sigma=[[1, 1]])  # type: ignore
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.dtw(C=C, step_sizes_sigma=[[1, 1]])  # type: ignore
 
 
 def test_dtw_diagonal_matching_shape_error(monkeypatch):
-    monkeypatch.setattr(np, "array_equal", lambda a, b: True)
+    monkeypatch.setattr(np, "array_equal", lambda _a, _b: True)
     with pytest.raises(librosa.ParameterShapeError, match="For diagonal matching"):
         librosa.sequence.dtw(C=np.ones((5, 3)))
 
 
 def test_dtw_incomplete_warping_path(monkeypatch):
-    monkeypatch.setattr("librosa.sequence.__dtw_backtracking", lambda *args, **kwargs: [(1, 1)])
+    monkeypatch.setattr("librosa.sequence.__dtw_backtracking", lambda *_args, **_kwargs: [(1, 1)])
     with pytest.raises(librosa.ParameterValueError, match="Unable to compute a full DTW warping path"):
         librosa.sequence.dtw(C=np.ones((2, 2)), subseq=False)
-
 
 
 def test_dtw_global_diagonal():
@@ -206,9 +197,9 @@ def test_dtw_global_diagonal():
     X = np.linspace(0.1, 1, 10)
     Y = X
 
-    gt_wp = list(zip(list(range(10)), list(range(10))))[::-1]
+    gt_wp = list(zip(list(range(10)), list(range(10)), strict=False))[::-1]
 
-    mut_D, mut_wp = librosa.sequence.dtw(
+    _mut_D, mut_wp = librosa.sequence.dtw(
         X,
         Y,
         subseq=True,
@@ -305,20 +296,18 @@ def test_dtw_subseq_pass():
     librosa.sequence.dtw(C=C, subseq=True)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_dtw_nan_fail():
     C = np.ones((10, 10))
     C[4, 6] = np.nan
-    librosa.sequence.dtw(C=C)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.dtw(C=C)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
-@pytest.mark.parametrize(
-    "steps", [np.array([[1, -1]]), np.array([[-1, 1]]), np.array([[-1, -1]])]
-)
+@pytest.mark.parametrize("steps", [np.array([[1, -1]]), np.array([[-1, 1]]), np.array([[-1, -1]])])
 def test_dtw_negative_steps(steps):
     C = np.ones((10, 10))
-    librosa.sequence.dtw(C=C, step_sizes_sigma=steps)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.dtw(C=C, step_sizes_sigma=steps)
 
 
 def test_dtw_multi(rng):
@@ -331,9 +320,7 @@ def test_dtw_multi(rng):
     # Should give identical results to calling with concatenated inputs
     Xf = np.concatenate([X[0], X[1]], axis=0)
     Yf = np.concatenate([Y[0], Y[1]], axis=0)
-    Df, wpf, stepsf = librosa.sequence.dtw(
-        X=Xf, Y=Yf, backtrack=True, return_steps=True
-    )
+    Df, wpf, stepsf = librosa.sequence.dtw(X=Xf, Y=Yf, backtrack=True, return_steps=True)
 
     assert np.allclose(D, Df)
     assert np.allclose(wp, wpf)
@@ -342,11 +329,11 @@ def test_dtw_multi(rng):
 
 @pytest.mark.parametrize("subseq", [True, False])
 def test_path_to_steps_inv(subseq):
-    '''Verify that path_to_steps with inverse does the right thing.'''
+    """Verify that path_to_steps with inverse does the right thing."""
     x1 = np.arange(10)
     x2 = np.arange(3, 6)
 
-    cost, path = librosa.sequence.dtw(x1, x2, subseq=subseq)
+    _cost, path = librosa.sequence.dtw(x1, x2, subseq=subseq)
 
     steps1 = librosa.sequence.path_to_steps(path, inverse=False)
     steps2 = librosa.sequence.path_to_steps(path[:, ::-1], inverse=True)
@@ -361,7 +348,7 @@ def test_path_to_steps(subseq):
     x1 = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
     x2 = np.array([1, 4, 7])
 
-    cost, path = librosa.sequence.dtw(x1, x2, subseq=subseq)
+    _cost, path = librosa.sequence.dtw(x1, x2, subseq=subseq)
 
     steps = librosa.sequence.path_to_steps(path, inverse=False)
     if subseq:

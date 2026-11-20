@@ -2,7 +2,6 @@
 # -*- encoding: utf-8 -*-
 
 import numpy as np
-
 import pytest
 
 import librosa
@@ -28,9 +27,7 @@ def test_viterbi_example():
 
     prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
 
-    path, logp = librosa.sequence.viterbi(
-        prob, transition, p_init=p_init, return_logp=True
-    )
+    path, logp = librosa.sequence.viterbi(prob, transition, p_init=p_init, return_logp=True)
 
     # True maximum likelihood state
     assert np.array_equal(path, [0, 0, 1])
@@ -63,39 +60,29 @@ def test_viterbi_multichannel():
 
     # Make a 3-channel stack
     prob_mc = np.stack([prob, 1 - prob, prob[:, ::-1]])
-    path, logp = librosa.sequence.viterbi(
-        prob_mc, transition, p_init=p_init, return_logp=True
-    )
+    path, logp = librosa.sequence.viterbi(prob_mc, transition, p_init=p_init, return_logp=True)
 
     # Check the second execution path
-    path2 = librosa.sequence.viterbi(
-        prob_mc, transition, p_init=p_init, return_logp=False
-    )
+    path2 = librosa.sequence.viterbi(prob_mc, transition, p_init=p_init, return_logp=False)
     assert np.array_equal(path, path2)
 
     # Check each individual path
-    path0, logp0 = librosa.sequence.viterbi(
-        prob_mc[0], transition, p_init=p_init, return_logp=True
-    )
+    path0, logp0 = librosa.sequence.viterbi(prob_mc[0], transition, p_init=p_init, return_logp=True)
     assert np.allclose(path0, path[0])
     assert np.allclose(logp0, logp[0])
 
-    path1, logp1 = librosa.sequence.viterbi(
-        prob_mc[1], transition, p_init=p_init, return_logp=True
-    )
+    path1, logp1 = librosa.sequence.viterbi(prob_mc[1], transition, p_init=p_init, return_logp=True)
     assert np.allclose(path1, path[1])
     assert np.allclose(logp1, logp[1])
 
-    path2, logp2 = librosa.sequence.viterbi(
-        prob_mc[2], transition, p_init=p_init, return_logp=True
-    )
+    path2, logp2 = librosa.sequence.viterbi(prob_mc[2], transition, p_init=p_init, return_logp=True)
     assert np.allclose(path2, path[2])
     assert np.allclose(logp2, logp[2])
 
 
 @pytest.mark.parametrize("transition_min_prob", [None, 0, 1e-10, 0.25])
 def test_viterbi_sparse(transition_min_prob):
-    
+
     p_init = np.asarray([0.6, 0.4])
     transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])
     emit_p = [
@@ -105,19 +92,17 @@ def test_viterbi_sparse(transition_min_prob):
     obs = ["normal", "cold", "dizzy"]
     prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
     path, logp = librosa.sequence.viterbi(
-        prob, transition, p_init=p_init, return_logp=True,
-        transition_min_prob=transition_min_prob
+        prob, transition, p_init=p_init, return_logp=True, transition_min_prob=transition_min_prob
     )
 
     ref_path, reg_logp = librosa.sequence.viterbi(
-        prob, transition, p_init=p_init, return_logp=True,
-        transition_min_prob=None
+        prob, transition, p_init=p_init, return_logp=True, transition_min_prob=None
     )
 
     assert np.array_equal(path, ref_path)
     assert np.isclose(logp, reg_logp)
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
+
 def test_viterbi_negative_minprob():
     p_init = np.asarray([0.6, 0.4])
     transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])
@@ -127,13 +112,10 @@ def test_viterbi_negative_minprob():
     ]
     obs = ["normal", "cold", "dizzy"]
     prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
-    librosa.sequence.viterbi(
-        prob, transition, p_init=p_init, return_logp=True,
-        transition_min_prob=-1
-    )
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi(prob, transition, p_init=p_init, return_logp=True, transition_min_prob=-1)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_viterbi_discriminative_negative_minprob():
     transition = np.asarray([[0.75, 0.25], [0.25, 0.75]])
     p_joint = np.asarray([[0.25, 0.25], [0.1, 0.4]])
@@ -144,13 +126,12 @@ def test_viterbi_discriminative_negative_minprob():
     seq = [1, 1, 0, 1, 1, 1, 0, 0]
     prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
 
-    librosa.sequence.viterbi_discriminative(
-        prob_d, transition, p_state=p_state_marginal, p_init=p_init, return_logp=True,
-        transition_min_prob=-1
-    )
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi_discriminative(
+            prob_d, transition, p_state=p_state_marginal, p_init=p_init, return_logp=True, transition_min_prob=-1
+        )
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_viterbi_sparse_fail():
     p_init = np.asarray([0.6, 0.4])
     transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])
@@ -162,10 +143,9 @@ def test_viterbi_sparse_fail():
     prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
     # This threshold is above all transition probabilities into state 1
     # so the algorithm should raise an error about disconnected states
-    librosa.sequence.viterbi(
-        prob, transition, p_init=p_init, return_logp=True,
-        transition_min_prob=0.65
-    )
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi(prob, transition, p_init=p_init, return_logp=True, transition_min_prob=0.65)
+
 
 def test_viterbi_init():
     # Example from https://en.wikipedia.org/wiki/Viterbi_algorithm#Example
@@ -186,9 +166,7 @@ def test_viterbi_init():
 
     prob = np.asarray([np.asarray([ep[o] for o in obs]) for ep in emit_p])
 
-    path1, logp1 = librosa.sequence.viterbi(
-        prob, transition, p_init=p_init, return_logp=True
-    )
+    path1, logp1 = librosa.sequence.viterbi(prob, transition, p_init=p_init, return_logp=True)
 
     path2, logp2 = librosa.sequence.viterbi(prob, transition, return_logp=True)
 
@@ -196,7 +174,6 @@ def test_viterbi_init():
     assert logp1 == logp2
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize(
     "trans",
     [
@@ -209,10 +186,10 @@ def test_viterbi_init():
 )
 def test_viterbi_bad_transition(trans, rng):
     x = rng.random(size=(3, 5))
-    librosa.sequence.viterbi(x, trans)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi(x, trans)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("trans", [np.ones((3, 3), dtype=float) / 3.0])
 @pytest.mark.parametrize(
     "p_init",
@@ -225,10 +202,10 @@ def test_viterbi_bad_transition(trans, rng):
 )
 def test_viterbi_bad_init(trans, p_init, rng):
     x = rng.random(size=(3, 5))
-    librosa.sequence.viterbi(x, trans, p_init=p_init)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi(x, trans, p_init=p_init)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("trans", [np.ones((3, 3), dtype=float) / 3])
 @pytest.mark.parametrize(
     "offset",
@@ -237,7 +214,8 @@ def test_viterbi_bad_init(trans, p_init, rng):
 )
 def test_viterbi_bad_obs(trans, offset, rng):
     x = rng.random(size=(3, 5)) + offset
-    librosa.sequence.viterbi(x, trans)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi(x, trans)
 
 
 # Discriminative viterbi
@@ -265,8 +243,13 @@ def test_viterbi_discriminative_example(transition_min_prob):
     # Then our conditional probability table can be constructed directly as
     prob_d = np.asarray([p_state_given_obs[i] for i in seq]).T
 
-    path, logp = librosa.sequence.viterbi_discriminative(
-        prob_d, transition, p_state=p_state_marginal, p_init=p_init, return_logp=True, transition_min_prob=transition_min_prob
+    path, _logp = librosa.sequence.viterbi_discriminative(
+        prob_d,
+        transition,
+        p_state=p_state_marginal,
+        p_init=p_init,
+        return_logp=True,
+        transition_min_prob=transition_min_prob,
     )
 
     # Pre-computed optimal path, determined by brute-force search
@@ -274,7 +257,12 @@ def test_viterbi_discriminative_example(transition_min_prob):
 
     # And check the second code path
     path2 = librosa.sequence.viterbi_discriminative(
-        prob_d, transition, p_state=p_state_marginal, p_init=p_init, return_logp=False, transition_min_prob=transition_min_prob
+        prob_d,
+        transition,
+        p_state=p_state_marginal,
+        p_init=p_init,
+        return_logp=False,
+        transition_min_prob=transition_min_prob,
     )
     assert np.array_equal(path, path2)
 
@@ -385,7 +373,6 @@ def x_disc(rng_mod):
     return x
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize(
     "trans",
     [
@@ -397,10 +384,10 @@ def x_disc(rng_mod):
     ids=["sum>1", "bad shape", "too small", "negative"],
 )
 def test_viterbi_discriminative_bad_transition(x_disc, trans):
-    librosa.sequence.viterbi_discriminative(x_disc, trans)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi_discriminative(x_disc, trans)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("trans", [np.ones((3, 3), dtype=float) / 3])
 @pytest.mark.parametrize(
     "p_init",
@@ -412,10 +399,10 @@ def test_viterbi_discriminative_bad_transition(x_disc, trans):
     ids=["sum>1", "too many states", "negative"],
 )
 def test_viterbi_discriminative_bad_init(p_init, trans, x_disc):
-    librosa.sequence.viterbi_discriminative(x_disc, trans, p_init=p_init)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi_discriminative(x_disc, trans, p_init=p_init)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("trans", [np.ones((3, 3), dtype=float) / 3])
 @pytest.mark.parametrize(
     "p_state",
@@ -427,10 +414,10 @@ def test_viterbi_discriminative_bad_init(p_init, trans, x_disc):
     ids=["sum>1", "too many states", "negative"],
 )
 def test_viterbi_discriminative_bad_marginal(x_disc, trans, p_state):
-    librosa.sequence.viterbi_discriminative(x_disc, trans, p_state=p_state)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi_discriminative(x_disc, trans, p_state=p_state)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("trans", [np.ones((3, 3), dtype=float) / 3])
 @pytest.mark.parametrize(
     "x",
@@ -442,7 +429,8 @@ def test_viterbi_discriminative_bad_marginal(x_disc, trans, p_state):
     ids=["zeros", "ones", "neg"],
 )
 def test_viterbi_discriminative_bad_obs(x, trans):
-    librosa.sequence.viterbi_discriminative(x, trans)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi_discriminative(x, trans)
 
 
 # Multi-label viterbi
@@ -468,9 +456,7 @@ def test_viterbi_binary_example():
     path_c, logp_c = librosa.sequence.viterbi_binary(
         p_full, transition, p_state=p_init, p_init=p_init, return_logp=True
     )
-    path_c2 = librosa.sequence.viterbi_binary(
-        p_full, transition, p_state=p_init, p_init=p_init, return_logp=False
-    )
+    path_c2 = librosa.sequence.viterbi_binary(p_full, transition, p_state=p_init, p_init=p_init, return_logp=False)
 
     # Check that the single and multilabel cases agree
     assert np.allclose(logp, logp_c[1])
@@ -539,9 +525,7 @@ def test_viterbi_binary_example_init():
     path_c, logp_c = librosa.sequence.viterbi_binary(
         p_full, transition, p_state=p_init, p_init=p_init, return_logp=True
     )
-    path_c2, logp_c2 = librosa.sequence.viterbi_binary(
-        p_full, transition, p_state=p_init, return_logp=True
-    )
+    path_c2, logp_c2 = librosa.sequence.viterbi_binary(p_full, transition, p_state=p_init, return_logp=True)
 
     # Check that the single and multilabel cases agree
     assert np.allclose(logp_c, logp_c2)
@@ -553,7 +537,6 @@ def x_data(rng_mod):
     return rng_mod.random(size=(3, 5))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize(
     "trans",
     [
@@ -565,7 +548,8 @@ def x_data(rng_mod):
     ids=["sum>1", "wrong size", "wrong shape", "negative"],
 )
 def test_viterbi_binary_bad_transition(x_data, trans):
-    librosa.sequence.viterbi_binary(x_data, trans)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi_binary(x_data, trans)
 
 
 @pytest.mark.parametrize("trans", [np.ones((2, 2), dtype=float) * 0.5])
@@ -574,12 +558,11 @@ def test_viterbi_binary_bad_transition(x_data, trans):
     [2 * np.ones(3, dtype=float), np.ones(4, dtype=float), -np.ones(3, dtype=float)],
     ids=["too big", "wrong shape", "negative"],
 )
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_viterbi_binary_bad_init(x_data, trans, p_init):
-    librosa.sequence.viterbi_binary(x_data, trans, p_init=p_init)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi_binary(x_data, trans, p_init=p_init)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("trans", [np.ones((2, 2), dtype=float) * 0.5])
 @pytest.mark.parametrize(
     "p_state",
@@ -587,10 +570,10 @@ def test_viterbi_binary_bad_init(x_data, trans, p_init):
     ids=["too big", "bad shape", "negative"],
 )
 def test_viterbi_binary_bad_marginal(p_state, trans, x_data):
-    librosa.sequence.viterbi_binary(x_data, trans, p_state=p_state)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi_binary(x_data, trans, p_state=p_state)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("trans", [np.ones((2, 2), dtype=float) * 0.5])
 @pytest.mark.parametrize(
     "x",
@@ -598,7 +581,8 @@ def test_viterbi_binary_bad_marginal(p_state, trans, x_data):
     ids=["non-positive", "too big"],
 )
 def test_viterbi_binary_bad_obs(x, trans):
-    librosa.sequence.viterbi_binary(x, trans)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.viterbi_binary(x, trans)
 
 
 # Transition operator constructors
@@ -609,10 +593,10 @@ def test_trans_uniform(n):
     assert np.allclose(A, 1.0 / n)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("n", [0, None])
 def test_trans_uniform_badshape(n):
-    librosa.sequence.transition_uniform(n)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.transition_uniform(n)
 
 
 @pytest.mark.parametrize("n,p", [(2, 0.5), (3, 0.5), (3, [0.8, 0.7, 0.5])])
@@ -629,7 +613,6 @@ def test_trans_loop(n, p):
     assert np.allclose(A.sum(axis=1), 1)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize(
     "n,p",
     [(1, 0.5), (None, 0.5), (3, 1.5), (3, -0.25), (3, [0.5, 0.2])],
@@ -642,7 +625,8 @@ def test_trans_loop(n, p):
     ],
 )
 def test_trans_loop_fail(n, p):
-    librosa.sequence.transition_loop(n, p)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.transition_loop(n, p)
 
 
 @pytest.mark.parametrize("n,p", [(2, 0.5), (3, 0.5), (3, [0.8, 0.7, 0.5])])
@@ -662,26 +646,26 @@ def test_trans_cycle(n, p):
     assert np.allclose(A.sum(axis=1), 1)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize(
     "n,p",
     [(1, 0.5), (None, 0.5), (3, 1.5), (3, -0.25), (3, [0.5, 0.2])],
     ids=["too few states", "wrong n_states", "p>1", "p<0", "shape mismatch"],
 )
 def test_trans_cycle_fail(n, p):
-    librosa.sequence.transition_cycle(n, p)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.transition_cycle(n, p)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("n", [1.5, 0])
 def test_trans_local_nstates_fail(n):
-    librosa.sequence.transition_local(n, 3)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.transition_local(n, 3)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("width", [-1, 0, [2, 3]])
 def test_trans_local_width_fail(width):
-    librosa.sequence.transition_local(5, width)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.transition_local(5, width)
 
 
 def test_trans_local_wrap_const():
@@ -764,9 +748,7 @@ def test_rqa_edge(gap_onset, gap_extend, knight, backtrack: bool):
     if backtrack:
         out = librosa.sequence.rqa(rec, backtrack=backtrack, **kwargs)
         score, path = out
-        __validate_rqa_results(
-            rec, score, path, gap_onset, gap_extend, backtrack, knight
-        )
+        __validate_rqa_results(rec, score, path, gap_onset, gap_extend, backtrack, knight)
         assert len(path) == 3
     else:
         out = librosa.sequence.rqa(rec, backtrack=backtrack, **kwargs)
@@ -820,9 +802,7 @@ def test_rqa_interior(gap_onset, gap_extend, knight, backtrack: bool):
     if backtrack:
         out = librosa.sequence.rqa(rec, backtrack=backtrack, **kwargs)
         score, path = out
-        __validate_rqa_results(
-            rec, score, path, gap_onset, gap_extend, backtrack, knight
-        )
+        __validate_rqa_results(rec, score, path, gap_onset, gap_extend, backtrack, knight)
         assert len(path) == 2
     else:
         out = librosa.sequence.rqa(rec, backtrack=backtrack, **kwargs)
@@ -837,19 +817,19 @@ def test_rqa_gaps(gap_onset, gap_extend):
     librosa.sequence.rqa(rec, gap_onset=gap_onset, gap_extend=gap_extend)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_rqa_bad_onset():
     rec = np.ones((5, 5))
-    librosa.sequence.rqa(rec, gap_onset=-1)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.rqa(rec, gap_onset=-1)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_rqa_bad_extend():
     rec = np.ones((5, 5))
-    librosa.sequence.rqa(rec, gap_extend=-1)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.sequence.rqa(rec, gap_extend=-1)
 
 
-def __validate_rqa_results(rec, score, path, gap_onset, gap_extend, backtrack, knight):
+def __validate_rqa_results(rec, score, path, gap_onset, gap_extend, _backtrack, knight):
     # Test maximal end-point
     assert np.all(score[tuple(path[-1])] >= score)
 
@@ -863,11 +843,7 @@ def __validate_rqa_results(rec, score, path, gap_onset, gap_extend, backtrack, k
     path_diff = np.diff(path, axis=0)
     if knight:
         for d in path_diff:
-            assert (
-                np.allclose(d, (1, 1))
-                or np.allclose(d, (1, 2))
-                or np.allclose(d, (2, 1))
-            )
+            assert np.allclose(d, (1, 1)) or np.allclose(d, (1, 2)) or np.allclose(d, (2, 1))
     else:
         # Without knight moves, only diagonal steps are allowed
         assert np.allclose(path_diff, 1)
