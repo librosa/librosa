@@ -137,13 +137,15 @@ def test_interp_variable_grids():
 
     # 1. Variable frequencies locked to regular target frequency grid
     target_freqs = np.linspace(100, 2000, 64)
-    mags_f_locked = librosa.interp_frequency(mags, target_freqs=target_freqs, freqs=freqs, axis=-2)
+    with pytest.warns(UserWarning, match="not unique"):
+        mags_f_locked = librosa.interp_frequency(mags, target_freqs=target_freqs, freqs=freqs, axis=-2)
     assert mags_f_locked.shape == (64, mags.shape[-1])
     assert not np.isnan(mags_f_locked).any()
 
     # 2. Variable times locked to regular target time grid
     target_times = np.linspace(0, 0.5, 50)
-    mags_t_locked = librosa.interp_time(mags, target_times=target_times, times=times, axis=-1)
+    with pytest.warns(UserWarning, match="not unique"):
+        mags_t_locked = librosa.interp_time(mags, target_times=target_times, times=times, axis=-1)
     assert mags_t_locked.shape == (mags.shape[-2], 50)
     assert not np.isnan(mags_t_locked).any()
 
@@ -186,7 +188,7 @@ def test_interp_validation_and_warnings():
 
     # Incompatible target coordinates broadcast
     with pytest.raises(ParameterShapeError):
-        librosa.interp_frequency(x, target_freqs=np.ones((5, 12)), freqs=np.ones(10), axis=-2)
+        librosa.interp_frequency(x, target_freqs=np.ones((5, 12)), freqs=np.arange(10, dtype=float), axis=-2)
 
     # Non-unique coordinates warning (1D)
     non_unique_1d = np.array([0, 1, 1, 3, 4, 5, 6, 7, 8, 9])
@@ -212,7 +214,8 @@ def test_interp_nan_slice_and_spline_fallback():
         ]
     )
     target = np.array([0.5, 1.5])
-    res = librosa.interp_frequency(x, target_freqs=target, freqs=freqs, axis=0, fill_value=-1.0)
+    with pytest.warns(UserWarning, match="not unique"):
+        res = librosa.interp_frequency(x, target_freqs=target, freqs=freqs, axis=0, fill_value=-1.0)
     assert res.shape == (2, 2)
     # Column 0 is valid
     assert np.allclose(res[:, 0], [1.0, 1.0])
@@ -229,9 +232,10 @@ def test_interp_nan_slice_and_spline_fallback():
             [4.0, np.nan],
         ]
     )
-    res_cubic = librosa.interp_frequency(
-        x, target_freqs=target, freqs=freqs_sparse, axis=0, kind="cubic", fill_value=-99.0
-    )
+    with pytest.warns(UserWarning, match="not unique"):
+        res_cubic = librosa.interp_frequency(
+            x, target_freqs=target, freqs=freqs_sparse, axis=0, kind="cubic", fill_value=-99.0
+        )
     assert res_cubic.shape == (2, 2)
     # Column 0 has 5 points -> valid cubic
     assert np.allclose(res_cubic[:, 0], [1.0, 1.0])

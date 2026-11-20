@@ -313,9 +313,10 @@ def test_hybrid_cqt_multi(y_multi, scale, res_type):
     y, sr = y_multi
 
     # Assuming single-channel CQT is well behaved
-    C0 = librosa.hybrid_cqt(y=y[0], sr=sr, scale=scale, res_type=res_type)
-    C1 = librosa.hybrid_cqt(y=y[1], sr=sr, scale=scale, res_type=res_type)
-    Call = librosa.hybrid_cqt(y=y, sr=sr, scale=scale, res_type=res_type)
+    with pytest.warns(FutureWarning, match=r"[Dd]eprecated"):
+        C0 = librosa.hybrid_cqt(y=y[0], sr=sr, scale=scale, res_type=res_type)
+        C1 = librosa.hybrid_cqt(y=y[1], sr=sr, scale=scale, res_type=res_type)
+        Call = librosa.hybrid_cqt(y=y, sr=sr, scale=scale, res_type=res_type)
 
     # Check each channel
     assert np.allclose(C0, Call[0])

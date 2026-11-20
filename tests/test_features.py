@@ -1204,6 +1204,7 @@ def test_metrogram_aggregate(y_clicks, tg_ex):
     assert np.allclose(np.max(met1, axis=-2), met2)
 
 
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_hybrid_tempogram():
     # Synthesize a short deterministic click track to avoid I/O flakiness
     sr = 22050

@@ -584,5 +584,6 @@ def test_vibrato_params():
 def test_vibrato_short():
     # Signal producing < 2 frames in STFT should early return copy
     y = np.ones(100)
-    yv = librosa.effects.vibrato(y, sr=22050)
+    with pytest.warns(UserWarning, match=r"n_fft=.*is too large for input signal"):
+        yv = librosa.effects.vibrato(y, sr=22050)
     assert np.allclose(y, yv)

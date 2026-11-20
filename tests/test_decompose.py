@@ -93,6 +93,7 @@ def test_sorted_decompose():
     assert np.allclose(X, W.dot(H), rtol=1e-2, atol=1e-2)
 
 
+@pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 def test_decompose_custom_components_fit_true(rng):
     X = np.abs(rng.standard_normal(size=(20, 50)))
     W_init = np.abs(rng.standard_normal(size=(20, 5))) + 1e-4

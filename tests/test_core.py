@@ -2174,7 +2174,7 @@ def test_harmonics_badshape_1d():
 
 
 def test_harmonics_badshape_2d():
-    freqs = np.zeros((5, 5))
+    freqs = np.arange(25, dtype=float).reshape((5, 5)) + 1
     obs = np.zeros((5, 10))
     with pytest.raises(librosa.ParameterShapeError):
         librosa.interp_harmonics(obs, freqs=freqs, harmonics=[1])

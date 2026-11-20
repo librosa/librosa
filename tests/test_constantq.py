@@ -280,6 +280,7 @@ def y_hybrid():
 @pytest.mark.parametrize("resolution", [1])
 @pytest.mark.parametrize("norm", [1])
 @pytest.mark.parametrize("res_type", ["polyphase"])
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_hybrid_cqt(
     y_hybrid,
     sr,
@@ -406,7 +407,7 @@ def test_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
     assert np.max(continuity) < 5e-4, continuity
 
 
-@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large", "ignore::FutureWarning")
 def test_hybrid_cqt_impulse(y_impulse, sr_impulse, hop_impulse):
     # Test to resolve issue #341
     # Updated in #417 to use integrated energy instead of pointwise max
@@ -451,6 +452,7 @@ def test_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
 @pytest.mark.parametrize("scale", [False, True])
 @pytest.mark.parametrize("fmin", list(librosa.note_to_hz(["C1", "C2"])))
 @pytest.mark.parametrize("n_bins", [72, 84])
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_hybrid_cqt_white_noise(y_white, sr_white, fmin, n_bins, scale):
     C = librosa.hybrid_cqt(y=y_white, sr=sr_white, fmin=fmin, n_bins=n_bins, scale=scale)
 
@@ -723,6 +725,7 @@ def test_griffinlim_cqt_momentum_warn():
         librosa.griffinlim_cqt(x, momentum=2)
 
 
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_griffinlim_cqt_deprecated_randomstate(y_chirp):
     # Test that the deprecated random_state argument raises a warning
     C = librosa.cqt(y=y_chirp, sr=22050, res_type="polyphase")
@@ -778,6 +781,7 @@ def test_vqt_provided_intervals(y_cqt, sr_cqt):
 
 
 @pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")
 def test_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave):
     # Test that n_bins=None works
     C = librosa.cqt(y=y_cqt, sr=sr_cqt, n_bins=None, bins_per_octave=bins_per_octave)
@@ -859,6 +863,7 @@ def test_vqt_fmin_over(y_cqt):
 
 @pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
 @pytest.mark.parametrize("fmin", [32, 64, 128])
+@pytest.mark.filterwarnings("ignore::FutureWarning", "ignore:n_fft=.*is too large")
 def test_hybrid_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
     # Test that n_bins=None works for hybrid CQT
     V = librosa.hybrid_cqt(
@@ -890,16 +895,19 @@ def test_hybrid_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
         )
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_hybrid_cqt_fmin_high(y_cqt):
     with pytest.raises(librosa.ParameterValueError):
         librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=999, n_bins=2, bins_per_octave=1)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_hybrid_cqt_nbins_none_small(y_cqt):
     with pytest.raises(librosa.ParameterValueError):
         librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=999, n_bins=None, bins_per_octave=1)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_hybrid_cqt_fmin_over(y_cqt):
     with pytest.raises(librosa.ParameterValueError):
         librosa.hybrid_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
@@ -910,6 +918,7 @@ def test_pseudo_cqt_deprecated(y_cqt, sr_cqt):
         librosa.pseudo_cqt(y=y_cqt, sr=sr_cqt)
 
 
+@pytest.mark.filterwarnings("ignore:.*pseudo_cqt.*")
 def test_hybrid_cqt_deprecated(y_cqt, sr_cqt):
     with pytest.warns(FutureWarning, match=r"hybrid_cqt\n\tDeprecated"):
         librosa.hybrid_cqt(y=y_cqt, sr=sr_cqt)
@@ -917,6 +926,7 @@ def test_hybrid_cqt_deprecated(y_cqt, sr_cqt):
 
 @pytest.mark.parametrize("bins_per_octave", [12, 24, 60])
 @pytest.mark.parametrize("fmin", [32, 64, 128])
+@pytest.mark.filterwarnings("ignore::FutureWarning", "ignore:n_fft=.*is too large")
 def test_pseudo_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
     # Test that n_bins=None works for pseudo CQT
     V = librosa.pseudo_cqt(
@@ -948,16 +958,19 @@ def test_pseudo_cqt_nbins_none(y_cqt, sr_cqt, bins_per_octave, fmin):
         )
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_pseudo_cqt_fmin_high(y_cqt):
     with pytest.raises(librosa.ParameterValueError):
         librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=999, n_bins=2, bins_per_octave=1)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_pseudo_cqt_nbins_none_small(y_cqt):
     with pytest.raises(librosa.ParameterValueError):
         librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=999, n_bins=None, bins_per_octave=1)
 
 
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_pseudo_cqt_fmin_over(y_cqt):
     with pytest.raises(librosa.ParameterValueError):
         librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)

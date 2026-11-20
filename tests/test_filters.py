@@ -441,14 +441,15 @@ def test_cq_to_chroma(n_octaves, semitones, n_chroma, fmin, base_c, window):
         midi_notes = np.around(midi_notes, decimals=2)
         C = np.diag(midi_notes)
 
-        cq2chr = librosa.filters.cq_to_chroma(
-            n_input=C.shape[0],
-            bins_per_octave=bins_per_octave,
-            n_chroma=n_chroma,
-            fmin=fmin,
-            base_c=base_c,
-            window=window,
-        )
+        with pytest.warns(FutureWarning, match=r"[Dd]eprecated"):
+            cq2chr = librosa.filters.cq_to_chroma(
+                n_input=C.shape[0],
+                bins_per_octave=bins_per_octave,
+                n_chroma=n_chroma,
+                fmin=fmin,
+                base_c=base_c,
+                window=window,
+            )
 
         chroma = cq2chr.dot(C)
         for i in range(n_chroma):

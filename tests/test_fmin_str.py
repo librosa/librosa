@@ -7,6 +7,11 @@ import pytest
 
 import librosa
 
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:n_fft=.*is too large",
+    "ignore::sklearn.exceptions.ConvergenceWarning",
+)
+
 
 def test_tone_str():
     t_str = librosa.tone("A4", duration=0.1, sr=22050)
@@ -50,16 +55,20 @@ def test_vqt_fmin_str():
 def test_hybrid_cqt_fmin_str():
     y = np.random.default_rng(0).standard_normal(4096)
     sr = 22050
-    H_str = librosa.hybrid_cqt(y, sr=sr, fmin="C2", n_bins=24)
-    H_ref = librosa.hybrid_cqt(y, sr=sr, fmin=librosa.note_to_hz("C2"), n_bins=24)
+    with pytest.warns(FutureWarning, match=r"[Dd]eprecated"):
+        H_str = librosa.hybrid_cqt(y, sr=sr, fmin="C2", n_bins=24)
+    with pytest.warns(FutureWarning, match=r"[Dd]eprecated"):
+        H_ref = librosa.hybrid_cqt(y, sr=sr, fmin=librosa.note_to_hz("C2"), n_bins=24)
     assert np.allclose(H_str, H_ref)
 
 
 def test_pseudo_cqt_fmin_str():
     y = np.random.default_rng(0).standard_normal(4096)
     sr = 22050
-    P_str = librosa.pseudo_cqt(y, sr=sr, fmin="C2", n_bins=24)
-    P_ref = librosa.pseudo_cqt(y, sr=sr, fmin=librosa.note_to_hz("C2"), n_bins=24)
+    with pytest.warns(FutureWarning, match=r"[Dd]eprecated"):
+        P_str = librosa.pseudo_cqt(y, sr=sr, fmin="C2", n_bins=24)
+    with pytest.warns(FutureWarning, match=r"[Dd]eprecated"):
+        P_ref = librosa.pseudo_cqt(y, sr=sr, fmin=librosa.note_to_hz("C2"), n_bins=24)
     assert np.allclose(P_str, P_ref)
 
 
@@ -137,8 +146,10 @@ def test_filters_mel_str():
 
 
 def test_filters_cq_to_chroma_str():
-    f_str = librosa.filters.cq_to_chroma(n_input=84, bins_per_octave=12, fmin="C2")
-    f_num = librosa.filters.cq_to_chroma(n_input=84, bins_per_octave=12, fmin=librosa.note_to_hz("C2"))
+    with pytest.warns(FutureWarning, match=r"[Dd]eprecated"):
+        f_str = librosa.filters.cq_to_chroma(n_input=84, bins_per_octave=12, fmin="C2")
+    with pytest.warns(FutureWarning, match=r"[Dd]eprecated"):
+        f_num = librosa.filters.cq_to_chroma(n_input=84, bins_per_octave=12, fmin=librosa.note_to_hz("C2"))
     assert np.allclose(f_str, f_num)
 
 
@@ -171,9 +182,12 @@ def test_display_specshow_str():
     D = np.abs(librosa.stft(np.zeros(2048)))
     # specshow with fmin, fmax
     librosa.display.specshow(D, sr=22050, y_axis="mel", fmin="C2", fmax="C7", ax=ax[0])
-    librosa.display.specshow(D, sr=22050, y_axis="cqt_hz", fmin="C2", ax=ax[1])
-    librosa.display.specshow(D, sr=22050, y_axis="logfreq_hz", fmin="C2", ax=ax[2])
-    librosa.display.specshow(D, sr=22050, y_axis="pitch_hz", fmin="C2", ax=ax[3])
+    with pytest.warns(UserWarning, match="Frequency axis exceeds Nyquist"):
+        librosa.display.specshow(D, sr=22050, y_axis="cqt_hz", fmin="C2", ax=ax[1])
+    with pytest.warns(UserWarning, match="Frequency axis exceeds Nyquist"):
+        librosa.display.specshow(D, sr=22050, y_axis="logfreq_hz", fmin="C2", ax=ax[2])
+    with pytest.warns(UserWarning, match="Frequency axis exceeds Nyquist"):
+        librosa.display.specshow(D, sr=22050, y_axis="pitch_hz", fmin="C2", ax=ax[3])
     plt.close(fig)
 
 
