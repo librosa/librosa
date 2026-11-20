@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Core IO, DSP and utility functions."""
 
 from __future__ import annotations
@@ -26,11 +25,10 @@ from .convert import frames_to_samples, frequency_weighting, time_to_samples
 
 if TYPE_CHECKING:
     import os
+    from collections.abc import Callable, Collection
     from typing import (
         Any,
         BinaryIO,
-        Callable,
-        Collection,
     )
 
     from numpy.typing import DTypeLike, NDArray
@@ -623,7 +621,7 @@ def to_multi(
     if downmix:
         # If all channels are downmixed to mono,
         # then the layout will be (n_signals, n_out)
-        channel_layout = tuple((len(signals),))
+        channel_layout = (len(signals),)
     else:
         # If we're not downmixing, then all have to have
         # identical channel layout
@@ -757,7 +755,7 @@ def resample(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         If ``res_type='polyphase'`` and ``orig_sr`` or ``target_sr`` are not both
         integer-valued.
 
@@ -897,7 +895,7 @@ def get_duration(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         if none of ``y``, ``S``, or ``path`` are provided.
 
     Notes
@@ -1091,8 +1089,9 @@ def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
 
     Raises
     ------
-    ParameterError
+    ParameterShapeError
         - If ``y`` is not valid audio as per `librosa.util.valid_audio`
+    ParameterValueError
         - If ``order < 1`` or not integer
     FloatingPointError
         - If ``y`` is ill-conditioned
@@ -1439,8 +1438,9 @@ def envelope(
 
     Raises
     ------
-    ParameterError
+    ParameterShapeError
         - If ``y`` is not valid audio.
+    ParameterValueError
         - If ``frame_length`` or ``hop_length`` are not positive integers.
         - If ``kind`` is unrecognized.
 
@@ -1547,7 +1547,7 @@ def clicks(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         - If neither ``times`` nor ``frames`` are provided.
         - If any of ``click_freq``, ``click_duration``, or ``length`` are out of range.
 
@@ -1681,7 +1681,7 @@ def tone(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         - If ``frequency`` is not provided.
         - If neither ``length`` nor ``duration`` are provided.
 
@@ -1790,7 +1790,7 @@ def chirp(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         - If either ``fmin`` or ``fmax`` are not provided.
         - If ``min(fmin, fmax)`` meets or exceeds Nyquist frequency (sr / 2).
         - If neither ``length`` nor ``duration`` are provided.
@@ -2254,7 +2254,7 @@ def mu_compress(x: np.ndarray | _FloatLike_co, *, mu: float = 255, quantize: boo
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         If ``x`` has values outside the range [-1, +1]
         If ``mu <= 0``
 
@@ -2340,7 +2340,7 @@ def mu_expand(x: np.ndarray | _FloatLike_co, *, mu: float = 255.0, quantize: boo
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         If ``x`` has values outside the range [-1, +1] and ``quantize=False``
         If ``mu <= 0``
 

@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 
 matplotlib.use("Agg")
-from packaging.version import parse as parse_version
 
 
 # An RNG seed for all tests to use if they need randomness
@@ -61,9 +60,3 @@ def pytest_collection_modifyitems(config, items):
 
 def pytest_configure(config):
     config.addinivalue_line("markers", "network: mark tests that require network access.")
-    # Bypass image comparison tests on older matplotlib versions
-    # due to changes in font rendering
-    if parse_version(matplotlib.__version__) < parse_version("3.11"):
-        # pytest-mpl relies on config.getoption("--mpl")
-        # which reads directly from config.option.mpl
-        config.option.mpl = False

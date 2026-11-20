@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Interpolation along time and frequency axes."""
 
 import warnings

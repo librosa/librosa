@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Streaming utilities for audio I/O bridging and sliding window buffering."""
 
 from __future__ import annotations
@@ -27,10 +26,10 @@ from ..util.utils import align_samples, fix_length, is_positive_int
 from .audio import to_mono
 
 if TYPE_CHECKING:
-    from typing import BinaryIO, Generator, Iterable
+    from collections.abc import Generator, Iterable
+    from typing import BinaryIO, Self
 
     from numpy.typing import DTypeLike
-    from typing_extensions import Self
 
 
 __all__ = [
@@ -253,7 +252,7 @@ class _StreamBuffer:
         """Check if the maximum input duration has been reached."""
         return self.samples_remaining is not None and self.samples_remaining <= 0
 
-    def process_stream(self, chunks: Iterable[np.ndarray]) -> Generator[np.ndarray, None, None]:
+    def process_stream(self, chunks: Iterable[np.ndarray]) -> Generator[np.ndarray]:
         """Ingest chunks from an iterable, yielding ready analysis blocks followed by flush."""
         if not self.is_complete():
             for chunk in chunks:
@@ -511,7 +510,7 @@ class StreamBridge:
         fill_value: float | None = None,
         res_type: str = "soxr_hq",
         dtype: DTypeLike = np.float32,
-    ) -> Generator[np.ndarray, None, None]:
+    ) -> Generator[np.ndarray]:
         """Stream audio from this bridge in fixed-length analysis buffers.
 
         This method is equivalent to calling ``librosa.stream(self, ...)``.
@@ -606,7 +605,7 @@ def stream(
     fill_value: float | None = None,
     res_type: str = "soxr_hq",
     dtype: DTypeLike = np.float32,
-) -> Generator[np.ndarray, None, None]:
+) -> Generator[np.ndarray]:
     """Stream audio in fixed-length buffers.
 
     This is primarily useful for processing large files that won't

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 librosa.segment provides functions for structural analysis and
 segmentation of audio.
@@ -28,13 +27,12 @@ from .util.exceptions import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal, TypeVar
+    from collections.abc import Callable
+    from typing import Any, Literal
 
     import sklearn.cluster
 
     from ._typing import _Array1D, _FloatLike_co, _SparseArray, _WindowSpec
-
-    _ArrayOrSparseArray = TypeVar("_ArrayOrSparseArray", bound=np.ndarray | _SparseArray)
 
 
 __all__ = [
@@ -276,7 +274,7 @@ def cross_similarity(
     data = data.reshape((n, -1), order="F")
 
     if mode not in ["connectivity", "distance", "affinity"]:
-        raise ParameterValueError((f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']"))
+        raise ParameterValueError(f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']")
     if k is None:
         k = min(n_ref, 2 * np.ceil(np.sqrt(n_ref)))
 
@@ -597,11 +595,11 @@ def recurrence_matrix(
 
     if width < 1 or width >= (t - 1) // 2:
         raise ParameterValueError(
-            "width={} must be at least 1 and at most (data.shape[{}] - 1) // 2={}".format(width, axis, (t - 1) // 2)
+            f"width={width} must be at least 1 and at most (data.shape[{axis}] - 1) // 2={(t - 1) // 2}"
         )
 
     if mode not in ["connectivity", "distance", "affinity"]:
-        raise ParameterValueError((f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']"))
+        raise ParameterValueError(f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']")
     if k is None:
         k = 2 * np.ceil(np.sqrt(t - 2 * width + 1))
 
@@ -693,7 +691,9 @@ def recurrence_matrix(
     return rec
 
 
-def recurrence_to_lag(rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int = -1) -> _ArrayOrSparseArray:
+def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
+    rec: ArrayOrSparseArray, *, pad: bool = True, axis: int = -1
+) -> ArrayOrSparseArray:
     """Convert a recurrence matrix into a lag matrix.
 
         ``lag[i, j] == rec[i+j, j]``
@@ -732,7 +732,8 @@ def recurrence_to_lag(rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int =
 
     Raises
     ------
-    ParameterError : if ``rec`` is non-square
+    ParameterShapeError
+        If ``rec`` is non-square
 
     See Also
     --------
@@ -790,7 +791,7 @@ def recurrence_to_lag(rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int =
             # Suppress type check, mypy doesn't know that rec is an ndarray here
             rec = np.pad(rec, padding, mode="constant")  # type: ignore
 
-    lag: _ArrayOrSparseArray = util.shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
+    lag: ArrayOrSparseArray = util.shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
 
     if sparse:
         # Suppress type check, mypy doesn't know
@@ -800,7 +801,9 @@ def recurrence_to_lag(rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int =
     return lag
 
 
-def lag_to_recurrence(lag: _ArrayOrSparseArray, *, axis: int = -1) -> _ArrayOrSparseArray:
+def lag_to_recurrence[ArrayOrSparseArray: np.ndarray | _SparseArray](
+    lag: ArrayOrSparseArray, *, axis: int = -1
+) -> ArrayOrSparseArray:
     """Convert a lag matrix into a recurrence matrix.
 
     Parameters
@@ -819,7 +822,8 @@ def lag_to_recurrence(lag: _ArrayOrSparseArray, *, axis: int = -1) -> _ArrayOrSp
 
     Raises
     ------
-    ParameterError : if ``lag`` does not have the correct shape
+    ParameterShapeError
+        If ``lag`` does not have the correct shape
 
     See Also
     --------
@@ -874,7 +878,7 @@ def lag_to_recurrence(lag: _ArrayOrSparseArray, *, axis: int = -1) -> _ArrayOrSp
 
     sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)
-    rec_slice: _ArrayOrSparseArray = rec[tuple(sub_slice)]  # type: ignore[assignment]
+    rec_slice: ArrayOrSparseArray = rec[tuple(sub_slice)]  # type: ignore[assignment]
     return rec_slice
 
 
@@ -1342,13 +1346,7 @@ def path_enhance(
         # This way, if R has shape, eg, [2, 3, n, n]
         # the expanded kernel will have shape [1, 1, m, m]
 
-        # The following is valid for numpy >= 1.18
-        # kernel = np.expand_dims(kernel, axis=list(np.arange(R.ndim - kernel.ndim)))
-
-        # This is functionally equivalent, but works on numpy 1.17
-        shape = [1] * R.ndim
-        shape[-2:] = kernel.shape
-        kernel = np.reshape(kernel, shape)
+        kernel = np.expand_dims(kernel, axis=tuple(range(R.ndim - kernel.ndim)))
 
         import scipy.ndimage
 
@@ -1414,7 +1412,7 @@ def __affinity_bandwidth(
         # catch empty dists lists in knn_dists
         if row_data.size == 0:
             # Disconnected vertices are only a problem for point-wise bandwidth estimation
-            if bw_mode not in ["med_k_scalar"]:
+            if bw_mode != "med_k_scalar":
                 raise ParameterValueError(f"The sample at time point {i} has no neighbors")
             knn_dists.append(np.array([np.nan]))
         else:
@@ -1518,8 +1516,12 @@ def diagonal_convolve(
 
     Raises
     ------
-    ParameterError
-        If `data` is sparse, if `kernel` shape is invalid, or if `mode` is unsupported.
+    ParameterTypeError
+        If `data` is sparse.
+    ParameterShapeError
+        If `kernel` shape is invalid.
+    ParameterValueError
+        If `mode` is unsupported.
 
     See Also
     --------

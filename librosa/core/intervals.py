@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 """Functions for interval construction"""
 
 from __future__ import annotations
@@ -14,7 +13,8 @@ from .._cache import cache
 from ..util.files import _resource_file
 
 if TYPE_CHECKING:
-    from typing import Collection, Iterable, Literal
+    from collections.abc import Collection, Iterable
+    from typing import Literal
 
     from numpy.typing import ArrayLike, NDArray
 
@@ -237,7 +237,7 @@ def pythagorean_intervals(
         idx = range(bins_per_octave)
 
     if return_factors:
-        return list({2: -pow2[i], 3: pow3[i]} for i in idx)
+        return [{2: -pow2[i], 3: pow3[i]} for i in idx]
 
     ratios: np.ndarray = np.power(2, log_ratios)
     return ratios

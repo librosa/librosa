@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 librosa.onset contains functions for computing onset strength envelopes
 and estimating onset events from audio signals.
@@ -21,7 +20,8 @@ from .util.exceptions import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal, Sequence
+    from collections.abc import Callable, Sequence
+    from typing import Any, Literal
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 
@@ -121,7 +121,7 @@ def onset_detect(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         if neither ``y`` nor ``onsets`` are provided
 
         or if ``units`` is not one of 'frames', 'samples', or 'time'
@@ -357,7 +357,7 @@ def onset_strength(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         if neither ``(y, sr)`` nor ``S`` are provided
 
         or if ``lag`` or ``max_size`` are not positive integers
@@ -655,7 +655,7 @@ def onset_strength_multi(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         if neither ``(y, sr)`` nor ``S`` are provided
 
         or if ``lag`` or ``max_size`` are not positive integers

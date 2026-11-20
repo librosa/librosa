@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 ===============================================
 Music Synchronization with Dynamic Time Warping

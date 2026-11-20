@@ -1,16 +1,15 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 Script to retrieve contributors from GitHub API.
 Modified to use urllib (instead of requests) for Python 3.13.
 Added URL scheme validation to mitigate Bandit's B310 warning.
 """
 
-import urllib.request
-import urllib.error  # For handling HTTP and URL errors
-import urllib.parse  # For parsing URLs to validate the scheme
 import json  # For JSON parsing
 import operator
+import urllib.error  # For handling HTTP and URL errors
+import urllib.parse  # For parsing URLs to validate the scheme
+import urllib.request
 
 
 def validate_url(url):

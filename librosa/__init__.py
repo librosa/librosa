@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Librosa is a python package for music and audio analysis. It provides the building
 blocks necessary to create audio retrieval systems.

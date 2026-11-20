@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Utilities for spectral processing"""
 
 from __future__ import annotations
@@ -25,7 +24,8 @@ from . import convert
 from .audio import resample
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal
+    from collections.abc import Callable
+    from typing import Any, Literal
 
     from numpy.typing import DTypeLike
 
@@ -1549,7 +1549,7 @@ def iirt(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         If ``flayout`` is not None, `ba`, or `sos`.
 
     See Also
@@ -1597,13 +1597,9 @@ def iirt(
     # get the semitone filterbank
     filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, flayout=flayout, **kwargs)
 
-    # create three downsampled versions of the audio signal
-    y_resampled = []
-
+    # create downsampled versions of the audio signal
     y_srs = np.unique(sample_rates)
-
-    for cur_sr in y_srs:
-        y_resampled.append(resample(y, orig_sr=sr, target_sr=cur_sr, res_type=res_type))
+    y_resampled = [resample(y, orig_sr=sr, target_sr=cur_sr, res_type=res_type) for cur_sr in y_srs]
 
     # Compute the number of frames that will fit. The end may get truncated.
     n_frames = int(1 + (y.shape[-1] - win_length) // hop_length)
@@ -2168,10 +2164,11 @@ def fmt(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         if ``n_fmt < 2`` or ``t_min <= 0``
         or if ``y`` is not finite
-        or if ``y.shape[axis] < 3``.
+    ParameterShapeError
+        if ``y.shape[axis] < 3``.
 
     Notes
     -----
@@ -2774,10 +2771,8 @@ def griffinlim(
             version_removed="1.2.0",
         )
 
-    # Coerce the various input types to a proper Generator
-    # This branch is necessary until we bump to numpy 2.2
-    if not isinstance(rng, np.random.RandomState):
-        rng = np.random.default_rng(rng)
+    # Coerce the input into a proper Generator (supported natively for RandomState in numpy >= 2.2)
+    rng = np.random.default_rng(rng)
 
     if momentum > 1:
         warnings.warn(
@@ -2797,7 +2792,7 @@ def griffinlim(
 
     if init == "random":
         # randomly initialize the phase
-        angles[:] = util.phasor((2 * np.pi * rng.random(size=S.shape)))
+        angles[:] = util.phasor(2 * np.pi * rng.random(size=S.shape))
     elif init is None:
         # Initialize an all ones complex matrix
         angles[:] = 1.0

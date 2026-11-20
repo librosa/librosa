@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Multi-plot orchestration
 ========================
@@ -34,7 +33,8 @@ from ..util.exceptions import (
 
 # Type checking imports for development and static analysis
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal, Sequence
+    from collections.abc import Callable, Sequence
+    from typing import Any, Literal
 
     import cycler
     import matplotlib

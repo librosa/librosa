@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Matching functions"""
 
 from __future__ import annotations
@@ -187,9 +186,9 @@ def match_intervals(intervals_from: np.ndarray, intervals_to: np.ndarray, strict
 
     Raises
     ------
-    ParameterError
+    ParameterShapeError
         If either array of input intervals is not the correct shape
-
+    ParameterValueError
         If ``strict=True`` and some element of ``intervals_from`` is disjoint from
         every element of ``intervals_to``.
 
@@ -268,7 +267,7 @@ def match_events(
 
     Raises
     ------
-    ParameterError
+    ParameterShapeError
         If either array of input events is not the correct shape
 
     See Also

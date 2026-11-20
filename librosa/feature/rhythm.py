@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Rhythmic feature extraction"""
 
 from __future__ import annotations
@@ -20,7 +19,8 @@ from ..exceptions import (
 from ..filters import get_window
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from collections.abc import Callable
+    from typing import Any
 
     import scipy
 
@@ -826,7 +826,7 @@ def hybrid_tempogram(
     >>> ax[2].set(title="Hybrid Tempogram")
     >>> fig.colorbar(img, ax=ax)
     """
-    interp_kwargs_dict: dict[str, Any] = kwargs if kwargs else {}
+    interp_kwargs_dict: dict[str, Any] = kwargs or {}
     interp_kwargs_dict.setdefault("bounds_error", False)
     interp_kwargs_dict.setdefault("fill_value", 0.0)
     interp_kwargs_dict.setdefault("copy", False)

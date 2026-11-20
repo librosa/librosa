@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Visualizing signals and spectral data.
 
 Librosa display functionality is built on top of matplotlib.

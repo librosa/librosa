@@ -4,8 +4,6 @@ CREATED:2015-03-01 by Eric Battenberg <ebattenberg@gmail.com>
 unit tests for librosa core.constantq
 """
 
-from __future__ import division
-
 import contextlib
 
 # Disable cache
@@ -14,7 +12,6 @@ import os
 with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
 
-from typing import Optional
 
 import numpy as np
 import pytest
@@ -57,7 +54,7 @@ def __test_cqt_size(
     return cqt_output
 
 
-def make_signal(sr, duration, fmin: Optional[str] = "C1", fmax: Optional[str] = "C8"):
+def make_signal(sr, duration, fmin: str | None = "C1", fmax: str | None = "C8"):
     """Generates a linear sine sweep"""
 
     if fmin is None:
@@ -186,7 +183,7 @@ def test_cqt_frame_rate(y_cqt_110, sr_cqt, hop_length):
         assert C.shape[1] == 17
     else:
         # Unsupported test case
-        raise AssertionError()
+        raise AssertionError
 
 
 def test_cqt_odd_hop(y_cqt_110, sr_cqt):

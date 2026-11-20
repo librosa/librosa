@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Spectral feature extraction"""
 
 from __future__ import annotations
@@ -22,7 +21,8 @@ from ..exceptions import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Collection, Literal
+    from collections.abc import Callable, Collection
+    from typing import Any, Literal
 
     from numpy.typing import DTypeLike
 
@@ -925,9 +925,8 @@ def rms(
         # Check the frame length
         if S.shape[-2] != frame_length // 2 + 1:
             raise ParameterShapeError(
-                "Since S.shape[-2] is {}, frame_length is expected to be {} or {}; found {}".format(
-                    S.shape[-2], S.shape[-2] * 2 - 2, S.shape[-2] * 2 - 1, frame_length
-                )
+                f"Since S.shape[-2] is {S.shape[-2]}, frame_length is expected to be "
+                f"{S.shape[-2] * 2 - 2} or {S.shape[-2] * 2 - 1}; found {frame_length}"
             )
 
         # power spectrogram

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Harmonic calculations for frequency representations"""
 
 from __future__ import annotations
@@ -12,7 +11,7 @@ from ..exceptions import ParameterShapeError
 from .interpolate import _validate_coords, interp_frequency
 
 if TYPE_CHECKING:
-    from typing import Callable, Sequence
+    from collections.abc import Callable, Sequence
 
     from numpy.typing import ArrayLike
 

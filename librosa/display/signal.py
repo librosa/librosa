@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Time-domain signal visualization
 ================================
@@ -35,7 +34,8 @@ from ..util.exceptions import (
 
 # Signal visualization utilities for time-domain waveforms
 if TYPE_CHECKING:
-    from typing import Any, Literal, Sequence
+    from collections.abc import Sequence
+    from typing import Any, Literal
 
     import matplotlib
     from matplotlib.artist import Artist
@@ -285,7 +285,7 @@ class AdaptiveWaveplot:
 
 
 # Keeps adaptors alive as long as their Axes exists, preventing GC
-_WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[mplaxes.Axes, set["AdaptiveWaveplot"]] = weakref.WeakKeyDictionary()
+_WAVESHOW_ADAPTORS: weakref.WeakKeyDictionary[mplaxes.Axes, set[AdaptiveWaveplot]] = weakref.WeakKeyDictionary()
 
 
 class _WaveplotDecoy(mlines.Line2D):

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Pitch-tracking and tuning estimation"""
 
 from __future__ import annotations
@@ -16,7 +15,8 @@ from . import audio, convert
 from .spectrum import _spectrogram
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from collections.abc import Callable
+    from typing import Any
 
     from numpy.typing import ArrayLike
 

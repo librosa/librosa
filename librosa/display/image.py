@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Image and spectral visualization
 ================================
@@ -34,7 +33,8 @@ from ..util.exceptions import (
 
 # Image visualization utilities for spectral and 2D matrix displays
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from collections.abc import Callable
+    from typing import Any
 
     from matplotlib.collections import QuadMesh
 

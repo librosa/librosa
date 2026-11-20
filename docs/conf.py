@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 #
 # librosa documentation build configuration file, created by
 # sphinx-quickstart on Tue Jun 25 13:12:33 2013.

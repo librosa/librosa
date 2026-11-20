@@ -1,1 +1,2 @@
 tests/data/*.mat export-ignore
+.git-blame-ignore-revs export-ignore

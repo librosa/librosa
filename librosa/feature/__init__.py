@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """librosa.feature contains routines for computing spectral, tonal,
 rhythmic features from audio signals.
 

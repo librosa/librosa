@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Unit tests for librosa.interp_time and librosa.interp_frequency."""
 
 import numpy as np

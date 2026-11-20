@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Unit conversion utilities"""
 
 from __future__ import annotations
@@ -14,8 +13,8 @@ from ..util.decorators import vectorize
 from . import notation
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-    from typing import Any, Callable, Iterable
+    from collections.abc import Callable, Iterable, Sequence
+    from typing import Any
 
     import numpy.typing as npt
 
@@ -623,7 +622,7 @@ def note_to_midi(note: str | Iterable[str], *, round_midi: bool = True) -> float
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         If the input is not in valid note format
 
     See Also
@@ -774,7 +773,7 @@ def midi_to_note(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         if ``cents`` is True and ``octave`` is False
 
     See Also
@@ -829,7 +828,7 @@ def midi_to_note(
     note = note_map[note_num % 12]
 
     if octave:
-        note = "{:s}{:0d}".format(note, int(note_num / 12) - 1)
+        note = f"{note:s}{int(note_num / 12) - 1:0d}"
     if cents:
         note = f"{note:s}{note_cents:+02d}"
 
@@ -2278,7 +2277,7 @@ def midi_to_svara_h(
         "Ni",
     ]
 
-    SVARA_MAP_SHORT = list(s[0] for s in SVARA_MAP)
+    SVARA_MAP_SHORT = [s[0] for s in SVARA_MAP]
 
     # mypy does not understand vectorization
     svara_num = int(np.round(midi - Sa))  # type: ignore

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 """
 librosa.sequence provides functions for sequential processing, such as
 dynamic time warping (DTW), recurrence quantification analysis (RQA), and
@@ -24,7 +23,8 @@ from .util.exceptions import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Iterable, Literal
+    from collections.abc import Iterable
+    from typing import Any, Literal
 
     import numpy.typing as npt
 

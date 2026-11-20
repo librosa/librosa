@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Utility functions"""
 
 from __future__ import annotations
@@ -20,7 +19,8 @@ from ..exceptions import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal, Sequence
+    from collections.abc import Callable, Sequence
+    from typing import Any, Literal
 
     from numpy.typing import DTypeLike, NDArray
 
@@ -176,9 +176,9 @@ def frame(
 
     Raises
     ------
-    ParameterError
+    ParameterShapeError
         If ``x.shape[axis] < frame_length``, there is not enough data to fill one frame.
-
+    ParameterValueError
         If ``hop_length < 1``, frames cannot advance.
 
     See Also
@@ -246,13 +246,13 @@ def frame(
         raise ParameterValueError(f"Invalid hop_length: {hop_length:d}")
 
     # put our new within-frame axis at the end for now
-    out_strides = x.strides + tuple([x.strides[axis]])
+    out_strides = (*x.strides, x.strides[axis])
 
     # Reduce the shape on the framing axis
     x_shape_trimmed = list(x.shape)
     x_shape_trimmed[axis] -= frame_length - 1
 
-    out_shape = tuple(x_shape_trimmed) + tuple([frame_length])
+    out_shape = (*tuple(x_shape_trimmed), frame_length)
     xw = as_strided(x, strides=out_strides, shape=out_shape, subok=subok, writeable=writeable)
 
     if axis < 0:
@@ -291,8 +291,12 @@ def valid_audio(y: np.ndarray) -> bool:
 
     Raises
     ------
-    ParameterError
-        In any of the conditions specified above fails
+    ParameterTypeError
+        If ``y`` is not a numpy array or is not floating point.
+    ParameterShapeError
+        If ``y`` has zero dimensions.
+    ParameterValueError
+        If ``y`` is not finite everywhere.
 
     See Also
     --------
@@ -314,7 +318,7 @@ def valid_audio(y: np.ndarray) -> bool:
 
     >>> y[5] = np.nan
     >>> librosa.util.valid_audio(y)
-    ParameterError: Audio buffer is not finite everywhere
+    ParameterValueError: Audio buffer is not finite everywhere
     """
     if not isinstance(y, np.ndarray):
         raise ParameterTypeError("Audio data must be of type numpy.ndarray")
@@ -352,7 +356,7 @@ def valid_int(x: float, *, cast: Callable[[float], float] | None = None) -> int:
 
     Raises
     ------
-    ParameterError
+    ParameterTypeError
         If ``cast`` is provided and is not callable.
     """
     if cast is None:
@@ -444,7 +448,7 @@ def align_samples(
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         If `n_samples` is not a positive integer.
         If `orig_sr` or `target_sr` is not a positive number.
         If `error=True` and the sample count does not evaluate to an integer at `target_sr`.
@@ -471,7 +475,7 @@ def align_samples(
     >>> librosa.util.align_samples(512, orig_sr=48000, target_sr=22050, error=True)
     Traceback (most recent call last):
         ...
-    librosa.util.exceptions.ParameterError: Sample count of 512 at 48000...
+    librosa.util.exceptions.ParameterValueError: Sample count of 512 at 48000...
     """
     if not is_positive_int(n_samples):
         raise ParameterValueError(f"n_samples={n_samples} must be a positive integer")
@@ -549,7 +553,7 @@ def pad_center(data: np.ndarray, *, size: int, axis: int = -1, **kwargs: Any) ->
 
     Raises
     ------
-    ParameterError
+    ParameterShapeError
         If ``size < data.shape[axis]``
 
     See Also
@@ -644,7 +648,7 @@ def expand_to(x: np.ndarray, *, ndim: int, axes: int | slice | Sequence[int] | S
     try:
         axes_tup = tuple(axes)  # type: ignore
     except TypeError:
-        axes_tup = tuple([axes])  # type: ignore
+        axes_tup = (axes,)  # type: ignore
 
     if len(axes_tup) != x.ndim:
         raise ParameterShapeError(f"Shape mismatch between axes={axes_tup} and input x.shape={x.shape}")
@@ -1676,7 +1680,8 @@ def sparsify_rows(x: np.ndarray, *, quantile: float = 0.01, dtype: DTypeLike | N
     Examples
     --------
     >>> # Construct a Hann window to sparsify
-    >>> x = scipy.signal.hann(32)
+    >>> import scipy.signal
+    >>> x = scipy.signal.windows.hann(32)
     >>> x
     array([ 0.   ,  0.01 ,  0.041,  0.09 ,  0.156,  0.236,  0.326,
             0.424,  0.525,  0.625,  0.72 ,  0.806,  0.879,  0.937,
@@ -2183,7 +2188,7 @@ def fill_off_diagonal(x: np.ndarray, *, radius: float, value: float = 0) -> None
     radius = int(np.round(radius * np.min(x.shape)))
 
     nx, ny = x.shape
-    offset = np.abs((x.shape[0] - x.shape[1]))
+    offset = np.abs(x.shape[0] - x.shape[1])
 
     if nx < ny:
         idx_u = np.triu_indices_from(x, k=radius + offset)
@@ -2475,7 +2480,7 @@ def stack(arrays: list[np.ndarray], *, axis: int = 0) -> np.ndarray:
         return np.stack(arrays, axis=axis)
     else:
         # If axis is 0, enforce F-ordering
-        shape = tuple([len(arrays), *list(shape_in)])
+        shape = (len(arrays), *list(shape_in))
 
         # Find the common dtype for all inputs
         dtype = np.result_type(*arrays)

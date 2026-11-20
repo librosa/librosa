@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
 
 from __future__ import annotations
@@ -389,7 +388,7 @@ def cite(version: str | None = None, *, bib: bool = False) -> str:
 
     Raises
     ------
-    ParameterError
+    ParameterValueError
         If the requested version is not found in the citation index.
 
     Examples

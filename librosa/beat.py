@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """The librosa.beat module provides two functions for estimating beat locations from an audio signal."""
 
 from __future__ import annotations
@@ -19,16 +18,16 @@ from .util.exceptions import (
 )
 
 if TYPE_CHECKING:
+    from typing import TypeVar
+
     import numpy.typing as npt
     import scipy.stats
-    from typing_extensions import TypeVar
 
     from ._typing import _Array1D
 
     type _BpmLike = float | np.floating[Any] | np.integer[Any] | npt.NDArray[np.floating[Any]]
 
-    # `typing_extensions.TypeVar` is only needed until Python 3.13, which adds support
-    # for type parameter defaults (PEP 696).
+    # Python 3.13 adds support for type parameter defaults (PEP 696).
     _SparseBpmT = TypeVar("_SparseBpmT", bound=_BpmLike, default=float | npt.NDArray[np.float64])
     _DenseBpmT = TypeVar("_DenseBpmT", bound=_BpmLike, default=npt.NDArray[np.float64])
 
@@ -184,9 +183,11 @@ def beat_track(
 
     Raises
     ------
-    ParameterError
-        if neither ``y`` nor ``onset_envelope`` are provided,
-        or if ``units`` is not one of 'frames', 'samples', or 'time'
+    ParameterValueError
+        If neither ``y`` nor ``onset_envelope`` are provided,
+        or if ``units`` is not one of 'frames', 'samples', or 'time'.
+    ParameterShapeError
+        If ``sparse=True`` and ``onset_envelope`` is multidimensional.
 
     See Also
     --------
@@ -580,19 +581,10 @@ def __beat_local_score(onset_envelope, frames_per_beat, localscore):
 
     if len(frames_per_beat) == 1:
         # Static tempo mode
-        # NOTE: when we can bump the minimum numba to 0.58, we can eliminate this branch and just use
-        # np.convolve(..., mode='same') directly
         window = np.exp(
             -0.5 * (np.arange(-frames_per_beat[0], frames_per_beat[0] + 1) * 32.0 / frames_per_beat[0]) ** 2
         )
-        K = len(window)
-        # This is a vanilla same-mode convolution
-        for i in range(len(onset_envelope)):
-            localscore[i] = 0.0
-            # we need i + K // 2 - k < N ==> k > i + K //2 - N
-            # and i + K // 2 - k >= 0 ==>    k <= i + K // 2
-            for k in range(max(0, i + K // 2 - N + 1), min(i + K // 2, K)):
-                localscore[i] += window[k] * onset_envelope[i + K // 2 - k]
+        localscore[:] = np.convolve(onset_envelope, window, mode="same")
 
     elif len(frames_per_beat) == len(onset_envelope):
         # Time-varying tempo estimates
@@ -669,9 +661,7 @@ def __trim_beats(localscore, beats, trim, beats_trimmed):
 
     # Compute the threshold: 1/2 RMS of the smoothed beat envelope
     w = np.hanning(5)
-    # Slicing here to implement same-mode convolution in older numba where
-    # mode='same' is not yet supported
-    smooth_boe = np.convolve(localscore[beats], w)[len(w) // 2 : len(localscore) + len(w) // 2]
+    smooth_boe = np.convolve(localscore[beats], w, mode="same")
 
     # This logic is to preserve old behavior and always discard beats detected with oenv==0
     if trim:
@@ -689,7 +679,6 @@ def __trim_beats(localscore, beats, trim, beats_trimmed):
     while localscore[n] <= threshold:
         beats_trimmed[n] = False
         n -= 1
-    pass
 
 
 def __last_beat(cumscore):

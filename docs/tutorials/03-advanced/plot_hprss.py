@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 =====================================
 Harmonic-percussive source separation
@@ -143,7 +142,7 @@ librosa.display.multiplot(
 ax[0, 0].set(title="Harmonic")
 ax[0, 1].set(title="Percussive")
 for i in range(5):
-    ax[i, 0].set(ylabel="margin={:d}".format(2**i))
+    ax[i, 0].set(ylabel=f"margin={2**i:d}")
 
 
 ################################################################################

@@ -13,7 +13,7 @@ with contextlib.suppress(KeyError):
 
 import platform
 import warnings
-from typing import Any, List, Union
+from typing import Any
 
 import numpy as np
 import pytest
@@ -1018,7 +1018,7 @@ def test_sync(aggregate, ndim, axis: int):
     assert s_test == s_orig
 
     # The first slice will sum to 2 and have mean 1
-    idx: List[Union[slice, int]] = [slice(None)] * ndim
+    idx: list[slice | int] = [slice(None)] * ndim
     idx[axis] = 0
     if aggregate is np.sum:
         assert np.allclose(dsync[tuple(idx)], 2)
@@ -1040,7 +1040,7 @@ def test_sync_slices(aggregate):
     elif aggregate is np.max:
         assert np.allclose(xsync, [1, 3, 5, 7])
     else:
-        raise AssertionError()
+        raise AssertionError
 
 
 @pytest.mark.parametrize("aggregate", [np.mean, np.max])
@@ -1054,7 +1054,7 @@ def test_sync_frames(aggregate, atype):
     elif aggregate is np.max:
         assert np.allclose(xsync, [1, 3, 5, 7])
     else:
-        raise AssertionError()
+        raise AssertionError
 
 
 @pytest.mark.parametrize("atype", [list, np.asarray])
@@ -1350,14 +1350,7 @@ def test_shear_badfactor():
 
 
 def test_shear_sparse_1d_raises():
-    try:
-        x = scipy.sparse.coo_array([1, 0, 2])
-    except Exception:
-        pytest.skip("SciPy cannot construct a 1D sparse array in this build")
-
-    if x.ndim != 1:
-        pytest.skip("SciPy coerces 1D sparse array constructors to 2D in this version")
-
+    x = scipy.sparse.coo_array([1, 0, 2])
     with pytest.raises(librosa.ParameterShapeError, match="Input must be 2D"):
         librosa.util.shear(x, factor=1, axis=0)
 
@@ -1427,7 +1420,7 @@ def test_example(key, hq):
 
 def test_example_url():
     url = librosa.example("trumpet", url=True)
-    assert url.startswith("https://") or url.startswith("http://")
+    assert url.startswith(("https://", "http://"))
 
 
 def test_example_fail():
@@ -1589,7 +1582,7 @@ def test_abs2_real(x, dtype):
 @pytest.mark.parametrize("x", [(2 - 2j), (3 + 0j), (0.5j) ** np.arange(6)])
 @pytest.mark.parametrize("dtype", [np.complex64, np.complex128])
 def test_abs2_complex(x, dtype):
-    x_cast: Union[np.complexfloating[Any, Any], np.ndarray] = dtype(x)
+    x_cast: np.complexfloating[Any, Any] | np.ndarray = dtype(x)
     p = librosa.util.abs2(x_cast)
     assert np.allclose(p, np.abs(x_cast) ** 2)
     assert p.dtype == librosa.util.dtype_c2r(x_cast.dtype)
@@ -1621,7 +1614,7 @@ def test_abs2_complex_dtype():
 @pytest.mark.parametrize("mag", [None, 2])
 def test_phasor(dtype, angles, mag):
 
-    angles_cast: Union[np.floating[Any], np.ndarray] = dtype(angles)
+    angles_cast: np.floating[Any] | np.ndarray = dtype(angles)
     z = np.exp(1j * angles_cast)
     if mag is not None:
         mag = dtype(mag)

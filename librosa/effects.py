@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 librosa.effects provides wrapper functions for time-series manipulation,
 harmonic-percussive source separation, and standard audio effects.
@@ -20,7 +19,8 @@ from .exceptions import (
 )
 
 if TYPE_CHECKING:
-    from typing import Callable, Iterable, Literal
+    from collections.abc import Callable, Iterable
+    from typing import Literal
 
     from numpy.typing import ArrayLike
 

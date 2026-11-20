@@ -18,8 +18,9 @@ import os
 with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
 
+from contextlib import AbstractContextManager as ContextManager
 from contextlib import nullcontext as dnr
-from typing import Any, ContextManager, Literal
+from typing import Any, Literal
 
 import numpy as np
 import pytest
@@ -504,9 +505,7 @@ def test_semitone_filterbank():
     # Verify that each filter is centered on the corresponding frequency
     for i in range(len(freqs)):
         # evaluate the z-transform of the filter
-        # TODO: when we bump scipy to 1.15, we can revise this to the newer name
-        # freqz_sos
-        _, h = scipy.signal.sosfreqz(sos_fb[i], worN=freqs, fs=sos_srs[i])
+        _, h = scipy.signal.freqz_sos(sos_fb[i], worN=freqs, fs=sos_srs[i])
         hmag = np.abs(h)
         # The filter should have a flat response that's log-symmetric around the center frequency
         # We'll just check that the peak is not far off from the max (ie due to ripple)
@@ -520,9 +519,7 @@ def test_semitone_filterbank_defaults(tuning):
     freqs = librosa.filters.mr_frequencies(tuning=tuning)[0]
     for i in range(len(freqs)):
         # evaluate the z-transform of the filter
-        # TODO: when we bump scipy to 1.15, we can revise this to the newer name
-        # freqz_sos
-        _, h = scipy.signal.sosfreqz(sos_fb[i], worN=freqs, fs=sos_srs[i])
+        _, h = scipy.signal.freqz_sos(sos_fb[i], worN=freqs, fs=sos_srs[i])
         hmag = np.abs(h)
         # The filter should have a flat response that's log-symmetric around the center frequency
         # We'll just check that the peak is not far off from the max (ie due to ripple)

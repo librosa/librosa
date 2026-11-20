@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Feature manipulation utilities"""
 
 from __future__ import annotations
