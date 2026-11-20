@@ -3,17 +3,15 @@
 # CREATED:2022-08-09 06:34:21 by Brian McFee <brian.mcfee@nyu.edu>
 """Unit tests for just intonation and friends"""
 
+import contextlib
 import os
-import sys
 
-try:
+with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
-except KeyError:
-    pass
 
-import warnings
 import numpy as np
 import pytest
+
 import librosa
 
 
@@ -97,12 +95,8 @@ def test_plimit5():
 
 
 def test_plimit7():
-    intervals = librosa.plimit_intervals(
-        primes=[3, 5, 7], bins_per_octave=24, sort=False
-    )
-    intervals_s = librosa.plimit_intervals(
-        primes=[3, 5, 7], bins_per_octave=24, sort=True
-    )
+    intervals = librosa.plimit_intervals(primes=[3, 5, 7], bins_per_octave=24, sort=False)
+    intervals_s = librosa.plimit_intervals(primes=[3, 5, 7], bins_per_octave=24, sort=True)
 
     assert np.allclose(sorted(intervals), intervals_s)
     assert np.allclose(
@@ -137,22 +131,16 @@ def test_plimit7():
 
 
 @pytest.mark.parametrize("n_bins", [6, 12, 24, 30])
-@pytest.mark.parametrize(
-    "intervals", ["equal", "pythagorean", "ji3", "ji5", "ji7", [1, 4 / 3, 3 / 2, 5 / 4]]
-)
+@pytest.mark.parametrize("intervals", ["equal", "pythagorean", "ji3", "ji5", "ji7", [1, 4 / 3, 3 / 2, 5 / 4]])
 @pytest.mark.parametrize("bins_per_octave", [6, 12, 15])
 def test_interval_frequencies(n_bins, intervals, bins_per_octave):
-    freqs = librosa.interval_frequencies(
-        n_bins, fmin=10, intervals=intervals, bins_per_octave=bins_per_octave
-    )
+    freqs = librosa.interval_frequencies(n_bins, fmin=10, intervals=intervals, bins_per_octave=bins_per_octave)
 
     assert len(freqs) == n_bins
     assert min(freqs) == 10
 
 
-@pytest.mark.parametrize(
-    "intervals", ["pythagorean", "ji3", "ji5", "ji7", [1, 3 / 2, 4 / 3, 5 / 4]]
-)
+@pytest.mark.parametrize("intervals", ["pythagorean", "ji3", "ji5", "ji7", [1, 3 / 2, 4 / 3, 5 / 4]])
 def test_intervals_sorted(intervals):
 
     freqs = librosa.interval_frequencies(12, fmin=1, intervals=intervals, sort=False)
@@ -165,16 +153,12 @@ def test_intervals_sorted(intervals):
 
 @pytest.mark.parametrize("sort", [False, True])
 def test_pythagorean_factorizations(sort):
-    intervals = librosa.pythagorean_intervals(
-        bins_per_octave=20, sort=sort, return_factors=False
-    )
-    factors = librosa.pythagorean_intervals(
-        bins_per_octave=20, sort=sort, return_factors=True
-    )
+    intervals = librosa.pythagorean_intervals(bins_per_octave=20, sort=sort, return_factors=False)
+    factors = librosa.pythagorean_intervals(bins_per_octave=20, sort=sort, return_factors=True)
 
     assert len(intervals) == len(factors)
 
-    for ival, facts in zip(intervals, factors):
+    for ival, facts in zip(intervals, factors, strict=False):
         value = 0.0
         for prime in facts:
             value += facts[prime] * np.log2(prime)
@@ -185,16 +169,12 @@ def test_pythagorean_factorizations(sort):
 @pytest.mark.parametrize("sort", [False, True])
 @pytest.mark.parametrize("primes", [[3], [3, 5], [3, 5, 7]])
 def test_plimit_factorizations(sort, primes):
-    intervals = librosa.plimit_intervals(
-        primes=primes, bins_per_octave=20, sort=sort, return_factors=False
-    )
-    factors = librosa.plimit_intervals(
-        primes=primes, bins_per_octave=20, sort=sort, return_factors=True
-    )
+    intervals = librosa.plimit_intervals(primes=primes, bins_per_octave=20, sort=sort, return_factors=False)
+    factors = librosa.plimit_intervals(primes=primes, bins_per_octave=20, sort=sort, return_factors=True)
 
     assert len(intervals) == len(factors)
 
-    for ival, facts in zip(intervals, factors):
+    for ival, facts in zip(intervals, factors, strict=False):
         value = 0.0
         for prime in facts:
             value += facts[prime] * np.log2(prime)

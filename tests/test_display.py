@@ -4,47 +4,49 @@
 """Unit tests for display module"""
 
 # Disable cache
+import contextlib
 import os
 
-try:
+with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
-except KeyError:
-    pass
 
 import gc
 import weakref
 
-from packaging import version
-
-import pytest
-
 import matplotlib
-
 import matplotlib.collections
 import matplotlib.pyplot as plt
+import pytest
+from packaging import version
+
 try:
     from matplotlib.testing.conftest import text_placeholders
 except ImportError:
+
     @pytest.fixture
     def text_placeholders():
         pass
+
+
+from typing import Any, Dict
+
+import matplotlib.collections as mcoll
+import matplotlib.lines as mlines
+import matplotlib.transforms as mtransforms
+import numpy as np
 from matplotlib import colormaps as mcm
 
 import librosa
 import librosa.display
-import numpy as np
-from typing import Any, Dict
-
-import matplotlib.lines as mlines
-import matplotlib.collections as mcoll
-import matplotlib.transforms as mtransforms
 import librosa.display.formatting
 import librosa.display.signal
+
 STYLE = "default"
 
 # Workaround for old freetype builds with our image fixtures
 FT_VERSION = version.parse(matplotlib.ft2font.__freetype_version__)
 OLD_FT = not (FT_VERSION >= version.parse("2.10"))
+
 
 @pytest.fixture(scope="module")
 def audio():
@@ -96,7 +98,7 @@ def tempo(rhythm):
 
 
 @pytest.fixture(scope="module")
-def beats(rhythm, C):
+def beats(rhythm):
     return librosa.util.fix_frames(rhythm[1])
 
 
@@ -110,28 +112,23 @@ def Csync(C, beats):
     return librosa.util.sync(C, beats, aggregate=np.median)
 
 
-
 def test_axes_type_validation():
     with pytest.raises(librosa.ParameterTypeError):
         librosa.display.formatting._check_axes("not_an_axes")  # type: ignore
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
+
 def test_unknown_time_unit(y):
     times = np.arange(len(y))
     plt.figure()
     ax = plt.gca()
     ax.plot(times, y)
-    ax.xaxis.set_major_formatter(
-        librosa.display.TimeFormatter(unit="an unsupported time unit")
-    )
-    return plt.gcf()
+    with pytest.raises(librosa.ParameterValueError):
+        ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit="an unsupported time unit"))
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["complex"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["complex"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_complex_input(S):
     plt.figure()
     with pytest.warns(UserWarning, match="Trying to display complex"):
@@ -139,20 +136,16 @@ def test_complex_input(S):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["abs"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["abs"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_abs_input(S_abs):
     plt.figure()
     librosa.display.specshow(S_abs)
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["cqt_note"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["cqt_note"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_cqt_note(C):
     plt.figure()
@@ -160,9 +153,7 @@ def test_cqt_note(C):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["fft_note"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["fft_note"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_fft_note(S_abs):
     plt.figure()
@@ -170,9 +161,7 @@ def test_fft_note(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["cqt_hz"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["cqt_hz"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_cqt_hz(C):
     plt.figure()
@@ -180,9 +169,7 @@ def test_cqt_hz(C):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["tempo"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["tempo"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_tempo(y, sr):
     T = librosa.feature.tempogram(y=y, sr=sr, win_length=64)
@@ -192,13 +179,9 @@ def test_tempo(y, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["fourier_tempo"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["fourier_tempo"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.filterwarnings(
-    "ignore:n_fft=.*is too large"
-)  # our test signal is short, but this is fine here
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short, but this is fine here
 def test_fourier_tempo(y, sr):
     T = librosa.feature.fourier_tempogram(y=y, sr=sr, win_length=64)
 
@@ -207,9 +190,7 @@ def test_fourier_tempo(y, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["tonnetz"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["tonnetz"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_tonnetz(C):
     plt.figure()
@@ -219,9 +200,7 @@ def test_tonnetz(C):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["chroma"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["chroma"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_chroma(S_abs, sr):
     plt.figure()
@@ -239,10 +218,10 @@ def test_chroma(S_abs, sr):
     return plt.gcf()
 
 
-
 def test_svara_parameter_error():
     with pytest.raises(librosa.ParameterValueError):
         librosa.display.formatting.SvaraFormatter(Sa=None)  # type: ignore
+
 
 def test_chroma_fallback_defaults():
     fig, ax = plt.subplots()
@@ -250,9 +229,8 @@ def test_chroma_fallback_defaults():
     librosa.display.formatting._decorate_axis(ax.yaxis, ax_type="chroma_c", Sa=None, mela=1)
     plt.close(fig)
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["chroma_svara"], extensions=["png"], style=STYLE
-)
+
+@pytest.mark.mpl_image_compare(baseline_images=["chroma_svara"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_chroma_svara(C, sr):
 
@@ -279,9 +257,7 @@ def test_chroma_svara(C, sr):
     return fig
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["double_chroma"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["double_chroma"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_double_chroma(S_abs, sr):
     plt.figure()
@@ -292,9 +268,7 @@ def test_double_chroma(S_abs, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["x_mel"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["x_mel"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_x_mel(S_abs):
     plt.figure()
@@ -304,9 +278,7 @@ def test_x_mel(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["y_mel"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["y_mel"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_y_mel(S_abs):
     plt.figure()
@@ -316,9 +288,7 @@ def test_y_mel(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["y_mel_bounded"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["y_mel_bounded"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_y_mel_bounded(S_abs):
     plt.figure()
@@ -329,9 +299,7 @@ def test_y_mel_bounded(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["x_none_y_linear"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["x_none_y_linear"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_linear(S_abs, S_signed):
     plt.figure()
@@ -344,15 +312,13 @@ def test_xaxis_none_yaxis_linear(S_abs, S_signed):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_ext_axes"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["specshow_ext_axes"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_specshow_ext_axes(S_abs):
     plt.figure()
     ax_left = plt.subplot(1, 2, 1)
-    ax_right = plt.subplot(1, 2, 2)
+    plt.subplot(1, 2, 2)
 
     # implicitly ax_right
     librosa.display.specshow(S_abs, cmap="gray")
@@ -360,9 +326,7 @@ def test_specshow_ext_axes(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["x_none_y_log"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["x_none_y_log"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_log(S_abs, S_signed):
     plt.figure()
@@ -376,9 +340,7 @@ def test_xaxis_none_yaxis_log(S_abs, S_signed):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["x_linear_y_none"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["x_linear_y_none"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_linear_yaxis_none(S_abs, S_signed):
     plt.figure()
@@ -392,9 +354,7 @@ def test_xaxis_linear_yaxis_none(S_abs, S_signed):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["x_log_y_none"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["x_log_y_none"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_log_yaxis_none(S_abs, S_signed):
 
@@ -409,9 +369,7 @@ def test_xaxis_log_yaxis_none(S_abs, S_signed):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["x_time_y_none"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["x_time_y_none"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_time_yaxis_none(S_abs):
 
@@ -420,9 +378,7 @@ def test_xaxis_time_yaxis_none(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["x_none_y_time"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["x_none_y_time"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_time(S_abs):
 
@@ -431,9 +387,7 @@ def test_xaxis_none_yaxis_time(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["x_frames_y_none"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["x_frames_y_none"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_frames_yaxis_none(S_abs):
 
@@ -442,9 +396,7 @@ def test_xaxis_frames_yaxis_none(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["x_none_y_frames"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["x_none_y_frames"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_none_yaxis_frames(S_abs):
 
@@ -453,9 +405,7 @@ def test_xaxis_none_yaxis_frames(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["x_lag_y_none"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["x_lag_y_none"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_lag_yaxis_none(S_abs):
 
@@ -464,9 +414,7 @@ def test_xaxis_lag_yaxis_none(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["x_none_y_lag"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["x_none_y_lag"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_xaxis_time_yaxis_lag(S_abs):
 
@@ -475,9 +423,7 @@ def test_xaxis_time_yaxis_lag(S_abs):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["time_scales_auto"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["time_scales_auto"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_time_scales_auto(S_abs, sr):
 
@@ -504,9 +450,7 @@ def test_time_scales_auto(S_abs, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["time_unit"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["time_unit"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_time_unit(S_abs, sr):
 
@@ -537,9 +481,7 @@ def test_time_unit(S_abs, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["time_unit_lag"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["time_unit_lag"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_time_unit_lag(S_abs, sr):
 
@@ -568,11 +510,9 @@ def test_time_unit_lag(S_abs, sr):
     return plt.gcf()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_mono"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["waveshow_mono"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_waveshow_mono(y, sr):
 
     fig, ax = plt.subplots()
@@ -586,7 +526,7 @@ def test_waveshow_mono(y, sr):
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_waveshow_mono_trans(y, sr):
 
     fig, ax = plt.subplots()
@@ -594,15 +534,13 @@ def test_waveshow_mono_trans(y, sr):
     return fig
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_mono_zoom"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["waveshow_mono_zoom"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_waveshow_mono_zoom(y, sr):
 
     fig, ax = plt.subplots()
-    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
+    librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(xlim=[1, 1.125])
     return fig
@@ -614,11 +552,11 @@ def test_waveshow_mono_zoom(y, sr):
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_waveshow_mono_zoom_trans(y, sr):
 
     fig, ax = plt.subplots()
-    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2, transpose=True)
+    librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2, transpose=True)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(ylim=[1, 1.125])
     return fig
@@ -630,11 +568,11 @@ def test_waveshow_mono_zoom_trans(y, sr):
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_waveshow_mono_zoom_out(y, sr):
 
     fig, ax = plt.subplots()
-    out = librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
+    librosa.display.waveshow(y, sr=sr, ax=ax, max_points=sr // 2)
     # Zoom into 1/8 of a second, make sure it's out of the initial viewport
     ax.set(xlim=[1, 1.125])
     # Zoom back out to get an envelope view again
@@ -642,15 +580,13 @@ def test_waveshow_mono_zoom_out(y, sr):
     return fig
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_ext_axes"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["waveshow_ext_axes"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_waveshow_ext_axes(y):
     plt.figure()
     ax_left = plt.subplot(1, 2, 1)
-    ax_right = plt.subplot(1, 2, 2)
+    plt.subplot(1, 2, 2)
 
     # implicitly ax_right
     librosa.display.waveshow(y, color="blue")
@@ -672,15 +608,11 @@ def test_waveshow_inverted(y, sr):
     ax[0].legend(loc="upper right")
 
     # Inverted with default (axes face) color
-    librosa.display.waveshow(
-        y, sr=sr, ax=ax[1], invert=True, invert_color=None, label="Inverted"
-    )
+    librosa.display.waveshow(y, sr=sr, ax=ax[1], invert=True, invert_color=None, label="Inverted")
     ax[1].legend(loc="upper right")
 
     # Inverted with custom color
-    librosa.display.waveshow(
-        y, sr=sr, ax=ax[2], invert=True, invert_color="#2d2d2d", label="Inverted custom"
-    )
+    librosa.display.waveshow(y, sr=sr, ax=ax[2], invert=True, invert_color="#2d2d2d", label="Inverted custom")
     ax[2].legend(loc="upper right")
 
     for axi in ax.flat:
@@ -689,11 +621,9 @@ def test_waveshow_inverted(y, sr):
     return fig
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["waveshow_stereo"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["waveshow_stereo"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_waveshow_stereo(y, sr):
 
     ys = librosa.util.stack([y, 2 * y])
@@ -703,27 +633,24 @@ def test_waveshow_stereo(y, sr):
     return plt.gcf()
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_unknown_wavaxis(y, sr):
 
     plt.figure()
-    librosa.display.waveshow(y, sr=sr, axis="something not in the axis map")
-    return plt.gcf()
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display.waveshow(y, sr=sr, axis="something not in the axis map")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_waveshow_unknown_wavaxis(y, sr):
 
     plt.figure()
-    librosa.display.waveshow(y, sr=sr, axis="something not in the axis map")
-    return plt.gcf()
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display.waveshow(y, sr=sr, axis="something not in the axis map")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_waveshow_bad_maxpoints(y, sr):
     plt.figure()
-    librosa.display.waveshow(y, sr=sr, max_points=0)
-    return plt.gcf()
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display.waveshow(y, sr=sr, max_points=0)
 
 
 def test_waveshow_adaptor_survives_gc_single(y, sr):
@@ -738,21 +665,13 @@ def test_waveshow_adaptor_survives_gc_single(y, sr):
     fig.canvas.draw()
 
     # Data lines only (not ticks)
-    visible_data_lines = [l for l in ax.lines if l.get_visible()]
+    visible_data_lines = [line for line in ax.lines if line.get_visible()]
 
     # Envelope(s) are PolyCollections in ax.collections
-    polys = [
-        c
-        for c in ax.collections
-        if isinstance(c, matplotlib.collections.PolyCollection)
-    ]
+    polys = [c for c in ax.collections if isinstance(c, matplotlib.collections.PolyCollection)]
 
-    assert (
-        len(visible_data_lines) >= 1
-    ), "Sample/step artist should be visible after zoom"
-    assert all(
-        not p.get_visible() for p in polys
-    ), "Envelope should be hidden after zoom"
+    assert len(visible_data_lines) >= 1, "Sample/step artist should be visible after zoom"
+    assert all(not p.get_visible() for p in polys), "Envelope should be hidden after zoom"
 
     plt.close(fig)
 
@@ -762,28 +681,18 @@ def test_waveshow_adaptor_survives_gc_multi(y, sr):
     fig, ax = plt.subplots()
 
     librosa.display.waveshow(y, sr=sr, ax=ax, color="blue", max_points=sr // 2)
-    librosa.display.waveshow(
-        y, sr=sr, ax=ax, color="red", alpha=0.5, zorder=-1, max_points=sr // 2
-    )
+    librosa.display.waveshow(y, sr=sr, ax=ax, color="red", alpha=0.5, zorder=-1, max_points=sr // 2)
 
     gc.collect()
 
     ax.set_xlim(0, 0.025)
     fig.canvas.draw()
 
-    visible_data_lines = [l for l in ax.lines if l.get_visible()]
-    polys = [
-        c
-        for c in ax.collections
-        if isinstance(c, matplotlib.collections.PolyCollection)
-    ]
+    visible_data_lines = [line for line in ax.lines if line.get_visible()]
+    polys = [c for c in ax.collections if isinstance(c, matplotlib.collections.PolyCollection)]
 
-    assert (
-        len(visible_data_lines) >= 2
-    ), "Both sample/step artists should be visible after zoom"
-    assert all(
-        not p.get_visible() for p in polys
-    ), "All envelopes should be hidden after zoom"
+    assert len(visible_data_lines) >= 2, "Both sample/step artists should be visible after zoom"
+    assert all(not p.get_visible() for p in polys), "All envelopes should be hidden after zoom"
 
     plt.close(fig)
 
@@ -794,8 +703,8 @@ def test_waveshow_registry_cleanup_on_axes_gc():
     This verifies the fix for #1970: adaptors are stored in a WeakKeyDictionary
     keyed by Axes, so they will be cleaned up when the Axes is garbage collected.
     """
-    from matplotlib.figure import Figure
     from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+    from matplotlib.figure import Figure
 
     fig = Figure()
     FigureCanvas(fig)
@@ -840,13 +749,13 @@ def test_waveshow_update_gc_guard():
     plt.close(fig)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("axis", ["x_axis", "y_axis"])
 def test_unknown_axis(S_abs, axis: str):
 
     kwargs: Dict[str, Any] = {axis: "something not in the axis map"}
     plt.figure()
-    librosa.display.specshow(S_abs, **kwargs)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display.specshow(S_abs, **kwargs)
 
 
 @pytest.mark.parametrize(
@@ -863,9 +772,7 @@ def test_infer_cmap_robust(data):
     cmap1 = librosa.display.infer_cmap(data, robust=False)
     cmap2 = librosa.display.infer_cmap(data, robust=True)
 
-    if isinstance(cmap1, matplotlib.colors.ListedColormap) and isinstance(
-        cmap2, matplotlib.colors.ListedColormap
-    ):
+    if isinstance(cmap1, matplotlib.colors.ListedColormap) and isinstance(cmap2, matplotlib.colors.ListedColormap):
         assert np.allclose(cmap1.colors, cmap2.colors)
     elif isinstance(cmap1, matplotlib.colors.LinearSegmentedColormap) and isinstance(
         cmap2, matplotlib.colors.LinearSegmentedColormap
@@ -876,9 +783,7 @@ def test_infer_cmap_robust(data):
         assert type(cmap1) is type(cmap2)
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["coords"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["coords"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_coords(Csync, beat_t):
 
@@ -887,25 +792,20 @@ def test_coords(Csync, beat_t):
     return plt.gcf()
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_bad_coords(S_abs):
 
-    librosa.display.specshow(S_abs, x_coords=np.arange(S_abs.shape[1] // 2))
-    return plt.gcf()
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.display.specshow(S_abs, x_coords=np.arange(S_abs.shape[1] // 2))
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["sharex_specshow_ms"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["sharex_specshow_ms"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_sharex_specshow_ms(S_abs, y, sr):
 
     # Correct time range ~= 4.6 s or 4600ms
     # Due to shared x_axis, both plots are plotted in 's'.
     fig, (ax, ax2) = plt.subplots(nrows=2, figsize=(8, 8), sharex=True)
-    librosa.display.specshow(
-        librosa.amplitude_to_db(S_abs, ref=np.max), x_axis="time", ax=ax
-    )
+    librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis="time", ax=ax)
     ax.set(xlabel="")  # hide the x label here, which is not propagated automatically
     ax2.margins(x=0)
     librosa.display.waveshow(y, sr=sr, axis="ms", ax=ax2)
@@ -913,9 +813,7 @@ def test_sharex_specshow_ms(S_abs, y, sr):
     return fig
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["sharex_waveplot_ms"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["sharex_waveplot_ms"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_sharex_waveplot_ms(y, sr, S_abs):
 
@@ -926,9 +824,7 @@ def test_sharex_waveplot_ms(y, sr, S_abs):
     librosa.display.waveshow(y, sr=sr, ax=ax)
     ax.set(xlabel="")  # hide the x label here, which is not propagated automatically
     ax2.margins(x=0)
-    librosa.display.specshow(
-        librosa.amplitude_to_db(S_abs, ref=np.max), x_axis="ms", ax=ax2
-    )
+    librosa.display.specshow(librosa.amplitude_to_db(S_abs, ref=np.max), x_axis="ms", ax=ax2)
     ax2.set(xlabel="")  # hide the x label here, which is not propagated automatically
     return fig
 
@@ -1009,9 +905,7 @@ def test_specshow_pitch_temperaments(y_axis, intervals):
 
     fig, ax = plt.subplots()
     D = np.ones((60, 10))
-    librosa.display.specshow(
-        D, y_axis=y_axis, fmin=32.7, bins_per_octave=12, intervals=intervals, ax=ax
-    )
+    librosa.display.specshow(D, y_axis=y_axis, fmin=32.7, bins_per_octave=12, intervals=intervals, ax=ax)
     plt.close(fig)
 
 
@@ -1058,16 +952,12 @@ def test_specshow_logfreq_pitch_same_axes():
     plt.close(fig)
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["cqt_svara"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["cqt_svara"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_display_cqt_svara(C, sr):
+def test_display_cqt_svara(C):
 
     Camp = librosa.amplitude_to_db(C, ref=np.max)
-    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(
-        nrows=5, sharex=True, figsize=(10, 10)
-    )
+    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(nrows=5, sharex=True, figsize=(10, 10))
 
     librosa.display.specshow(Camp, y_axis="cqt_svara", Sa=261, ax=ax1)
     librosa.display.specshow(Camp, y_axis="cqt_svara", Sa=440, ax=ax2)
@@ -1085,15 +975,11 @@ def test_display_cqt_svara(C, sr):
     return fig
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["fft_svara"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["fft_svara"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-def test_display_fft_svara(S_abs, sr):
+def test_display_fft_svara(S_abs):
 
-    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(
-        nrows=5, sharex=True, figsize=(10, 10)
-    )
+    fig, (ax1, ax2, ax3, ax4, ax5) = plt.subplots(nrows=5, sharex=True, figsize=(10, 10))
 
     librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=261, ax=ax1)
     librosa.display.specshow(S_abs, y_axis="fft_svara", Sa=440, ax=ax2)
@@ -1111,9 +997,7 @@ def test_display_fft_svara(S_abs, sr):
     return fig
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["nfft_odd"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["nfft_odd"], extensions=["png"], style=STYLE)
 def test_display_fft_odd():
 
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, sharex=True, figsize=(10, 10))
@@ -1137,9 +1021,7 @@ def test_display_fft_odd():
     return fig
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["nfft_odd_ftempo"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["nfft_odd_ftempo"], extensions=["png"], style=STYLE)
 def test_display_fourier_tempo_odd():
 
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, sharex=True, figsize=(10, 10))
@@ -1179,7 +1061,7 @@ def test_same_axes(x_axis, y_axis, xlim, ylim, out):
 
 def test_auto_aspect():
 
-    fig, ax = plt.subplots(nrows=5)
+    _fig, ax = plt.subplots(nrows=5)
 
     # Ensure auto aspect by default
     for axi in ax:
@@ -1196,15 +1078,11 @@ def test_auto_aspect():
     assert ax[1].get_aspect() == 1.0
 
     # Same axes and auto_aspect=False should retain auto scaling
-    librosa.display.specshow(
-        X, x_axis="chroma", y_axis="chroma", auto_aspect=False, ax=ax[2]
-    )
+    librosa.display.specshow(X, x_axis="chroma", y_axis="chroma", auto_aspect=False, ax=ax[2])
     assert ax[2].get_aspect() == "auto"
 
     # Different extents with auto_aspect=True should retain auto scaling
-    librosa.display.specshow(
-        X[:2, :], x_axis="chroma", y_axis="chroma", auto_aspect=True, ax=ax[3]
-    )
+    librosa.display.specshow(X[:2, :], x_axis="chroma", y_axis="chroma", auto_aspect=True, ax=ax[3])
     assert ax[3].get_aspect() == "auto"
 
     # different axes with compatible types and auto_aspect=True should force equal scaling
@@ -1228,24 +1106,16 @@ def test_specshow_unicode_true(C, sr):
     librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[0], unicode=True)
 
     # Hindustani, kafi thaat
-    librosa.display.specshow(
-        chroma, y_axis="chroma_h", Sa=5, ax=ax[1], thaat="kafi", unicode=True
-    )
+    librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[1], thaat="kafi", unicode=True)
 
     # Carnatic, mela 22
-    librosa.display.specshow(
-        chroma, y_axis="chroma_c", Sa=5, ax=ax[2], mela=22, unicode=True
-    )
+    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=5, ax=ax[2], mela=22, unicode=True)
 
     # Carnatic, mela 1
-    librosa.display.specshow(
-        chroma, y_axis="chroma_c", Sa=7, ax=ax[3], mela=1, unicode=True
-    )
+    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=7, ax=ax[3], mela=1, unicode=True)
 
     # Pitches
-    librosa.display.specshow(
-        chroma, y_axis="chroma", ax=ax[4], key="Eb:maj", unicode=True
-    )
+    librosa.display.specshow(chroma, y_axis="chroma", ax=ax[4], key="Eb:maj", unicode=True)
 
     for axi in ax:
         axi.label_outer()
@@ -1269,23 +1139,15 @@ def test_specshow_unicode_false(C, sr):
     librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[0], unicode=False)
 
     # Hindustani, kafi thaat
-    librosa.display.specshow(
-        chroma, y_axis="chroma_h", Sa=5, ax=ax[1], thaat="kafi", unicode=False
-    )
+    librosa.display.specshow(chroma, y_axis="chroma_h", Sa=5, ax=ax[1], thaat="kafi", unicode=False)
 
     # Carnatic, mela 22
-    librosa.display.specshow(
-        chroma, y_axis="chroma_c", Sa=5, ax=ax[2], mela=22, unicode=False
-    )
+    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=5, ax=ax[2], mela=22, unicode=False)
 
     # Carnatic, mela 1
-    librosa.display.specshow(
-        chroma, y_axis="chroma_c", Sa=7, ax=ax[3], mela=1, unicode=False
-    )
+    librosa.display.specshow(chroma, y_axis="chroma_c", Sa=7, ax=ax[3], mela=1, unicode=False)
 
-    librosa.display.specshow(
-        chroma, y_axis="chroma", ax=ax[4], key="Eb:maj", unicode=False
-    )
+    librosa.display.specshow(chroma, y_axis="chroma", ax=ax[4], key="Eb:maj", unicode=False)
 
     for axi in ax:
         axi.label_outer()
@@ -1294,7 +1156,7 @@ def test_specshow_unicode_false(C, sr):
 
 
 def test_waveshow_disconnect(y, sr):
-    fig, ax = plt.subplots()
+    _fig, ax = plt.subplots()
     ad = librosa.display.waveshow(y=y, sr=sr, ax=ax)
 
     assert ad.envelope is not None
@@ -1321,7 +1183,6 @@ def test_waveshow_disconnect(y, sr):
 
     # Envelope should now still be visible
     assert ad.envelope.get_visible() and not ad.steps.get_visible()
-
 
 
 def test_adaptor_destructor():
@@ -1353,9 +1214,10 @@ def test_adaptor_destructor():
     ref = _run_test()
     gc.collect()
     assert ref() is None
-    
+
+
 def test_waveshow_deladaptor(y, sr):
-    fig, ax = plt.subplots()
+    _fig, ax = plt.subplots()
     ad = librosa.display.waveshow(y=y, sr=sr, ax=ax)
 
     envelope, steps = ad.envelope, ad.steps
@@ -1385,9 +1247,7 @@ def test_waveshow_deladaptor(y, sr):
     assert envelope.get_visible() and not steps.get_visible()
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_vqt"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["specshow_vqt"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_vqt(C):
 
@@ -1396,30 +1256,24 @@ def test_specshow_vqt(C):
     librosa.display.specshow(C, y_axis="vqt_hz", intervals="ji5", ax=ax[0])
     librosa.display.specshow(C, y_axis="vqt_note", intervals="ji5", ax=ax[1])
     librosa.display.specshow(C, y_axis="vqt_fjs", intervals="ji5", ax=ax[2])
-    librosa.display.specshow(
-        C, y_axis="vqt_fjs", intervals="ji5", ax=ax[3], unicode=False
-    )
+    librosa.display.specshow(C, y_axis="vqt_fjs", intervals="ji5", ax=ax[3], unicode=False)
 
     for _ax in ax:
         _ax.set(ylim=[55, 165])
     return fig
 
 
-@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_chromafjs_badintervals():
-    formatter = librosa.display.ChromaFJSFormatter(intervals=dict())
+    with pytest.raises(librosa.ParameterTypeError):
+        librosa.display.ChromaFJSFormatter(intervals=dict())
 
 
-@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_chromafjs_badbpo():
-    formatter = librosa.display.ChromaFJSFormatter(
-        intervals="ji3", bins_per_octave=None
-    )
+    with pytest.raises(librosa.ParameterTypeError):
+        librosa.display.ChromaFJSFormatter(intervals="ji3", bins_per_octave=None)
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["chroma_fjs"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["chroma_fjs"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_chromafjs(C, sr):
 
@@ -1436,23 +1290,23 @@ def test_specshow_chromafjs(C, sr):
     return fig
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_vqt_hz_nointervals(C, sr):
-    librosa.display.specshow(C, sr=sr, y_axis="vqt_hz")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display.specshow(C, sr=sr, y_axis="vqt_hz")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("vscale", ["dBFS[1]", "dBFS[power,1]"])
 def test_parse_vscale_dbfs_ref(vscale):
     # This should raise an error because a reference value is
     # not allowed with dBFS
-    librosa.display._parse_vscale(vscale)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display._parse_vscale(vscale)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("vscale", ["bad string", "dB[gibberish]", "dBFS[gibberish]"])
 def test_parse_vscale_fail(vscale):
-    librosa.display._parse_vscale(vscale)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display._parse_vscale(vscale)
 
 
 @pytest.mark.parametrize(
@@ -1472,44 +1326,30 @@ def test_parse_vscale(vscale, mode, scale_type, ref):
     assert librosa.display._parse_vscale(vscale) == (mode, scale_type, ref)
 
 
-@pytest.mark.mpl_image_compare(
-    baseline_images=["specshow_vscale"], extensions=["png"], style=STYLE
-)
+@pytest.mark.mpl_image_compare(baseline_images=["specshow_vscale"], extensions=["png"], style=STYLE)
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
 def test_specshow_vscale(S):
     fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True, figsize=(12, 12))
 
     # first column is dB, dBFS, dB with ref value
-    i1 = librosa.display.specshow(
-        S, vscale="dB", y_axis="log", x_axis="time", ax=ax[0, 0]
-    )
+    i1 = librosa.display.specshow(S, vscale="dB", y_axis="log", x_axis="time", ax=ax[0, 0])
     fig.colorbar(i1, ax=ax[0, 0])
     ax[0, 0].set_title("dB")
-    i2 = librosa.display.specshow(
-        S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[1, 0]
-    )
+    i2 = librosa.display.specshow(S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[1, 0])
     fig.colorbar(i2, ax=ax[1, 0])
     ax[1, 0].set_title("dBFS")
-    i3 = librosa.display.specshow(
-        S, vscale="dB[1e-2]", y_axis="log", x_axis="time", ax=ax[2, 0]
-    )
+    i3 = librosa.display.specshow(S, vscale="dB[1e-2]", y_axis="log", x_axis="time", ax=ax[2, 0])
     fig.colorbar(i3, ax=ax[2, 0])
     ax[2, 0].set_title("dB, ref=1e-2")
 
     # second column is dB[power], dBFS[power], dB[power] with ref value
-    i4 = librosa.display.specshow(
-        S, vscale="dB[power]", y_axis="log", x_axis="time", ax=ax[0, 1]
-    )
+    i4 = librosa.display.specshow(S, vscale="dB[power]", y_axis="log", x_axis="time", ax=ax[0, 1])
     fig.colorbar(i4, ax=ax[0, 1])
     ax[0, 1].set_title("dB power")
-    i5 = librosa.display.specshow(
-        S, vscale="dBFS[power]", y_axis="log", x_axis="time", ax=ax[1, 1]
-    )
+    i5 = librosa.display.specshow(S, vscale="dBFS[power]", y_axis="log", x_axis="time", ax=ax[1, 1])
     fig.colorbar(i5, ax=ax[1, 1])
     ax[1, 1].set_title("dBFS power")
-    i6 = librosa.display.specshow(
-        S, vscale="dB[power,1e-2]", y_axis="log", x_axis="time", ax=ax[2, 1]
-    )
+    i6 = librosa.display.specshow(S, vscale="dB[power,1e-2]", y_axis="log", x_axis="time", ax=ax[2, 1])
     fig.colorbar(i6, ax=ax[2, 1])
     ax[2, 1].set_title("dB power, ref=1e-2")
 
@@ -1525,7 +1365,7 @@ def test_specshow_vscale(S):
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_specshow_vscale_phase():
     # Create a chirp
     sr = 22050
@@ -1544,21 +1384,15 @@ def test_specshow_vscale_phase():
 
     # phase, phase difference, and phase difference transpose
     # we use alpha channels here to avoid test failures for unstable phase estimates in quiet regions
-    i7 = librosa.display.specshow(
-        S, vscale="phase", y_axis="log", x_axis="time", ax=ax[0], alpha=alpha
-    )
+    i7 = librosa.display.specshow(S, vscale="phase", y_axis="log", x_axis="time", ax=ax[0], alpha=alpha)
     fig.colorbar(i7, ax=ax[0])
     ax[0].set_title("phase")
 
-    i8 = librosa.display.specshow(
-        S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1], alpha=alpha
-    )
+    i8 = librosa.display.specshow(S, vscale="dphase", y_axis="log", x_axis="time", ax=ax[1], alpha=alpha)
     fig.colorbar(i8, ax=ax[1])
     ax[1].set_title("dphase")
 
-    i9 = librosa.display.specshow(
-        S.T, vscale="dphase_t", x_axis="log", y_axis="time", ax=ax[2], alpha=alpha.T
-    )
+    i9 = librosa.display.specshow(S.T, vscale="dphase_t", x_axis="log", y_axis="time", ax=ax[2], alpha=alpha.T)
     fig.colorbar(i9, ax=ax[2])
     ax[2].set_title("dphase_t")
 
@@ -1575,9 +1409,7 @@ def test_colorbar_db(S):
     fig, ax = plt.subplots(nrows=2)
     i1 = librosa.display.specshow(S, vscale="dB", y_axis="log", x_axis="time", ax=ax[0])
     librosa.display.colorbar_db(i1, ax=ax[0])
-    i2 = librosa.display.specshow(
-        S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[1]
-    )
+    i2 = librosa.display.specshow(S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[1])
     librosa.display.colorbar_db(i2, ax=ax[1], label="dBFS")
     return fig
 
@@ -1592,13 +1424,9 @@ def test_colorbar_phase(S):
     alpha = np.abs(S)
     alpha /= np.max(alpha)
     fig, ax = plt.subplots(nrows=2)
-    i1 = librosa.display.specshow(
-        S, vscale="phase", y_axis="log", x_axis="time", alpha=alpha, ax=ax[0]
-    )
+    i1 = librosa.display.specshow(S, vscale="phase", y_axis="log", x_axis="time", alpha=alpha, ax=ax[0])
     librosa.display.colorbar_phase(i1, ax=ax[0])
-    i2 = librosa.display.specshow(
-        S, vscale="dphase", y_axis="log", x_axis="time", alpha=alpha, ax=ax[1]
-    )
+    i2 = librosa.display.specshow(S, vscale="dphase", y_axis="log", x_axis="time", alpha=alpha, ax=ax[1])
     librosa.display.colorbar_phase(i2, ax=ax[1], label="Δ radians")
     return fig
 
@@ -1606,10 +1434,10 @@ def test_colorbar_phase(S):
 def test_axis_fallbacks():
     fig, ax = plt.subplots()
     im_real = ax.imshow(np.array([[0.0, 1.0], [1.0, 0.0]]))
-    
+
     librosa.display.colorbar_db(im_real, ax=None)
     librosa.display.colorbar_phase(im_real, ax=None)
-    
+
     mock_line = mlines.Line2D([0], [0])
     mock_poly = mcoll.PolyCollection([])
     adaptor = librosa.display.signal.AdaptiveWaveplot(
@@ -1617,20 +1445,20 @@ def test_axis_fallbacks():
     )
     proxy = adaptor.label_proxy_
     handler = librosa.display.signal._AdaptiveWaveplotHandler()
-    
+
     # plot something so legend isn't totally empty, just in case
-    ax.plot([0,1],[0,1], label="test")
+    ax.plot([0, 1], [0, 1], label="test")
     leg = ax.legend()
-    
+
     handler.create_artists(
-        leg, 
+        leg,
         orig_handle=proxy,
-        xdescent=0, 
-        ydescent=0, 
-        width=10, 
-        height=10, 
-        fontsize=10, 
-        trans=mtransforms.IdentityTransform()
+        xdescent=0,
+        ydescent=0,
+        width=10,
+        height=10,
+        fontsize=10,
+        trans=mtransforms.IdentityTransform(),
     )
     plt.close(fig)
 
@@ -1669,9 +1497,7 @@ def test_diverging_scales(S_signed):
     fig.colorbar(i2, ax=ax[0, 1])
 
     # Diverging scale with specified cmap_div (auto norm)
-    i3 = librosa.display.specshow(
-        S_signed, y_axis="log", x_axis="time", ax=ax[1, 0], cmap_div="Spectral_r"
-    )
+    i3 = librosa.display.specshow(S_signed, y_axis="log", x_axis="time", ax=ax[1, 0], cmap_div="Spectral_r")
     ax[1, 0].set_title("Specified cmap_div (auto norm)")
     fig.colorbar(i3, ax=ax[1, 0])
 
@@ -1731,9 +1557,7 @@ def test_oct3(S_abs, C):
 
     librosa.display.specshow(C, vscale="dBFS", y_axis="cqt_oct3", ax=ax[1, 0])
 
-    librosa.display.specshow(
-        C, vscale="dBFS", y_axis="vqt_oct3", ax=ax[1, 1], intervals="equal"
-    )
+    librosa.display.specshow(C, vscale="dBFS", y_axis="vqt_oct3", ax=ax[1, 1], intervals="equal")
 
     # Put the ticks on the right just to reduce crowding
     ax[0, 1].yaxis.tick_right()
@@ -1762,9 +1586,7 @@ def test_oct3_minor(S_abs, C):
 
     librosa.display.specshow(C, vscale="dBFS", y_axis="cqt_oct3", ax=ax[1, 0])
 
-    librosa.display.specshow(
-        C, vscale="dBFS", y_axis="vqt_oct3", ax=ax[1, 1], intervals="equal"
-    )
+    librosa.display.specshow(C, vscale="dBFS", y_axis="vqt_oct3", ax=ax[1, 1], intervals="equal")
 
     # Put the ticks on the right just to reduce crowding
     ax[0, 1].yaxis.tick_right()
@@ -1787,15 +1609,9 @@ def test_wavebars(y, sr):
     fig, ax = plt.subplots(nrows=6, layout="tight", figsize=(8, 12))
 
     librosa.display.wavebars(y, sr=sr, ax=ax[0], label="100")
-    librosa.display.wavebars(
-        y, sr=sr, color="C1", n_bars=150, rounding_ratio=0, ax=ax[1], label="150 square"
-    )
-    librosa.display.wavebars(
-        y, sr=sr, color="C2", n_bars=50, ax=ax[2], invert=True, label="50 inverted"
-    )
-    librosa.display.wavebars(
-        y, sr=sr, color="C3", gap_ratio=0, ax=ax[3], label="no gap"
-    )
+    librosa.display.wavebars(y, sr=sr, color="C1", n_bars=150, rounding_ratio=0, ax=ax[1], label="150 square")
+    librosa.display.wavebars(y, sr=sr, color="C2", n_bars=50, ax=ax[2], invert=True, label="50 inverted")
+    librosa.display.wavebars(y, sr=sr, color="C3", gap_ratio=0, ax=ax[3], label="no gap")
     librosa.display.wavebars(
         y,
         sr=sr,
@@ -1846,9 +1662,7 @@ def test_wavebars_transpose(y, sr):
         invert=True,
         label="50 inverted",
     )
-    librosa.display.wavebars(
-        y, sr=sr, color="C3", gap_ratio=0, transpose=True, ax=ax[3], label="no gap"
-    )
+    librosa.display.wavebars(y, sr=sr, color="C3", gap_ratio=0, transpose=True, ax=ax[3], label="no gap")
     librosa.display.wavebars(
         y,
         sr=sr,
@@ -1861,9 +1675,7 @@ def test_wavebars_transpose(y, sr):
         ax=ax[4],
         label="offset 30, invert dark",
     )
-    librosa.display.wavebars(
-        y, sr=sr, ax=ax[5], color="C5", axis="ms", transpose=True, label="time_ms"
-    )
+    librosa.display.wavebars(y, sr=sr, ax=ax[5], color="C5", axis="ms", transpose=True, label="time_ms")
 
     for axi in ax.flat:
         axi.legend()
@@ -1887,24 +1699,24 @@ def test_wavebars_nbars_validation():
 def test_wavef0(y, sr):
     fig, ax = plt.subplots(nrows=2, figsize=(8, 6))
 
-    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
-                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")), fmax=float(librosa.note_to_hz("C7")), sr=sr)
     # Waveform with f0
-    librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label='waveshow')
-    ax[0].legend(loc='lower right')
+    librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label="waveshow")
+    ax[0].legend(loc="lower right")
 
     # Waveform with f0 and pitch
-    librosa.display.wavef0(y, sr=sr, f0=f0, method='wavebars', freq_axis='cqt_hz',
-                           color='C1', ax=ax[1], label='wavebars')
-    ax[1].legend(loc='lower right')
+    librosa.display.wavef0(
+        y, sr=sr, f0=f0, method="wavebars", freq_axis="cqt_hz", color="C1", ax=ax[1], label="wavebars"
+    )
+    ax[1].legend(loc="lower right")
     return fig
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_legend_for_axes_no_axes():
     fig = plt.figure()
     try:
-        librosa.display.legend_for_axes(fig=fig)
+        with pytest.raises(librosa.ParameterValueError):
+            librosa.display.legend_for_axes(fig=fig)
     finally:
         plt.close(fig)
 
@@ -1928,12 +1740,12 @@ def test_legend_for_axes_scalar():
     plt.close(fig)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_legend_for_axes_mismatched_figures():
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
     try:
-        librosa.display.legend_for_axes([ax1, ax2])
+        with pytest.raises(librosa.ParameterValueError):
+            librosa.display.legend_for_axes([ax1, ax2])
     finally:
         plt.close(fig1)
         plt.close(fig2)
@@ -1943,9 +1755,7 @@ def test_legend_for_axes_explicit_bbox():
     fig, ax = plt.subplots()
     ax.plot([0, 1], [0, 1], label="a")
 
-    leg = librosa.display.legend_for_axes(
-        [ax], loc="center", bbox_to_anchor=(0.5, 0.5, 0.2, 0.2)
-    )
+    leg = librosa.display.legend_for_axes([ax], loc="center", bbox_to_anchor=(0.5, 0.5, 0.2, 0.2))
 
     assert leg is not None
     plt.close(fig)
@@ -1978,18 +1788,16 @@ def test_legend_for_axes_right():
 def test_wavef0_transpose(y, sr):
     fig, ax = plt.subplots(ncols=2, figsize=(6, 8))
 
-    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
-                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")), fmax=float(librosa.note_to_hz("C7")), sr=sr)
     # Waveform with f0
-    librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label='waveshow',
-                           transpose=True)
-    ax[0].legend(loc='lower right')
+    librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax[0], label="waveshow", transpose=True)
+    ax[0].legend(loc="lower right")
 
     # Waveform with f0 and pitch
-    librosa.display.wavef0(y, sr=sr, f0=f0, method='wavebars', freq_axis='cqt_hz',
-                           color='C1', ax=ax[1], label='wavebars',
-                           transpose=True)
-    ax[1].legend(loc='lower right')
+    librosa.display.wavef0(
+        y, sr=sr, f0=f0, method="wavebars", freq_axis="cqt_hz", color="C1", ax=ax[1], label="wavebars", transpose=True
+    )
+    ax[1].legend(loc="lower right")
     return fig
 
 
@@ -2011,11 +1819,10 @@ def test_legend_for_axes_left():
     return fig
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_wavef0_bad_method(y, sr):
-    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
-                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
-    librosa.display.wavef0(y, f0=f0, sr=sr, method='bad_method')
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")), fmax=float(librosa.note_to_hz("C7")), sr=sr)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display.wavef0(y, f0=f0, sr=sr, method="bad_method")
 
 
 @pytest.mark.parametrize(
@@ -2049,11 +1856,10 @@ def test_transformf0_roundtrip(transpose, values):
     assert np.allclose(recovered, values, rtol=1e-12, atol=1e-12)
 
 
-@pytest.mark.parametrize('f0', [np.zeros(5), np.linspace(-10, -5, num=5), np.linspace(-10, 10,
-                                                                                      num=5)])
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
+@pytest.mark.parametrize("f0", [np.zeros(5), np.linspace(-10, -5, num=5), np.linspace(-10, 10, num=5)])
 def test_transformf0_bad_f0(f0):
-    librosa.display.Transformf0(f0=f0, sr=1, hop_length=1)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display.Transformf0(f0=f0, sr=1, hop_length=1)
 
 
 @pytest.mark.mpl_image_compare(
@@ -2184,9 +1990,9 @@ def test_resolve_multiplot(func, dims, badprops):
     assert badprops_out == badprops
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_resolve_multiplot_bad():
-    librosa.display._resolve_multiplot("bogus")  # type: ignore
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display._resolve_multiplot("bogus")  # type: ignore
 
 
 @pytest.mark.parametrize(
@@ -2202,9 +2008,7 @@ def test_resolve_multiplot_bad():
     ],
 )
 def test_mp_get_layout(data, dims, orient, axshape, nrows, ncols, multi_input):
-    axshape_out, nrows_out, ncols_out, multi_input_out = librosa.display._mp_get_layout(
-        data, dims, orient
-    )
+    axshape_out, nrows_out, ncols_out, multi_input_out = librosa.display._mp_get_layout(data, dims, orient)
 
     assert axshape_out == axshape
     assert nrows_out == nrows
@@ -2212,19 +2016,19 @@ def test_mp_get_layout(data, dims, orient, axshape, nrows, ncols, multi_input):
     assert multi_input_out is multi_input
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_mp_get_layout_bad_orient():
-    librosa.display._mp_get_layout((np.zeros((3, 10)),), dims=1, orient="q")  # type: ignore
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display._mp_get_layout((np.zeros((3, 10)),), dims=1, orient="q")  # type: ignore
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_mp_get_layout_no_data():
-    librosa.display._mp_get_layout(tuple(), dims=1, orient="v")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.display._mp_get_layout(tuple(), dims=1, orient="v")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_mp_get_layout_bad_axshape():
-    librosa.display._mp_get_layout((np.zeros((2, 3, 4, 10)),), dims=1, orient="v")
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.display._mp_get_layout((np.zeros((2, 3, 4, 10)),), dims=1, orient="v")
 
 
 @pytest.mark.parametrize(
@@ -2292,11 +2096,7 @@ def test_mp_setup_axes_with_fig():
     ],
 )
 def test_mp_setup_axes_array_input(orient, axes_in_shape, axes_out_shape, output_shape):
-    fig, axes_in = (
-        plt.subplots(*axes_in_shape)
-        if len(axes_in_shape) == 2
-        else plt.subplots(axes_in_shape[0])
-    )
+    fig, axes_in = plt.subplots(*axes_in_shape) if len(axes_in_shape) == 2 else plt.subplots(axes_in_shape[0])
 
     fig_out, axes_out, out_shape = librosa.display._mp_setup_axes(
         axes=np.asarray(axes_in),
@@ -2337,21 +2137,21 @@ def test_mp_setup_axes_scalar_input():
     plt.close(fig)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_mp_setup_axes_bad_shape():
     fig, axes = plt.subplots(nrows=2)
     try:
-        librosa.display._mp_setup_axes(
-            axes=np.asarray(axes),
-            fig=None,
-            fig_kw=None,
-            nrows=3,
-            ncols=1,
-            axshape=(3,),
-            orient="v",
-            sharex=True,
-            sharey=True,
-        )
+        with pytest.raises(librosa.ParameterShapeError):
+            librosa.display._mp_setup_axes(
+                axes=np.asarray(axes),
+                fig=None,
+                fig_kw=None,
+                nrows=3,
+                ncols=1,
+                axshape=(3,),
+                orient="v",
+                sharex=True,
+                sharey=True,
+            )
     finally:
         plt.close(fig)
 
@@ -2383,7 +2183,7 @@ def test_mp_setup_labels_none():
     assert labels.shape == (2, 2)
     assert labels.dtype == object
     # Comparison to None here is vectorized, so == is correct, not `is`.
-    assert np.all(labels == None)
+    assert np.all(labels == None)  # noqa: E711
 
 
 def test_mp_setup_labels_values():
@@ -2392,9 +2192,9 @@ def test_mp_setup_labels_values():
     assert np.array_equal(labels, np.asarray(["a", "b", "c"], dtype=object))
 
 
-@pytest.mark.xfail(raises=ValueError)
 def test_mp_setup_labels_bad_shape():
-    librosa.display._mp_setup_labels(["a", "b"], (2, 2))
+    with pytest.raises(ValueError):
+        librosa.display._mp_setup_labels(["a", "b"], (2, 2))
 
 
 def test_mp_setup_prop_group_none():
@@ -2427,9 +2227,9 @@ def test_mp_setup_prop_group_custom():
     assert np.array_equal(groups, np.array([[0, 1], [0, 1]]))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_mp_setup_prop_group_bad_shape():
-    librosa.display._mp_setup_prop_group([0, 1, 2], (2, 2))
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.display._mp_setup_prop_group([0, 1, 2], (2, 2))
 
 
 def test_mp_setup_properties_shared():
@@ -2457,7 +2257,7 @@ def test_mp_setup_properties_badprops():
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_multiplot_wave_constructed_axes_stacked(y, sr):
     y_stack = np.stack([y, y[::-1]])
 
@@ -2480,7 +2280,7 @@ def test_multiplot_wave_constructed_axes_stacked(y, sr):
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_multiplot_wave_constructed_axes_variadic(y, sr):
     librosa.display.multiplot(
         "waveshow",
@@ -2502,7 +2302,7 @@ def test_multiplot_wave_constructed_axes_variadic(y, sr):
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_multiplot_wave_existing_axes_stacked(y, sr):
     y_stack = np.stack([y, y[::-1]])
     fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 6))
@@ -2527,8 +2327,8 @@ def test_multiplot_wave_existing_axes_stacked(y, sr):
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
-def test_multiplot_img_existing_axes_variadic(y, sr):
+@pytest.mark.usefixtures("text_placeholders")
+def test_multiplot_img_existing_axes_variadic(y):
     y_stack = np.stack([y, y[::-1]])
     D = np.abs(librosa.stft(y_stack))
     fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True, figsize=(8, 6))
@@ -2555,7 +2355,7 @@ def test_multiplot_img_existing_axes_variadic(y, sr):
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_multiplot_axes_slices_mixed(y, sr):
     y_stack = np.stack([y, y[::-1]])
     D = np.abs(librosa.stft(y_stack))
@@ -2614,12 +2414,11 @@ def test_multiplot_axes_slices_mixed(y, sr):
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_highlight_spectrum(S_abs, y, sr):
 
     fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
-    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
-                            fmax=float(librosa.note_to_hz("C7")), sr=sr)
+    f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")), fmax=float(librosa.note_to_hz("C7")), sr=sr)
     times = librosa.times_like(f0, sr=sr)
     # Column 1: dark color spectrogram
     # Column 2: light color spectrogram
@@ -2628,22 +2427,17 @@ def test_highlight_spectrum(S_abs, y, sr):
     # Row 3: explicit highlight
 
     for i in range(3):
-        librosa.display.specshow(S_abs, x_axis='time', y_axis='log', cmap='magma',
-                                 vscale='dBFS', ax=ax[i, 0])
-        librosa.display.specshow(S_abs, x_axis='time', y_axis='log', cmap='magma_r',
-                                 vscale='dBFS', ax=ax[i, 1])
+        librosa.display.specshow(S_abs, x_axis="time", y_axis="log", cmap="magma", vscale="dBFS", ax=ax[i, 0])
+        librosa.display.specshow(S_abs, x_axis="time", y_axis="log", cmap="magma_r", vscale="dBFS", ax=ax[i, 1])
 
     for j in range(2):
         hl1 = librosa.display.highlight(ax=ax[0, j], linewidth=5, alpha=1.0)
         ax[0, j].plot(times, f0, path_effects=hl1)
 
-        hl2 = librosa.display.highlight(ax=ax[1, j], linewidth=5, alpha=1.0,
-                                        bright_color="green",
-                                        dark_color="pink")
+        hl2 = librosa.display.highlight(ax=ax[1, j], linewidth=5, alpha=1.0, bright_color="green", dark_color="pink")
         ax[1, j].plot(times, f0, path_effects=hl2)
 
-        hl3 = librosa.display.highlight(ax=ax[2, j], linewidth=5, alpha=1.0,
-                                        color="yellow")
+        hl3 = librosa.display.highlight(ax=ax[2, j], linewidth=5, alpha=1.0, color="yellow")
         ax[2, j].plot(times, f0, path_effects=hl3)
 
     for axi in ax.flat:
@@ -2658,13 +2452,13 @@ def test_highlight_spectrum(S_abs, y, sr):
     style=STYLE,
 )
 @pytest.mark.xfail(OLD_FT, reason=f"freetype version < {FT_VERSION}", strict=False)
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_highlight_axescolor():
 
     fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
 
     x = np.linspace(0, 5, num=100)
-    y = x * np.exp(-x**2)
+    y = x * np.exp(-(x**2))
 
     # First axes has light face color, do nothing
     # Second axes has a dark face color
@@ -2693,17 +2487,17 @@ def test_highlight_artist():
 
     fig, ax = plt.subplots()
     x = np.linspace(0, 5, num=100)
-    y = x * np.exp(-x**2)
+    y = x * np.exp(-(x**2))
 
     hl = librosa.display.highlight(ax=ax, linewidth=5)
-    ax.plot(x, y, path_effects=hl, label='path_effects=')
+    ax.plot(x, y, path_effects=hl, label="path_effects=")
 
-    lines2 = ax.plot(x, 1 + y, label='highlight(artist)')[0]
+    lines2 = ax.plot(x, 1 + y, label="highlight(artist)")[0]
     librosa.display.highlight(artist=lines2, linewidth=5)
 
     hl2 = librosa.display.highlight(linewidth=5)
-    ax.plot(x, 2 + y, path_effects=hl2, label='path_effects= + gca')
-    ax.legend(loc='upper right')
+    ax.plot(x, 2 + y, path_effects=hl2, label="path_effects= + gca")
+    ax.legend(loc="upper right")
     return fig
 
 
@@ -2712,7 +2506,7 @@ def test_highlight_artist():
     extensions=["png"],
     style=STYLE,
 )
-@pytest.mark.usefixtures('text_placeholders')
+@pytest.mark.usefixtures("text_placeholders")
 def test_specshow_boolean_norm(S_abs):
 
     fig, ax = plt.subplots(nrows=4, sharex=True, sharey=True)
@@ -2723,19 +2517,21 @@ def test_specshow_boolean_norm(S_abs):
     # and cmap is not provided, so we have to infer
     i1 = librosa.display.specshow(
         librosa.amplitude_to_db(S_abs),
-        y_axis="log_oct3", x_axis='time',
+        y_axis="log_oct3",
+        x_axis="time",
         ax=ax[0],
-        cmap_seq='gray_r',
-        cmap_bool='gray_r',
+        cmap_seq="gray_r",
+        cmap_bool="gray_r",
     )
     fig.colorbar(i1)
 
     # Now do the same thing, but explicitly using the same
     # colormap objects for seq and bool
-    cmap = mcm['Reds']
+    cmap = mcm["Reds"]
     i2 = librosa.display.specshow(
         librosa.amplitude_to_db(S_abs),
-        y_axis="log_oct3", x_axis='time',
+        y_axis="log_oct3",
+        x_axis="time",
         ax=ax[1],
         cmap_seq=cmap,
         cmap_bool=cmap,
@@ -2745,7 +2541,8 @@ def test_specshow_boolean_norm(S_abs):
     # Now use binary data for input
     i3 = librosa.display.specshow(
         S_abs > 0.5,
-        y_axis="log_oct3", x_axis='time',
+        y_axis="log_oct3",
+        x_axis="time",
         ax=ax[2],
     )
     fig.colorbar(i3)
@@ -2753,11 +2550,12 @@ def test_specshow_boolean_norm(S_abs):
     # And finally test the override case
     i4 = librosa.display.specshow(
         S_abs > 0.5,
-        y_axis="log_oct3", x_axis='time',
+        y_axis="log_oct3",
+        x_axis="time",
         ax=ax[3],
         cmap=None,
-        cmap_seq='gray_r',
-        cmap_bool='gray_r',
+        cmap_seq="gray_r",
+        cmap_bool="gray_r",
     )
     fig.colorbar(i4)
 
@@ -2765,12 +2563,14 @@ def test_specshow_boolean_norm(S_abs):
         axi.label_outer()
     return fig
 
+
 def test_wavef0_validation_method(y, sr):
     fig, ax = plt.subplots()
     f0 = np.array([440.0, 440.0])
     with pytest.raises(librosa.ParameterValueError):
-        librosa.display.wavef0(y, sr=sr, f0=f0, method='invalid', ax=ax)
+        librosa.display.wavef0(y, sr=sr, f0=f0, method="invalid", ax=ax)
     plt.close(fig)
+
 
 def test_wavef0_empty_audio(sr):
     fig, ax = plt.subplots()
@@ -2779,12 +2579,14 @@ def test_wavef0_empty_audio(sr):
         librosa.display.wavef0(np.empty(0), sr=sr, f0=f0, ax=ax)
     plt.close(fig)
 
+
 def test_wavef0_methods(y, sr):
     fig, ax = plt.subplots()
     f0 = np.array([440.0, 440.0])
-    librosa.display.wavef0(y, sr=sr, f0=f0, method='waveshow', ax=ax)
-    librosa.display.wavef0(y, sr=sr, f0=f0, method='wavebars', ax=ax)
+    librosa.display.wavef0(y, sr=sr, f0=f0, method="waveshow", ax=ax)
+    librosa.display.wavef0(y, sr=sr, f0=f0, method="wavebars", ax=ax)
     plt.close(fig)
+
 
 def test_wavef0_orientation(y, sr):
     fig, ax = plt.subplots()
@@ -2792,6 +2594,7 @@ def test_wavef0_orientation(y, sr):
     librosa.display.wavef0(y, sr=sr, f0=f0, transpose=False, ax=ax)
     librosa.display.wavef0(y, sr=sr, f0=f0, transpose=True, ax=ax)
     plt.close(fig)
+
 
 def test_wavef0_spectrogram_overlay(y, sr):
     fig, ax = plt.subplots()
@@ -2807,5 +2610,3 @@ def test_adaptive_formatter_base_not_implemented():
     formatter = AdaptiveFormatterBase()
     with pytest.raises(librosa.LibrosaNotImplementedError):
         formatter._format_tick(0.0)
-
-

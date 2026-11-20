@@ -2,23 +2,22 @@
 # -*- encoding: utf-8 -*-
 # CREATED:2015-02-14 19:13:49 by Brian McFee <brian.mcfee@nyu.edu>
 """Unit tests for time and frequency conversion"""
-import os
-import sys
 
-try:
+import contextlib
+import os
+
+with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
-except KeyError:
-    pass
 
 import warnings
-import librosa
+
 import numpy as np
 import pytest
 
+import librosa
 
-@pytest.mark.parametrize(
-    "frames", [100, np.arange(10.0), np.ones((3, 3))], ids=["0d", "1d", "2d"]
-)
+
+@pytest.mark.parametrize("frames", [100, np.arange(10.0), np.ones((3, 3))], ids=["0d", "1d", "2d"])
 @pytest.mark.parametrize("hop_length", [512, 1024])
 @pytest.mark.parametrize("n_fft", [None, 1024])
 def test_frames_to_samples(frames, hop_length, n_fft):
@@ -102,9 +101,7 @@ def test_time_to_frames(sr, hop_length, n_fft):
 @pytest.mark.parametrize("bins_per_octave", [12, 24, 36])
 def test_octs_to_hz(tuning, bins_per_octave):
     freq = np.asarray([55, 110, 220, 440]) * (2.0 ** (tuning / bins_per_octave))
-    freq_out = librosa.octs_to_hz(
-        [1, 2, 3, 4], tuning=tuning, bins_per_octave=bins_per_octave
-    )
+    freq_out = librosa.octs_to_hz([1, 2, 3, 4], tuning=tuning, bins_per_octave=bins_per_octave)
 
     assert np.allclose(freq, freq_out)
 
@@ -194,9 +191,9 @@ def test_note_to_midi(tuning, accidental, octave, round_midi: bool):
     assert midi[0] == midi_true
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_note_to_midi_badnote():
-    librosa.note_to_midi("does not pass")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.note_to_midi("does not pass")
 
 
 @pytest.mark.parametrize(
@@ -247,9 +244,9 @@ def test_note_to_hz(tuning, octave, accidental, round_midi: bool):
     assert np.allclose(hz[0], hz_true)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_note_to_hz_badnote():
-    librosa.note_to_hz("does not pass")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.note_to_hz("does not pass")
 
 
 def test_note_to_hz_default():
@@ -272,9 +269,9 @@ def test_midi_to_note(midi_num, note, octave, cents):
     assert note_out == note
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_midi_to_note_cents_nooctave():
-    librosa.midi_to_note(24.25, octave=False, cents=True)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.midi_to_note(24.25, octave=False, cents=True)
 
 
 def test_midi_to_hz():
@@ -304,9 +301,9 @@ def test_hz_to_note(hz, note, octave, cents):
         assert np.all(note_out == note)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_hz_to_note_cents_nooctave():
-    librosa.hz_to_note(440, octave=False, cents=True)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.hz_to_note(440, octave=False, cents=True)
 
 
 @pytest.mark.parametrize("sr", [8000, 22050])
@@ -354,9 +351,7 @@ def test_fft_frequencies_dtype_values_unchanged():
 @pytest.mark.parametrize("tuning", [-0.25, 0.0, 0.25])
 def test_cqt_frequencies(n_bins, fmin, bins_per_octave, tuning):
 
-    freqs = librosa.cqt_frequencies(
-        n_bins, fmin=fmin, bins_per_octave=bins_per_octave, tuning=tuning
-    )
+    freqs = librosa.cqt_frequencies(n_bins, fmin=fmin, bins_per_octave=bins_per_octave, tuning=tuning)
 
     # Make sure we get the right number of bins
     assert len(freqs) == n_bins
@@ -393,9 +388,7 @@ def test_tempo_frequencies(n_bins, hop_length, sr):
 @pytest.mark.parametrize("hop_length", [256, 512])
 @pytest.mark.parametrize("win_length", [192, 384])
 def test_fourier_tempo_frequencies(sr, hop_length, win_length):
-    freqs = librosa.fourier_tempo_frequencies(
-        sr=sr, hop_length=hop_length, win_length=win_length
-    )
+    freqs = librosa.fourier_tempo_frequencies(sr=sr, hop_length=hop_length, win_length=win_length)
 
     # DC
     assert freqs[0] == 0
@@ -506,9 +499,7 @@ def test_frequency_weighting_underflow_warning():
     # Ensure that four warnings are issued for the following call
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        librosa.multi_frequency_weighting(
-            np.arange(3), kinds="ABCD", min_db=None
-        )
+        librosa.multi_frequency_weighting(np.arange(3), kinds="ABCD", min_db=None)
         assert len(w) == 4
         # Ensure that all warnings are about non-finite values
         for warn in w:
@@ -518,9 +509,7 @@ def test_frequency_weighting_underflow_warning():
     # Now ensure that no warnings are issued when min_db is set
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        librosa.multi_frequency_weighting(
-            np.arange(3), kinds="ABCD", min_db=-100
-        )
+        librosa.multi_frequency_weighting(np.arange(3), kinds="ABCD", min_db=-100)
         assert len(w) == 0, "No warnings should be issued with min_db set"
 
 
@@ -530,7 +519,6 @@ def test_samples_like():
     hop_length = 512
 
     for axis in (0, 1, 2, -1):
-
         samples = librosa.samples_like(X, hop_length=hop_length, axis=axis)
 
         expected_samples = np.arange(X.shape[axis]) * hop_length
@@ -557,7 +545,6 @@ def test_times_like():
     hop_length = 512
 
     for axis in (0, 1, 2, -1):
-
         times = librosa.times_like(X, sr=sr, hop_length=hop_length, axis=axis)
 
         expected_times = np.arange(X.shape[axis]) * hop_length / float(sr)
@@ -598,9 +585,7 @@ def test_blocks_to_frames(blocks, block_length):
 @pytest.mark.parametrize("block_length", [1, 4, 8])
 @pytest.mark.parametrize("hop_length", [1, 512])
 def test_blocks_to_samples(blocks, block_length, hop_length):
-    samples = librosa.blocks_to_samples(
-        blocks, block_length=block_length, hop_length=hop_length
-    )
+    samples = librosa.blocks_to_samples(blocks, block_length=block_length, hop_length=hop_length)
 
     # Check shape
     assert samples.ndim == np.asarray(blocks).ndim
@@ -618,18 +603,14 @@ def test_blocks_to_samples(blocks, block_length, hop_length):
 @pytest.mark.parametrize("hop_length", [1, 512])
 @pytest.mark.parametrize("sr", [22050, 44100])
 def test_blocks_to_time(blocks, block_length, hop_length, sr):
-    times = librosa.blocks_to_time(
-        blocks, block_length=block_length, hop_length=hop_length, sr=sr
-    )
+    times = librosa.blocks_to_time(blocks, block_length=block_length, hop_length=hop_length, sr=sr)
 
     # Check shape
     assert times.ndim == np.asarray(blocks).ndim
     assert times.size == np.asarray(blocks).size
 
     # Check values
-    assert np.allclose(
-        times, np.asanyarray(blocks) * hop_length * block_length / float(sr)
-    )
+    assert np.allclose(times, np.asanyarray(blocks) * hop_length * block_length / float(sr))
 
     # Check dtype
     assert np.issubdtype(times.dtype, float)
@@ -642,9 +623,7 @@ def test_blocks_to_time(blocks, block_length, hop_length, sr):
 @pytest.mark.parametrize("Sa", [12])
 def test_midi_to_svara_h(midi, Sa, abbr, octave, unicode):
 
-    svara = librosa.midi_to_svara_h(
-        midi, Sa=Sa, abbr=abbr, octave=octave, unicode=unicode
-    )
+    svara = librosa.midi_to_svara_h(midi, Sa=Sa, abbr=abbr, octave=octave, unicode=unicode)
 
     svara = np.asarray(svara)
     assert len(svara) == len(midi)
@@ -718,9 +697,7 @@ def test_note_to_svara_h(note, Sa, abbr, octave, unicode, result):
 @pytest.mark.parametrize("mela", range(1, 72, 7))
 def test_midi_to_svara_c(midi, Sa, mela, abbr, octave, unicode):
 
-    svara = librosa.midi_to_svara_c(
-        midi, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode
-    )
+    svara = librosa.midi_to_svara_c(midi, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode)
 
     svara = np.asarray(svara)
     assert len(svara) == len(midi)
@@ -768,9 +745,7 @@ def test_midi_to_svara_c(midi, Sa, mela, abbr, octave, unicode):
     ],
 )
 def test_hz_to_svara_c(freq, Sa, mela, abbr, octave, unicode, result):
-    s = librosa.hz_to_svara_c(
-        freq, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode
-    )
+    s = librosa.hz_to_svara_c(freq, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode)
     assert s == result
 
 
@@ -790,9 +765,7 @@ def test_hz_to_svara_c(freq, Sa, mela, abbr, octave, unicode, result):
     ],
 )
 def test_note_to_svara_c(note, Sa, mela, abbr, octave, unicode, result):
-    s = librosa.note_to_svara_c(
-        note, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode
-    )
+    s = librosa.note_to_svara_c(note, Sa=Sa, mela=mela, abbr=abbr, octave=octave, unicode=unicode)
     assert s == result
 
 

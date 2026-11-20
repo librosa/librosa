@@ -2,21 +2,21 @@
 # CREATED:2013-03-11 18:14:30 by Brian McFee <brm2132@columbia.edu>
 #  unit tests for librosa.onset
 
-import pytest
-from contextlib import nullcontext as dnr
-
 # Disable cache
 import os
+from contextlib import nullcontext as dnr
+from contextlib import suppress
 
-try:
+import pytest
+
+with suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
-except KeyError:
-    pass
 
 
-import warnings
+import itertools
 
 import numpy as np
+
 import librosa
 
 
@@ -29,9 +29,7 @@ def ysr():
     return y, sr
 
 
-@pytest.mark.parametrize(
-    "feature", [None, librosa.feature.melspectrogram, librosa.feature.chroma_stft]
-)
+@pytest.mark.parametrize("feature", [None, librosa.feature.melspectrogram, librosa.feature.chroma_stft])
 @pytest.mark.parametrize("n_fft", [512, 2048])
 @pytest.mark.parametrize("hop_length", [256, 512])
 @pytest.mark.parametrize("center", [False, True])
@@ -119,21 +117,21 @@ def test_onset_strength_aggregate(melspec_sr):
     assert np.all(oenv_mean <= oenv_max)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_strength_badlag(ysr):
     y, sr = ysr
-    librosa.onset.onset_strength(y=y, sr=sr, lag=0)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.onset.onset_strength(y=y, sr=sr, lag=0)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_strength_badmax(ysr):
     y, sr = ysr
-    librosa.onset.onset_strength(y=y, sr=sr, max_size=0)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.onset.onset_strength(y=y, sr=sr, max_size=0)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_strength_noinput():
-    librosa.onset.onset_strength(y=None, S=None)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.onset.onset_strength(y=None, S=None)
 
 
 @pytest.fixture(scope="module")
@@ -149,9 +147,7 @@ def melspec_sr(ysr):
 @pytest.mark.parametrize("detrend", [False, True])
 @pytest.mark.parametrize("center", [False, True])
 @pytest.mark.parametrize("aggregate", [None, np.max])
-def test_onset_strength_spectrogram(
-    melspec_sr, feature, n_fft, hop_length, detrend, center, aggregate
-):
+def test_onset_strength_spectrogram(melspec_sr, feature, n_fft, hop_length, detrend, center, aggregate):
     S, sr = melspec_sr
     oenv = librosa.onset.onset_strength(
         y=None,
@@ -179,14 +175,10 @@ def test_onset_strength_spectrogram(
 @pytest.mark.parametrize("aggregate", [np.mean, np.max])
 def test_onset_strength_multi_noagg(melspec_sr, lag, aggregate):
 
-    S, sr = melspec_sr
+    S, _sr = melspec_sr
     # We only test with max_size=1 here to make the sub-band slicing test simple
-    odf_multi = librosa.onset.onset_strength_multi(
-        S=S, lag=lag, max_size=1, aggregate=False
-    )
-    odf_mean = librosa.onset.onset_strength_multi(
-        S=S, lag=lag, max_size=1, aggregate=aggregate
-    )
+    odf_multi = librosa.onset.onset_strength_multi(S=S, lag=lag, max_size=1, aggregate=False)
+    odf_mean = librosa.onset.onset_strength_multi(S=S, lag=lag, max_size=1, aggregate=aggregate)
 
     # With no aggregation, output shape should = input shape
     assert odf_multi.shape == S.shape
@@ -204,15 +196,13 @@ def channels(melspec_sr):
 @pytest.mark.parametrize("lag", [1, 2, 3])
 def test_onset_strength_multi(melspec_sr, lag, channels):
 
-    S, sr = melspec_sr
+    S, _sr = melspec_sr
     # We only test with max_size=1 here to make the sub-band slicing test simple
-    odf_multi = librosa.onset.onset_strength_multi(
-        S=S, lag=lag, max_size=1, channels=channels
-    )
+    odf_multi = librosa.onset.onset_strength_multi(S=S, lag=lag, max_size=1, channels=channels)
 
     assert len(odf_multi) == len(channels) - 1
 
-    for i, (s, t) in enumerate(zip(channels, channels[1:])):
+    for i, (s, t) in enumerate(itertools.pairwise(channels)):
         odf_single = librosa.onset.onset_strength(S=S[s:t], lag=lag, max_size=1)
         assert np.allclose(odf_single, odf_multi[i])
 
@@ -255,9 +245,9 @@ def test_onset_detect_real(ysr, oenv, hop, bt, normalize):
         assert np.all(onsets < len(oenv))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_detect_nosignal():
-    librosa.onset.onset_detect(y=None, onset_envelope=None)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.onset.onset_detect(y=None, onset_envelope=None)
 
 
 @pytest.mark.parametrize("sr", [4000])
@@ -319,7 +309,7 @@ def test_onset_units(ysr, hop_length, units, ctx):
             t2 = librosa.frames_to_time(b2, sr=sr, hop_length=hop_length)
 
         else:
-            assert False
+            raise AssertionError()
 
         assert np.allclose(t1, t2)
 
@@ -336,9 +326,7 @@ def energy(ysr, hop, request):
 def test_onset_backtrack(ysr, oenv, hop, energy):
     y, sr = ysr
 
-    onsets = librosa.onset.onset_detect(
-        y=y, sr=sr, onset_envelope=oenv, hop_length=hop, backtrack=False
-    )
+    onsets = librosa.onset.onset_detect(y=y, sr=sr, onset_envelope=oenv, hop_length=hop, backtrack=False)
 
     # Test backtracking
     onsets_bt = librosa.onset.onset_backtrack(onsets, energy)
@@ -353,35 +341,31 @@ def test_onset_backtrack(ysr, oenv, hop, energy):
     assert np.all(energy[onsets_bt] <= energy[np.maximum(0, onsets_bt - 1)])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_backtrack_fail(ysr):
     y, sr = ysr
-    onsets = librosa.onset.onset_detect(y=y, sr=sr, backtrack=True, sparse=False)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.onset.onset_detect(y=y, sr=sr, backtrack=True, sparse=False)
 
 
-def test_onset_sparse(ysr, oenv, hop, energy):
+def test_onset_sparse(ysr, oenv, hop):
     y, sr = ysr
 
-    onsets = librosa.onset.onset_detect(
-        y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=True
-    )
-    onsetsd = librosa.onset.onset_detect(
-        y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=False
-    )
+    onsets = librosa.onset.onset_detect(y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=True)
+    onsetsd = librosa.onset.onset_detect(y=y, sr=sr, onset_envelope=oenv, hop_length=hop, sparse=False)
 
     assert np.allclose(onsets, np.flatnonzero(onsetsd))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_onset_strength_noagg():
     S = np.zeros((3, 3))
-    librosa.onset.onset_strength(S=S, aggregate=False)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.onset.onset_strength(S=S, aggregate=False)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_onset_strength_badref():
     S = np.zeros((3, 3))
-    librosa.onset.onset_strength(S=S, ref=S[:, :2])
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.onset.onset_strength(S=S, ref=S[:, :2])
 
 
 def test_onset_strength_multi_ref(rng):
@@ -391,9 +375,7 @@ def test_onset_strength_multi_ref(rng):
     # Test with a null reference
     null_ref = np.zeros_like(S)
 
-    onsets = librosa.onset.onset_strength_multi(
-        S=S, ref=null_ref, aggregate=False, center=False
-    )
+    onsets = librosa.onset.onset_strength_multi(S=S, ref=null_ref, aggregate=False, center=False)
 
     # since the reference is zero everywhere, S - ref = S
     # past the setup phase (first frame)
@@ -436,9 +418,7 @@ def test_onset_strength_mode_validation(ysr):
 
     # Real feature with mode="complex"
     with pytest.raises(librosa.ParameterValueError):
-        librosa.onset.onset_strength(
-            y=y, sr=sr, mode="complex", feature=librosa.feature.melspectrogram
-        )
+        librosa.onset.onset_strength(y=y, sr=sr, mode="complex", feature=librosa.feature.melspectrogram)
 
 
 def test_onset_strength_complex_linear_phase(rng):
@@ -554,24 +534,18 @@ def test_onset_strength_complex_multichannel(rng):
 
     # onset_strength_multi with sub-band channels
     channels = [0, 128, 256, 512, 1025]
-    odf = librosa.onset.onset_strength_multi(
-        y=y, sr=sr, mode="complex", channels=channels
-    )
+    odf = librosa.onset.onset_strength_multi(y=y, sr=sr, mode="complex", channels=channels)
     assert odf.shape == (2, len(channels) - 1, 44)
 
 
 def test_onset_strength_complex_dtypes_and_edge_cases(rng):
     # complex64 -> float32
-    S32 = (
-        rng.standard_normal(size=(10, 20)) + 1j * rng.standard_normal(size=(10, 20))
-    ).astype(np.complex64)
+    S32 = (rng.standard_normal(size=(10, 20)) + 1j * rng.standard_normal(size=(10, 20))).astype(np.complex64)
     res32 = librosa.onset.onset_strength(S=S32)
     assert res32.dtype == np.float32
 
     # complex128 -> float64
-    S64 = (
-        rng.standard_normal(size=(10, 20)) + 1j * rng.standard_normal(size=(10, 20))
-    ).astype(np.complex128)
+    S64 = (rng.standard_normal(size=(10, 20)) + 1j * rng.standard_normal(size=(10, 20))).astype(np.complex128)
     res64 = librosa.onset.onset_strength(S=S64)
     assert res64.dtype == np.float64
 
@@ -591,4 +565,3 @@ def test_onset_strength_complex_dtypes_and_edge_cases(rng):
     res_nocenter = librosa.onset.onset_strength(S=S_short, lag=2, center=False)
     assert res_nocenter.shape == (3,)
     assert np.all(res_nocenter == 0.0)
-

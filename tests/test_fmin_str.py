@@ -1,4 +1,5 @@
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,9 +27,7 @@ def test_chirp_str():
 
 def test_clicks_str():
     clk_str = librosa.clicks(click_freq="A5", times=[0.05], length=2205, sr=22050)
-    clk_num = librosa.clicks(
-        click_freq=librosa.note_to_hz("A5"), times=[0.05], length=2205, sr=22050
-    )
+    clk_num = librosa.clicks(click_freq=librosa.note_to_hz("A5"), times=[0.05], length=2205, sr=22050)
     assert np.allclose(clk_str, clk_num)
 
 
@@ -44,9 +43,7 @@ def test_vqt_fmin_str():
     y = np.random.default_rng(0).standard_normal(4096)
     sr = 22050
     V_str = librosa.vqt(y, sr=sr, fmin="C2", n_bins=24, intervals="equal")
-    V_ref = librosa.vqt(
-        y, sr=sr, fmin=librosa.note_to_hz("C2"), n_bins=24, intervals="equal"
-    )
+    V_ref = librosa.vqt(y, sr=sr, fmin=librosa.note_to_hz("C2"), n_bins=24, intervals="equal")
     assert np.allclose(V_str, V_ref)
 
 
@@ -78,18 +75,14 @@ def test_icqt_fmin_str():
 def test_yin_fmin_fmax_str():
     y = librosa.chirp(fmin=440, fmax=880, duration=0.5, sr=22050)
     f0_str = librosa.yin(y, fmin="A4", fmax="A5", sr=22050)
-    f0_ref = librosa.yin(
-        y, fmin=librosa.note_to_hz("A4"), fmax=librosa.note_to_hz("A5"), sr=22050
-    )
+    f0_ref = librosa.yin(y, fmin=librosa.note_to_hz("A4"), fmax=librosa.note_to_hz("A5"), sr=22050)
     assert np.allclose(f0_str, f0_ref)
 
 
 def test_pyin_fmin_fmax_str():
     y = librosa.chirp(fmin=440, fmax=880, duration=0.5, sr=22050)
     f0_str, v_str, p_str = librosa.pyin(y, fmin="A4", fmax="A5", sr=22050)
-    f0_ref, v_ref, p_ref = librosa.pyin(
-        y, fmin=librosa.note_to_hz("A4"), fmax=librosa.note_to_hz("A5"), sr=22050
-    )
+    f0_ref, v_ref, p_ref = librosa.pyin(y, fmin=librosa.note_to_hz("A4"), fmax=librosa.note_to_hz("A5"), sr=22050)
     assert np.allclose(f0_str, f0_ref, equal_nan=True)
     assert np.allclose(v_str, v_ref)
     assert np.allclose(p_str, p_ref)
@@ -116,17 +109,13 @@ def test_cqt_frequencies_str():
 
 def test_mel_frequencies_str():
     freqs_str = librosa.mel_frequencies(128, fmin="C2", fmax="C7")
-    freqs_num = librosa.mel_frequencies(
-        128, fmin=librosa.note_to_hz("C2"), fmax=librosa.note_to_hz("C7")
-    )
+    freqs_num = librosa.mel_frequencies(128, fmin=librosa.note_to_hz("C2"), fmax=librosa.note_to_hz("C7"))
     assert np.allclose(freqs_str, freqs_num)
 
 
 def test_interval_frequencies_str():
     freqs_str = librosa.interval_frequencies(12, fmin="A1", intervals="equal")
-    freqs_num = librosa.interval_frequencies(
-        12, fmin=librosa.note_to_hz("A1"), intervals="equal"
-    )
+    freqs_num = librosa.interval_frequencies(12, fmin=librosa.note_to_hz("A1"), intervals="equal")
     assert np.allclose(freqs_str, freqs_num)
 
 
@@ -149,9 +138,7 @@ def test_filters_mel_str():
 
 def test_filters_cq_to_chroma_str():
     f_str = librosa.filters.cq_to_chroma(n_input=84, bins_per_octave=12, fmin="C2")
-    f_num = librosa.filters.cq_to_chroma(
-        n_input=84, bins_per_octave=12, fmin=librosa.note_to_hz("C2")
-    )
+    f_num = librosa.filters.cq_to_chroma(n_input=84, bins_per_octave=12, fmin=librosa.note_to_hz("C2"))
     assert np.allclose(f_str, f_num)
 
 
@@ -170,16 +157,12 @@ def test_spectral_features_str():
 
     # chroma_vqt
     vqt_str = librosa.feature.chroma_vqt(y=y, sr=sr, fmin="C2", intervals="equal")
-    vqt_num = librosa.feature.chroma_vqt(
-        y=y, sr=sr, fmin=librosa.note_to_hz("C2"), intervals="equal"
-    )
+    vqt_num = librosa.feature.chroma_vqt(y=y, sr=sr, fmin=librosa.note_to_hz("C2"), intervals="equal")
     assert np.allclose(vqt_str, vqt_num)
 
     # spectral_contrast
     con_str = librosa.feature.spectral_contrast(y=y, sr=sr, fmin="C3")
-    con_num = librosa.feature.spectral_contrast(
-        y=y, sr=sr, fmin=librosa.note_to_hz("C3")
-    )
+    con_num = librosa.feature.spectral_contrast(y=y, sr=sr, fmin=librosa.note_to_hz("C3"))
     assert np.allclose(con_str, con_num)
 
 
@@ -208,41 +191,31 @@ def test_shepard_scale_str():
 
 def test_shepard_risset_glissando_str():
     g_str = librosa.shepard_risset_glissando("C4", duration=0.1, sr=22050)
-    g_num = librosa.shepard_risset_glissando(
-        librosa.note_to_hz("C4"), duration=0.1, sr=22050
-    )
+    g_num = librosa.shepard_risset_glissando(librosa.note_to_hz("C4"), duration=0.1, sr=22050)
     assert np.allclose(g_str, g_num)
 
 
 def test_filters_logfrequency_str():
     f_str = librosa.filters.logfrequency(sr=22050, n_fft=2048, fmin="C2")
-    f_num = librosa.filters.logfrequency(
-        sr=22050, n_fft=2048, fmin=librosa.note_to_hz("C2")
-    )
+    f_num = librosa.filters.logfrequency(sr=22050, n_fft=2048, fmin=librosa.note_to_hz("C2"))
     assert np.allclose(f_str, f_num)
 
 
 def test_filters_pitch_str():
     f_str = librosa.filters.pitch_filterbank(sr=22050, n_fft=2048, fmin="C2")
-    f_num = librosa.filters.pitch_filterbank(
-        sr=22050, n_fft=2048, fmin=librosa.note_to_hz("C2")
-    )
+    f_num = librosa.filters.pitch_filterbank(sr=22050, n_fft=2048, fmin=librosa.note_to_hz("C2"))
     assert np.allclose(f_str, f_num)
 
 
 def test_filters_pitch_basis_str():
     b_str = librosa.filters.pitch_basis(sr=22050, n_fft=2048, fmin="C2")
-    b_num = librosa.filters.pitch_basis(
-        sr=22050, n_fft=2048, fmin=librosa.note_to_hz("C2")
-    )
+    b_num = librosa.filters.pitch_basis(sr=22050, n_fft=2048, fmin=librosa.note_to_hz("C2"))
     assert np.allclose(b_str, b_num)
 
 
 def test_filters_pitch_to_chroma_str():
     p_str = librosa.filters.pitch_to_chroma(n_input=84, bins_per_octave=12, fmin="C2")
-    p_num = librosa.filters.pitch_to_chroma(
-        n_input=84, bins_per_octave=12, fmin=librosa.note_to_hz("C2")
-    )
+    p_num = librosa.filters.pitch_to_chroma(n_input=84, bins_per_octave=12, fmin=librosa.note_to_hz("C2"))
     assert np.allclose(p_str, p_num)
 
 
@@ -250,9 +223,7 @@ def test_spectral_logfrequency_spectrogram_str():
     y = np.random.default_rng(0).standard_normal(4096)
     sr = 22050
     s_str = librosa.feature.logfrequency_spectrogram(y=y, sr=sr, fmin="C2")
-    s_num = librosa.feature.logfrequency_spectrogram(
-        y=y, sr=sr, fmin=librosa.note_to_hz("C2")
-    )
+    s_num = librosa.feature.logfrequency_spectrogram(y=y, sr=sr, fmin=librosa.note_to_hz("C2"))
     assert np.allclose(s_str, s_num)
 
 
@@ -260,9 +231,7 @@ def test_spectral_pitch_spectrogram_str():
     y = np.random.default_rng(0).standard_normal(4096)
     sr = 22050
     s_str = librosa.feature.pitch_spectrogram(y=y, sr=sr, fmin="C2")
-    s_num = librosa.feature.pitch_spectrogram(
-        y=y, sr=sr, fmin=librosa.note_to_hz("C2")
-    )
+    s_num = librosa.feature.pitch_spectrogram(y=y, sr=sr, fmin=librosa.note_to_hz("C2"))
     assert np.allclose(s_str, s_num)
 
 
@@ -271,9 +240,7 @@ def test_decompose_pitch_nmf_str():
     sr = 22050
     S = np.abs(librosa.stft(y))
     c_str, a_str = librosa.decompose.pitch_nmf(S, sr=sr, fmin="C2", max_iter=5)
-    c_num, a_num = librosa.decompose.pitch_nmf(
-        S, sr=sr, fmin=librosa.note_to_hz("C2"), max_iter=5
-    )
+    c_num, a_num = librosa.decompose.pitch_nmf(S, sr=sr, fmin=librosa.note_to_hz("C2"), max_iter=5)
     assert np.allclose(c_str, c_num)
     assert np.allclose(a_str, a_num)
 
@@ -283,9 +250,7 @@ def test_inverse_logfrequency_str():
     L = rng.uniform(0.1, 1.0, size=(84, 10))
     sr = 22050
     s_str = librosa.feature.inverse.logfrequency_to_stft(L, sr=sr, fmin="C2")
-    s_num = librosa.feature.inverse.logfrequency_to_stft(
-        L, sr=sr, fmin=librosa.note_to_hz("C2")
-    )
+    s_num = librosa.feature.inverse.logfrequency_to_stft(L, sr=sr, fmin=librosa.note_to_hz("C2"))
     assert np.allclose(s_str, s_num)
 
 
@@ -294,9 +259,7 @@ def test_inverse_pitch_str():
     P = rng.uniform(0.1, 1.0, size=(84, 10))
     sr = 22050
     s_str = librosa.feature.inverse.pitch_to_stft(P, sr=sr, fmin="C2")
-    s_num = librosa.feature.inverse.pitch_to_stft(
-        P, sr=sr, fmin=librosa.note_to_hz("C2")
-    )
+    s_num = librosa.feature.inverse.pitch_to_stft(P, sr=sr, fmin=librosa.note_to_hz("C2"))
     assert np.allclose(s_str, s_num)
 
 

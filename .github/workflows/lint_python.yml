@@ -41,9 +41,17 @@ jobs:
       shell: bash -el {0}
       run: codespell --ignore-words-list="ba,trough,ue,Shepard" --skip="*demo.ipynb,./AUTHORS.md,./docs/changelog.rst"
 
+    - name: Formatting check on tests
+      shell: bash -el {0}
+      run: ruff format --check tests
+
     - name: Linting check
       shell: bash -el {0}
       run: ruff check --output-format=github librosa
+
+    - name: Linting check on tests
+      shell: bash -el {0}
+      run: ruff check --output-format=github tests
 
     - name: Linting check on docs
       shell: bash -el {0}

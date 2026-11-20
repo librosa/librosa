@@ -18,9 +18,7 @@ def test_interp_time_1d():
     res = librosa.interp_time(x, target_times=target_times, times=times, axis=0)
     assert res.shape == (150,)
 
-    ref = scipy.interpolate.interp1d(times, x, axis=0, bounds_error=False, fill_value=0.0)(
-        target_times
-    )
+    ref = scipy.interpolate.interp1d(times, x, axis=0, bounds_error=False, fill_value=0.0)(target_times)
     assert np.allclose(res, ref)
 
 
@@ -31,22 +29,18 @@ def test_interp_time_implicit():
     x = np.ones((10, n_frames))
 
     target_times = np.linspace(0, 1.0, 50)
-    res = librosa.interp_time(
-        x, target_times=target_times, sr=sr, hop_length=hop_length, axis=-1
-    )
+    res = librosa.interp_time(x, target_times=target_times, sr=sr, hop_length=hop_length, axis=-1)
     assert res.shape == (10, 50)
 
     inferred_times = librosa.times_like(x, sr=sr, hop_length=hop_length, axis=-1)
-    ref = librosa.interp_time(
-        x, target_times=target_times, times=inferred_times, axis=-1
-    )
+    ref = librosa.interp_time(x, target_times=target_times, times=inferred_times, axis=-1)
     assert np.allclose(res, ref)
 
 
-def test_interp_time_2d():
+def test_interp_time_2d(rng):
     n_freqs = 32
     n_frames = 64
-    x = np.random.randn(n_freqs, n_frames)
+    x = rng.standard_normal((n_freqs, n_frames))
     times = np.linspace(0, 2.0, n_frames)
     target_times = np.linspace(0, 2.0, 48)
 
@@ -54,14 +48,12 @@ def test_interp_time_2d():
     assert res.shape == (n_freqs, 48)
 
     for i in range(n_freqs):
-        ref_slice = scipy.interpolate.interp1d(
-            times, x[i], bounds_error=False, fill_value=0.0
-        )(target_times)
+        ref_slice = scipy.interpolate.interp1d(times, x[i], bounds_error=False, fill_value=0.0)(target_times)
         assert np.allclose(res[i], ref_slice)
 
 
-def test_interp_time_axes():
-    x = np.random.randn(10, 20, 30)
+def test_interp_time_axes(rng):
+    x = rng.standard_normal((10, 20, 30))
     t = np.linspace(0, 1, 20)
     target_t = np.linspace(0, 1, 15)
 
@@ -76,30 +68,24 @@ def test_interp_frequency_1d():
     x = np.arange(11, dtype=float)
     target_freqs = np.array([250.0, 500.0, 750.0])
 
-    res = librosa.interp_frequency(
-        x, target_freqs=target_freqs, freqs=freqs, axis=0
-    )
+    res = librosa.interp_frequency(x, target_freqs=target_freqs, freqs=freqs, axis=0)
     assert res.shape == (3,)
     assert np.allclose(res, [2.5, 5.0, 7.5])
 
 
-def test_interp_frequency_2d():
+def test_interp_frequency_2d(rng):
     sr = 22050
     n_fft = 2048
     n_frames = 20
-    x = np.random.randn(n_fft // 2 + 1, n_frames)
+    x = rng.standard_normal((n_fft // 2 + 1, n_frames))
     fft_freqs = librosa.fft_frequencies(sr=sr, n_fft=n_fft)
     cqt_freqs = librosa.cqt_frequencies(n_bins=84, fmin=32.7)
 
-    res = librosa.interp_frequency(
-        x, target_freqs=cqt_freqs, freqs=fft_freqs, axis=-2
-    )
+    res = librosa.interp_frequency(x, target_freqs=cqt_freqs, freqs=fft_freqs, axis=-2)
     assert res.shape == (84, n_frames)
 
     for j in range(n_frames):
-        ref_col = scipy.interpolate.interp1d(
-            fft_freqs, x[:, j], bounds_error=False, fill_value=0.0
-        )(cqt_freqs)
+        ref_col = scipy.interpolate.interp1d(fft_freqs, x[:, j], bounds_error=False, fill_value=0.0)(cqt_freqs)
         assert np.allclose(res[:, j], ref_col)
 
 
@@ -113,15 +99,11 @@ def test_interp_fill_value():
     assert np.allclose(res_default, [0.0, 20.0, 0.0])
 
     # Custom fill_value
-    res_custom = librosa.interp_time(
-        x, target_times=target, times=coords, fill_value=-999.0, axis=0
-    )
+    res_custom = librosa.interp_time(x, target_times=target, times=coords, fill_value=-999.0, axis=0)
     assert np.allclose(res_custom, [-999.0, 20.0, -999.0])
 
     # Extrapolate
-    res_extrap = librosa.interp_time(
-        x, target_times=target, times=coords, fill_value="extrapolate", axis=0
-    )
+    res_extrap = librosa.interp_time(x, target_times=target, times=coords, fill_value="extrapolate", axis=0)
     assert np.allclose(res_extrap, [0.0, 20.0, 40.0])
 
 
@@ -130,14 +112,10 @@ def test_interp_kinds():
     x = np.array([0.0, 1.0, 8.0, 27.0])
     target = np.array([0.5, 1.5, 2.5])
 
-    res_linear = librosa.interp_frequency(
-        x, target_freqs=target, freqs=coords, kind="linear", axis=0
-    )
+    res_linear = librosa.interp_frequency(x, target_freqs=target, freqs=coords, kind="linear", axis=0)
     assert np.allclose(res_linear, [0.5, 4.5, 17.5])
 
-    res_nearest = librosa.interp_frequency(
-        x, target_freqs=target, freqs=coords, kind="nearest", axis=0
-    )
+    res_nearest = librosa.interp_frequency(x, target_freqs=target, freqs=coords, kind="nearest", axis=0)
     ref_nearest = scipy.interpolate.interp1d(coords, x, kind="nearest")(target)
     assert np.allclose(res_nearest, ref_nearest)
 
@@ -159,17 +137,13 @@ def test_interp_variable_grids():
 
     # 1. Variable frequencies locked to regular target frequency grid
     target_freqs = np.linspace(100, 2000, 64)
-    mags_f_locked = librosa.interp_frequency(
-        mags, target_freqs=target_freqs, freqs=freqs, axis=-2
-    )
+    mags_f_locked = librosa.interp_frequency(mags, target_freqs=target_freqs, freqs=freqs, axis=-2)
     assert mags_f_locked.shape == (64, mags.shape[-1])
     assert not np.isnan(mags_f_locked).any()
 
     # 2. Variable times locked to regular target time grid
     target_times = np.linspace(0, 0.5, 50)
-    mags_t_locked = librosa.interp_time(
-        mags, target_times=target_times, times=times, axis=-1
-    )
+    mags_t_locked = librosa.interp_time(mags, target_times=target_times, times=times, axis=-1)
     assert mags_t_locked.shape == (mags.shape[-2], 50)
     assert not np.isnan(mags_t_locked).any()
 
@@ -184,15 +158,11 @@ def test_interp_multidim_target():
     target_freqs = np.linspace(10, 90, 5)[:, None] + np.linspace(0, 5, n_frames)[None, :]
     assert target_freqs.shape == (5, n_frames)
 
-    res = librosa.interp_frequency(
-        x, target_freqs=target_freqs, freqs=freqs, axis=-2
-    )
+    res = librosa.interp_frequency(x, target_freqs=target_freqs, freqs=freqs, axis=-2)
     assert res.shape == (5, n_frames)
 
     for t in range(n_frames):
-        ref_t = scipy.interpolate.interp1d(
-            freqs, x[:, t], bounds_error=False, fill_value=0.0
-        )(target_freqs[:, t])
+        ref_t = scipy.interpolate.interp1d(freqs, x[:, t], bounds_error=False, fill_value=0.0)(target_freqs[:, t])
         assert np.allclose(res[:, t], ref_t)
 
 
@@ -212,41 +182,35 @@ def test_interp_validation_and_warnings():
 
     # Incompatible coordinate shape (multidimensional)
     with pytest.raises(ParameterShapeError):
-        librosa.interp_frequency(
-            x, target_freqs=np.ones(5), freqs=np.ones((8, 20)), axis=-2
-        )
+        librosa.interp_frequency(x, target_freqs=np.ones(5), freqs=np.ones((8, 20)), axis=-2)
 
     # Incompatible target coordinates broadcast
     with pytest.raises(ParameterShapeError):
-        librosa.interp_frequency(
-            x, target_freqs=np.ones((5, 12)), freqs=np.ones(10), axis=-2
-        )
+        librosa.interp_frequency(x, target_freqs=np.ones((5, 12)), freqs=np.ones(10), axis=-2)
 
     # Non-unique coordinates warning (1D)
     non_unique_1d = np.array([0, 1, 1, 3, 4, 5, 6, 7, 8, 9])
     with pytest.warns(UserWarning, match="not unique"):
-        librosa.interp_frequency(
-            x, target_freqs=np.ones(5), freqs=non_unique_1d, axis=0
-        )
+        librosa.interp_frequency(x, target_freqs=np.ones(5), freqs=non_unique_1d, axis=0)
 
     # Non-unique coordinates warning (2D)
     non_unique_2d = np.tile(non_unique_1d[:, None], (1, 20))
     with pytest.warns(UserWarning, match="not unique"):
-        librosa.interp_frequency(
-            x, target_freqs=np.ones(5), freqs=non_unique_2d, axis=-2
-        )
+        librosa.interp_frequency(x, target_freqs=np.ones(5), freqs=non_unique_2d, axis=-2)
 
 
 def test_interp_nan_slice_and_spline_fallback():
     # All NaN coordinates for a slice in 2D
     x = np.ones((5, 2))
-    freqs = np.array([
-        [0.0, np.nan],
-        [1.0, np.nan],
-        [2.0, np.nan],
-        [3.0, np.nan],
-        [4.0, np.nan],
-    ])
+    freqs = np.array(
+        [
+            [0.0, np.nan],
+            [1.0, np.nan],
+            [2.0, np.nan],
+            [3.0, np.nan],
+            [4.0, np.nan],
+        ]
+    )
     target = np.array([0.5, 1.5])
     res = librosa.interp_frequency(x, target_freqs=target, freqs=freqs, axis=0, fill_value=-1.0)
     assert res.shape == (2, 2)
@@ -256,13 +220,15 @@ def test_interp_nan_slice_and_spline_fallback():
     assert np.allclose(res[:, 1], [-1.0, -1.0])
 
     # Insufficient points for cubic spline (cubic requires >= 4 points, but we only have 2 finite)
-    freqs_sparse = np.array([
-        [0.0, 0.0],
-        [1.0, 1.0],
-        [2.0, np.nan],
-        [3.0, np.nan],
-        [4.0, np.nan],
-    ])
+    freqs_sparse = np.array(
+        [
+            [0.0, 0.0],
+            [1.0, 1.0],
+            [2.0, np.nan],
+            [3.0, np.nan],
+            [4.0, np.nan],
+        ]
+    )
     res_cubic = librosa.interp_frequency(
         x, target_freqs=target, freqs=freqs_sparse, axis=0, kind="cubic", fill_value=-99.0
     )
@@ -271,4 +237,3 @@ def test_interp_nan_slice_and_spline_fallback():
     assert np.allclose(res_cubic[:, 0], [1.0, 1.0])
     # Column 1 has only 2 points -> ValueError caught, fallback to fill_value
     assert np.allclose(res_cubic[:, 1], [-99.0, -99.0])
-

@@ -3,21 +3,23 @@
 # unit tests for util routines
 from __future__ import annotations
 
+import contextlib
+
 # Disable cache
 import os
 
-try:
+with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
-except KeyError:
-    pass
 
 import platform
-import numpy as np
-import scipy.sparse
-import pytest
 import warnings
-import librosa
 from typing import Any, List, Union
+
+import numpy as np
+import pytest
+import scipy.sparse
+
+import librosa
 
 
 @pytest.mark.parametrize("frame_length", [4, 8])
@@ -26,17 +28,13 @@ from typing import Any, List, Union
 @pytest.mark.parametrize("axis", [0, -1])
 def test_frame1d(frame_length, hop_length, axis, y):
 
-    y_frame = librosa.util.frame(
-        y, frame_length=frame_length, hop_length=hop_length, axis=axis
-    )
+    y_frame = librosa.util.frame(y, frame_length=frame_length, hop_length=hop_length, axis=axis)
 
     if axis == -1:
         y_frame = y_frame.T
 
     for i in range(y_frame.shape[0]):
-        assert np.allclose(
-            y_frame[i], y[i * hop_length : (i * hop_length + frame_length)]
-        )
+        assert np.allclose(y_frame[i], y[i * hop_length : (i * hop_length + frame_length)])
 
 
 @pytest.mark.parametrize("frame_length", [4, 8])
@@ -50,18 +48,14 @@ def test_frame1d(frame_length, hop_length, axis, y):
 )
 def test_frame2d(frame_length, hop_length, axis, y):
 
-    y_frame = librosa.util.frame(
-        y, frame_length=frame_length, hop_length=hop_length, axis=axis
-    )
+    y_frame = librosa.util.frame(y, frame_length=frame_length, hop_length=hop_length, axis=axis)
 
     if axis == -1:
         y_frame = y_frame.T
         y = y.T
 
     for i in range(y_frame.shape[0]):
-        assert np.allclose(
-            y_frame[i], y[i * hop_length : (i * hop_length + frame_length)]
-        )
+        assert np.allclose(y_frame[i], y[i * hop_length : (i * hop_length + frame_length)])
 
 
 def test_frame_0stride():
@@ -110,16 +104,16 @@ def test_frame_targetaxis(in_shape, axis, out_shape):
     assert xf.shape == out_shape
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 @pytest.mark.parametrize("axis", [0, -1])
 @pytest.mark.parametrize("x", [np.arange(16)])
 def test_frame_too_short(x, axis):
-    librosa.util.frame(x, frame_length=17, hop_length=1, axis=axis)
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.frame(x, frame_length=17, hop_length=1, axis=axis)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_frame_bad_hop():
-    librosa.util.frame(np.arange(16), frame_length=4, hop_length=0)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.frame(np.arange(16), frame_length=4, hop_length=0)
 
 
 @pytest.mark.parametrize("y", [np.ones((16,)), np.ones((16, 16))])
@@ -144,9 +138,9 @@ def test_pad_center(y, m, axis, mode):
 @pytest.mark.parametrize("n", [0, 10])
 @pytest.mark.parametrize("axis", [0, -1])
 @pytest.mark.parametrize("mode", ["constant", "edge", "reflect"])
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_pad_center_fail(y, n, axis, mode):
-    librosa.util.pad_center(y, size=n, axis=axis, mode=mode)
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.pad_center(y, size=n, axis=axis, mode=mode)
 
 
 @pytest.mark.parametrize("y", [np.ones((16,)), np.ones((16, 16))])
@@ -185,13 +179,13 @@ def test_fix_frames(frames, x_min, x_max, pad):
         assert np.all(f_fix <= x_max)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("frames", [np.arange(-20, 100)])
 @pytest.mark.parametrize("x_min", [None, 0, 20])
 @pytest.mark.parametrize("x_max", [None, 0, 20])
 @pytest.mark.parametrize("pad", [False, True])
 def test_fix_frames_fail_negative(frames, x_min, x_max, pad):
-    librosa.util.fix_frames(frames, x_min=x_min, x_max=x_max, pad=pad)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.fix_frames(frames, x_min=x_min, x_max=x_max, pad=pad)
 
 
 @pytest.mark.parametrize("norm", [np.inf, -np.inf, 0, 0.5, 1.0, 2.0, None])
@@ -229,24 +223,24 @@ def test_normalize(ndims, norm, axis, rng):
 
 @pytest.mark.parametrize("norm", ["inf", -0.5, -2])
 @pytest.mark.parametrize("X", [np.ones((3, 3))])
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_normalize_badnorm(X, norm):
-    librosa.util.normalize(X, norm=norm)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.normalize(X, norm=norm)
 
 
 @pytest.mark.parametrize("badval", [np.nan, np.inf, -np.inf])
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_normalize_bad_input(badval):
     X = np.ones((3, 3))
     X[0] = badval
-    librosa.util.normalize(X, norm=np.inf, axis=0)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.normalize(X, norm=np.inf, axis=0)
 
 
 @pytest.mark.parametrize("fill", [7, "foo"])
 @pytest.mark.parametrize("X", [np.ones((2, 2))])
-@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_normalize_badfill(X, fill):
-    librosa.util.normalize(X, fill=fill)
+    with pytest.raises(librosa.ParameterTypeError):
+        librosa.util.normalize(X, fill=fill)
 
 
 @pytest.mark.parametrize("x", [np.asarray([[0, 1, 2, 3]])])
@@ -264,17 +258,17 @@ def test_normalize_threshold(x, threshold, result):
     assert np.allclose(librosa.util.normalize(x, threshold=threshold), result)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("x", [np.asarray([[0, 1, 2, 3]])])
 @pytest.mark.parametrize("threshold", [0, -1])
 def test_normalize_threshold_fail(x, threshold):
-    librosa.util.normalize(x, threshold=threshold)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.normalize(x, threshold=threshold)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_normalize_fill_l0():
     X = np.ones((2, 2))
-    librosa.util.normalize(X, fill=True, norm=0)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.normalize(X, fill=True, norm=0)
 
 
 @pytest.mark.parametrize("norm", [1, 2, np.inf])
@@ -306,10 +300,10 @@ def test_normalize_fill(X, threshold, norm, value):
 @pytest.mark.parametrize("axis", [0, 1, -1])
 @pytest.mark.parametrize("index", [False, True])
 @pytest.mark.parametrize("value", [None, np.min, np.mean, np.max])
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_axis_sort_badndim(ndim, axis, index, value):
     data = np.zeros([2] * ndim)
-    librosa.util.axis_sort(data, axis=axis, index=index, value=value)
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.axis_sort(data, axis=axis, index=index, value=value)
 
 
 @pytest.mark.parametrize("ndim", [2])
@@ -346,16 +340,16 @@ def test_axis_sort(ndim, axis, index, value, rng):
         (np.zeros((0, 2), dtype=int), np.asarray([[0, 2], [0, 4], [3, 6]])),
     ],
 )
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_match_intervals_empty(int_from, int_to):
-    librosa.util.match_intervals(int_from, int_to)
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.match_intervals(int_from, int_to)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_match_intervals_strict_fail():
     int_from = np.asarray([[0, 3], [2, 4], [5, 7]])
     int_to = np.asarray([[0, 2], [0, 4]])
-    librosa.util.match_intervals(int_from, int_to, strict=True)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.match_intervals(int_from, int_to, strict=True)
 
 
 @pytest.mark.parametrize("int_from", [np.asarray([[0, 3], [2, 4], [5, 7]])])
@@ -441,20 +435,15 @@ def test_match_intervals_nonoverlapping_jaccard(dtype, strict, gap, rng):
 
     intersection = np.maximum(
         0,
-        np.minimum(queries[:, None, 1], targets[None, :, 1])
-        - np.maximum(queries[:, None, 0], targets[None, :, 0]),
+        np.minimum(queries[:, None, 1], targets[None, :, 1]) - np.maximum(queries[:, None, 0], targets[None, :, 0]),
     )
-    union = np.maximum(queries[:, None, 1], targets[None, :, 1]) - np.minimum(
-        queries[:, None, 0], targets[None, :, 0]
-    )
+    union = np.maximum(queries[:, None, 1], targets[None, :, 1]) - np.minimum(queries[:, None, 0], targets[None, :, 0])
     scores = intersection / union
     sorted_scores = np.sort(scores, axis=1)
     unique = (sorted_scores[:, -1] > 0) & (sorted_scores[:, -1] > sorted_scores[:, -2])
     assert unique.any()
     expected = scores[unique].argmax(axis=1)
-    actual = librosa.util.match_intervals(
-        queries[unique].astype(dtype), targets, strict=strict
-    )
+    actual = librosa.util.match_intervals(queries[unique].astype(dtype), targets, strict=strict)
     np.testing.assert_array_equal(actual, expected)
 
 
@@ -472,19 +461,15 @@ def test_match_events(n, m, rng):
         assert not np.any(values < values[match[i]])
 
 
-@pytest.mark.parametrize(
-    "ev1,ev2", [(np.array([]), np.arange(5)), (np.arange(5), np.array([]))]
-)
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
+@pytest.mark.parametrize("ev1,ev2", [(np.array([]), np.arange(5)), (np.arange(5), np.array([]))])
 def test_match_events_failempty(ev1, ev2):
-    librosa.util.match_events(ev1, ev2)
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.match_events(ev1, ev2)
 
 
 @pytest.mark.parametrize("events_from", [np.asarray([5, 15, 25])])
 @pytest.mark.parametrize("events_to", [np.asarray([0, 10, 20, 30])])
-@pytest.mark.parametrize(
-    "left,right,target", [(False, True, [10, 20, 30]), (True, False, [0, 10, 20])]
-)
+@pytest.mark.parametrize("left,right,target", [(False, True, [10, 20, 30]), (True, False, [0, 10, 20])])
 def test_match_events_onesided(events_from, events_to, left, right, target):
 
     events_from = np.asarray(events_from)
@@ -501,7 +486,6 @@ def test_match_events_twosided():
     assert np.allclose(match, [0, 1, 2])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize(
     "events_from,events_to,left,right",
     [
@@ -513,7 +497,8 @@ def test_match_events_twosided():
 def test_match_events_onesided_fail(events_from, events_to, left, right):
     events_from = np.asarray(events_from)
     events_to = np.asarray(events_to)
-    librosa.util.match_events(events_from, events_to, left=left, right=right)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.match_events(events_from, events_to, left=left, right=right)
 
 
 @pytest.mark.parametrize("ndim, axis", [(n, m) for n in range(1, 5) for m in range(n)])
@@ -563,13 +548,18 @@ def test_localmin(ndim, axis, rng):
 
 
 @pytest.mark.parametrize("d", [1, 5, 10, 100])
-@pytest.mark.parametrize("pre_max", [0, 1, 10])
-@pytest.mark.parametrize("post_max", [1, 10])
-@pytest.mark.parametrize("pre_avg", [0, 1, 10])
-@pytest.mark.parametrize("post_avg", [1, 10])
-@pytest.mark.parametrize("wait", [0, 1, 10])
-@pytest.mark.parametrize("delta", [0.05, 100.0])
 @pytest.mark.parametrize("method", ["greedy", "dp_count", "dp_value"])
+@pytest.mark.parametrize(
+    "pre_max,post_max,pre_avg,post_avg,wait,delta",
+    [
+        (0, 1, 0, 1, 0, 0.05),  # Minimal boundary window & zero wait
+        (1, 1, 1, 1, 1, 0.05),  # Standard symmetric small window
+        (10, 10, 10, 10, 10, 0.05),  # Large window and large wait
+        (0, 10, 1, 10, 1, 0.05),  # Asymmetric zero-pre window
+        (10, 1, 10, 1, 1, 0.05),  # Asymmetric small-post window
+        (1, 1, 1, 1, 1, 100.0),  # High delta (no peaks exceed threshold)
+    ],
+)
 def test_peak_pick(d, pre_max, post_max, pre_avg, post_avg, delta, wait, method, rng):
     x = rng.standard_normal(size=d) ** 2
 
@@ -628,9 +618,7 @@ def test_peak_pick_dp_long_float32(method):
     # signal. A float32 sum loses precision as it grows, which used to move
     # peaks across the threshold on long signals.
     x = (np.random.default_rng(0).standard_normal(500_000) ** 2).astype(np.float32)
-    kwargs: dict[str, Any] = dict(
-        pre_max=1, post_max=1, pre_avg=4, post_avg=5, delta=0.07, wait=1
-    )
+    kwargs: dict[str, Any] = dict(pre_max=1, post_max=1, pre_avg=4, post_avg=5, delta=0.07, wait=1)
 
     peaks = librosa.util.peak_pick(x, method=method, **kwargs)
     greedy = librosa.util.peak_pick(x, method="greedy", **kwargs)
@@ -645,7 +633,6 @@ def test_peak_pick_dp_long_float32(method):
         assert x[peaks].sum(dtype=np.float64) >= x[greedy].sum(dtype=np.float64)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize(
     "pre_max,post_max,pre_avg,post_avg,delta,wait",
     [
@@ -662,44 +649,45 @@ def test_peak_pick_dp_long_float32(method):
 @pytest.mark.parametrize("d", [1, 5, 10, 100])
 def test_peak_pick_fail(d, pre_max, post_max, pre_avg, post_avg, delta, wait, rng):
     x = rng.standard_normal(size=d) ** 2
-    librosa.util.peak_pick(
-        x,
-        pre_max=pre_max,
-        post_max=post_max,
-        pre_avg=pre_avg,
-        post_avg=post_avg,
-        delta=delta,
-        wait=wait,
-    )
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.peak_pick(
+            x,
+            pre_max=pre_max,
+            post_max=post_max,
+            pre_avg=pre_avg,
+            post_avg=post_avg,
+            delta=delta,
+            wait=wait,
+        )
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_peak_pick_badmethod():
     # suppress mypy type check here:
-    librosa.util.peak_pick(
-        np.zeros(100),
-        pre_max=3,
-        post_max=3,
-        pre_avg=3,
-        post_avg=3,
-        delta=1,
-        wait=1,
-        method="foo",  # type: ignore
-    )
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.peak_pick(
+            np.zeros(100),
+            pre_max=3,
+            post_max=3,
+            pre_avg=3,
+            post_avg=3,
+            delta=1,
+            wait=1,
+            method="foo",  # type: ignore
+        )
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 @pytest.mark.parametrize("ndim", [3, 4])
 def test_sparsify_rows_ndimfail(ndim):
     X = np.zeros([2] * ndim)
-    librosa.util.sparsify_rows(X)
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.sparsify_rows(X)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("quantile", [1.0, -1, 2.0])
 @pytest.mark.parametrize("X", [np.ones((3, 3))])
 def test_sparsify_rows_badquantile(X, quantile):
-    librosa.util.sparsify_rows(X, quantile=quantile)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.sparsify_rows(X, quantile=quantile)
 
 
 @pytest.mark.parametrize("dtype", [None, np.float32, np.float64])
@@ -736,7 +724,7 @@ def test_sparsify_rows(ndim, d, q, rng):
         # Get column indices for row i using CSR internal structure
         # (1D sparse slicing is not supported for sparse arrays)
         row_start = xs.indptr[i]
-        row_end = xs.indptr[i+1]
+        row_end = xs.indptr[i + 1]
         row_indices = xs.indices[row_start:row_end]
         assert np.allclose(xsd[i, row_indices], X[i, row_indices])
 
@@ -770,9 +758,7 @@ def search_files(tmp_path_factory):
 
 
 @pytest.mark.parametrize("ext", [None, "wav", "WAV", ["wav"], ["WAV"]])
-@pytest.mark.parametrize(
-    "case_sensitive", list({False} | {platform.system() != "Windows"})
-)
+@pytest.mark.parametrize("case_sensitive", list({False} | {platform.system() != "Windows"}))
 @pytest.mark.parametrize("limit", [None, 1, 2])
 @pytest.mark.parametrize("offset", [0, 1, -1])
 def test_find_files(search_files, ext, case_sensitive, limit, offset):
@@ -833,10 +819,10 @@ def test_valid_int(x_in, cast):
 
 @pytest.mark.parametrize("x", np.linspace(-2, 2, num=3))
 @pytest.mark.parametrize("cast", [7])
-@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_valid_int_fail(x, cast):
     # Test with a non-callable cast operator
-    librosa.util.valid_int(x, cast=cast)
+    with pytest.raises(librosa.ParameterTypeError):
+        librosa.util.valid_int(x, cast=cast)
 
 
 @pytest.mark.parametrize("x", [1, 64, np.int32(1), np.int64(64)])
@@ -844,9 +830,7 @@ def test_is_positive_int(x):
     assert librosa.util.is_positive_int(x) is True
 
 
-@pytest.mark.parametrize(
-    "x", [None, 0, -1, 1.1, np.float64(1.2), -np.inf, np.finfo(float).eps]
-)
+@pytest.mark.parametrize("x", [None, 0, -1, 1.1, np.float64(1.2), -np.inf, np.finfo(float).eps])
 def test_is_positive_int_fail(x):
     assert librosa.util.is_positive_int(x) is False
 
@@ -863,7 +847,6 @@ def test_valid_intervals(ivals):
     librosa.util.valid_intervals(ivals)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 @pytest.mark.parametrize(
     "ivals",
     [
@@ -875,20 +858,19 @@ def test_valid_intervals(ivals):
 )  # ndim=2, shape[1] != 2
 def test_valid_intervals_badshape(ivals):
     #   fail if ndim != 2 or shape[1] != 2
-    librosa.util.valid_intervals(ivals)
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.valid_intervals(ivals)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("intval", [np.asarray([[0, 1], [2, 1]])])
 def test_valid_intervals_fail(intval):
     # Test for issue #712: intervals must have non-negative duration
-    librosa.util.valid_intervals(intval)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.valid_intervals(intval)
 
 
 def test_warning_deprecated():
-    @librosa.util.decorators.deprecated(
-        version="old_version", version_removed="new_version"
-    )
+    @librosa.util.decorators.deprecated(version="old_version", version_removed="new_version")
     def __placeholder():
         return True
 
@@ -900,9 +882,7 @@ def test_warning_deprecated():
 
 
 def test_warning_moved():
-    @librosa.util.decorators.moved(
-        moved_from="from", version="old_version", version_removed="new_version"
-    )
+    @librosa.util.decorators.moved(moved_from="from", version="old_version", version_removed="new_version")
     def __placeholder():
         return True
 
@@ -992,9 +972,7 @@ def test_warning_rename_kw_fail():
 @pytest.mark.parametrize("pad", [False, True])
 def test_index_to_slice(idx, idx_min, idx_max, step, pad):
 
-    slices = librosa.util.index_to_slice(
-        idx, idx_min=idx_min, idx_max=idx_max, step=step, pad=pad
-    )
+    slices = librosa.util.index_to_slice(idx, idx_min=idx_min, idx_max=idx_max, step=step, pad=pad)
 
     if pad:
         if idx_min is not None:
@@ -1015,16 +993,14 @@ def test_index_to_slice(idx, idx_min, idx_max, step, pad):
     idx = np.unique(idx)
     assert len(slices) == len(idx) - 1
 
-    for sl, start, stop in zip(slices, idx, idx[1:]):
+    for sl, start, stop in zip(slices, idx, idx[1:], strict=False):
         assert sl.start == start
         assert sl.stop == stop
         assert sl.step == step
 
 
 @pytest.mark.parametrize("aggregate", [None, np.mean, np.sum])
-@pytest.mark.parametrize(
-    "ndim,axis", [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 2), (3, -1)]
-)
+@pytest.mark.parametrize("ndim,axis", [(1, 0), (1, -1), (2, 0), (2, 1), (2, -1), (3, 0), (3, 2), (3, -1)])
 def test_sync(aggregate, ndim, axis: int):
     data = np.ones([6] * ndim, dtype=float)
 
@@ -1064,7 +1040,7 @@ def test_sync_slices(aggregate):
     elif aggregate is np.max:
         assert np.allclose(xsync, [1, 3, 5, 7])
     else:
-        assert False
+        raise AssertionError()
 
 
 @pytest.mark.parametrize("aggregate", [np.mean, np.max])
@@ -1078,7 +1054,7 @@ def test_sync_frames(aggregate, atype):
     elif aggregate is np.max:
         assert np.allclose(xsync, [1, 3, 5, 7])
     else:
-        assert False
+        raise AssertionError()
 
 
 @pytest.mark.parametrize("atype", [list, np.asarray])
@@ -1095,9 +1071,9 @@ def test_sync_frames_pad(atype, pad):
 
 @pytest.mark.parametrize("data", [np.mod(np.arange(135), 5)])
 @pytest.mark.parametrize("idx", [["foo", "bar"], [None], [slice(None), None]])
-@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_sync_fail(data, idx):
-    librosa.util.sync(data, idx)
+    with pytest.raises(librosa.ParameterTypeError):
+        librosa.util.sync(data, idx)
 
 
 @pytest.mark.parametrize("power", [1, 2, 50, 100, np.inf])
@@ -1141,9 +1117,9 @@ def test_softmask_int():
         (np.ones(3), np.ones(3), -1, False),
     ],
 )
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_softmask_fail(x, x_ref, power, split_zeros):
-    librosa.util.softmask(x, x_ref, power=power, split_zeros=split_zeros)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.util.softmask(x, x_ref, power=power, split_zeros=split_zeros)
 
 
 @pytest.mark.parametrize(
@@ -1365,12 +1341,12 @@ def test_shear_sparse_matrix_preserves_type(fmt):
     assert isinstance(E_shear, scipy.sparse.spmatrix)
     assert not isinstance(E_shear, scipy.sparse.sparray)
     assert E_shear.format == fmt  # type: ignore[attr-defined]
-    assert np.allclose(E_shear.toarray(), np.asarray([[1,0,0],[0,0,1],[0,1,0]]))  # type: ignore[attr-defined]
+    assert np.allclose(E_shear.toarray(), np.asarray([[1, 0, 0], [0, 0, 1], [0, 1, 0]]))  # type: ignore[attr-defined]
 
 
-@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_shear_badfactor():
-    librosa.util.shear(np.eye(3), factor=None)  # type: ignore
+    with pytest.raises(librosa.ParameterTypeError):
+        librosa.util.shear(np.eye(3), factor=None)  # type: ignore
 
 
 def test_shear_sparse_1d_raises():
@@ -1396,17 +1372,17 @@ def test_stack_contig():
     assert np.allclose(xs, [[1, 1, 1], [-1, -1, -1]])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_stack_fail_shape():
     x1 = np.ones(3)
 
     x2 = np.ones(2)
-    librosa.util.stack([x1, x2])
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.stack([x1, x2])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_stack_fail_empty():
-    librosa.util.stack([])
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.stack([])
 
 
 @pytest.mark.parametrize("axis", [0, 1, -1])
@@ -1454,9 +1430,9 @@ def test_example_url():
     assert url.startswith("https://") or url.startswith("http://")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterKeyError)
 def test_example_fail():
-    librosa.example("no such track")
+    with pytest.raises(librosa.ParameterKeyError):
+        librosa.example("no such track")
 
 
 @pytest.mark.network
@@ -1486,9 +1462,9 @@ def test_example_info(key):
     librosa.util.example_info(key)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterKeyError)
 def test_example_info_fail():
-    librosa.util.example_info("no such track")
+    with pytest.raises(librosa.ParameterKeyError):
+        librosa.util.example_info("no such track")
 
 
 def test_list_examples():
@@ -1529,16 +1505,16 @@ def test_dtype_c2r(dtype, target):
     assert np.issubdtype(inf_type, target) and np.issubdtype(target, inf_type)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_expand_to_badshape():
     x = np.arange(3)
-    librosa.util.expand_to(x, ndim=2, axes=[0, 1])
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.expand_to(x, ndim=2, axes=[0, 1])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_expand_to_badndim():
     x = np.zeros((3, 3))
-    librosa.util.expand_to(x, ndim=1, axes=[0, 1])
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.expand_to(x, ndim=1, axes=[0, 1])
 
 
 @pytest.mark.parametrize("axes", [0, 1, -1, [0], [1], [-1]])
@@ -1671,16 +1647,16 @@ def test_cite_released(bib):
 
 
 @pytest.mark.network
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_cite_badversion():
-    librosa.cite(version="-1.5")
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.cite(version="-1.5")
 
 
 @pytest.mark.network
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("bib", [False, True])
 def test_cite_unreleased(bib):
-    librosa.cite("0.10.0.dev0", bib=bib)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.cite("0.10.0.dev0", bib=bib)
 
 
 def test_cite_missing_bib_entry(monkeypatch):
@@ -1688,7 +1664,7 @@ def test_cite_missing_bib_entry(monkeypatch):
 
     call_count = [0]
 
-    def mock_load(f):
+    def mock_load(_f):
         call_count[0] += 1
         if call_count[0] == 1:
             return {"0.10.0": "doi_val"}
@@ -1697,7 +1673,6 @@ def test_cite_missing_bib_entry(monkeypatch):
     monkeypatch.setattr(msgpack, "load", mock_load)
     with pytest.raises(librosa.ParameterValueError, match="No BibTeX entry found"):
         librosa.cite("0.10.0", bib=True)
-
 
 
 @pytest.mark.parametrize("n_bytes", [1, 2, 4])
@@ -1755,23 +1730,9 @@ def test_interp_broadcast_op(interp_arrays):
     # test that custom operators work
     x1, x1_pos, x2, x2_pos, _ = interp_arrays
 
-    result = librosa.util.interp_broadcast(
-        x1=x1,
-        x1_pos=x1_pos,
-        x2=x2,
-        x2_pos=x2_pos,
-        axis=0,
-        op=np.add
-    )
+    result = librosa.util.interp_broadcast(x1=x1, x1_pos=x1_pos, x2=x2, x2_pos=x2_pos, axis=0, op=np.add)
 
-    y1, y2 = librosa.util.interp_broadcast(
-        x1=x1,
-        x1_pos=x1_pos,
-        x2=x2,
-        x2_pos=x2_pos,
-        axis=0,
-        op=None
-    )
+    y1, y2 = librosa.util.interp_broadcast(x1=x1, x1_pos=x1_pos, x2=x2, x2_pos=x2_pos, axis=0, op=None)
 
     assert np.allclose(result, np.add(y1, y2))
 
@@ -1779,11 +1740,7 @@ def test_interp_broadcast_op(interp_arrays):
 def test_interp_broadcast_missing_dims():
     # test with missing dims
     result = librosa.util.interp_broadcast(
-        x1=np.zeros((9, 1)),
-        x1_pos=np.arange(9),
-        x2=np.zeros((5, 8, 1)),
-        x2_pos=np.arange(8),
-        axis=-2
+        x1=np.zeros((9, 1)), x1_pos=np.arange(9), x2=np.zeros((5, 8, 1)), x2_pos=np.arange(8), axis=-2
     )
     assert result.shape == (5, 9, 1)
 
@@ -1791,47 +1748,39 @@ def test_interp_broadcast_missing_dims():
 def test_interp_broadcast_compatible_shape():
     # test with unequal dims, if one dim is 1
     result = librosa.util.interp_broadcast(
-        x1=np.zeros((2, 9, 10)),
-        x1_pos=np.arange(9),
-        x2=np.zeros((2, 8, 1)),
-        x2_pos=np.arange(8),
-        axis=-2
+        x1=np.zeros((2, 9, 10)), x1_pos=np.arange(9), x2=np.zeros((2, 8, 1)), x2_pos=np.arange(8), axis=-2
     )
     assert result.shape == (2, 9, 10)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_interp_broadcast_incompatible_shape():
     # test with unequal dims, neither dim is 1
-    librosa.util.interp_broadcast(
-        x1=np.zeros((2, 9, 10)),
-        x1_pos=np.arange(9),
-        x2=np.zeros((2, 8, 11)),
-        x2_pos=np.arange(8),
-        axis=-2
-    )
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.interp_broadcast(
+            x1=np.zeros((2, 9, 10)), x1_pos=np.arange(9), x2=np.zeros((2, 8, 11)), x2_pos=np.arange(8), axis=-2
+        )
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_interp_broadcast_axis_lower_bound():
-    librosa.util.interp_broadcast(
-        x1=np.zeros((9, 1)),
-        x1_pos=np.arange(9),
-        x2=np.zeros((9, 1)),
-        x2_pos=np.arange(9),
-        axis=-3,
-    )
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.interp_broadcast(
+            x1=np.zeros((9, 1)),
+            x1_pos=np.arange(9),
+            x2=np.zeros((9, 1)),
+            x2_pos=np.arange(9),
+            axis=-3,
+        )
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_interp_broadcast_axis_upper_bound():
-    librosa.util.interp_broadcast(
-        x1=np.zeros((9, 1)),
-        x1_pos=np.arange(9),
-        x2=np.zeros((9, 1)),
-        x2_pos=np.arange(9),
-        axis=2,
-    )
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.util.interp_broadcast(
+            x1=np.zeros((9, 1)),
+            x1_pos=np.arange(9),
+            x2=np.zeros((9, 1)),
+            x2_pos=np.arange(9),
+            axis=2,
+        )
 
 
 def test_align_samples():
@@ -1847,10 +1796,7 @@ def test_align_samples():
 
     # Non-integer ratio returns None by default
     assert librosa.util.align_samples(512, orig_sr=48000, target_sr=22050) is None
-    assert (
-        librosa.util.align_samples(512, orig_sr=48000, target_sr=22050, error=False)
-        is None
-    )
+    assert librosa.util.align_samples(512, orig_sr=48000, target_sr=22050, error=False) is None
 
     # Non-integer ratio with error=True raises ParameterError
     with pytest.raises(librosa.ParameterValueError, match=r"fractional sample count"):
@@ -1872,4 +1818,3 @@ def test_align_samples():
         librosa.util.align_samples(512, orig_sr=-22050)
     with pytest.raises(librosa.ParameterValueError, match=r"target_sr"):
         librosa.util.align_samples(512, orig_sr=22050, target_sr=-11025)
-

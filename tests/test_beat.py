@@ -3,18 +3,18 @@
 #  unit tests for librosa.beat
 
 # Disable cache
+import contextlib
 import os
 
-try:
+with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
-except KeyError:
-    pass
 
-import pytest
 from contextlib import nullcontext as dnr
 
 import numpy as np
+import pytest
 import scipy.stats
+
 import librosa
 
 
@@ -55,10 +55,10 @@ def test_tempo(tempo, sr, hop_length, ac_size, aggregate, prior):
         assert np.abs(tempo_est - tempo) <= 0.05 * tempo, (tempo, tempo_est)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_beat_no_input():
 
-    librosa.beat.beat_track(y=None, onset_envelope=None)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.beat.beat_track(y=None, onset_envelope=None)
 
 
 def test_beat_no_onsets():
@@ -70,17 +70,13 @@ def test_beat_no_onsets():
     onsets = np.zeros(duration * sr // hop_length)
 
     # Sparse case
-    tempo, beats = librosa.beat.beat_track(
-        onset_envelope=onsets, sr=sr, hop_length=hop_length, sparse=True
-    )
+    tempo, beats = librosa.beat.beat_track(onset_envelope=onsets, sr=sr, hop_length=hop_length, sparse=True)
 
     assert np.allclose(tempo, 0)
     assert len(beats) == 0
 
     # Dense case
-    tempo, beats = librosa.beat.beat_track(
-        onset_envelope=onsets, sr=sr, hop_length=hop_length, sparse=False
-    )
+    tempo, beats = librosa.beat.beat_track(onset_envelope=onsets, sr=sr, hop_length=hop_length, sparse=False)
 
     assert np.allclose(tempo, 0)
     assert beats.shape == onsets.shape
@@ -152,25 +148,25 @@ def test_beat(ysr, hop, oenv, with_audio, start_bpm, bpm, trim, tightness, prior
         assert beats.max() <= len(oenv)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("tightness", [-1, -0.5, 0])
 def test_beat_bad_tightness(ysr, tightness):
     y, sr = ysr
-    librosa.beat.beat_track(y=y, sr=sr, tightness=tightness)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.beat.beat_track(y=y, sr=sr, tightness=tightness)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("bpm", [-1, -0.5, 0])
 def test_beat_bad_bpm(ysr, bpm):
     y, sr = ysr
-    librosa.beat.beat_track(y=y, sr=sr, bpm=bpm)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.beat.beat_track(y=y, sr=sr, bpm=bpm)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("start_bpm", [-1, -0.5, 0])
 def test_beat_bad_start_bpm(ysr, start_bpm):
     y, sr = ysr
-    librosa.beat.beat_track(y=y, sr=sr, start_bpm=start_bpm)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.beat.beat_track(y=y, sr=sr, start_bpm=start_bpm)
 
 
 @pytest.mark.parametrize("hop_length", [512, 1024])
@@ -188,7 +184,7 @@ def test_beat_units(ysr, hop_length, units, ctx):
     y, sr = ysr
     with ctx:
         _, b2 = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length, units=units)
-        tempo, b1 = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length)
+        _tempo, b1 = librosa.beat.beat_track(y=y, sr=sr, hop_length=hop_length)
         t1 = librosa.frames_to_time(b1, sr=sr, hop_length=hop_length)
 
         if units == "time":
@@ -198,14 +194,14 @@ def test_beat_units(ysr, hop_length, units, ctx):
         elif units == "frames":
             t2 = librosa.frames_to_time(b2, sr=sr, hop_length=hop_length)
         else:
-            assert False
+            raise AssertionError()
 
         assert np.allclose(t1, t2)
 
 
 def test_beat_sparse(ysr):
     y, sr = ysr
-    tempo, beats = librosa.beat.beat_track(y=y, sr=sr, sparse=True)
+    _tempo, beats = librosa.beat.beat_track(y=y, sr=sr, sparse=True)
     _, beatsd = librosa.beat.beat_track(y=y, sr=sr, sparse=False)
 
     # Verify that frame indices correspond to detections
@@ -225,12 +221,8 @@ def test_beat_sparse(ysr):
         (120, 80, pytest.raises(librosa.ParameterValueError)),
     ],
 )
-@pytest.mark.parametrize(
-    "prior", [None, scipy.stats.lognorm(s=1, loc=np.log(120), scale=120)]
-)
-@pytest.mark.filterwarnings(
-    "ignore:n_fft=.*is too large"
-)  # our test signal is short, but this is fine here
+@pytest.mark.parametrize("prior", [None, scipy.stats.lognorm(s=1, loc=np.log(120), scale=120)])
+@pytest.mark.filterwarnings("ignore:n_fft=.*is too large")  # our test signal is short, but this is fine here
 def test_plp(ysr, hop_length, win_length, tempo_min, tempo_max, use_onset, prior, ctx):
 
     y, sr = ysr
@@ -284,4 +276,3 @@ def test_beat_tracker_bad_bpm_shape():
 
     with pytest.raises(librosa.ParameterShapeError, match="Invalid bpm shape"):
         __beat_tracker(np.ones(100), np.ones(5), 43.0, 100, True)
-

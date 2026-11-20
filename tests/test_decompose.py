@@ -3,21 +3,20 @@
 # unit tests for librosa.decompose
 
 # Disable cache
+import contextlib
 import os
 
-try:
+with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
-except KeyError:
-    pass
+
+from typing import Union
 
 import numpy as np
+import pytest
 import scipy.sparse
-
-import librosa
 import sklearn.decomposition
 
-import pytest
-from typing import Union
+import librosa
 
 
 def test_default_decompose():
@@ -47,19 +46,19 @@ def test_decompose_fit(rng):
     X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
 
     # Do a first fit
-    (W, H) = librosa.decompose.decompose(X, transformer=D, fit=True)
+    (W, _H) = librosa.decompose.decompose(X, transformer=D, fit=True)
 
     # Make random data and decompose with the same basis
     X = np.asarray(rng.standard_normal(size=X.shape) ** 2)
-    (W2, H2) = librosa.decompose.decompose(X, transformer=D, fit=False)
+    (W2, _H2) = librosa.decompose.decompose(X, transformer=D, fit=False)
 
     # Make sure the basis hasn't changed
     assert np.allclose(W, W2)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_decompose_multi_sort():
-    librosa.decompose.decompose(np.zeros((3, 3, 3)), sort=True)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.decompose.decompose(np.zeros((3, 3, 3)), sort=True)
 
 
 @pytest.mark.filterwarnings("ignore:Maximum number of iterations")
@@ -67,9 +66,7 @@ def test_decompose_multi(rng):
     X = rng.random(size=(2, 20, 100))
 
     # Fit with multichannel data
-    components, activations = librosa.decompose.decompose(
-        X, n_components=20, random_state=0
-    )
+    components, activations = librosa.decompose.decompose(X, n_components=20, random_state=0)
 
     # Reshape the data
     Xflat = np.vstack([X[0], X[1]])
@@ -80,11 +77,11 @@ def test_decompose_multi(rng):
     assert np.allclose(activations, a_flat)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_decompose_fit_false():
 
     X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
-    (W, H) = librosa.decompose.decompose(X, fit=False)
+    with pytest.raises(librosa.ParameterValueError):
+        (_W, _H) = librosa.decompose.decompose(X, fit=False)
 
 
 def test_sorted_decompose():
@@ -101,16 +98,12 @@ def test_decompose_custom_components_fit_true(rng):
     W_init = np.abs(rng.standard_normal(size=(20, 5))) + 1e-4
 
     # solver='cd'
-    comps_cd, acts_cd = librosa.decompose.decompose(
-        X, components=W_init, fit=True, random_state=0
-    )
+    comps_cd, acts_cd = librosa.decompose.decompose(X, components=W_init, fit=True, random_state=0)
     assert comps_cd.shape == (20, 5)
     assert acts_cd.shape == (5, 50)
 
     # solver='mu'
-    comps_mu, acts_mu = librosa.decompose.decompose(
-        X, components=W_init, fit=True, solver="mu", random_state=0
-    )
+    comps_mu, acts_mu = librosa.decompose.decompose(X, components=W_init, fit=True, solver="mu", random_state=0)
     assert comps_mu.shape == (20, 5)
     assert acts_mu.shape == (5, 50)
 
@@ -147,15 +140,11 @@ def test_decompose_custom_components_errors(rng):
 
     # n_components mismatch
     with pytest.raises(librosa.ParameterShapeError):
-        librosa.decompose.decompose(
-            X, components=np.ones((20, 5)), n_components=10
-        )
+        librosa.decompose.decompose(X, components=np.ones((20, 5)), n_components=10)
 
     # activations shape mismatch
     with pytest.raises(librosa.ParameterShapeError):
-        librosa.decompose.decompose(
-            X, components=np.ones((20, 5)), activations=np.ones((5, 40))
-        )
+        librosa.decompose.decompose(X, components=np.ones((20, 5)), activations=np.ones((5, 40)))
 
 
 def test_decompose_components_multi(rng):
@@ -182,24 +171,18 @@ def test_pitch_nmf():
     assert not np.isnan(acts).any()
 
     # Inferred n_fft
-    comps_inf, acts_inf = librosa.decompose.pitch_nmf(
-        S, n_pitches=36, fmin="C3", n_residual=1, max_iter=10
-    )
+    comps_inf, acts_inf = librosa.decompose.pitch_nmf(S, n_pitches=36, fmin="C3", n_residual=1, max_iter=10)
     assert comps_inf.shape == (1025, 37)
     assert acts_inf.shape == (37, S.shape[1])
 
     # fit=False
-    comps_fix, acts_fix = librosa.decompose.pitch_nmf(
-        S, n_pitches=24, fmin="A2", fit=False
-    )
+    comps_fix, acts_fix = librosa.decompose.pitch_nmf(S, n_pitches=24, fmin="A2", fit=False)
     assert comps_fix.shape == (1025, 29)
     assert acts_fix.shape == (29, S.shape[1])
 
     # Multichannel spectrogram
     S_multi = np.stack([S, S[::-1]])
-    comps_mc, acts_mc = librosa.decompose.pitch_nmf(
-        S_multi, n_pitches=12, fmin="C3", n_residual=3, max_iter=10
-    )
+    comps_mc, acts_mc = librosa.decompose.pitch_nmf(S_multi, n_pitches=12, fmin="C3", n_residual=3, max_iter=10)
     assert comps_mc.shape == (2, 1025, 15)
     assert acts_mc.shape == (15, S.shape[1])
 
@@ -208,9 +191,7 @@ def test_pitch_nmf():
 def y22050():
     sr = 22050
     y = librosa.chirp(fmin=55, fmax=880, sr=sr, duration=5.0)
-    y += librosa.clicks(
-        times=np.arange(0, 5, 0.5), sr=sr, length=len(y), click_duration=0.25
-    )
+    y += librosa.clicks(times=np.arange(0, 5, 0.5), sr=sr, length=len(y), click_duration=0.25)
     return y
 
 
@@ -229,9 +210,7 @@ def S22050(D22050):
 @pytest.mark.parametrize("mask", [False, True])
 @pytest.mark.parametrize("margin", [1.0, 3.0, (1.0, 1.0), (9.0, 10.0)])
 def test_real_hpss(S22050, window, power, mask, margin):
-    H, P = librosa.decompose.hpss(
-        S22050, kernel_size=window, power=power, mask=mask, margin=margin
-    )
+    H, P = librosa.decompose.hpss(S22050, kernel_size=window, power=power, mask=mask, margin=margin)
 
     if margin == 1.0 or margin == (1.0, 1.0):
         if mask:
@@ -245,9 +224,9 @@ def test_real_hpss(S22050, window, power, mask, margin):
             assert np.all(H + P <= S22050)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_hpss_margin_error(S22050):
-    H, P = librosa.decompose.hpss(S22050, margin=0.9)
+    with pytest.raises(librosa.ParameterValueError):
+        _H, _P = librosa.decompose.hpss(S22050, margin=0.9)
 
 
 def test_complex_hpss(D22050):
@@ -320,9 +299,7 @@ def test_nn_filter_multi(s_multi, useR, sparse):
     else:
         R_multi = None
 
-    s_filt = librosa.decompose.nn_filter(
-        s_multi, rec=R_multi, mode="affinity", sparse=sparse
-    )
+    s_filt = librosa.decompose.nn_filter(s_multi, rec=R_multi, mode="affinity", sparse=sparse)
     # Always use the same recurrence matrix for comparison
     s_filt0 = librosa.decompose.nn_filter(s_multi[0], rec=R)
     s_filt1 = librosa.decompose.nn_filter(s_multi[1], rec=R)
@@ -347,10 +324,7 @@ def test_nn_filter_avg(rng):
     assert np.allclose(X_filtered, X.dot(rec))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterShapeError)
-@pytest.mark.parametrize(
-    "x,y", [(10, 10), (100, 20), (20, 100), (100, 101), (101, 101)]
-)
+@pytest.mark.parametrize("x,y", [(10, 10), (100, 20), (20, 100), (100, 101), (101, 101)])
 @pytest.mark.parametrize("sparse", [False, True])
 @pytest.mark.parametrize("data", [np.zeros((10, 100))])
 def test_nn_filter_badselfsim(data, x, y, sparse, rng):
@@ -360,4 +334,5 @@ def test_nn_filter_badselfsim(data, x, y, sparse, rng):
     if sparse:
         rec = scipy.sparse.csr_array(rec)
 
-    librosa.decompose.nn_filter(data, rec=rec)
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.decompose.nn_filter(data, rec=rec)

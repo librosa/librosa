@@ -1,5 +1,5 @@
-import pytest
 import librosa.display
+
 
 def test_public_api_surface():
     expected_symbols = [
@@ -26,6 +26,7 @@ def test_public_api_surface():
     for symbol in expected_symbols:
         assert hasattr(librosa.display, symbol), f"librosa.display missing {symbol}"
 
+
 def test_internal_aliases_present():
     aliases = [
         "_same_axes",
@@ -37,7 +38,7 @@ def test_internal_aliases_present():
         "_mp_setup_labels",
         "_mp_setup_prop_group",
         "_mp_setup_properties",
-        "_WAVESHOW_ADAPTORS"
+        "_WAVESHOW_ADAPTORS",
     ]
     for a in aliases:
         assert hasattr(librosa.display, a), f"librosa.display missing internal alias {a}"
