@@ -28,9 +28,7 @@ needs_sphinx = "8.2"
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-spec = importlib.util.spec_from_file_location(
-    "librosa.version", srcpath / "librosa" / "version.py"
-)
+spec = importlib.util.spec_from_file_location("librosa.version", srcpath / "librosa" / "version.py")
 if spec is None or spec.loader is None:
     raise ImportError("Could not load librosa.version")
 librosa_version = importlib.util.module_from_spec(spec)
@@ -104,7 +102,12 @@ import librosa
 )
 plot_include_source = True
 plot_html_show_source_link = False
-plot_formats = [("png", 150)]
+
+# Environment-aware DPI configuration (80 for CI / preview builds, 100 for default local/production)
+default_dpi = 80 if ("CI" in os.environ or "LIBROSA_DOC_DEBUG" in os.environ) else 100
+doc_dpi = int(os.environ.get("LIBROSA_DOC_DPI", default_dpi))
+
+plot_formats = [("png", doc_dpi)]
 plot_html_show_formats = False
 
 from cycler import cycler
@@ -112,7 +115,10 @@ from cycler import cycler
 # Read the style sheet into a dictionary and assign it globally to the directive
 # This guarantees it overrides the factory defaults applied during each snippet reset
 plot_rcparams = {
-    "axes.prop_cycle": cycler("color", ["#3f90da", "#ffa90e", "#bd1f01", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#717581", "#92dadd"]),
+    "axes.prop_cycle": cycler(
+        "color",
+        ["#3f90da", "#ffa90e", "#bd1f01", "#94a4a2", "#832db6", "#a96b59", "#e76300", "#b9ac70", "#717581", "#92dadd"],
+    ),
     "font.size": 10,
     "legend.loc": "upper right",
     "legend.frameon": True,
@@ -138,7 +144,10 @@ plot_rcparams = {
     "figure.subplot.left": 0.2,
     "figure.subplot.right": 0.9,
     "figure.subplot.top": 0.85,
-    #"figure.subplot.wspace": 0.4,
+    # "figure.subplot.wspace": 0.4,
+    "figure.dpi": doc_dpi,
+    "savefig.dpi": doc_dpi,
+    "text.hinting": "none",
     "text.usetex": False,
     "lines.linewidth": 1.5,
     "lines.antialiased": True,
@@ -152,11 +161,14 @@ def reset_mpl():
     matplotlib.rcParams.update(**plot_rcparams)
     plt.close("all")
 
+
 def reset_numpy_printoptions(gallery_conf, fname):  # noqa: ARG001
     # gallery_conf and fname are required by sphinx-gallery's reset_modules interface and are unused in this method
     import numpy as np
+
     np.set_printoptions(precision=3, suppress=True)
     reset_mpl()
+
 
 # Gallery
 sphinx_gallery_conf = {
@@ -307,9 +319,7 @@ html_show_sourcelink = False
 # there is no reason to ship them.
 html_copy_source = False
 
-html_context = {
-    "default_mode": "light"
-}
+html_context = {"default_mode": "light"}
 # -- Options for analytics ----------------------------------------------------
 googleanalytics_id = "UA-171031946-1"
 
@@ -353,9 +363,7 @@ latex_logo = "img/librosa_logo_text.png"
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [
-    ("index", "librosa", "librosa Documentation", ["The librosa development team"], 1)
-]
+man_pages = [("index", "librosa", "librosa Documentation", ["The librosa development team"], 1)]
 
 # -- Options for Texinfo output ------------------------------------------------
 
@@ -382,11 +390,14 @@ linkcheck_retries = 5
 linkcheck_timeout = 10
 linkcheck_workers = 10
 linkcheck_report_timeouts_as_broken = False
-linkcheck_ignore = ["https://www.ee.columbia.edu/~dpwe/resources/.*",
-                    "https://htk.eng.cam.ac.uk/.*",
-                    # Ignore broken links to publishers, as they throttle scrapers
-                    "https://zenodo.org/.*",
-                    "https://transactions.ismir.net/.*"]
+linkcheck_ignore = [
+    "https://www.ee.columbia.edu/~dpwe/resources/.*",
+    "https://htk.eng.cam.ac.uk/.*",
+    # Ignore broken links to publishers, as they throttle scrapers
+    "https://zenodo.org/.*",
+    "https://transactions.ismir.net/.*",
+]
+
 
 def skip_matplotlib_inherited(app, what, name, obj, skip, options):  # noqa: ARG001
     # app, what, name, and options are required by Sphinx's autodoc-skip-member interface and are unused in this method
@@ -395,6 +406,7 @@ def skip_matplotlib_inherited(app, what, name, obj, skip, options):  # noqa: ARG
     if mod and mod.startswith("matplotlib"):
         return True
     return skip
+
 
 def setup(app):
     # Ensure you append to the existing setup function if you already have one

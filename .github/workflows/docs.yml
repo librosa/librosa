@@ -21,11 +21,19 @@ jobs:
     name: "Documentation build"
     runs-on: ubuntu-latest
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    env:
+      LIBROSA_DATA_DIR: ${{ github.workspace }}/librosa-data/audio
     steps:
       - name: Checkout source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
+
+      - name: Checkout example audio data
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: librosa/data
+          path: librosa-data
 
       - name: Setup Micromamba (Python + ffmpeg)
         uses: mamba-org/setup-micromamba@f457c30a868e4760d3a6fcea5f25dc655b8edf39 # v3
