@@ -90,10 +90,28 @@ tools (included in the `lint` dependency group):
   pytest
   ```
 
--  Style adherence, check with:
+-  Style adherence and formatting:
+
+  Check code style and formatting with:
 
   ```shell
-  ruff check librosa
+  ruff check librosa docs tests scripts
+  ruff format --check librosa docs tests scripts
+  ```
+
+  To automatically format and fix lint issues:
+
+  ```shell
+  ruff format librosa docs tests scripts
+  ruff check --fix librosa docs tests scripts
+  ```
+
+- Ignoring formatting revisions in `git blame`:
+
+  To avoid mass reformatting commits cluttering `git blame`, configure git locally to use the repository's `.git-blame-ignore-revs` file:
+
+  ```shell
+  git config blame.ignoreRevsFile .git-blame-ignore-revs
   ```
 
 - Ensure that your docstrings are properly formatted, check with:
