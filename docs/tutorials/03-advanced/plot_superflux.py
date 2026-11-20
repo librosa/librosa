@@ -51,12 +51,28 @@ max_size = 3
 ########################################################
 # The paper uses a log-frequency representation, but for
 # simplicity, we'll use a Mel spectrogram instead.
-S = librosa.feature.melspectrogram(y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, fmin=fmin, fmax=fmax, n_mels=n_mels)
+S = librosa.feature.melspectrogram(
+    y=y,
+    sr=sr,
+    n_fft=n_fft,
+    hop_length=hop_length,
+    fmin=fmin,
+    fmax=fmax,
+    n_mels=n_mels,
+)
 
 
 fig, ax = plt.subplots()
 librosa.display.specshow(
-    S, vscale="dBFS[power]", y_axis="mel", x_axis="time", sr=sr, hop_length=hop_length, fmin=fmin, fmax=fmax, ax=ax
+    S,
+    vscale="dBFS[power]",
+    y_axis="mel",
+    x_axis="time",
+    sr=sr,
+    hop_length=hop_length,
+    fmin=fmin,
+    fmax=fmax,
+    ax=ax,
 )
 
 
@@ -64,16 +80,24 @@ librosa.display.specshow(
 # Now we'll compute the onset strength envelope and onset events
 # using the librosa defaults.
 odf_default = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
-onset_default = librosa.onset.onset_detect(y=y, sr=sr, hop_length=hop_length, units="time")
+onset_default = librosa.onset.onset_detect(
+    y=y, sr=sr, hop_length=hop_length, units="time"
+)
 
 
 #########################################
 # And similarly with the superflux method
 odf_sf = librosa.onset.onset_strength(
-    S=librosa.power_to_db(S, ref=np.max), sr=sr, hop_length=hop_length, lag=lag, max_size=max_size
+    S=librosa.power_to_db(S, ref=np.max),
+    sr=sr,
+    hop_length=hop_length,
+    lag=lag,
+    max_size=max_size,
 )
 
-onset_sf = librosa.onset.onset_detect(onset_envelope=odf_sf, sr=sr, hop_length=hop_length, units="time")
+onset_sf = librosa.onset.onset_detect(
+    onset_envelope=odf_sf, sr=sr, hop_length=hop_length, units="time"
+)
 
 
 ######################################################################
@@ -88,10 +112,20 @@ onset_sf = librosa.onset.onset_detect(onset_envelope=odf_sf, sr=sr, hop_length=h
 # sphinx_gallery_thumbnail_number = 2
 fig, ax = plt.subplots(nrows=3, sharex=True)
 
-frame_time = librosa.frames_to_time(np.arange(len(odf_default)), sr=sr, hop_length=hop_length)
+frame_time = librosa.frames_to_time(
+    np.arange(len(odf_default)), sr=sr, hop_length=hop_length
+)
 
 librosa.display.specshow(
-    S, vscale="dBFS[power]", y_axis="mel", x_axis="time", sr=sr, hop_length=hop_length, fmin=fmin, fmax=fmax, ax=ax[2]
+    S,
+    vscale="dBFS[power]",
+    y_axis="mel",
+    x_axis="time",
+    sr=sr,
+    hop_length=hop_length,
+    fmin=fmin,
+    fmax=fmax,
+    ax=ax[2],
 )
 ax[2].set(xlim=[0, 5.0])
 

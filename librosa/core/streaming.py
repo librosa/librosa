@@ -309,11 +309,15 @@ class StreamBridge:
     For a complete walkthrough, see :ref:`sphx_glr_auto_tutorials_03-advanced_plot_stream_capture.py`.
 
     >>> import sounddevice as sd  # doctest: +SKIP
-    >>> with librosa.StreamBridge(orig_sr=48000, channels=1) as bridge:  # doctest: +SKIP
+    >>> with librosa.StreamBridge(
+    ...     orig_sr=48000, channels=1
+    ... ) as bridge:  # doctest: +SKIP
     ...     with sd.InputStream(samplerate=48000, channels=1, callback=bridge):
-    ...         for i, block in enumerate(bridge.stream(
-    ...             block_length=256, frame_length=2048, hop_length=512, sr=None
-    ...         )):
+    ...         for i, block in enumerate(
+    ...             bridge.stream(
+    ...                 block_length=256, frame_length=2048, hop_length=512, sr=None
+    ...             )
+    ...         ):
     ...             centroid = librosa.feature.spectral_centroid(
     ...                 y=block, sr=48000, n_fft=2048, hop_length=512, center=False
     ...             )
@@ -737,29 +741,25 @@ def stream(
     at a time.  Note that streaming operation requires left-aligned
     frames, so we must set ``center=False`` to avoid padding artifacts.
 
-    >>> filename = librosa.ex('brahms')
-    >>> stream = librosa.stream(filename,
-    ...                         block_length=256,
-    ...                         frame_length=4096,
-    ...                         hop_length=1024)
+    >>> filename = librosa.ex("brahms")
+    >>> stream = librosa.stream(
+    ...     filename, block_length=256, frame_length=4096, hop_length=1024
+    ... )
     >>> for y_block in stream:
     ...     D_block = librosa.stft(y_block, center=False)
 
     Or compute a mel spectrogram over a stream in its native sampling rate,
     using a shorter frame and non-overlapping windows
 
-    >>> filename = librosa.ex('brahms')
+    >>> filename = librosa.ex("brahms")
     >>> sr = librosa.get_samplerate(filename)
-    >>> stream = librosa.stream(filename,
-    ...                         block_length=256,
-    ...                         frame_length=2048,
-    ...                         hop_length=2048,
-    ...                         sr=None)
+    >>> stream = librosa.stream(
+    ...     filename, block_length=256, frame_length=2048, hop_length=2048, sr=None
+    ... )
     >>> for y_block in stream:
-    ...     m_block = librosa.feature.melspectrogram(y=y_block, sr=sr,
-    ...                                              n_fft=2048,
-    ...                                              hop_length=2048,
-    ...                                              center=False)
+    ...     m_block = librosa.feature.melspectrogram(
+    ...         y=y_block, sr=sr, n_fft=2048, hop_length=2048, center=False
+    ...     )
     """
     if isinstance(path, StreamBridge):
         yield from path.stream(

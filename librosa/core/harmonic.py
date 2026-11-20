@@ -94,23 +94,27 @@ def salience(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet', duration=3)
+    >>> y, sr = librosa.loadx("trumpet", duration=3)
     >>> S = np.abs(librosa.stft(y))
     >>> freqs = librosa.fft_frequencies(sr=sr)
     >>> harms = [1, 2, 3, 4]
     >>> weights = [1.0, 0.5, 0.33, 0.25]
-    >>> S_sal = librosa.salience(S, freqs=freqs, harmonics=harms, weights=weights, fill_value=0)
+    >>> S_sal = librosa.salience(
+    ...     S, freqs=freqs, harmonics=harms, weights=weights, fill_value=0
+    ... )
     >>> print(S_sal.shape)
     (1025, 115)
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(S, vscale='dBFS',
-    ...                          sr=sr, y_axis='log', x_axis='time', ax=ax[0])
-    >>> ax[0].set(title='Magnitude spectrogram')
+    >>> librosa.display.specshow(
+    ...     S, vscale="dBFS", sr=sr, y_axis="log", x_axis="time", ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Magnitude spectrogram")
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(S_sal, vscale='dBFS',
-    ...                                sr=sr, y_axis='log', x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Salience spectrogram')
+    >>> img = librosa.display.specshow(
+    ...     S_sal, vscale="dBFS", sr=sr, y_axis="log", x_axis="time", ax=ax[1]
+    ... )
+    >>> ax[1].set(title="Salience spectrogram")
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if aggregate is None:
@@ -197,44 +201,56 @@ def interp_harmonics(
     --------
     Estimate the harmonics of a time-averaged tempogram
 
-    >>> y, sr = librosa.loadx('sweetwaltz')
+    >>> y, sr = librosa.loadx("sweetwaltz")
     >>> # Compute the time-varying tempogram and average over time
     >>> tempi = np.mean(librosa.feature.tempogram(y=y, sr=sr), axis=1)
     >>> # We'll measure the first five harmonics
     >>> harmonics = [1, 2, 3, 4, 5]
     >>> f_tempo = librosa.tempo_frequencies(len(tempi), sr=sr)
     >>> # Build the harmonic tensor; we only have one axis here (tempo)
-    >>> t_harmonics = librosa.interp_harmonics(tempi, freqs=f_tempo, harmonics=harmonics, axis=0)
+    >>> t_harmonics = librosa.interp_harmonics(
+    ...     tempi, freqs=f_tempo, harmonics=harmonics, axis=0
+    ... )
     >>> print(t_harmonics.shape)
     (5, 384)
 
     >>> # And plot the results
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.specshow(t_harmonics, x_axis='tempo', sr=sr, ax=ax)
-    >>> ax.set(yticks=np.arange(len(harmonics)),
-    ...        yticklabels=['{:.3g}'.format(_) for _ in harmonics],
-    ...        ylabel='Harmonic', xlabel='Tempo (BPM)')
+    >>> librosa.display.specshow(t_harmonics, x_axis="tempo", sr=sr, ax=ax)
+    >>> ax.set(
+    ...     yticks=np.arange(len(harmonics)),
+    ...     yticklabels=["{:.3g}".format(_) for _ in harmonics],
+    ...     ylabel="Harmonic",
+    ...     xlabel="Tempo (BPM)",
+    ... )
     >>> plt.show()
 
     We can also compute frequency harmonics for spectrograms.
     To calculate sub-harmonic energy, use values < 1.
 
-    >>> y, sr = librosa.loadx('trumpet', duration=3)
-    >>> harmonics = [1./3, 1./2, 1, 2, 3, 4]
+    >>> y, sr = librosa.loadx("trumpet", duration=3)
+    >>> harmonics = [1.0 / 3, 1.0 / 2, 1, 2, 3, 4]
     >>> S = np.abs(librosa.stft(y))
     >>> ref_value = np.max(S)  # Common reference for dB scaling
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
-    >>> S_harm = librosa.interp_harmonics(S, freqs=fft_freqs, harmonics=harmonics, axis=0)
+    >>> S_harm = librosa.interp_harmonics(
+    ...     S, freqs=fft_freqs, harmonics=harmonics, axis=0
+    ... )
     >>> print(S_harm.shape)
     (6, 1025, 646)
 
     >>> fig, ax = plt.subplots(nrows=3, ncols=2, sharex=True, sharey=True)
     >>> for i, _sh in enumerate(S_harm):
-    ...     img = librosa.display.specshow(_sh, vscale=f'dB[{ref_value}]',
-    ...                              sr=sr, y_axis='log', x_axis='time',
-    ...                              ax=ax.flat[i])
-    ...     ax.flat[i].set(title='h={:.3g}'.format(harmonics[i]))
+    ...     img = librosa.display.specshow(
+    ...         _sh,
+    ...         vscale=f"dB[{ref_value}]",
+    ...         sr=sr,
+    ...         y_axis="log",
+    ...         x_axis="time",
+    ...         ax=ax.flat[i],
+    ...     )
+    ...     ax.flat[i].set(title="h={:.3g}".format(harmonics[i]))
     ...     ax.flat[i].label_outer()
     >>> librosa.display.colorbar_db(img, ax=ax)
     >>> plt.show()
@@ -358,7 +374,7 @@ def f0_harmonics(
     This example estimates the fundamental (f0), and then extracts the first
     12 harmonics
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> f0, voicing, voicing_p = librosa.pyin(y=y, sr=sr, fmin=200, fmax=700)
     >>> S = np.abs(librosa.stft(y))
     >>> freqs = librosa.fft_frequencies(sr=sr)
@@ -366,20 +382,20 @@ def f0_harmonics(
     >>> f0_harm = librosa.f0_harmonics(S, freqs=freqs, f0=f0, harmonics=harmonics)
 
     >>> import matplotlib.pyplot as plt
-    >>> fig, ax =plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(S, vscale='dBFS',
-    ...                          x_axis='time', y_axis='log', ax=ax[0])
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> librosa.display.specshow(
+    ...     S, vscale="dBFS", x_axis="time", y_axis="log", ax=ax[0]
+    ... )
     >>> times = librosa.times_like(f0)
     >>> highlight = librosa.display.highlight(ax=ax[0])
     >>> for h in harmonics:
     ...     ax[0].plot(times, h * f0, label=f"{h}*f0", path_effects=highlight)
-    >>> ax[0].legend(ncols=4, loc='lower right')
+    >>> ax[0].legend(ncols=4, loc="lower right")
     >>> ax[0].label_outer()
-    >>> librosa.display.specshow(f0_harm, vscale='dBFS',
-    ...                          x_axis='time', ax=ax[1])
-    >>> ax[1].set_yticks(harmonics-1)
+    >>> librosa.display.specshow(f0_harm, vscale="dBFS", x_axis="time", ax=ax[1])
+    >>> ax[1].set_yticks(harmonics - 1)
     >>> ax[1].set_yticklabels(harmonics)
-    >>> ax[1].set(ylabel='Harmonics')
+    >>> ax[1].set(ylabel="Harmonics")
     """
     if freqs.ndim != 1 and freqs.shape != x.shape:
         raise ParameterShapeError(f"freqs.shape={freqs.shape} is incompatible with input shape={x.shape}")

@@ -467,13 +467,18 @@ def multiplot(
     the figure and axes objects for us.
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('choice', duration=10)
+    >>> y, sr = librosa.loadx("choice", duration=10)
     >>> yh, yp = librosa.effects.hpss(y)
-    >>> librosa.display.multiplot('waveshow', y, yh, yp,
-    ...                           labels=['Original', 'Harmonic', 'Percussive'],
-    ...                           # The remaining parameters are passed through to waveshow
-    ...                           sr=sr,
-    ...                           invert=True)
+    >>> librosa.display.multiplot(
+    ...     "waveshow",
+    ...     y,
+    ...     yh,
+    ...     yp,
+    ...     labels=["Original", "Harmonic", "Percussive"],
+    ...     # The remaining parameters are passed through to waveshow
+    ...     sr=sr,
+    ...     invert=True,
+    ... )
     >>> plt.gcf().legend()
     >>> plt.show()
 
@@ -484,10 +489,16 @@ def multiplot(
     >>> y_stack = librosa.to_multi(y, yh, yp)
     >>> stft = librosa.stft(y=y_stack)
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True, figsize=(8, 8))
-    >>> img = librosa.display.multiplot('specshow', stft, axes=ax,
-    ...                                 titles=['Original', 'Harmonic', 'Percussive'],
-    ...                                 x_axis='time', y_axis='log', vscale='dBFS')
-    >>> librosa.display.colorbar_db(img[0], ax=ax, label='dBFS')
+    >>> img = librosa.display.multiplot(
+    ...     "specshow",
+    ...     stft,
+    ...     axes=ax,
+    ...     titles=["Original", "Harmonic", "Percussive"],
+    ...     x_axis="time",
+    ...     y_axis="log",
+    ...     vscale="dBFS",
+    ... )
+    >>> librosa.display.colorbar_db(img[0], ax=ax, label="dBFS")
     >>> plt.show()
     """
     # Identify the display function and the expected data dimensions for each subplot
@@ -582,20 +593,20 @@ def legend_for_axes(
     >>> import matplotlib.pyplot as plt
     >>> x = np.linspace(-10, 10, 100)
     >>> fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True)
-    >>> ax[0].plot(x, label='Line', color='C0')
-    >>> ax[1].plot(x**2, label='Parabola', color='C1')
+    >>> ax[0].plot(x, label="Line", color="C0")
+    >>> ax[1].plot(x**2, label="Parabola", color="C1")
     >>> librosa.display.legend_for_axes()
     >>> plt.show()
 
     You can also specify a subset of axes to aggregate, and control the legend placement:
 
     >>> fig, ax = plt.subplots(nrows=2, ncols=2, sharex=True)
-    >>> ax[0, 0].plot(x, label='Line', color='C0')
-    >>> ax[0, 1].plot(x**2, label='Parabola', color='C1')
-    >>> ax[1, 0].plot(x**3, label='Cubic', color='C2')
-    >>> ax[1, 1].plot(x**4, label='Quartic', color='C3')
-    >>> librosa.display.legend_for_axes(axes=ax[0], loc='outside upper center')
-    >>> librosa.display.legend_for_axes(axes=ax[1], loc='outside lower center')
+    >>> ax[0, 0].plot(x, label="Line", color="C0")
+    >>> ax[0, 1].plot(x**2, label="Parabola", color="C1")
+    >>> ax[1, 0].plot(x**3, label="Cubic", color="C2")
+    >>> ax[1, 1].plot(x**4, label="Quartic", color="C3")
+    >>> librosa.display.legend_for_axes(axes=ax[0], loc="outside upper center")
+    >>> librosa.display.legend_for_axes(axes=ax[1], loc="outside lower center")
     >>> plt.show()
     """
     if axes is None:
@@ -757,30 +768,44 @@ def highlight(
     Plotting an f₀ contour with and without highlighting, in bright or dark colormaps
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> f0, _, _ = librosa.pyin(y, fmin=100, fmax=1000)
     >>> times = librosa.times_like(f0)
     >>> D = librosa.stft(y)
     >>> fig, ax = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(D, x_axis='time', y_axis='log_oct3', ax=ax[0, 0],
-    ...                          vscale='dBFS')
+    >>> librosa.display.specshow(
+    ...     D, x_axis="time", y_axis="log_oct3", ax=ax[0, 0], vscale="dBFS"
+    ... )
     >>> ax[0, 0].plot(times, f0)
-    >>> ax[0, 0].set_title('Dark image, no highlight')
-    >>> librosa.display.specshow(D, x_axis='time', y_axis='log_oct3', ax=ax[0, 1],
-    ...                          vscale='dBFS')
+    >>> ax[0, 0].set_title("Dark image, no highlight")
+    >>> librosa.display.specshow(
+    ...     D, x_axis="time", y_axis="log_oct3", ax=ax[0, 1], vscale="dBFS"
+    ... )
     >>> line = ax[0, 1].plot(times, f0)[0]  # 'plot' returns a list of artists
     >>> librosa.display.highlight(artist=line)
-    >>> ax[0, 1].set_title('Dark image, highlighted')
-    >>> librosa.display.specshow(D, x_axis='time', y_axis='log_oct3', ax=ax[1, 0],
-    ...                          vscale='dBFS', cmap='gray_r')
+    >>> ax[0, 1].set_title("Dark image, highlighted")
+    >>> librosa.display.specshow(
+    ...     D,
+    ...     x_axis="time",
+    ...     y_axis="log_oct3",
+    ...     ax=ax[1, 0],
+    ...     vscale="dBFS",
+    ...     cmap="gray_r",
+    ... )
     >>> ax[1, 0].plot(times, f0)
-    >>> ax[1, 0].set_title('Bright image, no highlight')
-    >>> librosa.display.specshow(D, x_axis='time', y_axis='log_oct3', ax=ax[1, 1],
-    ...                          vscale='dBFS', cmap='gray_r')
+    >>> ax[1, 0].set_title("Bright image, no highlight")
+    >>> librosa.display.specshow(
+    ...     D,
+    ...     x_axis="time",
+    ...     y_axis="log_oct3",
+    ...     ax=ax[1, 1],
+    ...     vscale="dBFS",
+    ...     cmap="gray_r",
+    ... )
     >>> # We can also construct the highlight first and then supply it to the plot command
     >>> hl = librosa.display.highlight(ax=ax[1, 1])
     >>> ax[1, 1].plot(times, f0, path_effects=hl)
-    >>> ax[1, 1].set_title('Bright image, highlighted')
+    >>> ax[1, 1].set_title("Bright image, highlighted")
     >>> for a in ax.flat:
     ...     a.label_outer()
     >>> plt.show()

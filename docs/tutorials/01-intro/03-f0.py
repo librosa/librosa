@@ -93,7 +93,9 @@ stft = librosa.stft(y)
 
 times = librosa.times_like(f0)
 
-librosa.display.specshow(stft, vscale="dBFS", x_axis="time", y_axis="log", ax=ax)
+librosa.display.specshow(
+    stft, vscale="dBFS", x_axis="time", y_axis="log", ax=ax
+)
 hl = librosa.display.highlight(ax=ax, alpha=0.8, linewidth=4)
 ax.plot(times, f0, label="yin f0 estimate", path_effects=hl)
 ax.legend(loc="upper right")
@@ -129,10 +131,14 @@ ax.legend(loc="upper right")
 # and an array `voiced_probs` that gives the probability of each frame being voiced.
 # Any frames that are estimated as unvoiced will by default receive an `f0` value of ``np.nan``.
 #
-pyin_f0, voiced_flag, voiced_probs = librosa.pyin(y=y, sr=sr, fmin=150, fmax=1100)
+pyin_f0, voiced_flag, voiced_probs = librosa.pyin(
+    y=y, sr=sr, fmin=150, fmax=1100
+)
 
 fig, ax = plt.subplots()
-librosa.display.specshow(stft, vscale="dBFS", x_axis="time", y_axis="log", ax=ax)
+librosa.display.specshow(
+    stft, vscale="dBFS", x_axis="time", y_axis="log", ax=ax
+)
 hl = librosa.display.highlight(ax=ax, alpha=0.8, linewidth=4)
 ax.plot(times, pyin_f0, label="pyin f0 estimate", path_effects=hl)
 ax.legend(loc="upper right")

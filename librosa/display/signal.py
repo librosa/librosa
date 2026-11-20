@@ -520,36 +520,44 @@ def waveshow(
     Plot a monophonic waveform with an envelope view
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('choice', duration=10)
+    >>> y, sr = librosa.loadx("choice", duration=10)
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
     >>> librosa.display.waveshow(y, sr=sr, ax=ax[0])
-    >>> ax[0].set(title='Envelope view, mono')
+    >>> ax[0].set(title="Envelope view, mono")
     >>> ax[0].label_outer()
 
     Or a stereo waveform
 
-    >>> y, sr = librosa.loadx('choice', mono=False, duration=10)
+    >>> y, sr = librosa.loadx("choice", mono=False, duration=10)
     >>> librosa.display.waveshow(y, sr=sr, ax=ax[1])
-    >>> ax[1].set(title='Envelope view, stereo')
+    >>> ax[1].set(title="Envelope view, stereo")
     >>> ax[1].label_outer()
 
     Or harmonic and percussive components with transparency
 
-    >>> y, sr = librosa.loadx('choice', duration=10)
+    >>> y, sr = librosa.loadx("choice", duration=10)
     >>> y_harm, y_perc = librosa.effects.hpss(y)
-    >>> librosa.display.waveshow(y_harm, sr=sr, color='C1', alpha=0.75, ax=ax[2], label='Harmonic')
-    >>> librosa.display.waveshow(y_perc, sr=sr, color='C2', alpha=0.75, ax=ax[2], label='Percussive')
-    >>> ax[2].set(title='Multiple waveforms')
+    >>> librosa.display.waveshow(
+    ...     y_harm, sr=sr, color="C1", alpha=0.75, ax=ax[2], label="Harmonic"
+    ... )
+    >>> librosa.display.waveshow(
+    ...     y_perc, sr=sr, color="C2", alpha=0.75, ax=ax[2], label="Percussive"
+    ... )
+    >>> ax[2].set(title="Multiple waveforms")
     >>> ax[2].legend()
     >>> plt.show()
 
     Zooming in on a plot to show raw sample values
 
     >>> fig, (ax, ax2) = plt.subplots(nrows=2, sharex=True)
-    >>> ax.set(xlim=[6.1, 6.25], title='Sample view')
-    >>> librosa.display.waveshow(y, sr=sr, ax=ax, label='Full signal')
-    >>> librosa.display.waveshow(y_harm, sr=sr, color='C1', alpha=0.75, ax=ax2, label='Harmonic')
-    >>> librosa.display.waveshow(y_perc, sr=sr, color='C2', alpha=0.75, ax=ax2, label='Percussive')
+    >>> ax.set(xlim=[6.1, 6.25], title="Sample view")
+    >>> librosa.display.waveshow(y, sr=sr, ax=ax, label="Full signal")
+    >>> librosa.display.waveshow(
+    ...     y_harm, sr=sr, color="C1", alpha=0.75, ax=ax2, label="Harmonic"
+    ... )
+    >>> librosa.display.waveshow(
+    ...     y_perc, sr=sr, color="C2", alpha=0.75, ax=ax2, label="Percussive"
+    ... )
     >>> ax.label_outer()
     >>> ax.legend()
     >>> ax2.legend(ncols=2)
@@ -557,23 +565,23 @@ def waveshow(
 
     Plotting a transposed wave along with a self-similarity matrix
 
-    >>> fig, ax = plt.subplot_mosaic("hSSS;hSSS;hSSS;.vvv", layout='compressed')
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> fig, ax = plt.subplot_mosaic("hSSS;hSSS;hSSS;.vvv", layout="compressed")
+    >>> y, sr = librosa.loadx("trumpet")
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
-    >>> sim = librosa.segment.recurrence_matrix(chroma, mode='affinity')
-    >>> librosa.display.specshow(sim, ax=ax['S'], sr=sr,
-    ...                          x_axis='time', y_axis='time',
-    ...                          auto_aspect=False)
-    >>> ax['S'].label_outer()
-    >>> ax['S'].sharex(ax['v'])
-    >>> ax['S'].sharey(ax['h'])
-    >>> ax['S'].set(title='Self-similarity')
-    >>> librosa.display.waveshow(y, ax=ax['v'])
-    >>> ax['v'].label_outer()
-    >>> ax['v'].set(title='transpose=False')
-    >>> librosa.display.waveshow(y, ax=ax['h'], transpose=True)
-    >>> ax['h'].label_outer()
-    >>> ax['h'].set(title='transpose=True')
+    >>> sim = librosa.segment.recurrence_matrix(chroma, mode="affinity")
+    >>> librosa.display.specshow(
+    ...     sim, ax=ax["S"], sr=sr, x_axis="time", y_axis="time", auto_aspect=False
+    ... )
+    >>> ax["S"].label_outer()
+    >>> ax["S"].sharex(ax["v"])
+    >>> ax["S"].sharey(ax["h"])
+    >>> ax["S"].set(title="Self-similarity")
+    >>> librosa.display.waveshow(y, ax=ax["v"])
+    >>> ax["v"].label_outer()
+    >>> ax["v"].set(title="transpose=False")
+    >>> librosa.display.waveshow(y, ax=ax["h"], transpose=True)
+    >>> ax["h"].label_outer()
+    >>> ax["h"].set(title="transpose=True")
     >>> plt.show()
     """
     util.valid_audio(y)
@@ -758,24 +766,47 @@ def wavebars(
     Plot a waveform as bars, compared to the `waveshow` version of the plot
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('libri1', duration=10)
+    >>> y, sr = librosa.loadx("libri1", duration=10)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.waveshow(y=y, sr=sr, ax=ax[0], label='waveshow()')
+    >>> librosa.display.waveshow(y=y, sr=sr, ax=ax[0], label="waveshow()")
     >>> ax[0].legend()
     >>> ax[0].label_outer()
-    >>> librosa.display.wavebars(y=y, sr=sr, ax=ax[1], label='wavebars()')
+    >>> librosa.display.wavebars(y=y, sr=sr, ax=ax[1], label="wavebars()")
     >>> ax[1].legend()
     >>> plt.show()
 
     Make plots with varying amounts of detail, squared corners, and inverted colors.
 
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.wavebars(y=y, sr=sr, n_bars=100, rounding_ratio=0,
-    ...                          invert=True, ax=ax[0], label='100 bars')
-    >>> librosa.display.wavebars(y=y, sr=sr, n_bars=200, rounding_ratio=0,
-    ...                          color='C1', invert=True, ax=ax[1], label='200 bars')
-    >>> librosa.display.wavebars(y=y, sr=sr, n_bars=50, rounding_ratio=0,
-    ...                          color='C2', invert=True, ax=ax[2], label='50 bars')
+    >>> librosa.display.wavebars(
+    ...     y=y,
+    ...     sr=sr,
+    ...     n_bars=100,
+    ...     rounding_ratio=0,
+    ...     invert=True,
+    ...     ax=ax[0],
+    ...     label="100 bars",
+    ... )
+    >>> librosa.display.wavebars(
+    ...     y=y,
+    ...     sr=sr,
+    ...     n_bars=200,
+    ...     rounding_ratio=0,
+    ...     color="C1",
+    ...     invert=True,
+    ...     ax=ax[1],
+    ...     label="200 bars",
+    ... )
+    >>> librosa.display.wavebars(
+    ...     y=y,
+    ...     sr=sr,
+    ...     n_bars=50,
+    ...     rounding_ratio=0,
+    ...     color="C2",
+    ...     invert=True,
+    ...     ax=ax[2],
+    ...     label="50 bars",
+    ... )
     >>> ax[0].legend()
     >>> ax[1].legend()
     >>> ax[2].legend()
@@ -1008,13 +1039,11 @@ def wavef0(
     Visualize a waveform with an f0 displacement using `waveshow`
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('trumpet')
-    >>> f0, _, _ = librosa.pyin(y, fmin='C2', fmax='C7',
-    ...                         sr=sr, hop_length=512)
+    >>> y, sr = librosa.loadx("trumpet")
+    >>> f0, _, _ = librosa.pyin(y, fmin="C2", fmax="C7", sr=sr, hop_length=512)
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.wavef0(y=y, f0=f0, sr=sr, ax=ax,
-    ...                        method='waveshow')
-    >>> ax.set(title='Waveform with f0 displacement (waveshow)')
+    >>> librosa.display.wavef0(y=y, f0=f0, sr=sr, ax=ax, method="waveshow")
+    >>> ax.set(title="Waveform with f0 displacement (waveshow)")
     >>> plt.show()
 
     Visualize a waveform with an f0 displacement using `wavebars`, and Hz
@@ -1022,17 +1051,25 @@ def wavef0(
     Using a larger number of bars shows more detail here.
 
     >>> fig, ax = plt.subplots()
-    >>> librosa.display.wavef0(y=y, f0=f0, sr=sr, ax=ax, n_bars=256,
-    ...                        method='wavebars', freq_axis='cqt_hz')
-    >>> ax.set(title='Waveform with f0 displacement (wavebars, cqt_hz)')
+    >>> librosa.display.wavef0(
+    ...     y=y, f0=f0, sr=sr, ax=ax, n_bars=256, method="wavebars", freq_axis="cqt_hz"
+    ... )
+    >>> ax.set(title="Waveform with f0 displacement (wavebars, cqt_hz)")
     >>> plt.show()
 
     Overlay a displaced waveform on a CQT plot via `specshow`.
 
     >>> fig, ax = plt.subplots()
     >>> C = librosa.cqt(y, sr=sr)
-    >>> librosa.display.specshow(C, ax=ax, sr=sr, x_axis='time', y_axis='cqt_note',
-    ...                          vscale='dBFS', cmap='gray_r')
+    >>> librosa.display.specshow(
+    ...     C,
+    ...     ax=ax,
+    ...     sr=sr,
+    ...     x_axis="time",
+    ...     y_axis="cqt_note",
+    ...     vscale="dBFS",
+    ...     cmap="gray_r",
+    ... )
     >>> hl = librosa.display.highlight(ax=ax)
     >>> librosa.display.wavef0(y=y, f0=f0, sr=sr, ax=ax, path_effects=hl)
     """

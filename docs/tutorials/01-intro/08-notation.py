@@ -152,8 +152,12 @@ print("G♯:mixolydian ⇒ ", librosa.key_to_degrees("G♯:mixolydian"))
 # To produce ASCII-compatible outputs when converting to pitch notation, set the ``unicode`` flag to
 # ``False``:
 
-print("unicode=True:  ", librosa.midi_to_note(midi, key="F:major", unicode=True))
-print("unicode=False: ", librosa.midi_to_note(midi, key="F:major", unicode=False))
+print(
+    "unicode=True:  ", librosa.midi_to_note(midi, key="F:major", unicode=True)
+)
+print(
+    "unicode=False: ", librosa.midi_to_note(midi, key="F:major", unicode=False)
+)
 
 # %%
 # Hindustani and Carnatic notation
@@ -190,7 +194,9 @@ print(librosa.midi_to_svara_h(midi, Sa=67, abbr=False))
 # The underlying dots indicate that the MIDI numbers lie in the octave below the specified Sa position.
 # Over-dots would indicate tones in the octave above the specified Sa position:
 
-print(librosa.midi_to_svara_h([60, 61, 67, 68, 72, 73, 79, 80], Sa=67, abbr=False))
+print(
+    librosa.midi_to_svara_h([60, 61, 67, 68, 72, 73, 79, 80], Sa=67, abbr=False)
+)
 
 # %%
 # As in Western keys and modes, the selection of scale degrees belonging to a particular *thaat* can be

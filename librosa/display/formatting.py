@@ -139,7 +139,7 @@ class TimeFormatter(mplticker.Formatter):
     >>> fig, ax = plt.subplots()
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter())
-    >>> ax.set(xlabel='Time')
+    >>> ax.set(xlabel="Time")
     >>> plt.show()
 
     Manually set the physical time unit of the x-axis to milliseconds
@@ -148,8 +148,8 @@ class TimeFormatter(mplticker.Formatter):
     >>> values = np.random.randn(len(times))
     >>> fig, ax = plt.subplots()
     >>> ax.plot(times, values)
-    >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit='ms'))
-    >>> ax.set(xlabel='Time (ms)')
+    >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(unit="ms"))
+    >>> ax.set(xlabel="Time (ms)")
     >>> plt.show()
 
     For lag plots
@@ -159,7 +159,7 @@ class TimeFormatter(mplticker.Formatter):
     >>> fig, ax = plt.subplots()
     >>> ax.plot(times, values)
     >>> ax.xaxis.set_major_formatter(librosa.display.TimeFormatter(lag=True))
-    >>> ax.set(xlabel='Lag')
+    >>> ax.set(xlabel="Lag")
     >>> plt.show()
     """
 
@@ -1610,19 +1610,25 @@ def colorbar_phase(
 
     >>> import matplotlib.pyplot as plt
     >>> import librosa
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> S = librosa.stft(y)
     >>> fig, ax = plt.subplots()
-    >>> im = librosa.display.specshow(S, ax=ax, y_axis='log', x_axis='time', vscale='phase')
+    >>> im = librosa.display.specshow(
+    ...     S, ax=ax, y_axis="log", x_axis="time", vscale="phase"
+    ... )
     >>> librosa.display.colorbar_phase(im)
     >>> plt.show()
 
     Attach a colorbar to one subplot axes, and show as multiples of π/3.
 
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> im_mag = librosa.display.specshow(S, ax=ax[0], y_axis='log', x_axis='time', vscale='dBFS')
-    >>> cbar = librosa.display.colorbar_db(im_mag, ax=ax[0], label='dBFS')
-    >>> im_ph = librosa.display.specshow(S, ax=ax[1], y_axis='log', x_axis='time', vscale='dphase')
+    >>> im_mag = librosa.display.specshow(
+    ...     S, ax=ax[0], y_axis="log", x_axis="time", vscale="dBFS"
+    ... )
+    >>> cbar = librosa.display.colorbar_db(im_mag, ax=ax[0], label="dBFS")
+    >>> im_ph = librosa.display.specshow(
+    ...     S, ax=ax[1], y_axis="log", x_axis="time", vscale="dphase"
+    ... )
     >>> cbar = librosa.display.colorbar_phase(im_ph, ax=ax[1], numticks=7)
     >>> ax[0].label_outer()
     >>> plt.show()
@@ -1692,19 +1698,25 @@ def colorbar_db(
 
     >>> import matplotlib.pyplot as plt
     >>> import librosa
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> S = librosa.stft(y)
     >>> fig, ax = plt.subplots()
-    >>> im = librosa.display.specshow(S, ax=ax, y_axis='log', x_axis='time', vscale='dB')
+    >>> im = librosa.display.specshow(
+    ...     S, ax=ax, y_axis="log", x_axis="time", vscale="dB"
+    ... )
     >>> librosa.display.colorbar_db(im)
     >>> plt.show()
 
     Attach a colorbar to one subplot axes.  We can also set a label for the colorbar.
 
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> im_mag = librosa.display.specshow(S, ax=ax[0], y_axis='log', x_axis='time', vscale='dBFS')
-    >>> cbar = librosa.display.colorbar_db(im_mag, ax=ax[0], label='dBFS')
-    >>> im_ph = librosa.display.specshow(S, ax=ax[1], y_axis='log', x_axis='time', vscale='dphase')
+    >>> im_mag = librosa.display.specshow(
+    ...     S, ax=ax[0], y_axis="log", x_axis="time", vscale="dBFS"
+    ... )
+    >>> cbar = librosa.display.colorbar_db(im_mag, ax=ax[0], label="dBFS")
+    >>> im_ph = librosa.display.specshow(
+    ...     S, ax=ax[1], y_axis="log", x_axis="time", vscale="dphase"
+    ... )
     >>> cbar = librosa.display.colorbar_phase(im_ph, ax=ax[1])
     >>> ax[0].label_outer()
     >>> plt.show()

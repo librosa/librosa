@@ -196,7 +196,7 @@ def beat_track(
     --------
     Track beats using time series input
 
-    >>> y, sr = librosa.loadx('choice', duration=10)
+    >>> y, sr = librosa.loadx("choice", duration=10)
 
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
     >>> tempo
@@ -228,10 +228,8 @@ def beat_track(
 
     Track beats using a pre-computed onset envelope
 
-    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr,
-    ...                                          aggregate=np.median)
-    >>> tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env,
-    ...                                        sr=sr)
+    >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr, aggregate=np.median)
+    >>> tempo, beats = librosa.beat.beat_track(onset_envelope=onset_env, sr=sr)
     >>> tempo
     135.99917763157896
     >>> beats
@@ -245,15 +243,20 @@ def beat_track(
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
     >>> times = librosa.times_like(onset_env, sr=sr, hop_length=hop_length)
     >>> M = librosa.feature.melspectrogram(y=y, sr=sr, hop_length=hop_length)
-    >>> librosa.display.specshow(M, vscale='dBFS[power]',
-    ...                          y_axis='mel', x_axis='time', hop_length=hop_length,
-    ...                          ax=ax[0])
+    >>> librosa.display.specshow(
+    ...     M,
+    ...     vscale="dBFS[power]",
+    ...     y_axis="mel",
+    ...     x_axis="time",
+    ...     hop_length=hop_length,
+    ...     ax=ax[0],
+    ... )
     >>> ax[0].label_outer()
-    >>> ax[0].set(title='Mel spectrogram')
-    >>> ax[1].plot(times, librosa.util.normalize(onset_env),
-    ...          label='Onset strength')
-    >>> ax[1].vlines(times[beats], 0, 1, alpha=0.5, color='r',
-    ...            linestyle='--', label='Beats')
+    >>> ax[0].set(title="Mel spectrogram")
+    >>> ax[1].plot(times, librosa.util.normalize(onset_env), label="Onset strength")
+    >>> ax[1].vlines(
+    ...     times[beats], 0, 1, alpha=0.5, color="r", linestyle="--", label="Beats"
+    ... )
     >>> ax[1].legend()
     """
     # First, get the frame->beat strength profile if we don't already have one
@@ -384,37 +387,45 @@ def plp[FloatT: np.floating[Any]](
     Visualize the PLP compared to an onset strength envelope.
     Both are normalized here to make comparison easier.
 
-    >>> y, sr = librosa.loadx('brahms')
+    >>> y, sr = librosa.loadx("brahms")
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
     >>> pulse = librosa.beat.plp(onset_envelope=onset_env, sr=sr)
     >>> # Or compute pulse with an alternate prior, like log-normal
     >>> import scipy.stats
     >>> prior = scipy.stats.lognorm(loc=np.log(120), scale=120, s=1)
-    >>> pulse_lognorm = librosa.beat.plp(onset_envelope=onset_env, sr=sr,
-    ...                                  prior=prior)
+    >>> pulse_lognorm = librosa.beat.plp(onset_envelope=onset_env, sr=sr, prior=prior)
     >>> melspec = librosa.feature.melspectrogram(y=y, sr=sr)
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> librosa.display.specshow(melspec, vscale='dBFS[power]',
-    ...                          x_axis='time', y_axis='mel', ax=ax[0])
-    >>> ax[0].set(title='Mel spectrogram')
+    >>> librosa.display.specshow(
+    ...     melspec, vscale="dBFS[power]", x_axis="time", y_axis="mel", ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Mel spectrogram")
     >>> ax[0].label_outer()
-    >>> ax[1].plot(librosa.times_like(onset_env),
-    ...          librosa.util.normalize(onset_env),
-    ...          label='Onset strength')
-    >>> ax[1].plot(librosa.times_like(pulse),
-    ...          librosa.util.normalize(pulse),
-    ...          label='Predominant local pulse (PLP)')
-    >>> ax[1].set(title='Uniform tempo prior [30, 300]')
+    >>> ax[1].plot(
+    ...     librosa.times_like(onset_env),
+    ...     librosa.util.normalize(onset_env),
+    ...     label="Onset strength",
+    ... )
+    >>> ax[1].plot(
+    ...     librosa.times_like(pulse),
+    ...     librosa.util.normalize(pulse),
+    ...     label="Predominant local pulse (PLP)",
+    ... )
+    >>> ax[1].set(title="Uniform tempo prior [30, 300]")
     >>> ax[1].label_outer()
-    >>> ax[2].plot(librosa.times_like(onset_env),
-    ...          librosa.util.normalize(onset_env),
-    ...          label='Onset strength')
-    >>> ax[2].plot(librosa.times_like(pulse_lognorm),
-    ...          librosa.util.normalize(pulse_lognorm),
-    ...          label='Predominant local pulse (PLP)')
-    >>> ax[2].set(title='Log-normal tempo prior, mean=120', xlim=[5, 20])
+    >>> ax[2].plot(
+    ...     librosa.times_like(onset_env),
+    ...     librosa.util.normalize(onset_env),
+    ...     label="Onset strength",
+    ... )
+    >>> ax[2].plot(
+    ...     librosa.times_like(pulse_lognorm),
+    ...     librosa.util.normalize(pulse_lognorm),
+    ...     label="Predominant local pulse (PLP)",
+    ... )
+    >>> ax[2].set(title="Log-normal tempo prior, mean=120", xlim=[5, 20])
     >>> ax[2].legend()
     >>> plt.show()
 
@@ -425,21 +436,27 @@ def plp[FloatT: np.floating[Any]](
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
     >>> times = librosa.times_like(onset_env, sr=sr)
-    >>> ax[0].plot(times, librosa.util.normalize(onset_env),
-    ...          label='Onset strength')
-    >>> ax[0].vlines(times[beats], 0, 1, alpha=0.5, color='r',
-    ...            linestyle='--', label='Beats')
+    >>> ax[0].plot(times, librosa.util.normalize(onset_env), label="Onset strength")
+    >>> ax[0].vlines(
+    ...     times[beats], 0, 1, alpha=0.5, color="r", linestyle="--", label="Beats"
+    ... )
     >>> ax[0].legend()
-    >>> ax[0].set(title='librosa.beat.beat_track')
+    >>> ax[0].set(title="librosa.beat.beat_track")
     >>> ax[0].label_outer()
     >>> # Limit the plot to a 15-second window
     >>> times = librosa.times_like(pulse, sr=sr)
-    >>> ax[1].plot(times, librosa.util.normalize(pulse),
-    ...          label='PLP')
-    >>> ax[1].vlines(times[beats_plp], 0, 1, alpha=0.5, color='r',
-    ...            linestyle='--', label='PLP Beats')
+    >>> ax[1].plot(times, librosa.util.normalize(pulse), label="PLP")
+    >>> ax[1].vlines(
+    ...     times[beats_plp],
+    ...     0,
+    ...     1,
+    ...     alpha=0.5,
+    ...     color="r",
+    ...     linestyle="--",
+    ...     label="PLP Beats",
+    ... )
     >>> ax[1].legend()
-    >>> ax[1].set(title='librosa.beat.plp', xlim=[5, 20])
+    >>> ax[1].set(title="librosa.beat.plp", xlim=[5, 20])
     >>> ax[1].xaxis.set_major_formatter(librosa.display.TimeFormatter())
     >>> plt.show()
     """

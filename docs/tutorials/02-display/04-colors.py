@@ -71,13 +71,19 @@ stft = librosa.stft(y)
 diffs = librosa.feature.delta(librosa.amplitude_to_db(np.abs(stft)))
 
 # Compute a recurrence matrix (for boolean values)
-rec = librosa.segment.recurrence_matrix(librosa.amplitude_to_db(np.abs(stft)), mode="connectivity")
+rec = librosa.segment.recurrence_matrix(
+    librosa.amplitude_to_db(np.abs(stft)), mode="connectivity"
+)
 
 fig, ax = plt.subplots(2, 2, figsize=(10, 8))
 
 # Draw each of the subplots
-i1 = librosa.display.specshow(stft, x_axis="time", y_axis="log", vscale="dBFS", ax=ax[0, 0])
-i2 = librosa.display.specshow(stft, x_axis="time", y_axis="log", vscale="dphase", ax=ax[0, 1])
+i1 = librosa.display.specshow(
+    stft, x_axis="time", y_axis="log", vscale="dBFS", ax=ax[0, 0]
+)
+i2 = librosa.display.specshow(
+    stft, x_axis="time", y_axis="log", vscale="dphase", ax=ax[0, 1]
+)
 i3 = librosa.display.specshow(diffs, x_axis="time", y_axis="log", ax=ax[1, 0])
 i4 = librosa.display.specshow(rec, x_axis="time", y_axis="time", ax=ax[1, 1])
 
@@ -112,7 +118,9 @@ ax[1, 1].set_title("Boolean (Recurrence)")
 # For example, `librosa.display.colorbar_db` is helpful for creating a colorbar that is labeled in decibels:
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(stft, vscale="dBFS", x_axis="time", y_axis="log", ax=ax)
+img = librosa.display.specshow(
+    stft, vscale="dBFS", x_axis="time", y_axis="log", ax=ax
+)
 librosa.display.colorbar_db(img)
 
 # %%
@@ -120,7 +128,9 @@ librosa.display.colorbar_db(img)
 # where the positions are labeled as fractions of π:
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(stft, vscale="dphase", x_axis="time", y_axis="log", ax=ax)
+img = librosa.display.specshow(
+    stft, vscale="dphase", x_axis="time", y_axis="log", ax=ax
+)
 librosa.display.colorbar_phase(img)
 
 # %%
@@ -140,10 +150,18 @@ cmaps = dict(
 fig, ax = plt.subplots(2, 2, figsize=(10, 8))
 
 # Draw each of the subplots
-i1 = librosa.display.specshow(stft, x_axis="time", y_axis="log", vscale="dBFS", ax=ax[0, 0], **cmaps)
-i2 = librosa.display.specshow(stft, x_axis="time", y_axis="log", vscale="dphase", ax=ax[0, 1], **cmaps)
-i3 = librosa.display.specshow(diffs, x_axis="time", y_axis="log", ax=ax[1, 0], **cmaps)
-i4 = librosa.display.specshow(rec, x_axis="time", y_axis="time", ax=ax[1, 1], **cmaps)
+i1 = librosa.display.specshow(
+    stft, x_axis="time", y_axis="log", vscale="dBFS", ax=ax[0, 0], **cmaps
+)
+i2 = librosa.display.specshow(
+    stft, x_axis="time", y_axis="log", vscale="dphase", ax=ax[0, 1], **cmaps
+)
+i3 = librosa.display.specshow(
+    diffs, x_axis="time", y_axis="log", ax=ax[1, 0], **cmaps
+)
+i4 = librosa.display.specshow(
+    rec, x_axis="time", y_axis="time", ax=ax[1, 1], **cmaps
+)
 
 # Add colorbars for each subplot
 fig.colorbar(i1)
@@ -162,7 +180,9 @@ ax[1, 1].set_title("Boolean (Recurrence)")
 # If you want to bypass automatic colormap selection, this can be done by setting `cmap=` directly:
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(stft, x_axis="time", y_axis="log", vscale="dBFS", cmap="gray_r", ax=ax)
+img = librosa.display.specshow(
+    stft, x_axis="time", y_axis="log", vscale="dBFS", cmap="gray_r", ax=ax
+)
 librosa.display.colorbar_db(img)
 
 # %%
@@ -171,7 +191,9 @@ librosa.display.colorbar_db(img)
 # Here, our documentation environment is configured to use `viridis` as the default colormap:
 
 fig, ax = plt.subplots()
-img = librosa.display.specshow(stft, x_axis="time", y_axis="log", vscale="dBFS", cmap=None, ax=ax)
+img = librosa.display.specshow(
+    stft, x_axis="time", y_axis="log", vscale="dBFS", cmap=None, ax=ax
+)
 librosa.display.colorbar_db(img)
 
 # %%
@@ -202,14 +224,23 @@ librosa.display.colorbar_db(img)
 
 fig, ax = plt.subplots(2, 1, figsize=(10, 8), sharex=True, sharey=True)
 
-librosa.display.specshow(stft, x_axis="time", y_axis="log", vscale="dBFS", ax=ax[0], cmap_seq="magma")
+librosa.display.specshow(
+    stft, x_axis="time", y_axis="log", vscale="dBFS", ax=ax[0], cmap_seq="magma"
+)
 ax[0].set_title("Dark background")
 
 line1 = ax[0].axhline(1000, color="C0", label="1000 Hz", linewidth=3)
 
 hl2 = librosa.display.highlight(artist=line1, linewidth=6)  # Add a highlight
 
-librosa.display.specshow(stft, x_axis="time", y_axis="log", vscale="dBFS", ax=ax[1], cmap_seq="magma_r")
+librosa.display.specshow(
+    stft,
+    x_axis="time",
+    y_axis="log",
+    vscale="dBFS",
+    ax=ax[1],
+    cmap_seq="magma_r",
+)
 ax[1].set_title("Light background")
 
 line2 = ax[1].axhline(1005, color="C1", label="1005 Hz", linewidth=3)

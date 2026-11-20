@@ -77,7 +77,9 @@ def interval_frequencies(
     --------
     Generate two octaves of Pythagorean intervals starting at 55Hz
 
-    >>> librosa.interval_frequencies(24, fmin=55, intervals="pythagorean", bins_per_octave=12)
+    >>> librosa.interval_frequencies(
+    ...     24, fmin=55, intervals="pythagorean", bins_per_octave=12
+    ... )
     array([ 55.   ,  58.733,  61.875,  66.075,  69.609,  74.334,  78.311,
             82.5  ,  88.099,  92.812,  99.112, 104.414, 110.   , 117.466,
            123.75 , 132.149, 139.219, 148.668, 156.621, 165.   , 176.199,
@@ -93,7 +95,7 @@ def interval_frequencies(
 
     Generate three octaves using only three intervals
 
-    >>> intervals = [1, 4/3, 3/2]
+    >>> intervals = [1, 4 / 3, 3 / 2]
     >>> librosa.interval_frequencies(9, fmin=55, intervals=intervals)
     array([ 55.   ,  73.333,  82.5  , 110.   , 146.667, 165.   , 220.   ,
        293.333, 330.   ])
@@ -145,7 +147,7 @@ def pythagorean_intervals(
     Intervals are constructed by stacking ratios of 3/2 (i.e.,
     just perfect fifths) and folding down to a single octave::
 
-        1, 3/2, 9/8, 27/16, 81/64, ...
+        1, 3 / 2, 9 / 8, 27 / 16, 81 / 64, ...
 
     Note that this differs from 3-limit just intonation intervals
     in that Pythagorean intervals only use positive powers of 3
@@ -182,7 +184,7 @@ def pythagorean_intervals(
     array([1.      , 1.067871, 1.125   , 1.201355, 1.265625, 1.351524,
            1.423828, 1.5     , 1.601807, 1.6875  , 1.802032, 1.898437])
     >>> # Compare to the 12-tone equal temperament intervals:
-    >>> 2**(np.arange(12)/12)
+    >>> 2 ** (np.arange(12) / 12)
     array([1.      , 1.059463, 1.122462, 1.189207, 1.259921, 1.33484 ,
            1.414214, 1.498307, 1.587401, 1.681793, 1.781797, 1.887749])
 
@@ -194,7 +196,9 @@ def pythagorean_intervals(
 
     Generate the first 7, in circle-of-fifths other and factored form
 
-    >>> librosa.pythagorean_intervals(bins_per_octave=7, sort=False, return_factors=True)
+    >>> librosa.pythagorean_intervals(
+    ...     bins_per_octave=7, sort=False, return_factors=True
+    ... )
     [
         {2: 0, 3: 0},
         {2: -1, 3: 1},
@@ -353,7 +357,7 @@ def plimit_intervals(
            1.35152435, 1.42382812, 1.5       , 1.60180664, 1.6875    ,
            1.80203247, 1.8984375 ])
     >>> # 12-TET intervals:
-    >>> 2**(np.arange(12)/12)
+    >>> 2 ** (np.arange(12) / 12)
     array([1.        , 1.05946309, 1.12246205, 1.18920712, 1.25992105,
            1.33483985, 1.41421356, 1.49830708, 1.58740105, 1.68179283,
            1.78179744, 1.88774863])
@@ -366,8 +370,7 @@ def plimit_intervals(
 
     The same example, but now in factored form
 
-    >>> librosa.plimit_intervals(primes=[3, 5], bins_per_octave=7,
-    ...                          return_factors=True)
+    >>> librosa.plimit_intervals(primes=[3, 5], bins_per_octave=7, return_factors=True)
     [
         {},
         {2: -3, 3: 2},

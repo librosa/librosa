@@ -136,8 +136,8 @@ def onset_detect(
     --------
     Get onset times from a signal
 
-    >>> y, sr = librosa.loadx('trumpet')
-    >>> librosa.onset.onset_detect(y=y, sr=sr, units='time')
+    >>> y, sr = librosa.loadx("trumpet")
+    >>> librosa.onset.onset_detect(y=y, sr=sr, units="time")
     array([0.07 , 0.232, 0.395, 0.604, 0.743, 0.929, 1.045, 1.115,
            1.416, 1.672, 1.881, 2.043, 2.206, 2.368, 2.554, 3.019])
 
@@ -150,13 +150,21 @@ def onset_detect(
     >>> import matplotlib.pyplot as plt
     >>> D = np.abs(librosa.stft(y))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> librosa.display.specshow(D, vscale='dBFS',
-    ...                          x_axis='time', y_axis='log', ax=ax[0], sr=sr)
-    >>> ax[0].set(title='Power spectrogram')
+    >>> librosa.display.specshow(
+    ...     D, vscale="dBFS", x_axis="time", y_axis="log", ax=ax[0], sr=sr
+    ... )
+    >>> ax[0].set(title="Power spectrogram")
     >>> ax[0].label_outer()
-    >>> ax[1].plot(times, o_env, label='Onset strength')
-    >>> ax[1].vlines(times[onset_frames], 0, o_env.max(), color='r', alpha=0.9,
-    ...            linestyle='--', label='Onsets')
+    >>> ax[1].plot(times, o_env, label="Onset strength")
+    >>> ax[1].vlines(
+    ...     times[onset_frames],
+    ...     0,
+    ...     o_env.max(),
+    ...     color="r",
+    ...     alpha=0.9,
+    ...     linestyle="--",
+    ...     label="Onsets",
+    ... )
     >>> ax[1].legend()
     """
     # First, get the frame->beat strength profile if we don't already have one
@@ -372,37 +380,55 @@ def onset_strength(
     First, load some audio and plot the spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('trumpet', duration=3)
+    >>> y, sr = librosa.loadx("trumpet", duration=3)
     >>> D = np.abs(librosa.stft(y))
     >>> times = librosa.times_like(D, sr=sr)
     >>> fig, ax = plt.subplots(nrows=4, sharex=True, height_ratios=[3, 1, 1, 1])
-    >>> librosa.display.specshow(D, vscale='dBFS',
-    ...                          y_axis='log', x_axis='time', ax=ax[0], sr=sr)
-    >>> ax[0].set(title='Power spectrogram')
+    >>> librosa.display.specshow(
+    ...     D, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[0], sr=sr
+    ... )
+    >>> ax[0].set(title="Power spectrogram")
     >>> ax[0].label_outer()
 
     Construct a standard onset function
 
     >>> onset_env = librosa.onset.onset_strength(y=y, sr=sr)
-    >>> ax[1].plot(times, onset_env / onset_env.max(), alpha=0.8,
-    ...            label='Mean (mel)', color='C0')
+    >>> ax[1].plot(
+    ...     times,
+    ...     onset_env / onset_env.max(),
+    ...     alpha=0.8,
+    ...     label="Mean (mel)",
+    ...     color="C0",
+    ... )
     >>> ax[1].label_outer()
 
     Compute complex-domain onset strength
 
-    >>> onset_complex = librosa.onset.onset_strength(y=y, sr=sr, mode='complex')
-    >>> ax[2].plot(times, onset_complex / onset_complex.max(), alpha=0.8,
-    ...            label='Complex domain (STFT)', color='C1')
+    >>> onset_complex = librosa.onset.onset_strength(y=y, sr=sr, mode="complex")
+    >>> ax[2].plot(
+    ...     times,
+    ...     onset_complex / onset_complex.max(),
+    ...     alpha=0.8,
+    ...     label="Complex domain (STFT)",
+    ...     color="C1",
+    ... )
     >>> ax[2].label_outer()
 
     Constant-Q spectrogram instead of Mel
 
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
-    >>> onset_cqt = librosa.onset.onset_strength(sr=sr, S=librosa.amplitude_to_db(C, ref=np.max))
-    >>> ax[3].plot(times, onset_cqt / onset_cqt.max(), alpha=0.8,
-    ...            label='Mean (CQT)', color='C2')
+    >>> onset_cqt = librosa.onset.onset_strength(
+    ...     sr=sr, S=librosa.amplitude_to_db(C, ref=np.max)
+    ... )
+    >>> ax[3].plot(
+    ...     times,
+    ...     onset_cqt / onset_cqt.max(),
+    ...     alpha=0.8,
+    ...     label="Mean (CQT)",
+    ...     color="C2",
+    ... )
     >>> ax[3].label_outer()
-    >>> fig.legend(loc='center right', ncols=3)
+    >>> fig.legend(loc="center right", ncols=3)
     """
     if aggregate is False:
         raise ParameterValueError("aggregate parameter cannot be False when computing full-spectrum onset strength.")
@@ -457,12 +483,11 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
     --------
     Backtrack the events using the onset envelope
 
-    >>> y, sr = librosa.loadx('trumpet', duration=3)
+    >>> y, sr = librosa.loadx("trumpet", duration=3)
     >>> oenv = librosa.onset.onset_strength(y=y, sr=sr)
     >>> times = librosa.times_like(oenv, sr=sr)
     >>> # Detect events without backtracking
-    >>> onset_raw = librosa.onset.onset_detect(onset_envelope=oenv,
-    ...                                        backtrack=False)
+    >>> onset_raw = librosa.onset.onset_detect(onset_envelope=oenv, backtrack=False)
     >>> onset_bt = librosa.onset.onset_backtrack(onset_raw, oenv)
 
     Backtrack the events using the RMS values
@@ -475,16 +500,31 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True)
-    >>> librosa.display.specshow(S, vscale='dBFS',
-    ...                          y_axis='log', x_axis='time', ax=ax[0])
+    >>> librosa.display.specshow(
+    ...     S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[0]
+    ... )
     >>> ax[0].label_outer()
-    >>> ax[1].plot(times, oenv, label='Onset strength')
-    >>> ax[1].vlines(librosa.frames_to_time(onset_raw), 0, oenv.max(), label='Raw onsets')
-    >>> ax[1].vlines(librosa.frames_to_time(onset_bt), 0, oenv.max(), label='Backtracked', color='r')
+    >>> ax[1].plot(times, oenv, label="Onset strength")
+    >>> ax[1].vlines(
+    ...     librosa.frames_to_time(onset_raw), 0, oenv.max(), label="Raw onsets"
+    ... )
+    >>> ax[1].vlines(
+    ...     librosa.frames_to_time(onset_bt),
+    ...     0,
+    ...     oenv.max(),
+    ...     label="Backtracked",
+    ...     color="r",
+    ... )
     >>> ax[1].legend()
     >>> ax[1].label_outer()
-    >>> ax[2].plot(times, rms[0], label='RMS')
-    >>> ax[2].vlines(librosa.frames_to_time(onset_bt_rms), 0, rms.max(), label='Backtracked (RMS)', color='r')
+    >>> ax[2].plot(times, rms[0], label="RMS")
+    >>> ax[2].vlines(
+    ...     librosa.frames_to_time(onset_bt_rms),
+    ...     0,
+    ...     rms.max(),
+    ...     label="Backtracked (RMS)",
+    ...     color="r",
+    ... )
     >>> ax[2].legend()
     """
     # Find points where energy is non-increasing
@@ -641,21 +681,23 @@ def onset_strength_multi(
     First, load some audio and plot the spectrogram
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('choice', duration=5)
+    >>> y, sr = librosa.loadx("choice", duration=5)
     >>> D = np.abs(librosa.stft(y))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img1 = librosa.display.specshow(D, vscale='dBFS',
-    ...                          y_axis='log', x_axis='time', ax=ax[0])
-    >>> ax[0].set(title='Power spectrogram')
+    >>> img1 = librosa.display.specshow(
+    ...     D, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Power spectrogram")
     >>> ax[0].label_outer()
     >>> librosa.display.colorbar_db(img1, ax=ax[0])
 
     Construct a standard onset function over four sub-bands
 
-    >>> onset_subbands = librosa.onset.onset_strength_multi(y=y, sr=sr,
-    ...                                                     channels=[0, 32, 64, 96, 128])
-    >>> img2 = librosa.display.specshow(onset_subbands, x_axis='time', ax=ax[1])
-    >>> ax[1].set(ylabel='Sub-bands', title='Sub-band onset strength')
+    >>> onset_subbands = librosa.onset.onset_strength_multi(
+    ...     y=y, sr=sr, channels=[0, 32, 64, 96, 128]
+    ... )
+    >>> img2 = librosa.display.specshow(onset_subbands, x_axis="time", ax=ax[1])
+    >>> ax[1].set(ylabel="Sub-bands", title="Sub-band onset strength")
     >>> fig.colorbar(img2, ax=[ax[1]])
     """
     if aggregate is None:

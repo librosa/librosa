@@ -146,7 +146,9 @@ def _update(delta):
     return None
 
 
-ani = animation.FuncAnimation(fig, func=_update, frames=window, repeat=False, interval=1000 / 30)
+ani = animation.FuncAnimation(
+    fig, func=_update, frames=window, repeat=False, interval=1000 / 30
+)
 
 
 # %%

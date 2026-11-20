@@ -266,22 +266,20 @@ def dtw(
     --------
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('brahms', offset=10, duration=15)
+    >>> y, sr = librosa.loadx("brahms", offset=10, duration=15)
     >>> X = librosa.feature.chroma_cens(y=y, sr=sr)
     >>> noise = np.random.rand(X.shape[0], 200)
     >>> Y = np.concatenate((noise, noise, X, noise), axis=1)
     >>> D, wp = librosa.sequence.dtw(X, Y, subseq=True)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True)
-    >>> img = librosa.display.specshow(D, x_axis='frames', y_axis='frames',
-    ...                                ax=ax[0])
+    >>> img = librosa.display.specshow(D, x_axis="frames", y_axis="frames", ax=ax[0])
     >>> hl = librosa.display.highlight(ax=ax[0])
-    >>> ax[0].set(title='DTW cost', xlabel='Noisy sequence', ylabel='Target')
-    >>> ax[0].plot(wp[:, 1], wp[:, 0], label='Optimal path', path_effects=hl)
+    >>> ax[0].set(title="DTW cost", xlabel="Noisy sequence", ylabel="Target")
+    >>> ax[0].plot(wp[:, 1], wp[:, 0], label="Optimal path", path_effects=hl)
     >>> ax[0].legend()
     >>> fig.colorbar(img, ax=ax[0])
     >>> ax[1].plot(D[-1, :] / wp.shape[0])
-    >>> ax[1].set(xlim=[0, Y.shape[1]], ylim=[0, 2],
-    ...           title='Matching cost function')
+    >>> ax[1].set(xlim=[0, Y.shape[1]], ylim=[0, 2], title="Matching cost function")
     """
     # Default Parameters
     default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.uint32)
@@ -781,26 +779,25 @@ def rqa(
 
     >>> import numpy as np
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('nutcracker', duration=30)
+    >>> y, sr = librosa.loadx("nutcracker", duration=30)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> # Use time-delay embedding to reduce noise
     >>> chroma_stack = librosa.feature.stack_memory(chroma, n_steps=10, delay=3)
     >>> # Build recurrence, suppress self-loops within 1 second
-    >>> rec = librosa.segment.recurrence_matrix(chroma_stack, width=43,
-    ...                                         mode='affinity',
-    ...                                         metric='cosine')
+    >>> rec = librosa.segment.recurrence_matrix(
+    ...     chroma_stack, width=43, mode="affinity", metric="cosine"
+    ... )
     >>> # using infinite cost for gaps enforces strict path continuation
-    >>> L_score, L_path = librosa.sequence.rqa(rec,
-    ...                                        gap_onset=np.inf,
-    ...                                        gap_extend=np.inf,
-    ...                                        knight_moves=False)
+    >>> L_score, L_path = librosa.sequence.rqa(
+    ...     rec, gap_onset=np.inf, gap_extend=np.inf, knight_moves=False
+    ... )
     >>> fig, ax = plt.subplots(ncols=2)
-    >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames', ax=ax[0])
-    >>> ax[0].set(title='Recurrence matrix')
-    >>> librosa.display.specshow(L_score, x_axis='frames', y_axis='frames', ax=ax[1])
+    >>> librosa.display.specshow(rec, x_axis="frames", y_axis="frames", ax=ax[0])
+    >>> ax[0].set(title="Recurrence matrix")
+    >>> librosa.display.specshow(L_score, x_axis="frames", y_axis="frames", ax=ax[1])
     >>> hl = librosa.display.highlight(ax=ax[1])
-    >>> ax[1].set(title='Alignment score matrix')
-    >>> ax[1].plot(L_path[:, 1], L_path[:, 0], label='Optimal path', path_effects=hl)
+    >>> ax[1].set(title="Alignment score matrix")
+    >>> ax[1].plot(L_path[:, 1], L_path[:, 0], label="Optimal path", path_effects=hl)
     >>> ax[1].legend()
     >>> ax[1].label_outer()
     >>> plt.show()
@@ -810,12 +807,12 @@ def rqa(
     >>> # New gaps cost 5, extending old gaps cost 10 for each step
     >>> score, path = librosa.sequence.rqa(rec, gap_onset=5, gap_extend=10)
     >>> fig, ax = plt.subplots(ncols=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(rec, x_axis='frames', y_axis='frames', ax=ax[0])
-    >>> ax[0].set(title='Recurrence matrix')
-    >>> librosa.display.specshow(score, x_axis='frames', y_axis='frames', ax=ax[1])
-    >>> ax[1].set(title='Alignment score matrix')
+    >>> librosa.display.specshow(rec, x_axis="frames", y_axis="frames", ax=ax[0])
+    >>> ax[0].set(title="Recurrence matrix")
+    >>> librosa.display.specshow(score, x_axis="frames", y_axis="frames", ax=ax[1])
+    >>> ax[1].set(title="Alignment score matrix")
     >>> hl = librosa.display.highlight(ax=ax[1])
-    >>> ax[1].plot(path[:, 1], path[:, 0], label='Optimal path', path_effects=hl)
+    >>> ax[1].plot(path[:, 1], path[:, 0], label="Optimal path", path_effects=hl)
     >>> ax[1].legend()
     >>> ax[1].label_outer()
     >>> plt.show()
@@ -1107,13 +1104,13 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> npt.NDArray[np.
     >>> y1_vocoded = librosa.istft(D1_vocoded, length=len(y2))
 
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.specshow(C1, x_axis='time', y_axis='chroma', ax=ax[0])
-    >>> ax[0].set(title='Chroma 1: fast')
-    >>> librosa.display.specshow(C2, x_axis='time', y_axis='chroma', ax=ax[1])
-    >>> ax[1].set(title='Chroma 2: slow')
+    >>> librosa.display.specshow(C1, x_axis="time", y_axis="chroma", ax=ax[0])
+    >>> ax[0].set(title="Chroma 1: fast")
+    >>> librosa.display.specshow(C2, x_axis="time", y_axis="chroma", ax=ax[1])
+    >>> ax[1].set(title="Chroma 2: slow")
     >>> C3 = librosa.feature.chroma_cqt(y=y1_vocoded, sr=22050)
-    >>> librosa.display.specshow(C3, x_axis='time', y_axis='chroma', ax=ax[2])
-    >>> ax[2].set(title='Chroma 1 vocoded to match Chroma 2')
+    >>> librosa.display.specshow(C3, x_axis="time", y_axis="chroma", ax=ax[2])
+    >>> ax[2].set(title="Chroma 1 vocoded to match Chroma 2")
     """
     if inverse:
         idx_from, idx_to = 1, 0
@@ -1311,11 +1308,11 @@ def viterbi(
     corresponding days, which we compute with the Viterbi algorithm below.
 
     >>> p_init = np.array([0.6, 0.4])
-    >>> p_emit = np.array([[0.5, 0.4, 0.1],
-    ...                    [0.1, 0.3, 0.6]])
+    >>> p_emit = np.array([[0.5, 0.4, 0.1], [0.1, 0.3, 0.6]])
     >>> p_trans = np.array([[0.7, 0.3], [0.4, 0.6]])
-    >>> path, logp = librosa.sequence.viterbi(p_emit, p_trans, p_init=p_init,
-    ...                                       return_logp=True)
+    >>> path, logp = librosa.sequence.viterbi(
+    ...     p_emit, p_trans, p_init=p_init, return_logp=True
+    ... )
     >>> print(logp, path)
     -4.19173690823075 [0 0 1]
     """
@@ -1479,31 +1476,57 @@ def viterbi_discriminative(
             intended to demonstrate how to use discriminative Viterbi decoding.
 
     >>> # Create templates for major, minor, and no-chord qualities
-    >>> maj_template = np.array([1,0,0, 0,1,0, 0,1,0, 0,0,0])
-    >>> min_template = np.array([1,0,0, 1,0,0, 0,1,0, 0,0,0])
-    >>> N_template   = np.array([1,1,1, 1,1,1, 1,1,1, 1,1,1.]) / 4.
+    >>> maj_template = np.array([1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0])
+    >>> min_template = np.array([1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0])
+    >>> N_template = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1.0]) / 4.0
     >>> # Generate the weighting matrix that maps chroma to labels
     >>> weights = np.zeros((25, 12), dtype=float)
-    >>> labels = ['C:maj', 'C#:maj', 'D:maj', 'D#:maj', 'E:maj', 'F:maj',
-    ...           'F#:maj', 'G:maj', 'G#:maj', 'A:maj', 'A#:maj', 'B:maj',
-    ...           'C:min', 'C#:min', 'D:min', 'D#:min', 'E:min', 'F:min',
-    ...           'F#:min', 'G:min', 'G#:min', 'A:min', 'A#:min', 'B:min',
-    ...           'N']
+    >>> labels = [
+    ...     "C:maj",
+    ...     "C#:maj",
+    ...     "D:maj",
+    ...     "D#:maj",
+    ...     "E:maj",
+    ...     "F:maj",
+    ...     "F#:maj",
+    ...     "G:maj",
+    ...     "G#:maj",
+    ...     "A:maj",
+    ...     "A#:maj",
+    ...     "B:maj",
+    ...     "C:min",
+    ...     "C#:min",
+    ...     "D:min",
+    ...     "D#:min",
+    ...     "E:min",
+    ...     "F:min",
+    ...     "F#:min",
+    ...     "G:min",
+    ...     "G#:min",
+    ...     "A:min",
+    ...     "A#:min",
+    ...     "B:min",
+    ...     "N",
+    ... ]
     >>> for c in range(12):
-    ...     weights[c, :] = np.roll(maj_template, c) # c:maj
+    ...     weights[c, :] = np.roll(maj_template, c)  # c:maj
     ...     weights[c + 12, :] = np.roll(min_template, c)  # c:min
     >>> weights[-1] = N_template  # the last row is the no-chord class
     >>> # Make a self-loop transition matrix over 25 states
     >>> trans = librosa.sequence.transition_loop(25, 0.9)
 
     >>> # Load in audio and make features
-    >>> y, sr = librosa.loadx('nutcracker', duration=15)
+    >>> y, sr = librosa.loadx("nutcracker", duration=15)
     >>> # Suppress percussive elements
     >>> y = librosa.effects.harmonic(y, margin=4)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr, threshold=0.25)
     >>> # Map chroma (observations) to class (state) likelihoods
-    >>> probs = np.exp(weights.dot(chroma))  # P[class | chroma] ~= exp(template' chroma)
-    >>> probs /= probs.sum(axis=0, keepdims=True)  # probabilities must sum to 1 in each column
+    >>> probs = np.exp(
+    ...     weights.dot(chroma)
+    ... )  # P[class | chroma] ~= exp(template' chroma)
+    >>> probs /= probs.sum(
+    ...     axis=0, keepdims=True
+    ... )  # probabilities must sum to 1 in each column
     >>> # Compute independent frame-wise estimates
     >>> chords_ind = np.argmax(probs, axis=0)
     >>> # And viterbi estimates
@@ -1512,24 +1535,42 @@ def viterbi_discriminative(
     >>> # Plot the features and prediction map
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2)
-    >>> librosa.display.specshow(chroma, x_axis='time', y_axis='chroma', ax=ax[0])
-    >>> librosa.display.specshow(weights, x_axis='chroma', ax=ax[1])
-    >>> ax[1].set(yticks=np.arange(25) + 0.5, yticklabels=labels, ylabel='Chord')
+    >>> librosa.display.specshow(chroma, x_axis="time", y_axis="chroma", ax=ax[0])
+    >>> librosa.display.specshow(weights, x_axis="chroma", ax=ax[1])
+    >>> ax[1].set(yticks=np.arange(25) + 0.5, yticklabels=labels, ylabel="Chord")
     >>> plt.show()
 
     >>> # And plot the results
     >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(probs, x_axis='time', ax=ax, div_thresh=1./25)
+    >>> img = librosa.display.specshow(probs, x_axis="time", ax=ax, div_thresh=1.0 / 25)
     >>> hl = librosa.display.highlight(ax=ax, alpha=0.1)
-    >>> fig.colorbar(img, ax=ax, label='Frame-wise class probability')
+    >>> fig.colorbar(img, ax=ax, label="Frame-wise class probability")
     >>> times = librosa.times_like(chords_vit)
-    >>> ax.scatter(times, chords_ind + 0.25, alpha=0.85, marker='x', color='k',
-    ...            s=15, label='Independent', path_effects=hl)
-    >>> ax.scatter(times, chords_vit - 0.25, alpha=0.85, marker='o', color='g',
-    ...            s=15, label='Viterbi', path_effects=hl)
-    >>> ax.set(yticks=np.unique(chords_vit),
-    ...        yticklabels=[labels[i] for i in np.unique(chords_vit)])
-    >>> ax.legend(loc='upper right', ncols=2)
+    >>> ax.scatter(
+    ...     times,
+    ...     chords_ind + 0.25,
+    ...     alpha=0.85,
+    ...     marker="x",
+    ...     color="k",
+    ...     s=15,
+    ...     label="Independent",
+    ...     path_effects=hl,
+    ... )
+    >>> ax.scatter(
+    ...     times,
+    ...     chords_vit - 0.25,
+    ...     alpha=0.85,
+    ...     marker="o",
+    ...     color="g",
+    ...     s=15,
+    ...     label="Viterbi",
+    ...     path_effects=hl,
+    ... )
+    >>> ax.set(
+    ...     yticks=np.unique(chords_vit),
+    ...     yticklabels=[labels[i] for i in np.unique(chords_vit)],
+    ... )
+    >>> ax.legend(loc="upper right", ncols=2)
     >>> plt.show()
     """
     n_states, _n_steps = prob.shape[-2:]
@@ -2024,14 +2065,14 @@ def transition_local(
     --------
     Triangular distributions with and without wrapping
 
-    >>> librosa.sequence.transition_local(5, 3, window='triangle', wrap=False)
+    >>> librosa.sequence.transition_local(5, 3, window="triangle", wrap=False)
     array([[0.667, 0.333, 0.   , 0.   , 0.   ],
            [0.25 , 0.5  , 0.25 , 0.   , 0.   ],
            [0.   , 0.25 , 0.5  , 0.25 , 0.   ],
            [0.   , 0.   , 0.25 , 0.5  , 0.25 ],
            [0.   , 0.   , 0.   , 0.333, 0.667]])
 
-    >>> librosa.sequence.transition_local(5, 3, window='triangle', wrap=True)
+    >>> librosa.sequence.transition_local(5, 3, window="triangle", wrap=True)
     array([[0.5 , 0.25, 0.  , 0.  , 0.25],
            [0.25, 0.5 , 0.25, 0.  , 0.  ],
            [0.  , 0.25, 0.5 , 0.25, 0.  ],
@@ -2040,7 +2081,7 @@ def transition_local(
 
     Uniform local distributions with variable widths and no wrapping
 
-    >>> librosa.sequence.transition_local(5, [1, 2, 3, 3, 1], window='ones', wrap=False)
+    >>> librosa.sequence.transition_local(5, [1, 2, 3, 3, 1], window="ones", wrap=False)
     array([[1.   , 0.   , 0.   , 0.   , 0.   ],
            [0.5  , 0.5  , 0.   , 0.   , 0.   ],
            [0.   , 0.333, 0.333, 0.333, 0.   ],

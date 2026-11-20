@@ -447,7 +447,9 @@ def interp_frequency(
     >>> S = np.abs(librosa.stft(y))
     >>> fft_freqs = librosa.fft_frequencies(sr=sr)
     >>> cqt_freqs = librosa.cqt_frequencies(n_bins=84, fmin=librosa.note_to_hz("C1"))
-    >>> S_cqt_grid = librosa.interp_frequency(S, target_freqs=cqt_freqs, freqs=fft_freqs)
+    >>> S_cqt_grid = librosa.interp_frequency(
+    ...     S, target_freqs=cqt_freqs, freqs=fft_freqs
+    ... )
     >>> S_cqt_grid.shape
     (84, 44)
 

@@ -206,7 +206,7 @@ def stft(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> S = np.abs(librosa.stft(y))
     >>> S
     array([[5.395e-03, 3.332e-03, ..., 9.862e-07, 1.201e-05],
@@ -228,9 +228,10 @@ def stft(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> img = librosa.display.specshow(S, vscale='dBFS',
-    ...                                y_axis='log', x_axis='time', ax=ax)
-    >>> ax.set_title('Power spectrogram')
+    >>> img = librosa.display.specshow(
+    ...     S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax
+    ... )
+    >>> ax.set_title("Power spectrogram")
     >>> librosa.display.colorbar_db(img)
     """
     # By default, use the entire frame
@@ -480,7 +481,7 @@ def istft(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> D = librosa.stft(y)
     >>> y_hat = librosa.istft(D)
     >>> y_hat
@@ -651,7 +652,7 @@ def __reassign_frequencies(
     The reassignment vector is calculated using equation 5.20 in Flandrin,
     Auger, & Chassande-Mottin 2002::
 
-        omega_reassigned = omega - np.imag(S_dh/S_h)
+        omega_reassigned = omega - np.imag(S_dh / S_h)
 
     where ``S_h`` is the complex STFT calculated using the original window, and
     ``S_dh`` is the complex STFT calculated using the derivative of the original
@@ -732,7 +733,7 @@ def __reassign_frequencies(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> frequencies, S = librosa.core.spectrum.__reassign_frequencies(y, sr=sr)
     >>> frequencies
     array([[0.000e+00, 0.000e+00, ..., 0.000e+00, 0.000e+00],
@@ -812,7 +813,7 @@ def __reassign_times(
     The reassignment vector is calculated using equation 5.23 in Flandrin,
     Auger, & Chassande-Mottin 2002::
 
-        t_reassigned = t + np.real(S_th/S_h)
+        t_reassigned = t + np.real(S_th / S_h)
 
     where ``S_h`` is the complex STFT calculated using the original window, and
     ``S_th`` is the complex STFT calculated using the original window multiplied
@@ -893,7 +894,7 @@ def __reassign_times(
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> times, S = librosa.core.spectrum.__reassign_times(y, sr=sr)
     >>> times
     array([[ 2.268e-05,  1.144e-02, ...,  5.332e+00,  5.333e+00],
@@ -1300,7 +1301,7 @@ def magphase(D: np.ndarray, *, power: float = 1) -> tuple[np.ndarray, np.ndarray
 
     Examples
     --------
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> D = librosa.stft(y)
     >>> magnitude, phase = librosa.magphase(D)
     >>> magnitude
@@ -1405,16 +1406,16 @@ def phase_vocoder(
     Examples
     --------
     >>> # Play at double speed
-    >>> y, sr   = librosa.loadx('trumpet')
-    >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
-    >>> D_fast  = librosa.phase_vocoder(D, rate=2.0, hop_length=512)
-    >>> y_fast  = librosa.istft(D_fast, hop_length=512)
+    >>> y, sr = librosa.loadx("trumpet")
+    >>> D = librosa.stft(y, n_fft=2048, hop_length=512)
+    >>> D_fast = librosa.phase_vocoder(D, rate=2.0, hop_length=512)
+    >>> y_fast = librosa.istft(D_fast, hop_length=512)
 
     >>> # Or play at 1/3 speed
-    >>> y, sr   = librosa.loadx('trumpet')
-    >>> D       = librosa.stft(y, n_fft=2048, hop_length=512)
-    >>> D_slow  = librosa.phase_vocoder(D, rate=1./3, hop_length=512)
-    >>> y_slow  = librosa.istft(D_slow, hop_length=512)
+    >>> y, sr = librosa.loadx("trumpet")
+    >>> D = librosa.stft(y, n_fft=2048, hop_length=512)
+    >>> D_slow = librosa.phase_vocoder(D, rate=1.0 / 3, hop_length=512)
+    >>> y_slow = librosa.istft(D_slow, hop_length=512)
     """
     n_frames = D.shape[-1]
 
@@ -1562,17 +1563,19 @@ def iirt(
     Examples
     --------
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('trumpet', duration=3)
+    >>> y, sr = librosa.loadx("trumpet", duration=3)
     >>> D = np.abs(librosa.iirt(y, sr=sr))
     >>> C = np.abs(librosa.cqt(y=y, sr=sr))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(C, vscale='dBFS',
-    ...                                y_axis='cqt_hz', x_axis='time', ax=ax[0])
-    >>> ax[0].set(title='Constant-Q transform')
+    >>> img = librosa.display.specshow(
+    ...     C, vscale="dBFS", y_axis="cqt_hz", x_axis="time", ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Constant-Q transform")
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(D, vscale='dBFS',
-    ...                                y_axis='cqt_hz', x_axis='time', ax=ax[1])
-    >>> ax[1].set_title('Semitone spectrogram (iirt)')
+    >>> img = librosa.display.specshow(
+    ...     D, vscale="dBFS", y_axis="cqt_hz", x_axis="time", ax=ax[1]
+    ... )
+    >>> ax[1].set_title("Semitone spectrogram (iirt)")
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if flayout not in ("ba", "sos"):
@@ -1735,7 +1738,7 @@ def power_to_db(
     --------
     Get a power spectrogram from a waveform ``y``
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> S = np.abs(librosa.stft(y))
     >>> librosa.power_to_db(S**2)
     array([[-41.809, -41.809, ..., -41.809, -41.809],
@@ -1766,13 +1769,19 @@ def power_to_db(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> imgpow = librosa.display.specshow(S**2, sr=sr, y_axis='log', x_axis='time',
-    ...                                   ax=ax[0])
-    >>> ax[0].set(title='Power spectrogram')
+    >>> imgpow = librosa.display.specshow(
+    ...     S**2, sr=sr, y_axis="log", x_axis="time", ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Power spectrogram")
     >>> ax[0].label_outer()
-    >>> imgdb = librosa.display.specshow(librosa.power_to_db(S**2, ref=np.max),
-    ...                                  sr=sr, y_axis='log', x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Log-Power spectrogram')
+    >>> imgdb = librosa.display.specshow(
+    ...     librosa.power_to_db(S**2, ref=np.max),
+    ...     sr=sr,
+    ...     y_axis="log",
+    ...     x_axis="time",
+    ...     ax=ax[1],
+    ... )
+    >>> ax[1].set(title="Log-Power spectrogram")
     >>> fig.colorbar(imgpow, ax=ax[0])
     >>> librosa.display.colorbar_db(imgdb, ax=ax[1])
     """
@@ -2055,12 +2064,10 @@ def perceptual_weighting(S: np.ndarray, frequencies: np.ndarray, *, kind: str = 
     --------
     Re-weight a CQT power spectrum, using peak power as reference
 
-    >>> y, sr = librosa.loadx('trumpet')
-    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin='A1'))
-    >>> freqs = librosa.cqt_frequencies(C.shape[0], fmin='A1')
-    >>> perceptual_CQT = librosa.perceptual_weighting(C**2,
-    ...                                               freqs,
-    ...                                               ref=np.max)
+    >>> y, sr = librosa.loadx("trumpet")
+    >>> C = np.abs(librosa.cqt(y, sr=sr, fmin="A1"))
+    >>> freqs = librosa.cqt_frequencies(C.shape[0], fmin="A1")
+    >>> perceptual_CQT = librosa.perceptual_weighting(C**2, freqs, ref=np.max)
     >>> perceptual_CQT
     array([[ -96.528,  -97.101, ..., -108.561, -108.561],
            [ -95.88 ,  -96.479, ..., -107.551, -107.551],
@@ -2070,17 +2077,19 @@ def perceptual_weighting(S: np.ndarray, frequencies: np.ndarray, *, kind: str = 
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(librosa.amplitude_to_db(C,
-    ...                                                        ref=np.max),
-    ...                                fmin='A1',
-    ...                                y_axis='cqt_hz', x_axis='time',
-    ...                                ax=ax[0])
-    >>> ax[0].set(title='Log CQT power')
+    >>> img = librosa.display.specshow(
+    ...     librosa.amplitude_to_db(C, ref=np.max),
+    ...     fmin="A1",
+    ...     y_axis="cqt_hz",
+    ...     x_axis="time",
+    ...     ax=ax[0],
+    ... )
+    >>> ax[0].set(title="Log CQT power")
     >>> ax[0].label_outer()
-    >>> imgp = librosa.display.specshow(perceptual_CQT, y_axis='cqt_hz',
-    ...                                 fmin='A1',
-    ...                                 x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Perceptually weighted log CQT')
+    >>> imgp = librosa.display.specshow(
+    ...     perceptual_CQT, y_axis="cqt_hz", fmin="A1", x_axis="time", ax=ax[1]
+    ... )
+    >>> ax[1].set(title="Perceptually weighted log CQT")
     >>> librosa.display.colorbar_db(img, ax=ax[0])
     >>> librosa.display.colorbar_db(imgp, ax=ax[1])
     """
@@ -2178,7 +2187,7 @@ def fmt(
     >>> y1 = np.sin(2 * np.pi * freq * x1)
     >>> y2 = np.sin(2 * np.pi * freq * x2) / np.sqrt(scale)
     >>> # Verify that the two signals have the same energy
-    >>> np.sum(np.abs(y1)**2), np.sum(np.abs(y2)**2)
+    >>> np.sum(np.abs(y1) ** 2), np.sum(np.abs(y2) ** 2)
         (255.99999999999997, 255.99999999999969)
     >>> scale1 = librosa.fmt(y1, n_fmt=512)
     >>> scale2 = librosa.fmt(y2, n_fmt=512)
@@ -2186,18 +2195,18 @@ def fmt(
     >>> # And plot the results
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=2)
-    >>> ax[0].plot(y1, label='Original')
-    >>> ax[0].plot(y2, linestyle='--', label='Stretched')
-    >>> ax[0].set(xlabel='time (samples)', title='Input signals')
+    >>> ax[0].plot(y1, label="Original")
+    >>> ax[0].plot(y2, linestyle="--", label="Stretched")
+    >>> ax[0].set(xlabel="time (samples)", title="Input signals")
     >>> ax[0].legend()
-    >>> ax[1].semilogy(np.abs(scale1), label='Original')
-    >>> ax[1].semilogy(np.abs(scale2), linestyle='--', label='Stretched')
-    >>> ax[1].set(xlabel='scale coefficients', title='Scale transform magnitude')
+    >>> ax[1].semilogy(np.abs(scale1), label="Original")
+    >>> ax[1].semilogy(np.abs(scale2), linestyle="--", label="Stretched")
+    >>> ax[1].set(xlabel="scale coefficients", title="Scale transform magnitude")
     >>> ax[1].legend()
     >>> plt.show()
 
     >>> # Plot the scale transform of an onset strength autocorrelation
-    >>> y, sr = librosa.loadx('choice')
+    >>> y, sr = librosa.loadx("choice")
     >>> odf = librosa.onset.onset_strength(y=y, sr=sr)
     >>> # Auto-correlate with up to 10 seconds lag
     >>> odf_ac = librosa.autocorrelate(odf, max_size=10 * sr // 512)
@@ -2206,13 +2215,13 @@ def fmt(
     >>> # Compute the scale transform
     >>> odf_ac_scale = librosa.fmt(odf_ac_norm, n_fmt=512)
     >>> # Plot the results
-    >>> fig, ax = plt.subplots(nrows=3, layout='compressed')
-    >>> ax[0].plot(odf, label='Onset strength')
-    >>> ax[0].set(xlabel='Time (frames)', title='Onset strength')
-    >>> ax[1].plot(odf_ac_norm, label='Onset autocorrelation')
-    >>> ax[1].set(xlabel='Lag (frames)', title='Onset autocorrelation')
-    >>> ax[2].semilogy(np.abs(odf_ac_scale), label='Scale transform magnitude')
-    >>> ax[2].set(xlabel='scale coefficients')
+    >>> fig, ax = plt.subplots(nrows=3, layout="compressed")
+    >>> ax[0].plot(odf, label="Onset strength")
+    >>> ax[0].set(xlabel="Time (frames)", title="Onset strength")
+    >>> ax[1].plot(odf_ac_norm, label="Onset autocorrelation")
+    >>> ax[1].set(xlabel="Lag (frames)", title="Onset autocorrelation")
+    >>> ax[2].semilogy(np.abs(odf_ac_scale), label="Scale transform magnitude")
+    >>> ax[2].set(xlabel="scale coefficients")
     >>> plt.show()
     """
     n = y.shape[axis]
@@ -2352,7 +2361,7 @@ def pcen(
     This function normalizes a time-frequency representation ``S`` by
     performing automatic gain control, followed by nonlinear compression [#]_ ::
 
-        P[f, t] = (S / (eps + M[f, t])**gain + bias)**power - bias**power
+        P[f, t] = (S / (eps + M[f, t]) ** gain + bias) ** power - bias**power
 
     IMPORTANT: the default values of eps, gain, bias, and power match the
     original publication, in which ``S`` is a 40-band mel-frequency
@@ -2368,7 +2377,7 @@ def pcen(
 
     If ``b`` is not provided, it is calculated as::
 
-        b = (sqrt(1 + 4* T**2) - 1) / (2 * T**2)
+        b = (sqrt(1 + 4 * T**2) - 1) / (2 * T**2)
 
     where ``T = time_constant * sr / hop_length``. [#]_
 
@@ -2385,7 +2394,7 @@ def pcen(
     where ``R`` has been max-filtered along the frequency axis, similar to
     the SuperFlux algorithm implemented in `onset.onset_strength`::
 
-        R[f, t] = max(S[f - max_size//2: f + max_size//2, t])
+        R[f, t] = max(S[f - max_size // 2 : f + max_size // 2, t])
 
     This can be used to perform automatic gain control on signals that cross
     or span multiple frequency bans, which may be desirable for spectrograms
@@ -2480,7 +2489,7 @@ def pcen(
     Compare PCEN to log amplitude (dB) scaling on Mel spectra
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('robin')
+    >>> y, sr = librosa.loadx("robin")
 
     >>> # We recommend scaling y to the range [-2**31, 2**31[ before applying
     >>> # PCEN's default parameters. Furthermore, we use power=1 to get a
@@ -2489,11 +2498,13 @@ def pcen(
     >>> log_S = librosa.amplitude_to_db(S, ref=np.max)
     >>> pcen_S = librosa.pcen(S * (2**31))
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> img = librosa.display.specshow(log_S, x_axis='time', y_axis='mel', ax=ax[0])
-    >>> ax[0].set(title='log amplitude (dB)', xlabel=None)
+    >>> img = librosa.display.specshow(log_S, x_axis="time", y_axis="mel", ax=ax[0])
+    >>> ax[0].set(title="log amplitude (dB)", xlabel=None)
     >>> ax[0].label_outer()
-    >>> imgpcen = librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel', ax=ax[1])
-    >>> ax[1].set(title='Per-channel energy normalization')
+    >>> imgpcen = librosa.display.specshow(
+    ...     pcen_S, x_axis="time", y_axis="mel", ax=ax[1]
+    ... )
+    >>> ax[1].set(title="Per-channel energy normalization")
     >>> librosa.display.colorbar_db(img, ax=ax[0])
     >>> fig.colorbar(imgpcen, ax=ax[1])
     >>> plt.show()
@@ -2502,11 +2513,11 @@ def pcen(
 
     >>> pcen_max = librosa.pcen(S * (2**31), max_size=3)
     >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-    >>> librosa.display.specshow(pcen_S, x_axis='time', y_axis='mel', ax=ax[0])
-    >>> ax[0].set(title='Per-channel energy normalization (no max-filter)')
+    >>> librosa.display.specshow(pcen_S, x_axis="time", y_axis="mel", ax=ax[0])
+    >>> ax[0].set(title="Per-channel energy normalization (no max-filter)")
     >>> ax[0].label_outer()
-    >>> img = librosa.display.specshow(pcen_max, x_axis='time', y_axis='mel', ax=ax[1])
-    >>> ax[1].set(title='Per-channel energy normalization (max_size=3)')
+    >>> img = librosa.display.specshow(pcen_max, x_axis="time", y_axis="mel", ax=ax[1])
+    >>> ax[1].set(title="Per-channel energy normalization (max_size=3)")
     >>> fig.colorbar(img, ax=ax)
     >>> plt.show()
     """
@@ -2726,7 +2737,7 @@ def griffinlim(
     --------
     A basic STFT inverse example
 
-    >>> y, sr = librosa.loadx('trumpet')
+    >>> y, sr = librosa.loadx("trumpet")
     >>> # Get the magnitude spectrogram
     >>> S = np.abs(librosa.stft(y))
     >>> # Invert using Griffin-Lim
@@ -2738,14 +2749,14 @@ def griffinlim(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> librosa.display.waveshow(y, sr=sr, color='C0', ax=ax[0])
-    >>> ax[0].set(title='Original', xlabel=None)
+    >>> librosa.display.waveshow(y, sr=sr, color="C0", ax=ax[0])
+    >>> ax[0].set(title="Original", xlabel=None)
     >>> ax[0].label_outer()
-    >>> librosa.display.waveshow(y_inv, sr=sr, color='C1', ax=ax[1])
-    >>> ax[1].set(title='Griffin-Lim reconstruction', xlabel=None)
+    >>> librosa.display.waveshow(y_inv, sr=sr, color="C1", ax=ax[1])
+    >>> ax[1].set(title="Griffin-Lim reconstruction", xlabel=None)
     >>> ax[1].label_outer()
-    >>> librosa.display.waveshow(y_istft, sr=sr, color='C2', ax=ax[2])
-    >>> ax[2].set_title('Magnitude-only istft reconstruction')
+    >>> librosa.display.waveshow(y_istft, sr=sr, color="C2", ax=ax[2])
+    >>> ax[2].set_title("Magnitude-only istft reconstruction")
     """
     if not isinstance(random_state, Deprecated):
         if rng is not None:

@@ -47,7 +47,9 @@ HTML(librosa.util.example_info("snare", html=True))
 # smaller over time, indicating a gradual increase of tempo.
 
 fig, ax = plt.subplots()
-melspec = librosa.power_to_db(librosa.feature.melspectrogram(y=y, sr=sr), ref=np.max)
+melspec = librosa.power_to_db(
+    librosa.feature.melspectrogram(y=y, sr=sr), ref=np.max
+)
 librosa.display.specshow(melspec, y_axis="mel", x_axis="time", ax=ax)
 ax.set(title="Mel spectrogram")
 
@@ -64,9 +66,17 @@ Audio(url=librosa.example("snare", url=True))
 # Note: by default, `beat_track` assumes that there is silence at the end of the
 # signal, and trims last beats to avoid false detections. Here, there is no silence
 # at the end, so we set `trim=False` to avoid this effect.
-tempo, beats_static = librosa.beat.beat_track(y=y, sr=sr, units="time", trim=False)
+tempo, beats_static = librosa.beat.beat_track(
+    y=y, sr=sr, units="time", trim=False
+)
 
-click_track = librosa.clicks(times=beats_static, sr=sr, click_freq=660, click_duration=0.25, length=len(y))
+click_track = librosa.clicks(
+    times=beats_static,
+    sr=sr,
+    click_freq=660,
+    click_duration=0.25,
+    length=len(y),
+)
 
 print(f"Tempo estimate: {tempo[0]:.2f} BPM")
 Audio(data=librosa.to_stereo(left=y, right=click_track), rate=sr)
@@ -90,7 +100,15 @@ tempo_dynamic = librosa.feature.tempo(y=y, sr=sr, aggregate=None, std_bpm=4)
 # rhythmic structure of the signal.
 fig, ax = plt.subplots()
 tg = librosa.feature.fourier_tempogram(y=y, sr=sr)
-librosa.display.specshow(tg, sr=sr, x_axis="time", y_axis="fourier_tempo", vscale="dBFS", top_db=20, ax=ax)
+librosa.display.specshow(
+    tg,
+    sr=sr,
+    x_axis="time",
+    y_axis="fourier_tempo",
+    vscale="dBFS",
+    top_db=20,
+    ax=ax,
+)
 hl = librosa.display.highlight(ax=ax, linewidth=5, alpha=0.8)
 times = librosa.times_like(tempo_dynamic, sr=sr)
 ax.plot(times, tempo_dynamic, label="Dynamic tempo estimate", path_effects=hl)
@@ -108,9 +126,17 @@ ax.set(xlabel="Time (s)", ylabel="Tempo (BPM)")
 #
 # We can now use this dynamic tempo in the beat tracker directly:
 
-tempo, beats_dynamic = librosa.beat.beat_track(y=y, sr=sr, units="time", bpm=tempo_dynamic, trim=False)
+tempo, beats_dynamic = librosa.beat.beat_track(
+    y=y, sr=sr, units="time", bpm=tempo_dynamic, trim=False
+)
 
-click_dynamic = librosa.clicks(times=beats_dynamic, sr=sr, click_freq=660, click_duration=0.25, length=len(y))
+click_dynamic = librosa.clicks(
+    times=beats_dynamic,
+    sr=sr,
+    click_freq=660,
+    click_duration=0.25,
+    length=len(y),
+)
 
 Audio(data=librosa.to_stereo(left=y, right=click_dynamic), rate=sr)
 
@@ -124,8 +150,17 @@ Audio(data=librosa.to_stereo(left=y, right=click_dynamic), rate=sr)
 
 fig, ax = plt.subplots()
 librosa.display.waveshow(y=y, sr=sr, ax=ax, color="k", alpha=0.7)
-ax.vlines(beats_static, 0.75, 1.0, label="Static tempo beat estimates", color="r")
-ax.vlines(beats_dynamic, -1, -0.75, label="Dynamic tempo beat estimates", color="b", linestyle="--")
+ax.vlines(
+    beats_static, 0.75, 1.0, label="Static tempo beat estimates", color="r"
+)
+ax.vlines(
+    beats_dynamic,
+    -1,
+    -0.75,
+    label="Dynamic tempo beat estimates",
+    color="b",
+    linestyle="--",
+)
 ax.legend()
 
 

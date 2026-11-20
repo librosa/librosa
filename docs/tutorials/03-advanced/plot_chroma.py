@@ -63,12 +63,19 @@ C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=12 * 3, n_bins=7 * 12 * 3))
 
 fig, ax = plt.subplots(nrows=2, sharex=True)
 img1 = librosa.display.specshow(
-    C[idx], vscale="dBFS", y_axis="cqt_note", x_axis="time", bins_per_octave=12 * 3, ax=ax[0]
+    C[idx],
+    vscale="dBFS",
+    y_axis="cqt_note",
+    x_axis="time",
+    bins_per_octave=12 * 3,
+    ax=ax[0],
 )
 librosa.display.colorbar_db(img1, ax=ax[0])
 ax[0].label_outer()
 
-img2 = librosa.display.specshow(chroma_orig[idx], y_axis="chroma", x_axis="time", ax=ax[1])
+img2 = librosa.display.specshow(
+    chroma_orig[idx], y_axis="chroma", x_axis="time", ax=ax[1]
+)
 fig.colorbar(img2, ax=[ax[1]])
 ax[1].set(ylabel="Default chroma")
 
@@ -81,11 +88,15 @@ chroma_harm = librosa.feature.chroma_cqt(y=y_harm, sr=sr)
 
 
 fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-librosa.display.specshow(chroma_orig[idx], y_axis="chroma", x_axis="time", ax=ax[0])
+librosa.display.specshow(
+    chroma_orig[idx], y_axis="chroma", x_axis="time", ax=ax[0]
+)
 ax[0].set(ylabel="Default chroma")
 ax[0].label_outer()
 
-librosa.display.specshow(chroma_harm[idx], y_axis="chroma", x_axis="time", ax=ax[1])
+librosa.display.specshow(
+    chroma_harm[idx], y_axis="chroma", x_axis="time", ax=ax[1]
+)
 ax[1].set(ylabel="Harmonic")
 
 
@@ -93,15 +104,24 @@ ax[1].set(ylabel="Harmonic")
 # There's still some noise in there though.
 # We can clean it up using non-local filtering.
 # This effectively removes any sparse additive noise from the features.
-chroma_filter = np.minimum(chroma_harm, librosa.decompose.nn_filter(chroma_harm, aggregate=np.median, metric="cosine"))
+chroma_filter = np.minimum(
+    chroma_harm,
+    librosa.decompose.nn_filter(
+        chroma_harm, aggregate=np.median, metric="cosine"
+    ),
+)
 
 
 fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-librosa.display.specshow(chroma_harm[idx], y_axis="chroma", x_axis="time", ax=ax[0])
+librosa.display.specshow(
+    chroma_harm[idx], y_axis="chroma", x_axis="time", ax=ax[0]
+)
 ax[0].set(ylabel="Harmonic")
 ax[0].label_outer()
 
-librosa.display.specshow(chroma_filter[idx], y_axis="chroma", x_axis="time", ax=ax[1])
+librosa.display.specshow(
+    chroma_filter[idx], y_axis="chroma", x_axis="time", ax=ax[1]
+)
 ax[1].set(ylabel="Non-local")
 
 
@@ -112,11 +132,15 @@ chroma_smooth = scipy.ndimage.median_filter(chroma_filter, size=(1, 9))
 
 
 fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-librosa.display.specshow(chroma_filter[idx], y_axis="chroma", x_axis="time", ax=ax[0])
+librosa.display.specshow(
+    chroma_filter[idx], y_axis="chroma", x_axis="time", ax=ax[0]
+)
 ax[0].set(ylabel="Non-local")
 ax[0].label_outer()
 
-librosa.display.specshow(chroma_smooth[idx], y_axis="chroma", x_axis="time", ax=ax[1])
+librosa.display.specshow(
+    chroma_smooth[idx], y_axis="chroma", x_axis="time", ax=ax[1]
+)
 ax[1].set(ylabel="Median-filtered")
 
 
@@ -124,13 +148,24 @@ ax[1].set(ylabel="Median-filtered")
 # A final comparison between the CQT, original chromagram
 # and the result of our filtering.
 fig, ax = plt.subplots(nrows=3, sharex=True)
-librosa.display.specshow(C[idx], vscale="dBFS", y_axis="cqt_note", x_axis="time", bins_per_octave=12 * 3, ax=ax[0])
+librosa.display.specshow(
+    C[idx],
+    vscale="dBFS",
+    y_axis="cqt_note",
+    x_axis="time",
+    bins_per_octave=12 * 3,
+    ax=ax[0],
+)
 ax[0].set(ylabel="CQT")
 ax[0].label_outer()
-librosa.display.specshow(chroma_orig[idx], y_axis="chroma", x_axis="time", ax=ax[1])
+librosa.display.specshow(
+    chroma_orig[idx], y_axis="chroma", x_axis="time", ax=ax[1]
+)
 ax[1].set(ylabel="Default chroma")
 ax[1].label_outer()
-librosa.display.specshow(chroma_smooth[idx], y_axis="chroma", x_axis="time", ax=ax[2])
+librosa.display.specshow(
+    chroma_smooth[idx], y_axis="chroma", x_axis="time", ax=ax[2]
+)
 ax[2].set(ylabel="Processed")
 
 
@@ -147,11 +182,15 @@ chromagram_cqt = librosa.feature.chroma_cqt(y=y, sr=sr)
 
 
 fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-librosa.display.specshow(chromagram_stft[idx], y_axis="chroma", x_axis="time", ax=ax[0])
+librosa.display.specshow(
+    chromagram_stft[idx], y_axis="chroma", x_axis="time", ax=ax[0]
+)
 ax[0].set(ylabel="STFT")
 ax[0].label_outer()
 
-librosa.display.specshow(chromagram_cqt[idx], y_axis="chroma", x_axis="time", ax=ax[1])
+librosa.display.specshow(
+    chromagram_cqt[idx], y_axis="chroma", x_axis="time", ax=ax[1]
+)
 ax[1].set(ylabel="CQT")
 
 
@@ -179,8 +218,12 @@ chromagram_cens = librosa.feature.chroma_cens(y=y, sr=sr)
 
 
 fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
-librosa.display.specshow(chromagram_cqt[idx], y_axis="chroma", x_axis="time", ax=ax[0])
+librosa.display.specshow(
+    chromagram_cqt[idx], y_axis="chroma", x_axis="time", ax=ax[0]
+)
 ax[0].set(ylabel="Orig")
 
-librosa.display.specshow(chromagram_cens[idx], y_axis="chroma", x_axis="time", ax=ax[1])
+librosa.display.specshow(
+    chromagram_cens[idx], y_axis="chroma", x_axis="time", ax=ax[1]
+)
 ax[1].set(ylabel="CENS")

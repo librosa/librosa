@@ -21,7 +21,9 @@ This section introduces the basics of loading audio with librosa.
 # Before we do anything else, we'll need to import the library:
 
 import librosa
-from IPython.display import HTML  # this is for displaying metadata about the example
+from IPython.display import (
+    HTML,
+)  # this is for displaying metadata about the example
 
 # %%
 # Next, we'll load an example audio file.

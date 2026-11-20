@@ -408,21 +408,29 @@ def specshow(
     Visualize an STFT magnitude spectrum using default parameters
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.loadx('choice', duration=15)
+    >>> y, sr = librosa.loadx("choice", duration=15)
     >>> fig, ax = plt.subplots(nrows=2, ncols=1, sharex=True)
     >>> D = librosa.stft(y)
-    >>> img = librosa.display.specshow(D, y_axis='linear', x_axis='time',
-    ...                                vscale='dBFS', sr=sr, ax=ax[0])
-    >>> ax[0].set(title='Linear-frequency magnitude spectrogram')
+    >>> img = librosa.display.specshow(
+    ...     D, y_axis="linear", x_axis="time", vscale="dBFS", sr=sr, ax=ax[0]
+    ... )
+    >>> ax[0].set(title="Linear-frequency magnitude spectrogram")
     >>> ax[0].label_outer()
 
     Or on a logarithmic scale, and using a larger hop
 
     >>> hop_length = 1024
     >>> D = librosa.stft(y, hop_length=hop_length)
-    >>> librosa.display.specshow(D, y_axis='log', sr=sr, hop_length=hop_length,
-    ...                          vscale='dBFS', x_axis='time', ax=ax[1])
-    >>> ax[1].set(title='Log-frequency magnitude spectrogram')
+    >>> librosa.display.specshow(
+    ...     D,
+    ...     y_axis="log",
+    ...     sr=sr,
+    ...     hop_length=hop_length,
+    ...     vscale="dBFS",
+    ...     x_axis="time",
+    ...     ax=ax[1],
+    ... )
+    >>> ax[1].set(title="Log-frequency magnitude spectrogram")
     >>> ax[1].label_outer()
     >>> librosa.display.colorbar_db(img, ax=ax)
     """

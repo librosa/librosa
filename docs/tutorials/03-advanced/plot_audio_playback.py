@@ -71,7 +71,9 @@ Audio(url=librosa.example("trumpet", url=True))
 # and `mir_eval.sonify.pitch_contour` for synthesis.
 
 # Using fill_na=None retains the best-guess f0 at unvoiced frames
-f0, voiced_flag, voiced_probs = librosa.pyin(y, sr=sr, fmin="C2", fmax="C7", fill_na=None)
+f0, voiced_flag, voiced_probs = librosa.pyin(
+    y, sr=sr, fmin="C2", fmax="C7", fill_na=None
+)
 
 # To synthesize the f0, we'll need sample times
 times = librosa.times_like(f0)
@@ -111,7 +113,9 @@ Audio(data=y_f0, rate=sr)
 onset_env = librosa.onset.onset_strength(y=y, sr=sr, max_size=5)
 
 # Detect onset times from the strength envelope
-onset_times = librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, units="time")
+onset_times = librosa.onset.onset_detect(
+    onset_envelope=onset_env, sr=sr, units="time"
+)
 
 # Sonify onset times as clicks
 y_clicks = librosa.clicks(times=onset_times, length=len(y), sr=sr)

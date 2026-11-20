@@ -78,7 +78,7 @@ def delta(
     --------
     Compute MFCC deltas, delta-deltas
 
-    >>> y, sr = librosa.loadx('libri1', duration=5)
+    >>> y, sr = librosa.loadx("libri1", duration=5)
     >>> mfcc = librosa.feature.mfcc(y=y, sr=sr)
     >>> mfcc_delta = librosa.feature.delta(mfcc)
     >>> mfcc_delta
@@ -99,14 +99,14 @@ def delta(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots(nrows=3, sharex=True, sharey=True)
-    >>> img1 = librosa.display.specshow(mfcc, ax=ax[0], x_axis='time')
-    >>> ax[0].set(title='MFCC')
+    >>> img1 = librosa.display.specshow(mfcc, ax=ax[0], x_axis="time")
+    >>> ax[0].set(title="MFCC")
     >>> ax[0].label_outer()
-    >>> img2 = librosa.display.specshow(mfcc_delta, ax=ax[1], x_axis='time')
-    >>> ax[1].set(title=r'MFCC-$\Delta$')
+    >>> img2 = librosa.display.specshow(mfcc_delta, ax=ax[1], x_axis="time")
+    >>> ax[1].set(title=r"MFCC-$\Delta$")
     >>> ax[1].label_outer()
-    >>> img3 = librosa.display.specshow(mfcc_delta2, ax=ax[2], x_axis='time')
-    >>> ax[2].set(title=r'MFCC-$\Delta^2$')
+    >>> img3 = librosa.display.specshow(mfcc_delta2, ax=ax[2], x_axis="time")
+    >>> ax[2].set(title=r"MFCC-$\Delta^2$")
     >>> fig.colorbar(img1, ax=[ax[0]])
     >>> fig.colorbar(img2, ax=[ax[1]])
     >>> fig.colorbar(img3, ax=[ax[2]])
@@ -198,39 +198,63 @@ def stack_memory(data: np.ndarray, *, n_steps: int = 2, delay: int = 1, **kwargs
 
     Use reflection padding instead of zero-padding
 
-    >>> librosa.feature.stack_memory(data, n_steps=3, mode='reflect')
+    >>> librosa.feature.stack_memory(data, n_steps=3, mode="reflect")
     array([[-3, -2, -1,  0,  1,  2],
            [-2, -3, -2, -1,  0,  1],
            [-1, -2, -3, -2, -1,  0]])
 
     Or pad with edge-values, and delay by 2
 
-    >>> librosa.feature.stack_memory(data, n_steps=3, delay=2, mode='edge')
+    >>> librosa.feature.stack_memory(data, n_steps=3, delay=2, mode="edge")
     array([[-3, -2, -1,  0,  1,  2],
            [-3, -3, -3, -2, -1,  0],
            [-3, -3, -3, -3, -3, -2]])
 
     Stack time-lagged beat-synchronous chroma edge padding
 
-    >>> y, sr = librosa.loadx('sweetwaltz', duration=10)
+    >>> y, sr = librosa.loadx("sweetwaltz", duration=10)
     >>> chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
     >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr, hop_length=512)
     >>> beats = librosa.util.fix_frames(beats, x_min=0)
     >>> chroma_sync = librosa.util.sync(chroma, beats)
-    >>> chroma_lag = librosa.feature.stack_memory(chroma_sync, n_steps=3,
-    ...                                           mode='edge')
+    >>> chroma_lag = librosa.feature.stack_memory(chroma_sync, n_steps=3, mode="edge")
 
     Plot the result
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
     >>> beat_times = librosa.frames_to_time(beats, sr=sr, hop_length=512)
-    >>> librosa.display.specshow(chroma_lag, y_axis='chroma', x_axis='time',
-    ...                          x_coords=beat_times, ax=ax)
-    >>> ax.text(1.0, 1/6, "Lag=0", transform=ax.transAxes, rotation=-90, ha="left", va="center")
-    >>> ax.text(1.0, 3/6, "Lag=1", transform=ax.transAxes, rotation=-90, ha="left", va="center")
-    >>> ax.text(1.0, 5/6, "Lag=2", transform=ax.transAxes, rotation=-90, ha="left", va="center")
-    >>> ax.set(title='Time-lagged chroma', ylabel="")
+    >>> librosa.display.specshow(
+    ...     chroma_lag, y_axis="chroma", x_axis="time", x_coords=beat_times, ax=ax
+    ... )
+    >>> ax.text(
+    ...     1.0,
+    ...     1 / 6,
+    ...     "Lag=0",
+    ...     transform=ax.transAxes,
+    ...     rotation=-90,
+    ...     ha="left",
+    ...     va="center",
+    ... )
+    >>> ax.text(
+    ...     1.0,
+    ...     3 / 6,
+    ...     "Lag=1",
+    ...     transform=ax.transAxes,
+    ...     rotation=-90,
+    ...     ha="left",
+    ...     va="center",
+    ... )
+    >>> ax.text(
+    ...     1.0,
+    ...     5 / 6,
+    ...     "Lag=2",
+    ...     transform=ax.transAxes,
+    ...     rotation=-90,
+    ...     ha="left",
+    ...     va="center",
+    ... )
+    >>> ax.set(title="Time-lagged chroma", ylabel="")
     """
     if n_steps < 1:
         raise ParameterValueError("n_steps must be a positive integer")

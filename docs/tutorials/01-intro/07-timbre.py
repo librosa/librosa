@@ -57,7 +57,9 @@ n_instruments = len(instruments)
 html_content = ""
 for i, instrument in enumerate(instruments):
     audio_widget = Audio(y[i], rate=sr)._repr_html_()
-    html_content += f"<div><strong>{instrument}:</strong><br>{audio_widget}</div><br>"
+    html_content += (
+        f"<div><strong>{instrument}:</strong><br>{audio_widget}</div><br>"
+    )
 
 # Must be the final statement evaluated in this script block
 HTML(html_content)
@@ -65,8 +67,12 @@ HTML(html_content)
 # %%
 # which we can visualize as follows:
 
-fig, ax = plt.subplots(nrows=n_instruments, sharex=True, layout="constrained", figsize=(8, 3))
-librosa.display.multiplot("waveshow", y, sr=sr, invert=True, labels=instruments, axes=ax)
+fig, ax = plt.subplots(
+    nrows=n_instruments, sharex=True, layout="constrained", figsize=(8, 3)
+)
+librosa.display.multiplot(
+    "waveshow", y, sr=sr, invert=True, labels=instruments, axes=ax
+)
 fig.legend(loc="outside right center")
 
 # %%
@@ -76,9 +82,15 @@ fig.legend(loc="outside right center")
 
 stft = librosa.stft(y)
 fig, ax = plt.subplots(
-    nrows=n_instruments, sharex=True, sharey=True, figsize=(10, 6), gridspec_kw=dict(hspace=0.05, wspace=0.05)
+    nrows=n_instruments,
+    sharex=True,
+    sharey=True,
+    figsize=(10, 6),
+    gridspec_kw=dict(hspace=0.05, wspace=0.05),
 )
-imgs = librosa.display.multiplot("specshow", stft, vscale="dBFS", sr=sr, x_axis="time", y_axis="log", axes=ax)
+imgs = librosa.display.multiplot(
+    "specshow", stft, vscale="dBFS", sr=sr, x_axis="time", y_axis="log", axes=ax
+)
 for i, inst in enumerate(instruments):
     ax[i].set(ylabel=inst)
 librosa.display.colorbar_db(imgs[0], ax=ax, pad=0.01)
@@ -100,7 +112,15 @@ fig, ax = plt.subplots(
     figsize=(10, 8),
     gridspec_kw=dict(hspace=0.05, wspace=0.05, width_ratios=[3, 1]),
 )
-imgs = librosa.display.multiplot("specshow", stft, vscale="dBFS", sr=sr, x_axis="time", y_axis="log", axes=ax[:, 0])
+imgs = librosa.display.multiplot(
+    "specshow",
+    stft,
+    vscale="dBFS",
+    sr=sr,
+    x_axis="time",
+    y_axis="log",
+    axes=ax[:, 0],
+)
 for i, inst in enumerate(instruments):
     ax[i, 0].set(ylabel=inst)
 
@@ -116,7 +136,11 @@ freqs = librosa.fft_frequencies(sr=sr)
 for i in range(n_instruments):
     # Scale to dB and plot on the same axes as the spectrogram
     # We'll clip to 60dB below peak to focus on the most prominent parts of the spectrum
-    ax[i, 1].plot(librosa.amplitude_to_db(avg_spec[i], ref=np.max, top_db=60), freqs, color=f"C{i}")
+    ax[i, 1].plot(
+        librosa.amplitude_to_db(avg_spec[i], ref=np.max, top_db=60),
+        freqs,
+        color=f"C{i}",
+    )
 
 ax[0, 0].set(title="Spectrogram")
 ax[0, 1].set(title="Average spectrum")
@@ -173,7 +197,8 @@ def minmax_normalize(x, axis=-1):
     # This function scales the input to the range [0, 1], which we'll use for mapping
     # frame amplitudes into alpha values for scatter plots below.
     return (x - np.min(x, axis=axis, keepdims=True)) / (
-        np.max(x, axis=axis, keepdims=True) - np.min(x, axis=axis, keepdims=True)
+        np.max(x, axis=axis, keepdims=True)
+        - np.min(x, axis=axis, keepdims=True)
     )
 
 
@@ -184,7 +209,9 @@ def scatter_outline(ax, x, y, alpha, s, zorder, color=None, **kwargs):
     # <https://matplotlib.org/cheatsheets/>`_.
     ax.scatter(x, y, color="k", s=s, lw=1, zorder=-10, alpha=1)
     ax.scatter(x, y, color="w", s=s, lw=0, zorder=-5)
-    return ax.scatter(x, y, color=color, alpha=alpha * 0.5, lw=0, s=s, zorder=zorder, **kwargs)
+    return ax.scatter(
+        x, y, color=color, alpha=alpha * 0.5, lw=0, s=s, zorder=zorder, **kwargs
+    )
 
 
 def plot_umap(data_fit, data_test, alpha_fit, alpha_test, ax):
@@ -192,8 +219,12 @@ def plot_umap(data_fit, data_test, alpha_fit, alpha_test, ax):
     reducer = umap.UMAP(random_state=5, n_jobs=1)
     # We need to reshape the data so that each time frame is a sample, and the frequency bins are
     # features.
-    embed_fit = reducer.fit_transform(data_fit.transpose(0, 2, 1).reshape(-1, data_fit.shape[1]))
-    embed_test = reducer.transform(data_test.transpose(0, 2, 1).reshape(-1, data_test.shape[1]))
+    embed_fit = reducer.fit_transform(
+        data_fit.transpose(0, 2, 1).reshape(-1, data_fit.shape[1])
+    )
+    embed_test = reducer.transform(
+        data_test.transpose(0, 2, 1).reshape(-1, data_test.shape[1])
+    )
 
     n_fit = data_fit.shape[-1]
     n_test = data_test.shape[-1]
@@ -230,7 +261,9 @@ def plot_umap(data_fit, data_test, alpha_fit, alpha_test, ax):
             marker="o",
             label=f"{instruments[i]} (test)",
         )
-    ax.set(xticks=[], yticks=[])  # X and Y axes are arbitrary units, so we can hide the ticks
+    ax.set(
+        xticks=[], yticks=[]
+    )  # X and Y axes are arbitrary units, so we can hide the ticks
     # Fix the alpha channels in the legend for legibility
     fig = ax.get_figure()
     leg = fig.legend(loc="outside right center")
@@ -254,8 +287,12 @@ fig, ax = plt.subplots(
     figsize=(10, 6),
     gridspec_kw=dict(hspace=0.05, wspace=0.05),
 )
-imgs = librosa.display.multiplot("specshow", stft_fit, sr=sr, x_axis="time", y_axis="log", axes=ax[:, 0])
-librosa.display.multiplot("specshow", stft_test, sr=sr, x_axis="time", y_axis="log", axes=ax[:, 1])
+imgs = librosa.display.multiplot(
+    "specshow", stft_fit, sr=sr, x_axis="time", y_axis="log", axes=ax[:, 0]
+)
+librosa.display.multiplot(
+    "specshow", stft_test, sr=sr, x_axis="time", y_axis="log", axes=ax[:, 1]
+)
 ax[0, 0].set(title="STFT (fit)")
 ax[0, 1].set(title="STFT (test)")
 for i, inst in enumerate(instruments):
@@ -274,7 +311,9 @@ alpha_fit = np.mean(stft_fit, axis=1, keepdims=True)
 alpha_test = np.mean(stft_test, axis=1, keepdims=True)
 
 fig, ax = plt.subplots(layout="constrained")
-embed_fit, embed_test = plot_umap(stft_fit, stft_test, alpha_fit, alpha_test, ax)
+embed_fit, embed_test = plot_umap(
+    stft_fit, stft_test, alpha_fit, alpha_test, ax
+)
 ax.set(title="STFT magnitude UMAP projection")
 
 # %%
@@ -293,8 +332,12 @@ ax.set(title="STFT magnitude UMAP projection")
 # frequency instead of instrument label:
 
 # Estimate the fundamental frequency (f0) for each frame using the pyin algorithm.
-f0_fit, voiced_flag_fit, voiced_probs_fit = librosa.pyin(y_fit, fmin=100, fmax=1000, sr=sr)
-f0_test, voiced_flag_test, voiced_probs_test = librosa.pyin(y_test, fmin=100, fmax=1000, sr=sr)
+f0_fit, voiced_flag_fit, voiced_probs_fit = librosa.pyin(
+    y_fit, fmin=100, fmax=1000, sr=sr
+)
+f0_test, voiced_flag_test, voiced_probs_test = librosa.pyin(
+    y_test, fmin=100, fmax=1000, sr=sr
+)
 
 # Re-plot the UMAP embeddings of the STFT magnitudes, now coloring by f0 instead of instrument class
 fig, ax = plt.subplots(layout="constrained")
@@ -366,10 +409,22 @@ fig, ax = plt.subplots(
     gridspec_kw=dict(hspace=0.05, wspace=0.05),
 )
 imgs = librosa.display.multiplot(
-    "specshow", mel_fit, vscale="dBFS[power]", sr=sr, x_axis="time", y_axis="mel", axes=ax[:, 0]
+    "specshow",
+    mel_fit,
+    vscale="dBFS[power]",
+    sr=sr,
+    x_axis="time",
+    y_axis="mel",
+    axes=ax[:, 0],
 )
 librosa.display.multiplot(
-    "specshow", mel_test, vscale="dBFS[power]", sr=sr, x_axis="time", y_axis="mel", axes=ax[:, 1]
+    "specshow",
+    mel_test,
+    vscale="dBFS[power]",
+    sr=sr,
+    x_axis="time",
+    y_axis="mel",
+    axes=ax[:, 1],
 )
 ax[0, 0].set(title="Mel spectrogram (fit)")
 ax[0, 1].set(title="Mel spectrogram (test)")
@@ -414,8 +469,12 @@ fig, ax = plt.subplots(
     figsize=(10, 6),
     gridspec_kw=dict(hspace=0.05, wspace=0.05),
 )
-imgs = librosa.display.multiplot("specshow", mfcc_fit, sr=sr, x_axis="time", axes=ax[:, 0])
-librosa.display.multiplot("specshow", mfcc_test, sr=sr, x_axis="time", axes=ax[:, 1])
+imgs = librosa.display.multiplot(
+    "specshow", mfcc_fit, sr=sr, x_axis="time", axes=ax[:, 0]
+)
+librosa.display.multiplot(
+    "specshow", mfcc_test, sr=sr, x_axis="time", axes=ax[:, 1]
+)
 ax[0, 0].set(title="MFCC (fit)")
 ax[0, 1].set(title="MFCC (test)")
 for i, inst in enumerate(instruments):

@@ -64,7 +64,11 @@ imgs = librosa.display.multiplot(
     vscale=f"dB[{rp}]",
     y_axis="log",
     x_axis="time",
-    titles=["Full spectrogram", "Harmonic spectrogram", "Percussive spectrogram"],
+    titles=[
+        "Full spectrogram",
+        "Harmonic spectrogram",
+        "Percussive spectrogram",
+    ],
     axes=ax,
 )
 librosa.display.colorbar_db(imgs[0], ax=ax)
@@ -109,7 +113,9 @@ D_harmonic16, D_percussive16 = librosa.decompose.hpss(D, margin=16)
 #############################################################################
 # In the plots below, note that vibrato has been suppressed from the harmonic
 # components, and vocals have been suppressed in the percussive components.
-fig, ax = plt.subplots(nrows=5, ncols=2, sharex=True, sharey=True, figsize=(10, 10))
+fig, ax = plt.subplots(
+    nrows=5, ncols=2, sharex=True, sharey=True, figsize=(10, 10)
+)
 librosa.display.multiplot(
     "specshow",
     D_harmonic,
