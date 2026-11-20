@@ -826,7 +826,7 @@ def hybrid_tempogram(
     >>> ax[2].set(title="Hybrid Tempogram")
     >>> fig.colorbar(img, ax=ax)
     """
-    interp_kwargs_dict: dict[str, Any] = kwargs if kwargs else {}
+    interp_kwargs_dict: dict[str, Any] = kwargs or {}
     interp_kwargs_dict.setdefault("bounds_error", False)
     interp_kwargs_dict.setdefault("fill_value", 0.0)
     interp_kwargs_dict.setdefault("copy", False)

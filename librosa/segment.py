@@ -1412,7 +1412,7 @@ def __affinity_bandwidth(
         # catch empty dists lists in knn_dists
         if row_data.size == 0:
             # Disconnected vertices are only a problem for point-wise bandwidth estimation
-            if bw_mode not in ["med_k_scalar"]:
+            if bw_mode != "med_k_scalar":
                 raise ParameterValueError(f"The sample at time point {i} has no neighbors")
             knn_dists.append(np.array([np.nan]))
         else:

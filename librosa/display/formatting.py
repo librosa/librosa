@@ -1369,7 +1369,7 @@ def _decorate_axis(
         axis.set_minor_locator(mplticker.FixedLocator(_OCT3_FREQUENCIES, nbins=None))  # type: ignore[arg-type]
         axis.set_minor_formatter(AdaptiveEngFormatter(major=False, unit="Hz"))
 
-    elif ax_type in ["frames"]:
+    elif ax_type == "frames":
         axis.set_label_text("Frames")
 
     elif ax_type in ["off", "none", None]:

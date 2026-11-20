@@ -186,6 +186,9 @@ select = [
     "PERF",  # perflint
     "FLY",   # flynt f-strings
     "PIE",   # flake8-pie
+    "ISC",   # flake8-implicit-str-concat
+    "RSE",   # flake8-raise
+    "FURB",  # refurb (modern python idioms)
 ]
 ignore = [
     "D107",  # This only affects inherited classes for us

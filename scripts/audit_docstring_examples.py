@@ -155,7 +155,7 @@ def extract_code_blocks(docstring):
     for line in examples:
         stripped_line = line.lstrip()  # Strip leading whitespace
 
-        if stripped_line.startswith(">>>") or stripped_line.startswith("..."):
+        if stripped_line.startswith((">>>", "...")):
             # Remove '>>>' or '...' from the start, but preserve indentation for continuation lines
             code_line = stripped_line[4:] if stripped_line.startswith(">>>") else stripped_line[3:]
             current_block.append(code_line)
@@ -183,5 +183,5 @@ if __name__ == "__main__":
         try:
             code_blocks = extract_code_blocks(function.__doc__)
             extract_librosa_calls(code_blocks, target_functions, desc=function.__name__)
-        except:
+        except Exception:
             print(f"Could not parse {function.__name__}, skipping.  CHECK MANUALLY.")

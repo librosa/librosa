@@ -183,7 +183,7 @@ def test_cqt_frame_rate(y_cqt_110, sr_cqt, hop_length):
         assert C.shape[1] == 17
     else:
         # Unsupported test case
-        raise AssertionError()
+        raise AssertionError
 
 
 def test_cqt_odd_hop(y_cqt_110, sr_cqt):

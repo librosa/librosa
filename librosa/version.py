@@ -71,6 +71,6 @@ def show_versions() -> None:
     print(f"librosa: {version}\n")
     for dep in core_deps:
         print(f"{dep}: {__get_mod_version(dep)}")
-    print("")
+    print()
     for dep in extra_deps:
         print(f"{dep}: {__get_mod_version(dep)}")

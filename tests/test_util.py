@@ -1040,7 +1040,7 @@ def test_sync_slices(aggregate):
     elif aggregate is np.max:
         assert np.allclose(xsync, [1, 3, 5, 7])
     else:
-        raise AssertionError()
+        raise AssertionError
 
 
 @pytest.mark.parametrize("aggregate", [np.mean, np.max])
@@ -1054,7 +1054,7 @@ def test_sync_frames(aggregate, atype):
     elif aggregate is np.max:
         assert np.allclose(xsync, [1, 3, 5, 7])
     else:
-        raise AssertionError()
+        raise AssertionError
 
 
 @pytest.mark.parametrize("atype", [list, np.asarray])
