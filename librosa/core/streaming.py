@@ -27,10 +27,9 @@ from ..util.utils import align_samples, fix_length, is_positive_int
 from .audio import to_mono
 
 if TYPE_CHECKING:
-    from typing import BinaryIO, Generator, Iterable
+    from typing import BinaryIO, Generator, Iterable, Self
 
     from numpy.typing import DTypeLike
-    from typing_extensions import Self
 
 
 __all__ = [

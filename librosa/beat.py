@@ -21,14 +21,13 @@ from .util.exceptions import (
 if TYPE_CHECKING:
     import numpy.typing as npt
     import scipy.stats
-    from typing_extensions import TypeVar
+    from typing import TypeVar
 
     from ._typing import _Array1D
 
     type _BpmLike = float | np.floating[Any] | np.integer[Any] | npt.NDArray[np.floating[Any]]
 
-    # `typing_extensions.TypeVar` is only needed until Python 3.13, which adds support
-    # for type parameter defaults (PEP 696).
+    # Python 3.13 adds support for type parameter defaults (PEP 696).
     _SparseBpmT = TypeVar("_SparseBpmT", bound=_BpmLike, default=float | npt.NDArray[np.float64])
     _DenseBpmT = TypeVar("_DenseBpmT", bound=_BpmLike, default=npt.NDArray[np.float64])
 
