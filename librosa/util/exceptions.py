@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 """Exception classes for librosa (backward-compatibility alias for librosa.exceptions)"""
 
 from ..exceptions import (

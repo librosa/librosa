@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 librosa.onset contains functions for computing onset strength envelopes
 and estimating onset events from audio signals.
@@ -21,7 +20,8 @@ from .util.exceptions import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal, Sequence
+    from collections.abc import Callable, Sequence
+    from typing import Any, Literal
 
 __all__ = ["onset_detect", "onset_strength", "onset_strength_multi", "onset_backtrack"]
 

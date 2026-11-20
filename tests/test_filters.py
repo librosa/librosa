@@ -18,8 +18,9 @@ import os
 with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
 
+from contextlib import AbstractContextManager as ContextManager
 from contextlib import nullcontext as dnr
-from typing import Any, ContextManager, Literal
+from typing import Any, Literal
 
 import numpy as np
 import pytest

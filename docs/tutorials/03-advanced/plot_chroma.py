@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 ===================================
 Enhanced chroma and chroma variants
@@ -55,7 +54,7 @@ Audio(url=librosa.example("fishin", url=True))
 chroma_orig = librosa.feature.chroma_cqt(y=y, sr=sr)
 
 # For display purposes, let's zoom in on a 15-second chunk from the middle of the song
-idx = tuple([slice(None), slice(*list(librosa.time_to_frames([45, 60])))])
+idx = (slice(None), slice(*list(librosa.time_to_frames([45, 60]))))
 
 # And for comparison, we'll show the CQT matrix as well.
 C = np.abs(librosa.cqt(y=y, sr=sr, bins_per_octave=12 * 3, n_bins=7 * 12 * 3))

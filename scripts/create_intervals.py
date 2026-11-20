@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # CREATED:2022-08-11 07:26:21 by Brian McFee <brian.mcfee@nyu.edu>
 """Construct the interval cache for just intonation systems.
 
@@ -17,6 +16,7 @@ The output will be stored in intervals.pickle
 
 import msgpack
 import numpy as np
+
 import librosa
 
 

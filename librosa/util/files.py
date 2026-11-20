@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Utility functions for dealing with files"""
 
 from __future__ import annotations

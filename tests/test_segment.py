@@ -1,12 +1,11 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 """Tests for segmentation functions"""
 
 import contextlib
 
 # Disable cache
 import os
-from typing import TYPE_CHECKING, Union, cast
+from typing import TYPE_CHECKING, cast
 
 with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
@@ -336,7 +335,7 @@ def test_recurrence_to_lag(n, pad, rng):
 
     assert np.allclose(lag, lag2.T)
 
-    x: Union[EllipsisType, slice] = Ellipsis
+    x: EllipsisType | slice = Ellipsis
     if pad:
         x = slice(n)
 

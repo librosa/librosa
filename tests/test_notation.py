@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # CREATED:2020-07-16 16:49:03 by Brian McFee <brian.mcfee@nyu.edu>
 """Unit tests for music notations"""
 

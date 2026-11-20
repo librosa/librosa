@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Utility functions"""
 
 from __future__ import annotations
@@ -20,7 +19,8 @@ from ..exceptions import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal, Sequence
+    from collections.abc import Callable, Sequence
+    from typing import Any, Literal
 
     from numpy.typing import DTypeLike, NDArray
 
@@ -246,13 +246,13 @@ def frame(
         raise ParameterValueError(f"Invalid hop_length: {hop_length:d}")
 
     # put our new within-frame axis at the end for now
-    out_strides = x.strides + tuple([x.strides[axis]])
+    out_strides = (*x.strides, x.strides[axis])
 
     # Reduce the shape on the framing axis
     x_shape_trimmed = list(x.shape)
     x_shape_trimmed[axis] -= frame_length - 1
 
-    out_shape = tuple(x_shape_trimmed) + tuple([frame_length])
+    out_shape = (*tuple(x_shape_trimmed), frame_length)
     xw = as_strided(x, strides=out_strides, shape=out_shape, subok=subok, writeable=writeable)
 
     if axis < 0:
@@ -644,7 +644,7 @@ def expand_to(x: np.ndarray, *, ndim: int, axes: int | slice | Sequence[int] | S
     try:
         axes_tup = tuple(axes)  # type: ignore
     except TypeError:
-        axes_tup = tuple([axes])  # type: ignore
+        axes_tup = (axes,)  # type: ignore
 
     if len(axes_tup) != x.ndim:
         raise ParameterShapeError(f"Shape mismatch between axes={axes_tup} and input x.shape={x.shape}")
@@ -2183,7 +2183,7 @@ def fill_off_diagonal(x: np.ndarray, *, radius: float, value: float = 0) -> None
     radius = int(np.round(radius * np.min(x.shape)))
 
     nx, ny = x.shape
-    offset = np.abs((x.shape[0] - x.shape[1]))
+    offset = np.abs(x.shape[0] - x.shape[1])
 
     if nx < ny:
         idx_u = np.triu_indices_from(x, k=radius + offset)
@@ -2475,7 +2475,7 @@ def stack(arrays: list[np.ndarray], *, axis: int = 0) -> np.ndarray:
         return np.stack(arrays, axis=axis)
     else:
         # If axis is 0, enforce F-ordering
-        shape = tuple([len(arrays), *list(shape_in)])
+        shape = (len(arrays), *list(shape_in))
 
         # Find the common dtype for all inputs
         dtype = np.result_type(*arrays)

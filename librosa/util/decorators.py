@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # CREATED:2015-02-15 10:06:03 by Brian McFee <brian.mcfee@nyu.edu>
 """Helpful tools for deprecation"""
 
@@ -50,10 +49,10 @@ def moved(*, moved_from: str, version: str, version_removed: str) -> _Decorator:
     def __wrapper[**P, R](func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
         """Warn the user, and then proceed."""
         warnings.warn(
-            "{:s}\n\tThis function was moved to '{:s}.{:s}' in "
-            "librosa version {:s}."
+            f"{moved_from:s}\n\tThis function was moved to '{func.__module__:s}.{func.__name__:s}' in "
+            f"librosa version {version:s}."
             "\n\tThis alias will be removed in librosa version "
-            "{:s}.".format(moved_from, func.__module__, func.__name__, version, version_removed),
+            f"{version_removed:s}.",
             category=FutureWarning,
             stacklevel=3,  # Would be 2, but the decorator adds a level
         )
@@ -83,10 +82,8 @@ def deprecated(*, version: str, version_removed: str) -> _Decorator:
     def __wrapper[**P, R](func: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
         """Warn the user, and then proceed."""
         warnings.warn(
-            "{:s}.{:s}\n\tDeprecated as of librosa version {:s}."
-            "\n\tIt will be removed in librosa version {:s}.".format(
-                func.__module__, func.__name__, version, version_removed
-            ),
+            f"{func.__module__:s}.{func.__name__:s}\n\tDeprecated as of librosa version {version:s}."
+            f"\n\tIt will be removed in librosa version {version_removed:s}.",
             category=FutureWarning,
             stacklevel=3,  # Would be 2, but the decorator adds a level
         )

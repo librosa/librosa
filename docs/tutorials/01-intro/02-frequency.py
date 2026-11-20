@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 =====================================
 Frequency and time-frequency analysis

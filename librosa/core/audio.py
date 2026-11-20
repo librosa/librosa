@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Core IO, DSP and utility functions."""
 
 from __future__ import annotations
@@ -26,11 +25,10 @@ from .convert import frames_to_samples, frequency_weighting, time_to_samples
 
 if TYPE_CHECKING:
     import os
+    from collections.abc import Callable, Collection
     from typing import (
         Any,
         BinaryIO,
-        Callable,
-        Collection,
     )
 
     from numpy.typing import DTypeLike, NDArray
@@ -623,7 +621,7 @@ def to_multi(
     if downmix:
         # If all channels are downmixed to mono,
         # then the layout will be (n_signals, n_out)
-        channel_layout = tuple((len(signals),))
+        channel_layout = (len(signals),)
     else:
         # If we're not downmixing, then all have to have
         # identical channel layout

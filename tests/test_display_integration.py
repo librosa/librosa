@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Integration and State Validation Tests for librosa.display"""
 
 import matplotlib.pyplot as plt

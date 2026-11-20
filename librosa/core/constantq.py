@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Constant-Q transforms"""
 
 from __future__ import annotations
@@ -26,7 +25,7 @@ from .pitch import estimate_tuning
 from .spectrum import istft, stft
 
 if TYPE_CHECKING:
-    from typing import Collection
+    from collections.abc import Collection
 
     from numpy.typing import DTypeLike, NDArray
 

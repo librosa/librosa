@@ -1,4 +1,3 @@
-# coding: utf-8
 """
 =====================================
 Beat tracking with time-varying tempo

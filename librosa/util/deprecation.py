@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 """Deprecation utilities"""
 
 import inspect
@@ -52,10 +51,10 @@ def rename_kw(
         dep_func = stack[1]
 
         warnings.warn(
-            "{:s}() keyword argument '{:s}' has been "
-            "renamed to '{:s}' in version {:}."
+            f"{dep_func[3]:s}() keyword argument '{old_name:s}' has been "
+            f"renamed to '{new_name:s}' in version {version_deprecated}."
             "\n\tThis alias will be removed in version "
-            "{:}.".format(dep_func[3], old_name, new_name, version_deprecated, version_removed),
+            f"{version_removed}.",
             category=FutureWarning,
             stacklevel=3,
         )

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Music notation utilities"""
 
 from __future__ import annotations
@@ -17,7 +16,7 @@ from ..util.decorators import vectorize
 from .intervals import INTERVALS
 
 if TYPE_CHECKING:
-    from typing import Iterable
+    from collections.abc import Iterable
 
     import numpy.typing as npt
 
@@ -610,7 +609,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     match = KEY_RE.match(signature)
 
     if not match:
-        raise ParameterValueError("Improper format: {:s}".format(signature))
+        raise ParameterValueError(f"Improper format: {signature:s}")
 
     if match.group("scale") or not match.group("mode"):
         # We're already fine here, but let's pass the key through __simpify_note()
@@ -774,7 +773,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool = False) -> li
 
         if not unicode:
             translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb", "♮": "n"})
-            notes = list(n.translate(translations) for n in notes)
+            notes = [n.translate(translations) for n in notes]
 
         return notes
 
@@ -840,7 +839,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool = False) -> li
 
     if use_sharps:
         # This will only execute if n_sharps >= 6
-        for n in range(0, n_sharps - 6 + 1):
+        for n in range(n_sharps - 6 + 1):
             index, name = sharp_corrections[n]
             notes_sharp[index] = name
 
@@ -849,7 +848,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool = False) -> li
         n_flats = (12 - tonic_number) % 12
 
         # This will only execute if tonic_number <= 6
-        for n in range(0, n_flats - 6 + 1):
+        for n in range(n_flats - 6 + 1):
             index, name = flat_corrections[n]
             notes_flat[index] = name
 
@@ -867,7 +866,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool = False) -> li
     # Finally, apply any unicode down-translation if necessary
     if not unicode:
         translations = str.maketrans({"♯": "#", "𝄪": "##", "♭": "b", "𝄫": "bb", "♮": "n"})
-        notes = list(n.translate(translations) for n in notes)
+        notes = [n.translate(translations) for n in notes]
 
     return notes
 
@@ -1085,7 +1084,7 @@ def interval_to_fjs(
     tolerance: float = ...,
     unicode: bool = ...,
 ) -> npt.NDArray[np.str_]: ...
-@vectorize(otypes="U", excluded=set(["unison", "tolerance", "unicode"]))
+@vectorize(otypes="U", excluded={"unison", "tolerance", "unicode"})
 def interval_to_fjs(
     interval: _ScalarOrSequence[_FloatLike_co],
     *,

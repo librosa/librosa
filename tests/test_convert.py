@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # CREATED:2015-02-14 19:13:49 by Brian McFee <brian.mcfee@nyu.edu>
 """Unit tests for time and frequency conversion"""
 
@@ -163,15 +162,15 @@ def test_tuning_to_A4(tuning, bins_per_octave, A4):
 @pytest.mark.parametrize("round_midi", [False, True])
 def test_note_to_midi(tuning, accidental, octave, round_midi: bool):
 
-    note = "C{:s}".format(accidental)
+    note = f"C{accidental:s}"
 
     if octave is not None:
-        note = "{:s}{:d}".format(note, octave)
+        note = f"{note:s}{octave:d}"
     else:
         octave = 0
 
     if tuning is not None:
-        note = "{:s}{:+d}".format(note, tuning)
+        note = f"{note:s}{tuning:+d}"
     else:
         tuning = 0
 
@@ -215,15 +214,15 @@ def test_note_to_midi_badnote():
 @pytest.mark.parametrize("round_midi", [False, True])
 def test_note_to_hz(tuning, octave, accidental, round_midi: bool):
 
-    note = "A{:s}".format(accidental)
+    note = f"A{accidental:s}"
 
     if octave is not None:
-        note = "{:s}{:d}".format(note, octave)
+        note = f"{note:s}{octave:d}"
     else:
         octave = 0
 
     if tuning is not None:
-        note = "{:s}{:+d}".format(note, tuning)
+        note = f"{note:s}{tuning:+d}"
     else:
         tuning = 0
 

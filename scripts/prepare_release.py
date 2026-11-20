@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """Prepare release materials for Librosa.
 
 Automates step 2 (changelog fragment) and step 3 (AUTHORS.md updates) of the

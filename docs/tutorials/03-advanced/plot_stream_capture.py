@@ -1,4 +1,3 @@
-# coding: utf-8
 # Code source: Brian McFee
 # License: ISC
 """

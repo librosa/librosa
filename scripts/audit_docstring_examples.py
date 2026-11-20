@@ -9,9 +9,9 @@
 #
 # Script co-authored by chatgpt v4 and Brian McFee
 
-import pkgutil
-import inspect
 import ast
+import inspect
+
 import numpydoc.docscrape as nds
 
 import librosa
@@ -21,11 +21,13 @@ def find_functions_with_param(package, param_name):
     """
     Scan all functions in a package and its submodules to find functions that include a given parameter.
 
-    Parameters:
+    Parameters
+    ----------
     - package: The package to scan. Should be the actual package/module object, not a string.
     - param_name: The name of the parameter to look for.
 
-    Returns:
+    Returns
+    -------
     - A set of strings, each containing the module path and function name where the parameter is found.
     """
     functions_with_param = []
@@ -55,10 +57,12 @@ def find_functions(package):
     """
     Scan all functions in a package and its submodules to find functions.
 
-    Parameters:
+    Parameters
+    ----------
     - package: The package to scan. Should be the actual package/module object, not a string.
 
-    Returns:
+    Returns
+    -------
     - A set of functions in the package.
     """
     functions = []

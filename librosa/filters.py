@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 librosa.filters provides functionality for filter bank construction, window
 function processing, and related utilities.
@@ -33,7 +32,8 @@ from .exceptions import (
 from .util.decorators import deprecated
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Collection, Literal, Sequence
+    from collections.abc import Callable, Collection, Sequence
+    from typing import Any, Literal
 
     from numpy.typing import ArrayLike, DTypeLike, NDArray
 

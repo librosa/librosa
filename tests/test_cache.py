@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # CREATED:2015-02-14 16:20:25 by Brian McFee <brian.mcfee@nyu.edu>
 #   unit tests for librosa cache
 """Tests for librosa.cache"""
@@ -17,7 +16,7 @@ import librosa._cache
 # Disable any initial cache settings
 for key in ["DIR", "MMAP", "COMPRESS", "VERBOSE", "LEVEL"]:
     with contextlib.suppress(KeyError):
-        os.environ.pop("LIBROSA_CACHE_{:s}".format(key))
+        os.environ.pop(f"LIBROSA_CACHE_{key:s}")
 
 
 @pytest.fixture

@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 """Exception classes for librosa"""
 
 from __future__ import annotations

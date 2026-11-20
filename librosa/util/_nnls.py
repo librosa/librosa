@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Non-negative least squares"""
 # The scipy library provides an nnls solver, but it does
 # not generalize efficiently to matrix-valued problems.
@@ -17,7 +16,8 @@ import numpy as np
 from .utils import MAX_MEM_BLOCK
 
 if TYPE_CHECKING:
-    from typing import Any, Sequence
+    from collections.abc import Sequence
+    from typing import Any
 
 __all__ = ["nnls"]
 

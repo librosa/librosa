@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 Tick formatters and axis decoration
 ===================================
@@ -38,7 +37,8 @@ from ..exceptions import (
 
 # Type checking imports for development and static analysis
 if TYPE_CHECKING:
-    from typing import Any, Collection, Sequence
+    from collections.abc import Collection, Sequence
+    from typing import Any
 
     import matplotlib
     import matplotlib.axes
@@ -195,19 +195,15 @@ class TimeFormatter(mplticker.Formatter):
             sign = ""
 
         if self.unit == "h" or ((self.unit is None) and (vmax - vmin > 3600)):
-            s = "{:d}:{:02d}:{:02d}".format(
-                int(value / 3600.0),
-                int(np.mod(value / 60.0, 60)),
-                int(np.mod(value, 60)),
-            )
+            s = f"{int(value / 3600.0):d}:{int(np.mod(value / 60.0, 60)):02d}:{int(np.mod(value, 60)):02d}"
         elif self.unit == "m" or ((self.unit is None) and (vmax - vmin > 60)):
-            s = "{:d}:{:02d}".format(int(value / 60.0), int(np.mod(value, 60)))
+            s = f"{int(value / 60.0):d}:{int(np.mod(value, 60)):02d}"
         elif self.unit == "s":
             s = f"{value:.3g}"
         elif self.unit is None and (vmax - vmin >= 1):
             s = f"{value:.2g}"
         elif self.unit == "ms":
-            s = "{:.3g}".format(value * 1000)
+            s = f"{value * 1000:.3g}"
         elif self.unit is None and (vmax - vmin < 1):
             s = f"{value:.3f}"
 
@@ -987,14 +983,14 @@ _misc_ax_types = (
 
 _AXIS_COMPAT = set(
     [(t, t) for t in _misc_ax_types]
-    + [t for t in product(_chroma_ax_types, _chroma_ax_types)]
-    + [t for t in product(_cqt_ax_types, _cqt_ax_types)]
-    + [t for t in product(_vqt_ax_types, _vqt_ax_types)]
-    + [t for t in product(_pitch_ax_types, _pitch_ax_types)]
-    + [t for t in product(_logfreq_ax_types, _logfreq_ax_types)]
-    + [t for t in product(_freq_ax_types, _freq_ax_types)]
-    + [t for t in product(_time_ax_types, _time_ax_types)]
-    + [t for t in product(_lag_ax_types, _lag_ax_types)]
+    + list(product(_chroma_ax_types, _chroma_ax_types))
+    + list(product(_cqt_ax_types, _cqt_ax_types))
+    + list(product(_vqt_ax_types, _vqt_ax_types))
+    + list(product(_pitch_ax_types, _pitch_ax_types))
+    + list(product(_logfreq_ax_types, _logfreq_ax_types))
+    + list(product(_freq_ax_types, _freq_ax_types))
+    + list(product(_time_ax_types, _time_ax_types))
+    + list(product(_lag_ax_types, _lag_ax_types))
 )
 
 
@@ -1003,9 +999,7 @@ def _check_axes(axes: mplaxes.Axes | None) -> mplaxes.Axes:
     if axes is None:
         axes = plt.gca()
     elif not isinstance(axes, mplaxes.Axes):
-        raise ParameterTypeError(
-            "`axes` must be an instance of matplotlib.axes.Axes. Found type(axes)={}".format(type(axes))
-        )
+        raise ParameterTypeError(f"`axes` must be an instance of matplotlib.axes.Axes. Found type(axes)={type(axes)}")
     return axes
 
 
@@ -1199,7 +1193,7 @@ def _decorate_axis(
     elif ax_type in time_units:
         axis.set_major_formatter(TimeFormatter(unit=ax_type, lag=False))
         axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
-        axis.set_label_text("Time ({:s})".format(time_units[ax_type]))
+        axis.set_label_text(f"Time ({time_units[ax_type]:s})")
 
     elif ax_type == "lag":
         axis.set_major_formatter(TimeFormatter(unit=None, lag=True))
@@ -1210,7 +1204,7 @@ def _decorate_axis(
         unit = ax_type[4:]
         axis.set_major_formatter(TimeFormatter(unit=unit, lag=True))
         axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
-        axis.set_label_text("Lag ({:s})".format(time_units[unit]))
+        axis.set_label_text(f"Lag ({time_units[unit]:s})")
 
     elif ax_type in ["cqt_note", "logfreq_note"] or (
         ax_type == "pitch_note" and (intervals is None or intervals == "equal")

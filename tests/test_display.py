@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # CREATED:2015-02-14 22:51:01 by Brian McFee <brian.mcfee@nyu.edu>
 """Unit tests for display module"""
 
@@ -28,7 +27,7 @@ except ImportError:
         pass
 
 
-from typing import Any, Dict
+from typing import Any
 
 import matplotlib.collections as mcoll
 import matplotlib.lines as mlines
@@ -752,7 +751,7 @@ def test_waveshow_update_gc_guard():
 @pytest.mark.parametrize("axis", ["x_axis", "y_axis"])
 def test_unknown_axis(S_abs, axis: str):
 
-    kwargs: Dict[str, Any] = {axis: "something not in the axis map"}
+    kwargs: dict[str, Any] = {axis: "something not in the axis map"}
     plt.figure()
     with pytest.raises(librosa.ParameterValueError):
         librosa.display.specshow(S_abs, **kwargs)

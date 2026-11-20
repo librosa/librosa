@@ -1,7 +1,7 @@
 # ruff: noqa: PYI047
 
-from collections.abc import Sequence
-from typing import Any, Callable, Generator, Literal, Never
+from collections.abc import Callable, Generator, Sequence
+from typing import Any, Literal, Never
 
 import numpy as np
 import scipy.sparse as sp
@@ -13,7 +13,7 @@ type RNGLike = np.random.Generator | np.random.BitGenerator
 
 
 type _WindowSpec = str | tuple[Any, ...] | float | Callable[[int], np.ndarray] | ArrayLike
-type _IterableLike[T] = list[T] | tuple[T, ...] | Generator[T, None, None]
+type _IterableLike[T] = list[T] | tuple[T, ...] | Generator[T]
 type _SequenceLike[T] = Sequence[T] | np.ndarray
 type _ScalarOrSequence[T] = T | _SequenceLike[T]
 
@@ -78,7 +78,6 @@ def _ensure_not_reachable(*, __arg: Never):
     This doesn't raise an exception so that we are forced to manually
     raise a more user friendly exception afterwards.
     """
-    ...
 
 
 type _SparseMatrix = (

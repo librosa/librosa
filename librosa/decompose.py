@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 librosa.decompose provides functions to decompose a feature matrix or spectrogram
 into components.
@@ -24,7 +23,8 @@ from .exceptions import (
 from .filters import pitch_basis
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Collection, Sequence
+    from collections.abc import Callable, Collection, Sequence
+    from typing import Any
 
     from numpy.typing import ArrayLike
 

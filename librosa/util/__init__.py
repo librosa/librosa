@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 librosa.util contains a variety of utility functions used throughout the
 package.

@@ -10,7 +10,6 @@ import os
 with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
 
-from typing import List, Union
 
 import numpy as np
 import pytest
@@ -77,7 +76,7 @@ def test_sync_multi(aggregate, ndim: int, axis: int):
     assert s_test == s_orig
 
     # The first slice will sum to 2 and have mean 1
-    idx: List[Union[slice, int]] = [slice(None)] * ndim
+    idx: list[slice | int] = [slice(None)] * ndim
     idx[axis] = 0
     if aggregate is np.sum:
         assert np.allclose(dsync[tuple(idx)], 2)

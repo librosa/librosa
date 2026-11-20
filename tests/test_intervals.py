@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # CREATED:2022-08-09 06:34:21 by Brian McFee <brian.mcfee@nyu.edu>
 """Unit tests for just intonation and friends"""
 

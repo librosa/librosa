@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Core IO and DSP functions"""
 
 import lazy_loader as lazy

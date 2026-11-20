@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Rhythmic feature extraction"""
 
 from __future__ import annotations
@@ -20,7 +19,8 @@ from ..exceptions import (
 from ..filters import get_window
 
 if TYPE_CHECKING:
-    from typing import Any, Callable
+    from collections.abc import Callable
+    from typing import Any
 
     import scipy
 

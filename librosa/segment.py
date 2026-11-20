@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """
 librosa.segment provides functions for structural analysis and
 segmentation of audio.
@@ -28,7 +27,8 @@ from .util.exceptions import (
 )
 
 if TYPE_CHECKING:
-    from typing import Any, Callable, Literal, TypeVar
+    from collections.abc import Callable
+    from typing import Any, Literal, TypeVar
 
     import sklearn.cluster
 
@@ -276,7 +276,7 @@ def cross_similarity(
     data = data.reshape((n, -1), order="F")
 
     if mode not in ["connectivity", "distance", "affinity"]:
-        raise ParameterValueError((f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']"))
+        raise ParameterValueError(f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']")
     if k is None:
         k = min(n_ref, 2 * np.ceil(np.sqrt(n_ref)))
 
@@ -597,11 +597,11 @@ def recurrence_matrix(
 
     if width < 1 or width >= (t - 1) // 2:
         raise ParameterValueError(
-            "width={} must be at least 1 and at most (data.shape[{}] - 1) // 2={}".format(width, axis, (t - 1) // 2)
+            f"width={width} must be at least 1 and at most (data.shape[{axis}] - 1) // 2={(t - 1) // 2}"
         )
 
     if mode not in ["connectivity", "distance", "affinity"]:
-        raise ParameterValueError((f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']"))
+        raise ParameterValueError(f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']")
     if k is None:
         k = 2 * np.ceil(np.sqrt(t - 2 * width + 1))
 
@@ -693,7 +693,9 @@ def recurrence_matrix(
     return rec
 
 
-def recurrence_to_lag(rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int = -1) -> _ArrayOrSparseArray:
+def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
+    rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int = -1
+) -> _ArrayOrSparseArray:
     """Convert a recurrence matrix into a lag matrix.
 
         ``lag[i, j] == rec[i+j, j]``
@@ -800,7 +802,9 @@ def recurrence_to_lag(rec: _ArrayOrSparseArray, *, pad: bool = True, axis: int =
     return lag
 
 
-def lag_to_recurrence(lag: _ArrayOrSparseArray, *, axis: int = -1) -> _ArrayOrSparseArray:
+def lag_to_recurrence[ArrayOrSparseArray: np.ndarray | _SparseArray](
+    lag: _ArrayOrSparseArray, *, axis: int = -1
+) -> _ArrayOrSparseArray:
     """Convert a lag matrix into a recurrence matrix.
 
     Parameters

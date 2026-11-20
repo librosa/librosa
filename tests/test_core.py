@@ -3,7 +3,6 @@
 #  unit tests for librosa core (__init__.py)
 #
 
-from __future__ import print_function
 
 import contextlib
 

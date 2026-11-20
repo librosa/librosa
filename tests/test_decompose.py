@@ -9,7 +9,6 @@ import os
 with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
 
-from typing import Union
 
 import numpy as np
 import pytest
@@ -331,7 +330,7 @@ def test_nn_filter_avg(rng):
 def test_nn_filter_badselfsim(data, x, y, sparse, rng):
 
     # Build a recurrence matrix, just for testing purposes
-    rec: Union[np.ndarray, scipy.sparse.csr_array] = rng.standard_normal(size=(x, y))
+    rec: np.ndarray | scipy.sparse.csr_array = rng.standard_normal(size=(x, y))
     if sparse:
         rec = scipy.sparse.csr_array(rec)
 

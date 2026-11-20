@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """The librosa.beat module provides two functions for estimating beat locations from an audio signal."""
 
 from __future__ import annotations
@@ -19,9 +18,10 @@ from .util.exceptions import (
 )
 
 if TYPE_CHECKING:
+    from typing import TypeVar
+
     import numpy.typing as npt
     import scipy.stats
-    from typing import TypeVar
 
     from ._typing import _Array1D
 
@@ -688,7 +688,6 @@ def __trim_beats(localscore, beats, trim, beats_trimmed):
     while localscore[n] <= threshold:
         beats_trimmed[n] = False
         n -= 1
-    pass
 
 
 def __last_beat(cumscore):

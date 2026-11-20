@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 """Version info"""
 
 import importlib
@@ -71,7 +70,7 @@ def show_versions() -> None:
     print(f"python: {sys.version}\n")
     print(f"librosa: {version}\n")
     for dep in core_deps:
-        print("{}: {}".format(dep, __get_mod_version(dep)))
+        print(f"{dep}: {__get_mod_version(dep)}")
     print("")
     for dep in extra_deps:
-        print("{}: {}".format(dep, __get_mod_version(dep)))
+        print(f"{dep}: {__get_mod_version(dep)}")
