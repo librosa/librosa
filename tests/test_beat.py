@@ -55,7 +55,7 @@ def test_tempo(tempo, sr, hop_length, ac_size, aggregate, prior):
         assert np.abs(tempo_est - tempo) <= 0.05 * tempo, (tempo, tempo_est)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_beat_no_input():
 
     librosa.beat.beat_track(y=None, onset_envelope=None)
@@ -152,21 +152,21 @@ def test_beat(ysr, hop, oenv, with_audio, start_bpm, bpm, trim, tightness, prior
         assert beats.max() <= len(oenv)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("tightness", [-1, -0.5, 0])
 def test_beat_bad_tightness(ysr, tightness):
     y, sr = ysr
     librosa.beat.beat_track(y=y, sr=sr, tightness=tightness)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("bpm", [-1, -0.5, 0])
 def test_beat_bad_bpm(ysr, bpm):
     y, sr = ysr
     librosa.beat.beat_track(y=y, sr=sr, bpm=bpm)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("start_bpm", [-1, -0.5, 0])
 def test_beat_bad_start_bpm(ysr, start_bpm):
     y, sr = ysr
@@ -180,7 +180,7 @@ def test_beat_bad_start_bpm(ysr, start_bpm):
         ("frames", dnr()),
         ("time", dnr()),
         ("samples", dnr()),
-        ("bad units", pytest.raises(librosa.ParameterError)),
+        ("bad units", pytest.raises(librosa.ParameterValueError)),
     ],
 )
 def test_beat_units(ysr, hop_length, units, ctx):
@@ -222,7 +222,7 @@ def test_beat_sparse(ysr):
         (30, 300, dnr()),
         (None, 240, dnr()),
         (60, None, dnr()),
-        (120, 80, pytest.raises(librosa.ParameterError)),
+        (120, 80, pytest.raises(librosa.ParameterValueError)),
     ],
 )
 @pytest.mark.parametrize(
@@ -277,3 +277,11 @@ def test_tempo_tgin(ysr):
     t2 = librosa.feature.tempo(tg=tg, sr=sr, aggregate=None)
 
     assert np.allclose(t1, t2)
+
+
+def test_beat_tracker_bad_bpm_shape():
+    from librosa.beat import __beat_tracker
+
+    with pytest.raises(librosa.ParameterShapeError, match="Invalid bpm shape"):
+        __beat_tracker(np.ones(100), np.ones(5), 43.0, 100, True)
+

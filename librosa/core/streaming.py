@@ -4,7 +4,6 @@
 from __future__ import annotations
 
 import os
-import queue
 import threading
 import warnings
 from collections import deque
@@ -15,7 +14,14 @@ import numpy as np
 import soundfile as sf
 import soxr
 
-from ..util.exceptions import ParameterError
+from ..exceptions import (
+    ParameterShapeError,
+    ParameterTypeError,
+    ParameterValueError,
+    StreamBufferError,
+    StreamClosedError,
+    StreamTimeoutError,
+)
 from ..util.utils import align_samples, fix_length, is_positive_int
 from .audio import to_mono
 
@@ -59,27 +65,27 @@ class _StreamBuffer:
         dtype: DTypeLike = np.float32,
     ):
         if not is_positive_int(block_length):
-            raise ParameterError(
+            raise ParameterValueError(
                 f"block_length={block_length} must be a positive integer"
             )
         if not is_positive_int(frame_length):
-            raise ParameterError(
+            raise ParameterValueError(
                 f"frame_length={frame_length} must be a positive integer"
             )
         if not is_positive_int(hop_length):
-            raise ParameterError(f"hop_length={hop_length} must be a positive integer")
+            raise ParameterValueError(f"hop_length={hop_length} must be a positive integer")
         if not (np.isfinite(orig_sr) and orig_sr > 0):
-            raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
+            raise ParameterValueError(f"orig_sr={orig_sr} must be a positive number")
         if sr is not None and not (np.isfinite(sr) and sr > 0):
-            raise ParameterError(f"sr={sr} must be a positive number")
+            raise ParameterValueError(f"sr={sr} must be a positive number")
         if not is_positive_int(channels):
-            raise ParameterError(f"channels={channels} must be a positive integer")
+            raise ParameterValueError(f"channels={channels} must be a positive integer")
         if offset < 0:
-            raise ParameterError(f"offset={offset} must be non-negative")
+            raise ParameterValueError(f"offset={offset} must be non-negative")
         if duration is not None and duration < 0:
-            raise ParameterError(f"duration={duration} must be non-negative")
+            raise ParameterValueError(f"duration={duration} must be non-negative")
         if res_type not in {"soxr_vhq", "soxr_hq", "soxr_mq", "soxr_lq", "soxr_qq"}:
-            raise ParameterError(
+            raise ParameterValueError(
                 f"res_type={res_type} is not a valid soxr resampling mode for streaming"
             )
 
@@ -351,13 +357,15 @@ class StreamBridge:
         timeout: float | None = None,
     ):
         if not (np.isfinite(orig_sr) and orig_sr > 0):
-            raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
+            raise ParameterValueError(f"orig_sr={orig_sr} must be a positive number")
         if not is_positive_int(channels):
-            raise ParameterError(f"channels={channels} must be a positive integer")
-        if not (isinstance(maxsize, (int, np.integer)) and maxsize >= 0):
-            raise ParameterError(f"maxsize={maxsize} must be a non-negative integer")
+            raise ParameterValueError(f"channels={channels} must be a positive integer")
+        if not isinstance(maxsize, (int, np.integer)):
+            raise ParameterTypeError(f"maxsize={maxsize} must be an integer")
+        if maxsize < 0:
+            raise ParameterValueError(f"maxsize={maxsize} must be a non-negative integer")
         if overflow_policy not in {"warn", "drop_oldest", "drop_newest", "error"}:
-            raise ParameterError(f"Invalid overflow_policy='{overflow_policy}'")
+            raise ParameterValueError(f"Invalid overflow_policy='{overflow_policy}'")
 
         self.orig_sr = float(orig_sr)
         self.channels = int(channels)
@@ -423,7 +431,7 @@ class StreamBridge:
         with self._cond:
             if self._closed:
                 if raise_on_closed:
-                    raise RuntimeError("Cannot push data to a closed StreamBridge.")
+                    raise StreamClosedError("Cannot push data to a closed StreamBridge.")
                 return False
 
             if self.maxsize > 0 and len(self._buffer) >= self.maxsize:
@@ -432,7 +440,7 @@ class StreamBridge:
                 elif self.overflow_policy == "drop_newest":
                     return True
                 elif self.overflow_policy == "error":
-                    raise BufferError(
+                    raise StreamBufferError(
                         "StreamBridge queue overflow: consumer is slower than capture."
                     )
                 elif self.overflow_policy == "warn":
@@ -450,7 +458,7 @@ class StreamBridge:
         elif isinstance(data, np.ndarray):
             raw = data
         else:
-            raise ParameterError(f"Unsupported audio data type: {type(data)}")
+            raise ParameterTypeError(f"Unsupported audio data type: {type(data)}")
 
         if np.issubdtype(raw.dtype, np.signedinteger):
             scale = float(1 << (8 * raw.dtype.itemsize - 1))
@@ -464,7 +472,7 @@ class StreamBridge:
         if arr.ndim == 1:
             if self.channels > 1:
                 if arr.size % self.channels != 0:
-                    raise ParameterError(
+                    raise ParameterShapeError(
                         f"1D input of size {arr.size} is not divisible by channels={self.channels}"
                     )
                 arr = (
@@ -476,13 +484,13 @@ class StreamBridge:
             if not self.channels_first:
                 arr = arr.T
             if arr.shape[0] != self.channels:
-                raise ParameterError(
+                raise ParameterShapeError(
                     f"Expected {self.channels} channels, but got {arr.shape[0]}"
                 )
             if self.channels == 1:
                 arr = arr.reshape(-1)
         else:
-            raise ParameterError(f"Audio data must be 1D or 2D; got {arr.ndim}D")
+            raise ParameterShapeError(f"Audio data must be 1D or 2D; got {arr.ndim}D")
 
         return arr
 
@@ -498,7 +506,7 @@ class StreamBridge:
                 lambda: bool(self._buffer) or self._closed,
                 timeout=self.timeout,
             ):
-                raise queue.Empty
+                raise StreamTimeoutError("Timeout waiting for audio data from StreamBridge.")
 
             if self._dropped_chunks > 0:
                 dropped = self._dropped_chunks
@@ -809,7 +817,7 @@ def stream(
         or hasattr(path, "read")
     )
     if not is_file:
-        raise ParameterError(f"Unsupported source type for stream: {type(path)}")
+        raise ParameterTypeError(f"Unsupported source type for stream: {type(path)}")
 
     context = (
         nullcontext(path)

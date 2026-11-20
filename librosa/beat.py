@@ -12,7 +12,10 @@ import scipy
 from . import core, onset, util
 from .feature import fourier_tempogram
 from .feature import tempo as _tempo
-from .util.exceptions import ParameterError
+from .util.exceptions import (
+    ParameterShapeError,
+    ParameterValueError,
+)
 
 if TYPE_CHECKING:
     import numpy.typing as npt
@@ -257,14 +260,14 @@ def beat_track(
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
-            raise ParameterError("y or onset_envelope must be provided")
+            raise ParameterValueError("y or onset_envelope must be provided")
 
         onset_envelope = onset.onset_strength(
             y=y, sr=sr, hop_length=hop_length, aggregate=np.median
         )
 
     if sparse and onset_envelope.ndim != 1:
-        raise ParameterError(f"sparse=True (default) does not support "
+        raise ParameterShapeError(f"sparse=True (default) does not support "
                 f"{onset_envelope.ndim}-dimensional inputs. "
                 f"Either set sparse=False or convert the signal to mono.")
 
@@ -305,7 +308,7 @@ def beat_track(
         elif units == "time":
             return (bpm, core.frames_to_time(beats, hop_length=hop_length, sr=sr))
         else:
-            raise ParameterError(f"Invalid unit type: {units}")
+            raise ParameterValueError(f"Invalid unit type: {units}")
     return (bpm, beats)
 
 
@@ -451,7 +454,7 @@ def plp[FloatT: np.floating[Any]](
         )
 
     if tempo_min is not None and tempo_max is not None and tempo_max <= tempo_min:
-        raise ParameterError(
+        raise ParameterValueError(
             f"tempo_max={tempo_max} must be larger than tempo_min={tempo_min}"
         )
 
@@ -523,14 +526,14 @@ def __beat_tracker(
         frame numbers of beat events
     """
     if np.any(bpm <= 0):
-        raise ParameterError(f"bpm={bpm} must be strictly positive")
+        raise ParameterValueError(f"bpm={bpm} must be strictly positive")
 
     if tightness <= 0:
-        raise ParameterError("tightness must be strictly positive")
+        raise ParameterValueError("tightness must be strictly positive")
 
     # TODO: this might be better accomplished with a np.broadcast_shapes check
     if bpm.shape[-1] not in (1, onset_envelope.shape[-1]):
-        raise ParameterError(f"Invalid bpm shape={bpm.shape} does not match "
+        raise ParameterShapeError(f"Invalid bpm shape={bpm.shape} does not match "
                              f"onset envelope shape={onset_envelope.shape}")
 
     # convert bpm to frames per beat (rounded)

@@ -15,8 +15,8 @@ from typing import Any
 import msgpack
 import pooch
 
+from ..exceptions import ParameterKeyError, ParameterValueError
 from ..version import version as librosa_version
-from .exceptions import ParameterError
 
 __all__ = [
     "find_files",
@@ -105,7 +105,7 @@ def example(key: str, *, hq: bool = False, url: bool = False) -> str:
     >>> y, sr = librosa.load(librosa.example('vibeace', hq=True))
     """
     if key not in __TRACKMAP:
-        raise ParameterError(f"Unknown example key: {key}")
+        raise ParameterKeyError(f"Unknown example key: {key}")
 
     if hq:
         ext = ".hq.ogg"
@@ -196,7 +196,7 @@ def example_info(key: str, *, html: bool = False) -> str | None:
     pooch.os_cache
     """
     if key not in __TRACKMAP:
-        raise ParameterError(f"Unknown example key: {key}")
+        raise ParameterKeyError(f"Unknown example key: {key}")
 
     license_file = __GOODBOY.fetch(__TRACKMAP[key]["path"] + ".toml")
 
@@ -418,10 +418,10 @@ def cite(version: str | None=None, *, bib: bool = False) -> str:
 
     if version not in version_index:
         if "dev" in version:
-            raise ParameterError(f"Version {version} is not yet released and "
+            raise ParameterValueError(f"Version {version} is not yet released and "
                                  "therefore does not yet have a citable DOI.")
         else:
-            raise ParameterError(f"Version {version} not found in the citation index")
+            raise ParameterValueError(f"Version {version} not found in the citation index")
 
     if bib:
         bib_data = __GOODBOY.fetch("bib_index.msgpack")
@@ -431,6 +431,6 @@ def cite(version: str | None=None, *, bib: bool = False) -> str:
         try:
             return bib_index[version]
         except KeyError as exc:
-            raise ParameterError(f"No BibTeX entry found for version {version}.") from exc
+            raise ParameterValueError(f"No BibTeX entry found for version {version}.") from exc
 
     return f"https://doi.org/{version_index[version]}"

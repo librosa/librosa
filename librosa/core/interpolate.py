@@ -8,7 +8,7 @@ from typing import Literal
 import numpy as np
 
 from .._typing import _InterpKind
-from ..util.exceptions import ParameterError
+from ..exceptions import ParameterShapeError
 from ..util.utils import is_unique
 from .convert import times_like
 
@@ -42,7 +42,7 @@ def _validate_coords(
     """
     if coords.ndim == 1:
         if len(coords) != n_in:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"{name} length={len(coords)} does not match input shape={n_in} along axis={axis}"
             )
         if not is_unique(coords, axis=0):
@@ -53,7 +53,7 @@ def _validate_coords(
     else:
         c_ax = axis if axis >= 0 else axis + coords.ndim
         if c_ax < 0 or c_ax >= coords.ndim or coords.shape[c_ax] != n_in:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"{name} shape={coords.shape} is incompatible with input shape length={n_in} along axis={axis}"
             )
         if not np.all(is_unique(coords, axis=c_ax)):
@@ -174,7 +174,7 @@ def _interp_axis(
         The interpolated array.
     """
     if axis < -x.ndim or axis >= x.ndim:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"axis={axis} is out of bounds for input array with ndim={x.ndim}"
         )
     ax = axis if axis >= 0 else axis + x.ndim
@@ -245,7 +245,7 @@ def _interp_axis(
     try:
         lead_shape = np.broadcast_shapes(*shapes)
     except ValueError as exc:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Cannot broadcast array shapes along non-interpolation axes: "
             f"x={x.shape}, coords={coords.shape}, target={target_coords.shape}"
         ) from exc

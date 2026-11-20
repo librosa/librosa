@@ -15,13 +15,13 @@ import librosa
 import pytest
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_valid_audio_int():
     y = np.zeros(10, dtype=int)
     librosa.util.valid_audio(y)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_valid_audio_scalar():
     y = np.array(0.0)
     librosa.util.valid_audio(y)
@@ -39,14 +39,14 @@ def test_valid_stereo():
     librosa.util.valid_audio(y)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_valid_audio_type():
     """valid_audio: list input"""
     y = list(np.zeros(1000))
     librosa.util.valid_audio(y)  # type: ignore
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_valid_audio_nan():
     """valid_audio: NaN"""
     y = np.zeros(1000)
@@ -54,7 +54,7 @@ def test_valid_audio_nan():
     librosa.util.valid_audio(y)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_valid_audio_inf():
     """valid_audio: Inf"""
     y = np.zeros(1000)
@@ -74,21 +74,21 @@ def test_valid_audio_clang():
     librosa.util.valid_audio(y)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_frame_hop():
     """frame: hop_length=0"""
     y = np.zeros(128)
     librosa.util.frame(y, frame_length=10, hop_length=0)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_frame_size():
     # frame: len(y) == 128, frame_length==256, hop_length=128
     y = np.zeros(64)
     librosa.util.frame(y, frame_length=256, hop_length=128)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_frame_size_difference():
     # In response to issue #385
     # https://github.com/librosa/librosa/issues/385
@@ -97,7 +97,7 @@ def test_frame_size_difference():
     librosa.util.frame(y, frame_length=256, hop_length=128)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_stft_bad_window():
 
     y = np.zeros(22050 * 5)
@@ -108,7 +108,7 @@ def test_stft_bad_window():
     librosa.stft(y, n_fft=n_fft, window=window)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_istft_bad_window():
 
     D = np.zeros((1025, 10), dtype=np.complex64)
@@ -120,7 +120,7 @@ def test_istft_bad_window():
     librosa.istft(D, window=window)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("y", [np.empty(22050)])
 @pytest.mark.parametrize("mode", ["wrap", "maximum", "minimum", "median", "mean"])
 def test_stft_bad_pad(y, mode):

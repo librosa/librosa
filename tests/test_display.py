@@ -112,10 +112,10 @@ def Csync(C, beats):
 
 
 def test_axes_type_validation():
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterTypeError):
         librosa.display.formatting._check_axes("not_an_axes")  # type: ignore
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_unknown_time_unit(y):
     times = np.arange(len(y))
     plt.figure()
@@ -241,7 +241,7 @@ def test_chroma(S_abs, sr):
 
 
 def test_svara_parameter_error():
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.display.formatting.SvaraFormatter(Sa=None)  # type: ignore
 
 def test_chroma_fallback_defaults():
@@ -703,7 +703,7 @@ def test_waveshow_stereo(y, sr):
     return plt.gcf()
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_unknown_wavaxis(y, sr):
 
     plt.figure()
@@ -711,7 +711,7 @@ def test_unknown_wavaxis(y, sr):
     return plt.gcf()
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_waveshow_unknown_wavaxis(y, sr):
 
     plt.figure()
@@ -719,7 +719,7 @@ def test_waveshow_unknown_wavaxis(y, sr):
     return plt.gcf()
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_waveshow_bad_maxpoints(y, sr):
     plt.figure()
     librosa.display.waveshow(y, sr=sr, max_points=0)
@@ -840,7 +840,7 @@ def test_waveshow_update_gc_guard():
     plt.close(fig)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("axis", ["x_axis", "y_axis"])
 def test_unknown_axis(S_abs, axis: str):
 
@@ -887,7 +887,7 @@ def test_coords(Csync, beat_t):
     return plt.gcf()
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_bad_coords(S_abs):
 
     librosa.display.specshow(S_abs, x_coords=np.arange(S_abs.shape[1] // 2))
@@ -1020,11 +1020,11 @@ def test_specshow_svara_validation():
 
     fig, ax = plt.subplots()
     D = np.ones((60, 10))
-    with pytest.raises(librosa.ParameterError, match="Sa frequency is required"):
+    with pytest.raises(librosa.ParameterValueError, match="Sa frequency is required"):
         librosa.display.specshow(D, y_axis="logfreq_svara", ax=ax)
-    with pytest.raises(librosa.ParameterError, match="Sa frequency is required"):
+    with pytest.raises(librosa.ParameterValueError, match="Sa frequency is required"):
         librosa.display.specshow(D, y_axis="pitch_svara", ax=ax)
-    with pytest.raises(librosa.ParameterError, match="Svara display is not currently supported"):
+    with pytest.raises(librosa.ParameterValueError, match="Svara display is not currently supported"):
         librosa.display.specshow(D, y_axis="pitch_svara", Sa=261.63, intervals="ji3", ax=ax)
     plt.close(fig)
 
@@ -1405,12 +1405,12 @@ def test_specshow_vqt(C):
     return fig
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_chromafjs_badintervals():
     formatter = librosa.display.ChromaFJSFormatter(intervals=dict())
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterTypeError)
 def test_chromafjs_badbpo():
     formatter = librosa.display.ChromaFJSFormatter(
         intervals="ji3", bins_per_octave=None
@@ -1436,12 +1436,12 @@ def test_specshow_chromafjs(C, sr):
     return fig
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_vqt_hz_nointervals(C, sr):
     librosa.display.specshow(C, sr=sr, y_axis="vqt_hz")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("vscale", ["dBFS[1]", "dBFS[power,1]"])
 def test_parse_vscale_dbfs_ref(vscale):
     # This should raise an error because a reference value is
@@ -1449,7 +1449,7 @@ def test_parse_vscale_dbfs_ref(vscale):
     librosa.display._parse_vscale(vscale)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("vscale", ["bad string", "dB[gibberish]", "dBFS[gibberish]"])
 def test_parse_vscale_fail(vscale):
     librosa.display._parse_vscale(vscale)
@@ -1873,7 +1873,7 @@ def test_wavebars_transpose(y, sr):
 
 def test_wavebars_nbars_validation():
     fig, ax = plt.subplots()
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.display.wavebars(np.array([0.0, 1.0]), n_bars=0, ax=ax)
     plt.close(fig)
 
@@ -1900,7 +1900,7 @@ def test_wavef0(y, sr):
     return fig
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_legend_for_axes_no_axes():
     fig = plt.figure()
     try:
@@ -1928,7 +1928,7 @@ def test_legend_for_axes_scalar():
     plt.close(fig)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_legend_for_axes_mismatched_figures():
     fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
@@ -2011,7 +2011,7 @@ def test_legend_for_axes_left():
     return fig
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_wavef0_bad_method(y, sr):
     f0, _, _ = librosa.pyin(y, fmin=float(librosa.note_to_hz("C2")),
                             fmax=float(librosa.note_to_hz("C7")), sr=sr)
@@ -2051,7 +2051,7 @@ def test_transformf0_roundtrip(transpose, values):
 
 @pytest.mark.parametrize('f0', [np.zeros(5), np.linspace(-10, -5, num=5), np.linspace(-10, 10,
                                                                                       num=5)])
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_transformf0_bad_f0(f0):
     librosa.display.Transformf0(f0=f0, sr=1, hop_length=1)
 
@@ -2184,7 +2184,7 @@ def test_resolve_multiplot(func, dims, badprops):
     assert badprops_out == badprops
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_resolve_multiplot_bad():
     librosa.display._resolve_multiplot("bogus")  # type: ignore
 
@@ -2212,17 +2212,17 @@ def test_mp_get_layout(data, dims, orient, axshape, nrows, ncols, multi_input):
     assert multi_input_out is multi_input
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_mp_get_layout_bad_orient():
     librosa.display._mp_get_layout((np.zeros((3, 10)),), dims=1, orient="q")  # type: ignore
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_mp_get_layout_no_data():
     librosa.display._mp_get_layout(tuple(), dims=1, orient="v")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_mp_get_layout_bad_axshape():
     librosa.display._mp_get_layout((np.zeros((2, 3, 4, 10)),), dims=1, orient="v")
 
@@ -2337,7 +2337,7 @@ def test_mp_setup_axes_scalar_input():
     plt.close(fig)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_mp_setup_axes_bad_shape():
     fig, axes = plt.subplots(nrows=2)
     try:
@@ -2427,7 +2427,7 @@ def test_mp_setup_prop_group_custom():
     assert np.array_equal(groups, np.array([[0, 1], [0, 1]]))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_mp_setup_prop_group_bad_shape():
     librosa.display._mp_setup_prop_group([0, 1, 2], (2, 2))
 
@@ -2768,14 +2768,14 @@ def test_specshow_boolean_norm(S_abs):
 def test_wavef0_validation_method(y, sr):
     fig, ax = plt.subplots()
     f0 = np.array([440.0, 440.0])
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.display.wavef0(y, sr=sr, f0=f0, method='invalid', ax=ax)
     plt.close(fig)
 
 def test_wavef0_empty_audio(sr):
     fig, ax = plt.subplots()
     f0 = np.array([440.0])
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.display.wavef0(np.empty(0), sr=sr, f0=f0, ax=ax)
     plt.close(fig)
 
@@ -2799,4 +2799,13 @@ def test_wavef0_spectrogram_overlay(y, sr):
     ax.plot([0, 1], [0, 1])
     librosa.display.wavef0(y, sr=sr, f0=f0, ax=ax)
     plt.close(fig)
+
+
+def test_adaptive_formatter_base_not_implemented():
+    from librosa.display.formatting import AdaptiveFormatterBase
+
+    formatter = AdaptiveFormatterBase()
+    with pytest.raises(librosa.LibrosaNotImplementedError):
+        formatter._format_tick(0.0)
+
 

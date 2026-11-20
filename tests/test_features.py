@@ -48,13 +48,13 @@ def test_delta(xin, width, slope, order, axis, bias):
     assert np.allclose((x + delta)[tuple(slice_out)], x[tuple(slice_orig)])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_delta_badorder():
     x = np.ones((10, 10))
     librosa.feature.delta(x, order=0)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("x", [np.ones((3, 100))])
 @pytest.mark.parametrize(
     "width, axis",
@@ -113,13 +113,13 @@ def test_stack_memory(data, n_steps, delay):
 
 @pytest.mark.parametrize("n_steps,delay", [(0, 1), (-1, 1), (1, 0)])
 @pytest.mark.parametrize("data", [np.zeros((2, 2))])
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_stack_memory_fail(data, n_steps, delay):
     librosa.feature.stack_memory(data, n_steps=n_steps, delay=delay)
 
 
 @pytest.mark.parametrize("data", [np.zeros((2, 0))])
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 @pytest.mark.parametrize("delay", [-2, -1, 1, 2])
 @pytest.mark.parametrize("n_steps", [1, 2])
 def test_stack_memory_ndim_badshape(data, delay, n_steps):
@@ -155,7 +155,7 @@ def test_spectral_centroid_synthetic(S_ideal, freq):
 
 
 @pytest.mark.parametrize("S", [-np.ones((9, 3)), -np.ones((9, 3)) * 1.0j])
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=(librosa.ParameterValueError, librosa.ParameterTypeError))
 def test_spectral_centroid_errors(S):
     librosa.feature.spectral_centroid(S=S)
 
@@ -244,7 +244,7 @@ def test_spectral_bandwidth_flat():
     assert np.isclose(bwf, np.std(freqs))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=(librosa.ParameterValueError, librosa.ParameterTypeError))
 @pytest.mark.parametrize("S", [-np.ones((17, 2)), -np.ones((17, 2)) * 1.0j])
 def test_spectral_bandwidth_errors(S):
     librosa.feature.spectral_bandwidth(S=S)
@@ -273,7 +273,7 @@ def test_spectral_rolloff_synthetic(S, freq, pct):
     assert np.allclose(rolloff, freq[idx])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=(librosa.ParameterValueError, librosa.ParameterTypeError))
 @pytest.mark.parametrize(
     "S,pct",
     [
@@ -354,7 +354,7 @@ def test_spectral_contrast_maximum(linear):
         (None, 200, 7, 0.02),
     ],
 )
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_spectral_contrast_errors(S, freq, fmin, n_bands, quantile):
 
     librosa.feature.spectral_contrast(
@@ -377,13 +377,13 @@ def test_spectral_flatness_synthetic(S, flatness_ref):
 
 @pytest.mark.parametrize("S", [np.ones((1025, 2))])
 @pytest.mark.parametrize("amin", [0, -1])
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_spectral_flatness_errors(S, amin):
     librosa.feature.spectral_flatness(S=S, amin=amin)
 
 
 @pytest.mark.parametrize("S", [-np.ones((1025, 2)), -np.ones((1025, 2)) * 1.0j])
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=(librosa.ParameterValueError, librosa.ParameterTypeError))
 def test_spectral_flatness_badtype(S):
     librosa.feature.spectral_flatness(S=S)
 
@@ -421,19 +421,19 @@ def test_rms(y_chirp, frame_length, hop_length, center):
     np.testing.assert_allclose(rms1, rms2, atol=5e-4)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_rms_noinput():
     librosa.feature.rms(y=None, S=None)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_rms_badshape():
     S = np.zeros((100, 3))
     librosa.feature.rms(S=S, frame_length=100)
 
 
 @pytest.mark.parametrize("bad", [np.nan, np.inf, -np.inf])
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_rms_nonfinite(bad):
     # A single non-finite sample used to propagate silently: NaN compares
     # False against every threshold, so effects.trim and effects.split
@@ -444,7 +444,7 @@ def test_rms_nonfinite(bad):
 
 
 @pytest.mark.parametrize("effect", [librosa.effects.trim, librosa.effects.split])
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_effects_nonfinite(effect):
     # These route through rms, so they inherited the missing check.
     y = np.zeros(4096, dtype=np.float32)
@@ -531,7 +531,7 @@ def test_poly_features_synthetic(poly_S, poly_coeffs, poly_freq):
         assert np.allclose(poly_coeffs, p[::-1, i].squeeze())
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_tonnetz_fail_empty():
     librosa.feature.tonnetz(y=None, chroma=None)
 
@@ -542,7 +542,7 @@ def test_tonnetz_audio(y_chirp):
     assert tonnetz.shape[0] == 6
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_chroma_cqt_badcombo(y_chirp):
     y, sr = y_chirp
     librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24, bins_per_octave=36)
@@ -599,7 +599,7 @@ def test_tonnetz():
     assert np.allclose(tonnetz[:, 2], [0, 0, 0, 0, 0, 0.5])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_tempogram_fail_noinput():
     librosa.feature.tempogram(y=None, onset_envelope=None)
 
@@ -609,7 +609,7 @@ def test_tempogram_fail_noinput():
 @pytest.mark.parametrize(
     "win_length,window", [(-384, "hann"), (0, "hann"), (384, np.ones(3))]
 )
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_tempogram_fail_badwin(y, sr, win_length, window):
     librosa.feature.tempogram(y=y, sr=sr, win_length=win_length, window=window)
 
@@ -753,12 +753,12 @@ def test_tempogram_odf_multi(center, win_length, window, norm):
 @pytest.mark.parametrize(
     "win_length,window", [(-384, "hann"), (0, "hann"), (384, np.ones(3))]
 )
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_fourier_tempogram_fail_badwin(y, sr, win_length, window):
     librosa.feature.fourier_tempogram(y=y, sr=sr, win_length=win_length, window=window)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_fourier_tempogram_fail_noinput():
     librosa.feature.fourier_tempogram(y=None, onset_envelope=None)
 
@@ -896,7 +896,7 @@ def test_cens_nonorm(cens_cqt):
     assert np.allclose(scipy.signal.convolve(cens, filter, mode="same"), cens_s)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("win_len_smooth", [-1, 0, 1.5, "foo"])
 def test_cens_fail(y_chirp, win_len_smooth):
     y, sr = y_chirp
@@ -926,7 +926,7 @@ def test_mfcc(S, dct_type, norm, n_mfcc, lifter):
         assert np.var(mfcc[0] / E_total) <= 1e-29
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("lifter", [-1, np.nan])
 def test_mfcc_badlifter(lifter, rng):
     S = np.ones((128, 100))
@@ -1023,7 +1023,7 @@ def test_logfrequency_to_stft(power, dtype, n_fft, rng):
     assert np.sqrt(np.mean((fb.dot(stft**power) - L) ** 2)) <= 5e-2
 
     # Check parameter error when n_bins does not match
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.feature.inverse.logfrequency_to_stft(
             L, sr=sr, n_fft=n_fft, power=power, n_bins=n_bins + 1
         )
@@ -1073,7 +1073,7 @@ def test_pitch_to_stft(power, dtype, n_fft, rng):
     assert np.sqrt(np.mean((fb.dot(stft**power) - P) ** 2)) <= 5e-2
 
     # Check parameter error when n_pitches does not match
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.feature.inverse.pitch_to_stft(
             P, sr=sr, n_fft=n_fft, power=power, n_pitches=n_pitches + 1, fmin="C1"
         )
@@ -1105,7 +1105,7 @@ def test_mfcc_to_mel(y, n_mfcc, n_mels, dct_type, lifter):
 
     # check lifter parameter error
     if lifter < 0:
-        with pytest.raises(librosa.ParameterError):
+        with pytest.raises(librosa.ParameterValueError):
             librosa.feature.inverse.mfcc_to_mel(
                 mfcc * 10**3, n_mels=n_mels, dct_type=dct_type, lifter=lifter
             )
@@ -1202,12 +1202,12 @@ def test_chroma_vqt_threshold(y_chirp):
     assert np.all(c2 <= c1)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_chroma_vqt_noinput():
     librosa.feature.chroma_vqt(y=None, V=None, intervals="ji3")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_chroma_cqt_noinput():
     librosa.feature.chroma_cqt(y=None, C=None)
 
@@ -1452,7 +1452,7 @@ def test_spectral_contrast_linear_ignores_top_db(top_db_signals):
 
 def test_top_db_negative_rejected():
     y = np.zeros(4096)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.feature.mfcc(y=y, sr=22050, top_db=-1)
 
 
@@ -1610,3 +1610,39 @@ def test_chroma_pitch_to_chroma_equivalence(y_chirp):
     c_vqt = librosa.feature.chroma_vqt(y=y, sr=sr, intervals="equal")
     assert c_vqt.shape[0] == 12
     assert not np.isnan(c_vqt).any()
+
+
+def test_delta_bad_order_type():
+    with pytest.raises(librosa.ParameterTypeError, match="must be an integer"):
+        librosa.feature.delta(np.ones((10, 10)), order="invalid")  # type: ignore[arg-type]
+    with pytest.raises(librosa.ParameterTypeError, match="must be an integer"):
+        librosa.feature.delta(np.ones((10, 10)), order=1.5)  # type: ignore[arg-type]
+
+
+def test_spectral_contrast_bad_bands_type():
+    with pytest.raises(librosa.ParameterTypeError, match="n_bands=1.5 must be an integer"):
+        librosa.feature.spectral_contrast(S=np.ones((1025, 2)), n_bands=1.5)  # type: ignore[arg-type]
+
+
+def test_chroma_cqt_bins_per_octave_none(y_chirp):
+    y, sr = y_chirp
+    chroma = librosa.feature.chroma_cqt(y=y, sr=sr, bins_per_octave=None)
+    assert chroma.shape[0] == 12
+
+
+def test_chroma_cqt_bad_bins_per_octave(y_chirp):
+    y, sr = y_chirp
+    with pytest.raises(librosa.ParameterValueError, match="must be an integer multiple"):
+        librosa.feature.chroma_cqt(y=y, sr=sr, n_chroma=24, bins_per_octave=36)
+
+
+def test_tempogram_ratio_no_input():
+    with pytest.raises(librosa.ParameterValueError, match="Either y or onset_envelope must be provided"):
+        librosa.feature.tempogram_ratio(y=None, onset_envelope=None)
+
+
+def test_hybrid_tempogram_no_input():
+    with pytest.raises(librosa.ParameterValueError, match="Either y or onset_envelope must be provided"):
+        librosa.feature.hybrid_tempogram(y=None, onset_envelope=None)
+
+

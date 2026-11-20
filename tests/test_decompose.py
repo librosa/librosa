@@ -57,7 +57,7 @@ def test_decompose_fit(rng):
     assert np.allclose(W, W2)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_decompose_multi_sort():
     librosa.decompose.decompose(np.zeros((3, 3, 3)), sort=True)
 
@@ -80,7 +80,7 @@ def test_decompose_multi(rng):
     assert np.allclose(activations, a_flat)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_decompose_fit_false():
 
     X = np.array([[1, 2, 3, 4, 5, 6], [1, 1, 1.2, 1, 0.8, 1]])
@@ -142,17 +142,17 @@ def test_decompose_custom_components_errors(rng):
     W_bad = np.abs(rng.standard_normal(size=(15, 5)))
 
     # Feature dimension mismatch
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.decompose.decompose(X, components=W_bad)
 
     # n_components mismatch
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.decompose.decompose(
             X, components=np.ones((20, 5)), n_components=10
         )
 
     # activations shape mismatch
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.decompose.decompose(
             X, components=np.ones((20, 5)), activations=np.ones((5, 40))
         )
@@ -245,7 +245,7 @@ def test_real_hpss(S22050, window, power, mask, margin):
             assert np.all(H + P <= S22050)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_hpss_margin_error(S22050):
     H, P = librosa.decompose.hpss(S22050, margin=0.9)
 
@@ -347,7 +347,7 @@ def test_nn_filter_avg(rng):
     assert np.allclose(X_filtered, X.dot(rec))
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 @pytest.mark.parametrize(
     "x,y", [(10, 10), (100, 20), (20, 100), (100, 101), (101, 101)]
 )

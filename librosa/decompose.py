@@ -16,8 +16,11 @@ import scipy.sparse
 
 from . import core, segment, util
 from ._cache import cache
+from .exceptions import (
+    ParameterShapeError,
+    ParameterValueError,
+)
 from .filters import pitch_basis
-from .util.exceptions import ParameterError
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Collection, Sequence
@@ -189,7 +192,7 @@ def decompose(
     orig_shape = list(S.shape)
 
     if S.ndim > 2 and sort:
-        raise ParameterError(
+        raise ParameterShapeError(
             "Parameter sort=True is unsupported for input with more than two dimensions"
         )
 
@@ -203,14 +206,14 @@ def decompose(
             components = np.broadcast_to(components, (*orig_shape[:-1], components.shape[-1]))
 
         if components.shape[:-1] != tuple(orig_shape[:-1]):
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"components feature dimensions {components.shape[:-1]} "
                 f"must match input S dimensions {tuple(orig_shape[:-1])}"
             )
         if n_components is None:
             n_components = components.shape[-1]
         elif n_components != components.shape[-1]:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"n_components={n_components} does not match components.shape[-1]={components.shape[-1]}"
             )
 
@@ -222,7 +225,7 @@ def decompose(
 
         if not fit:
             if components is None:
-                raise ParameterError("fit must be True if transformer and components are None")
+                raise ParameterValueError("fit must be True if transformer and components are None")
             transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
             H_fixed = components.reshape((-1, n_components), order="F").T.astype(S.dtype)
             transformer.components_ = H_fixed
@@ -243,7 +246,7 @@ def decompose(
         else:
             activations_arr = np.asarray(activations)
             if activations_arr.shape != (n_components, orig_shape[-1]):
-                raise ParameterError(
+                raise ParameterShapeError(
                     f"activations shape {activations_arr.shape} must match "
                     f"(n_components, n_samples) = {(n_components, orig_shape[-1])}"
                 )
@@ -602,7 +605,7 @@ def hpss(
 
     # margin minimum is 1.0
     if margin_harm < 1 or margin_perc < 1:
-        raise ParameterError(
+        raise ParameterValueError(
             "Margins must be >= 1.0. " "A typical range is between 1 and 10."
         )
 
@@ -775,7 +778,7 @@ def nn_filter(
         rec_s = scipy.sparse.csc_array(rec)
 
     if rec_s.shape[0] != S.shape[axis] or rec_s.shape[0] != rec_s.shape[1]:
-        raise ParameterError(
+        raise ParameterShapeError(
             "Invalid self-similarity matrix shape "
             f"rec.shape={rec_s.shape} for S.shape={S.shape}"
         )

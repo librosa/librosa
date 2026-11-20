@@ -41,8 +41,8 @@ def ysr(request):
         (1.0, dnr()),
         (2.0, dnr()),
         (4.0, dnr()),
-        (-1, pytest.raises(librosa.ParameterError)),
-        (0, pytest.raises(librosa.ParameterError)),
+        (-1, pytest.raises(librosa.ParameterValueError)),
+        (0, pytest.raises(librosa.ParameterValueError)),
     ],
 )
 @pytest.mark.parametrize("n_fft", [2048, 2049])
@@ -81,8 +81,8 @@ def test_time_stretch_multi(y_multi):
     [
         (12, dnr()),
         (24, dnr()),
-        (-1, pytest.raises(librosa.ParameterError)),
-        (0, pytest.raises(librosa.ParameterError)),
+        (-1, pytest.raises(librosa.ParameterValueError)),
+        (0, pytest.raises(librosa.ParameterValueError)),
     ],
 )
 @pytest.mark.parametrize("n_fft", [2048, 2049])
@@ -506,15 +506,15 @@ def test_tremolo_multi(y_multi):
 
 def test_tremolo_errors():
     y = np.ones(100)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.effects.tremolo(y, sr=0)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.effects.tremolo(y, sr=22050, rate=-1)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.effects.tremolo(y, sr=22050, depth=1.5)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.effects.tremolo(y, sr=22050, mode="invalid")  # type: ignore[arg-type]
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterTypeError):
         librosa.effects.tremolo(np.ones(100, dtype=int), sr=22050)
 
 
@@ -549,15 +549,15 @@ def test_vibrato_multi(y_multi):
 
 def test_vibrato_errors():
     y = np.ones(100)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.effects.vibrato(y, sr=-1)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.effects.vibrato(y, sr=22050, rate=0)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.effects.vibrato(y, sr=22050, depth=-0.1)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.effects.vibrato(y, sr=22050, mode="square")  # type: ignore[arg-type]
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterTypeError):
         librosa.effects.vibrato(np.ones(100, dtype=int), sr=22050)
 
 

@@ -12,9 +12,14 @@ from numba import jit
 
 from .. import util
 from .._cache import cache
+from ..exceptions import (
+    LibrosaError,
+    ParameterShapeError,
+    ParameterTypeError,
+    ParameterValueError,
+)
 from ..filters import get_window, semitone_filterbank, window_sumsquare
 from ..util.deprecation import Deprecated, rename_kw
-from ..util.exceptions import ParameterError
 from . import convert
 from .audio import resample
 
@@ -235,7 +240,7 @@ def stft(
     if hop_length is None:
         hop_length = int(win_length // 4)
     elif not util.is_positive_int(hop_length):
-        raise ParameterError(f"hop_length={hop_length} must be a positive integer")
+        raise ParameterValueError(f"hop_length={hop_length} must be a positive integer")
 
     # Check audio is valid
     util.valid_audio(y)
@@ -260,7 +265,7 @@ def stft(
             # >>> my_pad_func = functools.partial(pad_func, foo=x, bar=y)
             # >>> librosa.stft(..., pad_mode=my_pad_func)
 
-            raise ParameterError(
+            raise ParameterValueError(
                 f"pad_mode='{pad_mode}' is not supported by librosa.stft"
             )
 
@@ -328,7 +333,7 @@ def stft(
                 y_frames_post = np.empty_like(y_frames_pre, shape=post_shape)
     else:
         if n_fft > y.shape[-1]:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"n_fft={n_fft} is too large for uncentered analysis of input signal of length={y.shape[-1]}"
             )
 
@@ -355,11 +360,11 @@ def stft(
     if out is None:
         stft_matrix = np.zeros(shape, dtype=dtype, order="F")
     elif not (np.allclose(out.shape[:-1], shape[:-1]) and out.shape[-1] >= shape[-1]):
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Shape mismatch for provided output array out.shape={out.shape} and target shape={shape}"
         )
     elif not np.iscomplexobj(out):
-        raise ParameterError(f"output with dtype={out.dtype} is not of complex type")
+        raise ParameterTypeError(f"output with dtype={out.dtype} is not of complex type")
     else:
         if np.allclose(shape, out.shape):
             stft_matrix = out
@@ -546,7 +551,7 @@ def istft(
     if out is None:
         y = np.zeros(shape, dtype=dtype)
     elif not np.allclose(out.shape, shape):
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Shape mismatch for provided output array out.shape={out.shape} != {shape}"
         )
     else:
@@ -1187,10 +1192,10 @@ def reassigned_spectrogram(
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if not callable(ref_power) and ref_power < 0:
-        raise ParameterError("ref_power must be non-negative or callable.")
+        raise ParameterValueError("ref_power must be non-negative or callable.")
 
     if not reassign_frequencies and not reassign_times:
-        raise ParameterError("reassign_frequencies or reassign_times must be True.")
+        raise ParameterValueError("reassign_frequencies or reassign_times must be True.")
 
     if win_length is None:
         win_length = n_fft
@@ -1432,10 +1437,10 @@ def phase_vocoder(
     n_frames = D.shape[-1]
 
     if (rate is None) == (t_out is None):
-        raise ParameterError("Must specify exactly one of `rate` or `t_out`")
+        raise ParameterValueError("Must specify exactly one of `rate` or `t_out`")
 
     if (rate is not None) and (rate <= 0):
-        raise ParameterError(f"rate={rate} must be a positive number")
+        raise ParameterValueError(f"rate={rate} must be a positive number")
 
     if t_out is None:
         t_out = np.arange(0.0, n_frames, rate)
@@ -1443,7 +1448,7 @@ def phase_vocoder(
     t_out = np.asarray(t_out, dtype=float)
 
     if np.any(t_out < 0) or np.any(t_out >= n_frames):
-        raise ParameterError("t_out values must be in the range [0, D.shape[-1])")
+        raise ParameterValueError("t_out values must be in the range [0, D.shape[-1])")
 
     if np.any(np.diff(t_out) < 0):
         warnings.warn(
@@ -1591,7 +1596,7 @@ def iirt(
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if flayout not in ("ba", "sos"):
-        raise ParameterError(f"Unsupported flayout={flayout}")
+        raise ParameterValueError(f"Unsupported flayout={flayout}")
 
     # check audio input
     util.valid_audio(y)
@@ -1807,7 +1812,7 @@ def power_to_db(
     S = np.asarray(S)
 
     if amin <= 0:
-        raise ParameterError("amin must be strictly positive")
+        raise ParameterValueError("amin must be strictly positive")
 
     if np.issubdtype(S.dtype, np.complexfloating):
         warnings.warn(
@@ -1833,7 +1838,9 @@ def power_to_db(
             # Compute the reference value along the specified axes, keeping dimensions for broadcasting
             ref_value = ref(magnitude, axis=axes, keepdims=True)
         except TypeError as e:
-            raise ParameterError(
+            if isinstance(e, LibrosaError):
+                raise
+            raise ParameterTypeError(
                 "The provided reference function must support 'axis' and "
                 "'keepdims' arguments for proper multichannel processing."
             ) from e
@@ -1847,7 +1854,7 @@ def power_to_db(
 
     if top_db is not None:
         if top_db < 0:
-            raise ParameterError("top_db must be non-negative")
+            raise ParameterValueError("top_db must be non-negative")
         np.maximum(log_spec, log_spec.max(axis=axes, keepdims=True) - top_db, out=log_spec)
 
     return log_spec[()]
@@ -1993,7 +2000,9 @@ def amplitude_to_db(
             # Compute the reference value along the specified axes, keeping dimensions for broadcasting
             ref_value = ref(magnitude, axis=axes, keepdims=True)
         except TypeError as e:
-            raise ParameterError(
+            if isinstance(e, LibrosaError):
+                raise
+            raise ParameterTypeError(
                 "The provided reference function must support 'axis' and "
                 "'keepdims' arguments for proper multichannel processing."
             ) from e
@@ -2250,14 +2259,14 @@ def fmt(
     n = y.shape[axis]
 
     if n < 3:
-        raise ParameterError(f"y.shape[{axis}]=={n} < 3")
+        raise ParameterShapeError(f"y.shape[{axis}]=={n} < 3")
 
     if t_min <= 0:
-        raise ParameterError(f"t_min={t_min} must be a positive number")
+        raise ParameterValueError(f"t_min={t_min} must be a positive number")
 
     if n_fmt is None:
         if over_sample < 1:
-            raise ParameterError(f"over_sample={over_sample} must be >= 1")
+            raise ParameterValueError(f"over_sample={over_sample} must be >= 1")
 
         # The base is the maximum ratio between adjacent samples
         # Since the sample spacing is increasing, this is simply the
@@ -2267,12 +2276,12 @@ def fmt(
         n_fmt = int(np.ceil(over_sample * (np.log(n - 1) - np.log(t_min)) / log_base))
 
     elif n_fmt < 3:
-        raise ParameterError(f"n_fmt=={n_fmt} < 3")
+        raise ParameterValueError(f"n_fmt=={n_fmt} < 3")
     else:
         log_base = (np.log(n_fmt - 1) - np.log(n_fmt - 2)) / over_sample
 
     if not np.all(np.isfinite(y)):
-        raise ParameterError("y must be finite everywhere")
+        raise ParameterValueError("y must be finite everywhere")
 
     base = np.exp(log_base)
     # original grid: signal covers [0, 1).  This range is arbitrary, but convenient.
@@ -2307,7 +2316,7 @@ def fmt(
     # Make sure that all sample points are unique
     # This should never happen!
     if len(np.unique(x_exp)) != len(x_exp):
-        raise ParameterError("Redundant sample positions in Mellin transform")
+        raise ParameterValueError("Redundant sample positions in Mellin transform")
 
     # Resample the signal
     y_res = f_interp(x_exp)
@@ -2545,22 +2554,22 @@ def pcen(
     >>> plt.show()
     """
     if power < 0:
-        raise ParameterError(f"power={power} must be nonnegative")
+        raise ParameterValueError(f"power={power} must be nonnegative")
 
     if gain < 0:
-        raise ParameterError(f"gain={gain} must be non-negative")
+        raise ParameterValueError(f"gain={gain} must be non-negative")
 
     if bias < 0:
-        raise ParameterError(f"bias={bias} must be non-negative")
+        raise ParameterValueError(f"bias={bias} must be non-negative")
 
     if eps <= 0:
-        raise ParameterError(f"eps={eps} must be strictly positive")
+        raise ParameterValueError(f"eps={eps} must be strictly positive")
 
     if time_constant <= 0:
-        raise ParameterError(f"time_constant={time_constant} must be strictly positive")
+        raise ParameterValueError(f"time_constant={time_constant} must be strictly positive")
 
     if not util.is_positive_int(max_size):
-        raise ParameterError(f"max_size={max_size} must be a positive integer")
+        raise ParameterValueError(f"max_size={max_size} must be a positive integer")
 
     if b is None:
         t_frames = time_constant * sr / float(hop_length)
@@ -2572,7 +2581,7 @@ def pcen(
         b = (np.sqrt(1 + 4 * t_frames**2) - 1) / (2 * t_frames**2)
 
     if not 0 <= b <= 1:
-        raise ParameterError(f"b={b} must be between 0 and 1")
+        raise ParameterValueError(f"b={b} must be between 0 and 1")
 
     if np.issubdtype(S.dtype, np.complexfloating):
         warnings.warn(
@@ -2587,13 +2596,13 @@ def pcen(
         if max_size == 1:
             ref = S
         elif S.ndim == 1:
-            raise ParameterError(
+            raise ParameterShapeError(
                 "Max-filtering cannot be applied to 1-dimensional input"
             )
         else:
             if max_axis is None:
                 if S.ndim != 2:
-                    raise ParameterError(
+                    raise ParameterShapeError(
                         f"Max-filtering a {S.ndim:d}-dimensional spectrogram "
                         "requires you to specify max_axis"
                     )
@@ -2785,7 +2794,7 @@ def griffinlim(
     """
     if not isinstance(random_state, Deprecated):
         if rng is not None:
-            raise ParameterError(
+            raise ParameterValueError(
                 f"Both random_state={random_state!r} and rng={rng!r} were provided. "
                 "Please use only the rng parameter."
             )
@@ -2812,7 +2821,7 @@ def griffinlim(
             stacklevel=2,
         )
     elif momentum < 0:
-        raise ParameterError(f"griffinlim() called with momentum={momentum} < 0")
+        raise ParameterValueError(f"griffinlim() called with momentum={momentum} < 0")
 
     # Infer n_fft from the spectrogram shape
     if n_fft is None:
@@ -2829,7 +2838,7 @@ def griffinlim(
         # Initialize an all ones complex matrix
         angles[:] = 1.0
     else:
-        raise ParameterError(f"init={init} must either None or 'random'")
+        raise ParameterValueError(f"init={init} must either None or 'random'")
 
     # Place-holders for temporary data and reconstructed buffer
     rebuilt = None
@@ -2962,9 +2971,9 @@ def _spectrogram(
     else:
         # Otherwise, compute a magnitude spectrogram from input
         if n_fft is None:
-            raise ParameterError(f"Unable to compute spectrogram with n_fft={n_fft}")
+            raise ParameterValueError(f"Unable to compute spectrogram with n_fft={n_fft}")
         if y is None:
-            raise ParameterError(
+            raise ParameterValueError(
                 "Input signal must be provided to compute a spectrogram"
             )
         S = np.abs(

@@ -66,9 +66,12 @@ extensions = [
     "sphinx_design",
     "numpydoc",  # docstring examples
     "sphinxcontrib.inkscapeconverter",  # used for badge / logo conversion in tex
+    "sphinxcontrib.mermaid",  # mermaid diagrams
     "pydata_sphinx_theme",  # theme for docs
     "myst_parser",  # markdown support for CONTRIBUTING.md inclusion
 ]
+
+mermaid_version = "12.3.0"
 
 # Generate plots for example sections
 if "LIBROSA_DOC_DEBUG" in os.environ:

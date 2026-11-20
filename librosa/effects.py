@@ -14,7 +14,9 @@ from typing import TYPE_CHECKING, overload
 import numpy as np
 
 from . import core, decompose, feature, util
-from .util.exceptions import ParameterError
+from .exceptions import (
+    ParameterValueError,
+)
 
 if TYPE_CHECKING:
     from typing import Callable, Iterable, Literal
@@ -481,7 +483,7 @@ def time_stretch(
     >>> y_slow = librosa.effects.time_stretch(y, rate=0.5)
     """
     if rate <= 0:
-        raise ParameterError("rate must be a positive number")
+        raise ParameterValueError("rate must be a positive number")
 
     # Construct the short-term Fourier transform (STFT)
     stft = core.stft(
@@ -612,7 +614,7 @@ def pitch_shift(
     ...                                          bins_per_octave=24)
     """
     if not util.is_positive_int(bins_per_octave):
-        raise ParameterError(
+        raise ParameterValueError(
             f"bins_per_octave={bins_per_octave} must be a positive integer."
         )
 
@@ -1202,11 +1204,11 @@ def tremolo(
     util.valid_audio(y)
 
     if sr <= 0:
-        raise ParameterError("sr must be a positive number")
+        raise ParameterValueError("sr must be a positive number")
     if rate <= 0:
-        raise ParameterError("rate must be a positive number")
+        raise ParameterValueError("rate must be a positive number")
     if not 0.0 <= depth <= 1.0:
-        raise ParameterError("depth must be between 0.0 and 1.0")
+        raise ParameterValueError("depth must be between 0.0 and 1.0")
 
     t = np.arange(y.shape[-1], dtype=np.float64) / float(sr)
     angle = 2.0 * np.pi * rate * t + phase
@@ -1221,7 +1223,7 @@ def tremolo(
         import scipy.signal
         lfo = 0.5 * (1.0 + scipy.signal.square(angle))
     else:
-        raise ParameterError(f"Invalid mode='{mode}'. Must be 'sine', 'triangle', or 'square'.")
+        raise ParameterValueError(f"Invalid mode='{mode}'. Must be 'sine', 'triangle', or 'square'.")
 
     modulation: np.ndarray = 1.0 - depth * (1.0 - lfo)
     y_out: np.ndarray = y * modulation
@@ -1328,13 +1330,13 @@ def vibrato(
     util.valid_audio(y)
 
     if sr <= 0:
-        raise ParameterError("sr must be a positive number")
+        raise ParameterValueError("sr must be a positive number")
     if rate <= 0:
-        raise ParameterError("rate must be a positive number")
+        raise ParameterValueError("rate must be a positive number")
     if depth < 0:
-        raise ParameterError("depth must be non-negative")
+        raise ParameterValueError("depth must be non-negative")
     if mode not in ("sine", "triangle"):
-        raise ParameterError(f"Invalid mode='{mode}'. Must be 'sine' or 'triangle'.")
+        raise ParameterValueError(f"Invalid mode='{mode}'. Must be 'sine' or 'triangle'.")
 
     if depth == 0.0:
         return y.copy()

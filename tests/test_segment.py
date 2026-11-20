@@ -99,7 +99,7 @@ def test_cross_similarity_full():
     assert np.all(rec >= 0)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_cross_similarity_badmode(rng):
 
     data_ref = rng.standard_normal(size=(3, 70))
@@ -110,7 +110,7 @@ def test_cross_similarity_badmode(rng):
     )
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_cross_similarity_bad_bandwidth(rng):
 
     data_ref = rng.standard_normal(size=(3, 50))
@@ -120,7 +120,7 @@ def test_cross_similarity_bad_bandwidth(rng):
     )
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 def test_cross_similarity_fail_mismatch():
     D1 = np.zeros((3, 3))
     D2 = np.zeros((2, 3))
@@ -185,7 +185,7 @@ def test_recurrence_matrix(n, k, width, sym, metric, self, rng):
     assert not np.any(D)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("data", [np.ones((3, 10))])
 @pytest.mark.parametrize("width", [-1, 0, 11])
 def test_recurrence_badwidth(data, width):
@@ -269,20 +269,20 @@ def test_recurrence_full():
     assert np.all(rec >= 0)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_big_width(rng):
     data = rng.standard_normal(size=(3, 100))
     width = 55
     auto_k_rec = librosa.segment.recurrence_matrix(data, mode="affinity", width=width)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_empty_data_recurrence():
     data = np.zeros((10, 10))
     librosa.segment.recurrence_matrix(data, mode="affinity")
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_empty_rows_recurrence():
     data = np.zeros((10, 10))
     data[0, 5] = 1
@@ -307,7 +307,7 @@ def test_recurrence_multi(rng):
     assert np.allclose(R, Rf)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_recurrence_badmode(rng):
 
     data = rng.standard_normal(size=(3, 100))
@@ -317,7 +317,7 @@ def test_recurrence_badmode(rng):
     )
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize(
     "bandwidth", [-2, "FAKE", np.ones((2, 5)), -1 * np.ones((100, 100))]
 )
@@ -361,7 +361,7 @@ def test_recurrence_to_lag(n, pad, rng):
         assert np.allclose(rec[:, i], np.roll(lag[:, i], i)[x])
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 @pytest.mark.parametrize("size", [(17,), (17, 34), (17, 17, 17)])
 def test_recurrence_to_lag_fail(size):
     librosa.segment.recurrence_to_lag(np.zeros(size))
@@ -411,7 +411,7 @@ def test_lag_to_recurrence(n, pad, rng):
     assert np.allclose(lag, lag2)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterShapeError)
 @pytest.mark.parametrize("size", [(17,), (17, 35), (17, 17, 17)])
 def test_lag_to_recurrence_badsize(size):
     librosa.segment.lag_to_recurrence(np.zeros(size))
@@ -438,7 +438,7 @@ def test_lag_to_recurrence_sparse(axis, pad, rng):
     assert np.allclose(rec_sparse.toarray(), rec_dense)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_lag_to_recurrence_sparse_badaxis(rng):
 
     data = rng.standard_normal(size=(3, 100))
@@ -503,7 +503,7 @@ def test_subsegment(mfcc, beats, n_segments):
     assert np.allclose(subseg, ss2)
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 @pytest.mark.parametrize("n_segments", [-1, 0])
 def test_subsegment_badn(mfcc, beats, n_segments):
     librosa.segment.subsegment(mfcc, beats, n_segments=n_segments, axis=-1)
@@ -548,7 +548,7 @@ def test_path_enhance(
         assert np.min(R_smooth) >= 0
 
 
-@pytest.mark.xfail(raises=librosa.ParameterError)
+@pytest.mark.xfail(raises=librosa.ParameterValueError)
 def test_path_enhance_badratio(R_input):
     # We can't have min_ratio > max_ratio
     librosa.segment.path_enhance(R_input, n=5, min_ratio=3, max_ratio=2)
@@ -638,7 +638,7 @@ def test_diagonal_convolve_sparse_raises():
     R_sparse = scipy.sparse.csr_array(np.eye(20))
     K = np.ones((5, 5))
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterTypeError):
         librosa.segment.diagonal_convolve(R_sparse, K)  # type: ignore[arg-type]
 
 
@@ -646,18 +646,18 @@ def test_diagonal_convolve_bad_inputs():
     R = np.eye(20)
 
     # Invalid kernel dimensions
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.segment.diagonal_convolve(R, np.ones((2, 2, 2)))
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.segment.diagonal_convolve(R, (np.ones((2, 2)), np.ones(2)))
 
     # Empty kernel
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         librosa.segment.diagonal_convolve(R, np.empty((0, 0)))
 
     # Invalid mode
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.segment.diagonal_convolve(
             R, np.ones((3, 3)), mode="invalid"  # type: ignore[arg-type]
         )

@@ -13,7 +13,11 @@ import scipy.sparse
 from numpy.lib.stride_tricks import as_strided
 
 from .._cache import cache
-from .exceptions import ParameterError
+from ..exceptions import (
+    ParameterShapeError,
+    ParameterTypeError,
+    ParameterValueError,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Literal, Sequence
@@ -240,12 +244,12 @@ def frame(
     x = np.array(x, copy=False, subok=subok)
 
     if x.shape[axis] < frame_length:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Input is too short (n={x.shape[axis]:d}) for frame_length={frame_length:d}"
         )
 
     if hop_length < 1:
-        raise ParameterError(f"Invalid hop_length: {hop_length:d}")
+        raise ParameterValueError(f"Invalid hop_length: {hop_length:d}")
 
     # put our new within-frame axis at the end for now
     out_strides = x.strides + tuple([x.strides[axis]])
@@ -322,18 +326,18 @@ def valid_audio(y: np.ndarray) -> bool:
     ParameterError: Audio buffer is not finite everywhere
     """
     if not isinstance(y, np.ndarray):
-        raise ParameterError("Audio data must be of type numpy.ndarray")
+        raise ParameterTypeError("Audio data must be of type numpy.ndarray")
 
     if not np.issubdtype(y.dtype, np.floating):
-        raise ParameterError("Audio data must be floating-point")
+        raise ParameterTypeError("Audio data must be floating-point")
 
     if y.ndim == 0:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Audio data must be at least one-dimensional, given y.shape={y.shape}"
         )
 
     if not np.isfinite(y).all():
-        raise ParameterError("Audio buffer is not finite everywhere")
+        raise ParameterValueError("Audio buffer is not finite everywhere")
 
     return True
 
@@ -366,7 +370,7 @@ def valid_int(x: float, *, cast: Callable[[float], float] | None = None) -> int:
         cast = np.floor
 
     if not callable(cast):
-        raise ParameterError("cast parameter must be callable")
+        raise ParameterTypeError("cast parameter must be callable")
 
     return int(cast(x))
 
@@ -481,11 +485,11 @@ def align_samples(
     librosa.util.exceptions.ParameterError: Sample count of 512 at 48000...
     """
     if not is_positive_int(n_samples):
-        raise ParameterError(f"n_samples={n_samples} must be a positive integer")
+        raise ParameterValueError(f"n_samples={n_samples} must be a positive integer")
     if not (np.isfinite(orig_sr) and orig_sr > 0):
-        raise ParameterError(f"orig_sr={orig_sr} must be a positive number")
+        raise ParameterValueError(f"orig_sr={orig_sr} must be a positive number")
     if target_sr is not None and not (np.isfinite(target_sr) and target_sr > 0):
-        raise ParameterError(f"target_sr={target_sr} must be a positive number")
+        raise ParameterValueError(f"target_sr={target_sr} must be a positive number")
 
     if target_sr is None or target_sr == orig_sr:
         return int(n_samples)
@@ -498,7 +502,7 @@ def align_samples(
         exact_samples, aligned_samples, rtol=1e-7, atol=1e-5
     ):
         if error:
-            raise ParameterError(
+            raise ParameterValueError(
                 f"Sample count of {n_samples} at {orig_sr} Hz results in a "
                 f"fractional sample count ({exact_samples:.4f}) at {target_sr} Hz."
             )
@@ -525,10 +529,10 @@ def valid_intervals(intervals: np.ndarray) -> bool:
         True if ``intervals`` passes validation.
     """
     if intervals.ndim != 2 or intervals.shape[-1] != 2:
-        raise ParameterError("intervals must have shape (n, 2)")
+        raise ParameterShapeError("intervals must have shape (n, 2)")
 
     if np.any(intervals[:, 0] > intervals[:, 1]):
-        raise ParameterError(f"intervals={intervals} must have non-negative durations")
+        raise ParameterValueError(f"intervals={intervals} must have non-negative durations")
 
     return True
 
@@ -600,7 +604,7 @@ def pad_center(
     lengths[axis] = (lpad, int(size - n - lpad))
 
     if lpad < 0:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Target size ({size:d}) must be at least input size ({n:d})"
         )
 
@@ -662,12 +666,12 @@ def expand_to(
         axes_tup = tuple([axes])  # type: ignore
 
     if len(axes_tup) != x.ndim:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Shape mismatch between axes={axes_tup} and input x.shape={x.shape}"
         )
 
     if ndim < x.ndim:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Cannot expand x.shape={x.shape} to fewer dimensions ndim={ndim}"
         )
 
@@ -801,7 +805,7 @@ def fix_frames(
     frames = np.asarray(frames)
 
     if np.any(frames < 0):
-        raise ParameterError("Negative frame index detected")
+        raise ParameterValueError("Negative frame index detected")
 
     # TODO: this whole function could be made more efficient
 
@@ -928,7 +932,7 @@ def axis_sort(
         value = np.argmax
 
     if S.ndim != 2:
-        raise ParameterError("axis_sort is only defined for 2D arrays")
+        raise ParameterShapeError("axis_sort is only defined for 2D arrays")
 
     bin_idx = value(S, axis=np.mod(1 - axis, S.ndim))
     idx = np.argsort(bin_idx)
@@ -1109,13 +1113,13 @@ def normalize(
         threshold = tiny(S)
 
     elif threshold <= 0:
-        raise ParameterError(f"threshold={threshold} must be strictly positive")
+        raise ParameterValueError(f"threshold={threshold} must be strictly positive")
 
     if fill not in [None, False, True]:
-        raise ParameterError(f"fill={fill} must be None or boolean")
+        raise ParameterTypeError(f"fill={fill} must be None or boolean")
 
     if not np.all(np.isfinite(S)):
-        raise ParameterError("Input must be finite")
+        raise ParameterValueError("Input must be finite")
 
     # All norms only depend on magnitude, let's do that first
     mag = np.abs(S).astype(float)
@@ -1134,7 +1138,7 @@ def normalize(
 
     elif norm == 0:
         if fill is True:
-            raise ParameterError("Cannot normalize with norm=0 and fill=True")
+            raise ParameterValueError("Cannot normalize with norm=0 and fill=True")
 
         length = np.sum(mag > 0, axis=axis, keepdims=True, dtype=mag.dtype)
 
@@ -1147,7 +1151,7 @@ def normalize(
             fill_norm = mag.shape[axis] ** (-1.0 / norm)
 
     else:
-        raise ParameterError(f"Unsupported norm: {norm!r}")
+        raise ParameterValueError(f"Unsupported norm: {norm!r}")
 
     # indices where norm is below the threshold
     small_idx = length < threshold
@@ -1577,19 +1581,19 @@ def peak_pick(
     >>> ax[0].label_outer()
     """
     if pre_max < 0:
-        raise ParameterError("pre_max must be non-negative")
+        raise ParameterValueError("pre_max must be non-negative")
     if pre_avg < 0:
-        raise ParameterError("pre_avg must be non-negative")
+        raise ParameterValueError("pre_avg must be non-negative")
     if delta < 0:
-        raise ParameterError("delta must be non-negative")
+        raise ParameterValueError("delta must be non-negative")
     if wait < 0:
-        raise ParameterError("wait must be non-negative")
+        raise ParameterValueError("wait must be non-negative")
     if post_max <= 0:
-        raise ParameterError("post_max must be positive")
+        raise ParameterValueError("post_max must be positive")
     if post_avg <= 0:
-        raise ParameterError("post_avg must be positive")
+        raise ParameterValueError("post_avg must be positive")
     if sparse and x.ndim != 1:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"sparse=True (default) does not support "
             f"{x.ndim}-dimensional inputs. "
             f"Either set sparse=False or process each dimension independently."
@@ -1639,7 +1643,7 @@ def peak_pick(
             peaks.swapaxes(axis, -1),
         )
     else:
-        raise ParameterError(f"Unknown method {method}")
+        raise ParameterValueError(f"Unknown method {method}")
 
     if sparse:
         return np.flatnonzero(peaks)
@@ -1719,12 +1723,12 @@ def sparsify_rows(
         x = x.reshape((1, -1))
 
     elif x.ndim > 2:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Input must have 2 or fewer dimensions. Provided x.shape={x.shape}."
         )
 
     if not 0.0 <= quantile < 1:
-        raise ParameterError(f"Invalid quantile {quantile:.2f}")
+        raise ParameterValueError(f"Invalid quantile {quantile:.2f}")
 
     if dtype is None:
         dtype = x.dtype
@@ -1945,7 +1949,7 @@ def sync(
             np.asarray(idx), idx_min=0, idx_max=shape[axis], pad=pad
         )
     else:
-        raise ParameterError(f"Invalid index set: {idx}")
+        raise ParameterTypeError(f"Invalid index set: {idx}")
 
     agg_shape = list(shape)
     agg_shape[axis] = len(slices)
@@ -2045,13 +2049,13 @@ def softmask(
            [False, False,  True]], dtype=bool)
     """
     if X.shape != X_ref.shape:
-        raise ParameterError(f"Shape mismatch: {X.shape}!={X_ref.shape}")
+        raise ParameterShapeError(f"Shape mismatch: {X.shape}!={X_ref.shape}")
 
     if np.any(X < 0) or np.any(X_ref < 0):
-        raise ParameterError("X and X_ref must be non-negative")
+        raise ParameterValueError("X and X_ref must be non-negative")
 
     if power <= 0:
-        raise ParameterError("power must be strictly positive")
+        raise ParameterValueError("power must be strictly positive")
 
     # We're working with ints, cast to float.
     dtype = X.dtype
@@ -2316,7 +2320,7 @@ def __shear_sparse(
     the data was originally provided in.
     """
     if X.ndim != 2:
-        raise ParameterError(f"Input must be 2D. Provided shape={X.shape}.")
+        raise ParameterShapeError(f"Input must be 2D. Provided shape={X.shape}.")
 
     fmt = X.format
     is_matrix = isinstance(X, scipy.sparse.spmatrix)
@@ -2398,7 +2402,7 @@ def shear(
            [0., 1., 0.]])
     """
     if not np.issubdtype(type(factor), np.integer):
-        raise ParameterError(f"factor={factor} must be integer-valued")
+        raise ParameterTypeError(f"factor={factor} must be integer-valued")
 
     # Suppress type checks because mypy doesn't like numba jitting
     # or scipy sparse conversion
@@ -2486,9 +2490,9 @@ def stack(arrays: list[np.ndarray], *, axis: int = 0) -> np.ndarray:
     """
     shapes = {arr.shape for arr in arrays}
     if len(shapes) > 1:
-        raise ParameterError("all input arrays must have the same shape")
+        raise ParameterShapeError("all input arrays must have the same shape")
     elif len(shapes) < 1:
-        raise ParameterError("at least one input array must be provided for stack")
+        raise ParameterShapeError("at least one input array must be provided for stack")
 
     shape_in = shapes.pop()
 
@@ -2981,7 +2985,7 @@ def interp_broadcast(
 
     min_ndim = min(x1.ndim, x2.ndim)
     if axis < -min_ndim or axis >= min_ndim:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"axis={axis} is out of range for minimum ndim={min_ndim}"
         )
 
@@ -3016,7 +3020,7 @@ def interp_broadcast(
     try:
         np.broadcast_shapes(y1.shape, y2.shape)
     except ValueError as exc:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Interpolating x1.shape={x1.shape} and x2.shape={x2.shape} along "
             f"axis={axis} leads to y1.shape={y1.shape} and y2.shape={y2.shape}, "
             "which are not broadcast compatible."

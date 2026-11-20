@@ -7,7 +7,7 @@ import pytest
 import scipy.interpolate
 
 import librosa
-from librosa.util.exceptions import ParameterError
+from librosa.util.exceptions import ParameterShapeError
 
 
 def test_interp_time_1d():
@@ -200,24 +200,24 @@ def test_interp_validation_and_warnings():
     x = np.ones((10, 20))
 
     # Axis out of bounds
-    with pytest.raises(ParameterError):
+    with pytest.raises(ParameterShapeError):
         librosa.interp_time(x, target_times=np.ones(5), times=np.ones(10), axis=5)
 
-    with pytest.raises(ParameterError):
+    with pytest.raises(ParameterShapeError):
         librosa.interp_time(x, target_times=np.ones(5), times=np.ones(10), axis=-5)
 
     # Incompatible coordinate length (1D)
-    with pytest.raises(ParameterError):
+    with pytest.raises(ParameterShapeError):
         librosa.interp_time(x, target_times=np.ones(5), times=np.ones(15), axis=-1)
 
     # Incompatible coordinate shape (multidimensional)
-    with pytest.raises(ParameterError):
+    with pytest.raises(ParameterShapeError):
         librosa.interp_frequency(
             x, target_freqs=np.ones(5), freqs=np.ones((8, 20)), axis=-2
         )
 
     # Incompatible target coordinates broadcast
-    with pytest.raises(ParameterError):
+    with pytest.raises(ParameterShapeError):
         librosa.interp_frequency(
             x, target_freqs=np.ones((5, 12)), freqs=np.ones(10), axis=-2
         )

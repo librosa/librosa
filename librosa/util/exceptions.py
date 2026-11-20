@@ -1,15 +1,31 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
-"""Exception classes for librosa"""
+"""Exception classes for librosa (backward-compatibility alias for librosa.exceptions)"""
 
+from ..exceptions import (
+    LibrosaError,
+    LibrosaNotImplementedError,
+    ParameterError,
+    ParameterKeyError,
+    ParameterShapeError,
+    ParameterTypeError,
+    ParameterValueError,
+    StreamBufferError,
+    StreamClosedError,
+    StreamError,
+    StreamTimeoutError,
+)
 
-class LibrosaError(Exception):
-    """The root librosa exception class"""
-
-    pass
-
-
-class ParameterError(LibrosaError):
-    """Exception class for mal-formed inputs"""
-
-    pass
+__all__ = [
+    "LibrosaError",
+    "ParameterError",
+    "ParameterValueError",
+    "ParameterTypeError",
+    "ParameterShapeError",
+    "ParameterKeyError",
+    "StreamError",
+    "StreamClosedError",
+    "StreamBufferError",
+    "StreamTimeoutError",
+    "LibrosaNotImplementedError",
+]

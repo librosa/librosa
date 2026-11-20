@@ -13,8 +13,10 @@ from ..core.audio import autocorrelate
 from ..core.convert import fourier_tempo_frequencies, tempo_frequencies, time_to_frames
 from ..core.harmonic import f0_harmonics, interp_harmonics
 from ..core.spectrum import stft
+from ..exceptions import (
+    ParameterValueError,
+)
 from ..filters import get_window
-from ..util.exceptions import ParameterError
 
 if TYPE_CHECKING:
     from typing import Any, Callable
@@ -155,13 +157,13 @@ def tempogram(
     from ..onset import onset_strength
 
     if win_length < 1:
-        raise ParameterError("win_length must be a positive integer")
+        raise ParameterValueError("win_length must be a positive integer")
 
     ac_window = get_window(window, win_length, fftbins=True)
 
     if onset_envelope is None:
         if y is None:
-            raise ParameterError("Either y or onset_envelope must be provided")
+            raise ParameterValueError("Either y or onset_envelope must be provided")
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
@@ -277,11 +279,11 @@ def fourier_tempogram(
     from ..onset import onset_strength
 
     if win_length < 1:
-        raise ParameterError("win_length must be a positive integer")
+        raise ParameterValueError("win_length must be a positive integer")
 
     if onset_envelope is None:
         if y is None:
-            raise ParameterError("Either y or onset_envelope must be provided")
+            raise ParameterValueError("Either y or onset_envelope must be provided")
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
@@ -424,7 +426,7 @@ def tempo(
     >>> plt.show()
     """
     if start_bpm <= 0:
-        raise ParameterError("start_bpm must be strictly positive")
+        raise ParameterValueError("start_bpm must be strictly positive")
 
     if tg is None:
         win_length = time_to_frames(ac_size, sr=sr, hop_length=hop_length).item()
@@ -767,7 +769,7 @@ def hybrid_tempogram(
     # Calculate onset envelope once to avoid redundant STFT computations
     if onset_envelope is None:
         if y is None:
-            raise ParameterError("Either y or onset_envelope must be provided")
+            raise ParameterValueError("Either y or onset_envelope must be provided")
         from ..onset import onset_strength
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 

@@ -33,21 +33,21 @@ def test_streambridge_validation():
     """Test parameter validation on StreamBridge."""
     with pytest.raises(TypeError):
         StreamBridge()  # type: ignore[call-arg]
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         StreamBridge(orig_sr=-1)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         StreamBridge(orig_sr=np.nan)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         StreamBridge(orig_sr=22050, channels=0)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         StreamBridge(orig_sr=22050, channels=1.5)  # type: ignore[arg-type]
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         StreamBridge(orig_sr=22050, maxsize=-1)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterTypeError):
         StreamBridge(orig_sr=22050, maxsize=1.5)  # type: ignore[arg-type]
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterTypeError):
         StreamBridge(orig_sr=22050, maxsize="invalid")  # type: ignore[arg-type]
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         StreamBridge(orig_sr=22050, overflow_policy="invalid")
 
     # Verify numpy integer scalars are accepted
@@ -55,24 +55,24 @@ def test_streambridge_validation():
     assert StreamBridge(orig_sr=22050, maxsize=np.int64(5)).maxsize == 5
 
     bridge = StreamBridge(orig_sr=22050, channels=1)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterTypeError):
         bridge.push("not_an_array_or_bytes")  # type: ignore[arg-type]
     # 2-channel input pushed into 1-channel bridge should raise ParameterError (float and int16)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         bridge.push(np.ones((64, 2), dtype=np.float32))
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         bridge.push(np.ones((64, 2), dtype=np.int16))
     # 3D input should raise ParameterError
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         bridge.push(np.ones((1, 64, 1), dtype=np.float32))
 
     bridge_2ch = StreamBridge(orig_sr=22050, channels=2)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterShapeError):
         bridge_2ch.push(np.ones(63, dtype=np.float32))
 
     bridge.close()
     # Direct push on closed bridge raises RuntimeError, while callback returns paComplete (1)
-    with pytest.raises(RuntimeError):
+    with pytest.raises(librosa.StreamClosedError):
         bridge.push(np.ones(64, dtype=np.float32))
     assert bridge(np.ones(64, dtype=np.float32)) == (None, 1)
 
@@ -90,7 +90,7 @@ def test_streambridge_sync_and_timeout():
 
     # Timeout when empty and open
     bridge_timeout = StreamBridge(orig_sr=22050, timeout=0.01)
-    with pytest.raises(queue.Empty):
+    with pytest.raises(librosa.StreamTimeoutError):
         next(bridge_timeout)
 
 
@@ -210,7 +210,7 @@ def test_streambridge_overflow_policies():
     # error
     with StreamBridge(orig_sr=22050, maxsize=1, overflow_policy="error") as b_err:
         b_err.push(np.array([1.0], dtype=np.float32))
-        with pytest.raises(BufferError):
+        with pytest.raises(librosa.StreamBufferError):
             b_err.push(np.array([2.0], dtype=np.float32))
 
 
@@ -393,7 +393,7 @@ def test_threaded_producer_and_buffer_resize():
 
 def test_stream_invalid_sources_and_bounds():
     """Test rejection of unsupported sources and negative stream bounds."""
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterTypeError):
         next(
             librosa.stream(
                 [np.ones(512, dtype=np.float32)],
@@ -405,7 +405,7 @@ def test_stream_invalid_sources_and_bounds():
         )
 
     bridge = StreamBridge(orig_sr=22050)
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         next(
             librosa.stream(
                 bridge,
@@ -416,7 +416,7 @@ def test_stream_invalid_sources_and_bounds():
                 offset=-1.0,
             )
         )
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         next(
             librosa.stream(
                 bridge,
@@ -427,7 +427,7 @@ def test_stream_invalid_sources_and_bounds():
                 duration=-1.0,
             )
         )
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         next(
             librosa.stream(
                 librosa.ex("trumpet"),
@@ -437,6 +437,25 @@ def test_stream_invalid_sources_and_bounds():
                 sr=None,
                 duration=-1.0,
             )
+        )
+
+    from librosa.core.streaming import _StreamBuffer
+
+    with pytest.raises(librosa.ParameterValueError, match="orig_sr"):
+        _StreamBuffer(
+            frame_length=1024,
+            hop_length=512,
+            block_length=1,
+            orig_sr=-1,
+        )
+
+    with pytest.raises(librosa.ParameterValueError, match="channels"):
+        _StreamBuffer(
+            frame_length=1024,
+            hop_length=512,
+            block_length=1,
+            orig_sr=22050,
+            channels=0,
         )
 
     # Zero duration on an open bridge returns immediately without blocking or consuming chunks
@@ -459,7 +478,7 @@ def test_stream_invalid_sources_and_bounds():
 
     # Non-integer sample advance ratio raises ParameterError
     bridge_48k = StreamBridge(orig_sr=48000)
-    with pytest.raises(librosa.ParameterError, match=r"fractional sample count"):
+    with pytest.raises(librosa.ParameterValueError, match=r"fractional sample count"):
         next(
             librosa.stream(
                 bridge_48k,
@@ -578,4 +597,17 @@ def test_stream_default_sr():
     bridge_native.close()
     native_blocks = list(bridge_native.stream(block_length=1, frame_length=1024, hop_length=512, sr=None))
     assert len(native_blocks) > 0
+
+
+def test_streambridge_enqueue_race_closed(monkeypatch):
+    bridge = StreamBridge(orig_sr=22050)
+    data = np.ones(512, dtype=np.float32)
+
+    def close_during_normalize(x):
+        bridge.close()
+        return np.ones((512, 1), dtype=np.float32)
+
+    monkeypatch.setattr(bridge, "_normalize", close_during_normalize)
+    assert bridge._enqueue(data, raise_on_closed=False) is False
+
 

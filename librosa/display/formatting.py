@@ -30,7 +30,11 @@ from matplotlib import colormaps as mcm
 
 # Core and utility imports for audio processing
 from .. import core, util
-from ..util.exceptions import ParameterError
+from ..exceptions import (
+    LibrosaNotImplementedError,
+    ParameterTypeError,
+    ParameterValueError,
+)
 
 # Type checking imports for development and static analysis
 if TYPE_CHECKING:
@@ -164,7 +168,7 @@ class TimeFormatter(mplticker.Formatter):
 
     def __init__(self, lag: bool = False, unit: str | None = None):
         if unit not in ["h", "m", "s", "ms", None]:
-            raise ParameterError(f"Unknown time unit: {unit}")
+            raise ParameterValueError(f"Unknown time unit: {unit}")
 
         super().__init__()
         self.unit = unit
@@ -249,8 +253,8 @@ class AdaptiveFormatterBase(mplticker.Formatter):
 
         return self._format_tick(x, pos)
 
-    def _format_tick(self, x: float, pos: int | None = None) -> str:
-        raise NotImplementedError
+    def _format_tick(self, x: float, pos: int | None = None) -> str:  # noqa: ARG002
+        raise LibrosaNotImplementedError
 
 
 class NoteFormatter(AdaptiveFormatterBase):
@@ -361,7 +365,7 @@ class SvaraFormatter(AdaptiveFormatterBase):
         unicode: bool = True,
     ):
         if Sa is None:
-            raise ParameterError("Sa frequency is required for svara display formatting")
+            raise ParameterValueError("Sa frequency is required for svara display formatting")
 
         super().__init__(major=major)
         self.Sa = Sa
@@ -660,12 +664,13 @@ class ChromaFJSFormatter(mplticker.Formatter):
         self.unison = unison
         self.unicode = unicode
         self.intervals = intervals
+        if not isinstance(intervals, str):
+            bins_per_octave = len(intervals)
+        if not isinstance(bins_per_octave, int):
+            raise ParameterTypeError(f"bins_per_octave={bins_per_octave} must be integer-valued")
+        self.bins_per_octave = bins_per_octave
+
         try:
-            if not isinstance(intervals, str):
-                bins_per_octave = len(intervals)
-            if not isinstance(bins_per_octave, int):
-                raise ParameterError(f"bins_per_octave={bins_per_octave} must be integer-valued")
-            self.bins_per_octave = bins_per_octave
             # Construct the explicit interval set
             self.intervals_ = core.interval_frequencies(
                 self.bins_per_octave,
@@ -674,7 +679,7 @@ class ChromaFJSFormatter(mplticker.Formatter):
                 bins_per_octave=self.bins_per_octave,
             )
         except TypeError as exc:
-            raise ParameterError(
+            raise ParameterTypeError(
                 f"intervals={intervals} must be of type str or a collection of numbers between 1 and 2"
             ) from exc
 
@@ -762,7 +767,7 @@ class Transformf0(mtransforms.Transform):
         super().__init__(shorthand_name="Transformf0")
 
         if not np.any(np.isfinite(f0)) or np.nanmin(f0) <= 0:
-            raise ParameterError("f0 must be strictly positive (or NaN) and contain at least one finite value")
+            raise ParameterValueError("f0 must be strictly positive (or NaN) and contain at least one finite value")
 
         times = offset + core.times_like(f0, sr=sr, hop_length=hop_length)
         import scipy.interpolate
@@ -998,7 +1003,7 @@ def _check_axes(axes: mplaxes.Axes | None) -> mplaxes.Axes:
     if axes is None:
         axes = plt.gca()
     elif not isinstance(axes, mplaxes.Axes):
-        raise ParameterError(
+        raise ParameterTypeError(
             "`axes` must be an instance of matplotlib.axes.Axes. Found type(axes)={}".format(type(axes))
         )
     return axes
@@ -1221,9 +1226,9 @@ def _decorate_axis(
 
     elif ax_type in ["cqt_svara", "logfreq_svara"] or ax_type == "pitch_svara":
         if ax_type == "pitch_svara" and intervals not in (None, "equal"):
-            raise ParameterError("Svara display is not currently supported for non-equal pitch intervals")
+            raise ParameterValueError("Svara display is not currently supported for non-equal pitch intervals")
         if Sa is None:
-            raise ParameterError("Sa frequency is required for svara display formatting")
+            raise ParameterValueError("Sa frequency is required for svara display formatting")
         axis.set_major_formatter(SvaraFormatter(Sa=Sa, mela=mela, unicode=unicode))
         # Find the offset of Sa relative to 2**k Hz
         sa_offset = 2.0 ** (np.log2(Sa) - np.floor(np.log2(Sa)))
@@ -1378,7 +1383,7 @@ def _decorate_axis(
         axis.set_ticks([])
 
     else:
-        raise ParameterError(f"Unsupported axis type: {ax_type}")
+        raise ParameterValueError(f"Unsupported axis type: {ax_type}")
 
 
 def _coord_fft_hz(n: int, sr: float = 22050, n_fft: int | None = None, **_kwargs: Any) -> _Array1D[np.float64]:
@@ -1454,7 +1459,7 @@ def _coord_vqt_hz(
         fmin = float(core.note_to_hz("C1"))
 
     if intervals is None:
-        raise ParameterError("VQT axis coordinates cannot be defined without intervals")
+        raise ParameterValueError("VQT axis coordinates cannot be defined without intervals")
 
     freqs = core.interval_frequencies(n, fmin=fmin, intervals=intervals, bins_per_octave=bins_per_octave)
 

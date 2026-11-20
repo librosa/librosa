@@ -12,9 +12,12 @@ from numba import jit
 
 from .. import filters, util
 from .._cache import cache
+from ..exceptions import (
+    ParameterShapeError,
+    ParameterValueError,
+)
 from ..util.decorators import deprecated
 from ..util.deprecation import Deprecated, rename_kw
-from ..util.exceptions import ParameterError
 from . import audio
 from .convert import cqt_frequencies, note_to_hz
 from .intervals import interval_frequencies
@@ -329,7 +332,7 @@ def hybrid_cqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     if fmin >= sr / 2:
-        raise ParameterError(f"fmin={fmin} must be less than sr/2={sr/2}")
+        raise ParameterValueError(f"fmin={fmin} must be less than sr/2={sr/2}")
 
     if n_bins is None:
         n_bins = int(np.ceil(bins_per_octave * (np.log2(sr) - np.log2(fmin))))
@@ -357,7 +360,7 @@ def hybrid_cqt(
     )
 
     if filter_cutoff > sr / 2:
-        raise ParameterError(
+        raise ParameterValueError(
             f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. "
             "Try reducing the number of frequency bins."
         )
@@ -534,7 +537,7 @@ def pseudo_cqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     if fmin >= sr / 2:
-        raise ParameterError(f"fmin={fmin} must be less than sr/2={sr/2}")
+        raise ParameterValueError(f"fmin={fmin} must be less than sr/2={sr/2}")
 
     if n_bins is None:
         n_bins = int(np.ceil(bins_per_octave * (np.log2(sr) - np.log2(fmin))))
@@ -559,7 +562,7 @@ def pseudo_cqt(
     )
 
     if filter_cutoff > sr / 2:
-        raise ParameterError(
+        raise ParameterValueError(
             f"Filter cutoff frequency {filter_cutoff} exceeds Nyquist frequency {sr/2}. "
             "Try reducing the number of frequency bins."
         )
@@ -1009,7 +1012,7 @@ def vqt(
     fmin = fmin * 2.0 ** (tuning / bins_per_octave)
 
     if fmin >= sr / 2:
-        raise ParameterError(f"fmin={fmin} must be less than sr/2={sr/2}")
+        raise ParameterValueError(f"fmin={fmin} must be less than sr/2={sr/2}")
     if n_bins is None:
         # If n_bins is None, we need to compute the number of bins to reach sr/2
         # Over-allocating by one octave buys us enough buffer to be safe.
@@ -1052,7 +1055,7 @@ def vqt(
     if filter_cutoff > nyquist:
         freqs_top = freqs[-bins_per_octave:]
         fmax_t: float = np.max(freqs_top)
-        raise ParameterError(
+        raise ParameterValueError(
             f"Wavelet basis with max frequency={fmax_t} would exceed the Nyquist frequency={nyquist}. "
             "Try reducing the number of frequency bins."
         )
@@ -1263,7 +1266,7 @@ def __early_downsample(
         hop_length //= downsample_factor
 
         if y.shape[-1] < downsample_factor:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"Input signal length={len(y):d} is too short for "
                 f"{n_octaves:d}-octave CQT"
             )
@@ -1484,7 +1487,7 @@ def griffinlim_cqt(
 
     if not isinstance(random_state, Deprecated):
         if rng is not None:
-            raise ParameterError(
+            raise ParameterValueError(
                 f"Both random_state={random_state!r} and rng={rng!r} were provided. "
                 "Please use only the rng parameter."
             )
@@ -1511,7 +1514,7 @@ def griffinlim_cqt(
             stacklevel=2,
         )
     elif momentum < 0:
-        raise ParameterError(f"griffinlim_cqt() called with momentum={momentum} < 0")
+        raise ParameterValueError(f"griffinlim_cqt() called with momentum={momentum} < 0")
 
     # using complex64 will keep the result to minimal necessary precision
     angles = np.empty(C.shape, dtype=np.complex64)
@@ -1524,7 +1527,7 @@ def griffinlim_cqt(
         # Initialize an all ones complex matrix
         angles[:] = 1.0
     else:
-        raise ParameterError(f"init={init} must either None or 'random'")
+        raise ParameterValueError(f"init={init} must either None or 'random'")
 
     # And initialize the previous iterate to 0
     rebuilt: np.ndarray = np.array(0.0)
@@ -1672,6 +1675,6 @@ def __clip_freqs(
     idx = np.searchsorted(f_cutoff, sr / 2.0, side="left")
 
     if idx < 1:
-        raise ParameterError(f"Unable to construct wavelet basis for fmin={freqs[0]:.2f} Hz and sr={sr:.2f} Hz.")
+        raise ParameterValueError(f"Unable to construct wavelet basis for fmin={freqs[0]:.2f} Hz and sr={sr:.2f} Hz.")
 
     return freqs[:idx]

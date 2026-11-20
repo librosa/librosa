@@ -11,8 +11,8 @@ import numpy as np
 from numba import jit
 
 from .._cache import cache
+from ..exceptions import ParameterValueError
 from ..util.decorators import vectorize
-from ..util.exceptions import ParameterError
 from .intervals import INTERVALS
 
 if TYPE_CHECKING:
@@ -230,11 +230,14 @@ def mela_to_degrees(mela: str | int) -> _Array1D[np.int_]:
     array([0, 1, 2, 5, 7, 8, 9])
     """
     if isinstance(mela, str):
-        index = MELAKARTA_MAP[mela.lower()] - 1
+        try:
+            index = MELAKARTA_MAP[mela.lower()] - 1
+        except KeyError as exc:
+            raise ParameterValueError(f"Unknown melakarta raga '{mela}'") from exc
     elif 0 < mela <= 72:
         index = mela - 1
     else:
-        raise ParameterError(f"mela={mela} must be in range [1, 72]")
+        raise ParameterValueError(f"mela={mela} must be in range [1, 72]")
 
     # always have Sa [0]
     degrees = [0]
@@ -388,11 +391,14 @@ def mela_to_svara(
     ]
 
     if isinstance(mela, str):
-        mela_idx = MELAKARTA_MAP[mela.lower()] - 1
+        try:
+            mela_idx = MELAKARTA_MAP[mela.lower()] - 1
+        except KeyError as exc:
+            raise ParameterValueError(f"Unknown melakarta raga '{mela}'") from exc
     elif 0 < mela <= 72:
         mela_idx = mela - 1
     else:
-        raise ParameterError(f"mela={mela} must be in range [1, 72]")
+        raise ParameterValueError(f"mela={mela} must be in range [1, 72]")
 
     # Determine Ri2/Ga1
     lower = mela_idx % 36
@@ -529,7 +535,7 @@ def __note_to_degree(key: str | _IterableLike[str] | Iterable[str]) -> int | _Ar
     match = NOTE_RE.match(key)
 
     if not match:
-        raise ParameterError(f"Improper key format: {key:s}")
+        raise ParameterValueError(f"Improper key format: {key:s}")
 
     letter = match.group("note").upper()
     accidental = match.group("accidental")
@@ -568,7 +574,7 @@ def __simplify_note(
     match = NOTE_RE.match(key+additional_acc)
 
     if not match:
-        raise ParameterError(f"Improper key format: {key:s}")
+        raise ParameterValueError(f"Improper key format: {key:s}")
 
     letter = match.group("note").upper()
     accidental = match.group("accidental")
@@ -603,7 +609,7 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     match = KEY_RE.match(signature)
 
     if not match:
-        raise ParameterError("Improper format: {:s}".format(signature))
+        raise ParameterValueError("Improper format: {:s}".format(signature))
 
     if match.group("scale") or not match.group("mode"):
         # We're already fine here, but let's pass the key through __simpify_note()
@@ -735,7 +741,7 @@ def key_to_notes(key: str, *, unicode: bool = True, natural: bool= False) -> lis
     match = KEY_RE.match(key)
 
     if not match:
-        raise ParameterError(f"Improper key format: {key:s}")
+        raise ParameterValueError(f"Improper key format: {key:s}")
 
     pitch_map = {"C": 0, "D": 2, "E": 4, "F": 5, "G": 7, "A": 9, "B": 11}
 
@@ -918,7 +924,7 @@ def key_to_degrees(key: str) -> np.ndarray:
     match = KEY_RE.match(key)
 
     if not match:
-        raise ParameterError(f"Improper key format: {key:s}")
+        raise ParameterValueError(f"Improper key format: {key:s}")
 
     if match.group("mode") or not match.group("scale"):
         equiv = __mode_to_key(key)
@@ -1003,7 +1009,7 @@ def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
     match = NOTE_RE.match(unison)
 
     if not match:
-        raise ParameterError(f"Improper note format: {unison:s}")
+        raise ParameterValueError(f"Improper note format: {unison:s}")
 
     # Find unison in the alphabet
     pitch = match.group("note").upper()
@@ -1183,7 +1189,7 @@ def interval_to_fjs(
     # suppressing the type check here because mypy won't introspect through
     # numpy vectorization
     if interval <= 0:  # type: ignore
-        raise ParameterError(f"Interval={interval} must be strictly positive")
+        raise ParameterValueError(f"Interval={interval} must be strictly positive")
 
     # Find the approximate number of fifth-steps to get within tolerance
     # of the target interval
@@ -1198,7 +1204,7 @@ def interval_to_fjs(
         interval_b = __o_fold(interval)
         powers = INTERVALS[np.around(interval_b, decimals=6)]
     except KeyError as exc:
-        raise ParameterError(f"Unknown interval={interval}") from exc
+        raise ParameterValueError(f"Unknown interval={interval}") from exc
 
     # Ignore pythagorean spelling
     powers = {p: powers[p] for p in powers if p > 3}

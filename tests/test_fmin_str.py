@@ -301,29 +301,29 @@ def test_inverse_pitch_str():
 
 
 def test_invalid_str_raises():
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.tone("not_a_note", duration=0.1)
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.cqt_frequencies(12, fmin="not_a_note")
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.shepard_tone("not_a_note", duration=0.1)
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.shepard_scale("not_a_note", duration=0.1)
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.shepard_risset_glissando("not_a_note", duration=0.1)
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.logfrequency(sr=22050, n_fft=2048, fmin="not_a_note")
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.pitch_filterbank(sr=22050, n_fft=2048, fmin="not_a_note")
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.pitch_basis(sr=22050, n_fft=2048, fmin="not_a_note")
 
-    with pytest.raises(librosa.ParameterError):
+    with pytest.raises(librosa.ParameterValueError):
         librosa.filters.pitch_to_chroma(n_input=84, fmin="not_a_note")

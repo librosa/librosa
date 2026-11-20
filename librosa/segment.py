@@ -20,7 +20,11 @@ from decorator import decorator
 from . import util
 from ._cache import cache
 from .filters import checkerboard_kernel, diagonal_filter
-from .util.exceptions import ParameterError
+from .util.exceptions import (
+    ParameterShapeError,
+    ParameterTypeError,
+    ParameterValueError,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Literal, TypeVar
@@ -250,7 +254,7 @@ def cross_similarity(
     data = np.atleast_2d(data)
 
     if not np.allclose(data_ref.shape[:-1], data.shape[:-1]):
-        raise ParameterError(
+        raise ParameterShapeError(
             f"data_ref.shape={data_ref.shape} and data.shape={data.shape} do not match on leading dimension(s)"
         )
 
@@ -265,7 +269,7 @@ def cross_similarity(
     data = data.reshape((n, -1), order="F")
 
     if mode not in ["connectivity", "distance", "affinity"]:
-        raise ParameterError(
+        raise ParameterValueError(
             (
                 f"Invalid mode='{mode}'. Must be one of "
                 "['connectivity', 'distance', 'affinity']"
@@ -588,14 +592,14 @@ def recurrence_matrix(
     data = data.reshape((t, -1), order="F")
 
     if width < 1 or width >= (t - 1) // 2:
-        raise ParameterError(
+        raise ParameterValueError(
             "width={} must be at least 1 and at most (data.shape[{}] - 1) // 2={}".format(
                 width, axis, (t - 1) // 2
             )
         )
 
     if mode not in ["connectivity", "distance", "affinity"]:
-        raise ParameterError(
+        raise ParameterValueError(
             (
                 f"Invalid mode='{mode}'. Must be one of "
                 "['connectivity', 'distance', 'affinity']"
@@ -764,7 +768,7 @@ def recurrence_to_lag(
     axis = np.abs(axis)
 
     if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
-        raise ParameterError(f"non-square recurrence matrix shape: {rec.shape}")
+        raise ParameterShapeError(f"non-square recurrence matrix shape: {rec.shape}")
 
     sparse = scipy.sparse.issparse(rec)
 
@@ -857,14 +861,14 @@ def lag_to_recurrence(
     >>> ax[1, 1].label_outer()
     """
     if axis not in [0, 1, -1]:
-        raise ParameterError(f"Invalid target axis: {axis}")
+        raise ParameterValueError(f"Invalid target axis: {axis}")
 
     axis = np.abs(axis)
 
     if lag.ndim != 2 or (
         lag.shape[0] != lag.shape[1] and lag.shape[1 - axis] != 2 * lag.shape[axis]
     ):
-        raise ParameterError(f"Invalid lag matrix shape: {lag.shape}")
+        raise ParameterShapeError(f"Invalid lag matrix shape: {lag.shape}")
 
     # Since lag must be 2-dimensional, abs(axis) = axis
     t = lag.shape[axis]
@@ -1037,7 +1041,7 @@ def subsegment(
     frames = util.fix_frames(frames, x_min=0, x_max=data.shape[axis], pad=True)
 
     if n_segments < 1:
-        raise ParameterError("n_segments must be a positive integer")
+        raise ParameterValueError("n_segments must be a positive integer")
 
     boundaries: list = []
     idx_slices = [slice(None)] * data.ndim
@@ -1276,7 +1280,7 @@ def path_enhance(
     if min_ratio is None:
         min_ratio = 1.0 / max_ratio
     elif min_ratio > max_ratio:
-        raise ParameterError(
+        raise ParameterValueError(
             f"min_ratio={min_ratio} cannot exceed max_ratio={max_ratio}"
         )
 
@@ -1327,12 +1331,12 @@ def __affinity_bandwidth(
         bandwidth = bw_mode
         # check if bw is the right size
         if bandwidth.shape != rec.shape:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"Invalid matrix bandwidth shape: {bandwidth.shape}."
                 f"Should be {rec.shape}."
             )
         if (bandwidth <= 0).any():
-            raise ParameterError(
+            raise ParameterValueError(
                 "Invalid bandwidth. All entries must be strictly positive."
             )
         return np.array(bandwidth[rec.nonzero()])
@@ -1340,7 +1344,7 @@ def __affinity_bandwidth(
     elif isinstance(bw_mode, (int, float)):
         scalar_bandwidth = float(bw_mode)
         if scalar_bandwidth <= 0:
-            raise ParameterError(
+            raise ParameterValueError(
                 f"Invalid scalar bandwidth={scalar_bandwidth}. Must be strictly positive."
             )
         return scalar_bandwidth
@@ -1356,7 +1360,7 @@ def __affinity_bandwidth(
         "gmean_k_avg",
         "mean_k_avg_and_pair",
     ]:
-        raise ParameterError(
+        raise ParameterValueError(
             f"Invalid bandwidth='{bw_mode}'. Must be either a positive scalar or one of "
             "['med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']"
         )
@@ -1372,7 +1376,7 @@ def __affinity_bandwidth(
         if row_data.size == 0:
             # Disconnected vertices are only a problem for point-wise bandwidth estimation
             if bw_mode not in ["med_k_scalar"]:
-                raise ParameterError(f"The sample at time point {i} has no neighbors")
+                raise ParameterValueError(f"The sample at time point {i} has no neighbors")
             knn_dists.append(np.array([np.nan]))
         else:
             knn_dists.append(np.sort(row_data)[:k])
@@ -1383,7 +1387,7 @@ def __affinity_bandwidth(
 
     if bw_mode == "med_k_scalar":
         if not np.any(np.isfinite(dist_to_k)):
-            raise ParameterError("Cannot estimate bandwidth from an empty graph")
+            raise ParameterValueError("Cannot estimate bandwidth from an empty graph")
         return float(np.nanmedian(dist_to_k))
 
     if bw_mode in ["mean_k", "gmean_k"]:
@@ -1521,7 +1525,7 @@ def diagonal_convolve(
     >>> ax[1].legend()
     """
     if scipy.sparse.issparse(data):
-        raise ParameterError(
+        raise ParameterTypeError(
             "Sparse matrices are not supported by diagonal_convolve. "
             "Convert to a dense array (e.g. data.toarray()) first."
         )
@@ -1542,7 +1546,7 @@ def diagonal_convolve(
             is_separable = True
             M1, M2 = len(u), len(v)
         else:
-            raise ParameterError("Tuple kernel must contain two 1D arrays")
+            raise ParameterShapeError("Tuple kernel must contain two 1D arrays")
     elif isinstance(kernel, np.ndarray) and kernel.ndim == 1:
         u = v = kernel
         is_separable = True
@@ -1550,13 +1554,13 @@ def diagonal_convolve(
     else:
         K = np.asanyarray(kernel)
         if K.ndim != 2:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"kernel must be 2D, 1D, or a tuple of two 1D arrays; shape={K.shape}"
             )
         M1, M2 = K.shape
 
     if M1 <= 0 or M2 <= 0:
-        raise ParameterError(f"Kernel dimensions must be positive, got ({M1}, {M2})")
+        raise ParameterShapeError(f"Kernel dimensions must be positive, got ({M1}, {M2})")
 
     N1, N2 = data.shape[-2], data.shape[-1]
 
@@ -1570,7 +1574,7 @@ def diagonal_convolve(
         shift1, shift2 = M1 - 1, M2 - 1
         grid_rows, grid_cols = max(0, N1 - M1 + 1), max(0, N2 - M2 + 1)
     else:
-        raise ParameterError(
+        raise ParameterValueError(
             f"Unsupported mode='{mode}'. Must be one of ('same', 'valid', 'full')"
         )
 

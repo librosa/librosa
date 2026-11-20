@@ -11,8 +11,11 @@ import scipy
 
 from .. import filters
 from ..core.spectrum import db_to_power, griffinlim
+from ..exceptions import (
+    ParameterShapeError,
+    ParameterValueError,
+)
 from ..util import expand_to, nnls
-from ..util.exceptions import ParameterError
 from ..util.utils import tiny
 
 if TYPE_CHECKING:
@@ -303,7 +306,7 @@ def mfcc_to_mel(
         mfcc = mfcc / (lifter_sine + tiny(mfcc))
 
     elif lifter != 0:
-        raise ParameterError("MFCC to mel lifter must be a non-negative number.")
+        raise ParameterValueError("MFCC to mel lifter must be a non-negative number.")
 
     logmel = scipy.fft.idct(mfcc, axis=-2, type=dct_type, norm=norm, n=n_mels)
     melspec: np.ndarray = db_to_power(logmel, ref=ref)
@@ -503,7 +506,7 @@ def logfrequency_to_stft(
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
     if n_bins is not None and n_bins != L.shape[-2]:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Number of frequency bins in L ({L.shape[-2]}) does not match n_bins ({n_bins})"
         )
 
@@ -719,7 +722,7 @@ def pitch_to_stft(
     ... )
     """
     if n_pitches is not None and n_pitches != P.shape[-2]:
-        raise ParameterError(
+        raise ParameterShapeError(
             f"Number of pitch bands in P ({P.shape[-2]}) does not match n_pitches ({n_pitches})"
         )
 

@@ -27,7 +27,10 @@ from matplotlib import colormaps as mcm
 
 # Core and utility imports for audio processing
 from .. import core, util
-from ..util.exceptions import ParameterError
+from ..util.exceptions import (
+    ParameterShapeError,
+    ParameterValueError,
+)
 
 # Image visualization utilities for spectral and 2D matrix displays
 if TYPE_CHECKING:
@@ -582,7 +585,7 @@ def _mesh_coords(ax_type, coords, n, **kwargs):
     """Compute axis coordinates"""
     if coords is not None:
         if len(coords) not in (n, n + 1):
-            raise ParameterError(f"Coordinate shape mismatch: {len(coords)}!={n} or {n}+1")
+            raise ParameterShapeError(f"Coordinate shape mismatch: {len(coords)}!={n} or {n}+1")
         return coords
 
     coord_map: dict[str | None, Callable[..., np.ndarray]] = {
@@ -640,7 +643,7 @@ def _mesh_coords(ax_type, coords, n, **kwargs):
     }
 
     if ax_type not in coord_map:
-        raise ParameterError(f"Unknown axis type: {ax_type}")
+        raise ParameterValueError(f"Unknown axis type: {ax_type}")
     return coord_map[ax_type](n, **kwargs)
 
 
@@ -756,7 +759,7 @@ def _parse_vscale(vscale: str) -> tuple[str, str, float | str | None]:
     """
     match = VSCALE_PATTERN.fullmatch(vscale)
     if not match:
-        raise ParameterError(f"Invalid vscale specification: {vscale}")
+        raise ParameterValueError(f"Invalid vscale specification: {vscale}")
 
     mode = match.group("mode")
 
@@ -766,7 +769,7 @@ def _parse_vscale(vscale: str) -> tuple[str, str, float | str | None]:
 
     if mode == "dBFS":
         if ref is not None:
-            raise ParameterError("dBFS vscale cannot have an explicit reference value")
+            raise ParameterValueError("dBFS vscale cannot have an explicit reference value")
         ref = "max"
     elif ref is not None:  # mode == 'dB'
         ref = float(ref)

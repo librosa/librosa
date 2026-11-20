@@ -14,7 +14,10 @@ import numpy as np
 from . import core, util
 from ._cache import cache
 from .feature.spectral import melspectrogram
-from .util.exceptions import ParameterError
+from .util.exceptions import (
+    ParameterShapeError,
+    ParameterValueError,
+)
 
 if TYPE_CHECKING:
     from typing import Any, Callable, Literal, Sequence
@@ -158,7 +161,7 @@ def onset_detect(
     # First, get the frame->beat strength profile if we don't already have one
     if onset_envelope is None:
         if y is None:
-            raise ParameterError("y or onset_envelope must be provided")
+            raise ParameterValueError("y or onset_envelope must be provided")
 
         onset_envelope = onset_strength(y=y, sr=sr, hop_length=hop_length)
 
@@ -197,7 +200,7 @@ def onset_detect(
         # Optionally backtrack the events
         if backtrack:
             if not sparse:
-                raise ParameterError("onset backtracking is only supported if sparse=True")
+                raise ParameterValueError("onset backtracking is only supported if sparse=True")
 
             if energy is None:
                 energy = onset_envelope
@@ -212,7 +215,7 @@ def onset_detect(
         elif units == "time":
             onsets = core.frames_to_time(onsets, hop_length=hop_length, sr=sr)
         else:
-            raise ParameterError(f"Invalid unit type: {units}")
+            raise ParameterValueError(f"Invalid unit type: {units}")
 
     return onsets
 
@@ -401,7 +404,7 @@ def onset_strength(
     >>> fig.legend(loc='center right', ncols=3)
     """
     if aggregate is False:
-        raise ParameterError(
+        raise ParameterValueError(
             "aggregate parameter cannot be False when computing full-spectrum onset strength."
         )
 
@@ -660,27 +663,27 @@ def onset_strength_multi(
         aggregate = np.mean
 
     if not util.is_positive_int(lag):
-        raise ParameterError(f"lag={lag} must be a positive integer")
+        raise ParameterValueError(f"lag={lag} must be a positive integer")
 
     if not util.is_positive_int(max_size):
-        raise ParameterError(f"max_size={max_size} must be a positive integer")
+        raise ParameterValueError(f"max_size={max_size} must be a positive integer")
 
     if mode is not None and mode not in ("flux", "complex"):
-        raise ParameterError(f"Invalid mode='{mode}'. Must be one of ['flux', 'complex']")
+        raise ParameterValueError(f"Invalid mode='{mode}'. Must be one of ['flux', 'complex']")
 
     # First, resolve S and mode
     if S is not None:
         if mode is None:
             mode = "complex" if np.iscomplexobj(S) else "flux"
         elif mode == "complex" and not np.iscomplexobj(S):
-            raise ParameterError(
+            raise ParameterValueError(
                 "mode='complex' was specified, but input spectrogram S is real-valued"
             )
         elif mode == "flux" and np.iscomplexobj(S):
             S = np.abs(S)
     else:
         if y is None:
-            raise ParameterError("One of y or S must be provided")
+            raise ParameterValueError("One of y or S must be provided")
 
         if mode is None:
             mode = "flux"
@@ -703,7 +706,7 @@ def onset_strength_multi(
                 feature, y=y, sr=sr, n_fft=n_fft, hop_length=hop_length, **kwargs
             )
             if not np.iscomplexobj(S):
-                raise ParameterError(
+                raise ParameterValueError(
                     f"mode='complex' requires a complex-valued spectrogram, "
                     f"but feature={feature} returned a real-valued array"
                 )
@@ -713,11 +716,11 @@ def onset_strength_multi(
 
     if mode == "complex":
         if max_size > 1:
-            raise ParameterError(
+            raise ParameterValueError(
                 "max_size > 1 is not supported for complex-valued spectrograms S"
             )
         if ref is not None:
-            raise ParameterError(
+            raise ParameterValueError(
                 "ref is not supported for complex-valued spectrograms S"
             )
 
@@ -748,7 +751,7 @@ def onset_strength_multi(
 
                 ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=-2)
         elif ref.shape != S.shape:
-            raise ParameterError(
+            raise ParameterShapeError(
                 f"Reference spectrum shape {ref.shape} must match input spectrum {S.shape}"
             )
 
