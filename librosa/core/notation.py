@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, overload
 import numpy as np
 from numba import jit
 
-from .._cache import cache
 from ..exceptions import ParameterValueError
 from ..util.decorators import vectorize
 from .intervals import INTERVALS
@@ -298,7 +297,6 @@ def mela_to_degrees(mela: str | int) -> _Array1D[np.int_]:
     return np.array(degrees)
 
 
-@cache(level=10)
 def mela_to_svara(mela: str | int, *, abbr: bool = True, unicode: bool = True) -> list[str]:
     """Spell the Carnatic svara names for a given melakarta raga
 
@@ -628,7 +626,6 @@ def __mode_to_key(signature: str, unicode: bool = True) -> str:
     return __simplify_note(tonic + match.group("accidental"), unicode=unicode) + ":maj"
 
 
-@cache(level=10)
 def key_to_notes(key: str, *, unicode: bool = True, natural: bool = False) -> list[str]:
     """List all 12 chromatic note names, as spelled according to a given key or mode.
 
@@ -941,7 +938,6 @@ def key_to_degrees(key: str) -> np.ndarray:
     return (notes[scale] + pitch_map[tonic] + offset) % 12
 
 
-@cache(level=10)
 def fifths_to_note(*, unison: str, fifths: int, unicode: bool = True) -> str:
     """Calculate the note name for a given number of perfect fifths from a specified unison.
 

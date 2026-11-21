@@ -10,6 +10,7 @@ import numpy as np
 import scipy
 
 from . import core, onset, util
+from ._cache import cache
 from .feature import fourier_tempogram
 from .feature import tempo as _tempo
 from .util.exceptions import (
@@ -79,6 +80,7 @@ def beat_track(
     units: Literal["frames", "samples", "time"] = "frames",
     sparse: Literal[False],
 ) -> tuple[_DenseBpmT, npt.NDArray[np.bool]]: ...
+@cache(level=30)
 def beat_track(
     *,
     y: np.ndarray | None = None,
@@ -192,6 +194,10 @@ def beat_track(
     See Also
     --------
     librosa.onset.onset_strength
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -312,6 +318,7 @@ def beat_track(
     return (bpm, beats)
 
 
+@cache(level=30)
 def plp[FloatT: np.floating[Any]](
     *,
     y: npt.NDArray[FloatT] | None = None,
@@ -382,6 +389,10 @@ def plp[FloatT: np.floating[Any]](
     beat_track
     librosa.onset.onset_strength
     librosa.feature.fourier_tempogram
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------

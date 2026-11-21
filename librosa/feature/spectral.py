@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from .. import filters, util
+from .._cache import cache
 from ..core.audio import zero_crossings
 from ..core.constantq import cqt, hybrid_cqt, vqt
 from ..core.convert import fft_frequencies
@@ -1322,6 +1323,7 @@ def chroma_stft(
     return util.normalize(raw_chroma, norm=norm, axis=-2)
 
 
+@cache(level=30)
 def chroma_cqt(
     *,
     y: np.ndarray | None = None,
@@ -1385,6 +1387,10 @@ def chroma_cqt(
     librosa.cqt
     librosa.hybrid_cqt
     chroma_stft
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -1738,6 +1744,7 @@ def chroma_vqt(
     return chroma
 
 
+@cache(level=30)
 def tonnetz(
     *,
     y: np.ndarray | None = None,
@@ -1813,6 +1820,10 @@ def tonnetz(
     chroma_cqt : Compute a chromagram from a constant-Q transform.
     chroma_stft : Compute a chromagram from an STFT spectrogram or waveform.
 
+    Notes
+    -----
+    This function caches at level 30.
+
     Examples
     --------
     Compute tonnetz features from the harmonic component of a song
@@ -1872,6 +1883,7 @@ def tonnetz(
 
 
 # -- Mel spectrogram and MFCCs -- #
+@cache(level=30)
 def mfcc(
     *,
     y: np.ndarray | None = None,
@@ -1982,6 +1994,10 @@ def mfcc(
     --------
     melspectrogram
     scipy.fft.dct
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------

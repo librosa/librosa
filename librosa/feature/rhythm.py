@@ -38,6 +38,7 @@ __all__ = [
 
 
 # -- Rhythmic features -- #
+@cache(level=30)
 def tempogram(
     *,
     y: np.ndarray | None = None,
@@ -108,6 +109,10 @@ def tempogram(
     librosa.onset.onset_strength
     librosa.util.normalize
     librosa.stft
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -222,6 +227,7 @@ def tempogram(
     return util.normalize(autocorrelate(odf_frame * ac_window, axis=-2), norm=norm, axis=-2)
 
 
+@cache(level=30)
 def fourier_tempogram(
     *,
     y: np.ndarray | None = None,
@@ -277,6 +283,10 @@ def fourier_tempogram(
     librosa.onset.onset_strength
     librosa.util.normalize
     librosa.stft
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -670,6 +680,10 @@ def tempogram_ratio(
     librosa.f0_harmonics
     librosa.tempo_frequencies
 
+    Notes
+    -----
+    This function caches at level 40.
+
     Examples
     --------
     Compute tempogram ratio features using the default factors
@@ -727,6 +741,7 @@ def tempogram_ratio(
     return tgr
 
 
+@cache(level=30)
 def hybrid_tempogram(
     *,
     y: np.ndarray | None = None,
@@ -777,6 +792,10 @@ def hybrid_tempogram(
     --------
     tempogram
     fourier_tempogram
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -954,6 +973,10 @@ def metrogram(
     --------
     tempogram
     tempogram_ratio
+
+    Notes
+    -----
+    This function caches at level 40.
 
     Examples
     --------

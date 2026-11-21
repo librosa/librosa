@@ -606,7 +606,7 @@ def pseudo_cqt(
     return C
 
 
-@cache(level=40)
+@cache(level=20)
 def icqt(
     C: np.ndarray,
     *,
@@ -702,7 +702,7 @@ def icqt(
 
     Notes
     -----
-    This function caches at level 40.
+    This function caches at level 20.
 
     Examples
     --------
@@ -1155,7 +1155,12 @@ def __vqt_filter_fft(
     dtype=np.complex64,
     alpha=None,
 ):
-    """Generate the frequency domain variable-Q filter basis."""
+    """Generate the frequency domain variable-Q filter basis.
+
+    Notes
+    -----
+    This function caches at level 10.
+    """
     basis, lengths = filters.wavelet(
         freqs=freqs,
         sr=sr,

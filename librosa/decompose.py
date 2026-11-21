@@ -270,6 +270,7 @@ def decompose(
     return components_out, activations_out
 
 
+@cache(level=30)
 def pitch_nmf(
     S: np.ndarray,
     *,
@@ -374,6 +375,10 @@ def pitch_nmf(
     decompose
     pitch_basis
     librosa.filters.pitch_filterbank
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------

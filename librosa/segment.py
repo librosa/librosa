@@ -1109,6 +1109,7 @@ def subsegment(data: np.ndarray, frames: np.ndarray, *, n_segments: int = 4, axi
     return np.array(boundaries)
 
 
+@cache(level=30)
 def agglomerative(
     data: np.ndarray,
     k: int | np.integer,
@@ -1143,6 +1144,10 @@ def agglomerative(
     See Also
     --------
     sklearn.cluster.AgglomerativeClustering
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -1206,6 +1211,7 @@ def agglomerative(
     return np.asarray(boundaries)
 
 
+@cache(level=30)
 def path_enhance(
     R: np.ndarray,
     n: int,
@@ -1303,6 +1309,10 @@ def path_enhance(
     --------
     librosa.filters.diagonal_filter
     recurrence_matrix
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -1661,6 +1671,7 @@ def diagonal_convolve(
         return np.asanyarray(np.tensordot(patches, K[::-1, ::-1], axes=([-2, -1], [0, 1])))
 
 
+@cache(level=30)
 def recurrence_novelty(
     rec: np.ndarray,
     *,
@@ -1720,6 +1731,10 @@ def recurrence_novelty(
     diagonal_convolve
     librosa.filters.checkerboard_kernel
     librosa.segment.recurrence_matrix
+
+    Notes
+    -----
+    This function caches at level 30.
 
     References
     ----------

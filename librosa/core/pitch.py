@@ -443,6 +443,7 @@ def _cumulative_mean_normalized_difference(
     return np.asarray(yin_frames)
 
 
+@cache(level=30)
 def yin(
     y: np.ndarray,
     *,
@@ -515,6 +516,10 @@ def yin(
     --------
     librosa.pyin :
         Fundamental frequency (F0) estimation using probabilistic YIN (pYIN).
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
@@ -601,6 +606,7 @@ def yin(
     return f0
 
 
+@cache(level=30)
 def pyin(
     y: np.ndarray,
     *,
@@ -710,6 +716,10 @@ def pyin(
     --------
     librosa.yin :
         Fundamental frequency (F0) estimation using the YIN algorithm.
+
+    Notes
+    -----
+    This function caches at level 30.
 
     Examples
     --------
