@@ -1188,6 +1188,108 @@ def test_waveshow_deladaptor(y, sr):
     assert envelope.get_visible() and not steps.get_visible()
 
 
+def test_waveshow_cartesian_transform(y, sr):
+    fig, ax = plt.subplots()
+    try:
+        # Scale time by 2.0 and offset by 1.0; scale amplitude by 3.0 and offset by 0.5
+        pre = matplotlib.transforms.Affine2D().scale(2.0, 3.0).translate(1.0, 0.5)
+        ad = librosa.display.waveshow(y, sr=sr, ax=ax, transform=pre + ax.transData)
+
+        # Verify pre_transform extraction
+        assert ad.pre_transform == pre
+
+        # Verify axis decoration was skipped (no TimeFormatter on xaxis)
+        assert not isinstance(ax.xaxis.get_major_formatter(), librosa.display.TimeFormatter)
+        assert ax.xaxis.get_label_text() != "Time"
+
+        # Zoom into a narrow time window in transformed space:
+        # View signal around t = 0.5s with duration = 0.01s (well below max_samples/sr)
+        # In transformed space: x = 2 * t + 1
+        t_center = 0.5
+        t_span = 0.01
+        x0 = 2.0 * (t_center - t_span / 2) + 1.0
+        x1 = 2.0 * (t_center + t_span / 2) + 1.0
+        ax.set(xlim=[x0, x1])
+
+        # Steps should become visible and envelope hidden
+        assert ad.steps is not None and ad.envelope is not None
+        assert ad.steps.get_visible() and not ad.envelope.get_visible()
+
+        # The sliced steps data should be in signal time coordinates around t_center
+        steps_time = ad.steps.get_xdata()
+        assert np.isclose(steps_time[len(steps_time) // 2], t_center, atol=0.05)
+
+        # Zoom back out to full signal in transformed space
+        t_max = len(y) / sr
+        ax.set(xlim=[1.0, 2.0 * t_max + 1.0])
+        assert ad.envelope.get_visible() and not ad.steps.get_visible()
+    finally:
+        plt.close(fig)
+
+
+def test_waveshow_polar_transform(y, sr):
+    fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+    try:
+        # Check initial polar limits
+        assert ax.name == "polar"
+        assert np.isclose(ax.get_thetamin(), 0.0)
+        assert np.isclose(ax.get_thetamax(), 360.0)
+
+        duration = len(y) / sr
+        # Map time [0, duration] -> theta [0, 2*pi]; amplitude [-1, 1] -> radius [0.5, 1.5]
+        pre = matplotlib.transforms.Affine2D().scale(2 * np.pi / duration, 0.5).translate(0.0, 1.0)
+        ad = librosa.display.waveshow(y, sr=sr, ax=ax, pre_transform=pre)
+
+        assert ad.pre_transform == pre
+
+        # Polar axis decorations must not be overwritten with TimeFormatter
+        assert not isinstance(ax.xaxis.get_major_formatter(), librosa.display.TimeFormatter)
+        assert ax.xaxis.get_label_text() != "Time"
+
+        # thetamin/thetamax should NOT be corrupted
+        assert np.isclose(ax.get_thetamin(), 0.0)
+        assert np.isclose(ax.get_thetamax(), 360.0)
+
+        # Zoom into a small angular slice around pi radians (~ 0.5 * duration)
+        theta_center = np.pi
+        theta_span = 0.01  # small enough to trigger steps view
+        ax.set(xlim=[theta_center - theta_span / 2, theta_center + theta_span / 2])
+
+        assert ad.steps is not None and ad.envelope is not None
+        assert ad.steps.get_visible() and not ad.envelope.get_visible()
+
+        # Verify steps data is centered around 0.5 * duration in signal seconds
+        steps_time = ad.steps.get_xdata()
+        expected_t = 0.5 * duration
+        assert np.isclose(steps_time[len(steps_time) // 2], expected_t, atol=0.05)
+
+        # Zoom back out to [0, 2*pi]
+        ax.set(xlim=[0.0, 2 * np.pi])
+        assert ad.envelope.get_visible() and not ad.steps.get_visible()
+        assert np.isclose(ax.get_thetamin(), 0.0)
+        assert np.isclose(ax.get_thetamax(), 360.0)
+    finally:
+        plt.close(fig)
+
+
+def test_waveshow_pre_transform_fallback(y, sr):
+    fig, ax = plt.subplots()
+    try:
+        # Non-invertible singular pre-transform (scale by 0)
+        pre = matplotlib.transforms.Affine2D().scale(0.0, 1.0)
+        ad = librosa.display.waveshow(y, sr=sr, ax=ax, pre_transform=pre)
+
+        # Force update: should not crash and fall back to full signal bounds
+        ax.set(xlim=[-10, 10])
+        ad.update(ax)
+
+        assert ad.envelope is not None
+        # Since full bounds covers all samples > max_points, envelope should be visible
+        assert ad.envelope.get_visible()
+    finally:
+        plt.close(fig)
+
+
 @pytest.mark.mpl_image_compare(baseline_images=["specshow_vqt"], extensions=["png"], style=STYLE)
 def test_specshow_vqt(C):
 
@@ -1618,6 +1720,225 @@ def test_wavebars_nbars_validation():
     with pytest.raises(librosa.ParameterValueError):
         librosa.display.wavebars(np.array([0.0, 1.0]), n_bars=0, ax=ax)
     plt.close(fig)
+
+
+def test_wavebars_cartesian_transform(y, sr):
+    fig, ax = plt.subplots()
+    try:
+        # Scale time by 2.0 and offset by 1.0; scale amplitude by 3.0 and offset by 0.5
+        pre = matplotlib.transforms.Affine2D().scale(2.0, 3.0).translate(1.0, 0.5)
+        coll = librosa.display.wavebars(y, sr=sr, ax=ax, transform=pre + ax.transData, label="bars")
+        assert isinstance(coll, matplotlib.collections.PatchCollection)
+        ax.legend()
+
+        # Verify axis decoration was skipped (no TimeFormatter on xaxis)
+        assert not isinstance(ax.xaxis.get_major_formatter(), librosa.display.TimeFormatter)
+        assert ax.xaxis.get_label_text() != "Time"
+
+        # Verify data limits are mapped through pre-transform
+        duration = len(y) / sr
+        assert ax.dataLim.x0 >= 1.0 - 0.1
+        assert ax.dataLim.x1 <= 2.0 * duration + 1.0 + 0.1
+    finally:
+        plt.close(fig)
+
+
+def test_wavebars_polar_transform(y, sr):
+    fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+    try:
+        assert ax.name == "polar"
+        assert np.isclose(ax.get_thetamin(), 0.0)
+        assert np.isclose(ax.get_thetamax(), 360.0)
+
+        duration = len(y) / sr
+        # Map time [0, duration] -> theta [0, 2*pi]; amplitude [-1, 1] -> radius [0.5, 1.5]
+        pre = matplotlib.transforms.Affine2D().scale(2 * np.pi / duration, 0.5).translate(0.0, 1.0)
+        coll = librosa.display.wavebars(y, sr=sr, ax=ax, pre_transform=pre, label="polar_bars")
+        assert isinstance(coll, matplotlib.collections.PatchCollection)
+        leg = ax.legend()
+        assert "polar_bars" in [t.get_text() for t in leg.get_texts()]
+
+        # Polar axis decorations must not be overwritten with TimeFormatter
+        assert not isinstance(ax.xaxis.get_major_formatter(), librosa.display.TimeFormatter)
+        assert ax.xaxis.get_label_text() != "Time"
+
+        # thetamin/thetamax should NOT be corrupted
+        assert np.isclose(ax.get_thetamin(), 0.0)
+        assert np.isclose(ax.get_thetamax(), 360.0)
+
+        # Verify data limits are in (theta, r) coordinates
+        assert 0.0 <= ax.dataLim.x0
+        assert ax.dataLim.x1 <= 2 * np.pi + 1e-3
+        assert 0.0 <= ax.dataLim.y0
+        assert ax.dataLim.y1 <= 2.0
+    finally:
+        plt.close(fig)
+
+
+def test_waveloop_default_waveshow(y, sr):
+    adaptor = librosa.display.waveloop(y, sr=sr)
+    fig = adaptor.steps.figure
+    try:
+        assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
+        ax = adaptor.steps.axes
+        assert ax.name == "polar"
+        assert ax.get_theta_direction() == -1
+        assert np.isclose(ax.get_theta_offset(), np.pi / 2)
+        assert len(ax.get_yticks()) == 0
+        assert ax.get_ylim()[0] == 0.0
+        assert ax.get_ylim()[1] == 1.0
+    finally:
+        plt.close(fig)
+
+
+def test_waveloop_default_bars(y, sr):
+    coll = librosa.display.waveloop(y, sr=sr, mode="bars", n_bars=64)
+    fig = coll.figure
+    try:
+        assert isinstance(coll, matplotlib.collections.PatchCollection)
+        ax = coll.axes
+        assert ax.name == "polar"
+        assert ax.get_theta_direction() == -1
+        assert np.isclose(ax.get_theta_offset(), np.pi / 2)
+        assert len(ax.get_yticks()) == 0
+        assert ax.get_ylim()[0] == 0.0
+        assert ax.get_ylim()[1] == 1.0
+    finally:
+        plt.close(fig)
+
+
+def test_waveloop_duration_fractional(y, sr):
+    sig_dur = len(y) / sr
+    target_dur = sig_dur * 2.0
+    adaptor = librosa.display.waveloop(y, sr=sr, duration=target_dur)
+    fig = adaptor.steps.figure
+    try:
+        ax = adaptor.steps.axes
+        # Signal fills [0, pi] within [0, 2*pi]
+        assert ax.dataLim.x0 >= 0.0
+        assert ax.dataLim.x1 <= np.pi + 0.1
+    finally:
+        plt.close(fig)
+
+
+def test_waveloop_peak_norm(y, sr):
+    y_loud = 5.0 * y
+    adaptor = librosa.display.waveloop(y_loud, sr=sr, peak_norm=True, r_range=(0.2, 0.8))
+    fig = adaptor.steps.figure
+    try:
+        ax = adaptor.steps.axes
+        assert ax.get_ylim()[0] == 0.0
+        assert ax.get_ylim()[1] == 0.8
+        # Make sure no radius exceeds 0.8 or falls below 0.2
+        assert ax.dataLim.y0 >= 0.2 - 0.05
+        assert ax.dataLim.y1 <= 0.8 + 0.05
+    finally:
+        plt.close(fig)
+
+    # Test peak_norm=False with standard amplitude
+    adaptor_nonorm = librosa.display.waveloop(y, sr=sr, peak_norm=False, r_range=(0.2, 0.8))
+    fig_nonorm = adaptor_nonorm.steps.figure
+    plt.close(fig_nonorm)
+
+
+def test_waveloop_concentric(y, sr):
+    fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+    try:
+        # First track (inner ring)
+        librosa.display.waveloop(y, sr=sr, r_range=(0.2, 0.5), ax=ax)
+        assert ax.get_ylim() == (0.0, 0.5)
+        # Second track (outer ring)
+        librosa.display.waveloop(y, sr=sr, r_range=(0.6, 1.0), ax=ax)
+        assert ax.get_ylim() == (0.0, 1.0)
+        assert ax.get_theta_direction() == -1
+        assert np.isclose(ax.get_theta_offset(), np.pi / 2)
+        assert len(ax.get_yticks()) == 0
+    finally:
+        plt.close(fig)
+
+
+def test_waveloop_orientation(sr):
+    # Verify exact angular positioning and clockwise progression
+    duration = 1.0
+    y = np.zeros(sr)
+    # Pulses at 4 cardinal quarter intervals
+    y[0] = 1.0
+    y[int(0.25 * sr)] = 1.0
+    y[int(0.50 * sr)] = 1.0
+    y[int(0.75 * sr)] = 1.0
+
+    fig, ax = plt.subplots(subplot_kw=dict(projection="polar"))
+    try:
+        librosa.display.waveloop(y, sr=sr, duration=duration, ax=ax)
+        fig.canvas.draw()
+        center = ax.transData.transform([0, 0])
+
+        for frac, exp_cw_deg in [(0.0, 0.0), (0.25, 90.0), (0.50, 180.0), (0.75, 270.0)]:
+            t_val = frac * duration
+            theta = t_val * 2 * np.pi
+            r = 0.75 + 0.25 * 1.0
+            disp = ax.transData.transform([theta, r])
+            dx = disp[0] - center[0]
+            dy = disp[1] - center[1]
+            angle_cw = np.degrees(np.arctan2(dx, dy))
+            if angle_cw < 0:
+                angle_cw += 360
+            assert np.isclose(angle_cw, exp_cw_deg, atol=1e-3)
+    finally:
+        plt.close(fig)
+
+
+def test_waveloop_decorate_false(y, sr):
+    fig, ax = plt.subplots(subplot_kw=dict(projection="polar"))
+    try:
+        # Default polar axes has direction=1 (CCW) and offset=0 (East)
+        librosa.display.waveloop(y, sr=sr, ax=ax, decorate=False)
+        assert ax.get_theta_direction() == 1
+        assert np.isclose(ax.get_theta_offset(), 0.0)
+    finally:
+        plt.close(fig)
+
+
+def test_waveloop_validation_errors(y, sr):
+    sig_dur = len(y) / sr
+
+    # Rectilinear axes
+    fig, ax = plt.subplots()
+    try:
+        with pytest.raises(librosa.ParameterValueError, match="ax must be a PolarAxes"):
+            librosa.display.waveloop(y, sr=sr, ax=ax)
+    finally:
+        plt.close(fig)
+
+    # Signal duration exceeds duration
+    with pytest.raises(librosa.ParameterValueError, match="exceeds duration"):
+        librosa.display.waveloop(y, sr=sr, duration=sig_dur / 2)
+
+    # Duration <= 0
+    with pytest.raises(librosa.ParameterValueError, match="duration must be strictly positive"):
+        librosa.display.waveloop(y, sr=sr, duration=0)
+    with pytest.raises(librosa.ParameterValueError, match="duration must be strictly positive"):
+        librosa.display.waveloop(y, sr=sr, duration=-1.5)
+
+    # Invalid r_range
+    with pytest.raises(librosa.ParameterValueError, match="r_range must be a tuple"):
+        librosa.display.waveloop(y, sr=sr, r_range="invalid")  # type: ignore[arg-type]
+    with pytest.raises(librosa.ParameterValueError, match="Must satisfy 0 <= r_min < r_max"):
+        librosa.display.waveloop(y, sr=sr, r_range=(-0.1, 1.0))
+    with pytest.raises(librosa.ParameterValueError, match="Must satisfy 0 <= r_min < r_max"):
+        librosa.display.waveloop(y, sr=sr, r_range=(1.0, 0.5))
+
+    # Invalid mode
+    with pytest.raises(librosa.ParameterValueError, match="Invalid mode"):
+        librosa.display.waveloop(y, sr=sr, mode="invalid")  # type: ignore[arg-type]
+
+    # Invalid direction
+    with pytest.raises(librosa.ParameterValueError, match="Invalid direction"):
+        librosa.display.waveloop(y, sr=sr, direction="diagonal")  # type: ignore[arg-type]
+
+    # Transpose not supported
+    with pytest.raises(librosa.ParameterValueError, match="transpose=True is not supported"):
+        librosa.display.waveloop(y, sr=sr, transpose=True)
 
 
 @pytest.mark.mpl_image_compare(

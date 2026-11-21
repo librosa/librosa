@@ -9,4 +9,5 @@ Data visualization
     waveshow
     wavebars
     wavef0
+    waveloop
     multiplot

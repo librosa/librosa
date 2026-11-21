@@ -33,6 +33,7 @@ __all__ = [
     "Transformf0",
     "wavebars",
     "wavef0",
+    "waveloop",
     "waveshow",
     "_WAVESHOW_ADAPTORS",
     "_WaveplotDecoy",
