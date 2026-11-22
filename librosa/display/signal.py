@@ -99,6 +99,10 @@ class AdaptiveWaveplot:
     label : str or None
         An optional label for the waveplot, used in legend entries.
 
+    pre_transform : matplotlib.transforms.Transform or None
+        An optional pre-transform mapping data coordinates to intermediate
+        display coordinates (e.g. for polar waveplots).
+
     See Also
     --------
     waveshow

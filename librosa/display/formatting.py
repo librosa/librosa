@@ -262,12 +262,31 @@ class TransformedLocator(mplticker.Locator):
         super().__init__()
 
     def set_axis(self, axis: Any) -> None:
-        """Set the axis for this locator and forward to base locator via proxy."""
+        """Set the axis for this locator and forward to base locator via proxy.
+
+        Parameters
+        ----------
+        axis : matplotlib.axis.Axis
+            The axis to bind to this locator.
+        """
         super().set_axis(axis)
         self.base_locator.set_axis(cast("Any", _AxisTimeProxy(axis, self.transform)))
 
     def tick_values(self, vmin: float, vmax: float) -> np.ndarray:  # type: ignore[override]
-        """Return the locations of the ticks in display coordinates."""
+        """Return the locations of the ticks in display coordinates.
+
+        Parameters
+        ----------
+        vmin : float
+            Minimum boundary in display coordinates.
+        vmax : float
+            Maximum boundary in display coordinates.
+
+        Returns
+        -------
+        ticks : np.ndarray
+            Locations of ticks in display coordinates.
+        """
         inv = self.transform.inverted()
         pts = inv.transform([[vmin, 0.0], [vmax, 0.0]])[:, 0]
         t_min, t_max = float(np.min(pts)), float(np.max(pts))
@@ -310,7 +329,13 @@ class TransformedFormatter(mplticker.Formatter):
         super().__init__()
 
     def set_axis(self, axis: Any) -> None:
-        """Set the axis for this formatter and forward to base formatter via proxy."""
+        """Set the axis for this formatter and forward to base formatter via proxy.
+
+        Parameters
+        ----------
+        axis : matplotlib.axis.Axis
+            The axis to bind to this formatter.
+        """
         super().set_axis(axis)
         self.base_formatter.set_axis(cast("Any", _AxisTimeProxy(axis, self.transform)))
 
@@ -362,7 +387,20 @@ class LoopLocator(mplticker.Locator):
         super().__init__()
 
     def tick_values(self, vmin: float, vmax: float) -> np.ndarray:  # type: ignore[override]
-        """Return the tick locations in signal seconds within ``[vmin, vmax]``."""
+        """Return the tick locations in signal seconds within ``[vmin, vmax]``.
+
+        Parameters
+        ----------
+        vmin : float
+            Minimum boundary in signal seconds.
+        vmax : float
+            Maximum boundary in signal seconds.
+
+        Returns
+        -------
+        ticks : np.ndarray
+            Array of tick locations in seconds.
+        """
         if self.divisions is None:
             n = min(self.PREF_DIVISIONS, key=lambda c: abs(c - self.nbins))
             ticks = np.linspace(0.0, self.duration, n, endpoint=False)
