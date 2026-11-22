@@ -390,13 +390,16 @@ def _envelope(x, hop):
 
 
 def _extract_pre_transform(
+    pre_transform: mtransforms.Transform | None,
     transform: mtransforms.Transform | None,
     axes: mplaxes.Axes,
 ) -> tuple[mtransforms.Transform, mtransforms.Transform | None]:
-    """Extract data-to-axes pre-transform and artist transform.
+    """Resolve data-to-axes pre-transform and artist transform.
 
     Parameters
     ----------
+    pre_transform : matplotlib.transforms.Transform or None
+        Explicit data-to-axes pre-transform, if provided.
     transform : matplotlib.transforms.Transform or None
         The transform supplied by the caller, if any.
     axes : matplotlib.axes.Axes
@@ -410,6 +413,11 @@ def _extract_pre_transform(
         The transform to be passed to Matplotlib artists (combining pre_transform
         with axes.transData).
     """
+    if pre_transform is not None:
+        if transform is not None:
+            return pre_transform, transform
+        return pre_transform, pre_transform + axes.transData
+
     if transform is None:
         return mtransforms.IdentityTransform(), None
 
@@ -687,17 +695,7 @@ def waveshow(
     axes = _check_axes(ax)
 
     # Resolve pre_transform and artist transform
-    if pre_transform is not None:
-        if "transform" in kwargs:
-            artist_transform = kwargs.pop("transform")
-        else:
-            artist_transform = pre_transform + axes.transData
-    elif "transform" in kwargs:
-        pre_transform, artist_transform = _extract_pre_transform(kwargs.pop("transform"), axes)
-    else:
-        pre_transform = mtransforms.IdentityTransform()
-        artist_transform = None
-
+    pre_transform, artist_transform = _extract_pre_transform(pre_transform, kwargs.pop("transform", None), axes)
     if artist_transform is not None:
         kwargs["transform"] = artist_transform
 
@@ -974,17 +972,7 @@ def wavebars(
     axes = _check_axes(ax)
 
     # Resolve pre_transform and artist transform
-    if pre_transform is not None:
-        if "transform" in patch_kwargs:
-            artist_transform = patch_kwargs.pop("transform")
-        else:
-            artist_transform = pre_transform + axes.transData
-    elif "transform" in patch_kwargs:
-        pre_transform, artist_transform = _extract_pre_transform(patch_kwargs.pop("transform"), axes)
-    else:
-        pre_transform = mtransforms.IdentityTransform()
-        artist_transform = None
-
+    pre_transform, artist_transform = _extract_pre_transform(pre_transform, patch_kwargs.pop("transform", None), axes)
     if artist_transform is not None:
         patch_kwargs["transform"] = artist_transform
     else:
@@ -1383,7 +1371,8 @@ def _ensure_polar_axes(ax: mplaxes.Axes) -> PolarAxes:
     fig = ax.figure if ax.figure is not None else plt.gcf()
     ss = ax.get_subplotspec()
     rect = ax.get_position()
-    title = ax.get_title()
+    loc_names: tuple[Literal["left", "center", "right"], ...] = ("left", "center", "right")
+    titles = {loc: ax.get_title(loc=loc) for loc in loc_names if ax.get_title(loc=loc)}
 
     # Uncouple from shared Cartesian axes if any
     if hasattr(ax, "_shared_axes"):
@@ -1396,8 +1385,8 @@ def _ensure_polar_axes(ax: mplaxes.Axes) -> PolarAxes:
     PolarAxes.__init__(cast("PolarAxes", ax), fig, rect)
     if ss is not None:
         ax.set_subplotspec(ss)
-    if title:
-        ax.set_title(title)
+    for loc, title in titles.items():
+        ax.set_title(title, loc=loc)
 
     return cast("PolarAxes", ax)
 
@@ -1533,7 +1522,7 @@ def waveloop(
         duration = sig_dur
     elif duration <= 0:
         raise ParameterValueError(f"duration must be strictly positive, got {duration}")
-    elif sig_dur > duration:
+    elif sig_dur > duration and not np.isclose(sig_dur, duration, atol=1e-6):
         raise ParameterValueError(
             f"Signal duration ({sig_dur:.3f}s) exceeds duration ({duration:.3f}s). Multiple cycles are not supported."
         )
@@ -1574,7 +1563,7 @@ def waveloop(
     k = (r_max - r_min) / 2
 
     # Linear Affine pre-transform: (t, a) -> (theta, r)
-    pre = mtransforms.Affine2D().scale(2 * np.pi / duration, k).translate(phase, r0)
+    pre = mtransforms.Affine2D().translate(-offset, 0).scale(2 * np.pi / duration, k).translate(phase, r0)
 
     if decorate:
         theta_dir = -1 if direction in ("clockwise", -1) else 1
@@ -1594,6 +1583,7 @@ def waveloop(
                 time_axis,
                 transform=pre,
                 duration=duration,
+                offset=offset,
             )
 
     if method == "waveshow":

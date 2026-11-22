@@ -11,7 +11,7 @@ with contextlib.suppress(KeyError):
 
 import gc
 import weakref
-from typing import Any
+from typing import Any, cast
 
 import matplotlib
 import matplotlib.collections
@@ -23,6 +23,7 @@ import matplotlib.transforms as mtransforms
 import numpy as np
 import pytest
 from matplotlib import colormaps as mcm
+from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.testing.conftest import text_placeholders  # noqa: F401
@@ -2349,6 +2350,189 @@ def test_multiplot_waveloop_fig_kw(y, sr):
         assert np.allclose(fig_custom.get_size_inches(), (7, 7))
     finally:
         plt.close(fig_custom)
+
+
+def test_waveloop_offset(y, sr):
+    dur = 4.0
+    y_short = y[: int(2.0 * sr)]
+    adaptor = librosa.display.waveloop(y_short, sr=sr, offset=1.5, duration=dur)
+    assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
+    assert adaptor.steps is not None and adaptor.steps.figure is not None
+    fig = adaptor.steps.figure
+    assert isinstance(fig, Figure)
+    try:
+        ax = adaptor.steps.axes
+        assert isinstance(ax, PolarAxes)
+        ticks = ax.xaxis.get_majorticklocs()
+        # First tick should be at angle 0.0 (aligned with 12 o'clock theta_offset)
+        assert np.isclose(ticks[0], 0.0)
+        # Formatter should convert angle 0.0 back to time 1.5s
+        fmt = ax.xaxis.get_major_formatter()
+        lbl0 = fmt(ticks[0])
+        assert "01" in lbl0 or "1.5" in lbl0
+    finally:
+        plt.close(fig)
+
+
+def test_extract_pre_transform_branches():
+    fig, ax = plt.subplots()
+    try:
+        # 1. transform is None
+        pre, art = librosa.display.signal._extract_pre_transform(None, None, ax)
+        assert isinstance(pre, mtransforms.IdentityTransform)
+        assert art is None
+
+        # 2. pre_transform is not None, transform is not None
+        custom_pre = mtransforms.Affine2D().scale(2.0)
+        custom_art = custom_pre + ax.transData
+        pre, art = librosa.display.signal._extract_pre_transform(custom_pre, custom_art, ax)
+        assert pre is custom_pre
+        assert art is custom_art
+
+        # 3. transform == ax.transData
+        pre, art = librosa.display.signal._extract_pre_transform(None, ax.transData, ax)
+        assert isinstance(pre, mtransforms.IdentityTransform)
+        assert art == ax.transData
+
+        # 4. Chained composite: (t1 + t2) + ax.transData
+        t1 = mtransforms.Affine2D().scale(2.0)
+        t2 = mtransforms.Affine2D().translate(1.0, 0.0)
+        chained = (t1 + t2) + ax.transData
+        pre, art = librosa.display.signal._extract_pre_transform(None, chained, ax)
+        assert art == chained
+        # Check that pre matches (t1 + t2)
+        pt = pre.transform([[1.0, 0.0]])
+        expected = (t1 + t2).transform([[1.0, 0.0]])
+        assert np.allclose(pt, expected)
+
+        # 4b. Right-nested chained composite: t1 + (t2 + ax.transData)
+        chained_r = t1 + (t2 + ax.transData)
+        pre_r, art_r = librosa.display.signal._extract_pre_transform(None, chained_r, ax)
+        assert art_r == chained_r
+        pt_r = pre_r.transform([[1.0, 0.0]])
+        assert np.allclose(pt_r, expected)
+
+        # 5. Standalone transform without ax.transData
+        standalone = mtransforms.Affine2D().scale(3.0)
+        pre, art = librosa.display.signal._extract_pre_transform(None, standalone, ax)
+        assert pre is standalone
+        assert art is not None
+    finally:
+        plt.close(fig)
+
+
+def test_waveshow_custom_transform_transpose_and_mask(y, sr):
+    pre = mtransforms.Affine2D().scale(2.0, 1.0)
+    mask = np.ones(len(y), dtype=bool)
+    mask[::3] = False
+    adaptor = librosa.display.waveshow(y, sr=sr, pre_transform=pre, transpose=True, mask=mask)
+    assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
+    assert adaptor.steps is not None and adaptor.steps.figure is not None
+    fig = adaptor.steps.figure
+    assert isinstance(fig, Figure)
+    try:
+        ax = adaptor.steps.axes
+        assert ax is not None
+    finally:
+        plt.close(fig)
+
+
+def test_wavebars_pre_transform_with_transform_kwarg(y, sr):
+    fig, ax = plt.subplots()
+    try:
+        pre = mtransforms.Affine2D().scale(2.0, 1.0)
+        art = pre + ax.transData
+        coll = librosa.display.wavebars(y, sr=sr, pre_transform=pre, transform=art, ax=ax)
+        assert isinstance(coll, mcoll.PatchCollection)
+    finally:
+        plt.close(fig)
+
+
+def test_waveshow_pre_transform_with_transform_kwarg(y, sr):
+    fig, ax = plt.subplots()
+    try:
+        pre = mtransforms.Affine2D().scale(2.0, 1.0)
+        art = pre + ax.transData
+        adaptor = librosa.display.waveshow(y, sr=sr, pre_transform=pre, transform=art, ax=ax)
+        assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
+    finally:
+        plt.close(fig)
+
+
+def test_adaptive_waveplot_out_of_bounds_viewport(y, sr):
+    adaptor = librosa.display.waveshow(y, sr=sr)
+    assert adaptor.steps is not None and adaptor.steps.figure is not None
+    fig = adaptor.steps.figure
+    assert isinstance(fig, Figure)
+    try:
+        ax = adaptor.steps.axes
+        assert isinstance(ax, Axes)
+        # Set xlim far outside the signal time span
+        ax.set_xlim(1000.0, 2000.0)
+        adaptor.update(ax)
+        # Set xlim with reversed or non-finite values
+        ax.set_xlim(2.0, 1.0)
+        adaptor.update(ax)
+    finally:
+        plt.close(fig)
+
+
+def test_adaptive_waveplot_handler_expired_ref():
+    class DummyParent:
+        pass
+
+    dummy = DummyParent()
+    decoy = librosa.display.signal._WaveplotDecoy(cast("Any", dummy))
+    del dummy
+    handler = librosa.display.signal._AdaptiveWaveplotHandler()
+    res = handler.create_artists(
+        cast("Any", None),
+        decoy,
+        0.0,
+        0.0,
+        10.0,
+        10.0,
+        12.0,
+        mtransforms.IdentityTransform(),
+    )
+    assert res == []
+
+
+def test_loop_locator_inverted_bounds():
+    loc = librosa.display.LoopLocator(duration=4.0, offset=1.0)
+    ticks = loc.tick_values(5.0, 1.0)
+    assert len(ticks) == 8
+    assert np.isclose(ticks[0], 1.0)
+    assert np.isclose(ticks[-1], 1.0 + 3.5)
+
+
+def test_transformed_formatter_methods():
+    fig, ax = plt.subplots()
+    try:
+        pre = mtransforms.Affine2D().scale(2.0, 1.0)
+        base_fmt = librosa.display.TimeFormatter(unit="s")
+        fmt = librosa.display.TransformedFormatter(base_fmt, pre)
+        fmt.set_axis(ax.xaxis)
+        # format_ticks
+        labels = fmt.format_ticks([0.0, 2.0, 4.0])
+        assert len(labels) == 3
+        assert fmt.format_ticks([]) == []
+        # format_data_short
+        s = fmt.format_data_short(2.0)
+        assert "1" in s
+        # ChromaSvaraFormatter default Sa=None
+        csf = librosa.display.formatting.ChromaSvaraFormatter(Sa=None)
+        assert csf.Sa == 0
+        # set_axis(None)
+        fmt.set_axis(None)
+        assert fmt.axis is None
+        # TransformedLocator set_axis(None)
+        base_loc = librosa.display.LoopLocator(duration=4.0)
+        loc = librosa.display.TransformedLocator(base_loc, pre)
+        loc.set_axis(None)
+        assert loc.axis is None
+    finally:
+        plt.close(fig)
 
 
 @pytest.mark.mpl_image_compare(

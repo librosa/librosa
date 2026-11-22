@@ -475,6 +475,7 @@ def multiplot(
     --------
     waveshow
     wavebars
+    waveloop
     specshow
     legend_for_axes
 

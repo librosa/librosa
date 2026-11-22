@@ -266,11 +266,14 @@ class TransformedLocator(mplticker.Locator):
 
         Parameters
         ----------
-        axis : matplotlib.axis.Axis
+        axis : matplotlib.axis.Axis or None
             The axis to bind to this locator.
         """
         super().set_axis(axis)
-        self.base_locator.set_axis(cast("Any", _AxisTimeProxy(axis, self.transform)))
+        if axis is not None:
+            self.base_locator.set_axis(cast("Any", _AxisTimeProxy(axis, self.transform)))
+        else:
+            self.base_locator.set_axis(None)
 
     def tick_values(self, vmin: float, vmax: float) -> np.ndarray:  # type: ignore[override]
         """Return the locations of the ticks in display coordinates.
@@ -333,17 +336,57 @@ class TransformedFormatter(mplticker.Formatter):
 
         Parameters
         ----------
-        axis : matplotlib.axis.Axis
+        axis : matplotlib.axis.Axis or None
             The axis to bind to this formatter.
         """
         super().set_axis(axis)
-        self.base_formatter.set_axis(cast("Any", _AxisTimeProxy(axis, self.transform)))
+        if axis is not None:
+            self.base_formatter.set_axis(cast("Any", _AxisTimeProxy(axis, self.transform)))
+        else:
+            self.base_formatter.set_axis(None)
 
     def __call__(self, x: float, pos: int | None = None) -> str:
         """Format tick value ``x`` (in display coordinates) as a string."""
         inv = self.transform.inverted()
         t = float(inv.transform([[x, 0.0]])[0, 0])
         return self.base_formatter(t, pos)
+
+    def format_ticks(self, values: Sequence[float]) -> list[str]:
+        """Return the formatted tick labels for the given values.
+
+        Parameters
+        ----------
+        values : Sequence[float]
+            Tick positions in display coordinates.
+
+        Returns
+        -------
+        labels : list of str
+            Formatted string representations of each tick value.
+        """
+        if len(values) == 0:
+            return []
+        inv = self.transform.inverted()
+        pts = np.column_stack([values, np.zeros(len(values))])
+        t_vals = inv.transform(pts)[:, 0]
+        return self.base_formatter.format_ticks(t_vals.tolist())
+
+    def format_data_short(self, value: float) -> str:
+        """Return a short string representation of value for cursor position reporting.
+
+        Parameters
+        ----------
+        value : float
+            Coordinate value in display coordinates.
+
+        Returns
+        -------
+        label : str
+            Formatted string representation in signal units.
+        """
+        inv = self.transform.inverted()
+        t = float(inv.transform([[value, 0.0]])[0, 0])
+        return self.base_formatter.format_data_short(t)
 
 
 class LoopLocator(mplticker.Locator):
@@ -366,6 +409,8 @@ class LoopLocator(mplticker.Locator):
         `(2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)` based on `nbins`.
     nbins : int
         Target number of bins when `divisions` is `None`. Default is 8.
+    offset : float
+        Starting time offset in seconds. Default is 0.0.
     """
 
     PREF_DIVISIONS: tuple[int, ...] = (2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)
@@ -376,6 +421,7 @@ class LoopLocator(mplticker.Locator):
         *,
         divisions: int | Sequence[float] | None = None,
         nbins: int = 8,
+        offset: float = 0.0,
     ) -> None:
         if duration <= 0:
             raise ParameterValueError(f"duration must be strictly positive, got {duration}")
@@ -384,6 +430,7 @@ class LoopLocator(mplticker.Locator):
         self.duration = float(duration)
         self.divisions = divisions
         self.nbins = int(nbins)
+        self.offset = float(offset)
         super().__init__()
 
     def tick_values(self, vmin: float, vmax: float) -> np.ndarray:  # type: ignore[override]
@@ -403,15 +450,16 @@ class LoopLocator(mplticker.Locator):
         """
         if self.divisions is None:
             n = min(self.PREF_DIVISIONS, key=lambda c: abs(c - self.nbins))
-            ticks = np.linspace(0.0, self.duration, n, endpoint=False)
+            ticks = self.offset + np.linspace(0.0, self.duration, n, endpoint=False)
         elif isinstance(self.divisions, (int, np.integer)):
-            ticks = np.linspace(0.0, self.duration, int(self.divisions), endpoint=False)
+            ticks = self.offset + np.linspace(0.0, self.duration, int(self.divisions), endpoint=False)
         else:
             raw = np.asarray(self.divisions, dtype=float)
             ticks = raw
 
         tol = 1e-6 * self.duration
-        mask = (ticks >= vmin - tol) & (ticks < vmax - tol)
+        lo, hi = (vmin, vmax) if vmin <= vmax else (vmax, vmin)
+        mask = (ticks >= lo - tol) & (ticks < hi - tol)
         return ticks[mask]
 
     def __call__(self) -> np.ndarray:  # type: ignore[override]
@@ -419,7 +467,7 @@ class LoopLocator(mplticker.Locator):
         if self.axis is not None:
             vmin, vmax = self.axis.get_view_interval()
         else:
-            vmin, vmax = 0.0, self.duration
+            vmin, vmax = self.offset, self.offset + self.duration
         return self.tick_values(vmin, vmax)
 
 
@@ -1291,6 +1339,7 @@ def _decorate_axis(
     transform=None,
     duration=None,
     divisions=None,
+    offset=0.0,
 ):
     """Configure axis tickers, locators, and labels"""
     if ax_type is None or ax_type is False or (isinstance(ax_type, str) and ax_type.lower() in ("none", "off")):
@@ -1308,6 +1357,7 @@ def _decorate_axis(
             if duration is not None:
                 base_loc: mplticker.Locator = LoopLocator(
                     duration=duration,
+                    offset=offset,
                     divisions=cast("int | Sequence[float] | None", eff_divisions),
                 )
             else:
@@ -1319,6 +1369,7 @@ def _decorate_axis(
                 axis.set_major_locator(
                     LoopLocator(
                         duration=duration,
+                        offset=offset,
                         divisions=cast("int | Sequence[float] | None", eff_divisions),
                     )
                 )
@@ -1446,6 +1497,7 @@ def _decorate_axis(
         if duration is not None:
             base_loc = LoopLocator(
                 duration=duration,
+                offset=offset,
                 divisions=cast("int | Sequence[float] | None", eff_divisions),
             )
         else:
@@ -1645,10 +1697,6 @@ def _decorate_axis(
 
     elif ax_type == "frames":
         axis.set_label_text("Frames")
-
-    elif ax_type in ["off", "none", None, False]:
-        axis.set_label_text("")
-        axis.set_ticks([])
 
     else:
         raise ParameterValueError(f"Unsupported axis type: {ax_type}")
