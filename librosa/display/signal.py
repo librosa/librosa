@@ -1509,14 +1509,16 @@ def waveloop(
     Plot a synthesized audio loop in polar coordinates:
 
     >>> import matplotlib.pyplot as plt
-    >>> y, sr = librosa.load(librosa.ex("choice"))
+    >>> y, sr = librosa.loadx("choice")
     >>> fig, ax = plt.subplots()
     >>> librosa.display.waveloop(y, sr=sr, ax=ax)
+    >>> plt.show()
 
     Plot concentric tracks with discrete bars:
 
     >>> fig, ax = plt.subplots()
     >>> librosa.display.waveloop(y, sr=sr, r_range=(0.6, 1.0), method="wavebars", ax=ax)
+    >>> plt.show()
     """
     if kwargs.get("transpose", False):
         raise ParameterValueError("transpose=True is not supported in waveloop.")
