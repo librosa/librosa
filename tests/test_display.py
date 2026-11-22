@@ -2106,6 +2106,19 @@ def test_waveloop_time_axis(y, sr):
     finally:
         plt.close(fig_ms)
 
+    # 6. NumPy array sequence: time_axis=np.array([0.0, 1.0, 2.0])
+    custom_arr = np.array([0.0, 1.0, 2.0])
+    adaptor_arr = librosa.display.waveloop(y, sr=sr, time_axis=custom_arr)
+    fig_arr = adaptor_arr.steps.figure
+    try:
+        ax_arr = adaptor_arr.steps.axes
+        ticks_arr = ax_arr.xaxis.get_majorticklocs()
+        assert len(ticks_arr) == len(custom_arr)
+        expected_angles = custom_arr * (2 * np.pi / dur)
+        assert np.allclose(ticks_arr, expected_angles, atol=1e-3)
+    finally:
+        plt.close(fig_arr)
+
 
 @pytest.mark.mpl_image_compare(
     baseline_images=["wavef0"],

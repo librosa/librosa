@@ -1515,16 +1515,20 @@ def waveloop(
         ax.set_theta_direction(theta_dir)
         ax.set_theta_offset(theta_offset)
         ax.set_rticks([])
-        if time_axis not in (None, False, "none", "off"):
+        if (
+            time_axis is None
+            or time_axis is False
+            or (isinstance(time_axis, str) and time_axis.lower() in ("none", "off"))
+        ):
+            ax.xaxis.set_major_formatter(mplticker.NullFormatter())
+            ax.xaxis.set_major_locator(mplticker.NullLocator())
+        else:
             _decorate_axis(
                 ax.xaxis,
                 time_axis,
                 transform=pre,
                 duration=duration,
             )
-        else:
-            ax.xaxis.set_major_formatter(mplticker.NullFormatter())
-            ax.xaxis.set_major_locator(mplticker.NullLocator())
 
     if mode == "waveshow":
         artist: AdaptiveWaveplot | mcollections.PatchCollection = waveshow(

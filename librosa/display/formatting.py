@@ -1252,9 +1252,45 @@ def _decorate_axis(
     divisions=None,
 ):
     """Configure axis tickers, locators, and labels"""
-    fmin = util._ensure_hz(fmin)
+    if ax_type is None or ax_type is False or (isinstance(ax_type, str) and ax_type.lower() in ("none", "off")):
+        axis.set_label_text("")
+        axis.set_ticks([])
+        return
 
     time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
+
+    if isinstance(ax_type, (int, np.integer, np.ndarray, Sequence)) and not isinstance(ax_type, (str, bytes)):
+        eff_divisions = ax_type
+        if transform is not None:
+            base_fmt: mplticker.Formatter = TimeFormatter(unit=None, lag=False)
+            axis.set_major_formatter(TransformedFormatter(base_fmt, transform))
+            if duration is not None:
+                base_loc: mplticker.Locator = LoopLocator(
+                    duration=duration,
+                    divisions=cast("int | Sequence[float] | None", eff_divisions),
+                )
+            else:
+                base_loc = mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
+            axis.set_major_locator(TransformedLocator(base_loc, transform))
+        else:
+            axis.set_major_formatter(TimeFormatter(unit=None, lag=False))
+            if duration is not None:
+                axis.set_major_locator(
+                    LoopLocator(
+                        duration=duration,
+                        divisions=cast("int | Sequence[float] | None", eff_divisions),
+                    )
+                )
+            elif isinstance(eff_divisions, (int, np.integer)):
+                axis.set_major_locator(mplticker.MaxNLocator(nbins=int(eff_divisions), prune=None))
+            else:
+                axis.set_major_locator(mplticker.FixedLocator(cast("Sequence[float]", eff_divisions)))
+
+        if getattr(axis.axes, "name", None) != "polar":
+            axis.set_label_text("Time")
+        return
+
+    fmin = util._ensure_hz(fmin)
 
     if ax_type == "tonnetz":
         axis.set_major_formatter(TonnetzFormatter())
@@ -1360,22 +1396,14 @@ def _decorate_axis(
         axis.set_major_locator(mplticker.LogLocator(base=2.0))
         axis.set_label_text("BPM")
 
-    elif (
-        ax_type == "time"
-        or (isinstance(ax_type, str) and ax_type in time_units)
-        or isinstance(ax_type, (int, np.integer))
-        or (isinstance(ax_type, Sequence) and not isinstance(ax_type, str))
-    ) and transform is not None:
+    elif (ax_type == "time" or (isinstance(ax_type, str) and ax_type in time_units)) and transform is not None:
         unit = ax_type if isinstance(ax_type, str) and ax_type in time_units else None
         base_fmt = TimeFormatter(unit=unit, lag=False)
         axis.set_major_formatter(TransformedFormatter(base_fmt, transform))
 
         eff_divisions = divisions
-        if isinstance(ax_type, (int, np.integer, Sequence)) and not isinstance(ax_type, str):
-            eff_divisions = ax_type
-
         if duration is not None:
-            base_loc: mplticker.Locator = LoopLocator(
+            base_loc = LoopLocator(
                 duration=duration,
                 divisions=cast("int | Sequence[float] | None", eff_divisions),
             )
