@@ -7,6 +7,7 @@ def test_public_api_surface():
         "waveshow",
         "wavebars",
         "wavef0",
+        "waveloop",
         "multiplot",
         "highlight",
         "infer_cmap",
@@ -22,6 +23,9 @@ def test_public_api_surface():
         "ChromaFJSFormatter",
         "TonnetzFormatter",
         "AdaptiveWaveplot",
+        "LoopLocator",
+        "TransformedLocator",
+        "TransformedFormatter",
     ]
     for symbol in expected_symbols:
         assert hasattr(librosa.display, symbol), f"librosa.display missing {symbol}"

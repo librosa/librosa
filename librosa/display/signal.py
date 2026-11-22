@@ -22,6 +22,7 @@ import matplotlib.collections as mcollections
 import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mplticker
 import matplotlib.transforms as mtransforms
 import numpy as np
 from matplotlib.legend import Legend
@@ -1358,6 +1359,7 @@ def waveloop(
     n_bars: int = 512,
     offset: float = 0.0,
     peak_norm: bool = True,
+    time_axis: str | int | Sequence[float] | None = "time",
     theta_offset: float = np.pi / 2,
     direction: Literal["clockwise", "counterclockwise", -1, 1] = "clockwise",
     decorate: bool = True,
@@ -1402,6 +1404,14 @@ def waveloop(
         If ``True`` (default), normalizes ``y`` by its peak amplitude
         (``y / max(|y|)``) before mapping into ``r_range``, preventing
         clipping or negative-radius origin crossings.
+    time_axis : str, int, Sequence[float], or None
+        Display style of the time axis around the circle. Accepted values are:
+
+        - 'time' (default) : Formatted timestamps (adaptive unit via `TimeFormatter`).
+        - 's', 'ms', 'm', 'h' : Formatted timestamps using the specified unit.
+        - int : Number of equal subdivisions (e.g. 4, 8, 12, 16, 24, 32).
+        - Sequence[float] : Explicit timestamp locations in seconds.
+        - None, 'none', or 'off' : Ticks and labels are hidden.
     theta_offset : float
         Starting angle (in radians) of the circle. Default is ``pi / 2``
         (12 o'clock / top).
@@ -1494,17 +1504,27 @@ def waveloop(
 
     has_prior_artists = bool(ax.lines or ax.collections or ax.patches)
 
-    if decorate:
-        theta_dir = -1 if direction in ("clockwise", -1) else 1
-        ax.set_theta_direction(theta_dir)
-        ax.set_theta_offset(theta_offset)
-        ax.set_rticks([])
-
     r0 = (r_min + r_max) / 2
     k = (r_max - r_min) / 2
 
     # Linear Affine pre-transform: (t, a) -> (theta, r)
     pre = mtransforms.Affine2D().scale(2 * np.pi / duration, k).translate(phase, r0)
+
+    if decorate:
+        theta_dir = -1 if direction in ("clockwise", -1) else 1
+        ax.set_theta_direction(theta_dir)
+        ax.set_theta_offset(theta_offset)
+        ax.set_rticks([])
+        if time_axis not in (None, False, "none", "off"):
+            _decorate_axis(
+                ax.xaxis,
+                time_axis,
+                transform=pre,
+                duration=duration,
+            )
+        else:
+            ax.xaxis.set_major_formatter(mplticker.NullFormatter())
+            ax.xaxis.set_major_locator(mplticker.NullLocator())
 
     if mode == "waveshow":
         artist: AdaptiveWaveplot | mcollections.PatchCollection = waveshow(

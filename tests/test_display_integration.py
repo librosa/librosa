@@ -142,6 +142,7 @@ def test_display_namespace_fidelity():
         "waveshow",
         "wavebars",
         "wavef0",
+        "waveloop",
         "TimeFormatter",
         "NoteFormatter",
         "LogHzFormatter",
@@ -149,6 +150,9 @@ def test_display_namespace_fidelity():
         "TonnetzFormatter",
         "FJSFormatter",
         "AdaptiveWaveplot",
+        "LoopLocator",
+        "TransformedLocator",
+        "TransformedFormatter",
         "infer_cmap",
         "multiplot",
     ]

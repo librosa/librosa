@@ -18,6 +18,7 @@ import matplotlib.collections
 import matplotlib.collections as mcoll
 import matplotlib.lines as mlines
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mplticker
 import matplotlib.transforms as mtransforms
 import numpy as np
 import pytest
@@ -1939,6 +1940,171 @@ def test_waveloop_validation_errors(y, sr):
     # Transpose not supported
     with pytest.raises(librosa.ParameterValueError, match="transpose=True is not supported"):
         librosa.display.waveloop(y, sr=sr, transpose=True)
+
+
+def test_loop_locator():
+    # Test preferred divisions
+    loc8 = librosa.display.LoopLocator(duration=4.0, nbins=8)
+    ticks8 = loc8.tick_values(0.0, 4.0)
+    assert len(ticks8) == 8
+    assert np.allclose(ticks8, np.linspace(0.0, 4.0, 8, endpoint=False))
+
+    loc4 = librosa.display.LoopLocator(duration=4.0, nbins=4)
+    ticks4 = loc4.tick_values(0.0, 4.0)
+    assert len(ticks4) == 4
+    assert np.allclose(ticks4, [0.0, 1.0, 2.0, 3.0])
+
+    loc12 = librosa.display.LoopLocator(duration=4.0, nbins=12)
+    assert len(loc12.tick_values(0.0, 4.0)) == 12
+
+    loc16 = librosa.display.LoopLocator(duration=4.0, nbins=16)
+    assert len(loc16.tick_values(0.0, 4.0)) == 16
+
+    loc24 = librosa.display.LoopLocator(duration=4.0, nbins=24)
+    assert len(loc24.tick_values(0.0, 4.0)) == 24
+
+    loc32 = librosa.display.LoopLocator(duration=4.0, nbins=32)
+    assert len(loc32.tick_values(0.0, 4.0)) == 32
+
+    # Nearest bin selection: nbins=10 -> 8 or 12
+    loc10 = librosa.display.LoopLocator(duration=4.0, nbins=10)
+    assert len(loc10.tick_values(0.0, 4.0)) in (8, 12)
+
+    # Explicit integer division
+    loc_div6 = librosa.display.LoopLocator(duration=6.0, divisions=6)
+    assert np.allclose(loc_div6.tick_values(0.0, 6.0), np.arange(6, dtype=float))
+
+    # Explicit timestamp array
+    custom_times = [0.25, 1.5, 3.75]
+    loc_custom = librosa.display.LoopLocator(duration=4.0, divisions=custom_times)
+    assert np.allclose(loc_custom.tick_values(0.0, 4.0), custom_times)
+
+    # Boundary filtering: endpoint excluded and interval bounded
+    ticks_sub = loc8.tick_values(1.0, 3.0)
+    assert np.all(ticks_sub >= 1.0 - 1e-6)
+    assert np.all(ticks_sub < 3.0 - 1e-6)
+
+    # Calling with axis vs without axis
+    fig, ax = plt.subplots()
+    try:
+        loc8.set_axis(ax.xaxis)
+        ax.set_xlim(0.0, 4.0)
+        assert len(loc8()) == 8
+    finally:
+        plt.close(fig)
+
+    # Parameter validation
+    with pytest.raises(librosa.ParameterValueError, match="duration must be strictly positive"):
+        librosa.display.LoopLocator(duration=0.0)
+    with pytest.raises(librosa.ParameterValueError, match="duration must be strictly positive"):
+        librosa.display.LoopLocator(duration=-1.0)
+    with pytest.raises(librosa.ParameterValueError, match="divisions must be positive"):
+        librosa.display.LoopLocator(duration=4.0, divisions=0)
+    with pytest.raises(librosa.ParameterValueError, match="divisions must be positive"):
+        librosa.display.LoopLocator(duration=4.0, divisions=-4)
+
+
+def test_transformed_locator():
+    # Pre-transform mapping [0, 4] -> [0, 2pi]
+    pre = mtransforms.Affine2D().scale(2 * np.pi / 4.0, 1.0)
+    base_loc = mplticker.FixedLocator([0.0, 1.0, 2.0, 3.0])
+    trans_loc = librosa.display.TransformedLocator(base_loc, pre)
+
+    # View interval in display space [0, 2pi]
+    disp_ticks = trans_loc.tick_values(0.0, 2 * np.pi)
+    expected_disp = np.array([0.0, np.pi / 2, np.pi, 3 * np.pi / 2])
+    assert np.allclose(disp_ticks, expected_disp)
+
+    # Empty ticks handled cleanly
+    empty_loc = mplticker.FixedLocator([])
+    trans_empty = librosa.display.TransformedLocator(empty_loc, pre)
+    assert len(trans_empty.tick_values(0.0, 2 * np.pi)) == 0
+
+
+def test_transformed_formatter():
+    # Pre-transform mapping [0, 4] -> [0, 2pi]
+    pre = mtransforms.Affine2D().scale(2 * np.pi / 4.0, 1.0)
+    base_fmt = librosa.display.TimeFormatter(unit="s")
+    trans_fmt = librosa.display.TransformedFormatter(base_fmt, pre)
+
+    fig, ax = plt.subplots()
+    try:
+        trans_fmt.set_axis(ax.xaxis)
+        # Display coordinate np.pi corresponds to t = 2.0s
+        label = trans_fmt(np.pi)
+        assert "02" in label or "2" in label
+
+        # View interval proxy test
+        proxy = librosa.display.formatting._AxisTimeProxy(ax.xaxis, pre)
+        ax.set_xlim(0.0, 2 * np.pi)
+        v_min, v_max = proxy.get_view_interval()
+        assert np.isclose(v_min, 0.0)
+        assert np.isclose(v_max, 4.0)
+    finally:
+        plt.close(fig)
+
+
+def test_waveloop_time_axis(y, sr):
+    dur = len(y) / sr
+    # 1. Default time_axis="time" -> 8 ticks on polar xaxis
+    adaptor = librosa.display.waveloop(y, sr=sr)
+    fig = adaptor.steps.figure
+    try:
+        ax = adaptor.steps.axes
+        assert isinstance(ax.xaxis.get_major_locator(), librosa.display.TransformedLocator)
+        assert isinstance(ax.xaxis.get_major_formatter(), librosa.display.TransformedFormatter)
+        ticks = ax.xaxis.get_majorticklocs()
+        assert len(ticks) == 8
+        assert np.all(ticks >= 0.0)
+        assert np.all(ticks < 2 * np.pi + 1e-4)
+    finally:
+        plt.close(fig)
+
+    # 2. Integer division count: time_axis=16
+    adaptor16 = librosa.display.waveloop(y, sr=sr, time_axis=16)
+    fig16 = adaptor16.steps.figure
+    try:
+        ax16 = adaptor16.steps.axes
+        ticks16 = ax16.xaxis.get_majorticklocs()
+        assert len(ticks16) == 16
+    finally:
+        plt.close(fig16)
+
+    # 3. Explicit timestamp sequence: time_axis=[0.0, 1.0, 2.0]
+    custom_ts = [0.0, 1.0, 2.0]
+    adaptor_custom = librosa.display.waveloop(y, sr=sr, time_axis=custom_ts)
+    fig_c = adaptor_custom.steps.figure
+    try:
+        ax_c = adaptor_custom.steps.axes
+        ticks_c = ax_c.xaxis.get_majorticklocs()
+        assert len(ticks_c) == len(custom_ts)
+        expected_angles = np.array(custom_ts) * (2 * np.pi / dur)
+        assert np.allclose(ticks_c, expected_angles, atol=1e-3)
+    finally:
+        plt.close(fig_c)
+
+    # 4. time_axis=None / "off"
+    for no_time in (None, False, "none", "off"):
+        ad_none = librosa.display.waveloop(y, sr=sr, time_axis=no_time)
+        fig_n = ad_none.steps.figure
+        try:
+            ax_n = ad_none.steps.axes
+            assert isinstance(ax_n.xaxis.get_major_formatter(), mplticker.NullFormatter)
+            assert isinstance(ax_n.xaxis.get_major_locator(), mplticker.NullLocator)
+        finally:
+            plt.close(fig_n)
+
+    # 5. Unit specified: time_axis="ms"
+    ad_ms = librosa.display.waveloop(y, sr=sr, time_axis="ms")
+    fig_ms = ad_ms.steps.figure
+    try:
+        ax_ms = ad_ms.steps.axes
+        labels = [ax_ms.xaxis.get_major_formatter()(tick) for tick in ax_ms.xaxis.get_majorticklocs()]
+        # With unit="ms", ticks are multiplied by 1000 (e.g. >= 1000 for t >= 1s)
+        numeric_vals = [float(lbl) for lbl in labels]
+        assert any(val >= 1000 for val in numeric_vals)
+    finally:
+        plt.close(fig_ms)
 
 
 @pytest.mark.mpl_image_compare(

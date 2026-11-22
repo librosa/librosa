@@ -16,3 +16,6 @@ Display object reference
     TonnetzFormatter
     AdaptiveWaveplot
     Transformf0
+    LoopLocator
+    TransformedLocator
+    TransformedFormatter

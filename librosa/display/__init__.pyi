@@ -3,10 +3,13 @@ from .formatting import ChromaFormatter as ChromaFormatter
 from .formatting import ChromaSvaraFormatter as ChromaSvaraFormatter
 from .formatting import FJSFormatter as FJSFormatter
 from .formatting import LogHzFormatter as LogHzFormatter
+from .formatting import LoopLocator as LoopLocator
 from .formatting import NoteFormatter as NoteFormatter
 from .formatting import SvaraFormatter as SvaraFormatter
 from .formatting import TimeFormatter as TimeFormatter
 from .formatting import TonnetzFormatter as TonnetzFormatter
+from .formatting import TransformedFormatter as TransformedFormatter
+from .formatting import TransformedLocator as TransformedLocator
 from .formatting import Transformf0 as Transformf0
 from .formatting import _same_axes as _same_axes
 from .formatting import colorbar_db as colorbar_db
