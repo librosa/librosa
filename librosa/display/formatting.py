@@ -405,8 +405,6 @@ class LoopLocator(mplticker.Locator):
             n = min(self.PREF_DIVISIONS, key=lambda c: abs(c - self.nbins))
             ticks = np.linspace(0.0, self.duration, n, endpoint=False)
         elif isinstance(self.divisions, (int, np.integer)):
-            if self.divisions <= 0:
-                raise ParameterValueError(f"divisions must be positive, got {self.divisions}")
             ticks = np.linspace(0.0, self.duration, int(self.divisions), endpoint=False)
         else:
             raw = np.asarray(self.divisions, dtype=float)
