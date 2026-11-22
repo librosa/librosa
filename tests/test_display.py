@@ -1793,7 +1793,7 @@ def test_waveloop_default_waveshow(y, sr):
 
 
 def test_waveloop_default_bars(y, sr):
-    coll = librosa.display.waveloop(y, sr=sr, mode="bars", n_bars=64)
+    coll = librosa.display.waveloop(y, sr=sr, method="wavebars", n_bars=64)
     fig = coll.figure
     try:
         assert isinstance(coll, matplotlib.collections.PatchCollection)
@@ -1929,9 +1929,9 @@ def test_waveloop_validation_errors(y, sr):
     with pytest.raises(librosa.ParameterValueError, match="Must satisfy 0 <= r_min < r_max"):
         librosa.display.waveloop(y, sr=sr, r_range=(1.0, 0.5))
 
-    # Invalid mode
-    with pytest.raises(librosa.ParameterValueError, match="Invalid mode"):
-        librosa.display.waveloop(y, sr=sr, mode="invalid")  # type: ignore[arg-type]
+    # Invalid method
+    with pytest.raises(librosa.ParameterValueError, match="Invalid method"):
+        librosa.display.waveloop(y, sr=sr, method="invalid")  # type: ignore[arg-type]
 
     # Invalid direction
     with pytest.raises(librosa.ParameterValueError, match="Invalid direction"):
@@ -1944,6 +1944,15 @@ def test_waveloop_validation_errors(y, sr):
 
 def test_loop_locator():
     # Test preferred divisions
+    assert librosa.display.LoopLocator.PREF_DIVISIONS == (2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)
+
+    loc2 = librosa.display.LoopLocator(duration=4.0, nbins=2)
+    assert len(loc2.tick_values(0.0, 4.0)) == 2
+    assert np.allclose(loc2.tick_values(0.0, 4.0), [0.0, 2.0])
+
+    loc6 = librosa.display.LoopLocator(duration=6.0, nbins=6)
+    assert len(loc6.tick_values(0.0, 6.0)) == 6
+
     loc8 = librosa.display.LoopLocator(duration=4.0, nbins=8)
     ticks8 = loc8.tick_values(0.0, 4.0)
     assert len(ticks8) == 8
@@ -1965,6 +1974,12 @@ def test_loop_locator():
 
     loc32 = librosa.display.LoopLocator(duration=4.0, nbins=32)
     assert len(loc32.tick_values(0.0, 4.0)) == 32
+
+    loc48 = librosa.display.LoopLocator(duration=4.0, nbins=48)
+    assert len(loc48.tick_values(0.0, 4.0)) == 48
+
+    loc64 = librosa.display.LoopLocator(duration=4.0, nbins=64)
+    assert len(loc64.tick_values(0.0, 4.0)) == 64
 
     # Nearest bin selection: nbins=10 -> 8 or 12
     loc10 = librosa.display.LoopLocator(duration=4.0, nbins=10)
@@ -2118,6 +2133,17 @@ def test_waveloop_time_axis(y, sr):
         assert np.allclose(ticks_arr, expected_angles, atol=1e-3)
     finally:
         plt.close(fig_arr)
+
+    # 7. x_axis kwarg alias when time_axis="time"
+    ad_xalias = librosa.display.waveloop(y, sr=sr, x_axis="ms")
+    fig_xa = ad_xalias.steps.figure
+    try:
+        ax_xa = ad_xalias.steps.axes
+        labels = [ax_xa.xaxis.get_major_formatter()(tick) for tick in ax_xa.xaxis.get_majorticklocs()]
+        numeric_vals = [float(lbl) for lbl in labels]
+        assert any(val >= 1000 for val in numeric_vals)
+    finally:
+        plt.close(fig_xa)
 
 
 @pytest.mark.mpl_image_compare(
@@ -2821,6 +2847,63 @@ def test_multiplot_axes_slices_mixed(y, sr):
             axi.label_outer()
 
     return fig
+
+
+def test_multiplot_waveloop(y, sr):
+    y_stack = np.stack([y, y[::-1]])
+
+    # Constructed polar subplots
+    out = librosa.display.multiplot(
+        "waveloop",
+        y_stack,
+        sr=sr,
+        titles=["Track 1", "Track 2"],
+    )
+    fig = plt.gcf()
+    try:
+        assert out.shape == (2,)
+        assert len(fig.axes) == 2
+        for ax in fig.axes:
+            assert ax.name == "polar"
+            assert ax.get_theta_direction() == -1
+            assert np.isclose(ax.get_theta_offset(), np.pi / 2)
+            assert len(ax.get_yticks()) == 0
+        assert fig.axes[0].get_title() == "Track 1"
+        assert fig.axes[1].get_title() == "Track 2"
+        fig.canvas.draw()
+    finally:
+        plt.close(fig)
+
+    # With method="wavebars"
+    out_bars = librosa.display.multiplot(
+        "waveloop",
+        y_stack,
+        sr=sr,
+        method="wavebars",
+        n_bars=64,
+    )
+    fig_bars = plt.gcf()
+    try:
+        assert out_bars.shape == (2,)
+        for coll in out_bars:
+            assert isinstance(coll, matplotlib.collections.PatchCollection)
+        fig_bars.canvas.draw()
+    finally:
+        plt.close(fig_bars)
+
+    # Existing polar axes
+    fig, axes = plt.subplots(1, 2, subplot_kw=dict(projection="polar"))
+    try:
+        out_exist = librosa.display.multiplot(
+            "waveloop",
+            y_stack,
+            axes=axes,
+            sr=sr,
+        )
+        assert out_exist.shape == axes.shape
+        fig.canvas.draw()
+    finally:
+        plt.close(fig)
 
 
 @pytest.mark.mpl_image_compare(

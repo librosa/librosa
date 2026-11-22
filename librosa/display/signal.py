@@ -1353,7 +1353,7 @@ def waveloop(
     sr: float = 22050,
     duration: float | None = None,
     r_range: tuple[float, float] = (0.5, 1.0),
-    mode: Literal["waveshow", "bars"] = "waveshow",
+    method: Literal["waveshow", "wavebars"] = "waveshow",
     phase: float = 0.0,
     max_points: int = 11025,
     n_bars: int = 512,
@@ -1386,18 +1386,18 @@ def waveloop(
         The radial bounds ``(r_min, r_max)`` for the waveform display, where
         ``0 <= r_min < r_max``. Amplitudes in ``[-1, 1]`` are mapped linearly into
         this interval.
-    mode : {'waveshow', 'bars'}
-        Visualization mode:
+    method : {'waveshow', 'wavebars'}
+        Visualization method:
 
         - 'waveshow' : Continuous adaptive waveform using `waveshow`.
-        - 'bars' : Discrete radial barcode using `wavebars`.
+        - 'wavebars' : Discrete radial barcode using `wavebars`.
     phase : float
         Angular phase offset in radians applied to the waveform mapping.
     max_points : int > 0
-        Maximum number of samples drawn when ``mode='waveshow'``.
+        Maximum number of samples drawn when ``method='waveshow'``.
         Passed to `waveshow`.
     n_bars : int > 0
-        Number of radial bars when ``mode='bars'``. Passed to `wavebars`.
+        Number of radial bars when ``method='wavebars'``. Passed to `wavebars`.
     offset : float
         Time offset (in seconds) to start the waveform plot.
     peak_norm : bool
@@ -1460,10 +1460,15 @@ def waveloop(
     Plot concentric tracks with discrete bars:
 
     >>> fig, ax = plt.subplots(subplot_kw=dict(projection="polar"))
-    >>> librosa.display.waveloop(y, sr=sr, r_range=(0.6, 1.0), mode="bars", ax=ax)
+    >>> librosa.display.waveloop(y, sr=sr, r_range=(0.6, 1.0), method="wavebars", ax=ax)
     """
     if kwargs.get("transpose", False):
         raise ParameterValueError("transpose=True is not supported in waveloop.")
+
+    if "x_axis" in kwargs:
+        passed_x_axis = kwargs.pop("x_axis")
+        if time_axis == "time":
+            time_axis = passed_x_axis
 
     sig_dur = float(core.get_duration(y=y, sr=sr))
     if duration is None:
@@ -1483,8 +1488,8 @@ def waveloop(
     if not (0.0 <= r_min < r_max):
         raise ParameterValueError(f"Invalid r_range: {r_range}. Must satisfy 0 <= r_min < r_max.")
 
-    if mode not in ("waveshow", "bars"):
-        raise ParameterValueError(f"Invalid mode='{mode}'. Must be 'waveshow' or 'bars'.")
+    if method not in ("waveshow", "wavebars"):
+        raise ParameterValueError(f"Invalid method='{method}'. Must be 'waveshow' or 'wavebars'.")
 
     if direction not in ("clockwise", "counterclockwise", -1, 1):
         raise ParameterValueError(
@@ -1530,7 +1535,7 @@ def waveloop(
                 duration=duration,
             )
 
-    if mode == "waveshow":
+    if method == "waveshow":
         artist: AdaptiveWaveplot | mcollections.PatchCollection = waveshow(
             y,
             sr=sr,

@@ -47,7 +47,7 @@ if TYPE_CHECKING:
 
 # Module imports for image and signal display functions
 from .image import specshow
-from .signal import wavebars, waveshow
+from .signal import wavebars, waveloop, waveshow
 
 
 def _squeeze_shape(shape: tuple[int, ...]) -> tuple[int, ...]:
@@ -56,7 +56,7 @@ def _squeeze_shape(shape: tuple[int, ...]) -> tuple[int, ...]:
 
 
 def _resolve_multiplot(
-    func: Literal["waveshow", "wavebars", "specshow"],
+    func: Literal["waveshow", "wavebars", "specshow", "waveloop"],
 ) -> tuple[Callable[..., Any], int, list[str]]:
     """Resolve multiplot function names.
 
@@ -64,7 +64,7 @@ def _resolve_multiplot(
     ----------
     func : str
         The name of the display function to use for the multiplot.
-        Accepted values are 'waveshow', 'wavebars', and 'specshow'.
+        Accepted values are 'waveshow', 'wavebars', 'specshow', and 'waveloop'.
 
     Returns
     -------
@@ -80,6 +80,7 @@ def _resolve_multiplot(
         "waveshow": (waveshow, 1, []),
         "wavebars": (wavebars, 1, []),
         "specshow": (specshow, 2, ["color"]),
+        "waveloop": (waveloop, 1, []),
     }
 
     try:
@@ -155,6 +156,7 @@ def _mp_setup_axes(
     orient: Literal["h", "v"],
     sharex: bool,
     sharey: bool,
+    func: str | None = None,
 ) -> tuple[matplotlib.figure.FigureBase, npt.NDArray[np.object_], tuple[int, ...]]:
     """Set up the figure and axes for a multiplot grid.
 
@@ -194,10 +196,15 @@ def _mp_setup_axes(
     output_shape = axshape
 
     if axes is None:
-        if fig is None:
-            if fig_kw is None:
-                fig_kw = {}
+        if fig_kw is None:
+            fig_kw = {}
+        else:
+            fig_kw = copy.copy(fig_kw)
 
+        if func == "waveloop":
+            fig_kw.setdefault("subplot_kw", {"projection": "polar"})
+
+        if fig is None:
             fig, axes = plt.subplots(
                 nrows=nrows,
                 ncols=ncols,
@@ -213,6 +220,7 @@ def _mp_setup_axes(
                 sharex=sharex,
                 sharey=sharey,
                 squeeze=False,
+                **fig_kw,
             )
 
     elif isinstance(axes, np.ndarray):
@@ -360,16 +368,16 @@ def _mp_setup_properties(
 
 
 def multiplot(
-    func: Literal["waveshow", "wavebars", "specshow"],
+    func: Literal["waveshow", "wavebars", "specshow", "waveloop"],
     *data: np.ndarray,
     axes: matplotlib.axes.Axes | np.ndarray | None = None,
     fig: matplotlib.figure.FigureBase | None = None,
     orient: Literal["v", "h"] = "v",
     share_properties: bool | Literal["row", "col"] | np.ndarray | None = None,
     fig_kw: dict | None = None,
-    sharex: bool = True,
-    sharey: bool = True,
-    label_outer: bool = True,
+    sharex: bool | None = None,
+    sharey: bool | None = None,
+    label_outer: bool | None = None,
     labels: Sequence[str | None] | None = None,
     titles: Sequence[str | None] | None = None,
     prop_cycle: cycler.Cycler | None = None,
@@ -504,6 +512,13 @@ def multiplot(
     # Identify the display function and the expected data dimensions for each subplot
     function, dims, badprops = _resolve_multiplot(func)
 
+    if sharex is None:
+        sharex = func != "waveloop"
+    if sharey is None:
+        sharey = func != "waveloop"
+    if label_outer is None:
+        label_outer = func != "waveloop"
+
     # Determine the layout of the multiplot grid based on the data shape and orientation
     axshape, nrows, ncols, multi_input = _mp_get_layout(data, dims, orient)
 
@@ -518,6 +533,7 @@ def multiplot(
         orient=orient,
         sharex=sharex,
         sharey=sharey,
+        func=func,
     )
 
     # Set up the labels and properties for each subplot in the multiplot grid

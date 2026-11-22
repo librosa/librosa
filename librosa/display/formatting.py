@@ -224,10 +224,15 @@ class _AxisTimeProxy:
 
     def get_data_interval(self) -> tuple[float, float]:
         dmin, dmax = self._axis.get_data_interval()
+        if not np.isfinite(dmin) or not np.isfinite(dmax):
+            return self.get_view_interval()
         inv = self._transform.inverted()
         pts = inv.transform([[dmin, 0.0], [dmax, 0.0]])[:, 0]
         res = np.sort(pts)
         return float(res[0]), float(res[1])
+
+    def __repr__(self) -> str:
+        return f"<_AxisTimeProxy wrapping {self._axis!r} with transform {self._transform!r}>"
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self._axis, name)
@@ -257,9 +262,9 @@ class TransformedLocator(mplticker.Locator):
         super().__init__()
 
     def set_axis(self, axis: Any) -> None:
-        """Set the axis for this locator and forward to base locator."""
+        """Set the axis for this locator and forward to base locator via proxy."""
         super().set_axis(axis)
-        self.base_locator.set_axis(axis)
+        self.base_locator.set_axis(cast("Any", _AxisTimeProxy(axis, self.transform)))
 
     def tick_values(self, vmin: float, vmax: float) -> np.ndarray:  # type: ignore[override]
         """Return the locations of the ticks in display coordinates."""
@@ -333,12 +338,12 @@ class LoopLocator(mplticker.Locator):
     divisions : int, Sequence[float], or None
         Number of equal subdivisions across `duration`, or a sequence of explicit
         timestamp locations in seconds. If `None`, automatically chosen from
-        `(4, 8, 12, 16, 24, 32)` based on `nbins`.
+        `(2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)` based on `nbins`.
     nbins : int
         Target number of bins when `divisions` is `None`. Default is 8.
     """
 
-    PREF_DIVISIONS: tuple[int, ...] = (4, 8, 12, 16, 24, 32)
+    PREF_DIVISIONS: tuple[int, ...] = (2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)
 
     def __init__(
         self,
