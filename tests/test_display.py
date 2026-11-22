@@ -1900,13 +1900,47 @@ def test_waveloop_decorate_false(y, sr):
         plt.close(fig)
 
 
+def test_waveloop_rectilinear_ax_override(y, sr):
+    # 1. Standard fig, ax = plt.subplots()
+    fig, ax = plt.subplots()
+    try:
+        assert ax.name == "rectilinear"
+        adaptor = librosa.display.waveloop(y, sr=sr, ax=ax)
+        assert ax.name == "polar"
+        assert ax is adaptor.steps.axes
+        ax.set_title("Converted Polar")
+        fig.canvas.draw()
+        assert ax.get_title() == "Converted Polar"
+        assert ax.get_theta_direction() == -1
+        assert np.isclose(ax.get_theta_offset(), np.pi / 2)
+        assert len(ax.get_yticks()) == 0
+
+        # 2. Concentric track on already converted polar ax
+        librosa.display.waveloop(y, sr=sr, r_range=(0.2, 0.5), method="wavebars", n_bars=32, ax=ax)
+        fig.canvas.draw()
+        assert ax.name == "polar"
+    finally:
+        plt.close(fig)
+
+    # 3. No ax passed (defaults to plt.gca() / new polar subplot)
+    fig2 = plt.figure()
+    try:
+        adaptor2 = librosa.display.waveloop(y, sr=sr)
+        ax2 = adaptor2.steps.axes
+        assert ax2.name == "polar"
+        fig2.canvas.draw()
+    finally:
+        plt.close(fig2)
+
+
 def test_waveloop_validation_errors(y, sr):
     sig_dur = len(y) / sr
 
-    # Rectilinear axes
+    # Non-empty rectilinear axes
     fig, ax = plt.subplots()
     try:
-        with pytest.raises(librosa.ParameterValueError, match="ax must be a PolarAxes"):
+        ax.plot([1, 2, 3])
+        with pytest.raises(librosa.ParameterValueError, match="Cannot convert a non-empty axes"):
             librosa.display.waveloop(y, sr=sr, ax=ax)
     finally:
         plt.close(fig)
@@ -2901,6 +2935,21 @@ def test_multiplot_waveloop(y, sr):
             sr=sr,
         )
         assert out_exist.shape == axes.shape
+        fig.canvas.draw()
+    finally:
+        plt.close(fig)
+
+    # Existing rectilinear axes converted automatically
+    fig, axes_rect = plt.subplots(1, 2)
+    try:
+        out_rect = librosa.display.multiplot(
+            "waveloop",
+            y_stack,
+            axes=axes_rect,
+            sr=sr,
+        )
+        assert out_rect.shape == axes_rect.shape
+        assert all(a.name == "polar" for a in axes_rect)
         fig.canvas.draw()
     finally:
         plt.close(fig)

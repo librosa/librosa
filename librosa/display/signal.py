@@ -13,6 +13,7 @@ zoom levels and sequence lengths.
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
 
+import contextlib
 import weakref
 from typing import TYPE_CHECKING, cast
 
@@ -27,6 +28,7 @@ import matplotlib.transforms as mtransforms
 import numpy as np
 from matplotlib.legend import Legend
 from matplotlib.legend_handler import HandlerBase, HandlerLine2D, HandlerPatch
+from matplotlib.projections.polar import PolarAxes
 
 # Core and utility imports for audio processing
 from .. import core, util
@@ -45,7 +47,6 @@ if TYPE_CHECKING:
     from matplotlib.lines import Line2D
     from matplotlib.markers import MarkerStyle
     from matplotlib.path import Path as MplPath
-    from matplotlib.projections.polar import PolarAxes
 
     from .._typing import ArrayLike
 
@@ -1347,6 +1348,56 @@ def wavef0(
         )
 
 
+def _ensure_polar_axes(ax: mplaxes.Axes) -> PolarAxes:
+    """Ensure that the given axes has a polar projection, converting in-place if empty.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The target axes.
+
+    Returns
+    -------
+    ax : matplotlib.projections.polar.PolarAxes
+        The axes with polar projection.
+
+    Raises
+    ------
+    ParameterValueError
+        If `ax` is not a PolarAxes and already contains artists.
+    """
+    if getattr(ax, "name", None) == "polar":
+        return cast("PolarAxes", ax)
+
+    # Check for existing artists
+    if bool(ax.lines or ax.collections or ax.patches or ax.images or ax.texts or ax.artists or ax.tables):
+        raise ParameterValueError(
+            f"Target axes has projection '{getattr(ax, 'name', None)}' and already contains artists. "
+            "Cannot convert a non-empty axes to polar projection."
+        )
+
+    fig = ax.figure if ax.figure is not None else plt.gcf()
+    ss = ax.get_subplotspec()
+    rect = ax.get_position()
+    title = ax.get_title()
+
+    # Uncouple from shared Cartesian axes if any
+    if hasattr(ax, "_shared_axes"):
+        for k in ("x", "y"):
+            if k in ax._shared_axes:
+                with contextlib.suppress(Exception):
+                    ax._shared_axes[k].remove(ax)
+
+    ax.__class__ = PolarAxes
+    PolarAxes.__init__(cast("PolarAxes", ax), fig, rect)
+    if ss is not None:
+        ax.set_subplotspec(ss)
+    if title:
+        ax.set_title(title)
+
+    return cast("PolarAxes", ax)
+
+
 def waveloop(
     y: np.ndarray,
     *,
@@ -1359,11 +1410,11 @@ def waveloop(
     n_bars: int = 512,
     offset: float = 0.0,
     peak_norm: bool = True,
-    time_axis: str | int | Sequence[float] | None = "time",
+    time_axis: str | int | Sequence[float] | np.ndarray | bool | None = "time",
     theta_offset: float = np.pi / 2,
     direction: Literal["clockwise", "counterclockwise", -1, 1] = "clockwise",
     decorate: bool = True,
-    ax: PolarAxes | None = None,
+    ax: mplaxes.Axes | None = None,
     **kwargs: Any,
 ) -> AdaptiveWaveplot | mcollections.PatchCollection:
     r"""Visualize a waveform as a circular loop in polar coordinates.
@@ -1422,9 +1473,10 @@ def waveloop(
         and clearing radial ticks). Default is ``True``.
         Set to ``False`` to preserve custom axes settings when using a pre-configured
         polar projection.
-    ax : matplotlib.projections.polar.PolarAxes or None
-        Polar axes to plot on. If ``None``, a new figure and polar axes will
-        be created.
+    ax : matplotlib.axes.Axes or None
+        Target axes to plot on. If a rectilinear axes is provided, it will be
+        converted in-place to polar projection if it does not already contain artists.
+        If ``None``, a new polar axes or the current axes will be used.
     **kwargs
         Additional keyword arguments forwarded to `waveshow` or `wavebars`.
 
@@ -1436,10 +1488,10 @@ def waveloop(
     Raises
     ------
     ParameterValueError
-        If ``ax`` is provided but is not a `PolarAxes`.
+        If ``ax`` is provided, is not polar, and already contains artists.
         If ``duration <= 0`` or signal duration exceeds ``duration``.
         If ``r_range`` is invalid or ``r_min < 0`` or ``r_min >= r_max``.
-        If ``mode`` or ``direction`` is not recognized.
+        If ``method`` or ``direction`` is not recognized.
         If ``transpose=True`` is passed in ``kwargs``.
 
     See Also
@@ -1454,12 +1506,12 @@ def waveloop(
 
     >>> import matplotlib.pyplot as plt
     >>> y, sr = librosa.load(librosa.ex("choice"))
-    >>> fig, ax = plt.subplots(subplot_kw=dict(projection="polar"))
+    >>> fig, ax = plt.subplots()
     >>> librosa.display.waveloop(y, sr=sr, ax=ax)
 
     Plot concentric tracks with discrete bars:
 
-    >>> fig, ax = plt.subplots(subplot_kw=dict(projection="polar"))
+    >>> fig, ax = plt.subplots()
     >>> librosa.display.waveloop(y, sr=sr, r_range=(0.6, 1.0), method="wavebars", ax=ax)
     """
     if kwargs.get("transpose", False):
@@ -1502,10 +1554,13 @@ def waveloop(
             y = y / max_val
 
     if ax is None:
-        _fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+        fig = plt.gcf()
+        if not fig.axes:
+            ax = fig.add_subplot(projection="polar")
+        else:
+            ax = _ensure_polar_axes(plt.gca())
     else:
-        if getattr(ax, "name", None) != "polar":
-            raise ParameterValueError(f"ax must be a PolarAxes, found name='{getattr(ax, 'name', None)}'")
+        ax = _ensure_polar_axes(ax)
 
     has_prior_artists = bool(ax.lines or ax.collections or ax.patches)
 
