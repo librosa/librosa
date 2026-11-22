@@ -1781,6 +1781,106 @@ def test_wavebars_polar_transform(y, sr):
         plt.close(fig)
 
 
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveloop_waveshow"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.usefixtures("text_placeholders")
+def test_waveloop_waveshow(y, sr):
+    fig, ax = plt.subplots(ncols=2, figsize=(10, 5), layout="tight")
+    librosa.display.waveloop(y, sr=sr, ax=ax[0])
+    ax[0].set_title("Mono")
+
+    y_stereo = np.vstack([y, y[::-1]])
+    librosa.display.waveloop(y_stereo, sr=sr, r_range=(0.4, 0.95), ax=ax[1])
+    ax[1].set_title("Stereo")
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveloop_wavebars"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.usefixtures("text_placeholders")
+def test_waveloop_wavebars(y, sr):
+    fig, ax = plt.subplots(ncols=2, figsize=(10, 5), subplot_kw={"projection": "polar"}, layout="tight")
+    librosa.display.waveloop(y, sr=sr, method="wavebars", n_bars=64, r_range=(0.5, 1.0), ax=ax[0])
+    ax[0].set_title("Wavebars (64)")
+
+    librosa.display.waveloop(
+        y,
+        sr=sr,
+        method="wavebars",
+        n_bars=128,
+        gap_ratio=0.1,
+        rounding_ratio=0.2,
+        color="C1",
+        time_axis=8,
+        ax=ax[1],
+    )
+    ax[1].set_title("Wavebars (128, 8 bins)")
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveloop_concentric_tracks"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.usefixtures("text_placeholders")
+def test_waveloop_concentric_tracks(y, sr):
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={"projection": "polar"}, layout="tight")
+    librosa.display.waveloop(y, sr=sr, r_range=(0.6, 1.0), method="waveshow", color="C0", label="Harmonic", ax=ax)
+    librosa.display.waveloop(
+        y[::-1],
+        sr=sr,
+        r_range=(0.2, 0.5),
+        method="wavebars",
+        n_bars=64,
+        color="C1",
+        decorate=False,
+        label="Percussive",
+        ax=ax,
+    )
+    ax.legend(loc="upper right")
+    return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["waveloop_options"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.usefixtures("text_placeholders")
+def test_waveloop_options(y, sr):
+    fig, ax = plt.subplots(ncols=2, figsize=(10, 5), subplot_kw={"projection": "polar"}, layout="tight")
+    dur = float(librosa.get_duration(y=y, sr=sr)) + 1.0
+    librosa.display.waveloop(
+        y,
+        sr=sr,
+        offset=1.0,
+        duration=dur,
+        direction="counterclockwise",
+        theta_offset=0.0,
+        time_axis=12,
+        ax=ax[0],
+    )
+    ax[0].set_title("CCW, theta_0=0, offset=1s")
+
+    librosa.display.waveloop(
+        y,
+        sr=sr,
+        time_axis=None,
+        r_range=(0.2, 0.8),
+        phase=np.pi / 4,
+        ax=ax[1],
+    )
+    ax[1].set_title("No ticks, phase=pi/4")
+    return fig
+
+
 def test_waveloop_default_waveshow(y, sr):
     adaptor = librosa.display.waveloop(y, sr=sr)
     assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
@@ -3236,6 +3336,23 @@ def test_multiplot_axes_slices_mixed(y, sr):
             axi.label_outer()
 
     return fig
+
+
+@pytest.mark.mpl_image_compare(
+    baseline_images=["multiplot_waveloop"],
+    extensions=["png"],
+    style=STYLE,
+)
+@pytest.mark.usefixtures("text_placeholders")
+def test_multiplot_waveloop_image(y, sr):
+    y_stack = np.stack([y, y[::-1]])
+    librosa.display.multiplot(
+        "waveloop",
+        y_stack,
+        sr=sr,
+        titles=["Track 1", "Track 2"],
+    )
+    return plt.gcf()
 
 
 def test_multiplot_waveloop(y, sr):
