@@ -546,8 +546,8 @@ def waveshow(
         Default: 'post'
 
     label : str or None
-        The label string applied to this plot.
-        Note that the label
+        The label string applied to this plot, used in legend entries.
+        If `None`, no label is applied.
 
     transpose : bool
         If `True`, display the wave vertically instead of horizontally.
@@ -1459,14 +1459,14 @@ def waveloop(
         If ``True`` (default), normalizes ``y`` by its peak amplitude
         (``y / max(|y|)``) before mapping into ``r_range``, preventing
         clipping or negative-radius origin crossings.
-    time_axis : str, int, Sequence[float], or None
+    time_axis : str, int, Sequence[float], np.ndarray, bool, or None
         Display style of the time axis around the circle. Accepted values are:
 
         - 'time' (default) : Formatted timestamps (adaptive unit via `TimeFormatter`).
         - 's', 'ms', 'm', 'h' : Formatted timestamps using the specified unit.
         - int : Number of equal subdivisions (e.g. 4, 8, 12, 16, 24, 32).
-        - Sequence[float] : Explicit timestamp locations in seconds.
-        - None, 'none', or 'off' : Ticks and labels are hidden.
+        - Sequence[float] or np.ndarray : Explicit timestamp locations in seconds.
+        - False, None, 'none', or 'off' : Ticks and labels are hidden.
     theta_offset : float
         Starting angle (in radians) of the circle. Default is ``pi / 2``
         (12 o'clock / top).

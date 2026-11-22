@@ -350,8 +350,8 @@ class LoopLocator(mplticker.Locator):
     """Tick locator for periodic/loop time signals.
 
     This locator places ticks at subdivisions of a periodic loop of length `duration`.
-    By default, it selects a meaningful division from `(4, 8, 12, 16, 24, 32)` closest
-    to `nbins`. It also supports explicit division counts or arbitrary user-supplied
+    By default, it selects a meaningful division from `(2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)`
+    closest to `nbins`. It also supports explicit division counts or arbitrary user-supplied
     tick timestamps in seconds.
 
     On circular/polar intervals, it avoids duplicate endpoints at `duration == 0`.

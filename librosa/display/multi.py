@@ -183,6 +183,9 @@ def _mp_setup_axes(
         Whether to share the x-axis among subplots when creating a new figure.
     sharey : bool
         Whether to share the y-axis among subplots when creating a new figure.
+    func : str or None
+        The display function name being configured. If 'waveloop', polar projection
+        defaults are applied.
 
     Returns
     -------
@@ -394,7 +397,7 @@ def multiplot(
     ----------
     func : str
         The name of the display function to use for the multiplot. Accepted values are 'waveshow',
-        'wavebars', and 'specshow'.
+        'wavebars', 'specshow', and 'waveloop'.
 
     *data : one or more `np.ndarray`
         The input data for the multiplot.
@@ -432,14 +435,20 @@ def multiplot(
     fig_kw : dict or None
         Additional keyword arguments to pass to `plt.subplots` when creating a new figure.
 
-    sharex : bool
+    sharex : bool or None
         Whether to share the x-axis among subplots when creating a new figure.
+        If `None` (default), axes are shared (`True`) for Cartesian plots
+        ('waveshow', 'wavebars', 'specshow') and unshared (`False`) for 'waveloop'.
 
-    sharey : bool
+    sharey : bool or None
         Whether to share the y-axis among subplots when creating a new figure.
+        If `None` (default), axes are shared (`True`) for Cartesian plots
+        ('waveshow', 'wavebars', 'specshow') and unshared (`False`) for 'waveloop'.
 
-    label_outer : bool
+    label_outer : bool or None
         Whether to only show labels on the outer axes when using shared axes.
+        If `None` (default), outer labeling is applied (`True`) for Cartesian plots
+        ('waveshow', 'wavebars', 'specshow') and omitted (`False`) for 'waveloop'.
 
     labels : sequence of str or None
         The labels to apply to each subplot in the multiplot grid. If None, no labels
