@@ -5,8 +5,8 @@ Time-domain signal visualization
 
 This module contains tools for visualizing time-domain audio signals,
 waveforms, and their overlays. It includes functions like `waveshow`,
-`wavebars`, and `wavef0` which handle adaptive plotting based on
-zoom levels and sequence lengths.
+`wavebars`, `wavef0`, and `waveloop` which handle adaptive plotting based on
+zoom levels, frequency displacement, and polar loop coordinates.
 """
 # mypy: disable-error-code="attr-defined"
 
@@ -292,6 +292,8 @@ class AdaptiveWaveplot:
                 ],
                 dtype=float,
             )
+            # Probing viewport corners through domain-restricted inverses (e.g. Transformf0 log2)
+            # may transiently hit non-positive bounds; non-finite results fall back below.
             with np.errstate(divide="ignore", invalid="ignore"):
                 t_vals = inv.transform(pts)[:, 1 if self.transpose else 0]
             t_start, t_end = float(np.min(t_vals)), float(np.max(t_vals))
@@ -430,6 +432,8 @@ def _extract_pre_transform(
     if transform is axes.transData:
         return mtransforms.IdentityTransform(), axes.transData
 
+    # Stop at axes.transData by identity: transData is itself composite,
+    # and value equality falsely matches transAxes on [0, 1] x [0, 1] axes.
     def _flatten_until_transdata(t: mtransforms.Transform) -> list[mtransforms.Transform]:
         if t is axes.transData:
             return [t]
@@ -449,6 +453,19 @@ def _extract_pre_transform(
             return pre, transform
 
     return None, transform
+
+
+def _update_transformed_datalim(
+    axes: mplaxes.Axes,
+    pre_transform: mtransforms.Transform,
+    pts: np.ndarray,
+) -> None:
+    """Transform data-space points through ``pre_transform`` and update axes data limits."""
+    transformed_pts = pre_transform.transform(pts)
+    finite_mask = np.all(np.isfinite(transformed_pts), axis=-1)
+    if np.any(finite_mask):
+        axes.update_datalim(transformed_pts[finite_mask])
+        axes.autoscale_view()
 
 
 def waveshow(
@@ -594,7 +611,9 @@ def waveshow(
         `matplotlib.pyplot.step`.
 
         Note that only those arguments which are common to both functions will be
-        supported.
+        supported. When a custom data ``transform`` is supplied (for example,
+        ``pre + ax.transData``), data limits are updated through the pre-transform
+        and default Cartesian axis decoration is skipped.
 
     Returns
     -------
@@ -777,11 +796,7 @@ def waveshow(
             if np.any(mask_both):
                 all_pts = all_pts[mask_both]
 
-        transformed_pts = pre_transform.transform(all_pts)
-        finite_mask = np.all(np.isfinite(transformed_pts), axis=-1)
-        if np.any(finite_mask):
-            axes.update_datalim(transformed_pts[finite_mask])
-            axes.autoscale_view()
+        _update_transformed_datalim(axes, pre_transform, all_pts)
 
     # Register adaptor to keep it alive as long as Axes exists
     bucket = _WAVESHOW_ADAPTORS.get(axes)
@@ -887,7 +902,11 @@ def wavebars(
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
     **patch_kwargs : dict
-        Additional keyword arguments to pass to `matplotlib.patches.FancyBboxPatch`
+        Additional keyword arguments to pass to `matplotlib.patches.FancyBboxPatch`.
+
+        When a custom data ``transform`` is supplied (for example,
+        ``pre + ax.transData``), data limits are updated through the pre-transform
+        and default Cartesian axis decoration is skipped.
 
     Returns
     -------
@@ -1025,11 +1044,7 @@ def wavebars(
                 xs = np.concatenate([t0, t0, t1, t1])
                 ys = np.concatenate([base, top, base, top])
 
-            transformed_bar_pts = pre_transform.transform(np.column_stack([xs, ys]))
-            finite_mask = np.all(np.isfinite(transformed_bar_pts), axis=-1)
-            if np.any(finite_mask):
-                axes.update_datalim(transformed_bar_pts[finite_mask])
-                axes.autoscale_view()
+            _update_transformed_datalim(axes, pre_transform, np.column_stack([xs, ys]))
     else:
         axes.autoscale_view()
 
@@ -1293,7 +1308,6 @@ def wavef0(
         return waveshow(
             y=y,
             sr=sr,
-            axis=time_axis,
             offset=offset,
             mask=mask,
             ax=axes,
@@ -1306,7 +1320,6 @@ def wavef0(
         return wavebars(
             y=y,
             sr=sr,
-            axis=time_axis,
             offset=offset,
             ax=axes,
             transform=trans + axes.transData,
@@ -1408,7 +1421,8 @@ def waveloop(
     sr : number > 0 [scalar]
         sampling rate of ``y`` (samples per second).
     duration : float > 0 or None
-        The time extent in seconds mapped to one full revolution (``[0, 2π)``).
+        The finite, strictly positive time extent in seconds mapped to one full
+        revolution (``[0, 2π)``).
         If ``None``, defaults to the signal duration ``librosa.get_duration(y=y, sr=sr)``.
         The signal duration cannot exceed ``duration``; multiple cycles are not supported.
     r_range : tuple of (float, float)
@@ -1421,14 +1435,18 @@ def waveloop(
         - 'waveshow' : Continuous adaptive waveform using `waveshow`.
         - 'wavebars' : Discrete radial barcode using `wavebars`.
     phase : float
-        Angular phase offset in radians applied to the waveform mapping.
+        Angular phase offset in radians applied to the waveform and its time ticks
+        relative to the polar axes' zero angle (useful for phase-aligning
+        concentric tracks on the same axes even when ``decorate=False``).
     max_points : int > 0
         Maximum number of samples drawn when ``method='waveshow'``.
         Passed to `waveshow`.
     n_bars : int > 0
         Number of radial bars when ``method='wavebars'``. Passed to `wavebars`.
     offset : float
-        Time offset (in seconds) to start the waveform plot.
+        Time offset (in seconds) to start the waveform plot. Wrapped time ticks are
+        labeled in ``[offset, offset + duration)``, and explicit ``time_axis``
+        sequences are interpreted in absolute signal seconds.
     peak_norm : bool
         If ``True`` (default), normalizes ``y`` by its peak amplitude
         (``y / max(|y|)``) before mapping into ``r_range``, preventing
@@ -1442,15 +1460,16 @@ def waveloop(
         - Sequence[float] or np.ndarray : Explicit timestamp locations in seconds.
         - `None`, 'none', or 'off' : Ticks and labels are hidden.
     theta_offset : float
-        Starting angle (in radians) of the circle. Default is ``π / 2``
-        (12 o'clock / top).
+        Starting angle (in radians) rotating the polar axes' zero angle itself
+        when ``decorate=True``. Default is ``π / 2`` (12 o'clock / top).
     direction : {'clockwise', 'counterclockwise', -1, 1}
         Direction of time rotation around the circle. Default is 'clockwise'.
     decorate : bool
         Whether to style the polar axes (setting theta direction, theta offset,
-        and clearing radial ticks). Default is ``True``.
-        Set to ``False`` to preserve custom axes settings when using a pre-configured
-        polar projection.
+        angular time ticks via ``time_axis``, clearing radial ticks, and setting
+        ``ymargin(0)``). Default is ``True``.
+        Set to ``False`` to preserve custom axes settings and ticks when using a
+        pre-configured polar projection.
     ax : matplotlib.axes.Axes or None
         Target axes to plot on. If a rectilinear axes is provided, it will be
         converted in-place to polar projection if it does not already contain artists.
@@ -1471,9 +1490,12 @@ def waveloop(
     ------
     ParameterValueError
         If ``y`` is empty.
-        If ``ax`` is provided, is not polar, and already contains artists.
-        If ``duration <= 0`` or signal duration exceeds ``duration``.
-        If ``r_range`` is invalid or ``r_min < 0`` or ``r_min >= r_max``.
+        If ``ax`` has a non-rectilinear projection (such as ``'3d'``), or is
+        rectilinear and already contains artists.
+        If ``duration`` is non-finite, boolean, ``<= 0``, or less than the signal
+        duration.
+        If ``phase``, ``offset``, or ``theta_offset`` is non-finite or boolean.
+        If ``r_range`` is invalid or does not satisfy ``0 <= r_min < r_max``.
         If ``method``, ``direction``, or ``time_axis`` is not recognized.
         If ``transpose=True``, ``transform``, or ``axis`` is passed in ``kwargs``.
 
@@ -1481,6 +1503,8 @@ def waveloop(
     --------
     waveshow
     wavebars
+    multiplot
+    TimeFormatter
     matplotlib.projections.polar.PolarAxes
 
     Examples
@@ -1520,12 +1544,9 @@ def waveloop(
             f"Signal duration ({sig_dur:.3f}s) exceeds duration ({duration:.3f}s). Multiple cycles are not supported."
         )
 
-    if isinstance(phase, bool) or not np.isfinite(phase):
-        raise ParameterValueError(f"phase must be finite, got {phase}")
-    if isinstance(offset, bool) or not np.isfinite(offset):
-        raise ParameterValueError(f"offset must be finite, got {offset}")
-    if isinstance(theta_offset, bool) or not np.isfinite(theta_offset):
-        raise ParameterValueError(f"theta_offset must be finite, got {theta_offset}")
+    for name, val in (("phase", phase), ("offset", offset), ("theta_offset", theta_offset)):
+        if isinstance(val, bool) or not np.isfinite(val):
+            raise ParameterValueError(f"{name} must be finite, got {val}")
 
     try:
         r_min, r_max = r_range
@@ -1602,6 +1623,8 @@ def waveloop(
             **kwargs,
         )
 
+    # Reserve full r_range even for silent tracks and accumulate radial bounds across concentric tracks
+    # while respecting explicit ylim.
     ax.update_datalim([(0.0, r_min), (0.0, r_max)], updatex=False, updatey=True)
     ax.autoscale_view(scalex=False, scaley=True)
 

@@ -216,6 +216,11 @@ def _axis_index(axis: Any) -> int:
     return 1 if getattr(axis, "axis_name", "x") == "y" else 0
 
 
+def _is_finite_real(value: Any) -> bool:
+    """Return True if value is a finite real scalar and not a bool."""
+    return not isinstance(value, bool) and bool(np.isfinite(value))
+
+
 def _transform_1d(transform: mtransforms.Transform, values: np.ndarray, axis_idx: int) -> np.ndarray:
     """Apply a 1D or separable 2D Matplotlib transform along coordinate index 0 (x) or 1 (y)."""
     if transform.input_dims == 1:
@@ -270,6 +275,7 @@ class _TransformedTickMixin:
             raise ParameterValueError(
                 f"transform must be 1D or separable 2D, got ({transform.input_dims}D -> {transform.output_dims}D)"
             )
+        # Eagerly invert because Affine2DBase.has_inverse is a class attribute and stays True for singular matrices.
         try:
             transform.inverted()
         except (NotImplementedError, np.linalg.LinAlgError) as exc:
@@ -440,9 +446,9 @@ class _PeriodicFormatter(mplticker.Formatter):
         *,
         offset: float = 0.0,
     ) -> None:
-        if isinstance(period, bool) or not np.isfinite(period) or period <= 0:
+        if not _is_finite_real(period) or period <= 0:
             raise ParameterValueError(f"period must be finite and strictly positive, got {period}")
-        if isinstance(offset, bool) or not np.isfinite(offset):
+        if not _is_finite_real(offset):
             raise ParameterValueError(f"offset must be finite, got {offset}")
         self.base_formatter = base_formatter
         self.period = float(period)
@@ -456,6 +462,7 @@ class _PeriodicFormatter(mplticker.Formatter):
     def _wrap(self, values: np.ndarray) -> np.ndarray:
         wrapped = self.offset + np.mod(values - self.offset, self.period)
         tol = 1e-9 * self.period
+        # Snap values within tolerance of offset + period to offset (np.mod(-eps, period) can return period).
         return np.where(np.isclose(wrapped, self.offset + self.period, atol=tol), self.offset, wrapped)
 
     def __call__(self, x: float, pos: int | None = None) -> str:
@@ -509,9 +516,9 @@ class _LoopLocator(mplticker.Locator):
         nbins: int = 8,
         offset: float = 0.0,
     ) -> None:
-        if isinstance(period, bool) or not np.isfinite(period) or period <= 0:
+        if not _is_finite_real(period) or period <= 0:
             raise ParameterValueError(f"period must be finite and strictly positive, got {period}")
-        if isinstance(offset, bool) or not np.isfinite(offset):
+        if not _is_finite_real(offset):
             raise ParameterValueError(f"offset must be finite, got {offset}")
         if isinstance(nbins, bool) or not isinstance(nbins, (int, np.integer)) or nbins <= 0:
             raise ParameterValueError(f"nbins must be a positive integer, got {nbins}")
@@ -573,10 +580,11 @@ class _LoopLocator(mplticker.Locator):
         lo, hi = (vmin, vmax) if vmin <= vmax else (vmax, vmin)
         # Tile periodically so ticks wrap cleanly across phase-shifted loop intervals
         k_min = int(np.floor((lo - tol - float(np.max(base_ticks))) / self.period))
-        k_max = int(np.ceil((hi - tol - float(np.min(base_ticks))) / self.period))
+        k_max = int(np.ceil((hi + tol - float(np.min(base_ticks))) / self.period))
         shifts = np.arange(k_min, k_max + 1, dtype=float) * self.period
         ticks = (base_ticks[np.newaxis, :] + shifts[:, np.newaxis]).ravel()
 
+        # Exclude the upper endpoint only when the span wraps onto itself modulo period (full loop vs partial sector).
         span = hi - lo
         rem = span % self.period
         wraps_seam = span >= self.period - tol and (rem <= tol or (self.period - rem) <= tol)

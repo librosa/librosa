@@ -1278,34 +1278,47 @@ def test_waveshow_polar_transform(y, sr):
 
 
 def test_waveshow_pre_transform_fallback(y, sr):
-    fig, ax = plt.subplots()
-    try:
-        # 1. Singular pre-transform (scale by 0 -> LinAlgError on inverted())
-        pre = matplotlib.transforms.Affine2D().scale(0.0, 1.0)
-        ad = librosa.display.waveshow(y, sr=sr, ax=ax, transform=pre + ax.transData)
+    # 1. Singular pre-transform (LinAlgError on inverted()) falls back to full signal bounds
+    _, ax = plt.subplots()
+    pre = mtransforms.Affine2D().scale(0.0, 1.0)
+    ad = librosa.display.waveshow(y, sr=sr, ax=ax, transform=pre + ax.transData)
+    ax.set(xlim=[-10, 10])
+    ad.update(ax)
+    assert ad.envelope is not None and ad.envelope.get_visible()
 
-        # Force update: should not crash and fall back to full signal bounds
-        ax.set(xlim=[-10, 10])
-        ad.update(ax)
+    # 2. Non-data transform (ax.transAxes) sets use_view_limits=False for waveshow and passes through for wavebars
+    _, ax2 = plt.subplots()
+    ad2 = librosa.display.waveshow(y, sr=sr, ax=ax2, transform=ax2.transAxes)
+    assert ad2.use_view_limits is False
+    assert isinstance(ad2.pre_transform, mtransforms.IdentityTransform)
+    assert ad2.steps is not None and ad2.envelope is not None
+    assert ad2.steps.get_transform() is ax2.transAxes
+    assert ad2.envelope.get_visible()
+    coll2 = librosa.display.wavebars(y, sr=sr, ax=ax2, transform=ax2.transAxes)
+    assert coll2.get_transform() is ax2.transAxes
 
-        assert ad.envelope is not None
-        # Since full bounds covers all samples > max_points, envelope should be visible
-        assert ad.envelope.get_visible()
-    finally:
-        plt.close(fig)
+    # 3. Post-transform (axes.transData + ScaledTranslation) preserves dataLim and Time decoration
+    fig3, ax3 = plt.subplots()
+    post = ax3.transData + mtransforms.ScaledTranslation(5 / 72, 5 / 72, fig3.dpi_scale_trans)
+    coll3 = librosa.display.wavebars(y, sr=sr, ax=ax3, transform=post)
+    assert isinstance(coll3, mcoll.PatchCollection)
+    assert ax3.get_xlim()[1] > 1.0
+    assert ax3.xaxis.get_label_text() == "Time"
 
-    # 2. Non-data transform without axes.transData (has_inverse=False fallback)
-    fig2, ax2 = plt.subplots()
-    try:
-        ad2 = librosa.display.waveshow(y, sr=sr, ax=ax2, transform=ax2.transAxes)
-        assert ad2.steps is not None and ad2.envelope is not None
-        assert ad2.steps.get_transform() is ax2.transAxes
-        assert ad2.envelope.get_visible()
+    ax3.clear()
+    ad3 = librosa.display.waveshow(y, sr=sr, ax=ax3, transform=post)
+    assert ad3.use_view_limits is True
+    assert isinstance(ad3.pre_transform, mtransforms.IdentityTransform)
+    assert ax3.xaxis.get_label_text() == "Time"
 
-        coll2 = librosa.display.wavebars(y, sr=sr, ax=ax2, transform=ax2.transAxes)
-        assert coll2.get_transform() is ax2.transAxes
-    finally:
-        plt.close(fig2)
+    # 4. Non-separable 2D pre-transform uses all 4 viewport corners in AdaptiveWaveplot.update
+    _, ax4 = plt.subplots()
+    rot = mtransforms.Affine2D().rotate(np.pi / 4)
+    ad4 = librosa.display.waveshow(y, sr=sr, ax=ax4, transform=rot + ax4.transData)
+    ax4.set_xlim(-0.2, 0.2)
+    ax4.set_ylim(0.0, 0.2)
+    ad4.update(ax4)
+    assert ad4.steps is not None and ad4.steps.get_visible()
 
 
 @pytest.mark.mpl_image_compare(baseline_images=["specshow_vqt"], extensions=["png"], style=STYLE)
@@ -1894,42 +1907,21 @@ def test_waveloop_options(y, sr):
     return fig
 
 
-def test_waveloop_default_waveshow(y, sr):
-    adaptor = librosa.display.waveloop(y, sr=sr)
-    assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
-    assert adaptor.steps is not None and adaptor.steps.figure is not None
-    fig = adaptor.steps.figure
-    assert isinstance(fig, Figure)
-    try:
-        ax = adaptor.steps.axes
-        assert isinstance(ax, PolarAxes)
-        assert ax.name == "polar"
-        assert ax.get_theta_direction() == -1
-        assert np.isclose(ax.get_theta_offset(), np.pi / 2)
-        assert len(ax.get_yticks()) == 0
-        assert ax.get_ylim()[0] == 0.0
-        assert ax.get_ylim()[1] == 1.0
-    finally:
-        plt.close(fig)
-
-
-def test_waveloop_default_bars(y, sr):
-    coll = librosa.display.waveloop(y, sr=sr, method="wavebars", n_bars=64)
-    assert isinstance(coll, matplotlib.collections.PatchCollection)
-    assert coll.figure is not None
-    fig = coll.figure
-    assert isinstance(fig, Figure)
-    try:
-        ax = coll.axes
-        assert isinstance(ax, PolarAxes)
-        assert ax.name == "polar"
-        assert ax.get_theta_direction() == -1
-        assert np.isclose(ax.get_theta_offset(), np.pi / 2)
-        assert len(ax.get_yticks()) == 0
-        assert ax.get_ylim()[0] == 0.0
-        assert ax.get_ylim()[1] == 1.0
-    finally:
-        plt.close(fig)
+@pytest.mark.parametrize(
+    "method,expected_type",
+    [("waveshow", librosa.display.AdaptiveWaveplot), ("wavebars", mcoll.PatchCollection)],
+)
+def test_waveloop_defaults(y, sr, method, expected_type):
+    kw: dict[str, Any] = {"n_bars": 64} if method == "wavebars" else {}
+    out = librosa.display.waveloop(y, sr=sr, method=method, **kw)
+    assert isinstance(out, expected_type)
+    ax = out.axes if isinstance(out, mcoll.PatchCollection) else out.ax
+    assert isinstance(ax, PolarAxes)
+    assert ax.name == "polar"
+    assert ax.get_theta_direction() == -1
+    assert np.isclose(ax.get_theta_offset(), np.pi / 2)
+    assert len(ax.get_yticks()) == 0
+    assert ax.get_ylim() == (0.0, 1.0)
 
 
 def test_waveloop_duration_fractional(y, sr):
@@ -2068,67 +2060,51 @@ def test_waveloop_decorate_false(y, sr):
 
 
 def test_waveloop_rectilinear_ax_override(y, sr):
-    # 1. Standard fig, ax = plt.subplots()
+    # 1. Explicit rectilinear axes with pre-existing title -> converted in-place + concentric overlay
     fig, ax = plt.subplots()
-    try:
-        assert ax.name == "rectilinear"
-        adaptor = librosa.display.waveloop(y, sr=sr, ax=ax)
-        assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
-        assert adaptor.steps is not None
-        assert ax.name == "polar"
-        assert ax is adaptor.steps.axes
-        assert isinstance(ax, PolarAxes)
-        ax.set_title("Converted Polar")
-        fig.canvas.draw()
-        assert ax.get_title() == "Converted Polar"
-        assert ax.get_theta_direction() == -1
-        assert np.isclose(ax.get_theta_offset(), np.pi / 2)
-        assert len(ax.get_yticks()) == 0
+    assert ax.name == "rectilinear"
+    ax.set_title("Pre-existing Title")
+    adaptor = librosa.display.waveloop(y, sr=sr, ax=ax)
+    assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
+    assert isinstance(ax, PolarAxes)
+    assert ax.name == "polar" and ax is adaptor.ax
+    assert ax.get_title() == "Pre-existing Title"
+    assert ax.get_theta_direction() == -1
+    assert np.isclose(ax.get_theta_offset(), np.pi / 2)
+    assert len(ax.get_yticks()) == 0
 
-        # 2. Concentric track on already converted polar ax
-        librosa.display.waveloop(y, sr=sr, r_range=(0.2, 0.5), method="wavebars", n_bars=32, ax=ax)
-        fig.canvas.draw()
-        assert ax.name == "polar"
-    finally:
-        plt.close(fig)
+    librosa.display.waveloop(y, sr=sr, r_range=(0.2, 0.5), method="wavebars", n_bars=32, ax=ax)
+    fig.canvas.draw()
+    assert ax.name == "polar"
 
-    # 3. No ax passed (defaults to plt.gca() / new polar subplot)
+    # 2. No ax passed on an empty figure -> creates polar subplot
     fig2 = plt.figure()
-    try:
-        adaptor2 = librosa.display.waveloop(y, sr=sr)
-        assert isinstance(adaptor2, librosa.display.AdaptiveWaveplot)
-        assert adaptor2.steps is not None
-        ax2 = adaptor2.steps.axes
-        assert isinstance(ax2, PolarAxes)
-        assert ax2.name == "polar"
-        fig2.canvas.draw()
-    finally:
-        plt.close(fig2)
+    adaptor2 = librosa.display.waveloop(y, sr=sr)
+    assert isinstance(adaptor2, librosa.display.AdaptiveWaveplot)
+    assert isinstance(adaptor2.ax, PolarAxes)
+    fig2.canvas.draw()
 
-    # 4. Shared Cartesian axes should be cleanly uncoupled when converting
-    fig3, (ax_s1, ax_s2) = plt.subplots(1, 2, sharex=True)
-    try:
-        librosa.display.waveloop(y, sr=sr, ax=ax_s1)
-        assert isinstance(ax_s1, PolarAxes)
-        assert ax_s2.name == "rectilinear"
-        fig3.canvas.draw()
-    finally:
-        plt.close(fig3)
+    # 3. No ax passed when rectilinear gca() exists -> converts gca() in-place
+    _, ax3 = plt.subplots()
+    assert ax3.name == "rectilinear"
+    adaptor3 = librosa.display.waveloop(y, sr=sr)
+    assert isinstance(adaptor3, librosa.display.AdaptiveWaveplot)
+    assert ax3.name == "polar"
+
+    # 4. Shared Cartesian axes are uncoupled when converting
+    fig4, (ax_s1, ax_s2) = plt.subplots(1, 2, sharex=True)
+    librosa.display.waveloop(y, sr=sr, ax=ax_s1)
+    assert isinstance(ax_s1, PolarAxes)
+    assert ax_s2.name == "rectilinear"
+    fig4.canvas.draw()
 
 
 def test_waveloop_validation_errors(y, sr):
     sig_dur = len(y) / sr
 
-    # Non-empty rectilinear axes (line, text, inset axes, legend)
-    fig, ax = plt.subplots()
-    try:
-        ax.plot([1, 2, 3])
-        with pytest.raises(librosa.ParameterValueError, match="Cannot convert a non-empty axes"):
-            librosa.display.waveloop(y, sr=sr, ax=ax)
-    finally:
-        plt.close(fig)
-
+    # Non-empty rectilinear axes (data, text, inset axes, legend)
     for setup_fn in (
+        lambda a: a.plot([1, 2, 3]),
         lambda a: a.text(0.5, 0.5, "annotation"),
         lambda a: a.inset_axes([0.1, 0.1, 0.2, 0.2]),
         lambda a: a.legend([mlines.Line2D([], [])], ["leg"]),
@@ -2141,51 +2117,49 @@ def test_waveloop_validation_errors(y, sr):
         finally:
             plt.close(fig_e)
 
-    # Empty audio should raise ParameterValueError cleanly before peak_norm / framing
+    # Non-rectilinear projection (3D) cannot be converted to polar
+    fig_3d = plt.figure()
+    ax_3d = fig_3d.add_subplot(projection="3d")
+    with pytest.raises(librosa.ParameterValueError, match="Cannot convert axes with projection '3d'"):
+        librosa.display.waveloop(y, sr=sr, ax=ax_3d)
+    plt.close(fig_3d)
+
+    # Empty audio and duration errors
     with pytest.raises(librosa.ParameterValueError, match="empty audio"):
         librosa.display.waveloop(np.array([], dtype=float), sr=sr, duration=1.0)
-
-    # Signal duration exceeds duration
     with pytest.raises(librosa.ParameterValueError, match="exceeds duration"):
         librosa.display.waveloop(y, sr=sr, duration=sig_dur / 2)
+    for bad_dur in (0, -1.5, np.nan, np.inf, -np.inf, True):
+        with pytest.raises(librosa.ParameterValueError, match="duration must be finite and strictly positive"):
+            librosa.display.waveloop(y, sr=sr, duration=bad_dur)
 
-    # Duration <= 0
-    with pytest.raises(librosa.ParameterValueError, match="duration must be finite and strictly positive"):
-        librosa.display.waveloop(y, sr=sr, duration=0)
-    with pytest.raises(librosa.ParameterValueError, match="duration must be finite and strictly positive"):
-        librosa.display.waveloop(y, sr=sr, duration=-1.5)
+    # Non-finite / boolean angular & offset scalars
+    for bad_val in (np.nan, np.inf, True):
+        with pytest.raises(librosa.ParameterValueError, match="phase must be finite"):
+            librosa.display.waveloop(y, sr=sr, phase=bad_val)
+        with pytest.raises(librosa.ParameterValueError, match="offset must be finite"):
+            librosa.display.waveloop(y, sr=sr, offset=bad_val)
+        with pytest.raises(librosa.ParameterValueError, match="theta_offset must be finite"):
+            librosa.display.waveloop(y, sr=sr, theta_offset=bad_val)
 
     # Invalid r_range
-    with pytest.raises(librosa.ParameterValueError, match="r_range must be a tuple"):
-        librosa.display.waveloop(y, sr=sr, r_range="invalid")  # type: ignore[arg-type]
-    with pytest.raises(librosa.ParameterValueError, match="r_range must be a tuple"):
-        librosa.display.waveloop(y, sr=sr, r_range=("a", "b"))  # type: ignore[arg-type]
-    with pytest.raises(librosa.ParameterValueError, match="r_range must be a tuple"):
-        librosa.display.waveloop(y, sr=sr, r_range=(False, True))
-    with pytest.raises(librosa.ParameterValueError, match="Must satisfy 0 <= r_min < r_max"):
-        librosa.display.waveloop(y, sr=sr, r_range=(-0.1, 1.0))
-    with pytest.raises(librosa.ParameterValueError, match="Must satisfy 0 <= r_min < r_max"):
-        librosa.display.waveloop(y, sr=sr, r_range=(1.0, 0.5))
-    with pytest.raises(librosa.ParameterValueError, match="Must satisfy 0 <= r_min < r_max"):
-        librosa.display.waveloop(y, sr=sr, r_range=(0.5, np.inf))
+    for bad_r in ("invalid", ("a", "b"), (False, True)):
+        with pytest.raises(librosa.ParameterValueError, match="r_range must be a tuple"):
+            librosa.display.waveloop(y, sr=sr, r_range=bad_r)  # type: ignore[arg-type]
+    for bad_bounds in ((-0.1, 1.0), (1.0, 0.5), (0.5, np.inf)):
+        with pytest.raises(librosa.ParameterValueError, match="Must satisfy 0 <= r_min < r_max"):
+            librosa.display.waveloop(y, sr=sr, r_range=bad_bounds)
 
-    # Invalid method
+    # Invalid method, direction, time_axis, and unsupported kwargs
     with pytest.raises(librosa.ParameterValueError, match="Invalid method"):
         librosa.display.waveloop(y, sr=sr, method="invalid")  # type: ignore[arg-type]
+    for bad_dir in ("diagonal", True):
+        with pytest.raises(librosa.ParameterValueError, match="Invalid direction"):
+            librosa.display.waveloop(y, sr=sr, direction=bad_dir)  # type: ignore[arg-type]
+    for bad_time_axis in ("chroma", "lag", "frames", True, False, 3.5):
+        with pytest.raises(librosa.ParameterValueError, match="Unsupported time_axis"):
+            librosa.display.waveloop(y, sr=sr, time_axis=bad_time_axis)  # type: ignore[arg-type]
 
-    # Invalid direction (including bool)
-    with pytest.raises(librosa.ParameterValueError, match="Invalid direction"):
-        librosa.display.waveloop(y, sr=sr, direction="diagonal")  # type: ignore[arg-type]
-    with pytest.raises(librosa.ParameterValueError, match="Invalid direction"):
-        librosa.display.waveloop(y, sr=sr, direction=True)  # type: ignore[arg-type]
-
-    # Invalid bool time_axis
-    with pytest.raises(librosa.ParameterValueError, match="Unsupported time_axis"):
-        librosa.display.waveloop(y, sr=sr, time_axis=True)
-    with pytest.raises(librosa.ParameterValueError, match="Unsupported time_axis"):
-        librosa.display.waveloop(y, sr=sr, time_axis=False)
-
-    # Transpose, transform, and axis not supported in kwargs
     with pytest.raises(librosa.ParameterValueError, match="transpose=True is not supported"):
         librosa.display.waveloop(y, sr=sr, transpose=True)
     with pytest.raises(librosa.ParameterValueError, match="transform is managed internally"):
@@ -2197,349 +2171,256 @@ def test_waveloop_validation_errors(y, sr):
 def test_loop_locator():
     from librosa.display.formatting import _LoopLocator
 
-    # Test preferred divisions
     assert _LoopLocator.PREF_DIVISIONS == (2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)
+    for n in _LoopLocator.PREF_DIVISIONS:
+        loc = _LoopLocator(period=4.0, nbins=n)
+        ticks = loc.tick_values(0.0, 4.0)
+        assert len(ticks) == n
+        assert np.allclose(ticks, np.linspace(0.0, 4.0, n, endpoint=False))
 
-    loc2 = _LoopLocator(period=4.0, nbins=2)
-    assert len(loc2.tick_values(0.0, 4.0)) == 2
-    assert np.allclose(loc2.tick_values(0.0, 4.0), [0.0, 2.0])
-
-    loc6 = _LoopLocator(period=6.0, nbins=6)
-    assert len(loc6.tick_values(0.0, 6.0)) == 6
-
-    loc8 = _LoopLocator(period=4.0, nbins=8)
-    ticks8 = loc8.tick_values(0.0, 4.0)
-    assert len(ticks8) == 8
-    assert np.allclose(ticks8, np.linspace(0.0, 4.0, 8, endpoint=False))
-
-    loc4 = _LoopLocator(period=4.0, nbins=4)
-    ticks4 = loc4.tick_values(0.0, 4.0)
-    assert len(ticks4) == 4
-    assert np.allclose(ticks4, [0.0, 1.0, 2.0, 3.0])
-
-    loc12 = _LoopLocator(period=4.0, nbins=12)
-    assert len(loc12.tick_values(0.0, 4.0)) == 12
-
-    loc16 = _LoopLocator(period=4.0, nbins=16)
-    assert len(loc16.tick_values(0.0, 4.0)) == 16
-
-    loc24 = _LoopLocator(period=4.0, nbins=24)
-    assert len(loc24.tick_values(0.0, 4.0)) == 24
-
-    loc32 = _LoopLocator(period=4.0, nbins=32)
-    assert len(loc32.tick_values(0.0, 4.0)) == 32
-
-    loc48 = _LoopLocator(period=4.0, nbins=48)
-    assert len(loc48.tick_values(0.0, 4.0)) == 48
-
-    loc64 = _LoopLocator(period=4.0, nbins=64)
-    assert len(loc64.tick_values(0.0, 4.0)) == 64
-
-    # Nearest bin selection: nbins=10 -> 8 or 12
-    loc10 = _LoopLocator(period=4.0, nbins=10)
-    assert len(loc10.tick_values(0.0, 4.0)) in (8, 12)
-
-    # Explicit integer division
-    loc_div6 = _LoopLocator(period=6.0, divisions=6)
-    assert np.allclose(loc_div6.tick_values(0.0, 6.0), np.arange(6, dtype=float))
-
-    # Explicit timestamp array
+    # Nearest bin selection & explicit divisions (int, sequence, empty, seam)
+    assert len(_LoopLocator(period=4.0, nbins=10).tick_values(0.0, 4.0)) in (8, 12)
+    assert np.allclose(_LoopLocator(period=6.0, divisions=6).tick_values(0.0, 6.0), np.arange(6, dtype=float))
     custom_times = [0.25, 1.5, 3.75]
-    loc_custom = _LoopLocator(period=4.0, divisions=custom_times)
-    assert np.allclose(loc_custom.tick_values(0.0, 4.0), custom_times)
+    assert np.allclose(_LoopLocator(period=4.0, divisions=custom_times).tick_values(0.0, 4.0), custom_times)
+    assert len(_LoopLocator(period=4.0, divisions=[]).tick_values(0.0, 4.0)) == 0
+    assert np.allclose(_LoopLocator(period=4.0, divisions=[0.0, 4.0]).tick_values(0.0, 4.0), [0.0])
 
-    # Empty divisions and seam deduplication
-    loc_empty = _LoopLocator(period=4.0, divisions=[])
-    assert len(loc_empty.tick_values(0.0, 4.0)) == 0
-    loc_seam = _LoopLocator(period=4.0, divisions=[0.0, 4.0])
-    seam_ticks = loc_seam.tick_values(0.0, 4.0)
-    assert len(seam_ticks) == 1
-    assert np.isclose(seam_ticks[0], 0.0)
-
-    # Partial interval includes upper endpoint when span does not wrap modulo period
-    ticks_sub = loc8.tick_values(1.0, 3.0)
-    assert np.allclose(ticks_sub, [1.0, 1.5, 2.0, 2.5, 3.0])
-
-    # Partial polar sector preserves upper boundary tick (e.g., 180 deg)
-    loc4_sector = _LoopLocator(period=4.0, divisions=4)
-    assert np.allclose(loc4_sector.tick_values(0.0, 2.0), [0.0, 1.0, 2.0])
-
-    # Non-finite view bounds return empty array
+    # Partial interval / sector preserves upper endpoint; inverted & non-finite bounds work
+    loc8 = _LoopLocator(period=4.0, nbins=8)
+    assert np.allclose(loc8.tick_values(1.0, 3.0), [1.0, 1.5, 2.0, 2.5, 3.0])
+    assert np.allclose(_LoopLocator(period=4.0, divisions=4).tick_values(0.0, 2.0), [0.0, 1.0, 2.0])
     assert len(loc8.tick_values(np.nan, 4.0)) == 0
     assert len(loc8.tick_values(0.0, np.inf)) == 0
 
-    # Calling with axis vs without axis
+    loc_off = _LoopLocator(period=4.0, offset=1.0)
+    assert np.allclose(loc_off.tick_values(5.0, 1.0), 1.0 + np.linspace(0.0, 4.0, 8, endpoint=False))
+
+    # Calling without axis vs bound to an axis
+    assert np.allclose(_LoopLocator(period=4.0, nbins=4)(), [0.0, 1.0, 2.0, 3.0])
     fig, ax = plt.subplots()
-    try:
-        loc8.set_axis(ax.xaxis)
-        ax.set_xlim(0.0, 4.0)
-        assert len(loc8()) == 8
-    finally:
-        plt.close(fig)
+    loc8.set_axis(ax.xaxis)
+    ax.set_xlim(0.0, 4.0)
+    assert len(loc8()) == 8
+    plt.close(fig)
 
-    # Parameter validation
-    with pytest.raises(librosa.ParameterValueError, match="period must be finite and strictly positive"):
-        _LoopLocator(period=0.0)
-    with pytest.raises(librosa.ParameterValueError, match="period must be finite and strictly positive"):
-        _LoopLocator(period=-1.0)
-    with pytest.raises(librosa.ParameterValueError, match="period must be finite and strictly positive"):
-        _LoopLocator(period=np.nan)
-    with pytest.raises(librosa.ParameterValueError, match="period must be finite and strictly positive"):
-        _LoopLocator(period=np.inf)
-    with pytest.raises(librosa.ParameterValueError, match="period must be finite and strictly positive"):
-        _LoopLocator(period=True)
-    with pytest.raises(librosa.ParameterValueError, match="offset must be finite"):
-        _LoopLocator(period=4.0, offset=np.nan)
-    with pytest.raises(librosa.ParameterValueError, match="offset must be finite"):
-        _LoopLocator(period=4.0, offset=True)
-    with pytest.raises(librosa.ParameterValueError, match="nbins must be a positive integer"):
-        _LoopLocator(period=4.0, nbins=0)
-    with pytest.raises(librosa.ParameterValueError, match="nbins must be a positive integer"):
-        _LoopLocator(period=4.0, nbins=True)
-    with pytest.raises(librosa.ParameterValueError, match="divisions cannot be a boolean"):
-        _LoopLocator(period=4.0, divisions=True)
-    with pytest.raises(librosa.ParameterValueError, match="divisions cannot be a boolean"):
-        _LoopLocator(period=4.0, divisions=False)
-    with pytest.raises(librosa.ParameterValueError, match="divisions must be positive"):
-        _LoopLocator(period=4.0, divisions=0)
-    with pytest.raises(librosa.ParameterValueError, match="divisions must be positive"):
-        _LoopLocator(period=4.0, divisions=-4)
-    with pytest.raises(librosa.ParameterValueError, match="divisions must be an integer or sequence"):
-        _LoopLocator(period=4.0, divisions="bad")  # type: ignore[arg-type]
-    with pytest.raises(librosa.ParameterValueError, match="divisions must be an integer or sequence"):
-        _LoopLocator(period=4.0, divisions=["a", "b"])  # type: ignore[list-item]
-    with pytest.raises(librosa.ParameterValueError, match="divisions must be a 1D sequence of finite numbers"):
-        _LoopLocator(period=4.0, divisions=[[0.0, 1.0]])  # type: ignore[list-item]
-    with pytest.raises(librosa.ParameterValueError, match="divisions must be a 1D sequence of finite numbers"):
-        _LoopLocator(period=4.0, divisions=[0.0, np.nan])
+    # Constructor validation
+    invalid_cases: list[tuple[dict[str, Any], str]] = [
+        ({"period": 0.0}, "period must be finite and strictly positive"),
+        ({"period": -1.0}, "period must be finite and strictly positive"),
+        ({"period": np.nan}, "period must be finite and strictly positive"),
+        ({"period": np.inf}, "period must be finite and strictly positive"),
+        ({"period": True}, "period must be finite and strictly positive"),
+        ({"period": 4.0, "offset": np.nan}, "offset must be finite"),
+        ({"period": 4.0, "offset": True}, "offset must be finite"),
+        ({"period": 4.0, "nbins": 0}, "nbins must be a positive integer"),
+        ({"period": 4.0, "nbins": True}, "nbins must be a positive integer"),
+        ({"period": 4.0, "divisions": True}, "divisions cannot be a boolean"),
+        ({"period": 4.0, "divisions": False}, "divisions cannot be a boolean"),
+        ({"period": 4.0, "divisions": 0}, "divisions must be positive"),
+        ({"period": 4.0, "divisions": -4}, "divisions must be positive"),
+        ({"period": 4.0, "divisions": "bad"}, "divisions must be an integer or sequence"),
+        ({"period": 4.0, "divisions": ["a", "b"]}, "divisions must be an integer or sequence"),
+        ({"period": 4.0, "divisions": [[0.0, 1.0]]}, "divisions must be a 1D sequence of finite numbers"),
+        ({"period": 4.0, "divisions": [0.0, np.nan]}, "divisions must be a 1D sequence of finite numbers"),
+    ]
+    for kwargs_bad, match in invalid_cases:
+        with pytest.raises(librosa.ParameterValueError, match=match):
+            _LoopLocator(**kwargs_bad)
 
 
-def test_transformed_locator():
-    from librosa.display.formatting import _TransformedLocator
+def test_transformed_tickers(monkeypatch: pytest.MonkeyPatch):
+    import matplotlib.scale as mscale
 
-    # Pre-transform mapping [0, 4] -> [0, 2pi]
+    from librosa.display.formatting import (
+        _AxisTransformProxy,
+        _LoopLocator,
+        _TransformedFormatter,
+        _TransformedLocator,
+    )
+
     pre = mtransforms.Affine2D().scale(2 * np.pi / 4.0, 1.0)
     base_loc = mplticker.FixedLocator([0.0, 1.0, 2.0, 3.0])
     trans_loc = _TransformedLocator(base_loc, pre)
+    assert np.allclose(trans_loc.tick_values(0.0, 2 * np.pi), [0.0, np.pi / 2, np.pi, 3 * np.pi / 2])
+    assert len(trans_loc()) == 0
+    assert len(_TransformedLocator(mplticker.FixedLocator([]), pre).tick_values(0.0, 2 * np.pi)) == 0
 
-    # View interval in display space [0, 2pi]
-    disp_ticks = trans_loc.tick_values(0.0, 2 * np.pi)
-    expected_disp = np.array([0.0, np.pi / 2, np.pi, 3 * np.pi / 2])
-    assert np.allclose(disp_ticks, expected_disp)
-
-    # Empty ticks handled cleanly
-    empty_loc = mplticker.FixedLocator([])
-    trans_empty = _TransformedLocator(empty_loc, pre)
-    assert len(trans_empty.tick_values(0.0, 2 * np.pi)) == 0
-
-
-def test_transformed_formatter():
-    from librosa.display.formatting import _TransformedFormatter
-
-    # Pre-transform mapping [0, 4] -> [0, 2pi]
-    pre = mtransforms.Affine2D().scale(2 * np.pi / 4.0, 1.0)
+    _, ax = plt.subplots()
     base_fmt = librosa.display.TimeFormatter(unit="s")
     trans_fmt = _TransformedFormatter(base_fmt, pre)
+    trans_fmt.set_axis(ax.xaxis)
+    assert "2" in trans_fmt(np.pi)
+    assert len(trans_fmt.format_ticks([0.0, np.pi, 2 * np.pi])) == 3
+    assert trans_fmt.format_ticks([]) == []
+    assert "2" in trans_fmt.format_data_short(np.pi)
 
-    fig, ax = plt.subplots()
-    try:
-        trans_fmt.set_axis(ax.xaxis)
-        # Display coordinate np.pi corresponds to t = 2.0s
-        label = trans_fmt(np.pi)
-        assert "02" in label or "2" in label
+    proxy = _AxisTransformProxy(ax.xaxis, pre)
+    assert "_AxisTransformProxy wrapping" in repr(proxy)
+    assert proxy.get_scale() == ax.xaxis.get_scale()
+    ax.set_xlim(0.0, 2 * np.pi)
+    assert np.allclose(proxy.get_view_interval(), [0.0, 4.0])
+    monkeypatch.setattr(ax.xaxis, "get_data_interval", lambda: (float("-inf"), float("inf")))
+    assert np.allclose(proxy.get_data_interval(), [0.0, 4.0])
 
-        # View interval proxy test
-        proxy = librosa.display.formatting._AxisTransformProxy(ax.xaxis, pre)
-        ax.set_xlim(0.0, 2 * np.pi)
-        v_min, v_max = proxy.get_view_interval()
-        assert np.isclose(v_min, 0.0)
-        assert np.isclose(v_max, 4.0)
-    finally:
-        plt.close(fig)
+    trans_fmt.set_axis(None)
+    assert trans_fmt.axis is None
+    trans_loc.set_axis(None)
+    assert trans_loc.axis is None
+
+    # Y-axis support
+    pre_y = mtransforms.Affine2D().scale(1.0, 2.0)
+    y_loc = _TransformedLocator(mplticker.FixedLocator([0.5, 1.5]), pre_y)
+    y_loc.set_axis(ax.yaxis)
+    ax.set_ylim(0.0, 4.0)
+    assert np.allclose(y_loc(), [1.0, 3.0])
+    y_fmt = _TransformedFormatter(librosa.display.TimeFormatter(unit="s"), pre_y)
+    y_fmt.set_axis(ax.yaxis)
+    assert "1" in y_fmt(2.0)
+    assert "1" in y_fmt.format_ticks([2.0])[0]
+    assert "1" in y_fmt.format_data_short(2.0)
+    assert np.allclose(_AxisTransformProxy(ax.yaxis, pre_y).get_view_interval(), [0.0, 2.0])
+
+    # 1D transform support (e.g., matplotlib.scale.FuncTransform)
+    func_1d = mscale.FuncTransform(
+        lambda x: 2.0 * np.asarray(x, dtype=float),
+        lambda x: 0.5 * np.asarray(x, dtype=float),
+    )
+    loc_1d = _TransformedLocator(mplticker.FixedLocator([1.0, 2.0]), func_1d)
+    loc_1d.set_axis(ax.xaxis)
+    assert np.allclose(loc_1d.tick_values(0.0, 6.0), [2.0, 4.0])
+    fmt_1d = _TransformedFormatter(librosa.display.TimeFormatter(unit="s"), func_1d)
+    fmt_1d.set_axis(ax.xaxis)
+    assert "1" in fmt_1d(2.0)
+    assert "2" in fmt_1d.format_ticks([4.0])[0]
+
+    # Validation for non-invertible, singular, non-separable, and >2D transforms
+    class Dummy3DTransform(mtransforms.Transform):
+        input_dims = 3
+        output_dims = 3
+        has_inverse = True
+
+    loop_loc = _LoopLocator(period=4.0)
+    for bad_trans, match in (
+        (mtransforms.Transform(), "transform must be invertible"),
+        (mtransforms.Affine2D().scale(0.0, 1.0), "transform must be invertible"),
+        (mtransforms.Affine2D().rotate(np.pi / 4), "separable"),
+        (Dummy3DTransform(), "1D or separable 2D"),
+    ):
+        with pytest.raises(librosa.ParameterValueError, match=match):
+            _TransformedLocator(loop_loc, bad_trans)
+        with pytest.raises(librosa.ParameterValueError, match=match):
+            _TransformedFormatter(base_fmt, bad_trans)
+
+
+def test_periodic_formatter():
+    from librosa.display.formatting import _PeriodicFormatter
+
+    base_fmt = librosa.display.TimeFormatter(unit="s")
+    for bad_period in (0.0, np.nan, True):
+        with pytest.raises(librosa.ParameterValueError, match="period must be finite and strictly positive"):
+            _PeriodicFormatter(base_fmt, period=bad_period)
+    for bad_offset in (np.inf, False):
+        with pytest.raises(librosa.ParameterValueError, match="offset must be finite"):
+            _PeriodicFormatter(base_fmt, period=4.0, offset=bad_offset)
+
+    _, ax = plt.subplots()
+    p_fmt = _PeriodicFormatter(base_fmt, period=4.0, offset=1.0)
+    p_fmt.set_axis(ax.xaxis)
+    assert "3" in p_fmt(-1.0)
+    assert p_fmt.format_ticks([]) == []
+    # Near-upper-boundary wrap snaps cleanly to offset (1.0s)
+    assert "1" in p_fmt.format_ticks([1.0 - 1e-12])[0]
+    assert "3" in p_fmt.format_data_short(-1.0)
 
 
 def test_waveloop_time_axis(y, sr):
     dur = len(y) / sr
-    # 1. Default time_axis="time" -> 8 ticks on polar xaxis
-    adaptor = librosa.display.waveloop(y, sr=sr)
-    assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
-    assert adaptor.steps is not None and adaptor.steps.figure is not None
-    fig = adaptor.steps.figure
-    assert isinstance(fig, Figure)
-    try:
-        ax = adaptor.steps.axes
-        assert isinstance(ax, PolarAxes)
-        assert isinstance(ax.xaxis.get_major_locator(), librosa.display.formatting._TransformedLocator)
-        assert isinstance(ax.xaxis.get_major_formatter(), librosa.display.formatting._TransformedFormatter)
-        ticks = ax.xaxis.get_majorticklocs()
-        assert len(ticks) == 8
-        assert np.all(ticks >= 0.0)
-        assert np.all(ticks < 2 * np.pi + 1e-4)
-    finally:
-        plt.close(fig)
 
-    # 2. Integer division count: time_axis=16
-    adaptor16 = librosa.display.waveloop(y, sr=sr, time_axis=16)
-    assert isinstance(adaptor16, librosa.display.AdaptiveWaveplot)
-    assert adaptor16.steps is not None and adaptor16.steps.figure is not None
-    fig16 = adaptor16.steps.figure
-    assert isinstance(fig16, Figure)
-    try:
-        ax16 = adaptor16.steps.axes
-        assert isinstance(ax16, PolarAxes)
-        ticks16 = ax16.xaxis.get_majorticklocs()
-        assert len(ticks16) == 16
-    finally:
-        plt.close(fig16)
+    # Default time_axis="time" -> 8 ticks on polar xaxis
+    ad = librosa.display.waveloop(y, sr=sr)
+    assert isinstance(ad, librosa.display.AdaptiveWaveplot)
+    assert isinstance(ad.ax, PolarAxes)
+    assert isinstance(ad.ax.xaxis.get_major_locator(), librosa.display.formatting._TransformedLocator)
+    assert isinstance(ad.ax.xaxis.get_major_formatter(), librosa.display.formatting._TransformedFormatter)
+    ticks = ad.ax.xaxis.get_majorticklocs()
+    assert len(ticks) == 8 and np.all(ticks >= 0.0) and np.all(ticks < 2 * np.pi + 1e-4)
 
-    # 3. Explicit timestamp sequence: time_axis=[0.0, 1.0, 2.0]
-    custom_ts = [0.0, 1.0, 2.0]
-    adaptor_custom = librosa.display.waveloop(y, sr=sr, time_axis=custom_ts)
-    assert isinstance(adaptor_custom, librosa.display.AdaptiveWaveplot)
-    assert adaptor_custom.steps is not None and adaptor_custom.steps.figure is not None
-    fig_c = adaptor_custom.steps.figure
-    assert isinstance(fig_c, Figure)
-    try:
-        ax_c = adaptor_custom.steps.axes
-        assert isinstance(ax_c, PolarAxes)
-        ticks_c = ax_c.xaxis.get_majorticklocs()
-        assert len(ticks_c) == len(custom_ts)
-        expected_angles = np.array(custom_ts) * (2 * np.pi / dur)
-        assert np.allclose(ticks_c, expected_angles, atol=1e-3)
-    finally:
-        plt.close(fig_c)
+    # Integer division count: time_axis=16
+    _, ax16 = plt.subplots()
+    librosa.display.waveloop(y, sr=sr, time_axis=16, ax=ax16)
+    assert len(ax16.xaxis.get_majorticklocs()) == 16
 
-    # 4. time_axis=None / "none" / "off"
+    # Explicit sequences (list and ndarray)
+    for seq in ([0.0, 1.0, 2.0], np.array([0.0, 1.0, 2.0])):
+        fig_s, ax_s = plt.subplots()
+        librosa.display.waveloop(y, sr=sr, time_axis=seq, ax=ax_s)
+        ticks_s = ax_s.xaxis.get_majorticklocs()
+        assert len(ticks_s) == 3
+        assert np.allclose(ticks_s, np.asarray(seq) * (2 * np.pi / dur), atol=1e-3)
+        plt.close(fig_s)
+
+    # Hidden ticks: None / "none" / "off"
     for no_time in (None, "none", "off"):
-        ad_none = librosa.display.waveloop(y, sr=sr, time_axis=no_time)
-        assert isinstance(ad_none, librosa.display.AdaptiveWaveplot)
-        assert ad_none.steps is not None and ad_none.steps.figure is not None
-        fig_n = ad_none.steps.figure
-        assert isinstance(fig_n, Figure)
-        try:
-            ax_n = ad_none.steps.axes
-            assert isinstance(ax_n, PolarAxes)
-            assert isinstance(ax_n.xaxis.get_major_formatter(), mplticker.NullFormatter)
-            assert isinstance(ax_n.xaxis.get_major_locator(), mplticker.NullLocator)
-        finally:
-            plt.close(fig_n)
+        fig_n, ax_n = plt.subplots()
+        librosa.display.waveloop(y, sr=sr, time_axis=no_time, ax=ax_n)
+        assert isinstance(ax_n.xaxis.get_major_formatter(), mplticker.NullFormatter)
+        assert isinstance(ax_n.xaxis.get_major_locator(), mplticker.NullLocator)
+        plt.close(fig_n)
 
-    # 5. Unit specified: time_axis="ms"
-    ad_ms = librosa.display.waveloop(y, sr=sr, time_axis="ms")
-    assert isinstance(ad_ms, librosa.display.AdaptiveWaveplot)
-    assert ad_ms.steps is not None and ad_ms.steps.figure is not None
-    fig_ms = ad_ms.steps.figure
-    assert isinstance(fig_ms, Figure)
-    try:
-        ax_ms = ad_ms.steps.axes
-        assert isinstance(ax_ms, PolarAxes)
-        labels = [ax_ms.xaxis.get_major_formatter()(tick) for tick in ax_ms.xaxis.get_majorticklocs()]
-        # With unit="ms", ticks are multiplied by 1000 (e.g. >= 1000 for t >= 1s)
-        numeric_vals = [float(lbl) for lbl in labels]
-        assert any(val >= 1000 for val in numeric_vals)
-    finally:
-        plt.close(fig_ms)
+    # Explicit unit: time_axis="ms"
+    _, ax_ms = plt.subplots()
+    librosa.display.waveloop(y, sr=sr, time_axis="ms", ax=ax_ms)
+    labels = [ax_ms.xaxis.get_major_formatter()(t) for t in ax_ms.xaxis.get_majorticklocs()]
+    assert any(float(lbl) >= 1000 for lbl in labels)
 
-    # 6. NumPy array sequence: time_axis=np.array([0.0, 1.0, 2.0])
-    custom_arr = np.array([0.0, 1.0, 2.0])
-    adaptor_arr = librosa.display.waveloop(y, sr=sr, time_axis=custom_arr)
-    assert isinstance(adaptor_arr, librosa.display.AdaptiveWaveplot)
-    assert adaptor_arr.steps is not None and adaptor_arr.steps.figure is not None
-    fig_arr = adaptor_arr.steps.figure
-    assert isinstance(fig_arr, Figure)
-    try:
-        ax_arr = adaptor_arr.steps.axes
-        assert isinstance(ax_arr, PolarAxes)
-        ticks_arr = ax_arr.xaxis.get_majorticklocs()
-        assert len(ticks_arr) == len(custom_arr)
-        expected_angles = custom_arr * (2 * np.pi / dur)
-        assert np.allclose(ticks_arr, expected_angles, atol=1e-3)
-    finally:
-        plt.close(fig_arr)
-
-
-def test_transformed_locator_no_axis():
-    pre = mtransforms.Affine2D().scale(2.0, 1.0)
-    base_loc = mplticker.FixedLocator([0.0, 1.0])
-    trans_loc = librosa.display.formatting._TransformedLocator(base_loc, pre)
-    assert len(trans_loc()) == 0
-
-
-def test_loop_locator_no_axis():
-    loc = librosa.display.formatting._LoopLocator(period=4.0, nbins=4)
-    ticks = loc()
-    assert len(ticks) == 4
-    assert np.allclose(ticks, [0.0, 1.0, 2.0, 3.0])
-
-
-def test_axis_transform_proxy(monkeypatch: pytest.MonkeyPatch):
-    fig, ax = plt.subplots()
-    try:
-        pre = mtransforms.Affine2D().scale(2.0, 1.0)
-        proxy = librosa.display.formatting._AxisTransformProxy(ax.xaxis, pre)
-        assert "_AxisTransformProxy wrapping" in repr(proxy)
-        assert proxy.get_scale() == ax.xaxis.get_scale()
-
-        ax.set_xlim(0.0, 4.0)
-        monkeypatch.setattr(ax.xaxis, "get_data_interval", lambda: (float("-inf"), float("inf")))
-        dmin, dmax = proxy.get_data_interval()
-        assert np.isfinite(dmin) and np.isfinite(dmax)
-    finally:
-        plt.close(fig)
+    # Partial polar sector preserves upper endpoint tick (180 deg)
+    _, ax_sec = plt.subplots(subplot_kw={"projection": "polar"})
+    assert isinstance(ax_sec, PolarAxes)
+    librosa.display.waveloop(y[: int(1.0 * sr)], sr=sr, duration=4.0, time_axis=4, ax=ax_sec)
+    ax_sec.set_thetamin(0)
+    ax_sec.set_thetamax(180)
+    assert np.allclose(np.rad2deg(ax_sec.xaxis.get_major_locator()()), [0.0, 90.0, 180.0])
 
 
 def test_decorate_loop_time_axis_and_decorate_axis_validation(y, sr):
-    fig, ax = plt.subplots()
-    try:
-        # _decorate_axis rejects integer or sequence ax_type (restoring pre-PR validation)
-        with pytest.raises(librosa.ParameterValueError, match="Unsupported axis type"):
-            librosa.display.formatting._decorate_axis(ax.xaxis, ax_type=4)
-        with pytest.raises(librosa.ParameterValueError, match="Unsupported axis type"):
-            librosa.display.formatting._decorate_axis(ax.xaxis, ax_type=[0.0, 1.0])
+    _, ax = plt.subplots()
+    # _decorate_axis rejects integer or sequence ax_type (restoring pre-PR validation)
+    with pytest.raises(librosa.ParameterValueError, match="Unsupported axis type"):
+        librosa.display.formatting._decorate_axis(ax.xaxis, ax_type=4)
+    with pytest.raises(librosa.ParameterValueError, match="Unsupported axis type"):
+        librosa.display.formatting._decorate_axis(ax.xaxis, ax_type=[0.0, 1.0])
 
-        # _decorate_loop_time_axis works on Cartesian axes with and without transform
-        librosa.display.formatting._decorate_loop_time_axis(ax.xaxis, "time", period=4.0)
-        assert ax.xaxis.get_label_text() == "Time"
-        assert isinstance(ax.xaxis.get_major_locator(), librosa.display.formatting._LoopLocator)
-        assert isinstance(ax.xaxis.get_major_formatter(), librosa.display.formatting._PeriodicFormatter)
+    # _decorate_loop_time_axis works on Cartesian axes with and without transform
+    librosa.display.formatting._decorate_loop_time_axis(ax.xaxis, "time", period=4.0)
+    assert ax.xaxis.get_label_text() == "Time"
+    assert isinstance(ax.xaxis.get_major_locator(), librosa.display.formatting._LoopLocator)
+    assert isinstance(ax.xaxis.get_major_formatter(), librosa.display.formatting._PeriodicFormatter)
 
-        pre = mtransforms.Affine2D().scale(2.0, 1.0)
-        librosa.display.formatting._decorate_loop_time_axis(ax.xaxis, "s", period=2.0, transform=pre)
-        assert ax.xaxis.get_label_text() == "Time (seconds)"
-        assert isinstance(ax.xaxis.get_major_locator(), librosa.display.formatting._TransformedLocator)
-        assert isinstance(ax.xaxis.get_major_formatter(), librosa.display.formatting._TransformedFormatter)
+    pre = mtransforms.Affine2D().scale(2.0, 1.0)
+    librosa.display.formatting._decorate_loop_time_axis(ax.xaxis, "s", period=2.0, transform=pre)
+    assert ax.xaxis.get_label_text() == "Time (seconds)"
+    assert isinstance(ax.xaxis.get_major_locator(), librosa.display.formatting._TransformedLocator)
+    assert isinstance(ax.xaxis.get_major_formatter(), librosa.display.formatting._TransformedFormatter)
 
-        librosa.display.formatting._decorate_loop_time_axis(ax.xaxis, 8, period=4.0, transform=pre)
-        assert ax.xaxis.get_label_text() == "Time"
+    librosa.display.formatting._decorate_loop_time_axis(ax.xaxis, 8, period=4.0, transform=pre)
+    assert ax.xaxis.get_label_text() == "Time"
 
-        librosa.display.formatting._decorate_loop_time_axis(ax.xaxis, None, period=4.0)
-        assert ax.xaxis.get_label_text() == ""
-        assert len(ax.xaxis.get_major_locator()()) == 0
+    librosa.display.formatting._decorate_loop_time_axis(ax.xaxis, None, period=4.0)
+    assert ax.xaxis.get_label_text() == ""
+    assert len(ax.xaxis.get_major_locator()()) == 0
 
-        for bad_time_axis in ("chroma", "lag", "frames", True, 3.5):
-            with pytest.raises(librosa.ParameterValueError, match="Unsupported time_axis"):
-                librosa.display.formatting._decorate_loop_time_axis(ax.xaxis, bad_time_axis, period=4.0)  # type: ignore[arg-type]
-    finally:
-        plt.close(fig)
+    for bad_time_axis in ("chroma", "lag", "frames", True, 3.5):
+        with pytest.raises(librosa.ParameterValueError, match="Unsupported time_axis"):
+            librosa.display.formatting._decorate_loop_time_axis(ax.xaxis, bad_time_axis, period=4.0)  # type: ignore[arg-type]
 
     # Public callers reject invalid axis arguments instead of silently formatting as Time
-    fig2, ax2 = plt.subplots()
-    try:
-        f0 = np.full(10, 440.0)
-        with pytest.raises(librosa.ParameterValueError, match="Unsupported axis type"):
-            librosa.display.wavef0(y, f0=f0, sr=sr, freq_axis=4, ax=ax2)  # type: ignore[arg-type]
-        with pytest.raises(librosa.ParameterValueError, match="Unsupported axis type"):
-            librosa.display.waveshow(y, sr=sr, axis=4, ax=ax2)  # type: ignore[arg-type]
-    finally:
-        plt.close(fig2)
-
-    for bad_waveloop_axis in ("chroma", "lag", "frames", True, 3.5):
-        fig3, ax3 = plt.subplots()
-        try:
-            with pytest.raises(librosa.ParameterValueError, match="Unsupported time_axis"):
-                librosa.display.waveloop(y, sr=sr, time_axis=bad_waveloop_axis, ax=ax3)  # type: ignore[arg-type]
-        finally:
-            plt.close(fig3)
+    _, ax2 = plt.subplots()
+    f0 = np.full(10, 440.0)
+    with pytest.raises(librosa.ParameterValueError, match="Unsupported axis type"):
+        librosa.display.wavef0(y, f0=f0, sr=sr, freq_axis=4, ax=ax2)  # type: ignore[arg-type]
+    with pytest.raises(librosa.ParameterValueError, match="Unsupported axis type"):
+        librosa.display.waveshow(y, sr=sr, axis=4, ax=ax2)  # type: ignore[arg-type]
 
 
 def test_waveloop_phase_ticks(y, sr):
@@ -2549,105 +2430,20 @@ def test_waveloop_phase_ticks(y, sr):
     for phase in (np.pi / 4, np.pi / 2, np.pi, -np.pi / 2):
         ad = librosa.display.waveloop(y_short, sr=sr, duration=dur, offset=offset, phase=phase, time_axis=8)
         assert isinstance(ad, librosa.display.AdaptiveWaveplot)
-        assert ad.steps is not None and ad.steps.figure is not None
-        fig = ad.steps.figure
-        assert isinstance(fig, Figure)
-        try:
-            ax = ad.steps.axes
-            assert isinstance(ax, PolarAxes)
-            ticks = ax.xaxis.get_majorticklocs()
-            assert len(ticks) == 8
-            assert np.all(ticks >= -1e-6)
-            assert np.all(ticks < 2 * np.pi + 1e-6)
-            fmt = ax.xaxis.get_major_formatter()
-            assert isinstance(fmt, librosa.display.formatting._TransformedFormatter)
-            assert isinstance(fmt.base_formatter, librosa.display.formatting._PeriodicFormatter)
-            sig_vals = fmt.base_formatter._wrap(fmt._to_signal(ticks))
-            assert np.all(sig_vals >= offset - 1e-6)
-            assert np.all(sig_vals < offset + dur + 1e-6)
-            assert np.any(np.isclose(sig_vals, offset, atol=1e-6))
-        finally:
-            plt.close(fig)
-
-
-def test_waveloop_existing_title_preservation(y, sr):
-    fig, ax = plt.subplots()
-    try:
-        ax.set_title("Pre-existing Title")
-        adaptor = librosa.display.waveloop(y, sr=sr, ax=ax)
-        assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
-        assert adaptor.steps is not None
-        assert ax.name == "polar"
-        assert ax.get_title() == "Pre-existing Title"
-    finally:
-        plt.close(fig)
-
-
-def test_waveloop_auto_converts_existing_gca(y, sr):
-    plt.close("all")
-    fig, ax = plt.subplots()
-    try:
-        assert ax.name == "rectilinear"
-        adaptor = librosa.display.waveloop(y, sr=sr)
-        assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
-        assert adaptor.steps is not None
-        assert ax.name == "polar"
-    finally:
-        plt.close(fig)
-
-
-def test_multiplot_waveloop_fig_kw(y, sr):
-    y_stack = np.stack([y, y[::-1]])
-    out = librosa.display.multiplot("waveloop", y_stack, sr=sr, fig_kw={"figsize": (6, 6)})
-    fig = plt.gcf()
-    try:
-        assert out.shape == (2,)
-        assert np.allclose(fig.get_size_inches(), (6, 6))
-    finally:
-        plt.close(fig)
-
-    # User subplot_kw should merge with polar projection default without mutating input dicts
-    subplot_kw_orig = {"facecolor": "0.9"}
-    fig_kw_orig = {"figsize": (6, 6), "subplot_kw": subplot_kw_orig}
-    out_merged = librosa.display.multiplot("waveloop", y_stack, sr=sr, fig_kw=fig_kw_orig)
-    fig_merged = plt.gcf()
-    try:
-        assert out_merged.shape == (2,)
-        assert isinstance(fig_merged.axes[0], PolarAxes)
-        assert "projection" not in subplot_kw_orig
-    finally:
-        plt.close(fig_merged)
-
-    fig_custom = plt.figure(figsize=(7, 7))
-    try:
-        # Existing fig + subplot-level fig_kw on waveloop (merges projection + facecolor without mutation)
-        sub_kw_existing = {"facecolor": "0.9"}
-        fig_kw_existing = {"subplot_kw": sub_kw_existing}
-        out2 = librosa.display.multiplot("waveloop", y_stack, fig=fig_custom, fig_kw=fig_kw_existing, sr=sr)
-        assert out2.shape == (2,)
-        assert isinstance(fig_custom.axes[0], PolarAxes)
-        assert matplotlib.colors.same_color(fig_custom.axes[0].get_facecolor(), "0.9")
-        assert "projection" not in sub_kw_existing
-        assert np.allclose(fig_custom.get_size_inches(), (7, 7))
-
-        # Existing fig + figure-level fig_kw is rejected by fig.subplots
-        with pytest.raises(TypeError):
-            librosa.display.multiplot("waveloop", y_stack, fig=fig_custom, fig_kw={"figsize": (5, 5)}, sr=sr)
-    finally:
-        plt.close(fig_custom)
-
-    fig_cart = plt.figure(figsize=(6, 6))
-    try:
-        out_cart = librosa.display.multiplot(
-            "waveshow",
-            y_stack,
-            fig=fig_cart,
-            fig_kw={"gridspec_kw": {"hspace": 0.5}},
-            sr=sr,
-        )
-        assert out_cart.shape == (2,)
-    finally:
-        plt.close(fig_cart)
+        ax = ad.ax
+        assert isinstance(ax, PolarAxes)
+        ticks = ax.xaxis.get_majorticklocs()
+        assert len(ticks) == 8
+        assert np.all(ticks >= -1e-6) and np.all(ticks < 2 * np.pi + 1e-6)
+        fmt = ax.xaxis.get_major_formatter()
+        assert isinstance(fmt, librosa.display.formatting._TransformedFormatter)
+        assert isinstance(fmt.base_formatter, librosa.display.formatting._PeriodicFormatter)
+        sig_vals = fmt.base_formatter._wrap(fmt._to_signal(ticks))
+        assert np.all(sig_vals >= offset - 1e-6)
+        assert np.all(sig_vals < offset + dur + 1e-6)
+        assert np.any(np.isclose(sig_vals, offset, atol=1e-6))
+        assert isinstance(ax.figure, Figure)
+        plt.close(ax.figure)
 
 
 def test_waveloop_offset(y, sr):
@@ -2655,173 +2451,71 @@ def test_waveloop_offset(y, sr):
     y_short = y[: int(2.0 * sr)]
     adaptor = librosa.display.waveloop(y_short, sr=sr, offset=1.5, duration=dur)
     assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
-    assert adaptor.steps is not None and adaptor.steps.figure is not None
-    fig = adaptor.steps.figure
-    assert isinstance(fig, Figure)
-    try:
-        ax = adaptor.steps.axes
-        assert isinstance(ax, PolarAxes)
-        ticks = ax.xaxis.get_majorticklocs()
-        # First tick should be at angle 0.0 (aligned with 12 o'clock theta_offset)
-        assert np.isclose(ticks[0], 0.0)
-        # Formatter should convert angle 0.0 back to time 1.5s
-        fmt = ax.xaxis.get_major_formatter()
-        lbl0 = fmt(ticks[0])
-        assert "01" in lbl0 or "1.5" in lbl0
-    finally:
-        plt.close(fig)
+    ax = adaptor.ax
+    assert isinstance(ax, PolarAxes)
+    ticks = ax.xaxis.get_majorticklocs()
+    assert np.isclose(ticks[0], 0.0)
+    lbl0 = ax.xaxis.get_major_formatter()(ticks[0])
+    assert "01" in lbl0 or "1.5" in lbl0
 
 
 def test_extract_pre_transform_branches():
     fig, ax = plt.subplots()
-    try:
-        # 1. transform is None
-        pre, art = librosa.display.signal._extract_pre_transform(None, ax)
-        assert isinstance(pre, mtransforms.IdentityTransform)
-        assert art is None
+    # 1. transform is None / transform == ax.transData
+    pre, art = librosa.display.signal._extract_pre_transform(None, ax)
+    assert isinstance(pre, mtransforms.IdentityTransform) and art is None
+    pre, art = librosa.display.signal._extract_pre_transform(ax.transData, ax)
+    assert isinstance(pre, mtransforms.IdentityTransform) and art == ax.transData
 
-        # 2. transform == ax.transData
-        pre, art = librosa.display.signal._extract_pre_transform(ax.transData, ax)
-        assert isinstance(pre, mtransforms.IdentityTransform)
-        assert art == ax.transData
+    # 2. Left-nested, right-nested, and pre + transData + post composites
+    t1 = mtransforms.Affine2D().scale(2.0)
+    t2 = mtransforms.Affine2D().translate(1.0, 0.0)
+    expected = (t1 + t2).transform([[1.0, 0.0]])
+    for chained in ((t1 + t2) + ax.transData, t1 + (t2 + ax.transData)):
+        pre_c, art_c = librosa.display.signal._extract_pre_transform(chained, ax)
+        assert pre_c is not None and art_c == chained
+        assert np.allclose(pre_c.transform([[1.0, 0.0]]), expected)
 
-        # 3. Chained composite: (t1 + t2) + ax.transData
-        t1 = mtransforms.Affine2D().scale(2.0)
-        t2 = mtransforms.Affine2D().translate(1.0, 0.0)
-        chained = (t1 + t2) + ax.transData
-        pre, art = librosa.display.signal._extract_pre_transform(chained, ax)
-        assert pre is not None and art == chained
-        # Check that pre matches (t1 + t2)
-        pt = pre.transform([[1.0, 0.0]])
-        expected = (t1 + t2).transform([[1.0, 0.0]])
-        assert np.allclose(pt, expected)
+    post = ax.transData + mtransforms.ScaledTranslation(5 / 72, 5 / 72, fig.dpi_scale_trans)
+    pre_post, art_post = librosa.display.signal._extract_pre_transform(t1 + post, ax)
+    assert pre_post is t1 and art_post is not None
 
-        # 3b. Right-nested chained composite: t1 + (t2 + ax.transData)
-        chained_r = t1 + (t2 + ax.transData)
-        pre_r, art_r = librosa.display.signal._extract_pre_transform(chained_r, ax)
-        assert pre_r is not None and art_r == chained_r
-        pt_r = pre_r.transform([[1.0, 0.0]])
-        assert np.allclose(pt_r, expected)
+    # 3. Non-data transforms (transAxes, blended) and Transformf0
+    for non_data in (ax.transAxes, ax.get_xaxis_transform()):
+        pre_nd, art_nd = librosa.display.signal._extract_pre_transform(non_data, ax)
+        assert pre_nd is None and art_nd is non_data
 
-        # 4. Transform not anchored to ax.transData (e.g. ax.transAxes or BlendedGenericTransform)
-        pre, art = librosa.display.signal._extract_pre_transform(ax.transAxes, ax)
-        assert pre is None
-        assert art is ax.transAxes
+    tf0 = librosa.display.Transformf0(f0=np.array([220.0, 440.0]), sr=1, hop_length=1)
+    chained_f0 = tf0 + ax.transData
+    pre_f0, art_f0 = librosa.display.signal._extract_pre_transform(chained_f0, ax)
+    assert pre_f0 is tf0 and art_f0 is chained_f0
 
-        blended = ax.get_xaxis_transform()
-        pre_b, art_b = librosa.display.signal._extract_pre_transform(blended, ax)
-        assert pre_b is None
-        assert art_b is blended
-
-        # 5. Transformf0 + ax.transData peels cleanly
-        tf0 = librosa.display.Transformf0(f0=np.array([220.0, 440.0]), sr=1, hop_length=1)
-        chained_f0 = tf0 + ax.transData
-        pre_f0, art_f0 = librosa.display.signal._extract_pre_transform(chained_f0, ax)
-        assert pre_f0 is tf0
-        assert art_f0 is chained_f0
-    finally:
-        plt.close(fig)
-
-    # 6. PolarAxes composite transData stops at polar_ax.transData by identity
-    fig_p, ax_p = plt.subplots(subplot_kw={"projection": "polar"})
-    try:
-        pre_in = mtransforms.Affine2D().scale(2.0, 0.5)
-        chained_p = pre_in + ax_p.transData
-        pre_p, art_p = librosa.display.signal._extract_pre_transform(chained_p, ax_p)
-        assert pre_p is pre_in
-        assert art_p is chained_p
-    finally:
-        plt.close(fig_p)
+    # 4. PolarAxes composite transData stops at polar_ax.transData by identity
+    _, ax_p = plt.subplots(subplot_kw={"projection": "polar"})
+    pre_in = mtransforms.Affine2D().scale(2.0, 0.5)
+    chained_p = pre_in + ax_p.transData
+    pre_p, art_p = librosa.display.signal._extract_pre_transform(chained_p, ax_p)
+    assert pre_p is pre_in and art_p is chained_p
 
 
 def test_waveshow_custom_transform_transpose_and_mask(y, sr):
-    fig, ax = plt.subplots()
-    try:
-        pre = mtransforms.Affine2D().scale(2.0, 1.0)
-        mask = np.ones(len(y), dtype=bool)
-        mask[::3] = False
-        adaptor = librosa.display.waveshow(y, sr=sr, transform=pre + ax.transData, transpose=True, mask=mask, ax=ax)
-        assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
-        assert adaptor.steps is not None and adaptor.steps.axes is ax
-    finally:
-        plt.close(fig)
-
-
-def test_wavebars_custom_transform_with_ax(y, sr):
-    fig, ax = plt.subplots()
-    try:
-        pre = mtransforms.Affine2D().scale(2.0, 1.0)
-        art = pre + ax.transData
-        coll = librosa.display.wavebars(y, sr=sr, transform=art, ax=ax)
-        assert isinstance(coll, mcoll.PatchCollection)
-    finally:
-        plt.close(fig)
-
-
-def test_waveshow_custom_transform_with_ax(y, sr):
-    fig, ax = plt.subplots()
-    try:
-        pre = mtransforms.Affine2D().scale(2.0, 1.0)
-        art = pre + ax.transData
-        adaptor = librosa.display.waveshow(y, sr=sr, transform=art, ax=ax)
-        assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
-    finally:
-        plt.close(fig)
-
-
-def test_transformed_non_invertible_raises():
-    from librosa.display.formatting import _LoopLocator, _TransformedFormatter, _TransformedLocator
-
-    non_inv = mtransforms.Transform()
-    base_loc = _LoopLocator(period=4.0)
-    base_fmt = librosa.display.TimeFormatter(unit="s")
-    with pytest.raises(librosa.ParameterValueError, match="transform must be invertible"):
-        _TransformedLocator(base_loc, non_inv)
-    with pytest.raises(librosa.ParameterValueError, match="transform must be invertible"):
-        _TransformedFormatter(base_fmt, non_inv)
-
-    # Singular Affine2D has has_inverse=True on class, must still fail eagerly
-    singular = mtransforms.Affine2D().scale(0.0, 1.0)
-    with pytest.raises(librosa.ParameterValueError, match="transform must be invertible"):
-        _TransformedLocator(base_loc, singular)
-    with pytest.raises(librosa.ParameterValueError, match="transform must be invertible"):
-        _TransformedFormatter(base_fmt, singular)
-
-    # Non-separable 2D transform (rotation) rejected
-    rot = mtransforms.Affine2D().rotate(np.pi / 4)
-    with pytest.raises(librosa.ParameterValueError, match="separable"):
-        _TransformedLocator(base_loc, rot)
-    with pytest.raises(librosa.ParameterValueError, match="separable"):
-        _TransformedFormatter(base_fmt, rot)
-
-    # Non-1D/2D transform rejected
-    class Dummy3DTransform(mtransforms.Transform):
-        input_dims = 3
-        output_dims = 3
-        has_inverse = True
-
-    with pytest.raises(librosa.ParameterValueError, match="1D or separable 2D"):
-        _TransformedLocator(base_loc, Dummy3DTransform())
-    with pytest.raises(librosa.ParameterValueError, match="1D or separable 2D"):
-        _TransformedFormatter(base_fmt, Dummy3DTransform())
+    _, ax = plt.subplots()
+    pre = mtransforms.Affine2D().scale(2.0, 1.0)
+    mask = np.ones(len(y), dtype=bool)
+    mask[::3] = False
+    adaptor = librosa.display.waveshow(y, sr=sr, transform=pre + ax.transData, transpose=True, mask=mask, ax=ax)
+    assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
+    assert adaptor.ax is ax
 
 
 def test_adaptive_waveplot_out_of_bounds_viewport(y, sr):
     adaptor = librosa.display.waveshow(y, sr=sr)
-    assert adaptor.steps is not None and adaptor.steps.figure is not None
-    fig = adaptor.steps.figure
-    assert isinstance(fig, Figure)
-    try:
-        ax = adaptor.steps.axes
-        assert isinstance(ax, Axes)
-        # Set xlim far outside the signal time span
-        ax.set_xlim(1000.0, 2000.0)
-        adaptor.update(ax)
-        # Set xlim with reversed or non-finite values
-        ax.set_xlim(2.0, 1.0)
-        adaptor.update(ax)
-    finally:
-        plt.close(fig)
+    ax = adaptor.ax
+    assert isinstance(ax, Axes)
+    ax.set_xlim(1000.0, 2000.0)
+    adaptor.update(ax)
+    ax.set_xlim(2.0, 1.0)
+    adaptor.update(ax)
 
 
 def test_adaptive_waveplot_handler_expired_ref():
@@ -2843,191 +2537,6 @@ def test_adaptive_waveplot_handler_expired_ref():
         mtransforms.IdentityTransform(),
     )
     assert res == []
-
-
-def test_loop_locator_inverted_bounds():
-    from librosa.display.formatting import _LoopLocator
-
-    loc = _LoopLocator(period=4.0, offset=1.0)
-    ticks = loc.tick_values(5.0, 1.0)
-    assert len(ticks) == 8
-    assert np.isclose(ticks[0], 1.0)
-    assert np.isclose(ticks[-1], 1.0 + 3.5)
-
-
-def test_transformed_formatter_methods():
-    import matplotlib.scale as mscale
-
-    from librosa.display.formatting import (
-        _AxisTransformProxy,
-        _LoopLocator,
-        _PeriodicFormatter,
-        _TransformedFormatter,
-        _TransformedLocator,
-    )
-
-    fig, ax = plt.subplots()
-    try:
-        pre = mtransforms.Affine2D().scale(2.0, 1.0)
-        base_fmt = librosa.display.TimeFormatter(unit="s")
-        fmt = _TransformedFormatter(base_fmt, pre)
-        fmt.set_axis(ax.xaxis)
-        # format_ticks
-        labels = fmt.format_ticks([0.0, 2.0, 4.0])
-        assert len(labels) == 3
-        assert fmt.format_ticks([]) == []
-        # format_data_short
-        s = fmt.format_data_short(2.0)
-        assert "1" in s
-        # ChromaSvaraFormatter default Sa=None
-        csf = librosa.display.formatting.ChromaSvaraFormatter(Sa=None)
-        assert csf.Sa == 0
-        # set_axis(None)
-        fmt.set_axis(None)
-        assert fmt.axis is None
-        # _TransformedLocator set_axis(None)
-        base_loc = _LoopLocator(period=4.0)
-        loc = _TransformedLocator(base_loc, pre)
-        loc.set_axis(None)
-        assert loc.axis is None
-
-        # _PeriodicFormatter validation, wrapping, and protocol methods
-        with pytest.raises(librosa.ParameterValueError, match="period must be finite and strictly positive"):
-            _PeriodicFormatter(base_fmt, period=0.0)
-        with pytest.raises(librosa.ParameterValueError, match="period must be finite and strictly positive"):
-            _PeriodicFormatter(base_fmt, period=np.nan)
-        with pytest.raises(librosa.ParameterValueError, match="period must be finite and strictly positive"):
-            _PeriodicFormatter(base_fmt, period=True)
-        with pytest.raises(librosa.ParameterValueError, match="offset must be finite"):
-            _PeriodicFormatter(base_fmt, period=4.0, offset=np.inf)
-        with pytest.raises(librosa.ParameterValueError, match="offset must be finite"):
-            _PeriodicFormatter(base_fmt, period=4.0, offset=False)
-        p_fmt = _PeriodicFormatter(base_fmt, period=4.0, offset=1.0)
-        p_fmt.set_axis(ax.xaxis)
-        assert "3" in p_fmt(-1.0)
-        assert p_fmt.format_ticks([]) == []
-        # Near-upper-boundary wrap snaps cleanly to offset (1.0s)
-        snapped = p_fmt.format_ticks([1.0 - 1e-12])
-        assert "1" in snapped[0]
-        assert "3" in p_fmt.format_data_short(-1.0)
-
-        # Y-axis support for _TransformedLocator, _TransformedFormatter, and _AxisTransformProxy
-        pre_y = mtransforms.Affine2D().scale(1.0, 2.0)
-        y_loc = _TransformedLocator(mplticker.FixedLocator([0.5, 1.5]), pre_y)
-        y_loc.set_axis(ax.yaxis)
-        assert np.allclose(y_loc.tick_values(0.0, 4.0), [1.0, 3.0])
-        ax.set_ylim(0.0, 4.0)
-        assert np.allclose(y_loc(), [1.0, 3.0])
-        y_fmt = _TransformedFormatter(librosa.display.TimeFormatter(unit="s"), pre_y)
-        y_fmt.set_axis(ax.yaxis)
-        assert "1" in y_fmt(2.0)
-        assert "1" in y_fmt.format_ticks([2.0])[0]
-        assert "1" in y_fmt.format_data_short(2.0)
-        y_proxy = _AxisTransformProxy(ax.yaxis, pre_y)
-        assert np.allclose(y_proxy.get_view_interval(), [0.0, 2.0])
-
-        # 1D transform support (e.g., matplotlib.scale.FuncTransform)
-        func_1d = mscale.FuncTransform(
-            lambda x: 2.0 * np.asarray(x, dtype=float),
-            lambda x: 0.5 * np.asarray(x, dtype=float),
-        )
-        loc_1d = _TransformedLocator(mplticker.FixedLocator([1.0, 2.0]), func_1d)
-        loc_1d.set_axis(ax.xaxis)
-        assert np.allclose(loc_1d.tick_values(0.0, 6.0), [2.0, 4.0])
-        fmt_1d = _TransformedFormatter(librosa.display.TimeFormatter(unit="s"), func_1d)
-        fmt_1d.set_axis(ax.xaxis)
-        assert "1" in fmt_1d(2.0)
-        assert "2" in fmt_1d.format_ticks([4.0])[0]
-    finally:
-        plt.close(fig)
-
-
-def test_waveloop_partial_sector_and_validation(y, sr):
-    # Partial polar sector preserves upper endpoint tick (e.g. 180 deg)
-    y_short = y[: int(1.0 * sr)]
-    fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
-    try:
-        librosa.display.waveloop(y_short, sr=sr, duration=4.0, time_axis=4, ax=ax)
-        assert isinstance(ax, PolarAxes)
-        ax.set_thetamin(0)
-        ax.set_thetamax(180)
-        ticks_deg = np.rad2deg(ax.xaxis.get_major_locator()())
-        assert np.allclose(ticks_deg, [0.0, 90.0, 180.0])
-    finally:
-        plt.close(fig)
-
-    # Non-rectilinear projection (3D) cannot be converted to polar
-    fig_3d = plt.figure()
-    try:
-        ax_3d = fig_3d.add_subplot(projection="3d")
-        with pytest.raises(librosa.ParameterValueError, match="Cannot convert axes with projection '3d'"):
-            librosa.display.waveloop(y_short, sr=sr, ax=ax_3d)
-    finally:
-        plt.close(fig_3d)
-
-    # Reject non-finite / boolean duration, phase, offset, theta_offset
-    fig_val, ax_val = plt.subplots()
-    try:
-        for bad_dur in (np.nan, np.inf, -np.inf, True):
-            with pytest.raises(librosa.ParameterValueError, match="duration must be finite"):
-                librosa.display.waveloop(y_short, sr=sr, duration=bad_dur, ax=ax_val)
-        for bad_val in (np.nan, np.inf, True):
-            with pytest.raises(librosa.ParameterValueError, match="phase must be finite"):
-                librosa.display.waveloop(y_short, sr=sr, phase=bad_val, ax=ax_val)
-            with pytest.raises(librosa.ParameterValueError, match="offset must be finite"):
-                librosa.display.waveloop(y_short, sr=sr, offset=bad_val, ax=ax_val)
-            with pytest.raises(librosa.ParameterValueError, match="theta_offset must be finite"):
-                librosa.display.waveloop(y_short, sr=sr, theta_offset=bad_val, ax=ax_val)
-    finally:
-        plt.close(fig_val)
-
-
-def test_post_transform_and_adaptive_waveplot_edge_cases(y, sr):
-    # Post-transform (axes.transData + ScaledTranslation) preserves dataLim and decoration
-    fig, ax = plt.subplots()
-    try:
-        post = ax.transData + mtransforms.ScaledTranslation(5 / 72, 5 / 72, fig.dpi_scale_trans)
-        coll = librosa.display.wavebars(y, sr=sr, ax=ax, transform=post)
-        assert isinstance(coll, mcoll.PatchCollection)
-        xlim = ax.get_xlim()
-        assert xlim[1] > 1.0
-        assert ax.xaxis.get_label_text() == "Time"
-
-        ax.clear()
-        adaptor = librosa.display.waveshow(y, sr=sr, ax=ax, transform=post)
-        assert adaptor.use_view_limits is True
-        assert isinstance(adaptor.pre_transform, mtransforms.IdentityTransform)
-        assert ax.xaxis.get_label_text() == "Time"
-
-        # Pre + transData + post extracts pre cleanly
-        pre = mtransforms.Affine2D().scale(2.0, 1.0)
-        pre_out, art_out = librosa.display.signal._extract_pre_transform(pre + post, ax)
-        assert pre_out is pre
-        assert art_out is not None
-    finally:
-        plt.close(fig)
-
-    # Non-data transform sets use_view_limits=False without broken Transform() sentinel
-    fig2, ax2 = plt.subplots()
-    try:
-        adaptor_axes = librosa.display.waveshow(y, sr=sr, ax=ax2, transform=ax2.transAxes)
-        assert adaptor_axes.use_view_limits is False
-        assert isinstance(adaptor_axes.pre_transform, mtransforms.IdentityTransform)
-    finally:
-        plt.close(fig2)
-
-    # Non-separable 2D pre-transform uses 4 viewport corners in AdaptiveWaveplot.update
-    fig3, ax3 = plt.subplots()
-    try:
-        rot = mtransforms.Affine2D().rotate(np.pi / 4)
-        adaptor_rot = librosa.display.waveshow(y, sr=sr, ax=ax3, transform=rot + ax3.transData)
-        ax3.set_xlim(-0.2, 0.2)
-        ax3.set_ylim(0.0, 0.2)
-        adaptor_rot.update(ax3)
-        assert adaptor_rot.steps is not None
-        assert adaptor_rot.steps.get_visible()
-    finally:
-        plt.close(fig3)
 
 
 @pytest.mark.mpl_image_compare(
@@ -3809,18 +3318,65 @@ def test_multiplot_waveloop(y, sr):
 
     # Existing rectilinear axes converted automatically
     fig, axes_rect = plt.subplots(1, 2)
-    try:
-        out_rect = librosa.display.multiplot(
-            "waveloop",
-            y_stack,
-            axes=axes_rect,
-            sr=sr,
-        )
-        assert out_rect.shape == axes_rect.shape
-        assert all(a.name == "polar" for a in axes_rect)
-        fig.canvas.draw()
-    finally:
-        plt.close(fig)
+    out_rect = librosa.display.multiplot(
+        "waveloop",
+        y_stack,
+        axes=axes_rect,
+        sr=sr,
+    )
+    assert out_rect.shape == axes_rect.shape
+    assert all(a.name == "polar" for a in axes_rect)
+    fig.canvas.draw()
+
+
+def test_multiplot_waveloop_fig_kw(y, sr):
+    y_stack = np.stack([y, y[::-1]])
+    out = librosa.display.multiplot("waveloop", y_stack, sr=sr, fig_kw={"figsize": (6, 6)})
+    fig = plt.gcf()
+    assert out.shape == (2,)
+    assert np.allclose(fig.get_size_inches(), (6, 6))
+
+    # User subplot_kw merges with polar projection default without mutating input dicts
+    subplot_kw_orig = {"facecolor": "0.9"}
+    out_merged = librosa.display.multiplot(
+        "waveloop",
+        y_stack,
+        sr=sr,
+        fig_kw={"figsize": (6, 6), "subplot_kw": subplot_kw_orig},
+    )
+    fig_merged = plt.gcf()
+    assert out_merged.shape == (2,)
+    assert isinstance(fig_merged.axes[0], PolarAxes)
+    assert "projection" not in subplot_kw_orig
+
+    # Existing fig + subplot-level fig_kw works; figure-level fig_kw raises TypeError
+    fig_custom = plt.figure(figsize=(7, 7))
+    sub_kw_existing = {"facecolor": "0.9"}
+    out2 = librosa.display.multiplot(
+        "waveloop",
+        y_stack,
+        fig=fig_custom,
+        fig_kw={"subplot_kw": sub_kw_existing},
+        sr=sr,
+    )
+    assert out2.shape == (2,)
+    assert isinstance(fig_custom.axes[0], PolarAxes)
+    assert matplotlib.colors.same_color(fig_custom.axes[0].get_facecolor(), "0.9")
+    assert "projection" not in sub_kw_existing
+    assert np.allclose(fig_custom.get_size_inches(), (7, 7))
+
+    with pytest.raises(TypeError):
+        librosa.display.multiplot("waveloop", y_stack, fig=fig_custom, fig_kw={"figsize": (5, 5)}, sr=sr)
+
+    fig_cart = plt.figure(figsize=(6, 6))
+    out_cart = librosa.display.multiplot(
+        "waveshow",
+        y_stack,
+        fig=fig_cart,
+        fig_kw={"gridspec_kw": {"hspace": 0.5}},
+        sr=sr,
+    )
+    assert out_cart.shape == (2,)
 
 
 @pytest.mark.mpl_image_compare(
@@ -4022,3 +3578,8 @@ def test_adaptive_formatter_base_not_implemented():
     formatter = AdaptiveFormatterBase()
     with pytest.raises(librosa.LibrosaNotImplementedError):
         formatter._format_tick(0.0)
+
+
+def test_chroma_svara_formatter_default_sa():
+    csf = librosa.display.formatting.ChromaSvaraFormatter(Sa=None)
+    assert csf.Sa == 0
