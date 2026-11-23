@@ -205,7 +205,9 @@ def _mp_setup_axes(
             fig_kw = copy.copy(fig_kw)
 
         if func == "waveloop":
-            fig_kw.setdefault("subplot_kw", {"projection": "polar"})
+            subplot_kw = dict(fig_kw.get("subplot_kw") or {})
+            subplot_kw.setdefault("projection", "polar")
+            fig_kw["subplot_kw"] = subplot_kw
 
         if fig is None:
             fig, axes = plt.subplots(

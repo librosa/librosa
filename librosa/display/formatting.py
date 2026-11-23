@@ -27,6 +27,7 @@ import matplotlib.ticker as mplticker
 import matplotlib.transforms as mtransforms
 import numpy as np
 from matplotlib import colormaps as mcm
+from matplotlib.projections.polar import PolarAxes
 
 # Core and utility imports for audio processing
 from .. import core, util
@@ -257,6 +258,8 @@ class TransformedLocator(mplticker.Locator):
         base_locator: mplticker.Locator,
         transform: mtransforms.Transform,
     ) -> None:
+        if not transform.has_inverse:
+            raise ParameterValueError("transform must be invertible")
         self.base_locator = base_locator
         self.transform = transform
         super().__init__()
@@ -327,6 +330,8 @@ class TransformedFormatter(mplticker.Formatter):
         base_formatter: mplticker.Formatter,
         transform: mtransforms.Transform,
     ) -> None:
+        if not transform.has_inverse:
+            raise ParameterValueError("transform must be invertible")
         self.base_formatter = base_formatter
         self.transform = transform
         super().__init__()
@@ -397,7 +402,8 @@ class LoopLocator(mplticker.Locator):
     closest to `nbins`. It also supports explicit division counts or arbitrary user-supplied
     tick timestamps in seconds.
 
-    On circular/polar intervals, it avoids duplicate endpoints at `duration == 0`.
+    On circular/polar intervals, it avoids duplicate endpoints where ``offset + duration``
+    wraps onto ``offset``.
 
     Parameters
     ----------
@@ -414,6 +420,7 @@ class LoopLocator(mplticker.Locator):
     """
 
     PREF_DIVISIONS: tuple[int, ...] = (2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)
+    divisions: int | np.ndarray | None
 
     def __init__(
         self,
@@ -425,10 +432,27 @@ class LoopLocator(mplticker.Locator):
     ) -> None:
         if duration <= 0:
             raise ParameterValueError(f"duration must be strictly positive, got {duration}")
-        if isinstance(divisions, (int, np.integer)) and divisions <= 0:
-            raise ParameterValueError(f"divisions must be positive, got {divisions}")
+        if isinstance(divisions, bool):
+            raise ParameterValueError(f"divisions cannot be a boolean, got {divisions}")
+        if isinstance(divisions, (int, np.integer)):
+            if divisions <= 0:
+                raise ParameterValueError(f"divisions must be positive, got {divisions}")
+            self.divisions = int(divisions)
+        elif divisions is not None:
+            if isinstance(divisions, (str, bytes)):
+                raise ParameterValueError(f"divisions must be an integer or sequence of numbers, got {divisions!r}")
+            try:
+                div_arr = np.asarray(divisions, dtype=float)
+            except (TypeError, ValueError) as exc:
+                raise ParameterValueError(
+                    f"divisions must be an integer or sequence of numbers, got {divisions!r}"
+                ) from exc
+            if div_arr.ndim != 1 or not np.all(np.isfinite(div_arr)):
+                raise ParameterValueError(f"divisions must be a 1D sequence of finite numbers, got {divisions!r}")
+            self.divisions = div_arr
+        else:
+            self.divisions = None
         self.duration = float(duration)
-        self.divisions = divisions
         self.nbins = int(nbins)
         self.offset = float(offset)
         super().__init__()
@@ -454,8 +478,7 @@ class LoopLocator(mplticker.Locator):
         elif isinstance(self.divisions, (int, np.integer)):
             ticks = self.offset + np.linspace(0.0, self.duration, int(self.divisions), endpoint=False)
         else:
-            raw = np.asarray(self.divisions, dtype=float)
-            ticks = raw
+            ticks = np.asarray(self.divisions, dtype=float)
 
         tol = 1e-6 * self.duration
         lo, hi = (vmin, vmax) if vmin <= vmax else (vmax, vmin)
@@ -1323,6 +1346,35 @@ def _scale_axes(axes, ax_type, which, tempo_min, tempo_max):
     scaler(mode, **kwargs)
 
 
+def _set_transformed_time_axis(
+    axis: matplotlib.axis.Axis,
+    transform: mtransforms.Transform,
+    *,
+    unit: str | None = None,
+    unit_name: str | None = None,
+    duration: float | None = None,
+    offset: float = 0.0,
+    divisions: int | Sequence[float] | np.ndarray | None = None,
+) -> None:
+    """Configure transformed time locators, formatters, and axis label."""
+    base_fmt = TimeFormatter(unit=unit, lag=False)
+    axis.set_major_formatter(TransformedFormatter(base_fmt, transform))
+
+    if duration is not None:
+        base_loc: mplticker.Locator = LoopLocator(
+            duration=duration,
+            offset=offset,
+            divisions=cast("int | Sequence[float] | None", divisions),
+        )
+    else:
+        base_loc = mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
+
+    axis.set_major_locator(TransformedLocator(base_loc, transform))
+
+    if not isinstance(axis.axes, PolarAxes):
+        axis.set_label_text(f"Time ({unit_name:s})" if unit_name else "Time")
+
+
 def _decorate_axis(
     axis,
     ax_type,
@@ -1338,31 +1390,29 @@ def _decorate_axis(
     n_bins=None,
     transform=None,
     duration=None,
-    divisions=None,
     offset=0.0,
 ):
     """Configure axis tickers, locators, and labels"""
-    if ax_type is None or ax_type is False or (isinstance(ax_type, str) and ax_type.lower() in ("none", "off")):
+    if ax_type is None or (isinstance(ax_type, str) and ax_type.lower() in ("none", "off")):
         axis.set_label_text("")
-        axis.set_ticks([])
+        if isinstance(axis.axes, PolarAxes):
+            axis.set_major_formatter(mplticker.NullFormatter())
+            axis.set_major_locator(mplticker.NullLocator())
+        else:
+            axis.set_ticks([])
         return
 
     time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
 
-    if isinstance(ax_type, (int, np.integer, np.ndarray, Sequence)) and not isinstance(ax_type, (str, bytes)):
-        eff_divisions = ax_type
+    if isinstance(ax_type, (int, np.integer, np.ndarray, Sequence)) and not isinstance(ax_type, (str, bytes, bool)):
         if transform is not None:
-            base_fmt: mplticker.Formatter = TimeFormatter(unit=None, lag=False)
-            axis.set_major_formatter(TransformedFormatter(base_fmt, transform))
-            if duration is not None:
-                base_loc: mplticker.Locator = LoopLocator(
-                    duration=duration,
-                    offset=offset,
-                    divisions=cast("int | Sequence[float] | None", eff_divisions),
-                )
-            else:
-                base_loc = mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
-            axis.set_major_locator(TransformedLocator(base_loc, transform))
+            _set_transformed_time_axis(
+                axis,
+                transform,
+                duration=duration,
+                offset=offset,
+                divisions=cast("int | Sequence[float] | np.ndarray | None", ax_type),
+            )
         else:
             axis.set_major_formatter(TimeFormatter(unit=None, lag=False))
             if duration is not None:
@@ -1370,16 +1420,16 @@ def _decorate_axis(
                     LoopLocator(
                         duration=duration,
                         offset=offset,
-                        divisions=cast("int | Sequence[float] | None", eff_divisions),
+                        divisions=cast("int | Sequence[float] | None", ax_type),
                     )
                 )
-            elif isinstance(eff_divisions, (int, np.integer)):
-                axis.set_major_locator(mplticker.MaxNLocator(nbins=int(eff_divisions), prune=None))
+            elif isinstance(ax_type, (int, np.integer)):
+                axis.set_major_locator(mplticker.MaxNLocator(nbins=int(ax_type), prune=None))
             else:
-                axis.set_major_locator(mplticker.FixedLocator(cast("Sequence[float]", eff_divisions)))
+                axis.set_major_locator(mplticker.FixedLocator(cast("Sequence[float]", ax_type)))
 
-        if getattr(axis.axes, "name", None) != "polar":
-            axis.set_label_text("Time")
+            if not isinstance(axis.axes, PolarAxes):
+                axis.set_label_text("Time")
         return
 
     fmin = util._ensure_hz(fmin)
@@ -1490,26 +1540,14 @@ def _decorate_axis(
 
     elif (ax_type == "time" or (isinstance(ax_type, str) and ax_type in time_units)) and transform is not None:
         unit = ax_type if isinstance(ax_type, str) and ax_type in time_units else None
-        base_fmt = TimeFormatter(unit=unit, lag=False)
-        axis.set_major_formatter(TransformedFormatter(base_fmt, transform))
-
-        eff_divisions = divisions
-        if duration is not None:
-            base_loc = LoopLocator(
-                duration=duration,
-                offset=offset,
-                divisions=cast("int | Sequence[float] | None", eff_divisions),
-            )
-        else:
-            base_loc = mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
-
-        axis.set_major_locator(TransformedLocator(base_loc, transform))
-
-        if getattr(axis.axes, "name", None) != "polar":
-            if unit:
-                axis.set_label_text(f"Time ({time_units[unit]:s})")
-            else:
-                axis.set_label_text("Time")
+        _set_transformed_time_axis(
+            axis,
+            transform,
+            unit=unit,
+            unit_name=time_units[unit] if unit else None,
+            duration=duration,
+            offset=offset,
+        )
 
     elif ax_type == "time":
         axis.set_major_formatter(TimeFormatter(unit=None, lag=False))
