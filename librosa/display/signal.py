@@ -53,6 +53,7 @@ from .formatting import (
     Transformf0,
     _check_axes,
     _decorate_axis,
+    _decorate_loop_time_axis,
 )
 
 
@@ -101,6 +102,12 @@ class AdaptiveWaveplot:
         An optional pre-transform mapping data coordinates to intermediate
         display coordinates (e.g. for polar waveplots).
 
+    use_view_limits : bool
+        If ``True`` (default), map the axes viewport limits back into signal
+        coordinates through ``pre_transform.inverted()`` when updating the adaptive
+        display. Set to ``False`` when the artist transform does not compose with
+        ``axes.transData``.
+
     See Also
     --------
     waveshow
@@ -114,6 +121,7 @@ class AdaptiveWaveplot:
     cid: int | None
     label_proxy_: _WaveplotDecoy
     pre_transform: mtransforms.Transform
+    use_view_limits: bool
 
     def __init__(
         self,
@@ -126,6 +134,7 @@ class AdaptiveWaveplot:
         transpose: bool = False,
         label: str | None = None,
         pre_transform: mtransforms.Transform | None = None,
+        use_view_limits: bool = True,
     ):
         self.times = times
         self.samples = y
@@ -137,6 +146,7 @@ class AdaptiveWaveplot:
         self.cid = None
         self._ax_ref: weakref.ref[mplaxes.Axes] | None = None
         self.pre_transform = mtransforms.IdentityTransform() if pre_transform is None else pre_transform
+        self.use_view_limits = use_view_limits
 
         # This creates an invisible proxy artist to contain the label
         self.label_proxy_ = _WaveplotDecoy(self)
@@ -262,7 +272,7 @@ class AdaptiveWaveplot:
             data = np.asarray(steps.get_xdata())
 
         inv: mtransforms.Transform | None = None
-        if self.pre_transform.has_inverse:
+        if self.use_view_limits and self.pre_transform.has_inverse:
             try:
                 inv = self.pre_transform.inverted()
             except (NotImplementedError, np.linalg.LinAlgError):
@@ -273,16 +283,18 @@ class AdaptiveWaveplot:
         else:
             xlim = ax.get_xlim()
             ylim = ax.get_ylim()
-            if self.transpose:
-                x_mid = 0.5 * (xlim[0] + xlim[1])
-                pts = np.array([[x_mid, ylim[0]], [x_mid, ylim[1]]])
-                t_vals = inv.transform(pts)[:, 1]
-            else:
-                y_mid = 0.5 * (ylim[0] + ylim[1])
-                pts = np.array([[xlim[0], y_mid], [xlim[1], y_mid]])
-                t_vals = inv.transform(pts)[:, 0]
-
-            t_start, t_end = sorted((float(t_vals[0]), float(t_vals[1])))
+            pts = np.array(
+                [
+                    [xlim[0], ylim[0]],
+                    [xlim[0], ylim[1]],
+                    [xlim[1], ylim[0]],
+                    [xlim[1], ylim[1]],
+                ],
+                dtype=float,
+            )
+            with np.errstate(divide="ignore", invalid="ignore"):
+                t_vals = inv.transform(pts)[:, 1 if self.transpose else 0]
+            t_start, t_end = float(np.min(t_vals)), float(np.max(t_vals))
             if (
                 not np.isfinite(t_start)
                 or not np.isfinite(t_end)
@@ -418,22 +430,23 @@ def _extract_pre_transform(
     if transform is axes.transData:
         return mtransforms.IdentityTransform(), axes.transData
 
-    def _strip_transdata(t: mtransforms.Transform) -> tuple[mtransforms.Transform | None, bool]:
+    def _flatten_until_transdata(t: mtransforms.Transform) -> list[mtransforms.Transform]:
         if t is axes.transData:
-            return None, True
+            return [t]
         if isinstance(t, (mtransforms.CompositeGenericTransform, mtransforms.CompositeAffine2D)):
             comp = cast("Any", t)
-            sub, found = _strip_transdata(comp._b)
-            if found:
-                if sub is None:
-                    return comp._a, True
-                return comp._a + sub, True
-        return t, False
+            return _flatten_until_transdata(comp._a) + _flatten_until_transdata(comp._b)
+        return [t]
 
-    pre, has_transdata = _strip_transdata(transform)
-    if has_transdata:
-        pre_transform = pre if pre is not None else mtransforms.IdentityTransform()
-        return pre_transform, transform
+    factors = _flatten_until_transdata(transform)
+    for idx, factor in enumerate(factors):
+        if factor is axes.transData:
+            if idx == 0:
+                return mtransforms.IdentityTransform(), transform
+            pre = factors[0]
+            for f in factors[1:idx]:
+                pre = pre + f
+            return pre, transform
 
     return None, transform
 
@@ -684,7 +697,8 @@ def waveshow(
     if artist_transform is not None:
         kwargs["transform"] = artist_transform
 
-    has_custom_transform = pre_transform is None or not isinstance(pre_transform, mtransforms.IdentityTransform)
+    has_custom_artist_transform = artist_transform is not None and artist_transform is not axes.transData
+    has_custom_data_transform = pre_transform is None or not isinstance(pre_transform, mtransforms.IdentityTransform)
 
     # Reduce by envelope calculation
     # this choice of hop ensures that the envelope has at most max_points values
@@ -735,15 +749,11 @@ def waveshow(
         max_samples=max_points,
         transpose=transpose,
         label=label,
-        pre_transform=pre_transform if pre_transform is not None else mtransforms.Transform(),
+        pre_transform=pre_transform,
+        use_view_limits=pre_transform is not None,
     )
 
-    # Determine if coordinates along the time axis are custom-transformed.
-    # Note that Transformf0 only transforms the frequency displacement axis,
-    # leaving time coordinates untransformed (as required by wavef0).
-    has_custom_time_transform = has_custom_transform and not isinstance(pre_transform, Transformf0)
-
-    if has_custom_transform and pre_transform is not None:
+    if has_custom_artist_transform and pre_transform is not None:
         env_pts_top = np.column_stack(
             [
                 times[: len(y_top) * hop_length : hop_length],
@@ -799,8 +809,8 @@ def waveshow(
         steps.set_color(invert_color)
         envelope.set_color(invert_color)
 
-    # Construct tickers and locators unless polar or custom transform
-    if not isinstance(axes, PolarAxes) and not has_custom_time_transform:
+    # Construct tickers and locators unless polar or custom data transform
+    if not isinstance(axes, PolarAxes) and not has_custom_data_transform:
         _decorate_axis(dec_axis, axis)
 
     return adaptor
@@ -957,8 +967,8 @@ def wavebars(
     else:
         patch_kwargs.setdefault("transform", axes.transData)
 
-    has_custom_transform = pre_transform is None or not isinstance(pre_transform, mtransforms.IdentityTransform)
-    has_custom_time_transform = has_custom_transform and not isinstance(pre_transform, Transformf0)
+    has_custom_artist_transform = artist_transform is not None and artist_transform is not axes.transData
+    has_custom_data_transform = pre_transform is None or not isinstance(pre_transform, mtransforms.IdentityTransform)
 
     if n_bars <= 0:
         raise ParameterValueError(f"n_bars={n_bars} must be strictly positive")
@@ -991,7 +1001,7 @@ def wavebars(
         patches.append(p)
 
     coll = mcollections.PatchCollection(patches, **patch_kwargs)
-    axes.add_collection(coll, autolim=not has_custom_transform)
+    axes.add_collection(coll, autolim=not has_custom_artist_transform)
 
     # Create a proxy artist if we have a label to set
     # Even if we don't have a label, we'll still need it for handling inversion later on
@@ -1002,7 +1012,7 @@ def wavebars(
     if label is not None:
         axes.add_artist(proxy)
 
-    if has_custom_transform:
+    if has_custom_artist_transform:
         if pre_transform is not None:
             base = np.minimum(-rounding_size, -env_bottom)
             top = np.maximum(rounding_size, env_top)
@@ -1040,7 +1050,7 @@ def wavebars(
         proxy.set_facecolor(color)  # type: ignore[arg-type]
         coll.set_facecolor(invert_color)
 
-    if not isinstance(axes, PolarAxes) and not has_custom_time_transform:
+    if not isinstance(axes, PolarAxes) and not has_custom_data_transform:
         if transpose:
             _decorate_axis(axes.yaxis, axis)
         else:
@@ -1263,6 +1273,7 @@ def wavef0(
             thaat=thaat,
             unicode=unicode,
         )
+        _decorate_axis(axes.yaxis, time_axis)
     else:
         _decorate_axis(
             axes.yaxis,
@@ -1273,6 +1284,7 @@ def wavef0(
             thaat=thaat,
             unicode=unicode,
         )
+        _decorate_axis(axes.xaxis, time_axis)
 
     if method == "waveshow":
         times = offset + np.arange(y.shape[-1]) / sr
@@ -1328,6 +1340,12 @@ def _ensure_polar_axes(ax: mplaxes.Axes) -> PolarAxes:
     """
     if isinstance(ax, PolarAxes):
         return ax
+
+    if getattr(ax, "name", None) != "rectilinear":
+        raise ParameterValueError(
+            f"Cannot convert axes with projection '{getattr(ax, 'name', None)}' to polar projection. "
+            "Expected a polar or empty rectilinear axes."
+        )
 
     # Check for existing artists
     if _axes_has_artists(ax):
@@ -1495,12 +1513,19 @@ def waveloop(
     sig_dur = float(core.get_duration(y=y, sr=sr))
     if duration is None:
         duration = sig_dur
-    elif duration <= 0:
-        raise ParameterValueError(f"duration must be strictly positive, got {duration}")
+    elif isinstance(duration, bool) or not np.isfinite(duration) or duration <= 0:
+        raise ParameterValueError(f"duration must be finite and strictly positive, got {duration}")
     elif sig_dur > duration and not np.isclose(sig_dur, duration, atol=1e-6):
         raise ParameterValueError(
             f"Signal duration ({sig_dur:.3f}s) exceeds duration ({duration:.3f}s). Multiple cycles are not supported."
         )
+
+    if isinstance(phase, bool) or not np.isfinite(phase):
+        raise ParameterValueError(f"phase must be finite, got {phase}")
+    if isinstance(offset, bool) or not np.isfinite(offset):
+        raise ParameterValueError(f"offset must be finite, got {offset}")
+    if isinstance(theta_offset, bool) or not np.isfinite(theta_offset):
+        raise ParameterValueError(f"theta_offset must be finite, got {theta_offset}")
 
     try:
         r_min, r_max = r_range
@@ -1548,12 +1573,12 @@ def waveloop(
         ax.set_theta_offset(theta_offset)
         ax.set_rticks([])
         ax.set_ymargin(0)
-        _decorate_axis(
+        _decorate_loop_time_axis(
             ax.xaxis,
             time_axis,
-            transform=pre,
-            duration=duration,
+            period=duration,
             offset=offset,
+            transform=pre,
         )
 
     if method == "waveshow":
