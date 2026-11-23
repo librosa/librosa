@@ -1436,6 +1436,10 @@ def waveloop(
     ax : matplotlib.axes.Axes or None
         Target axes to plot on. If a rectilinear axes is provided, it will be
         converted in-place to polar projection if it does not already contain artists.
+        In-place conversion preserves subplot geometry, position, and titles
+        (``left``, ``center``, ``right``), uncouples any shared Cartesian axes, and
+        resets other rectilinear axes styling (such as facecolor, grid, or axis
+        labels).
         If ``None``, a new polar axes or the current axes will be used.
     **kwargs
         Additional keyword arguments forwarded to `waveshow` or `wavebars`.

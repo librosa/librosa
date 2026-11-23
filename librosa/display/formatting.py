@@ -217,7 +217,9 @@ def _axis_index(axis: Any) -> int:
 
 
 def _transform_1d(transform: mtransforms.Transform, values: np.ndarray, axis_idx: int) -> np.ndarray:
-    """Apply a 2D Matplotlib transform along coordinate index 0 (x) or 1 (y)."""
+    """Apply a 1D or separable 2D Matplotlib transform along coordinate index 0 (x) or 1 (y)."""
+    if transform.input_dims == 1:
+        return np.asarray(transform.transform(values), dtype=float)
     pts = np.zeros((len(values), 2), dtype=float)
     pts[:, axis_idx] = values
     return np.asarray(transform.transform(pts)[:, axis_idx], dtype=float)
@@ -261,6 +263,13 @@ class _TransformedTickMixin:
     def _init_transform(self, transform: mtransforms.Transform) -> None:
         if not transform.has_inverse:
             raise ParameterValueError("transform must be invertible")
+        if transform.input_dims == 2 and transform.output_dims == 2:
+            if not transform.is_separable:
+                raise ParameterValueError("2D transform must be separable for 1D axis decoration")
+        elif not (transform.input_dims == 1 and transform.output_dims == 1):
+            raise ParameterValueError(
+                f"transform must be 1D or separable 2D, got ({transform.input_dims}D -> {transform.output_dims}D)"
+            )
         self.transform = transform
 
     def _axis_idx(self) -> int:
@@ -273,7 +282,7 @@ class _TransformedTickMixin:
             base.set_axis(None)
 
 
-class TransformedLocator(_TransformedTickMixin, mplticker.Locator):
+class _TransformedLocator(_TransformedTickMixin, mplticker.Locator):
     """A locator that maps display coordinates through an inverse transform to signal coordinates.
 
     This adapter allows any base locator defined in signal coordinates (e.g., time in seconds)
@@ -284,7 +293,8 @@ class TransformedLocator(_TransformedTickMixin, mplticker.Locator):
     base_locator : matplotlib.ticker.Locator
         The underlying locator operating in signal coordinates.
     transform : matplotlib.transforms.Transform
-        The data-to-axes pre-transform mapping signal coordinates to display coordinates.
+        The 1D or separable 2D invertible transform mapping signal coordinates
+        to display coordinates.
     """
 
     def __init__(
@@ -338,7 +348,7 @@ class TransformedLocator(_TransformedTickMixin, mplticker.Locator):
         return np.array([])
 
 
-class TransformedFormatter(_TransformedTickMixin, mplticker.Formatter):
+class _TransformedFormatter(_TransformedTickMixin, mplticker.Formatter):
     """A formatter that maps display coordinates through an inverse transform to signal coordinates.
 
     This adapter allows any base formatter defined in signal coordinates (e.g., `TimeFormatter`)
@@ -349,28 +359,17 @@ class TransformedFormatter(_TransformedTickMixin, mplticker.Formatter):
     base_formatter : matplotlib.ticker.Formatter
         The underlying formatter operating in signal coordinates.
     transform : matplotlib.transforms.Transform
-        The data-to-axes pre-transform mapping signal coordinates to display coordinates.
-    period : float > 0 or None
-        Optional signal period in seconds. When provided, inverted signal coordinates are
-        wrapped modulo ``period`` into ``[offset, offset + period)``.
-    offset : float
-        Starting signal offset in seconds used with ``period``. Default is 0.0.
+        The 1D or separable 2D invertible transform mapping signal coordinates
+        to display coordinates.
     """
 
     def __init__(
         self,
         base_formatter: mplticker.Formatter,
         transform: mtransforms.Transform,
-        *,
-        period: float | None = None,
-        offset: float = 0.0,
     ) -> None:
-        if period is not None and period <= 0:
-            raise ParameterValueError(f"period must be strictly positive, got {period}")
         self.base_formatter = base_formatter
         self._init_transform(transform)
-        self.period: float | None = float(period) if period is not None else None
-        self.offset = float(offset)
         super().__init__()
 
     def set_axis(self, axis: Any) -> None:
@@ -385,12 +384,7 @@ class TransformedFormatter(_TransformedTickMixin, mplticker.Formatter):
         self._forward_axis(self.base_formatter, axis)
 
     def _to_signal(self, values: np.ndarray) -> np.ndarray:
-        t_vals = _transform_1d(self.transform.inverted(), values, self._axis_idx())
-        if self.period is not None:
-            t_vals = self.offset + np.mod(t_vals - self.offset, self.period)
-            tol = 1e-9 * self.period
-            t_vals = np.where(np.isclose(t_vals, self.offset + self.period, atol=tol), self.offset, t_vals)
-        return t_vals
+        return _transform_1d(self.transform.inverted(), values, self._axis_idx())
 
     def __call__(self, x: float, pos: int | None = None) -> str:
         """Format tick value ``x`` (in display coordinates) as a string."""
@@ -432,7 +426,48 @@ class TransformedFormatter(_TransformedTickMixin, mplticker.Formatter):
         return self.base_formatter.format_data_short(t)
 
 
-class LoopLocator(mplticker.Locator):
+class _PeriodicFormatter(mplticker.Formatter):
+    """Formatter wrapper that reduces values modulo ``period`` into ``[offset, offset + period)``."""
+
+    def __init__(
+        self,
+        base_formatter: mplticker.Formatter,
+        period: float,
+        *,
+        offset: float = 0.0,
+    ) -> None:
+        if period <= 0:
+            raise ParameterValueError(f"period must be strictly positive, got {period}")
+        self.base_formatter = base_formatter
+        self.period = float(period)
+        self.offset = float(offset)
+        super().__init__()
+
+    def set_axis(self, axis: Any) -> None:
+        super().set_axis(axis)
+        self.base_formatter.set_axis(axis)
+
+    def _wrap(self, values: np.ndarray) -> np.ndarray:
+        wrapped = self.offset + np.mod(values - self.offset, self.period)
+        tol = 1e-9 * self.period
+        return np.where(np.isclose(wrapped, self.offset + self.period, atol=tol), self.offset, wrapped)
+
+    def __call__(self, x: float, pos: int | None = None) -> str:
+        val = float(self._wrap(np.array([x], dtype=float))[0])
+        return self.base_formatter(val, pos)
+
+    def format_ticks(self, values: Sequence[float]) -> list[str]:
+        if len(values) == 0:
+            return []
+        wrapped = self._wrap(np.asarray(values, dtype=float))
+        return self.base_formatter.format_ticks(wrapped.tolist())
+
+    def format_data_short(self, value: float) -> str:
+        val = float(self._wrap(np.array([value], dtype=float))[0])
+        return self.base_formatter.format_data_short(val)
+
+
+class _LoopLocator(mplticker.Locator):
     """Tick locator for periodic/loop time signals.
 
     This locator places ticks at subdivisions of a periodic loop of length `duration`.
@@ -1404,7 +1439,7 @@ def _build_time_locator(
 ) -> mplticker.Locator:
     """Build a base time-axis locator for periodic or Cartesian intervals."""
     if duration is not None:
-        return LoopLocator(
+        return _LoopLocator(
             duration=duration,
             offset=offset,
             divisions=cast("int | Sequence[float] | None", divisions),
@@ -1428,10 +1463,12 @@ def _set_time_axis(
 ) -> None:
     """Configure time locators, formatters, and axis label (optionally transformed)."""
     base_fmt: mplticker.Formatter = TimeFormatter(unit=unit, lag=False)
+    if duration is not None:
+        base_fmt = _PeriodicFormatter(base_fmt, period=duration, offset=offset)
     base_loc = _build_time_locator(duration=duration, offset=offset, divisions=divisions)
     if transform is not None:
-        axis.set_major_formatter(TransformedFormatter(base_fmt, transform, period=duration, offset=offset))
-        axis.set_major_locator(TransformedLocator(base_loc, transform))
+        axis.set_major_formatter(_TransformedFormatter(base_fmt, transform))
+        axis.set_major_locator(_TransformedLocator(base_loc, transform))
     else:
         axis.set_major_formatter(base_fmt)
         axis.set_major_locator(base_loc)

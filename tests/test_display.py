@@ -2195,61 +2195,63 @@ def test_waveloop_validation_errors(y, sr):
 
 
 def test_loop_locator():
-    # Test preferred divisions
-    assert librosa.display.LoopLocator.PREF_DIVISIONS == (2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)
+    from librosa.display.formatting import _LoopLocator
 
-    loc2 = librosa.display.LoopLocator(duration=4.0, nbins=2)
+    # Test preferred divisions
+    assert _LoopLocator.PREF_DIVISIONS == (2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)
+
+    loc2 = _LoopLocator(duration=4.0, nbins=2)
     assert len(loc2.tick_values(0.0, 4.0)) == 2
     assert np.allclose(loc2.tick_values(0.0, 4.0), [0.0, 2.0])
 
-    loc6 = librosa.display.LoopLocator(duration=6.0, nbins=6)
+    loc6 = _LoopLocator(duration=6.0, nbins=6)
     assert len(loc6.tick_values(0.0, 6.0)) == 6
 
-    loc8 = librosa.display.LoopLocator(duration=4.0, nbins=8)
+    loc8 = _LoopLocator(duration=4.0, nbins=8)
     ticks8 = loc8.tick_values(0.0, 4.0)
     assert len(ticks8) == 8
     assert np.allclose(ticks8, np.linspace(0.0, 4.0, 8, endpoint=False))
 
-    loc4 = librosa.display.LoopLocator(duration=4.0, nbins=4)
+    loc4 = _LoopLocator(duration=4.0, nbins=4)
     ticks4 = loc4.tick_values(0.0, 4.0)
     assert len(ticks4) == 4
     assert np.allclose(ticks4, [0.0, 1.0, 2.0, 3.0])
 
-    loc12 = librosa.display.LoopLocator(duration=4.0, nbins=12)
+    loc12 = _LoopLocator(duration=4.0, nbins=12)
     assert len(loc12.tick_values(0.0, 4.0)) == 12
 
-    loc16 = librosa.display.LoopLocator(duration=4.0, nbins=16)
+    loc16 = _LoopLocator(duration=4.0, nbins=16)
     assert len(loc16.tick_values(0.0, 4.0)) == 16
 
-    loc24 = librosa.display.LoopLocator(duration=4.0, nbins=24)
+    loc24 = _LoopLocator(duration=4.0, nbins=24)
     assert len(loc24.tick_values(0.0, 4.0)) == 24
 
-    loc32 = librosa.display.LoopLocator(duration=4.0, nbins=32)
+    loc32 = _LoopLocator(duration=4.0, nbins=32)
     assert len(loc32.tick_values(0.0, 4.0)) == 32
 
-    loc48 = librosa.display.LoopLocator(duration=4.0, nbins=48)
+    loc48 = _LoopLocator(duration=4.0, nbins=48)
     assert len(loc48.tick_values(0.0, 4.0)) == 48
 
-    loc64 = librosa.display.LoopLocator(duration=4.0, nbins=64)
+    loc64 = _LoopLocator(duration=4.0, nbins=64)
     assert len(loc64.tick_values(0.0, 4.0)) == 64
 
     # Nearest bin selection: nbins=10 -> 8 or 12
-    loc10 = librosa.display.LoopLocator(duration=4.0, nbins=10)
+    loc10 = _LoopLocator(duration=4.0, nbins=10)
     assert len(loc10.tick_values(0.0, 4.0)) in (8, 12)
 
     # Explicit integer division
-    loc_div6 = librosa.display.LoopLocator(duration=6.0, divisions=6)
+    loc_div6 = _LoopLocator(duration=6.0, divisions=6)
     assert np.allclose(loc_div6.tick_values(0.0, 6.0), np.arange(6, dtype=float))
 
     # Explicit timestamp array
     custom_times = [0.25, 1.5, 3.75]
-    loc_custom = librosa.display.LoopLocator(duration=4.0, divisions=custom_times)
+    loc_custom = _LoopLocator(duration=4.0, divisions=custom_times)
     assert np.allclose(loc_custom.tick_values(0.0, 4.0), custom_times)
 
     # Empty divisions and seam deduplication
-    loc_empty = librosa.display.LoopLocator(duration=4.0, divisions=[])
+    loc_empty = _LoopLocator(duration=4.0, divisions=[])
     assert len(loc_empty.tick_values(0.0, 4.0)) == 0
-    loc_seam = librosa.display.LoopLocator(duration=4.0, divisions=[0.0, 4.0])
+    loc_seam = _LoopLocator(duration=4.0, divisions=[0.0, 4.0])
     seam_ticks = loc_seam.tick_values(0.0, 4.0)
     assert len(seam_ticks) == 1
     assert np.isclose(seam_ticks[0], 0.0)
@@ -2270,32 +2272,34 @@ def test_loop_locator():
 
     # Parameter validation
     with pytest.raises(librosa.ParameterValueError, match="duration must be strictly positive"):
-        librosa.display.LoopLocator(duration=0.0)
+        _LoopLocator(duration=0.0)
     with pytest.raises(librosa.ParameterValueError, match="duration must be strictly positive"):
-        librosa.display.LoopLocator(duration=-1.0)
+        _LoopLocator(duration=-1.0)
     with pytest.raises(librosa.ParameterValueError, match="divisions cannot be a boolean"):
-        librosa.display.LoopLocator(duration=4.0, divisions=True)
+        _LoopLocator(duration=4.0, divisions=True)
     with pytest.raises(librosa.ParameterValueError, match="divisions cannot be a boolean"):
-        librosa.display.LoopLocator(duration=4.0, divisions=False)
+        _LoopLocator(duration=4.0, divisions=False)
     with pytest.raises(librosa.ParameterValueError, match="divisions must be positive"):
-        librosa.display.LoopLocator(duration=4.0, divisions=0)
+        _LoopLocator(duration=4.0, divisions=0)
     with pytest.raises(librosa.ParameterValueError, match="divisions must be positive"):
-        librosa.display.LoopLocator(duration=4.0, divisions=-4)
+        _LoopLocator(duration=4.0, divisions=-4)
     with pytest.raises(librosa.ParameterValueError, match="divisions must be an integer or sequence"):
-        librosa.display.LoopLocator(duration=4.0, divisions="bad")  # type: ignore[arg-type]
+        _LoopLocator(duration=4.0, divisions="bad")  # type: ignore[arg-type]
     with pytest.raises(librosa.ParameterValueError, match="divisions must be an integer or sequence"):
-        librosa.display.LoopLocator(duration=4.0, divisions=["a", "b"])  # type: ignore[list-item]
+        _LoopLocator(duration=4.0, divisions=["a", "b"])  # type: ignore[list-item]
     with pytest.raises(librosa.ParameterValueError, match="divisions must be a 1D sequence of finite numbers"):
-        librosa.display.LoopLocator(duration=4.0, divisions=[[0.0, 1.0]])  # type: ignore[list-item]
+        _LoopLocator(duration=4.0, divisions=[[0.0, 1.0]])  # type: ignore[list-item]
     with pytest.raises(librosa.ParameterValueError, match="divisions must be a 1D sequence of finite numbers"):
-        librosa.display.LoopLocator(duration=4.0, divisions=[0.0, np.nan])
+        _LoopLocator(duration=4.0, divisions=[0.0, np.nan])
 
 
 def test_transformed_locator():
+    from librosa.display.formatting import _TransformedLocator
+
     # Pre-transform mapping [0, 4] -> [0, 2pi]
     pre = mtransforms.Affine2D().scale(2 * np.pi / 4.0, 1.0)
     base_loc = mplticker.FixedLocator([0.0, 1.0, 2.0, 3.0])
-    trans_loc = librosa.display.TransformedLocator(base_loc, pre)
+    trans_loc = _TransformedLocator(base_loc, pre)
 
     # View interval in display space [0, 2pi]
     disp_ticks = trans_loc.tick_values(0.0, 2 * np.pi)
@@ -2304,15 +2308,17 @@ def test_transformed_locator():
 
     # Empty ticks handled cleanly
     empty_loc = mplticker.FixedLocator([])
-    trans_empty = librosa.display.TransformedLocator(empty_loc, pre)
+    trans_empty = _TransformedLocator(empty_loc, pre)
     assert len(trans_empty.tick_values(0.0, 2 * np.pi)) == 0
 
 
 def test_transformed_formatter():
+    from librosa.display.formatting import _TransformedFormatter
+
     # Pre-transform mapping [0, 4] -> [0, 2pi]
     pre = mtransforms.Affine2D().scale(2 * np.pi / 4.0, 1.0)
     base_fmt = librosa.display.TimeFormatter(unit="s")
-    trans_fmt = librosa.display.TransformedFormatter(base_fmt, pre)
+    trans_fmt = _TransformedFormatter(base_fmt, pre)
 
     fig, ax = plt.subplots()
     try:
@@ -2342,8 +2348,8 @@ def test_waveloop_time_axis(y, sr):
     try:
         ax = adaptor.steps.axes
         assert isinstance(ax, PolarAxes)
-        assert isinstance(ax.xaxis.get_major_locator(), librosa.display.TransformedLocator)
-        assert isinstance(ax.xaxis.get_major_formatter(), librosa.display.TransformedFormatter)
+        assert isinstance(ax.xaxis.get_major_locator(), librosa.display.formatting._TransformedLocator)
+        assert isinstance(ax.xaxis.get_major_formatter(), librosa.display.formatting._TransformedFormatter)
         ticks = ax.xaxis.get_majorticklocs()
         assert len(ticks) == 8
         assert np.all(ticks >= 0.0)
@@ -2434,12 +2440,12 @@ def test_waveloop_time_axis(y, sr):
 def test_transformed_locator_no_axis():
     pre = mtransforms.Affine2D().scale(2.0, 1.0)
     base_loc = mplticker.FixedLocator([0.0, 1.0])
-    trans_loc = librosa.display.TransformedLocator(base_loc, pre)
+    trans_loc = librosa.display.formatting._TransformedLocator(base_loc, pre)
     assert len(trans_loc()) == 0
 
 
 def test_loop_locator_no_axis():
-    loc = librosa.display.LoopLocator(duration=4.0, nbins=4)
+    loc = librosa.display.formatting._LoopLocator(duration=4.0, nbins=4)
     ticks = loc()
     assert len(ticks) == 4
     assert np.allclose(ticks, [0.0, 1.0, 2.0, 3.0])
@@ -2495,12 +2501,12 @@ def test_decorate_axis_cartesian_transformed():
         librosa.display.formatting._decorate_axis(ax.xaxis, ax_type=8, transform=pre, duration=None)
         assert ax.xaxis.get_label_text() == "Time"
         loc_8 = ax.xaxis.get_major_locator()
-        assert isinstance(loc_8, librosa.display.TransformedLocator)
+        assert isinstance(loc_8, librosa.display.formatting._TransformedLocator)
         assert isinstance(loc_8.base_locator, mplticker.MaxNLocator)
 
         librosa.display.formatting._decorate_axis(ax.xaxis, ax_type=[0.0, 1.0, 2.0], transform=pre, duration=None)
         loc_fixed = ax.xaxis.get_major_locator()
-        assert isinstance(loc_fixed, librosa.display.TransformedLocator)
+        assert isinstance(loc_fixed, librosa.display.formatting._TransformedLocator)
         assert isinstance(loc_fixed.base_locator, mplticker.FixedLocator)
     finally:
         plt.close(fig)
@@ -2524,8 +2530,9 @@ def test_waveloop_phase_ticks(y, sr):
             assert np.all(ticks >= -1e-6)
             assert np.all(ticks < 2 * np.pi + 1e-6)
             fmt = ax.xaxis.get_major_formatter()
-            assert isinstance(fmt, librosa.display.TransformedFormatter)
-            sig_vals = fmt._to_signal(ticks)
+            assert isinstance(fmt, librosa.display.formatting._TransformedFormatter)
+            assert isinstance(fmt.base_formatter, librosa.display.formatting._PeriodicFormatter)
+            sig_vals = fmt.base_formatter._wrap(fmt._to_signal(ticks))
             assert np.all(sig_vals >= offset - 1e-6)
             assert np.all(sig_vals < offset + dur + 1e-6)
             assert np.any(np.isclose(sig_vals, offset, atol=1e-6))
@@ -2583,12 +2590,34 @@ def test_multiplot_waveloop_fig_kw(y, sr):
 
     fig_custom = plt.figure(figsize=(7, 7))
     try:
-        out2 = librosa.display.multiplot("waveloop", y_stack, fig=fig_custom, sr=sr)
+        # Existing fig + subplot-level fig_kw on waveloop (merges projection + facecolor without mutation)
+        sub_kw_existing = {"facecolor": "0.9"}
+        fig_kw_existing = {"subplot_kw": sub_kw_existing}
+        out2 = librosa.display.multiplot("waveloop", y_stack, fig=fig_custom, fig_kw=fig_kw_existing, sr=sr)
         assert out2.shape == (2,)
         assert isinstance(fig_custom.axes[0], PolarAxes)
+        assert matplotlib.colors.same_color(fig_custom.axes[0].get_facecolor(), "0.9")
+        assert "projection" not in sub_kw_existing
         assert np.allclose(fig_custom.get_size_inches(), (7, 7))
+
+        # Existing fig + figure-level fig_kw is rejected by fig.subplots
+        with pytest.raises(TypeError):
+            librosa.display.multiplot("waveloop", y_stack, fig=fig_custom, fig_kw={"figsize": (5, 5)}, sr=sr)
     finally:
         plt.close(fig_custom)
+
+    fig_cart = plt.figure(figsize=(6, 6))
+    try:
+        out_cart = librosa.display.multiplot(
+            "waveshow",
+            y_stack,
+            fig=fig_cart,
+            fig_kw={"gridspec_kw": {"hspace": 0.5}},
+            sr=sr,
+        )
+        assert out_cart.shape == (2,)
+    finally:
+        plt.close(fig_cart)
 
 
 def test_waveloop_offset(y, sr):
@@ -2644,12 +2673,35 @@ def test_extract_pre_transform_branches():
         pt_r = pre_r.transform([[1.0, 0.0]])
         assert np.allclose(pt_r, expected)
 
-        # 4. Transform not anchored to ax.transData (e.g. ax.transAxes)
+        # 4. Transform not anchored to ax.transData (e.g. ax.transAxes or BlendedGenericTransform)
         pre, art = librosa.display.signal._extract_pre_transform(ax.transAxes, ax)
         assert pre is None
         assert art is ax.transAxes
+
+        blended = ax.get_xaxis_transform()
+        pre_b, art_b = librosa.display.signal._extract_pre_transform(blended, ax)
+        assert pre_b is None
+        assert art_b is blended
+
+        # 5. Transformf0 + ax.transData peels cleanly
+        tf0 = librosa.display.Transformf0(f0=np.array([220.0, 440.0]), sr=1, hop_length=1)
+        chained_f0 = tf0 + ax.transData
+        pre_f0, art_f0 = librosa.display.signal._extract_pre_transform(chained_f0, ax)
+        assert pre_f0 is tf0
+        assert art_f0 is chained_f0
     finally:
         plt.close(fig)
+
+    # 6. PolarAxes composite transData stops at polar_ax.transData by identity
+    fig_p, ax_p = plt.subplots(subplot_kw={"projection": "polar"})
+    try:
+        pre_in = mtransforms.Affine2D().scale(2.0, 0.5)
+        chained_p = pre_in + ax_p.transData
+        pre_p, art_p = librosa.display.signal._extract_pre_transform(chained_p, ax_p)
+        assert pre_p is pre_in
+        assert art_p is chained_p
+    finally:
+        plt.close(fig_p)
 
 
 def test_waveshow_custom_transform_transpose_and_mask(y, sr):
@@ -2688,13 +2740,33 @@ def test_waveshow_custom_transform_with_ax(y, sr):
 
 
 def test_transformed_non_invertible_raises():
+    from librosa.display.formatting import _LoopLocator, _TransformedFormatter, _TransformedLocator
+
     non_inv = mtransforms.Transform()
-    base_loc = librosa.display.LoopLocator(duration=4.0)
+    base_loc = _LoopLocator(duration=4.0)
     base_fmt = librosa.display.TimeFormatter(unit="s")
     with pytest.raises(librosa.ParameterValueError, match="transform must be invertible"):
-        librosa.display.TransformedLocator(base_loc, non_inv)
+        _TransformedLocator(base_loc, non_inv)
     with pytest.raises(librosa.ParameterValueError, match="transform must be invertible"):
-        librosa.display.TransformedFormatter(base_fmt, non_inv)
+        _TransformedFormatter(base_fmt, non_inv)
+
+    # Non-separable 2D transform (rotation) rejected
+    rot = mtransforms.Affine2D().rotate(np.pi / 4)
+    with pytest.raises(librosa.ParameterValueError, match="separable"):
+        _TransformedLocator(base_loc, rot)
+    with pytest.raises(librosa.ParameterValueError, match="separable"):
+        _TransformedFormatter(base_fmt, rot)
+
+    # Non-1D/2D transform rejected
+    class Dummy3DTransform(mtransforms.Transform):
+        input_dims = 3
+        output_dims = 3
+        has_inverse = True
+
+    with pytest.raises(librosa.ParameterValueError, match="1D or separable 2D"):
+        _TransformedLocator(base_loc, Dummy3DTransform())
+    with pytest.raises(librosa.ParameterValueError, match="1D or separable 2D"):
+        _TransformedFormatter(base_fmt, Dummy3DTransform())
 
 
 def test_adaptive_waveplot_out_of_bounds_viewport(y, sr):
@@ -2737,7 +2809,9 @@ def test_adaptive_waveplot_handler_expired_ref():
 
 
 def test_loop_locator_inverted_bounds():
-    loc = librosa.display.LoopLocator(duration=4.0, offset=1.0)
+    from librosa.display.formatting import _LoopLocator
+
+    loc = _LoopLocator(duration=4.0, offset=1.0)
     ticks = loc.tick_values(5.0, 1.0)
     assert len(ticks) == 8
     assert np.isclose(ticks[0], 1.0)
@@ -2745,11 +2819,15 @@ def test_loop_locator_inverted_bounds():
 
 
 def test_transformed_formatter_methods():
+    import matplotlib.scale as mscale
+
+    from librosa.display.formatting import _LoopLocator, _PeriodicFormatter, _TransformedFormatter, _TransformedLocator
+
     fig, ax = plt.subplots()
     try:
         pre = mtransforms.Affine2D().scale(2.0, 1.0)
         base_fmt = librosa.display.TimeFormatter(unit="s")
-        fmt = librosa.display.TransformedFormatter(base_fmt, pre)
+        fmt = _TransformedFormatter(base_fmt, pre)
         fmt.set_axis(ax.xaxis)
         # format_ticks
         labels = fmt.format_ticks([0.0, 2.0, 4.0])
@@ -2764,38 +2842,51 @@ def test_transformed_formatter_methods():
         # set_axis(None)
         fmt.set_axis(None)
         assert fmt.axis is None
-        # TransformedLocator set_axis(None)
-        base_loc = librosa.display.LoopLocator(duration=4.0)
-        loc = librosa.display.TransformedLocator(base_loc, pre)
+        # _TransformedLocator set_axis(None)
+        base_loc = _LoopLocator(duration=4.0)
+        loc = _TransformedLocator(base_loc, pre)
         loc.set_axis(None)
         assert loc.axis is None
 
-        # Periodic wrapping and period validation in TransformedFormatter
+        # _PeriodicFormatter validation, wrapping, and protocol methods
         with pytest.raises(librosa.ParameterValueError, match="period must be strictly positive"):
-            librosa.display.TransformedFormatter(base_fmt, pre, period=0.0)
-        p_fmt = librosa.display.TransformedFormatter(base_fmt, pre, period=4.0, offset=1.0)
+            _PeriodicFormatter(base_fmt, period=0.0)
+        p_fmt = _PeriodicFormatter(base_fmt, period=4.0, offset=1.0)
         p_fmt.set_axis(ax.xaxis)
-        # x = -2.0 -> signal t = -1.0 -> wraps into [1.0, 5.0) as t = 3.0s
-        assert "3" in p_fmt(-2.0)
+        assert "3" in p_fmt(-1.0)
+        assert p_fmt.format_ticks([]) == []
         # Near-upper-boundary wrap snaps cleanly to offset (1.0s)
-        snapped = p_fmt.format_ticks([2.0 - 1e-12])
+        snapped = p_fmt.format_ticks([1.0 - 1e-12])
         assert "1" in snapped[0]
-        assert "3" in p_fmt.format_data_short(-2.0)
+        assert "3" in p_fmt.format_data_short(-1.0)
 
-        # Y-axis support for TransformedLocator, TransformedFormatter, and _AxisTimeProxy
+        # Y-axis support for _TransformedLocator, _TransformedFormatter, and _AxisTimeProxy
         pre_y = mtransforms.Affine2D().scale(1.0, 2.0)
-        y_loc = librosa.display.TransformedLocator(mplticker.FixedLocator([0.5, 1.5]), pre_y)
+        y_loc = _TransformedLocator(mplticker.FixedLocator([0.5, 1.5]), pre_y)
         y_loc.set_axis(ax.yaxis)
         assert np.allclose(y_loc.tick_values(0.0, 4.0), [1.0, 3.0])
         ax.set_ylim(0.0, 4.0)
         assert np.allclose(y_loc(), [1.0, 3.0])
-        y_fmt = librosa.display.TransformedFormatter(librosa.display.TimeFormatter(unit="s"), pre_y)
+        y_fmt = _TransformedFormatter(librosa.display.TimeFormatter(unit="s"), pre_y)
         y_fmt.set_axis(ax.yaxis)
         assert "1" in y_fmt(2.0)
         assert "1" in y_fmt.format_ticks([2.0])[0]
         assert "1" in y_fmt.format_data_short(2.0)
         y_proxy = librosa.display.formatting._AxisTimeProxy(ax.yaxis, pre_y)
         assert np.allclose(y_proxy.get_view_interval(), [0.0, 2.0])
+
+        # 1D transform support (e.g., matplotlib.scale.FuncTransform)
+        func_1d = mscale.FuncTransform(
+            lambda x: 2.0 * np.asarray(x, dtype=float),
+            lambda x: 0.5 * np.asarray(x, dtype=float),
+        )
+        loc_1d = _TransformedLocator(mplticker.FixedLocator([1.0, 2.0]), func_1d)
+        loc_1d.set_axis(ax.xaxis)
+        assert np.allclose(loc_1d.tick_values(0.0, 6.0), [2.0, 4.0])
+        fmt_1d = _TransformedFormatter(librosa.display.TimeFormatter(unit="s"), func_1d)
+        fmt_1d.set_axis(ax.xaxis)
+        assert "1" in fmt_1d(2.0)
+        assert "2" in fmt_1d.format_ticks([4.0])[0]
     finally:
         plt.close(fig)
 
