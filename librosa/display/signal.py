@@ -743,7 +743,7 @@ def waveshow(
     # leaving time coordinates untransformed (as required by wavef0).
     has_custom_time_transform = has_custom_transform and not isinstance(pre_transform, Transformf0)
 
-    if has_custom_time_transform and pre_transform is not None:
+    if has_custom_transform and pre_transform is not None:
         env_pts_top = np.column_stack(
             [
                 times[: len(y_top) * hop_length : hop_length],
@@ -1278,7 +1278,7 @@ def wavef0(
         times = offset + np.arange(y.shape[-1]) / sr
         mask = np.isfinite(trans.f0_interp(times))
 
-        adaptor = waveshow(
+        return waveshow(
             y=y,
             sr=sr,
             axis=time_axis,
@@ -1289,25 +1289,6 @@ def wavef0(
             transpose=transpose,
             **kwargs,
         )
-
-        # Kludge the data limits because the fill_between collection does not automatically
-        # update the data limits
-        assert adaptor.envelope is not None
-        xy = adaptor.envelope.get_datalim(trans + axes.transData).get_points()
-
-        f0min = np.nanmin(f0)
-        f0max = np.nanmax(f0)
-
-        if transpose:
-            handle = mlines.Line2D([xy[0, 0] + f0min, xy[1, 0] + f0max], xy[:, 1])
-        else:
-            handle = mlines.Line2D(xy[:, 0], [xy[0, 1] + f0min, xy[1, 1] + f0max])
-
-        axes.add_line(handle)
-        axes.autoscale_view()
-        handle.remove()
-        # end kludge
-        return adaptor
 
     else:
         return wavebars(
@@ -1467,11 +1448,12 @@ def waveloop(
     Raises
     ------
     ParameterValueError
+        If ``y`` is empty.
         If ``ax`` is provided, is not polar, and already contains artists.
         If ``duration <= 0`` or signal duration exceeds ``duration``.
         If ``r_range`` is invalid or ``r_min < 0`` or ``r_min >= r_max``.
-        If ``method`` or ``direction`` is not recognized.
-        If ``transpose=True`` is passed in ``kwargs``.
+        If ``method``, ``direction``, or ``time_axis`` is not recognized.
+        If ``transpose=True``, ``transform``, or ``axis`` is passed in ``kwargs``.
 
     See Also
     --------
@@ -1497,6 +1479,10 @@ def waveloop(
     """
     if kwargs.get("transpose", False):
         raise ParameterValueError("transpose=True is not supported in waveloop.")
+    if "transform" in kwargs:
+        raise ParameterValueError("transform is managed internally by waveloop and cannot be overridden.")
+    if "axis" in kwargs:
+        raise ParameterValueError("Use 'time_axis' instead of 'axis' in waveloop.")
 
     util.valid_audio(y)
     if y.size == 0:

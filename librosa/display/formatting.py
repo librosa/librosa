@@ -15,7 +15,7 @@ from __future__ import annotations
 import warnings
 
 # Third-party imports for plotting and numerical operations
-from collections.abc import Collection, Sequence
+from collections.abc import Sequence
 from fractions import Fraction
 from itertools import product
 from typing import TYPE_CHECKING, Any, cast
@@ -39,6 +39,8 @@ from ..exceptions import (
 
 # Type checking imports for development and static analysis
 if TYPE_CHECKING:
+    from collections.abc import Collection
+
     import matplotlib
     import matplotlib.axes
     import matplotlib.figure
@@ -209,17 +211,29 @@ class TimeFormatter(mplticker.Formatter):
         return f"{sign:s}{s:s}"
 
 
+def _axis_index(axis: Any) -> int:
+    """Return coordinate column index: 1 for a y-axis, 0 otherwise."""
+    return 1 if getattr(axis, "axis_name", "x") == "y" else 0
+
+
+def _transform_1d(transform: mtransforms.Transform, values: np.ndarray, axis_idx: int) -> np.ndarray:
+    """Apply a 2D Matplotlib transform along coordinate index 0 (x) or 1 (y)."""
+    pts = np.zeros((len(values), 2), dtype=float)
+    pts[:, axis_idx] = values
+    return np.asarray(transform.transform(pts)[:, axis_idx], dtype=float)
+
+
 class _AxisTimeProxy:
     """Proxy for Matplotlib Axis that transforms view and data intervals to signal time."""
 
     def __init__(self, axis: matplotlib.axis.Axis, transform: mtransforms.Transform) -> None:
         self._axis = axis
         self._transform = transform
+        self._axis_idx = _axis_index(axis)
 
     def get_view_interval(self) -> tuple[float, float]:
         vmin, vmax = self._axis.get_view_interval()
-        inv = self._transform.inverted()
-        pts = inv.transform([[vmin, 0.0], [vmax, 0.0]])[:, 0]
+        pts = _transform_1d(self._transform.inverted(), np.array([vmin, vmax], dtype=float), self._axis_idx)
         res = np.sort(pts)
         return float(res[0]), float(res[1])
 
@@ -227,8 +241,7 @@ class _AxisTimeProxy:
         dmin, dmax = self._axis.get_data_interval()
         if not np.isfinite(dmin) or not np.isfinite(dmax):
             return self.get_view_interval()
-        inv = self._transform.inverted()
-        pts = inv.transform([[dmin, 0.0], [dmax, 0.0]])[:, 0]
+        pts = _transform_1d(self._transform.inverted(), np.array([dmin, dmax], dtype=float), self._axis_idx)
         res = np.sort(pts)
         return float(res[0]), float(res[1])
 
@@ -239,7 +252,28 @@ class _AxisTimeProxy:
         return getattr(self._axis, name)
 
 
-class TransformedLocator(mplticker.Locator):
+class _TransformedTickMixin:
+    """Shared transform validation and axis-proxy binding for transformed tick helpers."""
+
+    transform: mtransforms.Transform
+    axis: Any
+
+    def _init_transform(self, transform: mtransforms.Transform) -> None:
+        if not transform.has_inverse:
+            raise ParameterValueError("transform must be invertible")
+        self.transform = transform
+
+    def _axis_idx(self) -> int:
+        return _axis_index(self.axis)
+
+    def _forward_axis(self, base: mplticker.Locator | mplticker.Formatter, axis: Any) -> None:
+        if axis is not None:
+            base.set_axis(cast("Any", _AxisTimeProxy(axis, self.transform)))
+        else:
+            base.set_axis(None)
+
+
+class TransformedLocator(_TransformedTickMixin, mplticker.Locator):
     """A locator that maps display coordinates through an inverse transform to signal coordinates.
 
     This adapter allows any base locator defined in signal coordinates (e.g., time in seconds)
@@ -258,10 +292,8 @@ class TransformedLocator(mplticker.Locator):
         base_locator: mplticker.Locator,
         transform: mtransforms.Transform,
     ) -> None:
-        if not transform.has_inverse:
-            raise ParameterValueError("transform must be invertible")
         self.base_locator = base_locator
-        self.transform = transform
+        self._init_transform(transform)
         super().__init__()
 
     def set_axis(self, axis: Any) -> None:
@@ -273,10 +305,7 @@ class TransformedLocator(mplticker.Locator):
             The axis to bind to this locator.
         """
         super().set_axis(axis)
-        if axis is not None:
-            self.base_locator.set_axis(cast("Any", _AxisTimeProxy(axis, self.transform)))
-        else:
-            self.base_locator.set_axis(None)
+        self._forward_axis(self.base_locator, axis)
 
     def tick_values(self, vmin: float, vmax: float) -> np.ndarray:  # type: ignore[override]
         """Return the locations of the ticks in display coordinates.
@@ -293,15 +322,13 @@ class TransformedLocator(mplticker.Locator):
         ticks : np.ndarray
             Locations of ticks in display coordinates.
         """
-        inv = self.transform.inverted()
-        pts = inv.transform([[vmin, 0.0], [vmax, 0.0]])[:, 0]
+        idx = self._axis_idx()
+        pts = _transform_1d(self.transform.inverted(), np.array([vmin, vmax], dtype=float), idx)
         t_min, t_max = float(np.min(pts)), float(np.max(pts))
-        sig_ticks = self.base_locator.tick_values(t_min, t_max)
+        sig_ticks = np.asarray(self.base_locator.tick_values(t_min, t_max), dtype=float)
         if len(sig_ticks) == 0:
             return np.array([])
-        sig_pts = np.column_stack([sig_ticks, np.zeros_like(sig_ticks)])
-        disp_ticks: np.ndarray = self.transform.transform(sig_pts)[:, 0]
-        return disp_ticks
+        return _transform_1d(self.transform, sig_ticks, idx)
 
     def __call__(self) -> np.ndarray:  # type: ignore[override]
         """Return the locations of the ticks."""
@@ -311,7 +338,7 @@ class TransformedLocator(mplticker.Locator):
         return np.array([])
 
 
-class TransformedFormatter(mplticker.Formatter):
+class TransformedFormatter(_TransformedTickMixin, mplticker.Formatter):
     """A formatter that maps display coordinates through an inverse transform to signal coordinates.
 
     This adapter allows any base formatter defined in signal coordinates (e.g., `TimeFormatter`)
@@ -323,17 +350,27 @@ class TransformedFormatter(mplticker.Formatter):
         The underlying formatter operating in signal coordinates.
     transform : matplotlib.transforms.Transform
         The data-to-axes pre-transform mapping signal coordinates to display coordinates.
+    period : float > 0 or None
+        Optional signal period in seconds. When provided, inverted signal coordinates are
+        wrapped modulo ``period`` into ``[offset, offset + period)``.
+    offset : float
+        Starting signal offset in seconds used with ``period``. Default is 0.0.
     """
 
     def __init__(
         self,
         base_formatter: mplticker.Formatter,
         transform: mtransforms.Transform,
+        *,
+        period: float | None = None,
+        offset: float = 0.0,
     ) -> None:
-        if not transform.has_inverse:
-            raise ParameterValueError("transform must be invertible")
+        if period is not None and period <= 0:
+            raise ParameterValueError(f"period must be strictly positive, got {period}")
         self.base_formatter = base_formatter
-        self.transform = transform
+        self._init_transform(transform)
+        self.period: float | None = float(period) if period is not None else None
+        self.offset = float(offset)
         super().__init__()
 
     def set_axis(self, axis: Any) -> None:
@@ -345,15 +382,19 @@ class TransformedFormatter(mplticker.Formatter):
             The axis to bind to this formatter.
         """
         super().set_axis(axis)
-        if axis is not None:
-            self.base_formatter.set_axis(cast("Any", _AxisTimeProxy(axis, self.transform)))
-        else:
-            self.base_formatter.set_axis(None)
+        self._forward_axis(self.base_formatter, axis)
+
+    def _to_signal(self, values: np.ndarray) -> np.ndarray:
+        t_vals = _transform_1d(self.transform.inverted(), values, self._axis_idx())
+        if self.period is not None:
+            t_vals = self.offset + np.mod(t_vals - self.offset, self.period)
+            tol = 1e-9 * self.period
+            t_vals = np.where(np.isclose(t_vals, self.offset + self.period, atol=tol), self.offset, t_vals)
+        return t_vals
 
     def __call__(self, x: float, pos: int | None = None) -> str:
         """Format tick value ``x`` (in display coordinates) as a string."""
-        inv = self.transform.inverted()
-        t = float(inv.transform([[x, 0.0]])[0, 0])
+        t = float(self._to_signal(np.array([x], dtype=float))[0])
         return self.base_formatter(t, pos)
 
     def format_ticks(self, values: Sequence[float]) -> list[str]:
@@ -371,9 +412,7 @@ class TransformedFormatter(mplticker.Formatter):
         """
         if len(values) == 0:
             return []
-        inv = self.transform.inverted()
-        pts = np.column_stack([values, np.zeros(len(values))])
-        t_vals = inv.transform(pts)[:, 0]
+        t_vals = self._to_signal(np.asarray(values, dtype=float))
         return self.base_formatter.format_ticks(t_vals.tolist())
 
     def format_data_short(self, value: float) -> str:
@@ -389,8 +428,7 @@ class TransformedFormatter(mplticker.Formatter):
         label : str
             Formatted string representation in signal units.
         """
-        inv = self.transform.inverted()
-        t = float(inv.transform([[value, 0.0]])[0, 0])
+        t = float(self._to_signal(np.array([value], dtype=float))[0])
         return self.base_formatter.format_data_short(t)
 
 
@@ -474,16 +512,28 @@ class LoopLocator(mplticker.Locator):
         """
         if self.divisions is None:
             n = min(self.PREF_DIVISIONS, key=lambda c: abs(c - self.nbins))
-            ticks = self.offset + np.linspace(0.0, self.duration, n, endpoint=False)
+            base_ticks = self.offset + np.linspace(0.0, self.duration, n, endpoint=False)
         elif isinstance(self.divisions, (int, np.integer)):
-            ticks = self.offset + np.linspace(0.0, self.duration, int(self.divisions), endpoint=False)
+            base_ticks = self.offset + np.linspace(0.0, self.duration, int(self.divisions), endpoint=False)
         else:
-            ticks = np.asarray(self.divisions, dtype=float)
+            base_ticks = np.asarray(self.divisions, dtype=float)
+
+        if base_ticks.size == 0:
+            return np.array([], dtype=float)
 
         tol = 1e-6 * self.duration
         lo, hi = (vmin, vmax) if vmin <= vmax else (vmax, vmin)
+        # Tile periodically so ticks wrap cleanly across phase-shifted loop intervals
+        k_min = int(np.floor((lo - tol - float(np.max(base_ticks))) / self.duration))
+        k_max = int(np.ceil((hi - tol - float(np.min(base_ticks))) / self.duration))
+        shifts = np.arange(k_min, k_max + 1, dtype=float) * self.duration
+        ticks = (base_ticks[np.newaxis, :] + shifts[:, np.newaxis]).ravel()
+
         mask = (ticks >= lo - tol) & (ticks < hi - tol)
-        return ticks[mask]
+        ticks = np.sort(ticks[mask])
+        if ticks.size > 1:
+            ticks = ticks[np.concatenate(([True], np.diff(ticks) > tol))]
+        return ticks
 
     def __call__(self) -> np.ndarray:  # type: ignore[override]
         """Return the tick locations in signal seconds."""
@@ -1346,30 +1396,45 @@ def _scale_axes(axes, ax_type, which, tempo_min, tempo_max):
     scaler(mode, **kwargs)
 
 
-def _set_transformed_time_axis(
-    axis: matplotlib.axis.Axis,
-    transform: mtransforms.Transform,
+def _build_time_locator(
     *,
-    unit: str | None = None,
-    unit_name: str | None = None,
     duration: float | None = None,
     offset: float = 0.0,
     divisions: int | Sequence[float] | np.ndarray | None = None,
-) -> None:
-    """Configure transformed time locators, formatters, and axis label."""
-    base_fmt = TimeFormatter(unit=unit, lag=False)
-    axis.set_major_formatter(TransformedFormatter(base_fmt, transform))
-
+) -> mplticker.Locator:
+    """Build a base time-axis locator for periodic or Cartesian intervals."""
     if duration is not None:
-        base_loc: mplticker.Locator = LoopLocator(
+        return LoopLocator(
             duration=duration,
             offset=offset,
             divisions=cast("int | Sequence[float] | None", divisions),
         )
-    else:
-        base_loc = mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
+    if isinstance(divisions, (int, np.integer)):
+        return mplticker.MaxNLocator(nbins=int(divisions), prune=None)
+    if divisions is not None:
+        return mplticker.FixedLocator(cast("Sequence[float]", divisions))
+    return mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10])
 
-    axis.set_major_locator(TransformedLocator(base_loc, transform))
+
+def _set_time_axis(
+    axis: matplotlib.axis.Axis,
+    *,
+    unit: str | None = None,
+    unit_name: str | None = None,
+    transform: mtransforms.Transform | None = None,
+    duration: float | None = None,
+    offset: float = 0.0,
+    divisions: int | Sequence[float] | np.ndarray | None = None,
+) -> None:
+    """Configure time locators, formatters, and axis label (optionally transformed)."""
+    base_fmt: mplticker.Formatter = TimeFormatter(unit=unit, lag=False)
+    base_loc = _build_time_locator(duration=duration, offset=offset, divisions=divisions)
+    if transform is not None:
+        axis.set_major_formatter(TransformedFormatter(base_fmt, transform, period=duration, offset=offset))
+        axis.set_major_locator(TransformedLocator(base_loc, transform))
+    else:
+        axis.set_major_formatter(base_fmt)
+        axis.set_major_locator(base_loc)
 
     if not isinstance(axis.axes, PolarAxes):
         axis.set_label_text(f"Time ({unit_name:s})" if unit_name else "Time")
@@ -1405,31 +1470,13 @@ def _decorate_axis(
     time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
 
     if isinstance(ax_type, (int, np.integer, np.ndarray, Sequence)) and not isinstance(ax_type, (str, bytes, bool)):
-        if transform is not None:
-            _set_transformed_time_axis(
-                axis,
-                transform,
-                duration=duration,
-                offset=offset,
-                divisions=cast("int | Sequence[float] | np.ndarray | None", ax_type),
-            )
-        else:
-            axis.set_major_formatter(TimeFormatter(unit=None, lag=False))
-            if duration is not None:
-                axis.set_major_locator(
-                    LoopLocator(
-                        duration=duration,
-                        offset=offset,
-                        divisions=cast("int | Sequence[float] | None", ax_type),
-                    )
-                )
-            elif isinstance(ax_type, (int, np.integer)):
-                axis.set_major_locator(mplticker.MaxNLocator(nbins=int(ax_type), prune=None))
-            else:
-                axis.set_major_locator(mplticker.FixedLocator(cast("Sequence[float]", ax_type)))
-
-            if not isinstance(axis.axes, PolarAxes):
-                axis.set_label_text("Time")
+        _set_time_axis(
+            axis,
+            transform=transform,
+            duration=duration,
+            offset=offset,
+            divisions=cast("int | Sequence[float] | np.ndarray | None", ax_type),
+        )
         return
 
     fmin = util._ensure_hz(fmin)
@@ -1540,11 +1587,11 @@ def _decorate_axis(
 
     elif (ax_type == "time" or (isinstance(ax_type, str) and ax_type in time_units)) and transform is not None:
         unit = ax_type if isinstance(ax_type, str) and ax_type in time_units else None
-        _set_transformed_time_axis(
+        _set_time_axis(
             axis,
-            transform,
             unit=unit,
             unit_name=time_units[unit] if unit else None,
+            transform=transform,
             duration=duration,
             offset=offset,
         )

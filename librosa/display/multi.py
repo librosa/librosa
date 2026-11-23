@@ -169,7 +169,9 @@ def _mp_setup_axes(
     fig : matplotlib.figure.FigureBase or None
         The figure to use for the multiplot. If None, a new figure will be created if needed.
     fig_kw : dict or None
-        Additional keyword arguments to pass to `plt.subplots` when creating a new figure.
+        Additional keyword arguments to pass to `plt.subplots` when creating a new figure,
+        or to `fig.subplots` when `fig` is provided (in which case only subplot-level
+        keyword arguments such as `subplot_kw` and `gridspec_kw` are accepted).
     nrows : int
         The number of rows in the grid of axes.
     ncols : int
@@ -435,7 +437,9 @@ def multiplot(
           are considered to be in the same group and will share properties.
 
     fig_kw : dict or None
-        Additional keyword arguments to pass to `plt.subplots` when creating a new figure.
+        Additional keyword arguments to pass to `plt.subplots` when creating a new figure,
+        or to `fig.subplots` when `fig` is provided (in which case only subplot-level
+        keyword arguments such as `subplot_kw` and `gridspec_kw` are accepted).
 
     sharex : bool or None
         Whether to share the x-axis among subplots when creating a new figure.
