@@ -20,6 +20,7 @@ from decorator import decorator
 from . import util
 from ._cache import cache
 from .filters import checkerboard_kernel, diagonal_filter
+from .util.deprecation import Deprecated, rename_kw
 from .util.exceptions import (
     ParameterShapeError,
     ParameterTypeError,
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
     from typing import Any, Literal
 
     import sklearn.cluster
+    import sklearn.neighbors
 
     from ._typing import _Array1D, _FloatLike_co, _SparseArray, _WindowSpec
 
@@ -54,8 +56,9 @@ def cross_similarity(
     data: np.ndarray,
     data_ref: np.ndarray,
     *,
-    k: int | None = ...,
+    k: int | tuple[int | None, int | None] | None = ...,
     metric: str = ...,
+    mutual: bool = ...,
     sparse: Literal[False] = ...,
     mode: str = ...,
     bandwidth: np.ndarray | _FloatLike_co | str | None = None,
@@ -66,8 +69,9 @@ def cross_similarity(
     data: np.ndarray,
     data_ref: np.ndarray,
     *,
-    k: int | None = ...,
+    k: int | tuple[int | None, int | None] | None = ...,
     metric: str = ...,
+    mutual: bool = ...,
     sparse: Literal[True],
     mode: str = ...,
     bandwidth: np.ndarray | _FloatLike_co | str | None = None,
@@ -78,8 +82,9 @@ def cross_similarity(
     data: np.ndarray,
     data_ref: np.ndarray,
     *,
-    k: int | None = None,
+    k: int | tuple[int | None, int | None] | None = None,
     metric: str = "euclidean",
+    mutual: bool = False,
     sparse: bool = False,
     mode: str = "connectivity",
     bandwidth: np.ndarray | _FloatLike_co | str | None = None,
@@ -89,6 +94,8 @@ def cross_similarity(
 
     The output is a matrix ``xsim``, where ``xsim[i, j]`` is non-zero
     if ``data_ref[..., i]`` is a k-nearest neighbor of ``data[..., j]``.
+    If ``mutual=True``, ``xsim[i, j]`` is non-zero only if ``data_ref[..., i]``
+    is a k-nearest neighbor of ``data[..., j]`` and vice versa.
 
     Parameters
     ----------
@@ -106,16 +113,30 @@ def cross_similarity(
         For example, a stereo input with shape `(2, d, n_ref)` is
         automatically reshaped to `(2 * d, n_ref)`.
 
-    k : int > 0 [scalar] or None
-        the number of nearest-neighbors for each sample
+    k : int > 0, tuple of (int > 0 or None, int > 0 or None), or None
+        the number of nearest-neighbors for each sample.
 
-        Default: ``k = 2 * ceil(sqrt(n_ref))``,
-        or ``k = 2`` if ``n_ref <= 3``
+        If a 2-tuple ``(k_data, k_ref)`` is provided (only valid when
+        ``mutual=True``), ``k_data`` specifies the number of nearest neighbors
+        from ``data_ref`` for each sample in ``data``, and ``k_ref`` specifies
+        the number of nearest neighbors from ``data`` for each sample in
+        ``data_ref``. Either element may be ``None`` to use its default.
+
+        Default for ``data``: ``k_data = min(n_ref, 2 * ceil(sqrt(n_ref)))``
+        Default for ``data_ref`` (when ``mutual=True``):
+        ``k_ref = min(n, 2 * ceil(sqrt(n)))``
 
     metric : str
         Distance metric to use for nearest-neighbor calculation.
 
         See `sklearn.neighbors.NearestNeighbors` for details.
+
+    mutual : bool [scalar]
+        If ``True``, only link mutual nearest neighbors: ``(i, j)`` is linked
+        if ``data_ref[..., i]`` is a nearest neighbor of ``data[..., j]``
+        and ``data[..., j]`` is a nearest neighbor of ``data_ref[..., i]``.
+        Candidate neighborhoods are computed strictly between ``data`` and
+        ``data_ref``.
 
     sparse : bool [scalar]
         if False, returns a dense type (ndarray)
@@ -140,7 +161,7 @@ def cross_similarity(
             - 'gmean_k_avg'
             - 'mean_k_avg_and_pair'
 
-        If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
+        If ndarray [shape=(n_ref, n)] is supplied, use ndarray as bandwidth for each (i, j) pair.
 
         If using ``mode='affinity'``, this can be used to set the
         bandwidth on the affinity kernel.
@@ -180,14 +201,14 @@ def cross_similarity(
             https://doi.org/10.1038/nmeth.2810
 
     full : bool
-        If using ``mode ='affinity'`` or ``mode='distance'``, this option can be used to compute
-        the full affinity or distance matrix as opposed a sparse matrix with only none-zero terms
+        If using ``mode='affinity'`` or ``mode='distance'``, this option can be used to compute
+        the full affinity or distance matrix as opposed to a sparse matrix with only non-zero terms
         for the first k-neighbors of each sample.
         This option has no effect when using ``mode='connectivity'``.
 
-        When using ``mode='distance'``, setting ``full=True`` will ignore ``k`` and ``width``.
+        When using ``mode='distance'``, setting ``full=True`` will ignore ``k``.
         When using ``mode='affinity'``, setting ``full=True`` will use ``k`` exclusively for
-        bandwidth estimation, and ignore ``width``.
+        bandwidth estimation.
 
     Returns
     -------
@@ -224,6 +245,12 @@ def cross_similarity(
 
     >>> xsim = librosa.segment.cross_similarity(x_comp, x_ref, k=5)
 
+    Require mutual nearest neighbors
+
+    >>> xsim_mutual = librosa.segment.cross_similarity(
+    ...     x_comp, x_ref, k=(5, 7), mutual=True
+    ... )
+
     Use cosine similarity instead of Euclidean distance
 
     >>> xsim = librosa.segment.cross_similarity(x_comp, x_ref, metric="cosine")
@@ -241,7 +268,7 @@ def cross_similarity(
     >>> imgsim = librosa.display.specshow(
     ...     xsim, x_axis="s", y_axis="s", hop_length=hop_length, ax=ax[0]
     ... )
-    >>> ax[0].set(title="Binary cross-similarity (symmetric)")
+    >>> ax[0].set(title="Binary cross-similarity")
     >>> imgaff = librosa.display.specshow(
     ...     xsim_aff,
     ...     x_axis="s",
@@ -275,116 +302,96 @@ def cross_similarity(
 
     if mode not in ["connectivity", "distance", "affinity"]:
         raise ParameterValueError(f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']")
-    if k is None:
-        k = min(n_ref, 2 * np.ceil(np.sqrt(n_ref)))
 
-    k = int(k)
+    k_data_default = int(min(n_ref, 2 * np.ceil(np.sqrt(n_ref))))
+    k_ref_default = int(min(n, 2 * np.ceil(np.sqrt(n))))
+    k_data, k_ref = __parse_k(k, mutual=mutual, default_0=k_data_default, default_1=k_ref_default)
 
     # using k for bandwidth estimation also and decouple k for full mode
-    bandwidth_k = k
-    if full and (mode != "connectivity"):
-        k = n
+    bandwidth_k: tuple[int, int] = (k_data, k_ref)
+    full_mode = full and (mode != "connectivity")
+    if full_mode:
+        k_data = n_ref
+        k_ref = n
 
-    # Build the neighbor search object
-    # `auto` mode does not work with some choices of metric.  Rather than special-case
-    # those here, we instead use a fall-back to brute force if auto fails.
-    import sklearn.neighbors
+    # Build the neighbor search object (data -> data_ref)
+    xsim_fwd = __cross_knn_graph(data_ref, data, k_data, metric, mode)
 
-    try:
-        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_ref, k), metric=metric, algorithm="auto")
-    except ValueError:
-        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=min(n_ref, k), metric=metric, algorithm="brute")
-
-    knn.fit(data_ref)
-
-    # Get the knn graph
-    if mode == "affinity":
-        # sklearn's nearest neighbor doesn't support affinity,
-        # so we use distance here and then do the conversion post-hoc
-        kng_mode = "distance"
+    xsim_rev: scipy.sparse.csr_array | None = None
+    if mutual:
+        xsim_rev = __cross_knn_graph(data, data_ref, k_ref, metric, mode)
+        xsim = xsim_fwd.minimum(xsim_rev.T.tocsr())
+        xsim.eliminate_zeros()
     else:
-        kng_mode = mode
-
-    xsim = knn.kneighbors_graph(X=data, mode=kng_mode).tolil()
-
-    if not full:
-        # Retain only the top-k links per point
-        for i in range(n):
-            # Get the links from point i
-            links = xsim[i].nonzero()[1]
-
-            # Order them ascending
-            idx = links[np.argsort(xsim[i, links].toarray())][0]
-
-            # Everything past the kth closest gets squashed
-            xsim[i, idx[k:]] = 0
-
-    # Convert to CSR
-    xsim = xsim.tocsr()
-    xsim.eliminate_zeros()
-
-    # sklearn gave us a sparse *matrix*; normalize to sparse *array*
-    xsim = scipy.sparse.csr_array(xsim)
+        xsim = xsim_fwd
+        if mode == "affinity" and isinstance(bandwidth, str) and bandwidth in _PAIRWISE_BANDWIDTH_MODES:
+            if full_mode:
+                xsim_rev = xsim_fwd.T.tocsr()
+            else:
+                xsim_rev = __cross_knn_graph(data, data_ref, k_ref, metric, mode)
 
     if mode == "connectivity":
         xsim = xsim.astype(bool)
     elif mode == "affinity":
-        aff_bandwidth = __affinity_bandwidth(xsim, bandwidth, bandwidth_k)
+        aff_bandwidth = __affinity_bandwidth(xsim, bandwidth, bandwidth_k, rec_fwd=xsim_fwd, rec_rev=xsim_rev)
         xsim.data[:] = np.exp(xsim.data / (-1 * aff_bandwidth))
 
     # Transpose to n_ref by n and guarantee sparse *array* return type
-    xsim = scipy.sparse.csc_array(xsim.T)
+    xsim_out = scipy.sparse.csc_array(xsim.T)
 
     if not sparse:
-        return xsim.toarray()
+        return xsim_out.toarray()
 
-    return xsim
+    return xsim_out
 
 
 @overload
 def recurrence_matrix(
     data: np.ndarray,
     *,
-    k: int | None = ...,
+    k: int | tuple[int | None, int | None] | None = ...,
     width: int = ...,
     metric: str = ...,
-    sym: bool = ...,
+    mutual: bool = ...,
     sparse: Literal[True],
     mode: str = ...,
     bandwidth: np.ndarray | _FloatLike_co | str | None = ...,
     self: bool = ...,
     axis: int = ...,
     full: bool = False,
+    sym: bool | Deprecated = ...,
 ) -> scipy.sparse.csc_array: ...
 @overload
 def recurrence_matrix(
     data: np.ndarray,
     *,
-    k: int | None = ...,
+    k: int | tuple[int | None, int | None] | None = ...,
     width: int = ...,
     metric: str = ...,
-    sym: bool = ...,
+    mutual: bool = ...,
     sparse: Literal[False] = ...,
     mode: str = ...,
     bandwidth: np.ndarray | _FloatLike_co | str | None = ...,
     self: bool = ...,
     axis: int = ...,
     full: bool = False,
+    sym: bool | Deprecated = ...,
 ) -> np.ndarray: ...
 @cache(level=30)
 def recurrence_matrix(
     data: np.ndarray,
     *,
-    k: int | None = None,
+    k: int | tuple[int | None, int | None] | None = None,
     width: int = 1,
     metric: str = "euclidean",
-    sym: bool = False,
+    mutual: bool = False,
     sparse: bool = False,
     mode: str = "connectivity",
     bandwidth: np.ndarray | _FloatLike_co | str | None = None,
     self: bool = False,
     axis: int = -1,
     full: bool = False,
+    sym: bool | Deprecated = Deprecated(),
 ) -> np.ndarray | scipy.sparse.csc_array:
     """Compute a recurrence matrix from a data matrix.
 
@@ -413,8 +420,13 @@ def recurrence_matrix(
         For example, a stereo input with shape `(2, d, n)` is
         automatically reshaped to `(2 * d, n)`.
 
-    k : int > 0 [scalar] or None
-        the number of nearest-neighbors for each sample
+    k : int > 0, tuple of (int > 0 or None, int > 0 or None), or None
+        the number of nearest-neighbors for each sample.
+
+        If a 2-tuple ``(k_col, k_row)`` is provided (only valid when
+        ``mutual=True``), ``k_col`` specifies the number of nearest neighbors
+        for each column and ``k_row`` specifies the number of nearest neighbors
+        for each row. Either element may be ``None`` to use the default.
 
         Default: ``k = 2 * ceil(sqrt(t - 2 * width + 1))``,
         or ``k = 2`` if ``t <= 2 * width + 1``
@@ -430,8 +442,14 @@ def recurrence_matrix(
 
         See `sklearn.neighbors.NearestNeighbors` for details.
 
-    sym : bool [scalar]
-        set ``sym=True`` to only link mutual nearest-neighbors
+    mutual : bool [scalar]
+        If ``True``, only link mutual nearest neighbors: ``(i, j)`` is linked
+        if ``data[..., i]`` is a nearest neighbor of ``data[..., j]`` and
+        vice versa. Note that ``mutual=False`` does not guarantee symmetry even
+        for scalar ``k``. When ``mutual=True`` and ``k`` is a scalar (or
+        ``(k0, k0)``), the resulting link structure is symmetric; when
+        ``k=(k_col, k_row)`` with ``k_col != k_row``, each column has at most
+        ``k_col`` links and each row has at most ``k_row`` links.
 
     sparse : bool [scalar]
         if False, returns a dense type (ndarray)
@@ -456,7 +474,7 @@ def recurrence_matrix(
             - 'gmean_k_avg'
             - 'mean_k_avg_and_pair'
 
-        If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
+        If ndarray [shape=(t, t)] is supplied, use ndarray as bandwidth for each (i, j) pair.
 
         If using ``mode='affinity'``, the ``bandwidth`` option can be used to set the
         bandwidth on the affinity kernel.
@@ -506,14 +524,20 @@ def recurrence_matrix(
         By default, the last index (-1) is taken.
 
     full : bool
-        If using ``mode ='affinity'`` or ``mode='distance'``, this option can be used to compute
-        the full affinity or distance matrix as opposed a sparse matrix with only none-zero terms
+        If using ``mode='affinity'`` or ``mode='distance'``, this option can be used to compute
+        the full affinity or distance matrix as opposed to a sparse matrix with only non-zero terms
         for the first k-neighbors of each sample.
         This option has no effect when using ``mode='connectivity'``.
 
         When using ``mode='distance'``, setting ``full=True`` will ignore ``k`` and ``width``.
         When using ``mode='affinity'``, setting ``full=True`` will use ``k`` exclusively for
         bandwidth estimation, and ignore ``width``.
+
+    sym : bool [scalar]
+        .. warning:: This parameter is deprecated in 1.1.0 and will be removed in 2.0.0.
+
+        Deprecated alias for ``mutual``.
+        An exception is raised if both ``mutual=True`` and ``sym`` are provided.
 
     Returns
     -------
@@ -556,7 +580,7 @@ def recurrence_matrix(
 
     Require mutual nearest neighbors
 
-    >>> R = librosa.segment.recurrence_matrix(chroma_stack, sym=True)
+    >>> R = librosa.segment.recurrence_matrix(chroma_stack, mutual=True)
 
     Use an affinity matrix instead of binary connectivity
 
@@ -585,6 +609,19 @@ def recurrence_matrix(
     >>> fig.colorbar(imgsim, ax=ax[0], orientation="horizontal", ticks=[0, 1])
     >>> fig.colorbar(imgaff, ax=ax[1], orientation="horizontal")
     """
+    if not isinstance(sym, Deprecated):
+        if mutual:
+            raise ParameterValueError("Both 'sym' and 'mutual' were provided. Please use only the 'mutual' parameter.")
+
+        mutual = rename_kw(
+            old_name="sym",
+            old_value=sym,
+            new_name="mutual",
+            new_value=mutual,
+            version_deprecated="1.1.0",
+            version_removed="2.0.0",
+        )
+
     data = np.atleast_2d(data)
 
     # Swap observations to the first dimension and flatten the rest
@@ -600,95 +637,54 @@ def recurrence_matrix(
 
     if mode not in ["connectivity", "distance", "affinity"]:
         raise ParameterValueError(f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']")
-    if k is None:
-        k = 2 * np.ceil(np.sqrt(t - 2 * width + 1))
 
-    k = int(k)
+    k_default = int(2 * np.ceil(np.sqrt(t - 2 * width + 1)))
+    k_col, k_row = __parse_k(k, mutual=mutual, default_0=k_default, default_1=k_default)
 
     # using k for bandwidth estimation also and decouple k for full mode
-    bandwidth_k = k
-    if full and (mode != "connectivity"):
-        k = t
+    bw_k_col, bw_k_row = k_col, k_row
+    full_mode = full and (mode != "connectivity")
+    if full_mode:
+        k_col = t - 1
+        k_row = t - 1
 
     # Build the neighbor search object
-    import sklearn.neighbors
+    n_neighbors = t - 1 if full_mode else min(t - 1, max(k_col, k_row) + 2 * width)
+    knn = __build_knn(data, n_neighbors, metric)
+    dists, indices = knn.kneighbors(return_distance=True)
 
-    try:
-        knn = sklearn.neighbors.NearestNeighbors(
-            n_neighbors=min(t - 1, k + 2 * width), metric=metric, algorithm="auto"
-        )
-    except ValueError:
-        knn = sklearn.neighbors.NearestNeighbors(
-            n_neighbors=min(t - 1, k + 2 * width), metric=metric, algorithm="brute"
-        )
+    eff_width = 0 if full_mode else width
+    rec_col = __build_knn_graph(dists, indices, (t, t), k_col, mode, width=eff_width)
+    rec_row: scipy.sparse.csr_array | None = None
 
-    knn.fit(data)
+    if mutual:
+        if k_row == k_col:
+            rec_row = rec_col
+        else:
+            rec_row = __build_knn_graph(dists, indices, (t, t), k_row, mode, width=eff_width)
+        rec = rec_col.minimum(rec_row.T.tocsr())
+        rec.eliminate_zeros()
+    else:
+        rec = rec_col
 
-    # Get the knn graph
     if mode == "affinity":
-        kng_mode = "distance"
-    else:
-        kng_mode = mode
+        rec_rev_bw = rec_row if bw_k_row != bw_k_col else None
+        aff_bandwidth = __affinity_bandwidth(rec, bandwidth, (bw_k_col, bw_k_row), rec_fwd=rec_col, rec_rev=rec_rev_bw)
+        rec.data[:] = np.exp(rec.data / (-1 * aff_bandwidth))
 
-    rec = knn.kneighbors_graph(mode=kng_mode).tolil()
-
-    if not full:
-        # Remove connections within width
-        for diag in range(-width + 1, width):
-            rec.setdiag(0, diag)
-
-        # Retain only the top-k links per point
-        for i in range(t):
-            # Get the links from point i
-            links = rec[i].nonzero()[1]
-
-            # Order them ascending
-            idx = links[np.argsort(rec[i, links].toarray())][0]
-
-            # Everything past the kth closest gets squashed
-            rec[i, idx[k:]] = 0
-
-    if self:
-        if mode == "connectivity":
-            rec.setdiag(1)
-        elif mode == "affinity":
-            # we need to keep the self-loop in here, but not mess up the
-            # bandwidth estimation
-            #
-            # using negative distances here preserves the structure without changing
-            # the statistics of the data
-            rec.setdiag(-1)
-    else:
-        rec.setdiag(0)
-
-    # symmetrize
-    if sym:
-        # Note: this operation produces a CSR (compressed sparse row) matrix!
-        # This is why we have to do it after filling the diagonal in self-mode
-        rec = rec.minimum(rec.T)
-
-    # Convert to CSR (matrix), then normalize to sparse *array*
-    rec = rec.tocsr()
-    rec.eliminate_zeros()
-    rec = scipy.sparse.csr_array(rec)
+    if self and mode != "distance":
+        rec = (rec + scipy.sparse.eye_array(t, format="csr")).tocsr()
 
     if mode == "connectivity":
         rec = rec.astype(bool)
-    elif mode == "affinity":
-        # Set all the negatives back to 0
-        # Negatives are temporarily inserted above to preserve the sparsity structure
-        # of the matrix without corrupting the bandwidth calculations
-        rec.data[rec.data < 0] = 0.0
-        aff_bandwidth = __affinity_bandwidth(rec, bandwidth, bandwidth_k)
-        rec.data[:] = np.exp(rec.data / (-1 * aff_bandwidth))
 
     # Transpose to be column-major
-    rec = scipy.sparse.csc_array(rec.T)
+    rec_out = scipy.sparse.csc_array(rec.T)
 
     if not sparse:
-        return rec.toarray()
+        return rec_out.toarray()
 
-    return rec
+    return rec_out
 
 
 def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
@@ -1373,53 +1369,100 @@ def path_enhance(
     return np.asanyarray(R_smooth)
 
 
-def __affinity_bandwidth(
-    rec: scipy.sparse.csr_array,
-    bw_mode: np.ndarray | _FloatLike_co | str | None,
-    k: int,
-) -> float | np.ndarray:
-    # rec should be a csr_array
+def __parse_k(
+    k: int | tuple[int | None, int | None] | None,
+    *,
+    mutual: bool,
+    default_0: int,
+    default_1: int,
+) -> tuple[int, int]:
+    """Validate and resolve neighborhood size ``k`` to ``(k_0, k_1)``."""
+    if k is None:
+        return default_0, default_1
 
-    # the api allows users to specify a scalar bandwidth directly, besides the string based options.
-    if isinstance(bw_mode, np.ndarray):
-        bandwidth = bw_mode
-        # check if bw is the right size
-        if bandwidth.shape != rec.shape:
-            raise ParameterShapeError(f"Invalid matrix bandwidth shape: {bandwidth.shape}.Should be {rec.shape}.")
-        if (bandwidth <= 0).any():
-            raise ParameterValueError("Invalid bandwidth. All entries must be strictly positive.")
-        return np.array(bandwidth[rec.nonzero()])
+    if isinstance(k, tuple):
+        if not mutual:
+            raise ParameterValueError("Tuple k is only supported when mutual=True")
+        if len(k) != 2:
+            raise ParameterValueError(
+                f"k must be a positive integer or a 2-tuple of positive integers, got tuple of length {len(k)}"
+            )
+        resolved: list[int] = []
+        for idx, (val, default) in enumerate(zip(k, (default_0, default_1), strict=True)):
+            if val is None:
+                resolved.append(default)
+            elif util.is_positive_int(val) and not isinstance(val, bool):
+                resolved.append(int(val))
+            else:
+                raise ParameterValueError(f"k[{idx}]={val!r} must be a positive integer or None")
+        return resolved[0], resolved[1]
 
-    elif isinstance(bw_mode, (int, float)):
-        scalar_bandwidth = float(bw_mode)
-        if scalar_bandwidth <= 0:
-            raise ParameterValueError(f"Invalid scalar bandwidth={scalar_bandwidth}. Must be strictly positive.")
-        return scalar_bandwidth
+    if util.is_positive_int(k) and not isinstance(k, bool):
+        k_int = int(k)
+        return k_int, k_int
 
-    if bw_mode is None:
-        bw_mode = "med_k_scalar"
+    raise ParameterValueError(f"k={k!r} must be a positive integer, a 2-tuple of positive integers, or None")
 
-    if bw_mode not in [
-        "med_k_scalar",
-        "mean_k",
-        "gmean_k",
-        "mean_k_avg",
-        "gmean_k_avg",
-        "mean_k_avg_and_pair",
-    ]:
-        raise ParameterValueError(
-            f"Invalid bandwidth='{bw_mode}'. Must be either a positive scalar or one of "
-            "['med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']"
-        )
 
-    # build a list of list that stores the distances to k nearest neighbors for all t points.
-    t = rec.shape[0]
-    knn_dists = []
-    for i in range(t):
-        # Get the links from point i using CSR format
+def __build_knn(fit_data: np.ndarray, n_neighbors: int, metric: str) -> sklearn.neighbors.NearestNeighbors:
+    """Fit a nearest-neighbors index."""
+    import sklearn.neighbors
+
+    knn = sklearn.neighbors.NearestNeighbors(n_neighbors=n_neighbors, metric=metric, algorithm="auto")
+    knn.fit(fit_data)
+    return knn
+
+
+def __build_knn_graph(
+    dists: np.ndarray,
+    indices: np.ndarray,
+    shape: tuple[int, int],
+    k_limit: int,
+    mode: str,
+    width: int = 0,
+) -> scipy.sparse.csr_array:
+    """Build a CSR k-NN graph from ``NearestNeighbors.kneighbors`` outputs."""
+    n_rows = shape[0]
+    if width > 1:
+        row_ids = np.arange(n_rows)[:, None]
+        valid = np.abs(indices - row_ids) >= width
+    else:
+        valid = np.ones_like(indices, dtype=bool)
+
+    rank = np.cumsum(valid, axis=1)
+    keep = valid & (rank <= k_limit)
+
+    rows, cols_pos = np.nonzero(keep)
+    cols = indices[rows, cols_pos]
+    vals = np.ones(len(rows), dtype=float) if mode == "connectivity" else dists[rows, cols_pos]
+
+    graph = scipy.sparse.csr_array((vals, (rows, cols)), shape=shape)
+    graph.eliminate_zeros()
+    return graph
+
+
+def __cross_knn_graph(
+    fit_data: np.ndarray,
+    query_data: np.ndarray,
+    k_limit: int,
+    metric: str,
+    mode: str,
+) -> scipy.sparse.csr_array:
+    """Build a CSR k-NN graph from ``query_data`` into ``fit_data``."""
+    n_fit = fit_data.shape[0]
+    n_query = query_data.shape[0]
+    knn = __build_knn(fit_data, min(n_fit, k_limit), metric)
+    dists, indices = knn.kneighbors(X=query_data, return_distance=True)
+    return __build_knn_graph(dists, indices, (n_query, n_fit), k_limit, mode)
+
+
+def __knn_row_stats(rec: scipy.sparse.csr_array, k: int, bw_mode: str) -> tuple[np.ndarray, np.ndarray]:
+    """Compute per-row k-th nearest-neighbor distance and average distance up to k."""
+    n_rows = rec.shape[0]
+    knn_dists: list[np.ndarray] = []
+    for i in range(n_rows):
         start, end = rec.indptr[i], rec.indptr[i + 1]
         row_data = rec.data[start:end]
-        # catch empty dists lists in knn_dists
         if row_data.size == 0:
             # Disconnected vertices are only a problem for point-wise bandwidth estimation
             if bw_mode != "med_k_scalar":
@@ -1428,23 +1471,86 @@ def __affinity_bandwidth(
         else:
             knn_dists.append(np.sort(row_data)[:k])
 
-    # take the last element of each list for the distance to kth neighbor
     dist_to_k = np.asarray([dists[-1] for dists in knn_dists])
     avg_dist_to_first_ks = np.asarray([np.mean(dists) for dists in knn_dists])
+    return dist_to_k, avg_dist_to_first_ks
+
+
+_PAIRWISE_BANDWIDTH_MODES = (
+    "mean_k",
+    "gmean_k",
+    "mean_k_avg",
+    "gmean_k_avg",
+    "mean_k_avg_and_pair",
+)
+
+
+def __affinity_bandwidth(
+    rec: scipy.sparse.csr_array,
+    bw_mode: np.ndarray | _FloatLike_co | str | None,
+    k: int | tuple[int, int],
+    *,
+    rec_fwd: scipy.sparse.csr_array | None = None,
+    rec_rev: scipy.sparse.csr_array | None = None,
+) -> float | np.ndarray:
+    # rec should be a csr_array
+
+    # the api allows users to specify a scalar bandwidth directly, besides the string based options.
+    if isinstance(bw_mode, np.ndarray):
+        bandwidth = bw_mode
+        # rec is transposed prior to returning, so bandwidth matches output shape (rec.shape[1], rec.shape[0])
+        expected_shape = (rec.shape[1], rec.shape[0])
+        if bandwidth.shape != expected_shape:
+            raise ParameterShapeError(
+                f"Invalid matrix bandwidth shape: {bandwidth.shape}. Should be {expected_shape}."
+            )
+        if not (np.issubdtype(bandwidth.dtype, np.floating) or np.issubdtype(bandwidth.dtype, np.integer)):
+            raise ParameterValueError(f"Invalid bandwidth dtype={bandwidth.dtype}. Must be real-valued numeric.")
+        if not np.all(bandwidth > 0):
+            raise ParameterValueError("Invalid bandwidth. All entries must be strictly positive.")
+        rows = np.repeat(np.arange(rec.shape[0]), np.diff(rec.indptr))
+        cols = rec.indices
+        return np.array(bandwidth[cols, rows])
+
+    elif isinstance(bw_mode, (int, float, np.integer, np.floating)) and not isinstance(bw_mode, bool):
+        scalar_bandwidth = float(bw_mode)
+        if not (scalar_bandwidth > 0):
+            raise ParameterValueError(f"Invalid scalar bandwidth={scalar_bandwidth}. Must be strictly positive.")
+        return scalar_bandwidth
+
+    if bw_mode is None:
+        bw_mode = "med_k_scalar"
+
+    if not isinstance(bw_mode, str) or bw_mode not in ("med_k_scalar", *_PAIRWISE_BANDWIDTH_MODES):
+        raise ParameterValueError(
+            f"Invalid bandwidth='{bw_mode}'. Must be either a positive scalar or one of "
+            "['med_k_scalar', 'mean_k', 'gmean_k', 'mean_k_avg', 'gmean_k_avg', 'mean_k_avg_and_pair']"
+        )
+
+    k_0, k_1 = k if isinstance(k, tuple) else (k, k)
+    src_fwd = rec if rec_fwd is None else rec_fwd
+    row_dist_to_k, row_avg_dist = __knn_row_stats(src_fwd, k_0, bw_mode)
 
     if bw_mode == "med_k_scalar":
-        if not np.any(np.isfinite(dist_to_k)):
+        if not np.any(np.isfinite(row_dist_to_k)):
             raise ParameterValueError("Cannot estimate bandwidth from an empty graph")
-        return float(np.nanmedian(dist_to_k))
+        return float(np.nanmedian(row_dist_to_k))
+
+    if rec_rev is not None:
+        col_dist_to_k, col_avg_dist = __knn_row_stats(rec_rev, k_1, bw_mode)
+    else:
+        col_dist_to_k, col_avg_dist = row_dist_to_k, row_avg_dist
+
+    t = rec.shape[0]
+    sigma_i_data = np.empty_like(rec.data)
+    sigma_j_data = np.empty_like(rec.data)
 
     if bw_mode in ["mean_k", "gmean_k"]:
         # building bandwidth components (sigma) using sparse matrix structures and indices
-        sigma_i_data = np.empty_like(rec.data)
-        sigma_j_data = np.empty_like(rec.data)
         for row in range(t):
-            sigma_i_data[rec.indptr[row] : rec.indptr[row + 1]] = dist_to_k[row]
+            sigma_i_data[rec.indptr[row] : rec.indptr[row + 1]] = row_dist_to_k[row]
             col_idx = rec.indices[rec.indptr[row] : rec.indptr[row + 1]]
-            sigma_j_data[rec.indptr[row] : rec.indptr[row + 1]] = dist_to_k[col_idx]
+            sigma_j_data[rec.indptr[row] : rec.indptr[row + 1]] = col_dist_to_k[col_idx]
 
         if bw_mode == "mean_k":
             out = np.array((sigma_i_data + sigma_j_data) / 2)
@@ -1453,12 +1559,10 @@ def __affinity_bandwidth(
 
     if bw_mode in ["mean_k_avg", "gmean_k_avg", "mean_k_avg_and_pair"]:
         # building bandwidth components (sigma) using sparse matrix structures and indices
-        sigma_i_data = np.empty_like(rec.data)
-        sigma_j_data = np.empty_like(rec.data)
         for row in range(t):
-            sigma_i_data[rec.indptr[row] : rec.indptr[row + 1]] = avg_dist_to_first_ks[row]
+            sigma_i_data[rec.indptr[row] : rec.indptr[row + 1]] = row_avg_dist[row]
             col_idx = rec.indices[rec.indptr[row] : rec.indptr[row + 1]]
-            sigma_j_data[rec.indptr[row] : rec.indptr[row + 1]] = avg_dist_to_first_ks[col_idx]
+            sigma_j_data[rec.indptr[row] : rec.indptr[row + 1]] = col_avg_dist[col_idx]
 
         if bw_mode == "mean_k_avg":
             out = np.array((sigma_i_data + sigma_j_data) / 2)
