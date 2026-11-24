@@ -7,6 +7,7 @@ def test_public_api_surface():
         "waveshow",
         "wavebars",
         "wavef0",
+        "waveloop",
         "multiplot",
         "highlight",
         "infer_cmap",

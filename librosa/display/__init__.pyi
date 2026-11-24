@@ -30,4 +30,5 @@ from .signal import _AdaptiveWaveplotHandler as _AdaptiveWaveplotHandler
 from .signal import _WaveplotDecoy as _WaveplotDecoy
 from .signal import wavebars as wavebars
 from .signal import wavef0 as wavef0
+from .signal import waveloop as waveloop
 from .signal import waveshow as waveshow

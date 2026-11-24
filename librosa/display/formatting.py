@@ -15,6 +15,7 @@ from __future__ import annotations
 import warnings
 
 # Third-party imports for plotting and numerical operations
+from collections.abc import Sequence
 from fractions import Fraction
 from itertools import product
 from typing import TYPE_CHECKING, Any, cast
@@ -26,6 +27,7 @@ import matplotlib.ticker as mplticker
 import matplotlib.transforms as mtransforms
 import numpy as np
 from matplotlib import colormaps as mcm
+from matplotlib.projections.polar import PolarAxes
 
 # Core and utility imports for audio processing
 from .. import core, util
@@ -37,8 +39,7 @@ from ..exceptions import (
 
 # Type checking imports for development and static analysis
 if TYPE_CHECKING:
-    from collections.abc import Collection, Sequence
-    from typing import Any
+    from collections.abc import Collection
 
     import matplotlib
     import matplotlib.axes
@@ -208,6 +209,389 @@ class TimeFormatter(mplticker.Formatter):
             s = f"{value:.3f}"
 
         return f"{sign:s}{s:s}"
+
+
+def _axis_index(axis: Any) -> int:
+    """Return coordinate column index: 1 for a y-axis, 0 otherwise."""
+    return 1 if getattr(axis, "axis_name", "x") == "y" else 0
+
+
+def _is_finite_real(value: Any) -> bool:
+    """Return True if value is a finite real scalar and not a bool."""
+    return not isinstance(value, bool) and bool(np.isfinite(value))
+
+
+def _transform_1d(transform: mtransforms.Transform, values: np.ndarray, axis_idx: int) -> np.ndarray:
+    """Apply a 1D or separable 2D Matplotlib transform along coordinate index 0 (x) or 1 (y)."""
+    if transform.input_dims == 1:
+        return np.asarray(transform.transform(values), dtype=float)
+    pts = np.zeros((len(values), 2), dtype=float)
+    pts[:, axis_idx] = values
+    return np.asarray(transform.transform(pts)[:, axis_idx], dtype=float)
+
+
+class _AxisTransformProxy:
+    """Proxy for Matplotlib Axis that transforms view and data intervals to signal coordinates."""
+
+    def __init__(self, axis: matplotlib.axis.Axis, transform: mtransforms.Transform) -> None:
+        self._axis = axis
+        self._transform = transform
+        self._axis_idx = _axis_index(axis)
+
+    def get_view_interval(self) -> tuple[float, float]:
+        vmin, vmax = self._axis.get_view_interval()
+        pts = _transform_1d(self._transform.inverted(), np.array([vmin, vmax], dtype=float), self._axis_idx)
+        res = np.sort(pts)
+        return float(res[0]), float(res[1])
+
+    def get_data_interval(self) -> tuple[float, float]:
+        dmin, dmax = self._axis.get_data_interval()
+        if not np.isfinite(dmin) or not np.isfinite(dmax):
+            return self.get_view_interval()
+        pts = _transform_1d(self._transform.inverted(), np.array([dmin, dmax], dtype=float), self._axis_idx)
+        res = np.sort(pts)
+        return float(res[0]), float(res[1])
+
+    def __repr__(self) -> str:
+        return f"<_AxisTransformProxy wrapping {self._axis!r} with transform {self._transform!r}>"
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._axis, name)
+
+
+class _TransformedTickMixin:
+    """Shared transform validation and axis-proxy binding for transformed tick helpers."""
+
+    transform: mtransforms.Transform
+    axis: Any
+
+    def _init_transform(self, transform: mtransforms.Transform) -> None:
+        if not transform.has_inverse:
+            raise ParameterValueError("transform must be invertible")
+        if transform.input_dims == 2 and transform.output_dims == 2:
+            if not transform.is_separable:
+                raise ParameterValueError("2D transform must be separable for 1D axis decoration")
+        elif not (transform.input_dims == 1 and transform.output_dims == 1):
+            raise ParameterValueError(
+                f"transform must be 1D or separable 2D, got ({transform.input_dims}D -> {transform.output_dims}D)"
+            )
+        # Eagerly invert because Affine2DBase.has_inverse is a class attribute and stays True for singular matrices.
+        try:
+            transform.inverted()
+        except (NotImplementedError, np.linalg.LinAlgError) as exc:
+            raise ParameterValueError("transform must be invertible") from exc
+        self.transform = transform
+
+    def _axis_idx(self) -> int:
+        return _axis_index(self.axis)
+
+    def _forward_axis(self, base: mplticker.Locator | mplticker.Formatter, axis: Any) -> None:
+        if axis is not None:
+            base.set_axis(cast("Any", _AxisTransformProxy(axis, self.transform)))
+        else:
+            base.set_axis(None)
+
+
+class _TransformedLocator(_TransformedTickMixin, mplticker.Locator):
+    """A locator that maps display coordinates through an inverse transform to signal coordinates.
+
+    This adapter allows any base locator defined in signal coordinates (e.g., time in seconds)
+    to be used on transformed axes (such as polar projections or scaled Cartesian axes).
+
+    Parameters
+    ----------
+    base_locator : matplotlib.ticker.Locator
+        The underlying locator operating in signal coordinates.
+    transform : matplotlib.transforms.Transform
+        The 1D or separable 2D invertible transform mapping signal coordinates
+        to display coordinates.
+    """
+
+    def __init__(
+        self,
+        base_locator: mplticker.Locator,
+        transform: mtransforms.Transform,
+    ) -> None:
+        self.base_locator = base_locator
+        self._init_transform(transform)
+        super().__init__()
+
+    def set_axis(self, axis: Any) -> None:
+        """Set the axis for this locator and forward to base locator via proxy.
+
+        Parameters
+        ----------
+        axis : matplotlib.axis.Axis or None
+            The axis to bind to this locator.
+        """
+        super().set_axis(axis)
+        self._forward_axis(self.base_locator, axis)
+
+    def tick_values(self, vmin: float, vmax: float) -> np.ndarray:  # type: ignore[override]
+        """Return the locations of the ticks in display coordinates.
+
+        Parameters
+        ----------
+        vmin : float
+            Minimum boundary in display coordinates.
+        vmax : float
+            Maximum boundary in display coordinates.
+
+        Returns
+        -------
+        ticks : np.ndarray
+            Locations of ticks in display coordinates.
+        """
+        idx = self._axis_idx()
+        pts = _transform_1d(self.transform.inverted(), np.array([vmin, vmax], dtype=float), idx)
+        t_min, t_max = float(np.min(pts)), float(np.max(pts))
+        sig_ticks = np.asarray(self.base_locator.tick_values(t_min, t_max), dtype=float)
+        if len(sig_ticks) == 0:
+            return np.array([])
+        return _transform_1d(self.transform, sig_ticks, idx)
+
+    def __call__(self) -> np.ndarray:  # type: ignore[override]
+        """Return the locations of the ticks."""
+        if self.axis is not None:
+            vmin, vmax = self.axis.get_view_interval()
+            return self.tick_values(vmin, vmax)
+        return np.array([])
+
+
+class _TransformedFormatter(_TransformedTickMixin, mplticker.Formatter):
+    """A formatter that maps display coordinates through an inverse transform to signal coordinates.
+
+    This adapter allows any base formatter defined in signal coordinates (e.g., `TimeFormatter`)
+    to be used on transformed axes (such as polar projections or scaled Cartesian axes).
+
+    Parameters
+    ----------
+    base_formatter : matplotlib.ticker.Formatter
+        The underlying formatter operating in signal coordinates.
+    transform : matplotlib.transforms.Transform
+        The 1D or separable 2D invertible transform mapping signal coordinates
+        to display coordinates.
+    """
+
+    def __init__(
+        self,
+        base_formatter: mplticker.Formatter,
+        transform: mtransforms.Transform,
+    ) -> None:
+        self.base_formatter = base_formatter
+        self._init_transform(transform)
+        super().__init__()
+
+    def set_axis(self, axis: Any) -> None:
+        """Set the axis for this formatter and forward to base formatter via proxy.
+
+        Parameters
+        ----------
+        axis : matplotlib.axis.Axis or None
+            The axis to bind to this formatter.
+        """
+        super().set_axis(axis)
+        self._forward_axis(self.base_formatter, axis)
+
+    def _to_signal(self, values: np.ndarray) -> np.ndarray:
+        t = _transform_1d(self.transform.inverted(), values, self._axis_idx())
+        rounded = np.round(t)
+        return np.where(np.isclose(t, rounded, rtol=1e-12, atol=1e-12), rounded, t)
+
+    def __call__(self, x: float, pos: int | None = None) -> str:
+        """Format tick value ``x`` (in display coordinates) as a string."""
+        t = float(self._to_signal(np.array([x], dtype=float))[0])
+        return self.base_formatter(t, pos)
+
+    def format_ticks(self, values: Sequence[float]) -> list[str]:
+        """Return the formatted tick labels for the given values.
+
+        Parameters
+        ----------
+        values : Sequence[float]
+            Tick positions in display coordinates.
+
+        Returns
+        -------
+        labels : list of str
+            Formatted string representations of each tick value.
+        """
+        if len(values) == 0:
+            return []
+        t_vals = self._to_signal(np.asarray(values, dtype=float))
+        return self.base_formatter.format_ticks(t_vals.tolist())
+
+    def format_data_short(self, value: float) -> str:
+        """Return a short string representation of value for cursor position reporting.
+
+        Parameters
+        ----------
+        value : float
+            Coordinate value in display coordinates.
+
+        Returns
+        -------
+        label : str
+            Formatted string representation in signal units.
+        """
+        t = float(self._to_signal(np.array([value], dtype=float))[0])
+        return self.base_formatter.format_data_short(t)
+
+
+class _PeriodicFormatter(mplticker.Formatter):
+    """Formatter wrapper that reduces values modulo ``period`` into ``[0, period)``."""
+
+    def __init__(
+        self,
+        base_formatter: mplticker.Formatter,
+        period: float,
+    ) -> None:
+        if not _is_finite_real(period) or period <= 0:
+            raise ParameterValueError(f"period must be finite and strictly positive, got {period}")
+        self.base_formatter = base_formatter
+        self.period = float(period)
+        super().__init__()
+
+    def set_axis(self, axis: Any) -> None:
+        super().set_axis(axis)
+        self.base_formatter.set_axis(axis)
+
+    def _wrap(self, values: np.ndarray) -> np.ndarray:
+        wrapped = np.mod(values, self.period)
+        tol = 1e-9 * self.period
+        # Snap values within tolerance of period to 0.0 (np.mod(-eps, period) can return period).
+        return np.where(np.isclose(wrapped, self.period, atol=tol), 0.0, wrapped)
+
+    def __call__(self, x: float, pos: int | None = None) -> str:
+        val = float(self._wrap(np.array([x], dtype=float))[0])
+        return self.base_formatter(val, pos)
+
+    def format_ticks(self, values: Sequence[float]) -> list[str]:
+        if len(values) == 0:
+            return []
+        wrapped = self._wrap(np.asarray(values, dtype=float))
+        return self.base_formatter.format_ticks(wrapped.tolist())
+
+    def format_data_short(self, value: float) -> str:
+        val = float(self._wrap(np.array([value], dtype=float))[0])
+        return self.base_formatter.format_data_short(val)
+
+
+class _LoopLocator(mplticker.Locator):
+    """Tick locator for periodic/loop time signals.
+
+    This locator places ticks at subdivisions of a periodic loop of length `period`.
+    By default, it selects a meaningful division from `(2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)`
+    closest to `nbins`. It also supports explicit division counts or arbitrary user-supplied
+    tick timestamps in seconds.
+
+    On full circular/periodic intervals, it avoids duplicate endpoints where ``period``
+    wraps onto ``0``.
+
+    Parameters
+    ----------
+    period : float > 0
+        The period or loop duration in seconds.
+    divisions : int, Sequence[float], or None
+        Number of equal subdivisions across `period`, or a sequence of explicit
+        timestamp locations in seconds. If `None`, automatically chosen from
+        `(2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)` based on `nbins`.
+    nbins : int > 0
+        Target number of bins when `divisions` is `None`. Default is 8.
+    """
+
+    PREF_DIVISIONS: tuple[int, ...] = (2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)
+    divisions: int | np.ndarray | None
+
+    def __init__(
+        self,
+        period: float,
+        *,
+        divisions: int | Sequence[float] | None = None,
+        nbins: int = 8,
+    ) -> None:
+        if not _is_finite_real(period) or period <= 0:
+            raise ParameterValueError(f"period must be finite and strictly positive, got {period}")
+        if isinstance(nbins, bool) or not isinstance(nbins, (int, np.integer)) or nbins <= 0:
+            raise ParameterValueError(f"nbins must be a positive integer, got {nbins}")
+        if isinstance(divisions, bool):
+            raise ParameterValueError(f"divisions cannot be a boolean, got {divisions}")
+        if isinstance(divisions, (int, np.integer)):
+            if divisions <= 0:
+                raise ParameterValueError(f"divisions must be positive, got {divisions}")
+            self.divisions = int(divisions)
+        elif divisions is not None:
+            if isinstance(divisions, (str, bytes)):
+                raise ParameterValueError(f"divisions must be an integer or sequence of numbers, got {divisions!r}")
+            try:
+                div_arr = np.asarray(divisions, dtype=float)
+            except (TypeError, ValueError) as exc:
+                raise ParameterValueError(
+                    f"divisions must be an integer or sequence of numbers, got {divisions!r}"
+                ) from exc
+            if div_arr.ndim != 1 or not np.all(np.isfinite(div_arr)):
+                raise ParameterValueError(f"divisions must be a 1D sequence of finite numbers, got {divisions!r}")
+            self.divisions = div_arr
+        else:
+            self.divisions = None
+        self.period = float(period)
+        self.nbins = int(nbins)
+        super().__init__()
+
+    def tick_values(self, vmin: float, vmax: float) -> np.ndarray:  # type: ignore[override]
+        """Return the tick locations in signal seconds within ``[vmin, vmax]``.
+
+        Parameters
+        ----------
+        vmin : float
+            Minimum boundary in signal seconds.
+        vmax : float
+            Maximum boundary in signal seconds.
+
+        Returns
+        -------
+        ticks : np.ndarray
+            Array of tick locations in seconds.
+        """
+        if not (np.isfinite(vmin) and np.isfinite(vmax)):
+            return np.array([], dtype=float)
+
+        if self.divisions is None:
+            n = min(self.PREF_DIVISIONS, key=lambda c: abs(c - self.nbins))
+            base_ticks = np.linspace(0.0, self.period, n, endpoint=False)
+        elif isinstance(self.divisions, (int, np.integer)):
+            base_ticks = np.linspace(0.0, self.period, int(self.divisions), endpoint=False)
+        else:
+            base_ticks = np.asarray(self.divisions, dtype=float)
+
+        if base_ticks.size == 0:
+            return np.array([], dtype=float)
+
+        tol = 1e-6 * self.period
+        lo, hi = (vmin, vmax) if vmin <= vmax else (vmax, vmin)
+        # Tile periodically so ticks wrap cleanly across shifted or negative view intervals
+        k_min = int(np.floor((lo - tol - float(np.max(base_ticks))) / self.period))
+        k_max = int(np.ceil((hi + tol - float(np.min(base_ticks))) / self.period))
+        shifts = np.arange(k_min, k_max + 1, dtype=float) * self.period
+        ticks = (base_ticks[np.newaxis, :] + shifts[:, np.newaxis]).ravel()
+
+        # Exclude the upper endpoint only when the span wraps onto itself modulo period (full loop vs partial sector).
+        span = hi - lo
+        rem = span % self.period
+        wraps_seam = span >= self.period - tol and (rem <= tol or (self.period - rem) <= tol)
+        mask = (ticks >= lo - tol) & (ticks < hi - tol if wraps_seam else ticks <= hi + tol)
+        ticks = np.sort(ticks[mask])
+        if ticks.size > 1:
+            ticks = ticks[np.concatenate(([True], np.diff(ticks) > tol))]
+        return ticks
+
+    def __call__(self) -> np.ndarray:  # type: ignore[override]
+        """Return the tick locations in signal seconds."""
+        if self.axis is not None:
+            vmin, vmax = self.axis.get_view_interval()
+        else:
+            vmin, vmax = 0.0, self.period
+        return self.tick_values(vmin, vmax)
 
 
 class AdaptiveFormatterBase(mplticker.Formatter):
@@ -1062,6 +1446,60 @@ def _scale_axes(axes, ax_type, which, tempo_min, tempo_max):
     scaler(mode, **kwargs)
 
 
+def _decorate_loop_time_axis(
+    axis: matplotlib.axis.Axis,
+    time_axis: str | int | Sequence[float] | np.ndarray | None,
+    *,
+    period: float,
+    transform: mtransforms.Transform | None = None,
+) -> None:
+    """Configure a periodic time axis (optionally mapped through ``transform``)."""
+    if time_axis is None or (isinstance(time_axis, str) and time_axis.lower() in ("none", "off")):
+        axis.set_label_text("")
+        if isinstance(axis.axes, PolarAxes):
+            axis.set_major_formatter(mplticker.NullFormatter())
+            axis.set_major_locator(mplticker.NullLocator())
+        else:
+            axis.set_ticks([])
+        return
+
+    time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
+    unit: str | None = None
+    unit_name: str | None = None
+    divisions: int | Sequence[float] | np.ndarray | None = None
+
+    if isinstance(time_axis, str):
+        if time_axis == "time":
+            unit = None
+        elif time_axis in time_units:
+            unit = time_axis
+            unit_name = time_units[time_axis]
+        else:
+            raise ParameterValueError(f"Unsupported time_axis: {time_axis!r}")
+    elif not isinstance(time_axis, (bool, bytes)) and isinstance(time_axis, (int, np.integer, np.ndarray, Sequence)):
+        divisions = cast("int | Sequence[float] | np.ndarray", time_axis)
+    else:
+        raise ParameterValueError(f"Unsupported time_axis: {time_axis!r}")
+
+    base_fmt: mplticker.Formatter = _PeriodicFormatter(
+        TimeFormatter(unit=unit, lag=False),
+        period=period,
+    )
+    base_loc: mplticker.Locator = _LoopLocator(
+        period=period,
+        divisions=cast("int | Sequence[float] | None", divisions),
+    )
+    if transform is not None:
+        axis.set_major_formatter(_TransformedFormatter(base_fmt, transform))
+        axis.set_major_locator(_TransformedLocator(base_loc, transform))
+    else:
+        axis.set_major_formatter(base_fmt)
+        axis.set_major_locator(base_loc)
+
+    if not isinstance(axis.axes, PolarAxes):
+        axis.set_label_text(f"Time ({unit_name:s})" if unit_name else "Time")
+
+
 def _decorate_axis(
     axis,
     ax_type,
@@ -1077,9 +1515,14 @@ def _decorate_axis(
     n_bins=None,
 ):
     """Configure axis tickers, locators, and labels"""
-    fmin = util._ensure_hz(fmin)
+    if ax_type is None or (isinstance(ax_type, str) and ax_type.lower() in ("none", "off")):
+        axis.set_label_text("")
+        axis.set_ticks([])
+        return
 
     time_units = {"h": "hours", "m": "minutes", "s": "seconds", "ms": "milliseconds"}
+
+    fmin = util._ensure_hz(fmin)
 
     if ax_type == "tonnetz":
         axis.set_major_formatter(TonnetzFormatter())
@@ -1190,7 +1633,7 @@ def _decorate_axis(
         axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text("Time")
 
-    elif ax_type in time_units:
+    elif isinstance(ax_type, str) and ax_type in time_units:
         axis.set_major_formatter(TimeFormatter(unit=ax_type, lag=False))
         axis.set_major_locator(mplticker.MaxNLocator(prune=None, steps=[1, 1.5, 5, 6, 10]))
         axis.set_label_text(f"Time ({time_units[ax_type]:s})")
@@ -1371,10 +1814,6 @@ def _decorate_axis(
 
     elif ax_type == "frames":
         axis.set_label_text("Frames")
-
-    elif ax_type in ["off", "none", None]:
-        axis.set_label_text("")
-        axis.set_ticks([])
 
     else:
         raise ParameterValueError(f"Unsupported axis type: {ax_type}")

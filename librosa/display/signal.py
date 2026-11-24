@@ -5,14 +5,16 @@ Time-domain signal visualization
 
 This module contains tools for visualizing time-domain audio signals,
 waveforms, and their overlays. It includes functions like `waveshow`,
-`wavebars`, and `wavef0` which handle adaptive plotting based on
-zoom levels and sequence lengths.
+`wavebars`, `wavef0`, and `waveloop` which handle adaptive plotting based on
+zoom levels, frequency displacement, and polar loop coordinates.
 """
 # mypy: disable-error-code="attr-defined"
 
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
 
+import functools
+import operator
 import weakref
 from typing import TYPE_CHECKING, cast
 
@@ -21,14 +23,17 @@ import matplotlib.axes as mplaxes
 import matplotlib.collections as mcollections
 import matplotlib.lines as mlines
 import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 import numpy as np
 from matplotlib.legend import Legend
 from matplotlib.legend_handler import HandlerBase, HandlerLine2D, HandlerPatch
+from matplotlib.projections.polar import PolarAxes
 
 # Core and utility imports for audio processing
 from .. import core, util
-from ..util.exceptions import (
+from ..exceptions import (
+    ParameterTypeError,
     ParameterValueError,
 )
 
@@ -51,6 +56,8 @@ from .formatting import (
     Transformf0,
     _check_axes,
     _decorate_axis,
+    _decorate_loop_time_axis,
+    _is_finite_real,
 )
 
 
@@ -95,6 +102,16 @@ class AdaptiveWaveplot:
     label : str or None
         An optional label for the waveplot, used in legend entries.
 
+    pre_transform : matplotlib.transforms.Transform or None
+        An optional pre-transform mapping data coordinates to intermediate
+        display coordinates (e.g. for polar waveplots).
+
+    use_view_limits : bool
+        If ``True`` (default), map the axes viewport limits back into signal
+        coordinates through ``pre_transform.inverted()`` when updating the adaptive
+        display. Set to ``False`` when the artist transform does not compose with
+        ``axes.transData``.
+
     See Also
     --------
     waveshow
@@ -107,6 +124,8 @@ class AdaptiveWaveplot:
     transpose: bool
     cid: int | None
     label_proxy_: _WaveplotDecoy
+    pre_transform: mtransforms.Transform
+    use_view_limits: bool
 
     def __init__(
         self,
@@ -118,6 +137,8 @@ class AdaptiveWaveplot:
         max_samples: int = 11025,
         transpose: bool = False,
         label: str | None = None,
+        pre_transform: mtransforms.Transform | None = None,
+        use_view_limits: bool = True,
     ):
         self.times = times
         self.samples = y
@@ -128,6 +149,8 @@ class AdaptiveWaveplot:
         self.transpose = transpose
         self.cid = None
         self._ax_ref: weakref.ref[mplaxes.Axes] | None = None
+        self.pre_transform = mtransforms.IdentityTransform() if pre_transform is None else pre_transform
+        self.use_view_limits = use_view_limits
 
         # This creates an invisible proxy artist to contain the label
         self.label_proxy_ = _WaveplotDecoy(self)
@@ -242,36 +265,66 @@ class AdaptiveWaveplot:
         # Deref artists and bail if they've been garbage collected
         steps = self.steps
         envelope = self.envelope
-        if steps is None or envelope is None:
+        if steps is None or envelope is None or len(self.times) == 0:
             return
 
-        lims = ax.viewLim
-
         if self.transpose:
-            dim = lims.height * self.sr
-            start, end = lims.y0, lims.y1
             xdata, ydata = self.samples, self.times
-            data = steps.get_ydata()
+            data = np.asarray(steps.get_ydata())
         else:
-            dim = lims.width * self.sr
-            start, end = lims.x0, lims.x1
             xdata, ydata = self.times, self.samples
-            data = steps.get_xdata()
+            data = np.asarray(steps.get_xdata())
+
+        inv: mtransforms.Transform | None = None
+        if self.use_view_limits and self.pre_transform.has_inverse:
+            try:
+                inv = self.pre_transform.inverted()
+            except (NotImplementedError, np.linalg.LinAlgError):
+                inv = None
+
+        if inv is None:
+            t_start, t_end = float(self.times[0]), float(self.times[-1])
+        else:
+            xlim = ax.get_xlim()
+            ylim = ax.get_ylim()
+            pts = np.array(
+                [
+                    [xlim[0], ylim[0]],
+                    [xlim[0], ylim[1]],
+                    [xlim[1], ylim[0]],
+                    [xlim[1], ylim[1]],
+                ],
+                dtype=float,
+            )
+            # Probing viewport corners through domain-restricted inverses (e.g. Transformf0 log2)
+            # may transiently hit non-positive bounds; non-finite results fall back below.
+            with np.errstate(divide="ignore", invalid="ignore"):
+                t_vals = inv.transform(pts)[:, 1 if self.transpose else 0]
+            t_start, t_end = float(np.min(t_vals)), float(np.max(t_vals))
+            if (
+                not np.isfinite(t_start)
+                or not np.isfinite(t_end)
+                or t_start >= t_end
+                or t_end < self.times[0]
+                or t_start > self.times[-1]
+            ):
+                t_start, t_end = float(self.times[0]), float(self.times[-1])
+
+        dim = (t_end - t_start) * self.sr
+
         # Does our width cover fewer than max_samples?
         # If so, then use the sample-based plot
         if dim <= self.max_samples:
             envelope.set_visible(False)
             steps.set_visible(True)
 
-            # Now check our viewport
-            # we have to squash mypy errors on operand compatibility
-            # here because the type annotations from matplotlib are too
-            # loose.
-            if start <= data[0] or end >= data[-1]:  # type: ignore[index]
+            # Check if viewport expands beyond currently rendered steps
+            if len(data) == 0 or t_start <= data[0] or t_end >= data[-1]:
                 # Viewport expands beyond current data in steps; update
                 # we want to cover a window of self.max_samples centered on the current viewport
-                midpoint_time = (start + end) / 2
-                idx_start = np.searchsorted(self.times, midpoint_time - 0.5 * self.max_samples / self.sr)
+                midpoint_time = (t_start + t_end) / 2
+                idx_start = int(np.searchsorted(self.times, midpoint_time - 0.5 * self.max_samples / self.sr))
+                idx_start = max(0, min(idx_start, max(0, len(self.times) - self.max_samples)))
                 steps.set_data(
                     xdata[idx_start : idx_start + self.max_samples],
                     ydata[idx_start : idx_start + self.max_samples],
@@ -353,6 +406,69 @@ def _envelope(x, hop):
     """
     x_frame = np.abs(util.frame(x, frame_length=hop, hop_length=hop))
     return x_frame.max(axis=1)
+
+
+def _extract_pre_transform(
+    transform: mtransforms.Transform | None,
+    axes: mplaxes.Axes,
+) -> tuple[mtransforms.Transform | None, mtransforms.Transform | None]:
+    """Resolve data-to-axes pre-transform and artist transform.
+
+    Parameters
+    ----------
+    transform : matplotlib.transforms.Transform or None
+        The transform supplied by the caller, if any.
+    axes : matplotlib.axes.Axes
+        The axes to which the plot will be added.
+
+    Returns
+    -------
+    pre_transform : matplotlib.transforms.Transform or None
+        The pre-transform separating internal coordinates from axes data
+        coordinates, or ``None`` if ``transform`` does not compose with
+        ``axes.transData``.
+    artist_transform : matplotlib.transforms.Transform or None
+        The transform to be passed to Matplotlib artists.
+    """
+    if transform is None:
+        return mtransforms.IdentityTransform(), None
+
+    # Flatten composite chains (a + b) into left-to-right factors, stopping at
+    # axes.transData by identity (it is itself composite, and `==` falsely
+    # matches transAxes on [0, 1] x [0, 1] axes).
+    factors: list[mtransforms.Transform] = []
+    stack: list[mtransforms.Transform] = [transform]
+    while stack:
+        node = stack.pop()
+        if node is not axes.transData and isinstance(
+            node, (mtransforms.CompositeGenericTransform, mtransforms.CompositeAffine2D)
+        ):
+            comp = cast("Any", node)
+            stack.extend((comp._b, comp._a))
+        else:
+            factors.append(node)
+
+    # Everything before axes.transData is the data-space pre-transform;
+    # anything after it is a display-space post-transform (e.g. ScaledTranslation).
+    pos = next((i for i, f in enumerate(factors) if f is axes.transData), None)
+    if pos is None:
+        return None, transform
+
+    pre: mtransforms.Transform = functools.reduce(operator.add, factors[:pos], mtransforms.IdentityTransform())
+    return pre, transform
+
+
+def _update_transformed_datalim(
+    axes: mplaxes.Axes,
+    pre_transform: mtransforms.Transform,
+    pts: np.ndarray,
+) -> None:
+    """Transform data-space points through ``pre_transform`` and update axes data limits."""
+    transformed_pts = pre_transform.transform(pts)
+    finite_mask = np.all(np.isfinite(transformed_pts), axis=-1)
+    if np.any(finite_mask):
+        axes.update_datalim(transformed_pts[finite_mask])
+        axes.autoscale_view()
 
 
 def waveshow(
@@ -462,8 +578,8 @@ def waveshow(
         Default: 'post'
 
     label : str or None
-        The label string applied to this plot.
-        Note that the label
+        The label string applied to this plot, used in legend entries.
+        If `None`, no label is applied.
 
     transpose : bool
         If `True`, display the wave vertically instead of horizontally.
@@ -498,7 +614,9 @@ def waveshow(
         `matplotlib.pyplot.step`.
 
         Note that only those arguments which are common to both functions will be
-        supported.
+        supported. When a custom data ``transform`` is supplied (for example,
+        ``pre + ax.transData``), data limits are updated through the pre-transform
+        and default Cartesian axis decoration is skipped.
 
     Returns
     -------
@@ -596,6 +714,14 @@ def waveshow(
     # Create the adaptive drawing object
     axes = _check_axes(ax)
 
+    # Resolve pre_transform and artist transform
+    pre_transform, artist_transform = _extract_pre_transform(kwargs.pop("transform", None), axes)
+    if artist_transform is not None:
+        kwargs["transform"] = artist_transform
+
+    has_custom_artist_transform = artist_transform is not None and artist_transform is not axes.transData
+    has_custom_data_transform = pre_transform is None or not isinstance(pre_transform, mtransforms.IdentityTransform)
+
     # Reduce by envelope calculation
     # this choice of hop ensures that the envelope has at most max_points values
     hop_length = max(1, y.shape[-1] // max_points)
@@ -645,7 +771,35 @@ def waveshow(
         max_samples=max_points,
         transpose=transpose,
         label=label,
+        pre_transform=pre_transform,
+        use_view_limits=pre_transform is not None,
     )
+
+    if has_custom_artist_transform and pre_transform is not None:
+        env_pts_top = np.column_stack(
+            [
+                times[: len(y_top) * hop_length : hop_length],
+                y_top,
+            ]
+        )
+        env_pts_bottom = np.column_stack(
+            [
+                times[: len(y_top) * hop_length : hop_length],
+                y_bottom,
+            ]
+        )
+        if transpose:
+            env_pts_top = env_pts_top[:, ::-1]
+            env_pts_bottom = env_pts_bottom[:, ::-1]
+
+        all_pts = np.vstack([env_pts_top, env_pts_bottom])
+        if mask is not None:
+            mask_arr = np.asarray(mask, dtype=bool)
+            mask_both = np.concatenate([mask_arr, mask_arr])
+            if np.any(mask_both):
+                all_pts = all_pts[mask_both]
+
+        _update_transformed_datalim(axes, pre_transform, all_pts)
 
     # Register adaptor to keep it alive as long as Axes exists
     bucket = _WAVESHOW_ADAPTORS.get(axes)
@@ -673,8 +827,9 @@ def waveshow(
         steps.set_color(invert_color)
         envelope.set_color(invert_color)
 
-    # Construct tickers and locators
-    _decorate_axis(dec_axis, axis)
+    # Construct tickers and locators unless polar or custom data transform
+    if not isinstance(axes, PolarAxes) and not has_custom_data_transform:
+        _decorate_axis(dec_axis, axis)
 
     return adaptor
 
@@ -750,7 +905,11 @@ def wavebars(
     ax : matplotlib.axes.Axes or None
         Axes to plot on instead of the default `plt.gca()`.
     **patch_kwargs : dict
-        Additional keyword arguments to pass to `matplotlib.patches.FancyBboxPatch`
+        Additional keyword arguments to pass to `matplotlib.patches.FancyBboxPatch`.
+
+        When a custom data ``transform`` is supplied (for example,
+        ``pre + ax.transData``), data limits are updated through the pre-transform
+        and default Cartesian axis decoration is skipped.
 
     Returns
     -------
@@ -823,6 +982,16 @@ def wavebars(
 
     axes = _check_axes(ax)
 
+    # Resolve pre_transform and artist transform
+    pre_transform, artist_transform = _extract_pre_transform(patch_kwargs.pop("transform", None), axes)
+    if artist_transform is not None:
+        patch_kwargs["transform"] = artist_transform
+    else:
+        patch_kwargs.setdefault("transform", axes.transData)
+
+    has_custom_artist_transform = artist_transform is not None and artist_transform is not axes.transData
+    has_custom_data_transform = pre_transform is None or not isinstance(pre_transform, mtransforms.IdentityTransform)
+
     if n_bars <= 0:
         raise ParameterValueError(f"n_bars={n_bars} must be strictly positive")
 
@@ -853,18 +1022,34 @@ def wavebars(
         )
         patches.append(p)
 
-    patch_kwargs.setdefault("transform", axes.transData)
     coll = mcollections.PatchCollection(patches, **patch_kwargs)
-    axes.add_collection(coll)
+    axes.add_collection(coll, autolim=not has_custom_artist_transform)
 
     # Create a proxy artist if we have a label to set
     # Even if we don't have a label, we'll still need it for handling inversion later on
-    proxy = mpatches.FancyBboxPatch((np.nan, np.nan), 1, 1, boxstyle=boxstyle, label=label, **patch_kwargs)
+    proxy_kwargs = dict(patch_kwargs)
+    proxy_kwargs.pop("transform", None)
+    proxy = mpatches.FancyBboxPatch((np.nan, np.nan), 1, 1, boxstyle=boxstyle, label=label, **proxy_kwargs)
     proxy.set_in_layout(False)
     if label is not None:
-        axes.add_patch(proxy)
+        axes.add_artist(proxy)
 
-    axes.autoscale_view()
+    if has_custom_artist_transform:
+        if pre_transform is not None:
+            base = np.minimum(-rounding_size, -env_bottom)
+            top = np.maximum(rounding_size, env_top)
+            t0 = times
+            t1 = times + bar_width
+            if transpose:
+                xs = np.concatenate([base, top, base, top])
+                ys = np.concatenate([t0, t0, t1, t1])
+            else:
+                xs = np.concatenate([t0, t0, t1, t1])
+                ys = np.concatenate([base, top, base, top])
+
+            _update_transformed_datalim(axes, pre_transform, np.column_stack([xs, ys]))
+    else:
+        axes.autoscale_view()
 
     if invert:
         # If no inverted color is given, just swap it from the axes face
@@ -883,10 +1068,11 @@ def wavebars(
         proxy.set_facecolor(color)  # type: ignore[arg-type]
         coll.set_facecolor(invert_color)
 
-    if transpose:
-        _decorate_axis(axes.yaxis, axis)
-    else:
-        _decorate_axis(axes.xaxis, axis)
+    if not isinstance(axes, PolarAxes) and not has_custom_data_transform:
+        if transpose:
+            _decorate_axis(axes.yaxis, axis)
+        else:
+            _decorate_axis(axes.xaxis, axis)
 
     return coll
 
@@ -1105,6 +1291,7 @@ def wavef0(
             thaat=thaat,
             unicode=unicode,
         )
+        _decorate_axis(axes.yaxis, time_axis)
     else:
         _decorate_axis(
             axes.yaxis,
@@ -1115,15 +1302,15 @@ def wavef0(
             thaat=thaat,
             unicode=unicode,
         )
+        _decorate_axis(axes.xaxis, time_axis)
 
     if method == "waveshow":
         times = offset + np.arange(y.shape[-1]) / sr
         mask = np.isfinite(trans.f0_interp(times))
 
-        adaptor = waveshow(
+        return waveshow(
             y=y,
             sr=sr,
-            axis=time_axis,
             offset=offset,
             mask=mask,
             ax=axes,
@@ -1132,33 +1319,335 @@ def wavef0(
             **kwargs,
         )
 
-        # Kludge the data limits because the fill_between collection does not automatically
-        # update the data limits
-        assert adaptor.envelope is not None
-        xy = adaptor.envelope.get_datalim(trans + axes.transData).get_points()
-
-        f0min = np.nanmin(f0)
-        f0max = np.nanmax(f0)
-
-        if transpose:
-            handle = mlines.Line2D([xy[0, 0] + f0min, xy[1, 0] + f0max], xy[:, 1])
-        else:
-            handle = mlines.Line2D(xy[:, 0], [xy[0, 1] + f0min, xy[1, 1] + f0max])
-
-        axes.add_line(handle)
-        axes.autoscale_view()
-        handle.remove()
-        # end kludge
-        return adaptor
-
     else:
         return wavebars(
             y=y,
             sr=sr,
-            axis=time_axis,
             offset=offset,
             ax=axes,
             transform=trans + axes.transData,
             transpose=transpose,
             **kwargs,
         )
+
+
+def _axes_has_artists(ax: mplaxes.Axes) -> bool:
+    """Return True if the axes contains any user-added artists, inset axes, or legend."""
+    return ax.has_data() or bool(ax.texts or ax.tables or ax.artists or ax.child_axes) or ax.get_legend() is not None
+
+
+def _ensure_polar_axes(ax: mplaxes.Axes) -> PolarAxes:
+    """Ensure that the given axes has a polar projection, converting in-place if empty.
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        The target axes.
+
+    Returns
+    -------
+    ax : matplotlib.projections.polar.PolarAxes
+        The axes with polar projection.
+
+    Raises
+    ------
+    ParameterTypeError
+        If ``ax`` is not a `matplotlib.axes.Axes` instance.
+    ParameterValueError
+        If `ax` is not a PolarAxes and already contains artists.
+    """
+    if not isinstance(ax, mplaxes.Axes):
+        raise ParameterTypeError(f"`ax` must be an instance of matplotlib.axes.Axes. Found type(ax)={type(ax)}")
+
+    if isinstance(ax, PolarAxes):
+        return ax
+
+    if getattr(ax, "name", None) != "rectilinear":
+        raise ParameterValueError(
+            f"Cannot convert axes with projection '{getattr(ax, 'name', None)}' to polar projection. "
+            "Expected a polar or empty rectilinear axes."
+        )
+
+    # Check for existing artists
+    if _axes_has_artists(ax):
+        raise ParameterValueError(
+            f"Target axes has projection '{getattr(ax, 'name', None)}' and already contains artists. "
+            "Cannot convert a non-empty axes to polar projection."
+        )
+
+    fig = ax.figure if ax.figure is not None else plt.gcf()
+    ss = ax.get_subplotspec()
+    rect = ax.get_position()
+    label = ax.get_label()
+    loc_names: tuple[Literal["left", "center", "right"], ...] = ("left", "center", "right")
+    titles = {loc: ax.get_title(loc=loc) for loc in loc_names if ax.get_title(loc=loc)}
+
+    # Uncouple from shared Cartesian axes if any
+    if hasattr(ax, "_shared_axes"):
+        for k in ("x", "y"):
+            if k in ax._shared_axes:
+                ax._shared_axes[k].remove(ax)
+
+    ax.__class__ = PolarAxes
+    PolarAxes.__init__(cast("PolarAxes", ax), fig, ss if ss is not None else rect, label=label)
+    for loc, title in titles.items():
+        ax.set_title(title, loc=loc)
+
+    return cast("PolarAxes", ax)
+
+
+def waveloop(
+    y: np.ndarray,
+    *,
+    sr: float = 22050,
+    duration: float | None = None,
+    r_range: tuple[float, float] = (0.5, 1.0),
+    method: Literal["waveshow", "wavebars"] = "waveshow",
+    offset: float = 0.0,
+    peak_norm: bool = True,
+    time_axis: str | int | Sequence[float] | np.ndarray | None = "time",
+    theta_offset: float = np.pi / 2,
+    direction: Literal["clockwise", "counterclockwise", -1, 1] = "clockwise",
+    decorate: bool = True,
+    ax: mplaxes.Axes | None = None,
+    **kwargs: Any,
+) -> AdaptiveWaveplot | mcollections.PatchCollection:
+    """Visualize a waveform as a circular loop in polar coordinates.
+
+    This function maps a time-domain signal onto a polar projection, wrapping
+    time from ``0`` to ``duration`` continuously around the circle from
+    ``0`` to ``2π``.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(n,) or (2,n)]
+        audio time series (mono or stereo).
+    sr : number > 0 [scalar]
+        sampling rate of ``y`` (samples per second).
+    duration : float > 0 or None
+        The finite, strictly positive time extent in seconds mapped to one full
+        revolution (``[0, 2π)``).
+        If ``None``, defaults to the signal duration ``librosa.get_duration(y=y, sr=sr)``.
+        The signal duration cannot exceed ``duration``; multiple cycles are not supported.
+    r_range : tuple of (float, float)
+        The radial bounds ``(r_min, r_max)`` for the waveform display, where
+        ``0 <= r_min < r_max``. Amplitudes in ``[-1, 1]`` are mapped linearly into
+        this interval.
+    method : {'waveshow', 'wavebars'}
+        Visualization method:
+
+        - 'waveshow' : Continuous adaptive waveform using `waveshow`.
+        - 'wavebars' : Discrete radial barcode using `wavebars`.
+    offset : float
+        Start time (in seconds) of ``y`` within the ``[0, duration)`` loop
+        (matching `waveshow` and `wavebars`). Loop ticks always start at ``0``
+        (positioned at ``theta_offset``); setting ``offset`` shifts the waveform
+        around the circle in seconds (wrapping smoothly across ``0`` when
+        ``offset + sig_dur > duration``), which is useful for placing a shorter
+        clip partway through a loop or time-aligning concentric tracks with
+        ``decorate=False``.
+    peak_norm : bool
+        If ``True`` (default), normalizes ``y`` by its peak amplitude
+        (``y / max(|y|)``) before mapping into ``r_range``, preventing
+        clipping or negative-radius origin crossings.
+    time_axis : str, int, Sequence[float], np.ndarray, or None
+        Display style of the time axis around the circle. Accepted values are:
+
+        - 'time' (default) : Formatted timestamps (adaptive unit via `TimeFormatter`).
+        - 's', 'ms', 'm', 'h' : Formatted timestamps using the specified unit.
+        - int : Number of equal subdivisions (e.g. 4, 8, 12, 16, 24, 32).
+        - Sequence[float] or np.ndarray : Explicit timestamp locations in seconds.
+        - `None`, 'none', or 'off' : Ticks and labels are hidden.
+    theta_offset : float
+        Visual orientation (in radians) of ``t = 0`` on the polar axes when
+        ``decorate=True``. Default is ``π / 2`` (12 o'clock / top); use
+        ``0.0`` for 3 o'clock.
+    direction : {'clockwise', 'counterclockwise', -1, 1}
+        Direction of time rotation around the circle. Default is 'clockwise'.
+    decorate : bool
+        Whether to style the polar axes (setting theta direction, theta offset,
+        angular time ticks via ``time_axis``, clearing radial ticks, and setting
+        ``ymargin(0)``). Default is ``True``.
+        Set to ``False`` to preserve custom axes settings and ticks when using a
+        pre-configured polar projection.
+    ax : matplotlib.axes.Axes or None
+        Target axes to plot on. If a rectilinear axes is provided, it will be
+        converted in-place to polar projection if it does not already contain artists.
+        In-place conversion preserves subplot geometry, position, ``label``, and
+        titles (``left``, ``center``, ``right``), uncouples any shared Cartesian
+        axes, and resets other rectilinear axes styling (such as facecolor, grid,
+        or axis labels).
+        If ``None``, a new polar axes or the current axes will be used.
+    **kwargs
+        Additional keyword arguments forwarded to the plotting function selected
+        by `method`.
+
+        If `method='waveshow'`, these must be keyword arguments supported by
+        `librosa.display.waveshow` (for example, `max_points`).
+
+        If `method='wavebars'`, these must be keyword arguments supported by
+        `librosa.display.wavebars` (for example, `n_bars`, `gap_ratio`,
+        `rounding_ratio`, `invert`, and `invert_color`).
+
+        Keyword arguments for one method are not valid when using the other.
+
+    Returns
+    -------
+    librosa.display.AdaptiveWaveplot or matplotlib.collections.PatchCollection
+        The underlying artist constructed by `waveshow` or `wavebars`.
+
+    Raises
+    ------
+    ParameterTypeError
+        If ``ax`` is not ``None`` and not a `matplotlib.axes.Axes` instance.
+    ParameterValueError
+        If ``y`` is empty.
+        If ``ax`` has a non-rectilinear projection (such as ``'3d'``), or is
+        rectilinear and already contains artists.
+        If ``duration`` is non-finite, boolean, ``<= 0``, or less than the signal
+        duration.
+        If ``offset`` or ``theta_offset`` is non-finite or boolean.
+        If ``r_range`` is invalid or does not satisfy ``0 <= r_min < r_max``.
+        If ``method``, ``direction``, or ``time_axis`` is not recognized.
+        If ``transpose=True``, ``transform``, or ``axis`` is passed in ``kwargs``.
+
+    See Also
+    --------
+    waveshow
+    wavebars
+    multiplot
+    TimeFormatter
+    matplotlib.projections.polar.PolarAxes
+
+    Examples
+    --------
+    Plot a synthesized audio loop in polar coordinates:
+
+    >>> import matplotlib.pyplot as plt
+    >>> y, sr = librosa.loadx("choice")
+    >>> fig, ax = plt.subplots()
+    >>> librosa.display.waveloop(y, sr=sr, ax=ax)
+    >>> plt.show()
+
+    Place a shorter clip starting 1 second into a 6-second loop and align a
+    second concentric track in seconds:
+
+    >>> fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+    >>> librosa.display.waveloop(
+    ...     y[: 2 * sr], sr=sr, duration=6.0, offset=1.0, r_range=(0.6, 1.0), ax=ax
+    ... )
+    >>> librosa.display.waveloop(
+    ...     y[: 2 * sr],
+    ...     sr=sr,
+    ...     duration=6.0,
+    ...     offset=3.0,
+    ...     r_range=(0.2, 0.5),
+    ...     method="wavebars",
+    ...     decorate=False,
+    ...     ax=ax,
+    ... )
+    >>> plt.show()
+    """
+    if kwargs.get("transpose", False):
+        raise ParameterValueError("transpose=True is not supported in waveloop.")
+    if "transform" in kwargs:
+        raise ParameterValueError("transform is managed internally by waveloop and cannot be overridden.")
+    if "axis" in kwargs:
+        raise ParameterValueError("Use 'time_axis' instead of 'axis' in waveloop.")
+
+    util.valid_audio(y)
+    if y.size == 0:
+        raise ParameterValueError("Cannot plot an empty audio array in waveloop.")
+
+    sig_dur = float(core.get_duration(y=y, sr=sr))
+    if duration is None:
+        duration = sig_dur
+    elif not _is_finite_real(duration) or duration <= 0:
+        raise ParameterValueError(f"duration must be finite and strictly positive, got {duration}")
+    elif sig_dur > duration and not np.isclose(sig_dur, duration, atol=1e-6):
+        raise ParameterValueError(
+            f"Signal duration ({sig_dur:.3f}s) exceeds duration ({duration:.3f}s). Multiple cycles are not supported."
+        )
+
+    for name, val in (("offset", offset), ("theta_offset", theta_offset)):
+        if not _is_finite_real(val):
+            raise ParameterValueError(f"{name} must be finite, got {val}")
+
+    try:
+        r_min, r_max = r_range
+        if isinstance(r_min, bool) or isinstance(r_max, bool):
+            raise TypeError("r_range elements cannot be booleans")
+        r_min = float(r_min)
+        r_max = float(r_max)
+    except (TypeError, ValueError) as exc:
+        raise ParameterValueError(f"r_range must be a tuple of two floats, got {r_range}") from exc
+
+    if not (np.isfinite(r_min) and np.isfinite(r_max) and 0.0 <= r_min < r_max):
+        raise ParameterValueError(f"Invalid r_range: {r_range}. Must satisfy 0 <= r_min < r_max.")
+
+    if method not in ("waveshow", "wavebars"):
+        raise ParameterValueError(f"Invalid method='{method}'. Must be 'waveshow' or 'wavebars'.")
+
+    if isinstance(direction, bool) or direction not in ("clockwise", "counterclockwise", -1, 1):
+        raise ParameterValueError(
+            f"Invalid direction='{direction}'. Must be 'clockwise', 'counterclockwise', -1, or 1."
+        )
+
+    if peak_norm:
+        max_val = float(np.max(np.abs(y)))
+        if max_val > 0:
+            y = y / max_val
+
+    if ax is None:
+        fig = plt.gcf()
+        if not fig.axes:
+            ax = fig.add_subplot(projection="polar")
+        else:
+            ax = _ensure_polar_axes(plt.gca())
+    else:
+        ax = _ensure_polar_axes(ax)
+
+    r0 = (r_min + r_max) / 2
+    k = (r_max - r_min) / 2
+
+    # Linear Affine pre-transform: (t, a) -> (theta, r)
+    pre = mtransforms.Affine2D().scale(2 * np.pi / duration, k).translate(0.0, r0)
+
+    if decorate:
+        theta_dir = -1 if direction in ("clockwise", -1) else 1
+        ax.set_theta_direction(theta_dir)
+        ax.set_theta_offset(theta_offset)
+        ax.set_rticks([])
+        ax.set_ymargin(0)
+        _decorate_loop_time_axis(
+            ax.xaxis,
+            time_axis,
+            period=duration,
+            transform=pre,
+        )
+
+    if method == "waveshow":
+        artist: AdaptiveWaveplot | mcollections.PatchCollection = waveshow(
+            y,
+            sr=sr,
+            offset=offset,
+            transform=pre + ax.transData,
+            ax=ax,
+            **kwargs,
+        )
+    else:
+        artist = wavebars(
+            y,
+            sr=sr,
+            offset=offset,
+            transform=pre + ax.transData,
+            ax=ax,
+            **kwargs,
+        )
+
+    # Reserve full r_range even for silent tracks and accumulate radial bounds across concentric tracks
+    # while respecting explicit ylim.
+    ax.update_datalim([(0.0, r_min), (0.0, r_max)], updatex=False, updatey=True)
+    ax.autoscale_view(scalex=False, scaley=True)
+
+    return artist
