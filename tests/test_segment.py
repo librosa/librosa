@@ -139,27 +139,29 @@ def test_cross_similarity_multi(rng):
 
 @pytest.mark.parametrize("n", [20, 40])
 @pytest.mark.parametrize("k", [None, 5])
-@pytest.mark.parametrize("sym", [False, True])
+@pytest.mark.parametrize("mutual", [False, True])
 @pytest.mark.parametrize("width", [1, 5])
 @pytest.mark.parametrize("metric", ["l2", "cosine"])
 @pytest.mark.parametrize("self", [False, True])
-def test_recurrence_matrix(n, k, width, sym, metric, self, rng):
+def test_recurrence_matrix(n, k, width, mutual, metric, self, rng):
 
     # Make a data matrix
     data = rng.standard_normal(size=(3, n))
 
-    D = librosa.segment.recurrence_matrix(data, k=k, width=width, sym=sym, axis=-1, metric=metric, self=self)
+    D = librosa.segment.recurrence_matrix(data, k=k, width=width, mutual=mutual, axis=-1, metric=metric, self=self)
 
     # First test for symmetry
-    if sym:
+    if mutual:
         assert np.allclose(D, D.T)
 
     # Test for target-axis invariance
-    D_trans = librosa.segment.recurrence_matrix(data.T, k=k, width=width, sym=sym, axis=0, metric=metric, self=self)
+    D_trans = librosa.segment.recurrence_matrix(
+        data.T, k=k, width=width, mutual=mutual, axis=0, metric=metric, self=self
+    )
     assert np.allclose(D, D_trans)
 
-    # If not symmetric, test for correct number of links
-    if not sym and k is not None:
+    # If not mutual, test for correct number of links
+    if not mutual and k is not None:
         real_k = min(k, n - width)
         if self:
             real_k += 1
@@ -175,6 +177,244 @@ def test_recurrence_matrix(n, k, width, sym, metric, self, rng):
     D[idx] = False
     D.T[idx] = False
     assert not np.any(D)
+
+
+@pytest.mark.parametrize("sym_val", [False, True])
+def test_recurrence_matrix_deprecated_sym(sym_val, rng):
+    data = rng.standard_normal(size=(3, 25))
+    pattern = (
+        r"(?s)recurrence_matrix\(\) keyword argument 'sym' has been "
+        r"renamed to 'mutual' in version 1\.1\.0.*2\.0\.0"
+    )
+
+    with pytest.warns(FutureWarning, match=pattern) as record:
+        D_old = librosa.segment.recurrence_matrix(data, sym=sym_val)
+    assert len(record) == 1
+
+    D_new = librosa.segment.recurrence_matrix(data, mutual=sym_val)
+    assert np.allclose(D_old, D_new)
+
+    if sym_val:
+        with pytest.warns(FutureWarning, match=pattern) as record_tuple:
+            D_old_tuple = librosa.segment.recurrence_matrix(data, k=(3, 7), sym=True)
+        assert len(record_tuple) == 1
+        D_new_tuple = librosa.segment.recurrence_matrix(data, k=(3, 7), mutual=True)
+        assert np.allclose(D_old_tuple, D_new_tuple)
+    else:
+        with pytest.warns(FutureWarning, match=pattern), pytest.raises(librosa.ParameterValueError):
+            librosa.segment.recurrence_matrix(data, k=(3, 7), sym=False)
+
+
+@pytest.mark.parametrize("sym_val", [False, True])
+def test_recurrence_matrix_sym_mutual_conflict(sym_val, rng):
+    data = rng.standard_normal(size=(3, 25))
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.segment.recurrence_matrix(data, mutual=True, sym=sym_val)
+
+
+@pytest.mark.parametrize("mode", ["connectivity", "distance", "affinity"])
+@pytest.mark.parametrize("sparse", [False, True])
+@pytest.mark.parametrize("metric", ["euclidean", "cosine"])
+@pytest.mark.parametrize("k", [None, 5, (5, 8), (8, 5), (5, None), (None, 8), (None, None)])
+def test_cross_similarity_mutual(mode, sparse, metric, k, rng):
+    n = 25
+    n_ref = 35
+    data = rng.standard_normal(size=(3, n))
+    data_ref = rng.standard_normal(size=(3, n_ref))
+
+    xsim = librosa.segment.cross_similarity(data, data_ref, k=k, metric=metric, mutual=True, sparse=sparse, mode=mode)
+    xsim_dense = xsim.toarray() if sparse else xsim
+    assert xsim_dense.shape == (n_ref, n)
+
+    if isinstance(k, tuple):
+        k0, k1 = k
+        k_swapped = (k1, k0)
+    else:
+        k0 = k1 = k
+        k_swapped = k
+
+    xsim_rev = librosa.segment.cross_similarity(
+        data_ref, data, k=k_swapped, metric=metric, mutual=True, sparse=sparse, mode=mode
+    )
+    xsim_rev_dense = xsim_rev.toarray() if sparse else xsim_rev
+
+    # Check exact intersection and symmetry
+    fwd = librosa.segment.cross_similarity(data, data_ref, k=k0, metric=metric, mutual=False, mode=mode)
+    rev = librosa.segment.cross_similarity(data_ref, data, k=k1, metric=metric, mutual=False, mode=mode)
+    if mode == "connectivity":
+        assert np.allclose(xsim_dense, xsim_rev_dense.T)
+        expected = fwd & rev.T
+        assert np.array_equal(xsim_dense, expected)
+
+        k0_eff = int(min(n_ref, 2 * np.ceil(np.sqrt(n_ref)))) if k0 is None else k0
+        k1_eff = int(min(n, 2 * np.ceil(np.sqrt(n)))) if k1 is None else k1
+        assert np.all(xsim_dense.sum(axis=0) <= k0_eff)
+        assert np.all(xsim_dense.sum(axis=1) <= k1_eff)
+    elif mode == "distance":
+        assert np.allclose(xsim_dense, xsim_rev_dense.T)
+        expected = np.minimum(fwd, rev.T)
+        assert np.allclose(xsim_dense, expected)
+    else:
+        # med_k_scalar uses data's independent k0 median, so surviving edges match mutual=False
+        mask = xsim_dense > 0
+        assert np.array_equal(mask, xsim_rev_dense.T > 0)
+        assert np.allclose(xsim_dense[mask], fwd[mask])
+
+        # Fixed scalar bandwidth preserves exact transpose symmetry
+        xsim_fixed = librosa.segment.cross_similarity(
+            data, data_ref, k=k, metric=metric, mutual=True, mode="affinity", bandwidth=1.0
+        )
+        xsim_fixed_rev = librosa.segment.cross_similarity(
+            data_ref, data, k=k_swapped, metric=metric, mutual=True, mode="affinity", bandwidth=1.0
+        )
+        assert np.allclose(xsim_fixed, xsim_fixed_rev.T)
+
+
+@pytest.mark.parametrize("n,n_ref", [(10, 25), (25, 10)])
+@pytest.mark.parametrize("mutual", [False, True])
+@pytest.mark.parametrize("mode", ["distance", "affinity"])
+def test_cross_similarity_full_rectangular(n, n_ref, mutual, mode, rng):
+    data = rng.standard_normal(size=(3, n))
+    data_ref = rng.standard_normal(size=(3, n_ref))
+
+    xsim = librosa.segment.cross_similarity(data, data_ref, mutual=mutual, mode=mode, full=True)
+    assert xsim.shape == (n_ref, n)
+
+    if mode == "distance":
+        expected = cdist(data_ref.T, data.T, metric="euclidean")
+        assert np.allclose(xsim, expected)
+    else:
+        assert np.all(xsim > 0)
+        if mutual:
+            xsim_nomut = librosa.segment.cross_similarity(data, data_ref, mutual=False, mode=mode, full=True)
+            assert np.allclose(xsim, xsim_nomut)
+
+
+@pytest.mark.parametrize("bw_mode", ["mean_k", "gmean_k", "mean_k_avg", "gmean_k_avg", "mean_k_avg_and_pair"])
+def test_cross_similarity_automatic_bandwidth(bw_mode, rng):
+    data = rng.standard_normal(size=(3, 25))
+    data_ref = rng.standard_normal(size=(3, 40))
+    data_eq = rng.standard_normal(size=(3, 25))
+
+    # Small asymmetric k with mutual=True: bandwidth is computed from unpruned graphs,
+    # so nodes with 0 mutual neighbors do not fail and transpose symmetry holds
+    xsim = librosa.segment.cross_similarity(data, data_ref, k=(5, 8), mutual=True, mode="affinity", bandwidth=bw_mode)
+    xsim_rev = librosa.segment.cross_similarity(
+        data_ref, data, k=(8, 5), mutual=True, mode="affinity", bandwidth=bw_mode
+    )
+    assert np.all(np.isfinite(xsim))
+    assert np.allclose(xsim, xsim_rev.T)
+
+    # mutual=False on both equal-length distinct and rectangular inputs (full=False and full=True)
+    for ref in (data_eq, data_ref):
+        for full in (False, True):
+            res = librosa.segment.cross_similarity(
+                data, ref, k=5, mutual=False, mode="affinity", bandwidth=bw_mode, full=full
+            )
+            assert np.all(np.isfinite(res))
+            assert np.any(res > 0)
+
+    # Verify mean_k uses data_ref's own k_ref-NN distances (not data's) even when n == n_ref
+    if bw_mode == "mean_k":
+        res_eq = librosa.segment.cross_similarity(data, data_eq, k=5, mutual=False, mode="affinity", bandwidth=bw_mode)
+        dists = cdist(data_eq.T, data.T, metric="euclidean")
+        sigma_data = np.sort(dists, axis=0)[4, :]
+        sigma_ref = np.sort(dists, axis=1)[:, 4]
+        bw_mat = 0.5 * (sigma_data[None, :] + sigma_ref[:, None])
+        expected = np.exp(-dists / bw_mat)
+        mask = res_eq > 0
+        assert np.allclose(res_eq[mask], expected[mask])
+
+
+@pytest.mark.parametrize("mode", ["connectivity", "distance", "affinity"])
+@pytest.mark.parametrize("width", [1, 5])
+@pytest.mark.parametrize("self", [False, True])
+@pytest.mark.parametrize("sparse", [False, True])
+@pytest.mark.parametrize("k", [(3, 7), (7, 3), (5, None), (None, 5), (None, None)])
+def test_recurrence_matrix_tuple_k(mode, width, self, sparse, k, rng):
+    n = 30
+    data = rng.standard_normal(size=(3, n))
+
+    rec = librosa.segment.recurrence_matrix(data, k=k, width=width, mutual=True, sparse=sparse, mode=mode, self=self)
+    rec_dense = rec.toarray() if sparse else rec
+    assert rec_dense.shape == (n, n)
+
+    k0, k1 = k
+    rec_swapped = librosa.segment.recurrence_matrix(
+        data, k=(k1, k0), width=width, mutual=True, sparse=sparse, mode=mode, self=self
+    )
+    rec_swapped_dense = rec_swapped.toarray() if sparse else rec_swapped
+
+    if mode in ("connectivity", "distance"):
+        assert np.allclose(rec_dense, rec_swapped_dense.T)
+
+    if mode == "connectivity":
+        rec_col = librosa.segment.recurrence_matrix(data, k=k0, width=width, mutual=False, mode=mode, self=self)
+        rec_row = librosa.segment.recurrence_matrix(data, k=k1, width=width, mutual=False, mode=mode, self=self)
+        assert np.array_equal(rec_dense, rec_col & rec_row.T)
+
+        k_default = int(2 * np.ceil(np.sqrt(n - 2 * width + 1)))
+        k0_eff = k_default if k0 is None else k0
+        k1_eff = k_default if k1 is None else k1
+        diag_extra = 1 if self else 0
+        assert np.all(rec_dense.sum(axis=0) <= k0_eff + diag_extra)
+        assert np.all(rec_dense.sum(axis=1) <= k1_eff + diag_extra)
+    elif mode == "affinity":
+        rec_nomut = librosa.segment.recurrence_matrix(data, k=k0, width=width, mutual=False, mode=mode, self=self)
+        mask = rec_dense > 0
+        assert np.array_equal(mask, rec_swapped_dense.T > 0)
+        assert np.allclose(rec_dense[mask], rec_nomut[mask])
+
+
+@pytest.mark.parametrize("bw_mode", ["mean_k", "gmean_k", "mean_k_avg", "gmean_k_avg", "mean_k_avg_and_pair"])
+@pytest.mark.parametrize("self", [False, True])
+def test_recurrence_matrix_tuple_k_automatic_bandwidth(bw_mode, self, rng):
+    data = rng.standard_normal(size=(3, 30))
+    rec = librosa.segment.recurrence_matrix(
+        data, k=(3, 7), width=1, mutual=True, mode="affinity", bandwidth=bw_mode, self=self
+    )
+    rec_swapped = librosa.segment.recurrence_matrix(
+        data, k=(7, 3), width=1, mutual=True, mode="affinity", bandwidth=bw_mode, self=self
+    )
+    assert np.all(np.isfinite(rec))
+    assert np.allclose(rec, rec_swapped.T)
+    if self:
+        assert np.allclose(np.diag(rec), 1.0)
+    else:
+        assert np.allclose(np.diag(rec), 0.0)
+
+
+def test_cross_similarity_recurrence_parity(rng):
+    data = rng.standard_normal(size=(4, 25))
+    k0, k1 = 4, 7
+    xsim = librosa.segment.cross_similarity(data, data, k=(k0 + 1, k1 + 1), mutual=True, mode="connectivity")
+    rec = librosa.segment.recurrence_matrix(data, k=(k0, k1), width=1, mutual=True, self=True, mode="connectivity")
+    assert np.array_equal(xsim, rec)
+
+
+@pytest.mark.parametrize(
+    "k,mutual",
+    [
+        ((5, 5), False),
+        ((5,), True),
+        ((5, 5, 5), True),
+        (0, False),
+        (-1, False),
+        (2.5, False),
+        (True, False),
+        ((0, 5), True),
+        ((5, -1), True),
+        ((5, True), True),
+        ((5, 2.5), True),
+    ],
+)
+def test_segment_bad_k(k, mutual, rng):
+    data = rng.standard_normal(size=(3, 20))
+    data_ref = rng.standard_normal(size=(3, 25))
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.segment.cross_similarity(data, data_ref, k=k, mutual=mutual)
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.segment.recurrence_matrix(data, k=k, mutual=mutual)
 
 
 @pytest.mark.parametrize("data", [np.ones((3, 10))])

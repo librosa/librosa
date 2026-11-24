@@ -103,7 +103,7 @@ librosa.display.specshow(
 
 Csync_stack = librosa.feature.stack_memory(Csync, n_steps=3, delay=1)
 R = librosa.segment.recurrence_matrix(
-    Csync_stack, width=3, mode="affinity", sym=True
+    Csync_stack, width=3, mode="affinity", mutual=True
 )
 
 # Enhance diagonals with a median filter (Equation 2)
