@@ -2645,9 +2645,45 @@ def test_pcen_ref(rng):
     Y = librosa.pcen(X, gain=1, bias=0, power=1, b=1, eps=1e-20)
     assert np.allclose(Y, ones)
 
-    # with ref=ones, we should get X / (eps + ones) == X
-    Y2 = librosa.pcen(X, gain=1, bias=0, power=1, b=1, ref=ones, eps=1e-20)
+    # with S_ref=ones, we should get X / (eps + ones) == X
+    Y2 = librosa.pcen(X, gain=1, bias=0, power=1, b=1, S_ref=ones, eps=1e-20)
     assert np.allclose(Y2, X)
+
+
+def test_pcen_deprecated_ref(rng):
+    X = rng.standard_normal(size=(100, 50)) ** 2
+    ones = np.ones_like(X)
+
+    with pytest.warns(
+        FutureWarning,
+        match=r"(?s)pcen\(\) keyword argument 'ref' has been renamed to 'S_ref' in version 1\.1\.0.*1\.2\.0",
+    ) as record:
+        Y_old = librosa.pcen(X, gain=1, bias=0, power=1, b=1, ref=ones, eps=1e-20)
+    assert len(record) == 1
+
+    Y_new = librosa.pcen(X, gain=1, bias=0, power=1, b=1, S_ref=ones, eps=1e-20)
+    assert np.allclose(Y_old, Y_new)
+
+    with pytest.warns(
+        FutureWarning,
+        match=r"(?s)pcen\(\) keyword argument 'ref' has been renamed to 'S_ref' in version 1\.1\.0.*1\.2\.0",
+    ) as record_none:
+        Y_old_none = librosa.pcen(X, gain=1, bias=0, power=1, b=1, ref=None, eps=1e-20)
+    assert len(record_none) == 1
+
+    Y_default = librosa.pcen(X, gain=1, bias=0, power=1, b=1, eps=1e-20)
+    assert np.allclose(Y_old_none, Y_default)
+
+
+def test_pcen_ref_conflict(rng):
+    X = rng.standard_normal(size=(10, 10)) ** 2
+    ones = np.ones_like(X)
+
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.pcen(X, S_ref=ones, ref=ones)
+
+    with pytest.raises(librosa.ParameterValueError):
+        librosa.pcen(X, S_ref=ones, ref=None)
 
 
 @pytest.mark.parametrize("x", [np.arange(100), np.arange(100).reshape((10, 10))])

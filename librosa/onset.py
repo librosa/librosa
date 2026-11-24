@@ -14,6 +14,7 @@ import numpy as np
 from . import core, util
 from ._cache import cache
 from .feature.spectral import melspectrogram
+from .util.deprecation import Deprecated, rename_kw
 from .util.exceptions import (
     ParameterShapeError,
     ParameterValueError,
@@ -236,13 +237,14 @@ def onset_strength(
     S: np.ndarray | None = None,
     lag: int = 1,
     max_size: int = 1,
-    ref: np.ndarray | None = None,
+    S_ref: np.ndarray | None = None,
     detrend: bool = False,
     center: bool = True,
     feature: Callable | None = None,
     aggregate: Callable | bool | None = None,
     top_db: float | None = 80.0,
     mode: Literal["flux", "complex"] | None = None,
+    ref: np.ndarray | Deprecated | None = Deprecated(),
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope.
@@ -250,9 +252,9 @@ def onset_strength(
     In standard spectral flux mode (``mode="flux"``), onset strength at time ``t``
     is determined by::
 
-        mean_f max(0, S[f, t] - ref[f, t - lag])
+        mean_f max(0, S[f, t] - S_ref[f, t - lag])
 
-    where ``ref`` is ``S`` after local max filtering along the frequency
+    where ``S_ref`` is ``S`` after local max filtering along the frequency
     axis [#]_.
 
     In complex-domain mode (``mode="complex"``), onset strength models both energy
@@ -300,7 +302,7 @@ def onset_strength(
         set to `1` to disable filtering.
         Must be `1` when ``mode="complex"``.
 
-    ref : None or np.ndarray [shape=(..., d, m)]
+    S_ref : None or np.ndarray [shape=(..., d, m)]
         An optional pre-computed reference spectrum, of the same shape as ``S``.
         If not provided, it will be computed from ``S``.
         If provided, it will override any local max filtering governed by ``max_size``.
@@ -346,6 +348,12 @@ def onset_strength(
         - ``"flux"``: standard spectral flux (rectified spectral difference).
         - ``"complex"``: complex-domain spectral flux.
 
+    ref : None or np.ndarray [shape=(..., d, m)]
+        .. warning:: This parameter is deprecated in 1.1.0 and will be removed in 1.2.0.
+
+        Deprecated alias for ``S_ref``.
+        An exception is raised if both ``S_ref`` and ``ref`` are provided.
+
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
@@ -366,9 +374,11 @@ def onset_strength(
 
         or if ``mode="complex"`` and ``max_size > 1``
 
-        or if ``mode="complex"`` and ``ref is not None``
+        or if ``mode="complex"`` and ``S_ref is not None``
 
         or if ``mode="complex"`` and ``S`` (or ``feature(...)``) is real-valued
+
+        or if both ``S_ref`` and ``ref`` are provided
 
     See Also
     --------
@@ -433,13 +443,26 @@ def onset_strength(
     if aggregate is False:
         raise ParameterValueError("aggregate parameter cannot be False when computing full-spectrum onset strength.")
 
+    if not isinstance(ref, Deprecated):
+        if S_ref is not None:
+            raise ParameterValueError("Both 'ref' and 'S_ref' were provided. Please use only the 'S_ref' parameter.")
+
+        S_ref = rename_kw(
+            old_name="ref",
+            old_value=ref,
+            new_name="S_ref",
+            new_value=S_ref,
+            version_deprecated="1.1.0",
+            version_removed="1.2.0",
+        )
+
     odf_all = onset_strength_multi(
         y=y,
         sr=sr,
         S=S,
         lag=lag,
         max_size=max_size,
-        ref=ref,
+        S_ref=S_ref,
         detrend=detrend,
         center=center,
         feature=feature,
@@ -551,7 +574,7 @@ def onset_strength_multi(
     hop_length: int = 512,
     lag: int = 1,
     max_size: int = 1,
-    ref: np.ndarray | None = None,
+    S_ref: np.ndarray | None = None,
     detrend: bool = False,
     center: bool = True,
     feature: Callable | None = None,
@@ -559,6 +582,7 @@ def onset_strength_multi(
     channels: Sequence[int] | Sequence[slice] | None = None,
     top_db: float | None = 80.0,
     mode: Literal["flux", "complex"] | None = None,
+    ref: np.ndarray | Deprecated | None = Deprecated(),
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a spectral flux onset strength envelope across multiple channels.
@@ -593,7 +617,7 @@ def onset_strength_multi(
         set to `1` to disable filtering.
         Must be `1` when ``mode="complex"``.
 
-    ref : None or np.ndarray [shape=(d, m)]
+    S_ref : None or np.ndarray [shape=(..., d, m)]
         An optional pre-computed reference spectrum, of the same shape as ``S``.
         If not provided, it will be computed from ``S``.
         If provided, it will override any local max filtering governed by ``max_size``.
@@ -645,6 +669,12 @@ def onset_strength_multi(
         - ``"flux"``: standard spectral flux (rectified spectral difference).
         - ``"complex"``: complex-domain spectral flux.
 
+    ref : None or np.ndarray [shape=(..., d, m)]
+        .. warning:: This parameter is deprecated in 1.1.0 and will be removed in 1.2.0.
+
+        Deprecated alias for ``S_ref``.
+        An exception is raised if both ``S_ref`` and ``ref`` are provided.
+
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
 
@@ -664,9 +694,11 @@ def onset_strength_multi(
 
         or if ``mode="complex"`` and ``max_size > 1``
 
-        or if ``mode="complex"`` and ``ref is not None``
+        or if ``mode="complex"`` and ``S_ref is not None``
 
         or if ``mode="complex"`` and ``S`` (or ``feature(...)``) is real-valued
+
+        or if both ``S_ref`` and ``ref`` are provided
 
     See Also
     --------
@@ -702,6 +734,19 @@ def onset_strength_multi(
     """
     if aggregate is None:
         aggregate = np.mean
+
+    if not isinstance(ref, Deprecated):
+        if S_ref is not None:
+            raise ParameterValueError("Both 'ref' and 'S_ref' were provided. Please use only the 'S_ref' parameter.")
+
+        S_ref = rename_kw(
+            old_name="ref",
+            old_value=ref,
+            new_name="S_ref",
+            new_value=S_ref,
+            version_deprecated="1.1.0",
+            version_removed="1.2.0",
+        )
 
     if not util.is_positive_int(lag):
         raise ParameterValueError(f"lag={lag} must be a positive integer")
@@ -752,8 +797,8 @@ def onset_strength_multi(
     if mode == "complex":
         if max_size > 1:
             raise ParameterValueError("max_size > 1 is not supported for complex-valued spectrograms S")
-        if ref is not None:
-            raise ParameterValueError("ref is not supported for complex-valued spectrograms S")
+        if S_ref is not None:
+            raise ParameterValueError("S_ref is not supported for complex-valued spectrograms S")
 
         pad_width = lag + 1
         if S.shape[-1] <= pad_width:
@@ -774,18 +819,18 @@ def onset_strength_multi(
             )
     else:
         pad_width = lag
-        if ref is None:
+        if S_ref is None:
             if max_size == 1:
-                ref = S
+                S_ref = S
             else:
                 import scipy.ndimage
 
-                ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=-2)
-        elif ref.shape != S.shape:
-            raise ParameterShapeError(f"Reference spectrum shape {ref.shape} must match input spectrum {S.shape}")
+                S_ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=-2)
+        elif S_ref.shape != S.shape:
+            raise ParameterShapeError(f"Reference spectrum shape {S_ref.shape} must match input spectrum {S.shape}")
 
         # Compute difference to the reference, spaced by lag
-        onset_env = S[..., lag:] - ref[..., :-lag]
+        onset_env = S[..., lag:] - S_ref[..., :-lag]
 
         # Discard negatives (decreasing amplitude)
         onset_env = np.maximum(0.0, onset_env)

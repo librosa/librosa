@@ -2296,11 +2296,12 @@ def pcen(
     eps: float = ...,
     b: float | None = ...,
     max_size: int = ...,
-    ref: np.ndarray | None = ...,
+    S_ref: np.ndarray | None = ...,
     axis: int = ...,
     max_axis: int | None = ...,
     zi: np.ndarray | None = ...,
     return_zf: Literal[False] = ...,
+    ref: np.ndarray | Deprecated | None = ...,
 ) -> np.ndarray: ...
 @overload
 def pcen(
@@ -2315,11 +2316,12 @@ def pcen(
     eps: float = ...,
     b: float | None = ...,
     max_size: int = ...,
-    ref: np.ndarray | None = ...,
+    S_ref: np.ndarray | None = ...,
     axis: int = ...,
     max_axis: int | None = ...,
     zi: np.ndarray | None = ...,
     return_zf: Literal[True],
+    ref: np.ndarray | Deprecated | None = ...,
 ) -> tuple[np.ndarray, np.ndarray]: ...
 @cache(level=30)
 def pcen(
@@ -2334,11 +2336,12 @@ def pcen(
     eps: float = 1e-6,
     b: float | None = None,
     max_size: int = 1,
-    ref: np.ndarray | None = None,
+    S_ref: np.ndarray | None = None,
     axis: int = -1,
     max_axis: int | None = None,
     zi: np.ndarray | None = None,
     return_zf: bool = False,
+    ref: np.ndarray | Deprecated | None = Deprecated(),
 ) -> np.ndarray | tuple[np.ndarray, np.ndarray]:
     """Per-channel energy normalization (PCEN)
 
@@ -2429,7 +2432,7 @@ def pcen(
         The width of the max filter applied to the frequency axis.
         If left as `1`, no filtering is performed.
 
-    ref : None or np.ndarray (shape=S.shape)
+    S_ref : None or np.ndarray (shape=S.shape)
         An optional pre-computed reference spectrum (``R`` in the above).
         If not provided it will be computed from ``S``.
 
@@ -2455,6 +2458,12 @@ def pcen(
         block of processing should be used to initialize the next block.
 
         If ``False`` (default) only the PCEN values ``P`` are returned.
+
+    ref : None or np.ndarray (shape=S.shape)
+        .. warning:: This parameter is deprecated in 1.1.0 and will be removed in 1.2.0.
+
+        Deprecated alias for ``S_ref``.
+        An exception is raised if both ``S_ref`` and ``ref`` are provided.
 
     Returns
     -------
@@ -2509,6 +2518,19 @@ def pcen(
     >>> fig.colorbar(img, ax=ax)
     >>> plt.show()
     """
+    if not isinstance(ref, Deprecated):
+        if S_ref is not None:
+            raise ParameterValueError("Both 'ref' and 'S_ref' were provided. Please use only the 'S_ref' parameter.")
+
+        S_ref = rename_kw(
+            old_name="ref",
+            old_value=ref,
+            new_name="S_ref",
+            new_value=S_ref,
+            version_deprecated="1.1.0",
+            version_removed="1.2.0",
+        )
+
     if power < 0:
         raise ParameterValueError(f"power={power} must be nonnegative")
 
@@ -2548,9 +2570,9 @@ def pcen(
         )
         S = np.abs(S)
 
-    if ref is None:
+    if S_ref is None:
         if max_size == 1:
-            ref = S
+            S_ref = S
         elif S.ndim == 1:
             raise ParameterShapeError("Max-filtering cannot be applied to 1-dimensional input")
         else:
@@ -2565,20 +2587,20 @@ def pcen(
 
             import scipy.ndimage
 
-            ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
+            S_ref = scipy.ndimage.maximum_filter1d(S, max_size, axis=max_axis)
 
     import scipy.signal
 
     if zi is None:
         # Make sure zi matches dimension to input
-        shape = tuple([1] * ref.ndim)
+        shape = tuple([1] * S_ref.ndim)
         zi = np.empty(shape)
         zi[:] = scipy.signal.lfilter_zi([b], [1, b - 1])[:]
 
     # Temporal integration
     S_smooth: np.ndarray
     zf: np.ndarray
-    S_smooth, zf = scipy.signal.lfilter([b], [1, b - 1], ref, zi=zi, axis=axis)
+    S_smooth, zf = scipy.signal.lfilter([b], [1, b - 1], S_ref, zi=zi, axis=axis)
 
     # Adaptive gain control
     # Working in log-space gives us some stability, and a slight speedup
