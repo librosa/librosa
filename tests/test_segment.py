@@ -563,17 +563,94 @@ def test_recurrence_badmode(rng):
         librosa.segment.recurrence_matrix(data, mode="NOT A MODE", metric="sqeuclidean", sparse=True)
 
 
-@pytest.mark.parametrize("bandwidth", [-2, "FAKE", np.ones((2, 5)), -1 * np.ones((100, 100))])
+@pytest.mark.parametrize(
+    "bandwidth",
+    [
+        -2,
+        True,
+        np.nan,
+        np.complex128(1 + 2j),
+        "FAKE",
+        np.ones((2, 5)),
+        -1 * np.ones((100, 100)),
+        np.full((100, 100), np.nan),
+        np.ones((100, 100), dtype=complex),
+        np.ones((100, 100), dtype=bool),
+    ],
+)
 def test_recurrence_bad_bandwidth(bandwidth, rng):
     data = rng.standard_normal(size=(3, 100))
     with pytest.raises(librosa.ParameterValueError):
         librosa.segment.recurrence_matrix(data, bandwidth=bandwidth, mode="affinity")
 
 
-def test_recurrence_array_bandwidth(rng):
-    data = rng.standard_normal(size=(3, 100))
-    bw = rng.random((100, 100)) + 0.1
-    librosa.segment.recurrence_matrix(data, bandwidth=bw, mode="affinity")
+@pytest.mark.parametrize("self", [False, True])
+@pytest.mark.parametrize("mutual", [False, True])
+def test_recurrence_array_bandwidth(self, mutual, rng):
+    data = rng.standard_normal(size=(3, 30))
+    bw = rng.random((30, 30)) + 0.1
+    distance = squareform(pdist(data.T, metric="euclidean"))
+    rec = librosa.segment.recurrence_matrix(data, k=5, bandwidth=bw, mode="affinity", self=self, mutual=mutual)
+
+    mask = rec > 0
+    if self:
+        assert np.allclose(np.diag(rec), 1.0)
+        np.fill_diagonal(mask, False)
+    else:
+        assert np.allclose(np.diag(rec), 0.0)
+
+    assert np.allclose(rec[mask], np.exp(-distance[mask] / bw[mask]))
+
+
+@pytest.mark.parametrize("mutual", [False, True])
+@pytest.mark.parametrize("sparse", [False, True])
+def test_cross_similarity_array_bandwidth(mutual, sparse, rng):
+    data = rng.standard_normal(size=(3, 20))
+    data_ref = rng.standard_normal(size=(3, 35))
+    bw = rng.random((35, 20)) + 0.1
+    distance = cdist(data_ref.T, data.T, metric="euclidean")
+
+    xsim = librosa.segment.cross_similarity(
+        data, data_ref, k=5, bandwidth=bw, mode="affinity", mutual=mutual, sparse=sparse
+    )
+    xsim_dense = xsim.toarray() if sparse else xsim
+    assert xsim_dense.shape == (35, 20)
+
+    mask = xsim_dense > 0
+    assert np.any(mask)
+    assert np.allclose(xsim_dense[mask], np.exp(-distance[mask] / bw[mask]))
+
+
+@pytest.mark.parametrize(
+    "bw,exc",
+    [
+        (np.ones((20, 35)), librosa.ParameterShapeError),
+        (-np.ones((35, 20)), librosa.ParameterValueError),
+        (np.full((35, 20), np.nan), librosa.ParameterValueError),
+        (np.ones((35, 20), dtype=complex), librosa.ParameterValueError),
+        (np.nan, librosa.ParameterValueError),
+        (np.complex128(1 + 2j), librosa.ParameterValueError),
+        (True, librosa.ParameterValueError),
+    ],
+)
+def test_cross_similarity_bad_array_bandwidth(bw, exc, rng):
+    data = rng.standard_normal(size=(3, 20))
+    data_ref = rng.standard_normal(size=(3, 35))
+    with pytest.raises(exc):
+        librosa.segment.cross_similarity(data, data_ref, bandwidth=bw, mode="affinity")
+
+
+@pytest.mark.parametrize("bw", [np.float32(1.5), np.int64(2)])
+def test_segment_numpy_scalar_bandwidth(bw, rng):
+    data = rng.standard_normal(size=(3, 20))
+    data_ref = rng.standard_normal(size=(3, 25))
+    c_np = librosa.segment.cross_similarity(data, data_ref, k=4, mode="affinity", bandwidth=bw)
+    c_py = librosa.segment.cross_similarity(data, data_ref, k=4, mode="affinity", bandwidth=float(bw))
+    assert np.allclose(c_np, c_py)
+
+    r_np = librosa.segment.recurrence_matrix(data, k=4, mode="affinity", bandwidth=bw)
+    r_py = librosa.segment.recurrence_matrix(data, k=4, mode="affinity", bandwidth=float(bw))
+    assert np.allclose(r_np, r_py)
 
 
 @pytest.mark.parametrize("bw_mode", ["mean_k", "gmean_k", "mean_k_avg", "gmean_k_avg", "mean_k_avg_and_pair"])

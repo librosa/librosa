@@ -161,7 +161,7 @@ def cross_similarity(
             - 'gmean_k_avg'
             - 'mean_k_avg_and_pair'
 
-        If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
+        If ndarray [shape=(n_ref, n)] is supplied, use ndarray as bandwidth for each (i, j) pair.
 
         If using ``mode='affinity'``, this can be used to set the
         bandwidth on the affinity kernel.
@@ -201,14 +201,14 @@ def cross_similarity(
             https://doi.org/10.1038/nmeth.2810
 
     full : bool
-        If using ``mode ='affinity'`` or ``mode='distance'``, this option can be used to compute
-        the full affinity or distance matrix as opposed a sparse matrix with only none-zero terms
+        If using ``mode='affinity'`` or ``mode='distance'``, this option can be used to compute
+        the full affinity or distance matrix as opposed to a sparse matrix with only non-zero terms
         for the first k-neighbors of each sample.
         This option has no effect when using ``mode='connectivity'``.
 
-        When using ``mode='distance'``, setting ``full=True`` will ignore ``k`` and ``width``.
+        When using ``mode='distance'``, setting ``full=True`` will ignore ``k``.
         When using ``mode='affinity'``, setting ``full=True`` will use ``k`` exclusively for
-        bandwidth estimation, and ignore ``width``.
+        bandwidth estimation.
 
     Returns
     -------
@@ -268,7 +268,7 @@ def cross_similarity(
     >>> imgsim = librosa.display.specshow(
     ...     xsim, x_axis="s", y_axis="s", hop_length=hop_length, ax=ax[0]
     ... )
-    >>> ax[0].set(title="Binary cross-similarity (symmetric)")
+    >>> ax[0].set(title="Binary cross-similarity")
     >>> imgaff = librosa.display.specshow(
     ...     xsim_aff,
     ...     x_axis="s",
@@ -474,7 +474,7 @@ def recurrence_matrix(
             - 'gmean_k_avg'
             - 'mean_k_avg_and_pair'
 
-        If ndarray is supplied, use ndarray as bandwidth for each i,j pair.
+        If ndarray [shape=(t, t)] is supplied, use ndarray as bandwidth for each (i, j) pair.
 
         If using ``mode='affinity'``, the ``bandwidth`` option can be used to set the
         bandwidth on the affinity kernel.
@@ -524,8 +524,8 @@ def recurrence_matrix(
         By default, the last index (-1) is taken.
 
     full : bool
-        If using ``mode ='affinity'`` or ``mode='distance'``, this option can be used to compute
-        the full affinity or distance matrix as opposed a sparse matrix with only none-zero terms
+        If using ``mode='affinity'`` or ``mode='distance'``, this option can be used to compute
+        the full affinity or distance matrix as opposed to a sparse matrix with only non-zero terms
         for the first k-neighbors of each sample.
         This option has no effect when using ``mode='connectivity'``.
 
@@ -1498,16 +1498,23 @@ def __affinity_bandwidth(
     # the api allows users to specify a scalar bandwidth directly, besides the string based options.
     if isinstance(bw_mode, np.ndarray):
         bandwidth = bw_mode
-        # check if bw is the right size
-        if bandwidth.shape != rec.shape:
-            raise ParameterShapeError(f"Invalid matrix bandwidth shape: {bandwidth.shape}.Should be {rec.shape}.")
-        if (bandwidth <= 0).any():
+        # rec is transposed prior to returning, so bandwidth matches output shape (rec.shape[1], rec.shape[0])
+        expected_shape = (rec.shape[1], rec.shape[0])
+        if bandwidth.shape != expected_shape:
+            raise ParameterShapeError(
+                f"Invalid matrix bandwidth shape: {bandwidth.shape}. Should be {expected_shape}."
+            )
+        if not (np.issubdtype(bandwidth.dtype, np.floating) or np.issubdtype(bandwidth.dtype, np.integer)):
+            raise ParameterValueError(f"Invalid bandwidth dtype={bandwidth.dtype}. Must be real-valued numeric.")
+        if not np.all(bandwidth > 0):
             raise ParameterValueError("Invalid bandwidth. All entries must be strictly positive.")
-        return np.array(bandwidth[rec.nonzero()])
+        rows = np.repeat(np.arange(rec.shape[0]), np.diff(rec.indptr))
+        cols = rec.indices
+        return np.array(bandwidth[cols, rows])
 
-    elif isinstance(bw_mode, (int, float)):
+    elif isinstance(bw_mode, (int, float, np.integer, np.floating)) and not isinstance(bw_mode, bool):
         scalar_bandwidth = float(bw_mode)
-        if scalar_bandwidth <= 0:
+        if not (scalar_bandwidth > 0):
             raise ParameterValueError(f"Invalid scalar bandwidth={scalar_bandwidth}. Must be strictly positive.")
         return scalar_bandwidth
 
