@@ -1422,17 +1422,11 @@ def __parse_k(
 
 
 def __build_knn(fit_data: np.ndarray, n_neighbors: int, metric: str) -> sklearn.neighbors.NearestNeighbors:
-    """Fit a nearest-neighbors index, falling back to brute force if needed."""
+    """Fit a nearest-neighbors index."""
     import sklearn.neighbors
 
-    # `auto` mode does not work with some choices of metric. Rather than special-case
-    # those here, we instead use a fall-back to brute force if auto fails.
-    try:
-        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=n_neighbors, metric=metric, algorithm="auto")
-        knn.fit(fit_data)
-    except ValueError:
-        knn = sklearn.neighbors.NearestNeighbors(n_neighbors=n_neighbors, metric=metric, algorithm="brute")
-        knn.fit(fit_data)
+    knn = sklearn.neighbors.NearestNeighbors(n_neighbors=n_neighbors, metric=metric, algorithm="auto")
+    knn.fit(fit_data)
     return knn
 
 
