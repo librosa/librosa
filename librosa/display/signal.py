@@ -32,7 +32,8 @@ from matplotlib.projections.polar import PolarAxes
 
 # Core and utility imports for audio processing
 from .. import core, util
-from ..util.exceptions import (
+from ..exceptions import (
+    ParameterTypeError,
     ParameterValueError,
 )
 
@@ -1350,9 +1351,14 @@ def _ensure_polar_axes(ax: mplaxes.Axes) -> PolarAxes:
 
     Raises
     ------
+    ParameterTypeError
+        If ``ax`` is not a `matplotlib.axes.Axes` instance.
     ParameterValueError
         If `ax` is not a PolarAxes and already contains artists.
     """
+    if not isinstance(ax, mplaxes.Axes):
+        raise ParameterTypeError(f"`ax` must be an instance of matplotlib.axes.Axes. Found type(ax)={type(ax)}")
+
     if isinstance(ax, PolarAxes):
         return ax
 
@@ -1372,6 +1378,7 @@ def _ensure_polar_axes(ax: mplaxes.Axes) -> PolarAxes:
     fig = ax.figure if ax.figure is not None else plt.gcf()
     ss = ax.get_subplotspec()
     rect = ax.get_position()
+    label = ax.get_label()
     loc_names: tuple[Literal["left", "center", "right"], ...] = ("left", "center", "right")
     titles = {loc: ax.get_title(loc=loc) for loc in loc_names if ax.get_title(loc=loc)}
 
@@ -1382,9 +1389,7 @@ def _ensure_polar_axes(ax: mplaxes.Axes) -> PolarAxes:
                 ax._shared_axes[k].remove(ax)
 
     ax.__class__ = PolarAxes
-    PolarAxes.__init__(cast("PolarAxes", ax), fig, rect)
-    if ss is not None:
-        ax.set_subplotspec(ss)
+    PolarAxes.__init__(cast("PolarAxes", ax), fig, ss if ss is not None else rect, label=label)
     for loc, title in titles.items():
         ax.set_title(title, loc=loc)
 
@@ -1398,8 +1403,6 @@ def waveloop(
     duration: float | None = None,
     r_range: tuple[float, float] = (0.5, 1.0),
     method: Literal["waveshow", "wavebars"] = "waveshow",
-    max_points: int = 11025,
-    n_bars: int = 512,
     offset: float = 0.0,
     peak_norm: bool = True,
     time_axis: str | int | Sequence[float] | np.ndarray | None = "time",
@@ -1435,11 +1438,6 @@ def waveloop(
 
         - 'waveshow' : Continuous adaptive waveform using `waveshow`.
         - 'wavebars' : Discrete radial barcode using `wavebars`.
-    max_points : int > 0
-        Maximum number of samples drawn when ``method='waveshow'``.
-        Passed to `waveshow`.
-    n_bars : int > 0
-        Number of radial bars when ``method='wavebars'``. Passed to `wavebars`.
     offset : float
         Start time (in seconds) of ``y`` within the ``[0, duration)`` loop
         (matching `waveshow` and `wavebars`). Loop ticks always start at ``0``
@@ -1475,13 +1473,23 @@ def waveloop(
     ax : matplotlib.axes.Axes or None
         Target axes to plot on. If a rectilinear axes is provided, it will be
         converted in-place to polar projection if it does not already contain artists.
-        In-place conversion preserves subplot geometry, position, and titles
-        (``left``, ``center``, ``right``), uncouples any shared Cartesian axes, and
-        resets other rectilinear axes styling (such as facecolor, grid, or axis
-        labels).
+        In-place conversion preserves subplot geometry, position, ``label``, and
+        titles (``left``, ``center``, ``right``), uncouples any shared Cartesian
+        axes, and resets other rectilinear axes styling (such as facecolor, grid,
+        or axis labels).
         If ``None``, a new polar axes or the current axes will be used.
     **kwargs
-        Additional keyword arguments forwarded to `waveshow` or `wavebars`.
+        Additional keyword arguments forwarded to the plotting function selected
+        by `method`.
+
+        If `method='waveshow'`, these must be keyword arguments supported by
+        `librosa.display.waveshow` (for example, `max_points`).
+
+        If `method='wavebars'`, these must be keyword arguments supported by
+        `librosa.display.wavebars` (for example, `n_bars`, `gap_ratio`,
+        `rounding_ratio`, `invert`, and `invert_color`).
+
+        Keyword arguments for one method are not valid when using the other.
 
     Returns
     -------
@@ -1490,6 +1498,8 @@ def waveloop(
 
     Raises
     ------
+    ParameterTypeError
+        If ``ax`` is not ``None`` and not a `matplotlib.axes.Axes` instance.
     ParameterValueError
         If ``y`` is empty.
         If ``ax`` has a non-rectilinear projection (such as ``'3d'``), or is
@@ -1620,7 +1630,6 @@ def waveloop(
         artist: AdaptiveWaveplot | mcollections.PatchCollection = waveshow(
             y,
             sr=sr,
-            max_points=max_points,
             offset=offset,
             transform=pre + ax.transData,
             ax=ax,
@@ -1630,7 +1639,6 @@ def waveloop(
         artist = wavebars(
             y,
             sr=sr,
-            n_bars=n_bars,
             offset=offset,
             transform=pre + ax.transData,
             ax=ax,

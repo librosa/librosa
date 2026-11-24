@@ -24,7 +24,6 @@ import numpy as np
 import pytest
 from matplotlib import colormaps as mcm
 from matplotlib.axes import Axes
-from matplotlib.figure import Figure
 from matplotlib.projections.polar import PolarAxes
 from matplotlib.testing.conftest import text_placeholders  # noqa: F401
 
@@ -1193,88 +1192,82 @@ def test_waveshow_deladaptor(y, sr):
 
 
 def test_waveshow_cartesian_transform(y, sr):
-    fig, ax = plt.subplots()
-    try:
-        # Scale time by 2.0 and offset by 1.0; scale amplitude by 3.0 and offset by 0.5
-        pre = matplotlib.transforms.Affine2D().scale(2.0, 3.0).translate(1.0, 0.5)
-        ad = librosa.display.waveshow(y, sr=sr, ax=ax, transform=pre + ax.transData)
+    _, ax = plt.subplots()
+    # Scale time by 2.0 and offset by 1.0; scale amplitude by 3.0 and offset by 0.5
+    pre = matplotlib.transforms.Affine2D().scale(2.0, 3.0).translate(1.0, 0.5)
+    ad = librosa.display.waveshow(y, sr=sr, ax=ax, transform=pre + ax.transData)
 
-        # Verify pre_transform extraction
-        assert ad.pre_transform == pre
+    # Verify pre_transform extraction
+    assert ad.pre_transform == pre
 
-        # Verify axis decoration was skipped (no TimeFormatter on xaxis)
-        assert not isinstance(ax.xaxis.get_major_formatter(), librosa.display.TimeFormatter)
-        assert ax.xaxis.get_label_text() != "Time"
+    # Verify axis decoration was skipped (no TimeFormatter on xaxis)
+    assert not isinstance(ax.xaxis.get_major_formatter(), librosa.display.TimeFormatter)
+    assert ax.xaxis.get_label_text() != "Time"
 
-        # Zoom into a narrow time window in transformed space:
-        # View signal around t = 0.5s with duration = 0.01s (well below max_samples/sr)
-        # In transformed space: x = 2 * t + 1
-        t_center = 0.5
-        t_span = 0.01
-        x0 = 2.0 * (t_center - t_span / 2) + 1.0
-        x1 = 2.0 * (t_center + t_span / 2) + 1.0
-        ax.set(xlim=[x0, x1])
+    # Zoom into a narrow time window in transformed space:
+    # View signal around t = 0.5s with duration = 0.01s (well below max_samples/sr)
+    # In transformed space: x = 2 * t + 1
+    t_center = 0.5
+    t_span = 0.01
+    x0 = 2.0 * (t_center - t_span / 2) + 1.0
+    x1 = 2.0 * (t_center + t_span / 2) + 1.0
+    ax.set(xlim=[x0, x1])
 
-        # Steps should become visible and envelope hidden
-        assert ad.steps is not None and ad.envelope is not None
-        assert ad.steps.get_visible() and not ad.envelope.get_visible()
+    # Steps should become visible and envelope hidden
+    assert ad.steps is not None and ad.envelope is not None
+    assert ad.steps.get_visible() and not ad.envelope.get_visible()
 
-        # The sliced steps data should be in signal time coordinates around t_center
-        steps_time = np.asarray(ad.steps.get_xdata())
-        assert np.isclose(steps_time[len(steps_time) // 2], t_center, atol=0.05)
+    # The sliced steps data should be in signal time coordinates around t_center
+    steps_time = np.asarray(ad.steps.get_xdata())
+    assert np.isclose(steps_time[len(steps_time) // 2], t_center, atol=0.05)
 
-        # Zoom back out to full signal in transformed space
-        t_max = len(y) / sr
-        ax.set(xlim=[1.0, 2.0 * t_max + 1.0])
-        assert ad.envelope.get_visible() and not ad.steps.get_visible()
-    finally:
-        plt.close(fig)
+    # Zoom back out to full signal in transformed space
+    t_max = len(y) / sr
+    ax.set(xlim=[1.0, 2.0 * t_max + 1.0])
+    assert ad.envelope.get_visible() and not ad.steps.get_visible()
 
 
 def test_waveshow_polar_transform(y, sr):
-    fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+    _, ax = plt.subplots(subplot_kw={"projection": "polar"})
     assert isinstance(ax, PolarAxes)
-    try:
-        # Check initial polar limits
-        assert ax.name == "polar"
-        assert np.isclose(ax.get_thetamin(), 0.0)
-        assert np.isclose(ax.get_thetamax(), 360.0)
+    # Check initial polar limits
+    assert ax.name == "polar"
+    assert np.isclose(ax.get_thetamin(), 0.0)
+    assert np.isclose(ax.get_thetamax(), 360.0)
 
-        duration = len(y) / sr
-        # Map time [0, duration] -> theta [0, 2*pi]; amplitude [-1, 1] -> radius [0.5, 1.5]
-        pre = matplotlib.transforms.Affine2D().scale(2 * np.pi / duration, 0.5).translate(0.0, 1.0)
-        ad = librosa.display.waveshow(y, sr=sr, ax=ax, transform=pre + ax.transData)
+    duration = len(y) / sr
+    # Map time [0, duration] -> theta [0, 2*pi]; amplitude [-1, 1] -> radius [0.5, 1.5]
+    pre = matplotlib.transforms.Affine2D().scale(2 * np.pi / duration, 0.5).translate(0.0, 1.0)
+    ad = librosa.display.waveshow(y, sr=sr, ax=ax, transform=pre + ax.transData)
 
-        assert ad.pre_transform == pre
+    assert ad.pre_transform == pre
 
-        # Polar axis decorations must not be overwritten with TimeFormatter
-        assert not isinstance(ax.xaxis.get_major_formatter(), librosa.display.TimeFormatter)
-        assert ax.xaxis.get_label_text() != "Time"
+    # Polar axis decorations must not be overwritten with TimeFormatter
+    assert not isinstance(ax.xaxis.get_major_formatter(), librosa.display.TimeFormatter)
+    assert ax.xaxis.get_label_text() != "Time"
 
-        # thetamin/thetamax should NOT be corrupted
-        assert np.isclose(ax.get_thetamin(), 0.0)
-        assert np.isclose(ax.get_thetamax(), 360.0)
+    # thetamin/thetamax should NOT be corrupted
+    assert np.isclose(ax.get_thetamin(), 0.0)
+    assert np.isclose(ax.get_thetamax(), 360.0)
 
-        # Zoom into a small angular slice around pi radians (~ 0.5 * duration)
-        theta_center = np.pi
-        theta_span = 0.01  # small enough to trigger steps view
-        ax.set(xlim=[theta_center - theta_span / 2, theta_center + theta_span / 2])
+    # Zoom into a small angular slice around pi radians (~ 0.5 * duration)
+    theta_center = np.pi
+    theta_span = 0.01  # small enough to trigger steps view
+    ax.set(xlim=[theta_center - theta_span / 2, theta_center + theta_span / 2])
 
-        assert ad.steps is not None and ad.envelope is not None
-        assert ad.steps.get_visible() and not ad.envelope.get_visible()
+    assert ad.steps is not None and ad.envelope is not None
+    assert ad.steps.get_visible() and not ad.envelope.get_visible()
 
-        # Verify steps data is centered around 0.5 * duration in signal seconds
-        steps_time = np.asarray(ad.steps.get_xdata())
-        expected_t = 0.5 * duration
-        assert np.isclose(steps_time[len(steps_time) // 2], expected_t, atol=0.05)
+    # Verify steps data is centered around 0.5 * duration in signal seconds
+    steps_time = np.asarray(ad.steps.get_xdata())
+    expected_t = 0.5 * duration
+    assert np.isclose(steps_time[len(steps_time) // 2], expected_t, atol=0.05)
 
-        # Zoom back out to [0, 2*pi]
-        ax.set(xlim=[0.0, 2 * np.pi])
-        assert ad.envelope.get_visible() and not ad.steps.get_visible()
-        assert np.isclose(ax.get_thetamin(), 0.0)
-        assert np.isclose(ax.get_thetamax(), 360.0)
-    finally:
-        plt.close(fig)
+    # Zoom back out to [0, 2*pi]
+    ax.set(xlim=[0.0, 2 * np.pi])
+    assert ad.envelope.get_visible() and not ad.steps.get_visible()
+    assert np.isclose(ax.get_thetamin(), 0.0)
+    assert np.isclose(ax.get_thetamax(), 360.0)
 
 
 def test_waveshow_pre_transform_fallback(y, sr):
@@ -1930,16 +1923,11 @@ def test_waveloop_duration_fractional(y, sr):
     adaptor = librosa.display.waveloop(y, sr=sr, duration=target_dur)
     assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
     assert adaptor.steps is not None and adaptor.steps.figure is not None
-    fig = adaptor.steps.figure
-    assert isinstance(fig, Figure)
-    try:
-        ax = adaptor.steps.axes
-        assert isinstance(ax, PolarAxes)
-        # Signal fills [0, pi] within [0, 2*pi]
-        assert ax.dataLim.x0 >= 0.0
-        assert ax.dataLim.x1 <= np.pi + 0.1
-    finally:
-        plt.close(fig)
+    ax = adaptor.steps.axes
+    assert isinstance(ax, PolarAxes)
+    # Signal fills [0, pi] within [0, 2*pi]
+    assert ax.dataLim.x0 >= 0.0
+    assert ax.dataLim.x1 <= np.pi + 0.1
 
 
 def test_waveloop_peak_norm(y, sr):
@@ -1947,72 +1935,52 @@ def test_waveloop_peak_norm(y, sr):
     adaptor = librosa.display.waveloop(y_loud, sr=sr, peak_norm=True, r_range=(0.2, 0.8))
     assert isinstance(adaptor, librosa.display.AdaptiveWaveplot)
     assert adaptor.steps is not None and adaptor.steps.figure is not None
-    fig = adaptor.steps.figure
-    assert isinstance(fig, Figure)
-    try:
-        ax = adaptor.steps.axes
-        assert isinstance(ax, PolarAxes)
-        assert ax.get_ylim()[0] == 0.0
-        assert ax.get_ylim()[1] == 0.8
-        # Make sure no radius exceeds 0.8 or falls below 0.2
-        assert ax.dataLim.y0 >= 0.2 - 0.05
-        assert ax.dataLim.y1 <= 0.8 + 0.05
-    finally:
-        plt.close(fig)
+    ax = adaptor.steps.axes
+    assert isinstance(ax, PolarAxes)
+    assert ax.get_ylim()[0] == 0.0
+    assert ax.get_ylim()[1] == 0.8
+    # Make sure no radius exceeds 0.8 or falls below 0.2
+    assert ax.dataLim.y0 >= 0.2 - 0.05
+    assert ax.dataLim.y1 <= 0.8 + 0.05
 
     # Test peak_norm=False with standard amplitude
     adaptor_nonorm = librosa.display.waveloop(y, sr=sr, peak_norm=False, r_range=(0.2, 0.8))
     assert isinstance(adaptor_nonorm, librosa.display.AdaptiveWaveplot)
     assert adaptor_nonorm.steps is not None and adaptor_nonorm.steps.figure is not None
-    fig_nonorm = adaptor_nonorm.steps.figure
-    assert isinstance(fig_nonorm, Figure)
-    plt.close(fig_nonorm)
 
 
 def test_waveloop_concentric(y, sr):
-    fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+    _, ax = plt.subplots(subplot_kw={"projection": "polar"})
     assert isinstance(ax, PolarAxes)
-    try:
-        # First track (inner ring)
-        librosa.display.waveloop(y, sr=sr, r_range=(0.2, 0.5), ax=ax)
-        assert ax.get_ylim() == (0.0, 0.5)
-        assert ax.get_autoscaley_on()
-        # Second track (outer ring)
-        librosa.display.waveloop(y, sr=sr, r_range=(0.6, 1.0), ax=ax)
-        assert ax.get_ylim() == (0.0, 1.0)
-        assert ax.get_autoscaley_on()
-        assert ax.get_theta_direction() == -1
-        assert np.isclose(ax.get_theta_offset(), np.pi / 2)
-        assert len(ax.get_yticks()) == 0
-    finally:
-        plt.close(fig)
+    # First track (inner ring)
+    librosa.display.waveloop(y, sr=sr, r_range=(0.2, 0.5), ax=ax)
+    assert ax.get_ylim() == (0.0, 0.5)
+    assert ax.get_autoscaley_on()
+    # Second track (outer ring)
+    librosa.display.waveloop(y, sr=sr, r_range=(0.6, 1.0), ax=ax)
+    assert ax.get_ylim() == (0.0, 1.0)
+    assert ax.get_autoscaley_on()
+    assert ax.get_theta_direction() == -1
+    assert np.isclose(ax.get_theta_offset(), np.pi / 2)
+    assert len(ax.get_yticks()) == 0
 
     # Outer ring first, then inner ring: cumulative ylim must stay (0.0, 1.0)
-    fig2, ax2 = plt.subplots(subplot_kw={"projection": "polar"})
-    try:
-        librosa.display.waveloop(y, sr=sr, r_range=(0.6, 1.0), ax=ax2)
-        librosa.display.waveloop(y, sr=sr, r_range=(0.2, 0.5), method="wavebars", n_bars=32, ax=ax2)
-        assert ax2.get_ylim() == (0.0, 1.0)
-        assert ax2.dataLim.x0 >= 0.0
-    finally:
-        plt.close(fig2)
+    _, ax2 = plt.subplots(subplot_kw={"projection": "polar"})
+    librosa.display.waveloop(y, sr=sr, r_range=(0.6, 1.0), ax=ax2)
+    librosa.display.waveloop(y, sr=sr, r_range=(0.2, 0.5), method="wavebars", n_bars=32, ax=ax2)
+    assert ax2.get_ylim() == (0.0, 1.0)
+    assert ax2.dataLim.x0 >= 0.0
 
     # Silent signal should still span r_range cleanly
-    fig3, ax3 = plt.subplots(subplot_kw={"projection": "polar"})
-    try:
-        librosa.display.waveloop(np.zeros_like(y), sr=sr, r_range=(0.5, 1.0), ax=ax3)
-        assert ax3.get_ylim() == (0.0, 1.0)
-    finally:
-        plt.close(fig3)
+    _, ax3 = plt.subplots(subplot_kw={"projection": "polar"})
+    librosa.display.waveloop(np.zeros_like(y), sr=sr, r_range=(0.5, 1.0), ax=ax3)
+    assert ax3.get_ylim() == (0.0, 1.0)
 
     # Explicit user ylim is preserved by autoscale_view
-    fig4, ax4 = plt.subplots(subplot_kw={"projection": "polar"})
-    try:
-        ax4.set_ylim(0.0, 2.0)
-        librosa.display.waveloop(y, sr=sr, r_range=(0.5, 1.0), ax=ax4)
-        assert ax4.get_ylim() == (0.0, 2.0)
-    finally:
-        plt.close(fig4)
+    _, ax4 = plt.subplots(subplot_kw={"projection": "polar"})
+    ax4.set_ylim(0.0, 2.0)
+    librosa.display.waveloop(y, sr=sr, r_range=(0.5, 1.0), ax=ax4)
+    assert ax4.get_ylim() == (0.0, 2.0)
 
 
 def test_waveloop_orientation(sr):
@@ -2027,36 +1995,30 @@ def test_waveloop_orientation(sr):
 
     fig, ax = plt.subplots(subplot_kw=dict(projection="polar"))
     assert isinstance(ax, PolarAxes)
-    try:
-        librosa.display.waveloop(y, sr=sr, duration=duration, ax=ax)
-        fig.canvas.draw()
-        center = ax.transData.transform([0, 0])
+    librosa.display.waveloop(y, sr=sr, duration=duration, ax=ax)
+    fig.canvas.draw()
+    center = ax.transData.transform([0, 0])
 
-        for frac, exp_cw_deg in [(0.0, 0.0), (0.25, 90.0), (0.50, 180.0), (0.75, 270.0)]:
-            t_val = frac * duration
-            theta = t_val * 2 * np.pi
-            r = 0.75 + 0.25 * 1.0
-            disp = ax.transData.transform([theta, r])
-            dx = disp[0] - center[0]
-            dy = disp[1] - center[1]
-            angle_cw = np.degrees(np.arctan2(dx, dy))
-            if angle_cw < 0:
-                angle_cw += 360
-            assert np.isclose(angle_cw, exp_cw_deg, atol=1e-3)
-    finally:
-        plt.close(fig)
+    for frac, exp_cw_deg in [(0.0, 0.0), (0.25, 90.0), (0.50, 180.0), (0.75, 270.0)]:
+        t_val = frac * duration
+        theta = t_val * 2 * np.pi
+        r = 0.75 + 0.25 * 1.0
+        disp = ax.transData.transform([theta, r])
+        dx = disp[0] - center[0]
+        dy = disp[1] - center[1]
+        angle_cw = np.degrees(np.arctan2(dx, dy))
+        if angle_cw < 0:
+            angle_cw += 360
+        assert np.isclose(angle_cw, exp_cw_deg, atol=1e-3)
 
 
 def test_waveloop_decorate_false(y, sr):
-    fig, ax = plt.subplots(subplot_kw=dict(projection="polar"))
+    _, ax = plt.subplots(subplot_kw=dict(projection="polar"))
     assert isinstance(ax, PolarAxes)
-    try:
-        # Default polar axes has direction=1 (CCW) and offset=0 (East)
-        librosa.display.waveloop(y, sr=sr, ax=ax, decorate=False)
-        assert ax.get_theta_direction() == 1
-        assert np.isclose(ax.get_theta_offset(), 0.0)
-    finally:
-        plt.close(fig)
+    # Default polar axes has direction=1 (CCW) and offset=0 (East)
+    librosa.display.waveloop(y, sr=sr, ax=ax, decorate=False)
+    assert ax.get_theta_direction() == 1
+    assert np.isclose(ax.get_theta_offset(), 0.0)
 
 
 def test_waveloop_rectilinear_ax_override(y, sr):
@@ -2102,9 +2064,19 @@ def test_waveloop_rectilinear_ax_override(y, sr):
     assert ax_s2.name == "rectilinear"
     fig4.canvas.draw()
 
+    # 5. subplot_mosaic key label and subplotspec are preserved when converting
+    fig5, axd = plt.subplot_mosaic("AB", layout="constrained")
+    librosa.display.waveloop(y, sr=sr, ax=axd["A"])
+    assert isinstance(axd["A"], PolarAxes)
+    assert axd["A"].get_label() == "A"
+    fig5.canvas.draw()
+
 
 def test_waveloop_validation_errors(y, sr):
     sig_dur = len(y) / sr
+
+    with pytest.raises(librosa.ParameterTypeError, match=r"matplotlib\.axes\.Axes"):
+        librosa.display.waveloop(y, sr=sr, ax="not_an_axes")  # type: ignore[arg-type]
 
     # Non-empty rectilinear axes (data, text, inset axes, legend)
     for setup_fn in (
@@ -2168,6 +2140,10 @@ def test_waveloop_validation_errors(y, sr):
         librosa.display.waveloop(y, sr=sr, transform=mtransforms.IdentityTransform())
     with pytest.raises(librosa.ParameterValueError, match="Use 'time_axis' instead of 'axis'"):
         librosa.display.waveloop(y, sr=sr, axis="ms")
+    with pytest.raises(AttributeError, match="unexpected keyword argument 'n_bars'"):
+        librosa.display.waveloop(y, sr=sr, method="waveshow", n_bars=64)
+    with pytest.raises(AttributeError, match="unexpected keyword argument 'max_points'"):
+        librosa.display.waveloop(y, sr=sr, method="wavebars", max_points=100)
 
 
 def test_loop_locator():
@@ -2378,6 +2354,23 @@ def test_waveloop_time_axis(y, sr):
     ax_sec.set_thetamin(0)
     ax_sec.set_thetamax(180)
     assert np.allclose(np.rad2deg(ax_sec.xaxis.get_major_locator()()), [0.0, 90.0, 180.0])
+
+    # Transform round-trip avoids 1-ULP truncation in minute/hour formatting (e.g. 0:30, not 0:29)
+    fig_m, ax_m = plt.subplots(subplot_kw={"projection": "polar"})
+    librosa.display.waveloop(y, sr=sr, duration=180.0, time_axis=6, ax=ax_m)
+    fig_m.canvas.draw()
+    assert [t.get_text() for t in ax_m.xaxis.get_majorticklabels()] == [
+        "0:00",
+        "0:30",
+        "1:00",
+        "1:30",
+        "2:00",
+        "2:30",
+    ]
+    fig_h, ax_h = plt.subplots(subplot_kw={"projection": "polar"})
+    librosa.display.waveloop(y, sr=sr, duration=4000.0, time_axis=8, ax=ax_h)
+    fig_h.canvas.draw()
+    assert ax_h.xaxis.get_majorticklabels()[1].get_text() == "0:08:20"
 
 
 def test_decorate_loop_time_axis_and_decorate_axis_validation(y, sr):
@@ -3267,20 +3260,17 @@ def test_multiplot_waveloop(y, sr):
         titles=["Track 1", "Track 2"],
     )
     fig = plt.gcf()
-    try:
-        assert out.shape == (2,)
-        assert len(fig.axes) == 2
-        for ax in fig.axes:
-            assert isinstance(ax, PolarAxes)
-            assert ax.name == "polar"
-            assert ax.get_theta_direction() == -1
-            assert np.isclose(ax.get_theta_offset(), np.pi / 2)
-            assert len(ax.get_yticks()) == 0
-        assert fig.axes[0].get_title() == "Track 1"
-        assert fig.axes[1].get_title() == "Track 2"
-        fig.canvas.draw()
-    finally:
-        plt.close(fig)
+    assert out.shape == (2,)
+    assert len(fig.axes) == 2
+    for ax in fig.axes:
+        assert isinstance(ax, PolarAxes)
+        assert ax.name == "polar"
+        assert ax.get_theta_direction() == -1
+        assert np.isclose(ax.get_theta_offset(), np.pi / 2)
+        assert len(ax.get_yticks()) == 0
+    assert fig.axes[0].get_title() == "Track 1"
+    assert fig.axes[1].get_title() == "Track 2"
+    fig.canvas.draw()
 
     # With method="wavebars"
     out_bars = librosa.display.multiplot(
@@ -3291,27 +3281,21 @@ def test_multiplot_waveloop(y, sr):
         n_bars=64,
     )
     fig_bars = plt.gcf()
-    try:
-        assert out_bars.shape == (2,)
-        for coll in out_bars:
-            assert isinstance(coll, matplotlib.collections.PatchCollection)
-        fig_bars.canvas.draw()
-    finally:
-        plt.close(fig_bars)
+    assert out_bars.shape == (2,)
+    for coll in out_bars:
+        assert isinstance(coll, matplotlib.collections.PatchCollection)
+    fig_bars.canvas.draw()
 
     # Existing polar axes
     fig, axes = plt.subplots(1, 2, subplot_kw=dict(projection="polar"))
-    try:
-        out_exist = librosa.display.multiplot(
-            "waveloop",
-            y_stack,
-            axes=axes,
-            sr=sr,
-        )
-        assert out_exist.shape == axes.shape
-        fig.canvas.draw()
-    finally:
-        plt.close(fig)
+    out_exist = librosa.display.multiplot(
+        "waveloop",
+        y_stack,
+        axes=axes,
+        sr=sr,
+    )
+    assert out_exist.shape == axes.shape
+    fig.canvas.draw()
 
     # Existing rectilinear axes converted automatically
     fig, axes_rect = plt.subplots(1, 2)

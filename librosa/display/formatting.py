@@ -394,7 +394,9 @@ class _TransformedFormatter(_TransformedTickMixin, mplticker.Formatter):
         self._forward_axis(self.base_formatter, axis)
 
     def _to_signal(self, values: np.ndarray) -> np.ndarray:
-        return _transform_1d(self.transform.inverted(), values, self._axis_idx())
+        t = _transform_1d(self.transform.inverted(), values, self._axis_idx())
+        rounded = np.round(t)
+        return np.where(np.isclose(t, rounded, rtol=1e-12, atol=1e-12), rounded, t)
 
     def __call__(self, x: float, pos: int | None = None) -> str:
         """Format tick value ``x`` (in display coordinates) as a string."""
