@@ -13,6 +13,8 @@ zoom levels, frequency displacement, and polar loop coordinates.
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
 
+import functools
+import operator
 import weakref
 from typing import TYPE_CHECKING, cast
 
@@ -54,6 +56,7 @@ from .formatting import (
     _check_axes,
     _decorate_axis,
     _decorate_loop_time_axis,
+    _is_finite_real,
 )
 
 
@@ -429,30 +432,29 @@ def _extract_pre_transform(
     if transform is None:
         return mtransforms.IdentityTransform(), None
 
-    if transform is axes.transData:
-        return mtransforms.IdentityTransform(), axes.transData
+    # Flatten composite chains (a + b) into left-to-right factors, stopping at
+    # axes.transData by identity (it is itself composite, and `==` falsely
+    # matches transAxes on [0, 1] x [0, 1] axes).
+    factors: list[mtransforms.Transform] = []
+    stack: list[mtransforms.Transform] = [transform]
+    while stack:
+        node = stack.pop()
+        if node is not axes.transData and isinstance(
+            node, (mtransforms.CompositeGenericTransform, mtransforms.CompositeAffine2D)
+        ):
+            comp = cast("Any", node)
+            stack.extend((comp._b, comp._a))
+        else:
+            factors.append(node)
 
-    # Stop at axes.transData by identity: transData is itself composite,
-    # and value equality falsely matches transAxes on [0, 1] x [0, 1] axes.
-    def _flatten_until_transdata(t: mtransforms.Transform) -> list[mtransforms.Transform]:
-        if t is axes.transData:
-            return [t]
-        if isinstance(t, (mtransforms.CompositeGenericTransform, mtransforms.CompositeAffine2D)):
-            comp = cast("Any", t)
-            return _flatten_until_transdata(comp._a) + _flatten_until_transdata(comp._b)
-        return [t]
+    # Everything before axes.transData is the data-space pre-transform;
+    # anything after it is a display-space post-transform (e.g. ScaledTranslation).
+    pos = next((i for i, f in enumerate(factors) if f is axes.transData), None)
+    if pos is None:
+        return None, transform
 
-    factors = _flatten_until_transdata(transform)
-    for idx, factor in enumerate(factors):
-        if factor is axes.transData:
-            if idx == 0:
-                return mtransforms.IdentityTransform(), transform
-            pre = factors[0]
-            for f in factors[1:idx]:
-                pre = pre + f
-            return pre, transform
-
-    return None, transform
+    pre: mtransforms.Transform = functools.reduce(operator.add, factors[:pos], mtransforms.IdentityTransform())
+    return pre, transform
 
 
 def _update_transformed_datalim(
@@ -1396,7 +1398,6 @@ def waveloop(
     duration: float | None = None,
     r_range: tuple[float, float] = (0.5, 1.0),
     method: Literal["waveshow", "wavebars"] = "waveshow",
-    phase: float = 0.0,
     max_points: int = 11025,
     n_bars: int = 512,
     offset: float = 0.0,
@@ -1434,19 +1435,19 @@ def waveloop(
 
         - 'waveshow' : Continuous adaptive waveform using `waveshow`.
         - 'wavebars' : Discrete radial barcode using `wavebars`.
-    phase : float
-        Angular phase offset in radians applied to the waveform and its time ticks
-        relative to the polar axes' zero angle (useful for phase-aligning
-        concentric tracks on the same axes even when ``decorate=False``).
     max_points : int > 0
         Maximum number of samples drawn when ``method='waveshow'``.
         Passed to `waveshow`.
     n_bars : int > 0
         Number of radial bars when ``method='wavebars'``. Passed to `wavebars`.
     offset : float
-        Time offset (in seconds) to start the waveform plot. Wrapped time ticks are
-        labeled in ``[offset, offset + duration)``, and explicit ``time_axis``
-        sequences are interpreted in absolute signal seconds.
+        Start time (in seconds) of ``y`` within the ``[0, duration)`` loop
+        (matching `waveshow` and `wavebars`). Loop ticks always start at ``0``
+        (positioned at ``theta_offset``); setting ``offset`` shifts the waveform
+        around the circle in seconds (wrapping smoothly across ``0`` when
+        ``offset + sig_dur > duration``), which is useful for placing a shorter
+        clip partway through a loop or time-aligning concentric tracks with
+        ``decorate=False``.
     peak_norm : bool
         If ``True`` (default), normalizes ``y`` by its peak amplitude
         (``y / max(|y|)``) before mapping into ``r_range``, preventing
@@ -1460,8 +1461,9 @@ def waveloop(
         - Sequence[float] or np.ndarray : Explicit timestamp locations in seconds.
         - `None`, 'none', or 'off' : Ticks and labels are hidden.
     theta_offset : float
-        Starting angle (in radians) rotating the polar axes' zero angle itself
-        when ``decorate=True``. Default is ``π / 2`` (12 o'clock / top).
+        Visual orientation (in radians) of ``t = 0`` on the polar axes when
+        ``decorate=True``. Default is ``π / 2`` (12 o'clock / top); use
+        ``0.0`` for 3 o'clock.
     direction : {'clockwise', 'counterclockwise', -1, 1}
         Direction of time rotation around the circle. Default is 'clockwise'.
     decorate : bool
@@ -1494,7 +1496,7 @@ def waveloop(
         rectilinear and already contains artists.
         If ``duration`` is non-finite, boolean, ``<= 0``, or less than the signal
         duration.
-        If ``phase``, ``offset``, or ``theta_offset`` is non-finite or boolean.
+        If ``offset`` or ``theta_offset`` is non-finite or boolean.
         If ``r_range`` is invalid or does not satisfy ``0 <= r_min < r_max``.
         If ``method``, ``direction``, or ``time_axis`` is not recognized.
         If ``transpose=True``, ``transform``, or ``axis`` is passed in ``kwargs``.
@@ -1517,10 +1519,23 @@ def waveloop(
     >>> librosa.display.waveloop(y, sr=sr, ax=ax)
     >>> plt.show()
 
-    Plot concentric tracks with discrete bars:
+    Place a shorter clip starting 1 second into a 6-second loop and align a
+    second concentric track in seconds:
 
-    >>> fig, ax = plt.subplots()
-    >>> librosa.display.waveloop(y, sr=sr, r_range=(0.6, 1.0), method="wavebars", ax=ax)
+    >>> fig, ax = plt.subplots(subplot_kw={"projection": "polar"})
+    >>> librosa.display.waveloop(
+    ...     y[: 2 * sr], sr=sr, duration=6.0, offset=1.0, r_range=(0.6, 1.0), ax=ax
+    ... )
+    >>> librosa.display.waveloop(
+    ...     y[: 2 * sr],
+    ...     sr=sr,
+    ...     duration=6.0,
+    ...     offset=3.0,
+    ...     r_range=(0.2, 0.5),
+    ...     method="wavebars",
+    ...     decorate=False,
+    ...     ax=ax,
+    ... )
     >>> plt.show()
     """
     if kwargs.get("transpose", False):
@@ -1537,15 +1552,15 @@ def waveloop(
     sig_dur = float(core.get_duration(y=y, sr=sr))
     if duration is None:
         duration = sig_dur
-    elif isinstance(duration, bool) or not np.isfinite(duration) or duration <= 0:
+    elif not _is_finite_real(duration) or duration <= 0:
         raise ParameterValueError(f"duration must be finite and strictly positive, got {duration}")
     elif sig_dur > duration and not np.isclose(sig_dur, duration, atol=1e-6):
         raise ParameterValueError(
             f"Signal duration ({sig_dur:.3f}s) exceeds duration ({duration:.3f}s). Multiple cycles are not supported."
         )
 
-    for name, val in (("phase", phase), ("offset", offset), ("theta_offset", theta_offset)):
-        if isinstance(val, bool) or not np.isfinite(val):
+    for name, val in (("offset", offset), ("theta_offset", theta_offset)):
+        if not _is_finite_real(val):
             raise ParameterValueError(f"{name} must be finite, got {val}")
 
     try:
@@ -1586,7 +1601,7 @@ def waveloop(
     k = (r_max - r_min) / 2
 
     # Linear Affine pre-transform: (t, a) -> (theta, r)
-    pre = mtransforms.Affine2D().translate(-offset, 0).scale(2 * np.pi / duration, k).translate(phase, r0)
+    pre = mtransforms.Affine2D().scale(2 * np.pi / duration, k).translate(0.0, r0)
 
     if decorate:
         theta_dir = -1 if direction in ("clockwise", -1) else 1
@@ -1598,7 +1613,6 @@ def waveloop(
             ax.xaxis,
             time_axis,
             period=duration,
-            offset=offset,
             transform=pre,
         )
 

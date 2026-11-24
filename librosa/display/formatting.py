@@ -437,22 +437,17 @@ class _TransformedFormatter(_TransformedTickMixin, mplticker.Formatter):
 
 
 class _PeriodicFormatter(mplticker.Formatter):
-    """Formatter wrapper that reduces values modulo ``period`` into ``[offset, offset + period)``."""
+    """Formatter wrapper that reduces values modulo ``period`` into ``[0, period)``."""
 
     def __init__(
         self,
         base_formatter: mplticker.Formatter,
         period: float,
-        *,
-        offset: float = 0.0,
     ) -> None:
         if not _is_finite_real(period) or period <= 0:
             raise ParameterValueError(f"period must be finite and strictly positive, got {period}")
-        if not _is_finite_real(offset):
-            raise ParameterValueError(f"offset must be finite, got {offset}")
         self.base_formatter = base_formatter
         self.period = float(period)
-        self.offset = float(offset)
         super().__init__()
 
     def set_axis(self, axis: Any) -> None:
@@ -460,10 +455,10 @@ class _PeriodicFormatter(mplticker.Formatter):
         self.base_formatter.set_axis(axis)
 
     def _wrap(self, values: np.ndarray) -> np.ndarray:
-        wrapped = self.offset + np.mod(values - self.offset, self.period)
+        wrapped = np.mod(values, self.period)
         tol = 1e-9 * self.period
-        # Snap values within tolerance of offset + period to offset (np.mod(-eps, period) can return period).
-        return np.where(np.isclose(wrapped, self.offset + self.period, atol=tol), self.offset, wrapped)
+        # Snap values within tolerance of period to 0.0 (np.mod(-eps, period) can return period).
+        return np.where(np.isclose(wrapped, self.period, atol=tol), 0.0, wrapped)
 
     def __call__(self, x: float, pos: int | None = None) -> str:
         val = float(self._wrap(np.array([x], dtype=float))[0])
@@ -488,8 +483,8 @@ class _LoopLocator(mplticker.Locator):
     closest to `nbins`. It also supports explicit division counts or arbitrary user-supplied
     tick timestamps in seconds.
 
-    On full circular/periodic intervals, it avoids duplicate endpoints where ``offset + period``
-    wraps onto ``offset``.
+    On full circular/periodic intervals, it avoids duplicate endpoints where ``period``
+    wraps onto ``0``.
 
     Parameters
     ----------
@@ -501,8 +496,6 @@ class _LoopLocator(mplticker.Locator):
         `(2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)` based on `nbins`.
     nbins : int > 0
         Target number of bins when `divisions` is `None`. Default is 8.
-    offset : float
-        Starting time offset in seconds. Default is 0.0.
     """
 
     PREF_DIVISIONS: tuple[int, ...] = (2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64)
@@ -514,12 +507,9 @@ class _LoopLocator(mplticker.Locator):
         *,
         divisions: int | Sequence[float] | None = None,
         nbins: int = 8,
-        offset: float = 0.0,
     ) -> None:
         if not _is_finite_real(period) or period <= 0:
             raise ParameterValueError(f"period must be finite and strictly positive, got {period}")
-        if not _is_finite_real(offset):
-            raise ParameterValueError(f"offset must be finite, got {offset}")
         if isinstance(nbins, bool) or not isinstance(nbins, (int, np.integer)) or nbins <= 0:
             raise ParameterValueError(f"nbins must be a positive integer, got {nbins}")
         if isinstance(divisions, bool):
@@ -544,7 +534,6 @@ class _LoopLocator(mplticker.Locator):
             self.divisions = None
         self.period = float(period)
         self.nbins = int(nbins)
-        self.offset = float(offset)
         super().__init__()
 
     def tick_values(self, vmin: float, vmax: float) -> np.ndarray:  # type: ignore[override]
@@ -567,9 +556,9 @@ class _LoopLocator(mplticker.Locator):
 
         if self.divisions is None:
             n = min(self.PREF_DIVISIONS, key=lambda c: abs(c - self.nbins))
-            base_ticks = self.offset + np.linspace(0.0, self.period, n, endpoint=False)
+            base_ticks = np.linspace(0.0, self.period, n, endpoint=False)
         elif isinstance(self.divisions, (int, np.integer)):
-            base_ticks = self.offset + np.linspace(0.0, self.period, int(self.divisions), endpoint=False)
+            base_ticks = np.linspace(0.0, self.period, int(self.divisions), endpoint=False)
         else:
             base_ticks = np.asarray(self.divisions, dtype=float)
 
@@ -578,7 +567,7 @@ class _LoopLocator(mplticker.Locator):
 
         tol = 1e-6 * self.period
         lo, hi = (vmin, vmax) if vmin <= vmax else (vmax, vmin)
-        # Tile periodically so ticks wrap cleanly across phase-shifted loop intervals
+        # Tile periodically so ticks wrap cleanly across shifted or negative view intervals
         k_min = int(np.floor((lo - tol - float(np.max(base_ticks))) / self.period))
         k_max = int(np.ceil((hi + tol - float(np.min(base_ticks))) / self.period))
         shifts = np.arange(k_min, k_max + 1, dtype=float) * self.period
@@ -599,7 +588,7 @@ class _LoopLocator(mplticker.Locator):
         if self.axis is not None:
             vmin, vmax = self.axis.get_view_interval()
         else:
-            vmin, vmax = self.offset, self.offset + self.period
+            vmin, vmax = 0.0, self.period
         return self.tick_values(vmin, vmax)
 
 
@@ -1460,7 +1449,6 @@ def _decorate_loop_time_axis(
     time_axis: str | int | Sequence[float] | np.ndarray | None,
     *,
     period: float,
-    offset: float = 0.0,
     transform: mtransforms.Transform | None = None,
 ) -> None:
     """Configure a periodic time axis (optionally mapped through ``transform``)."""
@@ -1486,9 +1474,7 @@ def _decorate_loop_time_axis(
             unit_name = time_units[time_axis]
         else:
             raise ParameterValueError(f"Unsupported time_axis: {time_axis!r}")
-    elif isinstance(time_axis, bool):
-        raise ParameterValueError(f"Unsupported time_axis: {time_axis!r}")
-    elif isinstance(time_axis, (int, np.integer, np.ndarray, Sequence)) and not isinstance(time_axis, bytes):
+    elif not isinstance(time_axis, (bool, bytes)) and isinstance(time_axis, (int, np.integer, np.ndarray, Sequence)):
         divisions = cast("int | Sequence[float] | np.ndarray", time_axis)
     else:
         raise ParameterValueError(f"Unsupported time_axis: {time_axis!r}")
@@ -1496,11 +1482,9 @@ def _decorate_loop_time_axis(
     base_fmt: mplticker.Formatter = _PeriodicFormatter(
         TimeFormatter(unit=unit, lag=False),
         period=period,
-        offset=offset,
     )
     base_loc: mplticker.Locator = _LoopLocator(
         period=period,
-        offset=offset,
         divisions=cast("int | Sequence[float] | None", divisions),
     )
     if transform is not None:
