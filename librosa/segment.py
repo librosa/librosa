@@ -319,22 +319,22 @@ def cross_similarity(
     dists_fwd, indices_fwd = knn_fwd.kneighbors(X=data, return_distance=True)
     xsim_fwd = __build_knn_graph(dists_fwd, indices_fwd, (n, n_ref), k_data, mode)
 
-    need_rev = mutual or (mode == "affinity" and isinstance(bandwidth, str) and bandwidth in _PAIRWISE_BANDWIDTH_MODES)
     xsim_rev: scipy.sparse.csr_array | None = None
-    if need_rev:
-        if full_mode and not mutual:
-            xsim_rev = xsim_fwd.T.tocsr()
-        else:
-            knn_rev = __build_knn(data, min(n, k_ref), metric)
-            dists_rev, indices_rev = knn_rev.kneighbors(X=data_ref, return_distance=True)
-            xsim_rev = __build_knn_graph(dists_rev, indices_rev, (n_ref, n), k_ref, mode)
-
     if mutual:
-        assert xsim_rev is not None
+        knn_rev = __build_knn(data, min(n, k_ref), metric)
+        dists_rev, indices_rev = knn_rev.kneighbors(X=data_ref, return_distance=True)
+        xsim_rev = __build_knn_graph(dists_rev, indices_rev, (n_ref, n), k_ref, mode)
         xsim = xsim_fwd.minimum(xsim_rev.T.tocsr())
         xsim.eliminate_zeros()
     else:
         xsim = xsim_fwd
+        if mode == "affinity" and isinstance(bandwidth, str) and bandwidth in _PAIRWISE_BANDWIDTH_MODES:
+            if full_mode:
+                xsim_rev = xsim_fwd.T.tocsr()
+            else:
+                knn_rev = __build_knn(data, min(n, k_ref), metric)
+                dists_rev, indices_rev = knn_rev.kneighbors(X=data_ref, return_distance=True)
+                xsim_rev = __build_knn_graph(dists_rev, indices_rev, (n_ref, n), k_ref, mode)
 
     if mode == "connectivity":
         xsim = xsim.astype(bool)
