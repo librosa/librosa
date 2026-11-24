@@ -315,15 +315,11 @@ def cross_similarity(
         k_ref = n
 
     # Build the neighbor search object (data -> data_ref)
-    knn_fwd = __build_knn(data_ref, min(n_ref, k_data), metric)
-    dists_fwd, indices_fwd = knn_fwd.kneighbors(X=data, return_distance=True)
-    xsim_fwd = __build_knn_graph(dists_fwd, indices_fwd, (n, n_ref), k_data, mode)
+    xsim_fwd = __cross_knn_graph(data_ref, data, k_data, metric, mode)
 
     xsim_rev: scipy.sparse.csr_array | None = None
     if mutual:
-        knn_rev = __build_knn(data, min(n, k_ref), metric)
-        dists_rev, indices_rev = knn_rev.kneighbors(X=data_ref, return_distance=True)
-        xsim_rev = __build_knn_graph(dists_rev, indices_rev, (n_ref, n), k_ref, mode)
+        xsim_rev = __cross_knn_graph(data, data_ref, k_ref, metric, mode)
         xsim = xsim_fwd.minimum(xsim_rev.T.tocsr())
         xsim.eliminate_zeros()
     else:
@@ -332,9 +328,7 @@ def cross_similarity(
             if full_mode:
                 xsim_rev = xsim_fwd.T.tocsr()
             else:
-                knn_rev = __build_knn(data, min(n, k_ref), metric)
-                dists_rev, indices_rev = knn_rev.kneighbors(X=data_ref, return_distance=True)
-                xsim_rev = __build_knn_graph(dists_rev, indices_rev, (n_ref, n), k_ref, mode)
+                xsim_rev = __cross_knn_graph(data, data_ref, k_ref, metric, mode)
 
     if mode == "connectivity":
         xsim = xsim.astype(bool)
@@ -673,27 +667,16 @@ def recurrence_matrix(
     else:
         rec = rec_col
 
-    if self:
-        if mode == "connectivity":
-            rec = (rec + scipy.sparse.eye_array(t, format="csr")).tocsr()
-        elif mode == "affinity":
-            # we need to keep the self-loop in here, but not mess up the
-            # bandwidth estimation
-            #
-            # using negative distances here preserves the structure without changing
-            # the statistics of the data
-            rec = (rec - scipy.sparse.eye_array(t, format="csr")).tocsr()
-
-    if mode == "connectivity":
-        rec = rec.astype(bool)
-    elif mode == "affinity":
-        # Set all the negatives back to 0
-        # Negatives are temporarily inserted above to preserve the sparsity structure
-        # of the matrix without corrupting the bandwidth calculations
-        rec.data[rec.data < 0] = 0.0
+    if mode == "affinity":
         rec_rev_bw = rec_row if bw_k_row != bw_k_col else None
         aff_bandwidth = __affinity_bandwidth(rec, bandwidth, (bw_k_col, bw_k_row), rec_fwd=rec_col, rec_rev=rec_rev_bw)
         rec.data[:] = np.exp(rec.data / (-1 * aff_bandwidth))
+
+    if self and mode != "distance":
+        rec = (rec + scipy.sparse.eye_array(t, format="csr")).tocsr()
+
+    if mode == "connectivity":
+        rec = rec.astype(bool)
 
     # Transpose to be column-major
     rec_out = scipy.sparse.csc_array(rec.T)
@@ -1456,6 +1439,21 @@ def __build_knn_graph(
     graph = scipy.sparse.csr_array((vals, (rows, cols)), shape=shape)
     graph.eliminate_zeros()
     return graph
+
+
+def __cross_knn_graph(
+    fit_data: np.ndarray,
+    query_data: np.ndarray,
+    k_limit: int,
+    metric: str,
+    mode: str,
+) -> scipy.sparse.csr_array:
+    """Build a CSR k-NN graph from ``query_data`` into ``fit_data``."""
+    n_fit = fit_data.shape[0]
+    n_query = query_data.shape[0]
+    knn = __build_knn(fit_data, min(n_fit, k_limit), metric)
+    dists, indices = knn.kneighbors(X=query_data, return_distance=True)
+    return __build_knn_graph(dists, indices, (n_query, n_fit), k_limit, mode)
 
 
 def __knn_row_stats(rec: scipy.sparse.csr_array, k: int, bw_mode: str) -> tuple[np.ndarray, np.ndarray]:

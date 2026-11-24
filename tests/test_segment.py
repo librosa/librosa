@@ -179,6 +179,26 @@ def test_recurrence_matrix(n, k, width, mutual, metric, self, rng):
     assert not np.any(D)
 
 
+@pytest.mark.parametrize("width", [1, 5])
+@pytest.mark.parametrize("k", [None, 5])
+def test_recurrence_connectivity_matches_distance(width, k, rng):
+    n = 30
+    data = rng.standard_normal(size=(3, n))
+
+    rec_conn = librosa.segment.recurrence_matrix(data, k=k, width=width, mode="connectivity")
+    rec_dist = librosa.segment.recurrence_matrix(data, k=k, width=width, mode="distance")
+    assert np.array_equal(rec_conn, rec_dist > 0)
+
+    k_eff = int(2 * np.ceil(np.sqrt(n - 2 * width + 1))) if k is None else k
+    dist_mat = squareform(pdist(data.T, metric="euclidean"))
+    idx_i, idx_j = np.indices(dist_mat.shape)
+    dist_mat[np.abs(idx_i - idx_j) < width] = np.inf
+    expected = np.zeros_like(rec_conn)
+    for j in range(n):
+        expected[np.argsort(dist_mat[:, j])[:k_eff], j] = True
+    assert np.array_equal(rec_conn, expected)
+
+
 @pytest.mark.parametrize("sym_val", [False, True])
 def test_recurrence_matrix_deprecated_sym(sym_val, rng):
     data = rng.standard_normal(size=(3, 25))
