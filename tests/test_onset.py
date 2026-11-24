@@ -365,7 +365,7 @@ def test_onset_strength_noagg():
 def test_onset_strength_badref():
     S = np.zeros((3, 3))
     with pytest.raises(librosa.ParameterShapeError):
-        librosa.onset.onset_strength(S=S, ref=S[:, :2])
+        librosa.onset.onset_strength(S=S, S_ref=S[:, :2])
 
 
 def test_onset_strength_multi_ref(rng):
@@ -375,11 +375,78 @@ def test_onset_strength_multi_ref(rng):
     # Test with a null reference
     null_ref = np.zeros_like(S)
 
-    onsets = librosa.onset.onset_strength_multi(S=S, ref=null_ref, aggregate=False, center=False)
+    onsets = librosa.onset.onset_strength_multi(S=S, S_ref=null_ref, aggregate=False, center=False)
 
-    # since the reference is zero everywhere, S - ref = S
+    # since the reference is zero everywhere, S - S_ref = S
     # past the setup phase (first frame)
     assert np.allclose(onsets[:, 1:], S[:, 1:])
+
+
+def test_onset_strength_deprecated_ref(rng):
+    S = 1 + np.abs(rng.standard_normal(size=(32, 10)))
+    null_ref = np.zeros_like(S)
+
+    with pytest.warns(
+        FutureWarning,
+        match=r"(?s)onset_strength\(\) keyword argument 'ref' has been renamed to 'S_ref' in version 1\.1\.0.*1\.2\.0",
+    ) as record:
+        onsets_old = librosa.onset.onset_strength(S=S, ref=null_ref, center=False)
+    assert len(record) == 1
+
+    onsets_new = librosa.onset.onset_strength(S=S, S_ref=null_ref, center=False)
+    assert np.allclose(onsets_old, onsets_new)
+
+    with pytest.warns(
+        FutureWarning,
+        match=r"(?s)onset_strength\(\) keyword argument 'ref' has been renamed to 'S_ref' in version 1\.1\.0.*1\.2\.0",
+    ) as record_none:
+        onsets_old_none = librosa.onset.onset_strength(S=S, ref=None, center=False)
+    assert len(record_none) == 1
+
+    onsets_default = librosa.onset.onset_strength(S=S, center=False)
+    assert np.allclose(onsets_old_none, onsets_default)
+
+
+def test_onset_strength_multi_deprecated_ref(rng):
+    S = 1 + np.abs(rng.standard_normal(size=(32, 10)))
+    null_ref = np.zeros_like(S)
+    pattern = (
+        r"(?s)onset_strength_multi\(\) keyword argument 'ref' "
+        r"has been renamed to 'S_ref' in version 1\.1\.0.*1\.2\.0"
+    )
+
+    with pytest.warns(FutureWarning, match=pattern) as record:
+        onsets_old = librosa.onset.onset_strength_multi(S=S, ref=null_ref, aggregate=False, center=False)
+    assert len(record) == 1
+
+    onsets_new = librosa.onset.onset_strength_multi(S=S, S_ref=null_ref, aggregate=False, center=False)
+    assert np.allclose(onsets_old, onsets_new)
+
+    with pytest.warns(FutureWarning, match=pattern) as record_none:
+        onsets_old_none = librosa.onset.onset_strength_multi(S=S, ref=None, aggregate=False, center=False)
+    assert len(record_none) == 1
+
+    onsets_default = librosa.onset.onset_strength_multi(S=S, aggregate=False, center=False)
+    assert np.allclose(onsets_old_none, onsets_default)
+
+
+@pytest.mark.parametrize("func", [librosa.onset.onset_strength, librosa.onset.onset_strength_multi])
+@pytest.mark.parametrize("use_none_ref", [False, True])
+def test_onset_strength_ref_conflict(rng, func, use_none_ref):
+    S = 1 + np.abs(rng.standard_normal(size=(32, 10)))
+    null_ref = np.zeros_like(S)
+    old_ref = None if use_none_ref else null_ref
+
+    with pytest.raises(librosa.ParameterValueError):
+        func(S=S, S_ref=null_ref, ref=old_ref)
+
+
+def test_onset_strength_deprecated_ref_complex(ysr):
+    y, _ = ysr
+    S_complex = librosa.stft(y[:2048])
+
+    with pytest.warns(FutureWarning, match="renamed to 'S_ref'"), pytest.raises(librosa.ParameterValueError):
+        librosa.onset.onset_strength(S=S_complex, ref=S_complex, mode="complex")
 
 
 def test_onset_detect_inplace_normalize():
@@ -408,9 +475,9 @@ def test_onset_strength_mode_validation(ysr):
     with pytest.raises(librosa.ParameterValueError):
         librosa.onset.onset_strength(S=S_complex, max_size=3, mode="complex")
 
-    # ref is not None with complex mode
+    # S_ref is not None with complex mode
     with pytest.raises(librosa.ParameterValueError):
-        librosa.onset.onset_strength(S=S_complex, ref=S_complex, mode="complex")
+        librosa.onset.onset_strength(S=S_complex, S_ref=S_complex, mode="complex")
 
     # Real S with mode="complex"
     with pytest.raises(librosa.ParameterValueError):
