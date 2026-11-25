@@ -1074,14 +1074,14 @@ def poly_features(
 
     # Match `np.polyfit` float64 conditioning with column L2-norm scaling and SVD rcond.
     eps = np.finfo(np.float64).eps
-    d = order + 1
+    powers = np.arange(order, -1, -1, dtype=np.float64)
     y_dtype = np.result_type(S.dtype, np.float64)
     coefficients: np.ndarray
 
     if freq.ndim == 1:
         # Constant frequencies across frames: factor once for all frames/channels
         x = np.asarray(freq, dtype=np.float64)
-        V = np.vander(x, d)
+        V = x[:, None] ** powers
         scale = np.sqrt(np.sum(V * V, axis=0))
         scale_safe = np.where(scale == 0, 1.0, scale)
         V_s = V / scale_safe
@@ -1091,18 +1091,17 @@ def poly_features(
         coefficients = proj @ np.asarray(S, dtype=y_dtype)
     else:
         # Time/channel-varying frequencies: factor on freq's shape before broadcasting against S
-        x = np.swapaxes(np.asarray(freq, dtype=np.float64), -2, -1)
-        y_arr = np.swapaxes(np.asarray(S, dtype=y_dtype), -2, -1)
-        powers = np.arange(order, -1, -1, dtype=np.float64)
+        x = np.moveaxis(np.asarray(freq, dtype=np.float64), -2, -1)
+        y_arr = np.moveaxis(np.asarray(S, dtype=y_dtype), -2, -1)
         V = x[..., None] ** powers
         scale = np.sqrt(np.sum(V * V, axis=-2, keepdims=True))
         scale_safe = np.where(scale == 0, 1.0, scale)
         V_s = V / scale_safe
         rcond = x.shape[-1] * eps
 
-        proj = np.linalg.pinv(V_s, rtol=rcond) / np.swapaxes(scale_safe, -2, -1)
+        proj = np.linalg.pinv(V_s, rtol=rcond) / np.moveaxis(scale_safe, -2, -1)
         c = (proj @ y_arr[..., None])[..., 0]
-        coefficients = np.swapaxes(c, -2, -1)
+        coefficients = np.moveaxis(c, -2, -1)
 
     # Cast back to the spectrogram dtype so a float32 pipeline is
     # preserved, consistent with the other spectral features.

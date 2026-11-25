@@ -1028,20 +1028,27 @@ def preemphasis(
                 f"Cannot extrapolate initial filter state zi from signal of length {y.shape[-1]}"
             )
         # Initialize the filter to implement linear extrapolation
-        zi = 2 * y[..., 0:1] - y[..., 1:2]
+        zi_arr = 2 * y[..., 0:1] - y[..., 1:2]
+    else:
+        zi_arr = np.asarray(zi, dtype=y.dtype)
+        if zi_arr.ndim == 0:
+            zi_arr = np.reshape(zi_arr, (1,))
+        zi_arr = np.broadcast_to(zi_arr, (*y.shape[:-1], 1))
 
-    zi_arr = np.asarray(np.atleast_1d(zi), dtype=y.dtype)
     coef_d = np.asarray(coef, dtype=y.dtype)
 
-    y_out: np.ndarray = np.empty_like(y)
+    y_out: np.ndarray
     z_f: np.ndarray
     if y.shape[-1] > 0:
-        y_out[..., 0:1] = y[..., 0:1] + zi_arr
+        first = y[..., 0:1] + zi_arr
         if y.shape[-1] > 1:
-            y_out[..., 1:] = y[..., 1:] - coef_d * y[..., :-1]
+            y_out = np.concat([first, y[..., 1:] - coef_d * y[..., :-1]], axis=-1)
+        else:
+            y_out = first
         z_f = -coef_d * y[..., -1:]
     else:
-        z_f = np.broadcast_to(zi_arr, (*y.shape[:-1], 1)).copy()
+        y_out = np.zeros(y.shape, dtype=y.dtype)
+        z_f = np.asarray(zi_arr, copy=True)
 
     if return_zf:
         return y_out, z_f

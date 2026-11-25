@@ -632,3 +632,6 @@ def test_preemphasis_edge_cases():
         assert yo.shape == emp_shape
         assert zf.shape == (*emp_shape[:-1], 1)
         assert np.allclose(zf, 0.5)
+
+    with pytest.raises(ValueError):
+        librosa.effects.preemphasis(np.zeros((1,), dtype=np.float32), zi=np.zeros((2, 1), dtype=np.float32))
