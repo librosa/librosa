@@ -1018,21 +1018,22 @@ def preemphasis(
     >>> np.allclose(y_filt, np.concatenate([y_filt_1, y_filt_2]))
     True
     """
-    b = np.asarray([1.0, -coef], dtype=y.dtype)
-    a = np.asarray([1.0], dtype=y.dtype)
-
     if zi is None:
         # Initialize the filter to implement linear extrapolation
         zi = 2 * y[..., 0:1] - y[..., 1:2]
 
-    zi = np.atleast_1d(zi)
+    zi_arr = np.asarray(np.atleast_1d(zi), dtype=y.dtype)
+    coef_d = np.asarray(coef, dtype=y.dtype)
 
-    y_out: np.ndarray
+    y_out: np.ndarray = np.empty_like(y)
     z_f: np.ndarray
-
-    import scipy.signal
-
-    y_out, z_f = scipy.signal.lfilter(b, a, y, zi=np.asarray(zi, dtype=y.dtype))
+    if y.shape[-1] > 0:
+        y_out[..., 0:1] = y[..., 0:1] + zi_arr
+        if y.shape[-1] > 1:
+            y_out[..., 1:] = y[..., 1:] - coef_d * y[..., :-1]
+        z_f = -coef_d * y[..., -1:]
+    else:
+        z_f = zi_arr.copy()
 
     if return_zf:
         return y_out, z_f

@@ -1069,22 +1069,40 @@ def poly_features(
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft, dtype=S.dtype)
 
+    # Match `np.polyfit` float64 conditioning with column L2-norm scaling and SVD rcond.
+    eps = np.finfo(np.float64).eps
+    d = order + 1
+    y_dtype = np.result_type(S.dtype, np.float64)
     coefficients: np.ndarray
 
     if freq.ndim == 1:
-        # If frequencies are constant over frames, then we only need to fit once
-        fitter = np.vectorize(lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)")
-        coefficients = fitter(S)
+        # Constant frequencies across frames: factor once for all frames/channels
+        x = np.asarray(freq, dtype=np.float64)
+        V = np.vander(x, d)
+        scale = np.sqrt(np.sum(V * V, axis=0))
+        scale_safe = np.where(scale == 0, 1.0, scale)
+        V_s = V / scale_safe
+        rcond = len(x) * eps
+
+        proj = np.linalg.pinv(V_s, rtol=rcond) / scale_safe[:, None]
+        coefficients = proj @ np.asarray(S, dtype=y_dtype)
     else:
-        # Otherwise, we have variable frequencies, and need to fit independently
-        fitter = np.vectorize(lambda x, y: np.polyfit(x, y, order), signature="(f),(f)->(d)")
+        # Time/channel-varying frequencies: batched Vandermonde solve
+        freq_b, S_b = np.broadcast_arrays(np.asarray(freq, dtype=np.float64), np.asarray(S, dtype=y_dtype))
+        x = np.swapaxes(freq_b, -2, -1)
+        y_arr = np.swapaxes(S_b, -2, -1)
+        powers = np.arange(order, -1, -1, dtype=np.float64)
+        V = x[..., None] ** powers
+        scale = np.sqrt(np.sum(V * V, axis=-2, keepdims=True))
+        scale_safe = np.where(scale == 0, 1.0, scale)
+        V_s = V / scale_safe
+        rcond = x.shape[-1] * eps
 
-        # We have to do some axis swapping to preserve layout
-        # otherwise, the new dimension gets put at the end instead of the penultimate position
-        coefficients = fitter(freq.swapaxes(-2, -1), S.swapaxes(-2, -1)).swapaxes(-2, -1)
+        c = (np.linalg.pinv(V_s, rtol=rcond) @ y_arr[..., None])[..., 0]
+        c = c / scale_safe[..., 0, :]
+        coefficients = np.swapaxes(c, -2, -1)
 
-    # `np.polyfit` always computes (and returns) in float64 for numerical
-    # stability; cast back to the spectrogram dtype so a float32 pipeline is
+    # Cast back to the spectrogram dtype so a float32 pipeline is
     # preserved, consistent with the other spectral features.
     return coefficients.astype(S.dtype, copy=False)
 

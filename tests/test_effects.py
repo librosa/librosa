@@ -586,3 +586,32 @@ def test_vibrato_short():
     with pytest.warns(UserWarning, match=r"n_fft=.*is too large for input signal"):
         yv = librosa.effects.vibrato(y, sr=22050)
     assert np.allclose(y, yv)
+
+
+def test_preemphasis_matches_lfilter(rng):
+    import scipy.signal
+
+    for dtype in (np.float32, np.float64):
+        for shape in ((100,), (2, 100), (2, 3, 50), (1,), (2, 1)):
+            y = rng.standard_normal(shape).astype(dtype)
+            for coef in (0.5, 0.97):
+                zi_cases: list[float | np.ndarray | None] = [
+                    0.5 if len(shape) == 1 else np.full((*shape[:-1], 1), 0.5, dtype=dtype),
+                    rng.standard_normal((*shape[:-1], 1)).astype(dtype),
+                ]
+                if shape[-1] >= 2:
+                    zi_cases.append(None)
+
+                for zi in zi_cases:
+                    b = np.asarray([1.0, -coef], dtype=dtype)
+                    a = np.asarray([1.0], dtype=dtype)
+                    zi_ref = (2 * y[..., 0:1] - y[..., 1:2]) if zi is None else np.atleast_1d(zi)
+                    y_ref, zf_ref = scipy.signal.lfilter(b, a, y, zi=np.asarray(zi_ref, dtype=dtype))  # type: ignore[arg-type]
+
+                    y_new, zf_new = librosa.effects.preemphasis(y, coef=coef, zi=zi, return_zf=True)
+                    assert y_new.dtype == y_ref.dtype
+                    assert zf_new.dtype == zf_ref.dtype
+                    assert y_new.shape == y_ref.shape
+                    assert zf_new.shape == zf_ref.shape
+                    assert np.allclose(y_new, y_ref, rtol=1e-6, atol=1e-6)
+                    assert np.allclose(zf_new, zf_ref, rtol=1e-6, atol=1e-6)

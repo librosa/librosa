@@ -407,7 +407,7 @@ def test_match_intervals_nonoverlapping(dtype, strict, targets, queries, expecte
         np.asarray(queries, dtype=dtype), np.asarray(targets, dtype=dtype), strict=strict
     )
     np.testing.assert_array_equal(actual, expected)
-    assert actual.dtype == np.uint32
+    assert actual.dtype == np.int32
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])

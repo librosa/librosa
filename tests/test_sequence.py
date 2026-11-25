@@ -846,3 +846,27 @@ def __validate_rqa_results(rec, score, path, gap_onset, gap_extend, _backtrack, 
     else:
         # Without knight moves, only diagonal steps are allowed
         assert np.allclose(path_diff, 1)
+
+
+def test_viterbi_int32_dtype():
+    p_init = np.asarray([0.6, 0.4])
+    transition = np.asarray([[0.7, 0.3], [0.4, 0.6]])
+    prob_2d = np.asarray([[0.5, 0.4, 0.1], [0.5, 0.6, 0.9]])
+    prob_3d = np.stack([prob_2d, prob_2d[:, ::-1]])
+
+    assert librosa.sequence.viterbi(prob_2d, transition, p_init=p_init).dtype == np.int32
+    assert librosa.sequence.viterbi(prob_3d, transition, p_init=p_init).dtype == np.int32
+    assert librosa.sequence.viterbi_discriminative(prob_2d, transition, p_init=p_init).dtype == np.int32
+    assert librosa.sequence.viterbi_discriminative(prob_3d, transition, p_init=p_init).dtype == np.int32
+
+    trans_bin = np.array([[[0.7, 0.3], [0.4, 0.6]], [[0.8, 0.2], [0.5, 0.5]]])
+    assert librosa.sequence.viterbi_binary(prob_2d, trans_bin).dtype == np.int32
+
+
+def test_dtw_3d_consistency(rng):
+    X = rng.standard_normal((2, 4, 12))
+    Y = rng.standard_normal((2, 4, 15))
+    D_3d, wp_3d = librosa.sequence.dtw(X, Y, metric="euclidean")
+    D_2d, wp_2d = librosa.sequence.dtw(X.reshape(-1, 12), Y.reshape(-1, 15), metric="euclidean")
+    assert np.allclose(D_3d, D_2d)
+    assert np.array_equal(wp_3d, wp_2d)

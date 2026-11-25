@@ -196,9 +196,8 @@ def decompose(
     if S.ndim > 2 and sort:
         raise ParameterShapeError("Parameter sort=True is unsupported for input with more than two dimensions")
 
-    # Transpose S and unroll feature dimensions
-    # Use order='F' here to preserve the temporal ordering
-    S = S.T.reshape((S.shape[-1], -1), order="F")
+    # Move sample/time axis to front and unroll leading feature dimensions in C order
+    S = np.moveaxis(S, -1, 0).reshape((S.shape[-1], -1))
 
     if components is not None:
         components = np.asarray(components)
@@ -227,7 +226,7 @@ def decompose(
             if components is None:
                 raise ParameterValueError("fit must be True if transformer and components are None")
             transformer = sklearn.decomposition.NMF(n_components=n_components, **kwargs)
-            H_fixed = components.reshape((-1, n_components), order="F").T.astype(S.dtype)
+            H_fixed = components.reshape((-1, n_components)).T.astype(S.dtype)
             transformer.components_ = H_fixed
             transformer.n_components_ = n_components
         else:
@@ -236,7 +235,7 @@ def decompose(
 
     fit_kwargs = {}
     if fit and components is not None:
-        H_init = components.reshape((-1, n_components), order="F").T.astype(S.dtype)
+        H_init = components.reshape((-1, n_components)).T.astype(S.dtype)
         fit_kwargs["H"] = H_init
         if activations is None:
             avg = np.sqrt(S.mean() / n_components)
@@ -260,9 +259,8 @@ def decompose(
         activations_out = transformer.transform(S).T  # type: ignore
 
     components_out: np.ndarray = transformer.components_  # type: ignore
-    component_shape = [*orig_shape[:-1], -1]
-    # use order='F' here to preserve component ordering
-    components_out = components_out.reshape(component_shape[::-1], order="F").T
+    # Reshape back to (*orig_shape[:-1], n_components) matching C-order flattening of S
+    components_out = np.moveaxis(components_out.reshape((-1, *orig_shape[:-1])), 0, -1)
 
     if sort:
         components_out, idx = util.axis_sort(components_out, index=True)
