@@ -2330,6 +2330,9 @@ def __shear_sparse(
     return _asformat_sparse(X_shear, fmt)
 
 
+# Private helper to let internal callers (recurrence_to_lag, lag_to_recurrence)
+# avoid emitting a duplicate spmatrix deprecation warning; fold back into shear
+# once spmatrix support is removed in 2.0.0.
 @overload
 def _shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 @overload

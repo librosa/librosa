@@ -1612,7 +1612,9 @@ def iirt(
         padding[-1] = (win_length // 2, win_length // 2)
         y = np.pad(y, padding, mode=pad_mode)
 
-    # get the semitone filterbank
+    # get the semitone filterbank (call private _semitone_filterbank to avoid
+    # emitting a duplicate flayout='ba' deprecation warning; revert to
+    # semitone_filterbank once flayout='ba' is removed in 2.0.0)
     filterbank_ct, sample_rates = _semitone_filterbank(tuning=tuning, flayout=flayout, **kwargs)
 
     # create downsampled versions of the audio signal

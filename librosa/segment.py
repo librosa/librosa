@@ -790,6 +790,8 @@ def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
             # Suppress type check, mypy doesn't know that rec is an ndarray here
             rec = np.pad(rec, padding, mode="constant")  # type: ignore
 
+    # Call private _shear to avoid emitting a duplicate spmatrix deprecation warning;
+    # revert to util.shear once spmatrix support is removed in 2.0.0.
     lag: ArrayOrSparseArray = _shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
 
     if sparse:
@@ -875,6 +877,8 @@ def lag_to_recurrence[ArrayOrSparseArray: np.ndarray | _SparseArray](
     # Since lag must be 2-dimensional, abs(axis) = axis
     t = lag.shape[axis]
 
+    # Call private _shear to avoid emitting a duplicate spmatrix deprecation warning;
+    # revert to util.shear once spmatrix support is removed in 2.0.0.
     rec = _shear(lag, factor=+1, axis=axis)  # type: ignore[arg-type]
 
     sub_slice = [slice(None)] * rec.ndim

@@ -1990,6 +1990,9 @@ def mr_frequencies(tuning: float) -> tuple[np.ndarray, np.ndarray]:
     return center_freqs, sample_rates
 
 
+# Private helper to let librosa.iirt avoid emitting a duplicate flayout='ba'
+# deprecation warning; fold back into semitone_filterbank once flayout='ba'
+# is removed in 2.0.0.
 def _semitone_filterbank(
     *,
     center_freqs: np.ndarray | None = None,
