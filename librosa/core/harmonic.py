@@ -9,6 +9,7 @@ import numpy as np
 
 from .._cache import cache
 from ..exceptions import ParameterShapeError
+from ..util._interp import _interp1d, _interp1d_batched
 from ..util.deprecation import _warn_interp_kind
 from .interpolate import _validate_coords, interp_frequency
 
@@ -274,61 +275,40 @@ def interp_harmonics(
     >>> librosa.display.colorbar_db(img, ax=ax)
     >>> plt.show()
     """
-    import scipy.interpolate
-
     _warn_interp_kind(kind, stacklevel=3)
     _validate_coords(freqs, x.shape[axis], axis, name="Frequencies")
 
     if freqs.ndim == 1:
         # Build the 1-D interpolator.
         # All frames have a common domain, so we only need one interpolator here.
-        f_interp = scipy.interpolate.interp1d(
+        f_out = np.multiply.outer(harmonics, freqs)
+        return _interp1d(
             freqs,
             x,
+            f_out,
             axis=axis,
             bounds_error=False,
-            copy=False,
             kind=kind,
             fill_value=fill_value,
         )
 
-        # Set the interpolation points
-        f_out = np.multiply.outer(harmonics, freqs)
-
-        # Interpolate; suppress type checks
-        return f_interp(f_out)
-
     elif freqs.shape == x.shape:
         # If we have time-varying frequencies, then it must match exactly the shape of the input
-
-        # We'll define a frame-wise interpolator helper function that we will vectorize over
-        # the entire input array
-        def _f_interp(_a, _b):
-            interp = scipy.interpolate.interp1d(
-                _a, _b, bounds_error=False, copy=False, kind=kind, fill_value=fill_value
-            )
-
-            return interp(np.multiply.outer(_a, harmonics))
-
-        # Signature is expanding frequency into a new dimension
-        xfunc = np.vectorize(_f_interp, signature="(f),(f)->(f,h)")
-
-        # Rotate the vectorizing axis to the tail so that we get parallelism over frames
-        # Afterward, we're swapping (-1, axis-1) instead of (-1,axis)
-        # because a new dimension has been inserted
-        return (  # type: ignore
-            xfunc(freqs.swapaxes(axis, -1), x.swapaxes(axis, -1))
-            .swapaxes(
-                # Return the original target axis to its place
-                -2,
-                axis,
-            )
-            .swapaxes(
-                # Put the new harmonic axis directly in front of the target axis
-                -1,
-                axis - 1,
-            )
+        ax = axis % x.ndim
+        harmonics_arr = np.asarray(harmonics)
+        c_s = np.moveaxis(freqs, ax, -1)
+        x_s = np.moveaxis(x, ax, -1)
+        q = (harmonics_arr[:, None] * c_s[..., None, :]).reshape(*c_s.shape[:-1], -1)
+        res = _interp1d_batched(
+            c_s,
+            x_s,
+            q,
+            kind=kind,
+            bounds_error=False,
+            fill_value=fill_value,
         )
+        out = res.reshape(*c_s.shape[:-1], len(harmonics_arr), c_s.shape[-1])
+        return np.moveaxis(out, (-2, -1), (ax, ax + 1))
     else:
         raise ParameterShapeError(f"freqs.shape={freqs.shape} is incompatible with input shape={x.shape}")
 

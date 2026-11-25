@@ -8,6 +8,7 @@ import numpy as np
 
 from .._typing import _InterpKind
 from ..exceptions import ParameterShapeError
+from ..util._interp import _STEP_AND_LINEAR_KINDS, _interp1d, _interp1d_batched
 from ..util.deprecation import _warn_interp_kind
 from ..util.utils import is_unique
 from .convert import times_like
@@ -72,7 +73,7 @@ def _interp_slice(
     fill_value: float | tuple[float, float] | Literal["extrapolate"],
     assume_sorted: bool,
 ) -> np.ndarray:
-    """Interpolate a single 1D slice using scipy.interpolate.interp1d.
+    """Interpolate a single 1D slice with NaN filtering and duplicate-coordinate averaging.
 
     Parameters
     ----------
@@ -94,8 +95,6 @@ def _interp_slice(
     res : np.ndarray
         Interpolated values at target coordinates.
     """
-    import scipy.interpolate
-
     idx = np.isfinite(c) & np.isfinite(v)
     if np.count_nonzero(idx) < 1:
         fill = fill_value if isinstance(fill_value, (int, float)) else 0.0
@@ -116,16 +115,16 @@ def _interp_slice(
     fill = fill_value if isinstance(fill_value, (int, float)) else 0.0
     try:
         with np.errstate(divide="ignore", invalid="ignore"):
-            interp = scipy.interpolate.interp1d(
+            res = _interp1d(
                 c_clean,
                 v_clean,
+                t,
+                axis=0,
                 bounds_error=False,
                 fill_value=fill_value,
                 assume_sorted=assume_sorted,
                 kind=kind,
-                copy=False,
             )
-            res = interp(t)
     except (ValueError, FloatingPointError):
         return np.full(len(t), fill, dtype=v.dtype)
 
@@ -177,22 +176,20 @@ def _interp_axis(
 
     _validate_coords(coords, n_in, ax, name=coord_name)
 
+    fill = fill_value if isinstance(fill_value, (int, float)) else 0.0
+
     # Fast path: 1D source and 1D target coordinates with fully finite coordinates
     if coords.ndim == 1 and target_coords.ndim == 1 and np.all(np.isfinite(coords)):
-        import scipy.interpolate
-
-        interp = scipy.interpolate.interp1d(
+        res = _interp1d(
             coords,
             x,
+            target_coords,
             axis=ax,
             kind=kind,
             fill_value=fill_value,
             bounds_error=False,
             assume_sorted=assume_sorted,
-            copy=False,
         )
-        res = interp(target_coords)
-        fill = fill_value if isinstance(fill_value, (int, float)) else 0.0
         return np.asarray(np.nan_to_num(res, copy=False, nan=fill))
 
     # General path: multidimensional coordinates, multidimensional targets, or NaNs
@@ -259,23 +256,54 @@ def _interp_axis(
     else:
         t_b = np.broadcast_to(target_aligned, full_out)
 
-    x_s = np.swapaxes(x_b, norm_ax, -1)
-    c_s = np.swapaxes(c_b, norm_ax, -1)
-    t_s = np.swapaxes(t_b, norm_ax, -1)
+    x_s = np.moveaxis(x_b, norm_ax, -1)
+    c_s = np.moveaxis(c_b, norm_ax, -1)
+    t_s = np.moveaxis(t_b, norm_ax, -1)
 
-    def _curried_slice(_c: np.ndarray, _v: np.ndarray, _t: np.ndarray) -> np.ndarray:
-        return _interp_slice(
-            _c,
-            _v,
-            _t,
-            kind=kind,
-            fill_value=fill_value,
-            assume_sorted=assume_sorted,
+    can_batch = (
+        kind in _STEP_AND_LINEAR_KINDS
+        and np.all(np.isfinite(x_s))
+        and (np.all(np.isfinite(coords)) if coords.ndim == 1 else np.all(np.isfinite(c_s)))
+        and (
+            assume_sorted
+            or (np.all(np.diff(coords) > 0) if coords.ndim == 1 else np.all(c_s[..., 1:] > c_s[..., :-1]))
         )
+    )
+    if can_batch:
+        c_in = coords if coords.ndim == 1 else c_s
+        res_b = _interp1d_batched(
+            c_in,
+            x_s,
+            t_s,
+            kind=kind,
+            bounds_error=False,
+            fill_value=fill_value,
+            assume_sorted=True,
+        )
+        res_s = np.asarray(np.nan_to_num(res_b, copy=False, nan=fill))
+    else:
+        batch_shape = c_s.shape[:-1]
+        b_size = int(np.prod(batch_shape)) if batch_shape else 1
+        if b_size == 0:
+            res_s = np.empty((*batch_shape, n_out), dtype=x.dtype)
+        else:
+            c_2d = c_s.reshape(b_size, n_in)
+            x_2d = x_s.reshape(b_size, n_in)
+            t_2d = t_s.reshape(b_size, n_out)
+            rows = [
+                _interp_slice(
+                    c_2d[i],
+                    x_2d[i],
+                    t_2d[i],
+                    kind=kind,
+                    fill_value=fill_value,
+                    assume_sorted=assume_sorted,
+                )
+                for i in range(b_size)
+            ]
+            res_s = np.stack(rows, axis=0).reshape(*batch_shape, n_out)
 
-    vfunc = np.vectorize(_curried_slice, signature="(n),(n),(m)->(m)")
-    res_s = vfunc(c_s, x_s, t_s)
-    return np.swapaxes(res_s, norm_ax, -1)
+    return np.moveaxis(res_s, -1, norm_ax)
 
 
 def interp_time(

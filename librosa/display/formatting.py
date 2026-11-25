@@ -12,6 +12,7 @@ frequencies (linear and log), musical notes, chords, and chromatic scales.
 # Standard library imports for type checking and future compatibility
 from __future__ import annotations
 
+import functools
 import warnings
 
 # Third-party imports for plotting and numerical operations
@@ -36,15 +37,15 @@ from ..exceptions import (
     ParameterTypeError,
     ParameterValueError,
 )
+from ..util._interp import _interp1d
 
 # Type checking imports for development and static analysis
 if TYPE_CHECKING:
-    from collections.abc import Collection
+    from collections.abc import Callable, Collection
 
     import matplotlib
     import matplotlib.axes
     import matplotlib.figure
-    import scipy.interpolate
     from matplotlib.colors import Colormap
 
     from .._typing import ArrayLike, _Array1D, _FloatLike_co
@@ -1119,7 +1120,7 @@ class Transformf0(mtransforms.Transform):
         If ``True``, apply the inverse of the f0-displacement transformation.
     """
 
-    f0_interp: scipy.interpolate.interp1d
+    f0_interp: Callable[[ArrayLike], np.ndarray]
     norm: float
     bins_per_octave: int
     f0: np.ndarray
@@ -1150,14 +1151,13 @@ class Transformf0(mtransforms.Transform):
             raise ParameterValueError("f0 must be strictly positive (or NaN) and contain at least one finite value")
 
         times = offset + core.times_like(f0, sr=sr, hop_length=hop_length)
-        import scipy.interpolate
-
-        self.f0_interp = scipy.interpolate.interp1d(
+        self.f0_interp = functools.partial(
+            _interp1d,
             times,
             f0,
             kind="previous",
-            copy=False,
             bounds_error=False,
+            fill_value=np.nan,
             assume_sorted=True,
         )
 

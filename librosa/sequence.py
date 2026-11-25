@@ -18,6 +18,7 @@ from numba import jit
 from ._cache import cache
 from .filters import get_window
 from .util import expand_to, fill_off_diagonal, is_positive_int, pad_center, tiny
+from .util._interp import _interp1d
 from .util.exceptions import (
     ParameterShapeError,
     ParameterValueError,
@@ -1124,11 +1125,8 @@ def path_to_steps(path: np.ndarray, *, inverse: bool = False) -> npt.NDArray[np.
     else:
         idx_from, idx_to = 0, 1
 
-    import scipy.interpolate
-
-    step_interp = scipy.interpolate.interp1d(path[:, idx_to], path[:, idx_from], kind="linear")
     frames_in = np.arange(path[:, idx_to].min(), path[:, idx_to].max() + 1)
-    steps = step_interp(frames_in)
+    steps = _interp1d(path[:, idx_to], path[:, idx_from], frames_in, kind="linear")
 
     return cast("npt.NDArray[np.float64]", steps)
 

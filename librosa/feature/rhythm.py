@@ -18,6 +18,7 @@ from ..exceptions import (
     ParameterValueError,
 )
 from ..filters import get_window
+from ..util._interp import _interp1d
 from ..util.deprecation import _warn_interp_kind
 
 if TYPE_CHECKING:
@@ -926,10 +927,7 @@ def hybrid_tempogram(
     lags_finite = lags[1:]
 
     # 4. Hybrid Interpolation
-    import scipy.interpolate
-
-    f_interp = scipy.interpolate.interp1d(lags_finite, tg_a_finite, **interp_kwargs_dict)
-    tg_a_resampled = f_interp(freqs)
+    tg_a_resampled = _interp1d(lags_finite, tg_a_finite, freqs, **interp_kwargs_dict)
 
     # 5. Shape Matching - align time frames
     n_frames_min = min(tg_f.shape[-1], tg_a_resampled.shape[-1])
