@@ -8,6 +8,7 @@ import numpy as np
 
 from .._typing import _InterpKind
 from ..exceptions import ParameterShapeError
+from ..util.deprecation import _warn_interp_kind
 from ..util.utils import is_unique
 from .convert import times_like
 
@@ -170,6 +171,7 @@ def _interp_axis(
     """
     if axis < -x.ndim or axis >= x.ndim:
         raise ParameterShapeError(f"axis={axis} is out of bounds for input array with ndim={x.ndim}")
+    _warn_interp_kind(kind, stacklevel=4)
     ax = axis if axis >= 0 else axis + x.ndim
     n_in = x.shape[ax]
 
@@ -320,6 +322,10 @@ def interp_time(
     kind : str
         Interpolation type. See `scipy.interpolate.interp1d`.
         Common choices: ``'linear'``, ``'nearest'``, ``'cubic'``.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float, tuple of float, or 'extrapolate'
         Value to fill when evaluating outside the observed time bounds.
         Defaults to 0.0.
@@ -416,6 +422,10 @@ def interp_frequency(
     kind : str
         Interpolation type. See `scipy.interpolate.interp1d`.
         Common choices: ``'linear'``, ``'nearest'``, ``'cubic'``.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float, tuple of float, or 'extrapolate'
         Value to fill when evaluating outside the observed frequency bounds.
         Defaults to 0.0.

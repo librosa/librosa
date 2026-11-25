@@ -63,8 +63,8 @@ def test_cache_real_function(local_cache):
     local_cache.clear()
     cached_semitone = local_cache(level=10)(librosa.filters.semitone_filterbank)
 
-    fb1, sr1 = cached_semitone()
-    fb2, sr2 = cached_semitone()
+    fb1, sr1 = cached_semitone(flayout="sos")
+    fb2, sr2 = cached_semitone(flayout="sos")
 
     assert np.allclose(sr1, sr2)
     assert len(fb1) == len(fb2)

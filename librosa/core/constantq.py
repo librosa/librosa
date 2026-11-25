@@ -213,7 +213,7 @@ def cqt(
     )
 
 
-@deprecated(version="1.1.0", version_removed="2.0")
+@deprecated(version="1.1.0", version_removed="2.0.0")
 @cache(level=20)
 def hybrid_cqt(
     y: np.ndarray,
@@ -234,6 +234,10 @@ def hybrid_cqt(
     dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the hybrid constant-Q transform of an audio signal.
+
+    .. deprecated:: 1.1.0
+        This function is deprecated and will be removed in version 2.0.0.
+        Use `librosa.cqt` instead.
 
     Here, the hybrid CQT uses the pseudo CQT for higher frequencies where
     the hop_length is longer than half the filter length and the full CQT
@@ -423,7 +427,7 @@ def hybrid_cqt(
     return __trim_stack(cqt_resp, n_bins, cqt_resp[-1].dtype)
 
 
-@deprecated(version="1.1.0", version_removed="2.0")
+@deprecated(version="1.1.0", version_removed="2.0.0")
 @cache(level=20)
 def pseudo_cqt(
     y: np.ndarray,
@@ -443,6 +447,10 @@ def pseudo_cqt(
     dtype: DTypeLike | None = None,
 ) -> np.ndarray:
     """Compute the pseudo constant-Q transform of an audio signal.
+
+    .. deprecated:: 1.1.0
+        This function is deprecated and will be removed in version 2.0.0.
+        Use `librosa.cqt` instead.
 
     This uses a single fft size that is the smallest power of 2 that is greater
     than or equal to the max of:
@@ -1407,7 +1415,7 @@ def griffinlim_cqt(
 
     init : None or 'random' [default]
         If 'random' (the default), then phase values are initialized randomly
-        according to ``random_state``.  This is recommended when the input ``C`` is
+        according to ``rng``.  This is recommended when the input ``C`` is
         a magnitude spectrogram with no initial phase estimates.
 
         If ``None``, then the phase is initialized from ``C``.  This is useful when
@@ -1421,8 +1429,6 @@ def griffinlim_cqt(
         passed to `numpy.random.default_rng` to instantiate a ``Generator``.
 
     random_state : None, int, np.random.RandomState, or np.random.Generator
-        .. warning:: This parameter is deprecated in 1.0.0 and will be removed in 1.2.0.
-
         If int, random_state is the seed used by the random number generator
         for phase initialization.
 
@@ -1431,6 +1437,10 @@ def griffinlim_cqt(
         If ``None``, defaults to the `np.random.default_rng()` object.
 
         An exception is raised if both `rng` and `random_state` are provided.
+
+        .. deprecated:: 1.0.0
+            This parameter is deprecated and will be removed in version 1.2.0.
+            Use ``rng`` instead.
 
     Returns
     -------

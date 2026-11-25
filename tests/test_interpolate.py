@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """Unit tests for librosa.interp_time and librosa.interp_frequency."""
 
+import warnings
+
 import numpy as np
 import pytest
 import scipy.interpolate
@@ -240,3 +242,23 @@ def test_interp_nan_slice_and_spline_fallback():
     assert np.allclose(res_cubic[:, 0], [1.0, 1.0])
     # Column 1 has only 2 points -> ValueError caught, fallback to fill_value
     assert np.allclose(res_cubic[:, 1], [-99.0, -99.0])
+
+
+def test_interp_slinear_deprecated_and_valid_kinds():
+    coords = np.array([0.0, 1.0, 2.0, 3.0])
+    x = np.array([0.0, 1.0, 8.0, 27.0])
+    target = np.array([0.5, 1.5, 2.5])
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        for kind in ("linear", "nearest", "nearest-up", "previous", "next", "zero", "quadratic", "cubic"):
+            librosa.interp_time(x, target_times=target, times=coords, kind=kind, axis=0)
+            librosa.interp_frequency(x, target_freqs=target, freqs=coords, kind=kind, axis=0)
+
+    with pytest.warns(FutureWarning, match="slinear") as record_t:
+        librosa.interp_time(x, target_times=target, times=coords, kind="slinear", axis=0)
+    assert len(record_t) == 1
+
+    with pytest.warns(FutureWarning, match="slinear") as record_f:
+        librosa.interp_frequency(x, target_freqs=target, freqs=coords, kind="slinear", axis=0)
+    assert len(record_f) == 1

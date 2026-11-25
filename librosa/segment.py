@@ -20,12 +20,13 @@ from decorator import decorator
 from . import util
 from ._cache import cache
 from .filters import checkerboard_kernel, diagonal_filter
-from .util.deprecation import Deprecated, rename_kw
+from .util.deprecation import Deprecated, _warn_spmatrix, rename_kw
 from .util.exceptions import (
     ParameterShapeError,
     ParameterTypeError,
     ParameterValueError,
 )
+from .util.utils import _shear
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -534,10 +535,12 @@ def recurrence_matrix(
         bandwidth estimation, and ignore ``width``.
 
     sym : bool [scalar]
-        .. warning:: This parameter is deprecated in 1.1.0 and will be removed in 2.0.0.
-
         Deprecated alias for ``mutual``.
         An exception is raised if both ``mutual=True`` and ``sym`` are provided.
+
+        .. deprecated:: 1.1.0
+            This parameter is deprecated and will be removed in version 2.0.0.
+            Use ``mutual`` instead.
 
     Returns
     -------
@@ -709,6 +712,10 @@ def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
     rec : np.ndarray, or scipy.sparse array [shape=(n, n)]
         A (binary) recurrence matrix, as returned by `recurrence_matrix`
 
+        .. deprecated:: 1.1.0
+            Support for ``scipy.sparse.spmatrix`` inputs is deprecated and will
+            be removed in version 2.0.0. Use ``scipy.sparse`` arrays instead.
+
     pad : bool
         If False, ``lag`` matrix is square, which is equivalent to
         assuming that the signal repeats itself indefinitely.
@@ -764,6 +771,8 @@ def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
     if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
         raise ParameterShapeError(f"non-square recurrence matrix shape: {rec.shape}")
 
+    _warn_spmatrix(rec, stacklevel=3)
+
     sparse = scipy.sparse.issparse(rec)
 
     if sparse:
@@ -787,7 +796,9 @@ def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
             # Suppress type check, mypy doesn't know that rec is an ndarray here
             rec = np.pad(rec, padding, mode="constant")  # type: ignore
 
-    lag: ArrayOrSparseArray = util.shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
+    # Call private _shear to avoid emitting a duplicate spmatrix deprecation warning;
+    # revert to util.shear once spmatrix support is removed in 2.0.0.
+    lag: ArrayOrSparseArray = _shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
 
     if sparse:
         # Suppress type check, mypy doesn't know
@@ -806,6 +817,10 @@ def lag_to_recurrence[ArrayOrSparseArray: np.ndarray | _SparseArray](
     ----------
     lag : np.ndarray or scipy.sparse array
         A lag matrix, as produced by ``recurrence_to_lag``
+
+        .. deprecated:: 1.1.0
+            Support for ``scipy.sparse.spmatrix`` inputs is deprecated and will
+            be removed in version 2.0.0. Use ``scipy.sparse`` arrays instead.
     axis : int
         The axis corresponding to the time dimension.
         The alternate axis will be interpreted in lag coordinates.
@@ -867,10 +882,14 @@ def lag_to_recurrence[ArrayOrSparseArray: np.ndarray | _SparseArray](
     if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and lag.shape[1 - axis] != 2 * lag.shape[axis]):
         raise ParameterShapeError(f"Invalid lag matrix shape: {lag.shape}")
 
+    _warn_spmatrix(lag, stacklevel=3)
+
     # Since lag must be 2-dimensional, abs(axis) = axis
     t = lag.shape[axis]
 
-    rec = util.shear(lag, factor=+1, axis=axis)  # type: ignore[arg-type]
+    # Call private _shear to avoid emitting a duplicate spmatrix deprecation warning;
+    # revert to util.shear once spmatrix support is removed in 2.0.0.
+    rec = _shear(lag, factor=+1, axis=axis)  # type: ignore[arg-type]
 
     sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)

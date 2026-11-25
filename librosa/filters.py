@@ -29,7 +29,7 @@ from .exceptions import (
     ParameterTypeError,
     ParameterValueError,
 )
-from .util.decorators import deprecated
+from .util.decorators import deprecated, future_default
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Sequence
@@ -1622,7 +1622,7 @@ def pitch_to_chroma(
     return cq_to_ch
 
 
-@deprecated(version="1.1.0", version_removed="2.0")
+@deprecated(version="1.1.0", version_removed="2.0.0")
 @cache(level=10)
 def cq_to_chroma(
     n_input: int,
@@ -1637,7 +1637,7 @@ def cq_to_chroma(
     """Construct a linear transformation matrix to map Constant-Q bins onto chroma bins.
 
     .. deprecated:: 1.1.0
-        This function is deprecated and will be removed in version 2.0.
+        This function is deprecated and will be removed in version 2.0.0.
         Use `librosa.filters.pitch_to_chroma` instead.
 
     Parameters
@@ -1990,6 +1990,28 @@ def mr_frequencies(tuning: float) -> tuple[np.ndarray, np.ndarray]:
     return center_freqs, sample_rates
 
 
+# Private helper to let librosa.iirt avoid emitting a duplicate flayout='ba'
+# deprecation warning; fold back into semitone_filterbank once flayout='ba'
+# is removed in 2.0.0.
+def _semitone_filterbank(
+    *,
+    center_freqs: np.ndarray | None = None,
+    tuning: float = 0.0,
+    sample_rates: np.ndarray | None = None,
+    flayout: Literal["ba", "sos"] = "ba",
+    **kwargs: Any,
+) -> tuple[list[Any], np.ndarray]:
+    if (center_freqs is None) and (sample_rates is None):
+        center_freqs, sample_rates = mr_frequencies(tuning)
+
+    filterbank, fb_sample_rates = _multirate_fb(
+        center_freqs=center_freqs, sample_rates=sample_rates, flayout=flayout, **kwargs
+    )
+
+    return filterbank, fb_sample_rates
+
+
+@future_default(param_name="flayout", old_default="ba", new_default="sos", version="2.0.0")
 @cache(level=10)
 def semitone_filterbank(
     *,
@@ -2033,6 +2055,11 @@ def semitone_filterbank(
           Can be unstable for high-order filters.
         - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
+
+        .. deprecated:: 1.1.0
+            ``flayout='ba'`` is deprecated and will be removed in version 2.0.0.
+            Use ``flayout='sos'`` instead. The default value will change from
+            ``'ba'`` to ``'sos'`` in version 2.0.0.
     **kwargs : additional keyword arguments
         Additional arguments to the private function `_multirate_fb()`.
 
@@ -2087,14 +2114,21 @@ def semitone_filterbank(
     ...     ylabel="Semitone filter center frequency (Hz)",
     ... )
     """
-    if (center_freqs is None) and (sample_rates is None):
-        center_freqs, sample_rates = mr_frequencies(tuning)
+    if flayout == "ba":
+        warnings.warn(
+            "flayout='ba' is deprecated as of librosa version 1.1.0 and will be removed "
+            "in version 2.0.0. Use flayout='sos' instead.",
+            category=FutureWarning,
+            stacklevel=3,
+        )
 
-    filterbank, fb_sample_rates = _multirate_fb(
-        center_freqs=center_freqs, sample_rates=sample_rates, flayout=flayout, **kwargs
+    return _semitone_filterbank(
+        center_freqs=center_freqs,
+        tuning=tuning,
+        sample_rates=sample_rates,
+        flayout=flayout,
+        **kwargs,
     )
-
-    return filterbank, fb_sample_rates
 
 
 @jit(nopython=True, cache=True)

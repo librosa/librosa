@@ -17,6 +17,7 @@ from ..exceptions import (
     ParameterTypeError,
     ParameterValueError,
 )
+from .deprecation import _warn_interp_kind, _warn_spmatrix
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence
@@ -2329,6 +2330,28 @@ def __shear_sparse(
     return _asformat_sparse(X_shear, fmt)
 
 
+# Private helper to let internal callers (recurrence_to_lag, lag_to_recurrence)
+# avoid emitting a duplicate spmatrix deprecation warning; fold back into shear
+# once spmatrix support is removed in 2.0.0.
+@overload
+def _shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
+@overload
+def _shear(X: _SparseArray | _SparseMatrix, *, factor: int = ..., axis: int = ...) -> _SparseArray | _SparseMatrix: ...
+def _shear(
+    X: np.ndarray | _SparseArray | _SparseMatrix, *, factor: int = 1, axis: int = -1
+) -> np.ndarray | _SparseArray | _SparseMatrix:
+    """Shear an array or matrix without emitting a spmatrix warning."""
+    if not np.issubdtype(type(factor), np.integer):
+        raise ParameterTypeError(f"factor={factor} must be integer-valued")
+
+    # Suppress type checks because mypy doesn't like numba jitting
+    # or scipy sparse conversion
+    if scipy.sparse.issparse(X):
+        return __shear_sparse(X, factor=factor, axis=axis)
+    else:
+        return __shear_dense(X, factor=factor, axis=axis)  # type: ignore
+
+
 @overload
 def shear(X: np.ndarray, *, factor: int = ..., axis: int = ...) -> np.ndarray: ...
 @overload
@@ -2350,6 +2373,10 @@ def shear(
     ----------
     X : np.ndarray [ndim=2] or scipy.sparse array/matrix
         The array/matrix to be sheared
+
+        .. deprecated:: 1.1.0
+            Support for ``scipy.sparse.spmatrix`` inputs is deprecated and will
+            be removed in version 2.0.0. Use ``scipy.sparse`` arrays instead.
     factor : int
         The shear factor: ``X[:, n] -> np.roll(X[:, n], factor * n)``
     axis : int
@@ -2376,15 +2403,8 @@ def shear(
            [0., 0., 1.],
            [0., 1., 0.]])
     """
-    if not np.issubdtype(type(factor), np.integer):
-        raise ParameterTypeError(f"factor={factor} must be integer-valued")
-
-    # Suppress type checks because mypy doesn't like numba jitting
-    # or scipy sparse conversion
-    if scipy.sparse.issparse(X):
-        return __shear_sparse(X, factor=factor, axis=axis)
-    else:
-        return __shear_dense(X, factor=factor, axis=axis)  # type: ignore
+    _warn_spmatrix(X, stacklevel=3)
+    return _shear(X, factor=factor, axis=axis)
 
 
 def stack(arrays: list[np.ndarray], *, axis: int = 0) -> np.ndarray:
@@ -2905,6 +2925,10 @@ def interp_broadcast(
     kind : str
         Interpolation type.  See ``scipy.interpolate.interp1d``.
         Default: ``"linear"``
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float
         The value to fill when extrapolating beyond the observed range.
         Default: ``0``
@@ -2950,6 +2974,8 @@ def interp_broadcast(
     min_ndim = min(x1.ndim, x2.ndim)
     if axis < -min_ndim or axis >= min_ndim:
         raise ParameterShapeError(f"axis={axis} is out of range for minimum ndim={min_ndim}")
+
+    _warn_interp_kind(kind, stacklevel=3)
 
     import scipy.interpolate
 

@@ -2050,7 +2050,7 @@ def y_orig():
     return np.sin(2 * np.pi * np.linspace(0, 1, num=256, endpoint=False))
 
 
-@pytest.mark.parametrize("kind,atol", [("slinear", 1e-4), ("quadratic", 1e-5), ("cubic", 1e-6)])
+@pytest.mark.parametrize("kind,atol", [("linear", 1e-4), ("quadratic", 1e-5), ("cubic", 1e-6)])
 @pytest.mark.parametrize("n_fmt", [None, 64, 128, 256, 512])
 def test_fmt_scale(y_orig, y_res, n_fmt, kind, atol, SCALE, OVER_SAMPLE):
 
@@ -2226,7 +2226,14 @@ def test_show_versions():
 @pytest.mark.parametrize("hop_length", [None, 1024])
 def test_iirt(y_22050, flayout, center, hop_length):
     sr = 22050
-    T = librosa.iirt(y_22050, sr=sr, hop_length=hop_length, flayout=flayout, center=center)
+    if flayout == "ba":
+        with pytest.warns(FutureWarning, match="flayout='ba'") as record:
+            T = librosa.iirt(y_22050, sr=sr, hop_length=hop_length, flayout=flayout, center=center)
+        assert len(record) == 1
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
+            T = librosa.iirt(y_22050, sr=sr, hop_length=hop_length, flayout=flayout, center=center)
     if hop_length is None:
         real_hop_length = 512
     else:
@@ -2247,6 +2254,23 @@ def test_iirt(y_22050, flayout, center, hop_length):
     assert np.all(T >= 0)
 
     # TODO: further verify this one?  I guess?
+
+
+def test_interp_slinear_deprecated(y_orig):
+    with pytest.warns(FutureWarning, match="slinear") as record:
+        librosa.fmt(y_orig, n_fmt=64, kind="slinear")
+    assert len(record) == 1
+
+    D = librosa.stft(y_orig, n_fft=64)
+    with pytest.warns(FutureWarning, match="slinear") as record:
+        librosa.phase_vocoder(D, rate=1.2, kind="slinear")
+    assert len(record) == 1
+
+    S = np.abs(D)
+    freqs = librosa.fft_frequencies(n_fft=64)
+    with pytest.warns(FutureWarning, match="slinear") as record:
+        librosa.interp_harmonics(S, freqs=freqs, harmonics=[1, 2], kind="slinear")
+    assert len(record) == 1
 
 
 @pytest.mark.parametrize("frequency", [440.0])

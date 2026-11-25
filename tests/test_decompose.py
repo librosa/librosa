@@ -10,6 +10,8 @@ with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
 
 
+import warnings
+
 import numpy as np
 import pytest
 import scipy.sparse
@@ -336,3 +338,17 @@ def test_nn_filter_badselfsim(data, x, y, sparse, rng):
 
     with pytest.raises(librosa.ParameterShapeError):
         librosa.decompose.nn_filter(data, rec=rec)
+
+
+def test_nn_filter_spmatrix_deprecated(rng):
+    X = rng.standard_normal(size=(10, 20))
+    rec_arr = scipy.sparse.eye_array(20, format="csc")
+    rec_mat = scipy.sparse.eye(20, format="csc")
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        librosa.decompose.nn_filter(X, rec=rec_arr)
+
+    with pytest.warns(FutureWarning, match="spmatrix") as record:
+        librosa.decompose.nn_filter(X, rec=rec_mat)  # type: ignore[arg-type]
+    assert len(record) == 1

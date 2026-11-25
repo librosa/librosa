@@ -1540,3 +1540,23 @@ def test_tempogram_ratio_no_input():
 def test_hybrid_tempogram_no_input():
     with pytest.raises(librosa.ParameterValueError, match="Either y or onset_envelope must be provided"):
         librosa.feature.hybrid_tempogram(y=None, onset_envelope=None)
+
+
+def test_hybrid_tempogram_deprecations():
+    y, sr = librosa.loadx("trumpet", duration=1.0)
+
+    # Explicit kind and fill_value should not warn
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        librosa.feature.hybrid_tempogram(y=y, sr=sr, win_length=32, kind="linear", fill_value=0.0)
+        librosa.feature.hybrid_tempogram(y=y, sr=sr, win_length=32, kind="quadratic", fill_value=0.0)
+
+    # Deprecated kind='slinear' warns
+    with pytest.warns(FutureWarning, match="slinear") as record:
+        librosa.feature.hybrid_tempogram(y=y, sr=sr, win_length=32, kind="slinear")
+    assert len([w for w in record if issubclass(w.category, FutureWarning)]) == 1
+
+    # Arbitrary **kwargs passthrough warns
+    with pytest.warns(FutureWarning, match="hybrid_tempogram\\(\\*\\*kwargs\\)") as record_kw:
+        librosa.feature.hybrid_tempogram(y=y, sr=sr, win_length=32, copy=True)
+    assert len([w for w in record_kw if issubclass(w.category, FutureWarning)]) == 1

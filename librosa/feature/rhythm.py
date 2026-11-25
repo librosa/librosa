@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
@@ -17,10 +18,11 @@ from ..exceptions import (
     ParameterValueError,
 )
 from ..filters import get_window
+from ..util.deprecation import _warn_interp_kind
 
 if TYPE_CHECKING:
     from collections.abc import Callable
-    from typing import Any
+    from typing import Any, Literal
 
     import scipy
 
@@ -658,6 +660,10 @@ def tempogram_ratio(
         A window specification as in `stft`.
     kind : str
         Interpolation mode for measuring tempogram ratios
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float
         The value to fill when extrapolating beyond the observed
         frequency range.
@@ -751,6 +757,8 @@ def hybrid_tempogram(
     win_length: int = 384,
     center: bool = True,
     window: _WindowSpec = "hann",
+    kind: _InterpKind = "linear",
+    fill_value: float | tuple[float, float] | Literal["extrapolate"] = 0.0,
     **kwargs: Any,
 ) -> np.ndarray:
     """Compute a hybrid tempogram.
@@ -780,8 +788,22 @@ def hybrid_tempogram(
     window : str, tuple, number, function, or np.ndarray [shape=(win_length,)]
         A window specification as supported by `scipy.signal.get_window`
         and `librosa.filters.get_window`.
+    kind : str
+        Interpolation mode for aligning autocorrelation lags to Fourier tempo
+        frequencies. See `scipy.interpolate.interp1d`.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
+    fill_value : float, tuple of float, or 'extrapolate'
+        Fill value for out-of-bounds evaluation during interpolation.
     **kwargs : additional keyword arguments
-        Additional keyword arguments passed to `scipy.interpolate.interp1d`
+        Additional keyword arguments passed to `scipy.interpolate.interp1d`.
+
+        .. deprecated:: 1.1.0
+            Passing arbitrary keyword arguments via ``**kwargs`` is deprecated
+            and will be removed in version 2.0.0. Use the explicit ``kind`` and
+            ``fill_value`` parameters instead.
 
     Returns
     -------
@@ -845,9 +867,21 @@ def hybrid_tempogram(
     >>> ax[2].set(title="Hybrid Tempogram")
     >>> fig.colorbar(img, ax=ax)
     """
-    interp_kwargs_dict: dict[str, Any] = kwargs or {}
+    _warn_interp_kind(kind, stacklevel=3)
+    if kwargs:
+        warnings.warn(
+            "Passing arbitrary keyword arguments to scipy.interpolate.interp1d via "
+            "hybrid_tempogram(**kwargs) is deprecated as of librosa version 1.1.0 and "
+            "will be removed in version 2.0.0. Use the explicit 'kind' and 'fill_value' "
+            "parameters instead.",
+            category=FutureWarning,
+            stacklevel=2,
+        )
+
+    interp_kwargs_dict: dict[str, Any] = dict(kwargs)
+    interp_kwargs_dict["kind"] = kind
+    interp_kwargs_dict["fill_value"] = fill_value
     interp_kwargs_dict.setdefault("bounds_error", False)
-    interp_kwargs_dict.setdefault("fill_value", 0.0)
     interp_kwargs_dict.setdefault("copy", False)
     interp_kwargs_dict.setdefault("axis", -2)
 
@@ -959,6 +993,10 @@ def metrogram(
         at each point in time. Defaults to ``np.sum``.
     kind : str
         Interpolation method used on the tempo axis.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float
         The value to fill when extrapolating beyond the observed
         tempo range.

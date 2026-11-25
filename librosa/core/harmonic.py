@@ -9,6 +9,7 @@ import numpy as np
 
 from .._cache import cache
 from ..exceptions import ParameterShapeError
+from ..util.deprecation import _warn_interp_kind
 from .interpolate import _validate_coords, interp_frequency
 
 if TYPE_CHECKING:
@@ -79,6 +80,10 @@ def salience(
     kind : str
         Interpolation type for harmonic estimation.
         See `scipy.interpolate.interp1d`.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
 
     axis : int
         The axis along which to compute harmonics
@@ -185,6 +190,10 @@ def interp_harmonics(
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
     kind : str
         Interpolation type.  See `scipy.interpolate.interp1d`.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float
         The value to fill when extrapolating beyond the observed
         frequency range.
@@ -267,6 +276,7 @@ def interp_harmonics(
     """
     import scipy.interpolate
 
+    _warn_interp_kind(kind, stacklevel=3)
     _validate_coords(freqs, x.shape[axis], axis, name="Frequencies")
 
     if freqs.ndim == 1:
@@ -362,6 +372,10 @@ def f0_harmonics(
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
     kind : str
         Interpolation type.  See `scipy.interpolate.interp1d`.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float
         The value to fill when extrapolating beyond the observed
         frequency range.
