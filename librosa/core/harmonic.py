@@ -9,6 +9,7 @@ import numpy as np
 
 from .._cache import cache
 from ..exceptions import ParameterShapeError
+from ..util.deprecation import _warn_interp_kind
 from .interpolate import _validate_coords, interp_frequency
 
 if TYPE_CHECKING:
@@ -267,6 +268,7 @@ def interp_harmonics(
     """
     import scipy.interpolate
 
+    _warn_interp_kind(kind, stacklevel=3)
     _validate_coords(freqs, x.shape[axis], axis, name="Frequencies")
 
     if freqs.ndim == 1:

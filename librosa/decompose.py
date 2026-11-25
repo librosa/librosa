@@ -21,6 +21,7 @@ from .exceptions import (
     ParameterValueError,
 )
 from .filters import pitch_basis
+from .util.deprecation import _warn_spmatrix
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Sequence
@@ -778,6 +779,7 @@ def nn_filter(
     elif not scipy.sparse.issparse(rec):
         rec_s = scipy.sparse.csc_array(rec)
     else:
+        _warn_spmatrix(rec, stacklevel=3)
         # Normalize any sparse input (matrix/array, any format) to csc_array
         rec_s = scipy.sparse.csc_array(rec)
 

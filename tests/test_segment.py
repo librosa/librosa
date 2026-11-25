@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING, cast
 with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
 
+import warnings
+
 import numpy as np
 import pytest
 import scipy
@@ -753,6 +755,25 @@ def test_lag_to_recurrence_sparse(axis, pad, rng):
     assert rec_sparse.format == lag.format
     assert rec_sparse.dtype == lag.dtype
     assert np.allclose(rec_sparse.toarray(), rec_dense)
+
+
+@pytest.mark.parametrize("pad", [False, True])
+def test_recurrence_lag_spmatrix_deprecated(pad):
+    rec_arr = scipy.sparse.eye_array(8, format="csc")
+    rec_mat = scipy.sparse.eye(8, format="csc")
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        lag_arr = librosa.segment.recurrence_to_lag(rec_arr, pad=pad)
+        librosa.segment.lag_to_recurrence(lag_arr)
+
+    with pytest.warns(FutureWarning, match="spmatrix") as record:
+        lag_mat = librosa.segment.recurrence_to_lag(rec_mat, pad=pad)  # type: ignore[type-var]
+    assert len(record) == 1
+
+    with pytest.warns(FutureWarning, match="spmatrix") as record2:
+        librosa.segment.lag_to_recurrence(lag_mat)  # type: ignore[type-var]
+    assert len(record2) == 1
 
 
 def test_lag_to_recurrence_sparse_badaxis(rng):

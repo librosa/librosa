@@ -1336,12 +1336,26 @@ def test_shear_sparse(fmt):
 def test_shear_sparse_matrix_preserves_type(fmt):
     E = scipy.sparse.eye(3, format=fmt)  # NOTE: matrix constructor
 
-    E_shear = librosa.util.shear(E, factor=1, axis=0)
+    with pytest.warns(FutureWarning, match="spmatrix") as record:
+        E_shear = librosa.util.shear(E, factor=1, axis=0)
+    assert len(record) == 1
     assert scipy.sparse.issparse(E_shear)
     assert isinstance(E_shear, scipy.sparse.spmatrix)
     assert not isinstance(E_shear, scipy.sparse.sparray)
     assert E_shear.format == fmt  # type: ignore[attr-defined]
     assert np.allclose(E_shear.toarray(), np.asarray([[1, 0, 0], [0, 0, 1], [0, 1, 0]]))  # type: ignore[attr-defined]
+
+
+def test_interp_broadcast_slinear_deprecated():
+    x1 = np.array([1.0, 1.0, 1.0])
+    x1_pos = np.array([0.0, 0.5, 1.0])
+    x2 = np.array([5.0, 10.0])
+    x2_pos = np.array([0.0, 1.0])
+
+    with pytest.warns(FutureWarning, match="slinear") as record:
+        res = librosa.util.interp_broadcast(x1=x1, x1_pos=x1_pos, x2=x2, x2_pos=x2_pos, kind="slinear", axis=0)
+    assert len(record) == 1
+    assert np.allclose(res, [5.0, 7.5, 10.0])
 
 
 def test_shear_badfactor():

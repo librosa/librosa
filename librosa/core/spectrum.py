@@ -18,8 +18,8 @@ from ..exceptions import (
     ParameterTypeError,
     ParameterValueError,
 )
-from ..filters import get_window, semitone_filterbank, window_sumsquare
-from ..util.deprecation import Deprecated, rename_kw
+from ..filters import _semitone_filterbank, get_window, window_sumsquare
+from ..util.deprecation import Deprecated, _warn_interp_kind, rename_kw
 from . import convert
 from .audio import resample
 
@@ -1457,6 +1457,8 @@ def phase_vocoder(
     # Cumulative phase; we can do this in-place to save a copy
     np.cumsum(phase, axis=-1, out=phase)
 
+    _warn_interp_kind(kind, stacklevel=3)
+
     # Interpolate magnitudes
     import scipy.interpolate
 
@@ -1537,7 +1539,8 @@ def iirt(
     flayout : str
         - If `sos` (default), a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
-        - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
+        - If `ba` (deprecated as of 1.1.0; will be removed in 2.0.0), the standard difference equation
+          is used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
     res_type : str
         The resampling mode.  See `librosa.resample` for details.
@@ -1588,6 +1591,14 @@ def iirt(
     if flayout not in ("ba", "sos"):
         raise ParameterValueError(f"Unsupported flayout={flayout}")
 
+    if flayout == "ba":
+        warnings.warn(
+            "flayout='ba' is deprecated as of librosa version 1.1.0 and will be removed "
+            "in version 2.0.0. Use flayout='sos' instead.",
+            category=FutureWarning,
+            stacklevel=2,
+        )
+
     # check audio input
     util.valid_audio(y)
 
@@ -1602,7 +1613,7 @@ def iirt(
         y = np.pad(y, padding, mode=pad_mode)
 
     # get the semitone filterbank
-    filterbank_ct, sample_rates = semitone_filterbank(tuning=tuning, flayout=flayout, **kwargs)
+    filterbank_ct, sample_rates = _semitone_filterbank(tuning=tuning, flayout=flayout, **kwargs)
 
     # create downsampled versions of the audio signal
     y_srs = np.unique(sample_rates)
@@ -2239,6 +2250,8 @@ def fmt(
     # original grid: signal covers [0, 1).  This range is arbitrary, but convenient.
     # The final sample is positioned at (n-1)/n, so we omit the endpoint
     x = np.linspace(0, 1, num=n, endpoint=False)
+
+    _warn_interp_kind(kind, stacklevel=3)
 
     # build the interpolator
     import scipy.interpolate

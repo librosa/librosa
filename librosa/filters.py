@@ -29,7 +29,7 @@ from .exceptions import (
     ParameterTypeError,
     ParameterValueError,
 )
-from .util.decorators import deprecated
+from .util.decorators import deprecated, future_default
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Collection, Sequence
@@ -1990,6 +1990,25 @@ def mr_frequencies(tuning: float) -> tuple[np.ndarray, np.ndarray]:
     return center_freqs, sample_rates
 
 
+def _semitone_filterbank(
+    *,
+    center_freqs: np.ndarray | None = None,
+    tuning: float = 0.0,
+    sample_rates: np.ndarray | None = None,
+    flayout: Literal["ba", "sos"] = "ba",
+    **kwargs: Any,
+) -> tuple[list[Any], np.ndarray]:
+    if (center_freqs is None) and (sample_rates is None):
+        center_freqs, sample_rates = mr_frequencies(tuning)
+
+    filterbank, fb_sample_rates = _multirate_fb(
+        center_freqs=center_freqs, sample_rates=sample_rates, flayout=flayout, **kwargs
+    )
+
+    return filterbank, fb_sample_rates
+
+
+@future_default(param_name="flayout", old_default="ba", new_default="sos", version="2.0.0")
 @cache(level=10)
 def semitone_filterbank(
     *,
@@ -2029,9 +2048,11 @@ def semitone_filterbank(
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Sample rates of each filter in the multirate filterbank.
     flayout : str
-        - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
+        - If `ba` (deprecated as of 1.1.0; will be removed in 2.0.0), the standard
+          difference equation is used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
-        - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
+        - If `sos` (will become the default in 2.0.0), a series of second-order
+          filters is used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
     **kwargs : additional keyword arguments
         Additional arguments to the private function `_multirate_fb()`.
@@ -2087,14 +2108,21 @@ def semitone_filterbank(
     ...     ylabel="Semitone filter center frequency (Hz)",
     ... )
     """
-    if (center_freqs is None) and (sample_rates is None):
-        center_freqs, sample_rates = mr_frequencies(tuning)
+    if flayout == "ba":
+        warnings.warn(
+            "flayout='ba' is deprecated as of librosa version 1.1.0 and will be removed "
+            "in version 2.0.0. Use flayout='sos' instead.",
+            category=FutureWarning,
+            stacklevel=3,
+        )
 
-    filterbank, fb_sample_rates = _multirate_fb(
-        center_freqs=center_freqs, sample_rates=sample_rates, flayout=flayout, **kwargs
+    return _semitone_filterbank(
+        center_freqs=center_freqs,
+        tuning=tuning,
+        sample_rates=sample_rates,
+        flayout=flayout,
+        **kwargs,
     )
-
-    return filterbank, fb_sample_rates
 
 
 @jit(nopython=True, cache=True)

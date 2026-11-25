@@ -20,12 +20,13 @@ from decorator import decorator
 from . import util
 from ._cache import cache
 from .filters import checkerboard_kernel, diagonal_filter
-from .util.deprecation import Deprecated, rename_kw
+from .util.deprecation import Deprecated, _warn_spmatrix, rename_kw
 from .util.exceptions import (
     ParameterShapeError,
     ParameterTypeError,
     ParameterValueError,
 )
+from .util.utils import _shear
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -764,6 +765,8 @@ def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
     if rec.ndim != 2 or rec.shape[0] != rec.shape[1]:
         raise ParameterShapeError(f"non-square recurrence matrix shape: {rec.shape}")
 
+    _warn_spmatrix(rec, stacklevel=3)
+
     sparse = scipy.sparse.issparse(rec)
 
     if sparse:
@@ -787,7 +790,7 @@ def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
             # Suppress type check, mypy doesn't know that rec is an ndarray here
             rec = np.pad(rec, padding, mode="constant")  # type: ignore
 
-    lag: ArrayOrSparseArray = util.shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
+    lag: ArrayOrSparseArray = _shear(rec, factor=-1, axis=axis)  # type: ignore[arg-type, assignment]
 
     if sparse:
         # Suppress type check, mypy doesn't know
@@ -867,10 +870,12 @@ def lag_to_recurrence[ArrayOrSparseArray: np.ndarray | _SparseArray](
     if lag.ndim != 2 or (lag.shape[0] != lag.shape[1] and lag.shape[1 - axis] != 2 * lag.shape[axis]):
         raise ParameterShapeError(f"Invalid lag matrix shape: {lag.shape}")
 
+    _warn_spmatrix(lag, stacklevel=3)
+
     # Since lag must be 2-dimensional, abs(axis) = axis
     t = lag.shape[axis]
 
-    rec = util.shear(lag, factor=+1, axis=axis)  # type: ignore[arg-type]
+    rec = _shear(lag, factor=+1, axis=axis)  # type: ignore[arg-type]
 
     sub_slice = [slice(None)] * rec.ndim
     sub_slice[1 - axis] = slice(t)

@@ -8,6 +8,7 @@ import numpy as np
 
 from .._typing import _InterpKind
 from ..exceptions import ParameterShapeError
+from ..util.deprecation import _warn_interp_kind
 from ..util.utils import is_unique
 from .convert import times_like
 
@@ -170,6 +171,7 @@ def _interp_axis(
     """
     if axis < -x.ndim or axis >= x.ndim:
         raise ParameterShapeError(f"axis={axis} is out of bounds for input array with ndim={x.ndim}")
+    _warn_interp_kind(kind, stacklevel=4)
     ax = axis if axis >= 0 else axis + x.ndim
     n_in = x.shape[ax]
 

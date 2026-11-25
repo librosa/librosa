@@ -530,7 +530,9 @@ def test_semitone_filterbank_defaults(tuning):
 def test_semitone_filterbank_layout():
     freqs = librosa.midi_to_hz(np.arange(60, 96))
     srs = np.array([8000] * len(freqs))
-    ba_fb, ba_srs = librosa.filters.semitone_filterbank(center_freqs=freqs, sample_rates=srs, flayout="ba")
+    with pytest.warns(FutureWarning, match="flayout='ba'") as record:
+        ba_fb, ba_srs = librosa.filters.semitone_filterbank(center_freqs=freqs, sample_rates=srs, flayout="ba")
+    assert len(record) == 1
     sos_fb, sos_srs = librosa.filters.semitone_filterbank(center_freqs=freqs, sample_rates=srs, flayout="sos")
     assert np.allclose(ba_srs, sos_srs)
     assert np.allclose(ba_srs, srs)
@@ -542,18 +544,30 @@ def test_semitone_filterbank_layout():
         assert np.allclose(tf[1], ba_fb[i][1])
 
 
+def test_semitone_filterbank_future_default():
+    freqs = librosa.midi_to_hz(np.arange(60, 64))
+    srs = np.array([8000] * len(freqs))
+    with pytest.warns(FutureWarning) as record:
+        librosa.filters.semitone_filterbank(center_freqs=freqs, sample_rates=srs)
+    messages = [str(w.message) for w in record]
+    assert any(
+        "default value of 'flayout' will change from 'ba' to 'sos' in librosa version 2.0.0" in m for m in messages
+    )
+    assert any("flayout='ba' is deprecated" in m for m in messages)
+
+
 def test_semitone_filterbank_bad_inputs():
     freqs = np.array([440.0, 880.0])
     srs = np.array([8000, 8000])
 
     with pytest.raises(librosa.ParameterValueError, match="center_freqs must be provided"):
-        librosa.filters.semitone_filterbank(center_freqs=None, sample_rates=srs)
+        librosa.filters.semitone_filterbank(center_freqs=None, sample_rates=srs, flayout="sos")
 
     with pytest.raises(librosa.ParameterValueError, match="sample_rates must be provided"):
-        librosa.filters.semitone_filterbank(center_freqs=freqs, sample_rates=None)
+        librosa.filters.semitone_filterbank(center_freqs=freqs, sample_rates=None, flayout="sos")
 
     with pytest.raises(librosa.ParameterShapeError, match="must be equal"):
-        librosa.filters.semitone_filterbank(center_freqs=freqs, sample_rates=srs[:1])
+        librosa.filters.semitone_filterbank(center_freqs=freqs, sample_rates=srs[:1], flayout="sos")
 
 
 @pytest.mark.parametrize("n", [9, 17])

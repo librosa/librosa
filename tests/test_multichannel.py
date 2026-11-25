@@ -876,7 +876,7 @@ def test_salience_multi_static(s_multi, filter_peaks):
         S,
         freqs=freqs,
         harmonics=[0.5, 1, 2, 3],
-        kind="slinear",
+        kind="linear",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
@@ -884,7 +884,7 @@ def test_salience_multi_static(s_multi, filter_peaks):
         S[0],
         freqs=freqs,
         harmonics=[0.5, 1, 2, 3],
-        kind="slinear",
+        kind="linear",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
@@ -892,7 +892,7 @@ def test_salience_multi_static(s_multi, filter_peaks):
         S[1],
         freqs=freqs,
         harmonics=[0.5, 1, 2, 3],
-        kind="slinear",
+        kind="linear",
         filter_peaks=filter_peaks,
         fill_value=0,
     )
