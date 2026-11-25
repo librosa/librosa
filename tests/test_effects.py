@@ -615,3 +615,20 @@ def test_preemphasis_matches_lfilter(rng):
                     assert zf_new.shape == zf_ref.shape
                     assert np.allclose(y_new, y_ref, rtol=1e-6, atol=1e-6)
                     assert np.allclose(zf_new, zf_ref, rtol=1e-6, atol=1e-6)
+
+
+def test_preemphasis_edge_cases():
+    for bad_dtype in (np.int16, np.int64):
+        with pytest.raises(librosa.ParameterTypeError, match="floating-point"):
+            librosa.effects.preemphasis(np.arange(10, dtype=bad_dtype))
+
+    for short_shape in ((0,), (1,), (2, 0), (2, 1)):
+        with pytest.raises(librosa.ParameterValueError, match="Cannot extrapolate"):
+            librosa.effects.preemphasis(np.zeros(short_shape, dtype=np.float32), zi=None)
+
+    for emp_shape in ((0,), (2, 0)):
+        ye = np.empty(emp_shape, dtype=np.float32)
+        yo, zf = librosa.effects.preemphasis(ye, zi=0.5, return_zf=True)
+        assert yo.shape == emp_shape
+        assert zf.shape == (*emp_shape[:-1], 1)
+        assert np.allclose(zf, 0.5)

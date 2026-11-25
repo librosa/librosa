@@ -1608,3 +1608,27 @@ def test_poly_features_matches_polyfit(dtype, order, rng):
     p_zero = librosa.feature.poly_features(S=S_const, freq=f_zero, order=order)
     assert p_zero.shape == (order + 1, 4)
     assert np.allclose(p_zero[-1], np.mean(S_const, axis=0), rtol=1e-5, atol=1e-6)
+
+
+def test_poly_features_edge_cases(rng):
+    S_2d = np.abs(rng.standard_normal((16, 4)))
+    f_1d = np.linspace(0, 8000, 16)
+    f_2d = np.tile(f_1d[:, None], (1, 4))
+
+    for bad_order in (-1, -2):
+        with pytest.raises(librosa.ParameterValueError, match="must be non-negative"):
+            librosa.feature.poly_features(S=S_2d, freq=f_1d, order=bad_order)
+        with pytest.raises(librosa.ParameterValueError, match="must be non-negative"):
+            librosa.feature.poly_features(S=S_2d, freq=f_2d, order=bad_order)
+
+    # Shared 2D / singleton-time freq broadcast against 3D multi-channel S
+    S_3d = np.abs(rng.standard_normal((2, 16, 4))).astype(np.float32)
+    f_shared = (f_1d[:, None] + rng.uniform(-5, 5, (16, 4))).astype(np.float32)
+    f_col = f_1d[:, None].astype(np.float32)
+
+    for f_in in (f_shared, f_col):
+        p_all = librosa.feature.poly_features(S=S_3d, freq=f_in, order=2)
+        p0 = librosa.feature.poly_features(S=S_3d[0], freq=f_in, order=2)
+        p1 = librosa.feature.poly_features(S=S_3d[1], freq=f_in, order=2)
+        assert np.allclose(p_all[0], p0, rtol=1e-5, atol=1e-6)
+        assert np.allclose(p_all[1], p1, rtol=1e-5, atol=1e-6)

@@ -16,6 +16,7 @@ import numpy as np
 from . import core, decompose, feature, util
 from ._cache import cache
 from .exceptions import (
+    ParameterTypeError,
     ParameterValueError,
 )
 
@@ -1018,7 +1019,14 @@ def preemphasis(
     >>> np.allclose(y_filt, np.concatenate([y_filt_1, y_filt_2]))
     True
     """
+    if not np.issubdtype(y.dtype, np.inexact):
+        raise ParameterTypeError(f"Audio data must be floating-point, got dtype={y.dtype}")
+
     if zi is None:
+        if y.shape[-1] < 2:
+            raise ParameterValueError(
+                f"Cannot extrapolate initial filter state zi from signal of length {y.shape[-1]}"
+            )
         # Initialize the filter to implement linear extrapolation
         zi = 2 * y[..., 0:1] - y[..., 1:2]
 
@@ -1033,7 +1041,7 @@ def preemphasis(
             y_out[..., 1:] = y[..., 1:] - coef_d * y[..., :-1]
         z_f = -coef_d * y[..., -1:]
     else:
-        z_f = zi_arr.copy()
+        z_f = np.broadcast_to(zi_arr, (*y.shape[:-1], 1)).copy()
 
     if return_zf:
         return y_out, z_f

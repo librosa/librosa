@@ -1054,6 +1054,9 @@ def poly_features(
     ...     S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[3]
     ... )
     """
+    if order < 0:
+        raise ParameterValueError(f"order={order} must be non-negative")
+
     S, n_fft = _spectrogram(
         y=y,
         S=S,
@@ -1087,10 +1090,9 @@ def poly_features(
         proj = np.linalg.pinv(V_s, rtol=rcond) / scale_safe[:, None]
         coefficients = proj @ np.asarray(S, dtype=y_dtype)
     else:
-        # Time/channel-varying frequencies: batched Vandermonde solve
-        freq_b, S_b = np.broadcast_arrays(np.asarray(freq, dtype=np.float64), np.asarray(S, dtype=y_dtype))
-        x = np.swapaxes(freq_b, -2, -1)
-        y_arr = np.swapaxes(S_b, -2, -1)
+        # Time/channel-varying frequencies: factor on freq's shape before broadcasting against S
+        x = np.swapaxes(np.asarray(freq, dtype=np.float64), -2, -1)
+        y_arr = np.swapaxes(np.asarray(S, dtype=y_dtype), -2, -1)
         powers = np.arange(order, -1, -1, dtype=np.float64)
         V = x[..., None] ** powers
         scale = np.sqrt(np.sum(V * V, axis=-2, keepdims=True))
@@ -1098,8 +1100,8 @@ def poly_features(
         V_s = V / scale_safe
         rcond = x.shape[-1] * eps
 
-        c = (np.linalg.pinv(V_s, rtol=rcond) @ y_arr[..., None])[..., 0]
-        c = c / scale_safe[..., 0, :]
+        proj = np.linalg.pinv(V_s, rtol=rcond) / np.swapaxes(scale_safe, -2, -1)
+        c = (proj @ y_arr[..., None])[..., 0]
         coefficients = np.swapaxes(c, -2, -1)
 
     # Cast back to the spectrogram dtype so a float32 pipeline is

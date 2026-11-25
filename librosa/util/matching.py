@@ -84,7 +84,7 @@ def __match_intervals(
     search_ends = np.searchsorted(start_sorted, intervals_from[:, 1], side="right")
     search_starts = np.searchsorted(end_sorted, intervals_from[:, 0], side="left")
 
-    output = np.empty(len(intervals_from), dtype=numba.int32)
+    output = np.empty(len(intervals_from), dtype=np.int32)
     for i in range(len(intervals_from)):
         query = intervals_from[i]
 
