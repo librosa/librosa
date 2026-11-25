@@ -687,6 +687,10 @@ def nn_filter(
         Optionally, a pre-computed nearest-neighbor array
         as provided by `librosa.segment.recurrence_matrix`
 
+        .. deprecated:: 1.1.0
+            Support for ``scipy.sparse.spmatrix`` inputs is deprecated and will
+            be removed in version 2.0.0. Use ``scipy.sparse`` arrays instead.
+
     aggregate : function
         aggregation function (default: `np.mean`)
 

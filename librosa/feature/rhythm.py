@@ -660,6 +660,10 @@ def tempogram_ratio(
         A window specification as in `stft`.
     kind : str
         Interpolation mode for measuring tempogram ratios
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float
         The value to fill when extrapolating beyond the observed
         frequency range.
@@ -787,6 +791,10 @@ def hybrid_tempogram(
     kind : str
         Interpolation mode for aligning autocorrelation lags to Fourier tempo
         frequencies. See `scipy.interpolate.interp1d`.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float, tuple of float, or 'extrapolate'
         Fill value for out-of-bounds evaluation during interpolation.
     **kwargs : additional keyword arguments
@@ -985,6 +993,10 @@ def metrogram(
         at each point in time. Defaults to ``np.sum``.
     kind : str
         Interpolation method used on the tempo axis.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float
         The value to fill when extrapolating beyond the observed
         tempo range.

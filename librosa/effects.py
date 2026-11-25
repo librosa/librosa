@@ -1280,6 +1280,10 @@ def vibrato(
         Specifies the type of interpolation used when re-aligning time warping.
         Passed to `scipy.interpolate.interp1d`. Defaults to "linear".
 
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
+
     n_fft : int > 0 [scalar]
         Length of the windowed signal after padding with zeros.
         The number of rows in the STFT matrix is ``(1 + n_fft/2)``.

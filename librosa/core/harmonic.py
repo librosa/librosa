@@ -81,6 +81,10 @@ def salience(
         Interpolation type for harmonic estimation.
         See `scipy.interpolate.interp1d`.
 
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
+
     axis : int
         The axis along which to compute harmonics
 
@@ -186,6 +190,10 @@ def interp_harmonics(
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
     kind : str
         Interpolation type.  See `scipy.interpolate.interp1d`.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float
         The value to fill when extrapolating beyond the observed
         frequency range.
@@ -364,6 +372,10 @@ def f0_harmonics(
         Values less than one (e.g., 1/2) correspond to sub-harmonics.
     kind : str
         Interpolation type.  See `scipy.interpolate.interp1d`.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float
         The value to fill when extrapolating beyond the observed
         frequency range.

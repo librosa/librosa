@@ -1396,6 +1396,10 @@ def phase_vocoder(
         Interpolation kind for magnitude interpolation, e.g., 'linear' or 'nearest'.
         See `scipy.interpolate.interp1d` for a full list of supported options.
 
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
+
     Returns
     -------
     D_stretched : np.ndarray [shape=(..., n_bins, t / rate), dtype=complex]
@@ -1539,9 +1543,12 @@ def iirt(
     flayout : str
         - If `sos` (default), a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
-        - If `ba` (deprecated as of 1.1.0; will be removed in 2.0.0), the standard difference equation
-          is used for filtering with `scipy.signal.filtfilt`.
+        - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
+
+        .. deprecated:: 1.1.0
+            ``flayout='ba'`` is deprecated and will be removed in version 2.0.0.
+            Use ``flayout='sos'`` instead.
     res_type : str
         The resampling mode.  See `librosa.resample` for details.
     **kwargs : additional keyword arguments
@@ -2148,6 +2155,11 @@ def fmt(
         This can be slow in practice; if speed is preferred over accuracy,
         then consider using ``kind='linear'``.
 
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
+        then consider using ``kind='linear'``.
+
     beta : float
         The Mellin parameter.  ``beta=0.5`` provides the scale transform.
 
@@ -2475,10 +2487,12 @@ def pcen(
         If ``False`` (default) only the PCEN values ``P`` are returned.
 
     ref : None or np.ndarray (shape=S.shape)
-        .. warning:: This parameter is deprecated in 1.1.0 and will be removed in 1.2.0.
-
         Deprecated alias for ``S_ref``.
         An exception is raised if both ``S_ref`` and ``ref`` are provided.
+
+        .. deprecated:: 1.1.0
+            This parameter is deprecated and will be removed in version 1.2.0.
+            Use ``S_ref`` instead.
 
     Returns
     -------
@@ -2720,7 +2734,7 @@ def griffinlim(
 
     init : None or 'random' [default]
         If 'random' (the default), then phase values are initialized randomly
-        according to ``random_state``.  This is recommended when the input ``S`` is
+        according to ``rng``.  This is recommended when the input ``S`` is
         a magnitude spectrogram with no initial phase estimates.
 
         If `None`, then the phase is initialized from ``S``.  This is useful when
@@ -2734,8 +2748,6 @@ def griffinlim(
         passed to `numpy.random.default_rng` to instantiate a ``Generator``.
 
     random_state : None, int, np.random.RandomState, or np.random.Generator
-        .. warning:: This parameter is deprecated in 1.0.0 and will be removed in 1.2.0.
-
         If int, random_state is the seed used by the random number generator
         for phase initialization.
 
@@ -2745,6 +2757,10 @@ def griffinlim(
         If `None`, defaults to the `np.random.default_rng()` object.
 
         An exception is raised if both `rng` and `random_state` are provided.
+
+        .. deprecated:: 1.0.0
+            This parameter is deprecated and will be removed in version 1.2.0.
+            Use ``rng`` instead.
 
     Returns
     -------

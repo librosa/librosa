@@ -349,10 +349,12 @@ def onset_strength(
         - ``"complex"``: complex-domain spectral flux.
 
     ref : None or np.ndarray [shape=(..., d, m)]
-        .. warning:: This parameter is deprecated in 1.1.0 and will be removed in 1.2.0.
-
         Deprecated alias for ``S_ref``.
         An exception is raised if both ``S_ref`` and ``ref`` are provided.
+
+        .. deprecated:: 1.1.0
+            This parameter is deprecated and will be removed in version 1.2.0.
+            Use ``S_ref`` instead.
 
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.
@@ -670,10 +672,12 @@ def onset_strength_multi(
         - ``"complex"``: complex-domain spectral flux.
 
     ref : None or np.ndarray [shape=(..., d, m)]
-        .. warning:: This parameter is deprecated in 1.1.0 and will be removed in 1.2.0.
-
         Deprecated alias for ``S_ref``.
         An exception is raised if both ``S_ref`` and ``ref`` are provided.
+
+        .. deprecated:: 1.1.0
+            This parameter is deprecated and will be removed in version 1.2.0.
+            Use ``S_ref`` instead.
 
     **kwargs : additional keyword arguments
         Additional parameters to ``feature()``, if ``S`` is not provided.

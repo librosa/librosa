@@ -2373,6 +2373,10 @@ def shear(
     ----------
     X : np.ndarray [ndim=2] or scipy.sparse array/matrix
         The array/matrix to be sheared
+
+        .. deprecated:: 1.1.0
+            Support for ``scipy.sparse.spmatrix`` inputs is deprecated and will
+            be removed in version 2.0.0. Use ``scipy.sparse`` arrays instead.
     factor : int
         The shear factor: ``X[:, n] -> np.roll(X[:, n], factor * n)``
     axis : int
@@ -2921,6 +2925,10 @@ def interp_broadcast(
     kind : str
         Interpolation type.  See ``scipy.interpolate.interp1d``.
         Default: ``"linear"``
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float
         The value to fill when extrapolating beyond the observed range.
         Default: ``0``

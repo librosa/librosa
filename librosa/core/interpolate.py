@@ -322,6 +322,10 @@ def interp_time(
     kind : str
         Interpolation type. See `scipy.interpolate.interp1d`.
         Common choices: ``'linear'``, ``'nearest'``, ``'cubic'``.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float, tuple of float, or 'extrapolate'
         Value to fill when evaluating outside the observed time bounds.
         Defaults to 0.0.
@@ -418,6 +422,10 @@ def interp_frequency(
     kind : str
         Interpolation type. See `scipy.interpolate.interp1d`.
         Common choices: ``'linear'``, ``'nearest'``, ``'cubic'``.
+
+        .. deprecated:: 1.1.0
+            ``kind='slinear'`` is deprecated and will be removed in version 2.0.0.
+            Use ``kind='linear'`` instead.
     fill_value : float, tuple of float, or 'extrapolate'
         Value to fill when evaluating outside the observed frequency bounds.
         Defaults to 0.0.

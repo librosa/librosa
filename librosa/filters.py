@@ -1622,7 +1622,7 @@ def pitch_to_chroma(
     return cq_to_ch
 
 
-@deprecated(version="1.1.0", version_removed="2.0")
+@deprecated(version="1.1.0", version_removed="2.0.0")
 @cache(level=10)
 def cq_to_chroma(
     n_input: int,
@@ -1637,7 +1637,7 @@ def cq_to_chroma(
     """Construct a linear transformation matrix to map Constant-Q bins onto chroma bins.
 
     .. deprecated:: 1.1.0
-        This function is deprecated and will be removed in version 2.0.
+        This function is deprecated and will be removed in version 2.0.0.
         Use `librosa.filters.pitch_to_chroma` instead.
 
     Parameters
@@ -2051,12 +2051,15 @@ def semitone_filterbank(
     sample_rates : np.ndarray [shape=(n,), dtype=float]
         Sample rates of each filter in the multirate filterbank.
     flayout : str
-        - If `ba` (deprecated as of 1.1.0; will be removed in 2.0.0), the standard
-          difference equation is used for filtering with `scipy.signal.filtfilt`.
+        - If `ba`, the standard difference equation is used for filtering with `scipy.signal.filtfilt`.
           Can be unstable for high-order filters.
-        - If `sos` (will become the default in 2.0.0), a series of second-order
-          filters is used for filtering with `scipy.signal.sosfiltfilt`.
+        - If `sos`, a series of second-order filters is used for filtering with `scipy.signal.sosfiltfilt`.
           Minimizes numerical precision errors for high-order filters, but is slower.
+
+        .. deprecated:: 1.1.0
+            ``flayout='ba'`` is deprecated and will be removed in version 2.0.0.
+            Use ``flayout='sos'`` instead. The default value will change from
+            ``'ba'`` to ``'sos'`` in version 2.0.0.
     **kwargs : additional keyword arguments
         Additional arguments to the private function `_multirate_fb()`.
 

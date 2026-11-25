@@ -535,10 +535,12 @@ def recurrence_matrix(
         bandwidth estimation, and ignore ``width``.
 
     sym : bool [scalar]
-        .. warning:: This parameter is deprecated in 1.1.0 and will be removed in 2.0.0.
-
         Deprecated alias for ``mutual``.
         An exception is raised if both ``mutual=True`` and ``sym`` are provided.
+
+        .. deprecated:: 1.1.0
+            This parameter is deprecated and will be removed in version 2.0.0.
+            Use ``mutual`` instead.
 
     Returns
     -------
@@ -710,6 +712,10 @@ def recurrence_to_lag[ArrayOrSparseArray: np.ndarray | _SparseArray](
     rec : np.ndarray, or scipy.sparse array [shape=(n, n)]
         A (binary) recurrence matrix, as returned by `recurrence_matrix`
 
+        .. deprecated:: 1.1.0
+            Support for ``scipy.sparse.spmatrix`` inputs is deprecated and will
+            be removed in version 2.0.0. Use ``scipy.sparse`` arrays instead.
+
     pad : bool
         If False, ``lag`` matrix is square, which is equivalent to
         assuming that the signal repeats itself indefinitely.
@@ -811,6 +817,10 @@ def lag_to_recurrence[ArrayOrSparseArray: np.ndarray | _SparseArray](
     ----------
     lag : np.ndarray or scipy.sparse array
         A lag matrix, as produced by ``recurrence_to_lag``
+
+        .. deprecated:: 1.1.0
+            Support for ``scipy.sparse.spmatrix`` inputs is deprecated and will
+            be removed in version 2.0.0. Use ``scipy.sparse`` arrays instead.
     axis : int
         The axis corresponding to the time dimension.
         The alternate axis will be interpreted in lag coordinates.
