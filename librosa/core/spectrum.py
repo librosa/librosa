@@ -19,6 +19,7 @@ from ..exceptions import (
     ParameterValueError,
 )
 from ..filters import _semitone_filterbank, get_window, window_sumsquare
+from ..util._interp import _interp1d
 from ..util.deprecation import Deprecated, _warn_interp_kind, rename_kw
 from . import convert
 from .audio import resample
@@ -1464,19 +1465,17 @@ def phase_vocoder(
     _warn_interp_kind(kind, stacklevel=3)
 
     # Interpolate magnitudes
-    import scipy.interpolate
-
-    mag_interp = scipy.interpolate.interp1d(
+    mag_interp = _interp1d(
         np.arange(n_frames),
         np.abs(D),
+        t_out,
         kind=kind,
         axis=-1,
         fill_value="extrapolate",
         assume_sorted=True,
-        copy=False,
     )
 
-    D_stretched: np.ndarray = util.phasor(phase, mag=mag_interp(t_out))
+    D_stretched: np.ndarray = util.phasor(phase, mag=mag_interp)
     return D_stretched
 
 
@@ -2267,11 +2266,6 @@ def fmt(
 
     _warn_interp_kind(kind, stacklevel=3)
 
-    # build the interpolator
-    import scipy.interpolate
-
-    f_interp = scipy.interpolate.interp1d(x, y, kind=kind, axis=axis)
-
     # build the new sampling grid
     # exponentially spaced between t_min/n and 1 (exclusive)
     # we'll go one past where we need, and drop the last sample
@@ -2298,7 +2292,7 @@ def fmt(
         raise ParameterValueError("Redundant sample positions in Mellin transform")
 
     # Resample the signal
-    y_res = f_interp(x_exp)
+    y_res = _interp1d(x, y, x_exp, kind=kind, axis=axis, assume_sorted=True)
 
     # Broadcast the window correctly
     shape = [1] * y_res.ndim

@@ -17,6 +17,7 @@ from ..exceptions import (
     ParameterTypeError,
     ParameterValueError,
 )
+from ._interp import _interp1d
 from .deprecation import _warn_interp_kind, _warn_spmatrix
 
 if TYPE_CHECKING:
@@ -2977,18 +2978,14 @@ def interp_broadcast(
 
     _warn_interp_kind(kind, stacklevel=3)
 
-    import scipy.interpolate
-
-    x1_interp = scipy.interpolate.interp1d(
-        x1_pos, x1, axis=axis, kind=kind, copy=False, bounds_error=False, fill_value=fill_value
+    y1 = cast(
+        "NDArray[np.float64]",
+        _interp1d(x1_pos, x1, interp_pos, axis=axis, kind=kind, bounds_error=False, fill_value=fill_value),
     )
-
-    x2_interp = scipy.interpolate.interp1d(
-        x2_pos, x2, axis=axis, kind=kind, copy=False, bounds_error=False, fill_value=fill_value
+    y2 = cast(
+        "NDArray[np.float64]",
+        _interp1d(x2_pos, x2, interp_pos, axis=axis, kind=kind, bounds_error=False, fill_value=fill_value),
     )
-
-    y1 = cast("NDArray[np.float64]", x1_interp(interp_pos))
-    y2 = cast("NDArray[np.float64]", x2_interp(interp_pos))
 
     if op is None:
         return y1, y2
