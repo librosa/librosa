@@ -1615,6 +1615,10 @@ def test_poly_features_edge_cases(rng):
     f_1d = np.linspace(0, 8000, 16)
     f_2d = np.tile(f_1d[:, None], (1, 4))
 
+    for bad_type_order in (1.5, True):
+        with pytest.raises(librosa.ParameterTypeError, match="must be an integer"):
+            librosa.feature.poly_features(S=S_2d, freq=f_1d, order=bad_type_order)  # type: ignore[arg-type]
+
     for bad_order in (-1, -2):
         with pytest.raises(librosa.ParameterValueError, match="must be non-negative"):
             librosa.feature.poly_features(S=S_2d, freq=f_1d, order=bad_order)

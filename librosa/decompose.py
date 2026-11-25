@@ -190,7 +190,6 @@ def decompose(
     >>> ax["D"].label_outer()
     >>> librosa.display.colorbar_db(img, ax=list(ax.values()))
     """
-    # Do a swapaxes and unroll
     orig_shape = list(S.shape)
 
     if S.ndim > 2 and sort:
