@@ -971,3 +971,24 @@ def test_pseudo_cqt_nbins_none_small(y_cqt):
 def test_pseudo_cqt_fmin_over(y_cqt):
     with pytest.raises(librosa.ParameterValueError):
         librosa.pseudo_cqt(y=y_cqt, sr=2000, fmin=1500, n_bins=12)
+
+
+@pytest.mark.parametrize(
+    "x,expected",
+    [
+        (-8, 0),
+        (-1, 0),
+        (0, 0),
+        (1, 0),
+        (3, 0),
+        (2, 1),
+        (4, 2),
+        (6, 1),
+        (12, 2),
+        (24, 3),
+        (1024, 10),
+        (np.int64(48), 4),
+    ],
+)
+def test_num_two_factors(x, expected):
+    assert librosa.core.constantq.__num_two_factors(x) == expected

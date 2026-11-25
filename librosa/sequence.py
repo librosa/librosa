@@ -288,7 +288,7 @@ def dtw(
     >>> ax[1].set(xlim=[0, Y.shape[1]], ylim=[0, 2], title="Matching cost function")
     """
     # Default Parameters
-    default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.uint32)
+    default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.int32)
     default_weights_add = np.zeros(3, dtype=np.float64)
     default_weights_mul = np.ones(3, dtype=np.float64)
 
@@ -352,16 +352,12 @@ def dtw(
         X = np.atleast_2d(X)
         Y = np.atleast_2d(Y)
 
-        # Perform some shape-squashing here
-        # Put the time axes around front
-        # Suppress types because mypy doesn't know these are ndarrays
-        X = np.swapaxes(X, -1, 0)
-        Y = np.swapaxes(Y, -1, 0)
+        # Move time axis to front and flatten feature dimensions in C order
+        X = np.moveaxis(X, -1, 0)
+        Y = np.moveaxis(Y, -1, 0)
 
-        # Flatten the remaining dimensions
-        # Use F-ordering to preserve columns
-        X = X.reshape((X.shape[0], -1), order="F")
-        Y = Y.reshape((Y.shape[0], -1), order="F")
+        X = X.reshape((X.shape[0], -1))
+        Y = Y.reshape((Y.shape[0], -1))
 
         try:
             from scipy.spatial.distance import cdist
@@ -654,7 +650,7 @@ def dtw_backtracking(
         )
 
     # Default Parameters
-    default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.uint32)
+    default_steps = np.array([[1, 1], [0, 1], [1, 0]], dtype=np.int32)
 
     if step_sizes_sigma is None:
         # Use the default steps
@@ -1143,7 +1139,7 @@ def _viterbi(
     log_trans: np.ndarray,
     log_p_init: np.ndarray,
     log_trans_threshold: float,
-) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]:  # pragma: no cover
+) -> tuple[npt.NDArray[np.int32], npt.NDArray[np.float64]]:  # pragma: no cover
     """Core Viterbi algorithm.
 
     This is intended for internal use only.
@@ -1171,9 +1167,9 @@ def _viterbi(
     """
     n_steps, n_states = log_prob.shape
 
-    state = np.zeros(n_steps, dtype=np.uint16)
+    state = np.zeros(n_steps, dtype=np.int32)
     value = np.zeros((n_steps, n_states), dtype=np.float64)
-    ptr = np.zeros((n_steps, n_states), dtype=np.uint16)
+    ptr = np.zeros((n_steps, n_states), dtype=np.int32)
 
     # factor in initial state distribution
     value[0] = log_prob[0] + log_p_init
@@ -1233,7 +1229,7 @@ def viterbi(
     p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
     transition_min_prob: float | None = ...,
-) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]: ...
+) -> tuple[npt.NDArray[np.int32], npt.NDArray[np.float64]]: ...
 @overload
 def viterbi(
     prob: np.ndarray,
@@ -1242,7 +1238,7 @@ def viterbi(
     p_init: np.ndarray | None = ...,
     return_logp: Literal[False] = ...,
     transition_min_prob: float | None = ...,
-) -> npt.NDArray[np.uint16]: ...
+) -> npt.NDArray[np.int32]: ...
 @cache(level=30)
 def viterbi(
     prob: np.ndarray,
@@ -1251,7 +1247,7 @@ def viterbi(
     p_init: np.ndarray | None = None,
     return_logp: bool = False,
     transition_min_prob: float | None = None,
-) -> npt.NDArray[np.uint16] | tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]:
+) -> npt.NDArray[np.int32] | tuple[npt.NDArray[np.int32], npt.NDArray[np.float64]]:
     """Viterbi decoding from observation likelihoods.
 
     Given a sequence of observation likelihoods ``prob[s, t]``,
@@ -1369,7 +1365,7 @@ def viterbi(
     else:
         raise ParameterValueError(f"Invalid transition_min_prob={transition_min_prob}, must be None or non-negative.")
 
-    def _helper(lp) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]:
+    def _helper(lp) -> tuple[npt.NDArray[np.int32], npt.NDArray[np.float64]]:
         # Transpose input
         _state, logp = _viterbi(lp.T, log_trans, log_p_init, log_trans_threshold)
         # Transpose outputs for return
@@ -1382,7 +1378,7 @@ def viterbi(
         states, logp = _helper(log_prob)
     else:
         # Vectorize the helper
-        __viterbi = np.vectorize(_helper, otypes=[np.uint16, np.float64], signature="(s,t)->(t),(1)")
+        __viterbi = np.vectorize(_helper, otypes=[np.int32, np.float64], signature="(s,t)->(t),(1)")
 
         states, logp = __viterbi(log_prob)
 
@@ -1404,7 +1400,7 @@ def viterbi_discriminative(
     p_init: np.ndarray | None = ...,
     return_logp: Literal[False] = ...,
     transition_min_prob: float | None = ...,
-) -> npt.NDArray[np.uint16]: ...
+) -> npt.NDArray[np.int32]: ...
 @overload
 def viterbi_discriminative(
     prob: np.ndarray,
@@ -1414,7 +1410,7 @@ def viterbi_discriminative(
     p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
     transition_min_prob: float | None = ...,
-) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]: ...
+) -> tuple[npt.NDArray[np.int32], npt.NDArray[np.float64]]: ...
 def viterbi_discriminative(
     prob: np.ndarray,
     transition: np.ndarray,
@@ -1423,7 +1419,7 @@ def viterbi_discriminative(
     p_init: np.ndarray | None = None,
     return_logp: bool = False,
     transition_min_prob: float | None = None,
-) -> npt.NDArray[np.uint16] | tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]:
+) -> npt.NDArray[np.int32] | tuple[npt.NDArray[np.int32], npt.NDArray[np.float64]]:
     """Viterbi decoding from discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,
@@ -1661,7 +1657,7 @@ def viterbi_discriminative(
         states, logp = _helper(log_prob)
     else:
         # Vectorize the helper
-        __viterbi = np.vectorize(_helper, otypes=[np.uint16, np.float64], signature="(s,t)->(t),(1)")
+        __viterbi = np.vectorize(_helper, otypes=[np.int32, np.float64], signature="(s,t)->(t),(1)")
 
         states, logp = __viterbi(log_prob)
 
@@ -1683,7 +1679,7 @@ def viterbi_binary(
     p_init: np.ndarray | None = ...,
     return_logp: Literal[False] = ...,
     transition_min_prob: float | None = ...,
-) -> npt.NDArray[np.uint16]: ...
+) -> npt.NDArray[np.int32]: ...
 @overload
 def viterbi_binary(
     prob: np.ndarray,
@@ -1693,7 +1689,7 @@ def viterbi_binary(
     p_init: np.ndarray | None = ...,
     return_logp: Literal[True],
     transition_min_prob: float | None = ...,
-) -> tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]: ...
+) -> tuple[npt.NDArray[np.int32], npt.NDArray[np.float64]]: ...
 def viterbi_binary(
     prob: np.ndarray,
     transition: np.ndarray,
@@ -1702,7 +1698,7 @@ def viterbi_binary(
     p_init: np.ndarray | None = None,
     return_logp: bool = False,
     transition_min_prob: float | None = None,
-) -> npt.NDArray[np.uint16] | tuple[npt.NDArray[np.uint16], npt.NDArray[np.float64]]:
+) -> npt.NDArray[np.int32] | tuple[npt.NDArray[np.int32], npt.NDArray[np.float64]]:
     """Viterbi decoding from binary (multi-label), discriminative state predictions.
 
     Given a sequence of conditional state predictions ``prob[s, t]``,
@@ -1841,7 +1837,7 @@ def viterbi_binary(
         raise ParameterValueError(f"Invalid initial state distributions: p_init={p_init}")
 
     shape_prefix = list(prob.shape[:-2])
-    states = np.empty([*shape_prefix, n_states, n_steps], dtype=np.uint16)
+    states = np.empty([*shape_prefix, n_states, n_steps], dtype=np.int32)
     logp = np.empty([*shape_prefix, n_states])
 
     prob_binary = np.empty([*shape_prefix, 2, n_steps])

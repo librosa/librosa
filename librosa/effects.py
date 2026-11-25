@@ -16,6 +16,7 @@ import numpy as np
 from . import core, decompose, feature, util
 from ._cache import cache
 from .exceptions import (
+    ParameterTypeError,
     ParameterValueError,
 )
 
@@ -966,10 +967,11 @@ def preemphasis(
 
         .. [#] https://htk.eng.cam.ac.uk/
 
-    zi : number
+    zi : number or np.ndarray [shape=(..., 1)], optional
         Initial filter state.  When making successive calls to non-overlapping
         frames, this can be set to the ``zf`` returned from the previous call.
         (See example below.)
+        If an array is provided, it must be broadcastable to ``(*y.shape[:-1], 1)``.
 
         By default ``zi`` is initialized as ``2*y[0] - y[1]``.
 
@@ -981,8 +983,15 @@ def preemphasis(
     -------
     y_out : np.ndarray
         pre-emphasized signal
-    zf : number
+    zf : np.ndarray [shape=(..., 1)]
         if ``return_zf=True``, the final filter state is also returned
+
+    Raises
+    ------
+    ParameterTypeError
+        if ``y`` does not have a floating-point or complex dtype.
+    ParameterValueError
+        if ``zi`` is ``None`` and ``y.shape[-1] < 2``.
 
     See Also
     --------
@@ -1018,21 +1027,34 @@ def preemphasis(
     >>> np.allclose(y_filt, np.concatenate([y_filt_1, y_filt_2]))
     True
     """
-    b = np.asarray([1.0, -coef], dtype=y.dtype)
-    a = np.asarray([1.0], dtype=y.dtype)
+    if not np.issubdtype(y.dtype, np.inexact):
+        raise ParameterTypeError(f"Audio data must be floating-point or complex, got dtype={y.dtype}")
 
     if zi is None:
+        if y.shape[-1] < 2:
+            raise ParameterValueError(
+                f"Cannot extrapolate initial filter state zi from signal of length {y.shape[-1]}"
+            )
         # Initialize the filter to implement linear extrapolation
-        zi = 2 * y[..., 0:1] - y[..., 1:2]
+        zi_arr = 2 * y[..., 0:1] - y[..., 1:2]
+    else:
+        zi_arr = np.asarray(zi, dtype=y.dtype)
+        zi_arr = np.broadcast_to(zi_arr, (*y.shape[:-1], 1))
 
-    zi = np.atleast_1d(zi)
+    coef_d = np.asarray(coef, dtype=y.dtype)
 
     y_out: np.ndarray
     z_f: np.ndarray
-
-    import scipy.signal
-
-    y_out, z_f = scipy.signal.lfilter(b, a, y, zi=np.asarray(zi, dtype=y.dtype))
+    if y.shape[-1] > 0:
+        first = y[..., 0:1] + zi_arr
+        if y.shape[-1] > 1:
+            y_out = np.concat([first, y[..., 1:] - coef_d * y[..., :-1]], axis=-1)
+        else:
+            y_out = first
+        z_f = -coef_d * y[..., -1:]
+    else:
+        y_out = np.zeros(y.shape, dtype=y.dtype)
+        z_f = np.asarray(zi_arr, copy=True)
 
     if return_zf:
         return y_out, z_f

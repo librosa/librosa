@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import scipy
-from numba import jit
 
 from .. import filters, util
 from .._cache import cache
@@ -1284,20 +1283,15 @@ def __early_downsample(y, sr, hop_length, res_type, n_octaves, nyquist, filter_c
     return y, sr, hop_length
 
 
-@jit(nopython=True, cache=True)
-def __num_two_factors(x):
+def __num_two_factors(x: int) -> int:
     """Return how many times integer x can be evenly divided by 2.
 
     Returns 0 for non-positive integers.
     """
-    if x <= 0:
+    x_int = int(x)
+    if x_int <= 0:
         return 0
-    num_twos = 0
-    while x % 2 == 0:
-        num_twos += 1
-        x //= 2
-
-    return num_twos
+    return (x_int & -x_int).bit_length() - 1
 
 
 def griffinlim_cqt(

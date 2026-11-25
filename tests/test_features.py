@@ -1560,3 +1560,79 @@ def test_hybrid_tempogram_deprecations():
     with pytest.warns(FutureWarning, match="hybrid_tempogram\\(\\*\\*kwargs\\)") as record_kw:
         librosa.feature.hybrid_tempogram(y=y, sr=sr, win_length=32, copy=True)
     assert len([w for w in record_kw if issubclass(w.category, FutureWarning)]) == 1
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("order", [0, 1, 2, 5])
+def test_poly_features_matches_polyfit(dtype, order, rng):
+    # Check 1D constant freq (including multi-channel)
+    f1 = librosa.fft_frequencies(sr=22050, n_fft=128).astype(dtype)
+    S3 = np.abs(rng.standard_normal((2, len(f1), 12))).astype(dtype)
+    p3 = librosa.feature.poly_features(S=S3, freq=f1, order=order)
+    ref3 = np.vectorize(lambda y: np.polyfit(f1, y, order), signature="(f,t)->(d,t)")(S3).astype(dtype)
+    assert p3.dtype == dtype
+    assert p3.shape == ref3.shape
+    assert np.allclose(p3, ref3, rtol=1e-5, atol=1e-6)
+
+    # Check time/channel-varying 2D and 3D freq
+    for s_shape, f_shape in [((len(f1), 10), (len(f1), 10)), ((2, len(f1), 10), (2, len(f1), 10))]:
+        S_v = np.abs(rng.standard_normal(s_shape)).astype(dtype)
+        f_v = (
+            librosa.fft_frequencies(sr=22050, n_fft=128).reshape(len(f1), 1) + rng.uniform(-5.0, 5.0, f_shape)
+        ).astype(dtype)
+        p_v = librosa.feature.poly_features(S=S_v, freq=f_v, order=order)
+        ref_v = (
+            np.vectorize(lambda x, y: np.polyfit(x, y, order), signature="(f),(f)->(d)")(
+                f_v.swapaxes(-2, -1), S_v.swapaxes(-2, -1)
+            )
+            .swapaxes(-2, -1)
+            .astype(dtype)
+        )
+        assert p_v.dtype == dtype
+        assert p_v.shape == ref_v.shape
+        assert np.allclose(p_v, ref_v, rtol=1e-5, atol=1e-6)
+
+    # Check rank-deficient constant frequencies
+    f_const = np.full(16, 440.0, dtype=dtype)
+    S_const = np.abs(rng.standard_normal((16, 4))).astype(dtype)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Polyfit may be poorly conditioned")
+        ref_const = np.vectorize(lambda y: np.polyfit(f_const, y, order), signature="(f,t)->(d,t)")(S_const).astype(
+            dtype
+        )
+    p_const = librosa.feature.poly_features(S=S_const, freq=f_const, order=order)
+    assert np.allclose(p_const, ref_const, rtol=1e-5, atol=1e-6)
+
+    # All-zero frequencies should not fail with SVD convergence errors
+    f_zero = np.zeros(16, dtype=dtype)
+    p_zero = librosa.feature.poly_features(S=S_const, freq=f_zero, order=order)
+    assert p_zero.shape == (order + 1, 4)
+    assert np.allclose(p_zero[-1], np.mean(S_const, axis=0), rtol=1e-5, atol=1e-6)
+
+
+def test_poly_features_edge_cases(rng):
+    S_2d = np.abs(rng.standard_normal((16, 4)))
+    f_1d = np.linspace(0, 8000, 16)
+    f_2d = np.tile(f_1d[:, None], (1, 4))
+
+    for bad_type_order in (1.5, True):
+        with pytest.raises(librosa.ParameterTypeError, match="must be an integer"):
+            librosa.feature.poly_features(S=S_2d, freq=f_1d, order=bad_type_order)  # type: ignore[arg-type]
+
+    for bad_order in (-1, -2):
+        with pytest.raises(librosa.ParameterValueError, match="must be non-negative"):
+            librosa.feature.poly_features(S=S_2d, freq=f_1d, order=bad_order)
+        with pytest.raises(librosa.ParameterValueError, match="must be non-negative"):
+            librosa.feature.poly_features(S=S_2d, freq=f_2d, order=bad_order)
+
+    # Shared 2D / singleton-time freq broadcast against 3D multi-channel S
+    S_3d = np.abs(rng.standard_normal((2, 16, 4))).astype(np.float32)
+    f_shared = (f_1d[:, None] + rng.uniform(-5, 5, (16, 4))).astype(np.float32)
+    f_col = f_1d[:, None].astype(np.float32)
+
+    for f_in in (f_shared, f_col):
+        p_all = librosa.feature.poly_features(S=S_3d, freq=f_in, order=2)
+        p0 = librosa.feature.poly_features(S=S_3d[0], freq=f_in, order=2)
+        p1 = librosa.feature.poly_features(S=S_3d[1], freq=f_in, order=2)
+        assert np.allclose(p_all[0], p0, rtol=1e-5, atol=1e-6)
+        assert np.allclose(p_all[1], p1, rtol=1e-5, atol=1e-6)

@@ -65,7 +65,7 @@ def __match_interval_overlaps(query, intervals_to, candidates):  # pragma: no co
 @numba.jit(nopython=True, cache=True)  # type: ignore
 def __match_intervals(
     intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True
-) -> _Array1D[np.uint32]:  # pragma: no cover
+) -> _Array1D[np.int32]:  # pragma: no cover
     """Numba-accelerated interval matching algorithm."""
     # sort index of the interval starts
     start_index = np.argsort(intervals_to[:, 0])
@@ -84,7 +84,7 @@ def __match_intervals(
     search_ends = np.searchsorted(start_sorted, intervals_from[:, 1], side="right")
     search_starts = np.searchsorted(end_sorted, intervals_from[:, 0], side="left")
 
-    output = np.empty(len(intervals_from), dtype=numba.uint32)
+    output = np.empty(len(intervals_from), dtype=np.int32)
     for i in range(len(intervals_from)):
         query = intervals_from[i]
 
@@ -137,7 +137,7 @@ def __match_intervals(
     return output
 
 
-def match_intervals(intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True) -> _Array1D[np.uint32]:
+def match_intervals(intervals_from: np.ndarray, intervals_to: np.ndarray, strict: bool = True) -> _Array1D[np.int32]:
     """Match one set of time intervals to another.
 
     This can be useful for tasks such as mapping beat timings
@@ -201,7 +201,7 @@ def match_intervals(intervals_from: np.ndarray, intervals_to: np.ndarray, strict
     >>> ints_from = np.array([[3, 5], [1, 4], [4, 5]])
     >>> ints_to = np.array([[0, 2], [1, 3], [4, 5], [6, 7]])
     >>> librosa.util.match_intervals(ints_from, ints_to)
-    array([2, 1, 2], dtype=uint32)
+    array([2, 1, 2], dtype=int32)
     >>> # [3, 5] => [4, 5]  (ints_to[2])
     >>> # [1, 4] => [1, 3]  (ints_to[1])
     >>> # [4, 5] => [4, 5]  (ints_to[2])
@@ -211,7 +211,7 @@ def match_intervals(intervals_from: np.ndarray, intervals_to: np.ndarray, strict
     With ``strict=False``, we get the following:
 
     >>> librosa.util.match_intervals(ints_to, ints_from, strict=False)
-    array([1, 1, 2, 2], dtype=uint32)
+    array([1, 1, 2, 2], dtype=int32)
     >>> # [0, 2] => [1, 4]  (ints_from[1])
     >>> # [1, 3] => [1, 4]  (ints_from[1])
     >>> # [4, 5] => [4, 5]  (ints_from[2])

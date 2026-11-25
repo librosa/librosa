@@ -276,3 +276,26 @@ def test_beat_tracker_bad_bpm_shape():
 
     with pytest.raises(librosa.ParameterShapeError, match="Invalid bpm shape"):
         __beat_tracker(np.ones(100), np.ones(5), 43.0, 100, True)
+
+
+def test_last_beat_all_masked_no_warning():
+    import warnings
+
+    from librosa.beat import __last_beat
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+
+        tail_1d = __last_beat(np.zeros(20))
+        assert tail_1d == 19
+
+        # Multichannel with one active peak row and one silent row
+        scores = np.array([[0.0, 1.0, 0.0, 2.0, 0.0], [0.0, 0.0, 0.0, 0.0, 0.0]])
+        tail_2d = __last_beat(scores)
+        assert tail_2d.shape == (2,)
+        assert tail_2d[0] == 3
+        assert tail_2d[1] == 4
+
+        tempo, beats = librosa.beat.beat_track(onset_envelope=np.zeros(100))
+        assert np.all(tempo >= 0)
+        assert beats.shape == (0,)

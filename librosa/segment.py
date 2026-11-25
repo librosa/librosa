@@ -291,15 +291,14 @@ def cross_similarity(
             f"data_ref.shape={data_ref.shape} and data.shape={data.shape} do not match on leading dimension(s)"
         )
 
-    # swap data axes so the feature axis is last
-    data_ref = np.swapaxes(data_ref, -1, 0)
+    # Move time axis to front and flatten feature dimensions in C order
+    data_ref = np.moveaxis(data_ref, -1, 0)
     n_ref = data_ref.shape[0]
-    # Use F-ordering for reshape to preserve leading axis
-    data_ref = data_ref.reshape((n_ref, -1), order="F")
+    data_ref = data_ref.reshape((n_ref, -1))
 
-    data = np.swapaxes(data, -1, 0)
+    data = np.moveaxis(data, -1, 0)
     n = data.shape[0]
-    data = data.reshape((n, -1), order="F")
+    data = data.reshape((n, -1))
 
     if mode not in ["connectivity", "distance", "affinity"]:
         raise ParameterValueError(f"Invalid mode='{mode}'. Must be one of ['connectivity', 'distance', 'affinity']")
@@ -627,11 +626,10 @@ def recurrence_matrix(
 
     data = np.atleast_2d(data)
 
-    # Swap observations to the first dimension and flatten the rest
-    data = np.swapaxes(data, axis, 0)
+    # Move observations to the first dimension and flatten the rest in C order
+    data = np.moveaxis(data, axis, 0)
     t = data.shape[0]
-    # Use F-ordering here to preserve leading axis layout
-    data = data.reshape((t, -1), order="F")
+    data = data.reshape((t, -1))
 
     if width < 1 or width >= (t - 1) // 2:
         raise ParameterValueError(
@@ -1200,12 +1198,10 @@ def agglomerative(
     # Make sure we have at least two dimensions
     data = np.atleast_2d(data)
 
-    # Swap data index to position 0
-    data = np.swapaxes(data, axis, 0)
-
-    # Flatten the features
+    # Move data index to position 0 and flatten features in C order
+    data = np.moveaxis(data, axis, 0)
     n = data.shape[0]
-    data = data.reshape((n, -1), order="F")
+    data = data.reshape((n, -1))
 
     if clusterer is None:
         import sklearn.cluster

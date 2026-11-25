@@ -694,12 +694,16 @@ def __trim_beats(localscore, beats, trim, beats_trimmed):
 
 def __last_beat(cumscore):
     """Identify the position of the last detected beat"""
-    # Use a masked array to support multidimensional statistics
-    # We negate the mask here because of numpy masked array semantics
     mask = ~util.localmax(cumscore, axis=-1)
-    masked_scores: np.ma.masked_array = np.ma.masked_array(data=cumscore, mask=mask)
-    medians = np.ma.median(masked_scores, axis=-1)
-    thresholds = 0.5 * np.ma.getdata(medians)
+    has_peak = np.any(~mask, axis=-1)
+    scores_nan = np.where(mask, np.nan, cumscore)
+    if np.all(has_peak):
+        medians = np.nanmedian(scores_nan, axis=-1)
+    else:
+        medians = np.zeros(cumscore.shape[:-1], dtype=np.result_type(cumscore, np.float64))
+        if np.any(has_peak):
+            medians[has_peak] = np.nanmedian(scores_nan[has_peak], axis=-1)
+    thresholds = 0.5 * medians
 
     # Also find the last beat positions
     tail = np.empty(shape=cumscore.shape[:-1], dtype=int)

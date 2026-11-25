@@ -22,6 +22,13 @@ if TYPE_CHECKING:
 __all__ = ["nnls"]
 
 
+def _pinv(A: np.ndarray) -> np.ndarray:
+    """Compute Moore-Penrose pseudoinverse with dtype-aware rtol matching scipy.linalg.pinv."""
+    eps_dtype = A.dtype if np.issubdtype(A.dtype, np.inexact) else np.float64
+    rtol = max(A.shape[-2:]) * float(np.finfo(eps_dtype).eps)
+    return np.linalg.pinv(A, rtol=rtol)
+
+
 def _nnls_obj(x: np.ndarray, shape: Sequence[int], A: np.ndarray, B: np.ndarray) -> tuple[float, np.ndarray]:
     """Compute the objective and gradient for NNLS"""
     # Scipy's lbfgs flattens all arrays, so we first reshape
@@ -62,12 +69,10 @@ def _nnls_lbfgs_block(A: np.ndarray, B: np.ndarray, x_init: np.ndarray | None = 
     """
     # If we don't have an initial point, start at the projected
     # least squares solution
-    import scipy.linalg
     import scipy.optimize
 
     if x_init is None:
-        # Suppress type checks because mypy can't find pinv
-        x_init = np.einsum("fm,...mt->...ft", scipy.linalg.pinv(A), B, optimize=True)
+        x_init = np.einsum("fm,...mt->...ft", _pinv(A), B, optimize=True)
         np.clip(x_init, 0, None, out=x_init)
 
     # Adapt the hessian approximation to the dimension of the problem
@@ -144,7 +149,6 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
     >>> ax[1].label_outer()
     >>> librosa.display.colorbar_db(img, ax=ax)
     """
-    import scipy.linalg
     import scipy.optimize
 
     # If B is a single vector, punt up to the scipy method
@@ -154,7 +158,7 @@ def nnls(A: np.ndarray, B: np.ndarray, **kwargs: Any) -> np.ndarray:
     n_columns = int(MAX_MEM_BLOCK // (np.prod(B.shape[:-1]) * A.itemsize))
     n_columns = max(n_columns, 1)
 
-    pinv_A = scipy.linalg.pinv(A)
+    pinv_A = _pinv(A)
 
     # Process in blocks:
     if B.shape[-1] <= n_columns:

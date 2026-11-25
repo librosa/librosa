@@ -994,7 +994,7 @@ def poly_features(
     pad_mode : str
         If ``center=True``, the padding mode to use at the edges of the signal.
         By default, STFT uses zero padding.
-    order : int > 0
+    order : int >= 0
         order of the polynomial to fit
     freq : None or np.ndarray [shape=(d,) or shape=(..., d, t)]
         Center frequencies for spectrogram bins.
@@ -1013,6 +1013,13 @@ def poly_features(
         ``coefficients[..., 1, :]`` corresponds to the next highest degree (``order-1``),
 
         down to the constant term ``coefficients[..., order, :]``.
+
+    Raises
+    ------
+    ParameterTypeError
+        if ``order`` is not an integer.
+    ParameterValueError
+        if ``order < 0``.
 
     Examples
     --------
@@ -1054,6 +1061,11 @@ def poly_features(
     ...     S, vscale="dBFS", y_axis="log", x_axis="time", ax=ax[3]
     ... )
     """
+    if not isinstance(order, (int, np.integer)) or isinstance(order, bool):
+        raise ParameterTypeError(f"order={order!r} must be an integer")
+    if order < 0:
+        raise ParameterValueError(f"order={order} must be non-negative")
+
     S, n_fft = _spectrogram(
         y=y,
         S=S,
@@ -1069,22 +1081,33 @@ def poly_features(
     if freq is None:
         freq = fft_frequencies(sr=sr, n_fft=n_fft, dtype=S.dtype)
 
+    # Match `np.polyfit` float64 conditioning with column L2-norm scaling and SVD rcond.
+    eps = np.finfo(np.float64).eps
+    powers = np.arange(order, -1, -1, dtype=np.float64)
+    y_dtype = np.result_type(S.dtype, np.float64)
+
+    x = np.asarray(freq, dtype=np.float64)
+    if freq.ndim > 1:
+        x = np.moveaxis(x, -2, -1)
+
+    V = x[..., None] ** powers
+    scale = np.sqrt(np.sum(V * V, axis=-2, keepdims=True))
+    scale_safe = np.where(scale == 0, 1.0, scale)
+    V_s = V / scale_safe
+    rcond = x.shape[-1] * eps
+
+    proj = np.linalg.pinv(V_s, rtol=rcond) / np.moveaxis(scale_safe, -2, -1)
+
+    y_arr = np.asarray(S, dtype=y_dtype)
     coefficients: np.ndarray
-
     if freq.ndim == 1:
-        # If frequencies are constant over frames, then we only need to fit once
-        fitter = np.vectorize(lambda y: np.polyfit(freq, y, order), signature="(f,t)->(d,t)")
-        coefficients = fitter(S)
+        coefficients = proj @ y_arr
     else:
-        # Otherwise, we have variable frequencies, and need to fit independently
-        fitter = np.vectorize(lambda x, y: np.polyfit(x, y, order), signature="(f),(f)->(d)")
+        y_arr = np.moveaxis(y_arr, -2, -1)
+        c = (proj @ y_arr[..., None])[..., 0]
+        coefficients = np.moveaxis(c, -2, -1)
 
-        # We have to do some axis swapping to preserve layout
-        # otherwise, the new dimension gets put at the end instead of the penultimate position
-        coefficients = fitter(freq.swapaxes(-2, -1), S.swapaxes(-2, -1)).swapaxes(-2, -1)
-
-    # `np.polyfit` always computes (and returns) in float64 for numerical
-    # stability; cast back to the spectrogram dtype so a float32 pipeline is
+    # Cast back to the spectrogram dtype so a float32 pipeline is
     # preserved, consistent with the other spectral features.
     return coefficients.astype(S.dtype, copy=False)
 

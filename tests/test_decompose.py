@@ -352,3 +352,13 @@ def test_nn_filter_spmatrix_deprecated(rng):
     with pytest.warns(FutureWarning, match="spmatrix") as record:
         librosa.decompose.nn_filter(X, rec=rec_mat)  # type: ignore[arg-type]
     assert len(record) == 1
+
+
+def test_decompose_custom_components_3d_roundtrip(rng):
+    X = np.abs(rng.standard_normal(size=(2, 8, 20))) + 0.1
+    W_3d = np.abs(rng.standard_normal(size=(2, 8, 4))) + 0.1
+
+    comps, acts = librosa.decompose.decompose(X, components=W_3d, fit=False)
+    assert comps.shape == W_3d.shape
+    assert acts.shape == (4, 20)
+    assert np.allclose(comps, W_3d)
