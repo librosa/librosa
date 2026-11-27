@@ -76,9 +76,7 @@ def onset_detect(
 
         This is primarily useful when using onsets as slice points for segmentation.
 
-        .. note:: backtracking is only supported if ``sparse=True``.
-
-    energy : np.ndarray [shape=(m,)] (optional)
+    energy : np.ndarray [shape=(m,) or (..., m)] (optional)
         An energy function to use for backtracking detected onset events.
         If none is provided, then ``onset_envelope`` is used.
 
@@ -209,9 +207,6 @@ def onset_detect(
 
         # Optionally backtrack the events
         if backtrack:
-            if not sparse:
-                raise ParameterValueError("onset backtracking is only supported if sparse=True")
-
             if energy is None:
                 energy = onset_envelope
             assert energy is not None
@@ -478,6 +473,16 @@ def onset_strength(
     return odf_all[..., 0, :]
 
 
+def _energy_minima(energy: np.ndarray) -> np.ndarray:
+    """Find local minima frame indices of a 1D energy curve, padded with 0."""
+    # Find points where energy is non-increasing:
+    # all points: energy[i] <= energy[i-1], tail points: energy[i] < energy[i+1]
+    minima = np.flatnonzero((energy[1:-1] <= energy[:-2]) & (energy[1:-1] < energy[2:]))
+
+    # Pad on a 0 in case onsets have no preceding minimum, and shift by 1 for slicing
+    return util.fix_frames(1 + minima, x_min=0)
+
+
 def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
     """Backtrack detected onset events to the nearest preceding local minimum of an energy function.
 
@@ -494,15 +499,22 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
 
     Parameters
     ----------
-    events : np.ndarray, dtype=int
-        List of onset event frame indices, as computed by `onset_detect`
-    energy : np.ndarray, shape=(m,)
+    events : np.ndarray [shape=(n_onsets,) or (..., m)], dtype=int or bool
+        List of onset event frame indices, or a dense boolean array of
+        onset detections, as computed by `onset_detect`
+    energy : np.ndarray, shape=(m,) or (..., m)
         An energy function
 
     Returns
     -------
     events_backtracked : np.ndarray, shape=events.shape
         The input events matched to nearest preceding minima of ``energy``.
+
+    Raises
+    ------
+    ParameterShapeError
+        If ``events`` is a dense boolean array and ``energy`` does not have a
+        compatible shape for broadcasting.
 
     Examples
     --------
@@ -552,14 +564,40 @@ def onset_backtrack(events: np.ndarray, energy: np.ndarray) -> np.ndarray:
     ... )
     >>> ax[2].legend()
     """
-    # Find points where energy is non-increasing
-    # all points:  energy[i] <= energy[i-1]
-    # tail points: energy[i] < energy[i+1]
-    minima = np.flatnonzero((energy[1:-1] <= energy[:-2]) & (energy[1:-1] < energy[2:]))
+    events_arr = np.asarray(events)
+    if np.issubdtype(events_arr.dtype, np.bool_):
+        if events_arr.ndim == 0:
+            raise ParameterShapeError("Dense boolean events must have at least one dimension")
 
-    # Pad on a 0, just in case we have onsets with no preceding minimum
-    # Shift by one to account for slicing in minima detection
-    minima = util.fix_frames(1 + minima, x_min=0)
+        energy_arr = np.asarray(energy)
+        if energy_arr.ndim == 0 or energy_arr.shape[-1] != events_arr.shape[-1]:
+            raise ParameterShapeError(
+                f"energy shape {energy_arr.shape} is incompatible with dense events shape {events_arr.shape}"
+            )
+
+        try:
+            energy_bcast = np.broadcast_to(energy_arr, events_arr.shape)
+        except ValueError as exc:
+            raise ParameterShapeError(
+                f"energy shape {energy_arr.shape} cannot be broadcast to dense events shape {events_arr.shape}"
+            ) from exc
+
+        output = np.zeros_like(events_arr, dtype=bool)
+        if not np.any(events_arr):
+            return output
+
+        shared_minima = _energy_minima(energy_arr) if energy_arr.ndim == 1 else None
+        for idx in np.ndindex(events_arr.shape[:-1]):
+            ev_ch = events_arr[idx]
+            if not np.any(ev_ch):
+                continue
+            minima = shared_minima if shared_minima is not None else _energy_minima(energy_bcast[idx])
+            bt_indices = minima[util.match_events(np.flatnonzero(ev_ch), minima, right=False)]
+            output[idx][bt_indices] = True
+
+        return output
+
+    minima = _energy_minima(energy)
 
     # Only match going left from the detected events
     results: np.ndarray = minima[util.match_events(events, minima, right=False)]
