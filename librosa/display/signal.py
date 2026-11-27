@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import functools
 import operator
+import warnings
 import weakref
 from typing import TYPE_CHECKING, cast
 
@@ -523,6 +524,11 @@ def waveshow(
         and the right channel's amplitude envelope (negated) will be used for the bottom of the plot.
         If mono, the signal's envelope is mirrored across the axis.
 
+        .. deprecated:: 1.1.0
+            Support for stereo and multi-channel inputs (``y.ndim > 1``) is deprecated
+            and will be removed in version 1.2.0. Use `multiplot` or pass a
+            monophonic signal instead.
+
     sr : number > 0 [scalar]
         sampling rate of ``y`` (samples per second)
 
@@ -703,6 +709,14 @@ def waveshow(
     >>> plt.show()
     """
     util.valid_audio(y)
+
+    if y.ndim > 1:
+        warnings.warn(
+            "Support for stereo and multi-channel inputs in waveshow() is deprecated as of librosa version 1.1.0 "
+            "and will be removed in version 1.2.0. Use librosa.display.multiplot() or pass a 1D mono array instead.",
+            category=FutureWarning,
+            stacklevel=2,
+        )
 
     # Pad an extra channel dimension, if necessary
     if y.ndim == 1:

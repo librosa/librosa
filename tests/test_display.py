@@ -10,6 +10,7 @@ with contextlib.suppress(KeyError):
     os.environ.pop("LIBROSA_CACHE_DIR")
 
 import gc
+import warnings
 import weakref
 from typing import Any, cast
 
@@ -580,8 +581,27 @@ def test_waveshow_stereo(y, sr):
     ys = librosa.util.stack([y, 2 * y])
 
     plt.figure()
-    librosa.display.waveshow(ys, sr=sr)
+    with pytest.warns(FutureWarning, match="deprecated"):
+        librosa.display.waveshow(ys, sr=sr)
     return plt.gcf()
+
+
+def test_waveshow_stereo_deprecated(y, sr):
+    fig, ax = plt.subplots()
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
+            librosa.display.waveshow(y, sr=sr, ax=ax)
+
+        ys = librosa.util.stack([y, 2 * y])
+        with pytest.warns(
+            FutureWarning,
+            match=r"(?s)waveshow\(\).*1\.1\.0.*1\.2\.0",
+        ) as record:
+            librosa.display.waveshow(ys, sr=sr, ax=ax)
+        assert len(record) == 1
+    finally:
+        plt.close(fig)
 
 
 def test_unknown_wavaxis(y, sr):
@@ -1812,7 +1832,8 @@ def test_waveloop_waveshow(y, sr):
     ax[0].set_title("Mono")
 
     y_stereo = np.vstack([y, y[::-1]])
-    librosa.display.waveloop(y_stereo, sr=sr, r_range=(0.4, 0.95), ax=ax[1])
+    with pytest.warns(FutureWarning, match="deprecated"):
+        librosa.display.waveloop(y_stereo, sr=sr, r_range=(0.4, 0.95), ax=ax[1])
     ax[1].set_title("Stereo")
     return fig
 
