@@ -1320,7 +1320,8 @@ def test_peak_pick_multi_fail(rng):
         )
 
 
-def test_onset_detect(y_multi):
+@pytest.mark.parametrize("backtrack", [False, True])
+def test_onset_detect(y_multi, backtrack):
 
     # Verify that a stereo onset detection matches each channel individually
     y, sr = y_multi
@@ -1329,9 +1330,9 @@ def test_onset_detect(y_multi):
     # channel normalization issues if we were to process fully independently
     oenv = librosa.onset.onset_strength(y=y, sr=sr)
 
-    D = librosa.onset.onset_detect(onset_envelope=oenv, sr=sr, sparse=False)
-    D0 = librosa.onset.onset_detect(onset_envelope=oenv[0], sr=sr, sparse=False)
-    D1 = librosa.onset.onset_detect(onset_envelope=oenv[1], sr=sr, sparse=False)
+    D = librosa.onset.onset_detect(onset_envelope=oenv, sr=sr, backtrack=backtrack, sparse=False)
+    D0 = librosa.onset.onset_detect(onset_envelope=oenv[0], sr=sr, backtrack=backtrack, sparse=False)
+    D1 = librosa.onset.onset_detect(onset_envelope=oenv[1], sr=sr, backtrack=backtrack, sparse=False)
 
     # Check each channel
     assert np.allclose(D[0], D0)
@@ -1339,6 +1340,26 @@ def test_onset_detect(y_multi):
 
     # Check that they're not both the same
     assert not np.allclose(D0, D1)
+
+
+def test_onset_backtrack_multi(y_multi):
+    y, sr = y_multi
+    oenv = librosa.onset.onset_strength(y=y, sr=sr)
+    events = librosa.onset.onset_detect(onset_envelope=oenv, sr=sr, backtrack=False, sparse=False)
+
+    # Multichannel events with shared 1D energy broadcasts cleanly
+    bt_1d = librosa.onset.onset_backtrack(events, oenv[0])
+    assert bt_1d.shape == events.shape
+    assert bt_1d.dtype == np.dtype(bool)
+    assert np.array_equal(bt_1d[0], librosa.onset.onset_backtrack(events[0], oenv[0]))
+    assert np.array_equal(bt_1d[1], librosa.onset.onset_backtrack(events[1], oenv[0]))
+
+    # Silent channel with no detections should not fail
+    events_silent = events.copy()
+    events_silent[1] = False
+    bt_silent = librosa.onset.onset_backtrack(events_silent, oenv)
+    assert np.array_equal(bt_silent[0], librosa.onset.onset_backtrack(events[0], oenv[0]))
+    assert not np.any(bt_silent[1])
 
 
 @pytest.mark.parametrize("trim", [False, True])

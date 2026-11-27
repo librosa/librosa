@@ -341,10 +341,27 @@ def test_onset_backtrack(ysr, oenv, hop, energy):
     assert np.all(energy[onsets_bt] <= energy[np.maximum(0, onsets_bt - 1)])
 
 
-def test_onset_backtrack_fail(ysr):
+def test_onset_backtrack_dense(ysr):
     y, sr = ysr
-    with pytest.raises(librosa.ParameterValueError):
-        librosa.onset.onset_detect(y=y, sr=sr, backtrack=True, sparse=False)
+    oenv = librosa.onset.onset_strength(y=y, sr=sr)
+
+    onsets_sparse = librosa.onset.onset_detect(onset_envelope=oenv, sr=sr, backtrack=True, sparse=True)
+    onsets_dense = librosa.onset.onset_detect(onset_envelope=oenv, sr=sr, backtrack=True, sparse=False)
+
+    assert onsets_dense.dtype == np.dtype(bool)
+    assert onsets_dense.shape == oenv.shape
+    assert np.array_equal(np.flatnonzero(onsets_dense), np.unique(onsets_sparse))
+
+    # Direct dense onset_backtrack on 1D boolean events, including empty detections
+    raw_dense = librosa.onset.onset_detect(onset_envelope=oenv, sr=sr, backtrack=False, sparse=False)
+    bt_dense = librosa.onset.onset_backtrack(raw_dense, oenv)
+    assert np.array_equal(bt_dense, onsets_dense)
+
+    all_false = np.zeros_like(raw_dense, dtype=bool)
+    assert np.array_equal(librosa.onset.onset_backtrack(all_false, oenv), all_false)
+
+    with pytest.raises(librosa.ParameterShapeError):
+        librosa.onset.onset_backtrack(raw_dense, oenv[:-1])
 
 
 def test_onset_sparse(ysr, oenv, hop):
