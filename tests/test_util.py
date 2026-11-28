@@ -1640,6 +1640,34 @@ def test_phasor(dtype, angles, mag):
     assert z2.dtype == librosa.util.dtype_r2c(dtype)
 
 
+def test_phasor_angles_uninitialized_output():
+    # phasor passes an uninitialized array to _phasor_angles.  Fill it with signaling
+    # NaNs: reading the old values (e.g. to cast them) raises "invalid value
+    # encountered in cast", and any value left unwritten fails the comparison.
+    x = np.linspace(-10, 10, 100, dtype=np.float32)
+    z = np.empty(100, dtype=np.complex64)
+    z.view(np.uint32)[:] = 0x7FA00000
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        librosa.util.utils._phasor_angles(x, z)
+
+    assert np.allclose(z, np.exp(1j * x.astype(np.float64)), atol=1e-6)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("order", ["C", "F"])
+def test_phasor_order(dtype, order):
+    angles = np.linspace(-10, 10, 600, dtype=dtype).reshape((20, 30), order=order)
+    z = librosa.util.phasor(angles)
+    # STFT phases are Fortran-ordered, so the output should keep the input layout
+    assert z.flags.f_contiguous == angles.flags.f_contiguous
+    assert np.allclose(z, np.exp(1j * angles))
+
+    # Non-contiguous input
+    angles = angles[::2, ::-3]
+    assert np.allclose(librosa.util.phasor(angles), np.exp(1j * angles))
+
+
 @pytest.mark.network
 @pytest.mark.parametrize("bib", [False, True])
 def test_cite_released(bib):

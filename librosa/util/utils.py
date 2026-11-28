@@ -2773,9 +2773,13 @@ def abs2(x: np.ndarray | _Real | _Complex, dtype: DTypeLike | None = None) -> np
         return np.square(x, dtype=dtype)
 
 
-@numba.vectorize(nopython=True, cache=True, identity=1)  # type: ignore
-def _phasor_angles(x) -> np.complexfloating:
-    return np.cos(x) + 1j * np.sin(x)  # type: ignore
+@numba.jit(nopython=True, cache=True)
+def _phasor_angles(x, z):
+    # Write into z directly instead of using a dynamic vectorize: for float32 input
+    # that computes in complex128 and casts into z through a buffer, which also
+    # reads the uninitialized contents of z and can warn about invalid values.
+    for i in range(x.shape[0]):
+        z[i] = np.cos(x[i]) + 1j * np.sin(x[i])
 
 
 @overload
@@ -2840,8 +2844,11 @@ def phasor(
     >>> librosa.util.phasor(np.array([0, np.pi / 2]), mag=np.array([0.5, 1.5]))
     array([5.000e-01+0.j , 9.185e-17+1.5j])
     """
-    z = np.empty_like(angles, dtype=dtype_r2c(np.asarray(angles).dtype))
-    _phasor_angles(angles, z)
+    angles = np.asarray(angles)
+    # Keep Fortran order for Fortran-ordered input, e.g. STFT phases
+    order: Literal["C", "F"] = "F" if np.isfortran(angles) else "C"
+    z = np.empty(angles.shape, dtype=dtype_r2c(angles.dtype), order=order)
+    _phasor_angles(angles.ravel(order=order), z.ravel(order=order))
 
     if mag is not None:
         z *= mag
